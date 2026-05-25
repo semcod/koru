@@ -808,6 +808,122 @@ def _apply_needs_input_heuristic(
     _hp(f"- needs_input heuristic: question={question!r}")
 
 
+def _check_recent_drive_ack_skip(
+    state: AutoloopState,
+    cooldown: float,
+    waiting_ticket: str,
+    ide: str | None,
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> bool:
+    drive_ack_age = _last_successful_drive_ack_age(
+        state,
+        waiting_ticket=waiting_ticket,
+        ide=ide,
+    )
+    if drive_ack_age is not None and drive_ack_age <= cooldown:
+        age = f"{drive_ack_age:.0f}s"
+        cycle_telemetry["autopilot_skipped_chat_activity"] = True
+        cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
+        _hp(
+            "- autopilot skipped (recent_drive_ack "
+            f"last=drive.ack age={age} cooldown={cooldown:.0f}s "
+            f"ticket={waiting_ticket})",
+        )
+        return True
+    return False
+
+
+def _check_chat_intake_skip(
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> bool:
+    intake_ticket = _upsert_chat_intake_operator_ticket(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        recent_events=recent_events,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+    if intake_ticket:
+        cycle_telemetry["autopilot_skipped_chat_intake"] = True
+        return True
+    return False
+
+
+def _check_recent_self_drive_skip(
+    state: AutoloopState,
+    cooldown: float,
+    waiting_ticket: str,
+    recent_events: list[dict[str, Any]],
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> bool:
+    has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
+    self_drive_age = _last_self_drive_event_age(state, recent_events)
+    if (
+        self_drive_age is not None
+        and self_drive_age <= cooldown
+        and not has_received
+        and not _llx_chat_reflection_enabled()
+    ):
+        age = f"{self_drive_age:.0f}s"
+        cycle_telemetry["autopilot_skipped_chat_activity"] = True
+        cycle_telemetry["autopilot_chat_activity_last_event"] = "message.sent"
+        _hp(
+            "- autopilot skipped (recent_self_drive "
+            f"last=message.sent age={age} cooldown={cooldown:.0f}s "
+            f"ticket={waiting_ticket})",
+        )
+        return True
+    return False
+
+
+def _determine_chat_activity_status(
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+    project: Path,
+    cooldown: float,
+    waiting_ticket: str,
+    ide: str | None,
+    recent_events: list[dict[str, Any]],
+    reflection_events: list[Any],
+    _hp: Any,
+) -> tuple[bool, str, str, list[Any]]:
+    if recent_events:
+        last_payload = recent_events[-1]
+        last_type = str(last_payload.get("type") or "?")
+        age_seconds = max(0.0, time.time() - _event_timestamp(last_payload, default=0.0))
+        age = f"{age_seconds:.0f}s"
+        if _recent_message_sent_allows_redrive(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            recent_events=recent_events,
+            last_type=last_type,
+            age=age,
+            waiting_ticket=waiting_ticket,
+            _hp=_hp,
+        ):
+            return False, "", "", []
+        return True, last_type, age, reflection_events
+    else:
+        fallback = _recent_chat_history_fallback(
+            ide=ide,
+            cooldown=cooldown,
+            reflection_events=reflection_events,
+        )
+        if fallback is None:
+            return False, "", "", []
+        last_type, age, reflection_events = fallback
+        return True, last_type, age, reflection_events
+
+
 def _skip_due_to_recent_chat_activity(
     *,
     project: Path,
@@ -838,22 +954,7 @@ def _skip_due_to_recent_chat_activity(
     ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
 
-    # Fallback dedupe when plugin chat events are delayed/missing: rely on
-    # the last successful drive for this exact waiting ticket.
-    drive_ack_age = _last_successful_drive_ack_age(
-        state,
-        waiting_ticket=waiting_ticket,
-        ide=ide,
-    )
-    if drive_ack_age is not None and drive_ack_age <= cooldown:
-        age = f"{drive_ack_age:.0f}s"
-        cycle_telemetry["autopilot_skipped_chat_activity"] = True
-        cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
-        _hp(
-            "- autopilot skipped (recent_drive_ack "
-            f"last=drive.ack age={age} cooldown={cooldown:.0f}s "
-            f"ticket={waiting_ticket})",
-        )
+    if _check_recent_drive_ack_skip(state, cooldown, waiting_ticket, ide, cycle_telemetry, _hp):
         return True
 
     recent_events = _recent_chat_activity_events(
@@ -863,71 +964,32 @@ def _skip_due_to_recent_chat_activity(
     )
     reflection_events = _state_events_to_chat_events(recent_events)
 
-    intake_ticket = _upsert_chat_intake_operator_ticket(
-        project=project,
-        queue_result=queue_result,
+    if _check_chat_intake_skip(project, queue_result, state, recent_events, cycle_telemetry, _hp):
+        return True
+
+    if _check_recent_self_drive_skip(
+        state,
+        cooldown,
+        waiting_ticket,
+        recent_events,
+        cycle_telemetry,
+        _hp,
+    ):
+        return True
+
+    has_activity, last_type, age, reflection_events = _determine_chat_activity_status(
         state=state,
+        queue_result=queue_result,
+        project=project,
+        cooldown=cooldown,
+        waiting_ticket=waiting_ticket,
+        ide=ide,
         recent_events=recent_events,
-        cycle_telemetry=cycle_telemetry,
+        reflection_events=reflection_events,
         _hp=_hp,
     )
-    if intake_ticket:
-        cycle_telemetry["autopilot_skipped_chat_intake"] = True
-        return True
-
-    has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
-    self_drive_age = _last_self_drive_event_age(state, recent_events)
-    if (
-        self_drive_age is not None
-        and self_drive_age <= cooldown
-        and not has_received
-        and not _llx_chat_reflection_enabled()
-    ):
-        age = f"{self_drive_age:.0f}s"
-        cycle_telemetry["autopilot_skipped_chat_activity"] = True
-        cycle_telemetry["autopilot_chat_activity_last_event"] = "message.sent"
-        _hp(
-            "- autopilot skipped (recent_self_drive "
-            f"last=message.sent age={age} cooldown={cooldown:.0f}s "
-            f"ticket={waiting_ticket})",
-        )
-        return True
-
-    if recent_events:
-        last_payload = recent_events[-1]
-        last_type = str(last_payload.get("type") or "?")
-        age_seconds = max(0.0, time.time() - _event_timestamp(last_payload, default=0.0))
-        age = f"{age_seconds:.0f}s"
-        # ``message.sent`` only means the plugin *attempted* a drive — on
-        # Wayland a false-positive xdotool submit still logs sent while nothing
-        # reached the IDE LLM. If we never saw ``message.received`` afterwards
-        # and the queue is still ``waiting_input``, allow redrive instead of
-        # waiting out the full cooldown.
-        if _recent_message_sent_allows_redrive(
-            project=project,
-            queue_result=queue_result,
-            state=state,
-            recent_events=recent_events,
-            last_type=last_type,
-            age=age,
-            waiting_ticket=waiting_ticket,
-            _hp=_hp,
-        ):
-            # Non-llm-ready: allow redrive — false-positive submits (Wayland
-            # xdotool, composer.sendToAgent no-op) still log message.sent.
-            # llm-ready: the IDE LLM is expected to be working; keep cooldown
-            # even without message.received (regression:
-            # test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity).
-            return False
-    else:
-        fallback = _recent_chat_history_fallback(
-            ide=ide,
-            cooldown=cooldown,
-            reflection_events=reflection_events,
-        )
-        if fallback is None:
-            return False
-        last_type, age, reflection_events = fallback
+    if not has_activity:
+        return False
 
     cycle_telemetry["autopilot_skipped_chat_activity"] = True
     cycle_telemetry["autopilot_chat_activity_last_event"] = last_type

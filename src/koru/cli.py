@@ -2,73 +2,21 @@
 
 
 import argparse
-import asyncio
-import json
 import os
 import shlex
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
-from koru.agents import (
-    detect_agent_options,
-)
 from koru.autoloop_cli import autoloop_main
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
+from koru.autonomous import autonomous_main
 from koru.autonomous_runtime import project_venv_reexec_argv
 from koru.autopilot.cli_command import autopilot_main
-from koru.bootstrap import import_flat_pipeline
-from koru.context import build_context, render_markdown_handoff
-from koru.dev_sync import dev_main
-from koru.doctor import detected_problems as doctor_detected_problems
-from koru.doctor import problem_catalog as doctor_problem_catalog
-from koru.doctor import render_problem_catalog_text
-from koru.doctor import render_text as render_doctor_text
-from koru.doctor import run_diagnostics
-from koru.events import emit_management_event
-from koru.gate import VALID_MODES as GATE_VALID_MODES
-from koru.gate import authorize_gate
-from koru.gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
-from koru.git_cli import git_main
-from koru.init import init_project, refresh_init_agent_lane
-from koru.queue import (
-    default_human_prompt as _queue_default_human_prompt,
-)
-from koru.queue import (
-    run_api_request as _queue_run_api_request,
-)
-from koru.queue import (
-    run_llm_request as _queue_run_llm_request,
-)
-from koru.queue import (
-    run_process as _queue_run_process,
-)
-from koru.queue import (
-    run_shell_command as _queue_run_shell_command,
-)
-from koru.queue_clean import CleanupReport, clean_queue
-from koru.scan import ScanResult, run_scan
-from koru.cli_scan import scan_main as _scan_main
-from koru.cli_gate import gate_main as _gate_main
-from koru.cli_gc import gc_main as _gc_main
-from koru.cli_queue import queue_main as _queue_main
-from koru.cli_topology import topology_main as _topology_main
-from koru.cli_init import init_main as _init_main, init_agent_lane_main as _init_agent_lane_main
 from koru.cli_loop import command_loop_main as _command_loop_main
-from koru.cli_parser import _build_parser, _command_value
-from koru.cli_doctor import doctor_main as _doctor_main
-from koru.cli_watch import watch_main as _watch_main
-from koru.serve import DEFAULT_HOST, DEFAULT_PORT
-from koru.tasks import create_nl_task
-from koru.tools import (
-    build_tool_task_scaffold,
-    detect_tools,
-    find_tool_entry,
-    load_tool_registry,
-    render_tools_detect_text,
-)
-from koru.watch import watch_planfile_events
+from koru.cli_parser import _build_parser
+from koru.cli_scan import scan_main as _scan_main
+from koru.dev_sync import dev_main
+from koru.git_cli import git_main
 
 
 def _env_truthy(name: str) -> bool:
@@ -178,41 +126,69 @@ def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
     return not (project / ".planfile").exists() and not (project / ".koru").exists()
 
 
+def _lazy_module_main(module_name: str, attr_name: str, argv: list[str]) -> int:
+    return getattr(__import__(module_name, fromlist=[attr_name]), attr_name)(argv)
+
+
 
 
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
-    "events": lambda argv: __import__("koru.cli_events", fromlist=["events_main"]).events_main(argv),
-    "doctor": lambda argv: __import__("koru.cli_doctor", fromlist=["doctor_subcommand_main"]).doctor_subcommand_main(argv),
-    "configure": lambda argv: __import__("koru.configurator", fromlist=["configure_main"]).configure_main(argv),
-    "mesh": lambda argv: __import__("korumesh.cli", fromlist=["mesh_main"]).mesh_main(argv),
-    "vision": lambda argv: __import__("koruvision.cli", fromlist=["vision_main"]).vision_main(argv),
-    "observe": lambda argv: __import__("koruobserve.cli", fromlist=["observe_main"]).observe_main(argv),
-    "init-ci": lambda argv: __import__("koru.cli_init", fromlist=["init_ci_main"]).init_ci_main(argv),
-    "init-ide": lambda argv: __import__("koru.mcp_provision", fromlist=["init_ide_main"]).init_ide_main(argv),
-    "agent-backends": lambda argv: __import__("koru.cli_agent_backends", fromlist=["agent_backends_main"]).agent_backends_main(argv),
-    "task": lambda argv: __import__("koru.cli_task", fromlist=["_task_main"])._task_main(argv),
-    "agent": lambda argv: __import__("koru.cli_agent", fromlist=["_agent_main"])._agent_main(argv),
-    "local-serve": lambda argv: __import__("koru.cli_local_serve", fromlist=["_local_serve_main"])._local_serve_main(argv),
-    "serve": lambda argv: __import__("koru.cli_serve", fromlist=["_serve_main"])._serve_main(argv),
+    "events": lambda argv: _lazy_module_main("koru.cli_events", "events_main", argv),
+    "doctor": lambda argv: _lazy_module_main(
+        "koru.cli_doctor",
+        "doctor_subcommand_main",
+        argv,
+    ),
+    "configure": lambda argv: _lazy_module_main("koru.configurator", "configure_main", argv),
+    "mesh": lambda argv: _lazy_module_main("korumesh.cli", "mesh_main", argv),
+    "vision": lambda argv: _lazy_module_main("koruvision.cli", "vision_main", argv),
+    "observe": lambda argv: _lazy_module_main("koruobserve.cli", "observe_main", argv),
+    "init-ci": lambda argv: _lazy_module_main("koru.cli_init", "init_ci_main", argv),
+    "init-ide": lambda argv: _lazy_module_main("koru.mcp_provision", "init_ide_main", argv),
+    "agent-backends": lambda argv: _lazy_module_main(
+        "koru.cli_agent_backends",
+        "agent_backends_main",
+        argv,
+    ),
+    "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
+    "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
+    "local-serve": lambda argv: _lazy_module_main(
+        "koru.cli_local_serve",
+        "_local_serve_main",
+        argv,
+    ),
+    "serve": lambda argv: _lazy_module_main("koru.cli_serve", "_serve_main", argv),
     "scan": _scan_main,
-    "refactor-planfile-handoff": lambda argv: __import__("koru.cli_refactor_planfile_handoff", fromlist=["_refactor_planfile_handoff_main"])._refactor_planfile_handoff_main(argv),
-    "gate": lambda argv: __import__("koru.cli_gate", fromlist=["gate_main"]).gate_main(argv),
-    "queue": lambda argv: __import__("koru.cli_queue", fromlist=["queue_main"]).queue_main(argv),
-    "gc": lambda argv: __import__("koru.cli_gc", fromlist=["gc_main"]).gc_main(argv),
+    "refactor-planfile-handoff": lambda argv: _lazy_module_main(
+        "koru.cli_refactor_planfile_handoff",
+        "_refactor_planfile_handoff_main",
+        argv,
+    ),
+    "gate": lambda argv: _lazy_module_main("koru.cli_gate", "gate_main", argv),
+    "queue": lambda argv: _lazy_module_main("koru.cli_queue", "queue_main", argv),
+    "gc": lambda argv: _lazy_module_main("koru.cli_gc", "gc_main", argv),
     "git": git_main,
-    "tools": lambda argv: __import__("koru.cli_tools", fromlist=["_tools_main"])._tools_main(argv),
-    "mcp-serve": lambda argv: __import__("koruapi.mcp", fromlist=["mcp_main"]).mcp_main(argv),
-    "ide-router": lambda argv: __import__("koru.cli_ide_router", fromlist=["ide_router_main"]).ide_router_main(argv),
-    "ide": lambda argv: __import__("koru.cli_ide", fromlist=["ide_main"]).ide_main(argv),
+    "tools": lambda argv: _lazy_module_main("koru.cli_tools", "_tools_main", argv),
+    "mcp-serve": lambda argv: _lazy_module_main("koruapi.mcp", "mcp_main", argv),
+    "ide-router": lambda argv: _lazy_module_main(
+        "koru.cli_ide_router",
+        "ide_router_main",
+        argv,
+    ),
+    "ide": lambda argv: _lazy_module_main("koru.cli_ide", "ide_main", argv),
     "autopilot": autopilot_main,
     "autoloop": autoloop_main,
     "autonomous": autonomous_main,
-    "auto": lambda argv: __import__("koru.cli_auto", fromlist=["_auto_main"])._auto_main(argv),
-    "wizard": lambda argv: __import__("koru.wizard.cli", fromlist=["wizard_main"]).wizard_main(argv),
+    "auto": lambda argv: _lazy_module_main("koru.cli_auto", "_auto_main", argv),
+    "wizard": lambda argv: _lazy_module_main("koru.wizard.cli", "wizard_main", argv),
     "dsl": _dsl_main,
     "api": _api_main,
-    "topology": lambda argv: __import__("koru.cli_topology", fromlist=["topology_main"]).topology_main(argv),
-    "runtime-context": lambda argv: __import__("koru.cli_runtime_context", fromlist=["_runtime_context_main"])._runtime_context_main(argv),
+    "topology": lambda argv: _lazy_module_main("koru.cli_topology", "topology_main", argv),
+    "runtime-context": lambda argv: _lazy_module_main(
+        "koru.cli_runtime_context",
+        "_runtime_context_main",
+        argv,
+    ),
     "dev": dev_main,
 }
 
@@ -248,13 +224,20 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
 
 def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int | None:
     if args.doctor:
-        return __import__("koru.cli_doctor", fromlist=["doctor_main"]).doctor_main(args, raw_args)
+        return __import__("koru.cli_doctor", fromlist=["doctor_main"]).doctor_main(
+            args,
+            raw_args,
+        )
     if args.init_agent_lane:
-        return __import__("koru.cli_init", fromlist=["init_agent_lane_main"]).init_agent_lane_main(args)
+        return __import__("koru.cli_init", fromlist=["init_agent_lane_main"]).init_agent_lane_main(
+            args,
+        )
     if args.init:
         return __import__("koru.cli_init", fromlist=["init_main"]).init_main(args)
     if args.context:
-        return __import__("koru.cli_context", fromlist=["_context_main"])._context_main(args)
+        return __import__("koru.cli_context", fromlist=["_context_main"])._context_main(
+            args,
+        )
     if args.bootstrap:
         return __import__("koru.cli_bootstrap", fromlist=["_bootstrap_main"])._bootstrap_main(args)
     if args.watch:

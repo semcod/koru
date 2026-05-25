@@ -25,34 +25,51 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from koru import autonomous_cli_config as _autonomous_cli_config
 from koru import autonomous_cycle as _autonomous_cycle_module
 from koru import autonomous_cycle_config as _autonomous_cycle_config
 from koru import autonomous_cycle_gate as _autonomous_cycle_gate
-from koru import autonomous_cli_config as _autonomous_cli_config
 from koru import autonomous_daemon as _autonomous_daemon
+from koru import autonomous_diagnostics as _autonomous_diagnostics
+from koru import autonomous_loop_runner as _autonomous_loop_runner
+from koru import autonomous_onboarding as _autonomous_onboarding
 from koru import autonomous_operator as _autonomous_operator
 from koru import autonomous_parser as _autonomous_parser
+from koru import autonomous_plugin as _autonomous_plugin
 from koru import autonomous_resources as _autonomous_resources
-from koru import autonomous_loop_runner as _autonomous_loop_runner
 from koru import autonomous_runtime as _autonomous_runtime
-from koru import autonomous_onboarding as _autonomous_onboarding
+from koru.autonomous_auto_pipeline import (
+    AutoPipelineProfile,
+    AutoPipelineState,
+    _collect_argv_options,
+    _expand_auto_up_defaults,
+    _select_auto_pipeline_profile,
+    _update_auto_pipeline_state,
+)
+from koru.autonomous_checkpoint import (
+    compute_backoff_sleep as _compute_backoff_sleep,
+)
+from koru.autonomous_checkpoint import (
+    load_loop_checkpoint as _load_loop_checkpoint,
+)
+from koru.autonomous_checkpoint import (
+    queue_loop_waiting_ticket_label as _queue_loop_waiting_ticket_label,
+)
+from koru.autonomous_checkpoint import (
+    save_loop_checkpoint as _save_loop_checkpoint,
+)
 from koru.autonomous_cycle import (
     AutoloopState,
     DiagnosticResult,
 )
-from koru.autonomous_checkpoint import (
-    compute_backoff_sleep as _compute_backoff_sleep,
-    current_head as _current_head,
-    load_loop_checkpoint as _load_loop_checkpoint,
-    queue_loop_waiting_ticket_label as _queue_loop_waiting_ticket_label,
-    save_loop_checkpoint as _save_loop_checkpoint,
-    status_in_skip_list as _status_in_skip_list,
-)
 from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
-from koru.autonomous_env import (
-    effective_ticket_source_flags as _effective_flags,
+from koru.autonomous_processes import (
+    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
+)
+from koru.autonomous_processes import (
+    stop_prior_autonomous_for_auto_start,
 )
 from koru.autonomous_startup import (
     build_startup_probe,
@@ -66,23 +83,7 @@ from koru.autonomous_wup import (
     _stop_process,
     _wup_watch_command,  # noqa: F401
 )
-from koru import autonomous_diagnostics as _autonomous_diagnostics
-from koru import autonomous_plugin as _autonomous_plugin
-from koru.autonomous_processes import (
-    ExistingAutonomousProcess,
-    ExistingManagedProcess,
-    _looks_like_autonomous_up_command,
-    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
-    stop_prior_autonomous_for_auto_start,
-)
-from koru.autonomous_auto_pipeline import (
-    AutoPipelineState,
-    AutoPipelineProfile,
-    _collect_argv_options,
-    _expand_auto_up_defaults,
-    _select_auto_pipeline_profile,
-    _update_auto_pipeline_state,
-)
+from koru.autonomy.env import plugin_required_for_ide
 from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from koru.autonomy.operator_pipeline import run_startup_operator_pipeline
 from koru.autonomy.prompts import build_prompt
@@ -116,9 +117,9 @@ from koru.scan import ScanResult, run_scan
 from koru.stdio_events import default_stdio_format_from_env, write_stdio_event
 from koru.tasks import create_nl_task
 from koru.topology import is_component_enabled, is_pipeline_enabled
+from koruide import os_injector as _os_injector_module
 from koruide.daemon import AutopilotDaemon
 from koruide.drive_orchestrator import DriveOrchestrator
-from koruide import os_injector as _os_injector_module
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 _ORIGINAL_LOAD_PROFILE = load_profile
@@ -177,7 +178,7 @@ def _effective_cycle_autopilot_enabled(
         client=client,
         autopilot_ide=autopilot_ide,
         stdio_format=stdio_format,
-        plugin_required_for_ide=_autonomous_cycle_module._plugin_required_for_ide,
+        plugin_required_for_ide=plugin_required_for_ide,
         status_has_autopilot_plugin=_status_has_autopilot_plugin,
         stdio_info=_stdio_info,
     )
@@ -1074,7 +1075,11 @@ def _normalize_autonomous_argv(argv: list[str]) -> list[str]:
     return _autonomous_cli_config.normalize_autonomous_argv(argv)
 
 
-def _configure_auto_mode_args(argv: list[str], args: Any, invoked_as_auto: bool) -> tuple[set[str], list[str]]:
+def _configure_auto_mode_args(
+    argv: list[str],
+    args: Any,
+    invoked_as_auto: bool,
+) -> tuple[set[str], list[str]]:
     """Configure arguments for auto mode and return user options and normalized argv."""
     return _autonomous_cli_config.configure_auto_mode_args(
         argv,

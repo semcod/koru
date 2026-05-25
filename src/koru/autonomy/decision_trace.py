@@ -51,6 +51,11 @@ and ``autonomous_cycle_chat_activity``):
     Drive ran but the plugin reports the chat surface needs manual focus
     (e.g. webview not foregrounded).
 
+``stuck_<queue_status>``
+    Queue has been stuck on the same status (e.g. ``waiting_input``) for
+    multiple cycles AND the waiting ticket is *not* marked ``llm-ready``
+    — the loop refuses to spam the same chat prompt at a human ticket.
+
 ``ok``
     Drive completed and was verified.
 
@@ -109,6 +114,15 @@ SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
         "Plugin ran the submit step but reports the chat surface needs "
         "manual focus (webview not foregrounded)."
     ),
+    "stuck_waiting_input": (
+        "Queue has been stuck on ``waiting_input`` for several cycles and "
+        "the waiting ticket is not marked ``llm-ready``; autopilot refuses "
+        "to clobber the human operator's chat."
+    ),
+    "stuck_status": (
+        "Queue has been stuck on the same non-idle status for several "
+        "cycles; autopilot is escalating instead of redriving."
+    ),
     "ok": "Drive completed and was verified.",
     "failed": "Drive ran but the plugin reported a failure.",
     "unknown": "No structured reason recorded for this cycle.",
@@ -140,8 +154,11 @@ class DecisionRecord:
             Concrete signals supporting the decision (verification mode,
             backend used, bubble db match, sentinel probe result, ticket
             id).
-        next_step:
+    next_step:
             Short description of what the loop will try next.
+        blocked_by:
+            Machine-readable blocker for the cycle, when work is stalled by
+            a specific gate such as ``plugin_missing`` or ``idle_no_ticket``.
         skip_code:
             Machine-readable reason from :data:`SKIP_CODE_DESCRIPTIONS`.
             ``ok`` when the cycle drove successfully; ``unknown`` if not
@@ -158,6 +175,7 @@ class DecisionRecord:
     action: str
     evidence: str
     next_step: str
+    blocked_by: str = ""
     skip_code: str = "unknown"
     skip_because: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
@@ -171,6 +189,7 @@ class DecisionRecord:
             "action": self.action,
             "evidence": self.evidence,
             "next_step": self.next_step,
+            "blocked_by": self.blocked_by,
             "skip_code": self.skip_code,
             "skip_because": self.skip_because,
         }
@@ -316,12 +335,20 @@ def classify_skip_code(cycle_telemetry: dict[str, Any], autopilot_status: str) -
         return "idle_streak"
     if cycle_telemetry.get("autopilot_skipped_manual_focus"):
         return "manual_focus"
+    if cycle_telemetry.get("autopilot_skipped_stuck_status"):
+        queue = str(cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or "")
+        specific = f"stuck_{queue}" if queue else "stuck_status"
+        return specific if specific in SKIP_CODE_DESCRIPTIONS else "stuck_status"
     status = (autopilot_status or "").lower()
     if status.startswith("skipped("):
         # ``skipped(idle_only)`` → ``idle_only`` etc.
         inner = status[len("skipped("):].rstrip(")").strip()
         if inner in SKIP_CODE_DESCRIPTIONS:
             return inner
+        # ``skipped(stuck_waiting_input)`` even when no telemetry flag was set
+        # by an upstream skip path (defensive — keeps the trace honest).
+        if inner.startswith("stuck_"):
+            return inner if inner in SKIP_CODE_DESCRIPTIONS else "stuck_status"
     if status == "ok":
         return "ok"
     if status == "failed":
@@ -389,9 +416,12 @@ def _evidence_label(
     autopilot_backend: str | None,
     diag_status: str,
     wup_status: str,
+    blocked_by: str,
 ) -> str:
     """``evidence=`` field. Concrete signals supporting the decision."""
     parts: list[str] = []
+    if blocked_by:
+        parts.append(f"blocked_by={blocked_by}")
     if autopilot_backend:
         parts.append(f"backend={autopilot_backend}")
     if diag_status:
@@ -435,6 +465,7 @@ def build_decision_record(
     the trace internals.
     """
     skip_code = classify_skip_code(cycle_telemetry, autopilot_status)
+    blocked_by = "" if skip_code in {"ok", "unknown"} else skip_code
     skip_because = ""
     if skip_code == "chat_activity":
         chat_event = cycle_telemetry.get("autopilot_chat_activity_last_event")
@@ -449,6 +480,19 @@ def build_decision_record(
         skip_because = f"autopilot lane ide={autopilot_ide} mismatches the foreground IDE"
     elif skip_code == "idle_no_ticket":
         skip_because = "queue idle AND zero open planfile tickets"
+    elif skip_code.startswith("stuck_"):
+        streak = cycle_telemetry.get("autopilot_skipped_stuck_status_streak")
+        queue = cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or queue_status
+        ticket_hint = (
+            f" ticket={waiting_ticket}"
+            if waiting_ticket and waiting_ticket != "-"
+            else ""
+        )
+        streak_hint = f" streak={streak}" if streak else ""
+        skip_because = (
+            f"queue stuck on {queue}{ticket_hint}{streak_hint}; "
+            "waiting ticket is not llm-ready, autopilot will not redrive"
+        )
     return DecisionRecord(
         at=now_utc_iso(),
         cycle=cycle,
@@ -458,9 +502,10 @@ def build_decision_record(
         decided=_decide_label(autopilot_status, autopilot_drive_kind, cycle_telemetry),
         action=_action_label(autopilot_status, autopilot_backend),
         evidence=_evidence_label(
-            cycle_telemetry, autopilot_backend, diag_status, wup_status
+            cycle_telemetry, autopilot_backend, diag_status, wup_status, blocked_by
         ),
         next_step=next_step,
+        blocked_by=blocked_by,
         skip_code=skip_code,
         skip_because=skip_because,
     )

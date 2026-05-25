@@ -22,11 +22,10 @@ from unittest import mock
 
 import pytest
 
-from koru.autonomous_cycle import (
+from koru.autonomous_cycle_chat_activity import (
     _autopilot_redrive_cooldown_seconds,
     _skip_due_to_recent_chat_activity,
 )
-
 
 _EVENTS_FILENAME = "koru-autopilot-events.ndjson"
 

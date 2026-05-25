@@ -96,7 +96,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T11:39:03.455403Z'
+        finished_at: '2026-05-25T11:49:34.222535Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -165,6 +165,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T11:39:03.467465+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T11:49:34.232994+00:00'
       id: STARTER-215
       inputs:
         api_headers: {}
@@ -220,7 +225,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T11:39:03.467434+00:00'
+      updated_at: '2026-05-25T11:49:34.232955+00:00'
     STARTER-216:
       blocked_by: []
       blocks: []
@@ -2352,11 +2357,17 @@ sprint:
       - src/koru/autonomous_cycle_chat_activity.py
       - src/koru/autonomous_loop_runner.py
       - src/koru/ide_adapters/ide_reload.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - labels
+        source: planfile.store
+        timestamp: '2026-05-25T11:56:56.535138+00:00'
       id: STARTER-239
       labels:
-      - refactor
       - autonomy
+      - llm-ready
+      - refactor
       name: 'Refactor: split high-CC functions in autonomous_cycle_chat_activity,
         autonomous_loop_runner, ide_reload'
       priority: high
@@ -2367,7 +2378,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-05-25T11:37:42.652326Z'
+      updated_at: '2026-05-25T11:56:56.535103+00:00'
     STARTER-240:
       acceptance_criteria: []
       blocked_by: []
@@ -2418,3 +2429,72 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-25T11:37:52.796094Z'
+    STARTER-241:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T11:54:48.045875+00:00'
+      description: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+        0/4 passed, 2 failed (448ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779710085_koru-shell_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T11:56:52.712401+00:00'
+        last_error: null
+        lease_expires_at: null
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+          0/4 passed, 2 failed (448ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779710085_koru-shell_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-25T11:54:48.045875+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-05-25T11:56:52.712401+00:00'
+      id: STARTER-241
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+          0/4 passed, 2 failed (448ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779710085_koru-shell_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-shell stage=...'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+            0/4 passed, 2 failed (448ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779710085_koru-shell_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-25T11:54:48.045875+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T11:56:52.712401+00:00'

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 from koru.events import emit_management_event
 from koru.init import init_project, refresh_init_agent_lane

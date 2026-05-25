@@ -1,0 +1,241 @@
+schema: "koru.interface-registry/v1"
+interfaces:
+  - id: mcp_stdio_server
+    family: tool_invocation
+    direction: inbound
+    transport: stdio_mcp
+    surface: ide_tool_calls
+    authority: high
+    write_mode: structured
+    verification:
+      mode: tool_result
+      can_confirm_submit: false
+    blocking_modes:
+      - mcp_not_connected
+      - tool_not_exposed
+    operator_recovery:
+      - enable_mcp_server
+      - reload_ide
+    primary_code:
+      - src/koru/mcp_server.py
+      - src/koruapi/mcp_server.py
+
+  - id: dashboard_rest
+    family: browser_control
+    direction: inbound
+    transport: http_json
+    surface: local_dashboard
+    authority: medium
+    write_mode: action_routes
+    verification:
+      mode: http_status
+      can_confirm_submit: false
+    blocking_modes:
+      - dashboard_not_running
+      - invalid_request
+    operator_recovery:
+      - start_dashboard
+      - use_quick_action_link
+    primary_code:
+      - src/koruapi/dashboard_routes.py
+      - src/koruapi/dashboard_tickets.py
+
+  - id: plugin_socket_vscode_family
+    family: ide_control
+    direction: bidirectional
+    transport: unix_socket_ndjson
+    surface: ide_chat
+    authority: high
+    write_mode: plugin_drive
+    verification:
+      mode: strict_ack
+      can_confirm_submit: true
+    blocking_modes:
+      - plugin_missing
+      - plugin_version_mismatch
+      - chat_busy
+    operator_recovery:
+      - reload_window
+      - reconnect_plugin
+    primary_code:
+      - src/koruide/protocol.py
+      - src/koruide/daemon.py
+      - plugins/koru-autopilot-vscode/
+
+  - id: plugin_socket_jetbrains
+    family: ide_control
+    direction: bidirectional
+    transport: unix_socket_ndjson
+    surface: ide_chat
+    authority: medium
+    write_mode: plugin_drive
+    verification:
+      mode: plugin_ack
+      can_confirm_submit: false
+    blocking_modes:
+      - plugin_missing
+      - plugin_partial_support
+    operator_recovery:
+      - reconnect_plugin
+      - restart_ide
+    primary_code:
+      - plugins/koru-autopilot-jetbrains/
+
+  - id: antigravity_native_send
+    family: ide_control
+    direction: outbound
+    transport: ide_command_registry
+    surface: ide_agent_panel
+    authority: high
+    write_mode: native_send_command
+    verification:
+      mode: plugin_ack
+      can_confirm_submit: true
+    blocking_modes:
+      - command_unavailable
+      - plugin_missing
+    operator_recovery:
+      - reload_window
+      - reconnect_plugin
+    primary_code:
+      - plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts
+      - plugins/koru-autopilot-vscode/src/ides/antigravity.ts
+
+  - id: os_injector_xdotool
+    family: desktop_control
+    direction: outbound
+    transport: x11_keyboard_injection
+    surface: focused_window
+    authority: low
+    write_mode: synthetic_keys
+    verification:
+      mode: host_probe
+      can_confirm_submit: false
+    blocking_modes:
+      - x11_unavailable
+      - wrong_focus
+    operator_recovery:
+      - focus_window
+      - install_xdotool
+    primary_code:
+      - src/koruide/injector_backends.py
+
+  - id: os_injector_wtype
+    family: desktop_control
+    direction: outbound
+    transport: wayland_keyboard_injection
+    surface: focused_window
+    authority: low
+    write_mode: synthetic_keys
+    verification:
+      mode: host_probe
+      can_confirm_submit: false
+    blocking_modes:
+      - wayland_tool_missing
+      - wrong_focus
+    operator_recovery:
+      - focus_window
+      - install_wtype
+    primary_code:
+      - src/koruide/injector_backends.py
+
+  - id: os_injector_ydotool
+    family: desktop_control
+    direction: outbound
+    transport: uinput_keyboard_injection
+    surface: focused_window
+    authority: low
+    write_mode: synthetic_keys
+    verification:
+      mode: host_probe
+      can_confirm_submit: false
+    blocking_modes:
+      - ydotool_service_missing
+      - insufficient_permissions
+      - wrong_focus
+    operator_recovery:
+      - start_ydotoold
+      - grant_uinput_access
+    primary_code:
+      - src/koruide/injector_backends.py
+
+  - id: filesystem_planfile
+    family: artifact_exchange
+    direction: bidirectional
+    transport: filesystem_yaml
+    surface: local_project_state
+    authority: high
+    write_mode: durable_state
+    verification:
+      mode: file_readback
+      can_confirm_submit: false
+    blocking_modes:
+      - lock_busy
+      - permissions_error
+      - stale_artifact
+    operator_recovery:
+      - run_doctor
+      - inspect_planfile
+    primary_code:
+      - src/koru/tasks.py
+      - src/koru/scan.py
+      - .planfile/
+
+  - id: chat_history_cursor_sqlite
+    family: observation
+    direction: inbound
+    transport: local_sqlite_polling
+    surface: ide_chat_history
+    authority: medium
+    write_mode: read_only
+    verification:
+      mode: observation_only
+      can_confirm_submit: false
+    blocking_modes:
+      - database_unavailable
+      - schema_changed
+    operator_recovery:
+      - restart_ide
+      - disable_history_watch
+    primary_code:
+      - plugins/koru-autopilot-vscode/src/chat-history-watcher.ts
+
+  - id: chat_history_antigravity_pb_readonly
+    family: observation
+    direction: inbound
+    transport: local_protobuf_files
+    surface: ide_chat_history
+    authority: low
+    write_mode: read_only
+    verification:
+      mode: observation_only
+      can_confirm_submit: false
+    blocking_modes:
+      - protobuf_schema_unknown
+      - encrypted_store
+    operator_recovery:
+      - keep_read_only
+      - prefer_plugin_events
+    primary_code:
+      - plugins/koru-autopilot-vscode/src/chat-history-adapters.ts
+      - plugins/koru-autopilot-vscode/src/chat-history-watcher.ts
+
+  - id: subprocess_local_tools
+    family: tool_invocation
+    direction: outbound
+    transport: subprocess
+    surface: local_cli
+    authority: high
+    write_mode: command_execution
+    verification:
+      mode: exit_code_and_output
+      can_confirm_submit: false
+    blocking_modes:
+      - tool_missing
+      - nonzero_exit
+    operator_recovery:
+      - install_tool
+      - inspect_command_output
+    primary_code:
+      - src/koru/queue.py
+      - src/koru/utils/subprocess_runner.py

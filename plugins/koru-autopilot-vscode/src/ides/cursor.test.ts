@@ -185,6 +185,53 @@ function testProbeCacheSanitizationForCursor(): void {
     "composer.sendToAgent",
     "registered composer.sendToAgent must be preserved",
   );
+
+  // aichat.newchataction opens a NEW chat tab in Cursor. If it ever
+  // wins the focus_open probe, the cache must be invalidated so the
+  // ladder re-probes against commands that target the existing chat
+  // (composer.showComposer / workbench.panel.chat). Caching it leaves
+  // every subsequent drive pasting+submitting into a fresh tab while
+  // the user is staring at the original chat — i.e. the v0.1.64 bug.
+  const newChatTab = sanitizeProbeCacheForIde(
+    {
+      version: PROBE_CACHE_VERSION,
+      ide: "cursor",
+      appName: "Cursor",
+      focusOpen: "aichat.newchataction",
+      updatedAt: "",
+    },
+    "cursor",
+  );
+  eq(
+    newChatTab?.focusOpen,
+    undefined,
+    "aichat.newchataction focus_open cache must be cleared for Cursor",
+  );
+}
+
+function testFocusOpenDefaultsExcludeNewChatTab(): void {
+  // Cursor's defaults list MUST NOT contain aichat.newchataction, which
+  // opens a new chat tab and routes the next paste/submit there instead
+  // of the existing chat the user is watching.
+  const defaults = cursorStrategy.focusOpenCommandsDefaults();
+  if (defaults.length === 0) {
+    throw new Error(
+      "Cursor focus_open defaults must be explicit so the generic " +
+        "ladder doesn't fall through to aichat.newchataction",
+    );
+  }
+  if (defaults.includes("aichat.newchataction")) {
+    throw new Error(
+      "Cursor focus_open defaults must NOT include aichat.newchataction " +
+        "(opens a new chat tab; submits land in the wrong pane)",
+    );
+  }
+  if (!defaults.includes("composer.showComposer")) {
+    throw new Error(
+      "Cursor focus_open defaults must include composer.showComposer " +
+        "as the primary candidate for the existing chat surface",
+    );
+  }
 }
 
 function run(): void {
@@ -197,6 +244,7 @@ function run(): void {
   testSubmitFallbackPolicy();
   testProbeLadderUsesCursorStrategy();
   testProbeCacheSanitizationForCursor();
+  testFocusOpenDefaultsExcludeNewChatTab();
   console.log("cursor-strategy tests: ok");
 }
 

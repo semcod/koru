@@ -108,6 +108,13 @@ class CreateTicketResult:
     detail: str = ""
 
 
+def _format_create_exception(exc: BaseException) -> str:
+    text = str(exc).strip()
+    if text:
+        return text
+    return exc.__class__.__name__
+
+
 # ---------------------------------------------------------------------------
 # Signal probes — each returns a list[Suggestion]; never raises
 # ---------------------------------------------------------------------------
@@ -973,8 +980,8 @@ def _create_ticket(
             if getattr(created, "reused", False):
                 return CreateTicketResult(ok=False, detail="task already exists (reused)")
             return CreateTicketResult(ok=True)
-        except (OSError, ValueError) as exc:
-            return CreateTicketResult(ok=False, detail=str(exc))
+        except Exception as exc:
+            return CreateTicketResult(ok=False, detail=_format_create_exception(exc))
 
     use_runner = runner or default_subprocess_runner
     cmd: list[str] = [
@@ -996,7 +1003,7 @@ def _create_ticket(
     try:
         result = use_runner(cmd, project)
     except (FileNotFoundError, OSError) as exc:
-        return CreateTicketResult(ok=False, detail=str(exc))
+        return CreateTicketResult(ok=False, detail=_format_create_exception(exc))
     if result.returncode == 0:
         return CreateTicketResult(ok=True)
     detail = (result.stderr or result.stdout or "").strip()
@@ -1007,7 +1014,10 @@ def _suggestion_dedupe_key(source: str, suggestion: Suggestion) -> str:
     """Return a stable producer-neutral key for repeated scan signals."""
     files = [str(path) for path in suggestion.files if str(path).strip()]
     if not files:
-        files = re.findall(r"(?:src|tests|scripts|plugins|services)/[A-Za-z0-9_./-]+", suggestion.title)
+        files = re.findall(
+            r"(?:src|tests|scripts|plugins|services)/[A-Za-z0-9_./-]+",
+            suggestion.title,
+        )
     if suggestion.signal in {"code2llm_god", "code2llm_refactor"} and files:
         return f"semcod:code2llm:refactor:{files[0]}"
     if files:
@@ -1135,6 +1145,7 @@ def run_scan(
                 skipped_create_failed.append(s.title)
                 if detail:
                     skipped_create_failed_details.append(f"{s.title}: {detail[:240]}")
+                fallback_hint = " — sprawdź `.planfile/` uprawnienia/lock"
                 _log_scan_decision(
                     s,
                     decision="skipped",
@@ -1142,7 +1153,7 @@ def run_scan(
                     message=(
                         f"pomijam ze skanu (planfile odrzucił create): {s.title} "
                         f"(signal={s.signal}"
-                        + (f" — {detail[:180]}" if detail else " — sprawdź `.planfile/` uprawnienia/lock")
+                        + (f" — {detail[:180]}" if detail else fallback_hint)
                         + ")"
                     ),
                 )

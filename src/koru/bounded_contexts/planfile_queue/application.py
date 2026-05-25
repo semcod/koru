@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
+from koru.cqrs import CqrsService, EventLogEntry, EventLogQueryService
 from koru.queue.runner import _run_next_planfile_task_impl
 from koru.queue.ticket import parse_next_ticket, planfile_command
 from koru.queue.types import QueueRunResult
@@ -23,8 +23,7 @@ from .events import (
     PlanfileQueueTaskWaiting,
     PlanfileQueueTickError,
 )
-from .queries import LoadNextRunnableTicketQuery
-from .queries import LoadPlanfileQueueHistoryQuery
+from .queries import LoadNextRunnableTicketQuery, LoadPlanfileQueueHistoryQuery
 
 
 def _event_for_result(result: QueueRunResult) -> tuple[str, dict[str, Any], str]:
@@ -67,11 +66,8 @@ def _event_for_result(result: QueueRunResult) -> tuple[str, dict[str, Any], str]
     return PLANFILE_QUEUE_TICK_ERROR, event.to_payload(), ticket_id
 
 
-class PlanfileQueueCommandService:
+class PlanfileQueueCommandService(CqrsService):
     """Handles state-changing queue operations."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def run_next_task(self, command: RunNextPlanfileTaskCommand) -> QueueRunResult:
         result = _run_next_planfile_task_impl(
@@ -96,13 +92,13 @@ class PlanfileQueueCommandService:
         return result
 
 
-class PlanfileQueueQueryService:
+class PlanfileQueueQueryService(CqrsService):
     """Handles read-only queue queries."""
 
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
-
-    def load_next_runnable_ticket(self, query: LoadNextRunnableTicketQuery) -> dict[str, Any] | None:
+    def load_next_runnable_ticket(
+        self,
+        query: LoadNextRunnableTicketQuery,
+    ) -> dict[str, Any] | None:
         result = planfile_command(
             query.project,
             ["ticket", "list", "--status", "open", "--format", "json"],

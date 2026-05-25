@@ -100,18 +100,7 @@ def bulk_waiting_input_action(
   return {"ok": True, "action": action, "requested": ticket_ids, "applied": applied}
 
 
-def create_ticket_from_dashboard(project: Path, body: dict[str, Any]) -> dict[str, Any]:
-  description = str(body.get("description") or "").strip()
-  if not description:
-    raise ValueError("description is required")
-  title = str(body.get("title") or "").strip() or None
-  priority = str(body.get("priority") or "normal").strip()
-  executor_kind = str(body.get("executor_kind") or "human").strip()
-  queue_name = str(body.get("queue_name") or "default").strip()
-  ide = normalize_ide_id(str(body.get("ide") or "auto").strip() or "auto")
-
-  from koru.tasks import create_nl_task
-
+def _build_ticket_scaffold(body: dict[str, Any], ide: str, executor_kind: str) -> dict[str, Any]:
   source_context: dict[str, Any] = {"ide": ide}
   dedupe_key = str(body.get("dedupe_key") or "").strip()
   if dedupe_key:
@@ -127,8 +116,24 @@ def create_ticket_from_dashboard(project: Path, body: dict[str, Any]) -> dict[st
     "source_context": source_context,
     "source_tool": "koru-dashboard",
   }
+  title = str(body.get("title") or "").strip() or None
   if title:
     scaffold["title"] = title
+  return scaffold
+
+
+def create_ticket_from_dashboard(project: Path, body: dict[str, Any]) -> dict[str, Any]:
+  description = str(body.get("description") or "").strip()
+  if not description:
+    raise ValueError("description is required")
+  priority = str(body.get("priority") or "normal").strip()
+  executor_kind = str(body.get("executor_kind") or "human").strip()
+  queue_name = str(body.get("queue_name") or "default").strip()
+  ide = normalize_ide_id(str(body.get("ide") or "auto").strip() or "auto")
+
+  from koru.tasks import create_nl_task
+
+  scaffold = _build_ticket_scaffold(body, ide, executor_kind)
   created = create_nl_task(
     project,
     description,
@@ -160,7 +165,10 @@ def _write_sprint_file(path: Path, data: dict[str, Any]) -> None:
   )
 
 
-def _find_ticket_in_sprints(project: Path, ticket_id: str) -> tuple[Path, dict[str, Any], dict[str, Any], dict[str, Any]]:
+def _find_ticket_in_sprints(
+  project: Path,
+  ticket_id: str,
+) -> tuple[Path, dict[str, Any], dict[str, Any], dict[str, Any]]:
   sprints_dir = project / ".planfile" / "sprints"
   for path in sorted(sprints_dir.glob("*.yaml")):
     data = _load_sprint_file(path)
@@ -219,7 +227,12 @@ def update_ticket_from_dashboard(
   return {"ok": True, "ticket_id": ticket_id, "changed": bool(changes), "changes": changes}
 
 
-def reorder_ticket_from_dashboard(project: Path, *, ticket_id: str, direction: str) -> dict[str, Any]:
+def reorder_ticket_from_dashboard(
+  project: Path,
+  *,
+  ticket_id: str,
+  direction: str,
+) -> dict[str, Any]:
   path, data, tickets, _ticket = _find_ticket_in_sprints(project, ticket_id)
   items = list(tickets.items())
   index = next((idx for idx, (key, _value) in enumerate(items) if key == ticket_id), -1)

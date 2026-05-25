@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
@@ -34,6 +33,105 @@ def _dashboard_action_urls(project: Any) -> dict[str, str]:
     }
 
 
+def _handle_stop_reason_waiting_input(ticket: str, **kwargs: Any) -> list[str]:
+    return [
+        f"1/3 stop now; queue is waiting for operator input on {ticket}",
+        f"2/3 operator should mark {ticket} done/input/fail through planfile",
+        "3/3 next koru auto run will resume from the updated queue state",
+    ]
+
+
+def _handle_stop_reason_max_cycles(args: Any, status: str, ticket: str, **kwargs: Any) -> list[str]:
+    return [
+        f"1/3 stop now; reached max-cycles={getattr(args, 'max_cycles', '?')}",
+        f"2/3 preserve checkpoint with queue={status or 'unknown'} waiting={ticket}",
+        "3/3 next koru auto run will continue from the saved checkpoint",
+    ]
+
+
+def _handle_status_waiting_input(
+    sleep_text: str,
+    ticket: str,
+    autopilot_status: str,
+    max_iterations: int,
+    **kwargs: Any,
+) -> list[str]:
+    if "chat_activity" in autopilot_status:
+        first = (
+            f"1/3 wait {sleep_text}; chat cooldown is active for {ticket}, "
+            "so Koru will not paste over the IDE chat"
+        )
+    elif "plugin_missing" in autopilot_status:
+        first = (
+            f"1/3 wait {sleep_text}; keep queue on {ticket} while the IDE "
+            "plugin reconnects"
+        )
+    else:
+        first = f"1/3 wait {sleep_text}; keep current waiting ticket {ticket} scoped"
+    return [
+        first,
+        f"2/3 rerun planfile queue (max {max_iterations}) and check whether {ticket} moved",
+        (
+            "3/3 if queue becomes idle, run scan/discovery; if still waiting, "
+            "use chat events/reflection before any redrive"
+        ),
+    ]
+
+
+def _handle_status_idle(args: Any, project: Any, sleep_text: str, **kwargs: Any) -> list[str]:
+    urls = _dashboard_action_urls(project) if project is not None else {
+        "dashboard": "http://127.0.0.1:8765/",
+        "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+        "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
+        "tickets": "http://127.0.0.1:8765/?tab=tickets",
+    }
+    discovery = (
+        "scan/code2llm discovery if freshness and rate limits allow"
+        if getattr(args, "scan_after_idle_queue", False)
+        else "idle scan is disabled unless explicitly requested"
+    )
+    return [
+        (
+            f"1/3 wait {sleep_text}; queue is idle — all planfile tickets "
+            "are 'done' or canceled. autopilot drive is suppressed so the "
+            "user's chat input isn't clobbered with stale prompts"
+        ),
+        f"2/3 next cycle: {discovery}; deduplicated against active tickets only",
+        (
+            "3/3 quick links: create discovery ticket "
+            f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
+            "force fresh scan command remains: "
+            "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
+        ),
+    ]
+
+
+def _handle_status_completed_or_failed(
+    status: str,
+    sleep_text: str,
+    max_iterations: int,
+    **kwargs: Any,
+) -> list[str]:
+    return [
+        f"1/3 wait {sleep_text}; queue just reported {status}",
+        f"2/3 rerun planfile queue (max {max_iterations}) to pick the next ticket",
+        "3/3 if no ticket remains, switch to idle scan/discovery strategy",
+    ]
+
+
+def _handle_default_steps(
+    sleep_text: str,
+    stagnation_streak: int,
+    status: str,
+    **kwargs: Any,
+) -> list[str]:
+    return [
+        f"1/3 wait {sleep_text}; preserve current loop state (streak={stagnation_streak})",
+        f"2/3 rerun queue/status checks for status={status or 'unknown'}",
+        "3/3 choose scan, ticket drive, or operator input based on the next queue result",
+    ]
+
+
 def _operator_next_steps(
     *,
     args: Any,
@@ -51,81 +149,33 @@ def _operator_next_steps(
     ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
     sleep_text = f"{effective_sleep:g}s"
 
+    kwargs = {
+        "args": args,
+        "project": project,
+        "queue_result": queue_result,
+        "waiting_ticket": waiting_ticket,
+        "autopilot_status": autopilot_status,
+        "effective_sleep": effective_sleep,
+        "stagnation_streak": stagnation_streak,
+        "stop_reason": stop_reason,
+        "status": status,
+        "max_iterations": max_iterations,
+        "ticket": ticket,
+        "sleep_text": sleep_text,
+    }
+
     if stop_reason == "waiting_input":
-        return [
-            f"1/3 stop now; queue is waiting for operator input on {ticket}",
-            f"2/3 operator should mark {ticket} done/input/fail through planfile",
-            "3/3 next koru auto run will resume from the updated queue state",
-        ]
-
+        return _handle_stop_reason_waiting_input(**kwargs)
     if stop_reason == "max_cycles":
-        return [
-            f"1/3 stop now; reached max-cycles={getattr(args, 'max_cycles', '?')}",
-            f"2/3 preserve checkpoint with queue={status or 'unknown'} waiting={ticket}",
-            "3/3 next koru auto run will continue from the saved checkpoint",
-        ]
-
+        return _handle_stop_reason_max_cycles(**kwargs)
     if status == "waiting_input":
-        if "chat_activity" in autopilot_status:
-            first = (
-                f"1/3 wait {sleep_text}; chat cooldown is active for {ticket}, "
-                "so Koru will not paste over the IDE chat"
-            )
-        elif "plugin_missing" in autopilot_status:
-            first = (
-                f"1/3 wait {sleep_text}; keep queue on {ticket} while the IDE "
-                "plugin reconnects"
-            )
-        else:
-            first = f"1/3 wait {sleep_text}; keep current waiting ticket {ticket} scoped"
-        return [
-            first,
-            f"2/3 rerun planfile queue (max {max_iterations}) and check whether {ticket} moved",
-            (
-                "3/3 if queue becomes idle, run scan/discovery; if still waiting, "
-                "use chat events/reflection before any redrive"
-            ),
-        ]
-
+        return _handle_status_waiting_input(**kwargs)
     if status == "idle":
-        urls = _dashboard_action_urls(project) if project is not None else {
-            "dashboard": "http://127.0.0.1:8765/",
-            "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
-            "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
-            "tickets": "http://127.0.0.1:8765/?tab=tickets",
-        }
-        discovery = (
-            "scan/code2llm discovery if freshness and rate limits allow"
-            if getattr(args, "scan_after_idle_queue", False)
-            else "idle scan is disabled unless explicitly requested"
-        )
-        return [
-            (
-                f"1/3 wait {sleep_text}; queue is idle — all planfile tickets "
-                "are 'done' or canceled. autopilot drive is suppressed so the "
-                "user's chat input isn't clobbered with stale prompts"
-            ),
-            f"2/3 next cycle: {discovery}; deduplicated against active tickets only",
-            (
-                "3/3 quick links: create discovery ticket "
-                f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
-                "force fresh scan command remains: "
-                "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
-            ),
-        ]
-
+        return _handle_status_idle(**kwargs)
     if status in {"completed", "failed"}:
-        return [
-            f"1/3 wait {sleep_text}; queue just reported {status}",
-            f"2/3 rerun planfile queue (max {max_iterations}) to pick the next ticket",
-            "3/3 if no ticket remains, switch to idle scan/discovery strategy",
-        ]
+        return _handle_status_completed_or_failed(**kwargs)
 
-    return [
-        f"1/3 wait {sleep_text}; preserve current loop state (streak={stagnation_streak})",
-        f"2/3 rerun queue/status checks for status={status or 'unknown'}",
-        "3/3 choose scan, ticket drive, or operator input based on the next queue result",
-    ]
+    return _handle_default_steps(**kwargs)
 
 
 def _quick_action_lines(
@@ -180,7 +230,8 @@ def _quick_action_lines(
         )
     if "chat_activity" in status:
         actions.append(
-            "[pause autopilot 10m] `touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
+            "[pause autopilot 10m] "
+            "`touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
         )
     if "idle_no_ticket" in status or queue_status == "idle":
         actions.append(f"[create ticket] {urls['create_project_ticket']}")
@@ -204,6 +255,54 @@ def _quick_action_lines(
     return actions
 
 
+def _current_mission_lines(
+    *,
+    queue_result: Any,
+    waiting_ticket: str,
+    autopilot_status: str,
+    effective_sleep: float,
+) -> list[str]:
+    """Compact mission snapshot for the operator shell.
+
+    Gives one stable place to see the current ticket, blocker, and next
+    expected movement without reading the whole cycle transcript.
+    """
+    queue_status = str(getattr(queue_result, "last_status", "") or "unknown")
+    if not waiting_ticket or waiting_ticket == "-":
+        return []
+    status = (autopilot_status or "").lower()
+    blocker = "none"
+    if status.startswith("skipped("):
+        blocker = status[len("skipped("):].rstrip(")").strip() or "unknown"
+    elif status == "failed":
+        blocker = "drive_failed"
+    line_1 = (
+        "koru autonomous: current mission "
+        f"ticket={waiting_ticket} queue={queue_status} blocker={blocker}"
+    )
+    if blocker == "plugin_missing":
+        line_2 = (
+            "koru autonomous: current mission next="
+            "reload/reconnect plugin, then rerun queue for the same ticket"
+        )
+    elif blocker == "chat_activity":
+        line_2 = (
+            "koru autonomous: current mission next="
+            f"wait {effective_sleep:g}s for cooldown, then reconsider redrive"
+        )
+    elif queue_status == "waiting_input":
+        line_2 = (
+            "koru autonomous: current mission next="
+            "operator or IDE work must move the ticket out of waiting_input"
+        )
+    else:
+        line_2 = (
+            "koru autonomous: current mission next="
+            "recheck queue state and continue the same ticket"
+        )
+    return [line_1, line_2]
+
+
 def _log_operator_next_steps(
     *,
     args: Any,
@@ -216,6 +315,13 @@ def _log_operator_next_steps(
     stop_reason: str | None,
     stdio_info: Any,
 ) -> None:
+    for line in _current_mission_lines(
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
+        effective_sleep=effective_sleep,
+    ):
+        stdio_info(line, fmt=args.emit_events)
     for line in _operator_next_steps(
         args=args,
         project=project,

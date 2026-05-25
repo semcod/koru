@@ -192,6 +192,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("plugin_console_logs", _check_plugin_console_logs),
         ("ide_console_log", _check_ide_console_log),
         ("agent_backends_registry", _check_agent_backends_registry),
+        ("interface_registry", _check_interface_registry),
         ("inotify_watches", _check_inotify_watches),
         ("wup_binary", _check_wup_binary),
     ]
@@ -258,6 +259,18 @@ def _check_agent_backends_registry(_project: Path) -> tuple[str, str]:
 
     ids = list_agent_backend_ids()
     return PASS, f"{len(ids)} profiles: {', '.join(ids)}"
+
+
+def _check_interface_registry(_project: Path) -> tuple[str, str]:
+    del _project
+    from koru.interface_registry import list_interface_ids, summarize_interfaces_by_family
+
+    ids = list_interface_ids()
+    if not ids:
+        return WARN, "0 interfaces loaded"
+    families = summarize_interfaces_by_family()
+    family_summary = ", ".join(f"{name}={count}" for name, count in sorted(families.items()))
+    return PASS, f"{len(ids)} interfaces: {', '.join(ids[:5])}{' ...' if len(ids) > 5 else ''}; families: {family_summary}"
 
 
 def _check_detected_environment(project: Path) -> tuple[str, str]:

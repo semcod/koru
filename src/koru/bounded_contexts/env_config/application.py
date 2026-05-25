@@ -5,19 +5,22 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
+from koru.cqrs import CqrsService, EventLogEntry, EventLogQueryService
 from koru.domain.env import _build_env_payload, _write_env_file
 
 from .commands import ApplyEnvUpdatesCommand, WriteEnvConfigCommand
-from .events import ENV_CONFIG_CONTEXT, ENV_CONFIG_WRITTEN, ENV_UPDATES_APPLIED, EnvConfigWritten, EnvUpdatesApplied
+from .events import (
+    ENV_CONFIG_CONTEXT,
+    ENV_CONFIG_WRITTEN,
+    ENV_UPDATES_APPLIED,
+    EnvConfigWritten,
+    EnvUpdatesApplied,
+)
 from .queries import LoadEnvConfigHistoryQuery, LoadEnvConfigQuery
 
 
-class EnvConfigCommandService:
+class EnvConfigCommandService(CqrsService):
     """Handles state-changing environment configuration operations."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def write(self, command: WriteEnvConfigCommand) -> Path:
         path = _write_env_file(command.project, command.updates)
@@ -53,11 +56,8 @@ class EnvConfigCommandService:
         return dict(command.updates)
 
 
-class EnvConfigQueryService:
+class EnvConfigQueryService(CqrsService):
     """Handles read-only environment configuration queries."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def load(self, query: LoadEnvConfigQuery) -> dict[str, Any]:
         return _build_env_payload(query.project, query.environ)

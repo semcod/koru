@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.autonomous_wup import WupHealthResult
-from koru.autonomous_wup import _load_wup_health
+from koru.autonomous_wup import WupHealthResult, _load_wup_health
 from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import CqrsService
 
 from .commands import EvaluateWupHealthCommand
 from .events import (
@@ -32,11 +31,8 @@ def _wup_health_event_type(status: str) -> str:
     return WUP_HEALTH_OK
 
 
-class WupCommandService:
+class WupCommandService(CqrsService):
     """Handles state-changing WUP operations."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def evaluate_health(self, command: EvaluateWupHealthCommand) -> WupHealthResult:
         result = _read_wup_health_impl(

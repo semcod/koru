@@ -1,56 +1,32 @@
 
 import json
 import os
-import re
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_cycle_chat_activity import (
-    _autopilot_redrive_cooldown_seconds,
-    _extract_needs_input_question,
-    _skip_due_to_recent_chat_activity,
-)
 from koru.autonomous_cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
-from koru.autonomous_cycle_drive_retry import (
-    _execute_autopilot_drive,
-    _log_autopilot_result,
-    _reply_chat_input_busy,
-    _resolve_autopilot_drive_decision,
-)
 from koru.autonomous_cycle_orchestrator import _handle_autopilot_phase
 from koru.autonomous_cycle_skip_conditions import (
-    _check_autopilot_skip_conditions,
     _is_topology_enabled,
 )
-
-import yaml
-
 from koru.autonomous_wup import WupHealthResult
 from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
-from koru.autonomy.ide_work import (
-    extract_ticket_id_from_text,
-    release_stale_in_progress_tickets,
-    resolve_idle_drive_prompt,
-    resolve_in_progress_stale_minutes,
-)
-from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
-from koru.autonomy.post_run_verify import (
-    load_post_run_verify_config,
-    verify_after_ide_work,
-    verify_completed_tickets,
-)
-from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD, build_prompt
-from koru.autonomy.prompts import PromptDecision
-from koru.autonomy.state import AutoloopState
 from koru.autonomy.decision_trace import (
     append_decision_record,
     build_decision_record,
     human_skip_reason,
 )
+from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene
+from koru.autonomy.phases.verify_phase import (
+    handle_post_run_verify_ide as _handle_post_run_verify_ide,
+)
+from koru.autonomy.post_run_verify import (
+    verify_completed_tickets,
+)
+from koru.autonomy.state import AutoloopState
 from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
 from koru.queue import default_human_prompt as _default_human_prompt
@@ -61,13 +37,19 @@ from koru.queue import run_shell_command as _run_shell_command
 from koru.scan import ScanResult, run_scan
 from koru.stdio_events import write_stdio_event
 from koru.tasks import create_nl_task
-from koru.topology import is_component_enabled, is_pipeline_enabled
-from koruide.drive_orchestrator import DriveOrchestrator
-from koruide.ide import (
-    detect_terminal_host_ide_id,
-    normalize_ide_id,
-    supports_vscode_extension_plugin,
+from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
+from koruide.ide import detect_terminal_host_ide_id
+from koru.autonomous_cycle_chat_activity import (
+    _autopilot_redrive_cooldown_seconds,
+    _skip_due_to_recent_chat_activity,
+    _extract_needs_input_question,
 )
+from koru.autonomous_cycle_drive_retry import (
+    _reply_chat_input_busy,
+    _resolve_autopilot_drive_decision,
+    _log_autopilot_result,
+)
+
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -276,10 +258,6 @@ def _handle_autopilot_events(
                 state.last_message_sent_ide = str(ev.get("ide") or "")
 
 
-from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene
-from koru.autonomy.phases.verify_phase import handle_post_run_verify_ide as _handle_post_run_verify_ide
-
-
 def _handle_scan_phase(
     project: Path,
     state: AutoloopState,
@@ -292,70 +270,22 @@ def _handle_scan_phase(
     _hp: callable,
     _emit: callable,
 ) -> ScanResult | None:
-    scan_result: ScanResult | None = None
-    if enable_scan:
-        if not _is_topology_enabled(
-            project,
-            "scan:on-change",
-            fallback=True,
-            enabled=topology_integration,
-        ):
-            _hp("- koru scan --apply skipped (scan:on-change disabled in topology)")
-            _emit("ScanSkipped", {"cycle": cycle, "reason": "topology:scan:on-change_disabled"})
-        else:
-            head_now = _current_head(project)
-            if (
-                scan_skip_if_clean
-                and state.scan_clean_streak >= scan_skip_after
-                and head_now
-                and head_now == state.scan_last_head
-            ):
-                _hp(
-                    "- koru scan --apply skipped "
-                    f"(clean_streak={state.scan_clean_streak}, HEAD unchanged)",
-                )
-                _emit(
-                    "ScanSkipped",
-                    {
-                        "cycle": cycle,
-                        "reason": "clean_git_head_unchanged",
-                        "clean_streak": state.scan_clean_streak,
-                        "head": head_now,
-                    },
-                )
-            else:
-                scan_cmd = "koru scan --apply" + (
-                    " --semcod-artifacts" if include_semcod_artifacts else ""
-                )
-                _hp("+ " + scan_cmd)
-                scan_result = run_scan(
-                    project=project,
-                    apply=True,
-                    include_semcod_artifacts=include_semcod_artifacts,
-                )
-                from koru.autonomy.phases.scan_phase import (
-                    _format_scan_summary_line,
-                    _hp_scan_skip_hint,
-                )
+    from koru.autonomy.phases import scan_phase
 
-                _hp(_format_scan_summary_line(scan_result))
-                _hp_scan_skip_hint(scan_result, _hp)
-                _emit(
-                    "ScanCompleted",
-                    {
-                        "cycle": cycle,
-                        "suggestions_count": len(scan_result.suggestions),
-                        "applied_count": len(scan_result.applied),
-                        "skipped_count": len(scan_result.skipped),
-                        "semcod_artifacts": bool(include_semcod_artifacts),
-                    },
-                    command=scan_cmd,
-                )
-                state.scan_clean_streak = (
-                    state.scan_clean_streak + 1 if not scan_result.suggestions else 0
-                )
-                state.scan_last_head = head_now
-    return scan_result
+    scan_phase.run_scan = run_scan
+
+    return scan_phase.handle_scan_phase(
+        project,
+        state,
+        cycle,
+        enable_scan,
+        include_semcod_artifacts,
+        scan_skip_if_clean,
+        scan_skip_after,
+        topology_integration,
+        _hp,
+        _emit,
+    )
 
 
 def _build_queue_command(max_iterations: int, queue_name: str | None) -> str:
@@ -499,81 +429,24 @@ def _handle_scan_after_idle(
     _hp: callable,
     _emit: callable,
 ) -> ScanResult | None:
-    scan_result: ScanResult | None = None
-    if (
-        scan_after_idle_queue
-        and queue_result.last_status == "idle"
-        and _is_topology_enabled(
-            project,
-            "scan:on-change",
-            fallback=True,
-            enabled=topology_integration,
-        )
-    ):
-        now = time.time()
-        too_soon = (
-            scan_after_idle_min_interval_seconds > 0.0
-            and state.last_scan_after_idle_ts >= 0.0
-            and now - state.last_scan_after_idle_ts < scan_after_idle_min_interval_seconds
-        )
-        if too_soon:
-            wait = scan_after_idle_min_interval_seconds - (now - state.last_scan_after_idle_ts)
-            _hp(
-                f"- koru scan after idle skipped (min-interval "
-                f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)",
-            )
-            _emit(
-                "ScanSkipped",
-                {
-                    "cycle": cycle,
-                    "reason": "after_idle_rate_limit",
-                    "min_interval_seconds": scan_after_idle_min_interval_seconds,
-                },
-            )
-            cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
-        else:
-            scan_cmd = f"koru scan --apply{' --semcod-artifacts' if include_semcod_artifacts else ''}"
-            _hp(f"+ {scan_cmd} (queue idle → intake scan)")
-            idle_scan = run_scan(
-                project=project,
-                apply=True,
-                include_semcod_artifacts=include_semcod_artifacts,
-            )
-            scan_result = idle_scan
-            state.last_scan_after_idle_ts = now
-            state.telemetry_scan_after_idle_runs += 1
-            state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
-            cycle_telemetry["scan_after_idle_run"] = True
-            cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
-            from koru.autonomy.phases.scan_phase import (
-                _format_scan_summary_line,
-                _hp_scan_skip_hint,
-            )
+    from koru.autonomy.phases import scan_phase
 
-            _hp(_format_scan_summary_line(idle_scan))
-            _hp_scan_skip_hint(idle_scan, _hp)
-            _emit(
-                "ScanCompleted",
-                {
-                    "cycle": cycle,
-                    "suggestions_count": len(idle_scan.suggestions),
-                    "applied_count": len(idle_scan.applied),
-                    "skipped_count": len(idle_scan.skipped),
-                    "semcod_artifacts": bool(include_semcod_artifacts),
-                    "phase": "after_idle_queue",
-                },
-                command=scan_cmd,
-            )
-            if include_semcod_artifacts and not idle_scan.applied:
-                discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
-                if discovery is not None:
-                    applied_count = len(discovery.get("applied", []))
-                    skipped_count = len(discovery.get("skipped", []))
-                    state.telemetry_scan_after_idle_tickets_applied += applied_count
-                    cycle_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
-                    cycle_telemetry["code2llm_discovery_applied"] = applied_count
-                    cycle_telemetry["code2llm_discovery_skipped"] = skipped_count
-    return scan_result
+    scan_phase.run_scan = run_scan
+    scan_phase._run_code2llm_discovery_after_idle = _run_code2llm_discovery_after_idle
+
+    return scan_phase.handle_scan_after_idle(
+        project,
+        state,
+        cycle,
+        queue_result,
+        scan_after_idle_queue,
+        include_semcod_artifacts,
+        scan_after_idle_min_interval_seconds,
+        topology_integration,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    )
 
 
 def _run_code2llm_discovery_after_idle(
@@ -847,6 +720,8 @@ def _decision_next_step_hint(
         return "let idle backoff drain before next drive"
     if cycle_telemetry.get("autopilot_skipped_manual_focus"):
         return "operator must foreground the chat surface"
+    if cycle_telemetry.get("autopilot_skipped_stuck_status"):
+        return "mark ticket llm-ready OR move it to input/done before next drive"
     if status == "failed":
         return "retry next cycle (cached winner discarded)"
     queue_status = (queue_status or "").lower()

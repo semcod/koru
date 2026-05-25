@@ -6,6 +6,28 @@
 
 ---
 
+## Session Summary
+
+### Done
+
+- [x] Split `_action_up` coordinator and validated the focused `up` path.
+- [x] Ran focused autonomous `up` tests and the broader local fast gate.
+- [x] Added shell colorization for scan output types/signals in `koru scan` text mode.
+- [x] Added regression coverage for TTY color output and `NO_COLOR` behavior.
+- [x] Fixed queue fallback so tickets missing `executor.kind` stay `human` instead of auto-running as `shell true`.
+- [x] Fixed scan classification so reused ticket creation is logged as duplicate/reused instead of `create_failed`.
+- [x] Refreshed `code2llm ./ -f toon` artifacts and completed discovery ticket `STARTER-237`.
+- [x] Created and verified follow-up discovery ticket `STARTER-238` to unblock the idle queue.
+
+### Next Actions
+
+- [ ] In VS Code run `Developer: Reload Window`.
+- [ ] In VS Code run `koru: Connect autopilot daemon`.
+- [ ] Verify `koru autopilot status --explain` shows a connected plugin instead of `plugins: []`.
+- [ ] Re-run `koru auto` and confirm `plugin_missing` no longer suppresses autopilot drive.
+- [ ] Re-check scan/apply logs and confirm reused findings are reported as duplicate/reused rather than `create_failed`.
+- [ ] If `scan --apply` still reports real `create_failed`, inspect the remaining Planfile-side rejection separately from dedupe.
+
 ## ✅ Completed Tasks
 
 - [x] src/koru/autonomous_cycle_drive_retry.py:219 - String concatenation can be converted to f-string

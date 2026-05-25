@@ -81,6 +81,18 @@ function sanitizeProbeCache(
   ) {
     entry.paste = undefined;
   }
+  // ``aichat.newchataction`` opens a *new* chat tab in Cursor. Cached as the
+  // focus_open winner it makes every subsequent drive paste+submit into a
+  // fresh tab while the user is still looking at the original chat — so
+  // they only see "pasted but not submitted" in the chat they were
+  // watching. Force re-probing so we land on
+  // ``composer.showComposer`` / ``workbench.panel.chat`` instead.
+  if (
+    typeof entry.focusOpen === "string" &&
+    entry.focusOpen === "aichat.newchataction"
+  ) {
+    entry.focusOpen = undefined;
+  }
   // Discard "type:" wins (legacy plugin ≤0.1.46 cached typing `\n` as the
   // submit; in Cursor that just inserts a newline).
   if (
@@ -112,8 +124,26 @@ function sanitizeProbeCache(
   }
 }
 
+/**
+ * Cursor-specific ``focus_open`` order. The generic default list includes
+ * ``aichat.newchataction`` which in Cursor opens a **new** chat tab — the
+ * subsequent ``paste`` + ``composer.sendToAgent`` then write to the new
+ * tab and the user sees nothing happen in their existing chat. We list
+ * every command that targets the *existing* Composer/Agent surface
+ * explicitly so the probe ladder never falls through to
+ * ``aichat.newchataction``.
+ */
 function focusOpenCommandsDefaults(): string[] {
-  return [];
+  return [
+    "composer.showComposer",
+    "composer.openAsPane",
+    "composer.focusComposer",
+    "cursor.composer.open",
+    "cursor.composer.focus",
+    "workbench.panel.chat.view.copilot.focus",
+    "workbench.panel.aichat.view.copilot.focus",
+    "workbench.panel.chat",
+  ];
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {

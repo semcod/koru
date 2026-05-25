@@ -634,6 +634,69 @@ class TestRunScan(unittest.TestCase):
             self.assertIn("mode: interactive", raw)
             self.assertIn("tool: koru-scan", raw)
 
+    def test_apply_surfaces_runtime_create_failure_detail_without_custom_runner(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            suggestions = [
+                Suggestion(
+                    signal="create-fail-runtime",
+                    title="Create fails at runtime",
+                    description="desc",
+                    priority="normal",
+                ),
+            ]
+
+            with mock.patch("koru.scan.collect_suggestions", return_value=suggestions):
+                with mock.patch(
+                    "koru.scan.create_nl_task",
+                    side_effect=RuntimeError("cqrs store lock busy"),
+                ):
+                    with mock.patch("koru.scan._record_scan_activity") as activity:
+                        result = run_scan(
+                            project,
+                            apply=True,
+                            skip_pytest=True,
+                            include_semcod_artifacts=False,
+                        )
+
+            self.assertEqual(result.applied, [])
+            self.assertEqual(result.skipped_create_failed, ["Create fails at runtime"])
+            self.assertEqual(
+                result.skipped_create_failed_details,
+                ["Create fails at runtime: cqrs store lock busy"],
+            )
+            message = str(activity.call_args.args[0])
+            self.assertIn("cqrs store lock busy", message)
+
+    def test_apply_surfaces_runtime_create_failure_class_when_message_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            suggestions = [
+                Suggestion(
+                    signal="create-fail-empty",
+                    title="Create fails silently",
+                    description="desc",
+                    priority="normal",
+                ),
+            ]
+
+            with mock.patch("koru.scan.collect_suggestions", return_value=suggestions):
+                with mock.patch(
+                    "koru.scan.create_nl_task",
+                    side_effect=RuntimeError(),
+                ):
+                    result = run_scan(
+                        project,
+                        apply=True,
+                        skip_pytest=True,
+                        include_semcod_artifacts=False,
+                    )
+
+            self.assertEqual(
+                result.skipped_create_failed_details,
+                ["Create fails silently: RuntimeError"],
+            )
+
     def test_apply_uses_stable_title_and_deduplicates_by_signal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

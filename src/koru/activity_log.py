@@ -145,7 +145,16 @@ def _ansi(text: str, color: str) -> str:
 
 def _color_status(value: str) -> str:
     normalized = value.lower()
-    if normalized in {"ok", "done", "completed", "connected", "accepted", "passed", "success", "true"}:
+    if normalized in {
+        "ok",
+        "done",
+        "completed",
+        "connected",
+        "accepted",
+        "passed",
+        "success",
+        "true",
+    }:
         return _ansi(value, _ANSI_GREEN)
     if normalized in {"waiting_input", "pending", "changed", "warn", "warning", "skipped"}:
         return _ansi(value, _ANSI_YELLOW)

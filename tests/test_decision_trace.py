@@ -24,8 +24,9 @@ def _record(cycle: int) -> DecisionRecord:
         observed=f"queue=idle streak={cycle}",
         decided="skip:idle_no_ticket",
         action="no_op",
-        evidence="diagnostics=skipped",
+        evidence="blocked_by=idle_no_ticket, diagnostics=skipped",
         next_step="scan",
+        blocked_by="idle_no_ticket",
         skip_code="idle_no_ticket",
         skip_because="queue idle AND zero open planfile tickets",
     )
@@ -115,6 +116,8 @@ def test_build_decision_record_idle_no_ticket_uses_explicit_because() -> None:
     assert "zero open planfile tickets" in record.skip_because
     assert record.decided == "skip:idle_no_ticket"
     assert record.action == "no_op"
+    assert record.blocked_by == "idle_no_ticket"
+    assert "blocked_by=idle_no_ticket" in record.evidence
     assert "diagnostics=skipped" in record.evidence
     assert "wup=changed" in record.evidence
 
@@ -135,9 +138,44 @@ def test_build_decision_record_successful_drive_records_backend() -> None:
         next_step="wait for IDE response",
     )
     assert record.skip_code == "ok"
+    assert record.blocked_by == ""
     assert record.decided == "ticket_prompt"
     assert record.action == "submit_verified(backend=plugin)"
     assert "backend=plugin" in record.evidence
+
+
+def test_build_decision_record_stuck_waiting_input_has_full_reason() -> None:
+    """Regression: ``stuck_waiting_input`` skip path was hitting ``unknown``."""
+    record = build_decision_record(
+        cycle=628,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-239",
+        stagnation_streak=1,
+        autopilot_status="skipped(stuck_waiting_input)",
+        autopilot_ide="cursor",
+        autopilot_backend=None,
+        autopilot_drive_kind=None,
+        diag_status="skipped",
+        wup_status="changed",
+        cycle_telemetry={
+            "autopilot_skipped_stuck_status": True,
+            "autopilot_skipped_stuck_status_queue": "waiting_input",
+            "autopilot_skipped_stuck_status_streak": 1,
+        },
+        next_step="mark ticket llm-ready OR move it to input/done before next drive",
+    )
+    assert record.skip_code == "stuck_waiting_input"
+    assert "STARTER-239" in record.skip_because
+    assert "streak=1" in record.skip_because
+    assert human_skip_reason(record.skip_code) != record.skip_code, (
+        "stuck_waiting_input must have a populated human description"
+    )
+
+
+def test_classify_skip_code_falls_back_to_stuck_status_for_inline_form() -> None:
+    """When telemetry flags weren't set but status string says ``stuck_*``."""
+    assert classify_skip_code({}, "skipped(stuck_waiting_input)") == "stuck_waiting_input"
+    assert classify_skip_code({}, "skipped(stuck_completed)") == "stuck_status"
 
 
 def test_build_decision_record_chat_activity_includes_last_event() -> None:
@@ -159,5 +197,7 @@ def test_build_decision_record_chat_activity_includes_last_event() -> None:
         next_step="wait for chat cooldown to expire",
     )
     assert record.skip_code == "chat_activity"
+    assert record.blocked_by == "chat_activity"
     assert "drive.ack" in record.skip_because
+    assert "blocked_by=chat_activity" in record.evidence
     assert "chat_event=drive.ack" in record.evidence

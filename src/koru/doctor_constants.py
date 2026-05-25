@@ -176,6 +176,15 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         ),
     ),
     ProblemCatalogEntry(
+        check="interface_registry",
+        severity=WARN,
+        problem="Autonomy interface registry failed to load.",
+        detection=(
+            "Doctor checks that `docs/interfaces/koru-interface-registry.yaml` "
+            "loads and exposes a non-empty set of control/observation interfaces."
+        ),
+    ),
+    ProblemCatalogEntry(
         check="koru_package_version",
         severity=WARN,
         problem="Installed `koru` distribution metadata is missing.",

@@ -167,11 +167,13 @@ def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:
         update_auto_pipeline_state=lambda *_args: None,
         save_loop_checkpoint=lambda *_args, **_kwargs: None,
         queue_loop_waiting_ticket_label=lambda _queue_result: "STARTER-217",
-        handle_exit_conditions=lambda *call_args: autonomous_loop_runner.handle_cycle_exit_conditions(
-            *call_args,
-            write_event=lambda *_args, **_kwargs: None,
-            stdio_info=lambda msg, **_kwargs: logs.append(msg),
-            output_stream=object(),
+        handle_exit_conditions=lambda *call_args: (
+            autonomous_loop_runner.handle_cycle_exit_conditions(
+                *call_args,
+                write_event=lambda *_args, **_kwargs: None,
+                stdio_info=lambda msg, **_kwargs: logs.append(msg),
+                output_stream=object(),
+            )
         ),
         compute_cycle_sleep=lambda *_args: 60.0,
         stdio_info=lambda msg, **_kwargs: logs.append(msg),
@@ -180,13 +182,16 @@ def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:
 
     assert result is True
     assert "summary cycle=3 queue=waiting_input" in logs[0]
-    assert logs[1:4] == [
+    assert logs[1:6] == [
+        "koru autonomous: current mission ticket=STARTER-217 "
+        "queue=waiting_input blocker=chat_activity",
+        "koru autonomous: current mission next=wait 60s for cooldown, then reconsider redrive",
         "koru autonomous: next 1/3 stop now; reached max-cycles=3",
         "koru autonomous: next 2/3 preserve checkpoint with queue=waiting_input "
         "waiting=STARTER-217",
         "koru autonomous: next 3/3 next koru auto run will continue from the saved checkpoint",
     ]
-    assert any("reached max-cycles=3" in line for line in logs[4:])
+    assert any("reached max-cycles=3" in line for line in logs[6:])
     assert any("[show decision trace]" in line for line in logs), (
         "operator log must include quick action links after next-step lines"
     )
@@ -208,4 +213,20 @@ def test_operator_next_steps_explain_waiting_input_chat_cooldown() -> None:
         "2/3 rerun planfile queue (max 12) and check whether STARTER-217 moved",
         "3/3 if queue becomes idle, run scan/discovery; if still waiting, "
         "use chat events/reflection before any redrive",
+    ]
+
+
+def test_current_mission_lines_include_ticket_and_plugin_blocker() -> None:
+    lines = autonomous_loop_runner._current_mission_lines(
+        queue_result=SimpleNamespace(last_status="waiting_input"),
+        waiting_ticket="STARTER-239",
+        autopilot_status="skipped(plugin_missing)",
+        effective_sleep=30.0,
+    )
+
+    assert lines == [
+        "koru autonomous: current mission ticket=STARTER-239 "
+        "queue=waiting_input blocker=plugin_missing",
+        "koru autonomous: current mission next=reload/reconnect plugin, "
+        "then rerun queue for the same ticket",
     ]

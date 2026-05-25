@@ -165,6 +165,52 @@ def reload_via_reopen_workspace(ide: str, project: Path) -> IdeReloadOutcome:
     return IdeReloadOutcome(attempted=True, ok=True, method="reuse_window")
 
 
+def _reload_fallback_reopen(
+    ide: str,
+    project: Path,
+    palette: IdeReloadOutcome,
+) -> IdeReloadOutcome:
+    reopen = reload_via_reopen_workspace(ide, project)
+    if reopen.ok:
+        return reopen
+    if palette.attempted:
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="command_palette+reuse_window",
+            detail=f"{palette.detail}; reopen: {reopen.detail}",
+        )
+    return reopen
+
+
+def _reload_explain_reuse_window_disabled(palette: IdeReloadOutcome) -> IdeReloadOutcome:
+    if palette.attempted:
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method=palette.method,
+            detail=(
+                f"{palette.detail or 'palette failed'}; "
+                "reuse-window fallback disabled (would replace user's current "
+                "workspace with --reuse-window). Set "
+                "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to enable, or reload the "
+                "IDE manually with `Developer: Reload Window`."
+            ),
+        )
+    return IdeReloadOutcome(
+        attempted=False,
+        ok=False,
+        method=None,
+        detail=(
+            "command palette reload unavailable (no wtype/xdotool focus "
+            "on Wayland) and --reuse-window fallback disabled to protect "
+            "the user's open workspace. Set "
+            "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to opt in, or reload "
+            "the IDE manually with `Developer: Reload Window`."
+        ),
+    )
+
+
 def try_reload_vscode_family_ide(
     ide: str,
     *,
@@ -185,51 +231,10 @@ def try_reload_vscode_family_ide(
     if palette.ok:
         return palette
 
-    if (
-        project is not None
-        and project.is_dir()
-        and reuse_window_reload_enabled()
-    ):
-        reopen = reload_via_reopen_workspace(ide, project)
-        if reopen.ok:
-            return reopen
-        if palette.attempted:
-            palette = IdeReloadOutcome(
-                attempted=True,
-                ok=False,
-                method="command_palette+reuse_window",
-                detail=f"{palette.detail}; reopen: {reopen.detail}",
-            )
-            return palette
-        return reopen
-
-    if project is not None and project.is_dir() and not reuse_window_reload_enabled():
-        if palette.attempted:
-            palette = IdeReloadOutcome(
-                attempted=True,
-                ok=False,
-                method=palette.method,
-                detail=(
-                    f"{palette.detail or 'palette failed'}; "
-                    "reuse-window fallback disabled (would replace user's current "
-                    "workspace with --reuse-window). Set "
-                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to enable, or reload the "
-                    "IDE manually with `Developer: Reload Window`."
-                ),
-            )
-        else:
-            palette = IdeReloadOutcome(
-                attempted=False,
-                ok=False,
-                method=None,
-                detail=(
-                    "command palette reload unavailable (no wtype/xdotool focus "
-                    "on Wayland) and --reuse-window fallback disabled to protect "
-                    "the user's open workspace. Set "
-                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to opt in, or reload "
-                    "the IDE manually with `Developer: Reload Window`."
-                ),
-            )
+    if project is not None and project.is_dir():
+        if reuse_window_reload_enabled():
+            return _reload_fallback_reopen(ide, project, palette)
+        return _reload_explain_reuse_window_disabled(palette)
 
     return palette
 

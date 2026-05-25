@@ -4,6 +4,35 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.64] — 2026-05-25
+
+### Fixed
+- **Cursor: drive pasted the prompt and reported `verification=strict
+  ok=true` but the user's chat input remained populated; the submit
+  silently happened in a brand-new chat tab.** Root cause: the generic
+  `focus_open` ladder defaults included `aichat.newchataction`, which in
+  Cursor opens a **new** Composer/Agent tab. Once that command won the
+  probe, every subsequent drive pasted + submitted into the fresh tab
+  while the user was still looking at the original chat — so the
+  `cursorDiskKV` watcher correctly emitted `message.sent` (the message
+  *was* sent, just in a different tab) and the v0.1.63 bubble-tail
+  verification confirmed it, hiding the regression.
+
+  Fix:
+  1. `cursor.ts` now ships an explicit `focusOpenCommandsDefaults()` list
+     that points at the *existing* chat surface
+     (`composer.showComposer`, `composer.openAsPane`,
+     `cursor.composer.open`, `workbench.panel.chat.view.copilot.focus`,
+     `workbench.panel.chat`, …) and deliberately excludes
+     `aichat.newchataction`.
+  2. `sanitizeProbeCache` now invalidates `entry.focusOpen` when it
+     equals `aichat.newchataction`, so any cached winner from a
+     pre-0.1.64 plugin is discarded on the next drive and the ladder
+     re-probes against the correct commands.
+
+  New unit tests (`cursor.test.ts → testFocusOpenDefaultsExcludeNewChatTab`,
+  extended `testProbeCacheSanitizationForCursor`) lock the invariant.
+
 ## [0.1.63] — 2026-05-25
 
 ### Fixed

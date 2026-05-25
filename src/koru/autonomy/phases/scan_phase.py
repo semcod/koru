@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -11,6 +13,8 @@ from koru.autonomy.phases.utils import current_head, is_topology_enabled
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.scan import ScanResult, run_scan
+
+_CREATE_FAILED_SCAN_COOLDOWN_SECONDS = 120.0
 
 
 def _format_scan_summary_line(result: ScanResult) -> str:
@@ -69,6 +73,61 @@ def _hp_scan_skip_hint(result: ScanResult, _hp: Callable[..., Any]) -> None:
         )
 
 
+def _scan_result_is_create_failed_only(result: ScanResult) -> bool:
+    return (
+        bool(result.skipped_create_failed)
+        and not result.applied
+        and len(result.skipped) == len(result.skipped_create_failed)
+    )
+
+
+def _scan_create_failed_fingerprint(result: ScanResult) -> str:
+    parts = list(result.skipped_create_failed_details) or list(result.skipped_create_failed)
+    digest = hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
+    return f"{len(result.skipped_create_failed)}:{digest}"
+
+
+def _create_failed_scan_cooldown_seconds() -> float:
+    raw = os.environ.get("KORU_SCAN_CREATE_FAILED_COOLDOWN_SECONDS", "").strip()
+    if not raw:
+        return _CREATE_FAILED_SCAN_COOLDOWN_SECONDS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return _CREATE_FAILED_SCAN_COOLDOWN_SECONDS
+
+
+def _remember_scan_create_failed_state(
+    state: AutoloopState,
+    result: ScanResult,
+    *,
+    now: float,
+) -> None:
+    if _scan_result_is_create_failed_only(result):
+        state.last_scan_create_failed_fingerprint = _scan_create_failed_fingerprint(result)
+        state.last_scan_create_failed_ts = now
+        return
+    if result.applied or not result.skipped_create_failed:
+        state.last_scan_create_failed_fingerprint = ""
+        state.last_scan_create_failed_ts = -1.0
+
+
+def _should_skip_repeated_create_failed_scan(
+    state: AutoloopState,
+) -> tuple[bool, float]:
+    cooldown = _create_failed_scan_cooldown_seconds()
+    if (
+        cooldown <= 0.0
+        or not state.last_scan_create_failed_fingerprint
+        or state.last_scan_create_failed_ts < 0.0
+    ):
+        return False, 0.0
+    elapsed = time.time() - state.last_scan_create_failed_ts
+    if elapsed >= cooldown:
+        return False, 0.0
+    return True, cooldown - elapsed
+
+
 def handle_scan_phase(
     project: Path,
     state: AutoloopState,
@@ -83,6 +142,7 @@ def handle_scan_phase(
 ) -> ScanResult | None:
     scan_result: ScanResult | None = None
     if enable_scan:
+        skip_repeated_create_failed, remaining = _should_skip_repeated_create_failed_scan(state)
         if not is_topology_enabled(
             project,
             "scan:on-change",
@@ -91,6 +151,19 @@ def handle_scan_phase(
         ):
             _hp("- koru scan --apply skipped (scan:on-change disabled in topology)")
             _emit("ScanSkipped", {"cycle": cycle, "reason": "topology:scan:on-change_disabled"})
+        elif skip_repeated_create_failed:
+            _hp(
+                "- koru scan --apply skipped "
+                f"(repeated create_failed, cooldown active, ~{remaining:.0f}s remaining)",
+            )
+            _emit(
+                "ScanSkipped",
+                {
+                    "cycle": cycle,
+                    "reason": "create_failed_cooldown",
+                    "cooldown_remaining_seconds": remaining,
+                },
+            )
         else:
             head_now = current_head(project)
             if (
@@ -122,6 +195,7 @@ def handle_scan_phase(
                     apply=True,
                     include_semcod_artifacts=include_semcod_artifacts,
                 )
+                _remember_scan_create_failed_state(state, scan_result, now=time.time())
                 _hp(_format_scan_summary_line(scan_result))
                 _hp_scan_skip_hint(scan_result, _hp)
                 _emit(
@@ -166,6 +240,7 @@ def handle_scan_after_idle(
             enabled=topology_integration,
         )
     ):
+        skip_repeated_create_failed, remaining = _should_skip_repeated_create_failed_scan(state)
         now = time.time()
         too_soon = (
             scan_after_idle_min_interval_seconds > 0.0
@@ -187,8 +262,26 @@ def handle_scan_after_idle(
                 },
             )
             cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
+        elif skip_repeated_create_failed:
+            _hp(
+                "- koru scan after idle skipped "
+                f"(repeated create_failed, cooldown active, ~{remaining:.0f}s remaining)",
+            )
+            _emit(
+                "ScanSkipped",
+                {
+                    "cycle": cycle,
+                    "reason": "create_failed_cooldown",
+                    "cooldown_remaining_seconds": remaining,
+                    "phase": "after_idle_queue",
+                },
+            )
+            cycle_telemetry["scan_after_idle_skipped_create_failed_cooldown"] = True
         else:
-            scan_cmd = f"koru scan --apply{' --semcod-artifacts' if include_semcod_artifacts else ''}"
+            scan_cmd = (
+                "koru scan --apply"
+                f"{' --semcod-artifacts' if include_semcod_artifacts else ''}"
+            )
             _hp(f"+ {scan_cmd} (queue idle → intake scan)")
             idle_scan = run_scan(
                 project=project,
@@ -196,6 +289,7 @@ def handle_scan_after_idle(
                 include_semcod_artifacts=include_semcod_artifacts,
             )
             scan_result = idle_scan
+            _remember_scan_create_failed_state(state, idle_scan, now=now)
             state.last_scan_after_idle_ts = now
             state.telemetry_scan_after_idle_runs += 1
             state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)

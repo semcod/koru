@@ -24,7 +24,7 @@ from koru.bounded_contexts.topology.queries import (
     IsEnabledQuery,
     LoadTopologyQuery,
 )
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import CqrsService
 from koru.topology import (
     ToggleResult,
     enabled_components_for_pipeline,
@@ -35,11 +35,8 @@ from koru.topology import (
 )
 
 
-class TopologyCommandService:
+class TopologyCommandService(CqrsService):
     """Handles state-changing topology operations."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def toggle_component(self, command: ToggleComponentCommand) -> ToggleResult:
         result = set_component_enabled(
@@ -112,7 +109,10 @@ class TopologyQueryService:
             return bool(pipe.get("enabled", True))
         return None
 
-    def enabled_components_for_pipeline(self, query: EnabledComponentsForPipelineQuery) -> list[str]:
+    def enabled_components_for_pipeline(
+        self,
+        query: EnabledComponentsForPipelineQuery,
+    ) -> list[str]:
         return enabled_components_for_pipeline(query.project, query.pipeline_id)
 
 

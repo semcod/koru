@@ -330,6 +330,19 @@ class TestServe(unittest.TestCase):
         self.assertIn("project", payload)
         self.assertIn("policy", payload)
         self.assertIn("environment", payload)
+        self.assertIn("interfaces", payload)
+        self.assertGreaterEqual(payload["interfaces"]["count"], 1)
+        self.assertIn("tool_invocation", payload["interfaces"]["families"])
+
+    def test_api_runtime_context_includes_interface_summary(self) -> None:
+        status, ctype, body = _get(self.port, "/api/runtime-context")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertIn("interfaces", payload)
+        self.assertGreaterEqual(payload["interfaces"]["count"], 1)
+        self.assertIn("interactive_control", payload["interfaces"])
+        self.assertIn("observation", payload["interfaces"])
 
     def test_api_handoff_returns_markdown(self) -> None:
         status, ctype, body = _get(self.port, "/api/handoff")

@@ -10,8 +10,7 @@ from .events import PLANFILE_QUEUE_CONTEXT
 class PlanfileQueueEventLogProjection(EventLogProjection):
     """In-memory read model for queue tick history."""
 
-    def __init__(self) -> None:
-        super().__init__(context=PLANFILE_QUEUE_CONTEXT)
+    context = PLANFILE_QUEUE_CONTEXT
 
 
 __all__ = ["EventLogEntry", "PlanfileQueueEventLogProjection"]

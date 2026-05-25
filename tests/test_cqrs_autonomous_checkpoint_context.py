@@ -81,7 +81,12 @@ def test_autonomous_checkpoint_commands_emit_domain_events(tmp_path: Path) -> No
 
 def test_public_checkpoint_helpers_round_trip_state(tmp_path: Path) -> None:
     path = tmp_path / ".koru" / "checkpoint.json"
-    saved = AutoloopState(previous_signature="sig-1", scan_clean_streak=3)
+    saved = AutoloopState(
+        previous_signature="sig-1",
+        scan_clean_streak=3,
+        last_scan_create_failed_fingerprint="1:deadbeef",
+        last_scan_create_failed_ts=123.0,
+    )
 
     save_loop_checkpoint(
         path,
@@ -97,6 +102,8 @@ def test_public_checkpoint_helpers_round_trip_state(tmp_path: Path) -> None:
     assert cycle == 4
     assert restored.previous_signature == "sig-1"
     assert restored.scan_clean_streak == 3
+    assert restored.last_scan_create_failed_fingerprint == "1:deadbeef"
+    assert restored.last_scan_create_failed_ts == 123.0
 
     events = JsonlEventStore(path.parent / "event-store.jsonl").all_events(
         context=AUTONOMOUS_CHECKPOINT_CONTEXT

@@ -108,6 +108,7 @@ class TestHappyPath(unittest.TestCase):
             self.assertEqual(_named(report, "gitignore").status, PASS)
             self.assertEqual(_named(report, "koru_project_pipeline").status, PASS)
             self.assertEqual(_named(report, "agent_backends_registry").status, PASS)
+            self.assertEqual(_named(report, "interface_registry").status, PASS)
             self.assertIn(_named(report, "koru_package_version").status, (PASS, WARN))
             self.assertIn(_named(report, "planfile_cli_version").status, (PASS, WARN, SKIP))
 

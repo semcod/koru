@@ -193,4 +193,11 @@ def _handle_stuck_status_skip_candidate(
         "- autopilot skipped "
         f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})",
     )
+    cycle_telemetry["autopilot_skipped_stuck_status"] = True
+    cycle_telemetry["autopilot_skipped_stuck_status_queue"] = str(
+        queue_result.last_status or ""
+    )
+    cycle_telemetry["autopilot_skipped_stuck_status_streak"] = int(
+        state.stagnation_streak or 0
+    )
     return True, f"skipped(stuck_{queue_result.last_status})"

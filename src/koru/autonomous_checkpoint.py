@@ -6,8 +6,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from koru.autonomous_cycle import AutoloopState
@@ -84,6 +83,8 @@ def _apply_checkpoint_payload(payload: dict[str, Any], state: AutoloopState) -> 
             "telemetry_scan_after_idle_runs",
             "telemetry_scan_after_idle_tickets_applied",
             "last_scan_after_idle_ts",
+            "last_scan_create_failed_fingerprint",
+            "last_scan_create_failed_ts",
         ):
             if key in state_payload:
                 setattr(state, key, state_payload[key])
@@ -146,6 +147,8 @@ def _build_checkpoint_payload(
                 state.telemetry_scan_after_idle_tickets_applied
             ),
             "last_scan_after_idle_ts": state.last_scan_after_idle_ts,
+            "last_scan_create_failed_fingerprint": state.last_scan_create_failed_fingerprint,
+            "last_scan_create_failed_ts": state.last_scan_create_failed_ts,
         },
     }
 
