@@ -48,6 +48,22 @@ def auto_reload_enabled() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
+def reuse_window_reload_enabled() -> bool:
+    """Whether ``cursor -r <project>`` is allowed as a reload fallback.
+
+    DEFAULT: off. The ``--reuse-window`` flag *replaces* whatever workspace
+    the IDE window currently has with ``project``. When koru is started in
+    a multi-project setup (e.g. user is editing project A in Cursor while
+    ``koru auto`` runs for project B), this silently switches the user's
+    open project, killing their session. Require explicit opt-in.
+    """
+    raw = os.environ.get(
+        "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD",
+        "",
+    ).strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 def _run(argv: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         argv,
@@ -169,7 +185,11 @@ def try_reload_vscode_family_ide(
     if palette.ok:
         return palette
 
-    if project is not None and project.is_dir():
+    if (
+        project is not None
+        and project.is_dir()
+        and reuse_window_reload_enabled()
+    ):
         reopen = reload_via_reopen_workspace(ide, project)
         if reopen.ok:
             return reopen
@@ -183,6 +203,34 @@ def try_reload_vscode_family_ide(
             return palette
         return reopen
 
+    if project is not None and project.is_dir() and not reuse_window_reload_enabled():
+        if palette.attempted:
+            palette = IdeReloadOutcome(
+                attempted=True,
+                ok=False,
+                method=palette.method,
+                detail=(
+                    f"{palette.detail or 'palette failed'}; "
+                    "reuse-window fallback disabled (would replace user's current "
+                    "workspace with --reuse-window). Set "
+                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to enable, or reload the "
+                    "IDE manually with `Developer: Reload Window`."
+                ),
+            )
+        else:
+            palette = IdeReloadOutcome(
+                attempted=False,
+                ok=False,
+                method=None,
+                detail=(
+                    "command palette reload unavailable (no wtype/xdotool focus "
+                    "on Wayland) and --reuse-window fallback disabled to protect "
+                    "the user's open workspace. Set "
+                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to opt in, or reload "
+                    "the IDE manually with `Developer: Reload Window`."
+                ),
+            )
+
     return palette
 
 
@@ -191,5 +239,6 @@ __all__ = [
     "auto_reload_enabled",
     "reload_via_command_palette",
     "reload_via_reopen_workspace",
+    "reuse_window_reload_enabled",
     "try_reload_vscode_family_ide",
 ]

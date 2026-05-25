@@ -440,6 +440,62 @@ sprint:
     assert plugin_step.ticket_id is None
 
 
+def test_run_startup_operator_pipeline_replaces_closed_pending_marker(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    marker_dir = tmp_path / ".planfile" / ".koru" / "operator-steps"
+    marker_dir.mkdir(parents=True)
+    marker = marker_dir / "autopilot_plugin.ticket"
+    marker.write_text("PLF-1280", encoding="utf-8")
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "config.yaml").write_text(
+        "prefix: PLF\nnext_id: 1281\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        """
+sprint:
+  name: current
+  tickets:
+    PLF-1280:
+      id: PLF-1280
+      name: "[OPERATOR] Autopilot: Connect + plugin w czacie"
+      status: done
+      labels: [koru, operator, auto-pipeline, step:autopilot_plugin]
+      execution:
+        queue: operator
+      source:
+        context:
+          detail: "old detail"
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide vscodium --fix --gc-sockets
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=False,
+        create_tickets=True,
+    )
+
+    plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
+    assert result.tickets_created == ["PLF-1281"]
+    assert plugin_step.ticket_id == "PLF-1281"
+    assert marker.read_text(encoding="utf-8") == "PLF-1281"
+
+
 def test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket(
     tmp_path: Path,
     probe: AutonomousStartupProbe,

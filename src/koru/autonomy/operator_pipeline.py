@@ -73,8 +73,7 @@ def _clear_marker(state_dir: Path, step_id: str) -> None:
 
 
 def _ticket_matches_step(ticket: dict[str, Any], *, step_id: str, queue_name: str) -> bool:
-    status = str(ticket.get("status") or "").strip().lower()
-    if status in {"done", "closed", "cancelled", "canceled"}:
+    if _ticket_is_closed(ticket):
         return False
     execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
     queue = str(execution.get("queue") or "default")
@@ -86,6 +85,11 @@ def _ticket_matches_step(ticket: dict[str, Any], *, step_id: str, queue_name: st
     source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
     context = source.get("context") if isinstance(source.get("context"), dict) else {}
     return context.get("step_id") == step_id
+
+
+def _ticket_is_closed(ticket: dict[str, Any]) -> bool:
+    status = str(ticket.get("status") or "").strip().lower()
+    return status in {"done", "closed", "cancelled", "canceled"}
 
 
 def _ticket_text(ticket: dict[str, Any]) -> str:
@@ -647,6 +651,9 @@ def _discard_stale_pending_marker(
     if not create_tickets or step.status != "pending" or ticket_id is None:
         return ticket_id
     ticket = _find_ticket_by_id(project, ticket_id)
+    if ticket is not None and _ticket_is_closed(ticket):
+        _clear_marker(state_dir, step.step_id)
+        return None
     if ticket is not None and _ticket_matches_current_step(ticket, step):
         return ticket_id
     if ticket is not None:
