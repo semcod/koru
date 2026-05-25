@@ -65,6 +65,13 @@ from koru.autonomous_cycle_bridge import run_cycle_with_compat as _run_cycle_wit
 from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
+from koru.autonomous_processes import (
+    ExistingManagedProcess,
+    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
+)
+from koru.autonomous_processes import (
+    stop_prior_autonomous_for_auto_start,
+)
 from koru.autonomous_startup import (
     build_startup_probe,
     format_post_startup_operator_hints,
@@ -74,10 +81,20 @@ from koru.autonomous_startup import (
 from koru.autonomous_up import (
     AutonomousUpContext,
     StopSignalState,
+)
+from koru.autonomous_up import (
     action_up as _autonomous_up_action_up,
+)
+from koru.autonomous_up import (
     autonomous_context_resource_kwargs as _autonomous_context_resource_kwargs_impl,
+)
+from koru.autonomous_up import (
     prepare_autonomous_startup_probe as _prepare_autonomous_startup_probe_impl,
+)
+from koru.autonomous_up import (
     prepare_autonomous_up_context as _prepare_autonomous_up_context_impl,
+)
+from koru.autonomous_up import (
     run_autonomous_up_loop as _run_autonomous_up_loop_impl,
 )
 from koru.autonomous_wup import (
@@ -124,14 +141,6 @@ from koruide import os_injector as _os_injector_module
 from koruide.daemon import AutopilotDaemon
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
-from koru.autonomous_env import effective_ticket_source_flags as _effective_flags
-from koru.autonomous_processes import (
-    ExistingAutonomousProcess,
-    ExistingManagedProcess,
-    _looks_like_autonomous_up_command,
-    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
-    stop_prior_autonomous_for_auto_start,
-)
 
 _ORIGINAL_LOAD_PROFILE = load_profile
 _ORIGINAL_INJECT_WITH_PROFILE = inject_with_profile
@@ -937,16 +946,20 @@ def _apply_replace_existing_flags(args: Any, invoked_as_auto: bool) -> None:
     _autonomous_cli_config.apply_replace_existing_flags(args, invoked_as_auto)
 
 
-def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+def _parse_autonomous_args(argv: list[str], *, invoked_as_auto: bool) -> argparse.Namespace:
     argv = _normalize_autonomous_argv(argv)
     auto_user_options, argv = _configure_auto_mode_args(argv, None, invoked_as_auto)
-    
+
     args = _build_parser().parse_args(argv)
     args._invoked_as_auto = bool(invoked_as_auto)
     _apply_auto_pipeline_flags(args, invoked_as_auto)
     args._auto_user_options = auto_user_options
     _apply_replace_existing_flags(args, invoked_as_auto)
-    
+    return args
+
+
+def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+    args = _parse_autonomous_args(argv, invoked_as_auto=invoked_as_auto)
     if args.action == "up":
         return _action_up(args)
     return 2

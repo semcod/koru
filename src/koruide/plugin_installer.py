@@ -30,7 +30,33 @@ from koruide.ide import (
 )
 
 SUPPORTED_IDES = vscode_extension_plugin_ide_ids()
+
+# Each per-IDE VSIX has its own extension ID. Cursor moved to a
+# dedicated ``koru-autopilot-cursor`` package so a regression in the
+# Cursor pipeline cannot leak into the umbrella VS Code-family plugin.
+# Sibling IDEs (vscode/vscodium/windsurf/antigravity) still share the
+# legacy ``koru-autopilot-vscode`` VSIX while they are extracted in
+# follow-up iterations.
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
+_EXTENSION_IDS: dict[str, str] = {
+    "cursor": "semcod.koru-autopilot-cursor",
+    "vscode": EXTENSION_ID,
+    "vscodium": EXTENSION_ID,
+    "windsurf": EXTENSION_ID,
+    "antigravity": EXTENSION_ID,
+}
+
+# Per-IDE plugin source directories under ``plugins/``. ``resolve_extension_vsix``
+# walks these in order; the first ``*.vsix`` found wins so a fresh Cursor
+# build wins even when the legacy umbrella VSIX is also present.
+_PLUGIN_DIR_NAMES: dict[str, tuple[str, ...]] = {
+    "cursor": ("koru-autopilot-cursor",),
+    "vscode": ("koru-autopilot-vscode",),
+    "vscodium": ("koru-autopilot-vscode",),
+    "windsurf": ("koru-autopilot-vscode",),
+    "antigravity": ("koru-autopilot-vscode",),
+}
+
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 AUTO_CONNECT_SETTING_KEY = "koruAutopilot.autoConnect"
 
@@ -41,6 +67,31 @@ _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
     "vscode": ("code", "code-insiders"),
     "vscodium": ("codium", "vscodium", "code-oss"),
 }
+
+
+def extension_id_for_ide(ide_id: str | None) -> str:
+    """Return the VSIX extension ID for ``ide_id``.
+
+    Unknown IDE falls back to the umbrella VS Code-family ID so legacy
+    callers that pass ``None`` keep their previous behaviour.
+    """
+
+    if not ide_id:
+        return EXTENSION_ID
+    return _EXTENSION_IDS.get(ide_id.lower(), EXTENSION_ID)
+
+
+def plugin_dir_names_for_ide(ide_id: str | None) -> tuple[str, ...]:
+    """Return candidate ``plugins/<name>`` directory names for ``ide_id``.
+
+    Cursor returns its dedicated dir first; if the matching VSIX has not
+    been built yet (development checkout), callers can fall back to the
+    umbrella VS Code plugin dir.
+    """
+
+    if not ide_id:
+        return _PLUGIN_DIR_NAMES["vscode"]
+    return _PLUGIN_DIR_NAMES.get(ide_id.lower(), _PLUGIN_DIR_NAMES["vscode"])
 
 
 @dataclass(frozen=True)
@@ -119,19 +170,30 @@ def _plugin_package_version(plugin_dir: Path) -> str | None:
     return str(version) if version else None
 
 
+def _plugin_package_name(plugin_dir: Path) -> str | None:
+    try:
+        data = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    name = data.get("name") if isinstance(data, dict) else None
+    return str(name) if name else None
+
+
 def _versioned_vsix_candidates(plugin_dir: Path) -> list[Path]:
     version = _plugin_package_version(plugin_dir)
     if not version:
         return []
+    name = _plugin_package_name(plugin_dir) or "koru-autopilot"
     return [
+        plugin_dir / f"{name}-{version}.vsix",
         plugin_dir / f"koru-autopilot-{version}.vsix",
         plugin_dir / f"koru-autopilot-vscode-{version}.vsix",
     ]
 
 
-def _bundled_vsix_candidates() -> list[Path]:
+def _bundled_vsix_candidates(plugin_dir_name: str = "koru-autopilot-vscode") -> list[Path]:
     try:
-        root = resources.files("koru").joinpath("assets", "koru-autopilot-vscode")
+        root = resources.files("koru").joinpath("assets", plugin_dir_name)
     except (ModuleNotFoundError, AttributeError):
         return []
     try:
@@ -147,7 +209,11 @@ def _bundled_vsix_candidates() -> list[Path]:
     )
 
 
-def _fallback_vsix_candidates(anchor: Path | None = None) -> list[Path]:
+def _fallback_vsix_candidates(
+    anchor: Path | None = None,
+    *,
+    plugin_dir_names: tuple[str, ...] = ("koru-autopilot-vscode",),
+) -> list[Path]:
     candidates: list[Path] = []
     if anchor is not None:
         try:
@@ -156,18 +222,18 @@ def _fallback_vsix_candidates(anchor: Path | None = None) -> list[Path]:
             pass
 
     repo_root = _repo_root()
-    if repo_root is not None:
-        plugin_dir = repo_root / "plugins" / "koru-autopilot-vscode"
+    for dir_name in plugin_dir_names:
+        if repo_root is not None:
+            plugin_dir = repo_root / "plugins" / dir_name
+            try:
+                candidates.extend(sorted(plugin_dir.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+            except OSError:
+                pass
+        cwd_plugin = Path.cwd() / "plugins" / dir_name
         try:
-            candidates.extend(sorted(plugin_dir.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+            candidates.extend(sorted(cwd_plugin.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
         except OSError:
             pass
-
-    cwd_plugin = Path.cwd() / "plugins" / "koru-autopilot-vscode"
-    try:
-        candidates.extend(sorted(cwd_plugin.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
-    except OSError:
-        pass
 
     out: list[Path] = []
     seen: set[Path] = set()
@@ -229,40 +295,55 @@ def resolve_target_ide(requested: str = "auto") -> str | None:
     return detected[0].id if detected else None
 
 
-def resolve_extension_vsix() -> Path | None:
-    """Find the bundled VS Code-family extension package."""
+def resolve_extension_vsix(target_ide: str | None = None) -> Path | None:
+    """Find the bundled VSIX package matching ``target_ide``.
+
+    When ``target_ide`` is ``"cursor"`` the dedicated
+    ``plugins/koru-autopilot-cursor`` build wins; falling back to the
+    umbrella ``koru-autopilot-vscode`` package only when no Cursor VSIX
+    is present (development checkout before the first build).
+    """
     env_path = os.environ.get("KORU_AUTOPILOT_VSIX", "").strip()
     candidates: list[Path] = []
     if env_path:
         candidates.append(Path(env_path).expanduser())
 
+    dir_names = plugin_dir_names_for_ide(target_ide)
     repo_root = _repo_root()
-    if repo_root is not None:
-        plugin_dir = repo_root / "plugins" / "koru-autopilot-vscode"
-        for candidate in _versioned_vsix_candidates(plugin_dir):
+    for dir_name in dir_names:
+        if repo_root is not None:
+            plugin_dir = repo_root / "plugins" / dir_name
+            for candidate in _versioned_vsix_candidates(plugin_dir):
+                if candidate.is_file():
+                    return candidate.resolve()
+            try:
+                repo_matches = sorted(
+                    plugin_dir.glob("*.vsix"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                )
+            except OSError:
+                repo_matches = []
+            if repo_matches:
+                return repo_matches[0].resolve()
+
+        cwd_plugin = Path.cwd() / "plugins" / dir_name
+        for candidate in _versioned_vsix_candidates(cwd_plugin):
             if candidate.is_file():
                 return candidate.resolve()
-        repo_matches = sorted(
-            plugin_dir.glob("*.vsix"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
-        if repo_matches:
-            return repo_matches[0].resolve()
+        try:
+            cwd_matches = sorted(
+                cwd_plugin.glob("*.vsix"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+        except OSError:
+            cwd_matches = []
+        if cwd_matches:
+            return cwd_matches[0].resolve()
 
-    cwd_plugin = Path.cwd() / "plugins" / "koru-autopilot-vscode"
-    for candidate in _versioned_vsix_candidates(cwd_plugin):
-        if candidate.is_file():
-            return candidate.resolve()
-    cwd_matches = sorted(
-        cwd_plugin.glob("*.vsix"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    if cwd_matches:
-        return cwd_matches[0].resolve()
-
-    candidates.extend(_bundled_vsix_candidates())
+    for dir_name in dir_names:
+        candidates.extend(_bundled_vsix_candidates(dir_name))
 
     candidates = sorted(
         {candidate.resolve() for candidate in candidates if candidate.is_file()},
@@ -349,7 +430,12 @@ def _env_reassert_extension_install() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
-def _extension_is_installed(command: str, runner: Runner) -> bool | None:
+def _extension_is_installed(
+    command: str,
+    runner: Runner,
+    *,
+    extension_id: str = EXTENSION_ID,
+) -> bool | None:
     try:
         proc = runner([command, "--list-extensions"])
     except (OSError, subprocess.SubprocessError):
@@ -357,11 +443,15 @@ def _extension_is_installed(command: str, runner: Runner) -> bool | None:
     if proc.returncode != 0:
         return None
     installed = {line.strip().lower() for line in proc.stdout.splitlines()}
-    return EXTENSION_ID.lower() in installed
+    return extension_id.lower() in installed
 
 
-def _parse_extension_version(output: str) -> str | None:
-    prefix = f"{EXTENSION_ID.lower()}@"
+def _parse_extension_version(
+    output: str,
+    *,
+    extension_id: str = EXTENSION_ID,
+) -> str | None:
+    prefix = f"{extension_id.lower()}@"
     for line in output.splitlines():
         item = line.strip()
         if item.lower().startswith(prefix):
@@ -388,7 +478,9 @@ def installed_extension_version_for_ide(
         return None
     if proc.returncode != 0:
         return None
-    return _parse_extension_version(proc.stdout)
+    return _parse_extension_version(
+        proc.stdout, extension_id=extension_id_for_ide(target)
+    )
 
 
 def _reassert_extension_extra(
@@ -396,6 +488,7 @@ def _reassert_extension_extra(
     *,
     dry_run: bool,
     runner: Runner,
+    target_ide: str | None = None,
 ) -> tuple[list[str], str]:
     def _missing_vsix_hint(proc: subprocess.CompletedProcess[str]) -> bool:
         detail = (proc.stderr or proc.stdout or "").lower()
@@ -405,11 +498,12 @@ def _reassert_extension_extra(
     extra = ""
     if dry_run or not _env_reassert_extension_install():
         return last_cmd, extra
-    vsix = resolve_extension_vsix()
+    vsix = resolve_extension_vsix(target_ide)
+    ext_id = extension_id_for_ide(target_ide)
     reassert_cmd = (
         [command, "--install-extension", str(vsix), "--force"]
         if vsix is not None
-        else [command, "--install-extension", EXTENSION_ID]
+        else [command, "--install-extension", ext_id]
     )
     try:
         proc = runner(reassert_cmd, timeout=90.0)
@@ -422,7 +516,9 @@ def _reassert_extension_extra(
         and not vsix.is_file()
         and _missing_vsix_hint(proc)
     ):
-        for fallback in _fallback_vsix_candidates(vsix):
+        for fallback in _fallback_vsix_candidates(
+            vsix, plugin_dir_names=plugin_dir_names_for_ide(target_ide)
+        ):
             if fallback == vsix:
                 continue
             retry_cmd = [command, "--install-extension", str(fallback), "--force"]
@@ -456,12 +552,15 @@ def _result_already_installed(
     settings_path: Path | None,
     socket_path_str: str | None,
 ) -> PluginInstallResult:
-    last_cmd, extra = _reassert_extension_extra(command, dry_run=dry_run, runner=runner)
+    last_cmd, extra = _reassert_extension_extra(
+        command, dry_run=dry_run, runner=runner, target_ide=target
+    )
+    ext_id = extension_id_for_ide(target)
     return PluginInstallResult(
         ide=target,
         status="already_installed",
         message=(
-            f"{EXTENSION_ID} is already installed for {target}{extra}; "
+            f"{ext_id} is already installed for {target}{extra}; "
             "if the IDE was already open during install/reassert, run "
             "`Developer: Reload Window` (or restart it), then run "
             "`koru: Connect autopilot daemon`"
@@ -519,7 +618,7 @@ def _install_extension_vsix(
         ide=target,
         status="installed",
         message=(
-            f"installed {EXTENSION_ID}; if {target} is already open, run "
+            f"installed {extension_id_for_ide(target)}; if {target} is already open, run "
             "`Developer: Reload Window` or restart it so the extension host scans the VSIX"
         ),
         command=cmd,
@@ -559,7 +658,9 @@ def install_plugin_for_ide(
     settings_path = None if dry_run else _configure_socket_path(target, socket_path)
     socket_path_str = str(socket_path.resolve()) if socket_path is not None else None
 
-    if _extension_is_installed(command, runner) is True:
+    if _extension_is_installed(
+        command, runner, extension_id=extension_id_for_ide(target)
+    ) is True:
         return _result_already_installed(
             target,
             command,
@@ -569,7 +670,7 @@ def install_plugin_for_ide(
             socket_path_str=socket_path_str,
         )
 
-    vsix = resolve_extension_vsix()
+    vsix = resolve_extension_vsix(target)
     if vsix is None:
         return PluginInstallResult(
             ide=target,
@@ -602,9 +703,11 @@ def format_plugin_install_result(result: PluginInstallResult) -> str:
 __all__ = [
     "EXTENSION_ID",
     "PluginInstallResult",
+    "extension_id_for_ide",
     "format_plugin_install_result",
     "install_plugin_for_ide",
     "installed_extension_version_for_ide",
+    "plugin_dir_names_for_ide",
     "resolve_extension_vsix",
     "resolve_target_ide",
 ]

@@ -627,15 +627,10 @@ def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_pat
     )
     monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
     monkeypatch.setattr(install_manager, "installed_extension_version_for_ide", lambda _ide: None)
-    monkeypatch.setattr(install_manager, "detect_terminal_host_ide_id", lambda: None)
-    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    # Mock functions at their actual import location in install_manager module
+    monkeypatch.setattr("koru.autopilot.install_manager.detect_terminal_host_ide_id", lambda: None)
+    monkeypatch.setattr("koru.autopilot.install_manager.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": True})
-    # Mock koru.autopilot.ide since install_manager imports from there (compatibility shim)
-    monkeypatch.setattr("koru.autopilot.ide.detect_terminal_host_ide_id", lambda: None)
-    monkeypatch.setattr("koru.autopilot.ide.detect_running_ides", lambda: [])
-    # Mock koruide.ide functions since koru.autopilot.ide is now a compatibility shim
-    monkeypatch.setattr("koruide.ide.detect_terminal_host_ide_id", lambda: None)
-    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
 
     report = install_manager.collect_install_manager_report(
         ide="auto",

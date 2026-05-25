@@ -7,6 +7,7 @@ import importlib.metadata
 import json
 import sys
 from pathlib import Path
+from typing import Callable
 
 from .dashboard import dashboard_main
 from .integrations import list_integrations
@@ -70,67 +71,88 @@ def _parse_body(raw: str) -> dict:
     return json.loads(raw or "{}")
 
 
+def _action_list(args: argparse.Namespace, rest: list[str], project: Path) -> int:
+    payload = [
+        {
+            "id": s.id,
+            "title": s.title,
+            "transport": s.transport,
+            "methods": list(s.methods),
+            "cli_equivalent": s.cli_equivalent,
+        }
+        for s in list_integrations()
+    ]
+    sys.stdout.write(json.dumps({"integrations": payload}, indent=2) + "\n")
+    return 0
+
+
+def _action_invoke(args: argparse.Namespace, rest: list[str], project: Path) -> int:
+    from koru.activity_log import activity
+
+    try:
+        body = _parse_body(args.body)
+    except json.JSONDecodeError as exc:
+        print(f"koru api invoke: invalid --body JSON: {exc}", file=sys.stderr)
+        return 2
+    activity(
+        "API",
+        f"invoke {args.integration_id} method={args.method} project={project}",
+    )
+    try:
+        result = invoke_integration(
+            args.integration_id,
+            project=project,
+            method=args.method,
+            body=body,
+        )
+    except InvokeError as exc:
+        activity("API", f"invoke failed: {exc}")
+        print(f"koru api invoke: {exc}", file=sys.stderr)
+        return 1
+    activity("API", f"invoke ok {args.integration_id}")
+    sys.stdout.write(json.dumps(result, indent=2, default=str) + "\n")
+    return 0
+
+
+def _action_serve(args: argparse.Namespace, rest: list[str], project: Path) -> int:
+    api_serve(project=project, host=args.host, port=args.port)
+    return 0
+
+
+def _action_dashboard(args: argparse.Namespace, rest: list[str], project: Path) -> int:
+    return dashboard_main(rest)
+
+
+def _action_mcp(args: argparse.Namespace, rest: list[str], project: Path) -> int:
+    return mcp_main(rest)
+
+
+def _action_local(args: argparse.Namespace, rest: list[str], project: Path) -> int:
+    return local_main(rest)
+
+
+# Dispatch table: action name -> handler. Single source of truth for routing.
+_ACTIONS: dict[str, Callable[[argparse.Namespace, list[str], Path], int]] = {
+    "list": _action_list,
+    "invoke": _action_invoke,
+    "http": _action_serve,
+    "serve": _action_serve,
+    "dashboard": _action_dashboard,
+    "mcp": _action_mcp,
+    "local": _action_local,
+}
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = _build_parser()
     args, rest = parser.parse_known_args(argv)
     project = args.project.resolve()
 
-    if args.action == "list":
-        payload = [
-            {
-                "id": s.id,
-                "title": s.title,
-                "transport": s.transport,
-                "methods": list(s.methods),
-                "cli_equivalent": s.cli_equivalent,
-            }
-            for s in list_integrations()
-        ]
-        sys.stdout.write(json.dumps({"integrations": payload}, indent=2) + "\n")
-        return 0
-
-    if args.action == "invoke":
-        from koru.activity_log import activity
-
-        try:
-            body = _parse_body(args.body)
-        except json.JSONDecodeError as exc:
-            print(f"koru api invoke: invalid --body JSON: {exc}", file=sys.stderr)
-            return 2
-        activity(
-            "API",
-            f"invoke {args.integration_id} method={args.method} project={project}",
-        )
-        try:
-            result = invoke_integration(
-                args.integration_id,
-                project=project,
-                method=args.method,
-                body=body,
-            )
-        except InvokeError as exc:
-            activity("API", f"invoke failed: {exc}")
-            print(f"koru api invoke: {exc}", file=sys.stderr)
-            return 1
-        activity("API", f"invoke ok {args.integration_id}")
-        sys.stdout.write(json.dumps(result, indent=2, default=str) + "\n")
-        return 0
-
-    if args.action in ("http", "serve"):
-        api_serve(project=project, host=args.host, port=args.port)
-        return 0
-
-    if args.action == "dashboard":
-        return dashboard_main(rest)
-
-    if args.action == "mcp":
-        return mcp_main(rest)
-
-    if args.action == "local":
-        return local_main(rest)
-
-    return 2
+    handler = _ACTIONS.get(args.action)
+    if handler is None:
+        return 2
+    return handler(args, rest, project)
 
 
 if __name__ == "__main__":

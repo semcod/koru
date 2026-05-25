@@ -1,8 +1,49 @@
-"""Bundled IDE plugin version metadata."""
+"""Bundled IDE plugin version metadata.
+
+Each per-IDE VSIX (``plugins/koru-autopilot-<ide>/``) is built and
+versioned independently so a regression in one plugin cannot ride
+along with another's release. The mapping below is the daemon-side
+contract that the strict version check uses to reject any IDE
+connection whose ``hello`` envelope reports a stale version.
+
+The legacy ``EXPECTED_VSCODE_PLUGIN_VERSION`` constant is kept as an
+alias for backward compatibility with code that has not migrated to
+``expected_plugin_version_for_ide(...)`` yet.
+"""
 
 from __future__ import annotations
 
-# Keep in sync with plugins/koru-autopilot-vscode/package.json.
-EXPECTED_VSCODE_PLUGIN_VERSION = "0.1.75"
+# Each per-IDE plugin tracks its own version. When you bump a plugin,
+# bump only the matching entry — do NOT lockstep all IDEs.
+EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
+    "cursor": "0.1.76",
+    "vscode": "0.1.76",
+    "vscodium": "0.1.76",
+    "windsurf": "0.1.76",
+    "antigravity": "0.1.76",
+}
 
-__all__ = ["EXPECTED_VSCODE_PLUGIN_VERSION"]
+# Legacy alias: most callers still expect a single VS Code-family
+# plugin version. Once Cursor moved to its own VSIX we kept this
+# pointing at the umbrella ``koru-autopilot-vscode`` package which
+# now covers VSCode/VSCodium/Windsurf/Antigravity only.
+EXPECTED_VSCODE_PLUGIN_VERSION = EXPECTED_PLUGIN_VERSIONS["vscode"]
+
+
+def expected_plugin_version_for_ide(ide_id: str | None) -> str:
+    """Return the expected VSIX version for ``ide_id``.
+
+    Unknown / missing IDE falls back to the umbrella plugin version so
+    legacy callers that pass ``None`` keep their previous behaviour.
+    """
+
+    if not ide_id:
+        return EXPECTED_VSCODE_PLUGIN_VERSION
+    return EXPECTED_PLUGIN_VERSIONS.get(ide_id.lower(), EXPECTED_VSCODE_PLUGIN_VERSION)
+
+
+__all__ = [
+    "EXPECTED_PLUGIN_VERSIONS",
+    "EXPECTED_VSCODE_PLUGIN_VERSION",
+    "expected_plugin_version_for_ide",
+]

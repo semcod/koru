@@ -473,6 +473,72 @@ class AutopilotBridge {
         const candidates = (0, probe_ladder_1.buildHostKeySubmitCandidates)(ide, override);
         return this.runHostKeyCandidates("SUBMIT_HOST_KEY", candidates);
     }
+    async _tryVerifiedHostKeySubmit(ide, verifyText) {
+        if (process.platform !== "linux" || !verifyText) {
+            return { ok: false };
+        }
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        const override = cfg.get("submitHostKey", "auto") || "auto";
+        const candidates = (0, probe_ladder_1.buildHostKeySubmitCandidates)(ide, override);
+        const attempts = [];
+        this.traceOperation({
+            op: "submit_host_key_verified",
+            route: "host-key-candidates",
+            ok: true,
+            detail: { candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`) },
+        });
+        for (const [command, args] of candidates) {
+            const rendered = `${command} ${args.join(" ")}`;
+            const res = await this.runHostCommand(command, args);
+            attempts.push(`${rendered} => ${res.ok ? "ok" : "failed"}`);
+            this.traceOperation({
+                op: "submit",
+                route: "host-key-verified",
+                ok: res.ok,
+                command: rendered,
+            });
+            if (!res.ok) {
+                await this.sleep(80);
+                continue;
+            }
+            const verify = await this.verifySubmitStep(verifyText, true);
+            if (verify.cleared) {
+                if (this.probeLadderEnabled()) {
+                    await this.saveProbeCache({ submit: rendered });
+                }
+                this.traceOperation({
+                    op: "submit",
+                    route: "accepted",
+                    ok: true,
+                    command: rendered,
+                    detail: { verifyEnabled: true, requireEmptyAfterSubmit: true },
+                });
+                return { ok: true, command: rendered, attempts };
+            }
+            await this.discardCachedSubmitWinner(rendered);
+            this.traceOperation({
+                op: "submit",
+                route: "host-key-verified",
+                ok: false,
+                command: rendered,
+                reason: "input still contains pasted text",
+                detail: { observedLength: verify.observedLength },
+            });
+            await this.focusChatInput();
+            await this.runHostKeyCandidates("SUBMIT_DESELECT", [
+                ["wtype", ["-k", "End"]],
+                ["xdotool", ["key", "End"]],
+                ["ydotool", ["key", "End"]],
+            ]);
+        }
+        return {
+            ok: false,
+            command: `${ide}-host-key-noop`,
+            reason: "host-key submit candidates ran but chat input still contains pasted text",
+            attempts,
+            unverified: true,
+        };
+    }
     async runHostCommand(command, args, input) {
         if (process.platform !== "linux") {
             return { ok: false, stdout: "" };
@@ -946,20 +1012,20 @@ class AutopilotBridge {
             if (accepted)
                 return accepted;
         }
+        if (hostVerifyEnabled && verifyText) {
+            const hostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText);
+            if (hostKey.ok && hostKey.command)
+                return hostKey;
+            return hostKey;
+        }
         const hostKey = await this._tryHostKeySubmit("vscodium");
         if (hostKey.ok && hostKey.command) {
-            const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, hostVerifyEnabled, true, { unverified: hostVerifyEnabled ? false : !this.trustUnverifiedHostSubmit() });
-            if (accepted)
-                return accepted;
-            if (hostVerifyEnabled && verifyText) {
-                return {
-                    ok: false,
-                    command: hostKey.command || "vscodium-host-key-noop",
-                    reason: "host-key submit ran but chat input still contains pasted text",
-                    attempts: hostKey.attempts,
-                    unverified: true,
-                };
-            }
+            return {
+                ok: true,
+                command: hostKey.command,
+                attempts: hostKey.attempts,
+                unverified: !this.trustUnverifiedHostSubmit(),
+            };
         }
         return {
             ok: false,

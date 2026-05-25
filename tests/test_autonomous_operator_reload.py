@@ -127,7 +127,7 @@ class ForceReloadIfStaleTests(unittest.TestCase):
             f"expected detection log; got {logs}",
         )
         self.assertTrue(any("reload after VSIX install" in m for m in logs))
-        self.assertEqual(wait_calls, [30.0])
+        self.assertEqual(wait_calls, [12.0])
 
     def test_no_reload_when_versions_match(self) -> None:
         client = StubClient(

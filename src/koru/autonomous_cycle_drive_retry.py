@@ -1,12 +1,12 @@
 import json
 import os
-import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from koru.autonomous_cycle_chat_activity import _inject_reflection_summary_into_prompt
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
+from koru.autonomous_drive_retry_policy import _handle_failed_drive_attempt
 from koru.autonomy.env import (
     allow_keyboard_autopilot_fallback as _allow_keyboard_autopilot_fallback,
 )
@@ -23,7 +23,6 @@ from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_dri
 from koru.autonomy.prompts import PromptDecision, build_prompt
 from koru.autonomy.state import AutoloopState
 from koru.decision_engine import (
-    DriveRetryDecision,
     EnvironmentDecisionEngine,
     build_decision_engine,
 )
@@ -233,6 +232,74 @@ def _drive_autopilot_once(
     return fallback, bool(fallback.get("ok", True))
 
 
+def _waiting_ticket_closed_skip_result(
+    queue_result: QueueLoopResult,
+    idle_prompt_kind: str | None,
+    skip_reason: str | None,
+    _hp: Callable[..., Any],
+) -> tuple[dict[str, Any], bool, str, str | None]:
+    waiting_ticket = _resolve_waiting_ticket_id(queue_result) or "-"
+    _hp(
+        "- autopilot skipped (waiting_ticket_closed): "
+        f"ticket {waiting_ticket} is already closed in planfile; "
+        "suppressing stale waiting_input redrive.",
+    )
+    return (
+        {
+            "ok": False,
+            "backend": None,
+            "message": f"waiting ticket {waiting_ticket} is already closed; skip stale redrive",
+            "prompt": "",
+        },
+        False,
+        skip_reason or "skipped",
+        idle_prompt_kind,
+    )
+
+
+def _idle_no_ticket_skip_result(
+    project: Path,
+    idle_prompt_kind: str | None,
+    _hp: Callable[..., Any],
+) -> tuple[dict[str, Any], bool, str, str | None]:
+    from koru.autonomous_loop_runner import _dashboard_action_urls
+    from koru.autonomy.ide_work import sprint_ticket_status_summary
+
+    urls = _dashboard_action_urls(project)
+    _hp(
+        "- autopilot skipped (idle_no_ticket): "
+        "queue empty AND no open ticket in planfile → nothing to paste "
+        "into the IDE chat. Drive is suppressed to avoid clobbering the "
+        "user's input with stale prompts.",
+    )
+    _hp(f"  planfile snapshot: {sprint_ticket_status_summary(project)}")
+    _hp(
+        "  what koru auto will try next: "
+        "(1) wait the configured sleep; (2) when queue stays idle, "
+        "rerun `koru scan --apply` to look for new signals; "
+        "(3) if scan finds signals already present as done tickets, "
+        "they will be skipped as duplicates; use the quick action below "
+        "to create a fresh discovery ticket immediately.",
+    )
+    _hp(
+        "  quick actions: create discovery ticket "
+        f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
+        "force fresh scan command remains: "
+        "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
+    )
+    return (
+        {
+            "ok": False,
+            "backend": None,
+            "message": "queue idle and no open ticket",
+            "prompt": "",
+        },
+        False,
+        "idle_no_ticket",
+        idle_prompt_kind,
+    )
+
+
 def _resolve_drive_plugin_requirement(client: Any, autopilot_ide: str) -> bool:
     require_plugin = _plugin_required_for_ide(autopilot_ide)
     if (
@@ -317,146 +384,44 @@ def _reply_requires_manual_chat_focus(reply: dict[str, Any]) -> bool:
     return isinstance(candidates, list) and not candidates
 
 
-def _format_autopilot_failure_details(reply: dict[str, Any]) -> list[str]:
-    lines: list[str] = []
-    message = str(reply.get("message") or "").strip()
-    if message:
-        lines.append(f"Plugin message: {message}")
-    diagnostics = reply.get("diagnostics")
-    if isinstance(diagnostics, dict):
-        for key in ("ide", "appName", "logPath", "probeLadder", "cacheFocusOpen"):
-            if key in diagnostics:
-                lines.append(f"{key}: {diagnostics[key]}")
-        candidates = diagnostics.get("focusOpenCandidates")
-        if isinstance(candidates, list):
-            preview = ", ".join(str(item) for item in candidates[:8])
-            if len(candidates) > 8:
-                preview += f", ... (+{len(candidates) - 8})"
-            lines.append(f"focusOpenCandidates: {preview or '(none)'}")
-        rejected = diagnostics.get("rejected")
-        if isinstance(rejected, list) and rejected:
-            lines.append(f"lastRejected: {rejected[-1]}")
-    elif reply.get("details"):
-        lines.append(f"Details: {reply['details']}")
-    return lines
-
-
-def _warn_autopilot_focus_retry(
-    attempt: int,
-    attempts: int,
-    reply: dict[str, Any] | None = None,
-) -> None:
-    print("\033[1;31m")  # bold red
-    print("================================================================================")
-    print("[AUTOPILOT FOCUS ERROR] Please place your cursor inside the IDE chat input!")
-    print("Make sure the cursor is blinking inside the chat input field.")
-    if reply:
-        for line in _format_autopilot_failure_details(reply):
-            print(line)
-    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
-    print("================================================================================")
-    print("\033[0m")  # reset colors
-
-
-def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -> None:
-    from koru.activity_log import activity
-
-    print("\033[1;31m")  # bold red
-    print("================================================================================")
-    print("[AUTOPILOT FOCUS REQUIRED] Please place your cursor inside the IDE chat input.")
-    print("No focus-open command is available, so Koru will not retry this drive automatically.")
-    if reply:
-        for line in _format_autopilot_failure_details(reply):
-            print(line)
-    print("================================================================================")
-    print("\033[0m")  # reset colors
-    activity(
-        "CHAT",
-        "manual focus required; no automatic retry",
-        data={"reply": reply or {}},
-    )
-
-
-def _warn_autopilot_plugin_retry(
-    attempt: int,
-    attempts: int,
-    reply: dict[str, Any] | None = None,
-) -> None:
-    print("\033[1;33m")  # bold yellow
-    print("================================================================================")
-    print("[AUTOPILOT PLUGIN RETRY] Plugin send did not succeed yet.")
-    print("This is usually transient in Windsurf; Koru will retry automatically.")
-    if reply:
-        for line in _format_autopilot_failure_details(reply):
-            print(line)
-    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
-    print("================================================================================")
-    print("\033[0m")  # reset colors
-
-
-def _warn_autopilot_submit_retry(
-    attempt: int,
-    attempts: int,
-    reply: dict[str, Any] | None = None,
-) -> None:
-    print("\033[1;33m")  # bold yellow
-    print("================================================================================")
-    print("[AUTOPILOT SUBMIT RETRY] Text was pasted, but Send was not confirmed.")
-    print("Koru will retry submit against the existing matching chat input.")
-    if reply:
-        for line in _format_autopilot_failure_details(reply):
-            print(line)
-    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
-    print("================================================================================")
-    print("\033[0m")  # reset colors
-
-
-def _handle_failed_drive_attempt(
-    reply: dict[str, Any],
-    attempt: int,
-    attempts: int,
+def _run_drive_retry_loop(
+    client: Any,
     *,
-    engine: EnvironmentDecisionEngine | None = None,
-) -> bool:
-    """Use the decision engine's LLM-axis policy for retry/stop/warn."""
-    if engine is None:
-        from korullm import resolve_active_llm_strategy
-
-        assessment = resolve_active_llm_strategy().assess_drive_failure(
+    prompt: str,
+    submit: bool,
+    autopilot_ide: str,
+    require_plugin: bool,
+    attempts: int,
+    engine: EnvironmentDecisionEngine,
+    _hp: Callable[..., Any],
+) -> tuple[dict[str, Any], bool]:
+    previous_signature: str | None = None
+    for attempt in range(attempts):
+        reply, ok = _drive_autopilot_once(
+            client,
+            prompt=prompt,
+            submit=submit,
+            autopilot_ide=autopilot_ide,
+            require_plugin=require_plugin,
+        )
+        if ok:
+            break
+        signature = engine.llm_strategy.failure_signature(reply)
+        if previous_signature is not None and signature == previous_signature:
+            _hp(
+                "  autopilot: aborting retry loop — identical failure repeated "
+                f"(attempt {attempt + 1}/{attempts}, signature unchanged)",
+            )
+            break
+        previous_signature = signature
+        if not _handle_failed_drive_attempt(
             reply,
-            attempt=attempt,
-            max_attempts=attempts,
-        )
-        should_retry = assessment.kind.startswith("retry_")
-        retry_decision = DriveRetryDecision(
-            assessment=assessment,
-            should_retry=should_retry,
-            should_warn=assessment.warn_banner,
-            sleep_seconds=assessment.sleep_seconds if should_retry else 0.0,
-        )
-    else:
-        retry_decision = engine.assess_drive_failure(
-            reply,
-            attempt=attempt,
-            max_attempts=attempts,
-        )
-    kind = retry_decision.assessment.kind
-    if kind == "skip_cooldown":
-        return False
-    if not retry_decision.should_retry:
-        if retry_decision.should_warn == "manual_focus":
-            _warn_autopilot_manual_focus_required(reply)
-        return False
-    banner = retry_decision.should_warn
-    if banner == "submit":
-        _warn_autopilot_submit_retry(attempt, attempts, reply)
-    elif banner == "focus":
-        _warn_autopilot_focus_retry(attempt, attempts, reply)
-    elif banner == "plugin":
-        _warn_autopilot_plugin_retry(attempt, attempts, reply)
-    if retry_decision.sleep_seconds > 0:
-        time.sleep(retry_decision.sleep_seconds)
-    return True
+            attempt,
+            attempts,
+            engine=engine,
+        ):
+            break
+    return reply, ok
 
 
 def _execute_autopilot_drive(
@@ -479,62 +444,14 @@ def _execute_autopilot_drive(
         autopilot_action=autopilot_action,
     )
     if decision.skip:
-        waiting_ticket = _resolve_waiting_ticket_id(queue_result) or "-"
-        _hp(
-            "- autopilot skipped (waiting_ticket_closed): "
-            f"ticket {waiting_ticket} is already closed in planfile; "
-            "suppressing stale waiting_input redrive.",
-        )
-        return (
-            {
-                "ok": False,
-                "backend": None,
-                "message": (
-                    f"waiting ticket {waiting_ticket} is already closed; skip stale redrive"
-                ),
-                "prompt": "",
-            },
-            False,
-            decision.skip_reason or "skipped",
+        return _waiting_ticket_closed_skip_result(
+            queue_result,
             idle_prompt_kind,
+            decision.skip_reason,
+            _hp,
         )
     if idle_prompt_kind == "idle_no_ticket":
-        from koru.autonomous_loop_runner import _dashboard_action_urls
-        from koru.autonomy.ide_work import sprint_ticket_status_summary
-
-        urls = _dashboard_action_urls(project)
-        _hp(
-            "- autopilot skipped (idle_no_ticket): "
-            "queue empty AND no open ticket in planfile → nothing to paste "
-            "into the IDE chat. Drive is suppressed to avoid clobbering the "
-            "user's input with stale prompts.",
-        )
-        _hp(f"  planfile snapshot: {sprint_ticket_status_summary(project)}")
-        _hp(
-            "  what koru auto will try next: "
-            "(1) wait the configured sleep; (2) when queue stays idle, "
-            "rerun `koru scan --apply` to look for new signals; "
-            "(3) if scan finds signals already present as done tickets, "
-            "they will be skipped as duplicates; use the quick action below "
-            "to create a fresh discovery ticket immediately.",
-        )
-        _hp(
-            "  quick actions: create discovery ticket "
-            f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
-            "force fresh scan command remains: "
-            "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
-        )
-        return (
-            {
-                "ok": False,
-                "backend": None,
-                "message": "queue idle and no open ticket",
-                "prompt": "",
-            },
-            False,
-            "idle_no_ticket",
-            idle_prompt_kind,
-        )
+        return _idle_no_ticket_skip_result(project, idle_prompt_kind, _hp)
     state.last_driven_prompt = decision.prompt
     # Telemetry hook used by ``_skip_due_to_recent_chat_activity`` to decide
     # whether to apply the escalation-cooldown multiplier on the next cycle.
@@ -542,32 +459,16 @@ def _execute_autopilot_drive(
     require_plugin = _resolve_drive_plugin_requirement(client, autopilot_ide)
     attempts = _max_drive_retries()
     engine = _active_decision_engine(project, autopilot_ide)
-    previous_signature: str | None = None
-    for attempt in range(attempts):
-        reply, ok = _drive_autopilot_once(
-            client,
-            prompt=decision.prompt,
-            submit=submit,
-            autopilot_ide=autopilot_ide,
-            require_plugin=require_plugin,
-        )
-        if ok:
-            break
-        signature = engine.llm_strategy.failure_signature(reply)
-        if previous_signature is not None and signature == previous_signature:
-            _hp(
-                "  autopilot: aborting retry loop — identical failure repeated "
-                f"(attempt {attempt + 1}/{attempts}, signature unchanged)",
-            )
-            break
-        previous_signature = signature
-        if not _handle_failed_drive_attempt(
-            reply,
-            attempt,
-            attempts,
-            engine=engine,
-        ):
-            break
+    reply, ok = _run_drive_retry_loop(
+        client,
+        prompt=decision.prompt,
+        submit=submit,
+        autopilot_ide=autopilot_ide,
+        require_plugin=require_plugin,
+        attempts=attempts,
+        engine=engine,
+        _hp=_hp,
+    )
 
     return reply, ok, decision.kind, idle_prompt_kind
 

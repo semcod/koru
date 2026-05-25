@@ -166,11 +166,22 @@ async function testUnsupportedAdapterEmitsNothing(): Promise<void> {
 }
 
 async function testBuildAdapterForIdeReturnsCorrectKind(): Promise<void> {
+  // ``koru-autopilot-cursor`` is the Cursor-only VSIX; the factory must
+  // ONLY know about CursorBubbleAdapter. Asking it for vscode/vscodium/
+  // windsurf/antigravity adapters must throw so a stray code path that
+  // accidentally registers a non-Cursor IDE blows up loudly in CI rather
+  // than silently producing the wrong adapter.
   assert.ok(buildAdapterForIde("cursor") instanceof CursorBubbleAdapter);
-  assert.ok(buildAdapterForIde("vscode") instanceof VSCodeChatSessionAdapter);
-  assert.ok(buildAdapterForIde("vscodium") instanceof VSCodeChatSessionAdapter);
-  assert.ok(buildAdapterForIde("windsurf") instanceof UnsupportedAdapter);
-  assert.ok(buildAdapterForIde("antigravity") instanceof UnsupportedAdapter);
+  for (const foreign of ["vscode", "vscodium", "windsurf", "antigravity"] as const) {
+    let threw = false;
+    try {
+      buildAdapterForIde(foreign);
+    } catch (err) {
+      threw = true;
+      assert.match(String(err), /Cursor support/);
+    }
+    assert.ok(threw, `buildAdapterForIde must refuse to construct an adapter for ${foreign}`);
+  }
 }
 
 async function testParseVSCodeChatIndexExtractsAssistantResponses(): Promise<void> {

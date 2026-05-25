@@ -92,6 +92,34 @@ def test_tool_list_tickets_status_filters(monkeypatch: pytest.MonkeyPatch) -> No
     assert out["tickets"][0]["id"] == "B"
 
 
+def test_koru_api_main_dispatch_table_covers_all_subparser_actions() -> None:
+    """All argparse subparsers must have a corresponding handler in _ACTIONS."""
+    from koruapi.cli import _ACTIONS, _build_parser
+
+    parser = _build_parser()
+    subparser_actions = next(
+        a for a in parser._actions if hasattr(a, "choices") and a.choices
+    )
+    declared = set(subparser_actions.choices.keys())
+    assert declared == set(_ACTIONS.keys()), (
+        f"subparsers and _ACTIONS keys diverged: "
+        f"only-in-subparsers={declared - set(_ACTIONS.keys())} "
+        f"only-in-actions={set(_ACTIONS.keys()) - declared}"
+    )
+
+
+def test_koru_api_main_list_action_emits_integrations(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Direct test for the extracted _action_list handler via main()."""
+    monkeypatch.setattr("sys.argv", ["koru-api", "list"])
+    rc = koru_api_main()
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert '"integrations"' in out
+
+
 def test_openapi_document_lists_invoke_path() -> None:
     from koruapi.openapi import build_openapi_document
 

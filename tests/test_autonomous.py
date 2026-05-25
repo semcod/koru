@@ -19,6 +19,8 @@ from koru import autonomous_cycle_drive_retry as drive_retry_mod
 from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_processes as autonomous_processes_mod
 from koru import autonomous_wup as autonomous_wup_mod
+from koru.autonomous_parser import looks_like_autonomous_up_command
+from koru.autonomous_processes import ExistingAutonomousProcess, ExistingManagedProcess
 from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
 
@@ -45,7 +47,6 @@ def test_effective_flags_matrix() -> None:
     assert autonomous_env_mod.effective_ticket_source_flags("queue") == (False, False)
     assert autonomous_env_mod.effective_ticket_source_flags("scan") == (True, False)
     assert autonomous_env_mod.effective_ticket_source_flags("all") == (True, True)
-    assert autonomous_mod._effective_flags("queue") == (False, False)
 
 
 def test_scan_after_idle_queue_runs_scan_when_queue_idle(tmp_path, monkeypatch) -> None:
@@ -477,13 +478,13 @@ def test_autonomous_environ_doctor_probe_pass_summary(tmp_path, monkeypatch) -> 
 
 
 def test_looks_like_autonomous_matches_koru_cli_auto() -> None:
-    assert autonomous_mod._looks_like_autonomous_up_command(
+    assert looks_like_autonomous_up_command(
         "python3 -m koru.cli auto --project /tmp/x",
     )
 
 
 def test_looks_like_autonomous_matches_koru_autonomous_regex() -> None:
-    assert autonomous_mod._looks_like_autonomous_up_command(
+    assert looks_like_autonomous_up_command(
         "python3 -m koru.cli autonomous up --project /tmp",
     )
 
@@ -804,7 +805,7 @@ def test_build_queue_command_omits_unsupported_all_queues_flag() -> None:
 
 def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) -> None:
     existing = [
-        autonomous_mod.ExistingAutonomousProcess(
+        ExistingAutonomousProcess(
             pid=99,
             command="python3 -m koru.cli auto --project " + str(tmp_path),
             cwd=tmp_path,
@@ -831,7 +832,7 @@ def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, mon
         autonomous_processes_mod,
         "_find_existing_autonomous_processes",
         lambda project: [
-            autonomous_mod.ExistingAutonomousProcess(
+            ExistingAutonomousProcess(
                 pid=123,
                 command="koru autonomous up --project " + str(tmp_path),
                 cwd=tmp_path,
@@ -851,7 +852,7 @@ def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, mon
 
 def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeypatch) -> None:
     existing = [
-        autonomous_mod.ExistingAutonomousProcess(
+        ExistingAutonomousProcess(
             pid=123,
             command="koru autonomous up --project " + str(tmp_path),
             cwd=tmp_path,
@@ -885,7 +886,7 @@ def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
     monkeypatch,
 ) -> None:
     wup = [
-        autonomous_mod.ExistingManagedProcess(
+        ExistingManagedProcess(
             pid=456,
             kind="wup-watch",
             command="wup watch " + str(tmp_path),
@@ -920,7 +921,7 @@ def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
         autonomous_processes_mod,
         "_find_existing_autonomous_processes",
         lambda project: [
-            autonomous_mod.ExistingAutonomousProcess(
+            ExistingAutonomousProcess(
                 pid=123,
                 command="koru autonomous up --project " + str(tmp_path),
                 cwd=tmp_path,

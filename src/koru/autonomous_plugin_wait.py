@@ -97,6 +97,7 @@ def force_reload_if_extension_host_stale(
     stdio_info: Any,
     detect_stale_extension_host: Any = plugin_runtime.detect_stale_extension_host,
     live_plugin_version: Any = plugin_runtime.live_plugin_version,
+    reload_retry_wait: Any = plugin_runtime.reload_retry_wait_seconds,
 ) -> None:
     """Reload IDE window when on-disk VSIX is newer than the running plugin."""
     stale, installed, live = detect_stale_extension_host(autopilot_ide, client)
@@ -119,7 +120,7 @@ def force_reload_if_extension_host_stale(
             fmt=args.emit_events,
         )
         return
-    retry_wait = max(wait_seconds, 30.0)
+    retry_wait = reload_retry_wait(wait_seconds)
     stdio_info(
         "koru autonomous: reload after VSIX install "
         f"({reload.method}) — czekam ponownie {retry_wait:.1f}s na świeży plugin…",
