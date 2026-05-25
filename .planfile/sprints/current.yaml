@@ -1129,7 +1129,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T14:48:40.997432Z'
+        finished_at: '2026-05-25T17:59:09.549689Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1165,6 +1165,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T14:48:41.013261+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T17:59:09.559409+00:00'
       id: STARTER-266
       inputs:
         api_headers: {}
@@ -1219,7 +1224,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T14:48:41.013214+00:00'
+      updated_at: '2026-05-25T17:59:09.559378+00:00'
     STARTER-267:
       blocked_by: []
       blocks: []
@@ -2032,7 +2037,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T17:50:10.960347Z'
+        finished_at: '2026-05-25T17:59:08.879354Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2075,6 +2080,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T17:50:10.977873+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T17:59:08.889123+00:00'
       id: STARTER-275
       inputs:
         api_headers: {}
@@ -2127,7 +2137,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T17:50:10.977841+00:00'
+      updated_at: '2026-05-25T17:59:08.889092+00:00'
     STARTER-276:
       blocked_by: []
       blocks: []
