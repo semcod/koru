@@ -45,6 +45,7 @@ Use one source of truth with three views:
 ```bash
 koru observe trace --ticket STARTER-277
 koru observe trace --corr cli-drive --format compact
+koru observe trace --corr cli-drive --format path
 koru observe trace --corr cli-drive --format dsl
 koru observe trace --corr cli-drive --format json
 ```
@@ -58,6 +59,12 @@ koru observe trace --corr cli-drive --format json
 `dsl` emits the full two-line record. `json` emits the canonical event
 projection for replay and tooling.
 
+`path` emits the shortest semantic axis:
+
+```text
+OBS intent(deliver_prompt_to_ide_chat) -> decision(plugin) -> phase(submit awaiting_ack) -> failure(autopilot_daemon_timeout) -> blocker(drive_failed) -> next(retry_next_cycle)
+```
+
 The dashboard exposes the same trace contract over HTTP:
 
 ```bash
@@ -69,4 +76,5 @@ The response contains:
 
 - `events`: canonical JSONL envelopes.
 - `compact`: terminal-ready semantic timeline lines.
+- `path`: one-line semantic axis for the selected trace.
 - `dsl`: replayable two-line DSL records.

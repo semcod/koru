@@ -20,7 +20,13 @@ from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
 from koru.autonomy.state import AutoloopState
-from koru.observability_events import emit_blocker, emit_next
+from koru.observability_events import (
+    emit_blocker,
+    emit_decision,
+    emit_failure,
+    emit_intent,
+    emit_next,
+)
 from koru.queue import QueueLoopResult
 
 
@@ -75,7 +81,17 @@ def _handle_autopilot_phase(
 
     if not enable_autopilot or client is None:
         return autopilot_status, autopilot_backend, autopilot_drive_kind
-    if plugin_status := _plugin_gate_status(client, autopilot_ide, cycle_telemetry, _hp):
+    if plugin_status := _plugin_gate_status(
+        project,
+        cycle,
+        queue_result,
+        client,
+        autopilot_ide,
+        drive_prompt,
+        submit,
+        cycle_telemetry,
+        _hp,
+    ):
         return plugin_status, None, None
     if conflict_status := _terminal_conflict_status(autopilot_ide, cycle_telemetry, _hp):
         return conflict_status, None, None
@@ -111,8 +127,13 @@ def _handle_autopilot_phase(
 
 
 def _plugin_gate_status(
+    project: Path,
+    cycle: int,
+    queue_result: QueueLoopResult,
     client: Any,
     autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
     cycle_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
 ) -> str | None:
@@ -133,6 +154,17 @@ def _plugin_gate_status(
     cycle_telemetry["autopilot_skipped_plugin_missing"] = True
     cycle_telemetry["autopilot_skipped_plugin_blocker"] = blocker
     cycle_telemetry["autopilot_skipped_plugin_missing_reason"] = plugin_reason
+    _emit_autopilot_preflight_skip(
+        project=project,
+        cycle=cycle,
+        queue_result=queue_result,
+        autopilot_ide=autopilot_ide,
+        drive_prompt=drive_prompt,
+        submit=submit,
+        blocker=blocker,
+        reason=plugin_reason,
+        next_action="reload_reconnect_plugin",
+    )
     return f"skipped({blocker})"
 
 
@@ -205,6 +237,75 @@ def _drive_autopilot_once(
         autopilot_ide=autopilot_ide,
     )
     return autopilot_status, autopilot_backend, autopilot_drive_kind
+
+
+def _emit_autopilot_preflight_skip(
+    *,
+    project: Path,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    blocker: str,
+    reason: str,
+    next_action: str,
+) -> None:
+    corr = f"auto-{cycle}-preflight"
+    ticket = _queue_loop_waiting_ticket_label(queue_result)
+    ticket_id = None if ticket == "-" else ticket
+    emit_intent(
+        project,
+        corr=corr,
+        cycle=cycle,
+        ticket=ticket_id,
+        goal="deliver_prompt_to_ide_chat",
+        target=autopilot_ide,
+        ide=autopilot_ide,
+        submit=submit,
+        require_plugin=_plugin_required_for_ide(autopilot_ide),
+        chars=len(drive_prompt or ""),
+    )
+    emit_decision(
+        project,
+        corr=corr,
+        cycle=cycle,
+        ticket=ticket_id,
+        name="preflight_plugin_gate",
+        chosen="skip",
+        because=blocker,
+        ide=autopilot_ide,
+        reason=reason,
+    )
+    emit_failure(
+        project,
+        corr=corr,
+        cycle=cycle,
+        ticket=ticket_id,
+        code=blocker,
+        message=reason,
+        ide=autopilot_ide,
+        verification="plugin_connected",
+    )
+    emit_blocker(
+        project,
+        corr=corr,
+        cycle=cycle,
+        ticket=ticket_id,
+        name=blocker,
+        because=reason,
+        ide=autopilot_ide,
+        status=f"skipped({blocker})",
+    )
+    emit_next(
+        project,
+        corr=corr,
+        cycle=cycle,
+        ticket=ticket_id,
+        action=next_action,
+        ide=autopilot_ide,
+        decision_kind="preflight_plugin_gate",
+    )
 
 
 def _emit_autopilot_observability_outcome(

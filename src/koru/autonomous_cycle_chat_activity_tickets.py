@@ -10,21 +10,153 @@ from __future__ import annotations
 
 import subprocess
 import time
+from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
 from koru.autonomous_cycle_chat_activity_config import (
+    chat_intake_ticket_enabled as _chat_intake_ticket_enabled,
     llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,
     llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,
     llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,
+    llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,
 )
 from koru.autonomous_cycle_chat_activity_text import (
     extract_needs_input_question as _extract_needs_input_question,
+    looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,
+    looks_like_explicit_intake_text as _looks_like_explicit_intake_text,
+    normalize_prompt_text as _normalize_prompt_text,
 )
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.tasks import create_nl_task
+
+
+def _recent_llm_reflection_summary(state: AutoloopState) -> str:
+    summary = str(getattr(state, "last_llm_reflection_summary", "") or "").strip()
+    if not summary:
+        return ""
+    ts_raw = getattr(state, "last_llm_reflection_ts", 0.0)
+    try:
+        ts = float(ts_raw or 0.0)
+    except (TypeError, ValueError):
+        ts = 0.0
+    if ts <= 0:
+        return ""
+    max_age = _llm_reflection_summary_max_age_seconds()
+    if max_age > 0 and (time.time() - ts) > max_age:
+        return ""
+    return summary
+
+
+def _waiting_ticket_has_chat_intake_label(
+    project: Path,
+    queue_result: QueueLoopResult,
+) -> bool:
+    try:
+        from koru.autonomous_cycle_skip_conditions import _waiting_ticket_has_label
+    except ImportError:
+        return False
+    return _waiting_ticket_has_label(project, queue_result, "autopilot-chat-intake")
+
+
+def _external_message_sent_text(
+    *,
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+) -> str:
+    last_driven = _normalize_prompt_text(str(getattr(state, "last_driven_prompt", "") or ""))
+    for event in reversed(recent_events):
+        if str(event.get("type") or "") != "message.sent":
+            continue
+        text = " ".join(str(event.get("text") or "").split()).strip()
+        if len(text) < 3:
+            continue
+        if _looks_like_autopilot_generated_prompt(text):
+            continue
+        if not _looks_like_explicit_intake_text(text):
+            continue
+        normalized = _normalize_prompt_text(text)
+        if last_driven and (normalized in last_driven or last_driven.startswith(normalized)):
+            continue
+        return text
+    return ""
+
+
+def _upsert_chat_intake_operator_ticket(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> str | None:
+    if not _chat_intake_ticket_enabled():
+        return None
+    if str(getattr(queue_result, "last_status", "") or "") != "waiting_input":
+        return None
+    if _waiting_ticket_has_chat_intake_label(project, queue_result):
+        return None
+
+    intake_text = _external_message_sent_text(state=state, recent_events=recent_events)
+    if not intake_text:
+        return None
+
+    waiting_ticket = _llm_needs_input_waiting_ticket(queue_result)
+    intake_hash = sha1(intake_text.encode("utf-8", errors="ignore")).hexdigest()[:16]
+    dedupe_key = f"autopilot:chat-intake:{intake_hash}"
+    title = "[OPERATOR] intake from IDE chat"
+    prompt = (
+        f"{title}\n\n"
+        + "A new external chat message was sent in IDE while the queue "
+        + "is blocked in waiting_input.\n"
+        + "Create/update a dedicated operator task from this intake "
+        + "instead of re-driving the old prompt.\n\n"
+        + f"Origin waiting ticket: {waiting_ticket}\n"
+        + f"Incoming intake:\n{intake_text}\n"
+    )
+    scaffold: dict[str, Any] = {
+        "title": title,
+        "executor_kind": "human",
+        "executor_mode": "interactive",
+        "labels": ["koru", "operator", "autopilot-chat-intake"],
+        "source_tool": "koru-autonomous-chat-intake",
+        "source_context": {
+            "signal": "chat_intake_message_sent",
+            "origin_waiting_ticket": waiting_ticket,
+            "dedupe_key": dedupe_key,
+            "intake_preview": intake_text[:200],
+        },
+    }
+    try:
+        from koru import autonomous_cycle as _cycle_mod
+
+        create_task = getattr(_cycle_mod, "create_nl_task", create_nl_task)
+        created = create_task(
+            project,
+            prompt,
+            queue_name="operator",
+            priority="high",
+            scaffold=scaffold,
+        )
+    except Exception as exc:
+        _hp(f"- chat intake: operator ticket upsert failed ({exc})")
+        return None
+
+    cycle_telemetry["autopilot_chat_intake_ticket"] = created.ticket_id
+    if getattr(created, "reused", False):
+        _hp(
+            "- chat intake: reused operator ticket "
+            f"{created.ticket_id} (waiting={waiting_ticket})",
+        )
+    else:
+        _hp(
+            "- chat intake: created operator ticket "
+            f"{created.ticket_id} (waiting={waiting_ticket})",
+        )
+    return created.ticket_id
 
 
 def _llm_needs_input_waiting_ticket(queue_result: QueueLoopResult) -> str:

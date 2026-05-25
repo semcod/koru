@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 from koru.cqrs.event_store import JsonlEventStore, StoredEvent, project_event_store_path
-from koru.observability_dsl import OBSERVABILITY_CONTEXT, KoruObsEvent
+from koru.observability_dsl import OBSERVABILITY_CONTEXT, KoruObsEvent, stored_event_to_compact_line
 
 DEFAULT_OBSERVABILITY_EVENT_FILE = "events/observability.jsonl"
 DEFAULT_OBSERVABILITY_DSL_FILE = "events/observability.dsl.log"
@@ -20,12 +21,26 @@ def observability_dsl_log_path(project: Path) -> Path:
     return project.resolve() / ".koru" / DEFAULT_OBSERVABILITY_DSL_FILE
 
 
+def observability_terminal_enabled() -> bool:
+    raw = os.environ.get("KORU_OBSERVABILITY_TERMINAL", "").strip().lower()
+    if raw:
+        return raw not in {"0", "false", "no", "off"}
+    from koru.activity_log import activity_enabled
+
+    return activity_enabled()
+
+
+def _emit_terminal_observability_line(stored: StoredEvent) -> None:
+    print(stored_event_to_compact_line(stored), file=sys.stderr, flush=True)
+
+
 def write_observability_event(
     event: KoruObsEvent,
     *,
     project: Path | None = None,
     store: JsonlEventStore | None = None,
     write_dsl_log: bool | None = None,
+    emit_terminal: bool | None = None,
 ) -> StoredEvent:
     """Append an observability event and optionally mirror it as DSL text."""
     active_project = (project or Path.cwd()).resolve()
@@ -48,6 +63,11 @@ def write_observability_event(
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(event.to_dsl() + "\n\n")
+    should_emit_terminal = (
+        observability_terminal_enabled() if emit_terminal is None else emit_terminal
+    )
+    if should_emit_terminal:
+        _emit_terminal_observability_line(stored)
     return stored
 
 
@@ -56,6 +76,7 @@ def try_write_observability_event(
     *,
     project: Path | None = None,
     write_dsl_log: bool | None = None,
+    emit_terminal: bool | None = None,
 ) -> StoredEvent | None:
     """Best-effort variant for daemon paths where observability must not break delivery."""
     try:
@@ -63,6 +84,7 @@ def try_write_observability_event(
             event,
             project=project,
             write_dsl_log=write_dsl_log,
+            emit_terminal=emit_terminal,
         )
     except OSError:
         return None
@@ -73,6 +95,7 @@ __all__ = [
     "DEFAULT_OBSERVABILITY_EVENT_FILE",
     "observability_dsl_log_path",
     "observability_event_store_path",
+    "observability_terminal_enabled",
     "try_write_observability_event",
     "write_observability_event",
 ]

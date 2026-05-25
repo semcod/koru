@@ -105,7 +105,7 @@ def build_observe_parser() -> argparse.ArgumentParser:
         if name == "trace":
             cmd.add_argument(
                 "--format",
-                choices=("compact", "dsl", "json"),
+                choices=("compact", "dsl", "json", "path"),
                 default="compact",
                 help="Trace output format (default: compact OBS lines).",
             )

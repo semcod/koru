@@ -8,6 +8,7 @@ from typing import Any
 from koru.cqrs.event_store import JsonlEventStore, StoredEvent
 from koru.observability_dsl import (
     OBSERVABILITY_CONTEXT,
+    render_observability_path,
     stored_event_to_compact_line,
     stored_event_to_dsl,
 )
@@ -38,6 +39,7 @@ def dashboard_observability_trace_payload(
             "ticket": ticket,
             "limit": limit,
         },
+        "path": render_observability_path(events),
         "events": [_stored_event_payload(event) for event in events],
         "compact": [stored_event_to_compact_line(event) for event in events],
         "dsl": [stored_event_to_dsl(event) for event in events],

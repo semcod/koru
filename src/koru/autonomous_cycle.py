@@ -302,9 +302,10 @@ def _heal_stale_socket() -> None:
         from koru.autopilot import default_socket_path
         from koru.ide_adapters.bridge import gc_stale_sockets_for_lane
 
+        import sys
         target = default_socket_path()
         for removed in gc_stale_sockets_for_lane(target):
-            print(f"koru autonomous: auto-healed stale socket {removed}")
+            print(f"koru autonomous: auto-healed stale socket {removed}", file=sys.stderr)
     except Exception:
         pass
 

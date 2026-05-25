@@ -389,9 +389,29 @@ def _post_remote_drive(handler: Any, _config: ServeConfig, body: dict[str, Any])
         handler._send_json({"error": "ide and text are required"}, status=400)
         return
     try:
+        project = handler._selected_project(body)
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    corr = str(body.get("corr") or body.get("ticket") or "dashboard-remote-drive").strip()
+    try:
         from koru.autopilot.client import AutopilotClient
+        from koru.control_commands import api_command
         from koruide.socket import default_socket_path
 
+        api_command(
+            project,
+            corr=corr,
+            method="POST",
+            path="/api/remote/drive",
+            body={
+                "ide": ide,
+                "text": text,
+                "require_plugin": require_plugin,
+                "corr": corr,
+            },
+            actor="dashboard",
+        )
         socket_path = default_socket_path()
         client = AutopilotClient(socket_path=socket_path, timeout=5.0)
         res = client.drive(ide=ide, text=text, require_plugin=require_plugin)

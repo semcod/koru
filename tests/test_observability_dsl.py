@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 
-from koru.autonomous_cycle_orchestrator import _emit_autopilot_observability_outcome
+from koru.autonomous_cycle_orchestrator import (
+    _emit_autopilot_observability_outcome,
+    _plugin_gate_status,
+)
 from koru.autopilot.cli_command import _action_trace
 from koru.control_commands import (
     api_command,
@@ -19,6 +22,7 @@ from koru.observability_dsl import (
     KoruObsEvent,
     parse_observability_dsl,
     render_compact_observability_line,
+    render_observability_path,
     stored_event_to_dsl,
 )
 from koru.observability_writer import (
@@ -56,7 +60,9 @@ def test_observability_dsl_roundtrips_event() -> None:
     assert 'message="daemon unreachable: timed out"' in event.to_dsl()
 
 
-def test_observability_writer_persists_jsonl_and_dsl_log(tmp_path) -> None:
+def test_observability_writer_persists_jsonl_dsl_log_and_terminal_compact(
+    tmp_path, capsys
+) -> None:
     event = KoruObsEvent(
         corr="cli-drive",
         component="autopilot",
@@ -80,6 +86,30 @@ def test_observability_writer_persists_jsonl_and_dsl_log(tmp_path) -> None:
 
     dsl_text = observability_dsl_log_path(tmp_path).read_text(encoding="utf-8")
     assert "decision because=plugin_connected chosen=plugin" in dsl_text
+    terminal = capsys.readouterr().err
+    assert "koru ▸ OBS:" in terminal
+    assert "decision" in terminal
+    assert "because=plugin_connected" in terminal
+    assert "chosen=plugin" in terminal
+
+
+def test_observability_writer_terminal_compact_can_be_disabled(
+    tmp_path, capsys, monkeypatch
+) -> None:
+    monkeypatch.setenv("KORU_OBSERVABILITY_TERMINAL", "0")
+
+    write_observability_event(
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autopilot",
+            kind="autopilot.intent",
+            data={"goal": "deliver_prompt_to_ide_chat"},
+        ),
+        project=tmp_path,
+        write_dsl_log=False,
+    )
+
+    assert capsys.readouterr().out == ""
 
 
 def test_stored_event_to_dsl_uses_store_timestamp(tmp_path) -> None:
@@ -116,12 +146,59 @@ def test_compact_observability_line_is_semantic_and_short() -> None:
         )
     )
 
-    assert line.startswith("[17:10:34] koru > OBS:")
+    assert line.startswith("[17:10:34] koru ▸ OBS:")
     assert "session=wayland" in line
     assert "ticket=STARTER-277" in line
     assert "failure code=autopilot_daemon_timeout" in line
     assert 'message="daemon unreachable: timed out"' in line
     assert "too noisy" not in line
+
+
+def test_observability_path_summarizes_trace_axis() -> None:
+    events = [
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autopilot",
+            kind="autopilot.intent",
+            data={"goal": "deliver_prompt_to_ide_chat"},
+        ),
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autopilot",
+            kind="autopilot.route.decision",
+            data={"chosen": "plugin"},
+        ),
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autopilot",
+            kind="autopilot.drive.phase",
+            data={"name": "submit", "status": "awaiting_ack"},
+        ),
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autopilot",
+            kind="autopilot.drive.failed",
+            data={"code": "autopilot_daemon_timeout"},
+        ),
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autonomy",
+            kind="autonomy.blocker",
+            data={"name": "drive_failed"},
+        ),
+        KoruObsEvent(
+            corr="cli-drive",
+            component="autonomy",
+            kind="autonomy.next",
+            data={"action": "retry_next_cycle"},
+        ),
+    ]
+
+    assert render_observability_path(events) == (
+        "OBS intent(deliver_prompt_to_ide_chat) -> decision(plugin) -> "
+        "phase(submit awaiting_ack) -> failure(autopilot_daemon_timeout) -> "
+        "blocker(drive_failed) -> next(retry_next_cycle)"
+    )
 
 
 def test_control_command_dsl_roundtrips_to_replay_plan(tmp_path) -> None:
@@ -193,6 +270,7 @@ def test_autopilot_trace_can_render_observability_dsl(tmp_path, capsys) -> None:
         ),
         project=tmp_path,
         write_dsl_log=False,
+        emit_terminal=False,
     )
 
     rc = _action_trace(Namespace(project=tmp_path, format="dsl", limit=10))
@@ -215,6 +293,7 @@ def test_observe_trace_renders_compact_timeline_with_filters(tmp_path, capsys) -
         ),
         project=tmp_path,
         write_dsl_log=False,
+        emit_terminal=False,
     )
     write_observability_event(
         KoruObsEvent(
@@ -227,6 +306,7 @@ def test_observe_trace_renders_compact_timeline_with_filters(tmp_path, capsys) -
         ),
         project=tmp_path,
         write_dsl_log=False,
+        emit_terminal=False,
     )
     write_observability_event(
         KoruObsEvent(
@@ -238,6 +318,7 @@ def test_observe_trace_renders_compact_timeline_with_filters(tmp_path, capsys) -
         ),
         project=tmp_path,
         write_dsl_log=False,
+        emit_terminal=False,
     )
 
     rc = observe_main(
@@ -257,6 +338,50 @@ def test_observe_trace_renders_compact_timeline_with_filters(tmp_path, capsys) -
     assert "intent goal=deliver_prompt_to_ide_chat target=vscodium chars=584" in out
     assert "next action=retry_next_cycle" in out
     assert "STARTER-999" not in out
+
+
+def test_observe_trace_renders_path_view(tmp_path, capsys) -> None:
+    write_observability_event(
+        KoruObsEvent(
+            corr="cli-drive",
+            ticket="STARTER-277",
+            component="autopilot",
+            kind="autopilot.intent",
+            data={"goal": "deliver_prompt_to_ide_chat"},
+        ),
+        project=tmp_path,
+        write_dsl_log=False,
+        emit_terminal=False,
+    )
+    write_observability_event(
+        KoruObsEvent(
+            corr="cli-drive",
+            ticket="STARTER-277",
+            component="autopilot",
+            kind="autopilot.drive.phase",
+            data={"name": "submit", "status": "awaiting_ack"},
+        ),
+        project=tmp_path,
+        write_dsl_log=False,
+        emit_terminal=False,
+    )
+
+    rc = observe_main(
+        [
+            "--project",
+            str(tmp_path),
+            "trace",
+            "--ticket",
+            "STARTER-277",
+            "--format",
+            "path",
+        ]
+    )
+
+    assert rc == 0
+    assert capsys.readouterr().out.strip() == (
+        "OBS intent(deliver_prompt_to_ide_chat) -> phase(submit awaiting_ack)"
+    )
 
 
 def test_autonomy_failed_drive_emits_blocker_and_next(tmp_path) -> None:
@@ -289,6 +414,54 @@ def test_autonomy_failed_drive_emits_blocker_and_next(tmp_path) -> None:
     assert rows[0]["payload"]["data"]["name"] == "drive_failed"
     assert rows[0]["payload"]["ticket"] == "STARTER-276"
     assert rows[1]["payload"]["data"]["action"] == "retry_next_cycle"
+
+
+def test_plugin_gate_skip_emits_semantic_observability_trace(tmp_path) -> None:
+    class _Client:
+        def status(self) -> dict[str, object]:
+            return {"plugins": []}
+
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-277"],
+        last_status="waiting_input",
+        last_message="",
+        last_ticket_id="STARTER-277",
+    )
+    messages: list[str] = []
+    telemetry: dict[str, object] = {}
+
+    status = _plugin_gate_status(
+        tmp_path,
+        736,
+        queue_result,
+        _Client(),
+        "vscodium",
+        "continue STARTER-277",
+        True,
+        telemetry,
+        messages.append,
+    )
+
+    rows = [
+        json.loads(raw)
+        for raw in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
+    ]
+    assert status == "skipped(plugin_not_connected)"
+    assert telemetry["autopilot_skipped_plugin_blocker"] == "plugin_not_connected"
+    assert [row["event_type"] for row in rows] == [
+        "autopilot.intent",
+        "autopilot.route.decision",
+        "autopilot.drive.failed",
+        "autonomy.blocker",
+        "autonomy.next",
+    ]
+    assert {row["payload"]["corr"] for row in rows} == {"auto-736-preflight"}
+    assert rows[0]["payload"]["ticket"] == "STARTER-277"
+    assert rows[2]["payload"]["data"]["code"] == "plugin_not_connected"
+    assert rows[4]["payload"]["data"]["action"] == "reload_reconnect_plugin"
 
 
 def test_control_commands_cover_api_shell_plugin_and_desktop_surfaces(tmp_path) -> None:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import shlex
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -154,12 +155,11 @@ def stored_event_to_dsl(event: StoredEvent) -> str:
 
 def render_compact_observability_line(event: KoruObsEvent) -> str:
     """Render one human-scannable terminal line for an observability event."""
-    parts = [
-        f"[{_compact_time(event.ts)}]",
-        "koru",
-        ">",
-        "OBS:",
-    ]
+    return f"[{_compact_time(event.ts)}] koru ▸ OBS: {render_compact_observability_message(event)}"
+
+
+def render_compact_observability_message(event: KoruObsEvent) -> str:
+    """Render the compact OBS payload without timestamp/log prefix."""
     meta: list[str] = []
     if event.session:
         meta.append(f"session={_quote(event.session)}")
@@ -175,11 +175,64 @@ def render_compact_observability_line(event: KoruObsEvent) -> str:
     for key, value in _compact_data(event).items():
         if value is not None:
             statement.append(f"{key}={_quote(value)}")
-    return " ".join([*parts, *meta, *statement])
+    return " ".join([*meta, *statement])
 
 
 def stored_event_to_compact_line(event: StoredEvent) -> str:
     return render_compact_observability_line(KoruObsEvent.from_stored_event(event))
+
+
+def render_observability_path(events: Iterable[KoruObsEvent | StoredEvent]) -> str:
+    """Render a one-line semantic path for a trace."""
+    steps = [_path_step(_as_obs_event(event)) for event in events]
+    visible = [step for step in steps if step]
+    if not visible:
+        return "OBS"
+    return "OBS " + " -> ".join(visible)
+
+
+def _as_obs_event(event: KoruObsEvent | StoredEvent) -> KoruObsEvent:
+    if isinstance(event, KoruObsEvent):
+        return event
+    return KoruObsEvent.from_stored_event(event)
+
+
+def _path_step(event: KoruObsEvent) -> str:
+    data = event.data
+    if event.kind == "control.command":
+        surface = str(data.get("surface") or "control")
+        operation = str(data.get("operation") or "").strip()
+        return f"command({surface} {operation})" if operation else f"command({surface})"
+    if event.kind == "autopilot.intent":
+        goal = str(data.get("goal") or "intent")
+        return f"intent({goal})"
+    if event.kind == "autopilot.route.decision":
+        chosen = data.get("chosen") or data.get("route") or data.get("transport")
+        return f"decision({chosen})" if chosen else "decision"
+    if event.kind == "autopilot.drive.requested":
+        name = str(data.get("name") or "drive")
+        return f"action({name})"
+    if event.kind == "autopilot.drive.phase":
+        name = str(data.get("name") or "phase")
+        status = str(data.get("status") or "").strip()
+        return f"phase({name} {status})" if status else f"phase({name})"
+    if event.kind == "autopilot.drive.verified":
+        name = str(data.get("name") or "submit")
+        status = str(data.get("status") or "ok")
+        return f"verify({name} {status})"
+    if event.kind == "autopilot.drive.failed":
+        code = str(data.get("code") or "failed")
+        return f"failure({code})"
+    if event.kind == "autonomy.blocker":
+        name = str(data.get("name") or "blocked")
+        return f"blocker({name})"
+    if event.kind == "autonomy.next":
+        action = str(data.get("action") or "next")
+        return f"next({action})"
+    if event.kind == "autonomy.summary":
+        status = str(data.get("status") or data.get("outcome") or "result")
+        return f"result({status})"
+    return ""
 
 
 def _compact_data(event: KoruObsEvent) -> dict[str, Any]:
@@ -305,7 +358,9 @@ __all__ = [
     "keyword_to_kind",
     "parse_observability_dsl",
     "render_compact_observability_line",
+    "render_compact_observability_message",
     "render_observability_dsl",
+    "render_observability_path",
     "stored_event_to_compact_line",
     "stored_event_to_dsl",
 ]

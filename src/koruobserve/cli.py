@@ -126,6 +126,7 @@ def _cmd_trace(args: argparse.Namespace) -> int:
     from koru.cqrs.event_store import JsonlEventStore
     from koru.observability_dsl import (
         OBSERVABILITY_CONTEXT,
+        render_observability_path,
         stored_event_to_compact_line,
         stored_event_to_dsl,
     )
@@ -165,6 +166,9 @@ def _cmd_trace(args: argparse.Namespace) -> int:
         return 0
     if not events:
         print(f"koru observe trace: no observability events for {project}")
+        return 0
+    if args.format == "path":
+        print(render_observability_path(events))
         return 0
     renderer = stored_event_to_dsl if args.format == "dsl" else stored_event_to_compact_line
     separator = "\n\n" if args.format == "dsl" else "\n"

@@ -438,10 +438,42 @@ class TestServe(unittest.TestCase):
         payload = json.loads(body)
         self.assertEqual(payload["count"], 2)
         self.assertEqual(payload["filters"]["ticket"], "STARTER-277")
+        self.assertEqual(
+            payload["path"],
+            "OBS intent(deliver_prompt_to_ide_chat) -> failure(autopilot_daemon_timeout)",
+        )
         self.assertIn("intent goal=deliver_prompt_to_ide_chat", payload["dsl"][0])
         self.assertIn("failure code=autopilot_daemon_timeout", payload["dsl"][1])
         self.assertIn("OBS:", payload["compact"][0])
         self.assertEqual(payload["events"][1]["event_type"], "autopilot.drive.failed")
+
+    def test_remote_drive_api_records_control_command(self) -> None:
+        with mock.patch("koru.autopilot.client.AutopilotClient") as client_cls:
+            client_cls.return_value.drive.return_value = {"delivered": True}
+
+            status, ctype, body = _post_json(
+                self.port,
+                "/api/remote/drive",
+                {
+                    "ide": "vscodium",
+                    "text": "continue STARTER-277",
+                    "require_plugin": True,
+                    "corr": "remote-drive-1",
+                },
+            )
+
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        self.assertTrue(json.loads(body)["ok"])
+        status, _, trace_body = _get(self.port, "/api/observe/trace?corr=remote-drive-1")
+        self.assertEqual(status, 200)
+        trace = json.loads(trace_body)
+        self.assertEqual(trace["count"], 1)
+        self.assertIn("command ", trace["dsl"][0])
+        self.assertEqual(trace["events"][0]["event_type"], "control.command")
+        data = trace["events"][0]["payload"]["data"]
+        self.assertEqual(data["surface"], "api")
+        self.assertEqual(data["operation"], "POST /api/remote/drive")
 
     def test_api_handoff_returns_markdown(self) -> None:
         status, ctype, body = _get(self.port, "/api/handoff")
