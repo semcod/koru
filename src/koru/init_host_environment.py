@@ -103,7 +103,9 @@ def _build_backend_steps(
     selected: str | None,
     groups: list[str],
 ) -> list[str]:
-    """Return backend-related next steps based on session type."""
+    """Return backend-related next steps based on the active OS strategy."""
+    from koruos import resolve_active_os_strategy
+
     steps: list[str] = []
     if not selected:
         steps.append(
@@ -111,7 +113,20 @@ def _build_backend_steps(
             "(see `automated_apt_suggestion` when on Debian/Ubuntu).",
         )
 
-    if session == "wayland":
+    os_strategy = resolve_active_os_strategy()
+    caps = os_strategy.capabilities()
+    steps.append(
+        f"Active OS strategy: {os_strategy.label} ({os_strategy.id}); "
+        f"keyboard={caps.keyboard_tool or '-'}; "
+        f"focus={','.join(caps.focus_methods) or '-'}",
+    )
+
+    if session == "wayland" or os_strategy.id == "linux-wayland":
+        if "integrated_terminal" in caps.focus_methods:
+            steps.append(
+                "Wayland: run `koru auto` from a terminal *inside* the IDE so "
+                "TERM_PROGRAM=vscode is set — Koru can reload without xdotool.",
+            )
         steps.append(
             "Wayland: GNOME/KDE often lack wtype's virtual-keyboard protocol — prefer ydotool "
             "(+ ydotoold, `input` group, full re-login) or the IDE extension.",
@@ -121,13 +136,13 @@ def _build_backend_steps(
                 "ydotool is on PATH but this login session is not in the `input` group — "
                 'run `sudo usermod -aG input "$USER"` then log out and back in.',
             )
-    elif session == "x11":
+    elif session == "x11" or os_strategy.id == "linux-x11":
         steps.append(
             "X11: `xdotool` is the usual keyboard path; optional OS injector uses "
             "`xclip`/`xsel`+Ctrl+V when available (see docs/autopilot-quickstart.md).",
         )
 
-    if session == "wayland" and shutil.which("wtype") and not shutil.which("ydotool"):
+    if session == "wayland" and caps.keyboard_tool == "wtype" and not shutil.which("ydotool"):
         steps.append(
             "If `wtype` fails with “virtual keyboard protocol”, switch to ydotool or the IDE "
             "extension — that error is compositor-side, not a broken wtype install.",

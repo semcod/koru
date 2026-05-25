@@ -272,6 +272,48 @@ def _check_detected_environment(project: Path) -> tuple[str, str]:
     return PASS, "; ".join(bits)
 
 
+def _detected_configuration_presence_bits(
+    *,
+    planfile_cfg: Path,
+    policy_cfg: Path,
+    pipeline_cfg: Path,
+) -> list[str]:
+    return [
+        f"planfile_config={'present' if planfile_cfg.is_file() else 'missing'}",
+        f"policy_yaml={'present' if policy_cfg.is_file() else 'missing'}",
+        f"koru_yaml={'present' if pipeline_cfg.is_file() else 'missing'}",
+    ]
+
+
+def _detected_configuration_json_bits(
+    *,
+    project: Path,
+    payload: dict[str, object],
+) -> tuple[str, list[str]]:
+    """Return (status, detail_bits) derived from .koru/project.json payload."""
+    status = PASS
+    bits: list[str] = []
+
+    schema = str(payload.get("schema", "")).strip()
+    declared_project = str(payload.get("project", "")).strip()
+    bits.append(f"koru_project_json=present(schema={schema or 'unknown'})")
+
+    if declared_project:
+        try:
+            if Path(declared_project).expanduser().resolve() != project.resolve():
+                status = WARN
+                bits.append("project_path_mismatch=true")
+        except OSError:
+            status = WARN
+            bits.append("project_path_mismatch=unknown")
+
+    if schema and schema != "koru.project/v1":
+        status = WARN
+        bits.append("schema_mismatch=true")
+
+    return status, bits
+
+
 def _check_detected_configuration(project: Path) -> tuple[str, str]:
     koru_project = project / ".koru" / "project.json"
     planfile_cfg = planfile_dir(project) / "config.yaml"
@@ -279,11 +321,11 @@ def _check_detected_configuration(project: Path) -> tuple[str, str]:
     pipeline_cfg = project_pipeline_path(project)
 
     status = PASS
-    detail_bits: list[str] = [
-        f"planfile_config={'present' if planfile_cfg.is_file() else 'missing'}",
-        f"policy_yaml={'present' if policy_cfg.is_file() else 'missing'}",
-        f"koru_yaml={'present' if pipeline_cfg.is_file() else 'missing'}",
-    ]
+    detail_bits = _detected_configuration_presence_bits(
+        planfile_cfg=planfile_cfg,
+        policy_cfg=policy_cfg,
+        pipeline_cfg=pipeline_cfg,
+    )
 
     if koru_project.is_file():
         try:
@@ -291,21 +333,13 @@ def _check_detected_configuration(project: Path) -> tuple[str, str]:
         except json.JSONDecodeError as exc:
             return FAIL, f".koru/project.json malformed JSON: {exc}"
 
-        schema = str(payload.get("schema", "")).strip()
-        declared_project = str(payload.get("project", "")).strip()
-        detail_bits.append(f"koru_project_json=present(schema={schema or 'unknown'})")
-
-        if declared_project:
-            try:
-                if Path(declared_project).expanduser().resolve() != project.resolve():
-                    status = WARN
-                    detail_bits.append("project_path_mismatch=true")
-            except OSError:
-                status = WARN
-                detail_bits.append("project_path_mismatch=unknown")
-        if schema and schema != "koru.project/v1":
-            status = WARN
-            detail_bits.append("schema_mismatch=true")
+        payload_status, payload_bits = _detected_configuration_json_bits(
+            project=project,
+            payload=payload,
+        )
+        detail_bits.extend(payload_bits)
+        if payload_status != PASS:
+            status = payload_status
     else:
         detail_bits.append("koru_project_json=missing")
         if planfile_cfg.is_file():
@@ -989,23 +1023,108 @@ def _build_chat_control_detail_bits(
     return detail_bits
 
 
-def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
+def _chat_control_context(
+    project: Path,
+) -> tuple[str, Path, list[str], list[str], str | None, str | None]:
+    """Return normalized context for chat-control checks.
+
+    Returns:
+        selected, debug_log_path, relevant_debug_lines, selected_activity_lines,
+        early_status, early_detail
+    """
     try:
         selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
     except OSError as exc:
         path = _autopilot_debug_log_path()
-        return WARN, f"cannot read {path}: {exc}"
+        return "", path, [], [], WARN, f"cannot read {path}: {exc}"
+
     if skip_reason:
-        return SKIP, skip_reason
+        return selected, path, relevant, [], SKIP, skip_reason
     if not relevant:
-        return WARN, f"{path}: no recent chat-control entries for ide={selected}"
+        return (
+            selected,
+            path,
+            relevant,
+            [],
+            WARN,
+            f"{path}: no recent chat-control entries for ide={selected}",
+        )
 
     activity = [
         line
         for line in _read_recent_autopilot_activity_lines(project)
         if selected and _activity_line_mentions_selected(line, selected)
     ]
-    daemon_successes, daemon_failures, last_activity_success_index, last_activity_failure_index = _count_daemon_metrics(activity)
+    return selected, path, relevant, activity, None, None
+
+
+def _chat_control_has_failures(chat_metrics: dict[str, int]) -> bool:
+    return any(
+        (
+            chat_metrics["fast_send_errors"],
+            chat_metrics["paste_failures"],
+            chat_metrics["focus_rejections"],
+            chat_metrics["paste_rejections"],
+            chat_metrics["input_refusals"],
+        )
+    )
+
+
+def _chat_control_recovered_after_retry(
+    *,
+    last_success_index: int,
+    last_failure_index: int,
+    last_activity_success_index: int,
+    last_activity_failure_index: int,
+) -> bool:
+    return (
+        last_success_index > last_failure_index >= 0
+        or last_activity_success_index > last_activity_failure_index
+    )
+
+
+def _chat_control_result(
+    *,
+    detail_bits: list[str],
+    command_missing_latest: bool,
+    chat_metrics: dict[str, int],
+    daemon_successes: int,
+    last_success_index: int,
+    last_failure_index: int,
+    last_activity_success_index: int,
+    last_activity_failure_index: int,
+) -> tuple[str, str]:
+    if command_missing_latest:
+        return WARN, "; ".join(detail_bits + ["native chat command unavailable"])
+
+    if _chat_control_has_failures(chat_metrics):
+        if _chat_control_recovered_after_retry(
+            last_success_index=last_success_index,
+            last_failure_index=last_failure_index,
+            last_activity_success_index=last_activity_success_index,
+            last_activity_failure_index=last_activity_failure_index,
+        ):
+            detail_bits.append("recovered_after_retry=true")
+        else:
+            detail_bits.append("latest_chat_control_failure=true")
+        return WARN, "; ".join(detail_bits)
+
+    if chat_metrics["send_successes"] or daemon_successes:
+        return PASS, "; ".join(detail_bits + ["chat_control=stable"])
+    return WARN, "; ".join(detail_bits + ["no recent paste/submit success observed"])
+
+
+def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
+    selected, _path, relevant, activity, early_status, early_detail = _chat_control_context(project)
+    if early_status is not None and early_detail is not None:
+        return early_status, early_detail
+
+    (
+        daemon_successes,
+        daemon_failures,
+        last_activity_success_index,
+        last_activity_failure_index,
+    ) = _count_daemon_metrics(activity)
     chat_metrics = _count_chat_control_metrics(relevant)
     command_available_index, command_missing_index = _calculate_command_indices(relevant)
     last_success_index, last_failure_index = _calculate_success_failure_indices(relevant)
@@ -1025,29 +1144,16 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         command_available,
         command_missing_index,
     )
-
-    if command_missing_latest:
-        return WARN, "; ".join(detail_bits + ["native chat command unavailable"])
-    if any(
-        (
-            chat_metrics["fast_send_errors"],
-            chat_metrics["paste_failures"],
-            chat_metrics["focus_rejections"],
-            chat_metrics["paste_rejections"],
-            chat_metrics["input_refusals"],
-        )
-    ):
-        if (
-            last_success_index > last_failure_index >= 0
-            or last_activity_success_index > last_activity_failure_index
-        ):
-            detail_bits.append("recovered_after_retry=true")
-        else:
-            detail_bits.append("latest_chat_control_failure=true")
-        return WARN, "; ".join(detail_bits)
-    if chat_metrics["send_successes"] or daemon_successes:
-        return PASS, "; ".join(detail_bits + ["chat_control=stable"])
-    return WARN, "; ".join(detail_bits + ["no recent paste/submit success observed"])
+    return _chat_control_result(
+        detail_bits=detail_bits,
+        command_missing_latest=command_missing_latest,
+        chat_metrics=chat_metrics,
+        daemon_successes=daemon_successes,
+        last_success_index=last_success_index,
+        last_failure_index=last_failure_index,
+        last_activity_success_index=last_activity_success_index,
+        last_activity_failure_index=last_activity_failure_index,
+    )
 
 
 def _windsurf_chat_column_indexes(relevant: list[str]) -> dict[str, list[int]]:
@@ -1214,6 +1320,71 @@ def _plugin_debug_log_tail_for_doctor(limit: int) -> tuple[Path, list[str], str 
     return path, relevant[-limit:], None
 
 
+def _plugin_console_logs_daemon_result(
+    *,
+    selected: str,
+    socket_path: Path,
+    selected_logs: list[dict[str, object]],
+    limit: int,
+) -> tuple[str, str] | None:
+    if not selected_logs:
+        return None
+    tail = selected_logs[-limit:]
+    latest = " | ".join(_compact_plugin_console_entry(entry) for entry in tail)
+    return PASS, (
+        f"ide={selected}; source=daemon; socket={socket_path}; "
+        f"entries={len(selected_logs)}; latest={latest}"
+    )
+
+
+def _plugin_console_logs_debug_tail_result(
+    *,
+    selected: str,
+    socket_path: Path,
+    debug_path: Path,
+    debug_tail: list[str],
+    daemon_error: str | None,
+) -> tuple[str, str] | None:
+    if not debug_tail:
+        return None
+    latest = " | ".join(re.sub(r"\s+", " ", line).strip() for line in debug_tail)
+    offline_after_stop = _plugin_debug_tail_is_daemon_offline_noise(
+        debug_tail,
+        selected=selected,
+        socket_path=socket_path,
+        daemon_error=daemon_error,
+    )
+    status = PASS if offline_after_stop or not daemon_error else WARN
+    reason = f"; daemon_status_error={daemon_error}" if daemon_error else ""
+    if offline_after_stop:
+        reason = f"; daemon_offline_expected_after_stop=true{reason}"
+    return status, (
+        f"ide={selected}; source=plugin_debug_log; path={debug_path}; "
+        f"entries={len(debug_tail)}; latest={latest}{reason}"
+    )
+
+
+def _plugin_console_logs_empty_result(
+    *,
+    selected: str,
+    socket_path: Path,
+    debug_path: Path,
+    daemon_error: str | None,
+    debug_error: str | None,
+) -> tuple[str, str]:
+    if daemon_error:
+        return WARN, f"ide={selected}; socket={socket_path}; daemon_status_error={daemon_error}"
+    if debug_error:
+        return WARN, (
+            f"ide={selected}; source=daemon; entries=0; debug_log={debug_path}; "
+            f"debug_error={debug_error}"
+        )
+    return WARN, (
+        f"ide={selected}; source=daemon; socket={socket_path}; "
+        "no console logs received yet"
+    )
+
+
 def _check_plugin_console_logs(_project: Path) -> tuple[str, str]:
     """Show recent extension-host console logs forwarded by the plugin."""
     selected = _selected_autopilot_ide()
@@ -1227,41 +1398,32 @@ def _check_plugin_console_logs(_project: Path) -> tuple[str, str]:
         for entry in daemon_logs
         if _plugin_console_entry_matches_selected(entry, selected)
     ]
-    if selected_logs:
-        tail = selected_logs[-limit:]
-        latest = " | ".join(_compact_plugin_console_entry(entry) for entry in tail)
-        return PASS, (
-            f"ide={selected}; source=daemon; socket={socket_path}; "
-            f"entries={len(selected_logs)}; latest={latest}"
-        )
+    daemon_result = _plugin_console_logs_daemon_result(
+        selected=selected,
+        socket_path=socket_path,
+        selected_logs=selected_logs,
+        limit=limit,
+    )
+    if daemon_result is not None:
+        return daemon_result
 
     debug_path, debug_tail, debug_error = _plugin_debug_log_tail_for_doctor(limit)
-    if debug_tail:
-        latest = " | ".join(re.sub(r"\s+", " ", line).strip() for line in debug_tail)
-        offline_after_stop = _plugin_debug_tail_is_daemon_offline_noise(
-            debug_tail,
-            selected=selected,
-            socket_path=socket_path,
-            daemon_error=daemon_error,
-        )
-        status = PASS if offline_after_stop or not daemon_error else WARN
-        reason = f"; daemon_status_error={daemon_error}" if daemon_error else ""
-        if offline_after_stop:
-            reason = f"; daemon_offline_expected_after_stop=true{reason}"
-        return status, (
-            f"ide={selected}; source=plugin_debug_log; path={debug_path}; "
-            f"entries={len(debug_tail)}; latest={latest}{reason}"
-        )
-    if daemon_error:
-        return WARN, f"ide={selected}; socket={socket_path}; daemon_status_error={daemon_error}"
-    if debug_error:
-        return WARN, (
-            f"ide={selected}; source=daemon; entries=0; debug_log={debug_path}; "
-            f"debug_error={debug_error}"
-        )
-    return WARN, (
-        f"ide={selected}; source=daemon; socket={socket_path}; "
-        "no console logs received yet"
+    debug_result = _plugin_console_logs_debug_tail_result(
+        selected=selected,
+        socket_path=socket_path,
+        debug_path=debug_path,
+        debug_tail=debug_tail,
+        daemon_error=daemon_error,
+    )
+    if debug_result is not None:
+        return debug_result
+
+    return _plugin_console_logs_empty_result(
+        selected=selected,
+        socket_path=socket_path,
+        debug_path=debug_path,
+        daemon_error=daemon_error,
+        debug_error=debug_error,
     )
 
 

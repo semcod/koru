@@ -270,6 +270,45 @@ def _drive_via_keyboard(
     """Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim."""
     ide_arg = ide_pref if ide_pref else "auto"
     daemon.log(f"drive_via_keyboard: ide_arg={ide_arg}, chars={len(text)}, submit={submit}")
+    target_id, profile_id, target, preview = _resolve_keyboard_drive_selection(
+        daemon=daemon,
+        ide_arg=ide_arg,
+        ide_pref=ide_pref,
+        text=text,
+    )
+    handled = _drive_via_os_injector_backend(
+        daemon=daemon,
+        client=client,
+        msg=msg,
+        target_id=target_id,
+        profile_id=profile_id,
+        text=text,
+        submit=submit,
+        preview=preview,
+        target=target,
+    )
+    if handled:
+        return
+
+    _drive_via_keyboard_backend(
+        daemon=daemon,
+        client=client,
+        msg=msg,
+        target_id=target_id,
+        text=text,
+        submit=submit,
+        preview=preview,
+        target=target,
+    )
+
+
+def _resolve_keyboard_drive_selection(
+    *,
+    daemon: Any,
+    ide_arg: str,
+    ide_pref: str | None,
+    text: str,
+) -> tuple[str, str, Any, str]:
     target_id, profile_id, selection = resolve_drive_target(
         ide_arg,
         None,
@@ -285,46 +324,74 @@ def _drive_via_keyboard(
         daemon.log(f"drive auto-selected {profile_id} ({selection})")
     preview = text.replace("\n", " ")[:100]
     target = pick_target(detect_running_ides(), prefer=ide_pref)
+    return target_id, profile_id, target, preview
+
+
+def _drive_via_os_injector_backend(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    target_id: str,
+    profile_id: str,
+    text: str,
+    submit: bool,
+    preview: str,
+    target: Any,
+) -> bool:
     try:
         # Call via the AutopilotDaemon instance method (which proxies back
         # to ``_try_os_injector_drive`` here) so tests can
         # ``monkeypatch.setattr(daemon, "_try_os_injector_drive", fake)``.
         os_res = daemon._try_os_injector_drive(profile_id, text, submit)
     except InjectorError as exc:
-        os_res = None
         daemon.log(f"drive → os_injector/{profile_id} failed; trying keyboard fallback: {exc}")
-    if os_res is not None:
-        daemon.log(
-            f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
-            f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
-            f"«{preview}»",
-        )
-        info: dict[str, Any] = {
-            "backend": str(os_res.get("backend", "os_injector")),
-            "submitted": bool(os_res.get("submitted", submit)),
-        }
-        if os_res.get("dry_run"):
-            info["dry_run"] = True
-        tid = os_res.get("tool_id")
-        if isinstance(tid, str):
-            info["tool_id"] = tid
-        if target is not None:
-            info["ide"] = target.to_dict()
-        daemon._send(client, ack(msg.id or "", info=info).encode())
-        daemon.log(
-            f"drive → {target_id} via {info['backend']}"
-            f" ({len(text)} chars, submit={submit})",
-        )
-        daemon.audit.record(
-            "drive",
-            ide=target_id,
-            backend=str(info["backend"]),
-            chars=len(text),
-            submit=submit,
-            ok=True,
-        )
-        return
+        return False
+    if os_res is None:
+        return False
+    daemon.log(
+        f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
+        f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
+        f"«{preview}»",
+    )
+    info: dict[str, Any] = {
+        "backend": str(os_res.get("backend", "os_injector")),
+        "submitted": bool(os_res.get("submitted", submit)),
+    }
+    if os_res.get("dry_run"):
+        info["dry_run"] = True
+    tid = os_res.get("tool_id")
+    if isinstance(tid, str):
+        info["tool_id"] = tid
+    if target is not None:
+        info["ide"] = target.to_dict()
+    daemon._send(client, ack(msg.id or "", info=info).encode())
+    daemon.log(
+        f"drive → {target_id} via {info['backend']}"
+        f" ({len(text)} chars, submit={submit})",
+    )
+    daemon.audit.record(
+        "drive",
+        ide=target_id,
+        backend=str(info["backend"]),
+        chars=len(text),
+        submit=submit,
+        ok=True,
+    )
+    return True
 
+
+def _drive_via_keyboard_backend(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    target_id: str,
+    text: str,
+    submit: bool,
+    preview: str,
+    target: Any,
+) -> None:
     backend = daemon.injector.select_backend()
     daemon.log(
         f"drive → keyboard/{target_id}: {backend or 'no-backend'} "

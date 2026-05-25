@@ -944,20 +944,16 @@ def _handle_autonomous_interrupt(
     )
 
 
-def _prepare_autonomous_up_context(
-    args: argparse.Namespace,
-) -> tuple[AutonomousUpContext | None, int]:
-    previous_stdio_format_env, strict_env = _setup_autonomous_env_vars()
-    correlation_id, project, guard_rc = _setup_autonomous_session(args)
-    if guard_rc:
-        return None, guard_rc
-
+def _prepare_autonomous_startup_probe(args: argparse.Namespace, project: Path) -> object:
     install_koru_agent_coauthor_hook(
         project,
         stdio_info=_stdio_info,
         stdio_format=args.emit_events,
     )
-    startup_probe = _build_and_log_startup_probe(args, project)
+    return _build_and_log_startup_probe(args, project)
+
+
+def _autonomous_context_resource_kwargs(resources: tuple[object, ...]) -> dict[str, object]:
     (
         client,
         daemon,
@@ -973,13 +969,42 @@ def _prepare_autonomous_up_context(
         diagnostic_state_dir,
         wup_process,
         auto_pipeline_state,
-    ) = _autonomous_resources.setup_autonomous_resources(
+    ) = resources
+    return {
+        "client": client,
+        "daemon": daemon,
+        "thread": thread,
+        "socket_path": socket_path,
+        "autopilot_socket_observed_at_boot": autopilot_socket_observed_at_boot,
+        "enable_scan": enable_scan,
+        "queue_name": queue_name,
+        "autopilot_ide": autopilot_ide,
+        "loop_state": loop_state,
+        "checkpoint_path": checkpoint_path,
+        "restored_cycle": restored_cycle,
+        "diagnostic_state_dir": diagnostic_state_dir,
+        "wup_process": wup_process,
+        "auto_pipeline_state": auto_pipeline_state,
+    }
+
+
+def _prepare_autonomous_up_context(
+    args: argparse.Namespace,
+) -> tuple[AutonomousUpContext | None, int]:
+    previous_stdio_format_env, strict_env = _setup_autonomous_env_vars()
+    correlation_id, project, guard_rc = _setup_autonomous_session(args)
+    if guard_rc:
+        return None, guard_rc
+
+    startup_probe = _prepare_autonomous_startup_probe(args, project)
+    resources = _autonomous_resources.setup_autonomous_resources(
         args,
         project,
         enable_strict_plugin_policy=_enable_autonomous_strict_plugin_policy,
         setup_autopilot_daemon=_setup_autopilot_daemon,
         load_checkpoint=_load_loop_checkpoint,
     )
+    context_kwargs = _autonomous_context_resource_kwargs(resources)
     return AutonomousUpContext(
         args=args,
         previous_stdio_format_env=previous_stdio_format_env,
@@ -987,20 +1012,7 @@ def _prepare_autonomous_up_context(
         correlation_id=correlation_id,
         project=project,
         startup_probe=startup_probe,
-        client=client,
-        daemon=daemon,
-        thread=thread,
-        socket_path=socket_path,
-        autopilot_socket_observed_at_boot=autopilot_socket_observed_at_boot,
-        enable_scan=enable_scan,
-        queue_name=queue_name,
-        autopilot_ide=autopilot_ide,
-        loop_state=loop_state,
-        checkpoint_path=checkpoint_path,
-        restored_cycle=restored_cycle,
-        diagnostic_state_dir=diagnostic_state_dir,
-        wup_process=wup_process,
-        auto_pipeline_state=auto_pipeline_state,
+        **context_kwargs,
     ), 0
 
 

@@ -171,6 +171,38 @@ def _read_yaml(path: Path) -> dict[str, Any]:
         return {}
 
 
+def _saved_component_ids(saved_components: object) -> list[str]:
+    ids = list(_DEFAULT_COMPONENTS.keys())
+    if isinstance(saved_components, dict):
+        for extra_id in saved_components:
+            if extra_id not in ids:
+                ids.append(extra_id)
+    return ids
+
+
+def _component_defaults(cid: str, override: object) -> dict[str, Any]:
+    defaults = dict(_DEFAULT_COMPONENTS.get(cid, {"enabled": True, "kind": "cli", "role": ""}))
+    if isinstance(override, dict):
+        defaults.update({k: v for k, v in override.items() if k in {"enabled", "kind", "role"}})
+    defaults["id"] = cid
+    return defaults
+
+
+def _apply_detected_tool(component: dict[str, Any], detected_tool: Any | None) -> None:
+    if detected_tool is not None:
+        component["available"] = bool(detected_tool.available)
+        component["via"] = detected_tool.via
+        component["command"] = detected_tool.command
+        component["config_present"] = bool(detected_tool.config_present)
+        component["command_hint"] = detected_tool.command_hint
+        return
+    component.setdefault("available", False)
+    component.setdefault("via", "missing")
+    component.setdefault("command", None)
+    component.setdefault("config_present", False)
+    component.setdefault("command_hint", "")
+
+
 def _merge_components(saved: dict[str, Any], detected: list[Any]) -> dict[str, dict[str, Any]]:
     """Return components dict with `enabled` merged from saved overrides and
     `available` / `via` / `command` / `config_present` filled from live
@@ -179,33 +211,12 @@ def _merge_components(saved: dict[str, Any], detected: list[Any]) -> dict[str, d
     """
     detected_by_id = {tool.id: tool for tool in detected}
     merged: dict[str, dict[str, Any]] = {}
-    ids = list(_DEFAULT_COMPONENTS.keys())
-    # Include any extra ids saved by the user.
     saved_components = saved.get("components") or {}
-    if isinstance(saved_components, dict):
-        for extra_id in saved_components:
-            if extra_id not in ids:
-                ids.append(extra_id)
-    for cid in ids:
-        defaults = dict(_DEFAULT_COMPONENTS.get(cid, {"enabled": True, "kind": "cli", "role": ""}))
+    for cid in _saved_component_ids(saved_components):
         override = saved_components.get(cid) if isinstance(saved_components, dict) else None
-        if isinstance(override, dict):
-            defaults.update({k: v for k, v in override.items() if k in {"enabled", "kind", "role"}})
-        detected_tool = detected_by_id.get(cid)
-        defaults["id"] = cid
-        if detected_tool is not None:
-            defaults["available"] = bool(detected_tool.available)
-            defaults["via"] = detected_tool.via
-            defaults["command"] = detected_tool.command
-            defaults["config_present"] = bool(detected_tool.config_present)
-            defaults["command_hint"] = detected_tool.command_hint
-        else:
-            defaults.setdefault("available", False)
-            defaults.setdefault("via", "missing")
-            defaults.setdefault("command", None)
-            defaults.setdefault("config_present", False)
-            defaults.setdefault("command_hint", "")
-        merged[cid] = defaults
+        component = _component_defaults(cid, override)
+        _apply_detected_tool(component, detected_by_id.get(cid))
+        merged[cid] = component
     return merged
 
 

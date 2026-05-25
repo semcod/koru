@@ -134,6 +134,150 @@ def _read_planfile_tickets_output(artifacts_dir: Path) -> tuple[list[str], list[
     return applied, skipped
 
 
+def _read_planfile_ticket_items(artifacts_dir: Path) -> tuple[str, list[dict[str, Any]]]:
+    path = artifacts_dir / "planfile-tickets.yaml"
+    if not path.is_file():
+        return DEFAULT_SOURCE, []
+    try:
+        import yaml  # local import; yaml is already a runtime dep of koru
+
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, Exception):  # noqa: BLE001 - best-effort
+        return DEFAULT_SOURCE, []
+    if not isinstance(data, dict):
+        return DEFAULT_SOURCE, []
+    source = str(data.get("source") or DEFAULT_SOURCE).strip() or DEFAULT_SOURCE
+    raw_tickets = data.get("tickets")
+    if not isinstance(raw_tickets, list):
+        return source, []
+    return source, [item for item in raw_tickets if isinstance(item, dict)]
+
+
+def _ticket_item_text(item: dict[str, Any]) -> str:
+    description = str(item.get("description") or "").strip()
+    return description or str(item.get("title") or "code2llm discovery ticket").strip()
+
+
+def _ticket_item_match_key(item: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
+    title = str(item.get("title") or "").strip()
+    files = tuple(str(v) for v in (item.get("files") or []) if str(v).strip())
+    return title, files
+
+
+def _backfill_existing_dedupe_keys(
+    project: Path,
+    artifacts_dir: Path,
+    *,
+    source: str,
+    sprint: str,
+) -> int:
+    try:
+        import yaml
+
+        _file_source, items = _read_planfile_ticket_items(artifacts_dir)
+        by_key = {_ticket_item_match_key(item): item for item in items}
+        if not by_key:
+            return 0
+        sprint_path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, Exception):  # noqa: BLE001 - best-effort backfill
+        return 0
+    sprint_data = data.get("sprint") if isinstance(data, dict) else None
+    tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
+    if not isinstance(tickets, dict):
+        return 0
+    changed = 0
+    for ticket in tickets.values():
+        if not isinstance(ticket, dict):
+            continue
+        ticket_source = ticket.get("source")
+        if not isinstance(ticket_source, dict) or ticket_source.get("tool") != source:
+            continue
+        context = ticket_source.get("context")
+        if isinstance(context, dict) and context.get("dedupe_key"):
+            continue
+        key = (
+            str(ticket.get("name") or "").strip(),
+            tuple(str(v) for v in (ticket.get("files") or []) if str(v).strip()),
+        )
+        item = by_key.get(key)
+        if not item:
+            continue
+        dedupe_key = str(item.get("dedupe_key") or "").strip()
+        if not dedupe_key:
+            continue
+        new_context = dict(context) if isinstance(context, dict) else {}
+        signal = str(item.get("signal") or "").strip()
+        if signal:
+            new_context.setdefault("signal", signal)
+        new_context["dedupe_key"] = dedupe_key
+        ticket_source["context"] = new_context
+        changed += 1
+    if changed:
+        try:
+            sprint_path.write_text(
+                yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
+                encoding="utf-8",
+            )
+        except OSError:
+            return 0
+    return changed
+
+
+def _apply_planfile_ticket_items(
+    project: Path,
+    artifacts_dir: Path,
+    *,
+    source: str,
+    sprint: str,
+    limit: int | None,
+) -> tuple[list[str], list[str]]:
+    from koru.tasks import create_nl_task
+
+    _backfill_existing_dedupe_keys(project, artifacts_dir, source=source, sprint=sprint)
+    _file_source, items = _read_planfile_ticket_items(artifacts_dir)
+    if not items:
+        return _read_planfile_tickets_output(artifacts_dir)
+    applied: list[str] = []
+    skipped: list[str] = []
+    selected = items[:limit] if limit is not None and limit > 0 else items
+    for item in selected:
+        title = str(item.get("title") or "code2llm discovery ticket").strip()
+        dedupe_key = str(item.get("dedupe_key") or "").strip()
+        signal = str(item.get("signal") or "").strip()
+        source_context: dict[str, Any] = {}
+        if signal:
+            source_context["signal"] = signal
+        if dedupe_key:
+            source_context["dedupe_key"] = dedupe_key
+        files = [str(v) for v in (item.get("files") or []) if str(v).strip()]
+        labels = [str(v) for v in (item.get("labels") or []) if str(v).strip()]
+        try:
+            created = create_nl_task(
+                project,
+                _ticket_item_text(item),
+                sprint=sprint,
+                priority=str(item.get("priority") or "normal"),
+                scaffold={
+                    "title": title,
+                    "labels": labels,
+                    "files": files,
+                    "source_tool": source,
+                    "source_context": source_context,
+                    "executor_kind": "human",
+                    "executor_mode": "interactive",
+                },
+            )
+        except (OSError, ValueError) as exc:
+            skipped.append(f"{title}: {exc}")
+            continue
+        if getattr(created, "reused", False):
+            skipped.append(title)
+        else:
+            applied.append(title)
+    return applied, skipped
+
+
 def run_code2llm_discovery(
     project: Path,
     *,
@@ -167,8 +311,16 @@ def run_code2llm_discovery(
         outcome.skipped_reason = (
             f"artifacts younger than {stale_minutes:.0f}m in {artifacts_dir}"
         )
-        # Still apply planfile tickets if a fresh ticket file is present.
-        applied, skipped = _read_planfile_tickets_output(artifacts_dir)
+        if apply_planfile:
+            applied, skipped = _apply_planfile_ticket_items(
+                project,
+                artifacts_dir,
+                source=planfile_source,
+                sprint=planfile_sprint,
+                limit=planfile_limit,
+            )
+        else:
+            applied, skipped = _read_planfile_tickets_output(artifacts_dir)
         outcome.applied_titles = applied
         outcome.skipped_titles = skipped
         return outcome
@@ -179,7 +331,7 @@ def run_code2llm_discovery(
         output_dir=artifacts_dir,
         formats=formats,
         excludes=excludes,
-        apply_planfile=apply_planfile,
+        apply_planfile=False,
         planfile_source=planfile_source,
         planfile_sprint=planfile_sprint,
         planfile_limit=planfile_limit,
@@ -205,7 +357,16 @@ def run_code2llm_discovery(
         outcome.error = outcome.error[0] if outcome.error else f"rc={result.returncode}"
         return outcome
 
-    applied, skipped = _read_planfile_tickets_output(artifacts_dir)
+    if apply_planfile:
+        applied, skipped = _apply_planfile_ticket_items(
+            project,
+            artifacts_dir,
+            source=planfile_source,
+            sprint=planfile_sprint,
+            limit=planfile_limit,
+        )
+    else:
+        applied, skipped = _read_planfile_tickets_output(artifacts_dir)
     outcome.applied_titles = applied
     outcome.skipped_titles = skipped
     return outcome

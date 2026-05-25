@@ -482,6 +482,121 @@ def _evidence_label(
     return ", ".join(parts) if parts else "-"
 
 
+_PLUGIN_SKIP_CODES = frozenset(
+    {
+        "plugin_missing",
+        "plugin_not_connected",
+        "plugin_version_mismatch",
+        "plugin_status_unavailable",
+    }
+)
+
+
+def _chat_activity_skip_because(cycle_telemetry: dict[str, Any]) -> str:
+    because = str(cycle_telemetry.get("autopilot_skipped_chat_activity_because") or "")
+    if because:
+        return because
+    chat_event = cycle_telemetry.get("autopilot_chat_activity_last_event")
+    if chat_event:
+        return f"last chat event: {chat_event}"
+    return ""
+
+
+def _idle_streak_skip_because(stagnation_streak: int) -> str:
+    if stagnation_streak:
+        return f"queue idle for {stagnation_streak} consecutive cycles"
+    return ""
+
+
+def _plugin_skip_because(
+    skip_code: str,
+    cycle_telemetry: dict[str, Any],
+    autopilot_ide: str,
+) -> str:
+    plugin_reason = str(cycle_telemetry.get("autopilot_skipped_plugin_missing_reason") or "")
+    plugin_reason = plugin_reason.strip()
+    if plugin_reason:
+        return plugin_reason
+    if skip_code == "plugin_version_mismatch":
+        return (
+            f"connected plugin session for ide={autopilot_ide} failed strict "
+            "version/protocol checks"
+        )
+    if skip_code == "plugin_status_unavailable":
+        return f"daemon status unavailable while probing ide={autopilot_ide}"
+    return f"daemon has no compatible plugin session for ide={autopilot_ide}"
+
+
+def _waiting_ticket_closed_skip_because(cycle_telemetry: dict[str, Any]) -> str:
+    ticket = str(cycle_telemetry.get("autopilot_skipped_waiting_ticket_closed_ticket") or "-")
+    ticket = ticket.strip()
+    if ticket and ticket != "-":
+        return (
+            f"queue references ticket={ticket} in waiting_input, but planfile "
+            "marks it closed/done"
+        )
+    return "queue references a waiting_input ticket already marked closed/done"
+
+
+def _stuck_skip_because(
+    cycle_telemetry: dict[str, Any],
+    queue_status: str,
+    waiting_ticket: str,
+) -> str:
+    streak = cycle_telemetry.get("autopilot_skipped_stuck_status_streak")
+    queue = cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or queue_status
+    ticket_hint = f" ticket={waiting_ticket}" if waiting_ticket and waiting_ticket != "-" else ""
+    streak_hint = f" streak={streak}" if streak else ""
+    return (
+        f"queue stuck on {queue}{ticket_hint}{streak_hint}; "
+        "waiting ticket is not llm-ready, autopilot will not redrive"
+    )
+
+
+def _diagnostics_fail_skip_because(cycle_telemetry: dict[str, Any]) -> str:
+    services = cycle_telemetry.get("autopilot_skipped_diagnostics_failed_services")
+    if isinstance(services, list) and services:
+        joined = ", ".join(str(s) for s in services)
+        return (
+            f"failing diagnostic services: {joined}; "
+            "fix the underlying check, mark the related diagnostic "
+            "ticket done, or set --no-autopilot-skip-on-diagnostics-fail"
+        )
+    return (
+        "pre-drive diagnostics returned failed status; "
+        "fix the underlying check or rerun with "
+        "--no-autopilot-skip-on-diagnostics-fail"
+    )
+
+
+def _skip_because_for_code(
+    *,
+    skip_code: str,
+    cycle_telemetry: dict[str, Any],
+    queue_status: str,
+    waiting_ticket: str,
+    stagnation_streak: int,
+    autopilot_ide: str,
+) -> str:
+    if skip_code == "chat_activity":
+        return _chat_activity_skip_because(cycle_telemetry)
+    if skip_code == "idle_streak":
+        return _idle_streak_skip_because(stagnation_streak)
+    if skip_code in _PLUGIN_SKIP_CODES:
+        return _plugin_skip_because(skip_code, cycle_telemetry, autopilot_ide)
+    if skip_code == "ide_mismatch":
+        return f"autopilot lane ide={autopilot_ide} mismatches the foreground IDE"
+    if skip_code == "idle_no_ticket":
+        return "queue idle AND zero open planfile tickets"
+    if skip_code == "waiting_ticket_closed":
+        return _waiting_ticket_closed_skip_because(cycle_telemetry)
+    if skip_code.startswith("stuck_"):
+        return _stuck_skip_because(cycle_telemetry, queue_status, waiting_ticket)
+    if skip_code == "diagnostics_fail":
+        return _diagnostics_fail_skip_because(cycle_telemetry)
+    return ""
+
+
 def build_decision_record(
     *,
     cycle: int,
@@ -507,81 +622,14 @@ def build_decision_record(
     """
     skip_code = classify_skip_code(cycle_telemetry, autopilot_status)
     blocked_by = "" if skip_code in {"ok", "unknown"} else skip_code
-    skip_because = ""
-    if skip_code == "chat_activity":
-        because = str(cycle_telemetry.get("autopilot_skipped_chat_activity_because") or "")
-        if because:
-            skip_because = because
-        else:
-            chat_event = cycle_telemetry.get("autopilot_chat_activity_last_event")
-            if chat_event:
-                skip_because = f"last chat event: {chat_event}"
-    elif skip_code == "idle_streak":
-        if stagnation_streak:
-            skip_because = f"queue idle for {stagnation_streak} consecutive cycles"
-    elif skip_code in {
-        "plugin_missing",
-        "plugin_not_connected",
-        "plugin_version_mismatch",
-        "plugin_status_unavailable",
-    }:
-        plugin_reason = str(
-            cycle_telemetry.get("autopilot_skipped_plugin_missing_reason") or ""
-        ).strip()
-        if plugin_reason:
-            skip_because = plugin_reason
-        elif skip_code == "plugin_version_mismatch":
-            skip_because = (
-                f"connected plugin session for ide={autopilot_ide} failed strict "
-                "version/protocol checks"
-            )
-        elif skip_code == "plugin_status_unavailable":
-            skip_because = f"daemon status unavailable while probing ide={autopilot_ide}"
-        else:
-            skip_because = f"daemon has no compatible plugin session for ide={autopilot_ide}"
-    elif skip_code == "ide_mismatch":
-        skip_because = f"autopilot lane ide={autopilot_ide} mismatches the foreground IDE"
-    elif skip_code == "idle_no_ticket":
-        skip_because = "queue idle AND zero open planfile tickets"
-    elif skip_code == "waiting_ticket_closed":
-        ticket = str(
-            cycle_telemetry.get("autopilot_skipped_waiting_ticket_closed_ticket") or "-"
-        ).strip()
-        if ticket and ticket != "-":
-            skip_because = (
-                f"queue references ticket={ticket} in waiting_input, but planfile "
-                "marks it closed/done"
-            )
-        else:
-            skip_because = "queue references a waiting_input ticket already marked closed/done"
-    elif skip_code.startswith("stuck_"):
-        streak = cycle_telemetry.get("autopilot_skipped_stuck_status_streak")
-        queue = cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or queue_status
-        ticket_hint = (
-            f" ticket={waiting_ticket}"
-            if waiting_ticket and waiting_ticket != "-"
-            else ""
-        )
-        streak_hint = f" streak={streak}" if streak else ""
-        skip_because = (
-            f"queue stuck on {queue}{ticket_hint}{streak_hint}; "
-            "waiting ticket is not llm-ready, autopilot will not redrive"
-        )
-    elif skip_code == "diagnostics_fail":
-        services = cycle_telemetry.get("autopilot_skipped_diagnostics_failed_services")
-        if isinstance(services, list) and services:
-            joined = ", ".join(str(s) for s in services)
-            skip_because = (
-                f"failing diagnostic services: {joined}; "
-                "fix the underlying check, mark the related diagnostic "
-                "ticket done, or set --no-autopilot-skip-on-diagnostics-fail"
-            )
-        else:
-            skip_because = (
-                "pre-drive diagnostics returned failed status; "
-                "fix the underlying check or rerun with "
-                "--no-autopilot-skip-on-diagnostics-fail"
-            )
+    skip_because = _skip_because_for_code(
+        skip_code=skip_code,
+        cycle_telemetry=cycle_telemetry,
+        queue_status=queue_status,
+        waiting_ticket=waiting_ticket,
+        stagnation_streak=stagnation_streak,
+        autopilot_ide=autopilot_ide,
+    )
     return DecisionRecord(
         at=now_utc_iso(),
         cycle=cycle,

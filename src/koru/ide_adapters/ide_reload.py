@@ -1,4 +1,10 @@
-"""Best-effort IDE window reload so VSIX extensions load without manual steps."""
+"""Best-effort IDE window reload so VSIX extensions load without manual steps.
+
+This module orchestrates the *IDE-side* reload sequence
+(``Developer: Reload Window``). Every OS-level decision (which focus
+tool, which keyboard injector, Wayland-vs-X11 quirks) is delegated to
+:mod:`koruos` — the OS strategy is the single source of truth.
+"""
 
 from __future__ import annotations
 
@@ -11,8 +17,36 @@ from pathlib import Path
 
 from koru.ide_adapters.shared import config_home_for_ide
 from koruide.ides import get_strategy as _get_ide_strategy
+from koruos import (
+    FocusOutcome,
+    KeySequence,
+    OsStrategy,
+    resolve_active_os_strategy,
+)
 
 _VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "vscode", "vscodium", "windsurf"})
+
+
+def _on_wayland() -> bool:
+    if os.environ.get("WAYLAND_DISPLAY", "").strip():
+        return True
+    return os.environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
+
+
+def _ide_accepts_integrated_terminal(ide: str) -> bool:
+    """Whether the IDE id is in the VS Code family that exports
+    ``TERM_PROGRAM=vscode`` for its integrated terminal.
+
+    The OS strategy detects the environment; this IDE-axis predicate
+    confirms that the IDE actually claims the integrated-terminal
+    contract. Putting the IDE predicate on the IDE axis keeps OS
+    strategies platform-only — no string-matching on IDE ids.
+    """
+    return ide in _VSCODE_FAMILY_IDES
+
+
+def _os_strategy() -> OsStrategy:
+    return resolve_active_os_strategy()
 
 # Fallback when an unknown IDE id is passed (supported IDEs use strategies).
 _LEGACY_WINDOW_NAME_HINTS: dict[str, tuple[str, ...]] = {}
@@ -82,55 +116,128 @@ def _resolve_editor_cli(ide: str) -> str | None:
     return None
 
 
-def _focus_ide_window(ide: str) -> bool:
-    if not shutil.which("xdotool"):
-        return False
-    for hint in _window_name_hints(ide):
-        proc = _run(["xdotool", "search", "--onlyvisible", "--name", hint])
-        if proc.returncode != 0 or not proc.stdout.strip():
-            proc = _run(["xdotool", "search", "--name", hint])
-        if proc.returncode != 0 or not proc.stdout.strip():
-            continue
-        window_ids = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
-        if not window_ids:
-            continue
-        wid = window_ids[-1]
-        activate = _run(["xdotool", "windowactivate", "--sync", wid])
-        return activate.returncode == 0
-    return False
+def _focus_ide_window(ide: str) -> tuple[bool, str]:
+    """Delegate window focus to the active :class:`OsStrategy`.
+
+    Returns ``(ok, method)`` where ``method`` is the OS strategy's
+    chosen technique (``xdotool`` / ``wmctrl`` / ``integrated_terminal``
+    / ``osascript`` / …). The IDE id is consulted only to decide whether
+    the integrated-terminal heuristic is admissible for this family —
+    a JetBrains target should not be activated by ``TERM_PROGRAM=vscode``
+    even if Koru was launched from a Cursor terminal.
+    """
+    strategy = _os_strategy()
+    outcome: FocusOutcome = strategy.focus_window(_window_name_hints(ide))
+    if outcome.ok and outcome.method == "integrated_terminal":
+        if not _ide_accepts_integrated_terminal(ide):
+            return False, ""
+    return outcome.ok, outcome.method
 
 
-def _type_keys(argv: list[str]) -> bool:
-    if not shutil.which("wtype"):
-        return False
-    return _run(argv).returncode == 0
+def reload_jetbrains_via_shortcut() -> IdeReloadOutcome:
+    """Reload JetBrains IDE via keyboard shortcut (Invalidate Caches / Restart).
 
+    Sequence:
+    1. Ask the OS strategy to focus the JetBrains window.
+    2. Inject ``Ctrl+Shift+F9`` to open Invalidate Caches dialog.
+    3. Press ``Return`` to confirm Invalidate and Restart.
 
-def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
-    """Open the command palette and run ``Developer: Reload Window``."""
-    if not shutil.which("wtype"):
+    Note: This works on Linux/Windows. macOS uses different shortcuts.
+    """
+    strategy = _os_strategy()
+    capabilities = strategy.capabilities()
+    if not capabilities.can_inject_keys:
         return IdeReloadOutcome(
             attempted=False,
             ok=False,
-            detail="wtype not on PATH",
+            detail=(
+                f"{strategy.label}: no keyboard-injection tool available "
+                f"(strategy={strategy.id})"
+            ),
         )
-    if not _focus_ide_window(ide):
+    # Focus JetBrains window first
+    focused, _ = _focus_ide_window("jetbrains")
+    if not focused:
+        wayland = "wayland" if _on_wayland() else "x11"
         return IdeReloadOutcome(
             attempted=True,
             ok=False,
-            method="command_palette",
-            detail=f"could not focus {ide} window (xdotool)",
+            method="jetbrains_shortcut",
+            detail=(
+                f"could not focus JetBrains window (session={wayland}, "
+                f"strategy={strategy.id}, methods={capabilities.focus_methods}). "
+                "Run `koru auto` from a terminal inside JetBrains, or install wmctrl/xdotool"
+            ),
         )
     time.sleep(0.6)
-    if not _type_keys(["wtype", "-M", "ctrl", "-M", "shift", "-p"]):
+    # Ctrl+Shift+F9 opens Invalidate Caches dialog on Linux/Windows
+    if not strategy.inject_keys(KeySequence(modifiers=("ctrl", "shift"), key="f9")):
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="jetbrains_shortcut",
+            detail=f"failed to open Invalidate Caches dialog ({capabilities.keyboard_tool})",
+        )
+    time.sleep(0.5)
+    # Press Return to confirm "Invalidate and Restart"
+    if not strategy.inject_keys(KeySequence(key="Return")):
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="jetbrains_shortcut",
+            detail="failed to confirm Invalidate and Restart",
+        )
+    return IdeReloadOutcome(attempted=True, ok=True, method="jetbrains_shortcut")
+
+
+def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
+    """Open the command palette and run ``Developer: Reload Window``.
+
+    Sequence:
+    1. Ask the OS strategy to focus the IDE window (or accept its
+       integrated-terminal alibi).
+    2. Inject ``Ctrl+Shift+P`` to open the command palette.
+    3. Type ``Developer: Reload Window``.
+    4. Press ``Return``.
+
+    Every step is delegated to ``strategy.inject_keys`` — this function
+    no longer cares which tool the OS strategy uses internally.
+    """
+    strategy = _os_strategy()
+    capabilities = strategy.capabilities()
+    if not capabilities.can_inject_keys:
+        return IdeReloadOutcome(
+            attempted=False,
+            ok=False,
+            detail=(
+                f"{strategy.label}: no keyboard-injection tool available "
+                f"(strategy={strategy.id})"
+            ),
+        )
+    focused, _ = _focus_ide_window(ide)
+    if not focused:
+        wayland = "wayland" if _on_wayland() else "x11"
         return IdeReloadOutcome(
             attempted=True,
             ok=False,
             method="command_palette",
-            detail="failed to open command palette",
+            detail=(
+                f"could not focus {ide} window (session={wayland}, "
+                f"strategy={strategy.id}, methods={capabilities.focus_methods}). "
+                "Run `koru auto` from a terminal *inside* the IDE so "
+                "TERM_PROGRAM=vscode is set, or install wmctrl/xdotool"
+            ),
+        )
+    time.sleep(0.6)
+    if not strategy.inject_keys(KeySequence(modifiers=("ctrl", "shift"), key="p")):
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="command_palette",
+            detail=f"failed to open command palette ({capabilities.keyboard_tool})",
         )
     time.sleep(0.5)
-    if not _type_keys(["wtype", "-t", "Developer: Reload Window"]):
+    if not strategy.inject_keys(KeySequence(literal_text="Developer: Reload Window")):
         return IdeReloadOutcome(
             attempted=True,
             ok=False,
@@ -138,7 +245,7 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
             detail="failed to type reload command",
         )
     time.sleep(0.2)
-    if not _type_keys(["wtype", "-k", "Return"]):
+    if not strategy.inject_keys(KeySequence(key="Return")):
         return IdeReloadOutcome(
             attempted=True,
             ok=False,
@@ -217,12 +324,14 @@ def detect_reload_command(
     dry_run: bool,
 ) -> tuple[str | None, str | None]:
     """Return ``(method, reason)`` for the reload strategy decision."""
-    if ide not in _VSCODE_FAMILY_IDES:
+    if ide not in _VSCODE_FAMILY_IDES and ide != "jetbrains":
         return None, f"unsupported ide={ide}"
     if not auto_reload_enabled():
         return None, "auto reload disabled"
     if dry_run:
         return "dry_run", None
+    if ide == "jetbrains":
+        return "jetbrains_shortcut", None
     if config_home_for_ide(ide) is None:
         return None, "unknown config home"
     return "command_palette", None
@@ -237,6 +346,9 @@ def execute_reload(
     """Execute the selected reload strategy and return the raw outcome."""
     if method == "dry_run":
         return IdeReloadOutcome(attempted=True, ok=True, method="dry_run")
+
+    if method == "jetbrains_shortcut":
+        return reload_jetbrains_via_shortcut()
 
     if method != "command_palette":
         return IdeReloadOutcome(
@@ -350,4 +462,7 @@ __all__ = [
     "reload_via_reopen_workspace",
     "reuse_window_reload_enabled",
     "try_reload_vscode_family_ide",
+    "_focus_ide_window",
+    "_ide_accepts_integrated_terminal",
+    "_on_wayland",
 ]

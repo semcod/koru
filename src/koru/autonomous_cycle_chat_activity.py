@@ -961,6 +961,68 @@ def explain_skip(decision: dict[str, str | bool]) -> str:
     return str(decision.get("because") or "")
 
 
+def _age_seconds_from_label(age: str) -> float:
+    if age.endswith("s"):
+        try:
+            return float(age[:-1])
+        except ValueError:
+            return 0.0
+    return 0.0
+
+
+def _apply_chat_activity_skip_decision(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    waiting_ticket: str,
+    ide: str | None,
+    reflection_events: list[Any],
+    last_type: str,
+    age: str,
+    cooldown: float,
+    _hp: Any,
+) -> bool:
+    decision = decide_redrive_cooldown(
+        event_type=last_type,
+        age_seconds=_age_seconds_from_label(age),
+        cooldown_seconds=cooldown,
+        waiting_ticket=waiting_ticket,
+    )
+    if not bool(decision["should_skip"]):
+        return False
+
+    cycle_telemetry["autopilot_skipped_chat_activity"] = True
+    cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
+    cycle_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
+    _hp(f"- autopilot skipped ({explain_skip(decision)})")
+    reflection_resolved, reflection_done = _apply_llx_chat_reflection(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        waiting_ticket=waiting_ticket,
+        ide=ide,
+        reflection_events=reflection_events,
+        _hp=_hp,
+    )
+    if reflection_done:
+        return True
+
+    # Fallback for environments where llx/OpenRouter is unavailable.
+    if not reflection_resolved:
+        _apply_needs_input_heuristic(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=cycle_telemetry,
+            reflection_events=reflection_events,
+            _hp=_hp,
+        )
+    return True
+
+
 def _skip_due_to_recent_chat_activity(
     *,
     project: Path,
@@ -1036,26 +1098,7 @@ def _skip_due_to_recent_chat_activity(
     ):
         return False
 
-    age_seconds = 0.0
-    if age.endswith("s"):
-        try:
-            age_seconds = float(age[:-1])
-        except ValueError:
-            age_seconds = 0.0
-    decision = decide_redrive_cooldown(
-        event_type=last_type,
-        age_seconds=age_seconds,
-        cooldown_seconds=cooldown,
-        waiting_ticket=waiting_ticket,
-    )
-    if not bool(decision["should_skip"]):
-        return False
-
-    cycle_telemetry["autopilot_skipped_chat_activity"] = True
-    cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
-    cycle_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
-    _hp(f"- autopilot skipped ({explain_skip(decision)})")
-    reflection_resolved, reflection_done = _apply_llx_chat_reflection(
+    return _apply_chat_activity_skip_decision(
         project=project,
         queue_result=queue_result,
         state=state,
@@ -1063,19 +1106,8 @@ def _skip_due_to_recent_chat_activity(
         waiting_ticket=waiting_ticket,
         ide=ide,
         reflection_events=reflection_events,
+        last_type=last_type,
+        age=age,
+        cooldown=cooldown,
         _hp=_hp,
     )
-    if reflection_done:
-        return True
-
-    # Fallback for environments where llx/OpenRouter is unavailable.
-    if not reflection_resolved:
-        _apply_needs_input_heuristic(
-            project=project,
-            queue_result=queue_result,
-            state=state,
-            cycle_telemetry=cycle_telemetry,
-            reflection_events=reflection_events,
-            _hp=_hp,
-        )
-    return True

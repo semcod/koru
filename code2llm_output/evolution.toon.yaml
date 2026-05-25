@@ -1,38 +1,57 @@
-# code2llm/evolution | 5246 func | 310f | 2026-05-25
-# generated in 0.02s
+# code2llm/evolution | 13736 func | 332f | 2026-05-25
 
-NEXT[5] (ranked by impact):
-  [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2061L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 28854
+NEXT[10] (ranked by impact):
+  [1] !! SPLIT           src/koru/doctor.py
+      WHY: 1921L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 26894
 
-  [2] !  SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=18  fan=23
+  [2] !! SPLIT           src/koru/scan.py
+      WHY: 1104L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 16560
+
+  [3] !! SPLIT           src/koru/autonomous.py
+      WHY: 1126L, 2 classes, max CC=5
+      EFFORT: ~4h  IMPACT: 5630
+
+  [4] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 520
+
+  [5] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 520
+
+  [6] !  SPLIT-FUNC      execFile  CC=18  fan=18
       WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 414
+      EFFORT: ~1h  IMPACT: 324
 
-  [3] !  SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=18  fan=23
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 414
+  [7] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
 
-  [4] !! SPLIT           CHANGELOG.md
-      WHY: 5323L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
+  [8] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
 
-  [5] !! SPLIT           README.md
-      WHY: 1264L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
+  [9] !  SPLIT-FUNC      _blocked_interface_action_lines  CC=24  fan=10
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 240
+
+  [10] !  SPLIT-FUNC      _blocked_interface_action_lines  CC=24  fan=10
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 240
 
 
 RISKS[3]:
-  ⚠ Splitting CHANGELOG.md may break 0 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 166 import paths
-  ⚠ Splitting README.md may break 0 import paths
+  ⚠ Splitting src/koru/doctor.py may break 178 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 118 import paths
+  ⚠ Splitting src/koru/scan.py may break 56 import paths
 
 METRICS-TARGET:
-  CC̄:          3.9 → ≤2.7
-  max-CC:      18 → ≤9
-  god-modules: 14 → 0
-  high-CC(≥15): 7 → ≤3
+  CC̄:          1.6 → ≤1.1
+  max-CC:      24 → ≤12
+  god-modules: 25 → 0
+  high-CC(≥15): 21 → ≤10
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -60,4 +79,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.9 → now CC̄=3.9
+  prev CC̄=3.9 → now CC̄=1.6

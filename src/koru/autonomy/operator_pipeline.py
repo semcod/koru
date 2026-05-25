@@ -399,8 +399,36 @@ def _host_injectors_ok() -> tuple[bool, str]:
     return False, "; ".join(parts) if parts else "host setup wymaga uwagi"
 
 
+def _self_control_autorepair_enabled() -> bool:
+    raw = os.getenv("KORU_SELF_CONTROL_AUTOREPAIR", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _first_self_control_problem(report: Any) -> Any | None:
+    return next(
+        (check for check in report.checks if check.status in {"warn", "fail"}),
+        None,
+    )
+
+
+def _self_control_problem_detail(report: Any) -> str:
+    first = _first_self_control_problem(report)
+    if first is None:
+        return f"self-control OK ({len(report.checks)} checks)"
+    return f"{first.name}: {first.detail}"
+
+
+def _summarize_self_control_actions(report: Any) -> str:
+    actions = list(getattr(report, "actions", []) or [])
+    if not actions:
+        return "no repair action recorded"
+    names = [str(action.get("action") or "?") for action in actions[:4]]
+    suffix = f" (+{len(actions) - 4} more)" if len(actions) > 4 else ""
+    return ", ".join(names) + suffix
+
+
 def _self_control_ok(project: Path, ide: str, socket_path: str) -> tuple[bool, str, str | None]:
-    from koru.self_control import run_self_control
+    from koru.self_control import repair_self_control, run_self_control
 
     try:
         report = run_self_control(project, ide=ide, socket_path=Path(socket_path))
@@ -410,13 +438,36 @@ def _self_control_ok(project: Path, ide: str, socket_path: str) -> tuple[bool, s
             f"self-control probe failed: {type(exc).__name__}: {exc}",
             f"koru self --project {project} --ide {ide} doctor",
         )
-    problems = [check for check in report.checks if check.status in {"warn", "fail"}]
-    if not problems or not report.needs_repair:
+    if _first_self_control_problem(report) is None or not report.needs_repair:
         return True, f"self-control OK ({len(report.checks)} checks)", None
-    first = problems[0]
-    detail = f"{first.name}: {first.detail}"
+
     command = f"koru self --project {project} --ide {ide} repair --yes"
-    return False, detail, command
+    if not _self_control_autorepair_enabled():
+        return False, _self_control_problem_detail(report), command
+
+    try:
+        repaired = repair_self_control(
+            project,
+            ide=ide,
+            socket_path=Path(socket_path),
+            yes=True,
+        )
+        after = run_self_control(project, ide=ide, socket_path=Path(socket_path))
+    except Exception as exc:
+        return (
+            False,
+            f"self-control auto-repair failed: {type(exc).__name__}: {exc}",
+            command,
+        )
+
+    action_summary = _summarize_self_control_actions(repaired)
+    if _first_self_control_problem(after) is None or not after.needs_repair:
+        return True, f"self-control auto-repaired ({action_summary})", None
+    return (
+        False,
+        f"self-control auto-repair ran ({action_summary}); {_self_control_problem_detail(after)}",
+        command,
+    )
 
 
 def _build_os_calibration_step(ide: str, project: Path) -> OperatorStep:

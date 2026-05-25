@@ -21,10 +21,7 @@ def _cli_version() -> str:
         return "unknown"
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Run closed-loop automation on semcod repositories.",
-    )
+def _add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--version", action="version", version=f"koru {_cli_version()}")
     parser.add_argument("--workspace", type=Path, default=Path.cwd(), help="Workspace root.")
     parser.add_argument(
@@ -43,6 +40,9 @@ def _build_parser() -> argparse.ArgumentParser:
         type=_command_value,
         help="Command to execute in each repository, e.g. 'python -m pytest -q'.",
     )
+
+
+def _add_queue_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--queue",
         action="store_true",
@@ -95,6 +95,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=100,
         help="Safety cap on the number of tickets --loop will process (default 100).",
     )
+
+
+def _add_watch_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--watch",
         action="store_true",
@@ -111,6 +114,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Stop --watch after this many events, useful for smoke tests.",
     )
+
+
+def _add_bootstrap_and_init_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--skip-host-environment",
         action="store_true",
@@ -178,6 +184,9 @@ def _build_parser() -> argparse.ArgumentParser:
             "Use when `koru --init` refuses without --force."
         ),
     )
+
+
+def _add_doctor_and_context_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--doctor",
         action="store_true",
@@ -251,4 +260,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Disable the per-run JSONL log under .planfile/.koru/runs/. "
         "Has no effect outside --queue mode.",
     )
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Run closed-loop automation on semcod repositories.",
+    )
+    _add_common_arguments(parser)
+    _add_queue_arguments(parser)
+    _add_watch_arguments(parser)
+    _add_bootstrap_and_init_arguments(parser)
+    _add_doctor_and_context_arguments(parser)
     return parser

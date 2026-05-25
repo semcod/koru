@@ -988,6 +988,12 @@ class AutopilotBridge {
     verifyText: string | undefined,
     verifyEnabled: boolean
   ): Promise<SubmitOutcome> {
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const cache = this.getProbeCache();
+    const candidates = filterRegistered(
+      orderWithCache(buildSubmitCommands("vscodium"), cache?.submit),
+      existing
+    );
     const hostVerifyEnabled =
       verifyEnabled ||
       shouldRequireVerifiedHostSubmit("vscodium", verifyText, this.koruStepConfig());
@@ -999,8 +1005,12 @@ class AutopilotBridge {
         verifyEnabled,
         hostVerifyEnabled,
         trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
+        registeredCandidates: candidates,
       },
     });
+    const registered = await this._tryRegisteredCommands(candidates, verifyText, hostVerifyEnabled);
+    if (registered) return registered;
+
     const hostClick = await this._tryHostClickSubmit();
     if (hostClick.ok && hostClick.command) {
       const accepted = await this.finalizeSubmitCandidate(

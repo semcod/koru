@@ -1,37 +1,39 @@
 flowchart TD
-%% generated in 0.10s
+%% generated in 0.11s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
-    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>496 funcs"]
+    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>560 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
+    scripts__sync_vscode_plugin_version["scripts.sync-vscode-plugin-version<br/>6 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>1728 funcs"]
+    src__koru["src.koru<br/>1787 funcs"]
     src__koruapi["src.koruapi<br/>185 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
-    src__koruide["src.koruide<br/>301 funcs"]
+    src__koruide["src.koruide<br/>303 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>52 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
-    src__koru ==>|425| scripts__koru_soak_monitor
-    src__koru ==>|112| src__koruide
-    src__koruapi ==>|82| src__koru
+    src__koru ==>|427| scripts__koru_soak_monitor
+    src__koru ==>|120| src__koruide
+    src__koruapi ==>|83| src__koru
     src__koruide ==>|27| scripts__koru_soak_monitor
-    src__koruapi ==>|19| plugins__koru_autopilot_vscode
+    src__koru ==>|27| plugins__koru_autopilot_vscode
+    src__koruapi ==>|20| plugins__koru_autopilot_vscode
+    src__koruide ==>|19| plugins__koru_autopilot_vscode
     src__koruobserve ==>|18| scripts__koru_soak_monitor
     src__koruide ==>|18| src__koruapi
-    src__koru ==>|18| plugins__koru_autopilot_vscode
     src__koruapi ==>|17| scripts__koru_soak_monitor
-    src__koru ==>|15| src__koruvision
-    src__koruide ==>|14| plugins__koru_autopilot_vscode
+    src__koru ==>|16| src__koruvision
     examples__remote_orchestration_demo ==>|12| scripts__koru_soak_monitor
     src__koruvision ==>|12| scripts__koru_soak_monitor
     src__koru ==>|10| src__koruobserve
     src__koruapi ==>|9| src__koruide
     src__koruide ==>|9| src__koru
     scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
+    scripts__sync_vscode_plugin_version ==>|9| scripts__koru_soak_monitor
     src__koruvision ==>|8| src__korumesh
     src__koru ==>|8| src__koruapi
     src__koruobserve ==>|7| src__koruvision

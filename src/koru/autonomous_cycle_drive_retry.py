@@ -13,6 +13,24 @@ from koru.autonomy.env import (
 from koru.autonomy.env import (
     env_truthy,
 )
+from koru.autonomy.env import (
+    plugin_required_for_ide as _plugin_required_for_ide,
+)
+from koru.autonomy.env import (
+    prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
+)
+from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_drive_prompt
+from koru.autonomy.prompts import PromptDecision, build_prompt
+from koru.autonomy.state import AutoloopState
+from koru.decision_engine import (
+    DriveRetryDecision,
+    EnvironmentDecisionEngine,
+    build_decision_engine,
+)
+from koru.queue import QueueLoopResult
+from koru.queue import run_process as _run_process
+from koruide.ide import normalize_ide_id as _normalize_ide_id
+from koruide.ide import supports_vscode_extension_plugin as _supports_vscode_extension_plugin
 
 
 def _max_drive_retries() -> int:
@@ -46,19 +64,11 @@ def _drive_failure_signature(reply: dict[str, Any]) -> str:
     verification = str(reply.get("verification") or "").strip().lower()
     reason = str(reply.get("reason") or "").strip().lower()
     return f"{verification}|{reason}|{msg[:200]}"
-from koru.autonomy.env import (
-    plugin_required_for_ide as _plugin_required_for_ide,
-)
-from koru.autonomy.env import (
-    prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
-)
-from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_drive_prompt
-from koru.autonomy.prompts import PromptDecision, build_prompt
-from koru.autonomy.state import AutoloopState
-from koru.queue import QueueLoopResult
-from koru.queue import run_process as _run_process
-from koruide.ide import normalize_ide_id as _normalize_ide_id
-from koruide.ide import supports_vscode_extension_plugin as _supports_vscode_extension_plugin
+
+
+def _active_decision_engine(project: Path, autopilot_ide: str) -> EnvironmentDecisionEngine:
+    return build_decision_engine(project, ide=autopilot_ide)
+
 
 _CLOSED_TICKET_STATUSES = frozenset({"done", "closed", "cancelled", "canceled", "failed"})
 
@@ -90,11 +100,11 @@ def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, st
         status = status_fn()
     except (OSError, TimeoutError, RuntimeError) as exc:
         return False, f"daemon status unavailable: {exc}"
-    
+
     plugins = status.get("plugins")
     if plugins is None:
         return True, ""
-    
+
     return plugin_status_decision(status, autopilot_ide)
 
 
@@ -405,29 +415,48 @@ def _handle_failed_drive_attempt(
     reply: dict[str, Any],
     attempt: int,
     attempts: int,
+    *,
+    engine: EnvironmentDecisionEngine | None = None,
 ) -> bool:
-    if _reply_missing_autopilot_plugin(reply):
+    """Use the decision engine's LLM-axis policy for retry/stop/warn."""
+    if engine is None:
+        from korullm import resolve_active_llm_strategy
+
+        assessment = resolve_active_llm_strategy().assess_drive_failure(
+            reply,
+            attempt=attempt,
+            max_attempts=attempts,
+        )
+        should_retry = assessment.kind.startswith("retry_")
+        retry_decision = DriveRetryDecision(
+            assessment=assessment,
+            should_retry=should_retry,
+            should_warn=assessment.warn_banner,
+            sleep_seconds=assessment.sleep_seconds if should_retry else 0.0,
+        )
+    else:
+        retry_decision = engine.assess_drive_failure(
+            reply,
+            attempt=attempt,
+            max_attempts=attempts,
+        )
+    kind = retry_decision.assessment.kind
+    if kind == "skip_cooldown":
         return False
-    if _reply_chat_input_busy(reply):
+    if not retry_decision.should_retry:
+        if retry_decision.should_warn == "manual_focus":
+            _warn_autopilot_manual_focus_required(reply)
         return False
-    if _reply_requires_manual_chat_focus(reply):
-        _warn_autopilot_manual_focus_required(reply)
-        return False
-    if attempt >= attempts - 1:
-        return False
-    if _reply_needs_submit_retry(reply):
+    banner = retry_decision.should_warn
+    if banner == "submit":
         _warn_autopilot_submit_retry(attempt, attempts, reply)
-        time.sleep(5)
-        return True
-    if _reply_needs_focus_retry(reply):
+    elif banner == "focus":
         _warn_autopilot_focus_retry(attempt, attempts, reply)
-        time.sleep(5)
-        return True
-    if _reply_needs_plugin_retry(reply):
+    elif banner == "plugin":
         _warn_autopilot_plugin_retry(attempt, attempts, reply)
-        time.sleep(5)
-        return True
-    return False
+    if retry_decision.sleep_seconds > 0:
+        time.sleep(retry_decision.sleep_seconds)
+    return True
 
 
 def _execute_autopilot_drive(
@@ -512,6 +541,7 @@ def _execute_autopilot_drive(
     state.last_driven_kind = decision.kind
     require_plugin = _resolve_drive_plugin_requirement(client, autopilot_ide)
     attempts = _max_drive_retries()
+    engine = _active_decision_engine(project, autopilot_ide)
     previous_signature: str | None = None
     for attempt in range(attempts):
         reply, ok = _drive_autopilot_once(
@@ -523,7 +553,7 @@ def _execute_autopilot_drive(
         )
         if ok:
             break
-        signature = _drive_failure_signature(reply)
+        signature = engine.llm_strategy.failure_signature(reply)
         if previous_signature is not None and signature == previous_signature:
             _hp(
                 "  autopilot: aborting retry loop — identical failure repeated "
@@ -531,7 +561,12 @@ def _execute_autopilot_drive(
             )
             break
         previous_signature = signature
-        if not _handle_failed_drive_attempt(reply, attempt, attempts):
+        if not _handle_failed_drive_attempt(
+            reply,
+            attempt,
+            attempts,
+            engine=engine,
+        ):
             break
 
     return reply, ok, decision.kind, idle_prompt_kind

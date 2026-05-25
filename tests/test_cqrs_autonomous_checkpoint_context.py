@@ -86,6 +86,8 @@ def test_public_checkpoint_helpers_round_trip_state(tmp_path: Path) -> None:
         scan_clean_streak=3,
         last_scan_create_failed_fingerprint="1:deadbeef",
         last_scan_create_failed_ts=123.0,
+        last_scan_duplicate_fingerprint="14:cafebabe",
+        last_scan_duplicate_ts=456.0,
     )
 
     save_loop_checkpoint(
@@ -104,6 +106,8 @@ def test_public_checkpoint_helpers_round_trip_state(tmp_path: Path) -> None:
     assert restored.scan_clean_streak == 3
     assert restored.last_scan_create_failed_fingerprint == "1:deadbeef"
     assert restored.last_scan_create_failed_ts == 123.0
+    assert restored.last_scan_duplicate_fingerprint == "14:cafebabe"
+    assert restored.last_scan_duplicate_ts == 456.0
 
     events = JsonlEventStore(path.parent / "event-store.jsonl").all_events(
         context=AUTONOMOUS_CHECKPOINT_CONTEXT

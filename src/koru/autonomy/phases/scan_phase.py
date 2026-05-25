@@ -15,6 +15,7 @@ from koru.queue import QueueLoopResult
 from koru.scan import ScanResult, run_scan
 
 _CREATE_FAILED_SCAN_COOLDOWN_SECONDS = 120.0
+_DUPLICATE_ONLY_SCAN_COOLDOWN_SECONDS = 300.0
 
 
 def _format_scan_summary_line(result: ScanResult) -> str:
@@ -81,10 +82,25 @@ def _scan_result_is_create_failed_only(result: ScanResult) -> bool:
     )
 
 
+def _scan_result_is_duplicate_only(result: ScanResult) -> bool:
+    return (
+        bool(result.skipped_as_duplicate)
+        and not result.applied
+        and len(result.skipped) == len(result.skipped_as_duplicate)
+    )
+
+
 def _scan_create_failed_fingerprint(result: ScanResult) -> str:
     parts = list(result.skipped_create_failed_details) or list(result.skipped_create_failed)
     digest = hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
     return f"{len(result.skipped_create_failed)}:{digest}"
+
+
+def _scan_duplicate_fingerprint(result: ScanResult) -> str:
+    digest = hashlib.sha1(
+        "|".join(result.skipped_as_duplicate).encode("utf-8"),
+    ).hexdigest()
+    return f"{len(result.skipped_as_duplicate)}:{digest}"
 
 
 def _create_failed_scan_cooldown_seconds() -> float:
@@ -95,6 +111,16 @@ def _create_failed_scan_cooldown_seconds() -> float:
         return max(0.0, float(raw))
     except ValueError:
         return _CREATE_FAILED_SCAN_COOLDOWN_SECONDS
+
+
+def _duplicate_only_scan_cooldown_seconds() -> float:
+    raw = os.environ.get("KORU_SCAN_DUPLICATE_COOLDOWN_SECONDS", "").strip()
+    if not raw:
+        return _DUPLICATE_ONLY_SCAN_COOLDOWN_SECONDS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return _DUPLICATE_ONLY_SCAN_COOLDOWN_SECONDS
 
 
 def _remember_scan_create_failed_state(
@@ -112,6 +138,21 @@ def _remember_scan_create_failed_state(
         state.last_scan_create_failed_ts = -1.0
 
 
+def _remember_scan_duplicate_state(
+    state: AutoloopState,
+    result: ScanResult,
+    *,
+    now: float,
+) -> None:
+    if _scan_result_is_duplicate_only(result):
+        state.last_scan_duplicate_fingerprint = _scan_duplicate_fingerprint(result)
+        state.last_scan_duplicate_ts = now
+        return
+    if result.applied or not result.skipped_as_duplicate:
+        state.last_scan_duplicate_fingerprint = ""
+        state.last_scan_duplicate_ts = -1.0
+
+
 def _should_skip_repeated_create_failed_scan(
     state: AutoloopState,
 ) -> tuple[bool, float]:
@@ -123,6 +164,20 @@ def _should_skip_repeated_create_failed_scan(
     ):
         return False, 0.0
     elapsed = time.time() - state.last_scan_create_failed_ts
+    if elapsed >= cooldown:
+        return False, 0.0
+    return True, cooldown - elapsed
+
+
+def _should_skip_repeated_duplicate_scan(state: AutoloopState) -> tuple[bool, float]:
+    cooldown = _duplicate_only_scan_cooldown_seconds()
+    if (
+        cooldown <= 0.0
+        or not state.last_scan_duplicate_fingerprint
+        or state.last_scan_duplicate_ts < 0.0
+    ):
+        return False, 0.0
+    elapsed = time.time() - state.last_scan_duplicate_ts
     if elapsed >= cooldown:
         return False, 0.0
     return True, cooldown - elapsed
@@ -143,6 +198,7 @@ def handle_scan_phase(
     scan_result: ScanResult | None = None
     if enable_scan:
         skip_repeated_create_failed, remaining = _should_skip_repeated_create_failed_scan(state)
+        skip_repeated_duplicates, duplicate_remaining = _should_skip_repeated_duplicate_scan(state)
         if not is_topology_enabled(
             project,
             "scan:on-change",
@@ -162,6 +218,19 @@ def handle_scan_phase(
                     "cycle": cycle,
                     "reason": "create_failed_cooldown",
                     "cooldown_remaining_seconds": remaining,
+                },
+            )
+        elif skip_repeated_duplicates:
+            _hp(
+                "- koru scan --apply skipped "
+                f"(duplicate-only results, cooldown active, ~{duplicate_remaining:.0f}s remaining)",
+            )
+            _emit(
+                "ScanSkipped",
+                {
+                    "cycle": cycle,
+                    "reason": "duplicate_only_cooldown",
+                    "cooldown_remaining_seconds": duplicate_remaining,
                 },
             )
         else:
@@ -196,6 +265,7 @@ def handle_scan_phase(
                     include_semcod_artifacts=include_semcod_artifacts,
                 )
                 _remember_scan_create_failed_state(state, scan_result, now=time.time())
+                _remember_scan_duplicate_state(state, scan_result, now=time.time())
                 _hp(_format_scan_summary_line(scan_result))
                 _hp_scan_skip_hint(scan_result, _hp)
                 _emit(
@@ -241,6 +311,7 @@ def handle_scan_after_idle(
         )
     ):
         skip_repeated_create_failed, remaining = _should_skip_repeated_create_failed_scan(state)
+        skip_repeated_duplicates, duplicate_remaining = _should_skip_repeated_duplicate_scan(state)
         now = time.time()
         too_soon = (
             scan_after_idle_min_interval_seconds > 0.0
@@ -277,6 +348,21 @@ def handle_scan_after_idle(
                 },
             )
             cycle_telemetry["scan_after_idle_skipped_create_failed_cooldown"] = True
+        elif skip_repeated_duplicates:
+            _hp(
+                "- koru scan after idle skipped "
+                f"(duplicate-only results, cooldown active, ~{duplicate_remaining:.0f}s remaining)",
+            )
+            _emit(
+                "ScanSkipped",
+                {
+                    "cycle": cycle,
+                    "reason": "duplicate_only_cooldown",
+                    "cooldown_remaining_seconds": duplicate_remaining,
+                    "phase": "after_idle_queue",
+                },
+            )
+            cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
         else:
             scan_cmd = (
                 "koru scan --apply"
@@ -290,6 +376,7 @@ def handle_scan_after_idle(
             )
             scan_result = idle_scan
             _remember_scan_create_failed_state(state, idle_scan, now=now)
+            _remember_scan_duplicate_state(state, idle_scan, now=now)
             state.last_scan_after_idle_ts = now
             state.telemetry_scan_after_idle_runs += 1
             state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)

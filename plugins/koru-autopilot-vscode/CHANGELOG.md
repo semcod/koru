@@ -4,6 +4,14 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.72] — 2026-05-25
+
+### Fixed
+- **VSCodium submit now tries verified in-process chat commands before OS
+  click/key fallbacks.** This avoids paste-only failures on Wayland where the
+  prompt remains in the chat input after ``ydotool ctrl+Return`` or a
+  bottom-right click reports success.
+
 ## [0.1.71] — 2026-05-25
 
 ### Fixed

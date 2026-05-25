@@ -42,6 +42,7 @@ from koru.autonomy.post_run_verify import (
     verify_completed_tickets,
 )
 from koru.autonomy.state import AutoloopState
+from koru.environment_profile import environment_profile_payload
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
 from koru.queue import default_human_prompt as _default_human_prompt
 from koru.queue import run_api_request as _run_api_request
@@ -235,6 +236,21 @@ def _initialize_cycle_telemetry() -> dict[str, Any]:
         "scan_after_idle_applied": 0,
         "scan_after_idle_skipped_rate_limit": False,
     }
+
+
+def _attach_environment_profile(
+    project: Path,
+    cycle_telemetry: dict[str, Any],
+    *,
+    autopilot_ide: str,
+) -> None:
+    try:
+        cycle_telemetry["environment_profile"] = environment_profile_payload(
+            project,
+            ide=autopilot_ide,
+        )
+    except Exception as exc:
+        cycle_telemetry["environment_profile_error"] = f"{type(exc).__name__}: {exc}"
 
 
 def _heal_stale_socket() -> None:
@@ -776,6 +792,7 @@ def run_cycle(
 ) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
     state = state or AutoloopState()
     cycle_telemetry = _initialize_cycle_telemetry()
+    _attach_environment_profile(project, cycle_telemetry, autopilot_ide=autopilot_ide)
     _heal_stale_socket()
 
     def _emit(event_type: str, payload: dict, command: str | None = None) -> None:

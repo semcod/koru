@@ -108,6 +108,70 @@ def test_scan_after_idle_queue_runs_scan_when_queue_idle(tmp_path, monkeypatch) 
     assert calls[0]["apply"] is True
 
 
+def test_run_cycle_records_environment_profile_in_telemetry(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **_kwargs: QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=[],
+            last_status="idle",
+            last_message="",
+            last_ticket_id=None,
+        ),
+    )
+
+    autonomous_mod._run_cycle(
+        cycle=7,
+        project=tmp_path,
+        actor="t",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=1,
+        enable_autopilot=False,
+        autopilot_ide="vscodium",
+        drive_prompt="",
+        submit=True,
+        include_semcod_artifacts=None,
+        client=None,
+        state=autonomous_mod.AutoloopState(),
+        idle_diagnostics="off",
+        diagnostic_tickets=False,
+        diagnostic_ticket_queue="default",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=None,
+        wup_watch_enabled=False,
+        wup_diagnostic_tickets=False,
+        wup_ticket_queue="default",
+        strict_diagnostics=False,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=True,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="waiting_input",
+        scan_skip_if_clean=False,
+        scan_skip_after=1,
+        scan_after_idle_queue=False,
+        topology_integration=False,
+        stdio_format="human",
+        correlation_id="env-profile-test",
+    )
+
+    snapshot = json.loads(
+        (tmp_path / ".planfile" / ".koru" / "autonomy-telemetry.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    profile = snapshot["last_cycle"]["environment_profile"]
+    assert profile["ide"]["id"] == "vscodium"
+    assert profile["os"]["display_server"] == "wayland"
+    assert profile["control"]["interface_id"] == "plugin_socket_vscode_family"
+    assert "ide=vscodium" in profile["decision_key"]
+
+
 def test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty(
     tmp_path,
     monkeypatch,

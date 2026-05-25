@@ -85,6 +85,8 @@ def _apply_checkpoint_payload(payload: dict[str, Any], state: AutoloopState) -> 
             "last_scan_after_idle_ts",
             "last_scan_create_failed_fingerprint",
             "last_scan_create_failed_ts",
+            "last_scan_duplicate_fingerprint",
+            "last_scan_duplicate_ts",
         ):
             if key in state_payload:
                 setattr(state, key, state_payload[key])
@@ -149,6 +151,8 @@ def _build_checkpoint_payload(
             "last_scan_after_idle_ts": state.last_scan_after_idle_ts,
             "last_scan_create_failed_fingerprint": state.last_scan_create_failed_fingerprint,
             "last_scan_create_failed_ts": state.last_scan_create_failed_ts,
+            "last_scan_duplicate_fingerprint": state.last_scan_duplicate_fingerprint,
+            "last_scan_duplicate_ts": state.last_scan_duplicate_ts,
         },
     }
 

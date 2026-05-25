@@ -108,6 +108,28 @@ interfaces:
       - plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts
       - plugins/koru-autopilot-vscode/src/ides/antigravity.ts
 
+  - id: windsurf_native_send
+    family: ide_control
+    direction: outbound
+    transport: ide_command_registry
+    surface: ide_agent_panel
+    authority: high
+    write_mode: native_send_command
+    verification:
+      mode: plugin_ack
+      can_confirm_submit: true
+    blocking_modes:
+      - command_unavailable
+      - plugin_missing
+      - plugin_not_connected
+      - plugin_version_mismatch
+    operator_recovery:
+      - reload_window
+      - reconnect_plugin
+    primary_code:
+      - plugins/koru-autopilot-vscode/src/ides/windsurf.ts
+      - plugins/koru-autopilot-vscode/src/extension.ts
+
   - id: os_injector_xdotool
     family: desktop_control
     direction: outbound

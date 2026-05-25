@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.71",
+  "version": "0.1.72",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {

@@ -52,6 +52,49 @@ def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
     assert report.plugin["expected_version"] == "0.1.13"
 
 
+def test_collect_report_accepts_nonlocal_koru_when_editable_source_matches(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    path_koru = tmp_path / "global-venv" / "bin" / "koru"
+    repo_koru = tmp_path / "repo" / ".venv" / "bin" / "koru"
+    path_koru.parent.mkdir(parents=True)
+    repo_koru.parent.mkdir(parents=True)
+    path_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    repo_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path / "repo")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
+    monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: path_koru)
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: repo_koru)
+    monkeypatch.setattr(
+        install_manager,
+        "_installed_editable_source_root",
+        lambda: (tmp_path / "repo").resolve(),
+    )
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(
+        install_manager,
+        "installed_extension_version_for_ide",
+        lambda _ide: "0.1.13",
+    )
+    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(
+        install_manager,
+        "_daemon_status",
+        lambda _socket: {"running": False},
+    )
+
+    report = install_manager.collect_install_manager_report(
+        ide="vscode",
+        socket_path=tmp_path / "koru.sock",
+    )
+
+    codes = {issue.code for issue in report.issues}
+    assert "koru_path_mismatch" not in codes
+
+
 def test_expected_plugin_version_falls_back_to_bundled_metadata(tmp_path: Path) -> None:
     assert install_manager._expected_plugin_version(tmp_path) == EXPECTED_VSCODE_PLUGIN_VERSION
 
@@ -93,6 +136,38 @@ def test_collect_report_uses_explicit_ide_socket_when_env_is_unset(
     assert checked == [expected_socket]
     assert report.socket == str(expected_socket)
     assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
+
+
+def test_collect_report_auto_prefers_autopilot_instance_over_terminal_hint(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
+    monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
+    monkeypatch.setattr(
+        install_manager,
+        "_repo_koru_bin",
+        lambda _root: tmp_path / ".venv/bin/koru",
+    )
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.15")
+    monkeypatch.setattr(
+        install_manager,
+        "installed_extension_version_for_ide",
+        lambda ide: f"{ide}:0.1.15",
+    )
+    monkeypatch.setattr(install_manager, "detect_terminal_host_ide_id", lambda: "vscode")
+    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
+
+    report = install_manager.collect_install_manager_report(ide="auto")
+
+    assert report.plugin["ide"] == "vscodium"
+    assert report.plugin["installed_version"] == "vscodium:0.1.15"
 
 
 def test_collect_report_flags_connected_plugin_version_mismatch(
@@ -375,6 +450,126 @@ def test_repair_installation_records_plugin_action(monkeypatch, tmp_path: Path) 
 
     assert report.actions[0] == {"action": "install_plugin", "result": {"status": "dry_run"}}
     assert report.actions[1]["action"] == "reload_ide_and_reconnect"
+
+
+def test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        install_manager,
+        "collect_install_manager_report",
+        lambda ide, socket_path: install_manager.InstallManagerReport(
+            ok=True,
+            source_root=str(tmp_path),
+            package_version="1.0",
+            source_version="1.0",
+            python="/python",
+            path_koru="/bin/koru",
+            repo_koru="/repo/.venv/bin/koru",
+            socket=str(tmp_path / "koru.sock"),
+            daemon={"running": True},
+            plugin={
+                "ide": "vscode",
+                "connected": True,
+                "connected_version": "0.1.70",
+                "installed_version": "0.1.70",
+                "expected_version": "0.1.70",
+            },
+            ides=[],
+        ),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "already_installed"}),
+    )
+
+    def _forbidden_shutdown(*_args, **_kwargs):  # noqa: ANN001
+        raise AssertionError("shutdown should not be called when plugin is aligned")
+
+    monkeypatch.setattr(install_manager, "AutopilotClient", _forbidden_shutdown)
+
+    report = install_manager.repair_installation(
+        ide="vscode",
+        socket_path=tmp_path / "koru.sock",
+        dry_run=False,
+    )
+
+    assert report.actions[0]["action"] == "install_plugin"
+    assert report.actions[1]["action"] == "shutdown_daemon_for_reload"
+    assert report.actions[1]["result"]["skipped"] is True
+    assert report.actions[2]["action"] == "reload_ide_and_reconnect"
+
+
+def test_repair_installation_returns_refreshed_report_after_plugin_fix(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    before = install_manager.InstallManagerReport(
+        ok=False,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": False},
+        plugin={
+            "ide": "vscodium",
+            "connected": False,
+            "installed_version": "0.1.71",
+            "expected_version": "0.1.72",
+        },
+        ides=[],
+        issues=[
+            install_manager.ManagerIssue(
+                code="plugin_installed_version_mismatch",
+                severity="error",
+                message="old plugin",
+            )
+        ],
+    )
+    after = install_manager.InstallManagerReport(
+        ok=True,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": False},
+        plugin={
+            "ide": "vscodium",
+            "connected": False,
+            "installed_version": "0.1.72",
+            "expected_version": "0.1.72",
+        },
+        ides=[],
+    )
+    reports = iter([before, after])
+    monkeypatch.setattr(
+        install_manager,
+        "collect_install_manager_report",
+        lambda ide, socket_path: next(reports),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "installed"}),
+    )
+
+    report = install_manager.repair_installation(
+        ide="vscodium",
+        socket_path=tmp_path / "koru.sock",
+        dry_run=False,
+    )
+
+    assert report.ok is True
+    assert report.plugin["installed_version"] == "0.1.72"
+    assert report.actions[0] == {"action": "install_plugin", "result": {"status": "installed"}}
 
 
 def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_path: Path) -> None:

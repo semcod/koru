@@ -16,6 +16,7 @@ from urllib.parse import urlencode, parse_qs, urlparse
 
 from koru.env_config import apply_env_updates, env_config_payload, write_env_config
 from koru.interface_registry import blocker_interface_payload, interface_registry_payload
+from koru.environment_profile import environment_profile_payload
 from koruapi.dashboard_config import (
     DashboardConfigDefaults,
     dashboard_config_payload,
@@ -75,7 +76,7 @@ def _state_payload(config: ServeConfig) -> dict[str, Any]:
     )
 
 
-def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
+def _build_dashboard_handler_impl(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
     """Build and return a DashboardRequestHandler subclass for the dashboard."""
 
     def _resolve_dashboard_project(raw: object | None) -> Path:
@@ -209,6 +210,15 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
         def _get_interfaces(self) -> None:
             try:
                 self._send_json(interface_registry_payload())
+            except Exception as exc:  # pragma: no cover - defensive surface
+                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+
+        def _get_environment(self) -> None:
+            try:
+                project = self._selected_project()
+                self._send_json(environment_profile_payload(project))
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=400)
             except Exception as exc:  # pragma: no cover - defensive surface
                 self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
 
@@ -358,6 +368,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 "/api/plugin-logs": self._get_plugin_logs,
                 "/api/autonomy/trace": self._get_autonomy_trace,
                 "/api/interfaces": self._get_interfaces,
+                "/api/environment": self._get_environment,
             }.get(path)
             if route is not None:
                 route()
@@ -574,3 +585,8 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
             self._send(404, b"not found")
 
     return _Handler
+
+
+def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
+    """Build and return a DashboardRequestHandler subclass for the dashboard."""
+    return _build_dashboard_handler_impl(config)

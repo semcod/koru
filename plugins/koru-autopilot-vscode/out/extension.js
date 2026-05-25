@@ -889,6 +889,9 @@ class AutopilotBridge {
         return { ok: true, command: cmd, ...extra };
     }
     async _submitChatVSCodium(verifyText, verifyEnabled) {
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+        const cache = this.getProbeCache();
+        const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildSubmitCommands)("vscodium"), cache?.submit), existing);
         const hostVerifyEnabled = verifyEnabled ||
             (0, step_decisions_1.shouldRequireVerifiedHostSubmit)("vscodium", verifyText, this.koruStepConfig());
         this.traceOperation({
@@ -899,8 +902,12 @@ class AutopilotBridge {
                 verifyEnabled,
                 hostVerifyEnabled,
                 trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
+                registeredCandidates: candidates,
             },
         });
+        const registered = await this._tryRegisteredCommands(candidates, verifyText, hostVerifyEnabled);
+        if (registered)
+            return registered;
         const hostClick = await this._tryHostClickSubmit();
         if (hostClick.ok && hostClick.command) {
             const accepted = await this.finalizeSubmitCandidate(hostClick.command, verifyText, hostVerifyEnabled, true);

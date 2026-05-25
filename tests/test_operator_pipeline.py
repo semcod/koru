@@ -6,11 +6,14 @@ import json
 import subprocess
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from koru.autonomous_startup import AutonomousStartupProbe
 from koru.autonomy import operator_pipeline as op
+
+REAL_SELF_CONTROL_OK = op._self_control_ok
 
 
 def _ticket_args(command: list[str]) -> list[str]:
@@ -178,6 +181,113 @@ def test_build_operator_steps_adds_self_control_step(
     assert self_step.status == "pending"
     assert self_step.actor == "taskfile"
     assert self_step.task_command == "koru self repair --yes"
+
+
+def _self_report(
+    tmp_path: Path,
+    *,
+    status: str,
+    repair: str = "",
+    actions: list[dict[str, object]] | None = None,
+) -> SimpleNamespace:
+    check = SimpleNamespace(
+        name="autopilot_install_manager",
+        status=status,
+        detail="installed=old; expected=new",
+        repair=repair,
+    )
+    return SimpleNamespace(
+        project=tmp_path,
+        checks=[check],
+        actions=actions or [],
+        needs_repair=bool(repair and status in {"warn", "fail"}),
+    )
+
+
+def test_self_control_ok_auto_repairs_when_fix_clears_problem(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru import self_control
+
+    reports = iter(
+        [
+            _self_report(tmp_path, status="warn", repair="koru autopilot manage --fix"),
+            _self_report(tmp_path, status="ok"),
+        ]
+    )
+    monkeypatch.setattr(self_control, "run_self_control", lambda *_args, **_kwargs: next(reports))
+    monkeypatch.setattr(
+        self_control,
+        "repair_self_control",
+        lambda *_args, **_kwargs: _self_report(
+            tmp_path,
+            status="warn",
+            repair="koru autopilot manage --fix",
+            actions=[{"action": "install_plugin"}],
+        ),
+    )
+
+    ok, detail, task = REAL_SELF_CONTROL_OK(tmp_path, "vscodium", "/tmp/koru.sock")
+
+    assert ok is True
+    assert task is None
+    assert "auto-repaired" in detail
+
+
+def test_self_control_ok_keeps_task_when_auto_repair_still_needs_reload(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru import self_control
+
+    reports = iter(
+        [
+            _self_report(tmp_path, status="warn", repair="koru autopilot manage --fix"),
+            _self_report(tmp_path, status="warn", repair="koru autopilot manage --fix"),
+        ]
+    )
+    monkeypatch.setattr(self_control, "run_self_control", lambda *_args, **_kwargs: next(reports))
+    monkeypatch.setattr(
+        self_control,
+        "repair_self_control",
+        lambda *_args, **_kwargs: _self_report(
+            tmp_path,
+            status="warn",
+            repair="koru autopilot manage --fix",
+            actions=[{"action": "install_plugin"}, {"action": "reload_ide_and_reconnect"}],
+        ),
+    )
+
+    ok, detail, task = REAL_SELF_CONTROL_OK(tmp_path, "vscodium", "/tmp/koru.sock")
+
+    assert ok is False
+    assert "auto-repair ran" in detail
+    assert task == f"koru self --project {tmp_path} --ide vscodium repair --yes"
+
+
+def test_self_control_ok_respects_autorepair_opt_out(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru import self_control
+
+    monkeypatch.setenv("KORU_SELF_CONTROL_AUTOREPAIR", "0")
+    monkeypatch.setattr(
+        self_control,
+        "run_self_control",
+        lambda *_args, **_kwargs: _self_report(
+            tmp_path,
+            status="warn",
+            repair="koru autopilot manage --fix",
+        ),
+    )
+
+    ok, detail, task = REAL_SELF_CONTROL_OK(tmp_path, "vscodium", "/tmp/koru.sock")
+
+    assert ok is False
+    assert detail == "autopilot_install_manager: installed=old; expected=new"
+    assert task == f"koru self --project {tmp_path} --ide vscodium repair --yes"
 
 
 def test_run_startup_operator_pipeline_creates_tickets(

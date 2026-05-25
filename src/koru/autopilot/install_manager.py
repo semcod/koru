@@ -8,6 +8,7 @@ import os
 import shutil
 import sys
 import tomllib
+import urllib.parse
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,13 +27,16 @@ from koru.autopilot.plugin_installer import (
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
-
 _ANSI_YELLOW = "\033[33m"
 _ANSI_RESET = "\033[0m"
 
 
 def _supports_color() -> bool:
-    return os.environ.get("NO_COLOR") is None and hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+    return (
+        os.environ.get("NO_COLOR") is None
+        and hasattr(sys.stdout, "isatty")
+        and sys.stdout.isatty()
+    )
 
 
 def _yellow(text: str, *, enabled: bool) -> str:
@@ -124,6 +128,28 @@ def _path_koru_bin() -> Path | None:
     return Path(resolved).resolve() if resolved else None
 
 
+def _installed_editable_source_root() -> Path | None:
+    try:
+        dist = importlib.metadata.distribution("koru")
+        raw = dist.read_text("direct_url.json")
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    dir_info = data.get("dir_info") if isinstance(data, dict) else None
+    if not isinstance(dir_info, dict) or not dir_info.get("editable"):
+        return None
+    url = str(data.get("url") or "")
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "file":
+        return None
+    return Path(urllib.parse.unquote(parsed.path)).resolve()
+
+
 def _is_pyenv_shim(path: Path | None) -> bool:
     return bool(path and ".pyenv" in path.parts and "shims" in path.parts)
 
@@ -145,6 +171,9 @@ def _resolve_ide(raw: str) -> str:
     env_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
     if env_ide:
         return env_ide
+    instance_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
+    if instance_ide:
+        return instance_ide
     terminal = detect_terminal_host_ide_id()
     if terminal:
         return terminal
@@ -197,7 +226,11 @@ def _plugin_for_ide(status: dict[str, Any], ide: str) -> dict[str, Any] | None:
 
 
 def _check_koru_path_issues(
-    path_koru: Path | None, repo_koru: Path | None
+    path_koru: Path | None,
+    repo_koru: Path | None,
+    *,
+    source_root: Path,
+    editable_source_root: Path | None = None,
 ) -> list[ManagerIssue]:
     issues: list[ManagerIssue] = []
     if path_koru is None:
@@ -210,6 +243,8 @@ def _check_koru_path_issues(
             ),
         )
     elif repo_koru is not None and path_koru != repo_koru:
+        if editable_source_root is not None and editable_source_root == source_root.resolve():
+            return issues
         issues.append(
             ManagerIssue(
                 "koru_path_mismatch",
@@ -493,6 +528,7 @@ def _issue_list(
     *,
     source_version: str | None,
     package_version: str | None,
+    source_root: Path,
     path_koru: Path | None,
     repo_koru: Path | None,
     daemon: dict[str, Any],
@@ -501,12 +537,20 @@ def _issue_list(
     socket_path: Path,
 ) -> list[ManagerIssue]:
     issues: list[ManagerIssue] = []
-    issues.extend(_check_koru_path_issues(path_koru, repo_koru))
+    issues.extend(
+        _check_koru_path_issues(
+            path_koru,
+            repo_koru,
+            source_root=source_root,
+            editable_source_root=_installed_editable_source_root(),
+        )
+    )
     issues.extend(_check_pyenv_shim_issue(path_koru))
     issues.extend(_check_version_mismatch_issue(source_version, package_version))
     issues.extend(_check_daemon_issues(daemon))
-    if ide != "auto" and not supports_vscode_extension_plugin(ide):
-        return issues
+    if ide != "auto":
+        if not supports_vscode_extension_plugin(ide):
+            return issues
     issues.extend(_check_plugin_version_missing_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_installed_version_mismatch_issue(plugin, ide))
     issues.extend(_check_plugin_live_host_stale_issue(daemon, plugin, ide))
@@ -550,6 +594,7 @@ def collect_install_manager_report(
     issues = _issue_list(
         source_version=source_version,
         package_version=package_version,
+        source_root=root,
         path_koru=path_koru,
         repo_koru=repo_koru,
         daemon=daemon,
@@ -600,7 +645,26 @@ def repair_installation(
         socket_path=Path(report.socket),
     )
     actions.append({"action": "install_plugin", "result": plugin_result.to_dict()})
-    if report.daemon.get("running") and not dry_run:
+    live_version = str(report.plugin.get("connected_version") or "").strip()
+    installed_version = str(report.plugin.get("installed_version") or "").strip()
+    plugin_already_aligned = bool(
+        live_version and installed_version and live_version == installed_version
+    )
+    if plugin_already_aligned:
+        actions.append(
+            {
+                "action": "shutdown_daemon_for_reload",
+                "result": {
+                    "ok": True,
+                    "skipped": True,
+                    "message": (
+                        "daemon kept running: live plugin version already matches "
+                        "installed VSIX"
+                    ),
+                },
+            }
+        )
+    elif report.daemon.get("running") and not dry_run:
         try:
             shutdown = AutopilotClient(socket_path=Path(report.socket), timeout=1.5).shutdown()
         except (OSError, RuntimeError) as exc:
@@ -618,6 +682,10 @@ def repair_installation(
             },
         },
     )
+    if not dry_run:
+        refreshed = collect_install_manager_report(ide=resolved_ide, socket_path=Path(report.socket))
+        refreshed.actions = actions
+        return refreshed
     report.actions = actions
     return report
 

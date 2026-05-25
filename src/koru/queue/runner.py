@@ -261,6 +261,82 @@ def _finalize_ticket(
     )
 
 
+def _next_ticket_or_result(
+    project: Path,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
+    next_result = planfile_command(
+        project,
+        ["ticket", "list", "--status", "open", "--format", "json"],
+        runner=planfile_runner,
+    )
+    if next_result.returncode != 0:
+        return None, QueueRunResult(
+            status="planfile_error",
+            message="planfile ticket list failed",
+            exit_code=next_result.returncode,
+            stdout=next_result.stdout,
+            stderr=next_result.stderr,
+        )
+
+    ticket = parse_next_ticket(next_result.stdout)
+    if ticket is None:
+        return None, QueueRunResult(status="idle", message="No runnable ticket found")
+    return ticket, None
+
+
+def _log_queue_ticket_start(ticket: dict[str, Any], ticket_id: str) -> None:
+    ticket_name = str(ticket.get("name") or ticket_id)
+    try:
+        from koru.activity_log import activity
+
+        activity(
+            "QUEUE",
+            f"start {ticket_id} ({ticket_name}) executor="
+            f"{(ticket.get('executor') or {}).get('kind', 'human')}",
+        )
+    except Exception:
+        pass
+
+
+def _resolve_action_or_result(
+    *,
+    ticket: dict[str, Any],
+    ticket_id: str,
+    executor_kind: str,
+    interactive: bool,
+    dry_run: bool,
+    project: Path,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> tuple[Any | None, QueueRunResult | None]:
+    action_info = _resolve_ticket_action(ticket, executor_kind)
+    if action_info is None:
+        return None, QueueRunResult(
+            status="unsupported_executor",
+            ticket_id=ticket_id,
+            executor_kind=executor_kind,
+            message=f"Executor kind '{executor_kind}' is not implemented yet",
+        )
+
+    action, missing_prompt = action_info
+    if action:
+        return action, None
+    if executor_kind == "shell" and not interactive and not dry_run:
+        return "true", None
+
+    planfile_command(
+        project,
+        ["ticket", "block", ticket_id, "--reason", missing_prompt],
+        runner=planfile_runner,
+    )
+    return None, QueueRunResult(
+        status="waiting_input",
+        ticket_id=ticket_id,
+        executor_kind=executor_kind,
+        message=missing_prompt,
+    )
+
+
 def _run_next_planfile_task_impl(
     *,
     project: Path,
@@ -292,37 +368,13 @@ def _run_next_planfile_task_impl(
     project = project.resolve()
 
     with queue_runner_lock(project):
-        next_args = ["ticket", "list", "--status", "open", "--format", "json"]
-        next_result = planfile_command(
-            project,
-            next_args,
-            runner=planfile_runner,
-        )
-        if next_result.returncode != 0:
-            return QueueRunResult(
-                status="planfile_error",
-                message="planfile ticket list failed",
-                exit_code=next_result.returncode,
-                stdout=next_result.stdout,
-                stderr=next_result.stderr,
-            )
-
-        ticket = parse_next_ticket(next_result.stdout)
-        if ticket is None:
-            return QueueRunResult(status="idle", message="No runnable ticket found")
+        ticket, early_result = _next_ticket_or_result(project, planfile_runner)
+        if early_result is not None:
+            return early_result
+        assert ticket is not None
 
         ticket_id = str(ticket["id"])
-        ticket_name = str(ticket.get("name") or ticket_id)
-        try:
-            from koru.activity_log import activity
-
-            activity(
-                "QUEUE",
-                f"start {ticket_id} ({ticket_name}) executor="
-                f"{(ticket.get('executor') or {}).get('kind', 'human')}",
-            )
-        except Exception:
-            pass
+        _log_queue_ticket_start(ticket, ticket_id)
 
         executor_kind = _resolve_executor_kind(ticket, interactive, dry_run)
 
@@ -338,32 +390,18 @@ def _run_next_planfile_task_impl(
                 prompt_runner,
             )
 
-        action_info = _resolve_ticket_action(ticket, executor_kind)
-        if action_info is None:
-            return QueueRunResult(
-                status="unsupported_executor",
-                ticket_id=ticket_id,
-                executor_kind=executor_kind,
-                message=f"Executor kind '{executor_kind}' is not implemented yet",
-            )
-
-        action, missing_prompt = action_info
-
-        if not action:
-            if executor_kind == "shell" and not interactive and not dry_run:
-                action = "true"
-            else:
-                planfile_command(
-                    project,
-                    ["ticket", "block", ticket_id, "--reason", missing_prompt],
-                    runner=planfile_runner,
-                )
-                return QueueRunResult(
-                    status="waiting_input",
-                    ticket_id=ticket_id,
-                    executor_kind=executor_kind,
-                    message=missing_prompt,
-                )
+        action, action_result = _resolve_action_or_result(
+            ticket=ticket,
+            ticket_id=ticket_id,
+            executor_kind=executor_kind,
+            interactive=interactive,
+            dry_run=dry_run,
+            project=project,
+            planfile_runner=planfile_runner,
+        )
+        if action_result is not None:
+            return action_result
+        assert action is not None
 
         if dry_run:
             return _handle_dry_run(ticket_id, executor_kind, action)

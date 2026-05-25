@@ -41,6 +41,13 @@ def koru_distribution_version() -> str:
 
 
 def _session_label() -> str:
+    from koruos import resolve_active_os_strategy
+
+    strategy = resolve_active_os_strategy()
+    if strategy.id == "linux-wayland":
+        return "wayland"
+    if strategy.id == "linux-x11":
+        return "x11"
     if (os.environ.get("WAYLAND_DISPLAY") or "").strip():
         return "wayland"
     if (os.environ.get("DISPLAY") or "").strip():

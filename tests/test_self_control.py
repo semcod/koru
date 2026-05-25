@@ -30,6 +30,9 @@ def test_run_self_control_reports_package_mismatch(
     assert package.status == "warn"
     assert "version_mismatch=true" in package.detail
     assert report.needs_repair is True
+    environment = next(check for check in report.checks if check.name == "environment_profile")
+    assert environment.status == "ok"
+    assert "ide=vscodium" in environment.detail
 
 
 def test_repair_self_control_requires_yes(tmp_path: Path) -> None:
@@ -71,6 +74,29 @@ def test_repair_self_control_runs_editable_install_when_package_mismatch(
     assert commands
     assert commands[0][-2:] == ["-e", str(tmp_path.resolve())]
     assert any(action["action"] == "pip_install_editable" for action in report.actions)
+
+
+def test_entrypoint_identity_accepts_global_venv_when_editable_source_matches(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    local = tmp_path / ".venv" / "bin" / "koru"
+    global_koru = tmp_path / "global-venv" / "bin" / "koru"
+    local.parent.mkdir(parents=True)
+    global_koru.parent.mkdir(parents=True)
+    local.write_text("#!/bin/sh\n", encoding="utf-8")
+    global_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setattr(self_control.shutil, "which", lambda _name: str(global_koru))
+    monkeypatch.setattr(
+        self_control,
+        "_installed_editable_source_root",
+        lambda: tmp_path.resolve(),
+    )
+
+    check = self_control._check_entrypoint_identity(tmp_path)
+
+    assert check.status == "ok"
+    assert "editable_source_matches=true" in check.detail
 
 
 def test_self_cli_accepts_json_after_subcommand(tmp_path: Path, monkeypatch, capsys) -> None:

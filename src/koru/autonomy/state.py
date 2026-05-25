@@ -30,5 +30,7 @@ class AutoloopState:
     last_scan_after_idle_ts: float = -1.0
     last_scan_create_failed_fingerprint: str = ""
     last_scan_create_failed_ts: float = -1.0
+    last_scan_duplicate_fingerprint: str = ""
+    last_scan_duplicate_ts: float = -1.0
     pending_ide_verify_id: str | None = None
     post_verify_seen: set[str] = field(default_factory=set)

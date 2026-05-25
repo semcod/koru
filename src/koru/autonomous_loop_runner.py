@@ -312,13 +312,19 @@ def _quick_action_lines(
         except Exception:
             urls = {
                 "dashboard": "http://127.0.0.1:8765/",
-                "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+                "create_project_ticket": (
+                    "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project"
+                ),
+                "create_project_ticket_action": (
+                    "http://127.0.0.1:8765/llm/action/create-ticket-for-project"
+                ),
                 "tickets": "http://127.0.0.1:8765/?tab=tickets",
             }
     else:
         urls = {
             "dashboard": "http://127.0.0.1:8765/",
             "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+            "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
             "tickets": "http://127.0.0.1:8765/?tab=tickets",
         }
 
@@ -352,7 +358,7 @@ def _quick_action_lines(
             "`touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
         )
     if "idle_no_ticket" in status or queue_status == "idle":
-        actions.append(f"[create ticket] {urls['create_project_ticket']}")
+        actions.append(f"[create ticket] {urls['create_project_ticket_action']}")
         actions.append(f"[reopen done ticket] {urls['tickets']}")
         actions.append(
             "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
@@ -368,11 +374,12 @@ def _quick_action_lines(
             "--prompt '<input needed>' --note '<what was verified>'`"
         )
         actions.append(
-            f"[open ticket] http://127.0.0.1:8765/?tab=tickets#{waiting_ticket}"
+            f"[open ticket] {urls['tickets']}#{waiting_ticket}"
         )
     if "submit_unverified" in status or status == "failed":
+        retry_ide = autopilot_ide or "auto"
         actions.append(
-            f"[retry submit] `koru autopilot drive --ide cursor --require-plugin "
+            f"[retry submit] `koru autopilot drive --ide {retry_ide} --require-plugin "
             f"-p 'continue with {waiting_ticket}'`"
         )
     if "diagnostics_fail" in status:

@@ -24,6 +24,7 @@ def test_interface_registry_path_exists() -> None:
 def test_interface_registry_contains_antigravity_and_mcp() -> None:
     ids = list_interface_ids()
     assert "antigravity_native_send" in ids
+    assert "windsurf_native_send" in ids
     assert "mcp_stdio_server" in ids
 
 

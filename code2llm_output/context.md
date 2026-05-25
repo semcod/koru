@@ -1,31 +1,42 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 714, md: 89, shell: 50, typescript: 29, yaml: 22
+- **Languages**: python: 751, md: 97, shell: 49, yaml: 48, typescript: 33
 - **Analysis Mode**: static
-- **Total Functions**: 5338
-- **Total Classes**: 529
-- **Modules**: 947
+- **Total Functions**: 13834
+- **Total Classes**: 578
+- **Modules**: 1023
 - **Entry Points**: 0
 
 ## Architecture by Module
 
+### code2llm_output.map.toon
+- **Functions**: 4534
+- **File**: `map.toon.yaml`
+
+### batch_1.SUMD
+- **Functions**: 3490
+- **File**: `SUMD.md`
+
+### project.map.toon
+- **Functions**: 2746
+- **File**: `map.toon.yaml`
+
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 306
+- **Functions**: 334
 - **Classes**: 2
 - **File**: `extension.ts`
 
 ### koru.doctor
-- **Functions**: 91
+- **Functions**: 89
 - **Classes**: 2
 - **File**: `doctor.py`
 
 ### src.koru.doctor
-- **Functions**: 91
+- **Functions**: 89
 - **Classes**: 2
 - **File**: `doctor.py`
 
@@ -43,18 +54,26 @@
 - **Classes**: 2
 - **File**: `autonomous.py`
 
+### plugins.koru-autopilot-vscode.src.probe-ladder
+- **Functions**: 49
+- **Classes**: 3
+- **File**: `probe-ladder.ts`
+
 ### koru.wizard.gui.static.wizard
 - **Functions**: 47
 - **File**: `wizard.js`
 
+### koru.autonomous_cycle_chat_activity
+- **Functions**: 47
+- **File**: `autonomous_cycle_chat_activity.py`
+
+### src.koru.autonomous_cycle_chat_activity
+- **Functions**: 47
+- **File**: `autonomous_cycle_chat_activity.py`
+
 ### src.koru.wizard.gui.static.wizard
 - **Functions**: 47
 - **File**: `wizard.js`
-
-### plugins.koru-autopilot-vscode.src.probe-ladder
-- **Functions**: 47
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
 
 ### koruide.ide
 - **Functions**: 44
@@ -66,6 +85,10 @@
 - **Classes**: 1
 - **File**: `ide.py`
 
+### plugins.koru-autopilot-vscode.src.chat-history-watcher.test
+- **Functions**: 42
+- **File**: `chat-history-watcher.test.ts`
+
 ### koru.cli_cleaned
 - **Functions**: 41
 - **File**: `cli_cleaned.py`
@@ -74,36 +97,10 @@
 - **Functions**: 41
 - **File**: `cli_cleaned.py`
 
-### koru.autonomous_cycle_chat_activity
-- **Functions**: 39
-- **File**: `autonomous_cycle_chat_activity.py`
-
 ### koru.autonomous_wup
 - **Functions**: 39
 - **Classes**: 3
 - **File**: `autonomous_wup.py`
-
-### src.koru.autonomous_cycle_chat_activity
-- **Functions**: 39
-- **File**: `autonomous_cycle_chat_activity.py`
-
-### src.koru.autonomous_wup
-- **Functions**: 39
-- **Classes**: 3
-- **File**: `autonomous_wup.py`
-
-### koruapi.mcp_server
-- **Functions**: 35
-- **File**: `mcp_server.py`
-
-### src.koruapi.mcp_server
-- **Functions**: 35
-- **File**: `mcp_server.py`
-
-### src.koru.autonomy.operator_pipeline
-- **Functions**: 33
-- **Classes**: 2
-- **File**: `operator_pipeline.py`
 
 ## Key Entry Points
 
@@ -116,8 +113,12 @@ Key execution flows identified:
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 292
+- **Methods**: 320
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+
+### plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 20
+- **Key Methods**: plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r
 
 ### plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
 - **Methods**: 19
@@ -140,10 +141,6 @@ no
 - **Methods**: 15
 - **Key Methods**: src.koruide.ides.base.IdeStrategy.id, src.koruide.ides.base.IdeStrategy.label, src.koruide.ides.base.IdeStrategy.detection, src.koruide.ides.base.IdeStrategy.terminal, src.koruide.ides.base.IdeStrategy.aliases, src.koruide.ides.base.IdeStrategy.config_home, src.koruide.ides.base.IdeStrategy.user_settings_path, src.koruide.ides.base.IdeStrategy.workspace_settings_path, src.koruide.ides.base.IdeStrategy.state_vscdb_path, src.koruide.ides.base.IdeStrategy.extensions_metadata_path
 - **Inherits**: ABC
-
-### plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
-- **Methods**: 15
-- **Key Methods**: plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fields
 
 ### koruide.drive_orchestrator.DriveOrchestrator
 > Pure helpers used by the autopilot daemon.
@@ -185,52 +182,51 @@ session:
 - **Methods**: 13
 - **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector._type_text_backends, src.koruide.injector.Injector._log_type_text_request, src.koruide.injector.Injector._dry_run_type_text_result, src.koruide.injector.Injector._try_type_text_backends, src.koruide.injector.Injector._all_type_backends_failed, src.koruide.injector.Injector.type_text
 
-### koruide.ides.antigravity.AntigravityStrategy
-- **Methods**: 12
-- **Key Methods**: koruide.ides.antigravity.AntigravityStrategy.id, koruide.ides.antigravity.AntigravityStrategy.label, koruide.ides.antigravity.AntigravityStrategy.detection, koruide.ides.antigravity.AntigravityStrategy.terminal, koruide.ides.antigravity.AntigravityStrategy.aliases, koruide.ides.antigravity.AntigravityStrategy.config_home, koruide.ides.antigravity.AntigravityStrategy.workspace_settings_path, koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, koruide.ides.antigravity.AntigravityStrategy.plugin, koruide.ides.antigravity.AntigravityStrategy.keyboard
-- **Inherits**: IdeStrategy
-
-### koruide.ides.windsurf.WindsurfStrategy
-- **Methods**: 12
-- **Key Methods**: koruide.ides.windsurf.WindsurfStrategy.id, koruide.ides.windsurf.WindsurfStrategy.label, koruide.ides.windsurf.WindsurfStrategy.detection, koruide.ides.windsurf.WindsurfStrategy.terminal, koruide.ides.windsurf.WindsurfStrategy.aliases, koruide.ides.windsurf.WindsurfStrategy.config_home, koruide.ides.windsurf.WindsurfStrategy.workspace_settings_path, koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, koruide.ides.windsurf.WindsurfStrategy.plugin, koruide.ides.windsurf.WindsurfStrategy.keyboard
-- **Inherits**: IdeStrategy
-
 ### koruide.ides.cursor.CursorStrategy
 > Strategy for Cursor (VS Code-fork by Anysphere).
-- **Methods**: 12
-- **Key Methods**: koruide.ides.cursor.CursorStrategy.id, koruide.ides.cursor.CursorStrategy.label, koruide.ides.cursor.CursorStrategy.detection, koruide.ides.cursor.CursorStrategy.terminal, koruide.ides.cursor.CursorStrategy.aliases, koruide.ides.cursor.CursorStrategy.config_home, koruide.ides.cursor.CursorStrategy.workspace_settings_path, koruide.ides.cursor.CursorStrategy.extensions_metadata_path, koruide.ides.cursor.CursorStrategy.plugin, koruide.ides.cursor.CursorStrategy.keyboard
-- **Inherits**: IdeStrategy
-
-### koruide.ides.vscode.VscodeStrategy
-- **Methods**: 12
-- **Key Methods**: koruide.ides.vscode.VscodeStrategy.id, koruide.ides.vscode.VscodeStrategy.label, koruide.ides.vscode.VscodeStrategy.detection, koruide.ides.vscode.VscodeStrategy.terminal, koruide.ides.vscode.VscodeStrategy.aliases, koruide.ides.vscode.VscodeStrategy.config_home, koruide.ides.vscode.VscodeStrategy.workspace_settings_path, koruide.ides.vscode.VscodeStrategy.extensions_metadata_path, koruide.ides.vscode.VscodeStrategy.plugin, koruide.ides.vscode.VscodeStrategy.keyboard
-- **Inherits**: IdeStrategy
-
-### src.koruide.ides.antigravity.AntigravityStrategy
-- **Methods**: 12
-- **Key Methods**: src.koruide.ides.antigravity.AntigravityStrategy.id, src.koruide.ides.antigravity.AntigravityStrategy.label, src.koruide.ides.antigravity.AntigravityStrategy.detection, src.koruide.ides.antigravity.AntigravityStrategy.terminal, src.koruide.ides.antigravity.AntigravityStrategy.aliases, src.koruide.ides.antigravity.AntigravityStrategy.config_home, src.koruide.ides.antigravity.AntigravityStrategy.workspace_settings_path, src.koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, src.koruide.ides.antigravity.AntigravityStrategy.plugin, src.koruide.ides.antigravity.AntigravityStrategy.keyboard
-- **Inherits**: IdeStrategy
-
-### src.koruide.ides.windsurf.WindsurfStrategy
-- **Methods**: 12
-- **Key Methods**: src.koruide.ides.windsurf.WindsurfStrategy.id, src.koruide.ides.windsurf.WindsurfStrategy.label, src.koruide.ides.windsurf.WindsurfStrategy.detection, src.koruide.ides.windsurf.WindsurfStrategy.terminal, src.koruide.ides.windsurf.WindsurfStrategy.aliases, src.koruide.ides.windsurf.WindsurfStrategy.config_home, src.koruide.ides.windsurf.WindsurfStrategy.workspace_settings_path, src.koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, src.koruide.ides.windsurf.WindsurfStrategy.plugin, src.koruide.ides.windsurf.WindsurfStrategy.keyboard
-- **Inherits**: IdeStrategy
+- **Methods**: 11
+- **Key Methods**: koruide.ides.cursor.CursorStrategy.id, koruide.ides.cursor.CursorStrategy.label, koruide.ides.cursor.CursorStrategy.config_folder_name, koruide.ides.cursor.CursorStrategy.workspace_settings_folder_name, koruide.ides.cursor.CursorStrategy.detection, koruide.ides.cursor.CursorStrategy.terminal, koruide.ides.cursor.CursorStrategy.aliases, koruide.ides.cursor.CursorStrategy.extensions_metadata_path, koruide.ides.cursor.CursorStrategy.plugin, koruide.ides.cursor.CursorStrategy.editor_cli_candidates
+- **Inherits**: VscodeFamilyStrategy
 
 ### src.koruide.ides.cursor.CursorStrategy
 > Strategy for Cursor (VS Code-fork by Anysphere).
-- **Methods**: 12
-- **Key Methods**: src.koruide.ides.cursor.CursorStrategy.id, src.koruide.ides.cursor.CursorStrategy.label, src.koruide.ides.cursor.CursorStrategy.detection, src.koruide.ides.cursor.CursorStrategy.terminal, src.koruide.ides.cursor.CursorStrategy.aliases, src.koruide.ides.cursor.CursorStrategy.config_home, src.koruide.ides.cursor.CursorStrategy.workspace_settings_path, src.koruide.ides.cursor.CursorStrategy.extensions_metadata_path, src.koruide.ides.cursor.CursorStrategy.plugin, src.koruide.ides.cursor.CursorStrategy.keyboard
-- **Inherits**: IdeStrategy
-
-### src.koruide.ides.vscode.VscodeStrategy
-- **Methods**: 12
-- **Key Methods**: src.koruide.ides.vscode.VscodeStrategy.id, src.koruide.ides.vscode.VscodeStrategy.label, src.koruide.ides.vscode.VscodeStrategy.detection, src.koruide.ides.vscode.VscodeStrategy.terminal, src.koruide.ides.vscode.VscodeStrategy.aliases, src.koruide.ides.vscode.VscodeStrategy.config_home, src.koruide.ides.vscode.VscodeStrategy.workspace_settings_path, src.koruide.ides.vscode.VscodeStrategy.extensions_metadata_path, src.koruide.ides.vscode.VscodeStrategy.plugin, src.koruide.ides.vscode.VscodeStrategy.keyboard
-- **Inherits**: IdeStrategy
-
-### koruide.ides.vscodium.VscodiumStrategy
 - **Methods**: 11
-- **Key Methods**: koruide.ides.vscodium.VscodiumStrategy.id, koruide.ides.vscodium.VscodiumStrategy.label, koruide.ides.vscodium.VscodiumStrategy.detection, koruide.ides.vscodium.VscodiumStrategy.aliases, koruide.ides.vscodium.VscodiumStrategy.config_home, koruide.ides.vscodium.VscodiumStrategy.workspace_settings_path, koruide.ides.vscodium.VscodiumStrategy.extensions_metadata_path, koruide.ides.vscodium.VscodiumStrategy.plugin, koruide.ides.vscodium.VscodiumStrategy.keyboard, koruide.ides.vscodium.VscodiumStrategy.editor_cli_candidates
-- **Inherits**: IdeStrategy
+- **Key Methods**: src.koruide.ides.cursor.CursorStrategy.id, src.koruide.ides.cursor.CursorStrategy.label, src.koruide.ides.cursor.CursorStrategy.config_folder_name, src.koruide.ides.cursor.CursorStrategy.workspace_settings_folder_name, src.koruide.ides.cursor.CursorStrategy.detection, src.koruide.ides.cursor.CursorStrategy.terminal, src.koruide.ides.cursor.CursorStrategy.aliases, src.koruide.ides.cursor.CursorStrategy.extensions_metadata_path, src.koruide.ides.cursor.CursorStrategy.plugin, src.koruide.ides.cursor.CursorStrategy.editor_cli_candidates
+- **Inherits**: VscodeFamilyStrategy
+
+### plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher
+- **Methods**: 11
+- **Key Methods**: plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.setCursor, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.start, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.tick, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.stop, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.a
+
+### koruide.ides.windsurf.WindsurfStrategy
+- **Methods**: 10
+- **Key Methods**: koruide.ides.windsurf.WindsurfStrategy.id, koruide.ides.windsurf.WindsurfStrategy.label, koruide.ides.windsurf.WindsurfStrategy.config_folder_name, koruide.ides.windsurf.WindsurfStrategy.detection, koruide.ides.windsurf.WindsurfStrategy.terminal, koruide.ides.windsurf.WindsurfStrategy.aliases, koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, koruide.ides.windsurf.WindsurfStrategy.plugin, koruide.ides.windsurf.WindsurfStrategy.editor_cli_candidates, koruide.ides.windsurf.WindsurfStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
+
+### koruide.ides.antigravity.AntigravityStrategy
+- **Methods**: 10
+- **Key Methods**: koruide.ides.antigravity.AntigravityStrategy.id, koruide.ides.antigravity.AntigravityStrategy.label, koruide.ides.antigravity.AntigravityStrategy.config_folder_name, koruide.ides.antigravity.AntigravityStrategy.detection, koruide.ides.antigravity.AntigravityStrategy.terminal, koruide.ides.antigravity.AntigravityStrategy.aliases, koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, koruide.ides.antigravity.AntigravityStrategy.plugin, koruide.ides.antigravity.AntigravityStrategy.editor_cli_candidates, koruide.ides.antigravity.AntigravityStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
+
+### src.koruide.ides.antigravity.AntigravityStrategy
+- **Methods**: 10
+- **Key Methods**: src.koruide.ides.antigravity.AntigravityStrategy.id, src.koruide.ides.antigravity.AntigravityStrategy.label, src.koruide.ides.antigravity.AntigravityStrategy.config_folder_name, src.koruide.ides.antigravity.AntigravityStrategy.detection, src.koruide.ides.antigravity.AntigravityStrategy.terminal, src.koruide.ides.antigravity.AntigravityStrategy.aliases, src.koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, src.koruide.ides.antigravity.AntigravityStrategy.plugin, src.koruide.ides.antigravity.AntigravityStrategy.editor_cli_candidates, src.koruide.ides.antigravity.AntigravityStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
+
+### src.koruide.ides.windsurf.WindsurfStrategy
+- **Methods**: 10
+- **Key Methods**: src.koruide.ides.windsurf.WindsurfStrategy.id, src.koruide.ides.windsurf.WindsurfStrategy.label, src.koruide.ides.windsurf.WindsurfStrategy.config_folder_name, src.koruide.ides.windsurf.WindsurfStrategy.detection, src.koruide.ides.windsurf.WindsurfStrategy.terminal, src.koruide.ides.windsurf.WindsurfStrategy.aliases, src.koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, src.koruide.ides.windsurf.WindsurfStrategy.plugin, src.koruide.ides.windsurf.WindsurfStrategy.editor_cli_candidates, src.koruide.ides.windsurf.WindsurfStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
+
+### koruide.ides.vscode.VscodeStrategy
+- **Methods**: 9
+- **Key Methods**: koruide.ides.vscode.VscodeStrategy.id, koruide.ides.vscode.VscodeStrategy.label, koruide.ides.vscode.VscodeStrategy.config_folder_name, koruide.ides.vscode.VscodeStrategy.detection, koruide.ides.vscode.VscodeStrategy.terminal, koruide.ides.vscode.VscodeStrategy.aliases, koruide.ides.vscode.VscodeStrategy.extensions_metadata_path, koruide.ides.vscode.VscodeStrategy.editor_cli_candidates, koruide.ides.vscode.VscodeStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
+
+### koruide.client.KoruIDEClient
+> Connect, send one message, read one reply, disconnect.
+- **Methods**: 9
+- **Key Methods**: koruide.client.KoruIDEClient.__init__, koruide.client.KoruIDEClient._drive_timeout, koruide.client.KoruIDEClient._connect, koruide.client.KoruIDEClient.request, koruide.client.KoruIDEClient._extract_reply, koruide.client.KoruIDEClient.is_running, koruide.client.KoruIDEClient.drive, koruide.client.KoruIDEClient.status, koruide.client.KoruIDEClient.shutdown
 
 ## Data Transformation Functions
 
@@ -324,8 +320,8 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `koruapi.dashboard_routes.build_dashboard_handler` - 237 calls
-- `src.koruapi.dashboard_routes.build_dashboard_handler` - 237 calls
+- `koruapi.dashboard_routes.build_dashboard_handler` - 267 calls
+- `src.koruapi.dashboard_routes.build_dashboard_handler` - 267 calls
 - `koru.wizard.gui.app.create_app` - 96 calls
 - `src.koru.wizard.gui.app.create_app` - 96 calls
 - `koru.autonomous_parser.build_parser` - 71 calls
@@ -334,9 +330,10 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `koru.context_render.render_markdown_handoff` - 47 calls
 - `src.koru.context_render.render_markdown_handoff` - 47 calls
+- `koru.autonomous_cycle.run_cycle` - 44 calls
+- `src.koru.autonomous_cycle.run_cycle` - 44 calls
 - `koru.policy.load_policy` - 43 calls
 - `src.koru.policy.load_policy` - 43 calls
-- `src.koru.autonomous_cycle.run_cycle` - 40 calls
 - `koru.git_cli.build_parser` - 39 calls
 - `src.koru.git_cli.build_parser` - 39 calls
 - `koru.local_manager_state.WorkerRegistry.register` - 37 calls
@@ -350,20 +347,19 @@ Functions exposed as public API (no underscore prefix):
 - `koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `koru.queue.runners.run_api_request` - 30 calls
-- `koruapi.dashboard_tickets.create_ticket_from_dashboard` - 30 calls
 - `koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
-- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 30 calls
 - `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
+- `koru.scan.run_scan` - 29 calls
+- `src.koru.scan.run_scan` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `koru.cli_queue.render_clean_report_text` - 28 calls
+- `koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
-- `koru.doctor.render_text` - 27 calls
 - `koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
-- `src.koru.doctor.render_text` - 27 calls
+- `koru.doctor_render.render_text` - 27 calls
 
 ## System Interactions
 

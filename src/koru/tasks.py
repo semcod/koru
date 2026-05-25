@@ -19,20 +19,17 @@ class CreatedTask:
     reused: bool = False
 
 
-def _create_nl_task_impl(
-    project: Path,
-    text: str,
-    *,
-    sprint: str = "current",
-    queue_name: str | None = None,
-    priority: str = "normal",
-    scaffold: dict[str, Any] | None = None,
-) -> CreatedTask:
-    """Create a planfile ticket from a normal-language sentence."""
-    text = text.strip()
-    if not text:
+def _validated_task_text(text: str) -> str:
+    normalized = text.strip()
+    if not normalized:
         raise ValueError("task text cannot be empty")
+    return normalized
 
+
+def _prepare_nl_task_storage(
+    project: Path,
+    sprint: str,
+) -> tuple[Path, Path, Path, dict[str, Any], dict[str, Any]]:
     project = project.resolve()
     planfile_dir = project / ".planfile"
     sprints_dir = planfile_dir / "sprints"
@@ -42,17 +39,39 @@ def _create_nl_task_impl(
     sprints_dir.mkdir(parents=True, exist_ok=True)
     sprint_data = _read_sprint(sprint_path, sprint=sprint)
     tickets = sprint_data["sprint"].setdefault("tickets", {})
-    now = datetime.now(UTC).isoformat()
-    scaffold = scaffold or {}
+    return project, config_path, sprint_path, sprint_data, tickets
+
+
+def _resolve_nl_task_name(text: str, scaffold: dict[str, Any]) -> str:
     scaffold_title = str(scaffold.get("title") or "").strip()
-    name = scaffold_title or _title_from_text(text)
+    return scaffold_title or _title_from_text(text)
 
-    existing, scaffold = _maybe_reuse_existing_task(tickets, scaffold, name, sprint, sprint_path)
-    if existing is not None:
-        return existing
 
-    ticket_id, _config = _generate_ticket_id(config_path, project.name)
+def _log_nl_task_creation(ticket_id: str, name: str, text: str, queue_name: str | None, executor_kind: str) -> None:
+    try:
+        from koru.activity_log import activity
 
+        activity(
+            "TICKET",
+            f"utworzono {ticket_id} ({name}) kolejka={queue_name or 'default'} "
+            f"executor={executor_kind}",
+            preview=text,
+        )
+    except Exception:
+        pass
+
+
+def _build_nl_task_record(
+    *,
+    ticket_id: str,
+    name: str,
+    text: str,
+    priority: str,
+    sprint: str,
+    queue_name: str | None,
+    scaffold: dict[str, Any],
+    now: str,
+) -> tuple[dict[str, Any], str]:
     labels = _build_ticket_labels(scaffold)
     source = _build_ticket_source(scaffold, text, now)
     inputs = _build_ticket_inputs(scaffold, text)
@@ -60,8 +79,7 @@ def _create_nl_task_impl(
     executor_kind = str(scaffold.get("executor_kind") or "human")
     executor_mode = str(scaffold.get("executor_mode") or "interactive")
     files = [str(v) for v in (scaffold.get("files") or []) if str(v).strip()]
-
-    tickets[ticket_id] = _build_ticket_dict(
+    ticket = _build_ticket_dict(
         ticket_id,
         name,
         text,
@@ -76,18 +94,46 @@ def _create_nl_task_impl(
         files,
         now,
     )
-    _write_yaml(sprint_path, sprint_data)
-    try:
-        from koru.activity_log import activity
+    return ticket, executor_kind
 
-        activity(
-            "TICKET",
-            f"utworzono {ticket_id} ({name}) kolejka={queue_name or 'default'} "
-            f"executor={executor_kind}",
-            preview=text,
-        )
-    except Exception:
-        pass
+
+def _create_nl_task_impl(
+    project: Path,
+    text: str,
+    *,
+    sprint: str = "current",
+    queue_name: str | None = None,
+    priority: str = "normal",
+    scaffold: dict[str, Any] | None = None,
+) -> CreatedTask:
+    """Create a planfile ticket from a normal-language sentence."""
+    text = _validated_task_text(text)
+    project, config_path, sprint_path, sprint_data, tickets = _prepare_nl_task_storage(
+        project, sprint
+    )
+    now = datetime.now(UTC).isoformat()
+    scaffold = scaffold or {}
+    name = _resolve_nl_task_name(text, scaffold)
+
+    existing, scaffold = _maybe_reuse_existing_task(tickets, scaffold, name, sprint, sprint_path)
+    if existing is not None:
+        return existing
+
+    ticket_id, _config = _generate_ticket_id(config_path, project.name)
+
+    ticket, executor_kind = _build_nl_task_record(
+        ticket_id=ticket_id,
+        name=name,
+        text=text,
+        priority=priority,
+        sprint=sprint,
+        queue_name=queue_name,
+        scaffold=scaffold,
+        now=now,
+    )
+    tickets[ticket_id] = ticket
+    _write_yaml(sprint_path, sprint_data)
+    _log_nl_task_creation(ticket_id, name, text, queue_name, executor_kind)
     return CreatedTask(ticket_id=ticket_id, sprint=sprint, path=sprint_path, name=name)
 
 

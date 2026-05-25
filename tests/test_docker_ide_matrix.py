@@ -133,6 +133,17 @@ def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> 
     assert "submit_verify" in source
 
 
+def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> None:
+    source = (
+        ROOT / "plugins" / "koru-autopilot-vscode" / "src" / "extension.ts"
+    ).read_text(encoding="utf-8")
+
+    registered = source.index("const registered = await this._tryRegisteredCommands")
+    host_click = source.index("const hostClick = await this._tryHostClickSubmit")
+    assert registered < host_click
+    assert 'buildSubmitCommands("vscodium")' in source
+
+
 def test_vscodium_plugin_supports_configured_submit_click() -> None:
     source = (
         ROOT / "plugins" / "koru-autopilot-vscode" / "src" / "extension.ts"

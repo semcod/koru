@@ -1,26 +1,26 @@
-# code2llm/evolution | 2998 func | 310f | 2026-05-25
+# code2llm/evolution | 3123 func | 322f | 2026-05-25
 # generated in 0.01s
 
-NEXT[7] (ranked by impact):
+NEXT[9] (ranked by impact):
   [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2223L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 31122
+      WHY: 2385L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 33390
 
   [2] !! SPLIT           src/koru/doctor.py
-      WHY: 1978L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 27692
+      WHY: 1921L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 26894
 
-  [3] !! SPLIT           src/koru/scan.py
-      WHY: 1167L, 3 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 17505
+  [3] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 520
 
-  [4] !  SPLIT-FUNC      execFile  CC=18  fan=18
+  [4] !! SPLIT-FUNC      build_decision_record  CC=28  fan=13
+      WHY: CC=28 exceeds 15
+      EFFORT: ~1h  IMPACT: 364
+
+  [5] !  SPLIT-FUNC      execFile  CC=18  fan=18
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
-
-  [5] !  SPLIT-FUNC      build_decision_record  CC=24  fan=13
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 312
 
   [6] !  SPLIT-FUNC      run_scan  CC=15  fan=19
       WHY: CC=15 exceeds 15
@@ -30,17 +30,25 @@ NEXT[7] (ranked by impact):
       WHY: CC=24 exceeds 15
       EFFORT: ~1h  IMPACT: 240
 
+  [8] !  SPLIT-FUNC      _handle_autopilot_phase  CC=15  fan=14
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [9] !! SPLIT           planfile.yaml
+      WHY: 1370L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
+
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 173 import paths
-  ⚠ Splitting src/koru/doctor.py may break 92 import paths
-  ⚠ Splitting src/koru/scan.py may break 31 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 183 import paths
+  ⚠ Splitting src/koru/doctor.py may break 89 import paths
+  ⚠ Splitting planfile.yaml may break 0 import paths
 
 METRICS-TARGET:
-  CC̄:          3.8 → ≤2.7
-  max-CC:      24 → ≤12
-  god-modules: 14 → 0
-  high-CC(≥15): 8 → ≤4
+  CC̄:          3.9 → ≤2.7
+  max-CC:      28 → ≤14
+  god-modules: 18 → 0
+  high-CC(≥15): 13 → ≤6
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -68,4 +76,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.8 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=3.9

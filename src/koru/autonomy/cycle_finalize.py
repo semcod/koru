@@ -29,41 +29,45 @@ def emit_cycle_completion_events(
     hp: Callable[[str], None],
     emit: Callable[[str, dict[str, Any]], None],
 ) -> None:
+    environment_profile = cycle_telemetry.get("environment_profile")
+    autopilot_payload = {
+        "cycle": cycle,
+        "decision": autopilot_status,
+        "queue_status": queue_result.last_status,
+        "ide": autopilot_ide,
+        "backend": autopilot_backend,
+        "drive_kind": autopilot_drive_kind,
+    }
+    if isinstance(environment_profile, dict):
+        autopilot_payload["environment_profile"] = environment_profile
     emit(
         "AutopilotDecision",
-        {
-            "cycle": cycle,
-            "decision": autopilot_status,
-            "queue_status": queue_result.last_status,
-            "ide": autopilot_ide,
-            "backend": autopilot_backend,
-            "drive_kind": autopilot_drive_kind,
-        },
+        autopilot_payload,
     )
     hp(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
         f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}",
     )
-    emit(
-        "CycleCompleted",
-        {
-            "cycle": cycle,
-            "queue_status": queue_result.last_status,
-            "diagnostics_status": diag_result.status,
-            "wup_status": wup_health.status,
-            "autopilot_status": autopilot_status,
-            "telemetry": {
-                "cycle": cycle_telemetry,
-                "cumulative": {
-                    "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
-                    "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-                    "scan_after_idle_tickets_applied": (
-                        state.telemetry_scan_after_idle_tickets_applied
-                    ),
-                },
+    cycle_completed_payload: dict[str, Any] = {
+        "cycle": cycle,
+        "queue_status": queue_result.last_status,
+        "diagnostics_status": diag_result.status,
+        "wup_status": wup_health.status,
+        "autopilot_status": autopilot_status,
+        "telemetry": {
+            "cycle": cycle_telemetry,
+            "cumulative": {
+                "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
+                "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
+                "scan_after_idle_tickets_applied": (
+                    state.telemetry_scan_after_idle_tickets_applied
+                ),
             },
         },
-    )
+    }
+    if isinstance(environment_profile, dict):
+        cycle_completed_payload["environment_profile"] = environment_profile
+    emit("CycleCompleted", cycle_completed_payload)
 
     write_autonomy_cycle_telemetry(
         project,

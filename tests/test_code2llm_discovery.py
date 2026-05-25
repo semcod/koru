@@ -60,6 +60,113 @@ def test_runs_and_parses_applied(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert outcome.error is None
 
 
+def test_applies_planfile_tickets_with_dedupe_key(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(cd, "_code2llm_executable", lambda: "/usr/bin/code2llm")
+    ticket_yaml = {
+        "schema": "code2llm.planfile_tickets.v1",
+        "source": "koru-project-discovery",
+        "tickets": [
+            {
+                "signal": "code2llm_smell_god_function",
+                "title": "Address code smell: God Function: build_parser",
+                "description": "Refactor build_parser",
+                "priority": "high",
+                "labels": ["llm-ready", "code2llm"],
+                "files": ["src/koru/autonomous_parser.py"],
+                "dedupe_key": (
+                    "code2llm:smell:god_function:"
+                    "src/koru/autonomous_parser.py:8:God Function: build_parser"
+                ),
+            }
+        ],
+    }
+    runner = _make_runner(written_yaml=ticket_yaml)
+
+    first = cd.run_code2llm_discovery(tmp_path, runner=runner, force=True)
+    second = cd.run_code2llm_discovery(tmp_path, runner=runner, force=True)
+
+    assert first.applied_titles == ["Address code smell: God Function: build_parser"]
+    assert first.skipped_titles == []
+    assert second.applied_titles == []
+    assert second.skipped_titles == ["Address code smell: God Function: build_parser"]
+
+    sprint = yaml.safe_load(
+        (tmp_path / ".planfile" / "sprints" / "current.yaml").read_text(encoding="utf-8"),
+    )
+    tickets = sprint["sprint"]["tickets"]
+    assert len(tickets) == 1
+    ticket = next(iter(tickets.values()))
+    assert ticket["source"]["tool"] == "koru-project-discovery"
+    assert ticket["source"]["context"]["dedupe_key"].startswith("code2llm:smell:")
+
+
+def test_backfills_existing_project_discovery_ticket_before_reuse(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(cd, "_code2llm_executable", lambda: "/usr/bin/code2llm")
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "sprint": {
+                    "tickets": {
+                        "STARTER-249": {
+                            "id": "STARTER-249",
+                            "name": "Address code smell: God Function: build_parser",
+                            "status": "open",
+                            "priority": "high",
+                            "source": {
+                                "tool": "koru-project-discovery",
+                                "context": {},
+                            },
+                            "files": ["src/koru/autonomous_parser.py"],
+                        }
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    ticket_yaml = {
+        "schema": "code2llm.planfile_tickets.v1",
+        "source": "koru-project-discovery",
+        "tickets": [
+            {
+                "signal": "code2llm_smell_god_function",
+                "title": "Address code smell: God Function: build_parser",
+                "description": "Refactor build_parser",
+                "priority": "high",
+                "labels": ["llm-ready", "code2llm"],
+                "files": ["src/koru/autonomous_parser.py"],
+                "dedupe_key": (
+                    "code2llm:smell:god_function:"
+                    "src/koru/autonomous_parser.py:8:God Function: build_parser"
+                ),
+            }
+        ],
+    }
+
+    outcome = cd.run_code2llm_discovery(
+        tmp_path,
+        runner=_make_runner(written_yaml=ticket_yaml),
+        force=True,
+    )
+
+    assert outcome.applied_titles == []
+    assert outcome.skipped_titles == ["Address code smell: God Function: build_parser"]
+    sprint = yaml.safe_load((sprint_dir / "current.yaml").read_text(encoding="utf-8"))
+    tickets = sprint["sprint"]["tickets"]
+    assert list(tickets) == ["STARTER-249"]
+    ctx = tickets["STARTER-249"]["source"]["context"]
+    assert ctx["signal"] == "code2llm_smell_god_function"
+    assert ctx["dedupe_key"].startswith("code2llm:smell:")
+
+
 def test_runner_failure_records_error(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

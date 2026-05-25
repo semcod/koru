@@ -268,6 +268,64 @@ def test_quick_action_lines_include_registry_backed_blocked_interface_hint() -> 
     assert not any("plugin_socket_jetbrains" in line for line in actions)
 
 
+def test_quick_action_create_ticket_uses_fast_action_endpoint() -> None:
+    actions = autonomous_loop_runner._quick_action_lines(
+        project=None,
+        queue_status="idle",
+        waiting_ticket="-",
+        autopilot_status="skipped(idle_no_ticket)",
+        autopilot_ide="vscodium",
+    )
+
+    create = next(line for line in actions if line.startswith("[create ticket]"))
+    assert "/llm/action/create-ticket-for-project" in create
+    assert "/llm/prompt/create-ticket-for-project" not in create
+
+
+def test_quick_action_retry_submit_uses_selected_autopilot_ide() -> None:
+    actions = autonomous_loop_runner._quick_action_lines(
+        project=None,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-249",
+        autopilot_status="failed(submit_unverified)",
+        autopilot_ide="vscodium",
+    )
+
+    retry = next(line for line in actions if line.startswith("[retry submit]"))
+    assert "--ide vscodium" in retry
+    assert "--ide cursor" not in retry
+
+
+def test_quick_action_open_ticket_reuses_dashboard_tickets_url_with_hash(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_loop_runner,
+        "_dashboard_action_urls",
+        lambda _project: {
+            "dashboard": "http://127.0.0.1:8765/",
+            "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+            "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
+            "tickets": "http://127.0.0.1:8765/?tab=tickets&project=%2Ftmp%2Frepo&ide=vscode",
+        },
+    )
+
+    actions = autonomous_loop_runner._quick_action_lines(
+        project="project",
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-248",
+        autopilot_status="skipped(chat_activity)",
+        autopilot_ide="vscode",
+    )
+
+    open_ticket = next(line for line in actions if line.startswith("[open ticket] "))
+    assert open_ticket == (
+        "[open ticket] "
+        "http://127.0.0.1:8765/?tab=tickets&project=%2Ftmp%2Frepo&ide=vscode"
+        "#STARTER-248"
+    )
+
+
 def test_blocked_interface_action_lines_filter_to_jetbrains_lane() -> None:
     actions = autonomous_loop_runner._blocked_interface_action_lines(
         "plugin_missing",

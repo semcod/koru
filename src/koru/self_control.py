@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+import urllib.parse
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -95,6 +96,27 @@ def _installed_version() -> str | None:
         return None
 
 
+def _installed_editable_source_root() -> Path | None:
+    try:
+        dist = importlib.metadata.distribution("koru")
+        raw = dist.read_text("direct_url.json")
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    dir_info = data.get("dir_info") if isinstance(data, dict) else None
+    if not isinstance(dir_info, dict) or not dir_info.get("editable"):
+        return None
+    parsed = urllib.parse.urlparse(str(data.get("url") or ""))
+    if parsed.scheme != "file":
+        return None
+    return Path(urllib.parse.unquote(parsed.path)).resolve()
+
+
 def _check_package_identity(project: Path) -> SelfCheck:
     source = _source_version(project)
     installed = _installed_version()
@@ -129,6 +151,13 @@ def _check_entrypoint_identity(project: Path) -> SelfCheck:
     local = project / ".venv" / "bin" / "koru"
     detail = f"path_koru={path_koru or '-'}; local_koru={local if local.is_file() else '-'}"
     if local.is_file() and path_koru and not _is_relative_to(Path(path_koru), project / ".venv"):
+        editable_source = _installed_editable_source_root()
+        if editable_source is not None and editable_source == project.resolve():
+            return SelfCheck(
+                "entrypoint_identity",
+                "ok",
+                detail + "; path_not_project_venv=true; editable_source_matches=true",
+            )
         return SelfCheck(
             "entrypoint_identity",
             "warn",
@@ -214,6 +243,28 @@ def _check_interface_registry() -> SelfCheck:
     )
 
 
+def _check_environment_profile(project: Path, *, ide: str) -> SelfCheck:
+    try:
+        from koru.environment_profile import resolve_environment_profile
+
+        profile = resolve_environment_profile(project, ide=ide)
+    except Exception as exc:
+        return SelfCheck(
+            "environment_profile",
+            "fail",
+            f"resolve failed: {type(exc).__name__}: {exc}",
+        )
+    return SelfCheck(
+        "environment_profile",
+        "ok",
+        (
+            f"{profile.decision_key}; "
+            f"submit_key={profile.ide.submit_key}; "
+            f"keyboard_fallback={profile.ide.keyboard_fallback_default}"
+        ),
+    )
+
+
 def run_self_control(
     project: Path,
     *,
@@ -226,6 +277,7 @@ def run_self_control(
     report.checks.append(_check_entrypoint_identity(project))
     report.checks.extend(_install_manager_checks(project, ide=ide, socket_path=socket_path))
     report.checks.append(_check_interface_registry())
+    report.checks.append(_check_environment_profile(project, ide=ide))
     return report
 
 
