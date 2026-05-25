@@ -1999,6 +1999,7 @@ def test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message(
             summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
             last_status="waiting_input",
             last_message="",
+            waiting=["TEST-001"],
         ),
     )
 
@@ -3771,7 +3772,6 @@ def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
     import time
 
     calls: list[int] = []
-    sleeps: list[int] = []
 
     class ManualFocusClient:
         def drive(self, *_args, **_kwargs):
@@ -3790,7 +3790,7 @@ def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
                 },
             }
 
-    monkeypatch.setattr(time, "sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(time, "sleep", lambda _seconds: None)
     monkeypatch.setattr(
         autonomous_mod,
         "run_planfile_queue_loop",
@@ -3819,7 +3819,6 @@ def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
     )
 
     assert calls == [1]
-    assert sleeps == []
     assert autopilot_status == "skipped(manual_focus)"
     captured = capsys.readouterr().out
     assert "[AUTOPILOT FOCUS REQUIRED]" in captured

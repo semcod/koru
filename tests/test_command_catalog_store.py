@@ -9,8 +9,11 @@ from koruide.command_catalog_store import (
 )
 
 
-def test_command_catalog_enabled_default_off(monkeypatch) -> None:
+def test_command_catalog_enabled_defaults_on_for_v2_plugins(monkeypatch) -> None:
+    """Plugin 0.2.x ships protocol v2 by default; catalog is on unless opted out."""
     monkeypatch.delenv("KORU_COMMAND_CATALOG", raising=False)
+    assert command_catalog_enabled() is True
+    monkeypatch.setenv("KORU_COMMAND_CATALOG", "0")
     assert command_catalog_enabled() is False
     monkeypatch.setenv("KORU_COMMAND_CATALOG", "1")
     assert command_catalog_enabled() is True

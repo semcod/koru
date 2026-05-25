@@ -13,33 +13,29 @@ _CATALOG_FILENAME_RE = re.compile(r"^([a-z0-9_-]+)-([0-9][0-9a-zA-Z._-]*)\.json$
 
 
 def command_catalog_enabled() -> bool:
-    """Whether hello ``commandCatalog`` payloads are accepted and persisted."""
+    """Whether hello ``commandCatalog`` payloads are accepted and persisted.
+
+    Defaults to ON for plugin protocol v2 (shipped in 0.2.0). Opt-out via
+    ``KORU_COMMAND_CATALOG=0`` (or ``false``/``no``/``off``) for the
+    rare case where a buggy plugin payload pollutes the store.
+    """
     raw = os.environ.get("KORU_COMMAND_CATALOG", "").strip().lower()
-    return raw in {"1", "true", "yes", "on"}
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return True
 
 
 def command_picker_enabled() -> bool:
-    """Whether daemon attaches ``command_order`` to outgoing drives."""
-    if os.environ.get("KORU_COMMAND_PICKER", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
-        return True
-    if os.environ.get("KORU_COMMAND_PICKER", "").strip().lower() in {
-        "0",
-        "false",
-        "no",
-        "off",
-    }:
-        return False
+    """Whether daemon attaches ``command_order`` to outgoing drives.
+
+    Ships ON together with the catalog (protocol v2 plugins consume it
+    via ``env.command_order``). Opt-out via ``KORU_COMMAND_PICKER=0``.
+    """
     raw = os.environ.get("KORU_COMMAND_PICKER", "").strip().lower()
-    if raw in {"1", "true", "yes", "on"}:
-        return True
     if raw in {"0", "false", "no", "off"}:
         return False
-    # Picker ships with protocol v2 plugins once catalog is enabled.
+    if raw in {"1", "true", "yes", "on"}:
+        return True
     return command_catalog_enabled()
 
 

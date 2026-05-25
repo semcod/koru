@@ -37,28 +37,36 @@ function pasteDirectCommandsPrefix(): string[] {
  * FIRST so we never need to forge keystrokes.
  */
 function submitCommandsOverride(): string[] {
+  // Cursor 1.x removed ``composer.*`` entirely; the only registered
+  // submit on modern builds is ``workbench.action.chat.submit``.
+  // ``composer.sendToAgent`` is kept at the tail for compatibility
+  // with older builds where ``getCommands`` still lists it.
   return [
-    "composer.sendToAgent",
-    "composer.acceptComposerStep",
-    "composer.startComposerPrompt",
-    "composer.startComposerPrompt2",
-    "composer.submit",
-    "aichat.submit",
-    // Generic VS Code candidates as last-resort fallback.
     "workbench.action.chat.submit",
     "workbench.action.chat.acceptInput",
     "workbench.action.chat.send",
     "workbench.action.chat.sendMessage",
     "workbench.action.interactive.accept",
+    // Legacy Cursor 0.x candidates — kept last as fallback.
+    "composer.sendToAgent",
+    "composer.acceptComposerStep",
+    "composer.submit",
+    "aichat.submit",
   ];
 }
 
 function focusInputCommandsPrefix(): string[] {
+  // Cursor 1.x: ``workbench.action.chat.focusInput`` and ``chat.action.focus``
+  // are the registered focus commands. ``composer.focusComposer`` no longer
+  // exists in 1.x but stays at the tail for legacy 0.x builds.
   return [
-    "composer.focusComposer",
-    "cursor.composer.focus",
+    "workbench.action.chat.focusInput",
+    "chat.action.focus",
+    "workbench.chat.action.focusLastFocused",
     "workbench.panel.chat.view.copilot.focus",
     "workbench.panel.aichat.view.copilot.focus",
+    "composer.focusComposer",
+    "cursor.composer.focus",
   ];
 }
 
@@ -170,15 +178,24 @@ function sanitizeProbeCache(
  * ``aichat.newchataction``.
  */
 function focusOpenCommandsDefaults(): string[] {
+  // Cursor 1.x removed the ``composer.*`` namespace entirely
+  // (``getCommands(false)`` returns 0 matches). The modern surface is
+  // ``workbench.action.chat.*``. ``composer.openAsPane`` was a *toggle*
+  // that hid the panel when it was already visible — never include it
+  // in defaults (kept in ``sanitizeProbeCache`` for legacy caches).
+  // Legacy ``composer.openComposer`` / ``cursor.composer.open`` are
+  // kept at the tail for older Cursor builds that still expose them.
   return [
-    "composer.openComposer",
-    "composer.openAsPane",
-    "composer.focusComposer",
-    "cursor.composer.open",
-    "cursor.composer.focus",
+    "workbench.action.chat.open",
+    "workbench.action.chat.openagent",
+    "workbench.action.openChat",
     "workbench.panel.chat.view.copilot.focus",
     "workbench.panel.aichat.view.copilot.focus",
     "workbench.panel.chat",
+    "composer.openComposer",
+    "composer.focusComposer",
+    "cursor.composer.open",
+    "cursor.composer.focus",
   ];
 }
 

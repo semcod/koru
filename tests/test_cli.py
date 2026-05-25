@@ -358,6 +358,10 @@ class TestInitCiSubcommand(unittest.TestCase):
 class TestAutoMain(unittest.TestCase):
     """``koru auto`` stops prior loops and forwards ``--replace-existing`` without a full run."""
 
+    def tearDown(self) -> None:
+        for key in ("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "KORU_AUTOPILOT_NEW_WINDOW_RELOAD"):
+            os.environ.pop(key, None)
+
     def test_auto_main_stops_prior_and_injects_replace_existing(self) -> None:
         from koru.cli_auto import _auto_main
 

@@ -90,8 +90,12 @@ function testSubmitCommands(): void {
   const cmds = cursorStrategy.submitCommandsOverride();
   assert(cmds !== null, "Cursor must override the submit command list");
   if (cmds === null) return;
-  eq(cmds[0], "composer.sendToAgent", "composer.sendToAgent MUST be first (real Cursor submit)");
-  assert(cmds.includes("workbench.action.chat.submit"), "generic fallback retained");
+  // Cursor 1.x removed ``composer.*`` entirely; the only registered
+  // submit on modern builds is ``workbench.action.chat.submit``. The
+  // legacy ``composer.sendToAgent`` is kept as a tail fallback for
+  // older builds that still register it.
+  eq(cmds[0], "workbench.action.chat.submit", "workbench.action.chat.submit MUST be first (Cursor 1.x)");
+  assert(cmds.includes("composer.sendToAgent"), "legacy composer.sendToAgent retained as tail fallback");
 }
 
 function testHostKeyPreference(): void {
@@ -113,7 +117,7 @@ function testProbeLadderUsesCursorStrategy(): void {
   eq(paste[0], "cursor.action.chat.typeText", "paste command 0 must come from strategy");
   // buildSubmitCommands returns the strategy override
   const submit = buildSubmitCommands("cursor");
-  eq(submit[0], "composer.sendToAgent", "submit command 0 must come from strategy");
+  eq(submit[0], "workbench.action.chat.submit", "submit command 0 must come from strategy (Cursor 1.x)");
   // buildHostKeySubmitCandidates puts Ctrl+Return first for Cursor (auto mode)
   const hostKeys = buildHostKeySubmitCandidates("cursor", "auto", { XDG_SESSION_TYPE: "wayland" });
   const firstArgs = hostKeys[0]?.[1] || [];
@@ -121,9 +125,9 @@ function testProbeLadderUsesCursorStrategy(): void {
     firstArgs.some((arg) => /ctrl/i.test(arg)),
     "first host-key candidate for Cursor must include ctrl modifier",
   );
-  // buildFocusInputCommands: Cursor has composer-specific focus commands first
+  // buildFocusInputCommands: Cursor 1.x prefers workbench.action.chat.focusInput
   const focus = buildFocusInputCommands("cursor");
-  eq(focus[0], "composer.focusComposer", "Cursor focus list starts with composer.focusComposer");
+  eq(focus[0], "workbench.action.chat.focusInput", "Cursor focus list starts with workbench.action.chat.focusInput (Cursor 1.x)");
   assert(
     !focus.includes("workbench.action.focusAuxiliaryBar"),
     "Cursor must not try focusAuxiliaryBar (false-positive chat focus)",
@@ -229,10 +233,22 @@ function testFocusOpenDefaultsExcludeNewChatTab(): void {
         "(opens a new chat tab; submits land in the wrong pane)",
     );
   }
-  if (!defaults.includes("composer.openComposer")) {
+  // composer.openAsPane is a documented toggle (see sanitizeProbeCache);
+  // it MUST NOT be in the defaults — when Composer is already visible
+  // it hides the panel and breaks the next paste/submit cycle.
+  if (defaults.includes("composer.openAsPane")) {
     throw new Error(
-      "Cursor focus_open defaults must include composer.openComposer " +
-        "as the primary candidate for the existing chat surface",
+      "Cursor focus_open defaults must NOT include composer.openAsPane " +
+        "(toggle: hides an already-open Composer panel)",
+    );
+  }
+  // Cursor 1.x: the modern primary focus_open command is
+  // ``workbench.action.chat.open``. Legacy ``composer.openComposer``
+  // stays as a tail fallback for older builds.
+  if (defaults[0] !== "workbench.action.chat.open") {
+    throw new Error(
+      "Cursor focus_open defaults[0] must be workbench.action.chat.open " +
+        "(Cursor 1.x removed the composer.* namespace)",
     );
   }
 }

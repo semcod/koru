@@ -42,6 +42,12 @@ from koru.autonomy.post_run_verify import (
     verify_completed_tickets,
 )
 from koru.autonomy.state import AutoloopState
+from koru.autonomy.decision_arbiter import ArbiterSignals, decide
+from koru.autonomy.verification_engine import (
+    assess_verdict,
+    collect_evidence,
+    take_snapshot,
+)
 from koru.environment_profile import environment_profile_payload
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
 from koru.queue import default_human_prompt as _default_human_prompt
@@ -558,6 +564,114 @@ def _update_stagnation_state(
     state.previous_signature = signature
 
 
+def _take_pre_drive_snapshot(
+    project: Path,
+    state: AutoloopState,
+    wup_health: Any,
+) -> None:
+    """Capture project state before autopilot drive (ADR AUTO-002 Phase 1)."""
+    test_status = str(getattr(wup_health, "status", "unknown") or "unknown")
+    snapshot = take_snapshot(project, test_status=test_status)
+    state.last_drive_snapshot = snapshot.to_dict()
+
+
+def _handle_post_drive_verification(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    autopilot_status: str,
+    wup_health: Any,
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    """Collect evidence and assess verdict after autopilot drive (ADR AUTO-002 Phase 1)."""
+    if autopilot_status not in {"ok", "failed"}:
+        return
+    from koru.autonomy.verification_engine import Snapshot
+
+    snap_dict = state.last_drive_snapshot
+    before = Snapshot(
+        git_head=str(snap_dict.get("git_head", "")),
+        git_dirty_count=int(snap_dict.get("git_dirty_count", 0)),
+        test_status=str(snap_dict.get("test_status", "unknown")),
+        timestamp=float(snap_dict.get("timestamp", 0)),
+    ) if snap_dict else None
+
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    ticket_id = "" if waiting_ticket == "-" else waiting_ticket
+
+    # Track per-ticket drive count
+    if ticket_id and ticket_id == state.last_driven_ticket_for_count:
+        state.drive_count_for_ticket += 1
+    elif ticket_id:
+        state.drive_count_for_ticket = 1
+        state.last_driven_ticket_for_count = ticket_id
+
+    evidence = collect_evidence(
+        project,
+        before=before,
+        wup_health=wup_health,
+        autopilot_events=state.autopilot_events,
+        drive_timestamp=state.last_message_sent_ts,
+    )
+    verdict = assess_verdict(
+        evidence,
+        ticket_id=ticket_id,
+        drive_count=state.drive_count_for_ticket,
+    )
+    state.last_drive_verdict = verdict.to_dict()
+
+    _hp(
+        f"  verdict: {verdict.outcome} (confidence={verdict.confidence:.2f}) "
+        f"ticket={ticket_id or '-'} drives={state.drive_count_for_ticket}"
+    )
+    _emit(
+        "DriveVerdict",
+        {
+            "cycle": cycle,
+            "ticket_id": ticket_id,
+            "outcome": verdict.outcome,
+            "confidence": verdict.confidence,
+            "reason": verdict.reason,
+            "drive_count": state.drive_count_for_ticket,
+            "autopilot_status": autopilot_status,
+            "git_files_changed": evidence.git.files_changed,
+            "test_status": evidence.tests.status,
+            "chat_events_since_drive": evidence.chat.events_since_drive,
+        },
+    )
+
+    # Phase 2: Decision Arbiter — produce advisory ActionPlan
+    signals = ArbiterSignals(
+        queue_status=str(queue_result.last_status or ""),
+        waiting_ticket=ticket_id,
+        stagnation_streak=state.stagnation_streak,
+        drive_count_for_ticket=state.drive_count_for_ticket,
+        test_status=evidence.tests.status,
+        verdict=verdict,
+        has_open_tickets=bool(getattr(queue_result, "waiting", None)),
+    )
+    plan = decide(signals)
+    state.last_drive_action_plan = plan.to_dict()
+
+    _hp(
+        f"  decision: {plan.action} "
+        f"(reason={plan.reason!r}, confidence={plan.confidence:.2f})"
+    )
+    _emit(
+        "ActionPlan",
+        {
+            "cycle": cycle,
+            "action": plan.action,
+            "ticket_id": plan.ticket_id,
+            "reason": plan.reason,
+            "confidence": plan.confidence,
+            "sleep_seconds": plan.sleep_seconds,
+        },
+    )
+
+
 
 
 def _handle_diagnostics(
@@ -928,6 +1042,8 @@ def run_cycle(
         )
         raise SystemExit(2)
 
+    _take_pre_drive_snapshot(project, state, wup_health)
+
     autopilot_status, autopilot_backend, autopilot_drive_kind = _handle_autopilot_phase(
         project,
         state,
@@ -946,6 +1062,17 @@ def run_cycle(
         diag_result,
         topology_integration,
         cycle_telemetry,
+        _hp,
+        _emit,
+    )
+
+    _handle_post_drive_verification(
+        project,
+        state,
+        cycle,
+        queue_result,
+        autopilot_status,
+        wup_health,
         _hp,
         _emit,
     )

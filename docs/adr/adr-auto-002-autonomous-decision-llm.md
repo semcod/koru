@@ -1,7 +1,8 @@
 # ADR AUTO-002 — Autonomiczna pętla decyzyjna: OpenRouter LLM + heurystyki + IDE LLM
 
-- Status: Proposed
+- Status: **Phase 1+2 implemented**, Phase 3+4 proposed
 - Date: 2026-05-25
+- Updated: 2026-05-25
 - Related: `koru.yaml` `autonomy.strategy.planning_assistant`, `korullm`, `decision_engine.py`
 
 ## Kontekst
@@ -165,18 +166,22 @@ class ActionPlan:
 
 ## Fazy implementacji
 
-### Faza 1: Verification Engine (zero LLM cost)
+### Faza 1: Verification Engine (zero LLM cost) ✅ DONE
 - `verification_engine.py`: git diff + test results + chat history → Verdict
-- Hook do `autonomous_cycle_orchestrator._handle_autopilot_phase()`
-- Po drive: zbierz evidence, oceń heurystycznie
+- Hook do `autonomous_cycle.py`: `_take_pre_drive_snapshot()` + `_handle_post_drive_verification()`
+- Po drive: zbierz evidence, oceń heurystycznie, emituj `DriveVerdict` event
 - Jeśli brak zmian po 2 drive'ach → `escalate_ticket`
 - Jeśli testy przechodzą + git diff → `close_ticket` (z opcją `planfile ticket done`)
+- Nowe pola w `AutoloopState`: `last_drive_snapshot`, `last_drive_verdict`, `drive_count_for_ticket`
+- Testy: `tests/test_verification_engine.py` (20 testów)
 
-### Faza 2: Decision Arbiter (heurystyki only)
-- `decision_arbiter.py`: zastąp inline `if/elif` w cycle
-- ActionPlan jako ustrukturyzowany output zamiast string `autopilot_status`
-- Refactor `_handle_autopilot_phase()` aby konsumował ActionPlan
-- Telemetria: loguj każdą decyzję jako structured event
+### Faza 2: Decision Arbiter (heurystyki only) ✅ DONE
+- `decision_arbiter.py`: `ArbiterSignals` → `decide()` → `ActionPlan`
+- ActionPlan jako ustrukturyzowany output emitowany jako `ActionPlan` event
+- Zintegrowany w `_handle_post_drive_verification()` — advisory mode
+- Telemetria: `DriveVerdict` + `ActionPlan` events w każdym cyklu po drive
+- Nowe pole w `AutoloopState`: `last_drive_action_plan`
+- Testy: `tests/test_decision_arbiter.py` (18), `tests/test_verification_cycle_integration.py` (10)
 
 ### Faza 3: Planning LLM (OpenRouter)
 - `planning_llm.py`: OpenRouter API client

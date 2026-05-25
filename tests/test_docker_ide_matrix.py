@@ -106,7 +106,7 @@ def test_vscodium_matrix_uses_isolated_socket_with_vscode_terminal_env(
 
 def test_vscodium_plugin_uses_host_clipboard_for_webview_paste() -> None:
     source = (
-        ROOT / "plugins" / "koru-autopilot-vscode" / "src" / "extension.ts"
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "extension.ts"
     ).read_text(encoding="utf-8")
 
     assert "tryHostClipboardPaste" in source
@@ -121,7 +121,7 @@ def test_vscodium_plugin_uses_host_clipboard_for_webview_paste() -> None:
 
 def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> None:
     source = (
-        ROOT / "plugins" / "koru-autopilot-vscode" / "src" / "extension.ts"
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "extension.ts"
     ).read_text(encoding="utf-8")
 
     assert 'command: "vscodium-submit-unavailable"' in source
@@ -135,7 +135,7 @@ def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> 
 
 def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> None:
     source = (
-        ROOT / "plugins" / "koru-autopilot-vscode" / "src" / "extension.ts"
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "extension.ts"
     ).read_text(encoding="utf-8")
 
     registered = source.index("const registered = await this._tryRegisteredCommands")
@@ -146,10 +146,10 @@ def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> No
 
 def test_vscodium_plugin_supports_configured_submit_click() -> None:
     source = (
-        ROOT / "plugins" / "koru-autopilot-vscode" / "src" / "extension.ts"
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "extension.ts"
     ).read_text(encoding="utf-8")
     package = (
-        ROOT / "plugins" / "koru-autopilot-vscode" / "package.json"
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "package.json"
     ).read_text(encoding="utf-8")
 
     assert "submitClickX" in package

@@ -34,3 +34,9 @@ class AutoloopState:
     last_scan_duplicate_ts: float = -1.0
     pending_ide_verify_id: str | None = None
     post_verify_seen: set[str] = field(default_factory=set)
+    # Verification engine (ADR AUTO-002 Phase 1)
+    last_drive_snapshot: dict[str, Any] = field(default_factory=dict)
+    last_drive_verdict: dict[str, Any] = field(default_factory=dict)
+    last_drive_action_plan: dict[str, Any] = field(default_factory=dict)
+    drive_count_for_ticket: int = 0
+    last_driven_ticket_for_count: str = ""

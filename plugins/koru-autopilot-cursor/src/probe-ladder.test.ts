@@ -78,12 +78,13 @@ function testBuildFocusOpenCursorFirst(): void {
 }
 
 function testBuildFocusInputUsesChatCommands(): void {
-  // Cursor strategy puts composer-focusing commands first so the
-  // toggling ``composer.openAsPane`` ladder entry never collapses an
-  // already-visible chat. Generic chat focus commands stay as fallback.
+  // Cursor 1.x removed the ``composer.*`` namespace; the modern primary
+  // focus-input command is ``workbench.action.chat.focusInput``. Legacy
+  // ``composer.focusComposer`` stays as a tail fallback for older
+  // builds that still register it.
   const cmds = buildFocusInputCommands("cursor");
-  assert(cmds[0] === "composer.focusComposer", "Cursor: composer.focusComposer must be first focus-input candidate");
-  assert(cmds.includes("workbench.action.chat.focusInput"), "Cursor: generic chat focus stays in the ladder as fallback");
+  assert(cmds[0] === "workbench.action.chat.focusInput", "Cursor: workbench.action.chat.focusInput must be first focus-input candidate (Cursor 1.x)");
+  assert(cmds.includes("composer.focusComposer"), "Cursor: legacy composer.focusComposer stays as tail fallback");
   assert(cmds.includes("chat.action.focus"), "chat action focus should be available as a fallback");
   // The blocklist must drop the side-bar/panel focus commands that
   // would otherwise steal focus to the explorer or terminal pane.
