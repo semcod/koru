@@ -328,10 +328,13 @@ def _handle_scan_phase(
                     apply=True,
                     include_semcod_artifacts=include_semcod_artifacts,
                 )
-                _hp(
-                    f"  scan: suggestions={len(scan_result.suggestions)} "
-                    f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}",
+                from koru.autonomy.phases.scan_phase import (
+                    _format_scan_summary_line,
+                    _hp_scan_skip_hint,
                 )
+
+                _hp(_format_scan_summary_line(scan_result))
+                _hp_scan_skip_hint(scan_result, _hp)
                 _emit(
                     "ScanCompleted",
                     {
@@ -537,10 +540,13 @@ def _handle_scan_after_idle(
             state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
             cycle_telemetry["scan_after_idle_run"] = True
             cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
-            _hp(
-                f"  scan: suggestions={len(idle_scan.suggestions)} "
-                f"applied={len(idle_scan.applied)} skipped={len(idle_scan.skipped)}",
+            from koru.autonomy.phases.scan_phase import (
+                _format_scan_summary_line,
+                _hp_scan_skip_hint,
             )
+
+            _hp(_format_scan_summary_line(idle_scan))
+            _hp_scan_skip_hint(idle_scan, _hp)
             _emit(
                 "ScanCompleted",
                 {
@@ -891,6 +897,12 @@ def run_cycle(
             activity("QUEUE", msg.strip(), fmt=stdio_format)
         elif msg.startswith("  autopilot:"):
             activity("CHAT", msg.strip(), fmt=stdio_format)
+        elif msg.startswith("- autopilot skipped"):
+            activity("CHAT", msg[2:].strip(), fmt=stdio_format)
+        elif msg.startswith("  planfile snapshot:") or msg.startswith(
+            ("  what koru auto", "  to give koru work", "  →")
+        ):
+            activity("KORUAUTONOMOUS", msg.strip(), fmt=stdio_format)
         elif stdio_format == "human":
             activity_info(msg, fmt=stdio_format)
         else:

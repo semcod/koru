@@ -16,6 +16,7 @@ from koru.autonomy.ide_work import (
     fetch_next_open_ticket,
     release_stale_in_progress_tickets,
     resolve_idle_drive_prompt,
+    sprint_ticket_status_summary,
 )
 
 
@@ -150,6 +151,27 @@ class TestIdeWork(unittest.TestCase):
         self.assertIn("planfile ticket done STARTER-206", prompt)
         self.assertIn("planfile ticket input STARTER-206", prompt)
         self.assertIn("Do not leave completed IDE work in waiting_input", prompt)
+
+    def test_sprint_ticket_status_summary_counts_by_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".planfile" / "sprints").mkdir(parents=True)
+            sprint = {
+                "sprint": {
+                    "tickets": {
+                        "A": {"status": "done"},
+                        "B": {"status": "done"},
+                        "C": {"status": "open"},
+                    },
+                },
+            }
+            (project / ".planfile" / "sprints" / "current.yaml").write_text(
+                yaml.dump(sprint),
+                encoding="utf-8",
+            )
+            summary = sprint_ticket_status_summary(project)
+            self.assertIn("done=2", summary)
+            self.assertIn("open=1", summary)
 
 
 if __name__ == "__main__":

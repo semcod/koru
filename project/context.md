@@ -7,8 +7,8 @@
 - **Primary Language**: python
 - **Languages**: python: 355, shell: 49, typescript: 29, yaml: 22, json: 10
 - **Analysis Mode**: static
-- **Total Functions**: 2981
-- **Total Classes**: 276
+- **Total Functions**: 2997
+- **Total Classes**: 277
 - **Modules**: 492
 - **Entry Points**: 1146
 
@@ -29,8 +29,8 @@
 - **File**: `probe-ladder.test.ts`
 
 ### src.koru.autonomous
-- **Functions**: 57
-- **Classes**: 1
+- **Functions**: 59
+- **Classes**: 2
 - **File**: `autonomous.py`
 
 ### src.koru.wizard.gui.static.wizard
@@ -64,24 +64,24 @@
 - **Functions**: 35
 - **File**: `mcp_server.py`
 
-### src.koruide.daemon.handlers
-- **Functions**: 32
-- **File**: `handlers.py`
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 33
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
 
 ### src.koru.autonomous_startup
 - **Functions**: 32
 - **Classes**: 3
 - **File**: `autonomous_startup.py`
 
-### src.koru.autonomy.operator_pipeline
-- **Functions**: 32
-- **Classes**: 2
-- **File**: `operator_pipeline.py`
-
 ### src.koru.autopilot.install_manager
 - **Functions**: 32
 - **Classes**: 2
 - **File**: `install_manager.py`
+
+### src.koruide.daemon.handlers
+- **Functions**: 32
+- **File**: `handlers.py`
 
 ### src.koru.context
 - **Functions**: 31
@@ -102,7 +102,7 @@
 - **File**: `configurator.py`
 
 ### src.koru.scan
-- **Functions**: 28
+- **Functions**: 29
 - **Classes**: 2
 - **File**: `scan.py`
 
@@ -129,12 +129,12 @@ Main execution flows into the system:
 ### src.koru.cli_topology.topology_main
 - **Calls**: None.parse_args, args.project.resolve, TopologyCommandService, TopologyQueryService, query_service.load, src.koru.topology_cli.apply_topology_mutations, query_service.is_enabled, scripts.koru-soak-monitor.print
 
-### src.koruide.daemon.handlers.handle_drive
-- **Calls**: msg.data.get, src.koruide.ide.normalize_ide_id, bool, bool, daemon.log, daemon._plugin_for, daemon.log, src.koruide.daemon.handlers._drive_via_keyboard
-
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
+
+### src.koruide.daemon.handlers.handle_drive
+- **Calls**: msg.data.get, src.koruide.ide.normalize_ide_id, bool, bool, daemon.log, daemon._plugin_for, daemon.log, src.koruide.daemon.handlers._drive_via_keyboard
 
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
@@ -156,9 +156,6 @@ Main execution flows into the system:
 ### examples.remote_orchestration_demo.run_multi_node_orchestration
 - **Calls**: scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, KoruRemoteClient, scripts.koru-soak-monitor.print, client.get_status, status.get
 
-### src.koru.autonomy.phases.scan_phase.handle_scan_after_idle
-- **Calls**: src.koru.autonomy.phases.utils.is_topology_enabled, time.time, _hp, src.koru.run_log.RunLogWriter._emit, _hp, src.koru.scan.run_scan, len, len
-
 ### src.koru.autopilot.cli_command._action_status
 - **Calls**: src.koru.autopilot.cli_command._client, scripts.koru-soak-monitor.print, client.is_running, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, client.status, json.dumps, isinstance
 
@@ -172,6 +169,9 @@ Main execution flows into the system:
 ### src.koru.cli_cleaned._agent_backends_main
 > List or describe IDE agent backend profiles (``agent_backends``).
 - **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.parse_args, src.koru.agent_backends.iter_agent_backend_profiles, src.koru.agent_backends.get_agent_backend_profile, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
+
+### src.koru.autonomy.phases.scan_phase.handle_scan_after_idle
+- **Calls**: src.koru.autonomy.phases.utils.is_topology_enabled, time.time, _hp, src.koru.run_log.RunLogWriter._emit, _hp, src.koru.scan.run_scan, len, len
 
 ### src.koru.gate.parse_authorizations
 > Extract all gate authorizations recorded on a ticket.
@@ -253,15 +253,15 @@ register [src.koru.local_manager_state.WorkerRegistry]
 topology_main [src.koru.cli_topology]
 ```
 
-### Flow 7: handle_drive
+### Flow 7: run_api_request
+```
+run_api_request [src.koru.queue.runners]
+```
+
+### Flow 8: handle_drive
 ```
 handle_drive [src.koruide.daemon.handlers]
   └─ →> normalize_ide_id
-```
-
-### Flow 8: run_api_request
-```
-run_api_request [src.koru.queue.runners]
 ```
 
 ### Flow 9: autonomous_environ_doctor_probe
@@ -515,21 +515,21 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koruapi.dashboard_routes.build_dashboard_handler` - 207 calls
+- `src.koruapi.dashboard_routes.build_dashboard_handler` - 216 calls
 - `src.koru.wizard.gui.app.create_app` - 96 calls
 - `src.koru.autonomous_parser.build_parser` - 71 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `src.koru.context_render.render_markdown_handoff` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
+- `src.koru.autonomous_cycle.run_cycle` - 40 calls
 - `src.koru.git_cli.build_parser` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koru.ide_doctor_cli.build_parser` - 33 calls
 - `src.koru.cli_topology.topology_main` - 33 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
-- `src.koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
+- `src.koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
@@ -541,20 +541,20 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `examples.remote_orchestration_demo.run_multi_node_orchestration` - 24 calls
 - `src.koru.configurator.render_shell_exports` - 24 calls
-- `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.agents.detect_project_environment` - 24 calls
-- `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
+- `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 23 calls
 - `src.koru.dev_sync.dev_main` - 23 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 23 calls
 - `src.koru.cli_agent_backends.agent_backends_main` - 23 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.context_render.render_active_ticket` - 23 calls
+- `src.koru.scan.run_scan` - 23 calls
+- `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.context_render.render_environment` - 22 calls
-- `services.healing-webhook.app.heal_vallm_validate` - 21 calls
 
 ## System Interactions
 
@@ -585,13 +585,13 @@ graph TD
     topology_main --> TopologyCommandServi
     topology_main --> TopologyQueryService
     topology_main --> load
-    handle_drive --> get
-    handle_drive --> normalize_ide_id
-    handle_drive --> bool
-    handle_drive --> log
     run_api_request --> get
     run_api_request --> Request
     run_api_request --> float
+    run_api_request --> str
+    handle_drive --> get
+    handle_drive --> normalize_ide_id
+    handle_drive --> bool
 ```
 
 ## Reverse Engineering Guidelines

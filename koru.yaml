@@ -56,10 +56,10 @@ when:
 
   autonomous_outer_loop:
     description: >
-      Unattended cycle (scan → queue → optional autopilot). Tune flags with
-      `koru autonomous up -h` (e.g. --sleep-seconds, --keep-waiting-input). If the queue
-      shows claim_failed, start the planfile HTTP/WebSocket API for your stack. `--agent-lane auto`
-      matches the marker order in the header comments (or pass an explicit lane).
+      Unattended cycle (scan → queue → optional autopilot). Implements the Accordion 
+      Scanning Strategy: when the queue is active, it runs narrow context scans; when the 
+      queue goes idle, it runs deep whole-project discovery via `code2llm` to automatically 
+      generate new planfile refactoring tickets. Tune flags with `koru autonomous up -h`.
     commands:
       - koru autonomous up --project . --max-cycles 1 --agent-lane auto
 

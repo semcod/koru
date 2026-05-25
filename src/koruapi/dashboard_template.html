@@ -325,6 +325,11 @@ const state = {
   tab: urlState.searchParams.get("tab") || localStorage.getItem("koru.dashboard.tab") || "overview",
   focus: urlState.searchParams.get("focus") || "",
   change: urlState.searchParams.get("change") || "",
+  title: urlState.searchParams.get("title") || "",
+  description: urlState.searchParams.get("description") || "",
+  priority: urlState.searchParams.get("priority") || "",
+  executorKind: urlState.searchParams.get("executor_kind") || "",
+  queueName: urlState.searchParams.get("queue_name") || "",
 };
 let lastRenderPayload = null;
 
@@ -611,24 +616,27 @@ function ticketsTable(tickets, activeId) {
 }
 
 function renderCreateTicketForm() {
+  const priority = state.priority || "normal";
+  const executorKind = state.executorKind || "human";
+  const queueName = state.queueName || "default";
   return panel("Create ticket", `
     <form id="create-ticket-form" autocomplete="off">
       <div class="form-stack">
-        <input id="ct-title" placeholder="Ticket title (optional)" />
-        <textarea id="ct-description" rows="3" placeholder="Description / prompt (required)"></textarea>
+        <input id="ct-title" placeholder="Ticket title (optional)" value="${attr(state.title)}" />
+        <textarea id="ct-description" rows="3" placeholder="Description / prompt (required)">${esc(state.description)}</textarea>
         <div class="form-row">
           <select id="ct-priority">
-            <option value="normal">normal</option>
-            <option value="high">high</option>
-            <option value="critical">critical</option>
-            <option value="low">low</option>
+            <option value="normal"${priority === "normal" ? " selected" : ""}>normal</option>
+            <option value="high"${priority === "high" ? " selected" : ""}>high</option>
+            <option value="critical"${priority === "critical" ? " selected" : ""}>critical</option>
+            <option value="low"${priority === "low" ? " selected" : ""}>low</option>
           </select>
           <select id="ct-executor">
-            <option value="human">human (LLM IDE)</option>
-            <option value="shell">shell</option>
-            <option value="api">api</option>
+            <option value="human"${executorKind === "human" ? " selected" : ""}>human (LLM IDE)</option>
+            <option value="shell"${executorKind === "shell" ? " selected" : ""}>shell</option>
+            <option value="api"${executorKind === "api" ? " selected" : ""}>api</option>
           </select>
-          <input id="ct-queue" value="default" placeholder="Queue" />
+          <input id="ct-queue" value="${attr(queueName)}" placeholder="Queue" />
           <button type="submit" class="primary">Create</button>
         </div>
       </div>
@@ -1641,6 +1649,11 @@ document.addEventListener("submit", async (ev) => {
     }
     $("ct-title").value = "";
     $("ct-description").value = "";
+    state.title = "";
+    state.description = "";
+    state.priority = "";
+    state.executorKind = "";
+    state.queueName = "";
     setTimeout(refresh, 300);
   } catch (e) {
     if (status) {

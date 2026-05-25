@@ -51,6 +51,13 @@ def _handle_autopilot_phase(
             plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
             if not plugin_ok:
                 _hp(f"- autopilot skipped (plugin_missing: {plugin_reason})")
+                _hp(
+                    "  → VSIX plugin is not connected to the daemon socket. "
+                    "In the IDE: Command Palette → `koru: Connect autopilot daemon` "
+                    "(status bar should show koru: on). If you just installed or "
+                    "upgraded the VSIX, run `Developer: Reload Window` first, then "
+                    "connect again. Check: `koru autopilot status --explain`.",
+                )
                 cycle_telemetry["autopilot_skipped_plugin_missing"] = True
                 return "skipped(plugin_missing)", None, None
         if conflict_reason := _autopilot_terminal_conflict_reason(

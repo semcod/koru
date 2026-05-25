@@ -9,9 +9,34 @@ from typing import Any
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
+def _dashboard_action_urls(project: Any) -> dict[str, str]:
+    base = "http://127.0.0.1:8765"
+    try:
+        from pathlib import Path
+        from urllib.parse import urlencode
+
+        from koruapi.dashboard_serve import read_serve_endpoint
+
+        endpoint = read_serve_endpoint(Path(project))
+        if isinstance(endpoint, dict):
+            raw_base = str(endpoint.get("http_base") or "").strip()
+            if raw_base:
+                base = raw_base.rstrip("/")
+        query = urlencode({"project": str(Path(project).resolve())})
+    except Exception:
+        query = ""
+    suffix = f"?{query}" if query else ""
+    return {
+        "dashboard": f"{base}/{suffix}",
+        "create_project_ticket": f"{base}/llm/prompt/create-ticket-for-project{suffix}",
+        "tickets": f"{base}/?tab=tickets{('&' + query) if query else ''}",
+    }
+
+
 def _operator_next_steps(
     *,
     args: Any,
+    project: Any | None = None,
     queue_result: Any,
     waiting_ticket: str,
     autopilot_status: str,
@@ -62,15 +87,29 @@ def _operator_next_steps(
         ]
 
     if status == "idle":
+        urls = _dashboard_action_urls(project) if project is not None else {
+            "dashboard": "http://127.0.0.1:8765/",
+            "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+            "tickets": "http://127.0.0.1:8765/?tab=tickets",
+        }
         discovery = (
-            "scan/code2llm discovery is eligible"
+            "scan/code2llm discovery if freshness and rate limits allow"
             if getattr(args, "scan_after_idle_queue", False)
             else "idle scan is disabled unless explicitly requested"
         )
         return [
-            f"1/3 wait {sleep_text}; no runnable ticket is blocking the queue",
-            f"2/3 run idle intake strategy next cycle ({discovery})",
-            "3/3 create/upsert new planfile tickets from findings, then work them one by one",
+            (
+                f"1/3 wait {sleep_text}; queue is idle — all planfile tickets "
+                "are 'done' or canceled. autopilot drive is suppressed so the "
+                "user's chat input isn't clobbered with stale prompts"
+            ),
+            f"2/3 next cycle: {discovery}; deduplicated against active tickets only",
+            (
+                "3/3 action links: create discovery ticket "
+                f"{urls['create_project_ticket']} ; tickets {urls['tickets']} ; "
+                "force fresh scan command remains: "
+                "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
+            ),
         ]
 
     if status in {"completed", "failed"}:
@@ -90,6 +129,7 @@ def _operator_next_steps(
 def _log_operator_next_steps(
     *,
     args: Any,
+    project: Any | None,
     queue_result: Any,
     waiting_ticket: str,
     autopilot_status: str,
@@ -100,6 +140,7 @@ def _log_operator_next_steps(
 ) -> None:
     for line in _operator_next_steps(
         args=args,
+        project=project,
         queue_result=queue_result,
         waiting_ticket=waiting_ticket,
         autopilot_status=autopilot_status,
@@ -259,15 +300,21 @@ def run_autonomous_cycle(
     effective_sleep = compute_cycle_sleep(args, loop_state, queue_result)
     stop_reason = _cycle_stop_reason(args, queue_result, cycle)
     waiting_ticket = queue_loop_waiting_ticket_label(queue_result)
+    idle_context = ""
+    if queue_result.last_status == "idle":
+        from koru.autonomy.ide_work import sprint_ticket_status_summary
+
+        idle_context = f" {sprint_ticket_status_summary(project)}"
     stdio_info(
         f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
         f"waiting={waiting_ticket} "
         f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
-        f"autopilot={autopilot_status} sleep={effective_sleep}s",
+        f"autopilot={autopilot_status} sleep={effective_sleep}s{idle_context}",
         fmt=args.emit_events,
     )
     _log_operator_next_steps(
         args=args,
+        project=project,
         queue_result=queue_result,
         waiting_ticket=waiting_ticket,
         autopilot_status=autopilot_status,

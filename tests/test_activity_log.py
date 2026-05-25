@@ -19,6 +19,39 @@ def test_activity_flushes_with_timestamp(capsys: pytest.CaptureFixture[str]) -> 
     assert out.strip().startswith("[")
 
 
+def test_activity_colorizes_shell_data_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("KORU_FORCE_COLOR", "1")
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    al.activity(
+        "QUEUE",
+        (
+            "queue=idle waiting=STARTER-219 url=http://127.0.0.1:8765/ "
+            "cmd=`koru auto` path=/tmp/koru/test.sock"
+        ),
+        fmt="human",
+    )
+    out = capsys.readouterr().out
+    assert "\033[" in out
+    assert "STARTER-219" in out
+    assert "http://127.0.0.1:8765/" in out
+    assert "`\033[" in out and "koru auto" in out
+    assert "queue=" in out and "idle" in out
+
+
+def test_activity_color_respects_no_color(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("KORU_FORCE_COLOR", "1")
+    monkeypatch.setenv("NO_COLOR", "1")
+    al.activity("QUEUE", "queue=idle waiting=STARTER-219", fmt="human")
+    out = capsys.readouterr().out
+    assert "\033[" not in out
+
+
 def test_activity_disabled(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

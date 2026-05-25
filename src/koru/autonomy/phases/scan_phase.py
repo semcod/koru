@@ -13,6 +13,59 @@ from koru.queue import QueueLoopResult
 from koru.scan import ScanResult, run_scan
 
 
+def _format_scan_summary_line(result: ScanResult) -> str:
+    """One-line summary that distinguishes 'duplicate' vs 'create failed'."""
+    parts = [
+        f"suggestions={len(result.suggestions)}",
+        f"applied={len(result.applied)}",
+        f"skipped={len(result.skipped)}",
+    ]
+    if result.skipped_as_duplicate:
+        parts.append(f"duplicates={len(result.skipped_as_duplicate)}")
+    if result.skipped_create_failed:
+        parts.append(f"create_failed={len(result.skipped_create_failed)}")
+    return "  scan: " + " ".join(parts)
+
+
+def _hp_scan_skip_hint(result: ScanResult, _hp: Callable[..., Any]) -> None:
+    """Emit a follow-up explanation when scan applied nothing but had work."""
+    if result.applied:
+        return
+    if not result.suggestions:
+        return
+    if result.skipped_as_duplicate and not result.skipped_create_failed:
+        sample = ", ".join(result.skipped_as_duplicate[:3])
+        more = (
+            f" (+{len(result.skipped_as_duplicate) - 3} more)"
+            if len(result.skipped_as_duplicate) > 3
+            else ""
+        )
+        _hp(
+            f"  scan: all {len(result.skipped_as_duplicate)} suggestion(s) "
+            "are duplicates of *active* planfile tickets (closed tickets are "
+            "ignored on purpose so regressing signals can reopen). "
+            f"Examples: {sample}{more}. "
+            "To force fresh tickets, either reopen the matching done ticket "
+            "in the dashboard, or `rm -rf project/` + "
+            "`KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
+        )
+        return
+    if result.skipped_create_failed:
+        sample = ", ".join(result.skipped_create_failed[:3])
+        more = (
+            f" (+{len(result.skipped_create_failed) - 3} more)"
+            if len(result.skipped_create_failed) > 3
+            else ""
+        )
+        _hp(
+            f"  scan: {len(result.skipped_create_failed)} suggestion(s) "
+            "could not be turned into a planfile ticket (create failed — "
+            "check `.planfile/` permissions, lockfile, or run "
+            "`koru ide doctor --explain`). "
+            f"Examples: {sample}{more}.",
+        )
+
+
 def handle_scan_phase(
     project: Path,
     state: AutoloopState,
@@ -66,10 +119,8 @@ def handle_scan_phase(
                     apply=True,
                     include_semcod_artifacts=include_semcod_artifacts,
                 )
-                _hp(
-                    f"  scan: suggestions={len(scan_result.suggestions)} "
-                    f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}",
-                )
+                _hp(_format_scan_summary_line(scan_result))
+                _hp_scan_skip_hint(scan_result, _hp)
                 _emit(
                     "ScanCompleted",
                     {
@@ -147,10 +198,8 @@ def handle_scan_after_idle(
             state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
             cycle_telemetry["scan_after_idle_run"] = True
             cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
-            _hp(
-                f"  scan: suggestions={len(idle_scan.suggestions)} "
-                f"applied={len(idle_scan.applied)} skipped={len(idle_scan.skipped)}",
-            )
+            _hp(_format_scan_summary_line(idle_scan))
+            _hp_scan_skip_hint(idle_scan, _hp)
             _emit(
                 "ScanCompleted",
                 {

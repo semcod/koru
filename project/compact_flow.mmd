@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.09s
+%% generated in 0.14s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
     plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>477 funcs"]
@@ -8,7 +8,7 @@ flowchart TD
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>1652 funcs"]
+    src__koru["src.koru<br/>1668 funcs"]
     src__koruapi["src.koruapi<br/>183 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
     src__koruide["src.koruide<br/>306 funcs"]
@@ -33,16 +33,16 @@ flowchart TD
     src__koruide ==>|9| src__koru
     scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
     src__koruvision ==>|8| src__korumesh
+    src__koru ==>|8| src__koruapi
     src__koruobserve ==>|7| src__koruvision
     src__korumesh ==>|7| scripts__koru_soak_monitor
-    src__koru ==>|7| src__koruapi
     src__koruobserve ==>|6| src__koru
     src__koruvision ==>|5| src__koru
     scripts__koru_gate_capture ==>|5| scripts__koru_soak_monitor
     src__koruapi ==>|4| src__korudsl
     docker__capture ==>|4| src__koruvision
-    src__koruapi -->|3| src__korumesh
     src__koru -->|3| src__korudsl
+    src__koruapi -->|3| src__korumesh
     services__healing_webhook -->|2| plugins__koru_autopilot_vscode
     src__korumesh -->|2| src__koru
     src__korumesh -->|2| src__koruvision

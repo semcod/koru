@@ -298,7 +298,29 @@ def _execute_autopilot_drive(
         autopilot_action=autopilot_action,
     )
     if idle_prompt_kind == "idle_no_ticket":
-        _hp("- autopilot skipped (idle_no_ticket)")
+        from koru.autonomy.ide_work import sprint_ticket_status_summary
+
+        _hp(
+            "- autopilot skipped (idle_no_ticket): "
+            "queue empty AND no open ticket in planfile → nothing to paste "
+            "into the IDE chat. Drive is suppressed to avoid clobbering the "
+            "user's input with stale prompts.",
+        )
+        _hp(f"  planfile snapshot: {sprint_ticket_status_summary(project)}")
+        _hp(
+            "  what koru auto will try next: "
+            "(1) wait the configured sleep; (2) when queue stays idle, "
+            "rerun `koru scan --apply` to look for new signals; "
+            "(3) if scan finds signals already present as done tickets, "
+            "they will be skipped as duplicates and nothing new is queued.",
+        )
+        _hp(
+            "  to give koru work right now: "
+            "open the dashboard at http://127.0.0.1:8765/ and reopen a "
+            "relevant ticket (status: done → open), OR create a new ticket "
+            "with `koru --ticket 'Title' --description '...'`, OR force a "
+            "fresh scan with `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
+        )
         return (
             {
                 "ok": False,
@@ -388,7 +410,7 @@ def _log_autopilot_result(
             )
     else:
         if decision_kind == "idle_no_ticket":
-            _hp("  autopilot: skipped(idle_no_ticket)")
+            return
         elif _reply_requires_manual_chat_focus(reply):
             _hp(
                 "  autopilot: skipped(manual_focus) "

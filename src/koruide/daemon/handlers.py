@@ -457,6 +457,22 @@ def _log_rejected_plugin_connection(
         return
     suffix = f" (suppressed {suppressed} repeated reconnects)" if suppressed else ""
     daemon.log(f"rejecting plugin connection: ide={ide} {message}{suffix}")
+    if expected and plugin_version and plugin_version != expected:
+        daemon.log(
+            f"  → installed VSIX is v{plugin_version} but daemon expects "
+            f"v{expected}. The IDE is still running the older plugin. "
+            "Action: in Cursor run `Developer: Reload Window` then "
+            "`koru: Connect autopilot daemon` from the command palette. "
+            "If still mismatched after reload, rebuild and reinstall the "
+            "VSIX from plugins/koru-autopilot-vscode/.",
+        )
+    elif expected and not plugin_version:
+        daemon.log(
+            f"  → plugin sent no version; daemon expects v{expected}. "
+            "This usually means the VSIX is older than the policy gate. "
+            "Action: reinstall the VSIX from plugins/koru-autopilot-vscode/ "
+            "and reload the IDE window.",
+        )
     daemon._plugin_rejection_log_state[key] = (now, 0)
     daemon._plugin_rejections.append(
         {

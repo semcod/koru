@@ -1,12 +1,12 @@
-# redup/duplication | 94 groups | 346f 56720L | 2026-05-24
+# redup/duplication | 94 groups | 346f 57911L | 2026-05-25
 
 SUMMARY:
   files_scanned: 346
-  total_lines:   56720
+  total_lines:   57911
   dup_groups:    94
-  dup_fragments: 231
-  saved_lines:   1115
-  scan_ms:       7889
+  dup_fragments: 232
+  saved_lines:   1118
+  scan_ms:       3739
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli_cleaned.py  dup=409L  groups=32  frags=37  (0.7%)
@@ -70,6 +70,14 @@ DUPLICATES[94] (ranked by impact):
       src/koruide/ides/vscode.py:57-61  (config_home)
       src/koruide/ides/vscodium.py:43-47  (config_home)
       src/koruide/ides/windsurf.py:48-52  (config_home)
+  [2d7b9210c1b65241]   STRU  activity_enabled  L=3 N=7 saved=18 sim=1.00
+      src/koru/activity_log.py:16-18  (activity_enabled)
+      src/koru/autonomous_cycle_chat_activity.py:93-95  (_llm_needs_input_ticket_enabled)
+      src/koru/autonomous_cycle_chat_activity.py:108-110  (_llm_needs_input_heuristic_enabled)
+      src/koru/autonomous_cycle_chat_activity.py:113-115  (_chat_intake_ticket_enabled)
+      src/koru/autonomy/operator_pipeline.py:281-283  (_operator_autostart_server_enabled)
+      src/koru/ide_adapters/ide_reload.py:46-48  (auto_reload_enabled)
+      src/koruide/plugin_installer.py:311-313  (_env_reassert_extension_install)
   [e29ad3fb5eb111af]   STRU  _is_topology_enabled  L=9 N=3 saved=18 sim=1.00
       src/koru/autonomous.py:324-332  (_is_topology_enabled)
       src/koru/autonomous_cycle_skip_conditions.py:18-26  (_is_topology_enabled)
@@ -79,7 +87,7 @@ DUPLICATES[94] (ranked by impact):
       src/koru/autonomous_cycle.py:74-82  (_current_head)
       src/koru/autonomy/phases/utils.py:22-30  (current_head)
   [fba62c0a0f651c53]   STRU  _run_queue_loop  L=18 N=2 saved=18 sim=1.00
-      src/koru/autonomous_cycle.py:358-375  (_run_queue_loop)
+      src/koru/autonomous_cycle.py:362-379  (_run_queue_loop)
       src/koru/autonomy/phases/queue_phase.py:51-68  (run_queue_loop)
   [7212aaa3f9adc25b]   STRU  _is_bare_invocation  L=17 N=2 saved=17 sim=1.00
       src/koru/cli.py:79-95  (_is_bare_invocation)
@@ -96,13 +104,6 @@ DUPLICATES[94] (ranked by impact):
   [54051ebae1746d54]   STRU  _agent_main  L=16 N=2 saved=16 sim=1.00
       src/koru/cli_agent.py:74-89  (_agent_main)
       src/koru/cli_cleaned.py:246-256  (_agent_main)
-  [2d7b9210c1b65241]   STRU  activity_enabled  L=3 N=6 saved=15 sim=1.00
-      src/koru/activity_log.py:15-17  (activity_enabled)
-      src/koru/autonomous_cycle_chat_activity.py:89-91  (_llm_needs_input_ticket_enabled)
-      src/koru/autonomous_cycle_chat_activity.py:104-106  (_llm_needs_input_heuristic_enabled)
-      src/koru/autonomy/operator_pipeline.py:277-279  (_operator_autostart_server_enabled)
-      src/koru/ide_adapters/ide_reload.py:46-48  (auto_reload_enabled)
-      src/koruide/plugin_installer.py:311-313  (_env_reassert_extension_install)
   [4c788efcc3404bcc]   STRU  _project_cli_reexec_argv  L=15 N=2 saved=15 sim=1.00
       src/koru/cli.py:133-147  (_project_cli_reexec_argv)
       src/koru/cli_cleaned.py:401-413  (_project_cli_reexec_argv)
@@ -143,7 +144,7 @@ DUPLICATES[94] (ranked by impact):
       src/koru/cli_cleaned.py:287-300  (_runtime_context_main)
       src/koru/cli_runtime_context.py:60-77  (_runtime_context_main)
   [2252dd4ae417456e]   EXAC  _parse_iso_datetime  L=13 N=2 saved=13 sim=1.00
-      src/koru/autonomy/ide_work.py:289-301  (_parse_iso_datetime)
+      src/koru/autonomy/ide_work.py:302-314  (_parse_iso_datetime)
       src/koru/autonomy/post_run_verify.py:131-143  (_parse_iso_datetime)
   [5ddec50ead9632f9]   STRU  _should_suggest_wizard  L=13 N=2 saved=13 sim=1.00
       src/koru/cli.py:166-178  (_should_suggest_wizard)
@@ -175,8 +176,8 @@ DUPLICATES[94] (ranked by impact):
       src/koruide/protocol.py:203-214  (message_received)
       src/koruide/protocol.py:217-228  (status_error)
   [42883f38a75056c9]   STRU  _warn_autopilot_focus_retry  L=11 N=2 saved=11 sim=1.00
-      src/koru/autonomous_cycle_drive_retry.py:198-208  (_warn_autopilot_focus_retry)
-      src/koru/autonomous_cycle_drive_retry.py:230-240  (_warn_autopilot_plugin_retry)
+      src/koru/autonomous_cycle_drive_retry.py:211-221  (_warn_autopilot_focus_retry)
+      src/koru/autonomous_cycle_drive_retry.py:243-253  (_warn_autopilot_plugin_retry)
   [b79fb4d314048ea0]   STRU  _build_serve_parser  L=11 N=2 saved=11 sim=1.00
       src/koru/cli_cleaned.py:144-154  (_build_serve_parser)
       src/koru/cli_serve.py:17-64  (_build_serve_parser)
@@ -203,8 +204,8 @@ DUPLICATES[94] (ranked by impact):
       src/korudsl/library.py:48-50  (_handle_save)
       src/korudsl/library.py:53-55  (_handle_if)
   [d16cf5813adee1a1]   STRU  _llm_reflection_summary_max_age_seconds  L=8 N=2 saved=8 sim=1.00
-      src/koru/autonomous_cycle_chat_activity.py:62-69  (_llm_reflection_summary_max_age_seconds)
-      src/koruide/daemon/handlers.py:46-53  (_plugin_rejection_log_interval_seconds)
+      src/koru/autonomous_cycle_chat_activity.py:66-73  (_llm_reflection_summary_max_age_seconds)
+      src/koruide/daemon/handlers.py:47-54  (_plugin_rejection_log_interval_seconds)
   [7b90218491b862bb]   STRU  _versioned_plugin_vsix_candidates  L=8 N=2 saved=8 sim=1.00
       src/koru/autopilot/install_plugin_cli.py:52-59  (_versioned_plugin_vsix_candidates)
       src/koruide/plugin_installer.py:122-129  (_versioned_vsix_candidates)
@@ -212,7 +213,7 @@ DUPLICATES[94] (ranked by impact):
       src/koru/cli_cleaned.py:104-111  (_build_tools_parser)
       src/koru/cli_tools.py:17-38  (_build_tools_parser)
   [4a39ec7a354e028b]   STRU  _run  L=8 N=2 saved=8 sim=1.00
-      src/koru/ide_adapters/ide_reload.py:51-58  (_run)
+      src/koru/ide_adapters/ide_reload.py:67-74  (_run)
       src/koruide/plugin_installer.py:301-308  (_run)
   [940e90e95c5d69b3]   STRU  _check_git_commit_policy  L=4 N=3 saved=8 sim=1.00
       src/koru/policy.py:194-197  (_check_git_commit_policy)
@@ -299,13 +300,13 @@ DUPLICATES[94] (ranked by impact):
       src/koruide/ides/vscode.py:51-55  (aliases)
       src/koruide/ides/vscodium.py:37-41  (aliases)
   [03f2881011656d1f]   EXAC  _cycle_attr  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous_cycle_chat_activity.py:14-17  (_cycle_attr)
+      src/koru/autonomous_cycle_chat_activity.py:18-21  (_cycle_attr)
       src/koru/autonomous_cycle_drive_retry.py:21-24  (_cycle_attr)
   [8c85b68869749734]   STRU  status_in_skip_list  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous_checkpoint.py:183-186  (status_in_skip_list)
+      src/koru/autonomous_checkpoint.py:185-188  (status_in_skip_list)
       src/koru/autonomous_cycle_common.py:17-20  (_status_in_skip_list)
   [6ab181429cc7b1d7]   STRU  _build_queue_command  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous_cycle.py:352-355  (_build_queue_command)
+      src/koru/autonomous_cycle.py:356-359  (_build_queue_command)
       src/koru/autonomy/phases/queue_phase.py:45-48  (build_queue_command)
   [11e58559cb0f1b01]   STRU  _looks_like_autonomous_up_command  L=4 N=2 saved=4 sim=1.00
       src/koru/autonomous_processes.py:77-80  (_looks_like_autonomous_up_command)
@@ -323,14 +324,14 @@ DUPLICATES[94] (ranked by impact):
       src/koru/agent_backends.py:105-107  (iter_agent_backend_profiles)
       src/koruide/ide.py:93-95  (autopilot_ide_choices)
   [c313a68ea5e776b1]   STRU  _normalize_autonomous_argv  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous.py:1016-1018  (_normalize_autonomous_argv)
+      src/koru/autonomous.py:1072-1074  (_normalize_autonomous_argv)
       src/koru/wizard/cli.py:51-53  (propose_projects)
   [3e72ce8df48766bc]   STRU  _apply_auto_pipeline_flags  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous.py:1031-1033  (_apply_auto_pipeline_flags)
-      src/koru/autonomous.py:1036-1038  (_apply_replace_existing_flags)
+      src/koru/autonomous.py:1087-1089  (_apply_auto_pipeline_flags)
+      src/koru/autonomous.py:1092-1094  (_apply_replace_existing_flags)
   [815c4492e986dd60]   STRU  _llm_needs_input_ticket_queue_name  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous_cycle_chat_activity.py:94-96  (_llm_needs_input_ticket_queue_name)
-      src/koru/autonomous_cycle_chat_activity.py:99-101  (_llm_needs_input_ticket_priority)
+      src/koru/autonomous_cycle_chat_activity.py:98-100  (_llm_needs_input_ticket_queue_name)
+      src/koru/autonomous_cycle_chat_activity.py:103-105  (_llm_needs_input_ticket_priority)
   [5d75a9aed94653a0]   STRU  allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
       src/koru/autonomous_cycle_gate.py:54-56  (allow_keyboard_autopilot_fallback)
       src/koru/autonomous_cycle_gate.py:91-93  (scan_while_waiting_input_enabled)
@@ -378,33 +379,33 @@ REFACTOR[94] (ranked by priority):
   [11] ○ extract_function   → src/koruide/ides/utils/config_home.py
       WHY: 5 occurrences of 5-line block across 5 files — saves 20 lines
       FILES: src/koruide/ides/antigravity.py, src/koruide/ides/cursor.py, src/koruide/ides/vscode.py, src/koruide/ides/vscodium.py, src/koruide/ides/windsurf.py
-  [12] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
+  [12] ○ extract_function   → src/utils/activity_enabled.py
+      WHY: 7 occurrences of 3-line block across 5 files — saves 18 lines
+      FILES: src/koru/activity_log.py, src/koru/autonomous_cycle_chat_activity.py, src/koru/autonomy/operator_pipeline.py, src/koru/ide_adapters/ide_reload.py, src/koruide/plugin_installer.py
+  [13] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
       WHY: 3 occurrences of 9-line block across 3 files — saves 18 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle_skip_conditions.py, src/koru/autonomy/phases/utils.py
-  [13] ○ extract_function   → src/koru/utils/current_head.py
+  [14] ○ extract_function   → src/koru/utils/current_head.py
       WHY: 3 occurrences of 9-line block across 3 files — saves 18 lines
       FILES: src/koru/autonomous_checkpoint.py, src/koru/autonomous_cycle.py, src/koru/autonomy/phases/utils.py
-  [14] ○ extract_function   → src/koru/utils/_run_queue_loop.py
+  [15] ○ extract_function   → src/koru/utils/_run_queue_loop.py
       WHY: 2 occurrences of 18-line block across 2 files — saves 18 lines
       FILES: src/koru/autonomous_cycle.py, src/koru/autonomy/phases/queue_phase.py
-  [15] ○ extract_function   → src/koru/utils/_is_bare_invocation.py
+  [16] ○ extract_function   → src/koru/utils/_is_bare_invocation.py
       WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
       FILES: src/koru/cli.py, src/koru/cli_cleaned.py
-  [16] ○ extract_function   → src/koru/utils/_load_tool_scaffold.py
+  [17] ○ extract_function   → src/koru/utils/_load_tool_scaffold.py
       WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
       FILES: src/koru/cli_cleaned.py, src/koru/cli_task.py
-  [17] ○ extract_function   → src/koru/utils/ide_router_main.py
+  [18] ○ extract_function   → src/koru/utils/ide_router_main.py
       WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
       FILES: src/koru/cli_cleaned.py, src/koru/cli_ide_router.py
-  [18] ○ extract_function   → src/utils/bundled_plugin_vsix_candidates.py
+  [19] ○ extract_function   → src/utils/bundled_plugin_vsix_candidates.py
       WHY: 2 occurrences of 16-line block across 2 files — saves 16 lines
       FILES: src/koru/autopilot/install_plugin_cli.py, src/koruide/plugin_installer.py
-  [19] ○ extract_function   → src/koru/utils/_agent_main.py
+  [20] ○ extract_function   → src/koru/utils/_agent_main.py
       WHY: 2 occurrences of 16-line block across 2 files — saves 16 lines
       FILES: src/koru/cli_agent.py, src/koru/cli_cleaned.py
-  [20] ○ extract_function   → src/utils/activity_enabled.py
-      WHY: 6 occurrences of 3-line block across 5 files — saves 15 lines
-      FILES: src/koru/activity_log.py, src/koru/autonomous_cycle_chat_activity.py, src/koru/autonomy/operator_pipeline.py, src/koru/ide_adapters/ide_reload.py, src/koruide/plugin_installer.py
   [21] ○ extract_function   → src/koru/utils/_project_cli_reexec_argv.py
       WHY: 2 occurrences of 15-line block across 2 files — saves 15 lines
       FILES: src/koru/cli.py, src/koru/cli_cleaned.py
@@ -643,14 +644,14 @@ QUICK_WINS[65] (low risk, high savings — do first):
       FILES: autonomous.py, autonomous_checkpoint.py, autonomous_cycle.py +2
   [11] extract_function   saved=20L  → src/koruide/ides/utils/config_home.py
       FILES: antigravity.py, cursor.py, vscode.py +2
-  [12] extract_function   saved=18L  → src/koru/utils/_is_topology_enabled.py
+  [12] extract_function   saved=18L  → src/utils/activity_enabled.py
+      FILES: activity_log.py, autonomous_cycle_chat_activity.py, operator_pipeline.py +2
+  [13] extract_function   saved=18L  → src/koru/utils/_is_topology_enabled.py
       FILES: autonomous.py, autonomous_cycle_skip_conditions.py, utils.py
-  [13] extract_function   saved=18L  → src/koru/utils/current_head.py
+  [14] extract_function   saved=18L  → src/koru/utils/current_head.py
       FILES: autonomous_checkpoint.py, autonomous_cycle.py, utils.py
-  [14] extract_function   saved=18L  → src/koru/utils/_run_queue_loop.py
-      FILES: autonomous_cycle.py, queue_phase.py
 
-EFFORT_ESTIMATE (total ≈ 40.4h):
+EFFORT_ESTIMATE (total ≈ 40.5h):
   hard   agent_backends_main                 saved=57L  ~171min
   hard   _bootstrap_main                     saved=52L  ~156min
   hard   _build_agent_parser                 saved=49L  ~147min
@@ -661,8 +662,8 @@ EFFORT_ESTIMATE (total ≈ 40.4h):
   medium _koru_package_version               saved=25L  ~50min
   medium _maybe_reexec_for_project_venv      saved=21L  ~42min
   medium _stdio_info                         saved=20L  ~40min
-  ... +84 more (~1528min)
+  ... +84 more (~1534min)
 
 METRICS-TARGET:
   dup_groups:  94 → 0
-  saved_lines: 1115 lines recoverable
+  saved_lines: 1118 lines recoverable

@@ -84,6 +84,20 @@ def _get(port: int, path: str) -> tuple[int, str, str]:
         return resp.status, content_type, body
 
 
+def _get_no_redirect(port: int, path: str) -> tuple[int, str]:
+    class _NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+            return None
+
+    url = f"http://127.0.0.1:{port}{path}"
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        opener.open(url, timeout=5)  # noqa: S310
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.headers.get("Location", "")
+    raise AssertionError("request did not redirect")
+
+
 def _post_json(port: int, path: str, payload: dict[str, object]) -> tuple[int, str, str]:
     url = f"http://127.0.0.1:{port}{path}"
     body = json.dumps(payload).encode("utf-8")
@@ -185,6 +199,19 @@ class TestServe(unittest.TestCase):
         self.assertIn("tab", body)
         self.assertIn("project", body)
         self.assertIn("change", body)
+        self.assertIn("executor_kind", body)
+        self.assertIn("ct-description", body)
+
+    def test_llm_prompt_create_ticket_link_redirects_to_prefilled_dashboard(self) -> None:
+        status, location = _get_no_redirect(
+            self.port,
+            "/llm/prompt/create-ticket-for-project",
+        )
+        self.assertEqual(status, 303)
+        self.assertIn("/?tab=tickets", location)
+        self.assertIn("focus=create-ticket", location)
+        self.assertIn("title=Project+discovery", location)
+        self.assertIn("description=Run+a+broad+project+discovery", location)
 
     def test_dashboard_html_has_mobile_layout_guards(self) -> None:
         status, _, body = _get(self.port, "/")

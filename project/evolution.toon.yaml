@@ -1,18 +1,18 @@
-# code2llm/evolution | 2906 func | 310f | 2026-05-25
-# generated in 0.01s
+# code2llm/evolution | 2922 func | 310f | 2026-05-25
+# generated in 0.02s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
       WHY: 2061L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 28854
 
-  [2] !! SPLIT           src/koru/autonomous_cycle_chat_activity.py
-      WHY: 962L, 0 classes, max CC=18
-      EFFORT: ~4h  IMPACT: 17316
+  [2] !! SPLIT           src/koru/scan.py
+      WHY: 1117L, 2 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 14521
 
-  [3] !! SPLIT           src/koruide/daemon/handlers.py
-      WHY: 837L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 11718
+  [3] !! SPLIT           src/koru/autonomous.py
+      WHY: 1119L, 2 classes, max CC=5
+      EFFORT: ~4h  IMPACT: 5595
 
   [4] !  SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=18  fan=23
       WHY: CC=18 exceeds 15
@@ -21,14 +21,14 @@ NEXT[4] (ranked by impact):
 
 RISKS[3]:
   ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 166 import paths
-  ⚠ Splitting src/koru/autonomous_cycle_chat_activity.py may break 39 import paths
-  ⚠ Splitting src/koruide/daemon/handlers.py may break 32 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 59 import paths
+  ⚠ Splitting src/koru/scan.py may break 29 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
   max-CC:      18 → ≤9
-  god-modules: 3 → 0
-  high-CC(≥15): 2 → ≤1
+  god-modules: 7 → 0
+  high-CC(≥15): 3 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -56,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.1 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=3.8

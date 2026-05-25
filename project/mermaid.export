@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.01s
+%% generated in 0.02s
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -280,10 +280,6 @@ flowchart TD
         src__koruapi__runtime_insights___top_processes["_top_processes"]
         src__koruapi__runtime_insights__collect_runtime_insights["collect_runtime_insights"]
         src__koruapi__mcp__mcp_main["mcp_main"]
-        src__koruapi__dashboard_routes___load_dashboard_html["_load_dashboard_html"]
-        src__koruapi__dashboard_routes___config_defaults["_config_defaults"]
-        src__koruapi__dashboard_routes___state_payload["_state_payload"]
-        src__koruapi__dashboard_routes__build_dashboard_handler["build_dashboard_handler"]
         src__koruapi__dashboard___env_truthy["_env_truthy"]
         src__koruapi__dashboard___argv_has_flag["_argv_has_flag"]
         src__koruapi__dashboard__build_serve_parser["build_serve_parser"]
@@ -333,6 +329,10 @@ flowchart TD
         src__koruapi__dashboard_runtime__runtime_context_payload["runtime_context_payload"]
         src__koruapi__dashboard_runtime__runtime_context_error_payload["runtime_context_error_payload"]
         src__koruapi__dashboard_runtime__save_runtime_context_config["save_runtime_context_config"]
+        src__koruapi__invoke__invoke_integration["invoke_integration"]
+        src__koruapi__dashboard_context__dashboard_context_payload["dashboard_context_payload"]
+        src__koruapi__dashboard_context__dashboard_handoff_markdown["dashboard_handoff_markdown"]
+        src__koruapi__dashboard_serve_utils___address_in_use["_address_in_use"]
     end
     subgraph src__korudsl
         src__korudsl__cli___build_parser["_build_parser"]
@@ -741,10 +741,6 @@ flowchart TD
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koru__autonomous_process_guard__find_existing_wup_processes
     src__koruapi__mcp__mcp_main --> src__koru__activity_log__activity
     src__koruapi__mcp__mcp_main --> src__koruapi__mcp_server__mcp_serve_main
-    src__koruapi__dashboard_routes___config_defaults --> src__koruapi__dashboard_projects__dashboard_workspace
-    src__koruapi__dashboard_routes___state_payload --> src__koruapi__dashboard_state__dashboard_state
-    src__koruapi__dashboard_routes__build_dashboard_handler --> src__koruapi__dashboard_projects__resolve_dashboard_project
-    src__koruapi__dashboard_routes__build_dashboard_handler --> src__koruapi__dashboard_topology__apply_dashboard_topology_update
     src__koruapi__dashboard___resolve_serve_config --> src__koruapi__dashboard___resolve_serve_lan
     src__koruapi__dashboard___resolve_serve_config --> src__koruapi__dashboard___resolve_serve_host
     src__koruapi__dashboard___resolve_serve_config --> src__koruapi__dashboard___resolve_serve_port
@@ -1184,8 +1180,12 @@ flowchart TD
     src__korumesh__browser_capture__serve_browser_capture_http --> src__korumesh__browser_capture__browser_upload_payload
     src__korumesh__browser_capture__serve_browser_capture_http --> plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__CursorBubbleAdapter__type
     src__korumesh__cli_commands__mesh_init --> src__koru__configurator__load_project_config
+    src__korumesh__cli_commands__mesh_init --> src__korumesh__keys__write_mesh_key
+    src__korumesh__cli_commands__mesh_init --> scripts__koru_soak_monitor__print
+    src__korumesh__cli_commands__mesh_relay --> src__korumesh__transport__run_relay
+    src__korumesh__cli_commands__mesh_relay --> scripts__koru_soak_monitor__print
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__autonomous_loop_runner___operator_next_steps,src__koru__autonomous_cycle_chat_activity___skip_due_to_recent_chat_activity highCC
+    class src__koru__autonomous_cycle_chat_activity___skip_due_to_recent_chat_activity,src__koru__autonomous_loop_runner___operator_next_steps,src__koru__ide_adapters__ide_reload__try_reload_vscode_family_ide highCC
     class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config___dashboard_config_request_kwargs,src__koruapi__dashboard_projects__workspace_project_candidates medCC

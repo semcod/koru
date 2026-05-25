@@ -80,13 +80,23 @@ class ScanResult:
 
     suggestions: list[Suggestion]
     applied: list[str] = field(default_factory=list)  # ticket IDs / names actually created
-    skipped: list[str] = field(default_factory=list)  # duplicates already in planfile
+    skipped: list[str] = field(default_factory=list)  # duplicates + failed creates
+    # Fine-grained breakdown of ``skipped`` so operator logs can explain WHY
+    # nothing was applied. ``skipped_as_duplicate`` = title or signal already
+    # exists in an *active* ticket in the planfile sprint (closed tickets are
+    # excluded by ``_existing_scan_titles`` so regressing signals can reopen
+    # work). ``skipped_create_failed`` = planfile rejected the create call
+    # (permission, lock, validation, etc.).
+    skipped_as_duplicate: list[str] = field(default_factory=list)
+    skipped_create_failed: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "suggestions": [s.to_dict() for s in self.suggestions],
             "applied": list(self.applied),
             "skipped": list(self.skipped),
+            "skipped_as_duplicate": list(self.skipped_as_duplicate),
+            "skipped_create_failed": list(self.skipped_create_failed),
         }
 
 
@@ -800,6 +810,21 @@ def collect_suggestions(
     return out
 
 
+def _record_scan_activity(
+    message: str,
+    *,
+    preview: str | None = None,
+    data: dict[str, Any] | None = None,
+) -> None:
+    """Best-effort activity event for scan decisions."""
+    try:
+        from koru.activity_log import activity
+
+        activity("SCAN", message, preview=preview, data=data)
+    except Exception:
+        pass
+
+
 # Terminal planfile statuses: scan may re-apply when the signal is still present.
 _SCAN_DEDUP_SKIP_STATUSES: frozenset[str] = frozenset(
     {"done", "canceled", "cancelled", "closed"},
@@ -1011,23 +1036,82 @@ def run_scan(
     existing = _existing_scan_titles(project, source=source, runner=runner)
     applied: list[str] = []
     skipped: list[str] = []
+    skipped_as_duplicate: list[str] = []
+    skipped_create_failed: list[str] = []
+
+    def _log_scan_decision(
+        s: "Suggestion",
+        *,
+        decision: str,
+        reason: str | None,
+        message: str,
+    ) -> None:
+        payload: dict[str, Any] = {
+            "decision": decision,
+            "signal": s.signal,
+            "title": s.title,
+            "priority": s.priority,
+        }
+        if reason is not None:
+            payload["reason"] = reason
+        _record_scan_activity(
+            message,
+            preview=s.description,
+            data=payload,
+        )
+
     for s in suggestions:
-        if s.title in existing or f"signal:{s.signal}" in existing:
+        if s.title in existing:
             skipped.append(s.title)
+            skipped_as_duplicate.append(s.title)
+            _log_scan_decision(
+                s,
+                decision="skipped",
+                reason="duplicate_title",
+                message=(
+                    f"pomijam ze skanu (duplikat tytułu): {s.title} "
+                    f"(signal={s.signal})"
+                ),
+            )
+            continue
+        if f"signal:{s.signal}" in existing:
+            skipped.append(s.title)
+            skipped_as_duplicate.append(s.title)
+            _log_scan_decision(
+                s,
+                decision="skipped",
+                reason="duplicate_signal",
+                message=(
+                    f"pomijam ze skanu (duplikat sygnału): {s.title} "
+                    f"(signal={s.signal} — istnieje aktywny ticket dla tego sygnału)"
+                ),
+            )
             continue
         ok = _create_ticket(project, s, source=source, runner=runner)
         if ok:
             applied.append(s.title)
-            try:
-                from koru.activity_log import activity
-
-                activity(
-                    "SCAN",
-                    f"ticket ze skanu: {s.title} (priority={s.priority})",
-                    preview=s.description,
-                )
-            except Exception:
-                pass
+            _log_scan_decision(
+                s,
+                decision="applied",
+                reason=None,
+                message=f"ticket ze skanu: {s.title} (priority={s.priority})",
+            )
         else:
             skipped.append(s.title)
-    return ScanResult(suggestions=suggestions, applied=applied, skipped=skipped)
+            skipped_create_failed.append(s.title)
+            _log_scan_decision(
+                s,
+                decision="skipped",
+                reason="create_failed",
+                message=(
+                    f"pomijam ze skanu (planfile odrzucił create): {s.title} "
+                    f"(signal={s.signal} — sprawdź `.planfile/` uprawnienia/lock)"
+                ),
+            )
+    return ScanResult(
+        suggestions=suggestions,
+        applied=applied,
+        skipped=skipped,
+        skipped_as_duplicate=skipped_as_duplicate,
+        skipped_create_failed=skipped_create_failed,
+    )

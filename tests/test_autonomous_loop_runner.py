@@ -114,13 +114,17 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
         },
     )
     assert "summary cycle=3 queue=idle" in logs[0]
-    assert logs[1:4] == [
-        "koru autonomous: next 1/3 wait 4.5s; no runnable ticket is blocking the queue",
-        "koru autonomous: next 2/3 run idle intake strategy next cycle "
-        "(scan/code2llm discovery is eligible)",
-        "koru autonomous: next 3/3 create/upsert new planfile tickets from findings, "
-        "then work them one by one",
-    ]
+    assert logs[1].startswith(
+        "koru autonomous: next 1/3 wait 4.5s; queue is idle"
+    )
+    assert "all planfile tickets" in logs[1]
+    assert logs[2].startswith(
+        "koru autonomous: next 2/3 next cycle: "
+        "scan/code2llm discovery if freshness and rate limits allow"
+    )
+    assert logs[3].startswith("koru autonomous: next 3/3 action links:")
+    assert "/llm/prompt/create-ticket-for-project" in logs[3]
+    assert "/?tab=tickets" in logs[3]
     assert sleeps == [4.5]
 
 

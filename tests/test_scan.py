@@ -90,6 +90,75 @@ class TestScanCLI(unittest.TestCase):
             _suggestion_dedupe_key("prefact", refactor),
         )
 
+    def test_render_scan_text_colors_signal_in_tty(self) -> None:
+        result = ScanResult(
+            suggestions=[
+                Suggestion(
+                    signal="code2llm_cc",
+                    title="Reduce CC",
+                    description="desc",
+                    priority="high",
+                ),
+            ],
+        )
+
+        with mock.patch.dict("os.environ", {}, clear=False):
+            with mock.patch("sys.stdout.isatty", return_value=True):
+                text = cli_scan.render_scan_text(result)
+
+        self.assertIn("\033[", text)
+        self.assertIn("code2llm_cc", text)
+
+    def test_render_scan_text_respects_no_color(self) -> None:
+        result = ScanResult(
+            suggestions=[
+                Suggestion(
+                    signal="code2llm_cc",
+                    title="Reduce CC",
+                    description="desc",
+                    priority="high",
+                ),
+            ],
+        )
+
+        with mock.patch.dict("os.environ", {"NO_COLOR": "1"}, clear=False):
+            with mock.patch("sys.stdout.isatty", return_value=True):
+                text = cli_scan.render_scan_text(result)
+
+        self.assertNotIn("\033[", text)
+
+    def test_render_scan_text_uses_distinct_signal_colors(self) -> None:
+        result = ScanResult(
+            suggestions=[
+                Suggestion(
+                    signal="code2llm_cc",
+                    title="Reduce CC",
+                    description="desc",
+                    priority="normal",
+                ),
+                Suggestion(
+                    signal="redup_overlap",
+                    title="Remove duplicate",
+                    description="desc",
+                    priority="normal",
+                ),
+                Suggestion(
+                    signal="pytest_flaky",
+                    title="Stabilize test",
+                    description="desc",
+                    priority="normal",
+                ),
+            ],
+        )
+
+        with mock.patch.dict("os.environ", {}, clear=False):
+            with mock.patch("sys.stdout.isatty", return_value=True):
+                text = cli_scan.render_scan_text(result)
+
+        self.assertIn("\033[36mcode2llm_cc", text)
+        self.assertIn("\033[35mredup_overlap", text)
+        self.assertIn("\033[33mpytest_flaky", text)
+
 
 class TestScanPytestCollect(unittest.TestCase):
     def test_returns_empty_when_no_tests_and_no_pyproject(self) -> None:
@@ -401,6 +470,91 @@ class TestRunScan(unittest.TestCase):
             # Failed create -> skipped, never applied
             self.assertEqual(result.applied, [])
             self.assertGreater(len(result.skipped), 0)
+
+    def test_apply_logs_all_scan_decisions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+
+            suggestions = [
+                Suggestion(
+                    signal="dup-title",
+                    title="Duplicate by title",
+                    description="dup-title desc",
+                    priority="normal",
+                ),
+                Suggestion(
+                    signal="dup-signal",
+                    title="Duplicate by signal",
+                    description="dup-signal desc",
+                    priority="high",
+                ),
+                Suggestion(
+                    signal="create-fail",
+                    title="Create fails",
+                    description="create-fail desc",
+                    priority="high",
+                ),
+                Suggestion(
+                    signal="create-ok",
+                    title="Create succeeds",
+                    description="create-ok desc",
+                    priority="normal",
+                ),
+            ]
+
+            def runner(cmd, _proj) -> SimpleNamespace:
+                if cmd[:4] == ["planfile", "ticket", "list", "--source"]:
+                    return _ok(
+                        json.dumps(
+                            [
+                                {"name": "Duplicate by title"},
+                                {
+                                    "name": "Something else",
+                                    "source": {"context": {"signal": "dup-signal"}},
+                                },
+                            ],
+                        ),
+                    )
+                if cmd[:3] == ["planfile", "ticket", "create"]:
+                    title = cmd[3]
+                    if title == "Create fails":
+                        return _ok("boom", returncode=2)
+                    return _ok("ok")
+                return _ok()
+
+            with mock.patch("koru.scan.collect_suggestions", return_value=suggestions):
+                with mock.patch("koru.scan._record_scan_activity") as activity:
+                    result = run_scan(
+                        project,
+                        apply=True,
+                        skip_pytest=True,
+                        include_semcod_artifacts=False,
+                        runner=runner,
+                    )
+
+            self.assertEqual(result.applied, ["Create succeeds"])
+            self.assertCountEqual(
+                result.skipped,
+                ["Duplicate by title", "Duplicate by signal", "Create fails"],
+            )
+
+            decision_payloads = [
+                call.kwargs.get("data", {})
+                for call in activity.call_args_list
+            ]
+            self.assertEqual(len(decision_payloads), 4)
+            by_signal = {
+                str(payload.get("signal")): payload
+                for payload in decision_payloads
+            }
+            self.assertEqual(by_signal["dup-title"].get("decision"), "skipped")
+            self.assertEqual(by_signal["dup-title"].get("reason"), "duplicate_title")
+            self.assertEqual(by_signal["dup-signal"].get("decision"), "skipped")
+            self.assertEqual(by_signal["dup-signal"].get("reason"), "duplicate_signal")
+            self.assertEqual(by_signal["create-fail"].get("decision"), "skipped")
+            self.assertEqual(by_signal["create-fail"].get("reason"), "create_failed")
+            self.assertEqual(by_signal["create-ok"].get("decision"), "applied")
+            self.assertNotIn("reason", by_signal["create-ok"])
 
     def test_apply_creates_human_executor_tickets_without_custom_runner(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

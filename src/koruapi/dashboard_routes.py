@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlencode, parse_qs, urlparse
 
 from koru.env_config import apply_env_updates, env_config_payload, write_env_config
 from koruapi.dashboard_config import (
@@ -184,6 +184,31 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
             except Exception as exc:
                 self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
 
+        def _redirect_create_project_ticket_prompt(self) -> None:
+            qs = parse_qs(urlparse(self.path).query)
+            query: dict[str, str] = {
+                "tab": "tickets",
+                "focus": "create-ticket",
+                "change": "llm.prompt.create-ticket-for-project",
+                "title": "Project discovery: generate code2llm analysis and tickets",
+                "priority": "high",
+                "executor_kind": "human",
+                "queue_name": "operator",
+                "description": (
+                    "Run a broad project discovery pass because the planfile queue is idle.\n\n"
+                    "1. Refresh project/code2llm artifacts when stale.\n"
+                    "2. Review findings and create focused planfile tickets for concrete work.\n"
+                    "3. Keep broad discovery scoped: stop when runnable tickets exist."
+                ),
+            }
+            raw_project = qs.get("project", [""])[0].strip()
+            if raw_project:
+                query["project"] = raw_project
+            location = "/?" + urlencode(query)
+            self.send_response(303)
+            self.send_header("Location", location)
+            self.end_headers()
+
         def do_GET(self) -> None:  # noqa: N802 — stdlib API
             path = urlparse(self.path).path
             if path in ("/", "/index.html"):
@@ -211,6 +236,9 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                     method="GET",
                 ):
                     return
+            if path == "/llm/prompt/create-ticket-for-project":
+                self._redirect_create_project_ticket_prompt()
+                return
             route = {
                 "/api/dashboard": self._get_dashboard,
                 "/api/config": self._get_config,

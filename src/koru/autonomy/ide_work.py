@@ -97,6 +97,19 @@ def fetch_next_open_ticket(
     return tickets[0] if tickets else None
 
 
+def sprint_ticket_status_summary(project: Path | str) -> str:
+    """Compact ``open=2 done=23`` snapshot for operator logs."""
+    tickets = _current_sprint_tickets(Path(project))
+    if not tickets:
+        return "planfile: 0 tickets in current sprint"
+    counts: dict[str, int] = {}
+    for ticket in tickets:
+        status = str(ticket.get("status") or "unknown").strip().lower() or "unknown"
+        counts[status] = counts.get(status, 0) + 1
+    parts = [f"{status}={count}" for status, count in sorted(counts.items())]
+    return "planfile: " + ", ".join(parts)
+
+
 def _current_sprint_tickets(project: Path) -> list[dict[str, Any]]:
     sprint_path = project / ".planfile" / "sprints" / "current.yaml"
     try:
@@ -448,4 +461,5 @@ __all__ = [
     "release_stale_in_progress_tickets",
     "resolve_idle_drive_prompt",
     "resolve_in_progress_stale_minutes",
+    "sprint_ticket_status_summary",
 ]
