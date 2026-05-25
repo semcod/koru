@@ -689,7 +689,6 @@ def test_strict_plugin_version_blocks_stale_plugin_with_compatible_protocol(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
@@ -697,6 +696,7 @@ def test_strict_plugin_version_blocks_stale_plugin_with_compatible_protocol(
     )
 
     with _daemon(tmp_path, monkeypatch) as h:
+        monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
         plugin = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         plugin.settimeout(2.0)
         plugin.connect(str(h.sock_path))
@@ -723,7 +723,6 @@ def test_protocol_policy_allows_stale_plugin_with_compatible_protocol(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
@@ -731,6 +730,7 @@ def test_protocol_policy_allows_stale_plugin_with_compatible_protocol(
     )
 
     with _daemon(tmp_path, monkeypatch) as h:
+        monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
         plugin, plugin_reader = _connect_plugin(
             h.sock_path,
             ide="vscode",
@@ -1000,8 +1000,8 @@ def test_message_sent_event_does_not_complete_strict_ack_drive(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Strict ACK mode waits for the full chat.send ack, not the telemetry event."""
-    monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
     with _daemon(tmp_path, monkeypatch) as h:
+        monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -1118,11 +1118,13 @@ def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
     logs: list[str] = []
 
     _patch_no_running_ides(monkeypatch)
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_ACK", raising=False)
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
     with _DaemonHarness(tmp_path, logs=logs) as h:
+        monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

@@ -55,6 +55,7 @@ from koru.autopilot.cli_direct_drive import (
 from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
 from koru.autopilot.commands.drive import action_drive as _drive_action_impl
 from koru.autopilot.commands.drive import _drive_command_argv
+from koru.autopilot.commands.status import action_status as _status_action_impl
 from koru.autopilot.cli_trace import action_trace as _action_trace
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
@@ -162,39 +163,14 @@ def _action_drive(args: argparse.Namespace) -> int:
 
 
 def _action_status(args: argparse.Namespace) -> int:
-    client = _client(args)
-    if not client.is_running():
-        print(f"koru autopilot: daemon is NOT running on {client.socket_path}")
-        print(f"hint: {_daemon_start_hint(args)}")
-        return 1
-    try:
-        info = client.status()
-    except (OSError, RuntimeError) as exc:
-        print(f"koru autopilot status: {exc}", file=sys.stderr)
-        return 1
-    import json
-
-    print(json.dumps(info, indent=2, sort_keys=True))
-    plugins = info.get("plugins") if isinstance(info, dict) else []
-    if args.explain and isinstance(plugins, list) and not plugins:
-        from koru.ide_adapters.bridge import evaluate_bridge, format_bridge_text
-        from koruide.plugin_installer import resolve_target_ide
-
-        instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
-        ide = normalize_ide_id(instance) if instance else resolve_target_ide("auto")
-        ide = ide or "cursor"
-        socket = getattr(client, "socket_path", None)
-        if socket is not None:
-            bridge = evaluate_bridge(
-                ide=ide,
-                socket_path=socket,
-                project=getattr(args, "project", Path.cwd()),
-                plugins=plugins,
-            )
-            print("\n--- explain ---", file=sys.stderr)
-            print(format_bridge_text(bridge, explain=True), file=sys.stderr)
-            print(f"hint: koru ide doctor --ide {ide} --fix", file=sys.stderr)
-    return 0
+    """Wrapper for status command with dependency injection."""
+    return _status_action_impl(
+        args,
+        client_fn=_client,
+        daemon_start_hint_fn=_daemon_start_hint,
+        normalize_ide_fn=normalize_ide_id,
+        resolve_target_ide_fn=resolve_drive_target,
+    )
 
 
 def _action_shutdown(args: argparse.Namespace) -> int:

@@ -129,6 +129,8 @@ def test_plugin_ack_summary_includes_submit_failure_details() -> None:
 
 
 def test_plugin_version_info_marks_mismatch(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
     monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: "0.1.13")
 
     info = DriveOrchestrator.plugin_version_info(
@@ -224,7 +226,12 @@ def test_plugin_ack_summary_includes_operation_trace() -> None:
             "operation_trace": [
                 {"op": "focus_open", "route": "command", "ok": True, "command": "chat.open"},
                 {"op": "paste", "route": "host-clipboard", "ok": True, "command": "wl-copy+wtype"},
-                {"op": "submit", "route": "host-key", "ok": False, "reason": "input still contains pasted text"},
+                {
+                    "op": "submit",
+                    "route": "host-key",
+                    "ok": False,
+                    "reason": "input still contains pasted text",
+                },
             ],
         },
     )
@@ -308,7 +315,10 @@ def test_drive_outcome_dsl_includes_winners_and_reason() -> None:
     assert line.startswith("#999 act=drive")
     assert "delivered=false" in line
     assert "verification=submit_unverified" in line
-    assert "winners=focus=composer.openComposer|paste=editor.action.clipboardPasteAction|submit=-" in line
+    assert (
+        "winners=focus=composer.openComposer|paste=editor.action.clipboardPasteAction|submit=-"
+        in line
+    )
     assert 'reason="no fresh user bubble after 2.5s"' in line
 
 

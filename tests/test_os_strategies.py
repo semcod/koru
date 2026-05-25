@@ -14,6 +14,7 @@ Higher layers must consume these strategies instead of branching on
 
 from __future__ import annotations
 
+import os
 import unittest
 from typing import Any
 from unittest import mock
@@ -75,9 +76,12 @@ class WaylandLinuxStrategyTests(unittest.TestCase):
         def fake_which(name: str) -> str | None:
             return f"/usr/bin/{name}" if name in {"wtype", "wl-copy"} else None
 
-        with mock.patch(
-            "koruos.strategies.wayland_linux.shutil.which",
-            side_effect=fake_which,
+        with (
+            mock.patch(
+                "koruos.strategies.wayland_linux.shutil.which",
+                side_effect=fake_which,
+            ),
+            mock.patch.dict(os.environ, {"TERM_PROGRAM": ""}, clear=False),
         ):
             caps = WaylandLinuxStrategy().capabilities()
         self.assertEqual(caps.keyboard_tool, "wtype")
