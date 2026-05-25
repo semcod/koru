@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import shlex
 import sys
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -454,6 +456,144 @@ def _quick_action_lines(
     return actions
 
 
+def _record_quick_action_control_commands(
+    *,
+    project: Any | None,
+    waiting_ticket: str,
+    autopilot_status: str,
+    autopilot_ide: str,
+    actions: list[str],
+) -> None:
+    if project is None:
+        return
+    try:
+        from pathlib import Path
+
+        project_path = Path(project)
+    except TypeError:
+        return
+    if not project_path.exists():
+        return
+    corr_ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
+    blocker = _blocked_by_from_autopilot_status(autopilot_status) or "none"
+    corr = f"operator-action-{corr_ticket}-{blocker}"
+    for action in actions:
+        _record_quick_action_control_command(
+            project_path,
+            corr=corr,
+            action=action,
+            autopilot_ide=autopilot_ide,
+        )
+
+
+def _record_quick_action_control_command(
+    project: Any,
+    *,
+    corr: str,
+    action: str,
+    autopilot_ide: str,
+) -> None:
+    label, body = _split_quick_action(action)
+    if label == "reconnect plugin":
+        _record_reconnect_plugin_command(project, corr=corr, autopilot_ide=autopilot_ide)
+        return
+    command = _backtick_command(body)
+    if command:
+        _record_backtick_command(project, corr=corr, label=label, command=command)
+        return
+    if body.startswith("http://") or body.startswith("https://"):
+        _record_url_command(project, corr=corr, label=label, url=body)
+        return
+
+
+def _split_quick_action(action: str) -> tuple[str, str]:
+    text = str(action).strip()
+    if text.startswith("[") and "]" in text:
+        label, body = text[1:].split("]", 1)
+        return label.strip(), body.strip()
+    return "", text
+
+
+def _backtick_command(text: str) -> str:
+    if "`" not in text:
+        return ""
+    try:
+        return text.split("`", 2)[1].strip()
+    except IndexError:
+        return ""
+
+
+def _record_backtick_command(project: Any, *, corr: str, label: str, command: str) -> None:
+    from koru.control_commands import shell_command
+
+    url = _curl_url(command)
+    if url:
+        _record_url_command(project, corr=corr, label=label, url=url)
+    shell_command(
+        project,
+        corr=f"{corr}:{_slug(label or 'shell')}:shell",
+        argv=["bash", "-lc", command],
+        actor="autonomy-next",
+    )
+
+
+def _curl_url(command: str) -> str:
+    parts = shlex.split(command)
+    for part in parts:
+        if part.startswith(("http://", "https://")):
+            return part
+    return ""
+
+
+def _record_url_command(project: Any, *, corr: str, label: str, url: str) -> None:
+    from koru.control_commands import api_command
+
+    parsed = urlparse(url)
+    path = parsed.path or "/"
+    query = {
+        key: values[-1] if len(values) == 1 else values
+        for key, values in parse_qs(parsed.query).items()
+    }
+    if parsed.fragment:
+        query["_fragment"] = parsed.fragment
+    api_command(
+        project,
+        corr=f"{corr}:{_slug(label or path)}:api",
+        method="GET",
+        path=path,
+        query=query,
+        actor="autonomy-next",
+    )
+
+
+def _record_reconnect_plugin_command(project: Any, *, corr: str, autopilot_ide: str) -> None:
+    from koru.control_commands import desktop_gui_command
+
+    desktop_gui_command(
+        project,
+        corr=f"{corr}:reconnect-plugin:desktop",
+        operation="command_palette_sequence",
+        backend="command_palette",
+        target=autopilot_ide or "ide",
+        payload={
+            "commands": [
+                "Developer: Reload Window",
+                "koru: Connect autopilot daemon",
+            ],
+        },
+        actor="operator",
+        replayable=False,
+    )
+
+
+def _slug(value: str) -> str:
+    return "-".join(
+        part
+        for part in "".join(ch.lower() if ch.isalnum() else "-" for ch in value).split("-")
+        if part
+    )[:48]
+
+
 def _current_mission_lines(
     *,
     queue_result: Any,
@@ -528,13 +668,21 @@ def _log_operator_next_steps(
         stop_reason=stop_reason,
     ):
         stdio_info(f"koru autonomous: next {line}", fmt=args.emit_events)
-    for action in _quick_action_lines(
+    actions = _quick_action_lines(
         project=project,
         queue_status=str(getattr(queue_result, "last_status", "") or ""),
         waiting_ticket=waiting_ticket,
         autopilot_status=autopilot_status,
         autopilot_ide=autopilot_ide,
-    ):
+    )
+    _record_quick_action_control_commands(
+        project=project,
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
+        autopilot_ide=autopilot_ide,
+        actions=actions,
+    )
+    for action in actions:
         stdio_info(f"koru autonomous: action {action}", fmt=args.emit_events)
 
 

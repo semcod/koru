@@ -27,6 +27,7 @@ from koru.observability_events import (
     emit_intent,
     emit_next,
 )
+from koru.observability_writer import emit_terminal_observability_path
 from koru.queue import QueueLoopResult
 
 
@@ -254,58 +255,61 @@ def _emit_autopilot_preflight_skip(
     corr = f"auto-{cycle}-preflight"
     ticket = _queue_loop_waiting_ticket_label(queue_result)
     ticket_id = None if ticket == "-" else ticket
-    emit_intent(
-        project,
-        corr=corr,
-        cycle=cycle,
-        ticket=ticket_id,
-        goal="deliver_prompt_to_ide_chat",
-        target=autopilot_ide,
-        ide=autopilot_ide,
-        submit=submit,
-        require_plugin=_plugin_required_for_ide(autopilot_ide),
-        chars=len(drive_prompt or ""),
-    )
-    emit_decision(
-        project,
-        corr=corr,
-        cycle=cycle,
-        ticket=ticket_id,
-        name="preflight_plugin_gate",
-        chosen="skip",
-        because=blocker,
-        ide=autopilot_ide,
-        reason=reason,
-    )
-    emit_failure(
-        project,
-        corr=corr,
-        cycle=cycle,
-        ticket=ticket_id,
-        code=blocker,
-        message=reason,
-        ide=autopilot_ide,
-        verification="plugin_connected",
-    )
-    emit_blocker(
-        project,
-        corr=corr,
-        cycle=cycle,
-        ticket=ticket_id,
-        name=blocker,
-        because=reason,
-        ide=autopilot_ide,
-        status=f"skipped({blocker})",
-    )
-    emit_next(
-        project,
-        corr=corr,
-        cycle=cycle,
-        ticket=ticket_id,
-        action=next_action,
-        ide=autopilot_ide,
-        decision_kind="preflight_plugin_gate",
-    )
+    events = [
+        emit_intent(
+            project,
+            corr=corr,
+            cycle=cycle,
+            ticket=ticket_id,
+            goal="deliver_prompt_to_ide_chat",
+            target=autopilot_ide,
+            ide=autopilot_ide,
+            submit=submit,
+            require_plugin=_plugin_required_for_ide(autopilot_ide),
+            chars=len(drive_prompt or ""),
+        ),
+        emit_decision(
+            project,
+            corr=corr,
+            cycle=cycle,
+            ticket=ticket_id,
+            name="preflight_plugin_gate",
+            chosen="skip",
+            because=blocker,
+            ide=autopilot_ide,
+            reason=reason,
+        ),
+        emit_failure(
+            project,
+            corr=corr,
+            cycle=cycle,
+            ticket=ticket_id,
+            code=blocker,
+            message=reason,
+            ide=autopilot_ide,
+            verification="plugin_connected",
+        ),
+        emit_blocker(
+            project,
+            corr=corr,
+            cycle=cycle,
+            ticket=ticket_id,
+            name=blocker,
+            because=reason,
+            ide=autopilot_ide,
+            status=f"skipped({blocker})",
+        ),
+        emit_next(
+            project,
+            corr=corr,
+            cycle=cycle,
+            ticket=ticket_id,
+            action=next_action,
+            ide=autopilot_ide,
+            decision_kind="preflight_plugin_gate",
+        ),
+    ]
+    emit_terminal_observability_path(events)
 
 
 def _emit_autopilot_observability_outcome(

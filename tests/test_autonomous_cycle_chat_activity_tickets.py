@@ -6,10 +6,15 @@ from unittest import mock
 
 import pytest
 
+import time
+
 from koru.autonomous_cycle_chat_activity_tickets import (
+    _external_message_sent_text,
     _llm_needs_input_operator_payload,
     _llm_needs_input_summary,
     _llm_needs_input_waiting_ticket,
+    _recent_llm_reflection_summary,
+    _upsert_chat_intake_operator_ticket,
     _upsert_llm_needs_input_operator_ticket,
 )
 
@@ -20,6 +25,7 @@ def _make_queue_result(**kwargs: Any) -> mock.Mock:
     qr.last_message = kwargs.get("last_message", "")
     qr.last_ticket_id = kwargs.get("last_ticket_id", "")
     qr.waiting_ticket_id = kwargs.get("waiting_ticket_id", "")
+    qr.waiting = kwargs.get("waiting", [])
     return qr
 
 
@@ -268,6 +274,103 @@ def test_upsert_returns_none_on_create_failure(
 
 
 # ---------------------------------------------------------------------------
+# _recent_llm_reflection_summary
+# ---------------------------------------------------------------------------
+
+def test_recent_llm_reflection_summary_valid() -> None:
+    state = mock.Mock()
+    state.last_llm_reflection_summary = "found issue"
+    state.last_llm_reflection_ts = time.time() - 10
+    assert _recent_llm_reflection_summary(state) == "found issue"
+
+
+def test_recent_llm_reflection_summary_stale() -> None:
+    state = mock.Mock()
+    state.last_llm_reflection_summary = "found issue"
+    state.last_llm_reflection_ts = time.time() - 100000
+    assert _recent_llm_reflection_summary(state) == ""
+
+
+# ---------------------------------------------------------------------------
+# _external_message_sent_text
+# ---------------------------------------------------------------------------
+
+def test_external_message_sent_text_finds_msg() -> None:
+    state = mock.Mock()
+    state.last_driven_prompt = "re-drive"
+    events = [
+        {"type": "message.sent", "text": "bug: hey computer"},
+    ]
+    assert _external_message_sent_text(state=state, recent_events=events) == "bug: hey computer"
+
+
+def test_external_message_sent_text_skips_generated() -> None:
+    state = mock.Mock()
+    state.last_driven_prompt = "re-drive"
+    events = [
+        {"type": "message.sent", "text": "[AUTOPILOT] go"},
+    ]
+    assert _external_message_sent_text(state=state, recent_events=events) == ""
+
+
+# ---------------------------------------------------------------------------
+# _upsert_chat_intake_operator_ticket
+# ---------------------------------------------------------------------------
+
+def test_upsert_chat_intake_returns_none_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "koru.autonomous_cycle_chat_activity_tickets._chat_intake_ticket_enabled",
+        lambda: False,
+    )
+    result = _upsert_chat_intake_operator_ticket(
+        project=mock.Mock(),
+        queue_result=_make_queue_result(),
+        state=mock.Mock(),
+        recent_events=[],
+        cycle_telemetry={},
+        _hp=lambda *_a, **_k: None,
+    )
+    assert result is None
+
+
+def test_upsert_chat_intake_creates_ticket(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    monkeypatch.setattr(
+        "koru.autonomous_cycle_chat_activity_tickets._chat_intake_ticket_enabled",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        "koru.autonomous_cycle_chat_activity_tickets._waiting_ticket_has_chat_intake_label",
+        lambda *_a, **_k: False,
+    )
+    monkeypatch.setattr(
+        "koru.autonomous_cycle_chat_activity_tickets._external_message_sent_text",
+        lambda **_k: "help me",
+    )
+
+    captured = {}
+    def _fake_create(project, prompt, *, queue_name, priority, scaffold):
+        captured.update(prompt=prompt, queue_name=queue_name, priority=priority, scaffold=scaffold)
+        return mock.Mock(ticket_id="STARTER-OP-500", reused=False)
+
+    import koru.autonomous_cycle as cycle_mod
+    monkeypatch.setattr(cycle_mod, "create_nl_task", _fake_create, raising=False)
+
+    telemetry = {}
+    qr = _make_queue_result(last_status="waiting_input")
+    result = _upsert_chat_intake_operator_ticket(
+        project=tmp_path,
+        queue_result=qr,
+        state=mock.Mock(),
+        recent_events=[],
+        cycle_telemetry=telemetry,
+        _hp=lambda *_a, **_k: None,
+    )
+    assert result == "STARTER-OP-500"
+    assert telemetry["autopilot_chat_intake_ticket"] == "STARTER-OP-500"
+    assert "help me" in captured["prompt"]
+
+
+# ---------------------------------------------------------------------------
 # Backward-compat re-exports
 # ---------------------------------------------------------------------------
 
@@ -277,9 +380,13 @@ def test_backward_compat_reexports_from_main_module() -> None:
         _llm_needs_input_summary as legacy_summary,
         _llm_needs_input_waiting_ticket as legacy_waiting,
         _upsert_llm_needs_input_operator_ticket as legacy_upsert,
+        _recent_llm_reflection_summary as legacy_reflection,
+        _upsert_chat_intake_operator_ticket as legacy_intake,
     )
 
     assert legacy_payload is _llm_needs_input_operator_payload
     assert legacy_summary is _llm_needs_input_summary
     assert legacy_waiting is _llm_needs_input_waiting_ticket
     assert legacy_upsert is _upsert_llm_needs_input_operator_ticket
+    assert legacy_reflection is _recent_llm_reflection_summary
+    assert legacy_intake is _upsert_chat_intake_operator_ticket

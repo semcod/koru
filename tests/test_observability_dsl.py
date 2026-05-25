@@ -109,7 +109,9 @@ def test_observability_writer_terminal_compact_can_be_disabled(
         write_dsl_log=False,
     )
 
-    assert capsys.readouterr().out == ""
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
 
 
 def test_stored_event_to_dsl_uses_store_timestamp(tmp_path) -> None:
@@ -416,7 +418,7 @@ def test_autonomy_failed_drive_emits_blocker_and_next(tmp_path) -> None:
     assert rows[1]["payload"]["data"]["action"] == "retry_next_cycle"
 
 
-def test_plugin_gate_skip_emits_semantic_observability_trace(tmp_path) -> None:
+def test_plugin_gate_skip_emits_semantic_observability_trace(tmp_path, capsys) -> None:
     class _Client:
         def status(self) -> dict[str, object]:
             return {"plugins": []}
@@ -462,6 +464,10 @@ def test_plugin_gate_skip_emits_semantic_observability_trace(tmp_path) -> None:
     assert rows[0]["payload"]["ticket"] == "STARTER-277"
     assert rows[2]["payload"]["data"]["code"] == "plugin_not_connected"
     assert rows[4]["payload"]["data"]["action"] == "reload_reconnect_plugin"
+    terminal = capsys.readouterr().err
+    assert "OBS-PATH:" in terminal
+    assert "intent(deliver_prompt_to_ide_chat) -> decision(skip)" in terminal
+    assert "failure(plugin_not_connected)" in terminal
 
 
 def test_control_commands_cover_api_shell_plugin_and_desktop_surfaces(tmp_path) -> None:

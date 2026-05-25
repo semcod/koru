@@ -3844,7 +3844,28 @@ def test_run_cycle_skips_drive_when_required_plugin_missing(
 
     assert autopilot_status == "skipped(plugin_not_connected)"
     assert drive_calls == []
-    assert "plugin_not_connected" in capsys.readouterr().out
+    captured = capsys.readouterr()
+    assert "plugin_not_connected" in captured.out
+    assert "koru ▸ OBS:" in captured.err
+
+    from koru.observability_writer import observability_event_store_path
+
+    rows = [
+        json.loads(raw)
+        for raw in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
+    ]
+    assert [row["event_type"] for row in rows] == [
+        "autopilot.intent",
+        "autopilot.route.decision",
+        "autopilot.drive.failed",
+        "autonomy.blocker",
+        "autonomy.next",
+    ]
+    assert rows[0]["payload"]["data"]["goal"] == "deliver_prompt_to_ide_chat"
+    assert rows[1]["payload"]["data"]["because"] == "plugin_not_connected"
+    assert rows[2]["payload"]["data"]["code"] == "plugin_not_connected"
+    assert rows[3]["payload"]["data"]["name"] == "plugin_not_connected"
+    assert rows[4]["payload"]["data"]["action"] == "reload_reconnect_plugin"
 
 
 def test_run_cycle_visible_typing_does_not_require_plugin(

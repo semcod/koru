@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from koru.cqrs.event_store import JsonlEventStore, StoredEvent, project_event_store_path
-from koru.observability_dsl import OBSERVABILITY_CONTEXT, KoruObsEvent, stored_event_to_compact_line
+from koru.observability_dsl import (
+    OBSERVABILITY_CONTEXT,
+    KoruObsEvent,
+    render_observability_path,
+    stored_event_to_compact_line,
+)
 
 DEFAULT_OBSERVABILITY_EVENT_FILE = "events/observability.jsonl"
 DEFAULT_OBSERVABILITY_DSL_FILE = "events/observability.dsl.log"
@@ -32,6 +38,16 @@ def observability_terminal_enabled() -> bool:
 
 def _emit_terminal_observability_line(stored: StoredEvent) -> None:
     print(stored_event_to_compact_line(stored), file=sys.stderr, flush=True)
+
+
+def emit_terminal_observability_path(events: list[KoruObsEvent]) -> None:
+    """Emit a one-line terminal summary for an already-persisted trace slice."""
+    if not observability_terminal_enabled():
+        return
+    path = render_observability_path(events)
+    if path.startswith("OBS "):
+        path = path[len("OBS "):]
+    print(f"[{datetime.now().astimezone():%H:%M:%S}] koru ▸ OBS-PATH: {path}", file=sys.stderr)
 
 
 def write_observability_event(
@@ -93,6 +109,7 @@ def try_write_observability_event(
 __all__ = [
     "DEFAULT_OBSERVABILITY_DSL_FILE",
     "DEFAULT_OBSERVABILITY_EVENT_FILE",
+    "emit_terminal_observability_path",
     "observability_dsl_log_path",
     "observability_event_store_path",
     "observability_terminal_enabled",

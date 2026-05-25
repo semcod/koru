@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
 from koru import autonomous_loop_runner
+from koru.observability_writer import observability_event_store_path
 
 
 def test_handle_cycle_exit_conditions_stops_on_waiting_input() -> None:
@@ -350,3 +352,37 @@ def test_current_mission_lines_treat_plugin_version_mismatch_as_plugin_blocker()
         "koru autonomous: current mission next=reload/reconnect plugin, "
         "then rerun queue for the same ticket",
     ]
+
+
+def test_operator_quick_actions_emit_replayable_control_commands(tmp_path) -> None:
+    args = SimpleNamespace(emit_events="human", max_iterations=50)
+    logs: list[str] = []
+
+    autonomous_loop_runner._log_operator_next_steps(
+        args=args,
+        project=tmp_path,
+        queue_result=SimpleNamespace(last_status="waiting_input"),
+        waiting_ticket="STARTER-277",
+        autopilot_status="skipped(plugin_not_connected)",
+        effective_sleep=240.0,
+        loop_state=SimpleNamespace(stagnation_streak=3),
+        stop_reason=None,
+        stdio_info=lambda msg, **_kwargs: logs.append(msg),
+        autopilot_ide="vscodium",
+    )
+
+    rows = [
+        json.loads(raw)
+        for raw in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
+    ]
+    commands = [row["payload"]["data"] for row in rows if row["event_type"] == "control.command"]
+    surfaces = [command["surface"] for command in commands]
+    operations = [command["operation"] for command in commands]
+    assert "api" in surfaces
+    assert "shell_cli" in surfaces
+    assert "desktop_gui" in surfaces
+    assert "GET /api/autonomy/trace" in operations
+    assert "GET /api/interfaces" in operations
+    assert "bash" in operations
+    assert "command_palette_sequence" in operations
+    assert any("planfile ticket input STARTER-277" in str(command["args"]) for command in commands)
