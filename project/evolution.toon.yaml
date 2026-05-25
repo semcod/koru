@@ -1,30 +1,34 @@
-# code2llm/evolution | 4565 func | 378f | 2026-05-25
+# code2llm/evolution | 4640 func | 395f | 2026-05-25
 # generated in 0.02s
 
-NEXT[3] (ranked by impact):
-  [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2666L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37324
+NEXT[4] (ranked by impact):
+  [1] !! SPLIT           plugins/koru-autopilot-cursor/src/extension.ts
+      WHY: 2868L, 2 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 43020
 
-  [2] !! SPLIT           plugins/koru-autopilot-cursor/src/extension.ts
-      WHY: 2662L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37268
+  [2] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
+      WHY: 2709L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 37926
 
   [3] !! SPLIT           plugins/koru-autopilot-vscodium/src/extension.ts
-      WHY: 2657L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37198
+      WHY: 2705L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 37870
+
+  [4] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=15  fan=20
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 300
 
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 201 import paths
-  ⚠ Splitting plugins/koru-autopilot-cursor/src/extension.ts may break 199 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscodium/src/extension.ts may break 200 import paths
+  ⚠ Splitting plugins/koru-autopilot-cursor/src/extension.ts may break 206 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 204 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscodium/src/extension.ts may break 204 import paths
 
 METRICS-TARGET:
   CC̄:          3.6 → ≤2.5
-  max-CC:      18 → ≤9
-  god-modules: 13 → 0
-  high-CC(≥15): 1 → ≤0
+  max-CC:      32 → ≤16
+  god-modules: 11 → 0
+  high-CC(≥15): 4 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -52,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.5 → now CC̄=3.6
+  prev CC̄=3.6 → now CC̄=3.6

@@ -11,11 +11,29 @@ import pytest
 
 from koru.autopilot import cli_command, doctor_cli, install_plugin_cli, systemd_cli
 from koru.autopilot.cli_command import autopilot_main
+from koru.autopilot.cli_parser import build_autopilot_parser
 
 
 def test_autopilot_parser_requires_action() -> None:
     with pytest.raises(SystemExit):
         autopilot_main([])
+
+
+def test_autopilot_parser_module_preserves_drive_and_trace_options() -> None:
+    parser = build_autopilot_parser()
+
+    drive_args = parser.parse_args(
+        ["drive", "--prompt", "hello", "--ide", "vscode", "--require-plugin"]
+    )
+    trace_args = parser.parse_args(["trace", "--format", "dsl", "--limit", "3"])
+
+    assert drive_args.action == "drive"
+    assert drive_args.prompt == "hello"
+    assert drive_args.ide == "vscode"
+    assert drive_args.require_plugin is True
+    assert trace_args.action == "trace"
+    assert trace_args.format == "dsl"
+    assert trace_args.limit == 3
 
 
 def test_drive_without_daemon_errors(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
