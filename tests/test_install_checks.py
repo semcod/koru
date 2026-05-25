@@ -203,5 +203,21 @@ def test_check_plugin_not_connected_issue_when_daemon_running_without_plugin() -
     assert [i.code for i in issues] == ["plugin_not_connected"]
 
 
+def test_check_plugin_not_connected_issue_mentions_reload_after_stale_rejection() -> None:
+    issues = check_plugin_not_connected_issue(
+        {
+            "running": True,
+            "rejected_plugins": [
+                {"ide": "vscode", "version": "0.1.74", "expected_version": "0.1.75"},
+            ],
+        },
+        {"connected": False},
+        "vscode",
+    )
+
+    assert [i.code for i in issues] == ["plugin_not_connected"]
+    assert "Developer: Reload Window" in (issues[0].fix or "")
+
+
 def test_check_plugin_not_connected_issue_silent_when_daemon_down() -> None:
     assert check_plugin_not_connected_issue({"running": False}, {"connected": False}, "vscode") == []

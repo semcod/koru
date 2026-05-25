@@ -4,6 +4,48 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.79] — 2026-05-25
+
+### Fixed
+- **"Wkleja ale nie wysyła" regression — invisible-composer trap.**
+  Cycle #760 surfaced the root cause through the new Koru Drive DSL
+  trace: `#004 act=focus_open route=input-only:composer.focusComposer
+  ok=true` followed by `#009 act=submit_verify route=cursor-bubble-db
+  ok=false reason="no new user bubble in cursorDiskKV after submit"`
+  and `#019 act=submit route=cursor-host-fallback-refused ok=false`.
+  The focus-only preflight (`composer.focusComposer`) returned `true`
+  even when the chat panel was *hidden* — Cursor focused the logical
+  composer state without making it visible, paste landed in the
+  invisible composer, the registered submit commands silently no-oped
+  (no fresh `cursorDiskKV` bubble), and the host-key fallback refused
+  because Cursor didn't have OS keyboard focus.
+
+  Two-part fix:
+
+  1. **`_shouldPreflightFocusOnly` now skips the input-only
+     preflight whenever the ladder contains a *non-toggling* open
+     command.** Cursor's ladder always has `composer.openComposer`
+     (non-toggle), so the plugin now always goes through it before
+     falling back to focus-only routes. A non-toggling open is
+     idempotent — it opens the panel when closed, focuses it when
+     already open, but never hides it — eliminating the invisible
+     panel state.
+
+  2. **`sendSubmitFailureAck` now discards toxic `focusOpen` cache
+     entries.** When the submit verification reports
+     `submit_unverified` and the cached `focusOpen` winner was an
+     input-only / focus-only command (`composer.focusComposer`,
+     `cursor.composer.focus`, `input-only:*`), the plugin invalidates
+     it via `globalState.update("probeCache.v3", { ...cache,
+     focusOpen: undefined })` so the next drive re-probes through
+     `composer.openComposer` instead of replaying the trap. The
+     discard is also emitted as a DSL step so the daemon log shows
+     `[DSL] act=focus_open route=cache-discard ok=false reason="..."`.
+
+  Note: `mergeProbeCache` treats `wins.focusOpen === undefined` as
+  "keep previous", so the discard mutates `globalState` directly
+  rather than going through `saveProbeCache`.
+
 ## [0.1.78] — 2026-05-25
 
 ### Added

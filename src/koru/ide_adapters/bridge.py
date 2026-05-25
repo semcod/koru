@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from koru.autopilot.client import AutopilotClient
 from koru.ide_adapters.base import BridgeStatus, Hypothesis
@@ -13,6 +14,45 @@ from koruide.ide import detect_running_ides, normalize_ide_id
 
 def _ide_is_running(ide: str) -> bool:
     return any(getattr(item, "id", None) == ide for item in detect_running_ides())
+
+
+def _stale_rejected_plugin_hypothesis(
+    *,
+    ide: str,
+    daemon_status: dict[str, Any],
+    expected_socket: str,
+) -> Hypothesis | None:
+    rejected = daemon_status.get("rejected_plugins")
+    if not isinstance(rejected, list):
+        return None
+    stale_versions = sorted(
+        {
+            str(row.get("version"))
+            for row in rejected
+            if isinstance(row, dict)
+            and normalize_ide_id(str(row.get("ide") or "")) == ide
+            and row.get("version")
+            and row.get("expected_version")
+            and row.get("version") != row.get("expected_version")
+        }
+    )
+    if not stale_versions:
+        return None
+    return Hypothesis(
+        id=f"{ide}.plugin.live_host_stale",
+        confidence=0.9,
+        evidence=(
+            f"Daemon odrzucił stale wersje pluginu {ide}: "
+            f"{', '.join(stale_versions)}"
+        ),
+        remediation=shared.Remediation(
+            kind="manual",
+            summary=(
+                "Developer: Reload Window, potem koru: Connect autopilot daemon "
+                f"(socket {expected_socket})"
+            ),
+        ),
+    )
 
 
 def evaluate_bridge(
@@ -27,10 +67,11 @@ def evaluate_bridge(
     sock = str(Path(socket_path).resolve())
     client = AutopilotClient(socket_path=Path(sock), timeout=1.0)
     daemon_running = client.is_running()
+    daemon_status: dict[str, Any] = {}
     if plugins is None and daemon_running:
         try:
-            status = client.status()
-            plugins = status.get("plugins") if isinstance(status, dict) else []
+            daemon_status = client.status()
+            plugins = daemon_status.get("plugins") if isinstance(daemon_status, dict) else []
         except (OSError, RuntimeError):
             plugins = []
     plugin_list = plugins if isinstance(plugins, list) else []
@@ -67,6 +108,14 @@ def evaluate_bridge(
         expected_socket=sock,
         plugins_connected=plugins_connected,
     )
+    stale_hypothesis = _stale_rejected_plugin_hypothesis(
+        ide=ide,
+        daemon_status=daemon_status,
+        expected_socket=sock,
+    )
+    if stale_hypothesis is not None and not plugins_connected:
+        status.hypotheses.append(stale_hypothesis)
+        status.hypotheses.sort(key=lambda h: h.confidence, reverse=True)
     return status
 
 

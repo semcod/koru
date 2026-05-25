@@ -92,6 +92,39 @@ def _plugin_rows(status: Mapping[str, Any]) -> tuple[list[Any] | None, str | Non
     return plugins, None
 
 
+def _latest_rejected_plugin(status: Mapping[str, Any], wanted: str) -> Mapping[str, Any] | None:
+    rejected = status.get("rejected_plugins")
+    if not isinstance(rejected, list):
+        return None
+    for row in reversed(rejected):
+        if not isinstance(row, Mapping):
+            continue
+        plugin_ide = str(row.get("ide") or "").strip().lower()
+        if wanted not in {"", "auto"} and plugin_ide != wanted:
+            continue
+        return row
+    return None
+
+
+def _rejected_plugin_reason(row: Mapping[str, Any]) -> str:
+    plugin_ide = str(row.get("ide") or "").strip().lower()
+    version = row.get("version")
+    expected = row.get("expected_version")
+    message = str(row.get("message") or "").strip()
+    if "version mismatch" in message.lower():
+        return f"{_plugin_row_label(plugin_ide, version)} blocked: {message}"
+    if version and expected and version != expected:
+        return (
+            f"{_plugin_row_label(plugin_ide, version)} blocked: connected autopilot "
+            f"plugin version mismatch: connected={version} expected={expected}; "
+            "reload the IDE window after installing the current VSIX, then run "
+            "`koru: Connect autopilot daemon`."
+        )
+    if message:
+        return f"{_plugin_row_label(plugin_ide, version)} rejected: {message}"
+    return f"{_plugin_row_label(plugin_ide, version)} rejected"
+
+
 def _wanted_plugin_ide(ide: str) -> str:
     return (ide or "auto").strip().lower()
 
@@ -147,12 +180,16 @@ def _matching_plugin_decision(plugin: Mapping[str, Any]) -> tuple[bool, str]:
 
 
 def plugin_status_decision(status: Mapping[str, Any], ide: str) -> tuple[bool, str]:
+    wanted = _wanted_plugin_ide(ide)
     plugins, invalid_reason = _plugin_rows(status)
     if invalid_reason is not None:
+        if plugins == []:
+            rejected = _latest_rejected_plugin(status, wanted)
+            if rejected is not None:
+                return False, _rejected_plugin_reason(rejected)
         return False, invalid_reason
     if plugins is None:
         return False, "daemon status has no plugin list"
-    wanted = _wanted_plugin_ide(ide)
     ignored: list[str] = []
     for plugin in plugins:
         ignored_reason = _plugin_row_ignored_reason(plugin, wanted)

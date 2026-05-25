@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from koru.autonomous_operator import _plugin_blocker_line
-from koru.autonomous_plugin import plugin_skip_code
+from koru.autonomous_plugin import plugin_skip_code, plugin_status_decision
 
 
 def test_plugin_skip_code_classifies_version_mismatch() -> None:
@@ -27,3 +27,28 @@ def test_plugin_blocker_line_includes_recovery_action() -> None:
     assert "blocked_by=plugin_version_mismatch" in line
     assert "ide=vscodium" in line
     assert "reload IDE window" in line
+
+
+def test_plugin_status_decision_uses_stale_rejection_when_plugin_list_empty() -> None:
+    ready, reason = plugin_status_decision(
+        {
+            "plugins": [],
+            "rejected_plugins": [
+                {
+                    "ide": "vscodium",
+                    "version": "0.1.77",
+                    "expected_version": "0.1.78",
+                    "message": (
+                        "connected autopilot plugin version mismatch: "
+                        "connected=0.1.77 expected=0.1.78"
+                    ),
+                },
+            ],
+        },
+        "vscodium",
+    )
+
+    assert ready is False
+    assert "plugin version mismatch" in reason
+    assert "connected=0.1.77 expected=0.1.78" in reason
+    assert plugin_skip_code(reason) == "plugin_version_mismatch"

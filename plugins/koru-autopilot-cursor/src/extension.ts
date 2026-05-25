@@ -1513,15 +1513,45 @@ class AutopilotBridge {
   /**
    * Should we try focus-only commands *before* any open command?
    *
-   * Returns ``true`` when the open-command ladder contains at least
-   * one toggle (currently: ``composer.openAsPane`` for Cursor).
-   * Running a toggle on an already-visible panel hides it, and the
-   * subsequent paste+submit pipeline silently no-ops. The preflight
-   * short-circuits that by checking whether a focus-only command can
-   * land focus on the chat input without touching the panel chrome.
+   * Returns ``true`` only when *every* open-command in the ladder is a
+   * toggle. Running a toggle on an already-visible panel hides it, so
+   * when the ladder offers a non-toggling open command (e.g.
+   * ``composer.openComposer`` for Cursor) we always prefer it: a
+   * non-toggle open is **idempotent** — it opens the panel when
+   * closed and focuses it when already open, but never hides it.
+   *
+   * Why this matters (root cause of the May 2026 regression "wpisał,
+   * zamknął i otworzył prawy tab z chat" / "wkleja ale nie wysyła"):
+   * the focus-only preflight calls ``composer.focusComposer`` which
+   * focuses Cursor's **logical** composer state without forcing the
+   * panel to become visible. ``vscode.window.activeTextEditor`` then
+   * returns ``undefined`` (focus is on a webview, not a text editor)
+   * and ``chatFocusHeuristic`` returns ``true`` for the
+   * ``hasEditor:false`` snapshot — so the plugin records a "focus_open
+   * via input-only" win even though the chat panel is invisible. The
+   * subsequent ``paste`` lands in the invisible composer; the
+   * registered submit commands no-op (no new ``cursorDiskKV`` bubble);
+   * the host-key fallback refuses because Cursor doesn't have OS
+   * keyboard focus. Result: prompt appears stuck in the textarea
+   * (visible after Reload Window) and operator sees ``ok=False``.
+   *
+   * The DSL trace that surfaced this (cycle #760):
+   *   #004 act=focus_open route=input-only:composer.focusComposer ok=true
+   *   #009 act=submit_verify route=cursor-bubble-db ok=false
+   *        reason="no new user bubble in cursorDiskKV after submit"
+   *   #019 act=submit route=cursor-host-fallback-refused ok=false
+   *
+   * Always preferring the non-toggling open command eliminates this
+   * class of regression on Cursor.
    */
   private _shouldPreflightFocusOnly(context: FocusChatContext): boolean {
     if (context.commands.length === 0) {
+      return false;
+    }
+    const hasNonToggleOpen = context.commands.some(
+      (cmd) => !isTogglingFocusOpenCommand(cmd),
+    );
+    if (hasNonToggleOpen) {
       return false;
     }
     return context.commands.some((cmd) => isTogglingFocusOpenCommand(cmd));
@@ -2212,6 +2242,18 @@ class AutopilotBridge {
     attemptedSubmit?: string,
     submitDetails?: SubmitOutcome
   ): void {
+    // Cache hygiene: when verify says "no new user bubble in
+    // cursorDiskKV after submit" while ``winning_focus_open`` was a
+    // focus-only command (e.g. ``input-only:composer.focusComposer``),
+    // the cached focus winner is *toxic* — it caused paste to land in
+    // a hidden composer where submit silently no-ops. Clearing it now
+    // forces the next drive to re-probe through ``composer.openComposer``
+    // (the non-toggling open command) instead of replaying the same
+    // invisible-panel trap. See the cycle #760 DSL trace and the
+    // long-form comment on ``_shouldPreflightFocusOnly``.
+    this.discardToxicFocusOpenCache(focus.command).catch((err) => {
+      debugLog("FOCUS_OPEN_CACHE_DISCARD_FAILED", { err: String(err) });
+    });
     this.send({
       type: "ack",
       id: env.id,
@@ -2230,6 +2272,42 @@ class AutopilotBridge {
       message:
         "chat opened and text injected, but submit could not be verified; "
         + "manual Send may be required. Input was cleared before paste to avoid prompt concatenation.",
+    });
+  }
+
+  /**
+   * After a confirmed ``submit_unverified`` drive, discard the cached
+   * ``focusOpen`` winner when it was an input-only / focus-only
+   * command. Re-probing on the next drive lets the ladder pick a
+   * verifiable open command (``composer.openComposer`` for Cursor)
+   * instead of replaying the invisible-panel trap.
+   *
+   * NOTE: ``mergeProbeCache`` treats ``undefined`` as "keep previous",
+   * so we must mutate ``globalState`` directly to clear the field.
+   */
+  private async discardToxicFocusOpenCache(focusCommand: string | undefined): Promise<void> {
+    if (!this.probeLadderEnabled()) return;
+    const cache = this.getProbeCache();
+    const cached = cache?.focusOpen;
+    if (!cached) return;
+    const focusToken = (focusCommand || "").toLowerCase();
+    const isInputOnlyFocus =
+      focusToken.includes("focuscomposer") ||
+      focusToken.includes("focuscascade") ||
+      focusToken.startsWith("input-only");
+    if (!isInputOnlyFocus) return;
+    const cleared: ProbeCacheEntry = { ...cache, focusOpen: undefined };
+    await this.context.globalState.update("probeCache.v3", cleared);
+    debugLog("PROBE_CACHE_FOCUS_OPEN_DISCARDED", { previous: cached });
+    this.traceOperation({
+      op: "focus_open",
+      route: "cache-discard",
+      ok: false,
+      command: cached,
+      reason:
+        "cached focus_open winner was an input-only/focus-only command "
+        + "but submit could not be verified — discarding so the next "
+        + "drive re-probes via the non-toggling open command",
     });
   }
 

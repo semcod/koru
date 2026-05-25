@@ -78,6 +78,59 @@ def test_ide_doctor_json_reports_plugin_not_connected(
     assert payload["hypotheses"][0]["id"] == "vscode.plugin.not_connected"
 
 
+def test_ide_doctor_json_prioritizes_stale_rejected_plugin(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    class FakeAutopilotClient:
+        def __init__(self, *, socket_path: Path, timeout: float) -> None:
+            self.socket_path = socket_path
+            self.timeout = timeout
+
+        def is_running(self) -> bool:
+            return True
+
+        def status(self) -> dict[str, object]:
+            return {
+                "plugins": [],
+                "rejected_plugins": [
+                    {
+                        "ide": "vscode",
+                        "version": "0.1.74",
+                        "expected_version": "0.1.75",
+                    },
+                ],
+            }
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setattr(bridge_mod, "AutopilotClient", FakeAutopilotClient)
+    _write_extensions_json(
+        tmp_path / ".vscode" / "extensions" / "extensions.json",
+        [shared.EXTENSION_ID],
+    )
+
+    rc = ide_main(
+        [
+            "doctor",
+            "--ide",
+            "vscode",
+            "--project",
+            str(tmp_path),
+            "--socket",
+            str(tmp_path / "koru-autopilot-vscode.sock"),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert rc == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["hypotheses"][0]["id"] == "vscode.plugin.live_host_stale"
+    assert "Developer: Reload Window" in payload["hypotheses"][0]["remediation"]["summary"]
+
+
 def test_ide_doctor_defaults_socket_to_selected_lane(
     tmp_path: Path,
     monkeypatch,
