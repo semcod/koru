@@ -1,11 +1,11 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.36s
-# nodes: 404 | edges: 500 | modules: 92
-# CC̄=3.8
+# generated in 0.33s
+# nodes: 407 | edges: 500 | modules: 91
+# CC̄=3.7
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:545  out:0  total:545
+    CC=0  in:550  out:0  total:550
   src.koruapi.dashboard_routes._build_dashboard_handler_impl
     CC=1  in:1  out:267  total:268
   src.koru.wizard.gui.static.wizard.list
@@ -32,29 +32,29 @@ HUBS[20]:
     CC=4  in:15  out:15  total:30
   src.koruvision.providers.obs_websocket._with_obs_connection
     CC=9  in:2  out:26  total:28
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  examples.remote_orchestration_demo.run_multi_node_orchestration
-    CC=9  in:0  out:24  total:24
-  src.koruapi.dashboard_config._dashboard_config_request_kwargs
-    CC=10  in:1  out:23  total:24
   src.koru.queue.ticket.planfile_command
     CC=5  in:17  out:7  total:24
+  src.koruapi.dashboard_tickets.create_ticket_from_dashboard
+    CC=8  in:2  out:22  total:24
+  examples.remote_orchestration_demo.run_multi_node_orchestration
+    CC=9  in:0  out:24  total:24
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
     run_multi_node_orchestration  CC=9  out:24
+  plugins.koru-autopilot-cursor.src.extension  [2 funcs]
+    connect  CC=2  out:7
+    next  CC=2  out:1
   plugins.koru-autopilot-vscode.src.ack-payload  [1 funcs]
     bytes  CC=2  out:0
   plugins.koru-autopilot-vscode.src.cursor-bubble-adapter  [1 funcs]
     type  CC=1  out:2
-  plugins.koru-autopilot-vscode.src.extension  [2 funcs]
-    connect  CC=2  out:7
-    next  CC=2  out:1
   scripts.koru-soak-monitor  [1 funcs]
     print  CC=0  out:0
   services.healing-webhook.app  [23 funcs]
@@ -68,8 +68,11 @@ MODULES:
     _resolve_affected_files  CC=11  out:24
     _resolve_strategy  CC=3  out:1
     _run_docker  CC=1  out:3
-  services.healing-webhook.ticket_builder  [2 funcs]
+  services.healing-webhook.ticket_builder  [5 funcs]
+    _default_acceptance  CC=2  out:1
+    _format_paths  CC=2  out:1
     _infer_paths  CC=7  out:1
+    _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
   src.koru.activity_log  [1 funcs]
     activity  CC=6  out:13
@@ -370,11 +373,19 @@ MODULES:
     __repr__  CC=1  out:1
   src.koruos.strategies.darwin  [1 funcs]
     focus_window  CC=4  out:5
-  src.koruos.strategies.x11_linux  [4 funcs]
+  src.koruos.strategies.wayland_linux  [8 funcs]
+    _focus_via_wmctrl  CC=4  out:3
+    _inject_via_wtype  CC=9  out:7
+    _inject_via_ydotool  CC=7  out:10
+    inject_keys  CC=9  out:8
+    _gnome_compositor  CC=4  out:3
+    _prefer_ydotool  CC=3  out:4
+    _run  CC=1  out:1
+    _scan_for_key  CC=5  out:1
+  src.koruos.strategies.x11_linux  [3 funcs]
     _focus_via_wmctrl  CC=4  out:3
     _focus_via_xdotool  CC=11  out:10
     _inject_via_xdotool  CC=3  out:4
-    _run  CC=1  out:1
   src.koruvision.agent  [5 funcs]
     _capture_cycle  CC=2  out:2
     capture_all_once  CC=1  out:1
@@ -439,11 +450,10 @@ MODULES:
     capture_one_with_providers  CC=6  out:13
     list_provider_status  CC=2  out:3
     monitors_via_xrandr  CC=6  out:10
-  src.koruvision.providers.env  [4 funcs]
+  src.koruvision.providers.env  [3 funcs]
     capture_provider_pref  CC=4  out:6
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
-    tool_available  CC=1  out:2
   src.koruvision.providers.obs_websocket  [13 funcs]
     availability  CC=3  out:8
     capture_all  CC=1  out:3
@@ -455,19 +465,11 @@ MODULES:
     _with_obs_connection  CC=9  out:26
     obs_password  CC=1  out:2
     obs_screenshot_width  CC=2  out:4
-  src.koruvision.providers.portal_screencast  [2 funcs]
-    availability  CC=7  out:10
-    list_monitors  CC=1  out:1
-  src.koruvision.providers.portal_screenshot  [3 funcs]
-    availability  CC=2  out:3
-    capture_one  CC=2  out:4
-    list_monitors  CC=1  out:1
   src.koruvision.providers.registry  [2 funcs]
     all_providers  CC=1  out:1
     provider_by_name  CC=1  out:3
-  src.koruvision.providers.screencast_session  [3 funcs]
+  src.koruvision.providers.screencast_session  [2 funcs]
     clear_session_file  CC=3  out:3
-    resolve_screencast_session_file  CC=3  out:12
     session_file_for_project  CC=1  out:1
   src.koruvision.scaling  [3 funcs]
     downscale_rgb_nearest  CC=6  out:5
@@ -480,7 +482,7 @@ EDGES:
   services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._run_vallm_check
   services.healing-webhook.app._execute_planfile_create → services.healing-webhook.app._extract_ticket_id_from_stdout
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._enrich_ticket_with_vallm
-  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.next
+  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.next
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._build_planfile_command
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._execute_planfile_create
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload
@@ -504,6 +506,9 @@ EDGES:
   services.healing-webhook.app.get_history → src.koru.wizard.gui.static.wizard.list
   services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
   services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.logfile
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.runtime_dir
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.pidfile
@@ -522,6 +527,3 @@ EDGES:
   src.koruobserve.lifecycle.observe_up → src.koruobserve.lifecycle._spawn
   src.koruobserve.lifecycle.observe_down → src.koruobserve.lifecycle._stop_orphan_observe_processes
   src.koruobserve.lifecycle.observe_down → src.koruobserve.lifecycle._stop_pid
-  src.koruobserve.lifecycle.observe_down → src.koruobserve.paths.state_file
-  src.koruobserve.lifecycle.observe_status → src.koruobserve.lifecycle._read_pid
-  src.koruobserve.lifecycle.observe_status → src.koruobserve.lifecycle._is_alive

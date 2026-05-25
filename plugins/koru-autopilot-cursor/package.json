@@ -1,0 +1,180 @@
+{
+  "name": "koru-autopilot-cursor",
+  "displayName": "koru autopilot (Cursor)",
+  "description": "Bridge between Cursor and the koru autopilot daemon. Standalone VSIX dedicated to Cursor IDE; sibling VSIX packages cover VS Code, VSCodium, Windsurf and Antigravity so a regression in this plugin cannot leak into another IDE's runtime.",
+  "version": "0.1.75",
+  "publisher": "semcod",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/semcod/koru.git",
+    "directory": "plugins/koru-autopilot-cursor"
+  },
+  "bugs": {
+    "url": "https://github.com/semcod/koru/issues"
+  },
+  "homepage": "https://github.com/semcod/koru/tree/main/plugins/koru-autopilot-cursor#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "koru",
+    "autopilot",
+    "cursor",
+    "automation"
+  ],
+  "activationEvents": [
+    "*",
+    "onCommand:koruAutopilot.connect",
+    "onCommand:koruAutopilot.sendChat",
+    "onCommand:koruAutopilot.calibrateProbe",
+    "onCommand:koruAutopilot.calibrate",
+    "onCommand:koruAutopilot.calibrateCompact",
+    "onCommand:koruAutopilot.captureSubmitClick",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "koruAutopilot.connect",
+        "title": "koru: Connect autopilot daemon"
+      },
+      {
+        "command": "koruAutopilot.sendChat",
+        "title": "koru: Send text to active chat"
+      },
+      {
+        "command": "koruAutopilot.calibrateProbe",
+        "title": "koru: Calibrate chat probe ladder"
+      },
+      {
+        "command": "koruAutopilot.calibrate",
+        "title": "koru: Calibrate"
+      },
+      {
+        "command": "koruAutopilot.calibrateCompact",
+        "title": "koru:calibrate"
+      },
+      {
+        "command": "koruAutopilot.captureSubmitClick",
+        "title": "koru: Capture submit button position"
+      }
+    ],
+    "configuration": {
+      "title": "koru autopilot (Cursor)",
+      "properties": {
+        "koruAutopilot.socketPath": {
+          "type": "string",
+          "default": "",
+          "description": "Unix socket override. Empty = KORU_AUTOPILOT_SOCKET, else KORU_AUTOPILOT_INSTANCE / XDG_RUNTIME_DIR (matches koru Python)."
+        },
+        "koruAutopilot.chatOpenCommands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Commands to open Cursor Composer/chat, tried in order. Empty = plugin defaults (composer.openComposer first, etc)."
+        },
+        "koruAutopilot.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Connect to the daemon automatically when Cursor starts."
+        },
+        "koruAutopilot.probeLadder": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try chat commands in order with focus/paste verification; cache winning command IDs."
+        },
+        "koruAutopilot.probeFocusDelayMs": {
+          "type": "number",
+          "default": 220,
+          "minimum": 50,
+          "maximum": 2000,
+          "description": "Milliseconds to wait after a focus-open command before verifying UI state."
+        },
+        "koruAutopilot.probePasteDelayMs": {
+          "type": "number",
+          "default": 120,
+          "minimum": 50,
+          "maximum": 2000,
+          "description": "Milliseconds to wait after paste before checking the text did not land in a file editor."
+        },
+        "koruAutopilot.submitClickX": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Optional absolute screen X coordinate for clicking the chat Send button after paste. Use command `koru: Capture submit button position`."
+        },
+        "koruAutopilot.submitClickY": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Optional absolute screen Y coordinate for clicking the chat Send button after paste. Use command `koru: Capture submit button position`."
+        },
+        "koruAutopilot.chatHistoryWatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Poll Cursor's chat-history SQLite DB and forward newly observed assistant messages as 'message.received' events to the koru daemon. Without this, koru cannot tell whether the IDE-side LLM has answered, asked a follow-up question, or finished the task."
+        },
+        "koruAutopilot.chatHistoryPollIntervalMs": {
+          "type": "number",
+          "default": 4000,
+          "minimum": 500,
+          "maximum": 60000,
+          "description": "How often (ms) to poll Cursor's chat-history SQLite DB for new assistant messages."
+        },
+        "koruAutopilot.skipWhenInputBusy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Before pasting into chat, probe via select-all + copy to detect un-submitted text in the chat input. When non-empty, skip the drive instead of clobbering the user's reply or concatenating prompts. Disable to restore the legacy 'always paste on top' behavior."
+        },
+        "koruAutopilot.submitHostKey": {
+          "type": "string",
+          "enum": ["auto", "Return", "ctrl+Return"],
+          "default": "auto",
+          "description": "Host-level key combo used to submit the chat after paste. 'auto' picks Ctrl+Return for Cursor (where plain Return inserts a newline). Override to force a specific key."
+        },
+        "koruAutopilot.verifySubmit": {
+          "type": "boolean",
+          "default": true,
+          "description": "After every submit candidate, probe the chat input via select-all + copy AND cross-check `cursorDiskKV` for a fresh `type=1` (user) bubble. If neither confirms submission, discard the cached winner and try the next candidate."
+        },
+        "koruAutopilot.verifySubmitOnCursor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Deprecated alias for koruAutopilot.verifySubmit (kept for settings migration)."
+        },
+        "koruAutopilot.reloadOnVersionMismatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "When the koru daemon rejects this plugin because the installed VSIX version does not match the daemon's expected version, run `Developer: Reload Window` automatically so the freshly installed VSIX gets loaded. The plugin enforces a 60s cooldown so it never reloads more than once per minute. Set to false to keep the manual recovery (status bar shows `koru: reload`)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "prebuild": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
+    "precompile": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
+    "compile": "tsc -p ./",
+    "pretest": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/ides/cursor.test.js",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "prepackage": "python3 ../../scripts/sync-vscode-plugin-version.py --from-package && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
+    "package": "vsce package --no-dependencies --out koru-autopilot-cursor-${npm_package_version}.vsix",
+    "prepublish": "python3 ../../scripts/sync-vscode-plugin-version.py --from-package",
+    "publish": "vsce publish --no-dependencies",
+    "clean": "rm -rf out node_modules src/_shared *.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}

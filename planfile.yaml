@@ -1186,19 +1186,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-a0a11851
-    name: Fix unused-imports issues
-    description: Resolve 32 unused-imports issues in src/koru/autonomous_cycle.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - src/koru/autonomous_cycle.py
-    rule_id: unused-imports
-    count: 32
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-c1addf51
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/autonomous_cycle_gate.py

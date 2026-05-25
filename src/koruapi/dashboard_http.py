@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from http.server import BaseHTTPRequestHandler
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
 
@@ -44,3 +44,20 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
 
   def _query_params(self) -> dict[str, list[str]]:
     return parse_qs(urlparse(self.path).query)
+
+  def _safe_respond_json(self, fn: Callable[[], Any]) -> None:
+    """Run ``fn`` and emit JSON; map ValueError→400, other Exception→500.
+
+    Eliminates the repeated try/except/_send_json boilerplate across route
+    handlers. ``fn`` should return the JSON-serializable payload to send on
+    success.
+    """
+    try:
+      result = fn()
+    except ValueError as exc:
+      self._send_json({"error": str(exc)}, status=400)
+      return
+    except Exception as exc:  # pragma: no cover — surface unexpected errors
+      self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+      return
+    self._send_json(result)

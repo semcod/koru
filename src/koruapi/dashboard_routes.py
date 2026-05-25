@@ -98,60 +98,31 @@ def _build_dashboard_handler_impl(config: ServeConfig) -> type[BaseHTTPRequestHa
             return _resolve_dashboard_project(raw)
 
         def _get_dashboard(self) -> None:
-            try:
-                self._send_json(_state_payload(config))
-            except Exception as exc:  # pragma: no cover — surface discovery errors
-                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            self._safe_respond_json(lambda: _state_payload(config))
 
         def _get_config(self) -> None:
-            try:
-                project = self._selected_project()
-                self._send_json(
-                    dashboard_config_payload(project, _config_defaults(config))
+            self._safe_respond_json(
+                lambda: dashboard_config_payload(
+                    self._selected_project(), _config_defaults(config)
                 )
-            except ValueError as exc:
-                self._send_json({"error": str(exc)}, status=400)
-            except Exception as exc:  # pragma: no cover — surface config errors
-                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            )
 
         def _get_env_config(self) -> None:
-            try:
-                project = self._selected_project()
-                self._send_json(env_config_payload(project))
-            except ValueError as exc:
-                self._send_json({"error": str(exc)}, status=400)
-            except Exception as exc:  # pragma: no cover — surface env-config errors
-                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            self._safe_respond_json(
+                lambda: env_config_payload(self._selected_project())
+            )
 
         def _get_context(self) -> None:
-            try:
-                project = self._selected_project()
-                ctx = dashboard_context_payload(project, config.queue_name)
-            except ValueError as exc:
-                self._send_json({"error": str(exc)}, status=400)
-                return
-            except Exception as exc:  # pragma: no cover — surface errors
-                self._send_json(
-                    {"error": str(exc), "type": type(exc).__name__},
-                    status=500,
+            self._safe_respond_json(
+                lambda: dashboard_context_payload(
+                    self._selected_project(), config.queue_name
                 )
-                return
-            self._send_json(ctx)
+            )
 
         def _get_topology(self) -> None:
-            try:
-                project = self._selected_project()
-                topo = dashboard_topology_payload(project)
-            except ValueError as exc:
-                self._send_json({"error": str(exc)}, status=400)
-                return
-            except Exception as exc:  # pragma: no cover — surface errors
-                self._send_json(
-                    {"error": str(exc), "type": type(exc).__name__},
-                    status=500,
-                )
-                return
-            self._send_json(topo)
+            self._safe_respond_json(
+                lambda: dashboard_topology_payload(self._selected_project())
+            )
 
         def _get_runtime_context(self) -> None:
             project = config.project
@@ -208,19 +179,12 @@ def _build_dashboard_handler_impl(config: ServeConfig) -> type[BaseHTTPRequestHa
             )
 
         def _get_interfaces(self) -> None:
-            try:
-                self._send_json(interface_registry_payload())
-            except Exception as exc:  # pragma: no cover - defensive surface
-                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            self._safe_respond_json(interface_registry_payload)
 
         def _get_environment(self) -> None:
-            try:
-                project = self._selected_project()
-                self._send_json(environment_profile_payload(project))
-            except ValueError as exc:
-                self._send_json({"error": str(exc)}, status=400)
-            except Exception as exc:  # pragma: no cover - defensive surface
-                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            self._safe_respond_json(
+                lambda: environment_profile_payload(self._selected_project())
+            )
 
         def _get_handoff(self) -> None:
             try:
@@ -239,10 +203,7 @@ def _build_dashboard_handler_impl(config: ServeConfig) -> type[BaseHTTPRequestHa
             )
 
         def _get_plugin_logs(self) -> None:
-            try:
-                self._send_json(dashboard_plugin_logs_payload())
-            except Exception as exc:
-                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            self._safe_respond_json(dashboard_plugin_logs_payload)
 
         def _redirect_create_project_ticket_prompt(self) -> None:
             qs = parse_qs(urlparse(self.path).query)

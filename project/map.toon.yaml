@@ -1,11 +1,11 @@
-# koru | 529f 82122L | yaml:23,txt:2,json:10,yml:10,toml:1,shell:49,python:387,md:1,javascript:1,typescript:33,kotlin:6,properties:1,xml:1 | 2026-05-25
-# generated in 0.19s
-# stats: 3379 func | 0 cls | 529 mod | CC̄=3.8 | critical:15 | cycles:0
+# koru | 572f 89550L | yaml:24,txt:2,json:14,yml:10,toml:1,shell:49,python:393,md:1,javascript:1,typescript:65,kotlin:6,properties:1,xml:1 | 2026-05-25
+# generated in 0.10s
+# stats: 3984 func | 0 cls | 572 mod | CC̄=3.7 | critical:19 | cycles:0
 # alerts[5]: fan-out _build_dashboard_handler_impl=63; fan-out _build_handler=44; fan-out create_app=44; CC _backfill_existing_dedupe_keys=26; fan-out _add_label_to_ticket_yaml_text=26
 # hotspots[5]: _build_dashboard_handler_impl fan=63; _build_handler fan=44; create_app fan=44; _add_label_to_ticket_yaml_text fan=26; run_cycle fan=25
-# evolution: CC̄ 3.9→3.8 (improved -0.1)
+# evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[529]:
+M[572]:
   .pretest.yml,17
   Dockerfile,73
   Makefile,32
@@ -64,8 +64,37 @@ M[529]:
   koru.yaml,70
   src/koru/autonomy/events.py,124
   output.txt,3
+  package.json,20
   pipeline.yaml,142
-  planfile.yaml,1370
+  planfile.yaml,1357
+  plugins/koru-autopilot-cursor/koru.yaml,69
+  plugins/koru-autopilot-cursor/package.json,180
+  plugins/koru-autopilot-cursor/src/ack-payload.ts,236
+  plugins/koru-autopilot-cursor/src/ack-payload.test.ts,52
+  plugins/koru-autopilot-cursor/src/chat-history-adapters.ts,30
+  plugins/koru-autopilot-cursor/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-cursor/src/chat-history-types.ts,32
+  plugins/koru-autopilot-cursor/src/chat-history-watcher.ts,197
+  plugins/koru-autopilot-cursor/src/chat-history-watcher.test.ts,352
+  plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts,152
+  plugins/koru-autopilot-cursor/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-cursor/src/dispatch-plan.test.ts,118
+  plugins/koru-autopilot-cursor/src/extension.ts,2537
+  plugins/koru-autopilot-cursor/src/host-click-submit.ts,35
+  plugins/koru-autopilot-cursor/src/host-click-submit.test.ts,39
+  plugins/koru-autopilot-cursor/src/ide-control-strategy.ts,64
+  plugins/koru-autopilot-cursor/src/ides/index.ts,8
+  plugins/koru-autopilot-cursor/src/ides/cursor.ts,231
+  plugins/koru-autopilot-cursor/src/ides/cursor.test.ts,294
+  plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts,108
+  plugins/koru-autopilot-cursor/src/ides/registry.ts,63
+  plugins/koru-autopilot-cursor/src/probe-ladder.ts,419
+  plugins/koru-autopilot-cursor/src/probe-ladder.test.ts,419
+  plugins/koru-autopilot-cursor/src/socketPath.ts,61
+  plugins/koru-autopilot-cursor/src/step-decisions.ts,145
+  plugins/koru-autopilot-cursor/src/step-decisions.test.ts,148
+  plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts,136
+  plugins/koru-autopilot-cursor/tsconfig.json,15
   plugins/koru-autopilot-jetbrains/build.gradle.kts,49
   plugins/koru-autopilot-jetbrains/gradle.properties,6
   plugins/koru-autopilot-jetbrains/settings.gradle.kts,8
@@ -74,6 +103,14 @@ M[529]:
   plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt,186
   plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/SocketPath.kt,33
   plugins/koru-autopilot-jetbrains/src/main/resources/META-INF/plugin.xml,24
+  plugins/koru-autopilot-shared/package.json,10
+  plugins/koru-autopilot-shared/src/index.ts,37
+  plugins/koru-autopilot-shared/src/ack-payload.ts,236
+  plugins/koru-autopilot-shared/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-shared/src/chat-history-types.ts,32
+  plugins/koru-autopilot-shared/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-shared/src/host-click-submit.ts,35
+  plugins/koru-autopilot-shared/src/socketPath.ts,67
   plugins/koru-autopilot-vscode/package.json,189
   plugins/koru-autopilot-vscode/src/ack-payload.ts,236
   plugins/koru-autopilot-vscode/src/ack-payload.test.ts,52
@@ -87,14 +124,14 @@ M[529]:
   plugins/koru-autopilot-vscode/src/cursor-bubble-adapter.ts,152
   plugins/koru-autopilot-vscode/src/dispatch-plan.ts,26
   plugins/koru-autopilot-vscode/src/dispatch-plan.test.ts,118
-  plugins/koru-autopilot-vscode/src/extension.ts,2507
+  plugins/koru-autopilot-vscode/src/extension.ts,2537
   plugins/koru-autopilot-vscode/src/host-click-submit.ts,35
   plugins/koru-autopilot-vscode/src/host-click-submit.test.ts,39
   plugins/koru-autopilot-vscode/src/ide-control-strategy.ts,64
   plugins/koru-autopilot-vscode/src/ides/index.ts,8
   plugins/koru-autopilot-vscode/src/ides/antigravity.ts,59
   plugins/koru-autopilot-vscode/src/ides/cursor.ts,231
-  plugins/koru-autopilot-vscode/src/ides/cursor.test.ts,271
+  plugins/koru-autopilot-vscode/src/ides/cursor.test.ts,294
   plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts,108
   plugins/koru-autopilot-vscode/src/ides/registry.ts,61
   plugins/koru-autopilot-vscode/src/ides/vscode.ts,81
@@ -132,6 +169,7 @@ M[529]:
   scripts/koru-soak-stop.sh,123
   scripts/planfile-export-prompt.sh,81
   scripts/planfile-sync-todo.py,260
+  scripts/sync-plugin-shared.py,97
   scripts/sync-vscode-plugin-version.py,124
   services/healing-webhook/Dockerfile,36
   services/healing-webhook/app.py,702
@@ -145,11 +183,12 @@ M[529]:
   src/koru/agents.py,335
   src/koru/api/__init__.py,7
   src/koru/autoloop_cli.py,88
-  src/koru/autonomous.py,1138
+  src/koru/autonomous.py,962
   src/koru/autonomous_auto_pipeline.py,255
   src/koru/autonomous_checkpoint.py,205
   src/koru/autonomous_cli_config.py,74
   src/koru/autonomous_cycle.py,953
+  src/koru/autonomous_cycle_bridge.py,20
   src/koru/autonomous_cycle_chat_activity.py,1185
   src/koru/autonomous_cycle_common.py,20
   src/koru/autonomous_cycle_config.py,194
@@ -163,9 +202,12 @@ M[529]:
   src/koru/autonomous_env.py,25
   src/koru/autonomous_loop_runner.py,674
   src/koru/autonomous_onboarding.py,231
-  src/koru/autonomous_operator.py,582
+  src/koru/autonomous_operator.py,304
   src/koru/autonomous_parser.py,454
   src/koru/autonomous_plugin.py,222
+  src/koru/autonomous_plugin_lifecycle.py,76
+  src/koru/autonomous_plugin_runtime.py,191
+  src/koru/autonomous_plugin_wait.py,273
   src/koru/autonomous_process_guard.py,206
   src/koru/autonomous_processes.py,355
   src/koru/autonomous_resources.py,90
@@ -299,6 +341,7 @@ M[529]:
   src/koru/cqrs/event_log_query.py,43
   src/koru/cqrs/event_store.py,220
   src/koru/decision_engine.py,228
+  src/koru/deployment_events.py,498
   src/koru/dev_sync.py,213
   src/koru/doctor.py,2083
   src/koru/doctor_constants.py,215
@@ -642,6 +685,77 @@ D:
     e: CursorBubbleAdapter,execFile
     CursorBubbleAdapter: storeAvailable(-1),fetchNewer(-1),lastRowid(-1),latestBubbleRowid(-1),exec(-1),r(-1),r(-1),n(-1),exec(-1),r(-1),r(-1),parseCursorBubbleRows(-1),recSep(-1),fldSep(-1),fields(-1),rowid(-1),type(-1),keyParts(-1),conversationId(-1),bubbleId(-1)
     execFile()
+  plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts:
+    i: ./chat-history-paths,./chat-history-types,child_process,fs,util
+    e: CursorBubbleAdapter,execFile
+    CursorBubbleAdapter: storeAvailable(-1),fetchNewer(-1),lastRowid(-1),latestBubbleRowid(-1),exec(-1),r(-1),r(-1),n(-1),exec(-1),r(-1),r(-1),parseCursorBubbleRows(-1),recSep(-1),fldSep(-1),fields(-1),rowid(-1),type(-1),keyParts(-1),conversationId(-1),bubbleId(-1)
+    execFile()
+  plugins/koru-autopilot-cursor/src/ides/cursor.test.ts:
+    i: ./cursor,./registry
+    e: assert,eq,testRegistry,strat,testIdentity,testDetectIde,testPasteCommands,cmds,testSubmitCommands,cmds,testHostKeyPreference,testSubmitFallbackPolicy,testProbeLadderUsesCursorStrategy,paste,submit,hostKeys,firstArgs,focus,testProbeCacheSanitizationForCursor,typeSubmit,clipboardPaste,plainReturn,ctrl,registered,auxBar,newChatTab,openAsPane,testFocusOpenDefaultsExcludeNewChatTab,defaults,run
+    assert()
+    eq()
+    testRegistry()
+    strat()
+    testIdentity()
+    testDetectIde()
+    testPasteCommands()
+    cmds()
+    testSubmitCommands()
+    cmds()
+    testHostKeyPreference()
+    testSubmitFallbackPolicy()
+    testProbeLadderUsesCursorStrategy()
+    paste()
+    submit()
+    hostKeys()
+    firstArgs()
+    focus()
+    testProbeCacheSanitizationForCursor()
+    typeSubmit()
+    clipboardPaste()
+    plainReturn()
+    ctrl()
+    registered()
+    auxBar()
+    newChatTab()
+    openAsPane()
+    testFocusOpenDefaultsExcludeNewChatTab()
+    defaults()
+    run()
+  plugins/koru-autopilot-vscode/src/ides/cursor.test.ts:
+    i: ./cursor,./registry
+    e: assert,eq,testRegistry,strat,testIdentity,testDetectIde,testPasteCommands,cmds,testSubmitCommands,cmds,testHostKeyPreference,testSubmitFallbackPolicy,testProbeLadderUsesCursorStrategy,paste,submit,hostKeys,firstArgs,focus,testProbeCacheSanitizationForCursor,typeSubmit,clipboardPaste,plainReturn,ctrl,registered,auxBar,newChatTab,openAsPane,testFocusOpenDefaultsExcludeNewChatTab,defaults,run
+    assert()
+    eq()
+    testRegistry()
+    strat()
+    testIdentity()
+    testDetectIde()
+    testPasteCommands()
+    cmds()
+    testSubmitCommands()
+    cmds()
+    testHostKeyPreference()
+    testSubmitFallbackPolicy()
+    testProbeLadderUsesCursorStrategy()
+    paste()
+    submit()
+    hostKeys()
+    firstArgs()
+    focus()
+    testProbeCacheSanitizationForCursor()
+    typeSubmit()
+    clipboardPaste()
+    plainReturn()
+    ctrl()
+    registered()
+    auxBar()
+    newChatTab()
+    openAsPane()
+    testFocusOpenDefaultsExcludeNewChatTab()
+    defaults()
+    run()
   src/koru/autonomy/events.py:
     e: AutonomyEvent,prompt_hash,correlation_id,_chat_kind,_event_ts,_event_text,_same_prompt,normalize_chat_events
     AutonomyEvent: to_dict(0)  # Normalized event emitted into cycle telemetry and decision t...
@@ -653,6 +767,66 @@ D:
     _same_prompt(left;right)
     normalize_chat_events(events)
   plugins/koru-autopilot-vscode/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,slimDiagnostics,diag,entry,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    slimDiagnostics()
+    diag()
+    entry()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-shared/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,slimDiagnostics,diag,entry,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    slimDiagnostics()
+    diag()
+    entry()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-cursor/src/ack-payload.ts:
     e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,slimDiagnostics,diag,entry,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
     MAX_ACK_WIRE_BYTES()
     MAX_TRACE_STEPS()
@@ -736,38 +910,6 @@ D:
     e: decision_next_step_hint,record_decision_trace
     decision_next_step_hint()
     record_decision_trace()
-  plugins/koru-autopilot-vscode/src/ides/cursor.test.ts:
-    i: ./cursor,./registry
-    e: assert,eq,testRegistry,strat,testIdentity,testDetectIde,testPasteCommands,cmds,testSubmitCommands,cmds,testHostKeyPreference,testSubmitFallbackPolicy,testProbeLadderUsesCursorStrategy,paste,submit,hostKeys,firstArgs,focus,testProbeCacheSanitizationForCursor,typeSubmit,clipboardPaste,plainReturn,ctrl,registered,auxBar,newChatTab,testFocusOpenDefaultsExcludeNewChatTab,defaults,run
-    assert()
-    eq()
-    testRegistry()
-    strat()
-    testIdentity()
-    testDetectIde()
-    testPasteCommands()
-    cmds()
-    testSubmitCommands()
-    cmds()
-    testHostKeyPreference()
-    testSubmitFallbackPolicy()
-    testProbeLadderUsesCursorStrategy()
-    paste()
-    submit()
-    hostKeys()
-    firstArgs()
-    focus()
-    testProbeCacheSanitizationForCursor()
-    typeSubmit()
-    clipboardPaste()
-    plainReturn()
-    ctrl()
-    registered()
-    auxBar()
-    newChatTab()
-    testFocusOpenDefaultsExcludeNewChatTab()
-    defaults()
-    run()
   src/koruapi/dashboard_tickets.py:
     e: run_planfile,list_tickets,bulk_waiting_input_action,_build_ticket_scaffold,create_ticket_from_dashboard,_load_sprint_file,_write_sprint_file,_find_ticket_in_sprints,_append_dashboard_history,update_ticket_from_dashboard,reorder_ticket_from_dashboard
     run_planfile(command;project)
@@ -855,6 +997,46 @@ D:
   src/koruide/drive_orchestrator.py:
     e: DriveOrchestrator
     DriveOrchestrator: plugin_required_message(0),should_try_os_fallback(-1),build_message_sent_info(-1),annotate_plugin_ack(-1),strict_plugin_ack_required(-1),expected_plugin_version(-1),strict_plugin_version_required(-1),protocol_plugin_version_policy(-1),plugin_version_info(-1),should_block_plugin_version(0),plugin_version_block_message(0),should_fail_strict_plugin_ack(-1),plugin_ack_summary(0),operation_trace_summary(0)  # Pure helpers used by the autopilot daemon...
+  src/koruide/daemon/handlers.py:
+    e: _cap_ack_info_for_cli,_env_truthy,_prefer_keyboard_drive,_plugin_rejection_log_interval_seconds,_ide_reload_label,_load_context_module,_default_handoff,handle_drive,_drive_via_plugin,_try_os_injector_drive,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend,_extract_hello_metadata,_handle_plugin_version_check,_configure_plugin_client,_log_plugin_hello_accepted,handle_hello,_log_rejected_plugin_connection,handle_status,_plugin_ack_needs_os_fallback,_relay_os_fallback_ack,_cli_client_still_connected,_relay_message_sent_ack,handle_ack,_event_path,_append_event,_plugin_event_should_handoff,_ack_plugin_event_without_handoff,_handle_plugin_event_basic,_check_handoff_cooldown,_execute_handoff,_forward_handoff_to_plugin,handle_plugin_event,handle_shutdown,handle_ping,handle_console_log
+    _cap_ack_info_for_cli(info)
+    _env_truthy(name)
+    _prefer_keyboard_drive()
+    _plugin_rejection_log_interval_seconds()
+    _ide_reload_label(ide)
+    _load_context_module()
+    _default_handoff(project)
+    handle_drive(daemon;client;msg)
+    _drive_via_plugin(daemon;client;msg;plugin;text;submit;require_plugin)
+    _try_os_injector_drive(daemon;target_id;text;submit)
+    _drive_via_keyboard(daemon;client;msg;ide_pref;text;submit)
+    _resolve_keyboard_drive_selection()
+    _drive_via_os_injector_backend()
+    _drive_via_keyboard_backend()
+    _extract_hello_metadata(msg)
+    _handle_plugin_version_check(daemon;client;msg;ide;plugin_version;protocol_version;capabilities)
+    _configure_plugin_client(daemon;client;ide;plugin_version;protocol_version;capabilities)
+    _log_plugin_hello_accepted(daemon;ide;plugin_version;protocol_version;capabilities;version_info;matching_cmds)
+    handle_hello(daemon;client;msg)
+    _log_rejected_plugin_connection(daemon)
+    handle_status(daemon;client;msg)
+    _plugin_ack_needs_os_fallback(plugin_ok;info;submit_requested;plugin_ide;require_plugin)
+    _relay_os_fallback_ack(daemon;cli_client;corr;plugin_ide;original_text;submit_requested;info)
+    _cli_client_still_connected(daemon;cli_client)
+    _relay_message_sent_ack(daemon;client;msg)
+    handle_ack(daemon;client;msg)
+    _event_path()
+    _append_event(client;msg)
+    _plugin_event_should_handoff(daemon;msg)
+    _ack_plugin_event_without_handoff(daemon;client;msg;ack_info)
+    _handle_plugin_event_basic(daemon;client;msg)
+    _check_handoff_cooldown(daemon;ack_info)
+    _execute_handoff(daemon;client;msg;chat;reason;ack_info)
+    _forward_handoff_to_plugin(daemon;client;msg;text;chat;reason;ack_info)
+    handle_plugin_event(daemon;client;msg)
+    handle_shutdown(daemon;client;msg)
+    handle_ping(daemon;client;msg)
+    handle_console_log(daemon;client;msg)
   src/koru/queue_clean.py:
     e: CleanupCandidate,CleanupReport,_planfile_base,_parse_age_days,_matched_rules,_cleanable_statuses,_maybe_skip_active_ticket,_candidate_from_ticket,find_candidates,_build_close_note,_list_tickets,_close_ticket,clean_queue
     CleanupCandidate: explanation(0)  # A planfile ticket selected for cleanup, with the reasons why...
@@ -993,6 +1175,54 @@ D:
     _action_type(payload)
     _required_capabilities(payload)
     _version_key(raw)
+  src/koru/autonomy/operator_pipeline.py:
+    e: OperatorStep,OperatorPipelineResult,_operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_is_closed,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_autopilot_plugin_operator_hints,_host_injectors_ok,_self_control_autorepair_enabled,_first_self_control_problem,_self_control_problem_detail,_summarize_self_control_actions,_self_control_ok,_build_os_calibration_step,_build_planfile_api_step,_build_mcp_step,_build_plugin_step,_build_host_injectors_step,_build_self_control_step,_build_ready_step,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format
+    OperatorStep:
+    OperatorPipelineResult:
+    _operator_state_dir(project)
+    _marker_path(state_dir;step_id)
+    _read_marker(state_dir;step_id)
+    _write_marker(state_dir;step_id;ticket_id)
+    _clear_marker(state_dir;step_id)
+    _ticket_matches_step(ticket)
+    _ticket_is_closed(ticket)
+    _ticket_text(ticket)
+    _ticket_matches_current_step(ticket;step)
+    _find_ticket_by_id(project;ticket_id)
+    _find_existing_step_ticket(project)
+    _close_resolved_step_ticket(project)
+    _mcp_koru_configured(project;ide)
+    _candidate_planfile_health_urls(project)
+    _planfile_api_ok(project)
+    _operator_autostart_server_enabled()
+    _try_start_planfile_api(project)
+    _os_profile_ok(ide;project)
+    _autopilot_plugin_operator_hints()
+    _host_injectors_ok()
+    _self_control_autorepair_enabled()
+    _first_self_control_problem(report)
+    _self_control_problem_detail(report)
+    _summarize_self_control_actions(report)
+    _self_control_ok(project;ide;socket_path)
+    _build_os_calibration_step(ide;project)
+    _build_planfile_api_step(project)
+    _build_mcp_step(project;ide)
+    _build_plugin_step()
+    _build_host_injectors_step()
+    _build_self_control_step(project;ide;socket_path)
+    _build_ready_step()
+    build_operator_steps()
+    _emit_step(stream)
+    _create_step_ticket(project;step)
+    _ensure_planfile_api(project;stdio_format;correlation_id)
+    _discard_stale_pending_marker(project;step)
+    _close_finished_step_marker(project;step)
+    _recover_matching_step_ticket(project;step)
+    _create_pending_step_ticket(project;step)
+    _process_operator_step(project;step;index;total;state_dir;create_tickets;ticket_queue;ticket_priority;stdio_format;result)
+    _emit_operator_step_event(out;index;total;step;stdio_format;correlation_id)
+    run_startup_operator_pipeline()
+    sys_stdout_for_format(fmt)
   src/koru/autonomy/post_run_verify.py:
     e: _HasIdeVerifyState,PostRunVerifyConfig,_truthy_env,_extract_post_run_verify_block,_parse_verify_commands,_parse_verify_on_failure,_parse_verify_max_output,_parse_verify_ide_settings,load_post_run_verify_config,_parse_iso_datetime,fetch_ticket_status,fetch_recently_done_ticket_ids,_record_verify_outcomes,verify_after_ide_work,run_verify_commands,_truncate,apply_verify_failure,verify_completed_tickets
     _HasIdeVerifyState(Protocol):
@@ -1094,99 +1324,31 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koruide/daemon/handlers.py:
-    e: _cap_ack_info_for_cli,_env_truthy,_prefer_keyboard_drive,_plugin_rejection_log_interval_seconds,_ide_reload_label,_load_context_module,_default_handoff,handle_drive,_drive_via_plugin,_try_os_injector_drive,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend,_extract_hello_metadata,_handle_plugin_version_check,_configure_plugin_client,_log_plugin_hello_accepted,handle_hello,_log_rejected_plugin_connection,handle_status,_plugin_ack_needs_os_fallback,_relay_os_fallback_ack,_cli_client_still_connected,_relay_message_sent_ack,handle_ack,_event_path,_append_event,_plugin_event_should_handoff,_ack_plugin_event_without_handoff,_handle_plugin_event_basic,_check_handoff_cooldown,_execute_handoff,_forward_handoff_to_plugin,handle_plugin_event,handle_shutdown,handle_ping,handle_console_log
-    _cap_ack_info_for_cli(info)
-    _env_truthy(name)
-    _prefer_keyboard_drive()
-    _plugin_rejection_log_interval_seconds()
-    _ide_reload_label(ide)
-    _load_context_module()
-    _default_handoff(project)
-    handle_drive(daemon;client;msg)
-    _drive_via_plugin(daemon;client;msg;plugin;text;submit;require_plugin)
-    _try_os_injector_drive(daemon;target_id;text;submit)
-    _drive_via_keyboard(daemon;client;msg;ide_pref;text;submit)
-    _resolve_keyboard_drive_selection()
-    _drive_via_os_injector_backend()
-    _drive_via_keyboard_backend()
-    _extract_hello_metadata(msg)
-    _handle_plugin_version_check(daemon;client;msg;ide;plugin_version;protocol_version;capabilities)
-    _configure_plugin_client(daemon;client;ide;plugin_version;protocol_version;capabilities)
-    _log_plugin_hello_accepted(daemon;ide;plugin_version;protocol_version;capabilities;version_info;matching_cmds)
-    handle_hello(daemon;client;msg)
-    _log_rejected_plugin_connection(daemon)
-    handle_status(daemon;client;msg)
-    _plugin_ack_needs_os_fallback(plugin_ok;info;submit_requested;plugin_ide;require_plugin)
-    _relay_os_fallback_ack(daemon;cli_client;corr;plugin_ide;original_text;submit_requested;info)
-    _cli_client_still_connected(daemon;cli_client)
-    _relay_message_sent_ack(daemon;client;msg)
-    handle_ack(daemon;client;msg)
-    _event_path()
-    _append_event(client;msg)
-    _plugin_event_should_handoff(daemon;msg)
-    _ack_plugin_event_without_handoff(daemon;client;msg;ack_info)
-    _handle_plugin_event_basic(daemon;client;msg)
-    _check_handoff_cooldown(daemon;ack_info)
-    _execute_handoff(daemon;client;msg;chat;reason;ack_info)
-    _forward_handoff_to_plugin(daemon;client;msg;text;chat;reason;ack_info)
-    handle_plugin_event(daemon;client;msg)
-    handle_shutdown(daemon;client;msg)
-    handle_ping(daemon;client;msg)
-    handle_console_log(daemon;client;msg)
-  src/koru/autonomy/operator_pipeline.py:
-    e: OperatorStep,OperatorPipelineResult,_operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_is_closed,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_autopilot_plugin_operator_hints,_host_injectors_ok,_self_control_autorepair_enabled,_first_self_control_problem,_self_control_problem_detail,_summarize_self_control_actions,_self_control_ok,_build_os_calibration_step,_build_planfile_api_step,_build_mcp_step,_build_plugin_step,_build_host_injectors_step,_build_self_control_step,_build_ready_step,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format
-    OperatorStep:
-    OperatorPipelineResult:
-    _operator_state_dir(project)
-    _marker_path(state_dir;step_id)
-    _read_marker(state_dir;step_id)
-    _write_marker(state_dir;step_id;ticket_id)
-    _clear_marker(state_dir;step_id)
-    _ticket_matches_step(ticket)
-    _ticket_is_closed(ticket)
-    _ticket_text(ticket)
-    _ticket_matches_current_step(ticket;step)
-    _find_ticket_by_id(project;ticket_id)
-    _find_existing_step_ticket(project)
-    _close_resolved_step_ticket(project)
-    _mcp_koru_configured(project;ide)
-    _candidate_planfile_health_urls(project)
-    _planfile_api_ok(project)
-    _operator_autostart_server_enabled()
-    _try_start_planfile_api(project)
-    _os_profile_ok(ide;project)
-    _autopilot_plugin_operator_hints()
-    _host_injectors_ok()
-    _self_control_autorepair_enabled()
-    _first_self_control_problem(report)
-    _self_control_problem_detail(report)
-    _summarize_self_control_actions(report)
-    _self_control_ok(project;ide;socket_path)
-    _build_os_calibration_step(ide;project)
-    _build_planfile_api_step(project)
-    _build_mcp_step(project;ide)
-    _build_plugin_step()
-    _build_host_injectors_step()
-    _build_self_control_step(project;ide;socket_path)
-    _build_ready_step()
-    build_operator_steps()
-    _emit_step(stream)
-    _create_step_ticket(project;step)
-    _ensure_planfile_api(project;stdio_format;correlation_id)
-    _discard_stale_pending_marker(project;step)
-    _close_finished_step_marker(project;step)
-    _recover_matching_step_ticket(project;step)
-    _create_pending_step_ticket(project;step)
-    _process_operator_step(project;step;index;total;state_dir;create_tickets;ticket_queue;ticket_priority;stdio_format;result)
-    _emit_operator_step_event(out;index;total;step;stdio_format;correlation_id)
-    run_startup_operator_pipeline()
-    sys_stdout_for_format(fmt)
+  plugins/koru-autopilot-cursor/src/extension.ts:
+    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
+    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
+    Envelope:
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),accepted(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),activate(-1),bridge(-1),text(-1),cfg(-1),cfg(-1),deactivate(-1)
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    safeLog()
+    suffix()
   plugins/koru-autopilot-vscode/src/extension.ts:
     i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
     e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
     Envelope:
-    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),accepted(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),inputOnly(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),activate(-1),bridge(-1),text(-1),cfg(-1),cfg(-1),deactivate(-1)
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),accepted(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),activate(-1),bridge(-1),text(-1),cfg(-1),cfg(-1),deactivate(-1)
     DISALLOWED_FOCUS_OPEN_COMMANDS()
     UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
     isAllowedFocusOpenCommand()
@@ -1534,6 +1696,16 @@ Designed to ...
     selectStrategy()
     confirmTicket()
     escapeHtml()
+  src/koru/deployment_events.py:
+    e: DeploymentEventType,EventSource,Severity,Component,DeploymentEvent,DeploymentEventBatch,DeploymentEventEmitter,DeploymentEventAnalyzer
+    DeploymentEventType(str,Enum):  # Deployment event types for tracking deployment and self-depl...
+    EventSource(str,Enum):  # Source of the deployment event...
+    Severity(str,Enum):  # Severity level for events...
+    Component:  # Component being deployed or affected...
+    DeploymentEvent: to_dict(0),to_json(0),to_dsl(0),from_dict(1),from_json(1)  # Deployment event payload...
+    DeploymentEventBatch: add_event(1),to_dict(0),to_json(0),from_dict(1),from_json(1)  # Batch of events for efficient transmission...
+    DeploymentEventEmitter: __init__(3),emit(1),emit_batch(1),flush(0),_write_to_file(1)  # Emitter for deployment events with DSL logging and persisten...
+    DeploymentEventAnalyzer: __init__(1),add_events(1),filter_by_type(1),filter_by_source(1),filter_by_correlation(1),filter_by_time_range(2),get_errors(0),get_plugin_events(1),get_deployment_summary(0),analyze_deployment_flow(1),reflect_on_development_session(1),_generate_recommendations(1)  # Analyzer for deployment event history with reflection capabi...
   src/korudsl/transform.py:
     e: library_from_any,library_to_any,dsl_roundtrip_report,load_path
     library_from_any(payload)
@@ -1741,6 +1913,60 @@ Designed to ...
     _read_config(path)
     _read_sprint(path)
     _write_yaml(path;data)
+  src/koru/autonomous_cycle_chat_activity.py:
+    e: _cycle_attr,_autopilot_redrive_cooldown_seconds,_autopilot_escalation_cooldown_seconds,_llm_reflection_summary_max_age_seconds,_recent_llm_reflection_summary,_llm_needs_input_ticket_enabled,_llm_needs_input_ticket_queue_name,_llm_needs_input_ticket_priority,_llm_needs_input_heuristic_enabled,_chat_intake_ticket_enabled,_waiting_ticket_has_chat_intake_label,_normalize_prompt_text,_looks_like_autopilot_generated_prompt,_looks_like_explicit_intake_text,_external_message_sent_text,_upsert_chat_intake_operator_ticket,_compact_question_text,_extract_needs_input_question,_latest_received_text,_llm_needs_input_waiting_ticket,_llm_needs_input_summary,_llm_needs_input_operator_payload,_note_reused_llm_needs_input_operator_ticket,_upsert_llm_needs_input_operator_ticket,_inject_reflection_summary_into_prompt,_event_timestamp,_recent_chat_activity_events,_state_events_to_chat_events,_chat_activity_cooldown_for_state,_last_successful_drive_ack_age,_event_matches_last_driven_prompt,_last_self_drive_event_age,_event_is_self_drive_for_other_ticket,_filter_chat_activity_events_for_waiting_ticket,_record_normalized_chat_activity_events,_llx_chat_reflection_enabled,_recent_message_sent_allows_redrive,_recent_chat_history_fallback,_upsert_reflection_needs_input_ticket,_apply_llx_chat_reflection,_apply_needs_input_heuristic,_check_recent_drive_ack_skip,_check_chat_intake_skip,_check_recent_self_drive_skip,_determine_chat_activity_status,classify_chat_event,decide_intake_ticket,decide_redrive_cooldown,explain_skip,_age_seconds_from_label,_apply_chat_activity_skip_decision,_skip_due_to_recent_chat_activity
+    _cycle_attr(name;fallback)
+    _autopilot_redrive_cooldown_seconds()
+    _autopilot_escalation_cooldown_seconds(base_cooldown)
+    _llm_reflection_summary_max_age_seconds()
+    _recent_llm_reflection_summary(state)
+    _llm_needs_input_ticket_enabled()
+    _llm_needs_input_ticket_queue_name()
+    _llm_needs_input_ticket_priority()
+    _llm_needs_input_heuristic_enabled()
+    _chat_intake_ticket_enabled()
+    _waiting_ticket_has_chat_intake_label(project;queue_result)
+    _normalize_prompt_text(text)
+    _looks_like_autopilot_generated_prompt(text)
+    _looks_like_explicit_intake_text(text)
+    _external_message_sent_text()
+    _upsert_chat_intake_operator_ticket()
+    _compact_question_text(text)
+    _extract_needs_input_question(reflection_events;reflection_summary)
+    _latest_received_text(reflection_events)
+    _llm_needs_input_waiting_ticket(queue_result)
+    _llm_needs_input_summary(queue_result;reflection_summary)
+    _llm_needs_input_operator_payload()
+    _note_reused_llm_needs_input_operator_ticket()
+    _upsert_llm_needs_input_operator_ticket()
+    _inject_reflection_summary_into_prompt(state;queue_result;decision)
+    _event_timestamp(payload)
+    _recent_chat_activity_events(state)
+    _state_events_to_chat_events(recent_events)
+    _chat_activity_cooldown_for_state(state)
+    _last_successful_drive_ack_age(state)
+    _event_matches_last_driven_prompt(state;event)
+    _last_self_drive_event_age(state;recent_events)
+    _event_is_self_drive_for_other_ticket(state;event;waiting_ticket)
+    _filter_chat_activity_events_for_waiting_ticket(state;recent_events;waiting_ticket)
+    _record_normalized_chat_activity_events()
+    _llx_chat_reflection_enabled()
+    _recent_message_sent_allows_redrive()
+    _recent_chat_history_fallback()
+    _upsert_reflection_needs_input_ticket()
+    _apply_llx_chat_reflection()
+    _apply_needs_input_heuristic()
+    _check_recent_drive_ack_skip(state;cooldown;waiting_ticket;ide;cycle_telemetry;_hp)
+    _check_chat_intake_skip(project;queue_result;state;recent_events;cycle_telemetry;_hp)
+    _check_recent_self_drive_skip(state;cooldown;waiting_ticket;recent_events;cycle_telemetry;_hp)
+    _determine_chat_activity_status(state;ide;cooldown;recent_events;reflection_events)
+    classify_chat_event()
+    decide_intake_ticket(intake_ticket)
+    decide_redrive_cooldown()
+    explain_skip(decision)
+    _age_seconds_from_label(age)
+    _apply_chat_activity_skip_decision()
+    _skip_due_to_recent_chat_activity()
   src/koru/autonomous_wup.py:
     e: WupWatchConfig,WupHealthResult,_WupEventState,_wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_load_project_env,_wup_subprocess_env,_parse_wup_services,_extract_docker_items,_profiled_compose_services,_compose_ps_command,_parse_compose_ps_json,_compose_field,_compose_health_ready,_compose_state_ready,_compose_status_ready,_compose_service_item_ready,_compose_service_ready,_wait_for_compose_service_ready,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_wup_service_names_from_yaml,_prune_stale_wup_health,_extract_wup_diagnostic_check_id,_complete_wup_diagnostic_ticket,_process_stale_ticket_batch,_resolve_stale_wup_diagnostic_tickets,_identify_failing_services,_identify_interrupted_services,_is_interrupted_wup_entry,_normalize_interrupted_wup_health,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health
     WupWatchConfig:
@@ -1831,60 +2057,6 @@ Designed to ...
   scripts/_koru_autodiag_filter_tickets.py:
     e: main
     main()
-  src/koru/autonomous_cycle_chat_activity.py:
-    e: _cycle_attr,_autopilot_redrive_cooldown_seconds,_autopilot_escalation_cooldown_seconds,_llm_reflection_summary_max_age_seconds,_recent_llm_reflection_summary,_llm_needs_input_ticket_enabled,_llm_needs_input_ticket_queue_name,_llm_needs_input_ticket_priority,_llm_needs_input_heuristic_enabled,_chat_intake_ticket_enabled,_waiting_ticket_has_chat_intake_label,_normalize_prompt_text,_looks_like_autopilot_generated_prompt,_looks_like_explicit_intake_text,_external_message_sent_text,_upsert_chat_intake_operator_ticket,_compact_question_text,_extract_needs_input_question,_latest_received_text,_llm_needs_input_waiting_ticket,_llm_needs_input_summary,_llm_needs_input_operator_payload,_note_reused_llm_needs_input_operator_ticket,_upsert_llm_needs_input_operator_ticket,_inject_reflection_summary_into_prompt,_event_timestamp,_recent_chat_activity_events,_state_events_to_chat_events,_chat_activity_cooldown_for_state,_last_successful_drive_ack_age,_event_matches_last_driven_prompt,_last_self_drive_event_age,_event_is_self_drive_for_other_ticket,_filter_chat_activity_events_for_waiting_ticket,_record_normalized_chat_activity_events,_llx_chat_reflection_enabled,_recent_message_sent_allows_redrive,_recent_chat_history_fallback,_upsert_reflection_needs_input_ticket,_apply_llx_chat_reflection,_apply_needs_input_heuristic,_check_recent_drive_ack_skip,_check_chat_intake_skip,_check_recent_self_drive_skip,_determine_chat_activity_status,classify_chat_event,decide_intake_ticket,decide_redrive_cooldown,explain_skip,_age_seconds_from_label,_apply_chat_activity_skip_decision,_skip_due_to_recent_chat_activity
-    _cycle_attr(name;fallback)
-    _autopilot_redrive_cooldown_seconds()
-    _autopilot_escalation_cooldown_seconds(base_cooldown)
-    _llm_reflection_summary_max_age_seconds()
-    _recent_llm_reflection_summary(state)
-    _llm_needs_input_ticket_enabled()
-    _llm_needs_input_ticket_queue_name()
-    _llm_needs_input_ticket_priority()
-    _llm_needs_input_heuristic_enabled()
-    _chat_intake_ticket_enabled()
-    _waiting_ticket_has_chat_intake_label(project;queue_result)
-    _normalize_prompt_text(text)
-    _looks_like_autopilot_generated_prompt(text)
-    _looks_like_explicit_intake_text(text)
-    _external_message_sent_text()
-    _upsert_chat_intake_operator_ticket()
-    _compact_question_text(text)
-    _extract_needs_input_question(reflection_events;reflection_summary)
-    _latest_received_text(reflection_events)
-    _llm_needs_input_waiting_ticket(queue_result)
-    _llm_needs_input_summary(queue_result;reflection_summary)
-    _llm_needs_input_operator_payload()
-    _note_reused_llm_needs_input_operator_ticket()
-    _upsert_llm_needs_input_operator_ticket()
-    _inject_reflection_summary_into_prompt(state;queue_result;decision)
-    _event_timestamp(payload)
-    _recent_chat_activity_events(state)
-    _state_events_to_chat_events(recent_events)
-    _chat_activity_cooldown_for_state(state)
-    _last_successful_drive_ack_age(state)
-    _event_matches_last_driven_prompt(state;event)
-    _last_self_drive_event_age(state;recent_events)
-    _event_is_self_drive_for_other_ticket(state;event;waiting_ticket)
-    _filter_chat_activity_events_for_waiting_ticket(state;recent_events;waiting_ticket)
-    _record_normalized_chat_activity_events()
-    _llx_chat_reflection_enabled()
-    _recent_message_sent_allows_redrive()
-    _recent_chat_history_fallback()
-    _upsert_reflection_needs_input_ticket()
-    _apply_llx_chat_reflection()
-    _apply_needs_input_heuristic()
-    _check_recent_drive_ack_skip(state;cooldown;waiting_ticket;ide;cycle_telemetry;_hp)
-    _check_chat_intake_skip(project;queue_result;state;recent_events;cycle_telemetry;_hp)
-    _check_recent_self_drive_skip(state;cooldown;waiting_ticket;recent_events;cycle_telemetry;_hp)
-    _determine_chat_activity_status(state;ide;cooldown;recent_events;reflection_events)
-    classify_chat_event()
-    decide_intake_ticket(intake_ticket)
-    decide_redrive_cooldown()
-    explain_skip(decision)
-    _age_seconds_from_label(age)
-    _apply_chat_activity_skip_decision()
-    _skip_due_to_recent_chat_activity()
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,_enrich_ticket_with_vallm,_build_planfile_command,_extract_ticket_id_from_stdout,_execute_planfile_create,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_parse_redup_summary,_update_redup_metrics,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
@@ -1914,6 +2086,15 @@ Designed to ...
     alertmanager_webhook(request)
     probe_failure(request)
     get_tickets()
+  services/healing-webhook/ticket_builder.py:
+    e: _git_commit,_infer_paths,_format_paths,_default_acceptance,_format_acceptance,_reproduction_for,build_ticket_payload
+    _git_commit(repo)
+    _infer_paths(component;labels)
+    _format_paths(paths)
+    _default_acceptance(instance)
+    _format_acceptance(items)
+    _reproduction_for(labels;failures)
+    build_ticket_payload(alert)
   src/koruos/strategies/x11_linux.py:
     e: X11LinuxStrategy,_run
     X11LinuxStrategy(OsStrategy): matches_current_environment(0),capabilities(0),focus_window(1),inject_keys(1),_focus_via_xdotool(0),_focus_via_wmctrl(0),_inject_via_xdotool(0)
@@ -2212,35 +2393,18 @@ P...
     e: StdinPrompter,ScriptedPrompter
     StdinPrompter(Prompter): __init__(0),_print(1),_render_prompt(2),_show_help(2),ask_choice(2),ask_yes_no(1)  # Default prompter: prints prompt + options, reads a single li...
     ScriptedPrompter(Prompter): __init__(2),ask_choice(2),ask_yes_no(1)  # Test prompter: answers come from a queue of (node-question -...
-  services/healing-webhook/ticket_builder.py:
-    e: _git_commit,_infer_paths,_format_paths,_default_acceptance,_format_acceptance,_reproduction_for,build_ticket_payload
-    _git_commit(repo)
-    _infer_paths(component;labels)
-    _format_paths(paths)
-    _default_acceptance(instance)
-    _format_acceptance(items)
-    _reproduction_for(labels;failures)
-    build_ticket_payload(alert)
-  src/koru/autonomous_operator.py:
-    e: run_mcp_provision,_ensure_trusted_publisher_for_plugin,_extension_active_in_latest_session,_live_plugin_version,_detect_stale_extension_host,_plugin_status_reason,_plugin_reason_requires_reload,_plugin_blocker_line,_reload_retry_wait_seconds,_report_unsupported_plugin_result,_emit_reload_required_lines,_prepare_plugin_wait,_force_reload_if_extension_host_stale,_retry_plugin_wait_after_reload,_wait_for_plugin_connection,setup_autopilot_plugin,run_operator_pipeline,unblock_queue_if_needed
-    run_mcp_provision(project;stdio_format)
-    _ensure_trusted_publisher_for_plugin(autopilot_ide)
-    _extension_active_in_latest_session(autopilot_ide)
-    _live_plugin_version(client;autopilot_ide)
-    _detect_stale_extension_host(autopilot_ide;client)
-    _plugin_status_reason(client;autopilot_ide)
-    _plugin_reason_requires_reload(reason)
-    _plugin_blocker_line(reason;autopilot_ide)
-    _reload_retry_wait_seconds(base_wait_seconds)
-    _report_unsupported_plugin_result(autopilot_ide)
-    _emit_reload_required_lines(autopilot_ide)
-    _prepare_plugin_wait(args;autopilot_ide;plugin_install_status)
-    _force_reload_if_extension_host_stale(args;autopilot_ide;wait_seconds)
-    _retry_plugin_wait_after_reload(args;autopilot_ide;wait_seconds)
-    _wait_for_plugin_connection(args;autopilot_ide;plugin_install_status;reload_after_install)
-    setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
-    run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
-    unblock_queue_if_needed(project;stdio_format)
+  src/koru/autonomous_plugin_runtime.py:
+    e: ensure_trusted_publisher_for_plugin,extension_active_in_latest_session,live_plugin_version,detect_stale_extension_host,plugin_status_reason,plugin_reason_requires_reload,plugin_blocker_line,reload_retry_wait_seconds,report_unsupported_plugin_result,emit_reload_required_lines
+    ensure_trusted_publisher_for_plugin(autopilot_ide)
+    extension_active_in_latest_session(autopilot_ide)
+    live_plugin_version(client;autopilot_ide)
+    detect_stale_extension_host(autopilot_ide;client)
+    plugin_status_reason(client;autopilot_ide)
+    plugin_reason_requires_reload(reason)
+    plugin_blocker_line(reason;autopilot_ide)
+    reload_retry_wait_seconds(base_wait_seconds)
+    report_unsupported_plugin_result(autopilot_ide)
+    emit_reload_required_lines(autopilot_ide)
   src/koruobserve/lifecycle.py:
     e: ObserveProcesses,_resolve_serve_settings,_pick_free_port,_spawn,_is_alive,_read_pid,_stop_pid,_pids_matching_koru_cmdline,_stop_orphan_observe_processes,_koru_cmd,observe_up,observe_down,observe_status
     ObserveProcesses: to_json(0)
@@ -2574,9 +2738,82 @@ P...
     entry()
     makeProbeCache()
     mergeProbeCache()
+  plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts:
+    i: ./chat-history-paths,./chat-history-types,child_process,fs,util
+    e: VSCodeChatSessionEntry,VSCodeChatSessionAdapter,execFile
+    VSCodeChatSessionEntry:
+    VSCodeChatSessionAdapter: storeAvailable(-1),fetchNewer(-1),exec(-1),r(-1),r(-1),extractResponsesFromSession(-1),responses(-1),resp(-1),ts(-1),text(-1),safeParseJson(-1),trimmed(-1),extractEntriesMap(-1),entriesRaw(-1),parseAfterCursor(-1),parseVSCodeChatIndex(-1),entries(-1),after(-1),extractMessageText(-1)
+    execFile()
+  plugins/koru-autopilot-cursor/src/chat-history-watcher.ts:
+    i: ./chat-history-adapters,./chat-history-types
+    e: ChatHistoryWatcherOptions,ChatHistoryWatcher
+    ChatHistoryWatcherOptions:
+    ChatHistoryWatcher: currentCursor(-1),adapterDescription(-1),setCursor(-1),start(-1),tick(-1),stop(-1),clearInterval(-1),pollOnce(-1),cursorAdvances(-1),a(-1),b(-1)
+  plugins/koru-autopilot-cursor/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,injectorRow,reorderForXSession,buildHostKeySubmitCandidates,normalized,plain,ctrl,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    injectorRow()
+    reorderForXSession()
+    buildHostKeySubmitCandidates()
+    normalized()
+    plain()
+    ctrl()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
   examples/remote_orchestration_demo.py:
     e: run_multi_node_orchestration
     run_multi_node_orchestration()
+  src/koruos/strategies/wayland_linux.py:
+    e: WaylandLinuxStrategy,_run,_scan_for_key,_gnome_compositor,_prefer_ydotool
+    WaylandLinuxStrategy(OsStrategy): matches_current_environment(0),capabilities(0),focus_window(1),inject_keys(1),_focus_via_wmctrl(0),_inject_via_wtype(0),_inject_via_ydotool(0)
+    _run(argv)
+    _scan_for_key(key)
+    _gnome_compositor()
+    _prefer_ydotool()
   src/korudsl/library.py:
     e: ensure_library_structure,_start_goal,_handle_func,_handle_set,_handle_wait,_handle_get,_handle_save,_handle_if,_handle_error,_handle_correct,_apply_prefixed_line,normalize_dsl_to_library,convert_goals_json_to_library,_emit_step,_emit_objective,_emit_functions,_emit_goal,_emit_goals,library_to_dsl
     ensure_library_structure(library)
@@ -2788,6 +3025,10 @@ No soc...
     interfaces_for_blocker(blocker)
     blocker_interface_payload(blocker)
     interface_registry_payload()
+  src/koru/autonomy/reflection_policy.py:
+    e: ReflectionPolicyDecision,decide_chat_reflection
+    ReflectionPolicyDecision: to_dict(0)
+    decide_chat_reflection()
   src/koru/queue/runners.py:
     e: _planfile_env,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
     _planfile_env()
@@ -2903,17 +3144,56 @@ No soc...
     _create_ticket()
     _handle_existing_finding()
     main()
-  src/koruos/strategies/wayland_linux.py:
-    e: WaylandLinuxStrategy,_run,_scan_for_key,_gnome_compositor,_prefer_ydotool
-    WaylandLinuxStrategy(OsStrategy): matches_current_environment(0),capabilities(0),focus_window(1),inject_keys(1),_focus_via_wmctrl(0),_inject_via_wtype(0),_inject_via_ydotool(0)
-    _run(argv)
-    _scan_for_key(key)
-    _gnome_compositor()
-    _prefer_ydotool()
-  src/koru/autonomy/reflection_policy.py:
-    e: ReflectionPolicyDecision,decide_chat_reflection
-    ReflectionPolicyDecision: to_dict(0)
-    decide_chat_reflection()
+  plugins/koru-autopilot-shared/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  plugins/koru-autopilot-cursor/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  src/koru/autonomous_plugin_wait.py:
+    e: prepare_plugin_wait,force_reload_if_extension_host_stale,retry_plugin_wait_after_reload,wait_for_plugin_connection
+    prepare_plugin_wait(args;autopilot_ide;plugin_install_status)
+    force_reload_if_extension_host_stale(args;autopilot_ide;wait_seconds)
+    retry_plugin_wait_after_reload(args;autopilot_ide;wait_seconds)
+    wait_for_plugin_connection(args;autopilot_ide;plugin_install_status;reload_after_install)
+  src/koru/autonomous_plugin_lifecycle.py:
+    e: PluginLifecycleHooks,setup_autopilot_plugin_lifecycle
+    PluginLifecycleHooks:
+    setup_autopilot_plugin_lifecycle(args;autopilot_ide;socket_path;client)
   src/koruobserve/diagnostics.py:
     e: _session_type,_monitors_from_mss,_monitors_from_xrandr,detect_monitors,_read_log_tail,_last_failure_line,_wayland_hint,capture_diagnostics
     _session_type()
@@ -3208,6 +3488,40 @@ No soc...
     focusOpen()
     focusOpenCommandsDefaults()
     trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-shared/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-cursor/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-cursor/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+  plugins/koru-autopilot-cursor/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  scripts/sync-plugin-shared.py:
+    e: _sync_one,main
+    _sync_one(plugin_dir)
+    main()
   src/koruobserve/cli_parser.py:
     e: _add_subproject,_register_up_arguments,build_observe_parser,project_path
     _add_subproject(parser)
@@ -3394,6 +3708,106 @@ Construct once ...
     sanitizeProbeCache()
     focusOpenCommandsDefaults()
     trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-cursor/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-shared/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-cursor/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  plugins/koru-autopilot-cursor/src/probe-ladder.test.ts:
+    e: assert,testOrderWithCache,ordered,testChatFocusHeuristic,testVerifyFocusAfterOpen,testPasteLandedInEditor,testMergeUnique,testBuildFocusOpenCursorFirst,cmds,testBuildFocusOpenAntigravityFirst,cmds,testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand,cmds,testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault,defaults,testSanitizeVscodeDropsUnsafeFocusOpenCache,sanitized,testBuildFocusInputUsesChatCommands,cmds,testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance,cmds,testVscodiumSubmitStillExposesWorkbenchFallback,cmds,testSanitizeCursorDiscardsTypeSubmit,sanitized,testSanitizeCursorPreservesNonTypeSubmit,sanitized,testSanitizeCursorDiscardsXdotoolSubmitOnWayland,prev,sanitized,testSanitizeCursorDiscardsHostPlainReturn,sanitized,testSanitizeWindsurfStillDiscardsTypeSubmit,sanitized,testSanitizeIsIdempotent,empty,sanitized,firstKey,renderKey,testHostKeyOrderCursorPrefersCtrlReturn,cands,flat,testHostKeyOrderVscodeKeepsPlainReturnFirst,cands,testHostKeyOrderVscodiumPrefersCtrlReturn,cands,testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes,cands,testHostKeyOverrideReturnForcesPlainEvenOnCursor,cands,testHostKeyWaylandPrefersYdotoolOverXdotool,cands,flat,ydotoolPos,xdotoolPos,testHostKeyX11KeepsXdotoolFirst,cands,plainOnly,order,testDecideSubmitClearedNullProbeFallsClosedToCleared,decision,testDecideSubmitClearedEmptyInputMeansSubmitWorked,decision,testDecideSubmitClearedTextStillPresentMeansSubmitFailed,decision,testDecideSubmitClearedDifferentResidueIsTrusted,decision,testDecideSubmitClearedShortPromptDoesNotFalsePositive,decision
+    assert()
+    testOrderWithCache()
+    ordered()
+    testChatFocusHeuristic()
+    testVerifyFocusAfterOpen()
+    testPasteLandedInEditor()
+    testMergeUnique()
+    testBuildFocusOpenCursorFirst()
+    cmds()
+    testBuildFocusOpenAntigravityFirst()
+    cmds()
+    testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand()
+    cmds()
+    testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault()
+    defaults()
+    testSanitizeVscodeDropsUnsafeFocusOpenCache()
+    sanitized()
+    testBuildFocusInputUsesChatCommands()
+    cmds()
+    testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance()
+    cmds()
+    testVscodiumSubmitStillExposesWorkbenchFallback()
+    cmds()
+    testSanitizeCursorDiscardsTypeSubmit()
+    sanitized()
+    testSanitizeCursorPreservesNonTypeSubmit()
+    sanitized()
+    testSanitizeCursorDiscardsXdotoolSubmitOnWayland()
+    prev()
+    sanitized()
+    testSanitizeCursorDiscardsHostPlainReturn()
+    sanitized()
+    testSanitizeWindsurfStillDiscardsTypeSubmit()
+    sanitized()
+    testSanitizeIsIdempotent()
+    empty()
+    sanitized()
+    firstKey()
+    renderKey()
+    testHostKeyOrderCursorPrefersCtrlReturn()
+    cands()
+    flat()
+    testHostKeyOrderVscodeKeepsPlainReturnFirst()
+    cands()
+    testHostKeyOrderVscodiumPrefersCtrlReturn()
+    cands()
+    testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes()
+    cands()
+    testHostKeyOverrideReturnForcesPlainEvenOnCursor()
+    cands()
+    testHostKeyWaylandPrefersYdotoolOverXdotool()
+    cands()
+    flat()
+    ydotoolPos()
+    xdotoolPos()
+    testHostKeyX11KeepsXdotoolFirst()
+    cands()
+    plainOnly()
+    order()
+    testDecideSubmitClearedNullProbeFallsClosedToCleared()
+    decision()
+    testDecideSubmitClearedEmptyInputMeansSubmitWorked()
+    decision()
+    testDecideSubmitClearedTextStillPresentMeansSubmitFailed()
+    decision()
+    testDecideSubmitClearedDifferentResidueIsTrusted()
+    decision()
+    testDecideSubmitClearedShortPromptDoesNotFalsePositive()
+    decision()
   src/koruobserve/cli.py:
     e: _missing_observe_packages,_require_observe_runtime,_pip_install,_cmd_install,_cmd_up,_cmd_down,_cmd_status,_cmd_grid,_cmd_providers,observe_main
     _missing_observe_packages()
@@ -3517,75 +3931,19 @@ The constructor must be argument-l...
     e: build_gate_parser,gate_main
     build_gate_parser()
     gate_main(argv)
-  src/koru/autonomous.py:
-    e: StopSignalState,AutonomousUpContext,_try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_daemon_status_log_summary,_stop_reused_daemon,_start_or_reuse_daemon,_plugin_rows_log_summary,_plugin_status_decision,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_is_topology_enabled,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_select_and_log_cycle_profile,_resolve_effective_cycle_flags,_build_cycle_run_kwargs,_compute_cycle_sleep,_sleep,_run_autonomous_cycle,_setup_autonomous_env_vars,_restore_autonomous_env_vars,_run_autonomous_pre_checks,_maybe_run_interactive_onboarding,_build_and_log_startup_probe,_install_sigterm_interrupt_handler,_handle_autonomous_interrupt,_prepare_autonomous_startup_probe,_autonomous_context_resource_kwargs,_prepare_autonomous_up_context,_run_autonomous_up_loop,_action_up,_normalize_autonomous_argv,_configure_auto_mode_args,_apply_auto_pipeline_flags,_apply_replace_existing_flags,autonomous_main
-    StopSignalState:
-    AutonomousUpContext:
-    _try_os_injector_fallback(prompt)
-    _stdio_info(msg)
-    _daemon_activity_log(msg)
-    _allow_keyboard_autopilot_fallback()
-    _effective_cycle_autopilot_enabled(enabled)
-    _scan_while_waiting_input_enabled()
-    _effective_cycle_scan_enabled(enabled)
-    _resolve_autopilot_ide(cli_value)
-    _apply_agent_lane_environ(project;agent_lane)
-    _build_parser()
-    _ensure_init(project)
-    _current_koru_version()
-    _daemon_status_version(status)
-    _daemon_status_compatible(status)
-    _daemon_status_log_summary(status)
-    _stop_reused_daemon(client;socket_path)
-    _start_or_reuse_daemon()
-    _plugin_rows_log_summary(rows)
-    _plugin_status_decision(status;ide)
-    _status_has_autopilot_plugin(status;ide)
-    _wait_for_autopilot_plugin(client;ide)
-    _is_topology_enabled(project;key)
-    _run_command_check(project;check_id;command)
-    _create_diagnostic_ticket()
-    _clear_diagnostic_marker(state_dir;check_id)
-    _read_wup_health()
-    _run_idle_diagnostics()
-    _run_cycle()
-    _setup_autonomous_session(args)
-    _setup_autopilot_daemon(args;project)
-    _enable_autonomous_strict_plugin_policy(args)
-    _run_mcp_provision(project;stdio_format)
-    _setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
-    _run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
-    _unblock_queue_if_needed(project;stdio_format)
-    _restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
-    _handle_cycle_exit_conditions(args;queue_result;cycle;correlation_id)
-    _cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
-    _select_and_log_cycle_profile(args;auto_pipeline_state)
-    _resolve_effective_cycle_flags(args;profile)
-    _build_cycle_run_kwargs(args;profile)
-    _compute_cycle_sleep(args;loop_state;queue_result)
-    _sleep(seconds)
-    _run_autonomous_cycle()
-    _setup_autonomous_env_vars()
-    _restore_autonomous_env_vars(snapshot)
-    _run_autonomous_pre_checks(args;project;startup_probe;socket_path;autopilot_ide;client;correlation_id)
-    _maybe_run_interactive_onboarding(args)
-    _build_and_log_startup_probe(args;project)
-    _install_sigterm_interrupt_handler(args;stop_state)
-    _handle_autonomous_interrupt(args)
-    _prepare_autonomous_startup_probe(args;project)
-    _autonomous_context_resource_kwargs(resources)
-    _prepare_autonomous_up_context(args)
-    _run_autonomous_up_loop(context)
-    _action_up(args)
-    _normalize_autonomous_argv(argv)
-    _configure_auto_mode_args(argv;args;invoked_as_auto)
-    _apply_auto_pipeline_flags(args;invoked_as_auto)
-    _apply_replace_existing_flags(args;invoked_as_auto)
-    autonomous_main(argv)
   src/koru/ide_runtime.py:
     e: build_host_setup_report,detect_running_ides
     build_host_setup_report()
     detect_running_ides()
+  src/koru/autonomous_up.py:
+    e: StopSignalState,AutonomousUpContext,autonomous_context_resource_kwargs,prepare_autonomous_startup_probe,prepare_autonomous_up_context,run_autonomous_up_loop,action_up
+    StopSignalState:
+    AutonomousUpContext:
+    autonomous_context_resource_kwargs(resources)
+    prepare_autonomous_startup_probe(args;project)
+    prepare_autonomous_up_context(args)
+    run_autonomous_up_loop(context)
+    action_up(args)
   src/koru/cli_bootstrap.py:
     e: _build_parser,_bootstrap_main
     _build_parser()
@@ -3647,16 +4005,24 @@ The constructor must be argument-l...
   src/koru/cqrs/event_log_query.py:
     e: EventLogQueryService
     EventLogQueryService: __init__(1),recent(0)  # Provides simple history queries over an event store...
-  src/koru/autonomous_up.py:
-    e: StopSignalState,AutonomousUpContext,autonomous_context_resource_kwargs,prepare_autonomous_startup_probe,prepare_autonomous_up_context,run_autonomous_up_loop,action_up
-    StopSignalState:
-    AutonomousUpContext:
-    autonomous_context_resource_kwargs(resources)
-    prepare_autonomous_startup_probe(args;project)
-    prepare_autonomous_up_context(args)
-    run_autonomous_up_loop(context)
-    action_up(args)
   plugins/koru-autopilot-vscode/src/ides/cursor.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,focusInputCommandsBlocklist,preferCtrlSubmit,sanitizeProbeCache,blocked,cmd,cmd,focusOpenCommandsDefaults,trustFocusOpenCommand,n,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    focusInputCommandsBlocklist()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    blocked()
+    cmd()
+    cmd()
+    focusOpenCommandsDefaults()
+    trustFocusOpenCommand()
+    n()
+    trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-cursor/src/ides/cursor.ts:
     i: ../probe-ladder,./ide-strategy,./registry
     e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,focusInputCommandsBlocklist,preferCtrlSubmit,sanitizeProbeCache,blocked,cmd,cmd,focusOpenCommandsDefaults,trustFocusOpenCommand,n,trustFocusOpenWithoutEditorSnapshot
     detect()
@@ -3822,6 +4188,124 @@ The c...
     cmd()
     focusOpenCommandsDefaults()
     trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-shared/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-cursor/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-cursor/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  plugins/koru-autopilot-cursor/src/ack-payload.test.ts:
+    e: assert,testStripsEditorSnapshotsFromDiagnosticsRejected,slim,bytes,diag,rejected,first
+    assert()
+    testStripsEditorSnapshotsFromDiagnosticsRejected()
+    slim()
+    bytes()
+    diag()
+    rejected()
+    first()
+  plugins/koru-autopilot-cursor/src/dispatch-plan.test.ts:
+    i: ./dispatch-plan,./socketPath
+    e: assert,testShutdownPlan,plan,testUnknownTypePlan,plan,testSocketCandidatesPreferIdeInstanceBeforeSingleton,oldSocket,oldInstance,oldRuntime,candidates,testSocketCandidatesDoNotCrossIdeFallback,oldSocket,oldInstance,oldRuntime,candidates,testSocketCandidatesSeparateVscodeAndVscodium,oldSocket,oldInstance,oldRuntime,candidates,testSocketCandidatesOverrideIsStrict,candidates
+    assert()
+    testShutdownPlan()
+    plan()
+    testUnknownTypePlan()
+    plan()
+    testSocketCandidatesPreferIdeInstanceBeforeSingleton()
+    oldSocket()
+    oldInstance()
+    oldRuntime()
+    candidates()
+    testSocketCandidatesDoNotCrossIdeFallback()
+    oldSocket()
+    oldInstance()
+    oldRuntime()
+    candidates()
+    testSocketCandidatesSeparateVscodeAndVscodium()
+    oldSocket()
+    oldInstance()
+    oldRuntime()
+    candidates()
+    testSocketCandidatesOverrideIsStrict()
+    candidates()
+  src/koru/autonomous.py:
+    e: _try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_daemon_status_log_summary,_stop_reused_daemon,_start_or_reuse_daemon,_plugin_rows_log_summary,_plugin_status_decision,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_is_topology_enabled,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_select_and_log_cycle_profile,_resolve_effective_cycle_flags,_build_cycle_run_kwargs,_compute_cycle_sleep,_sleep,_run_autonomous_cycle,_setup_autonomous_env_vars,_restore_autonomous_env_vars,_run_autonomous_pre_checks,_maybe_run_interactive_onboarding,_build_and_log_startup_probe,_install_sigterm_interrupt_handler,_handle_autonomous_interrupt,_prepare_autonomous_startup_probe,_autonomous_context_resource_kwargs,_prepare_autonomous_up_context,_run_autonomous_up_loop,_action_up,_normalize_autonomous_argv,_configure_auto_mode_args,_apply_auto_pipeline_flags,_apply_replace_existing_flags,autonomous_main
+    _try_os_injector_fallback(prompt)
+    _stdio_info(msg)
+    _daemon_activity_log(msg)
+    _allow_keyboard_autopilot_fallback()
+    _effective_cycle_autopilot_enabled(enabled)
+    _scan_while_waiting_input_enabled()
+    _effective_cycle_scan_enabled(enabled)
+    _resolve_autopilot_ide(cli_value)
+    _apply_agent_lane_environ(project;agent_lane)
+    _build_parser()
+    _ensure_init(project)
+    _current_koru_version()
+    _daemon_status_version(status)
+    _daemon_status_compatible(status)
+    _daemon_status_log_summary(status)
+    _stop_reused_daemon(client;socket_path)
+    _start_or_reuse_daemon()
+    _plugin_rows_log_summary(rows)
+    _plugin_status_decision(status;ide)
+    _status_has_autopilot_plugin(status;ide)
+    _wait_for_autopilot_plugin(client;ide)
+    _is_topology_enabled(project;key)
+    _run_command_check(project;check_id;command)
+    _create_diagnostic_ticket()
+    _clear_diagnostic_marker(state_dir;check_id)
+    _read_wup_health()
+    _run_idle_diagnostics()
+    _run_cycle()
+    _setup_autonomous_session(args)
+    _setup_autopilot_daemon(args;project)
+    _enable_autonomous_strict_plugin_policy(args)
+    _run_mcp_provision(project;stdio_format)
+    _setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
+    _run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
+    _unblock_queue_if_needed(project;stdio_format)
+    _restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
+    _handle_cycle_exit_conditions(args;queue_result;cycle;correlation_id)
+    _cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+    _select_and_log_cycle_profile(args;auto_pipeline_state)
+    _resolve_effective_cycle_flags(args;profile)
+    _build_cycle_run_kwargs(args;profile)
+    _compute_cycle_sleep(args;loop_state;queue_result)
+    _sleep(seconds)
+    _run_autonomous_cycle()
+    _setup_autonomous_env_vars()
+    _restore_autonomous_env_vars(snapshot)
+    _run_autonomous_pre_checks(args;project;startup_probe;socket_path;autopilot_ide;client;correlation_id)
+    _maybe_run_interactive_onboarding(args)
+    _build_and_log_startup_probe(args;project)
+    _install_sigterm_interrupt_handler(args;stop_state)
+    _handle_autonomous_interrupt(args)
+    _prepare_autonomous_startup_probe(args;project)
+    _autonomous_context_resource_kwargs(resources)
+    _prepare_autonomous_up_context(args)
+    _run_autonomous_up_loop(context)
+    _action_up(args)
+    _normalize_autonomous_argv(argv)
+    _configure_auto_mode_args(argv;args;invoked_as_auto)
+    _apply_auto_pipeline_flags(args;invoked_as_auto)
+    _apply_replace_existing_flags(args;invoked_as_auto)
+    autonomous_main(argv)
   src/koruobserve/bootstrap.py:
     e: _config_has_v2_sections,ensure_observe_config,ensure_mesh_key
     _config_has_v2_sections(config)
@@ -4006,6 +4490,71 @@ The c...
     testSubmitCommandsGenericFallback()
     cmds()
     run()
+  plugins/koru-autopilot-cursor/src/chat-history-watcher.test.ts:
+    i: assert
+    e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
+    buildSqliteOutput()
+    testParseCursorBubbleRowsHandlesMultilineText()
+    stdout()
+    rows()
+    testWatcherEmitsNewBubblesAndAdvancesCursor()
+    call()
+    fakeRunner()
+    r()
+    watcher()
+    testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse()
+    watcher()
+    testWatcherSwallowsAdapterErrors()
+    watcher()
+    rows()
+    testUnsupportedAdapterEmitsNothing()
+    adapter()
+    rows()
+    testBuildAdapterForIdeReturnsCorrectKind()
+    testParseVSCodeChatIndexExtractsAssistantResponses()
+    payload()
+    allRows()
+    partialRows()
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage()
+    payload()
+    rows()
+    allRows()
+    testWatcherSkipsPollingWhenStoreUnavailable()
+    polls()
+    watcher()
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor()
+    adapter()
+    fakeRunner()
+    rows()
+    sqlArg()
+    testCursorBubbleAdapterLatestBubbleRowidParsesMax()
+    adapter()
+    fakeRunner()
+    rowid()
+    adapterEmpty()
+    emptyRunner()
+    rowidEmpty()
+    main()
+  src/koru/autonomous_operator.py:
+    e: run_mcp_provision,_ensure_trusted_publisher_for_plugin,_extension_active_in_latest_session,_live_plugin_version,_detect_stale_extension_host,_plugin_status_reason,_plugin_reason_requires_reload,_plugin_blocker_line,_reload_retry_wait_seconds,_report_unsupported_plugin_result,_emit_reload_required_lines,_prepare_plugin_wait,_force_reload_if_extension_host_stale,_retry_plugin_wait_after_reload,_wait_for_plugin_connection,setup_autopilot_plugin,run_operator_pipeline,unblock_queue_if_needed
+    run_mcp_provision(project;stdio_format)
+    _ensure_trusted_publisher_for_plugin(autopilot_ide)
+    _extension_active_in_latest_session(autopilot_ide)
+    _live_plugin_version(client;autopilot_ide)
+    _detect_stale_extension_host(autopilot_ide;client)
+    _plugin_status_reason(client;autopilot_ide)
+    _plugin_reason_requires_reload(reason)
+    _plugin_blocker_line(reason;autopilot_ide)
+    _reload_retry_wait_seconds(base_wait_seconds)
+    _report_unsupported_plugin_result(autopilot_ide)
+    _emit_reload_required_lines(autopilot_ide)
+    _prepare_plugin_wait(args;autopilot_ide;plugin_install_status)
+    _force_reload_if_extension_host_stale(args;autopilot_ide;wait_seconds)
+    _retry_plugin_wait_after_reload(args;autopilot_ide;wait_seconds)
+    _wait_for_plugin_connection(args;autopilot_ide;plugin_install_status;reload_after_install)
+    setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
+    run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
+    unblock_queue_if_needed(project;stdio_format)
   src/koruapi/mcp.py:
     e: mcp_main
     mcp_main(argv)
@@ -4161,6 +4710,33 @@ Subclasses are **pure data + thin...
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
+  plugins/koru-autopilot-cursor/src/step-decisions.test.ts:
+    i: ./ide-control-strategy
+    e: assert,testReadVerifySubmitPrefersNewSetting,testShouldVerifyPostSubmitAllPluginIdes,testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled,testIdeStrategiesAreSeparated,testShouldVerifyPrePasteBusy,testDecideBusyInputAction,testInterpretPostSubmitProbeRetry,result,testInterpretPostSubmitProbeStrictEmpty,result,inconclusive,empty
+    assert()
+    testReadVerifySubmitPrefersNewSetting()
+    testShouldVerifyPostSubmitAllPluginIdes()
+    testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled()
+    testIdeStrategiesAreSeparated()
+    testShouldVerifyPrePasteBusy()
+    testDecideBusyInputAction()
+    testInterpretPostSubmitProbeRetry()
+    result()
+    testInterpretPostSubmitProbeStrictEmpty()
+    result()
+    inconclusive()
+    empty()
+  plugins/koru-autopilot-cursor/src/host-click-submit.test.ts:
+    e: assert,testParseXdotoolGeometryShell,geometry,testRejectsTinyOrIncompleteGeometry,testBottomRightSubmitPoint,point
+    assert()
+    testParseXdotoolGeometryShell()
+    geometry()
+    testRejectsTinyOrIncompleteGeometry()
+    testBottomRightSubmitPoint()
+    point()
+  src/koru/autonomous_cycle_bridge.py:
+    e: run_cycle_with_compat
+    run_cycle_with_compat(kwargs)
   src/koruobserve/paths.py:
     e: runtime_dir,pidfile,logfile,state_file
     runtime_dir(project)
@@ -4279,7 +4855,6 @@ Th...
   regix.yaml:
   wup-shell-only.yaml:
   output.txt:
-  planfile.yaml:
   Makefile:
   coverage.json:
   koru.yaml:
@@ -4312,6 +4887,7 @@ Th...
   docs/llm-tools/planfile/install.sh:
   docs/llm-tools/goal/install.sh:
   docs/llm-tools/redup/install.sh:
+  docs/llm-tools/rebuild/install.sh:
   docs/llm-tools/regix/install.sh:
   docs/llm-tools/cursor/install.sh:
   docs/llm-tools/doql/install.sh:
@@ -4547,6 +5123,12 @@ Th...
     e: gradlePluginPortal,mavenCentral
     gradlePluginPortal()
     mavenCentral()
+  plugins/koru-autopilot-jetbrains/build.gradle.kts:
+    e: jvmToolchain,mavenCentral,defaultRepositories,bundledPlugin
+    jvmToolchain()
+    mavenCentral()
+    defaultRepositories()
+    bundledPlugin()
   plugins/koru-autopilot-jetbrains/gradle.properties:
   plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt:
     e: KoruAutopilotService,reconnect,disconnect,sendHello,startReadLoop,withContext,when,withContext,when
@@ -4636,13 +5218,29 @@ Th...
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-scenarios/cli-koru-live.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  planfile.yaml:
   wup.yaml:
-  docs/llm-tools/rebuild/install.sh:
-  src/koruide/plugin_version.py:
+  package.json:
+  plugins/koru-autopilot-shared/package.json:
+  plugins/koru-autopilot-shared/src/index.ts:
+  plugins/koru-autopilot-cursor/koru.yaml:
+  plugins/koru-autopilot-shared/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-cursor/tsconfig.json:
+  plugins/koru-autopilot-cursor/package.json:
+  plugins/koru-autopilot-cursor/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-cursor/src/ides/index.ts:
+  plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
   plugins/koru-autopilot-vscode/package.json:
-  plugins/koru-autopilot-jetbrains/build.gradle.kts:
-    e: jvmToolchain,mavenCentral,defaultRepositories,bundledPlugin
-    jvmToolchain()
-    mavenCentral()
-    defaultRepositories()
-    bundledPlugin()
+  src/koruide/plugin_version.py:

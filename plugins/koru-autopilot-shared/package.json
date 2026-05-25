@@ -1,0 +1,10 @@
+{
+  "name": "@koru/autopilot-shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared stable utilities (NDJSON protocol envelopes, socket path resolution, host-OS keyboard/click injection) used by every per-IDE koru autopilot VSIX. Code lands in each plugin's src/_shared/ via scripts/sync-plugin-shared.py at prebuild time so each plugin's VSIX remains fully self-contained and a regression in one plugin cannot leak into another by sharing a runtime module.",
+  "license": "Apache-2.0",
+  "files": [
+    "src/**/*"
+  ]
+}

@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-05-11 18:52:04
+# Generated: 2026-05-25 17:01:38
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -16,12 +16,14 @@ project:
   name: koru
   type:
   - python
+  - nodejs
   description: Closed-loop automation across semcod/* repositories.
 versioning:
   strategy: semver
   files:
   - VERSION
   - pyproject.toml:version
+  - package.json:version
   - venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__
   bump_rules:
     patch: 10
@@ -223,17 +225,17 @@ git:
 strategies:
   python:
     test: make test-python-parallel
-    parallel_test_command: make test-parallel
-    test_jobs: auto
-    pytest_workers: auto
-    pytest_distribution: loadfile
-    timeout_test: 180
     build: python -m build
     publish: twine upload dist/koru-{version}*
     publish_enabled: true
     dependencies:
       file: uv.lock
       lock: uv lock
+    parallel_test_command: make test-parallel
+    test_jobs: auto
+    pytest_workers: auto
+    pytest_distribution: loadfile
+    timeout_test: 180
   nodejs:
     test: npm test
     build: npm run build

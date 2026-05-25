@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+plugins/koru-autopilot-cursor/.vscodeignore
 .code2llm_cache/
 plugins/koru-autopilot-vscode/.vscodeignore
 node_modules

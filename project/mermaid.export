@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.03s
+%% generated in 0.02s
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -23,9 +23,75 @@ flowchart TD
         koru__autonomy__events___same_prompt["_same_prompt"]
         koru__autonomy__events__normalize_chat_events{{normalize_chat_events CC=16}}
     end
+    subgraph plugins__koru_autopilot_cursor
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__execFile{{execFile CC=18}}
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__storeAvailable["storeAvailable"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__fetchNewer["fetchNewer"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__lastRowid["lastRowid"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__latestBubbleRowid["latestBubbleRowid"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__exec["exec"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__r["r"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__n["n"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__parseCursorBubbleRows("parseCursorBubbleRows CC=11")
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__recSep("recSep CC=8")
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__fldSep("fldSep CC=8")
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__fields["fields"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__rowid["rowid"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__type["type"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__keyParts["keyParts"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__conversationId["conversationId"]
+        plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__CursorBubbleAdapter__bubbleId["bubbleId"]
+        plugins__koru_autopilot_cursor__src__dispatch_plan__planDispatch["planDispatch"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__execFile["execFile"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__storeAvailable["storeAvailable"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__fetchNewer["fetchNewer"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__exec["exec"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__r["r"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractResponsesFromSession("extractResponsesFromSession CC=10")
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__responses("responses CC=9")
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__resp["resp"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__ts["ts"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__text["text"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__safeParseJson["safeParseJson"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__trimmed["trimmed"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractEntriesMap["extractEntriesMap"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__entriesRaw["entriesRaw"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseAfterCursor["parseAfterCursor"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex["parseVSCodeChatIndex"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__entries["entries"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__after["after"]
+        plugins__koru_autopilot_cursor__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractMessageText["extractMessageText"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__parseXdotoolGeometryShell["parseXdotoolGeometryShell"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__match["match"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__x["x"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__y["y"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__width["width"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__height["height"]
+        plugins__koru_autopilot_cursor__src__host_click_submit__bottomRightSubmitPoint["bottomRightSubmitPoint"]
+        plugins__koru_autopilot_cursor__src__chat_history_paths__ideUserDir["ideUserDir"]
+        plugins__koru_autopilot_cursor__src__chat_history_paths__home["home"]
+        plugins__koru_autopilot_cursor__src__chat_history_paths__name["name"]
+        plugins__koru_autopilot_cursor__src__chat_history_paths__appdata["appdata"]
+        plugins__koru_autopilot_cursor__src__chat_history_paths__defaultGlobalStateDbPath["defaultGlobalStateDbPath"]
+        plugins__koru_autopilot_cursor__src__ide_control_strategy__ideControlStrategy["ideControlStrategy"]
+        plugins__koru_autopilot_cursor__src__ide_control_strategy__key["key"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__currentCursor["currentCursor"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__adapterDescription["adapterDescription"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__setCursor["setCursor"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__start["start"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__tick["tick"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__stop["stop"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__clearInterval["clearInterval"]
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__pollOnce("pollOnce CC=10")
+        plugins__koru_autopilot_cursor__src__chat_history_watcher__ChatHistoryWatcher__cursorAdvances["cursorAdvances"]
+    end
     subgraph plugins__koru_autopilot_jetbrains
         plugins__koru_autopilot_jetbrains__settings__gradle__gradlePluginPortal["gradlePluginPortal"]
         plugins__koru_autopilot_jetbrains__settings__gradle__mavenCentral["mavenCentral"]
+        plugins__koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
+        plugins__koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
+        plugins__koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
+        plugins__koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__reconnect["reconnect"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__disconnect["disconnect"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__sendHello["sendHello"]
@@ -34,10 +100,59 @@ flowchart TD
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__when["when"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__openAiPanel["openAiPanel"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__pasteViaClipboard["pasteViaClipboard"]
-        plugins__koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
-        plugins__koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
-        plugins__koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
+    end
+    subgraph plugins__koru_autopilot_shared
+        plugins__koru_autopilot_shared__src__dispatch_plan__planDispatch["planDispatch"]
+        plugins__koru_autopilot_shared__src__chat_history_paths__ideUserDir["ideUserDir"]
+        plugins__koru_autopilot_shared__src__chat_history_paths__home["home"]
+        plugins__koru_autopilot_shared__src__chat_history_paths__name["name"]
+        plugins__koru_autopilot_shared__src__chat_history_paths__appdata["appdata"]
+        plugins__koru_autopilot_shared__src__chat_history_paths__defaultGlobalStateDbPath["defaultGlobalStateDbPath"]
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_ACK_WIRE_BYTES("MAX_ACK_WIRE_BYTES CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_TRACE_STEPS("MAX_TRACE_STEPS CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_TRACE_ATTEMPTS("MAX_TRACE_ATTEMPTS CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_SHORT_FIELD("MAX_SHORT_FIELD CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_MESSAGE_FIELD("MAX_MESSAGE_FIELD CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_FOCUS_OPEN_CANDIDATES("MAX_FOCUS_OPEN_CANDIDATES CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__MAX_REJECTED_WIRE("MAX_REJECTED_WIRE CC=8")
+        plugins__koru_autopilot_shared__src__ack_payload__clipString["clipString"]
+        plugins__koru_autopilot_shared__src__ack_payload__slimTraceStep("slimTraceStep CC=12")
+        plugins__koru_autopilot_shared__src__ack_payload__step["step"]
+        plugins__koru_autopilot_shared__src__ack_payload__command["command"]
+        plugins__koru_autopilot_shared__src__ack_payload__reason["reason"]
+        plugins__koru_autopilot_shared__src__ack_payload__detail["detail"]
+        plugins__koru_autopilot_shared__src__ack_payload__slimOperationTrace["slimOperationTrace"]
+        plugins__koru_autopilot_shared__src__ack_payload__slimRejectedEntry["slimRejectedEntry"]
+        plugins__koru_autopilot_shared__src__ack_payload__entry["entry"]
+        plugins__koru_autopilot_shared__src__ack_payload__slimDiagnostics{{slimDiagnostics CC=16}}
+        plugins__koru_autopilot_shared__src__ack_payload__diag["diag"]
+        plugins__koru_autopilot_shared__src__ack_payload__slimSubmitAttempts["slimSubmitAttempts"]
+        plugins__koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope("sanitizeOutboundEnvelope CC=12")
+        plugins__koru_autopilot_shared__src__ack_payload__type["type"]
+        plugins__koru_autopilot_shared__src__ack_payload__slim["slim"]
+        plugins__koru_autopilot_shared__src__ack_payload__bytes["bytes"]
+        plugins__koru_autopilot_shared__src__ack_payload__measureEnvelopeBytes["measureEnvelopeBytes"]
+        plugins__koru_autopilot_shared__src__host_click_submit__parseXdotoolGeometryShell["parseXdotoolGeometryShell"]
+        plugins__koru_autopilot_shared__src__host_click_submit__match["match"]
+        plugins__koru_autopilot_shared__src__host_click_submit__x["x"]
+        plugins__koru_autopilot_shared__src__host_click_submit__y["y"]
+        plugins__koru_autopilot_shared__src__host_click_submit__width["width"]
+        plugins__koru_autopilot_shared__src__host_click_submit__height["height"]
+        plugins__koru_autopilot_shared__src__host_click_submit__bottomRightSubmitPoint["bottomRightSubmitPoint"]
+        plugins__koru_autopilot_shared__src__socketPath__slugInstance["slugInstance"]
+        plugins__koru_autopilot_shared__src__socketPath__cleaned["cleaned"]
+        plugins__koru_autopilot_shared__src__socketPath__defaultSocketPathFromEnv("defaultSocketPathFromEnv CC=9")
+        plugins__koru_autopilot_shared__src__socketPath__explicit["explicit"]
+        plugins__koru_autopilot_shared__src__socketPath__inst["inst"]
+        plugins__koru_autopilot_shared__src__socketPath__name["name"]
+        plugins__koru_autopilot_shared__src__socketPath__xdg["xdg"]
+        plugins__koru_autopilot_shared__src__socketPath__uid["uid"]
+        plugins__koru_autopilot_shared__src__socketPath__stem["stem"]
+        plugins__koru_autopilot_shared__src__socketPath__defaultSocketCandidates["defaultSocketCandidates"]
+        plugins__koru_autopilot_shared__src__socketPath__push["push"]
+        plugins__koru_autopilot_shared__src__socketPath__r["r"]
+        plugins__koru_autopilot_shared__src__socketPath__socketCandidatesFromEnv["socketCandidatesFromEnv"]
+        plugins__koru_autopilot_shared__src__socketPath__ov["ov"]
     end
     subgraph plugins__koru_autopilot_vscode
         plugins__koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
@@ -183,6 +298,10 @@ flowchart TD
         scripts__planfile_sync_todo__do_from_todo("do_from_todo CC=10")
         scripts__planfile_sync_todo___llm_stub["_llm_stub"]
         scripts__planfile_sync_todo__main["main"]
+    end
+    subgraph scripts__sync_plugin_shared
+        scripts__sync_plugin_shared___sync_one["_sync_one"]
+        scripts__sync_plugin_shared__main["main"]
     end
     subgraph scripts__sync_vscode_plugin_version
         scripts__sync_vscode_plugin_version__get_plugin_version_from_source["get_plugin_version_from_source"]
@@ -593,6 +712,17 @@ flowchart TD
         src__koruos__strategies__registry__get_os_strategy["get_os_strategy"]
         src__koruos__strategies__registry__list_os_strategy_ids["list_os_strategy_ids"]
         src__koruos__strategies__registry__resolve_active_os_strategy["resolve_active_os_strategy"]
+        src__koruos__strategies__wayland_linux___run["_run"]
+        src__koruos__strategies__wayland_linux___scan_for_key["_scan_for_key"]
+        src__koruos__strategies__wayland_linux___gnome_compositor["_gnome_compositor"]
+        src__koruos__strategies__wayland_linux___prefer_ydotool["_prefer_ydotool"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__matches_current_environment["matches_current_environment"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__capabilities["capabilities"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__focus_window["focus_window"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys("inject_keys CC=9")
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___focus_via_wmctrl["_focus_via_wmctrl"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype("_inject_via_wtype CC=9")
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_ydotool["_inject_via_ydotool"]
         src__koruos__strategies__x11_linux___run["_run"]
         src__koruos__strategies__x11_linux__X11LinuxStrategy__matches_current_environment["matches_current_environment"]
         src__koruos__strategies__x11_linux__X11LinuxStrategy__capabilities["capabilities"]
@@ -610,17 +740,6 @@ flowchart TD
         src__koruos__strategies__windows__WindowsStrategy__capabilities["capabilities"]
         src__koruos__strategies__windows__WindowsStrategy__focus_window["focus_window"]
         src__koruos__strategies__windows__WindowsStrategy__inject_keys["inject_keys"]
-        src__koruos__strategies__wayland_linux___run["_run"]
-        src__koruos__strategies__wayland_linux___scan_for_key["_scan_for_key"]
-        src__koruos__strategies__wayland_linux___gnome_compositor["_gnome_compositor"]
-        src__koruos__strategies__wayland_linux___prefer_ydotool["_prefer_ydotool"]
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__matches_current_environment["matches_current_environment"]
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__capabilities["capabilities"]
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__focus_window["focus_window"]
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys("inject_keys CC=9")
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___focus_via_wmctrl["_focus_via_wmctrl"]
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype("_inject_via_wtype CC=9")
-        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_ydotool["_inject_via_ydotool"]
     end
     subgraph src__koruvision
         src__koruvision__capture_probe__python_can_capture["python_can_capture"]
@@ -689,7 +808,7 @@ flowchart TD
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___run_vallm_check
     services__healing_webhook__app___execute_planfile_create --> services__healing_webhook__app___extract_ticket_id_from_stdout
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___enrich_ticket_with_vallm
-    services__healing_webhook__app__create_planfile_ticket --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__next
+    services__healing_webhook__app__create_planfile_ticket --> plugins__koru_autopilot_cursor__src__extension__AutopilotBridge__next
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___build_planfile_command
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___execute_planfile_create
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__ticket_builder__build_ticket_payload
@@ -716,6 +835,9 @@ flowchart TD
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__create_planfile_ticket
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_improve
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_gate
+    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___format_paths
+    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___default_acceptance
+    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___reproduction_for
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__logfile
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__runtime_dir
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__pidfile
@@ -800,11 +922,17 @@ flowchart TD
     src__koruobserve__cli_parser__build_observe_parser --> src__koruobserve__cli_parser___add_subproject
     src__koruobserve__cli_parser__build_observe_parser --> src__koruobserve__cli_parser___register_up_arguments
     src__koruos__strategies__base__OsStrategy____repr__ --> plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__CursorBubbleAdapter__type
-    src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool --> src__koruos__strategies__x11_linux___run
-    src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_wmctrl --> src__koruos__strategies__x11_linux___run
+    src__koruos__strategies__wayland_linux___prefer_ydotool --> src__koruos__strategies__wayland_linux___gnome_compositor
+    src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys --> src__koruos__strategies__wayland_linux___prefer_ydotool
+    src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___focus_via_wmctrl --> src__koruos__strategies__wayland_linux___run
+    src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype --> src__koruos__strategies__wayland_linux___run
+    src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_ydotool --> src__koruos__strategies__wayland_linux___scan_for_key
+    src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_ydotool --> src__koruos__strategies__wayland_linux___run
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool --> src__koruos__strategies__wayland_linux___run
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_wmctrl --> src__koruos__strategies__wayland_linux___run
     src__koruos__strategies__x11_linux__X11LinuxStrategy___inject_via_xdotool --> src__koru__wizard__gui__static__wizard__list
-    src__koruos__strategies__x11_linux__X11LinuxStrategy___inject_via_xdotool --> src__koruos__strategies__x11_linux___run
-    src__koruos__strategies__darwin__DarwinStrategy__focus_window --> src__koruos__strategies__x11_linux___run
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___inject_via_xdotool --> src__koruos__strategies__wayland_linux___run
+    src__koruos__strategies__darwin__DarwinStrategy__focus_window --> src__koruos__strategies__wayland_linux___run
     src__korudsl__cli___build_parser --> src__korudsl__cli___cli_version
     src__korudsl__cli__main --> src__korudsl__cli___read_input
     src__korudsl__cli__main --> src__korudsl__transform__library_from_any
@@ -833,7 +961,7 @@ flowchart TD
     src__korudsl__library__library_to_dsl --> src__korudsl__library___emit_goals
     src__koruapi__runtime_insights___classify_process --> src__koruapi__runtime_insights___looks_project_related
     src__koruapi__runtime_insights___active_tools --> src__koruapi__runtime_insights___classify_process
-    src__koruapi__runtime_insights___active_tools --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__next
+    src__koruapi__runtime_insights___active_tools --> plugins__koru_autopilot_cursor__src__extension__AutopilotBridge__next
     src__koruapi__runtime_insights___top_processes --> src__koruapi__runtime_insights___classify_process
     src__koruapi__runtime_insights___top_processes --> src__koruapi__runtime_insights___looks_project_related
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koruapi__runtime_insights___run_ps
@@ -923,7 +1051,7 @@ flowchart TD
     src__koruapi__dashboard_tickets__update_ticket_from_dashboard --> src__koruapi__dashboard_tickets___write_sprint_file
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___find_ticket_in_sprints
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koru__wizard__gui__static__wizard__list
-    src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__next
+    src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> plugins__koru_autopilot_cursor__src__extension__AutopilotBridge__next
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___append_dashboard_history
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___write_sprint_file
     src__koruapi__dashboard_runtime___interface_runtime_payload --> src__koru__interface_registry__iter_interfaces
@@ -1184,7 +1312,7 @@ flowchart TD
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket___websockets_missing
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket__obs_url
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket__obs_password
-    src__koruvision__providers__obs_websocket___with_obs_connection --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect
+    src__koruvision__providers__obs_websocket___with_obs_connection --> plugins__koru_autopilot_cursor__src__extension__AutopilotBridge__connect
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket___obs_auth
     src__koruvision__providers__obs_websocket__probe_obs_reachable --> src__koruvision__providers__obs_websocket___websockets_missing
     src__koruvision__providers__obs_websocket__probe_obs_reachable --> src__koruvision__providers__obs_websocket___obs_request
@@ -1275,17 +1403,8 @@ flowchart TD
     src__korumesh__store_persistence__load_recent_envelopes --> src__koru__wizard__gui__static__wizard__list
     src__korumesh__store_persistence__load_recent_envelopes --> src__korumesh__codec__envelope_from_wire
     src__korumesh__cli__mesh_main --> scripts__koru_soak_monitor__print
-    src__korumesh__cli__mesh_main --> src__korumesh__cli_commands__mesh_init
-    src__korumesh__cli__mesh_main --> src__korumesh__keys__load_mesh_key
-    src__korumesh__cli__mesh_main --> src__korumesh__cli_commands__mesh_relay
-    src__korumesh__cli__mesh_main --> src__korumesh__cli_commands__mesh_publish
-    src__korumesh__cli__mesh_main --> src__korumesh__cli_parser__build_mesh_parser
-    src__korumesh__envelope__sign_envelope --> src__korumesh__envelope___canonical_header
-    src__korumesh__envelope__verify_envelope --> src__korumesh__envelope__sign_envelope
-    src__korumesh__transport___relay_client --> src__korumesh__codec__envelope_to_wire
-    src__korumesh__transport___relay_client --> src__korumesh__codec__envelope_from_wire
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koruide__plugin_installer___reassert_extension_extra,src__koru__autonomous_cycle_orchestrator___handle_autopilot_phase,src__koru__scan__run_scan,src__koru__autonomous_loop_runner___blocked_interface_action_lines,src__koru__autonomous_loop_runner___quick_action_lines,src__koru__self_control___install_manager_checks,src__koru__autonomous_cycle_skip_conditions___add_label_to_ticket_yaml_text,src__koru__autonomy__decision_trace__classify_skip_code,koru__autonomy__events__normalize_chat_events,src__koru__autonomy__code2llm_discovery___backfill_existing_dedupe_keys,src__koru__autonomy__code2llm_discovery___apply_planfile_ticket_items,src__koru__autonomy__cycle_trace__decision_next_step_hint,plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__execFile,plugins__koru_autopilot_vscode__src__ack_payload__slimDiagnostics,plugins__koru_autopilot_vscode__src__ides__cursor__test__testProbeCacheSanitizationForCursor highCC
-    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets___build_ticket_scaffold,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config___dashboard_config_request_kwargs medCC
+    class src__koruide__plugin_installer___reassert_extension_extra,src__koru__autonomous_cycle_orchestrator___handle_autopilot_phase,src__koru__scan__run_scan,src__koru__autonomous_loop_runner___blocked_interface_action_lines,src__koru__autonomous_loop_runner___quick_action_lines,src__koru__self_control___install_manager_checks,src__koru__autonomous_cycle_skip_conditions___add_label_to_ticket_yaml_text,src__koru__autonomy__decision_trace__classify_skip_code,koru__autonomy__events__normalize_chat_events,src__koru__autonomy__code2llm_discovery___backfill_existing_dedupe_keys,src__koru__autonomy__code2llm_discovery___apply_planfile_ticket_items,src__koru__autonomy__cycle_trace__decision_next_step_hint,plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__execFile,plugins__koru_autopilot_vscode__src__ack_payload__slimDiagnostics,plugins__koru_autopilot_cursor__src__cursor_bubble_adapter__execFile,plugins__koru_autopilot_shared__src__ack_payload__slimDiagnostics,plugins__koru_autopilot_cursor__src__ack_payload__slimDiagnostics,plugins__koru_autopilot_cursor__src__ides__cursor__test__testProbeCacheSanitizationForCursor,plugins__koru_autopilot_vscode__src__ides__cursor__test__testProbeCacheSanitizationForCursor highCC
+    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype,src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets___build_ticket_scaffold,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard medCC

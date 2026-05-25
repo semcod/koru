@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.270;
+  version: 0.1.272;
 }
 
 dependencies {
@@ -51,6 +51,11 @@ workflow[name="test-api-parallel"] {
   step-5: run cmd=tests/test_dashboard_topology_post.py \;
   step-6: run cmd=tests/test_mcp_server.py \;
   step-7: run cmd=$(PYTEST_ARGS);
+}
+
+workflow[name="sync-plugin-version"] {
+  trigger: manual;
+  step-1: run cmd=python3 scripts/sync-vscode-plugin-version.py;
 }
 
 workflow[name="default"] {
