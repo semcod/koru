@@ -25,6 +25,13 @@ class ExistingManagedProcess:
     cwd: Path | None = None
 
 
+@dataclass(frozen=True)
+class _PsRow:
+    pid: int
+    ppid: int
+    command: str
+
+
 def command_project(command: str) -> Path | None:
     parts = command.split()
     for idx, part in enumerate(parts):
@@ -66,6 +73,46 @@ def ancestor_pids(pid: int) -> set[int]:
     return ancestors
 
 
+def _parse_ps_row(raw_line: str) -> _PsRow | None:
+    line = raw_line.strip()
+    if not line:
+        return None
+    pid_text, _, rest = line.partition(" ")
+    ppid_text, _, command = rest.strip().partition(" ")
+    try:
+        return _PsRow(pid=int(pid_text), ppid=int(ppid_text), command=command)
+    except ValueError:
+        return None
+
+
+def _ps_rows(stdout: str) -> list[_PsRow]:
+    rows: list[_PsRow] = []
+    for raw_line in stdout.splitlines():
+        row = _parse_ps_row(raw_line)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def _autonomous_process_match(
+    row: _PsRow,
+    project: Path,
+    *,
+    any_project: bool,
+    excluded: set[int],
+) -> ExistingAutonomousProcess | None:
+    if row.pid in excluded:
+        return None
+    if not looks_like_autonomous_up_command(row.command):
+        return None
+
+    cwd = process_cwd(row.pid)
+    cmd_project = command_project(row.command)
+    if any_project or cwd == project or cmd_project == project:
+        return ExistingAutonomousProcess(pid=row.pid, command=row.command, cwd=cwd)
+    return None
+
+
 def find_existing_autonomous_processes(
     project: Path,
     *,
@@ -87,26 +134,15 @@ def find_existing_autonomous_processes(
     excluded = {current_pid, *ancestor_pids(current_pid)}
     project = project.resolve()
     matches: list[ExistingAutonomousProcess] = []
-    for raw_line in result.stdout.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        pid_text, _, rest = line.partition(" ")
-        ppid_text, _, command = rest.strip().partition(" ")
-        try:
-            pid = int(pid_text)
-            int(ppid_text)
-        except ValueError:
-            continue
-        if pid in excluded:
-            continue
-        if not looks_like_autonomous_up_command(command):
-            continue
-
-        cwd = process_cwd(pid)
-        cmd_project = command_project(command)
-        if any_project or cwd == project or cmd_project == project:
-            matches.append(ExistingAutonomousProcess(pid=pid, command=command, cwd=cwd))
+    for row in _ps_rows(result.stdout):
+        match = _autonomous_process_match(
+            row,
+            project,
+            any_project=any_project,
+            excluded=excluded,
+        )
+        if match is not None:
+            matches.append(match)
     return matches
 
 

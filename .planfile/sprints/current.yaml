@@ -5621,10 +5621,12 @@ sprint:
 
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
-        attempt: 0
+        attempt: 1
+        finished_at: '2026-05-26T14:33:53.047632Z'
+        last_error: <short failure reason>
         max_attempts: 1
         queue: default
-        state: ready
+        state: failed
       executor:
         kind: human
         mode: interactive
@@ -5643,21 +5645,44 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T13:26:29.898040+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T14:07:10.014903+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-26T14:33:50.933538+00:00'
+      - action: update
+        changes:
+        - execution
+        - inputs
+        - outputs
+        execution_state: waiting_input
+        previous_execution_state: done
+        source: planfile.store
+        timestamp: '2026-05-26T14:33:52.034788+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: failed
+        previous_execution_state: waiting_input
+        source: planfile.store
+        timestamp: '2026-05-26T14:33:53.081511+00:00'
       id: STARTER-312
       inputs:
         api_headers: {}
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: 'code2llm reports `God Function: find_existing_autonomous_processes`
-          in `src/koru/autonomous_process_guard.py:69`.
-
-
-          Function ''find_existing_autonomous_processes'' is oversized: CC=11, fan-out=15,
-          mutations=21.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
+        prompt: <exact input needed>
       labels:
       - koru
       - nl-task
@@ -5668,7 +5693,8 @@ sprint:
       name: 'Address code smell: God Function: find_existing_autonomous_processes'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - <what you verified>
       priority: high
       source:
         context:
@@ -5711,9 +5737,9 @@ sprint:
         timestamp: '2026-05-26T13:26:29.898040+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T13:26:29.898040+00:00'
+      updated_at: '2026-05-26T14:33:53.081482+00:00'
     STARTER-313:
       blocked_by: []
       blocks: []
