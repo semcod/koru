@@ -143,6 +143,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update .tmp/code2llm-plugins/flow.mmd
 - ... and 19 more files
 
+## [0.1.288] - 2026-05-26
+
+### Docs
+- Update .tmp/code2llm-plugins/README.md
+- Update .tmp/code2llm-plugins/context.md
+- Update README.md
+- Update docs/autopilot-daemon-runtime.md
+
+### Test
+- Update tests/test_autonomous_daemon_metadata.py
+- Update tests/test_autonomous_loop_runner.py
+- Update tests/test_autopilot_commands_status.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_command_picker.py
+- Update tests/test_koruide_daemon_handlers_hello.py
+- Update tests/test_plugin_router.py
+
+### Other
+- Update .koru/project.json
+- Update .tmp/code2llm-plugins/analysis.toon.yaml
+- Update .tmp/code2llm-plugins/calls.mmd
+- Update .tmp/code2llm-plugins/calls.png
+- Update .tmp/code2llm-plugins/calls.toon.yaml
+- Update .tmp/code2llm-plugins/calls.yaml
+- Update .tmp/code2llm-plugins/compact_flow.mmd
+- Update .tmp/code2llm-plugins/compact_flow.png
+- Update .tmp/code2llm-plugins/evolution.toon.yaml
+- Update .tmp/code2llm-plugins/flow.mmd
+- ... and 19 more files
+
 ## [0.1.287] - 2026-05-26
 
 ### Docs
