@@ -1239,7 +1239,7 @@ export class SharedAutopilotBridge extends SharedAutopilotBridgeFocus implements
     if (registered) return registered;
 
     const typeFallback = await this._tryTypeSubmitFallbacks(verifyText, hostVerifyEnabled);
-    if (typeFallback) return typeFallback;
+    if (typeFallback?.ok) return typeFallback;
 
     let preservedFocusHostKey: SubmitOutcome | undefined;
     if (

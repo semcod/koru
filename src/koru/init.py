@@ -286,6 +286,23 @@ class InitReport:
         return self._init_summary()
 
 
+@dataclass(frozen=True)
+class _InitPipelineImport:
+    tickets_imported: int
+    used_starter: bool
+
+
+@dataclass(frozen=True)
+class _InitArtifacts:
+    policy_written: bool
+    gitignore_updated: bool
+    agent_lane: str | None
+    agent_lane_files_written: bool
+    autopilot_host_setup_written: bool
+    koru_project_pipeline_yaml_written: bool
+    host_environment_written: bool
+
+
 def init_project(
     project: Path,
     *,
@@ -321,57 +338,26 @@ def init_project(
             ".planfile/.koru/runs/ intact).",
         )
 
-    used_starter = from_file is None
-    if used_starter:
-        starter = pf_dir / "_starter.planfile.yaml"
-        pf_dir.mkdir(parents=True, exist_ok=True)
-        starter.write_text(STARTER_PIPELINE_YAML, encoding="utf-8")
-        pipeline_source: Path = starter
-    else:
-        pipeline_source = Path(from_file).resolve()
-
-    try:
-        report = import_flat_pipeline(
-            pipeline_source,
-            project,
-            sprint=sprint,
-            overwrite=force,
-        )
-    finally:
-        if used_starter:
-            with contextlib.suppress(OSError):
-                (pf_dir / "_starter.planfile.yaml").unlink()
-
-    policy_written = _write_policy_stub_if_absent(project)
-    gitignore_updated = _ensure_gitignore_entry(project)
-
-    lane = _resolve_init_agent_lane(project, agent_lane)
-    agent_written = False
-    if lane is None:
-        _remove_agent_lane_artifacts(runtime_dir(project))
-    else:
-        agent_written = _write_agent_lane_artifacts(project, lane)
-
-    host_setup_written = _write_autopilot_host_setup_script(project)
-    pipeline_yaml_written = write_koru_project_pipeline_if_absent(project)
-
-    host_env_written = False
-    if prepare_host_environment:
-        host_env_written = write_host_environment_bundle(project)
+    pipeline = _import_init_pipeline(project, pf_dir, from_file, sprint=sprint, force=force)
+    artifacts = _write_init_artifacts(
+        project,
+        agent_lane=agent_lane,
+        prepare_host_environment=prepare_host_environment,
+    )
 
     return InitReport(
         project=project,
         planfile_created=True,
-        sprint_imported=len(report.tickets_imported),
-        policy_written=policy_written,
-        gitignore_updated=gitignore_updated,
-        used_starter_pipeline=used_starter,
-        agent_lane=lane,
-        agent_lane_files_written=agent_written,
+        sprint_imported=pipeline.tickets_imported,
+        policy_written=artifacts.policy_written,
+        gitignore_updated=artifacts.gitignore_updated,
+        used_starter_pipeline=pipeline.used_starter,
+        agent_lane=artifacts.agent_lane,
+        agent_lane_files_written=artifacts.agent_lane_files_written,
         agent_lane_refresh_only=False,
-        autopilot_host_setup_written=host_setup_written,
-        koru_project_pipeline_yaml_written=pipeline_yaml_written,
-        host_environment_written=host_env_written,
+        autopilot_host_setup_written=artifacts.autopilot_host_setup_written,
+        koru_project_pipeline_yaml_written=artifacts.koru_project_pipeline_yaml_written,
+        host_environment_written=artifacts.host_environment_written,
     )
 
 
@@ -421,6 +407,69 @@ def refresh_init_agent_lane(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _import_init_pipeline(
+    project: Path,
+    pf_dir: Path,
+    from_file: Path | None,
+    *,
+    sprint: str,
+    force: bool,
+) -> _InitPipelineImport:
+    used_starter = from_file is None
+    if used_starter:
+        starter = pf_dir / "_starter.planfile.yaml"
+        pf_dir.mkdir(parents=True, exist_ok=True)
+        starter.write_text(STARTER_PIPELINE_YAML, encoding="utf-8")
+        pipeline_source: Path = starter
+    else:
+        pipeline_source = Path(from_file).resolve()
+
+    try:
+        report = import_flat_pipeline(
+            pipeline_source,
+            project,
+            sprint=sprint,
+            overwrite=force,
+        )
+    finally:
+        if used_starter:
+            with contextlib.suppress(OSError):
+                (pf_dir / "_starter.planfile.yaml").unlink()
+    return _InitPipelineImport(
+        tickets_imported=len(report.tickets_imported),
+        used_starter=used_starter,
+    )
+
+
+def _write_init_artifacts(
+    project: Path,
+    *,
+    agent_lane: str,
+    prepare_host_environment: bool,
+) -> _InitArtifacts:
+    policy_written = _write_policy_stub_if_absent(project)
+    gitignore_updated = _ensure_gitignore_entry(project)
+    lane = _resolve_init_agent_lane(project, agent_lane)
+    agent_written = _write_agent_lane_for_init(project, lane)
+    host_env_written = write_host_environment_bundle(project) if prepare_host_environment else False
+    return _InitArtifacts(
+        policy_written=policy_written,
+        gitignore_updated=gitignore_updated,
+        agent_lane=lane,
+        agent_lane_files_written=agent_written,
+        autopilot_host_setup_written=_write_autopilot_host_setup_script(project),
+        koru_project_pipeline_yaml_written=write_koru_project_pipeline_if_absent(project),
+        host_environment_written=host_env_written,
+    )
+
+
+def _write_agent_lane_for_init(project: Path, lane: str | None) -> bool:
+    if lane is None:
+        _remove_agent_lane_artifacts(runtime_dir(project))
+        return False
+    return _write_agent_lane_artifacts(project, lane)
 
 
 def _init_auto_agent_lane(project: Path) -> str:

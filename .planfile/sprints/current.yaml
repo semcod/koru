@@ -5622,11 +5622,11 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 1
-        finished_at: '2026-05-26T14:33:53.047632Z'
+        finished_at: '2026-05-26T15:20:23.800861Z'
         last_error: <short failure reason>
         max_attempts: 1
         queue: default
-        state: failed
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -5676,6 +5676,13 @@ sprint:
         previous_execution_state: waiting_input
         source: planfile.store
         timestamp: '2026-05-26T14:33:53.081511+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: done
+        previous_execution_state: failed
+        source: planfile.store
+        timestamp: '2026-05-26T15:20:23.833441+00:00'
       id: STARTER-312
       inputs:
         api_headers: {}
@@ -5739,7 +5746,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-26T14:33:53.081482+00:00'
+      updated_at: '2026-05-26T15:20:23.833390+00:00'
     STARTER-313:
       blocked_by: []
       blocks: []
@@ -5755,9 +5762,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T15:21:43.081212Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -5776,6 +5784,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T13:26:30.794250+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T15:21:43.114601+00:00'
       id: STARTER-313
       inputs:
         api_headers: {}
@@ -5843,9 +5861,9 @@ sprint:
         timestamp: '2026-05-26T13:26:30.794250+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T13:26:30.794250+00:00'
+      updated_at: '2026-05-26T15:21:43.114568+00:00'
     STARTER-314:
       blocked_by: []
       blocks: []
@@ -5859,9 +5877,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T15:30:47.795620Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -5878,6 +5897,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T13:26:31.326163+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T15:30:47.833222+00:00'
       id: STARTER-314
       inputs:
         api_headers: {}
@@ -5942,9 +5971,9 @@ sprint:
         timestamp: '2026-05-26T13:26:31.326163+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T13:26:31.326163+00:00'
+      updated_at: '2026-05-26T15:30:47.833186+00:00'
     STARTER-315:
       blocked_by: []
       blocks: []
@@ -5958,9 +5987,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T15:38:10.192553Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -5977,6 +6007,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T13:26:31.854363+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T15:38:10.225442+00:00'
       id: STARTER-315
       inputs:
         api_headers: {}
@@ -6041,9 +6081,9 @@ sprint:
         timestamp: '2026-05-26T13:26:31.854363+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T13:26:31.854363+00:00'
+      updated_at: '2026-05-26T15:38:10.225406+00:00'
     STARTER-316:
       blocked_by: []
       blocks: []
@@ -6057,9 +6097,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T15:41:06.266725Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -6076,6 +6117,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T13:26:33.087739+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T15:41:06.317534+00:00'
       id: STARTER-316
       inputs:
         api_headers: {}
@@ -6140,9 +6191,9 @@ sprint:
         timestamp: '2026-05-26T13:26:33.087739+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T13:26:33.087739+00:00'
+      updated_at: '2026-05-26T15:41:06.317495+00:00'
     STARTER-317:
       blocked_by: []
       blocks: []
@@ -6950,3 +7001,179 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-26T13:40:01.607595+00:00'
+    STARTER-325:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-26T15:33:04.574608+00:00'
+      description: '[OPERATOR] STARTER-315: provide missing IDE input
+
+
+        IDE-side LLM asked for more context while this task is blocked in waiting_input.
+
+
+        Blocked ticket: STARTER-315
+
+        Queue message: code2llm reports `God Function: handle_scan_after_idle` in
+        `src/koru/autonomy/phases/scan_phase.py:289`.
+
+
+        Function ''handle_scan_after_idle'' is oversized: CC=14, fan-out=15, mutations=24.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+        Reflection summary: The IDE has received only a generic ''hi'' message with
+        no further context or responses to determine if the refactor task is complete
+        or blocked.
+
+
+        Action:
+
+        1. Open the related IDE chat thread.
+
+        2. Answer the missing question/context from this summary.
+
+        3. Let the LLM continue and close this operator ticket when unblocked.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-26T15:38:13.402980Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] STARTER-315: provide missing IDE input
+
+
+          IDE-side LLM asked for more context while this task is blocked in waiting_input.
+
+
+          Blocked ticket: STARTER-315
+
+          Queue message: code2llm reports `God Function: handle_scan_after_idle` in
+          `src/koru/autonomy/phases/scan_phase.py:289`.
+
+
+          Function ''handle_scan_after_idle'' is oversized: CC=14, fan-out=15, mutations=24.
+
+
+          Make the smallest refactor that removes the smell and run local tests.
+
+          Reflection summary: The IDE has received only a generic ''hi'' message with
+          no further context or responses to determine if the refactor task is complete
+          or blocked.
+
+
+          Action:
+
+          1. Open the related IDE chat thread.
+
+          2. Answer the missing question/context from this summary.
+
+          3. Let the LLM continue and close this operator ticket when unblocked.'
+        source: koru task
+        timestamp: '2026-05-26T15:33:04.574608+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T15:38:13.435932+00:00'
+      id: STARTER-325
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] STARTER-315: provide missing IDE input
+
+
+          IDE-side LLM asked for more context while this task is blocked in waiting_input.
+
+
+          Blocked ticket: STARTER-315
+
+          Queue message: code2llm reports `God Function: handle_scan_after_idle` in
+          `src/koru/autonomy/phases/scan_phase.py:289`.
+
+
+          Function ''handle_scan_after_idle'' is oversized: CC=14, fan-out=15, mutations=24.
+
+
+          Make the smallest refactor that removes the smell and run local tests.
+
+          Reflection summary: The IDE has received only a generic ''hi'' message with
+          no further context or responses to determine if the refactor task is complete
+          or blocked.
+
+
+          Action:
+
+          1. Open the related IDE chat thread.
+
+          2. Answer the missing question/context from this summary.
+
+          3. Let the LLM continue and close this operator ticket when unblocked.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-needs-input
+      - waiting:STARTER-315
+      name: '[OPERATOR] STARTER-315: provide missing IDE input'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: autopilot-needs-input:STARTER-315
+          input: '[OPERATOR] STARTER-315: provide missing IDE input
+
+
+            IDE-side LLM asked for more context while this task is blocked in waiting_input.
+
+
+            Blocked ticket: STARTER-315
+
+            Queue message: code2llm reports `God Function: handle_scan_after_idle`
+            in `src/koru/autonomy/phases/scan_phase.py:289`.
+
+
+            Function ''handle_scan_after_idle'' is oversized: CC=14, fan-out=15, mutations=24.
+
+
+            Make the smallest refactor that removes the smell and run local tests.
+
+            Reflection summary: The IDE has received only a generic ''hi'' message
+            with no further context or responses to determine if the refactor task
+            is complete or blocked.
+
+
+            Action:
+
+            1. Open the related IDE chat thread.
+
+            2. Answer the missing question/context from this summary.
+
+            3. Let the LLM continue and close this operator ticket when unblocked.'
+          reflection_question: ''
+          reflection_summary: The IDE has received only a generic 'hi' message with
+            no further context or responses to determine if the refactor task is complete
+            or blocked.
+          waiting_ticket: STARTER-315
+        timestamp: '2026-05-26T15:33:04.574608+00:00'
+        tool: koru-autonomous-llx-reflect
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-26T15:38:13.435896+00:00'

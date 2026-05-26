@@ -94,6 +94,21 @@ def _ps_rows(stdout: str) -> list[_PsRow]:
     return rows
 
 
+def _live_ps_rows() -> list[_PsRow]:
+    try:
+        result = subprocess.run(
+            ["ps", "-eo", "pid=,ppid=,command="],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except OSError:
+        return []
+    if result.returncode != 0:
+        return []
+    return _ps_rows(result.stdout)
+
+
 def _autonomous_process_match(
     row: _PsRow,
     project: Path,
@@ -113,77 +128,84 @@ def _autonomous_process_match(
     return None
 
 
+def _matching_autonomous_processes(
+    rows: list[_PsRow],
+    project: Path,
+    *,
+    any_project: bool,
+    excluded: set[int],
+) -> list[ExistingAutonomousProcess]:
+    return [
+        match
+        for row in rows
+        if (
+            match := _autonomous_process_match(
+                row,
+                project,
+                any_project=any_project,
+                excluded=excluded,
+            )
+        )
+        is not None
+    ]
+
+
 def find_existing_autonomous_processes(
     project: Path,
     *,
     any_project: bool = False,
 ) -> list[ExistingAutonomousProcess]:
-    try:
-        result = subprocess.run(
-            ["ps", "-eo", "pid=,ppid=,command="],
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-    except OSError:
-        return []
-    if result.returncode != 0:
-        return []
-
     current_pid = os.getpid()
-    excluded = {current_pid, *ancestor_pids(current_pid)}
-    project = project.resolve()
-    matches: list[ExistingAutonomousProcess] = []
-    for row in _ps_rows(result.stdout):
-        match = _autonomous_process_match(
-            row,
-            project,
-            any_project=any_project,
-            excluded=excluded,
+    return _matching_autonomous_processes(
+        _live_ps_rows(),
+        project.resolve(),
+        any_project=any_project,
+        excluded={current_pid, *ancestor_pids(current_pid)},
+    )
+
+
+def _wup_process_match(
+    row: _PsRow,
+    project: Path,
+    *,
+    excluded: set[int],
+) -> ExistingManagedProcess | None:
+    if row.pid in excluded:
+        return None
+    if "wup" not in row.command or " watch " not in f" {row.command} ":
+        return None
+
+    cwd = process_cwd(row.pid)
+    if cwd == project or str(project) in row.command:
+        return ExistingManagedProcess(
+            pid=row.pid,
+            kind="wup-watch",
+            command=row.command,
+            cwd=cwd,
         )
-        if match is not None:
-            matches.append(match)
-    return matches
+    return None
+
+
+def _matching_wup_processes(
+    rows: list[_PsRow],
+    project: Path,
+    *,
+    excluded: set[int],
+) -> list[ExistingManagedProcess]:
+    return [
+        match
+        for row in rows
+        if (match := _wup_process_match(row, project, excluded=excluded)) is not None
+    ]
 
 
 def find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
-    try:
-        result = subprocess.run(
-            ["ps", "-eo", "pid=,ppid=,command="],
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-    except OSError:
-        return []
-    if result.returncode != 0:
-        return []
-
     current_pid = os.getpid()
-    excluded = {current_pid, *ancestor_pids(current_pid)}
-    project = project.resolve()
-    matches: list[ExistingManagedProcess] = []
-    for raw_line in result.stdout.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        first, _, rest = line.partition(" ")
-        second, _, command = rest.strip().partition(" ")
-        try:
-            pid = int(first)
-            int(second)
-        except ValueError:
-            continue
-        if pid in excluded:
-            continue
-        if "wup" not in command or " watch " not in f" {command} ":
-            continue
-        cwd = process_cwd(pid)
-        if cwd == project or str(project) in command:
-            matches.append(
-                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd),
-            )
-    return matches
+    return _matching_wup_processes(
+        _live_ps_rows(),
+        project.resolve(),
+        excluded={current_pid, *ancestor_pids(current_pid)},
+    )
 
 
 def as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:

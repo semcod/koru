@@ -144,6 +144,81 @@ def _log_plugin_hello_accepted(
     )
 
 
+def _store_hello_command_catalog(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide: str,
+    plugin_version: str | None,
+) -> Any:
+    matching_cmds = msg.data.get("matchingCommands")
+    catalog = parse_hello_command_catalog(msg.data)
+    if catalog and command_catalog_enabled():
+        client.command_catalog = catalog
+        unknown = catalog.get("unknown_chat") or []
+        daemon._command_catalog_store.update(
+            ide,
+            plugin_version=plugin_version,
+            catalog=catalog,
+            unknown_sample=unknown[:20] if isinstance(unknown, list) else None,
+        )
+        daemon.log(
+            f"plugin command catalog stored: ide={ide} "
+            f"focus_open={len(catalog.get('focus_open', []))} "
+            f"paste={len(catalog.get('paste', []))} "
+            f"submit={len(catalog.get('submit', []))} "
+            f"unknown_chat={len(catalog.get('unknown_chat', []))}",
+        )
+    return matching_cmds
+
+
+def _accept_plugin_hello(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide: str,
+    plugin_version: str | None,
+    build_sha: str | None,
+    protocol_version: int | None,
+    capabilities: list[str],
+    workspace_name: str | None,
+    workspace_folders: list[str],
+) -> None:
+    version_info = DriveOrchestrator.plugin_version_info(
+        plugin_ide=ide,
+        connected_version=plugin_version,
+        connected_build_sha=build_sha,
+        protocol_version=protocol_version,
+        capabilities=capabilities,
+    )
+    matching_cmds = _store_hello_command_catalog(
+        daemon,
+        client,
+        msg,
+        ide,
+        plugin_version,
+    )
+    _log_plugin_hello_accepted(
+        daemon,
+        ide,
+        plugin_version,
+        build_sha,
+        protocol_version,
+        capabilities,
+        version_info,
+        matching_cmds,
+        workspace_name,
+        workspace_folders,
+    )
+    daemon._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
+    daemon.audit.record(
+        "plugin_connected",
+        ide=ide,
+        version=plugin_version,
+        build_sha=build_sha,
+    )
+
+
 def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
     """Handle plugin hello message."""
     (
@@ -164,14 +239,6 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
     ):
         return
 
-    version_info = DriveOrchestrator.plugin_version_info(
-        plugin_ide=ide,
-        connected_version=plugin_version,
-        connected_build_sha=build_sha,
-        protocol_version=protocol_version,
-        capabilities=capabilities,
-    )
-
     _configure_plugin_client(
         daemon,
         client,
@@ -183,42 +250,17 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         workspace_name,
         workspace_folders,
     )
-    matching_cmds = msg.data.get("matchingCommands")
-    catalog = parse_hello_command_catalog(msg.data)
-    if catalog and command_catalog_enabled():
-        client.command_catalog = catalog
-        unknown = catalog.get("unknown_chat") or []
-        daemon._command_catalog_store.update(
-            ide,
-            plugin_version=plugin_version,
-            catalog=catalog,
-            unknown_sample=unknown[:20] if isinstance(unknown, list) else None,
-        )
-        daemon.log(
-            f"plugin command catalog stored: ide={ide} "
-            f"focus_open={len(catalog.get('focus_open', []))} "
-            f"paste={len(catalog.get('paste', []))} "
-            f"submit={len(catalog.get('submit', []))} "
-            f"unknown_chat={len(catalog.get('unknown_chat', []))}",
-        )
-    _log_plugin_hello_accepted(
+    _accept_plugin_hello(
         daemon,
+        client,
+        msg,
         ide,
         plugin_version,
         build_sha,
         protocol_version,
         capabilities,
-        version_info,
-        matching_cmds,
         workspace_name,
         workspace_folders,
-    )
-    daemon._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
-    daemon.audit.record(
-        "plugin_connected",
-        ide=ide,
-        version=plugin_version,
-        build_sha=build_sha,
     )
 
 

@@ -299,120 +299,221 @@ def handle_scan_after_idle(
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> ScanResult | None:
-    scan_result: ScanResult | None = None
     if (
-        scan_after_idle_queue
-        and queue_result.last_status == "idle"
-        and is_topology_enabled(
+        not scan_after_idle_queue
+        or queue_result.last_status != "idle"
+        or not is_topology_enabled(
             project,
             "scan:on-change",
             fallback=True,
             enabled=topology_integration,
         )
     ):
-        skip_repeated_create_failed, remaining = _should_skip_repeated_create_failed_scan(state)
-        skip_repeated_duplicates, duplicate_remaining = _should_skip_repeated_duplicate_scan(state)
-        now = time.time()
-        too_soon = (
-            scan_after_idle_min_interval_seconds > 0.0
-            and state.last_scan_after_idle_ts >= 0.0
-            and now - state.last_scan_after_idle_ts < scan_after_idle_min_interval_seconds
+        return None
+
+    now = time.time()
+    if _skip_scan_after_idle_for_rate_limit(
+        state,
+        cycle,
+        scan_after_idle_min_interval_seconds,
+        now,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    ):
+        return None
+    if _skip_scan_after_idle_for_create_failed_cooldown(state, cycle, cycle_telemetry, _hp, _emit):
+        return None
+    if _skip_scan_after_idle_for_duplicate_cooldown(
+        project,
+        state,
+        cycle,
+        include_semcod_artifacts,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    ):
+        return None
+    return _run_scan_after_idle(
+        project,
+        state,
+        cycle,
+        include_semcod_artifacts,
+        now,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    )
+
+
+def _skip_scan_after_idle_for_rate_limit(
+    state: AutoloopState,
+    cycle: int,
+    scan_after_idle_min_interval_seconds: float,
+    now: float,
+    cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> bool:
+    too_soon = (
+        scan_after_idle_min_interval_seconds > 0.0
+        and state.last_scan_after_idle_ts >= 0.0
+        and now - state.last_scan_after_idle_ts < scan_after_idle_min_interval_seconds
+    )
+    if not too_soon:
+        return False
+    wait = scan_after_idle_min_interval_seconds - (now - state.last_scan_after_idle_ts)
+    _hp(
+        f"- koru scan after idle skipped (min-interval "
+        f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)",
+    )
+    _emit(
+        "ScanSkipped",
+        {
+            "cycle": cycle,
+            "reason": "after_idle_rate_limit",
+            "min_interval_seconds": scan_after_idle_min_interval_seconds,
+        },
+    )
+    cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
+    return True
+
+
+def _skip_scan_after_idle_for_create_failed_cooldown(
+    state: AutoloopState,
+    cycle: int,
+    cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> bool:
+    skip_repeated_create_failed, remaining = _should_skip_repeated_create_failed_scan(state)
+    if not skip_repeated_create_failed:
+        return False
+    _hp(
+        "- koru scan after idle skipped "
+        f"(repeated create_failed, cooldown active, ~{remaining:.0f}s remaining)",
+    )
+    _emit(
+        "ScanSkipped",
+        {
+            "cycle": cycle,
+            "reason": "create_failed_cooldown",
+            "cooldown_remaining_seconds": remaining,
+            "phase": "after_idle_queue",
+        },
+    )
+    cycle_telemetry["scan_after_idle_skipped_create_failed_cooldown"] = True
+    return True
+
+
+def _skip_scan_after_idle_for_duplicate_cooldown(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    include_semcod_artifacts: bool | None,
+    cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> bool:
+    skip_repeated_duplicates, duplicate_remaining = _should_skip_repeated_duplicate_scan(state)
+    if not skip_repeated_duplicates:
+        return False
+    _hp(
+        "- koru scan after idle skipped "
+        f"(duplicate-only results, cooldown active, ~{duplicate_remaining:.0f}s remaining)",
+    )
+    _emit(
+        "ScanSkipped",
+        {
+            "cycle": cycle,
+            "reason": "duplicate_only_cooldown",
+            "cooldown_remaining_seconds": duplicate_remaining,
+            "phase": "after_idle_queue",
+        },
+    )
+    cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
+    if include_semcod_artifacts:
+        _hp(
+            "  idle strategy: detailed scan is in duplicate cooldown; "
+            "continue detail→general by checking whole-project discovery",
         )
-        if too_soon:
-            wait = scan_after_idle_min_interval_seconds - (now - state.last_scan_after_idle_ts)
-            _hp(
-                f"- koru scan after idle skipped (min-interval "
-                f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)",
-            )
-            _emit(
-                "ScanSkipped",
-                {
-                    "cycle": cycle,
-                    "reason": "after_idle_rate_limit",
-                    "min_interval_seconds": scan_after_idle_min_interval_seconds,
-                },
-            )
-            cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
-        elif skip_repeated_create_failed:
-            _hp(
-                "- koru scan after idle skipped "
-                f"(repeated create_failed, cooldown active, ~{remaining:.0f}s remaining)",
-            )
-            _emit(
-                "ScanSkipped",
-                {
-                    "cycle": cycle,
-                    "reason": "create_failed_cooldown",
-                    "cooldown_remaining_seconds": remaining,
-                    "phase": "after_idle_queue",
-                },
-            )
-            cycle_telemetry["scan_after_idle_skipped_create_failed_cooldown"] = True
-        elif skip_repeated_duplicates:
-            _hp(
-                "- koru scan after idle skipped "
-                f"(duplicate-only results, cooldown active, ~{duplicate_remaining:.0f}s remaining)",
-            )
-            _emit(
-                "ScanSkipped",
-                {
-                    "cycle": cycle,
-                    "reason": "duplicate_only_cooldown",
-                    "cooldown_remaining_seconds": duplicate_remaining,
-                    "phase": "after_idle_queue",
-                },
-            )
-            cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
-            if include_semcod_artifacts:
-                _hp(
-                    "  idle strategy: detailed scan is in duplicate cooldown; "
-                    "continue detail→general by checking whole-project discovery",
-                )
-                discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
-                _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
-        else:
-            scan_cmd = (
-                "koru scan --apply"
-                f"{' --semcod-artifacts' if include_semcod_artifacts else ''}"
-            )
-            if include_semcod_artifacts:
-                _hp(
-                    "  idle strategy: detail→general; first apply concrete scan "
-                    "signals, then run whole-project code2llm discovery if no "
-                    "tickets were created",
-                )
-            _hp(f"+ {scan_cmd} (queue idle → intake scan)")
-            idle_scan = run_scan(
-                project=project,
-                apply=True,
-                include_semcod_artifacts=include_semcod_artifacts,
-            )
-            scan_result = idle_scan
-            _remember_scan_create_failed_state(state, idle_scan, now=now)
-            _remember_scan_duplicate_state(state, idle_scan, now=now)
-            state.last_scan_after_idle_ts = now
-            state.telemetry_scan_after_idle_runs += 1
-            state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
-            cycle_telemetry["scan_after_idle_run"] = True
-            cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
-            _hp(_format_scan_summary_line(idle_scan))
-            _hp_scan_skip_hint(idle_scan, _hp)
-            _emit(
-                "ScanCompleted",
-                {
-                    "cycle": cycle,
-                    "suggestions_count": len(idle_scan.suggestions),
-                    "applied_count": len(idle_scan.applied),
-                    "skipped_count": len(idle_scan.skipped),
-                    "semcod_artifacts": bool(include_semcod_artifacts),
-                    "phase": "after_idle_queue",
-                },
-                command=scan_cmd,
-            )
-            if include_semcod_artifacts and not idle_scan.applied:
-                discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
-                _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
-    return scan_result
+        discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
+        _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
+    return True
+
+
+def _run_scan_after_idle(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    include_semcod_artifacts: bool | None,
+    now: float,
+    cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> ScanResult:
+    scan_cmd = "koru scan --apply" f"{' --semcod-artifacts' if include_semcod_artifacts else ''}"
+    if include_semcod_artifacts:
+        _hp(
+            "  idle strategy: detail→general; first apply concrete scan "
+            "signals, then run whole-project code2llm discovery if no "
+            "tickets were created",
+        )
+    _hp(f"+ {scan_cmd} (queue idle → intake scan)")
+    idle_scan = run_scan(
+        project=project,
+        apply=True,
+        include_semcod_artifacts=include_semcod_artifacts,
+    )
+    _record_scan_after_idle_result(
+        state,
+        cycle,
+        idle_scan,
+        scan_cmd,
+        include_semcod_artifacts,
+        now,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    )
+    if include_semcod_artifacts and not idle_scan.applied:
+        discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
+        _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
+    return idle_scan
+
+
+def _record_scan_after_idle_result(
+    state: AutoloopState,
+    cycle: int,
+    idle_scan: ScanResult,
+    scan_cmd: str,
+    include_semcod_artifacts: bool | None,
+    now: float,
+    cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> None:
+    _remember_scan_create_failed_state(state, idle_scan, now=now)
+    _remember_scan_duplicate_state(state, idle_scan, now=now)
+    state.last_scan_after_idle_ts = now
+    state.telemetry_scan_after_idle_runs += 1
+    state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
+    cycle_telemetry["scan_after_idle_run"] = True
+    cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
+    _hp(_format_scan_summary_line(idle_scan))
+    _hp_scan_skip_hint(idle_scan, _hp)
+    _emit(
+        "ScanCompleted",
+        {
+            "cycle": cycle,
+            "suggestions_count": len(idle_scan.suggestions),
+            "applied_count": len(idle_scan.applied),
+            "skipped_count": len(idle_scan.skipped),
+            "semcod_artifacts": bool(include_semcod_artifacts),
+            "phase": "after_idle_queue",
+        },
+        command=scan_cmd,
+    )
 
 
 def _record_code2llm_discovery_telemetry(
