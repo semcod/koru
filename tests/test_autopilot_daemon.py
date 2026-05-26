@@ -1084,27 +1084,84 @@ def test_message_sent_event_does_not_complete_strict_ack_drive(
             cli_reader.read_message()
         cli.settimeout(6.0)
 
+
+def test_vscodium_message_sent_event_completes_after_submit_unverified_ack_grace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """VSCodium may emit ``message.sent`` shortly after an untrusted submit ack."""
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(
+            h.sock_path,
+            ide="vscodium",
+            pid=42,
+            capabilities=[
+                "ide.commands",
+                "chat.focus",
+                "chat.paste",
+                "chat.submit",
+                "chat.events",
+            ],
+        )
+        plugin.settimeout(6.0)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(6.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-vscodium-message-sent",
+                data={"text": "hi", "ide": "vscodium", "submit": True, "require_plugin": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
         plugin.sendall(
             Message(
                 type="ack",
-                id="d-message-sent-strict",
+                id="d-vscodium-message-sent",
                 data={
                     "ok": True,
                     "delivered": True,
                     "opened": True,
                     "submitted": True,
-                    "winning_focus_open": "workbench.action.chat.open",
+                    "winning_focus_open": (
+                        "workbench.action.chat.focusInput+workbench.action.chat.focusInput"
+                    ),
                     "winning_paste": "editor.action.clipboardPasteAction",
                     "winning_submit": "workbench.action.chat.submit",
+                    "operation_trace": [
+                        {
+                            "op": "submit",
+                            "route": "accepted",
+                            "ok": True,
+                            "detail": {"requireEmptyAfterSubmit": False},
+                        },
+                        {"op": "submit_verify", "route": "sentinel-clipboard", "ok": True},
+                    ],
                 },
             ).encode(),
         )
+        plugin.sendall(
+            Message(
+                type="message.sent",
+                data={"chat": "default", "text": "hi", "length": 2},
+            ).encode(),
+        )
+
         cli_reply = cli_reader.read_message()
         assert cli_reply.type == "ack"
         assert cli_reply.data.get("ok") is True
-        assert cli_reply.data.get("verification") == "strict"
+        assert cli_reply.data.get("event") == "message.sent"
+        assert cli_reply.data.get("verification") == "event_only"
+        assert cli_reply.data.get("intent_status") == "fulfilled"
 
         plugin.close()
+        cli.close()
         cli.close()
 
 

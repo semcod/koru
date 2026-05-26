@@ -52,6 +52,16 @@ def _drive_result_autopilot_status(
     if _reply_requires_manual_chat_focus(reply):
         cycle_telemetry["autopilot_skipped_manual_focus"] = True
         return "skipped(manual_focus)"
+    verification = str(reply.get("verification") or "").strip().lower()
+    if verification in {"submit_unverified", "submit_failed"}:
+        cycle_telemetry["autopilot_submit_unverified"] = True
+        cycle_telemetry["autopilot_submit_unverified_reason"] = (
+            reply.get("submit_failure_reason")
+            or reply.get("reason")
+            or reply.get("message")
+            or verification
+        )
+        return f"failed({verification})"
     return "failed"
 
 
@@ -217,10 +227,13 @@ def _drive_autopilot_once(
         cycle_telemetry=cycle_telemetry,
     )
     autopilot_backend = str(reply.get("backend")) if reply.get("backend") is not None else None
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     if ok:
         state.last_message_sent_ts = time.time()
         state.last_message_sent_ide = autopilot_ide
-        state.last_driven_ticket_id = _queue_loop_waiting_ticket_label(queue_result)
+        state.last_driven_ticket_id = waiting_ticket
+    elif autopilot_status.startswith("failed(submit_") and reply.get("delivered") is True:
+        state.last_driven_ticket_id = waiting_ticket
     state.last_autopilot_status = autopilot_status
     _update_autopilot_state(
         state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
@@ -324,13 +337,17 @@ def _emit_autopilot_observability_outcome(
 ) -> None:
     if ok:
         return
-    if not (autopilot_status == "failed" or autopilot_status.startswith("skipped(")):
+    if not (autopilot_status.startswith("failed") or autopilot_status.startswith("skipped(")):
         return
     corr = str(reply.get("id") or "cli-drive")
     ticket = _queue_loop_waiting_ticket_label(queue_result)
     cycle_number = cycle if isinstance(cycle, int) else None
     blocker = "drive_failed"
     next_action = "retry_next_cycle"
+    verification = str(reply.get("verification") or "").strip().lower()
+    if verification in {"submit_unverified", "submit_failed"}:
+        blocker = "manual_send_required"
+        next_action = "validate_submit_or_mark_ticket_input"
     if autopilot_status == "skipped(manual_focus)":
         blocker = "manual_focus_required"
         next_action = "focus_chat_or_open_interfaces"

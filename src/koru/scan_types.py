@@ -21,6 +21,7 @@ class Suggestion:
     priority: str = "normal"
     labels: tuple[str, ...] = ()
     files: tuple[str, ...] = ()
+    source_context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -30,6 +31,7 @@ class Suggestion:
             "priority": self.priority,
             "labels": list(self.labels),
             "files": list(self.files),
+            "source_context": dict(self.source_context),
         }
 
 

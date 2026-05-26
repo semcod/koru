@@ -35,3 +35,14 @@ def test_decision_next_step_hint_falls_back_to_queue_status() -> None:
         )
         == "keep waiting ticket scoped; rerun queue next cycle"
     )
+
+
+def test_decision_next_step_hint_submit_unverified_does_not_retry() -> None:
+    assert (
+        decision_next_step_hint(
+            queue_status="waiting_input",
+            autopilot_status="failed",
+            cycle_telemetry={"autopilot_submit_unverified": True},
+        )
+        == "manual send required; validate submit trace before any redrive"
+    )

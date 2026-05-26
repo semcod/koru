@@ -129,7 +129,11 @@
         },
         "koruAutopilot.submitHostKey": {
           "type": "string",
-          "enum": ["auto", "Return", "ctrl+Return"],
+          "enum": [
+            "auto",
+            "Return",
+            "ctrl+Return"
+          ],
           "default": "auto",
           "description": "Host-level key combo used to submit the chat after paste. 'auto' picks Ctrl+Return for Cursor (where plain Return inserts a newline). Override to force a specific key."
         },
@@ -146,7 +150,7 @@
         "koruAutopilot.reloadOnVersionMismatch": {
           "type": "boolean",
           "default": true,
-          "description": "When the koru daemon rejects this plugin because the installed VSIX version does not match the daemon's expected version, run `Developer: Reload Window` automatically so the freshly installed VSIX gets loaded. The plugin enforces a 60s cooldown so it never reloads more than once per minute. Set to false to keep the manual recovery (status bar shows `koru: reload`)."
+          "description": "When the koru daemon rejects this plugin because the installed VSIX version or build hash does not match the daemon's expected plugin, run `Developer: Reload Window` automatically so the freshly installed VSIX gets loaded. The plugin enforces a 60s cooldown so it never reloads more than once per minute. Set to false to keep the manual recovery (status bar shows `koru: reload`)."
         }
       }
     }
@@ -159,9 +163,9 @@
     "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/ides/cursor.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
-    "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
+    "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-cursor",
     "package": "vsce package --no-dependencies --out koru-autopilot-cursor-${npm_package_version}.vsix",
-    "prepublish": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor",
+    "prepublish": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-cursor",
     "publish": "vsce publish --no-dependencies",
     "clean": "rm -rf out node_modules src/_shared *.vsix"
   },
@@ -170,5 +174,9 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.0.0",
     "typescript": "^5.4.0"
+  },
+  "koruAutopilotBuild": {
+    "schema": 1,
+    "sha": "b476082b7a5b3807"
   }
 }

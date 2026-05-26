@@ -152,18 +152,25 @@ Wysyłane natychmiast po połączeniu wtyczki z socketem w celu rejestracji śro
   "id": "vscode-hello-1a8f",
   "ide": "cursor",
   "version": "1.0.4",
+  "buildSha": "5bf6fc852b66c95a",
+  "protocolVersion": 2,
   "pid": 28491
 }
 ```
 * **Pola**:
   - `ide` (string): Identyfikator środowiska (`vscode`, `vscodium`, `cursor`, `windsurf`, `jetbrains`, `zed`).
   - `version` (string): Wersja wtyczki koru-autopilot.
+  - `buildSha` (string, optional): Hash konkretnego builda VSIX zapisany w `package.json` jako `koruAutopilotBuild.sha`.
+  - `protocolVersion` (integer, optional): Wersja kontraktu plugin/daemon.
   - `pid` (integer): ID procesu wtyczki w systemie.
 
 `version` jest używane przez daemon wyłącznie jako metadana runtime/policy.
 Nie zmienia dekodowania ramek `v1`, ale może spowodować zablokowanie `drive`,
 gdy `KORU_STRICT_PLUGIN_VERSION=1` i wersja live pluginu różni się od wersji
 VSIX/package oczekiwanej przez bieżącą instalację koru.
+`buildSha` domyka przypadek, w którym wersja VSIX jest taka sama, ale edytor nadal
+uruchamia starszy kod. Przy strict policy daemon odrzuca połączenie, jeśli zna
+oczekiwany hash builda, a live plugin wysyła inny hash albo nie wysyła go wcale.
 
 #### B. `session.started`
 Informuje, że asystent LLM w IDE rozpoczął generowanie odpowiedzi.

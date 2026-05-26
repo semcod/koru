@@ -79,10 +79,34 @@ def test_drive_command_argv_with_prompt() -> None:
     assert "hello world" in argv
 
 
+def test_drive_command_argv_with_prompt_file() -> None:
+    """Test _drive_command_argv with replay-safe --prompt-file."""
+    args = argparse.Namespace(
+        ide="vscodium",
+        submit=True,
+        require_plugin=True,
+        direct=False,
+        prompt=None,
+        prompt_file=Path("/tmp/drive.prompt"),
+    )
+    argv = _drive_command_argv(args, "hello world")
+    assert argv == [
+        "koru",
+        "autopilot",
+        "drive",
+        "--ide",
+        "vscodium",
+        "--require-plugin",
+        "--prompt-file",
+        "/tmp/drive.prompt",
+    ]
+
+
 def test_action_drive_missing_text() -> None:
     """Test action_drive returns 2 when text is missing."""
     args = argparse.Namespace(
         prompt=None,
+        prompt_file=None,
         text=[],
         ide="auto",
         submit=True,
@@ -102,6 +126,7 @@ def test_action_drive_direct_mode() -> None:
     """Test action_drive uses direct mode when --direct flag is set."""
     args = argparse.Namespace(
         prompt="test text",
+        prompt_file=None,
         text=[],
         ide="vscode",
         submit=True,
@@ -186,6 +211,44 @@ def test_action_drive_dry_run() -> None:
     assert result == 0
     mock_print.assert_called_once()
     assert "dry-run" in str(mock_print.call_args)
+
+
+def test_action_drive_prompt_file_preserves_prompt_bytes(tmp_path: Path) -> None:
+    """Replay-safe --prompt-file preserves whitespace in the stored prompt."""
+    prompt_path = tmp_path / "drive.prompt"
+    prompt_path.write_text("hello replay\n", encoding="utf-8")
+    args = argparse.Namespace(
+        prompt=None,
+        prompt_file=prompt_path,
+        text=[],
+        ide="vscodium",
+        submit=True,
+        dry_run=False,
+        require_plugin=True,
+        direct=False,
+        project=None,
+    )
+    mock_client = mock.Mock()
+    mock_client.is_running.return_value = True
+    mock_client.drive.return_value = {"ok": True}
+
+    with mock.patch("builtins.print"):
+        with mock.patch("koru.autopilot.commands.drive.shell_command"):
+            result = action_drive(
+                args,
+                client_fn=mock.Mock(return_value=mock_client),
+                daemon_start_hint_fn=mock.Mock(),
+                run_direct_drive_fn=mock.Mock(),
+                should_fallback_fn=mock.Mock(return_value=False),
+            )
+
+    assert result == 0
+    mock_client.drive.assert_called_once_with(
+        "hello replay\n",
+        submit=True,
+        ide="vscodium",
+        require_plugin=True,
+    )
 
 
 def test_action_drive_success() -> None:

@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.02s
+%% generated in 0.03s
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -10,35 +10,40 @@ flowchart TD
         docker__capture__smoke___run_x11["_run_x11"]
         docker__capture__smoke__main["main"]
     end
+    subgraph docs__deployment_events
+        docs__deployment_events__print["print"]
+        docs__deployment_events__on_deployment_start["on_deployment_start"]
+        docs__deployment_events__on_deployment_complete["on_deployment_complete"]
+        docs__deployment_events__on_deployment_error["on_deployment_error"]
+    end
+    subgraph docs__koru_auto_vs_observe_up
+        docs__koru_auto_vs_observe_up__print["print"]
+    end
+    subgraph docs__plans
+        docs__plans__observation_mesh_plan__start["start"]
+        docs__plans__observation_mesh_plan__stop["stop"]
+        docs__plans__observation_mesh_plan__latest["latest"]
+        docs__plans__capture_providers_refactor__availability["availability"]
+        docs__plans__capture_providers_refactor__list_monitors["list_monitors"]
+        docs__plans__capture_providers_refactor__capture_all["capture_all"]
+        docs__plans__capture_providers_refactor__start_stream["start_stream"]
+        docs__plans__capture_providers_refactor__rank_providers["rank_providers"]
+    end
+    subgraph docs__refactor
+        docs__refactor__ide_bridge_2026__detect["detect"]
+        docs__refactor__ide_bridge_2026__install_plugin["install_plugin"]
+        docs__refactor__ide_bridge_2026__verify_plugin_active["verify_plugin_active"]
+        docs__refactor__ide_bridge_2026__resolve_settings["resolve_settings"]
+        docs__refactor__ide_bridge_2026__diagnose_inactive["diagnose_inactive"]
+        docs__refactor__ide_bridge_2026__hint_remediation["hint_remediation"]
+    end
+    subgraph docs__refactoring
+        docs__refactoring__REFACTORING_PLAN___get_X["_get_X"]
+        docs__refactoring__REFACTORING_PLAN___get_dashboard["_get_dashboard"]
+        docs__refactoring__REFACTORING_PLAN__run["run"]
+    end
     subgraph examples__remote_orchestration_demo
         examples__remote_orchestration_demo__run_multi_node_orchestration("run_multi_node_orchestration CC=9")
-    end
-    subgraph koru__activity_log
-        koru__activity_log__activity_enabled["activity_enabled"]
-        koru__activity_log__preview_text["preview_text"]
-        koru__activity_log___env_disabled["_env_disabled"]
-        koru__activity_log__configure_nfo_activity_log["configure_nfo_activity_log"]
-        koru__activity_log__nfo_activity_log_path["nfo_activity_log_path"]
-        koru__activity_log___emit_nfo_activity("_emit_nfo_activity CC=10")
-        koru__activity_log___supports_color["_supports_color"]
-        koru__activity_log___ansi["_ansi"]
-        koru__activity_log___color_status["_color_status"]
-        koru__activity_log___highlight_shell_data["_highlight_shell_data"]
-        koru__activity_log___color_category["_color_category"]
-        koru__activity_log___out_stream["_out_stream"]
-        koru__activity_log__activity["activity"]
-        koru__activity_log__activity_warn("activity_warn CC=8")
-        koru__activity_log__activity_info["activity_info"]
-    end
-    subgraph koru__autonomous_drive_retry_policy
-        koru__autonomous_drive_retry_policy___format_autopilot_failure_details("_format_autopilot_failure_details CC=13")
-        koru__autonomous_drive_retry_policy___warn_autopilot_focus_retry["_warn_autopilot_focus_retry"]
-        koru__autonomous_drive_retry_policy___warn_autopilot_manual_focus_required["_warn_autopilot_manual_focus_requir"]
-        koru__autonomous_drive_retry_policy___warn_autopilot_plugin_retry["_warn_autopilot_plugin_retry"]
-        koru__autonomous_drive_retry_policy___warn_autopilot_submit_retry["_warn_autopilot_submit_retry"]
-        koru__autonomous_drive_retry_policy___drive_retry_decision["_drive_retry_decision"]
-        koru__autonomous_drive_retry_policy___handle_failed_drive_attempt("_handle_failed_drive_attempt CC=8")
-        koru__autonomous_drive_retry_policy___record_drive_retry_decision("_record_drive_retry_decision CC=13")
     end
     subgraph koru__bootstrap
         koru__bootstrap__ValidationError____str__["__str__"]
@@ -62,20 +67,6 @@ flowchart TD
         koru__bootstrap___next_id_after["_next_id_after"]
         koru__bootstrap__import_flat_pipeline("import_flat_pipeline CC=9")
         koru__bootstrap___infer_prefix["_infer_prefix"]
-    end
-    subgraph koru__ide_client
-        koru__ide_client__IDEControlClient__is_running["is_running"]
-        koru__ide_client__IDEControlClient__drive["drive"]
-        koru__ide_client__IDEControlClient__status["status"]
-        koru__ide_client__IDEControlClient__shutdown["shutdown"]
-        koru__ide_client__LegacyAutopilotClientAdapter__is_running["is_running"]
-        koru__ide_client__LegacyAutopilotClientAdapter__drive["drive"]
-        koru__ide_client__LegacyAutopilotClientAdapter__status["status"]
-        koru__ide_client__LegacyAutopilotClientAdapter__shutdown["shutdown"]
-        koru__ide_client__adapt_legacy_autopilot_client["adapt_legacy_autopilot_client"]
-        koru__ide_client__build_legacy_ide_client["build_legacy_ide_client"]
-        koru__ide_client__build_koruide_client["build_koruide_client"]
-        koru__ide_client__build_ide_client["build_ide_client"]
     end
     subgraph koru__observability_events
         koru__observability_events__obs_event["obs_event"]
@@ -103,394 +94,6 @@ flowchart TD
         koruide__command_catalog_store__CommandCatalogStore___persist["_persist"]
         koruide__command_catalog_store__CommandCatalogStore___load_from_disk("_load_from_disk CC=9")
         koruide__command_catalog_store__parse_hello_command_catalog["parse_hello_command_catalog"]
-    end
-    subgraph plugins__koru_autopilot_antigravity
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__stdout["stdout"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__rows["rows"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__call["call"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__r["r"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__watcher["watcher"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__adapter["adapter"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__threw["threw"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__payload["payload"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__allRows["allRows"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__partialRows["partialRows"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__polls["polls"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__sqlArg["sqlArg"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__rowid["rowid"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
-        plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__main["main"]
-        plugins__koru_autopilot_antigravity__src__extension__DISALLOWED_FOCUS_OPEN_COMMANDS["DISALLOWED_FOCUS_OPEN_COMMANDS"]
-        plugins__koru_autopilot_antigravity__src__extension__UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS["UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS"]
-        plugins__koru_autopilot_antigravity__src__extension__isAllowedFocusOpenCommand["isAllowedFocusOpenCommand"]
-        plugins__koru_autopilot_antigravity__src__extension__sanitizeFocusOpenCommand["sanitizeFocusOpenCommand"]
-        plugins__koru_autopilot_antigravity__src__extension__sanitizeFocusOpenCandidates["sanitizeFocusOpenCandidates"]
-        plugins__koru_autopilot_antigravity__src__extension__filterUnsafeFocusOpenForIde["filterUnsafeFocusOpenForIde"]
-        plugins__koru_autopilot_antigravity__src__extension__isSpecificChatInputFocusCommand["isSpecificChatInputFocusCommand"]
-        plugins__koru_autopilot_antigravity__src__extension__normalized["normalized"]
-        plugins__koru_autopilot_antigravity__src__extension__isTogglingFocusOpenCommand["isTogglingFocusOpenCommand"]
-        plugins__koru_autopilot_antigravity__src__extension__debugLog["debugLog"]
-        plugins__koru_autopilot_antigravity__src__extension__suffix["suffix"]
-        plugins__koru_autopilot_antigravity__src__extension__safeLogPayload("safeLogPayload CC=9")
-        plugins__koru_autopilot_antigravity__src__extension__snapshot["snapshot"]
-        plugins__koru_autopilot_antigravity__src__extension__safeLog["safeLog"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__isConnected["isConnected"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__sendConsoleLog["sendConsoleLog"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__resetOperationTrace["resetOperationTrace"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__value["value"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__commands["commands"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__server["server"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__traceOperation["traceOperation"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__safeLog["safeLog"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__emitLiveDsl["emitLiveDsl"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__seq["seq"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__okToken["okToken"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__routeToken["routeToken"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__reason["reason"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__debugLog["debugLog"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__currentOperationTrace["currentOperationTrace"]
-        plugins__koru_autopilot_antigravity__src__extension__AutopilotBridge__socketPath["socketPath"]
-    end
-    subgraph plugins__koru_autopilot_cursor
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__stdout["stdout"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__rows["rows"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__call["call"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__r["r"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__watcher["watcher"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__adapter["adapter"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__threw["threw"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__payload["payload"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__allRows["allRows"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__partialRows["partialRows"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__polls["polls"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__sqlArg["sqlArg"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__rowid["rowid"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
-        plugins__koru_autopilot_cursor__src__chat_history_watcher__test__main["main"]
-        plugins__koru_autopilot_cursor__src__extension__isCursorHost["isCursorHost"]
-        plugins__koru_autopilot_cursor__src__extension__maybeAutoConnect["maybeAutoConnect"]
-        plugins__koru_autopilot_cursor__src__extension__cfg["cfg"]
-        plugins__koru_autopilot_cursor__src__extension__registerBridgeCommands["registerBridgeCommands"]
-        plugins__koru_autopilot_cursor__src__extension__text["text"]
-        plugins__koru_autopilot_cursor__src__extension__activateBridge["activateBridge"]
-        plugins__koru_autopilot_cursor__src__extension__bridge["bridge"]
-        plugins__koru_autopilot_cursor__src__extension__activate["activate"]
-        plugins__koru_autopilot_cursor__src__extension__appName["appName"]
-        plugins__koru_autopilot_cursor__src__extension__deactivate["deactivate"]
-        plugins__koru_autopilot_cursor__src__chat_history_adapters__buildAdapterForIde["buildAdapterForIde"]
-        plugins__koru_autopilot_cursor__src__ides__registry__REGISTRY["REGISTRY"]
-        plugins__koru_autopilot_cursor__src__ides__registry__registerStrategy["registerStrategy"]
-        plugins__koru_autopilot_cursor__src__ides__registry__id["id"]
-        plugins__koru_autopilot_cursor__src__ides__registry__getStrategy["getStrategy"]
-        plugins__koru_autopilot_cursor__src__ides__registry__allStrategies["allStrategies"]
-        plugins__koru_autopilot_cursor__src__ides__registry__detectIdeViaStrategies["detectIdeViaStrategies"]
-        plugins__koru_autopilot_cursor__src__ides__registry__bootstrapStrategies["bootstrapStrategies"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__assert["assert"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testOrderWithCache["testOrderWithCache"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__ordered["ordered"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testChatFocusHeuristic["testChatFocusHeuristic"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testVerifyFocusAfterOpen["testVerifyFocusAfterOpen"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testPasteLandedInEditor["testPasteLandedInEditor"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testMergeUnique["testMergeUnique"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testBuildFocusOpenCursorFirst["testBuildFocusOpenCursorFirst"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__cmds["cmds"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testBuildFocusInputUsesChatCommands["testBuildFocusInputUsesChatCommands"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance["testBuildSubmitCommandsDoesNotUseQu"]
-        plugins__koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsTypeSubmit["testSanitizeCursorDiscardsTypeSubmi"]
-    end
-    subgraph plugins__koru_autopilot_jetbrains
-        plugins__koru_autopilot_jetbrains__settings__gradle__gradlePluginPortal["gradlePluginPortal"]
-        plugins__koru_autopilot_jetbrains__settings__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__reconnect["reconnect"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__disconnect["disconnect"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__sendHello["sendHello"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__startReadLoop["startReadLoop"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__withContext["withContext"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__when["when"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__openAiPanel["openAiPanel"]
-        plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__pasteViaClipboard["pasteViaClipboard"]
-        plugins__koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
-        plugins__koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
-        plugins__koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
-    end
-    subgraph plugins__koru_autopilot_shared
-        plugins__koru_autopilot_shared__src__autopilot_bridge__DISALLOWED_FOCUS_OPEN_COMMANDS["DISALLOWED_FOCUS_OPEN_COMMANDS"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS["UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__isAllowedFocusOpenCommand["isAllowedFocusOpenCommand"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__sanitizeFocusOpenCommand["sanitizeFocusOpenCommand"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__sanitizeFocusOpenCandidates["sanitizeFocusOpenCandidates"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__filterUnsafeFocusOpenForIde["filterUnsafeFocusOpenForIde"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__isSpecificChatInputFocusCommand["isSpecificChatInputFocusCommand"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__normalized["normalized"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__isTogglingFocusOpenCommand["isTogglingFocusOpenCommand"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__debugLog["debugLog"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__suffix["suffix"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__safeLogPayload("safeLogPayload CC=9")
-        plugins__koru_autopilot_shared__src__autopilot_bridge__snapshot["snapshot"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__safeLog["safeLog"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__resolveAutopilotBridgeOptions["resolveAutopilotBridgeOptions"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__isConnected["isConnected"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__sendConsoleLog["sendConsoleLog"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__resetOperationTrace["resetOperationTrace"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__value["value"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__commands["commands"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__server["server"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__traceOperation["traceOperation"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__safeLog["safeLog"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__emitLiveDsl["emitLiveDsl"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__seq["seq"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__okToken["okToken"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__routeToken["routeToken"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__reason["reason"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__debugLog["debugLog"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__currentOperationTrace["currentOperationTrace"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__socketPath["socketPath"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__cfg["cfg"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__override["override"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__connect["connect"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__tryConnectNext("tryConnectNext CC=9")
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__p["p"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__sock["sock"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__connected["connected"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__commandCatalog["commandCatalog"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__matching["matching"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__disconnect["disconnect"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__clearTimeout["clearTimeout"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__startChatHistoryWatcherIfEligible("startChatHistoryWatcherIfEligible CC=9")
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__ide["ide"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__initialCursor["initialCursor"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__scheduleRetry["scheduleRetry"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__delay["delay"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__maybeOpenChatOnConnect["maybeOpenChatOnConnect"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__setTimeout["setTimeout"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__detail["detail"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__openChatPanel["openChatPanel"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__focus["focus"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__runCommand["runCommand"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__result["result"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__probeLadderEnabled["probeLadderEnabled"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__probeFocusDelayMs["probeFocusDelayMs"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__probePasteDelayMs["probePasteDelayMs"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__sleep["sleep"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__waitForCommand["waitForCommand"]
-        plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__deadline["deadline"]
-    end
-    subgraph plugins__koru_autopilot_vscode
-        plugins__koru_autopilot_vscode__src__chat_history_paths__ideUserDir["ideUserDir"]
-        plugins__koru_autopilot_vscode__src__chat_history_paths__home["home"]
-        plugins__koru_autopilot_vscode__src__chat_history_paths__name["name"]
-        plugins__koru_autopilot_vscode__src__chat_history_paths__appdata["appdata"]
-        plugins__koru_autopilot_vscode__src__chat_history_paths__defaultGlobalStateDbPath["defaultGlobalStateDbPath"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__planDispatch["planDispatch"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__parseXdotoolGeometryShell["parseXdotoolGeometryShell"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__match["match"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__x["x"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__y["y"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__width["width"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__height["height"]
-        plugins__koru_autopilot_vscode__src__host_click_submit__bottomRightSubmitPoint["bottomRightSubmitPoint"]
-        plugins__koru_autopilot_vscode__src__unsupported_chat_adapter__UnsupportedAdapter__storeAvailable["storeAvailable"]
-        plugins__koru_autopilot_vscode__src__unsupported_chat_adapter__UnsupportedAdapter__fetchNewer["fetchNewer"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__assert["assert"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testReadVerifySubmitPrefersNewSetting["testReadVerifySubmitPrefersNewSetti"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testShouldVerifyPostSubmitAllPluginIdes["testShouldVerifyPostSubmitAllPlugin"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled["testHostSubmitIdesRequireVerificati"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testIdeStrategiesAreSeparated["testIdeStrategiesAreSeparated"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testShouldVerifyPrePasteBusy["testShouldVerifyPrePasteBusy"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testDecideBusyInputAction["testDecideBusyInputAction"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testInterpretPostSubmitProbeRetry["testInterpretPostSubmitProbeRetry"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__result["result"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__testInterpretPostSubmitProbeStrictEmpty["testInterpretPostSubmitProbeStrictE"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__inconclusive["inconclusive"]
-        plugins__koru_autopilot_vscode__src__step_decisions__test__empty["empty"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert["assert"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testShutdownPlan["testShutdownPlan"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__plan["plan"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testUnknownTypePlan["testUnknownTypePlan"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesPreferIdeInstanceBeforeSingleton["testSocketCandidatesPreferIdeInstan"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldSocket["oldSocket"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldInstance["oldInstance"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldRuntime["oldRuntime"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__candidates["candidates"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesDoNotCrossIdeFallback["testSocketCandidatesDoNotCrossIdeFa"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesSeparateVscodeAndVscodium["testSocketCandidatesSeparateVscodeA"]
-        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesOverrideIsStrict["testSocketCandidatesOverrideIsStric"]
-        plugins__koru_autopilot_vscode__src__ide_control_strategy__ideControlStrategy["ideControlStrategy"]
-        plugins__koru_autopilot_vscode__src__ide_control_strategy__key["key"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__currentCursor["currentCursor"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__adapterDescription["adapterDescription"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__setCursor["setCursor"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__start["start"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__tick["tick"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__stop["stop"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__clearInterval["clearInterval"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__pollOnce("pollOnce CC=10")
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__cursorAdvances["cursorAdvances"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__a["a"]
-        plugins__koru_autopilot_vscode__src__chat_history_watcher__ChatHistoryWatcher__b["b"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__PROBE_CACHE_VERSION["PROBE_CACHE_VERSION"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__captureEditorSnapshot["captureEditorSnapshot"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__scheme["scheme"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__isFileLike["isFileLike"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__decideSubmitCleared["decideSubmitCleared"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__trimmed["trimmed"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__original["original"]
-        plugins__koru_autopilot_vscode__src__probe_ladder__tail["tail"]
-    end
-    subgraph plugins__koru_autopilot_vscodium
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__stdout["stdout"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__rows["rows"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__call["call"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__r["r"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__watcher["watcher"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__adapter["adapter"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__threw["threw"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__payload["payload"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__allRows["allRows"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__partialRows["partialRows"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__polls["polls"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__sqlArg["sqlArg"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__rowid["rowid"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
-        plugins__koru_autopilot_vscodium__src__chat_history_watcher__test__main["main"]
-        plugins__koru_autopilot_vscodium__src__extension__isHostClipboardPasteCommand["isHostClipboardPasteCommand"]
-        plugins__koru_autopilot_vscodium__src__extension__debugLog["debugLog"]
-        plugins__koru_autopilot_vscodium__src__extension__suffix["suffix"]
-        plugins__koru_autopilot_vscodium__src__extension__safeLogPayload("safeLogPayload CC=9")
-        plugins__koru_autopilot_vscodium__src__extension__snapshot["snapshot"]
-        plugins__koru_autopilot_vscodium__src__extension__safeLog["safeLog"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__isConnected["isConnected"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__sendConsoleLog["sendConsoleLog"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__resetOperationTrace["resetOperationTrace"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__value["value"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__commands["commands"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__server["server"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__traceOperation["traceOperation"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__safeLog["safeLog"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__emitLiveDsl["emitLiveDsl"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__seq["seq"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__okToken["okToken"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__routeToken["routeToken"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__reason["reason"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__debugLog["debugLog"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__currentOperationTrace["currentOperationTrace"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__socketPath["socketPath"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__cfg["cfg"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__override["override"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__connect["connect"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__tryConnectNext("tryConnectNext CC=9")
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__p["p"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__sock["sock"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__connected["connected"]
-        plugins__koru_autopilot_vscodium__src__extension__AutopilotBridge__commandCatalog["commandCatalog"]
-    end
-    subgraph plugins__koru_autopilot_windsurf
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__stdout["stdout"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__rows["rows"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__call["call"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__r["r"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__watcher["watcher"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__adapter["adapter"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__threw["threw"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__payload["payload"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__allRows["allRows"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__partialRows["partialRows"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__polls["polls"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__sqlArg["sqlArg"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__rowid["rowid"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
-        plugins__koru_autopilot_windsurf__src__chat_history_watcher__test__main["main"]
-        plugins__koru_autopilot_windsurf__src__extension__DISALLOWED_FOCUS_OPEN_COMMANDS["DISALLOWED_FOCUS_OPEN_COMMANDS"]
-        plugins__koru_autopilot_windsurf__src__extension__UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS["UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS"]
-        plugins__koru_autopilot_windsurf__src__extension__isAllowedFocusOpenCommand["isAllowedFocusOpenCommand"]
-        plugins__koru_autopilot_windsurf__src__extension__sanitizeFocusOpenCommand["sanitizeFocusOpenCommand"]
-        plugins__koru_autopilot_windsurf__src__extension__sanitizeFocusOpenCandidates["sanitizeFocusOpenCandidates"]
-        plugins__koru_autopilot_windsurf__src__extension__filterUnsafeFocusOpenForIde["filterUnsafeFocusOpenForIde"]
-        plugins__koru_autopilot_windsurf__src__extension__isSpecificChatInputFocusCommand["isSpecificChatInputFocusCommand"]
-        plugins__koru_autopilot_windsurf__src__extension__normalized["normalized"]
-        plugins__koru_autopilot_windsurf__src__extension__isTogglingFocusOpenCommand["isTogglingFocusOpenCommand"]
-        plugins__koru_autopilot_windsurf__src__extension__debugLog["debugLog"]
-        plugins__koru_autopilot_windsurf__src__extension__suffix["suffix"]
-        plugins__koru_autopilot_windsurf__src__extension__safeLogPayload("safeLogPayload CC=9")
-        plugins__koru_autopilot_windsurf__src__extension__snapshot["snapshot"]
-        plugins__koru_autopilot_windsurf__src__extension__safeLog["safeLog"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__isConnected["isConnected"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__sendConsoleLog["sendConsoleLog"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__resetOperationTrace["resetOperationTrace"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__value["value"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__commands["commands"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__server["server"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__traceOperation["traceOperation"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__safeLog["safeLog"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__emitLiveDsl["emitLiveDsl"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__seq["seq"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__okToken["okToken"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__routeToken["routeToken"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__reason["reason"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__debugLog["debugLog"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__currentOperationTrace["currentOperationTrace"]
-        plugins__koru_autopilot_windsurf__src__extension__AutopilotBridge__socketPath["socketPath"]
     end
     subgraph scripts___koru_autodiag_filter_tickets
         scripts___koru_autodiag_filter_tickets__main("main CC=12")
@@ -584,6 +187,13 @@ flowchart TD
         scripts__scaffold_ide_plugin__scaffold["scaffold"]
         scripts__scaffold_ide_plugin__main["main"]
     end
+    subgraph scripts__sync_plugin_build
+        scripts__sync_plugin_build___iter_hash_files("_iter_hash_files CC=13")
+        scripts__sync_plugin_build___package_without_build_metadata["_package_without_build_metadata"]
+        scripts__sync_plugin_build__compute_build_sha["compute_build_sha"]
+        scripts__sync_plugin_build__update_package["update_package"]
+        scripts__sync_plugin_build__main["main"]
+    end
     subgraph scripts__sync_plugin_shared
         scripts__sync_plugin_shared___sync_one["_sync_one"]
         scripts__sync_plugin_shared__main["main"]
@@ -644,15 +254,6 @@ flowchart TD
         services__healing_webhook__ticket_builder__build_ticket_payload("build_ticket_payload CC=11")
     end
     subgraph src__koru
-        src__koru__autonomous_auto_pipeline___argv_has_option["_argv_has_option"]
-        src__koru__autonomous_auto_pipeline___expand_auto_up_defaults["_expand_auto_up_defaults"]
-        src__koru__autonomous_auto_pipeline___collect_argv_options["_collect_argv_options"]
-        src__koru__autonomous_auto_pipeline___user_option["_user_option"]
-        src__koru__autonomous_auto_pipeline___auto_value["_auto_value"]
-        src__koru__autonomous_auto_pipeline___auto_pipeline_has_pressure("_auto_pipeline_has_pressure CC=9")
-        src__koru__autonomous_auto_pipeline___auto_pipeline_stage["_auto_pipeline_stage"]
-        src__koru__autonomous_auto_pipeline___select_auto_pipeline_profile["_select_auto_pipeline_profile"]
-        src__koru__autonomous_auto_pipeline___update_auto_pipeline_state["_update_auto_pipeline_state"]
         src__koru__runtime__planfile_dir["planfile_dir"]
         src__koru__runtime__runtime_dir["runtime_dir"]
         src__koru__runtime__runs_dir["runs_dir"]
@@ -670,15 +271,6 @@ flowchart TD
         src__koru__gc_cli_helpers__print_gc_text_report("print_gc_text_report CC=12")
         src__koru__gc_cli_helpers__emit_gc_management_event["emit_gc_management_event"]
         src__koru__gc_cli_helpers__print_gc_report["print_gc_report"]
-        src__koru__dev_sync___default_semcod_root["_default_semcod_root"]
-        src__koru__dev_sync___venv_python["_venv_python"]
-        src__koru__dev_sync___target_python["_target_python"]
-        src__koru__dev_sync___run["_run"]
-        src__koru__dev_sync___is_dirty["_is_dirty"]
-        src__koru__dev_sync___pull_repo["_pull_repo"]
-        src__koru__dev_sync___sync_single_package("_sync_single_package CC=11")
-        src__koru__dev_sync__sync_developer_packages["sync_developer_packages"]
-        src__koru__dev_sync__dev_main("dev_main CC=9")
         src__koru__ide_router__is_headless_environment("is_headless_environment CC=8")
         src__koru__ide_router__resolve_ide_route("resolve_ide_route CC=10")
         src__koru__autonomous_diagnostics___has_redup_module["_has_redup_module"]
@@ -704,6 +296,24 @@ flowchart TD
         src__koru__autonomous_processes___find_existing_autonomous_processes["_find_existing_autonomous_processes"]
         src__koru__autonomous_processes___find_existing_wup_processes["_find_existing_wup_processes"]
         src__koru__autonomous_processes___as_managed["_as_managed"]
+        src__koru__autonomous_processes___stdio_info["_stdio_info"]
+        src__koru__autonomous_processes___terminate_existing_processes("_terminate_existing_processes CC=10")
+        src__koru__autonomous_processes___confirm_replace_existing["_confirm_replace_existing"]
+        src__koru__autonomous_processes__stop_prior_autonomous_for_auto_start["stop_prior_autonomous_for_auto_star"]
+        src__koru__autonomous_processes__guard_existing_autonomous_processes("guard_existing_autonomous_processes CC=11")
+        src__koru__wup_testql_compat___normalize_timeout["_normalize_timeout"]
+        src__koru__wup_testql_compat___normalize_args["_normalize_args"]
+        src__koru__wup_testql_compat___real_testql["_real_testql"]
+        src__koru__wup_testql_compat__main["main"]
+        src__koru__mcp_provision___windsurf_global_config["_windsurf_global_config"]
+        src__koru__mcp_provision___cursor_project_config["_cursor_project_config"]
+        src__koru__mcp_provision___vscode_project_config["_vscode_project_config"]
+        src__koru__mcp_provision___windsurf_project_config["_windsurf_project_config"]
+        src__koru__mcp_provision___zed_project_settings["_zed_project_settings"]
+        src__koru__mcp_provision___resolved_koru_command["_resolved_koru_command"]
+        src__koru__mcp_provision___koru_mcp_entry["_koru_mcp_entry"]
+        src__koru__mcp_provision___koru_mcp_entry_cursor["_koru_mcp_entry_cursor"]
+        src__koru__mcp_provision___maybe_upgrade_koru_command["_maybe_upgrade_koru_command"]
     end
     subgraph src__koruapi
         src__koruapi__runtime_insights___run_ps("_run_ps CC=9")
@@ -811,20 +421,6 @@ flowchart TD
         src__koruide__config__clear_config_cache["clear_config_cache"]
         src__koruide__ide_control__ide_control_strategy["ide_control_strategy"]
         src__koruide__ide_control__plugin_socket_ide_ids["plugin_socket_ide_ids"]
-        src__koruide__protocol___filter_extras["_filter_extras"]
-        src__koruide__protocol__Message__to_dict["to_dict"]
-        src__koruide__protocol__Message__encode["encode"]
-        src__koruide__protocol__decode("decode CC=12")
-        src__koruide__protocol__hello["hello"]
-        src__koruide__protocol__chat_send["chat_send"]
-        src__koruide__protocol__drive["drive"]
-        src__koruide__protocol__ack["ack"]
-        src__koruide__protocol__error["error"]
-        src__koruide__protocol__session_started["session_started"]
-        src__koruide__protocol__session_ended["session_ended"]
-        src__koruide__protocol__message_sent["message_sent"]
-        src__koruide__protocol__message_received["message_received"]
-        src__koruide__protocol__status_error["status_error"]
         src__koruide__command_scenario__ScenarioValidation__to_dict["to_dict"]
         src__koruide__command_scenario__ide_command_scenario_schema["ide_command_scenario_schema"]
         src__koruide__command_scenario___validate_step["_validate_step"]
@@ -857,6 +453,20 @@ flowchart TD
         src__koruide__host_setup___package_manager_hint["_package_manager_hint"]
         src__koruide__host_setup___human_followups("_human_followups CC=14")
         src__koruide__host_setup__build_setup_host_report["build_setup_host_report"]
+        src__koruide__host_setup___try_apt_install["_try_apt_install"]
+        src__koruide__host_setup__run_host_setup["run_host_setup"]
+        src__koruide__host_setup___print_setup_host_header["_print_setup_host_header"]
+        src__koruide__host_setup___print_setup_host_backends["_print_setup_host_backends"]
+        src__koruide__host_setup___print_setup_host_ides["_print_setup_host_ides"]
+        src__koruide__host_setup___print_setup_host_apt_section["_print_setup_host_apt_section"]
+        src__koruide__host_setup___print_setup_host_human_followups["_print_setup_host_human_followups"]
+        src__koruide__host_setup___print_setup_host_install_details["_print_setup_host_install_details"]
+        src__koruide__host_setup___print_text_report["_print_text_report"]
+        src__koruide__ide__normalize_ide_id["normalize_ide_id"]
+        src__koruide__ide__supported_autopilot_ide_ids["supported_autopilot_ide_ids"]
+        src__koruide__ide__autopilot_ide_choices["autopilot_ide_choices"]
+        src__koruide__ide__vscode_extension_plugin_ide_ids["vscode_extension_plugin_ide_ids"]
+        src__koruide__ide__supports_vscode_extension_plugin["supports_vscode_extension_plugin"]
     end
     subgraph src__korullm
         src__korullm__strategies__codex__CodexStrategy__matches_environment["matches_environment"]
@@ -1101,12 +711,11 @@ flowchart TD
         src__koruvision__providers__detector__provider_diagnostics_rows["provider_diagnostics_rows"]
         src__koruvision__providers__detector__probe_capture_providers("probe_capture_providers CC=10")
     end
-    examples__remote_orchestration_demo__run_multi_node_orchestration --> scripts__koru_soak_monitor__print
+    examples__remote_orchestration_demo__run_multi_node_orchestration --> docs__deployment_events__print
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___resolve_affected_files
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___run_vallm_check
     services__healing_webhook__app___execute_planfile_create --> services__healing_webhook__app___extract_ticket_id_from_stdout
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___enrich_ticket_with_vallm
-    services__healing_webhook__app__create_planfile_ticket --> plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__next
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___build_planfile_command
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___execute_planfile_create
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__ticket_builder__build_ticket_payload
@@ -1129,10 +738,12 @@ flowchart TD
     services__healing_webhook__app__heal_redup_check --> services__healing_webhook__app___record_action
     services__healing_webhook__app__get_history --> src__koru__wizard__gui__static__wizard__list
     services__healing_webhook__app__alertmanager_webhook --> services__healing_webhook__app___resolve_strategy
-    services__healing_webhook__app__alertmanager_webhook --> plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__strategy
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__create_planfile_ticket
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_improve
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_gate
+    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___format_paths
+    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___default_acceptance
+    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___reproduction_for
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__logfile
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__runtime_dir
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__pidfile
@@ -1163,37 +774,37 @@ flowchart TD
     src__koruobserve__bootstrap__ensure_observe_config --> src__koru__configurator__migrate_project_config
     src__koruobserve__bootstrap__ensure_mesh_key --> src__korumesh__keys__write_mesh_key
     src__koruobserve__cli___require_observe_runtime --> src__koruobserve__cli___missing_observe_packages
-    src__koruobserve__cli___require_observe_runtime --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___require_observe_runtime --> docs__deployment_events__print
     src__koruobserve__cli___require_observe_runtime --> src__koruobserve__cli___pip_install
-    src__koruobserve__cli___pip_install --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___pip_install --> docs__deployment_events__print
     src__koruobserve__cli___cmd_install --> src__koruobserve__cli___missing_observe_packages
     src__koruobserve__cli___cmd_install --> src__koruobserve__cli___pip_install
     src__koruobserve__cli___cmd_up --> src__koruobserve__cli___require_observe_runtime
     src__koruobserve__cli___cmd_up --> src__koruobserve__lifecycle__observe_up
-    src__koruobserve__cli___cmd_up --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___cmd_up --> docs__deployment_events__print
     src__koruobserve__cli___cmd_up --> src__koruobserve__cli_parser__project_path
     src__koruobserve__cli___cmd_down --> src__koruobserve__lifecycle__observe_down
     src__koruobserve__cli___cmd_down --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli___cmd_down --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___cmd_down --> docs__deployment_events__print
     src__koruobserve__cli___cmd_status --> src__koruobserve__lifecycle__observe_status
-    src__koruobserve__cli___cmd_status --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___cmd_status --> docs__deployment_events__print
     src__koruobserve__cli___cmd_status --> src__koruobserve__cli_parser__project_path
     src__koruobserve__cli___cmd_grid --> src__koruobserve__paths__state_file
-    src__koruobserve__cli___cmd_grid --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___cmd_grid --> docs__deployment_events__print
     src__koruobserve__cli___cmd_grid --> src__koruobserve__cli_parser__project_path
     src__koruobserve__cli___cmd_trace --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli___cmd_trace --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___cmd_trace --> docs__deployment_events__print
     src__koruobserve__cli___cmd_trace --> src__koru__observability_writer__observability_event_store_path
     src__koruobserve__cli___cmd_trace --> src__koruobserve__cli___trace_event_matches
     src__koruobserve__cli___cmd_trace --> src__koru__observability_dsl__render_observability_path
     src__koruobserve__cli___cmd_providers --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli___cmd_providers --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli___cmd_providers --> docs__deployment_events__print
     src__koruobserve__cli___cmd_providers --> src__koruobserve__providers_cli__cmd_providers_list
     src__koruobserve__cli___cmd_providers --> src__koruobserve__providers_cli__cmd_providers_test
     src__koruobserve__cli___cmd_providers --> src__koruobserve__providers_cli__cmd_providers_reset
-    src__koruobserve__cli__observe_main --> scripts__koru_soak_monitor__print
+    src__koruobserve__cli__observe_main --> docs__deployment_events__print
     src__koruobserve__cli__observe_main --> src__koruobserve__cli_parser__build_observe_parser
-    src__koruobserve__diagnostics___monitors_from_mss --> src__koruvision__capture__list_monitors
+    src__koruobserve__diagnostics___monitors_from_mss --> docs__plans__capture_providers_refactor__list_monitors
     src__koruobserve__diagnostics__detect_monitors --> src__koruobserve__diagnostics___monitors_from_mss
     src__koruobserve__diagnostics__detect_monitors --> src__koruobserve__diagnostics___monitors_from_xrandr
     src__koruobserve__diagnostics__capture_diagnostics --> src__koruobserve__diagnostics__detect_monitors
@@ -1208,20 +819,19 @@ flowchart TD
     src__koruobserve__providers_cli__providers_reset_consent --> src__koruobserve__providers_cli__screencast_session_path
     src__koruobserve__providers_cli__providers_reset_consent --> src__koruvision__providers__screencast_session__clear_session_file
     src__koruobserve__providers_cli__cmd_providers_list --> src__koruobserve__providers_cli__providers_list_payload
-    src__koruobserve__providers_cli__cmd_providers_list --> scripts__koru_soak_monitor__print
+    src__koruobserve__providers_cli__cmd_providers_list --> docs__deployment_events__print
     src__koruobserve__providers_cli__cmd_providers_list --> src__koruobserve__providers_cli__providers_list_text
     src__koruobserve__providers_cli__cmd_providers_test --> src__koruobserve__providers_cli__providers_test_payload
-    src__koruobserve__providers_cli__cmd_providers_test --> scripts__koru_soak_monitor__print
+    src__koruobserve__providers_cli__cmd_providers_test --> docs__deployment_events__print
     src__koruobserve__providers_cli__cmd_providers_test --> src__koruobserve__providers_cli__providers_test_text
     src__koruobserve__providers_cli__cmd_providers_reset --> src__koruobserve__providers_cli__providers_reset_consent
-    src__koruobserve__providers_cli__cmd_providers_reset --> scripts__koru_soak_monitor__print
+    src__koruobserve__providers_cli__cmd_providers_reset --> docs__deployment_events__print
     src__koruobserve__providers_cli__cmd_providers_reset --> src__koruobserve__providers_cli__providers_reset_text
     src__koruobserve__paths__pidfile --> src__koruobserve__paths__runtime_dir
     src__koruobserve__paths__logfile --> src__koruobserve__paths__runtime_dir
     src__koruobserve__paths__state_file --> src__koruobserve__paths__runtime_dir
     src__koruobserve__cli_parser__build_observe_parser --> src__koruobserve__cli_parser___add_subproject
     src__koruobserve__cli_parser__build_observe_parser --> src__koruobserve__cli_parser___register_up_arguments
-    src__koruos__strategies__base__OsStrategy____repr__ --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruos__strategies__wayland_linux___prefer_ydotool --> src__koruos__strategies__wayland_linux___gnome_compositor
     src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys --> src__koruos__strategies__wayland_linux___prefer_ydotool
     src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___focus_via_wmctrl --> src__koruos__strategies__wayland_linux___run
@@ -1243,7 +853,6 @@ flowchart TD
     src__korudsl__transform__library_from_any --> src__korudsl__library__ensure_library_structure
     src__korudsl__transform__library_from_any --> src__korudsl__library__convert_goals_json_to_library
     src__korudsl__transform__library_from_any --> src__korudsl__library__normalize_dsl_to_library
-    src__korudsl__transform__library_from_any --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__korudsl__transform__library_to_any --> src__korudsl__library__library_to_dsl
     src__korudsl__transform__library_to_any --> src__korudsl__library__ensure_library_structure
     src__korudsl__transform__dsl_roundtrip_report --> src__korudsl__library__normalize_dsl_to_library
@@ -1261,7 +870,6 @@ flowchart TD
     src__korudsl__library__library_to_dsl --> src__korudsl__library___emit_goals
     src__koruapi__runtime_insights___classify_process --> src__koruapi__runtime_insights___looks_project_related
     src__koruapi__runtime_insights___active_tools --> src__koruapi__runtime_insights___classify_process
-    src__koruapi__runtime_insights___active_tools --> plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__next
     src__koruapi__runtime_insights___top_processes --> src__koruapi__runtime_insights___classify_process
     src__koruapi__runtime_insights___top_processes --> src__koruapi__runtime_insights___looks_project_related
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koruapi__runtime_insights___run_ps
@@ -1270,7 +878,7 @@ flowchart TD
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koruide__ide__detect_running_ides
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koru__autonomous_process_guard__find_existing_autonomous_processes
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koru__autonomous_process_guard__find_existing_wup_processes
-    src__koruapi__mcp__mcp_main --> koru__activity_log__activity
+    src__koruapi__mcp__mcp_main --> src__koru__activity_log__activity
     src__koruapi__mcp__mcp_main --> src__koruapi__mcp_server__mcp_serve_main
     src__koruapi__dashboard_routes___config_defaults --> src__koruapi__dashboard_projects__dashboard_workspace
     src__koruapi__dashboard_routes___state_payload --> src__koruapi__dashboard_state__dashboard_state
@@ -1287,7 +895,6 @@ flowchart TD
     src__koruapi__dashboard_routes___get_ide_strategy_prompt --> src__koruide__strategy_prompt__build_strategy_prompt
     src__koruapi__dashboard_routes___get_autonomy_trace --> src__koru__autonomy__decision_trace__load_recent_decisions
     src__koruapi__dashboard_routes___get_autonomy_trace --> src__koru__interface_registry__blocker_interface_payload
-    src__koruapi__dashboard_routes___get_autonomy_trace --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_routes___get_observe_trace --> src__koruapi__dashboard_routes___first_query_value
     src__koruapi__dashboard_routes___get_observe_trace --> src__koruapi__dashboard_routes___int_query_value
     src__koruapi__dashboard_routes___get_observe_trace --> src__koruapi__dashboard_observability__dashboard_observability_trace_payload
@@ -1299,23 +906,18 @@ flowchart TD
     src__koruapi__dashboard_routes___get_create_project_ticket_action --> src__koruapi__dashboard_html__render_action_error_html
     src__koruapi__dashboard_routes___post_topology --> src__koruapi__dashboard_topology__apply_dashboard_topology_update
     src__koruapi__dashboard_routes___post_runtime_context_config --> src__koruapi__dashboard_runtime__save_runtime_context_config
-    src__koruapi__dashboard_routes___post_runtime_context_config --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_routes___post_env_config --> src__koru__env_config__write_env_config
     src__koruapi__dashboard_routes___post_env_config --> src__koru__env_config__apply_env_updates
     src__koruapi__dashboard_routes___post_env_config --> src__koru__env_config__env_config_payload
     src__koruapi__dashboard_routes___post_config --> src__koruapi__dashboard_routes___config_defaults
     src__koruapi__dashboard_routes___post_config --> src__koruapi__dashboard_config__save_dashboard_config
     src__koruapi__dashboard_routes___post_config --> src__koruapi__dashboard_config__dashboard_config_payload
-    src__koruapi__dashboard_routes___post_config --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_routes___post_waiting_input_bulk --> src__koruapi__dashboard_tickets__bulk_waiting_input_action
     src__koruapi__dashboard_routes___post_ticket_create --> src__koruapi__dashboard_tickets__create_ticket_from_dashboard
-    src__koruapi__dashboard_routes___post_ticket_create --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_routes___post_ticket_update --> src__koruapi__dashboard_tickets__update_ticket_from_dashboard
-    src__koruapi__dashboard_routes___post_ticket_update --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_routes___post_remote_drive --> src__koru__control_commands__api_command
     src__koruapi__dashboard_routes___post_remote_drive --> src__koruide__socket__default_socket_path
     src__koruapi__dashboard_routes___post_ticket_reorder --> src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard
-    src__koruapi__dashboard_routes___post_ticket_reorder --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_routes___handle_dashboard_get --> src__korumesh__dashboard__serve_mesh_http
     src__koruapi__dashboard_routes___handle_dashboard_get --> src__korumesh__browser_capture__serve_browser_capture_http
     src__koruapi__dashboard_routes___handle_dashboard_get --> src__koruapi__dashboard_routes___load_dashboard_html
@@ -1339,16 +941,16 @@ flowchart TD
     src__koruapi__dashboard__dashboard_main --> src__koru__dotenv_loader__load_dotenv
     src__koruapi__dashboard__dashboard_main --> src__koru__configurator__load_project_config
     src__koruapi__dashboard__dashboard_main --> src__koruapi__dashboard___resolve_serve_config
-    src__koruapi__dashboard__dashboard_main --> koru__activity_log__activity
+    src__koruapi__dashboard__dashboard_main --> src__koru__activity_log__activity
     src__koruapi__dashboard__dashboard_main --> src__koruapi__server__serve
     src__koruapi__dashboard__dashboard_main --> src__koru__events__emit_management_event
     src__koruapi__dashboard__dashboard_main --> src__koruapi__dashboard__build_serve_parser
     src__koruapi__cli___action_list --> src__koru__wizard__gui__static__wizard__list
     src__koruapi__cli___action_list --> src__koruapi__integrations__list_integrations
-    src__koruapi__cli___action_invoke --> koru__activity_log__activity
+    src__koruapi__cli___action_invoke --> src__koru__activity_log__activity
     src__koruapi__cli___action_invoke --> src__koruapi__cli___parse_body
     src__koruapi__cli___action_invoke --> src__koruapi__invoke__invoke_integration
-    src__koruapi__cli___action_invoke --> scripts__koru_soak_monitor__print
+    src__koruapi__cli___action_invoke --> docs__deployment_events__print
     src__koruapi__cli___action_dashboard --> src__koruapi__dashboard__dashboard_main
     src__koruapi__cli___action_mcp --> src__koruapi__mcp__mcp_main
     src__koruapi__cli___action_local --> src__koruapi__local__local_main
@@ -1365,16 +967,16 @@ flowchart TD
     src__koruapi__dashboard_state__dashboard_state --> src__koruapi__dashboard_projects__discover_dashboard_projects
     src__koruapi__dashboard_state__dashboard_state --> src__koruapi__dashboard_projects__dashboard_workspace
     src__koruapi__local__local_main --> src__koru__local_service__default_local_service_config
-    src__koruapi__local__local_main --> koru__activity_log__activity
+    src__koruapi__local__local_main --> src__koru__activity_log__activity
     src__koruapi__local__local_main --> src__koru__local_service__run_local_service
-    src__koruapi__local__local_main --> scripts__koru_soak_monitor__print
+    src__koruapi__local__local_main --> docs__deployment_events__print
     src__koruapi__local__local_main --> src__koruapi__local__build_local_parser
     src__koruapi__invoke_handlers___handle_context_build --> src__koru__context__build_context
     src__koruapi__invoke_handlers___handle_doctor_run --> src__koru__doctor__run_diagnostics
     src__koruapi__invoke_handlers___handle_scan_apply --> src__koru__scan__run_scan
     src__koruapi__invoke_handlers___handle_queue_loop --> src__koru__queue__loop__run_planfile_queue_loop
-    src__koruapi__invoke_handlers___handle_autopilot_status --> koru__ide_client__build_ide_client
-    src__koruapi__invoke_handlers___handle_autopilot_drive --> koru__ide_client__build_ide_client
+    src__koruapi__invoke_handlers___handle_autopilot_status --> src__koru__ide_client__build_ide_client
+    src__koruapi__invoke_handlers___handle_autopilot_drive --> src__koru__ide_client__build_ide_client
     src__koruapi__invoke_handlers___handle_ide_commands --> src__koruide__command_catalog__command_catalog_for_llm
     src__koruapi__invoke_handlers___handle_ide_commands --> src__koruide__command_catalog__build_ide_command_catalog
     src__koruapi__invoke_handlers___handle_ide_scenario_schema --> src__koruide__command_scenario__ide_command_scenario_schema
@@ -1390,8 +992,6 @@ flowchart TD
     src__koruapi__invoke_handlers___handle_mcp_list_tickets --> src__koruapi__mcp_server__tool_list_tickets
     src__koruapi__invoke_handlers___handle_mcp_run_ticket --> src__koruapi__mcp_server__tool_run_ticket
     src__koruapi__invoke_handlers___handle_mcp_quality_gates --> src__koruapi__mcp_server__tool_run_quality_gates
-    src__koruapi__dashboard_html__render_action_error_html --> plugins__koru_autopilot_shared__src__ack_payload__type
-    src__koruapi__dashboard_html__render_create_ticket_success_html --> src__koruapi__dashboard_html__render_action_success_html
     src__koruapi__dashboard_tickets__run_planfile --> src__koru__queue__runners__run_process
     src__koruapi__dashboard_tickets__run_planfile --> src__koru__wizard__gui__static__wizard__list
     src__koruapi__dashboard_tickets__list_tickets --> src__koru__queue__ticket__planfile_command
@@ -1407,7 +1007,6 @@ flowchart TD
     src__koruapi__dashboard_tickets__update_ticket_from_dashboard --> src__koruapi__dashboard_tickets___write_sprint_file
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___find_ticket_in_sprints
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koru__wizard__gui__static__wizard__list
-    src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__next
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___append_dashboard_history
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___write_sprint_file
     src__koruapi__dashboard_runtime___interface_runtime_payload --> src__koru__interface_registry__iter_interfaces
@@ -1416,7 +1015,6 @@ flowchart TD
     src__koruapi__dashboard_runtime__runtime_context_payload --> src__koruapi__dashboard_runtime___interface_runtime_payload
     src__koruapi__dashboard_runtime__runtime_context_error_payload --> src__koruapi__runtime_insights__collect_runtime_insights
     src__koruapi__dashboard_runtime__runtime_context_error_payload --> src__koruapi__dashboard_runtime___interface_runtime_payload
-    src__koruapi__dashboard_runtime__runtime_context_error_payload --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__invoke__invoke_integration --> src__koruapi__integrations__get_integration
     src__koruapi__dashboard_context__dashboard_context_payload --> src__koru__context__build_context
     src__koruapi__dashboard_context__dashboard_context_payload --> src__koru__interface_registry__summarize_interfaces_by_family
@@ -1426,7 +1024,7 @@ flowchart TD
     src__koruapi__dashboard_serve_utils___listener_pids_for_tcp_port --> src__koru__wizard__gui__static__wizard__list
     src__koruapi__dashboard_serve_utils___cmdline_suggests_koru_serve --> src__koruapi__dashboard_serve_utils___cmdline_suggests_koru_serve_from_bytes
     src__koruapi__dashboard_serve_utils___kill_prior_listeners --> src__koruapi__dashboard_serve_utils___listener_pids_for_tcp_port
-    src__koruapi__dashboard_serve_utils___kill_prior_listeners --> scripts__koru_soak_monitor__print
+    src__koruapi__dashboard_serve_utils___kill_prior_listeners --> docs__deployment_events__print
     src__koruapi__dashboard_serve_utils___kill_prior_listeners --> src__koruapi__dashboard_serve_utils___cmdline_suggests_koru_serve
     src__koruapi__dashboard_serve_utils___wait_for_prior_listeners_to_exit --> src__koruapi__dashboard_serve_utils___listener_pids_for_tcp_port
     src__koruapi__dashboard_serve_utils___wait_for_prior_listeners_to_exit --> src__koruapi__dashboard_serve_utils___cmdline_suggests_koru_serve
@@ -1449,16 +1047,16 @@ flowchart TD
     src__koruapi__server___handle_invoke_post --> src__koruapi__server___read_json_body
     src__koruapi__server___handle_invoke_post --> src__koruapi__invoke__invoke_integration
     src__koruapi__server___handle_invoke_post --> src__koruapi__server___json_response
-    src__koruapi__server__KoruAPIHandler__log_message --> scripts__koru_soak_monitor__print
-    src__koruapi__server__KoruAPIHandler__do_GET --> koru__activity_log__activity
+    src__koruapi__server__KoruAPIHandler__log_message --> docs__deployment_events__print
+    src__koruapi__server__KoruAPIHandler__do_GET --> src__koru__activity_log__activity
     src__koruapi__server__KoruAPIHandler__do_GET --> src__koruapi__server___json_response
     src__koruapi__server__KoruAPIHandler__do_GET --> src__koruapi__openapi__build_openapi_document
     src__koruapi__server__KoruAPIHandler__do_GET --> src__koruapi__integrations__list_integrations
     src__koruapi__server__KoruAPIHandler__do_GET --> src__koruide__command_catalog__command_catalog_for_llm
-    src__koruapi__server__KoruAPIHandler__do_POST --> koru__activity_log__activity
+    src__koruapi__server__KoruAPIHandler__do_POST --> src__koru__activity_log__activity
     src__koruapi__server__KoruAPIHandler__do_POST --> src__koruapi__server___handle_invoke_post
     src__koruapi__server__KoruAPIHandler__do_POST --> src__koruapi__server___json_response
-    src__koruapi__server__serve --> scripts__koru_soak_monitor__print
+    src__koruapi__server__serve --> docs__deployment_events__print
     src__koruapi__integrations__list_integrations --> src__koru__wizard__gui__static__wizard__list
     src__koruapi__openapi__build_openapi_document --> src__koruapi__integrations__list_integrations
     src__koruapi__dashboard_topology__dashboard_topology_payload --> src__koru__topology__load_topology
@@ -1476,7 +1074,6 @@ flowchart TD
     src__koruapi__dashboard_plugin_logs__dashboard_plugin_logs_payload --> src__koruapi__dashboard_plugin_logs___plugin_debug_log_path
     src__koruapi__topology_post__apply_topology_post_update --> src__koru__topology__set_component_enabled
     src__koruapi__topology_post__apply_topology_post_update --> src__koru__topology__set_pipeline_enabled
-    src__koruapi__dashboard_http__DashboardRequestHandler___safe_respond_json --> plugins__koru_autopilot_shared__src__ack_payload__type
     src__koruapi__dashboard_serve___dashboard_urls --> src__koruapi__dashboard_state__dashboard_urls
     src__koruapi__dashboard_serve___build_handler --> src__koruapi__dashboard_routes__build_dashboard_handler
     src__koruapi__dashboard_serve___emit_serve_event --> src__koru__events__emit_management_event
@@ -1487,10 +1084,10 @@ flowchart TD
     src__koruapi__dashboard_serve___announce_bound_dashboard --> src__koruapi__dashboard_serve___emit_serve_event
     src__koruapi__dashboard_serve___announce_bound_dashboard --> src__koruapi__dashboard_serve___schedule_browser_open
     src__koruapi__dashboard_serve___bind_or_print --> src__koruapi__dashboard_serve___prepare_bound_dashboard
-    src__koruapi__dashboard_serve___bind_or_print --> scripts__koru_soak_monitor__print
+    src__koruapi__dashboard_serve___bind_or_print --> docs__deployment_events__print
     src__koruapi__dashboard_serve__serve --> src__koruapi__dashboard_serve___bind_or_print
     src__koruapi__dashboard_serve__serve --> src__koruapi__dashboard_serve___announce_bound_dashboard
-    src__koruapi__dashboard_serve__serve --> scripts__koru_soak_monitor__print
+    src__koruapi__dashboard_serve__serve --> docs__deployment_events__print
     src__koruapi__dashboard_serve__start_serve_background --> src__koruapi__dashboard_serve___prepare_bound_dashboard
     src__koruapi__dashboard_serve__start_serve_background --> src__koruapi__dashboard_serve___announce_bound_dashboard
     src__koruapi__dashboard_config___dotenv_payload --> src__koruapi__dashboard_config___dotenv_path
@@ -1580,16 +1177,14 @@ flowchart TD
     src__koruapi__mcp_server__run_stdio --> src__koruapi__mcp_server__handle_message
     src__koruapi__mcp_server__run_stdio --> src__koruapi__mcp_server___write
     src__koruapi__mcp_server__run_stdio --> src__koruapi__mcp_server___jsonrpc_error
-    src__koruapi__mcp_server___log --> scripts__koru_soak_monitor__print
+    src__koruapi__mcp_server___log --> docs__deployment_events__print
     src__koruapi__mcp_server__mcp_serve_main --> src__koruapi__mcp_server__run_stdio
-    src__koruapi__mcp_server__mcp_serve_main --> scripts__koru_soak_monitor__print
-    src__korullm__strategies__base__LlmStrategy____repr__ --> plugins__koru_autopilot_shared__src__ack_payload__type
+    src__koruapi__mcp_server__mcp_serve_main --> docs__deployment_events__print
     src__korullm__strategies__registry___fallback_strategy --> src__korullm__strategies__registry__get_llm_strategy
     src__korullm__strategies__registry__resolve_active_llm_strategy --> src__korullm__strategies__registry__resolve_llm_strategy_from_environment
     src__korullm__strategies__registry__resolve_llm_strategy_from_environment --> src__korullm__strategies__registry___fallback_strategy
     src__korullm__strategies__registry__resolve_llm_strategy_from_environment --> src__korullm__strategies__registry__get_llm_strategy
     src__koruvision__capture_probe__resolve_observe_python --> src__koruvision__capture_probe__python_can_capture
-    src__koruvision__scaling__downscale_rgb_nearest --> plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__bytes
     src__koruvision__cli___vision_interval --> src__koru__configurator__load_project_config
     src__koruvision__cli___vision_interval --> src__koruvision__agent__normalize_capture_interval
     src__koruvision__cli___mesh_publish_enabled --> src__koru__configurator__load_project_config
@@ -1598,7 +1193,7 @@ flowchart TD
     src__koruvision__cli___maybe_publish_mesh --> src__koruvision__cli___mesh_publish_enabled
     src__koruvision__cli__vision_main --> src__koruvision__cli___vision_interval
     src__koruvision__cli__vision_main --> src__koruvision__agent__run_capture_loop
-    src__koruvision__cli__vision_main --> scripts__koru_soak_monitor__print
+    src__koruvision__cli__vision_main --> docs__deployment_events__print
     src__koruvision__cli__vision_main --> src__koruvision__cli_parser__build_vision_parser
     src__koruvision__cli__vision_main --> src__koruvision__agent__capture_once
     src__koruvision__cli__vision_main --> src__koruvision__cli___maybe_publish_mesh
@@ -1620,7 +1215,7 @@ flowchart TD
     src__koruvision__capture_mss___grab_single_mss_raw --> src__koruvision__capture_mss__ordered_monitor_indices
     src__koruvision__capture_mss___grab_single_mss_raw --> src__koruvision__capture_mss__grab_target
     src__koruvision__capture_mss___grab_all_mss_raw --> src__koruvision__capture_mss__grab_target
-    src__koruvision__capture_mss___grab_all_mss_raw --> scripts__koru_soak_monitor__print
+    src__koruvision__capture_mss___grab_all_mss_raw --> docs__deployment_events__print
     src__koruvision__portal_capture__capture_portal_png --> src__koruvision__portal_capture___portal_python
     src__koruvision__mesh__resolve_mesh_publish --> src__koru__configurator__load_project_config
     src__koruvision__mesh__resolve_mesh_publish --> src__korumesh__keys__load_mesh_key
@@ -1635,7 +1230,7 @@ flowchart TD
     src__koruvision__agent___capture_cycle --> src__koruvision__agent__capture_once
     src__koruvision__agent__run_capture_loop --> src__koruvision__agent__normalize_capture_interval
     src__koruvision__agent__run_capture_loop --> src__koruvision__agent___capture_cycle
-    src__koruvision__agent__run_capture_loop --> scripts__koru_soak_monitor__print
+    src__koruvision__agent__run_capture_loop --> docs__deployment_events__print
     src__koruvision__cli_parser___add_capture_subparser --> src__koruvision__cli_parser__register_mesh_publish_args
     src__koruvision__cli_parser___add_agent_subparser --> src__koruvision__cli_parser__register_mesh_publish_args
     src__koruvision__cli_parser__build_vision_parser --> src__koruvision__cli_parser___add_capture_subparser
@@ -1670,19 +1265,18 @@ flowchart TD
     src__koruvision__providers__detector__capture_one_with_providers --> src__koruvision__providers__detector__rank_providers
     src__koruvision__providers__detector__capture_one_with_providers --> src__koruvision__providers__detector___stamp_provider
     src__koruvision__providers__detector__capture_one_with_providers --> src__koruvision__providers__detector___auto_failure_message
-    src__koruvision__providers__detector__capture_one_with_providers --> scripts__koru_soak_monitor__print
+    src__koruvision__providers__detector__capture_one_with_providers --> docs__deployment_events__print
     src__koruvision__providers__detector__capture_one_with_providers --> src__koruvision__providers__detector___should_report_auto_portal
     src__koruvision__providers__detector__capture_one_with_providers --> src__koruvision__providers__detector___provider_label
     src__koruvision__providers__detector__capture_all_with_providers --> src__koruvision__providers__detector__rank_providers
     src__koruvision__providers__detector__capture_all_with_providers --> src__koruvision__providers__detector___auto_failure_message
-    src__koruvision__providers__detector__capture_all_with_providers --> scripts__koru_soak_monitor__print
+    src__koruvision__providers__detector__capture_all_with_providers --> docs__deployment_events__print
     src__koruvision__providers__detector__capture_all_with_providers --> src__koruvision__providers__detector___should_report_auto_portal
     src__koruvision__providers__detector__capture_all_with_providers --> src__koruvision__providers__detector___stamp_provider
     src__koruvision__providers__detector__capture_all_with_providers --> src__koruvision__providers__detector___provider_label
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket___websockets_missing
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket__obs_url
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket__obs_password
-    src__koruvision__providers__obs_websocket___with_obs_connection --> plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge__connect
     src__koruvision__providers__obs_websocket___with_obs_connection --> src__koruvision__providers__obs_websocket___obs_auth
     src__koruvision__providers__obs_websocket__probe_obs_reachable --> src__koruvision__providers__obs_websocket___websockets_missing
     src__koruvision__providers__obs_websocket__probe_obs_reachable --> src__koruvision__providers__obs_websocket___obs_request
@@ -1701,8 +1295,24 @@ flowchart TD
     src__koruvision__providers__obs_websocket__ObsWebSocketProvider__capture_all --> src__koruvision__providers__obs_websocket___capture_source_png
     src__koruvision__providers__obs_websocket__ObsWebSocketProvider__capture_all --> src__koruvision__providers__base__frame_from_png
     src__koruvision__providers__obs_websocket__ObsWebSocketProvider__capture_all --> src__koruvision__providers__obs_websocket__obs_source_name
+    src__koruvision__providers__registry__all_providers --> src__koru__wizard__gui__static__wizard__list
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__availability --> src__koruvision__providers__env__portal_possible
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__list_monitors --> src__koruvision__providers__detector__monitors_via_xrandr
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__capture_one --> src__koruvision__capture_mss__png_payload_descriptor
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__capture_one --> src__koruvision__portal_capture__capture_portal_png
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__portal_capture___portal_python
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__providers__screencast_session__resolve_screencast_session_file
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__providers__env__portal_possible
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__providers__env__tool_available
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__list_monitors --> src__koruvision__providers__detector__monitors_via_xrandr
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__capture_all --> src__koruvision__providers__portal_screencast___screencast_frames
+    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__capture_all --> src__koruvision__providers__base__frame_from_png
+    src__koruvision__providers__portal_screencast___screencast_frames --> src__koruvision__portal_capture___portal_python
+    src__koruvision__providers__portal_screencast___screencast_frames --> src__koruvision__providers__screencast_session__resolve_screencast_session_file
+    src__koruvision__providers__portal_screencast___screencast_frames --> src__koruvision__providers__portal_screencast___run_screencast_subprocess
+    src__koruvision__providers__portal_screencast___screencast_frames --> src__koruvision__providers__portal_screencast___parse_screencast_stdout
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__observability_dsl___compact_data,src__koru__autonomous_plugin_wait__retry_plugin_wait_after_reload,src__koru__autonomy__decision_arbiter__decide,plugins__koru_autopilot_shared__src__autopilot_bridge__AutopilotBridge___performInject,src__koru__autonomous_cycle___handle_post_drive_verification,plugins__koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject highCC
-    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__cli___cmd_trace,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype,src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__dashboard_routes___get_autonomy_trace,src__koruapi__dashboard_routes___post_env_config,src__koruapi__dashboard_routes___post_waiting_input_bulk,src__koruapi__dashboard_routes___post_remote_drive,src__koruapi__dashboard_routes___handle_dashboard_get,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action medCC
+    class src__koru__observability_dsl___compact_data,src__koru__autonomous_plugin_wait__retry_plugin_wait_after_reload,src__koru__autonomy__decision_arbiter__decide,src__koruide__daemon__handlers_hello___log_rejected_plugin_connection,src__koruide__drive_orchestrator__DriveOrchestrator__drive_intent_evidence,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_version_info,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_version_block_message,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_ack_summary,src__koruide__drive_orchestrator__DriveOrchestrator__drive_diagnosis,src__koru__autonomous_cycle___load_open_tickets_for_planning,src__koru__autonomous_cycle___handle_post_drive_verification,src__koru__cli_queue__queue_main,src__koru__autonomous_cli_config__apply_autonomy_strategy_defaults,src__koru__autonomous_cycle_chat_activity___apply_llx_chat_reflection,src__koru__ticket_evidence___validate_one_ticket,src__koru__autonomy__replay_actions___known_replay_action,src__koru__autonomy__replay_actions__quick_action_to_replay,src__koru__autopilot__commands__status___print_status_explain_summary,src__koru__autopilot__commands__status__action_status,src__koru__autopilot__install_checks__check_plugin_live_host_stale_issue,src__koruide__plugin_router__PluginRouter__plugin_for,src__koru__autopilot__install_manager__format_install_manager_report highCC
+    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__cli___cmd_trace,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype,src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__dashboard_routes___get_autonomy_trace,src__koruapi__dashboard_routes___post_env_config,src__koruapi__dashboard_routes___post_waiting_input_bulk,src__koruapi__dashboard_routes___post_remote_drive,src__koruapi__dashboard_routes___handle_dashboard_get,src__koruapi__dashboard_tickets__list_tickets medCC

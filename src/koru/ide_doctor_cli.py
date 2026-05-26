@@ -43,9 +43,7 @@ def _resolve_socket(args: argparse.Namespace, ide: str) -> Path:
             os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="koru ide")
-    sub = parser.add_subparsers(dest="action", required=True)
+def _add_discover_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     discover = sub.add_parser(
         "discover",
         help="Run code2llm broad discovery and apply planfile tickets (idle queue helper).",
@@ -66,6 +64,9 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("text", "json"),
         default="text",
     )
+
+
+def _add_doctor_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     doctor = sub.add_parser(
         "doctor",
         help="Diagnose autopilot daemon + IDE plugin bridge for one IDE lane.",
@@ -104,6 +105,9 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
     )
     doctor.add_argument("--explain", action="store_true", help="Always print hypothesis details.")
+
+
+def _add_reload_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     reload = sub.add_parser(
         "reload",
         help="Reload IDE window so a newly installed VSIX extension can activate.",
@@ -117,6 +121,9 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("text", "json"),
         default="text",
     )
+
+
+def _add_command_catalog_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     commands = sub.add_parser(
         "commands",
         help="Print the IDE command/action catalog used by autonomy strategy planning.",
@@ -133,6 +140,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the compact strategy-planning view instead of the full catalog.",
     )
+
+
+def _add_scenario_parsers(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     scenario_schema = sub.add_parser(
         "scenario-schema",
         help="Print the JSON Schema for LLM-authored IDE command scenarios.",
@@ -159,6 +169,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("text", "json", "yaml"),
         default="text",
     )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="koru ide")
+    sub = parser.add_subparsers(dest="action", required=True)
+    _add_discover_parser(sub)
+    _add_doctor_parser(sub)
+    _add_reload_parser(sub)
+    _add_command_catalog_parser(sub)
+    _add_scenario_parsers(sub)
     return parser
 
 

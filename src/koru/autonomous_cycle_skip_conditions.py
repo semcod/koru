@@ -348,6 +348,15 @@ def _check_autopilot_skip_conditions(
     if diagnostics_skip is not None:
         return diagnostics_skip
 
+    manual_send_skip = _manual_send_required_skip_result(
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+    if manual_send_skip is not None:
+        return manual_send_skip
+
     if _should_skip_for_idle_streak(
         queue_result=queue_result,
         state=state,
@@ -430,6 +439,39 @@ def _is_waiting_llm_ready_ticket(*, queue_result: QueueLoopResult, project: Path
     )
 
 
+def _previous_drive_needs_manual_send(state: AutoloopState) -> bool:
+    return str(getattr(state, "last_autopilot_status", "") or "").startswith(
+        "failed(submit_"
+    )
+
+
+def _manual_send_required_skip_result(
+    *,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> tuple[bool, str] | None:
+    if not _previous_drive_needs_manual_send(state):
+        return None
+    waiting_ticket = _waiting_ticket_id(queue_result)
+    previous_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
+    if not waiting_ticket or waiting_ticket != previous_ticket:
+        cycle_telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] = True
+        cycle_telemetry["autopilot_submit_unverified_previous_ticket"] = previous_ticket
+        cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
+        state.last_autopilot_status = ""
+        return None
+    _hp("- autopilot skipped (manual_send_required after submit_unverified)")
+    cycle_telemetry["autopilot_submit_unverified"] = True
+    cycle_telemetry["autopilot_skipped_manual_send_required"] = True
+    cycle_telemetry["autopilot_submit_unverified_reason"] = (
+        "previous drive pasted text but submit was not verified; "
+        "manual send or submit strategy fix required before redrive"
+    )
+    return True, "skipped(manual_send_required)"
+
+
 def _handle_stuck_status_skip_candidate(
     *,
     project: Path,
@@ -438,7 +480,7 @@ def _handle_stuck_status_skip_candidate(
     cycle_telemetry: dict[str, Any],
     _hp: callable,
 ) -> tuple[bool, str]:
-    if str(getattr(state, "last_autopilot_status", "") or "") == "failed":
+    if str(getattr(state, "last_autopilot_status", "") or "").startswith("failed"):
         _hp(
             "- autopilot not skipped "
             f"(previous drive failed, streak={state.stagnation_streak})",

@@ -661,6 +661,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "scan",
             "gate",
             "queue",
+            "replay",
             "gc",
             "doctor",
             "git",

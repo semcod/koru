@@ -155,9 +155,11 @@ def _plugin_capabilities(plugin: Mapping[str, Any]) -> list[Any] | None:
 
 def _plugin_version_info(plugin: Mapping[str, Any], plugin_ide: str) -> Mapping[str, Any]:
     version = plugin.get("version")
+    build_sha = plugin.get("buildSha")
     return DriveOrchestrator.plugin_version_info(
         plugin_ide=plugin_ide or None,
         connected_version=version if isinstance(version, str) else None,
+        connected_build_sha=build_sha if isinstance(build_sha, str) else None,
         protocol_version=_plugin_protocol_version(plugin),
         capabilities=_plugin_capabilities(plugin),
     )
@@ -165,8 +167,9 @@ def _plugin_version_info(plugin: Mapping[str, Any], plugin_ide: str) -> Mapping[
 
 def _accepted_plugin_reason(row_label: str, version_info: Mapping[str, Any]) -> str:
     expected = version_info.get("expected_plugin_version") or "-"
+    expected_build = version_info.get("expected_plugin_build_sha") or "-"
     policy = version_info.get("plugin_version_policy") or "warn"
-    return f"{row_label} accepted: expected={expected} policy={policy}"
+    return f"{row_label} accepted: expected={expected} expected_build={expected_build} policy={policy}"
 
 
 def _matching_plugin_decision(plugin: Mapping[str, Any]) -> tuple[bool, str]:

@@ -15,7 +15,9 @@ import yaml
 
 from koru import autonomous as autonomous_mod
 from koru import autonomous_cycle as autonomous_cycle_mod
+from koru import autonomous_cycle_orchestrator as cycle_orchestrator_mod
 from koru import autonomous_cycle_drive_retry as drive_retry_mod
+from koru import autonomous_cycle_skip_conditions as skip_conditions_mod
 from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_processes as autonomous_processes_mod
 from koru import autonomous_wup as autonomous_wup_mod
@@ -1870,6 +1872,11 @@ def test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict(monkeypatc
         "expected_plugin_version",
         lambda _plugin_ide: "0.1.14",
     )
+    monkeypatch.setattr(
+        autonomous_mod.DriveOrchestrator,
+        "expected_plugin_build_sha",
+        lambda _plugin_ide: None,
+    )
 
     assert not autonomous_mod._status_has_autopilot_plugin(
         {"plugins": [{"ide": "vscode", "version": "0.1.13"}]},
@@ -1891,6 +1898,11 @@ def test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol(m
         autonomous_mod.DriveOrchestrator,
         "expected_plugin_version",
         lambda _plugin_ide: "0.1.15",
+    )
+    monkeypatch.setattr(
+        autonomous_mod.DriveOrchestrator,
+        "expected_plugin_build_sha",
+        lambda _plugin_ide: None,
     )
 
     assert not autonomous_mod._status_has_autopilot_plugin(
@@ -3506,7 +3518,7 @@ def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
     )
 
 
-def test_submit_unverified_drive_failure_is_retryable(monkeypatch) -> None:
+def test_submit_unverified_drive_failure_is_not_retryable(monkeypatch) -> None:
     sleeps: list[int] = []
     monkeypatch.setattr("koru.autonomous_drive_retry_policy.time.sleep", lambda seconds: sleeps.append(seconds))
 
@@ -3522,8 +3534,109 @@ def test_submit_unverified_drive_failure_is_retryable(monkeypatch) -> None:
         attempts=5,
     )
 
-    assert should_retry is True
-    assert sleeps == [5]
+    assert should_retry is False
+    assert sleeps == []
+
+
+def test_submit_unverified_drive_status_is_specific() -> None:
+    telemetry: dict[str, object] = {}
+    status = cycle_orchestrator_mod._drive_result_autopilot_status(
+        queue_result=QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=["STARTER-298"],
+            last_status="waiting_input",
+        ),
+        reply={
+            "ok": False,
+            "verification": "submit_unverified",
+            "submit_failure_reason": "input still contains pasted text",
+        },
+        ok=False,
+        decision_kind="ticket_prompt",
+        cycle_telemetry=telemetry,
+    )
+
+    assert status == "failed(submit_unverified)"
+    assert telemetry["autopilot_submit_unverified"] is True
+    assert telemetry["autopilot_submit_unverified_reason"] == "input still contains pasted text"
+
+
+def test_submit_unverified_previous_drive_skips_redrive(tmp_path: Path) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-299"],
+        last_status="waiting_input",
+    )
+    state = autonomous_mod.AutoloopState(
+        last_autopilot_status="failed(submit_unverified)",
+        last_driven_ticket_id="STARTER-299",
+        stagnation_streak=1,
+    )
+    telemetry: dict[str, object] = {}
+    lines: list[str] = []
+
+    should_skip, reason = skip_conditions_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="waiting_input",
+        diag_result=autonomous_cycle_mod.DiagnosticResult("skipped", []),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=lines.append,
+    )
+
+    assert should_skip is True
+    assert reason == "skipped(manual_send_required)"
+    assert telemetry["autopilot_submit_unverified"] is True
+    assert telemetry["autopilot_skipped_manual_send_required"] is True
+    assert any("manual_send_required" in line for line in lines)
+
+
+def test_submit_unverified_previous_drive_does_not_block_next_ticket(tmp_path: Path) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-302"],
+        last_status="waiting_input",
+    )
+    state = autonomous_mod.AutoloopState(
+        last_autopilot_status="failed(submit_unverified)",
+        last_driven_ticket_id="STARTER-301",
+        stagnation_streak=1,
+    )
+    telemetry: dict[str, object] = {}
+
+    should_skip, reason = skip_conditions_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="",
+        diag_result=autonomous_cycle_mod.DiagnosticResult("skipped", []),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=lambda _line: None,
+    )
+
+    assert should_skip is False
+    assert reason == ""
+    assert state.last_autopilot_status == ""
+    assert telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] is True
+    assert telemetry["autopilot_submit_unverified_previous_ticket"] == "STARTER-301"
+    assert telemetry["autopilot_submit_unverified_current_ticket"] == "STARTER-302"
 
 
 def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(

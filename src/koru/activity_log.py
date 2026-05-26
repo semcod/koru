@@ -230,6 +230,9 @@ def _color_category(category: str, *, enabled: bool) -> str:
         "OPERATOR": _ANSI_CYAN,
         "INTEGRATION": _ANSI_BLUE,
         "INFO": _ANSI_GRAY,
+        "DIAG": _ANSI_CYAN,
+        "PLAN": _ANSI_GREEN,
+        "ACTION": _ANSI_BOLD + _ANSI_MAGENTA,
     }
     color = palette.get(category.upper(), _ANSI_BOLD)
     return _ansi(category, color)

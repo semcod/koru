@@ -15,6 +15,7 @@ class PluginClient(Protocol):
     ide: str | None
     protocol_version: int | None
     capabilities: list[str]
+    build_sha: str | None
     workspace_name: str | None
     workspace_folders: list[str]
     sock: Any
@@ -26,6 +27,7 @@ class PluginStatusRow:
     ide: str | None
     fd: int
     version: str | None = None
+    build_sha: str | None = None
     protocol_version: int | None = None
     capabilities: list[str] | None = None
     workspace_name: str | None = None
@@ -35,6 +37,8 @@ class PluginStatusRow:
         data = {"ide": self.ide, "fd": self.fd}
         if self.version:
             data["version"] = self.version
+        if self.build_sha:
+            data["buildSha"] = self.build_sha
         if self.protocol_version is not None:
             data["protocolVersion"] = self.protocol_version
         if self.capabilities:
@@ -109,7 +113,13 @@ class PluginRouter:
             and other.role == "plugin"
             and normalize_ide_id(other.ide) == target_ide
             and other.awaiting_plugin is None
-            and (current_has_workspace or not other.workspace_folders)
+            and (
+                not other.workspace_folders
+                or (
+                    current_has_workspace
+                    and _workspace_sets_overlap(current.workspace_folders, other.workspace_folders)
+                )
+            )
         ]
         for other in stale:
             self._log(f"dropping stale plugin connection: ide={target_ide} fd={other.sock.fileno()}")
@@ -122,6 +132,7 @@ class PluginRouter:
                 ide=client.ide,
                 fd=client.sock.fileno(),
                 version=getattr(client, "version", None),
+                build_sha=getattr(client, "build_sha", None),
                 protocol_version=getattr(client, "protocol_version", None),
                 capabilities=getattr(client, "capabilities", None),
                 workspace_name=getattr(client, "workspace_name", None),
@@ -149,6 +160,16 @@ def _workspace_matches_project(workspace_folders: list[str], project: str | Path
                 return True
         except ValueError:
             continue
+    return False
+
+
+def _workspace_sets_overlap(left: list[str], right: list[str]) -> bool:
+    for folder in left:
+        if _workspace_matches_project(right, folder):
+            return True
+    for folder in right:
+        if _workspace_matches_project(left, folder):
+            return True
     return False
 
 

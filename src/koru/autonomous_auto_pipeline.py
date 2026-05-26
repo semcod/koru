@@ -88,7 +88,7 @@ def _auto_pipeline_has_pressure(state: AutoPipelineState, max_iterations: int) -
         return True, "queue waiting for input"
     if state.last_diag_status == "failed":
         return True, "diagnostics failed"
-    if state.last_autopilot_status == "failed":
+    if state.last_autopilot_status.startswith("failed"):
         return True, "autopilot failed"
     if state.last_queue_status == "completed" and state.last_iterations >= max_iterations:
         return True, "queue backlog reached max-iterations"

@@ -66,6 +66,10 @@ and ``autonomous_cycle_chat_activity``):
     Drive ran but the plugin reports the chat surface needs manual focus
     (e.g. webview not foregrounded).
 
+``manual_send_required``
+    Text was pasted into the IDE chat, but submit verification failed.
+    Koru must not blindly redrive because that can duplicate prompts.
+
 ``stuck_<queue_status>``
     Queue has been stuck on the same status (e.g. ``waiting_input``) for
     multiple cycles AND the waiting ticket is *not* marked ``llm-ready``
@@ -145,6 +149,10 @@ SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
     "manual_focus": (
         "Plugin ran the submit step but reports the chat surface needs "
         "manual focus (webview not foregrounded)."
+    ),
+    "manual_send_required": (
+        "Plugin pasted text into chat but submit was not verified; manual "
+        "send or a submit-strategy fix is required before another drive."
     ),
     "stuck_waiting_input": (
         "Queue has been stuck on ``waiting_input`` for several cycles and "
@@ -383,8 +391,10 @@ def _status_skip_code(autopilot_status: str) -> str | None:
         # by an upstream skip path (defensive: keeps the trace honest).
         if inner.startswith("stuck_"):
             return inner if inner in SKIP_CODE_DESCRIPTIONS else "stuck_status"
-    if status in {"ok", "failed"}:
+    if status == "ok":
         return status
+    if status.startswith("failed"):
+        return "failed"
     return None
 
 
@@ -399,6 +409,8 @@ def classify_skip_code(cycle_telemetry: dict[str, Any], autopilot_status: str) -
     """
     if plugin_code := _plugin_missing_skip_code(cycle_telemetry):
         return plugin_code
+    if cycle_telemetry.get("autopilot_submit_unverified"):
+        return "manual_send_required"
     for flag, code in _TELEMETRY_SKIP_FLAGS:
         if cycle_telemetry.get(flag):
             return code
@@ -441,9 +453,11 @@ def _decide_label(
         return "intake_only"
     if cycle_telemetry.get("autopilot_llx_operator_ticket"):
         return "llx_reflection"
+    if status.startswith("failed") and cycle_telemetry.get("autopilot_submit_unverified"):
+        return "manual_send_required"
     if status.startswith("skipped("):
         return f"skip:{status[len('skipped('):].rstrip(')')}"
-    if status == "failed":
+    if status.startswith("failed"):
         return "drive_failed"
     return status or "no_action"
 
@@ -459,7 +473,7 @@ def _action_label(
         return f"submit_verified(backend={backend})"
     if status.startswith("skipped("):
         return "no_op"
-    if status == "failed":
+    if status.startswith("failed"):
         return "submit_unverified"
     return status or "no_op"
 
@@ -609,6 +623,11 @@ def _skip_because_for_code(
         return _stuck_skip_because(cycle_telemetry, queue_status, waiting_ticket)
     if skip_code == "diagnostics_fail":
         return _diagnostics_fail_skip_because(cycle_telemetry)
+    if skip_code == "manual_send_required":
+        reason = str(cycle_telemetry.get("autopilot_submit_unverified_reason") or "").strip()
+        if reason:
+            return reason
+        return "chat text was pasted, but submit verification failed; do not redrive blindly"
     return ""
 
 

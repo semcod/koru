@@ -112,6 +112,13 @@ def _add_drive_parser(sub: argparse._SubParsersAction) -> None:
         help="Full prompt string (alternative to positional words; avoids quoting issues).",
     )
     drive.add_argument(
+        "--prompt-file",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Read the full prompt from PATH; used by replayable drive DSL lines.",
+    )
+    drive.add_argument(
         "--ide",
         default="auto",
         choices=IDE_CHOICES,
@@ -283,7 +290,7 @@ def _add_trace_parser(sub: argparse._SubParsersAction) -> None:
     )
     trace.add_argument(
         "--format",
-        choices=("text", "json", "dsl"),
+        choices=("text", "json", "dsl", "drive-dsl"),
         default="text",
         help="Output format (default: text - one compact line per record).",
     )

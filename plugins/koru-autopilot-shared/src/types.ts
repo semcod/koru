@@ -1,6 +1,6 @@
-// koru autopilot — shared types
-//
-// Shared type definitions for VS Code family IDE plugins.
+import { captureEditorSnapshot, ProbeCacheEntry } from "../probe-ladder";
+
+export type CommandCapability = "focus_open" | "focus_input" | "paste" | "submit";
 
 export type CommandOutcome = { ok: boolean; command?: string; reason?: string; attempts?: string[] };
 export type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
@@ -23,3 +23,11 @@ export interface Envelope {
   id?: string;
   [k: string]: unknown;
 }
+
+export type FocusChatContext = {
+  ide: string;
+  cache: ProbeCacheEntry | undefined;
+  useProbe: boolean;
+  commands: string[];
+  before: ReturnType<typeof captureEditorSnapshot>;
+};

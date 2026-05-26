@@ -117,6 +117,17 @@ def _drive_retry_decision(
             attempt=attempt,
             max_attempts=attempts,
         )
+    if _submit_retry_is_known_unsafe_without_engine(reply):
+        from korullm import DriveFailureAssessment
+
+        return DriveRetryDecision(
+            assessment=DriveFailureAssessment(
+                kind="stop",
+                failure_signature=str(reply.get("verification") or "submit_unverified"),
+                detail="submit_unverified_not_retryable",
+            ),
+            should_retry=False,
+        )
 
     from korullm import resolve_active_llm_strategy
 
@@ -132,6 +143,19 @@ def _drive_retry_decision(
         should_warn=assessment.warn_banner,
         sleep_seconds=assessment.sleep_seconds if should_retry else 0.0,
     )
+
+
+def _submit_retry_is_known_unsafe_without_engine(reply: dict[str, Any]) -> bool:
+    verification = str(reply.get("verification") or "").strip().lower()
+    if verification in {"submit_unverified", "submit_failed"}:
+        return True
+    if reply.get("submitted") is False and (
+        reply.get("attempted_submit")
+        or reply.get("winning_paste")
+        or reply.get("submit_failure_reason")
+    ):
+        return True
+    return "submit could not be verified" in str(reply.get("message") or "").lower()
 
 
 def _handle_failed_drive_attempt(

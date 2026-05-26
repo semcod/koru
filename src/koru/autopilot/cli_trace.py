@@ -18,6 +18,8 @@ def action_trace(args: argparse.Namespace) -> int:
     project = args.project.resolve()
     if args.format == "dsl":
         return _print_observability_dsl_trace(args, project)
+    if args.format == "drive-dsl":
+        return _print_drive_dsl_trace(args, project)
     history = load_recent_decisions(project, limit=int(args.limit or 10))
     if args.format == "json":
         print(json.dumps({"project": str(project), "decisions": history}, indent=2))
@@ -69,6 +71,31 @@ def _print_observability_dsl_trace(args: argparse.Namespace, project: Path) -> i
         print(f"koru autopilot trace: no observability DSL events recorded yet for {project}")
         return 0
     print("\n\n".join(stored_event_to_dsl(event) for event in events))
+    return 0
+
+
+def _print_drive_dsl_trace(args: argparse.Namespace, project: Path) -> int:
+    path = project / ".planfile" / ".koru" / "dsl_recent.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print(f"koru autopilot trace: no drive DSL recorded yet for {project}")
+        return 0
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"koru autopilot trace: cannot read drive DSL at {path}: {exc}")
+        return 1
+    raw_lines = payload.get("lines") if isinstance(payload, dict) else None
+    if not isinstance(raw_lines, list):
+        print(f"koru autopilot trace: malformed drive DSL at {path}")
+        return 1
+    limit = int(args.limit or 10)
+    lines = [str(line) for line in raw_lines if str(line).strip()]
+    if limit > 0:
+        lines = lines[-limit:]
+    if not lines:
+        print(f"koru autopilot trace: no drive DSL recorded yet for {project}")
+        return 0
+    print("\n".join(lines))
     return 0
 
 

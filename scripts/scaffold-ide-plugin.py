@@ -220,10 +220,14 @@ def _write_package_json(dest: Path, cfg: dict[str, object], version: str) -> Non
         "vscode:prepublish": "npm run compile",
         "prepackage": (
             f"python3 ../../scripts/sync-plugin-version.py --plugin {dir_name} && "
-            f"python3 ../../scripts/sync-plugin-shared.py --plugin {dir_name}"
+            f"python3 ../../scripts/sync-plugin-shared.py --plugin {dir_name} && "
+            f"python3 ../../scripts/sync-plugin-build.py --plugin {dir_name}"
         ),
         "package": f"vsce package --no-dependencies --out {dir_name}-${{npm_package_version}}.vsix",
-        "prepublish": f"python3 ../../scripts/sync-plugin-version.py --plugin {dir_name}",
+        "prepublish": (
+            f"python3 ../../scripts/sync-plugin-version.py --plugin {dir_name} && "
+            f"python3 ../../scripts/sync-plugin-build.py --plugin {dir_name}"
+        ),
         "publish": "vsce publish --no-dependencies",
         "clean": "rm -rf out node_modules src/_shared *.vsix",
     }

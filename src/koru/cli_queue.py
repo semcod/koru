@@ -9,12 +9,16 @@ from pathlib import Path
 
 from koru.events import emit_management_event
 from koru.queue_clean import CleanupReport, clean_queue
+from koru.ticket_evidence import render_ticket_evidence_report, validate_ticket_evidence
 
 
 def build_queue_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru queue",
-        description=("Manage the planfile queue. Subcommands: clean (sweep stale test fixtures)."),
+        description=(
+            "Manage the planfile queue. Subcommands: clean (sweep stale test fixtures), "
+            "validate-evidence (check generated-ticket source hashes)."
+        ),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
 
@@ -75,6 +79,38 @@ def build_queue_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format for the report.",
     )
+    validate = sub.add_parser(
+        "validate-evidence",
+        help="Validate source.context.evidence hashes on generated planfile tickets.",
+        description=(
+            "Check whether generated tickets still match the artifact/file hashes "
+            "captured when they were created. Prints regenerate_command for stale "
+            "tickets so an IDE LLM can refresh the source artifact before work."
+        ),
+    )
+    validate.add_argument(
+        "--ticket",
+        default=None,
+        help="Validate one ticket id. Default: validate tickets matching --status.",
+    )
+    validate.add_argument(
+        "--status",
+        default="open",
+        help="Planfile status filter for list mode (default: open; use all for every ticket).",
+    )
+    validate.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root containing .planfile/.",
+    )
+    validate.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the report.",
+    )
     return parser
 
 
@@ -124,6 +160,21 @@ def render_clean_report_text(report: CleanupReport) -> str:
 
 def queue_main(argv: list[str]) -> int:
     args = build_queue_parser().parse_args(argv)
+    if args.subcommand == "validate-evidence":
+        try:
+            report = validate_ticket_evidence(
+                args.project,
+                ticket_id=args.ticket,
+                status="" if args.status == "all" else args.status,
+            )
+        except (RuntimeError, json.JSONDecodeError) as exc:
+            print(f"koru queue validate-evidence: {exc}", file=sys.stderr)
+            return 1
+        if args.output_format == "json":
+            print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+        else:
+            print(render_ticket_evidence_report(report))
+        return 1 if report.stale_count or report.missing_evidence_count else 0
     if args.subcommand != "clean":
         print(f"koru queue: unknown subcommand {args.subcommand!r}", file=sys.stderr)
         return 2

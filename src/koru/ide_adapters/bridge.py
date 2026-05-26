@@ -55,6 +55,99 @@ def _stale_rejected_plugin_hypothesis(
     )
 
 
+def _daemon_status_and_plugins(
+    client: AutopilotClient,
+    *,
+    plugins: list | None,
+    daemon_running: bool,
+) -> tuple[dict[str, Any], list]:
+    daemon_status: dict[str, Any] = {}
+    if plugins is not None or not daemon_running:
+        return daemon_status, plugins if isinstance(plugins, list) else []
+    try:
+        daemon_status = client.status()
+    except (OSError, RuntimeError):
+        return {}, []
+    plugins = daemon_status.get("plugins") if isinstance(daemon_status, dict) else []
+    return daemon_status, plugins if isinstance(plugins, list) else []
+
+
+def _plugins_connected(plugin_list: list, ide: str) -> bool:
+    return any(
+        isinstance(p, dict) and normalize_ide_id(str(p.get("ide", ""))) == ide
+        for p in plugin_list
+    )
+
+
+def _bridge_status_base(
+    *,
+    ide: str,
+    sock: str,
+    project: Path | None,
+    daemon_running: bool,
+    plugins_connected: bool,
+) -> BridgeStatus:
+    return BridgeStatus(
+        ide=ide,
+        socket_path=sock,
+        daemon_running=daemon_running,
+        plugins_connected=plugins_connected,
+        project=str(project.resolve()) if project is not None else None,
+    )
+
+
+def _add_unsupported_ide_hypothesis(status: BridgeStatus) -> None:
+    if status.plugins_connected:
+        return
+    status.hypotheses.append(
+        Hypothesis(
+            id="ide.unsupported",
+            confidence=0.4,
+            evidence=f"Brak adaptera diagnostycznego dla ide={status.ide}",
+            remediation=shared.Remediation(
+                kind="manual",
+                summary="Użyj keyboard fallback lub zgłoś IDE w koru",
+            ),
+        ),
+    )
+
+
+def _populate_adapter_diagnostics(
+    status: BridgeStatus,
+    *,
+    project: Path | None,
+    sock: str,
+) -> None:
+    adapter = get_adapter(status.ide)
+    if adapter is None:
+        _add_unsupported_ide_hypothesis(status)
+        return
+    status.activation = adapter.diagnose_activation()
+    status.settings = adapter.analyze_settings(project=project, expected_socket=sock)
+    status.hypotheses = adapter.collect_hypotheses(
+        project=project,
+        expected_socket=sock,
+        plugins_connected=status.plugins_connected,
+    )
+
+
+def _append_stale_plugin_hypothesis(
+    status: BridgeStatus,
+    *,
+    daemon_status: dict[str, Any],
+    sock: str,
+) -> None:
+    stale_hypothesis = _stale_rejected_plugin_hypothesis(
+        ide=status.ide,
+        daemon_status=daemon_status,
+        expected_socket=sock,
+    )
+    if stale_hypothesis is None or status.plugins_connected:
+        return
+    status.hypotheses.append(stale_hypothesis)
+    status.hypotheses.sort(key=lambda h: h.confidence, reverse=True)
+
+
 def evaluate_bridge(
     *,
     ide: str,
@@ -67,55 +160,28 @@ def evaluate_bridge(
     sock = str(Path(socket_path).resolve())
     client = AutopilotClient(socket_path=Path(sock), timeout=1.0)
     daemon_running = client.is_running()
-    daemon_status: dict[str, Any] = {}
-    if plugins is None and daemon_running:
-        try:
-            daemon_status = client.status()
-            plugins = daemon_status.get("plugins") if isinstance(daemon_status, dict) else []
-        except (OSError, RuntimeError):
-            plugins = []
-    plugin_list = plugins if isinstance(plugins, list) else []
-    plugins_connected = any(
-        isinstance(p, dict) and normalize_ide_id(str(p.get("ide", ""))) == ide
-        for p in plugin_list
-    )
-    adapter = get_adapter(ide)
-    status = BridgeStatus(
-        ide=ide,
-        socket_path=sock,
+    daemon_status, plugin_list = _daemon_status_and_plugins(
+        client,
+        plugins=plugins,
         daemon_running=daemon_running,
-        plugins_connected=plugins_connected,
-        project=str(project.resolve()) if project is not None else None,
     )
-    if adapter is None:
-        if not plugins_connected:
-            status.hypotheses.append(
-                Hypothesis(
-                    id="ide.unsupported",
-                    confidence=0.4,
-                    evidence=f"Brak adaptera diagnostycznego dla ide={ide}",
-                    remediation=shared.Remediation(
-                        kind="manual",
-                        summary="Użyj keyboard fallback lub zgłoś IDE w koru",
-                    ),
-                ),
-            )
-        return status
-    status.activation = adapter.diagnose_activation()
-    status.settings = adapter.analyze_settings(project=project, expected_socket=sock)
-    status.hypotheses = adapter.collect_hypotheses(
-        project=project,
-        expected_socket=sock,
-        plugins_connected=plugins_connected,
-    )
-    stale_hypothesis = _stale_rejected_plugin_hypothesis(
+    status = _bridge_status_base(
         ide=ide,
-        daemon_status=daemon_status,
-        expected_socket=sock,
+        sock=sock,
+        project=project,
+        daemon_running=daemon_running,
+        plugins_connected=_plugins_connected(plugin_list, ide),
     )
-    if stale_hypothesis is not None and not plugins_connected:
-        status.hypotheses.append(stale_hypothesis)
-        status.hypotheses.sort(key=lambda h: h.confidence, reverse=True)
+    _populate_adapter_diagnostics(
+        status,
+        project=project,
+        sock=sock,
+    )
+    _append_stale_plugin_hypothesis(
+        status,
+        daemon_status=daemon_status,
+        sock=sock,
+    )
     return status
 
 

@@ -31,6 +31,7 @@ planfile tickets through ``planfile ticket create``.
 
 
 import fnmatch
+import hashlib
 import json
 import os
 import re
@@ -486,29 +487,95 @@ def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
     return path, str(path.relative_to(project))
 
 
-def _parse_dup_suggestions(text: str, rel: str) -> list[Suggestion]:
+def _file_evidence(project: Path, path: Path, rel: str | None = None) -> dict[str, object]:
+    try:
+        stat = path.stat()
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return {}
+    return {
+        "path": rel or str(path.relative_to(project)),
+        "size_bytes": stat.st_size,
+        "mtime_ns": stat.st_mtime_ns,
+        "sha256": digest,
+    }
+
+
+def _code2llm_regenerate_command(project: Path) -> str:
+    return (
+        f"code2llm {project} -f all -o {project / 'project'} --no-chunk "
+        "--exclude '*.md' --planfile-apply --planfile-source koru-project-discovery "
+        f"--planfile-sprint current --planfile-project {project} --planfile-limit 20"
+    )
+
+
+def _code2llm_source_context(project: Path, analysis_path: Path, rel: str) -> dict[str, object]:
+    return {
+        "evidence": {
+            "schema": "koru.ticket_evidence.v1",
+            "kind": "code2llm_analysis",
+            "artifact": _file_evidence(project, analysis_path, rel),
+            "regenerate_command": _code2llm_regenerate_command(project),
+            "staleness_check": (
+                "Regenerate the artifact and compare artifact.sha256 before assuming "
+                "this ticket still reflects the current code."
+            ),
+        }
+    }
+
+
+def _with_source_context(suggestion: Suggestion, context: dict[str, object] | None) -> Suggestion:
+    if not context:
+        return suggestion
+    merged = dict(suggestion.source_context)
+    merged.update(context)
+    return Suggestion(
+        signal=suggestion.signal,
+        title=suggestion.title,
+        description=suggestion.description,
+        priority=suggestion.priority,
+        labels=suggestion.labels,
+        files=suggestion.files,
+        source_context=merged,
+    )
+
+
+def _parse_dup_suggestions(
+    text: str,
+    rel: str,
+    *,
+    source_context: dict[str, object] | None = None,
+) -> list[Suggestion]:
     """Parse duplication suggestions from analysis text."""
     suggestions: list[Suggestion] = []
     dup_match = _TOON_DUP_RE.search(text)
     if dup_match:
         count = int(dup_match.group("count"))
         suggestions.append(
-            Suggestion(
+            _with_source_context(
+                Suggestion(
                 signal="code2llm_dup",
                 title=f"Remove {count} duplicated classes (code2llm analysis)",
                 description=(
                     f"`{rel}` reports **{count}** duplicated classes. "
-                    "Extract shared helpers/modules; re-run `code2llm ./ -f toon` to refresh."
+                    "Extract shared helpers/modules; re-run the source.context.evidence.regenerate_command to refresh."
                 ),
                 priority="high",
                 labels=("code2llm", "duplication", "refactor", "scan"),
                 files=(rel,),
+                ),
+                source_context,
             ),
         )
     return suggestions
 
 
-def _parse_god_module_suggestions(text: str, rel: str) -> list[Suggestion]:
+def _parse_god_module_suggestions(
+    text: str,
+    rel: str,
+    *,
+    source_context: dict[str, object] | None = None,
+) -> list[Suggestion]:
     """Parse god module suggestions from analysis text."""
     suggestions: list[Suggestion] = []
     for m in _TOON_GOD_RE.finditer(text):
@@ -517,7 +584,8 @@ def _parse_god_module_suggestions(text: str, rel: str) -> list[Suggestion]:
         classes = m.group("classes")
         methods = m.group("methods")
         suggestions.append(
-            Suggestion(
+            _with_source_context(
+                Suggestion(
                 signal="code2llm_god",
                 title=f"Split god module: {file_path}",
                 description=(
@@ -528,12 +596,19 @@ def _parse_god_module_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority="high",
                 labels=("code2llm", "god-module", "refactor", "scan"),
                 files=(file_path, rel),
+                ),
+                source_context,
             ),
         )
     return suggestions
 
 
-def _parse_high_cc_suggestions(text: str, rel: str) -> list[Suggestion]:
+def _parse_high_cc_suggestions(
+    text: str,
+    rel: str,
+    *,
+    source_context: dict[str, object] | None = None,
+) -> list[Suggestion]:
     """Parse high-CC method suggestions from analysis text."""
     suggestions: list[Suggestion] = []
     cc_seen: set[str] = set()
@@ -545,7 +620,8 @@ def _parse_high_cc_suggestions(text: str, rel: str) -> list[Suggestion]:
             continue
         cc_seen.add(func)
         suggestions.append(
-            Suggestion(
+            _with_source_context(
+                Suggestion(
                 signal="code2llm_cc",
                 title=f"Reduce cyclomatic complexity: {func} (CC={cc}, limit={limit})",
                 description=(
@@ -555,12 +631,19 @@ def _parse_high_cc_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority="normal",
                 labels=("code2llm", "complexity", "refactor", "scan"),
                 files=(rel,),
+                ),
+                source_context,
             ),
         )
     return suggestions
 
 
-def _parse_refactor_suggestions(text: str, rel: str) -> list[Suggestion]:
+def _parse_refactor_suggestions(
+    text: str,
+    rel: str,
+    *,
+    source_context: dict[str, object] | None = None,
+) -> list[Suggestion]:
     """Parse refactor item suggestions from analysis text."""
     suggestions: list[Suggestion] = []
     in_refactor = False
@@ -578,22 +661,30 @@ def _parse_refactor_suggestions(text: str, rel: str) -> list[Suggestion]:
         desc = rm.group("desc").strip()
         note = rm.group("note").strip()
         suggestions.append(
-            Suggestion(
+            _with_source_context(
+                Suggestion(
                 signal="code2llm_refactor",
                 title=f"code2llm refactor: {desc}",
                 description=(
                     f"REFACTOR item from `{rel}`: **{desc}** ({note}). "
-                    "Execute this refactor step; re-run `code2llm ./ -f toon` to verify."
+                    "Execute this refactor step; re-run the source.context.evidence.regenerate_command to verify."
                 ),
                 priority="normal",
                 labels=("code2llm", "refactor", "scan"),
                 files=(rel,),
+                ),
+                source_context,
             ),
         )
     return suggestions
 
 
-def _parse_layer_hotspot_suggestions(text: str, rel: str) -> list[Suggestion]:
+def _parse_layer_hotspot_suggestions(
+    text: str,
+    rel: str,
+    *,
+    source_context: dict[str, object] | None = None,
+) -> list[Suggestion]:
     """Parse large ``LAYERS`` module rows from newer code2llm output."""
     suggestions: list[Suggestion] = []
     seen: set[str] = set()
@@ -610,7 +701,8 @@ def _parse_layer_hotspot_suggestions(text: str, rel: str) -> list[Suggestion]:
             continue
         priority = "high" if loc >= 800 or cc >= 14 else "normal"
         suggestions.append(
-            Suggestion(
+            _with_source_context(
+                Suggestion(
                 signal="code2llm_layer_hotspot",
                 title=f"Split large module: {module}",
                 description=(
@@ -622,6 +714,8 @@ def _parse_layer_hotspot_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority=priority,
                 labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
                 files=(rel,),
+                ),
+                source_context,
             ),
         )
         if len(suggestions) >= 5:
@@ -638,12 +732,13 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     except OSError:
         return []
 
+    source_context = _code2llm_source_context(project, path, rel)
     suggestions: list[Suggestion] = []
-    suggestions.extend(_parse_dup_suggestions(text, rel))
-    suggestions.extend(_parse_god_module_suggestions(text, rel))
-    suggestions.extend(_parse_high_cc_suggestions(text, rel))
-    suggestions.extend(_parse_refactor_suggestions(text, rel))
-    suggestions.extend(_parse_layer_hotspot_suggestions(text, rel))
+    suggestions.extend(_parse_dup_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(_parse_god_module_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(_parse_high_cc_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(_parse_refactor_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(_parse_layer_hotspot_suggestions(text, rel, source_context=source_context))
     return suggestions
 
 
@@ -1253,6 +1348,7 @@ def _create_ticket(
                     "source_context": {
                         "signal": suggestion.signal,
                         "dedupe_key": _suggestion_dedupe_key(source, suggestion),
+                        **suggestion.source_context,
                     },
                     "executor_kind": "human",
                     "executor_mode": "interactive",

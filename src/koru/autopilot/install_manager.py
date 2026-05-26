@@ -24,6 +24,8 @@ from koru.autopilot.install_checks import (
     ManagerIssue,
     check_daemon_issues,
     check_koru_path_issues,
+    check_plugin_build_mismatch_issue,
+    check_plugin_build_missing_issue,
     check_plugin_installed_ok_but_not_connected_issue,
     check_plugin_installed_version_mismatch_issue,
     check_plugin_live_host_stale_issue,
@@ -54,11 +56,13 @@ _check_pyenv_shim_issue = check_pyenv_shim_issue
 _check_version_mismatch_issue = check_version_mismatch_issue
 _check_daemon_issues = check_daemon_issues
 _check_plugin_version_missing_issue = check_plugin_version_missing_issue
+_check_plugin_build_missing_issue = check_plugin_build_missing_issue
 _check_plugin_installed_version_mismatch_issue = check_plugin_installed_version_mismatch_issue
 _check_plugin_installed_ok_but_not_connected_issue = check_plugin_installed_ok_but_not_connected_issue
 _check_plugin_live_host_stale_issue = check_plugin_live_host_stale_issue
 _check_plugin_socket_candidate_mismatch_issue = check_plugin_socket_candidate_mismatch_issue
 _check_plugin_version_mismatch_issue = check_plugin_version_mismatch_issue
+_check_plugin_build_mismatch_issue = check_plugin_build_mismatch_issue
 _check_plugin_not_connected_issue = check_plugin_not_connected_issue
 
 _ANSI_YELLOW = "\033[33m"
@@ -195,6 +199,21 @@ def _expected_plugin_version(root: Path, ide_id: str | None = None) -> str | Non
     return expected_plugin_version_for_ide(ide_id) or EXPECTED_VSCODE_PLUGIN_VERSION
 
 
+def _expected_plugin_build_sha(root: Path, ide_id: str | None = None) -> str | None:
+    from koruide.plugin_installer import plugin_dir_names_for_ide
+
+    for dir_name in plugin_dir_names_for_ide(ide_id):
+        package_json = root / "plugins" / dir_name / "package.json"
+        try:
+            data = json.loads(package_json.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        build = data.get("koruAutopilotBuild")
+        if isinstance(build, dict) and isinstance(build.get("sha"), str):
+            return build["sha"]
+    return None
+
+
 def _resolve_ide(raw: str) -> str:
     requested = normalize_ide_id(raw) or "auto"
     if requested != "auto":
@@ -284,13 +303,52 @@ def _issue_list(
         if not supports_vscode_extension_plugin(ide):
             return issues
     issues.extend(_check_plugin_version_missing_issue(daemon, plugin, ide))
+    issues.extend(_check_plugin_build_missing_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_installed_version_mismatch_issue(plugin, ide))
     issues.extend(_check_plugin_live_host_stale_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_socket_candidate_mismatch_issue(daemon, plugin, ide, socket_path))
     issues.extend(_check_plugin_installed_ok_but_not_connected_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_version_mismatch_issue(daemon, plugin, ide))
+    issues.extend(_check_plugin_build_mismatch_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_not_connected_issue(daemon, plugin, ide))
     return issues
+
+
+def _build_plugin_info_dict(
+    root: Path,
+    resolved_ide: str,
+    daemon: dict[str, Any],
+) -> dict[str, Any]:
+    connected_plugin = _plugin_for_ide(daemon, resolved_ide) if daemon.get("running") else None
+    plugin_supported = resolved_ide == "auto" or supports_vscode_extension_plugin(resolved_ide)
+    expected_plugin = _expected_plugin_version(root, resolved_ide) if plugin_supported else None
+    expected_build = _expected_plugin_build_sha(root, resolved_ide) if plugin_supported else None
+    installed_plugin = (
+        installed_extension_version_for_ide(resolved_ide) if plugin_supported else None
+    )
+    plugin = {
+        "ide": resolved_ide,
+        "supported": plugin_supported,
+        "connected": connected_plugin is not None,
+        "connected_version": connected_plugin.get("version") if connected_plugin else None,
+        "connected_build_sha": connected_plugin.get("buildSha") if connected_plugin else None,
+        "installed_version": installed_plugin,
+        "expected_version": expected_plugin,
+        "expected_build_sha": expected_build,
+    }
+    if connected_plugin:
+        plugin["fd"] = connected_plugin.get("fd")
+    return plugin
+
+
+def _resolve_install_environment(
+    root: Path,
+) -> tuple[Path | None, Path | None, str | None, str | None]:
+    path_koru = _path_koru_bin()
+    repo_koru = _repo_koru_bin(root)
+    source_version = _source_version(root)
+    package_version = _package_version()
+    return path_koru, repo_koru, source_version, package_version
 
 
 def collect_install_manager_report(
@@ -302,26 +360,8 @@ def collect_install_manager_report(
     resolved_ide = _resolve_ide(ide)
     sock = _manager_socket_path(resolved_ide, socket_path)
     daemon = _daemon_status(sock)
-    connected_plugin = _plugin_for_ide(daemon, resolved_ide) if daemon.get("running") else None
-    plugin_supported = resolved_ide == "auto" or supports_vscode_extension_plugin(resolved_ide)
-    expected_plugin = _expected_plugin_version(root, resolved_ide) if plugin_supported else None
-    installed_plugin = (
-        installed_extension_version_for_ide(resolved_ide) if plugin_supported else None
-    )
-    plugin = {
-        "ide": resolved_ide,
-        "supported": plugin_supported,
-        "connected": connected_plugin is not None,
-        "connected_version": connected_plugin.get("version") if connected_plugin else None,
-        "installed_version": installed_plugin,
-        "expected_version": expected_plugin,
-    }
-    if connected_plugin:
-        plugin["fd"] = connected_plugin.get("fd")
-    path_koru = _path_koru_bin()
-    repo_koru = _repo_koru_bin(root)
-    source_version = _source_version(root)
-    package_version = _package_version()
+    plugin = _build_plugin_info_dict(root, resolved_ide, daemon)
+    path_koru, repo_koru, source_version, package_version = _resolve_install_environment(root)
     ides = [ide_obj.to_dict() for ide_obj in detect_running_ides()]
     issues = _issue_list(
         source_version=source_version,
@@ -438,8 +478,10 @@ def format_install_manager_report(report: InstallManagerReport) -> str:
             "  plugin: "
             f"ide={data['plugin'].get('ide')} connected={data['plugin'].get('connected')} "
             f"version={data['plugin'].get('connected_version') or '-'} "
+            f"build={data['plugin'].get('connected_build_sha') or '-'} "
             f"installed={data['plugin'].get('installed_version') or '-'} "
-            f"expected={data['plugin'].get('expected_version') or '-'}"
+            f"expected={data['plugin'].get('expected_version') or '-'} "
+            f"expected_build={data['plugin'].get('expected_build_sha') or '-'}"
         ),
     ]
     if report.issues:

@@ -2,6 +2,8 @@
 //
 // IDE-agnostic helper functions for VS Code family plugins.
 
+import { buildSubmitCommands } from "../probe-ladder";
+
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.chat.openagent",
   "workbench.action.chat.openask",
@@ -66,4 +68,20 @@ export function isTogglingFocusOpenCommand(command: string | undefined): boolean
     return false;
   }
   return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
+}
+
+export function isVSCodiumSafeSubmitCommand(command: string): boolean {
+  const normalized = command.trim().toLowerCase();
+  if (buildSubmitCommands("vscodium").includes(command)) {
+    return true;
+  }
+  return normalized.startsWith("workbench.action.chat.");
+}
+
+export function filterVSCodiumSubmitCandidates(commands: string[]): string[] {
+  return commands.filter(isVSCodiumSafeSubmitCommand);
+}
+
+export function isHostClipboardPasteCommand(command: string | undefined): boolean {
+  return Boolean(command && command.includes("host-clipboard"));
 }

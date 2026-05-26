@@ -7,12 +7,16 @@
 //
 // Wire protocol: see ../docs/autopilot-design.md.
 
-import * as fs from "fs";
-import * as net from "net";
-import { spawn } from "child_process";
 import * as vscode from "vscode";
-import { sanitizeOutboundEnvelope } from "./ack-payload";
-import { planDispatch } from "./dispatch-plan";
+import { SharedAutopilotBridgeFocus } from "./bridge-focus";
+import {
+  BridgeOptions,
+  ResolvedBridgeOptions,
+  resolveBridgeOptions,
+  debugLog,
+  safeLog,
+  setBridgeInstance,
+} from "./bridge-config";
 import {
   ANTIGRAVITY_SEND_PROMPT_COMMAND,
   canUseAntigravitySendPrompt,
@@ -24,211 +28,46 @@ import {
   type ScreenPoint,
 } from "./host-click-submit";
 import {
-  buildFocusInputCommands,
-  buildFocusOpenCommands,
-  buildHostKeySubmitCandidates,
   buildPasteDirectCommands,
   buildSubmitCommands,
-  captureEditorSnapshot,
-  chatFocusHeuristic,
-  filterRegistered,
-  loadProbeCache,
-  mergeUnique,
-  mergeProbeCache,
-  orderWithCache,
-  pasteLandedInEditor,
   prioritizePlainHostKeySubmitCandidates,
-  type ProbeCacheEntry,
-  sanitizeProbeCacheForIde,
-  verifyFocusAfterOpen,
+  ProbeCacheEntry,
+  captureEditorSnapshot,
+  pasteLandedInEditor,
+  filterRegistered,
+  buildHostKeySubmitCandidates,
 } from "../probe-ladder";
-import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
-import { ChatHistoryWatcher, SupportedIde } from "../chat-history-watcher";
-import { CursorBubbleAdapter } from "../cursor-bubble-adapter";
 import {
   decideBusyInputAction,
-  interpretPostSubmitProbe,
   shouldRequireVerifiedHostSubmit,
   shouldVerifyPostSubmit,
   shouldVerifyPrePasteBusy,
+  interpretPostSubmitProbe,
   type BusyInputAction,
   type KoruAutopilotStepConfig,
 } from "../step-decisions";
-import { detectIdeViaStrategies, getStrategy } from "../ides/registry";
+import { getStrategy } from "../ides/registry";
 import {
-  classifyCommands,
-  matchingCommandsFlat,
-  type CommandCapability,
-  type CommandCatalog,
-} from "../command-catalog";
+  Envelope,
+  OperationTraceStep,
+  CommandOutcome,
+  FocusOutcome,
+  PasteAttempt,
+  SubmitOutcome,
+  CommandCapability,
+} from "./types";
+import {
+  filterVSCodiumSubmitCandidates,
+  isHostClipboardPasteCommand,
+} from "./bridge-helpers";
 
-
-const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
-  "workbench.action.chat.openagent",
-  "workbench.action.chat.openask",
-]);
-
-const UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS = new Set([
-  "workbench.action.openchat",
-  "workbench.action.openquickchat",
-  "workbench.action.chat.open",
-  "workbench.action.chat.openinnewwindow",
-  "workbench.action.chat.opensessioninnewwindow",
-  "workbench.action.quickchat.openinchatview",
-  "workbench.panel.chat",
-  "workbench.panel.chat.view.copilot.focus",
-  "workbench.panel.aichat.view.copilot.focus",
-]);
-
-const OPEN_CHAT_PANEL_DEBOUNCE_MS = 2000;
-
-function isAllowedFocusOpenCommand(command: unknown): command is string {
-  return (
-    typeof command === "string" &&
-    command.trim().length > 0 &&
-    !DISALLOWED_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase())
-  );
-}
-
-function sanitizeFocusOpenCommand(command: unknown): string | undefined {
-  if (!isAllowedFocusOpenCommand(command)) {
-    return undefined;
-  }
-  return command.trim();
-}
-
-function sanitizeFocusOpenCandidates(commands: readonly string[]): string[] {
-  return commands.filter(isAllowedFocusOpenCommand);
-}
-
-function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
-  if (ide !== "vscode" && ide !== "vscodium") {
-    return [...commands];
-  }
-  return commands.filter((command) => !UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
-}
-
-function isSpecificChatInputFocusCommand(command: string | undefined): boolean {
-  if (!command) {
-    return false;
-  }
-  const normalized = command.toLowerCase();
-  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
-}
-
-/**
- * Commands whose effect *toggles* a chat/composer panel (open → hidden,
- * hidden → open) rather than idempotently opening it. Running these on
- * an already-visible panel hides it, which silently breaks the
- * subsequent paste+submit pipeline because the target surface is no
- * longer rendered. The focus ladder uses this to gate a focus-only
- * preflight (try ``composer.focusComposer`` first; only fall through
- * to toggle commands when the chat input cannot be focused, which
- * implies the panel really is closed).
- */
-const TOGGLING_FOCUS_OPEN_COMMANDS: ReadonlySet<string> = new Set([
-  "composer.openaspane",
-  "workbench.action.toggleauxiliarybar",
-  "workbench.action.togglepanel",
-  "workbench.action.togglesidebar",
-  "workbench.view.chat.toggle",
-]);
-
-function isTogglingFocusOpenCommand(command: string | undefined): boolean {
-  if (!command) {
-    return false;
-  }
-  return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
-}
-
-
-interface Envelope {
-  type: string;
-  id?: string;
-  [k: string]: unknown;
-}
-
-type CommandOutcome = { ok: boolean; command?: string; reason?: string; attempts?: string[] };
-type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
-type PasteAttempt = { handled: boolean; result: CommandOutcome };
-type SubmitOutcome = CommandOutcome & { unverified?: boolean };
-type HostCommandResult = { ok: boolean; stdout: string };
-type FocusChatContext = {
-  ide: string;
-  cache: ProbeCacheEntry | undefined;
-  useProbe: boolean;
-  commands: string[];
-  before: ReturnType<typeof captureEditorSnapshot>;
-};
+export { debugLog, BridgeOptions } from "./bridge-config";
 
 type VerifiedHostKeySubmitOptions = {
   preserveFocus?: boolean;
   preferPlain?: boolean;
   ctrlOnly?: boolean;
 };
-
-function isHostClipboardPasteCommand(command: string | undefined): boolean {
-  return Boolean(command && command.includes("host-clipboard"));
-}
-type OperationTraceStep = {
-  op: string;
-  route: string;
-  ok: boolean;
-  command?: string;
-  reason?: string;
-  attempts?: string[];
-  detail?: Record<string, unknown>;
-};
-
-export function debugLog(message: string, data?: unknown): void {
-  try {
-    const suffix = data === undefined ? "" : " " + JSON.stringify(data);
-    fs.appendFileSync("/tmp/koru-plugin-debug.log", `${new Date().toISOString()} ${message}${suffix}\n`);
-  } catch (err) {
-    console.error("koru autopilot: debugLog failed", message, err);
-  }
-}
-
-function safeLogPayload(data: unknown): string {
-  return JSON.stringify(data, (key, value) => {
-    // Avoid circular references and large objects.
-    if (typeof value === "object" && value !== null) {
-      if (key === "before" || key === "after" || key === "beforeSnapshot" || key === "afterSnapshot") {
-        const snapshot = value as { hasEditor?: unknown; isFileLike?: unknown };
-        return { hasEditor: snapshot.hasEditor, isFileLike: snapshot.isFileLike };
-      }
-    }
-    return value;
-  });
-}
-
-let bridgeInstance: SharedAutopilotBridge | null = null;
-
-function safeLog(message: string, data?: unknown): void {
-  try {
-    const suffix = data === undefined ? "" : " " + safeLogPayload(data);
-    console.log(`[koru] ${message}${suffix}`);
-    debugLog(message, data);
-    // Send to daemon for koru doctor
-    bridgeInstance?.sendConsoleLog(message, data);
-  } catch (err) {
-    console.log(`[koru] ${message}`);
-    debugLog(message, { log_error: String(err) });
-  }
-}
-
-
-export type PreflightFocusOnlyPolicy = "any-toggle" | "all-toggle";
-
-export interface BridgeOptions {
-  extensionPackageId: string;
-  openChatOnConnect?: boolean;
-  openChatOnConnectDelayMs?: number;
-  preflightFocusOnlyPolicy?: PreflightFocusOnlyPolicy;
-  enableCursorComposerFastPath?: boolean;
-  enableDiscardToxicFocusOpenCache?: boolean;
-  reloadCommandStrategies?: readonly string[];
-}
 
 export interface BridgeHandle {
   connect(): void;
@@ -239,92 +78,15 @@ export interface BridgeHandle {
   captureSubmitClickPosition(): Promise<void>;
 }
 
-type ResolvedBridgeOptions = {
-  extensionPackageId: string;
-  openChatOnConnect: boolean;
-  openChatOnConnectDelayMs: number;
-  preflightFocusOnlyPolicy: PreflightFocusOnlyPolicy;
-  enableCursorComposerFastPath: boolean;
-  enableDiscardToxicFocusOpenCache: boolean;
-  reloadCommandStrategies: readonly string[];
-};
+export class SharedAutopilotBridge extends SharedAutopilotBridgeFocus implements BridgeHandle {
+  protected pendingCommandOrder: Partial<Record<CommandCapability, string[]>> | undefined;
 
-function resolveBridgeOptions(options: BridgeOptions): ResolvedBridgeOptions {
-  return {
-    extensionPackageId: options.extensionPackageId,
-    openChatOnConnect: options.openChatOnConnect ?? false,
-    openChatOnConnectDelayMs: options.openChatOnConnectDelayMs ?? 500,
-    preflightFocusOnlyPolicy: options.preflightFocusOnlyPolicy ?? "all-toggle",
-    enableCursorComposerFastPath: options.enableCursorComposerFastPath ?? true,
-    enableDiscardToxicFocusOpenCache: options.enableDiscardToxicFocusOpenCache ?? true,
-    reloadCommandStrategies:
-      options.reloadCommandStrategies ?? [
-        "workbench.action.restartExtensionHost",
-        "workbench.action.reloadWindow",
-        "workbench.action.reloadExtensions",
-      ],
-  };
-}
-
-class SharedAutopilotBridge {
-  private socket: net.Socket | null = null;
-  private buf = "";
-  private status: vscode.StatusBarItem;
-  private retryTimer: NodeJS.Timeout | null = null;
-  private connectCandidates: string[] = [];
-  private connectIndex = 0;
-  private reconnectBlockedReason: string | null = null;
-  private chatHistoryWatcher: ChatHistoryWatcher | null = null;
-  private operationTrace: OperationTraceStep[] = [];
-  private openChatPanelInFlight: Promise<FocusOutcome> | null = null;
-  private lastOpenChatPanelAt = 0;
-  private lastOpenChatPanelOutcome: FocusOutcome | null = null;
-  /**
-   * Anchor ``rowid`` captured from Cursor's ``cursorDiskKV`` *just before*
-   * the current drive's submit step. Used by ``verifySubmitStep`` to look
-   * for a fresh ``type = 1`` (user) bubble proving Cursor actually
-   * accepted the message — the only ground truth available because the
-   * clipboard sentinel probe cannot reach Cursor's chat webview.
-   */
-  private cursorBubbleAnchorRowid: number | null = null;
-  /**
-   * Adapter used to query Cursor's bubble database for post-submit
-   * verification. Reused across calls so we don't repeatedly resolve the
-   * db path.
-   */
-  private cursorBubbleVerifierAdapter: CursorBubbleAdapter | null = null;
-  /** Per-drive server-provided command order (``command_order`` from daemon). */
-  private pendingCommandOrder: Partial<Record<CommandCapability, string[]>> | undefined;
-  private readonly options: ResolvedBridgeOptions;
-
-  constructor(private context: vscode.ExtensionContext, options: BridgeOptions) {
-    this.options = resolveBridgeOptions(options);
-    this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
-    this.status.text = "$(plug) koru: off";
-    this.status.tooltip = "Click to connect to koru autopilot daemon";
-    this.status.command = "koruAutopilot.connect";
-    this.status.show();
-    context.subscriptions.push(this.status);
-    bridgeInstance = this;
+  constructor(context: vscode.ExtensionContext, options: BridgeOptions) {
+    super(context, options);
   }
 
-  isConnected(): boolean {
-    return this.socket !== null;
-  }
-
-  sendConsoleLog(message: string, data?: unknown): void {
-    if (!this.socket) return;
-    this.send({
-      type: "console_log",
-      id: "console-log",
-      message,
-      data,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  private resetOperationTrace(): void {
-    this.operationTrace = [];
+  protected currentOperationTrace(): OperationTraceStep[] {
+    return this.operationTrace.slice(-40);
   }
 
   private parseCommandOrder(
@@ -348,382 +110,1338 @@ class SharedAutopilotBridge {
     return Object.keys(order).length > 0 ? order : undefined;
   }
 
-  private orderWithServerOverride(
-    capability: CommandCapability,
-    localCommands: string[],
-    cacheWinner?: string,
-  ): string[] {
-    const server = this.pendingCommandOrder?.[capability];
-    if (server?.length) {
-      return mergeUnique(server, localCommands);
-    }
-    return orderWithCache(localCommands, cacheWinner);
-  }
-
-  private traceOperation(step: OperationTraceStep): void {
-    const clipped: OperationTraceStep = {
-      ...step,
-      attempts: step.attempts?.slice(0, 12),
-    };
-    this.operationTrace.push(clipped);
-    safeLog("OP_ROUTE", clipped);
-    this.emitLiveDsl(clipped);
-  }
-
-  private workspaceFolders(): string[] {
-    return (vscode.workspace.workspaceFolders || [])
-      .map((folder) => folder.uri.fsPath)
-      .filter((path): path is string => typeof path === "string" && path.length > 0);
-  }
-
-  /**
-   * Emit a Koru Drive DSL line *immediately* to the daemon — i.e.
-   * before the drive ack envelope is even built. This is what makes
-   * the DSL "live": the operator sees every focus/paste/submit
-   * candidate the plugin tries while the drive is still in flight,
-   * not just in the post-ack summary. See ``docs/koru-drive-dsl.md``
-   * for the full format and intent table.
-   */
-  private emitLiveDsl(step: OperationTraceStep): void {
-    if (!this.socket) return;
-    try {
-      const seq = String(this.operationTrace.length).padStart(3, "0");
-      const okToken = step.ok === true ? "true" : step.ok === false ? "false" : "ambiguous";
-      const routeToken = step.command ? `${step.route}:${step.command}` : step.route;
-      const parts = [
-        `#${seq}`,
-        `act=${step.op}`,
-        `route=${routeToken}`,
-        `ok=${okToken}`,
-      ];
-      if (step.reason) {
-        const reason = String(step.reason).replace(/"/g, "'").replace(/\s+/g, " ").slice(0, 160);
-        parts.push(`reason="${reason}"`);
-      }
-      this.sendConsoleLog(`[DSL-LIVE] ${parts.join(" ")}`);
-    } catch (err) {
-      debugLog("DSL_LIVE_EMIT_FAILED", { err: String(err) });
-    }
-  }
-
-  private currentOperationTrace(): OperationTraceStep[] {
-    return this.operationTrace.slice(-40);
-  }
-
-  socketPath(): string {
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const override = (cfg.get<string>("socketPath") || "").trim();
-    return override || defaultSocketPathFromEnv();
-  }
-
-  connect(): void {
-    this.disconnect();
-    this.reconnectBlockedReason = null;
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const override = (cfg.get<string>("socketPath") || "").trim();
-    this.connectCandidates = socketCandidatesFromEnv(this.detectIde(), override);
-    this.connectIndex = 0;
-    debugLog("CONNECT_CANDIDATES", {
-      ide: this.detectIde(),
-      override,
-      candidates: this.connectCandidates,
-    });
-    this.tryConnectNext();
-  }
-
-  private tryConnectNext(): void {
-    if (this.connectIndex >= this.connectCandidates.length) {
-      this.status.text = "$(warning) koru: off";
-      this.status.tooltip = "koru autopilot: no reachable socket candidate";
-      this.scheduleRetry();
-      return;
-    }
-    const p = this.connectCandidates[this.connectIndex++];
-    debugLog("CONNECT_TRY", { path: p });
-    const sock = net.createConnection(p);
-    sock.setEncoding("utf-8");
-    let connected = false;
-    sock.on("connect", () => {
-      connected = true;
-      this.socket = sock;
-      this.status.text = "$(plug) koru: on";
-      this.status.tooltip = `koru autopilot: connected ${p}`;
-      debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
-      this.maybeOpenChatOnConnect();
-      Promise.resolve(vscode.commands.getCommands(false)).then((cmds) => {
-        const commandCatalog = classifyCommands(cmds);
-        const matching = matchingCommandsFlat(commandCatalog);
-        try {
-          fs.writeFileSync("/tmp/windsurf-commands.json", JSON.stringify(cmds, null, 2), "utf-8");
-        } catch (err) {
-          console.error("koru autopilot: failed to write commands to /tmp", err);
-        }
-        this.send({
-          type: "hello",
-          id: "vscode-hello",
-          ide: this.detectIde(),
-          version: vscode.extensions.getExtension(this.options.extensionPackageId)?.packageJSON.version || "unknown",
-          protocolVersion: 2,
-          capabilities: [
-            "ide.commands",
-            "chat.focus",
-            "chat.paste",
-            "chat.submit",
-            "chat.events",
-            "chat.history",
-            "probe.ladder",
-            "command.catalog",
-          ],
-          pid: process.pid,
-          workspaceName: vscode.workspace.name || "",
-          workspaceFolders: this.workspaceFolders(),
-          matchingCommands: matching,
-          commandCatalog,
-        });
-        this.startChatHistoryWatcherIfEligible();
-      });
-    });
-    sock.on("data", (chunk: string) => this.onData(chunk));
-    sock.on("error", (err: Error) => {
-      debugLog("CONNECT_ERROR", { path: p, connected, message: err.message });
-      if (!connected) {
-        // Try next candidate immediately on initial connect failure.
-        try { sock.destroy(); } catch { /* ignore */ }
-        this.tryConnectNext();
-        return;
-      }
-      this.status.text = "$(warning) koru: err";
-      this.status.tooltip = `koru autopilot: ${err.message}`;
-      this.scheduleRetry();
-    });
-    sock.on("close", () => {
-      debugLog("CONNECT_CLOSE", { path: p, connected });
-      if (!connected) return;
-      this.status.text = "$(plug) koru: off";
-      this.socket = null;
-      if (this.reconnectBlockedReason) {
-        this.status.text = "$(warning) koru: reload";
-        this.status.tooltip = `koru autopilot: ${this.reconnectBlockedReason}`;
-        return;
-      }
-      this.scheduleRetry();
-    });
-  }
-
-  disconnect(): void {
-    debugLog("DISCONNECT");
-    if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
-      this.retryTimer = null;
-    }
-    if (this.socket) {
-      try { this.socket.end(); } catch { /* ignore */ }
-      this.socket = null;
-    }
-    if (this.chatHistoryWatcher) {
-      this.chatHistoryWatcher.stop();
-      this.chatHistoryWatcher = null;
-    }
-  }
-
-  /**
-   * Start the per-IDE chat-history watcher when (a) the IDE is one we
-   * have an adapter for, (b) the user has not explicitly disabled it,
-   * and (c) the watcher is not already running. The watcher reads the
-   * assistant's latest replies from each IDE's local conversation store
-   * and forwards them as ``message.received`` events — exactly the half
-   * of ``chat.events`` that the VS Code Extension API itself does NOT
-   * expose. Encrypted stores (Windsurf Cascade, Antigravity) are still
-   * recognized but no rows are emitted; the input-busy precheck and
-   * escalation cooldown still protect those IDEs.
-   */
-  private startChatHistoryWatcherIfEligible(): void {
-    if (this.chatHistoryWatcher) return;
-    const ide = this.detectIde();
-    const supported: SupportedIde[] = ["cursor", "vscode", "vscodium", "windsurf", "antigravity"];
-    if (!supported.includes(ide as SupportedIde)) return;
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    if (!cfg.get<boolean>("chatHistoryWatch", true)) return;
-    const persistKey = `chatHistory.cursor.${ide}`;
-    const initialCursor = String(this.context.globalState.get<string>(persistKey, "") || "");
-    this.chatHistoryWatcher = new ChatHistoryWatcher({
-      ide: ide as SupportedIde,
-      pollIntervalMs: cfg.get<number>("chatHistoryPollIntervalMs", 4000) || 4000,
-      initialCursor,
-      log: (msg, data) => debugLog(msg, data),
-      onMessage: async (row) => {
-        if (!this.socket) return false;
-        this.send({
-          type: "message.received",
-          chat: row.conversationId || "default",
-          text: row.text.substring(0, 4000),
-          length: row.text.length,
-          summary: row.text.split(/\r?\n/, 1)[0].substring(0, 200),
-          createdAt: row.createdAt,
-        });
-        return true;
-      },
-      onCursorAdvance: async (cursor) => {
-        await this.context.globalState.update(persistKey, cursor);
-      },
-    });
-    this.chatHistoryWatcher.start();
-    debugLog("CHAT_HISTORY_WATCH_START", {
-      ide,
-      adapter: this.chatHistoryWatcher.adapterDescription,
-      initialCursor,
-    });
-  }
-
-  private scheduleRetry(): void {
-    if (this.reconnectBlockedReason) return;
-    if (this.retryTimer) return;
-    // Add ~±500 ms of jitter so 30 IDE windows don't all reconnect in
-    // the same 3 s window after the daemon restarts (R10).
-    const delay = 3000 + Math.floor((Math.random() - 0.5) * 1000);
-    this.retryTimer = setTimeout(() => {
-      this.retryTimer = null;
-      const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-      if (cfg.get<boolean>("autoConnect", true)) this.connect();
-    }, delay);
-  }
-
-  private maybeOpenChatOnConnect(): void {
-    if (!this.options.openChatOnConnect) {
-      return;
-    }
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    if (cfg.get<boolean>("openChatOnConnect", true) === false) {
-      return;
-    }
-    setTimeout(() => {
-      void this.openChatPanel("connect").catch((err) => {
-        const detail = err instanceof Error ? err.message : String(err);
-        safeLog("OPEN_CHAT_ON_CONNECT_FAILED", { detail });
-      });
-    }, this.options.openChatOnConnectDelayMs);
-  }
-
-  private async openChatPanel(reason: string): Promise<FocusOutcome> {
-    if (this.openChatPanelInFlight) {
-      return this.openChatPanelInFlight;
-    }
-    const now = Date.now();
-    if (
-      this.lastOpenChatPanelOutcome &&
-      now - this.lastOpenChatPanelAt < OPEN_CHAT_PANEL_DEBOUNCE_MS
-    ) {
-      return this.lastOpenChatPanelOutcome;
-    }
-
-    this.openChatPanelInFlight = this.performOpenChatPanel(reason);
-    try {
-      const outcome = await this.openChatPanelInFlight;
-      this.lastOpenChatPanelAt = Date.now();
-      this.lastOpenChatPanelOutcome = outcome;
-      return outcome;
-    } finally {
-      this.openChatPanelInFlight = null;
-    }
-  }
-
-  private async performOpenChatPanel(reason: string): Promise<FocusOutcome> {
+  protected async injectChat(env: Envelope): Promise<void> {
+    const text = typeof env.text === "string" ? env.text : "";
+    const submit = env.submit !== false;
+    this.pendingCommandOrder = this.parseCommandOrder(env.command_order);
     this.resetOperationTrace();
     this.traceOperation({
-      op: "focus_open",
+      op: "drive",
       route: "plugin",
       ok: true,
-      detail: { ide: this.detectIde(), reason },
+      detail: { ide: this.detectIde(), submit, textLength: text.length, id: env.id },
     });
-    const focus = await this.focusChat();
-    this.traceOperation({
-      op: "focus_open",
-      route: focus.command ? `command:${focus.command}` : "command",
-      ok: focus.ok,
-      reason: focus.reason,
-      attempts: focus.attempts,
-      detail: focus.diagnostics,
-    });
-    this.send({
-      type: "chat.opened",
-      chat: "default",
-      ok: focus.ok,
-      reason,
-      command: focus.command,
-      message: focus.reason,
-      operation_trace: this.currentOperationTrace(),
-    });
-    return focus;
+    if (!text) {
+      this.traceOperation({ op: "drive", route: "validate", ok: false, reason: "empty text" });
+      this.send({ type: "ack", id: env.id, ok: false, message: "empty text", operation_trace: this.currentOperationTrace() });
+      return;
+    }
+    const previous = await this.saveClipboard();
+    const previousHost = await this.saveHostClipboard();
+    try {
+      await this._performInject(env, text, submit);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.traceOperation({ op: "drive", route: "exception", ok: false, reason: message });
+      this.send({ type: "ack", id: env.id, ok: false, message, operation_trace: this.currentOperationTrace() });
+    } finally {
+      this.pendingCommandOrder = undefined;
+      if (this.detectIde() === "vscodium") {
+        await this.sleep(400);
+      }
+      await this.restoreHostClipboard(previousHost);
+      await this.restoreClipboard(previous);
+    }
   }
 
-  private async runCommand(command: string): Promise<boolean> {
-    // Wrap a Thenable in a real Promise so we can ``.catch`` it.
-    // VS Code's ``Thenable<T>`` lacks ``catch``; ``Promise.resolve``
-    // upgrades it without losing the resolved value.
-    // Some commands resolve ``false`` when they did not run (no-op) — treat
-    // that as failure so Windsurf/Cascade fallbacks still run (R15).
+  private async tryWindsurfSendTextFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
+    if (this.detectIde() !== "windsurf") {
+      return false;
+    }
+    safeLog("WINDSURF_FASTPATH_START", { submit, textLength: text.length });
+    const hasCommand = await this.waitForCommand("windsurf.sendTextToChat", 1200, 150);
+    safeLog("WINDSURF_FASTPATH_CHECK_COMMAND", { hasSendCmd: hasCommand });
+    if (!hasCommand) {
+      safeLog("WINDSURF_FASTPATH_ABORT_MISSING_COMMAND");
+      return false;
+    }
+    let lastError = "";
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      try {
+        safeLog("WINDSURF_FASTPATH_EXECUTE_SEND", { attempt, textLength: text.length });
+        await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
+        await this.maybeKeepWindsurfChatPanelVisible("after-sendTextToChat");
+        safeLog("WINDSURF_FASTPATH_EXECUTE_SEND_OK", { attempt });
+        this.sendSuccessAck(
+          env,
+          { ok: true, command: "none" },
+          { ok: true, command: "windsurf.sendTextToChat" },
+          "windsurf.sendTextToChat"
+        );
+        if (submit) {
+          this.sendMessageSent(text);
+        }
+        return true;
+      } catch (err) {
+        lastError = String(err);
+        safeLog("WINDSURF_FASTPATH_EXECUTE_SEND_ERROR", { attempt, error: lastError });
+        if (attempt < 4) {
+          await this.sleep(450);
+        }
+      }
+    }
+    this.traceOperation({
+      op: "submit",
+      route: "windsurf-fastpath-exhausted",
+      ok: false,
+      reason: `windsurf.sendTextToChat failed after 4 retries; lastError=${lastError}`,
+    });
+    this.sendSubmitFailureAck(
+      env,
+      { ok: true, command: "none" },
+      { ok: true, command: "windsurf.sendTextToChat" },
+      "windsurf.sendTextToChat",
+      {
+        ok: false,
+        command: "windsurf.sendTextToChat",
+        reason: `windsurf.sendTextToChat command failed 4 times; lastError=${lastError}`,
+      }
+    );
+    return true;
+  }
+
+  private async maybeKeepWindsurfChatPanelVisible(reason: string): Promise<void> {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const keepOpen = cfg.get<boolean>("windsurfKeepOpenAfterSend", false);
+    if (!keepOpen) {
+      return;
+    }
+    const strategies = [
+      "windsurf.focusCascadeChat",
+      "windsurf.focusCascade",
+      "windsurf.openCascadeChat",
+      "windsurf.openCascade",
+    ];
+    for (const strategy of strategies) {
+      try {
+        safeLog("WINDSURF_KEEP_OPEN_TRY", { strategy, reason });
+        await Promise.resolve(vscode.commands.executeCommand(strategy));
+        await this.sleep(120);
+        return;
+      } catch (err) {
+        safeLog("WINDSURF_KEEP_OPEN_FAILED", { strategy, reason, error: String(err) });
+      }
+    }
+  }
+
+  private async tryAntigravitySendPromptFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
+    if (this.detectIde() !== "antigravity") {
+      return false;
+    }
+    safeLog("ANTIGRAVITY_FASTPATH_START", { submit, textLength: text.length });
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const hasCommand = await canUseAntigravitySendPrompt(existing);
+    safeLog("ANTIGRAVITY_FASTPATH_CHECK_COMMAND", { hasSendCmd: hasCommand });
+    if (!hasCommand) {
+      safeLog("ANTIGRAVITY_FASTPATH_ABORT_MISSING_COMMAND");
+      return false;
+    }
     try {
-      const result = await Promise.resolve(vscode.commands.executeCommand(command));
-      if (result === false) {
-        return false;
+      safeLog("ANTIGRAVITY_FASTPATH_EXECUTE_SEND", { textLength: text.length });
+      await Promise.resolve(vscode.commands.executeCommand(ANTIGRAVITY_SEND_PROMPT_COMMAND, text));
+      safeLog("ANTIGRAVITY_FASTPATH_EXECUTE_SEND_OK");
+      const openCmd = selectAntigravityOpenCommand(existing);
+      try {
+        await Promise.resolve(vscode.commands.executeCommand(openCmd));
+      } catch (err) {
+        safeLog("ANTIGRAVITY_FASTPATH_OPEN_FAILED", { openCmd, error: String(err) });
+      }
+      this.sendSuccessAck(
+        env,
+        { ok: true, command: openCmd },
+        { ok: true, command: ANTIGRAVITY_SEND_PROMPT_COMMAND },
+        ANTIGRAVITY_SEND_PROMPT_COMMAND
+      );
+      if (submit) {
+        this.sendMessageSent(text);
       }
       return true;
     } catch (err) {
-      console.error(`koru autopilot: command ${command} failed`, err);
+      const lastError = String(err);
+      safeLog("ANTIGRAVITY_FASTPATH_EXECUTE_SEND_ERROR", { error: lastError });
+      this.traceOperation({
+        op: "submit",
+        route: "antigravity-fastpath-failed",
+        ok: false,
+        reason: `antigravity native send failed; error=${lastError}`,
+      });
+      this.sendSubmitFailureAck(
+        env,
+        { ok: true, command: "none" },
+        { ok: true, command: ANTIGRAVITY_SEND_PROMPT_COMMAND },
+        ANTIGRAVITY_SEND_PROMPT_COMMAND,
+        {
+          ok: false,
+          command: ANTIGRAVITY_SEND_PROMPT_COMMAND,
+          reason: `antigravity native send failed; error=${lastError}`,
+        }
+      );
+      return true;
+    }
+  }
+
+  private async tryCursorComposerPromptFastPath(
+    env: Envelope,
+    text: string,
+    submit: boolean
+  ): Promise<boolean> {
+    if (this.detectIde() !== "cursor") {
       return false;
     }
-  }
-
-  private probeLadderEnabled(): boolean {
-    return vscode.workspace.getConfiguration("koruAutopilot").get<boolean>("probeLadder", true);
-  }
-
-  private probeFocusDelayMs(): number {
-    return vscode.workspace.getConfiguration("koruAutopilot").get<number>("probeFocusDelayMs", 220);
-  }
-
-  private probePasteDelayMs(): number {
-    return vscode.workspace.getConfiguration("koruAutopilot").get<number>("probePasteDelayMs", 120);
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  private async waitForCommand(command: string, timeoutMs: number, intervalMs = 100): Promise<boolean> {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() <= deadline) {
-      const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-      if (existing.has(command)) {
-        return true;
-      }
-      await this.sleep(intervalMs);
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const pasteCmd = "composer.focusComposer";
+    const submitCmd = "composer.sendToAgent";
+    if (!existing.has(pasteCmd) || !existing.has(submitCmd)) {
+      return false;
     }
+    safeLog("CURSOR_COMPOSER_FASTPATH_START", { submit, textLength: text.length });
+    this.traceOperation({
+      op: "focus_open",
+      route: "composer-fastpath",
+      ok: true,
+      command: pasteCmd,
+    });
+    try {
+      await vscode.commands.executeCommand(pasteCmd);
+    } catch (err) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_FOCUS_FAILED", { error: String(err) });
+      return false;
+    }
+    await this.sleep(this.probeFocusDelayMs());
+    const busyInput = await this.decideBusyInput(text);
+    if (busyInput.action === "block") {
+      this.sendInputBusyAck(env, { ok: true, command: pasteCmd }, busyInput.observedLength);
+      return true;
+    }
+    const replace = busyInput.action === "replace_known_koru_draft";
+    const pasted = await this.pasteText(text, replace);
+    if (!pasted.ok) {
+      return false;
+    }
+    if (!submit) {
+      this.sendSuccessAck(env, { ok: true, command: pasteCmd }, pasted, undefined);
+      return true;
+    }
+    await this.captureCursorBubbleAnchor();
+    this.traceOperation({
+      op: "submit",
+      route: "composer-fastpath",
+      ok: true,
+      command: submitCmd,
+    });
+    try {
+      await vscode.commands.executeCommand(submitCmd);
+    } catch (err) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_SUBMIT_FAILED", { error: String(err) });
+      return false;
+    }
+    const verifyResult = await this._verifySubmitViaCursorBubble(text);
+    if (verifyResult && verifyResult.matched) {
+      this.traceOperation({ op: "submit", route: "success", ok: true, command: submitCmd });
+      this.sendSuccessAck(env, { ok: true, command: pasteCmd }, pasted, submitCmd);
+      this.sendMessageSent(text);
+      return true;
+    }
+    this.traceOperation({
+      op: "submit_verify",
+      route: "cursor-bubble-db",
+      ok: false,
+      reason: "no new user bubble in cursorDiskKV after composer fastpath (paste+sendToAgent)",
+      detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult?.newUserBubbles },
+    });
+    await this._clearComposerDraft();
     return false;
   }
 
-  private editorSnapshot(): ReturnType<typeof captureEditorSnapshot> {
-    return captureEditorSnapshot(vscode.window.activeTextEditor);
+  private async _clearComposerDraft(): Promise<void> {
+    try {
+      await vscode.commands.executeCommand("composer.focusComposer");
+      await this.sleep(60);
+      await vscode.commands.executeCommand("editor.action.selectAll");
+      await this.sleep(40);
+      await vscode.commands.executeCommand("deleteLeft");
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      safeLog("CURSOR_COMPOSER_FASTPATH_CLEAR_DRAFT_FAILED", { detail });
+    }
   }
 
-  private getProbeCache(): ProbeCacheEntry | undefined {
+  private async submitAfterPaste(
+    env: Envelope,
+    focus: CommandOutcome,
+    pasted: CommandOutcome,
+    submit: boolean,
+    pastedText?: string
+  ): Promise<string | undefined | null> {
+    if (pasted.command === "windsurf.sendTextToChat") {
+      this.traceOperation({ op: "submit", route: "windsurf-native", ok: true, command: "windsurf.sendTextToChat" });
+      return "windsurf.sendTextToChat";
+    }
+    if (!submit) {
+      this.traceOperation({ op: "submit", route: "disabled-by-request", ok: true });
+      return undefined;
+    }
+    await this.sleep(150);
+    await this.focusChatInput();
+    await this.captureCursorBubbleAnchor();
+    const submitResult = await this.submitChat(pastedText, pasted.command);
+    if (submitResult.unverified) {
+      this.traceOperation({
+        op: "submit",
+        route: "unverified",
+        ok: false,
+        command: submitResult.command,
+        reason: submitResult.reason,
+        attempts: submitResult.attempts,
+      });
+      this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
+      return null;
+    }
+    if (submitResult.ok) {
+      this.traceOperation({ op: "submit", route: "success", ok: true, command: submitResult.command });
+      return submitResult.command;
+    }
+    this.traceOperation({
+      op: "submit",
+      route: "failed",
+      ok: false,
+      command: submitResult.command,
+      reason: submitResult.reason,
+      attempts: submitResult.attempts,
+    });
+    this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
+    return null;
+  }
+
+  private async _performInject(env: Envelope, text: string, submit: boolean): Promise<void> {
     const ide = this.detectIde();
-    const raw = this.context.globalState.get<unknown>("probeCache.v3");
-    const cache = loadProbeCache(raw, ide, vscode.env.appName || "");
-    return sanitizeProbeCacheForIde(cache, ide);
+    this.traceOperation({
+      op: "drive",
+      route: "perform",
+      ok: true,
+      detail: { ide, submit, textLength: text.length },
+    });
+    if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
+      this.traceOperation({ op: "drive", route: "antigravity-fastpath", ok: true });
+      return;
+    }
+    if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
+      this.traceOperation({ op: "drive", route: "windsurf-fastpath", ok: true });
+      return;
+    }
+    if (
+      this.options.enableCursorComposerFastPath &&
+      await this.tryCursorComposerPromptFastPath(env, text, submit)
+    ) {
+      this.traceOperation({ op: "drive", route: "cursor-composer-fastpath", ok: true });
+      return;
+    }
+    if (ide === "windsurf") {
+      this.traceOperation({ op: "paste", route: "windsurf-fastpath-required", ok: false, reason: "fast path failed" });
+      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
+      return;
+    }
+    if (ide === "antigravity") {
+      this.traceOperation({ op: "paste", route: "antigravity-native-required", ok: false, reason: "native send command unavailable" });
+      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "native send command unavailable" });
+      return;
+    }
+
+    const focus = await this.openChatPanel("inject");
+    if (focus.ok) {
+      await this.sleep(80);
+    }
+    if (!focus.ok) {
+      this.sendFocusFailureAck(env, focus);
+      return;
+    }
+    const busyInput = await this.decideBusyInput(text);
+    if (busyInput.action === "submit_existing") {
+      debugLog("CHAT_INPUT_BUSY_SUBMIT_EXISTING", { length: busyInput.observedLength });
+      await this.submitExistingChatInput(env, focus, text, submit);
+      return;
+    }
+    if (busyInput.action === "block") {
+      this.sendInputBusyAck(env, focus, busyInput.observedLength);
+      return;
+    }
+    if (busyInput.action === "replace_known_koru_draft") {
+      debugLog("CHAT_INPUT_BUSY_REPLACE_KORU_DRAFT", { length: busyInput.observedLength });
+    }
+    const pasted = await this.pasteText(text, busyInput.action === "replace_known_koru_draft");
+    if (!pasted.ok) {
+      this.sendPasteFailureAck(env, focus, pasted);
+      return;
+    }
+    const submitCmd = await this.submitAfterPaste(env, focus, pasted, submit, text);
+    if (submitCmd === null) {
+      return;
+    }
+    this.sendSuccessAck(env, focus, pasted, submitCmd);
+    if (submit) {
+      this.sendMessageSent(text);
+    }
   }
 
-  private async saveProbeCache(
-    wins: Partial<Pick<ProbeCacheEntry, "focusOpen" | "focusInput" | "paste" | "submit">>
-  ): Promise<void> {
-    const next = mergeProbeCache(
-      this.getProbeCache(),
-      this.detectIde(),
-      vscode.env.appName || "",
-      wins
+  private async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {
+    const ide = this.detectIde();
+    const useProbe = this.probeLadderEnabled();
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const cache = this.getProbeCache();
+    const before = this.editorSnapshot();
+    this.traceOperation({
+      op: "paste",
+      route: "start",
+      ok: true,
+      detail: { ide, replaceCurrentInput, useProbe, textLength: text.length },
+    });
+
+    if (replaceCurrentInput) {
+      await this.focusChatInput();
+      await this.runCommand("editor.action.selectAll");
+      await this.sleep(50);
+      const clipboard = await this.tryClipboardPaste(text, before, useProbe);
+      if (clipboard.handled && clipboard.result.ok) {
+        this.traceOperation({ op: "paste", route: "replace:clipboard", ok: true, command: clipboard.result.command });
+        return clipboard.result;
+      }
+      const typed = await this.tryTypePaste(text, before, useProbe);
+      if (typed.ok) {
+        this.traceOperation({ op: "paste", route: "replace:type", ok: true, command: typed.command });
+        return typed;
+      }
+    }
+
+    const direct = await this.tryDirectPasteCommands(text, ide, existing, cache, before, useProbe);
+    if (direct) {
+      this.traceOperation({ op: "paste", route: "direct-command", ok: direct.ok, command: direct.command, reason: direct.reason });
+      return direct;
+    }
+
+    if (ide === "windsurf") {
+      return { ok: false };
+    }
+
+    const clipboard = await this.tryClipboardPaste(text, before, useProbe);
+    if (clipboard.handled) {
+      this.traceOperation({
+        op: "paste",
+        route: "vscode-clipboard",
+        ok: clipboard.result.ok,
+        command: clipboard.result.command,
+        reason: clipboard.result.reason,
+      });
+      return clipboard.result;
+    }
+
+    if (ide === "vscodium" && this.allowVSCodiumHostInputFallback()) {
+      const hostPaste = await this.tryHostClipboardPaste(text, before, useProbe);
+      if (hostPaste.handled) {
+        this.traceOperation({
+          op: "paste",
+          route: "vscodium:host-clipboard",
+          ok: hostPaste.result.ok,
+          command: hostPaste.result.command,
+          reason: hostPaste.result.reason,
+          attempts: hostPaste.result.attempts,
+        });
+        return hostPaste.result;
+      }
+    }
+
+    const typed = await this.tryTypePaste(text, before, useProbe);
+    this.traceOperation({ op: "paste", route: "type", ok: typed.ok, command: typed.command, reason: typed.reason });
+    return typed;
+  }
+
+  private static directPasteReadsClipboard(cmd: string): boolean {
+    return (
+      cmd === "editor.action.clipboardPasteAction"
+      || cmd === "editor.action.pasteAs"
+      || cmd === "execPaste"
+      || cmd === "paste"
     );
-    await this.context.globalState.update("probeCache.v3", next);
-    debugLog("PROBE_CACHE", next);
+  }
+
+  private async tryDirectPasteCommands(
+    text: string,
+    ide: string,
+    existing: Set<string>,
+    cache: ProbeCacheEntry | undefined,
+    before: ReturnType<typeof captureEditorSnapshot>,
+    useProbe: boolean
+  ): Promise<CommandOutcome | undefined> {
+    const directCommands = filterRegistered(
+      this.orderWithServerOverride("paste", buildPasteDirectCommands(ide), cache?.paste),
+      existing
+    );
+    const previousClip = await this.saveClipboard();
+    let clipboardSeeded = false;
+    try {
+      for (const cmd of directCommands) {
+        const readsClipboard = SharedAutopilotBridge.directPasteReadsClipboard(cmd);
+        if (readsClipboard) {
+          const seeded = await this.writeClipboardVerified(text);
+          if (!seeded) {
+            debugLog("DIRECT_PASTE_CLIPBOARD_SEED_FAILED", { cmd });
+            this.traceOperation({
+              op: "paste",
+              route: `direct-command:${cmd}`,
+              ok: false,
+              reason: "clipboard seed unverified; refusing to invoke clipboard-reading paste with stale clipboard",
+            });
+            continue;
+          }
+          clipboardSeeded = true;
+        }
+        try {
+          const result = await Promise.resolve(vscode.commands.executeCommand(cmd, text));
+          if (result === false) {
+            continue;
+          }
+          await this.sleep(this.probePasteDelayMs());
+          const after = this.editorSnapshot();
+          if (useProbe && pasteLandedInEditor(before, after, text)) {
+            debugLog("PROBE_PASTE_REJECT", { cmd, reason: "landed_in_editor" });
+            continue;
+          }
+          if (useProbe) {
+            await this.saveProbeCache({ paste: cmd });
+          }
+          return { ok: true, command: cmd };
+        } catch {
+          /* ignore */
+        }
+      }
+      return undefined;
+    } finally {
+      if (clipboardSeeded) {
+        await this.sleep(120);
+        await this.restoreClipboard(previousClip);
+      }
+    }
+  }
+
+  private async tryHostClipboardPaste(
+    text: string,
+    before: ReturnType<typeof captureEditorSnapshot>,
+    useProbe: boolean
+  ): Promise<PasteAttempt> {
+    const inputFocused = await this.focusChatInput();
+    if (!inputFocused.ok) {
+      debugLog("HOST_PASTE_NO_INPUT_FOCUS");
+      this.traceOperation({ op: "paste", route: "host-clipboard:focus-input", ok: false, reason: "input focus unavailable" });
+    }
+    const guard = await this.guardVSCodiumTerminalRiskPaste("host-clipboard");
+    if (guard) {
+      return guard;
+    }
+    await this.clearChatInput();
+    const clip = await this.writeHostClipboard(text);
+    if (!clip) {
+      debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
+      this.traceOperation({ op: "paste", route: "host-clipboard:write", ok: false, reason: "no host clipboard tool" });
+      return { handled: false, result: { ok: false, reason: "no host clipboard tool" } };
+    }
+    this.traceOperation({ op: "paste", route: `host-clipboard:${clip}`, ok: true, detail: { textLength: text.length } });
+    await this.writeClipboardVerified(text);
+    const paste = await this.runHostKeyCandidates("HOST_PASTE_KEY", [
+      ["wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]],
+      ["xdotool", ["key", "ctrl+v"]],
+      ["ydotool", ["key", "ctrl+v"]],
+    ]);
+    if (!paste.ok) {
+      return { handled: true, result: { ...paste, reason: "host clipboard paste key failed" } };
+    }
+    await this.sleep(Math.max(this.probePasteDelayMs(), 350));
+    const after = this.editorSnapshot();
+    if (useProbe && pasteLandedInEditor(before, after, text)) {
+      this.traceOperation({ op: "paste", route: "host-clipboard:probe", ok: false, reason: "paste landed in editor" });
+      return { handled: true, result: { ok: false, command: paste.command, reason: "paste landed in editor" } };
+    }
+    if (useProbe) {
+      await this.saveProbeCache({ paste: `host-clipboard:${clip}+${paste.command}` });
+    }
+    return { handled: true, result: { ok: true, command: `host-clipboard:${clip}+${paste.command}` } };
+  }
+
+  private async tryClipboardPaste(
+    text: string,
+    before: ReturnType<typeof captureEditorSnapshot>,
+    useProbe: boolean
+  ): Promise<PasteAttempt> {
+    const inputFocused = await this.focusChatInput();
+    if (!inputFocused.ok) {
+      debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
+      if (useProbe && before.hasEditor && before.isFileLike) {
+        return { handled: true, result: { ok: false, reason: "chat input focus unavailable; refusing editor clipboard paste fallback" } };
+      }
+    }
+    try {
+      const guard = await this.guardVSCodiumTerminalRiskPaste("vscode-clipboard");
+      if (guard) {
+        return guard;
+      }
+      await this.clearChatInput();
+      const ok = await this.writeClipboardVerified(text);
+      if (!ok) {
+        debugLog("CLIPBOARD_PASTE_ABORT_UNVERIFIED");
+        return {
+          handled: true,
+          result: {
+            ok: false,
+            reason:
+              "clipboard writeText did not propagate (readback mismatch); "
+              + "refusing paste to avoid clobbering chat input with stale clipboard content",
+          },
+        };
+      }
+      await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+      await this.sleep(this.probePasteDelayMs());
+      const after = this.editorSnapshot();
+      if (useProbe && pasteLandedInEditor(before, after, text)) {
+        return { handled: true, result: { ok: false } };
+      }
+      if (useProbe) {
+        await this.saveProbeCache({ paste: "editor.action.clipboardPasteAction" });
+      }
+      return { handled: true, result: { ok: true, command: "editor.action.clipboardPasteAction" } };
+    } catch {
+      /* ignore */
+    }
+    return { handled: false, result: { ok: false } };
+  }
+
+  private async guardVSCodiumTerminalRiskPaste(route: string): Promise<PasteAttempt | null> {
+    if (this.detectIde() !== "vscodium" || !this.probeLadderEnabled()) {
+      return null;
+    }
+    const observed = await this._probeChatInputContents();
+    if (observed !== null) {
+      return null;
+    }
+    const reason =
+      "chat input probe inconclusive; refusing terminal-risk paste fallback";
+    this.traceOperation({
+      op: "paste",
+      route: `${route}:terminal-risk-guard`,
+      ok: false,
+      reason,
+    });
+    return { handled: true, result: { ok: false, reason } };
+  }
+
+  private async tryTypePaste(
+    text: string,
+    before: ReturnType<typeof captureEditorSnapshot>,
+    useProbe: boolean
+  ): Promise<CommandOutcome> {
+    const inputFocused = await this.focusChatInput();
+    if (!inputFocused.ok && useProbe && before.hasEditor && before.isFileLike) {
+      debugLog("TYPE_PASTE_NO_INPUT_FOCUS_REFUSED");
+      return { ok: false, reason: "chat input focus unavailable; refusing editor type fallback" };
+    }
+    try {
+      await this.clearChatInput();
+      await Promise.resolve(vscode.commands.executeCommand("type", { text }));
+      await this.sleep(this.probePasteDelayMs());
+      const after = this.editorSnapshot();
+      if (useProbe && pasteLandedInEditor(before, after, text)) {
+        return { ok: false };
+      }
+      if (useProbe) {
+        await this.saveProbeCache({ paste: "type" });
+      }
+      return { ok: true, command: "type" };
+    } catch {
+      return { ok: false };
+    }
+  }
+
+  protected async saveClipboard(): Promise<string | null> {
+    try {
+      return await vscode.env.clipboard.readText();
+    } catch {
+      return null;
+    }
+  }
+
+  protected async restoreClipboard(previous: string | null): Promise<void> {
+    if (previous !== null) {
+      try {
+        await vscode.env.clipboard.writeText(previous);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  protected async writeClipboardVerified(text: string): Promise<boolean> {
+    const maxTries = 6;
+    for (let i = 0; i < maxTries; i++) {
+      try {
+        await vscode.env.clipboard.writeText(text);
+      } catch (err) {
+        debugLog("CLIPBOARD_WRITE_ERROR", { err: String(err) });
+      }
+      await this.sleep(i === 0 ? 20 : 40);
+      try {
+        const observed = await vscode.env.clipboard.readText();
+        if (observed === text) {
+          if (i > 0) {
+            debugLog("CLIPBOARD_WRITE_VERIFIED_RETRY", { attempts: i + 1 });
+          }
+          return true;
+        }
+      } catch (err) {
+        debugLog("CLIPBOARD_READBACK_ERROR", { err: String(err) });
+      }
+    }
+    debugLog("CLIPBOARD_WRITE_UNVERIFIED", { length: text.length });
+    return false;
+  }
+
+  private async decideBusyInput(text: string): Promise<{ action: BusyInputAction; observedLength: number }> {
+    if (!shouldVerifyPrePasteBusy(this.koruStepConfig())) {
+      this.traceOperation({ op: "input_busy_probe", route: "disabled", ok: true });
+      return { action: "empty", observedLength: 0 };
+    }
+    const observed = await this._probeChatInputContents();
+    const observedLength = observed === null ? -1 : observed.trim().length;
+    const action = decideBusyInputAction(observed, text);
+    debugLog("CHAT_INPUT_BUSY_PROBE", { busy: action !== "empty", action, length: observedLength });
+    this.traceOperation({
+      op: "input_busy_probe",
+      route: "select-copy",
+      ok: action !== "block",
+      reason: action === "block" ? "input contains unrelated draft" : undefined,
+      detail: { action, observedLength },
+    });
+    return { action, observedLength };
+  }
+
+  private async _probeChatInputContents(): Promise<string | null> {
+    const sentinel = `__koru_input_probe_${Date.now().toString(36)}__`;
+    const previous = await this.saveClipboard();
+    try {
+      await vscode.env.clipboard.writeText(sentinel);
+      await this.runCommand("editor.action.selectAll");
+      await this.runCommand("editor.action.clipboardCopyAction");
+      await this.sleep(60);
+      const observed = await this.saveClipboard();
+      if (observed === null || observed === sentinel) {
+        this.traceOperation({
+          op: "input_probe",
+          route: "select-copy",
+          ok: false,
+          reason: observed === sentinel ? "sentinel unchanged" : "clipboard unreadable",
+        });
+        return null;
+      }
+      this.traceOperation({
+        op: "input_probe",
+        route: "select-copy",
+        ok: true,
+        detail: { observedLength: observed.length },
+      });
+      return observed;
+    } catch (err) {
+      debugLog("CHAT_INPUT_PROBE_ERROR", { err: String(err) });
+      return null;
+    } finally {
+      await this.restoreClipboard(previous);
+      await this.collapseProbeSelection();
+    }
+  }
+
+  private async collapseProbeSelection(): Promise<void> {
+    try {
+      await Promise.resolve(vscode.commands.executeCommand("cursorMove", {
+        to: "wrappedLineEnd",
+        select: false,
+      }));
+      this.traceOperation({ op: "input_probe", route: "collapse-selection", ok: true });
+    } catch (err) {
+      const fallbackOk = await this.runCommand("cursorLineEnd");
+      this.traceOperation({
+        op: "input_probe",
+        route: "collapse-selection",
+        ok: fallbackOk,
+        reason: fallbackOk ? undefined : String(err),
+      });
+    }
+  }
+
+  private sendInputBusyAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    observedLength?: number
+  ): void {
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      delivered: false,
+      opened: focus.ok,
+      submitted: false,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      verification: "input_busy",
+      operation_trace: this.currentOperationTrace(),
+      reason: "chat_input_not_empty",
+      observed_length: observedLength,
+      message:
+        "chat input already contains un-submitted text — skipping drive to "
+        + "avoid clobbering the user's reply or concatenating prompts.",
+    });
+  }
+
+  private async submitExistingChatInput(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    text: string,
+    submit: boolean
+  ): Promise<void> {
+    if (!submit) {
+      this.send({
+        type: "ack",
+        id: env.id,
+        ok: true,
+        delivered: true,
+        opened: true,
+        submitted: false,
+        probe_ladder: this.probeLadderEnabled(),
+        winning_focus_open: focus.command,
+        verification: "input_matches_prompt",
+        operation_trace: this.currentOperationTrace(),
+      });
+      return;
+    }
+    await this.captureCursorBubbleAnchor();
+    const submitResult = await this.submitChat(text);
+    if (submitResult.unverified || !submitResult.ok) {
+      this.sendSubmitFailureAck(
+        env,
+        focus,
+        { ok: true, command: "existing-input" },
+        submitResult.command,
+        submitResult
+      );
+      return;
+    }
+    this.sendSuccessAck(env, focus, { ok: true, command: "existing-input" }, submitResult.command);
+    this.sendMessageSent(text);
+  }
+
+  private sendFocusFailureAck(env: Envelope, focus: FocusOutcome): void {
+    const details = focus.diagnostics || {};
+    const candidates = Array.isArray(details.focusOpenCandidates)
+      ? details.focusOpenCandidates.join(", ")
+      : "";
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      opened: false,
+      submitted: false,
+      probe_ladder: this.probeLadderEnabled(),
+      diagnostics: details,
+      operation_trace: this.currentOperationTrace(),
+      message:
+        "chat input is not focused/open; "
+        + `ide=${details.ide || this.detectIde()} app=${details.appName || vscode.env.appName}; `
+        + `focus_open_candidates=${candidates || "(none)"}; `
+        + "log=/tmp/koru-plugin-debug.log. Open chat input manually, then retry.",
+    });
+  }
+
+  private sendPasteFailureAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    pasted: { ok: boolean; command?: string; reason?: string }
+  ): void {
+    const reason = pasted.reason || "unknown paste failure";
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      opened: true,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      attempted_paste: pasted.command,
+      paste_failure_reason: reason,
+      operation_trace: this.currentOperationTrace(),
+      message: `chat opened but paste command failed (${reason})`,
+    });
+  }
+
+  private sendSubmitFailureAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    pasted: { ok: boolean; command?: string },
+    attemptedSubmit?: string,
+    submitDetails?: SubmitOutcome
+  ): void {
+    if (this.options.enableDiscardToxicFocusOpenCache) {
+      this.discardToxicFocusOpenCache(focus.command).catch((err) => {
+        debugLog("FOCUS_OPEN_CACHE_DISCARD_FAILED", { err: String(err) });
+      });
+    }
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      delivered: true,
+      opened: true,
+      submitted: false,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      winning_paste: pasted.command,
+      attempted_submit: attemptedSubmit,
+      submit_failure_reason: submitDetails?.reason,
+      submit_attempts: submitDetails?.attempts,
+      verification: "submit_unverified",
+      operation_trace: this.currentOperationTrace(),
+      message:
+        "chat opened and text injected, but submit could not be verified; "
+        + "manual Send may be required. Input was cleared before paste to avoid prompt concatenation.",
+    });
+  }
+
+  private async discardToxicFocusOpenCache(focusCommand: string | undefined): Promise<void> {
+    if (!this.probeLadderEnabled()) return;
+    const cache = this.getProbeCache();
+    const cached = cache?.focusOpen;
+    if (!cached) return;
+    const focusToken = (focusCommand || "").toLowerCase();
+    const isInputOnlyFocus =
+      focusToken.includes("focuscomposer") ||
+      focusToken.includes("focuscascade") ||
+      (this.detectIde() === "vscodium" && focusToken.includes("openquickchat")) ||
+      (this.detectIde() === "vscodium" && focusToken.includes("quickchat.openinchatview")) ||
+      focusToken.startsWith("input-only");
+    if (!isInputOnlyFocus) return;
+    const cleared: any = { ...cache, focusOpen: undefined };
+    await this.context.globalState.update("probeCache.v3", cleared);
+    debugLog("PROBE_CACHE_FOCUS_OPEN_DISCARDED", { previous: cached });
+    this.traceOperation({
+      op: "focus_open",
+      route: "cache-discard",
+      ok: false,
+      command: cached,
+      reason:
+        "cached focus_open winner was an input-only/focus-only command "
+        + "but submit could not be verified — discarding so the next "
+        + "drive re-probes via the non-toggling open command",
+    });
+  }
+
+  private sendSuccessAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    pasted: { ok: boolean; command?: string },
+    submitCmd: string | undefined
+  ): void {
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: true,
+      delivered: true,
+      opened: true,
+      submitted: true,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      winning_paste: pasted.command,
+      winning_submit: submitCmd,
+      operation_trace: this.currentOperationTrace(),
+    });
+  }
+
+  private sendMessageSent(text: string): void {
+    console.log("koru autopilot: sending message.sent");
+    this.traceOperation({
+      op: "message_sent",
+      route: "plugin-event",
+      ok: true,
+      detail: { length: text.length },
+    });
+    this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+  }
+
+  private koruStepConfig(): KoruAutopilotStepConfig {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const legacyVerify = cfg.get<boolean>("verifySubmitOnCursor");
+    const verifySubmit = cfg.get<boolean>("verifySubmit");
+    return {
+      probeLadder: this.probeLadderEnabled(),
+      verifySubmit: typeof verifySubmit === "boolean" ? verifySubmit : (legacyVerify ?? true),
+      verifySubmitOnCursor: legacyVerify,
+      skipWhenInputBusy: cfg.get<boolean>("skipWhenInputBusy", true),
+    };
+  }
+
+  private postSubmitVerifyEnabled(verifyText?: string): boolean {
+    return shouldVerifyPostSubmit(this.detectIde(), verifyText, this.koruStepConfig());
+  }
+
+  private async discardCachedSubmitWinner(cmd: string): Promise<void> {
+    if (!this.probeLadderEnabled()) {
+      return;
+    }
+    const current = this.getProbeCache();
+    if (current?.submit === cmd) {
+      await this.saveProbeCache({ submit: undefined });
+    }
+  }
+
+  private async verifySubmitStep(
+    originalText: string,
+    requireEmptyAfterSubmit = false
+  ): Promise<{ cleared: boolean; observedLength: number }> {
+    const ide = this.detectIde();
+    const config = this.koruStepConfig();
+    this.traceOperation({
+      op: "submit_verify",
+      route: "start",
+      ok: true,
+      detail: { ide, verifySubmitEnabled: config.verifySubmit, requireEmptyAfterSubmit },
+    });
+    if (ide === "cursor") {
+      const bubble = await this._verifySubmitViaCursorBubble(originalText);
+      if (bubble) {
+        this.traceOperation({
+          op: "submit_verify",
+          route: "cursor-bubble-db",
+          ok: bubble.matched,
+          detail: { newUserBubbles: bubble.newUserBubbles },
+        });
+        return { cleared: bubble.matched, observedLength: bubble.matched ? 0 : originalText.length };
+      }
+    }
+    if (!config.verifySubmit) {
+      this.traceOperation({ op: "submit_verify", route: "skipped-by-configuration", ok: true });
+      return { cleared: true, observedLength: 0 };
+    }
+    const observed = await this._probeChatInputContents();
+    const verifyResult = interpretPostSubmitProbe(observed, originalText, { requireEmpty: requireEmptyAfterSubmit });
+    const verified = verifyResult.cleared;
+    const observedLength = observed === null ? -1 : observed.trim().length;
+    this.traceOperation({
+      op: "submit_verify",
+      route: "sentinel-clipboard",
+      ok: verified,
+      detail: { observedLength, verifyTextLength: originalText.length, requireEmptyAfterSubmit },
+    });
+    return { cleared: verified, observedLength };
+  }
+
+  private async finalizeSubmitCandidate(
+    cmd: string,
+    verifyText: string | undefined,
+    verifyEnabled: boolean,
+    requireEmptyAfterSubmit = false,
+    extra?: Partial<SubmitOutcome>
+  ): Promise<SubmitOutcome | null> {
+    if (verifyEnabled && verifyText) {
+      const verify = await this.verifySubmitStep(verifyText, requireEmptyAfterSubmit);
+      if (!verify.cleared) {
+        debugLog("SUBMIT_VERIFY_DISCARD", { cmd, observedLength: verify.observedLength });
+        await this.discardCachedSubmitWinner(cmd);
+        return null;
+      }
+    }
+    if (this.probeLadderEnabled()) {
+      await this.saveProbeCache({ submit: cmd });
+    }
+    this.traceOperation({
+      op: "submit",
+      route: "accepted",
+      ok: true,
+      command: cmd,
+      detail: { verifyEnabled, requireEmptyAfterSubmit },
+    });
+    return { ok: true, command: cmd, ...extra };
+  }
+
+  private async submitChat(verifyText?: string, pasteCommand?: string): Promise<SubmitOutcome> {
+    const ide = this.detectIde();
+    const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
+    this.traceOperation({
+      op: "submit",
+      route: "start",
+      ok: true,
+      detail: { ide, verifyEnabled, verifyTextLength: verifyText?.length || 0 },
+    });
+    if (ide === "vscodium") {
+      return this._submitChatVSCodium(verifyText, verifyEnabled, pasteCommand);
+    }
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const cache = this.getProbeCache();
+    const candidates = filterRegistered(
+      this.orderWithServerOverride("submit", buildSubmitCommands(ide), cache?.submit),
+      existing
+    );
+    debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
+    const registered = await this._tryRegisteredCommands(candidates, verifyText, verifyEnabled);
+    if (registered) return registered;
+    if (ide === "windsurf") {
+      return { ok: false };
+    }
+    if (ide === "cursor" || ide === "vscode") {
+      const fallback = await this._submitChatCursorVSCodeFallback(ide, verifyText, verifyEnabled);
+      if (fallback) return fallback;
+    }
+    const typeFallback = await this._tryTypeSubmitFallbacks(verifyText, verifyEnabled);
+    if (typeFallback) return typeFallback;
+    return { ok: false };
+  }
+
+  private async _submitChatVSCodium(
+    verifyText: string | undefined,
+    verifyEnabled: boolean,
+    pasteCommand?: string
+  ): Promise<SubmitOutcome> {
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const cache = this.getProbeCache();
+    const orderedCandidates = this.orderWithServerOverride(
+      "submit",
+      buildSubmitCommands("vscodium"),
+      cache?.submit
+    );
+    const safeOrderedCandidates = filterVSCodiumSubmitCandidates(orderedCandidates);
+    const registeredCandidates = filterRegistered(safeOrderedCandidates, existing);
+    const candidates = registeredCandidates.length > 0 ? registeredCandidates : safeOrderedCandidates;
+    const hostVerifyEnabled =
+      verifyEnabled ||
+      shouldRequireVerifiedHostSubmit("vscodium", verifyText, this.koruStepConfig());
+    const preserveWebviewFocus = isHostClipboardPasteCommand(pasteCommand);
+    this.traceOperation({
+      op: "submit",
+      route: "vscodium",
+      ok: true,
+      detail: {
+        verifyEnabled,
+        hostVerifyEnabled,
+        trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
+        pasteCommand,
+        preserveWebviewFocus,
+        usedUnregisteredFallback: registeredCandidates.length === 0,
+        unsafeRegisteredCandidatesFiltered: orderedCandidates.length - safeOrderedCandidates.length,
+        registeredCandidates: candidates,
+      },
+    });
+    const registered = await this._tryRegisteredCommands(
+      candidates,
+      verifyText,
+      hostVerifyEnabled,
+      false
+    );
+    if (registered) return registered;
+
+    const typeFallback = await this._tryTypeSubmitFallbacks(verifyText, hostVerifyEnabled);
+    if (typeFallback) return typeFallback;
+
+    let preservedFocusHostKey: SubmitOutcome | undefined;
+    if (
+      hostVerifyEnabled
+      && verifyText
+      && preserveWebviewFocus
+      && this.allowVSCodiumHostInputFallback()
+    ) {
+      preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
+        preserveFocus: true,
+        ctrlOnly: true,
+      });
+      if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
+      return preservedFocusHostKey;
+    }
+
+    if (!this.allowVSCodiumHostInputFallback()) {
+      this.traceOperation({
+        op: "submit",
+        route: "vscodium-host-fallback-refused",
+        ok: false,
+        reason: "registered submit commands exhausted; host-key/host-click fallback disabled "
+          + "because it targets the active OS window, which may be another VSCodium workspace",
+      });
+      return {
+        ok: false,
+        command: "vscodium-submit-unavailable",
+        reason: "registered VSCodium submit commands no-oped and host-key fallback is disabled "
+          + "to avoid submitting in the wrong workspace/window",
+        unverified: true,
+      };
+    }
+
+    const hostClick = await this._tryHostClickSubmit();
+    if (hostClick.ok && hostClick.command) {
+      const accepted = await this.finalizeSubmitCandidate(
+        hostClick.command,
+        verifyText,
+        hostVerifyEnabled,
+        true
+      );
+      if (accepted) return accepted;
+    }
+    if (hostVerifyEnabled && verifyText) {
+      if (preservedFocusHostKey) return preservedFocusHostKey;
+      const hostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText);
+      if (hostKey.ok && hostKey.command) return hostKey;
+      return hostKey;
+    }
+    const hostKey = await this._tryHostKeySubmit("vscodium");
+    if (hostKey.ok && hostKey.command) {
+      return {
+        ok: true,
+        command: hostKey.command,
+        attempts: hostKey.attempts,
+        unverified: !this.trustUnverifiedHostSubmit(),
+      };
+    }
+    return {
+      ok: false,
+      command: "vscodium-submit-unavailable",
+      reason: hostClick.reason || hostKey.reason,
+      attempts: [...(hostClick.attempts || []), ...(hostKey.attempts || [])],
+      unverified: true,
+    };
+  }
+
+  private async _submitChatCursorVSCodeFallback(
+    ide: string,
+    verifyText: string | undefined,
+    verifyEnabled: boolean
+  ): Promise<SubmitOutcome | null> {
+    const strategy = getStrategy(ide);
+    const hostVerifyEnabled =
+      verifyEnabled ||
+      shouldRequireVerifiedHostSubmit(ide, verifyText, this.koruStepConfig());
+
+    if (ide === "cursor") {
+      this.traceOperation({
+        op: "submit",
+        route: "cursor-host-fallback-refused",
+        ok: false,
+        reason: "registered submit commands exhausted; host-key/host-click "
+          + "would target whatever OS window has keyboard focus (typically "
+          + "the terminal running `koru auto`), not the Cursor chat input",
+      });
+      return {
+        ok: false,
+        command: "cursor-submit-unavailable",
+        reason: "registered Cursor submit commands no-oped (chat input was "
+          + "likely empty because paste did not land in the chat); host-key "
+          + "fallback refused because Cursor does not have OS keyboard focus",
+        unverified: true,
+      };
+    }
+
+    const hostKey = await this._tryHostKeySubmit(strategy?.preferCtrlSubmit() ? ide : undefined);
+    if (hostKey.ok && hostKey.command) {
+      const accepted = await this.finalizeSubmitCandidate(
+        hostKey.command,
+        verifyText,
+        hostVerifyEnabled,
+        true,
+        { unverified: hostVerifyEnabled ? false : !this.trustUnverifiedHostSubmit() }
+      );
+      if (accepted) return accepted;
+      if (hostVerifyEnabled && verifyText) {
+        return {
+          ok: false,
+          command: hostKey.command || `${ide}-host-key-noop`,
+          reason: "host-key submit ran but chat input still contains pasted text",
+          attempts: hostKey.attempts,
+          unverified: true,
+        };
+      }
+    }
+    if (strategy?.submitFallback.refuseTypeNewlineFallback) {
+      return {
+        ok: false,
+        command: `${ide}-submit-unavailable`,
+        reason: hostKey.reason,
+        attempts: hostKey.attempts,
+        unverified: true,
+      };
+    }
+    return null;
+  }
+
+  private async _tryRegisteredCommands(
+    candidates: string[],
+    verifyText: string | undefined,
+    verifyEnabled: boolean,
+    requireEmptyAfterSubmit = false
+  ): Promise<SubmitOutcome | null> {
+    for (const cmd of candidates) {
+      if (!(await this.runCommand(cmd))) {
+        console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
+        this.traceOperation({
+          op: "submit",
+          route: "registered-command",
+          ok: false,
+          command: cmd,
+          reason: "command unavailable or returned false",
+        });
+        continue;
+      }
+      this.traceOperation({
+        op: "submit",
+        route: "registered-command",
+        ok: true,
+        command: cmd,
+        detail: { verifyEnabled, requireEmptyAfterSubmit },
+      });
+      const accepted = await this.finalizeSubmitCandidate(
+        cmd,
+        verifyText,
+        verifyEnabled,
+        requireEmptyAfterSubmit
+      );
+      if (accepted) return accepted;
+      this.traceOperation({
+        op: "submit",
+        route: "registered-command-rejected",
+        ok: false,
+        command: cmd,
+        reason: "post-submit verification failed; input still contains pasted text",
+      });
+    }
+    return null;
+  }
+
+  private async _tryTypeSubmitFallbacks(
+    verifyText: string | undefined,
+    verifyEnabled: boolean
+  ): Promise<SubmitOutcome | null> {
+    for (const attempt of [() => this._tryTypeSubmit("\n")]) {
+      const result = await attempt();
+      if (result.ok && result.command) {
+        if (this.detectIde() === "vscodium") {
+          this.traceOperation({
+            op: "submit",
+            route: "type-newline-untrusted",
+            ok: false,
+            command: result.command,
+            reason:
+              "VSCodium accepted VS Code type-newline command, but this is not "
+              + "a trusted chat send proof; treating as submit_unverified",
+          });
+          return {
+            ok: false,
+            command: result.command,
+            reason:
+              "VSCodium type-newline fallback did not produce a trusted chat "
+              + "send proof",
+            unverified: true,
+          };
+        }
+        const accepted = await this.finalizeSubmitCandidate(result.command, verifyText, verifyEnabled);
+        if (accepted) return accepted;
+      }
+    }
+    return null;
   }
 
   private async _tryTypeSubmit(char: string): Promise<{ ok: boolean; command?: string }> {
@@ -752,9 +1470,6 @@ class SharedAutopilotBridge {
 
   private resolveSubmitHostKeyOverride(ide: string | undefined, override: string): string {
     const normalized = (override || "auto").toLowerCase();
-    // VSCodium often reports host-key success on plain Return even when
-    // the chat webview only consumed a newline. Keep Ctrl+Return first in
-    // auto mode even if strategy registration/cache state is stale.
     if (ide === "vscodium" && normalized === "auto") {
       return "ctrl+Return";
     }
@@ -782,7 +1497,7 @@ class SharedAutopilotBridge {
         ? prioritizePlainHostKeySubmitCandidates(builtCandidates)
         : builtCandidates;
     if (options.ctrlOnly) {
-      const ctrlOnly = candidates.filter(([, args]) => SharedAutopilotBridge.isCtrlHostKeyCandidateArgs(args));
+      const ctrlOnly = candidates.filter(([, args]: [string, string[]]) => SharedAutopilotBridge.isCtrlHostKeyCandidateArgs(args));
       if (ctrlOnly.length > 0) {
         candidates = ctrlOnly;
       }
@@ -793,7 +1508,7 @@ class SharedAutopilotBridge {
       route: "host-key-candidates",
       ok: true,
       detail: {
-        candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`),
+        candidates: candidates.map(([command, args]: [string, string[]]) => `${command} ${args.join(" ")}`),
         preserveFocus: Boolean(options.preserveFocus),
         preferPlain: Boolean(options.preferPlain),
         ctrlOnly: Boolean(options.ctrlOnly),
@@ -862,56 +1577,6 @@ class SharedAutopilotBridge {
     };
   }
 
-  private async runHostCommand(command: string, args: string[], input?: string): Promise<HostCommandResult> {
-    if (process.platform !== "linux") {
-      return { ok: false, stdout: "" };
-    }
-    return new Promise<HostCommandResult>((resolve) => {
-      const child = spawn(command, args, { stdio: ["pipe", "pipe", "ignore"] });
-      const chunks: Buffer[] = [];
-      child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
-      child.on("error", () => resolve({ ok: false, stdout: "" }));
-      child.on("close", (code) => {
-        resolve({ ok: code === 0, stdout: Buffer.concat(chunks).toString("utf8") });
-      });
-      if (input !== undefined) {
-        child.stdin.end(input);
-      } else {
-        child.stdin.end();
-      }
-    });
-  }
-
-  private async runHostKeyCandidates(
-    label: string,
-    candidates: Array<[string, string[]]>
-  ): Promise<CommandOutcome> {
-    const attempts: string[] = [];
-    this.traceOperation({
-      op: label.toLowerCase(),
-      route: "host-key-candidates",
-      ok: true,
-      detail: { candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`) },
-    });
-    for (const [command, args] of candidates) {
-      const res = await this.runHostCommand(command, args);
-      const rendered = `${command} ${args.join(" ")}`;
-      attempts.push(`${rendered} => ${res.ok ? "ok" : "failed"}`);
-      debugLog(label, { command: rendered, ok: res.ok });
-      this.traceOperation({
-        op: label.toLowerCase(),
-        route: command,
-        ok: res.ok,
-        command: rendered,
-      });
-      if (res.ok) {
-        return { ok: true, command: rendered, attempts };
-      }
-      await this.sleep(80);
-    }
-    return { ok: false, reason: "host key command failed", attempts };
-  }
-
   private submitClickPoint(): { x: number; y: number } | null {
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
     const x = Math.trunc(cfg.get<number>("submitClickX", 0));
@@ -951,8 +1616,8 @@ class SharedAutopilotBridge {
     this.traceOperation({
       op: "submit",
       route: "host-click:auto-point",
-      ok: true,
-      detail: { x: point.x, y: point.y },
+      ok: point !== null,
+      detail: point !== null ? { x: point.x, y: point.y } : {},
     });
     return point;
   }
@@ -1079,6 +1744,12 @@ class SharedAutopilotBridge {
     return cfg.get<boolean>("trustUnverifiedHostSubmit", true);
   }
 
+  private allowVSCodiumHostInputFallback(): boolean {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    return cfg.get<boolean>("allowVSCodiumHostInputFallback", false)
+      || process.env.KORU_VSCODIUM_ALLOW_HOST_INPUT_FALLBACK === "1";
+  }
+
   private async saveHostClipboard(): Promise<string | null> {
     if (this.detectIde() !== "vscodium") {
       return null;
@@ -1120,2034 +1791,27 @@ class SharedAutopilotBridge {
     debugLog("HOST_CLIPBOARD_RESTORE", { length: previous.length });
   }
 
-  private async clearChatInput(): Promise<void> {
-    if (this.detectIde() !== "vscodium" || process.platform !== "linux") {
-      return;
-    }
-    await this.runHostKeyCandidates("CLEAR_INPUT_SELECT_ALL", [
-      ["wtype", ["-M", "ctrl", "-k", "a", "-m", "ctrl"]],
-      ["xdotool", ["key", "ctrl+a"]],
-      ["ydotool", ["key", "ctrl+a"]],
-    ]);
-    await this.runHostKeyCandidates("CLEAR_INPUT_BACKSPACE", [
-      ["wtype", ["-k", "BackSpace"]],
-      ["xdotool", ["key", "BackSpace"]],
-      ["ydotool", ["key", "Backspace"]],
-    ]);
-  }
-
-  private koruStepConfig(): KoruAutopilotStepConfig {
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const legacyVerify = cfg.get<boolean>("verifySubmitOnCursor");
-    const verifySubmit = cfg.get<boolean>("verifySubmit");
-    return {
-      probeLadder: this.probeLadderEnabled(),
-      verifySubmit: typeof verifySubmit === "boolean" ? verifySubmit : (legacyVerify ?? true),
-      verifySubmitOnCursor: legacyVerify,
-      skipWhenInputBusy: cfg.get<boolean>("skipWhenInputBusy", true),
-    };
-  }
-
-  private postSubmitVerifyEnabled(verifyText?: string): boolean {
-    return shouldVerifyPostSubmit(this.detectIde(), verifyText, this.koruStepConfig());
-  }
-
-  private async discardCachedSubmitWinner(cmd: string): Promise<void> {
-    if (!this.probeLadderEnabled()) {
-      return;
-    }
-    const current = this.getProbeCache();
-    if (current?.submit === cmd) {
-      await this.saveProbeCache({ submit: undefined });
-    }
-  }
-
-  /**
-   * Post-submit step: probe chat input and decide accept vs retry next candidate.
-   */
-  private async verifySubmitStep(originalText: string, requireEmpty = false): Promise<{
-    cleared: boolean;
-    observedLength: number;
-  }> {
-    await this.sleep(180);
-    const probe = await this._probeChatInputContents();
-    const result = interpretPostSubmitProbe(probe, originalText, { requireEmpty });
-    if (result.action === "retry") {
-      debugLog("SUBMIT_VERIFY_FAILED", {
-        observedLength: result.observedLength,
-        tailMatched: result.tailMatched,
-      });
-    }
-    this.traceOperation({
-      op: "submit_verify",
-      route: "chat-input-probe",
-      ok: result.cleared,
-      reason: result.cleared ? undefined : "input still contains pasted text",
-      detail: { observedLength: result.observedLength, tailMatched: result.tailMatched },
-    });
-    // The clipboard probe is unreliable on Cursor's chat webview:
-    // ``editor.action.selectAll`` may either no-op (probe → ``null``)
-    // or, when the focus chrome falls back to the underlying file
-    // ``TextEditor``, copy unrelated editor content. In *either* case
-    // the legacy heuristic returns ``cleared=true`` because the tail
-    // of our prompt is not present, and we cache the bogus winner.
-    //
-    // The only ground truth on Cursor is the conversation database
-    // (``cursorDiskKV``): a successful submit creates a new
-    // ``type = 1`` user bubble containing the prompt tail. Consult it
-    // unconditionally for Cursor whenever the probe said the input
-    // was cleared.
-    if (
-      result.cleared
-      && this.detectIde() === "cursor"
-      && originalText.trim().length >= 4
-    ) {
-      const dbResult = await this._verifySubmitViaCursorBubble(originalText);
-      if (dbResult !== null) {
-        const detail = {
-          observedLength: result.observedLength,
-          tailMatched: result.tailMatched,
-          dbVerified: dbResult.matched,
-          newUserBubbles: dbResult.newUserBubbles,
-          probeWasNull: probe === null,
-        };
-        this.traceOperation({
-          op: "submit_verify",
-          route: "cursor-bubble-db",
-          ok: dbResult.matched,
-          reason: dbResult.matched
-            ? undefined
-            : "no new user bubble in cursorDiskKV after submit "
-              + "(probe-cleared was a false positive on the webview chat input)",
-          detail,
-        });
-        return { cleared: dbResult.matched, observedLength: result.observedLength };
-      }
-    }
-    return { cleared: result.cleared, observedLength: result.observedLength };
-  }
-
-  /**
-   * Cursor-specific post-submit verification using ``cursorDiskKV``.
-   *
-   * Returns ``null`` when the verification could not run (sqlite missing,
-   * database unavailable, no anchor recorded), in which case the caller
-   * keeps the previous probe result. Returns ``{ matched: true }`` when a
-   * fresh ``type = 1`` bubble containing the tail of our prompt was
-   * observed (real submit). Returns ``{ matched: false }`` when the
-   * sqlite query worked but no matching user bubble appeared (the
-   * submit-command call no-oped on the webview).
-   */
-  private async _verifySubmitViaCursorBubble(
-    originalText: string
-  ): Promise<{ matched: boolean; newUserBubbles: number } | null> {
-    const anchor = this.cursorBubbleAnchorRowid;
-    if (anchor === null) {
-      debugLog("CURSOR_BUBBLE_VERIFY_NO_ANCHOR");
-      return null;
-    }
-    const adapter = this.cursorBubbleVerifierAdapter ?? new CursorBubbleAdapter({ ide: "cursor" });
-    this.cursorBubbleVerifierAdapter = adapter;
-    if (!adapter.storeAvailable()) {
-      debugLog("CURSOR_BUBBLE_VERIFY_DB_UNAVAILABLE");
-      return null;
-    }
-    const tail = originalText.trim().slice(-40);
-    // Cursor's bubble writer is debounced; on slower machines the new
-    // ``type=1`` row sometimes lands 1.5–2.0 s after ``executeCommand``
-    // returns. 1.2 s was too short and produced ``matched=false`` for
-    // submits that actually went through.
-    const deadline = Date.now() + 2500;
-    let attempts = 0;
-    let lastRows: number = 0;
-    while (Date.now() <= deadline) {
-      attempts += 1;
-      let rows;
-      try {
-        rows = await adapter.fetchLatestUserBubbles(anchor, null);
-      } catch (err) {
-        debugLog("CURSOR_BUBBLE_VERIFY_QUERY_ERROR", { err: String(err) });
-        return null;
-      }
-      lastRows = rows.length;
-      for (const row of rows) {
-        if (row.type === 1 && typeof row.text === "string" && row.text.includes(tail)) {
-          debugLog("CURSOR_BUBBLE_VERIFY_MATCH", {
-            attempts,
-            rowid: row.cursor,
-            bubbleId: row.bubbleId,
-            textLength: row.text.length,
-          });
-          return { matched: true, newUserBubbles: rows.length };
-        }
-      }
-      await this.sleep(150);
-    }
-    debugLog("CURSOR_BUBBLE_VERIFY_NO_MATCH", {
-      attempts,
-      anchor,
-      tailLength: tail.length,
-      newUserBubbles: lastRows,
-    });
-    return { matched: false, newUserBubbles: lastRows };
-  }
-
-  /**
-   * Capture the current ``MAX(rowid)`` from Cursor's ``cursorDiskKV``
-   * so the post-submit verifier can tell "new" rows from "stale" ones.
-   * Called right before ``submitChat`` for Cursor. No-op on other IDEs.
-   */
-  private async captureCursorBubbleAnchor(): Promise<void> {
-    if (this.detectIde() !== "cursor") {
-      this.cursorBubbleAnchorRowid = null;
-      return;
-    }
-    const adapter = this.cursorBubbleVerifierAdapter ?? new CursorBubbleAdapter({ ide: "cursor" });
-    this.cursorBubbleVerifierAdapter = adapter;
-    if (!adapter.storeAvailable()) {
-      this.cursorBubbleAnchorRowid = null;
-      debugLog("CURSOR_BUBBLE_ANCHOR_DB_UNAVAILABLE");
-      return;
-    }
-    try {
-      this.cursorBubbleAnchorRowid = await adapter.latestBubbleRowid(null);
-      debugLog("CURSOR_BUBBLE_ANCHOR_CAPTURED", {
-        rowid: this.cursorBubbleAnchorRowid,
-      });
-    } catch (err) {
-      this.cursorBubbleAnchorRowid = null;
-      debugLog("CURSOR_BUBBLE_ANCHOR_ERROR", { err: String(err) });
-    }
-  }
-
-  /**
-   * Run submit candidate + optional post-submit verify + cache winner.
-   * Returns ``null`` when verification failed and the ladder should continue.
-   */
-  private async finalizeSubmitCandidate(
-    cmd: string,
-    verifyText: string | undefined,
-    verifyEnabled: boolean,
-    requireEmptyAfterSubmit = false,
-    extra?: Partial<SubmitOutcome>
-  ): Promise<SubmitOutcome | null> {
-    if (verifyEnabled && verifyText) {
-      const verify = await this.verifySubmitStep(verifyText, requireEmptyAfterSubmit);
-      if (!verify.cleared) {
-        debugLog("SUBMIT_VERIFY_DISCARD", { cmd, observedLength: verify.observedLength });
-        await this.discardCachedSubmitWinner(cmd);
-        return null;
-      }
-    }
-    if (this.probeLadderEnabled()) {
-      await this.saveProbeCache({ submit: cmd });
-    }
-    this.traceOperation({
-      op: "submit",
-      route: "accepted",
-      ok: true,
-      command: cmd,
-      detail: { verifyEnabled, requireEmptyAfterSubmit },
-    });
-    return { ok: true, command: cmd, ...extra };
-  }
-
-  private async _submitChatVSCodium(
-    verifyText: string | undefined,
-    verifyEnabled: boolean,
-    pasteCommand?: string
-  ): Promise<SubmitOutcome> {
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const cache = this.getProbeCache();
-    const orderedCandidates = orderWithCache(buildSubmitCommands("vscodium"), cache?.submit);
-    const registeredCandidates = filterRegistered(orderedCandidates, existing);
-    const candidates = registeredCandidates.length > 0 ? registeredCandidates : orderedCandidates;
-    const hostVerifyEnabled =
-      verifyEnabled ||
-      shouldRequireVerifiedHostSubmit("vscodium", verifyText, this.koruStepConfig());
-    const preserveWebviewFocus = isHostClipboardPasteCommand(pasteCommand);
-    this.traceOperation({
-      op: "submit",
-      route: "vscodium",
-      ok: true,
-      detail: {
-        verifyEnabled,
-        hostVerifyEnabled,
-        trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
-        pasteCommand,
-        preserveWebviewFocus,
-        usedUnregisteredFallback: registeredCandidates.length === 0,
-        registeredCandidates: candidates,
-      },
-    });
-    const registered = await this._tryRegisteredCommands(candidates, verifyText, hostVerifyEnabled);
-    if (registered) return registered;
-
-    let preservedFocusHostKey: SubmitOutcome | undefined;
-    if (hostVerifyEnabled && verifyText && preserveWebviewFocus) {
-      preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
-        preserveFocus: true,
-        // When host clipboard paste is used, plain Return can insert newline
-        // (or clobber selected text) in webview chat inputs. Try verified
-        // Ctrl+Return candidates only in this branch.
-        ctrlOnly: true,
-      });
-      if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
-      return preservedFocusHostKey;
-    }
-
-    const hostClick = await this._tryHostClickSubmit();
-    if (hostClick.ok && hostClick.command) {
-      const accepted = await this.finalizeSubmitCandidate(
-        hostClick.command,
-        verifyText,
-        hostVerifyEnabled,
-        true
-      );
-      if (accepted) return accepted;
-    }
-    if (hostVerifyEnabled && verifyText) {
-      if (preservedFocusHostKey) return preservedFocusHostKey;
-      const hostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText);
-      if (hostKey.ok && hostKey.command) return hostKey;
-      return hostKey;
-    }
-    const hostKey = await this._tryHostKeySubmit("vscodium");
-    if (hostKey.ok && hostKey.command) {
-      return {
-        ok: true,
-        command: hostKey.command,
-        attempts: hostKey.attempts,
-        unverified: !this.trustUnverifiedHostSubmit(),
-      };
-    }
-    return {
-      ok: false,
-      command: "vscodium-submit-unavailable",
-      reason: hostClick.reason || hostKey.reason,
-      attempts: [...(hostClick.attempts || []), ...(hostKey.attempts || [])],
-      unverified: true,
-    };
-  }
-
-  private async _submitChatCursorVSCodeFallback(
-    ide: string,
-    verifyText: string | undefined,
-    verifyEnabled: boolean
-  ): Promise<SubmitOutcome | null> {
-    const strategy = getStrategy(ide);
-    const hostVerifyEnabled =
-      verifyEnabled ||
-      shouldRequireVerifiedHostSubmit(ide, verifyText, this.koruStepConfig());
-
-    // Cursor: host-key / host-click submit requires the OS keyboard focus to
-    // be on the Cursor window. When `koru auto` runs from a terminal the
-    // synthetic keystroke goes to the terminal and the chat never receives
-    // it. Registered commands (composer.sendToAgent, workbench.action.chat.*)
-    // operate inside VS Code without OS focus, so if they failed there is
-    // nothing meaningful to fall back to — return a verified failure with
-    // operator guidance instead of pseudo-succeeding via the wrong window.
-    if (ide === "cursor") {
-      this.traceOperation({
-        op: "submit",
-        route: "cursor-host-fallback-refused",
-        ok: false,
-        reason: "registered submit commands exhausted; host-key/host-click "
-          + "would target whatever OS window has keyboard focus (typically "
-          + "the terminal running `koru auto`), not the Cursor chat input",
-      });
-      return {
-        ok: false,
-        command: "cursor-submit-unavailable",
-        reason: "registered Cursor submit commands no-oped (chat input was "
-          + "likely empty because paste did not land in the chat); host-key "
-          + "fallback refused because Cursor does not have OS keyboard focus",
-        unverified: true,
-      };
-    }
-
-    const hostKey = await this._tryHostKeySubmit(strategy?.preferCtrlSubmit() ? ide : undefined);
-    if (hostKey.ok && hostKey.command) {
-      const accepted = await this.finalizeSubmitCandidate(
-        hostKey.command,
-        verifyText,
-        hostVerifyEnabled,
-        true,
-        { unverified: hostVerifyEnabled ? false : !this.trustUnverifiedHostSubmit() }
-      );
-      if (accepted) return accepted;
-      if (hostVerifyEnabled && verifyText) {
-        return {
-          ok: false,
-          command: hostKey.command || `${ide}-host-key-noop`,
-          reason: "host-key submit ran but chat input still contains pasted text",
-          attempts: hostKey.attempts,
-          unverified: true,
-        };
-      }
-    }
-    if (strategy?.submitFallback.refuseTypeNewlineFallback) {
-      return {
-        ok: false,
-        command: `${ide}-submit-unavailable`,
-        reason: hostKey.reason,
-        attempts: hostKey.attempts,
-        unverified: true,
-      };
-    }
-    return null;
-  }
-
-  private async _tryRegisteredCommands(
-    candidates: string[],
-    verifyText: string | undefined,
-    verifyEnabled: boolean
-  ): Promise<SubmitOutcome | null> {
-    for (const cmd of candidates) {
-      if (!(await this.runCommand(cmd))) {
-        console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
-        continue;
-      }
-      const accepted = await this.finalizeSubmitCandidate(cmd, verifyText, verifyEnabled);
-      if (accepted) return accepted;
-    }
-    return null;
-  }
-
-  private async _tryTypeSubmitFallbacks(
-    verifyText: string | undefined,
-    verifyEnabled: boolean
-  ): Promise<SubmitOutcome | null> {
-    // ``type:\r`` can be interpreted as literal "r" in some chat/webview
-    // inputs; keep only newline fallback to avoid clobbering selected text.
-    for (const attempt of [() => this._tryTypeSubmit("\n")]) {
-      const result = await attempt();
-      if (result.ok && result.command) {
-        const accepted = await this.finalizeSubmitCandidate(result.command, verifyText, verifyEnabled);
-        if (accepted) return accepted;
-      }
-    }
-    return null;
-  }
-
-  private async submitChat(verifyText?: string, pasteCommand?: string): Promise<SubmitOutcome> {
-    const ide = this.detectIde();
-    const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
-    this.traceOperation({
-      op: "submit",
-      route: "start",
-      ok: true,
-      detail: { ide, verifyEnabled, verifyTextLength: verifyText?.length || 0 },
-    });
-    if (ide === "vscodium") {
-      return this._submitChatVSCodium(verifyText, verifyEnabled, pasteCommand);
-    }
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const cache = this.getProbeCache();
-    const candidates = filterRegistered(
-      this.orderWithServerOverride("submit", buildSubmitCommands(ide), cache?.submit),
-      existing
-    );
-    debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
-    const registered = await this._tryRegisteredCommands(candidates, verifyText, verifyEnabled);
-    if (registered) return registered;
-    if (ide === "windsurf") {
-      // On Windsurf, typing a newline is extremely dangerous because if Cascade is not focused, it toggles/closes the panel!
-      return { ok: false };
-    }
-    if (ide === "cursor" || ide === "vscode") {
-      const fallback = await this._submitChatCursorVSCodeFallback(ide, verifyText, verifyEnabled);
-      if (fallback) return fallback;
-    }
-    const typeFallback = await this._tryTypeSubmitFallbacks(verifyText, verifyEnabled);
-    if (typeFallback) return typeFallback;
-    return { ok: false };
-  }
-
-  private async _buildFocusChatContext(primary: string[]): Promise<FocusChatContext> {
-    const ide = this.detectIde();
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const cache = this.getProbeCache();
-    const useProbe = this.probeLadderEnabled();
-    let commands = filterUnsafeFocusOpenForIde(filterRegistered(
-      this.orderWithServerOverride(
-        "focus_open",
-        buildFocusOpenCommands(ide, primary),
-        cache?.focusOpen,
-      ),
-      existing
-    ), ide);
-    if (ide === "vscode" && commands.length === 0 && existing.has("workbench.action.chat.open")) {
-      commands = ["workbench.action.chat.open"];
-      debugLog("FOCUS_OPEN_HARD_FALLBACK", { ide, command: "workbench.action.chat.open" });
-    }
-    const before = this.editorSnapshot();
-    debugLog("FOCUS_OPEN_START", { ide, commandsCount: commands.length, useProbe, cacheFocusOpen: cache?.focusOpen });
-    debugLog("FOCUS_OPEN_CANDIDATES", { ide, commands });
-    debugLog("FOCUS_OPEN_BEFORE_SNAPSHOT", { before });
-    return { ide, cache, useProbe, commands, before };
-  }
-
-  private _focusChatAlreadyFocused(context: FocusChatContext): FocusOutcome | null {
-    if (
-      context.useProbe
-      && context.ide === "vscode"
-      && context.commands.length === 0
-      && chatFocusHeuristic(context.before)
-    ) {
-      debugLog("FOCUS_OPEN_ALREADY_FOCUSED");
-      this.traceOperation({ op: "focus_open", route: "already-focused", ok: true });
-      return { ok: true, command: "already-focused" };
-    }
-    return null;
-  }
-
-  private async _focusChatWithoutOpenCommands(
-    rejected: Array<Record<string, unknown>>
-  ): Promise<FocusOutcome | null> {
-    const before = this.editorSnapshot();
-    const inputOnly = await this.focusChatInput();
-    if (!isSpecificChatInputFocusCommand(inputOnly.command)) {
-      rejected.push({
-        cmd: "(input-only)",
-        reason: "no specific chat input focus command succeeded",
-      });
-      return null;
-    }
-    // ``composer.focusComposer`` (and friends) can return ``true`` even
-    // when the chat panel is *hidden* — Cursor focuses the logical
-    // composer state without making it visible. Paste then lands in the
-    // invisible composer and the submit pipeline silently no-ops. Guard
-    // against this with the editor-snapshot heuristic: if the active
-    // text editor is still a file-like editor after the focus command,
-    // chat is NOT actually the foreground surface and we must fall
-    // through to the open commands instead of returning a false win.
-    const after = this.editorSnapshot();
-    if (!chatFocusHeuristic(after)) {
-      debugLog("FOCUS_OPEN_INPUT_ONLY_HIDDEN_PANEL", {
-        command: inputOnly.command,
-        before,
-        after,
-      });
-      this.traceOperation({
-        op: "focus_open",
-        route: "input-only",
-        ok: false,
-        command: inputOnly.command,
-        reason: "focus command succeeded but file editor is still active "
-          + "(chat panel likely hidden) — fall through to open commands",
-      });
-      rejected.push({
-        cmd: inputOnly.command || "(input-only)",
-        reason: "focus succeeded but snapshot shows file editor active",
-      });
-      return null;
-    }
-    debugLog("FOCUS_OPEN_INPUT_ONLY_SUCCESS", { command: inputOnly.command });
-    this.traceOperation({
-      op: "focus_open",
-      route: "input-only",
-      ok: true,
-      command: inputOnly.command,
-    });
-    return { ok: true, command: inputOnly.command };
-  }
-
-  private async _tryFocusChatCommand(
-    command: string,
-    context: FocusChatContext,
-    rejected: Array<Record<string, unknown>>,
-  ): Promise<FocusOutcome | null> {
-    debugLog("FOCUS_OPEN_ATTEMPT", { cmd: command, isToggle: command.includes("toggle") });
-    if (!(await this.runCommand(command))) {
-      console.warn(`koru autopilot: focusChat command not available: ${command}`);
-      rejected.push({ cmd: command, reason: "executeCommand returned false" });
-      debugLog("FOCUS_OPEN_COMMAND_FAILED", { cmd: command, reason: "executeCommand returned false" });
-      return null;
-    }
-    await this.sleep(this.probeFocusDelayMs());
-    const inputFocus = await this.focusChatInput();
-    if (isSpecificChatInputFocusCommand(inputFocus.command)) {
-      const combined = `${command}+${inputFocus.command}`;
-      debugLog("FOCUS_OPEN_SUCCESS_INPUT", { cmd: command, inputFocus: inputFocus.command });
-      if (context.useProbe) {
-        await this.saveProbeCache({ focusOpen: command });
-      }
-      this.traceOperation({ op: "focus_open", route: "command+input", ok: true, command: combined });
-      return { ok: true, command: combined };
-    }
-    const strategy = getStrategy(context.ide);
-    if (strategy?.trustFocusOpenCommand?.(command)) {
-      debugLog("FOCUS_OPEN_SUCCESS_TRUSTED", { cmd: command, ide: context.ide });
-      if (context.useProbe) {
-        await this.saveProbeCache({ focusOpen: command });
-      }
-      this.traceOperation({ op: "focus_open", route: "trusted-command", ok: true, command });
-      return { ok: true, command };
-    }
-    const after = this.editorSnapshot();
-    debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd: command, after });
-    if (!context.useProbe || verifyFocusAfterOpen(context.before, after, context.ide)) {
-      debugLog("FOCUS_OPEN_SUCCESS", { cmd: command });
-      if (context.useProbe) {
-        await this.saveProbeCache({ focusOpen: command });
-      }
-      this.traceOperation({ op: "focus_open", route: "command", ok: true, command });
-      return { ok: true, command };
-    }
-    debugLog("PROBE_FOCUS_REJECT", { cmd: command, before: context.before, after });
-    rejected.push({ cmd: command, reason: "probe rejected focus snapshot", before: context.before, after });
-    return null;
-  }
-
-  private _focusChatFailure(
-    primary: string[],
-    context: FocusChatContext,
-    rejected: Array<Record<string, unknown>>,
-  ): FocusOutcome {
-    debugLog("FOCUS_OPEN_ALL_FAILED", { rejectedCount: rejected.length });
-    this.traceOperation({
-      op: "focus_open",
-      route: "all-candidates",
-      ok: false,
-      reason: "no focus-open candidate verified",
-      detail: { rejectedCount: rejected.length, candidates: sanitizeFocusOpenCandidates(context.commands) },
-    });
-    return {
-      ok: false,
-      diagnostics: {
-        ide: context.ide,
-        appName: vscode.env.appName,
-        logPath: "/tmp/koru-plugin-debug.log",
-        probeLadder: context.useProbe,
-        configuredChatOpenCommands: primary,
-        focusOpenCandidates: sanitizeFocusOpenCandidates(context.commands),
-        cacheFocusOpen: sanitizeFocusOpenCommand(context.cache?.focusOpen),
-        before: context.before,
-        rejected,
-      },
-    };
-  }
-
-  private async focusChat(): Promise<FocusOutcome> {
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const primary = (cfg.get<string[]>("chatOpenCommands") || []).filter(Boolean);
-    const context = await this._buildFocusChatContext(primary);
-    const alreadyFocused = this._focusChatAlreadyFocused(context);
-    if (alreadyFocused) {
-      return alreadyFocused;
-    }
-    const rejected: Array<Record<string, unknown>> = [];
-    // Preflight: try focus-only commands BEFORE any open-command in the
-    // ladder. On Cursor (and any IDE whose open commands include
-    // toggles like ``composer.openAsPane``) running an open command
-    // when the chat panel is *already visible* hides it. The plugin
-    // then pastes into an invisible/file-editor target and the
-    // bubble-DB verifier correctly reports "no new user bubble", but
-    // the user sees "schowal panel, wkleil, nie wysłał". When a
-    // focus-only command can land focus on a specific chat input,
-    // chat is already open and we must not call any toggle commands.
-    if (this._shouldPreflightFocusOnly(context)) {
-      const inputOnly = await this._focusChatWithoutOpenCommands(rejected);
-      if (inputOnly) {
-        return inputOnly;
-      }
-    } else if (context.commands.length === 0) {
-      const inputOnly = await this._focusChatWithoutOpenCommands(rejected);
-      if (inputOnly) {
-        return inputOnly;
-      }
-    }
-    for (const command of context.commands) {
-      const result = await this._tryFocusChatCommand(command, context, rejected);
-      if (result) {
-        return result;
-      }
-    }
-    return this._focusChatFailure(primary, context, rejected);
-  }
-
-  /**
-   * Should we try focus-only commands *before* any open command?
-   *
-   * Returns ``true`` only when *every* open-command in the ladder is a
-   * toggle. Running a toggle on an already-visible panel hides it, so
-   * when the ladder offers a non-toggling open command (e.g.
-   * ``composer.openComposer`` for Cursor) we always prefer it: a
-   * non-toggle open is **idempotent** — it opens the panel when
-   * closed and focuses it when already open, but never hides it.
-   *
-   * Why this matters (root cause of the May 2026 regression "wpisał,
-   * zamknął i otworzył prawy tab z chat" / "wkleja ale nie wysyła"):
-   * the focus-only preflight calls ``composer.focusComposer`` which
-   * focuses Cursor's **logical** composer state without forcing the
-   * panel to become visible. ``vscode.window.activeTextEditor`` then
-   * returns ``undefined`` (focus is on a webview, not a text editor)
-   * and ``chatFocusHeuristic`` returns ``true`` for the
-   * ``hasEditor:false`` snapshot — so the plugin records a "focus_open
-   * via input-only" win even though the chat panel is invisible. The
-   * subsequent ``paste`` lands in the invisible composer; the
-   * registered submit commands no-op (no new ``cursorDiskKV`` bubble);
-   * the host-key fallback refuses because Cursor doesn't have OS
-   * keyboard focus. Result: prompt appears stuck in the textarea
-   * (visible after Reload Window) and operator sees ``ok=False``.
-   *
-   * The DSL trace that surfaced this (cycle #760):
-   *   #004 act=focus_open route=input-only:composer.focusComposer ok=true
-   *   #009 act=submit_verify route=cursor-bubble-db ok=false
-   *        reason="no new user bubble in cursorDiskKV after submit"
-   *   #019 act=submit route=cursor-host-fallback-refused ok=false
-   *
-   * Always preferring the non-toggling open command eliminates this
-   * class of regression on Cursor.
-   */
-  private _shouldPreflightFocusOnly(context: FocusChatContext): boolean {
-    if (context.commands.length === 0) {
-      return false;
-    }
-    const hasToggleOpen = context.commands.some((cmd) => isTogglingFocusOpenCommand(cmd));
-    if (!hasToggleOpen) {
-      return false;
-    }
-    if (this.options.preflightFocusOnlyPolicy === "all-toggle") {
-      const hasNonToggleOpen = context.commands.some(
-        (cmd) => !isTogglingFocusOpenCommand(cmd),
-      );
-      return !hasNonToggleOpen;
-    }
-    return true;
-  }
-
-  private async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {
-    const ide = this.detectIde();
-    const useProbe = this.probeLadderEnabled();
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const cache = this.getProbeCache();
-    const before = this.editorSnapshot();
-    this.traceOperation({
-      op: "paste",
-      route: "start",
-      ok: true,
-      detail: { ide, replaceCurrentInput, useProbe, textLength: text.length },
-    });
-
-    if (replaceCurrentInput) {
-      await this.focusChatInput();
-      await this.runCommand("editor.action.selectAll");
-      await this.sleep(50);
-      const clipboard = await this.tryClipboardPaste(text, before, useProbe);
-      if (clipboard.handled && clipboard.result.ok) {
-        this.traceOperation({ op: "paste", route: "replace:clipboard", ok: true, command: clipboard.result.command });
-        return clipboard.result;
-      }
-      const typed = await this.tryTypePaste(text, before, useProbe);
-      if (typed.ok) {
-        this.traceOperation({ op: "paste", route: "replace:type", ok: true, command: typed.command });
-        return typed;
-      }
-    }
-
-    if (ide === "vscodium") {
-      const hostPaste = await this.tryHostClipboardPaste(text, before, useProbe);
-      if (hostPaste.handled) {
-        this.traceOperation({
-          op: "paste",
-          route: "vscodium:host-clipboard",
-          ok: hostPaste.result.ok,
-          command: hostPaste.result.command,
-          reason: hostPaste.result.reason,
-          attempts: hostPaste.result.attempts,
-        });
-        return hostPaste.result;
-      }
-    }
-
-    const direct = await this.tryDirectPasteCommands(text, ide, existing, cache, before, useProbe);
-    if (direct) {
-      this.traceOperation({ op: "paste", route: "direct-command", ok: direct.ok, command: direct.command, reason: direct.reason });
-      return direct;
-    }
-
-    if (ide === "windsurf") {
-      // Direct paste must succeed on Windsurf to prevent fallback editor contamination.
-      return { ok: false };
-    }
-
-    const clipboard = await this.tryClipboardPaste(text, before, useProbe);
-    if (clipboard.handled) {
-      this.traceOperation({
-        op: "paste",
-        route: "vscode-clipboard",
-        ok: clipboard.result.ok,
-        command: clipboard.result.command,
-        reason: clipboard.result.reason,
-      });
-      return clipboard.result;
-    }
-
-    const typed = await this.tryTypePaste(text, before, useProbe);
-    this.traceOperation({ op: "paste", route: "type", ok: typed.ok, command: typed.command, reason: typed.reason });
-    return typed;
-  }
-
-  /**
-   * Whether ``cmd`` reads the system clipboard rather than its ``text``
-   * argument. ``editor.action.clipboardPasteAction`` (and friends) ignore
-   * the argument we pass and paste whatever is currently in the OS
-   * clipboard — so we MUST seed the clipboard with ``text`` first or the
-   * IDE will paste whatever the user had on their clipboard (a copy from
-   * earlier, completely unrelated content, etc.).
-   */
-  private static directPasteReadsClipboard(cmd: string): boolean {
-    return (
-      cmd === "editor.action.clipboardPasteAction"
-      || cmd === "editor.action.pasteAs"
-      || cmd === "execPaste"
-      || cmd === "paste"
-    );
-  }
-
-  private async tryDirectPasteCommands(
-    text: string,
-    ide: string,
-    existing: Set<string>,
-    cache: ProbeCacheEntry | undefined,
-    before: ReturnType<typeof captureEditorSnapshot>,
-    useProbe: boolean
-  ): Promise<CommandOutcome | undefined> {
-    const directCommands = filterRegistered(
-      this.orderWithServerOverride("paste", buildPasteDirectCommands(ide), cache?.paste),
-      existing
-    );
-    const previousClip = await this.saveClipboard();
-    let clipboardSeeded = false;
-    try {
-      for (const cmd of directCommands) {
-        const readsClipboard = SharedAutopilotBridge.directPasteReadsClipboard(cmd);
-        if (readsClipboard) {
-          const seeded = await this.writeClipboardVerified(text);
-          if (!seeded) {
-            debugLog("DIRECT_PASTE_CLIPBOARD_SEED_FAILED", { cmd });
-            this.traceOperation({
-              op: "paste",
-              route: `direct-command:${cmd}`,
-              ok: false,
-              reason: "clipboard seed unverified; refusing to invoke clipboard-reading paste with stale clipboard",
-            });
-            continue;
-          }
-          clipboardSeeded = true;
-        }
-        try {
-          const result = await Promise.resolve(vscode.commands.executeCommand(cmd, text));
-          if (result === false) {
-            continue;
-          }
-          await this.sleep(this.probePasteDelayMs());
-          const after = this.editorSnapshot();
-          if (useProbe && pasteLandedInEditor(before, after, text)) {
-            debugLog("PROBE_PASTE_REJECT", { cmd, reason: "landed_in_editor" });
-            continue;
-          }
-          if (useProbe) {
-            await this.saveProbeCache({ paste: cmd });
-          }
-          return { ok: true, command: cmd };
-        } catch {
-          /* command doesn't exist — try next */
-        }
-      }
-      return undefined;
-    } finally {
-      if (clipboardSeeded) {
-        await this.sleep(120);
-        await this.restoreClipboard(previousClip);
-      }
-    }
-  }
-
-  private async tryHostClipboardPaste(
-    text: string,
-    before: ReturnType<typeof captureEditorSnapshot>,
-    useProbe: boolean
-  ): Promise<PasteAttempt> {
-    const inputFocused = await this.focusChatInput();
-    if (!inputFocused.ok) {
-      debugLog("HOST_PASTE_NO_INPUT_FOCUS");
-      this.traceOperation({ op: "paste", route: "host-clipboard:focus-input", ok: false, reason: "input focus unavailable" });
-    }
-    await this.clearChatInput();
-    const clip = await this.writeHostClipboard(text);
-    if (!clip) {
-      debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
-      this.traceOperation({ op: "paste", route: "host-clipboard:write", ok: false, reason: "no host clipboard tool" });
-      return { handled: false, result: { ok: false, reason: "no host clipboard tool" } };
-    }
-    this.traceOperation({ op: "paste", route: `host-clipboard:${clip}`, ok: true, detail: { textLength: text.length } });
-    await this.writeClipboardVerified(text);
-    const paste = await this.runHostKeyCandidates("HOST_PASTE_KEY", [
-      ["wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]],
-      ["xdotool", ["key", "ctrl+v"]],
-      ["ydotool", ["key", "ctrl+v"]],
-    ]);
-    if (!paste.ok) {
-      return { handled: true, result: { ...paste, reason: "host clipboard paste key failed" } };
-    }
-    await this.sleep(Math.max(this.probePasteDelayMs(), 350));
-    const after = this.editorSnapshot();
-    if (useProbe && pasteLandedInEditor(before, after, text)) {
-      this.traceOperation({ op: "paste", route: "host-clipboard:probe", ok: false, reason: "paste landed in editor" });
-      return { handled: true, result: { ok: false, command: paste.command, reason: "paste landed in editor" } };
-    }
-    if (useProbe) {
-      await this.saveProbeCache({ paste: `host-clipboard:${clip}+${paste.command}` });
-    }
-    return { handled: true, result: { ok: true, command: `host-clipboard:${clip}+${paste.command}` } };
-  }
-
-  private async tryClipboardPaste(
-    text: string,
-    before: ReturnType<typeof captureEditorSnapshot>,
-    useProbe: boolean
-  ): Promise<PasteAttempt> {
-    const inputFocused = await this.focusChatInput();
-    if (!inputFocused.ok) {
-      debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
-      if (useProbe && before.hasEditor && before.isFileLike) {
-        return { handled: true, result: { ok: false, reason: "chat input focus unavailable; refusing editor clipboard paste fallback" } };
-      }
-    }
-    try {
-      await this.clearChatInput();
-      const ok = await this.writeClipboardVerified(text);
-      if (!ok) {
-        debugLog("CLIPBOARD_PASTE_ABORT_UNVERIFIED");
-        return {
-          handled: true,
-          result: {
-            ok: false,
-            reason:
-              "clipboard writeText did not propagate (readback mismatch); "
-              + "refusing paste to avoid clobbering chat input with stale clipboard content",
-          },
-        };
-      }
-      await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
-      await this.sleep(this.probePasteDelayMs());
-      const after = this.editorSnapshot();
-      if (useProbe && pasteLandedInEditor(before, after, text)) {
-        return { handled: true, result: { ok: false } };
-      }
-      if (useProbe) {
-        await this.saveProbeCache({ paste: "editor.action.clipboardPasteAction" });
-      }
-      return { handled: true, result: { ok: true, command: "editor.action.clipboardPasteAction" } };
-    } catch {
-      /* clipboard paste failed — fallback to type */
-    }
-
-    return { handled: false, result: { ok: false } };
-  }
-
-  private async tryTypePaste(
-    text: string,
-    before: ReturnType<typeof captureEditorSnapshot>,
-    useProbe: boolean
-  ): Promise<CommandOutcome> {
-    const inputFocused = await this.focusChatInput();
-    if (!inputFocused.ok && useProbe && before.hasEditor && before.isFileLike) {
-      debugLog("TYPE_PASTE_NO_INPUT_FOCUS_REFUSED");
-      return { ok: false, reason: "chat input focus unavailable; refusing editor type fallback" };
-    }
-    try {
-      await this.clearChatInput();
-      await Promise.resolve(vscode.commands.executeCommand("type", { text }));
-      await this.sleep(this.probePasteDelayMs());
-      const after = this.editorSnapshot();
-      if (useProbe && pasteLandedInEditor(before, after, text)) {
-        return { ok: false };
-      }
-      if (useProbe) {
-        await this.saveProbeCache({ paste: "type" });
-      }
-      return { ok: true, command: "type" };
-    } catch {
-      return { ok: false };
-    }
-  }
-
-  private async focusChatInput(): Promise<{ ok: boolean; command?: string }> {
-    const ide = this.detectIde();
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const cache = this.getProbeCache();
-    const candidates = filterRegistered(
-      this.orderWithServerOverride("focus_input", buildFocusInputCommands(ide), cache?.focusInput),
-      existing
-    );
-    debugLog("FOCUS_INPUT_START", { ide, candidatesCount: candidates.length, cacheFocusInput: cache?.focusInput });
-    debugLog("FOCUS_INPUT_CANDIDATES", { ide, candidates });
-    for (const cmd of candidates) {
-      debugLog("FOCUS_INPUT_ATTEMPT", { cmd });
-      if (!(await this.runCommand(cmd))) {
-        debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
-        continue;
-      }
-      if (!isSpecificChatInputFocusCommand(cmd)) {
-        debugLog("FOCUS_INPUT_NOT_CHAT", { cmd });
-        this.traceOperation({
-          op: "focus_input",
-          route: "non-chat-command",
-          ok: false,
-          command: cmd,
-          reason: "command succeeded but is not a chat/composer focus command",
-        });
-        continue;
-      }
-      debugLog("FOCUS_INPUT_SUCCESS", { cmd });
-      if (this.probeLadderEnabled()) {
-        await this.saveProbeCache({ focusInput: cmd });
-      }
-      this.traceOperation({ op: "focus_input", route: "command", ok: true, command: cmd });
-      return { ok: true, command: cmd };
-    }
-    debugLog("FOCUS_INPUT_ALL_FAILED");
-    this.traceOperation({
-      op: "focus_input",
-      route: "all-candidates",
-      ok: false,
-      reason: "no focus-input command succeeded",
-      detail: { candidates },
-    });
-    return { ok: false };
-  }
-
-  private detectIde(): string {
-    const app = vscode.env.appName || "";
-    return detectIdeViaStrategies(app) ?? "vscode";
-  }
-
-  private send(env: Envelope): void {
-    if (!this.socket) return;
-    const wire = sanitizeOutboundEnvelope(env as Record<string, unknown>);
-    const line = JSON.stringify(wire) + "\n";
-    debugLog("OUT", env);
-    // STARTER-242 telemetry: log oversized envelopes BEFORE they hit the
-    // daemon socket. The truncated-NDJSON crash reported on cycle #632
-    // (~170 KB ack with no trailing newline reaching the CLI) needs a
-    // concrete size budget per envelope type before we cap fields. Treat
-    // >32 KB as "investigate" and >128 KB as "almost certainly the cause".
-    const bytes = Buffer.byteLength(line, "utf8");
-    if (bytes > 32 * 1024) {
-      const fieldSizes: Record<string, number> = {};
-      for (const [k, v] of Object.entries(env as Record<string, unknown>)) {
-        try {
-          fieldSizes[k] = Buffer.byteLength(JSON.stringify(v), "utf8");
-        } catch {
-          fieldSizes[k] = -1;
-        }
-      }
-      safeLog("OUT_OVERSIZED", {
-        type: env.type,
-        id: (env as { id?: unknown }).id,
-        bytes,
-        fields: fieldSizes,
-      });
-    }
-    this.socket.write(line);
-  }
-
-  private onData(chunk: string): void {
-    this.buf += chunk;
-    while (true) {
-      const idx = this.buf.indexOf("\n");
-      if (idx < 0) break;
-      const line = this.buf.slice(0, idx);
-      this.buf = this.buf.slice(idx + 1);
-      if (!line.trim()) continue;
-      try {
-        const env = JSON.parse(line) as Envelope;
-        if (!env || typeof env !== "object" || typeof env.type !== "string") {
-          console.error("koru autopilot: malformed envelope", env);
-          continue;
-        }
-        void this.dispatch(env).catch((err) => {
-          const message = err instanceof Error ? err.message : String(err);
-          console.error("koru autopilot: dispatch failed", env, err);
-          this.send({ type: "error", id: env.id, ok: false, message });
-        });
-      } catch (err) {
-        console.error("koru autopilot: bad envelope", line, err);
-      }
-    }
-  }
-
-  private async dispatch(env: Envelope): Promise<void> {
-    if (env.type === "error") {
-      const message = typeof env.message === "string" ? env.message : "daemon rejected plugin";
-      if (message.includes("plugin version mismatch")) {
-        this.reconnectBlockedReason = message;
-        this.status.text = "$(warning) koru: reload";
-        this.status.tooltip = message;
-        await this._handleVersionMismatchRejection(message);
-      }
-      return;
-    }
-    const plan = planDispatch(env);
-    switch (plan.kind) {
-      case "injectChat":
-        await this.injectChat(env);
-        return;
-      case "ack":
-        this.send({ type: "ack", id: env.id, ok: true, ...plan.info });
-        return;
-      case "ignore":
-        return;
-      case "ackAndDisconnect":
-        this.send({ type: "ack", id: env.id, ok: true, ...plan.info });
-        this.disconnect();
-        return;
-      case "error":
-        this.send({ type: "error", id: env.id, ok: false, message: plan.message });
-        return;
-    }
-  }
-
-  /**
-   * Daemon rejected this plugin because the installed VSIX version no
-   * longer matches the expected version. The classic recovery is for the
-   * user to run `Developer: Reload Window`, but Koru's host-side reload
-   * automation (`wtype Ctrl+Shift+P`) fails on many Wayland compositors.
-   * Since we already have a privileged VS Code extension context, just
-   * call `workbench.action.reloadWindow` ourselves — that bypasses every
-   * xdotool/wtype quirk because the IDE reloads itself natively.
-   *
-   * Honours `koruAutopilot.reloadOnVersionMismatch` (default: `true`)
-   * and a per-session cooldown so we never loop into a reload storm.
-   */
-  private async _handleVersionMismatchRejection(message: string): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const enabled = cfg.get<boolean>("reloadOnVersionMismatch");
-    if (enabled === false) {
-      void vscode.window.showWarningMessage(`koru autopilot: ${message}`);
-      return;
-    }
-    const ctx = this.context;
-    const lastReloadAt = ctx.globalState.get<number>(
-      "koruAutopilot.lastVersionMismatchReloadAt",
-      0,
-    );
-    const COOLDOWN_MS = 60_000;
-    if (Date.now() - lastReloadAt < COOLDOWN_MS) {
-      void vscode.window.showWarningMessage(
-        `koru autopilot: ${message} (reload skipped — already attempted within last 60s; ` +
-        "use Developer: Reload Window manually if the mismatch persists)",
-      );
-      return;
-    }
-    await ctx.globalState.update("koruAutopilot.lastVersionMismatchReloadAt", Date.now());
-    safeLog("PLUGIN_VERSION_MISMATCH_AUTO_RELOAD", { message });
-    void vscode.window.showInformationMessage(
-      `koru autopilot: ${message}. Reloading the window to load the new VSIX…`,
-    );
-    const reloadStrategies = this.options.reloadCommandStrategies.map((cmd, index) => ({
-      id: `strategy_${index + 1}`,
-      cmd,
-    }));
-    const failures: { id: string; cmd: string; detail: string }[] = [];
-    for (const strategy of reloadStrategies) {
-      try {
-        safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_ATTEMPT", { strategy: strategy.id, cmd: strategy.cmd });
-        await vscode.commands.executeCommand(strategy.cmd);
-        safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_ISSUED", { strategy: strategy.id, cmd: strategy.cmd });
-        return;
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        failures.push({ id: strategy.id, cmd: strategy.cmd, detail });
-        safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_STRATEGY_FAILED", { strategy: strategy.id, cmd: strategy.cmd, detail });
-      }
-    }
-    safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_FAILED", {
-      detail: failures.map((f) => `${f.id}=${f.detail}`).join("; "),
-    });
-    void vscode.window.showWarningMessage(
-      `koru autopilot: automatic reload failed (all strategies failed: ${failures
-        .map((f) => `${f.id}=${f.detail}`)
-        .join(", ")}). Run \`Developer: Reload Window\` manually.`,
-    );
-  }
-
-  private async saveClipboard(): Promise<string | null> {
-    try {
-      return await vscode.env.clipboard.readText();
-    } catch {
-      return null;
-    }
-  }
-
-  private async restoreClipboard(previous: string | null): Promise<void> {
-    if (previous !== null) {
-      try {
-        await vscode.env.clipboard.writeText(previous);
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  /**
-   * Write `text` to the OS clipboard and verify the write took effect.
-   *
-   * On Linux/Wayland (and some Cursor builds where the chat input is a
-   * webview-rooted contenteditable that reads the OS clipboard natively
-   * via the browser APIs), `vscode.env.clipboard.writeText` returns
-   * before the underlying `wl-copy` / selection-manager pipeline has
-   * propagated. If we fire `editor.action.clipboardPasteAction`
-   * immediately, the webview can paste the *previous* clipboard content
-   * (e.g. the user's last manual copy, freshly restored by the
-   * input-busy probe). Read back the clipboard with a short retry loop
-   * to guarantee the prompt text is actually visible before paste.
-   */
-  private async writeClipboardVerified(text: string): Promise<boolean> {
-    const maxTries = 6;
-    for (let i = 0; i < maxTries; i++) {
-      try {
-        await vscode.env.clipboard.writeText(text);
-      } catch (err) {
-        debugLog("CLIPBOARD_WRITE_ERROR", { err: String(err) });
-      }
-      await this.sleep(i === 0 ? 20 : 40);
-      try {
-        const observed = await vscode.env.clipboard.readText();
-        if (observed === text) {
-          if (i > 0) {
-            debugLog("CLIPBOARD_WRITE_VERIFIED_RETRY", { attempts: i + 1 });
-          }
-          return true;
-        }
-      } catch (err) {
-        debugLog("CLIPBOARD_READBACK_ERROR", { err: String(err) });
-      }
-    }
-    debugLog("CLIPBOARD_WRITE_UNVERIFIED", { length: text.length });
-    return false;
-  }
-
-  /**
-   * Best-effort detection: is the chat input already holding un-submitted text?
-   *
-   * Cursor's chat input is a webview-rooted contenteditable, not a normal
-   * TextEditor, so it is invisible to ``vscode.window.activeTextEditor``. We
-   * therefore probe via the only thing the editor reliably exposes when chat
-   * has focus: select-all + clipboardCopy will copy the chat input's current
-   * contents into VS Code's clipboard. We snapshot, sentinel-write, copy,
-   * and compare; if the clipboard ends up holding non-trivial text that is
-   * NOT our sentinel, we treat the chat input as busy and abort drive.
-   *
-   * Falls closed on errors (missing commands, clipboard failures): when in
-   * doubt, do NOT skip — let the legacy paste path run.
-   */
-  private async decideBusyInput(text: string): Promise<{ action: BusyInputAction; observedLength: number }> {
-    if (!shouldVerifyPrePasteBusy(this.koruStepConfig())) {
-      this.traceOperation({ op: "input_busy_probe", route: "disabled", ok: true });
-      return { action: "empty", observedLength: 0 };
-    }
-    const observed = await this._probeChatInputContents();
-    const observedLength = observed === null ? -1 : observed.trim().length;
-    const action = decideBusyInputAction(observed, text);
-    debugLog("CHAT_INPUT_BUSY_PROBE", { busy: action !== "empty", action, length: observedLength });
-    this.traceOperation({
-      op: "input_busy_probe",
-      route: "select-copy",
-      ok: action !== "block",
-      reason: action === "block" ? "input contains unrelated draft" : undefined,
-      detail: { action, observedLength },
-    });
-    return { action, observedLength };
-  }
-
-  /**
-   * Sentinel-probe the chat input via select-all + clipboardCopy.
-   *
-   * Returns the chat input's current text (empty string if cleared by a
-   * successful submit), or ``null`` when the probe could not run (clipboard
-   * unreadable, sentinel still present meaning select+copy did not pick up
-   * any chat content). The sentinel guards against false positives when the
-   * select+copy pipeline has no effect — without it an empty clipboard read
-   * would look identical to "input is empty".
-   */
-  private async _probeChatInputContents(): Promise<string | null> {
-    const sentinel = `__koru_input_probe_${Date.now().toString(36)}__`;
-    const previous = await this.saveClipboard();
-    try {
-      await vscode.env.clipboard.writeText(sentinel);
-      await this.runCommand("editor.action.selectAll");
-      await this.runCommand("editor.action.clipboardCopyAction");
-      await this.sleep(60);
-      const observed = await this.saveClipboard();
-      if (observed === null || observed === sentinel) {
-        this.traceOperation({
-          op: "input_probe",
-          route: "select-copy",
-          ok: false,
-          reason: observed === sentinel ? "sentinel unchanged" : "clipboard unreadable",
-        });
-        return null;
-      }
-      this.traceOperation({
-        op: "input_probe",
-        route: "select-copy",
-        ok: true,
-        detail: { observedLength: observed.length },
-      });
-      return observed;
-    } catch (err) {
-      debugLog("CHAT_INPUT_PROBE_ERROR", { err: String(err) });
-      return null;
-    } finally {
-      await this.restoreClipboard(previous);
-    }
-  }
-
-  private sendInputBusyAck(
-    env: Envelope,
-    focus: { ok: boolean; command?: string },
-    observedLength?: number
-  ): void {
-    this.send({
-      type: "ack",
-      id: env.id,
-      ok: false,
-      delivered: false,
-      opened: focus.ok,
-      submitted: false,
-      probe_ladder: this.probeLadderEnabled(),
-      winning_focus_open: focus.command,
-      verification: "input_busy",
-      operation_trace: this.currentOperationTrace(),
-      reason: "chat_input_not_empty",
-      observed_length: observedLength,
-      message:
-        "chat input already contains un-submitted text — skipping drive to "
-        + "avoid clobbering the user's reply or concatenating prompts.",
-    });
-  }
-
-  private async submitExistingChatInput(
-    env: Envelope,
-    focus: { ok: boolean; command?: string },
-    text: string,
-    submit: boolean
-  ): Promise<void> {
-    if (!submit) {
-      this.send({
-        type: "ack",
-        id: env.id,
-        ok: true,
-        delivered: true,
-        opened: true,
-        submitted: false,
-        probe_ladder: this.probeLadderEnabled(),
-        winning_focus_open: focus.command,
-        verification: "input_matches_prompt",
-        operation_trace: this.currentOperationTrace(),
-      });
-      return;
-    }
-    await this.captureCursorBubbleAnchor();
-    const submitResult = await this.submitChat(text);
-    if (submitResult.unverified || !submitResult.ok) {
-      this.sendSubmitFailureAck(
-        env,
-        focus,
-        { ok: true, command: "existing-input" },
-        submitResult.command,
-        submitResult
-      );
-      return;
-    }
-    this.sendSuccessAck(env, focus, { ok: true, command: "existing-input" }, submitResult.command);
-    this.sendMessageSent(text);
-  }
-
-  private sendFocusFailureAck(env: Envelope, focus: FocusOutcome): void {
-    const details = focus.diagnostics || {};
-    const candidates = Array.isArray(details.focusOpenCandidates)
-      ? details.focusOpenCandidates.join(", ")
-      : "";
-    this.send({
-      type: "ack",
-      id: env.id,
-      ok: false,
-      opened: false,
-      submitted: false,
-      probe_ladder: this.probeLadderEnabled(),
-      diagnostics: details,
-      operation_trace: this.currentOperationTrace(),
-      message:
-        "chat input is not focused/open; "
-        + `ide=${details.ide || this.detectIde()} app=${details.appName || vscode.env.appName}; `
-        + `focus_open_candidates=${candidates || "(none)"}; `
-        + "log=/tmp/koru-plugin-debug.log. Open chat input manually, then retry.",
-    });
-  }
-
-  private sendPasteFailureAck(
-    env: Envelope,
-    focus: { ok: boolean; command?: string },
-    pasted: { ok: boolean; command?: string; reason?: string }
-  ): void {
-    const reason = pasted.reason || "unknown paste failure";
-    this.send({
-      type: "ack",
-      id: env.id,
-      ok: false,
-      opened: true,
-      probe_ladder: this.probeLadderEnabled(),
-      winning_focus_open: focus.command,
-      attempted_paste: pasted.command,
-      paste_failure_reason: reason,
-      operation_trace: this.currentOperationTrace(),
-      message: `chat opened but paste command failed (${reason})`,
-    });
-  }
-
-  private sendSubmitFailureAck(
-    env: Envelope,
-    focus: { ok: boolean; command?: string },
-    pasted: { ok: boolean; command?: string },
-    attemptedSubmit?: string,
-    submitDetails?: SubmitOutcome
-  ): void {
-    // Cache hygiene: when verify says "no new user bubble in
-    // cursorDiskKV after submit" while ``winning_focus_open`` was a
-    // focus-only command (e.g. ``input-only:composer.focusComposer``),
-    // the cached focus winner is *toxic* — it caused paste to land in
-    // a hidden composer where submit silently no-ops. Clearing it now
-    // forces the next drive to re-probe through ``composer.openComposer``
-    // (the non-toggling open command) instead of replaying the same
-    // invisible-panel trap. See the cycle #760 DSL trace and the
-    // long-form comment on ``_shouldPreflightFocusOnly``.
-    if (this.options.enableDiscardToxicFocusOpenCache) {
-      this.discardToxicFocusOpenCache(focus.command).catch((err) => {
-        debugLog("FOCUS_OPEN_CACHE_DISCARD_FAILED", { err: String(err) });
-      });
-    }
-    this.send({
-      type: "ack",
-      id: env.id,
-      ok: false,
-      delivered: true,
-      opened: true,
-      submitted: false,
-      probe_ladder: this.probeLadderEnabled(),
-      winning_focus_open: focus.command,
-      winning_paste: pasted.command,
-      attempted_submit: attemptedSubmit,
-      submit_failure_reason: submitDetails?.reason,
-      submit_attempts: submitDetails?.attempts,
-      verification: "submit_unverified",
-      operation_trace: this.currentOperationTrace(),
-      message:
-        "chat opened and text injected, but submit could not be verified; "
-        + "manual Send may be required. Input was cleared before paste to avoid prompt concatenation.",
-    });
-  }
-
-  /**
-   * After a confirmed ``submit_unverified`` drive, discard the cached
-   * ``focusOpen`` winner when it was an input-only / focus-only
-   * command. Re-probing on the next drive lets the ladder pick a
-   * verifiable open command (``composer.openComposer`` for Cursor)
-   * instead of replaying the invisible-panel trap.
-   *
-   * NOTE: ``mergeProbeCache`` treats ``undefined`` as "keep previous",
-   * so we must mutate ``globalState`` directly to clear the field.
-   */
-  private async discardToxicFocusOpenCache(focusCommand: string | undefined): Promise<void> {
-    if (!this.probeLadderEnabled()) return;
-    const cache = this.getProbeCache();
-    const cached = cache?.focusOpen;
-    if (!cached) return;
-    const focusToken = (focusCommand || "").toLowerCase();
-    const isInputOnlyFocus =
-      focusToken.includes("focuscomposer") ||
-      focusToken.includes("focuscascade") ||
-      (this.detectIde() === "vscodium" && focusToken.includes("openquickchat")) ||
-      (this.detectIde() === "vscodium" && focusToken.includes("quickchat.openinchatview")) ||
-      focusToken.startsWith("input-only");
-    if (!isInputOnlyFocus) return;
-    const cleared: ProbeCacheEntry = { ...cache, focusOpen: undefined };
-    await this.context.globalState.update("probeCache.v3", cleared);
-    debugLog("PROBE_CACHE_FOCUS_OPEN_DISCARDED", { previous: cached });
-    this.traceOperation({
-      op: "focus_open",
-      route: "cache-discard",
-      ok: false,
-      command: cached,
-      reason:
-        "cached focus_open winner was an input-only/focus-only command "
-        + "but submit could not be verified — discarding so the next "
-        + "drive re-probes via the non-toggling open command",
-    });
-  }
-
-  private sendSuccessAck(
-    env: Envelope,
-    focus: { ok: boolean; command?: string },
-    pasted: { ok: boolean; command?: string },
-    submitCmd: string | undefined
-  ): void {
-    this.send({
-      type: "ack",
-      id: env.id,
-      ok: true,
-      delivered: true,
-      opened: true,
-      submitted: true,
-      probe_ladder: this.probeLadderEnabled(),
-      winning_focus_open: focus.command,
-      winning_paste: pasted.command,
-      winning_submit: submitCmd,
-      operation_trace: this.currentOperationTrace(),
-    });
-  }
-
-  private sendMessageSent(text: string): void {
-    console.log("koru autopilot: sending message.sent");
-    this.traceOperation({
-      op: "message_sent",
-      route: "plugin-event",
-      ok: true,
-      detail: { length: text.length },
-    });
-    this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
-  }
-
-  private async injectChat(env: Envelope): Promise<void> {
-    const text = typeof env.text === "string" ? env.text : "";
-    const submit = env.submit !== false;
-    this.pendingCommandOrder = this.parseCommandOrder(env.command_order);
-    this.resetOperationTrace();
-    this.traceOperation({
-      op: "drive",
-      route: "plugin",
-      ok: true,
-      detail: { ide: this.detectIde(), submit, textLength: text.length, id: env.id },
-    });
-    if (!text) {
-      this.traceOperation({ op: "drive", route: "validate", ok: false, reason: "empty text" });
-      this.send({ type: "ack", id: env.id, ok: false, message: "empty text", operation_trace: this.currentOperationTrace() });
-      return;
-    }
-    // Snapshot the user's clipboard BEFORE we do anything else so we
-    // can always restore it — even if focus/paste/submit throws (R8).
-    const previous = await this.saveClipboard();
-    const previousHost = await this.saveHostClipboard();
-    try {
-      await this._performInject(env, text, submit);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      this.traceOperation({ op: "drive", route: "exception", ok: false, reason: message });
-      this.send({ type: "ack", id: env.id, ok: false, message, operation_trace: this.currentOperationTrace() });
-    } finally {
-      this.pendingCommandOrder = undefined;
-      // Restore clipboard regardless of outcome.
-      if (this.detectIde() === "vscodium") {
-        await this.sleep(400);
-      }
-      await this.restoreHostClipboard(previousHost);
-      await this.restoreClipboard(previous);
-    }
-  }
-
-  private async tryWindsurfSendTextFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
-    if (this.detectIde() !== "windsurf") {
-      return false;
-    }
-    safeLog("WINDSURF_FASTPATH_START", { submit, textLength: text.length });
-    const hasCommand = await this.waitForCommand("windsurf.sendTextToChat", 1200, 150);
-    safeLog("WINDSURF_FASTPATH_CHECK_COMMAND", { hasSendCmd: hasCommand });
-    if (!hasCommand) {
-      safeLog("WINDSURF_FASTPATH_ABORT_MISSING_COMMAND");
-      return false;
-    }
-    let lastError = "";
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
-      try {
-        safeLog("WINDSURF_FASTPATH_EXECUTE_SEND", { attempt, textLength: text.length });
-        await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
-        await this.maybeKeepWindsurfChatPanelVisible("after-sendTextToChat");
-        safeLog("WINDSURF_FASTPATH_EXECUTE_SEND_OK", { attempt });
-        this.sendSuccessAck(
-          env,
-          { ok: true, command: "none" },
-          { ok: true, command: "windsurf.sendTextToChat" },
-          "windsurf.sendTextToChat"
-        );
-        if (submit) {
-          this.sendMessageSent(text);
-        }
-        return true;
-      } catch (err) {
-        lastError = String(err);
-        safeLog("WINDSURF_FASTPATH_EXECUTE_SEND_ERROR", { attempt, error: lastError });
-        if (attempt < 4) {
-          await this.sleep(450);
-        }
-      }
-    }
-    console.warn("koru autopilot: windsurf.sendTextToChat fast path failed", lastError);
-    return false;
-  }
-
-  private async maybeKeepWindsurfChatPanelVisible(reason: string): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const enabled = cfg.get<boolean>("windsurfKeepOpenAfterSend", false);
-    if (!enabled) {
-      safeLog("WINDSURF_KEEP_OPEN_DISABLED", {
-        reason,
-        detail: "post-send cascade open commands can toggle the Windsurf right chat column closed",
-      });
-      return;
-    }
-    await this.ensureWindsurfChatPanelVisible(reason);
-  }
-
-  private async ensureWindsurfChatPanelVisible(reason: string): Promise<void> {
-    if (this.detectIde() !== "windsurf") {
-      return;
-    }
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const registered = filterRegistered(
-      buildFocusOpenCommands("windsurf", []),
-      existing,
-    );
-    const preferred = [
-      "windsurf.cascadePanel.open",
-      "windsurf.action.showCascade",
-      "windsurf.action.openChat",
-      "windsurf.chat.open",
-      "windsurf.cascade.open",
-      "windsurf.panel.chat",
-    ];
-    const commands = mergeUnique(
-      preferred.filter((cmd) => registered.includes(cmd)),
-      registered.filter((cmd) => !cmd.includes(".focus")),
-    );
-    safeLog("WINDSURF_KEEP_OPEN_START", { reason, candidates: commands, registered });
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
-      await this.sleep(attempt === 1 ? 900 : 700);
-      for (const cmd of commands) {
-        if (cmd.includes("toggle") || cmd === "workbench.view.windsurfAgentSidebarContainer") {
-          safeLog("WINDSURF_KEEP_OPEN_SKIP_TOGGLE", { attempt, cmd });
-          continue;
-        }
-        if (await this.runCommand(cmd)) {
-          safeLog("WINDSURF_KEEP_OPEN_OK", { attempt, cmd, reason });
-          return;
-        }
-        safeLog("WINDSURF_KEEP_OPEN_COMMAND_FAILED", { attempt, cmd, reason });
-      }
-    }
-    safeLog("WINDSURF_KEEP_OPEN_ALL_FAILED", { reason, candidatesCount: commands.length });
-  }
-
-  private async tryAntigravitySendPromptFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
-    if (this.detectIde() !== "antigravity" || !submit) {
-      return false;
-    }
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    try {
-      if (!canUseAntigravitySendPrompt(existing)) {
-        debugLog("ANTIGRAVITY_FAST_PATH_MISSING", {
-          reason: `${ANTIGRAVITY_SEND_PROMPT_COMMAND} command is not registered`,
-          openCommand: selectAntigravityOpenCommand(existing),
-        });
-        return false;
-      }
-      await Promise.resolve(vscode.commands.executeCommand(ANTIGRAVITY_SEND_PROMPT_COMMAND, text));
-      this.sendSuccessAck(
-        env,
-        { ok: true, command: "none" },
-        { ok: true, command: ANTIGRAVITY_SEND_PROMPT_COMMAND },
-        ANTIGRAVITY_SEND_PROMPT_COMMAND
-      );
-      this.sendMessageSent(text);
-      return true;
-    } catch (err) {
-      console.warn("koru autopilot: antigravity.sendPromptToAgentPanel fast path failed, trying fallback", err);
-      return false;
-    }
-  }
-
-  /**
-   * Cursor-native fast path: paste via ``composer.startComposerPrompt2``
-   * (which targets the webview directly — not the active TextEditor) +
-   * submit via ``composer.sendToAgent`` + verify via ``cursorDiskKV``.
-   *
-   * Regression history (each DSL trace led to one piece of the fix):
-   *
-   * Cycle #760 → 0.1.79: invisible-composer trap. ``composer.focusComposer``
-   * returned ok=true on a *hidden* panel; paste landed nowhere.
-   * Fix: skip input-only preflight when a non-toggling open command
-   * (``composer.openComposer``) is in the ladder.
-   *
-   * Cycle #810 → 0.1.81 (first attempt): paste lands in active editor.
-   * ``editor.action.clipboardPasteAction`` targets
-   * ``vscode.window.activeTextEditor``, not the webview Composer.
-   * Even with the panel visibly open, the prompt text went into the
-   * .ts file the user had focused, while the chat input stayed empty.
-   * Fix attempt: call ``composer.startComposerPrompt2(text)`` as a
-   * single paste+submit combo.
-   *
-   * Cycle (this) → 0.1.82: ``startComposerPrompt2`` writes the text
-   * into the chat input but does **not** auto-submit. The DSL showed:
-   *
-   *   #003 paste route=cursor-composer-fastpath:composer.startComposerPrompt2 ok=true
-   *   #004 submit_verify route=cursor-bubble-db ok=false  ← no bubble — not submitted
-   *   #005 paste route=cursor-composer-fastpath:composer.startComposerPrompt ok=true
-   *   #006 submit_verify ok=false  ← drugi wpis (kumulacja draftu!)
-   *   #010 input_busy_probe ok=false reason="input contains unrelated draft"
-   *
-   * So this fast path is now structured as **paste, then submit, then
-   * verify** — and we only ever attempt one paste command (the highest
-   * ranked available) so we don't kumulate drafts when verification
-   * fails. The legacy probe ladder is left as a fallback in case
-   * sendToAgent is unavailable.
-   */
-  private async tryCursorComposerPromptFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
-    if (this.detectIde() !== "cursor" || !submit) {
-      return false;
-    }
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    // Cursor 1.x removed the ``composer.*`` namespace; ``getCommands`` on
-    // modern builds returns only ``workbench.action.chat.*``. Older builds
-    // still register ``composer.startComposerPrompt2``. Try the modern
-    // namespace first, fall back to the legacy command.
-    const pasteCandidates = [
-      "workbench.action.chat.insertText",
-      "composer.startComposerPrompt2",
-      "composer.startComposerPrompt",
-    ];
-    const pasteCmd = pasteCandidates.find((cmd) => existing.has(cmd));
-    if (!pasteCmd) {
-      this.traceOperation({
-        op: "paste",
-        route: "cursor-composer-fastpath:probe",
-        ok: false,
-        reason: "no Cursor paste command registered (workbench.action.chat.insertText/composer.startComposerPrompt[2])",
-      });
-      return false;
-    }
-    // ``composer.sendToAgent`` was the right submit for Cursor 0.x, but it
-    // no-ops on 1.x even when ``getCommands`` lists it (the bubble-db
-    // verifier consistently sees zero new ``type=1`` rows). The standard
-    // ``workbench.action.chat.submit`` works reliably on 1.x, so it goes
-    // first; the legacy candidate stays at the end for old builds.
-    const submitCandidates = [
-      "workbench.action.chat.submit",
-      "workbench.action.chat.acceptInput",
-      "composer.sendToAgent",
-      "composer.acceptComposerStep",
-    ];
-    const submitCmd = submitCandidates.find((cmd) => existing.has(cmd));
-    if (!submitCmd) {
-      this.traceOperation({
-        op: "submit",
-        route: "cursor-composer-fastpath:probe",
-        ok: false,
-        reason: "no registered Cursor submit command (sendToAgent et al)",
-      });
-      return false;
-    }
-
-    await this.captureCursorBubbleAnchor();
-
-    // Paste step. ``startComposerPrompt2(text)`` targets the webview
-    // composer directly, so we don't need clipboard, focus matching, or
-    // VS Code editor commands.
-    this.traceOperation({
-      op: "paste",
-      route: `cursor-composer-fastpath:${pasteCmd}`,
-      ok: true,
-      detail: { ide: "cursor", textLength: text.length, submitCmd },
-    });
-    try {
-      safeLog("CURSOR_COMPOSER_FASTPATH_PASTE", { pasteCmd, submitCmd, textLength: text.length });
-      await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      safeLog("CURSOR_COMPOSER_FASTPATH_PASTE_ERROR", { pasteCmd, detail });
-      this.traceOperation({
-        op: "paste",
-        route: `cursor-composer-fastpath:${pasteCmd}`,
-        ok: false,
-        reason: `executeCommand threw: ${detail}`,
-      });
-      return false;
-    }
-
-    // Cursor's webview takes a moment to settle after the prompt is
-    // injected. Without this delay sendToAgent occasionally runs before
-    // the composer textarea has accepted the value and submits empty.
-    await this.sleep(180);
-
-    // Submit step.
-    this.traceOperation({
-      op: "submit",
-      route: `cursor-composer-fastpath:${submitCmd}`,
-      ok: true,
-      command: submitCmd,
-      detail: { pasteCmd },
-    });
-    try {
-      safeLog("CURSOR_COMPOSER_FASTPATH_SUBMIT", { pasteCmd, submitCmd });
-      await Promise.resolve(vscode.commands.executeCommand(submitCmd));
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      safeLog("CURSOR_COMPOSER_FASTPATH_SUBMIT_ERROR", { submitCmd, detail });
-      this.traceOperation({
-        op: "submit",
-        route: `cursor-composer-fastpath:${submitCmd}`,
-        ok: false,
-        reason: `executeCommand threw: ${detail}`,
-      });
-      // Try to clear the draft we just injected so the legacy ladder
-      // doesn't see input_busy on its next attempt.
-      await this._clearComposerDraft();
-      return false;
-    }
-
-    // Verification via cursorDiskKV (ground truth on Cursor).
-    const verifyResult = await this._verifySubmitViaCursorBubble(text);
-    if (verifyResult === null) {
-      this.traceOperation({
-        op: "submit_verify",
-        route: "cursor-bubble-db",
-        ok: false,
-        reason: "verification skipped (no anchor / sqlite unavailable)",
-        detail: { pasteCmd, submitCmd },
-      });
-      // No verification possible — but the commands succeeded, so we
-      // optimistically treat this as success rather than dragging the
-      // legacy ladder over an already-injected prompt.
-      const focusOutcome: CommandOutcome = { ok: true, command: pasteCmd };
-      const pasteOutcome: CommandOutcome = { ok: true, command: pasteCmd };
-      this.sendSuccessAck(env, focusOutcome, pasteOutcome, submitCmd);
-      this.sendMessageSent(text);
-      return true;
-    }
-    if (verifyResult.matched) {
-      safeLog("CURSOR_COMPOSER_FASTPATH_VERIFIED", {
-        pasteCmd,
-        submitCmd,
-        newUserBubbles: verifyResult.newUserBubbles,
-      });
-      this.traceOperation({
-        op: "submit_verify",
-        route: "cursor-bubble-db",
-        ok: true,
-        detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult.newUserBubbles },
-      });
-      const focusOutcome: CommandOutcome = { ok: true, command: pasteCmd };
-      const pasteOutcome: CommandOutcome = { ok: true, command: pasteCmd };
-      this.sendSuccessAck(env, focusOutcome, pasteOutcome, submitCmd);
-      this.sendMessageSent(text);
-      return true;
-    }
-
-    // sendToAgent reported success but no bubble landed. This can
-    // happen when the composer was already busy (e.g. agent is mid-
-    // response). Clear the draft so the legacy ladder doesn't pile up
-    // on top of it.
-    safeLog("CURSOR_COMPOSER_FASTPATH_NO_BUBBLE", {
-      pasteCmd,
-      submitCmd,
-      newUserBubbles: verifyResult.newUserBubbles,
-    });
-    this.traceOperation({
-      op: "submit_verify",
-      route: "cursor-bubble-db",
-      ok: false,
-      reason: "no new user bubble in cursorDiskKV after composer fastpath (paste+sendToAgent)",
-      detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult.newUserBubbles },
-    });
-    await this._clearComposerDraft();
-    return false;
-  }
-
-  /**
-   * Best-effort: clear any draft text we left in the Composer input
-   * before falling back to the legacy ladder. Without this, the next
-   * ``input_busy_probe`` sees our own injected prompt as "unrelated
-   * draft" and refuses to paste again.
-   */
-  private async _clearComposerDraft(): Promise<void> {
-    try {
-      await vscode.commands.executeCommand("composer.focusComposer");
-      await this.sleep(60);
-      await vscode.commands.executeCommand("editor.action.selectAll");
-      await this.sleep(40);
-      await vscode.commands.executeCommand("deleteLeft");
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      safeLog("CURSOR_COMPOSER_FASTPATH_CLEAR_DRAFT_FAILED", { detail });
-    }
-  }
-
-  private async submitAfterPaste(
-    env: Envelope,
-    focus: CommandOutcome,
-
-
-    pasted: CommandOutcome,
-    submit: boolean,
-    pastedText?: string
-  ): Promise<string | undefined | null> {
-    if (pasted.command === "windsurf.sendTextToChat") {
-      this.traceOperation({ op: "submit", route: "windsurf-native", ok: true, command: "windsurf.sendTextToChat" });
-      return "windsurf.sendTextToChat";
-    }
-    if (!submit) {
-      this.traceOperation({ op: "submit", route: "disabled-by-request", ok: true });
-      return undefined;
-    }
-    await this.sleep(150);
-    await this.focusChatInput();
-    await this.captureCursorBubbleAnchor();
-    const submitResult = await this.submitChat(pastedText, pasted.command);
-    if (submitResult.unverified) {
-      this.traceOperation({
-        op: "submit",
-        route: "unverified",
-        ok: false,
-        command: submitResult.command,
-        reason: submitResult.reason,
-        attempts: submitResult.attempts,
-      });
-      this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
-      return null;
-    }
-    if (submitResult.ok) {
-      this.traceOperation({ op: "submit", route: "success", ok: true, command: submitResult.command });
-      return submitResult.command;
-    }
-    this.traceOperation({
-      op: "submit",
-      route: "failed",
-      ok: false,
-      command: submitResult.command,
-      reason: submitResult.reason,
-      attempts: submitResult.attempts,
-    });
-    this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
-    return null;
-  }
-
-  private async _performInject(env: Envelope, text: string, submit: boolean): Promise<void> {
-    const ide = this.detectIde();
-    this.traceOperation({
-      op: "drive",
-      route: "perform",
-      ok: true,
-      detail: { ide, submit, textLength: text.length },
-    });
-    if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
-      this.traceOperation({ op: "drive", route: "antigravity-fastpath", ok: true });
-      return;
-    }
-    if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
-      this.traceOperation({ op: "drive", route: "windsurf-fastpath", ok: true });
-      return;
-    }
-    if (
-      this.options.enableCursorComposerFastPath &&
-      await this.tryCursorComposerPromptFastPath(env, text, submit)
-    ) {
-      this.traceOperation({ op: "drive", route: "cursor-composer-fastpath", ok: true });
-      return;
-    }
-    if (ide === "windsurf") {
-      // On Windsurf, if the fast path failed, we should NOT fall back to the traditional focus and paste path,
-      // because traditional paste is disabled on Windsurf to prevent active file editor contamination.
-      // Doing so would only cause unsafe toggles and failures.
-      this.traceOperation({ op: "paste", route: "windsurf-fastpath-required", ok: false, reason: "fast path failed" });
-      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
-      return;
-    }
-    if (ide === "antigravity") {
-      // Antigravity exposes a native send command when its agent surface is ready.
-      // Avoid generic focus/open fallbacks here: several Antigravity commands behave like panel toggles.
-      this.traceOperation({ op: "paste", route: "antigravity-native-required", ok: false, reason: "native send command unavailable" });
-      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "native send command unavailable" });
-      return;
-    }
-
-    const focus = await this.focusChat();
-    if (focus.ok) {
-      // Extra settle time after verified open (R13).
-      await this.sleep(80);
-    }
-    if (!focus.ok) {
-      this.sendFocusFailureAck(env, focus);
-      return;
-    }
-    const busyInput = await this.decideBusyInput(text);
-    if (busyInput.action === "submit_existing") {
-      debugLog("CHAT_INPUT_BUSY_SUBMIT_EXISTING", { length: busyInput.observedLength });
-      await this.submitExistingChatInput(env, focus, text, submit);
-      return;
-    }
-    if (busyInput.action === "block") {
-      // The chat input already has un-submitted content (the user is typing,
-      // or the IDE-side LLM left the user with a prompt and nothing has been
-      // sent yet). Pasting our prompt on top would either concatenate with
-      // their text (creating a Frankenstein prompt) or overwrite an answer
-      // they were preparing. Skip the drive cleanly so the autonomous loop
-      // can either back off or retry later — it is the operator's job to
-      // resolve the pending input.
-      this.sendInputBusyAck(env, focus, busyInput.observedLength);
-      return;
-    }
-    if (busyInput.action === "replace_known_koru_draft") {
-      debugLog("CHAT_INPUT_BUSY_REPLACE_KORU_DRAFT", { length: busyInput.observedLength });
-    }
-    const pasted = await this.pasteText(text, busyInput.action === "replace_known_koru_draft");
-    if (!pasted.ok) {
-      this.sendPasteFailureAck(env, focus, pasted);
-      return;
-    }
-    const submitCmd = await this.submitAfterPaste(env, focus, pasted, submit, text);
-    if (submitCmd === null) {
-      return;
-    }
-    this.sendSuccessAck(env, focus, pasted, submitCmd);
-    if (submit) {
-      this.sendMessageSent(text);
-    }
-  }
-
   async calibrateProbe(): Promise<void> {
     const token = `__koru_probe_${Math.random().toString(36).slice(2, 10)}__`;
     const lines: string[] = [`IDE: ${this.detectIde()} (${vscode.env.appName})`];
-    const focus = await this.focusChat();
+    const focus = await this.openChatPanel("probe");
     lines.push(focus.ok ? `focus open: ${focus.command}` : "focus open: FAILED");
     if (!focus.ok) {
-      void vscode.window.showWarningMessage(`koru probe: could not open chat.\n${lines.join("\n")}`);
+      void vscode.window.showWarningMessage(`koru autopilot: could not open chat.\n${lines.join("\n")}`);
       return;
     }
     await this.sleep(this.probeFocusDelayMs());
     const pasted = await this.pasteText(token);
     lines.push(pasted.ok ? `paste: ${pasted.command}` : "paste: FAILED");
     if (!pasted.ok) {
-      void vscode.window.showWarningMessage(`koru probe: paste failed.\n${lines.join("\n")}`);
+      void vscode.window.showWarningMessage(`koru autopilot: paste failed.\n${lines.join("\n")}`);
       return;
     }
     const cache = this.getProbeCache();
     if (cache) {
       lines.push(`cache: ${JSON.stringify(cache)}`);
     }
-    void vscode.window.showInformationMessage(`koru probe OK\n${lines.join("\n")}`);
+    void vscode.window.showInformationMessage(`koru autopilot: probe OK\n${lines.join("\n")}`);
   }
 
   async captureSubmitClickPosition(): Promise<void> {
@@ -3166,7 +1830,7 @@ class SharedAutopilotBridge {
     await cfg.update("submitClickX", x, vscode.ConfigurationTarget.Global);
     await cfg.update("submitClickY", y, vscode.ConfigurationTarget.Global);
     debugLog("SUBMIT_CLICK_CAPTURED", { x, y });
-    void vscode.window.showInformationMessage(`koru submit click captured: ${x}, ${y}`);
+    void vscode.window.showInformationMessage(`koru autopilot: submit click captured: ${x}, ${y}`);
   }
 
   async sendManualChat(text: string): Promise<void> {

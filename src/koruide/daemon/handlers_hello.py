@@ -22,12 +22,14 @@ from koruide.protocol import Message, ack, error, MIN_PLUGIN_PROTOCOL_VERSION
 
 def _extract_hello_metadata(
     msg: Message,
-) -> tuple[str | None, str | None, int | None, list[str], str | None, list[str]]:
+) -> tuple[str | None, str | None, str | None, int | None, list[str], str | None, list[str]]:
     """Extract and validate hello message metadata."""
     raw_ide = msg.data.get("ide")
     ide = normalize_ide_id(raw_ide) if isinstance(raw_ide, str) else raw_ide
     version = msg.data.get("version")
     plugin_version = version if isinstance(version, str) else None
+    build_raw = msg.data.get("buildSha")
+    build_sha = build_raw if isinstance(build_raw, str) else None
     protocol_raw = msg.data.get("protocolVersion")
     protocol_version = protocol_raw if isinstance(protocol_raw, int) else None
     capabilities_raw = msg.data.get("capabilities")
@@ -44,7 +46,7 @@ def _extract_hello_metadata(
         if isinstance(folders_raw, list)
         else []
     )
-    return ide, plugin_version, protocol_version, capabilities, workspace_name, workspace_folders
+    return ide, plugin_version, build_sha, protocol_version, capabilities, workspace_name, workspace_folders
 
 
 def _handle_plugin_version_check(
@@ -53,6 +55,7 @@ def _handle_plugin_version_check(
     msg: Message,
     ide: str,
     plugin_version: str | None,
+    build_sha: str | None,
     protocol_version: int | None,
     capabilities: list[str],
 ) -> bool:
@@ -60,6 +63,7 @@ def _handle_plugin_version_check(
     version_info = DriveOrchestrator.plugin_version_info(
         plugin_ide=ide,
         connected_version=plugin_version,
+        connected_build_sha=build_sha,
         protocol_version=protocol_version,
         capabilities=capabilities,
     )
@@ -73,13 +77,17 @@ def _handle_plugin_version_check(
             ide=ide,
             plugin_version=plugin_version,
             expected_plugin_version=version_info.get("expected_plugin_version"),
+            plugin_build_sha=build_sha,
+            expected_plugin_build_sha=version_info.get("expected_plugin_build_sha"),
             message=message,
         )
         daemon.audit.record(
             "plugin_rejected",
             ide=ide,
             version=plugin_version,
+            build_sha=build_sha,
             expected_plugin_version=version_info.get("expected_plugin_version"),
+            expected_plugin_build_sha=version_info.get("expected_plugin_build_sha"),
             error=message,
         )
         daemon._drop(client)
@@ -92,6 +100,7 @@ def _configure_plugin_client(
     client: _Client,
     ide: str,
     plugin_version: str | None,
+    build_sha: str | None,
     protocol_version: int | None,
     capabilities: list[str],
     workspace_name: str | None,
@@ -101,6 +110,7 @@ def _configure_plugin_client(
     client.role = "plugin"
     client.ide = ide
     client.version = plugin_version
+    client.build_sha = build_sha
     client.protocol_version = protocol_version
     client.capabilities = capabilities
     client.workspace_name = workspace_name
@@ -112,6 +122,7 @@ def _log_plugin_hello_accepted(
     daemon: Any,
     ide: str,
     plugin_version: str | None,
+    build_sha: str | None,
     protocol_version: int | None,
     capabilities: list[str],
     version_info: dict[str, Any],
@@ -125,6 +136,7 @@ def _log_plugin_hello_accepted(
         "plugin hello accepted: "
         f"ide={ide} version={plugin_version or '-'} "
         f"expected={version_info.get('expected_plugin_version') or '-'} "
+        f"build={build_sha or '-'} expected_build={version_info.get('expected_plugin_build_sha') or '-'} "
         f"policy={version_info.get('plugin_version_policy') or 'warn'} "
         f"protocol={protocol_version or '-'} min_protocol={MIN_PLUGIN_PROTOCOL_VERSION} "
         f"capabilities={len(capabilities)} matching_commands={command_count} "
@@ -137,6 +149,7 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
     (
         ide,
         plugin_version,
+        build_sha,
         protocol_version,
         capabilities,
         workspace_name,
@@ -147,13 +160,14 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         return
 
     if not _handle_plugin_version_check(
-        daemon, client, msg, ide, plugin_version, protocol_version, capabilities
+        daemon, client, msg, ide, plugin_version, build_sha, protocol_version, capabilities
     ):
         return
 
     version_info = DriveOrchestrator.plugin_version_info(
         plugin_ide=ide,
         connected_version=plugin_version,
+        connected_build_sha=build_sha,
         protocol_version=protocol_version,
         capabilities=capabilities,
     )
@@ -163,6 +177,7 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         client,
         ide,
         plugin_version,
+        build_sha,
         protocol_version,
         capabilities,
         workspace_name,
@@ -190,6 +205,7 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         daemon,
         ide,
         plugin_version,
+        build_sha,
         protocol_version,
         capabilities,
         version_info,
@@ -202,6 +218,7 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         "plugin_connected",
         ide=ide,
         version=plugin_version,
+        build_sha=build_sha,
     )
 
 
@@ -212,6 +229,8 @@ def _log_rejected_plugin_connection(
     plugin_version: str | None,
     expected_plugin_version: Any,
     message: str,
+    plugin_build_sha: str | None = None,
+    expected_plugin_build_sha: Any = None,
 ) -> None:
     """Log rejected plugin connection with rate limiting."""
     from koruide.daemon.handlers import _ide_reload_label, _plugin_rejection_log_interval_seconds
@@ -235,6 +254,18 @@ def _log_rejected_plugin_connection(
             "If still mismatched after reload, rebuild and reinstall the "
             "VSIX from plugins/koru-autopilot-vscode/.",
         )
+    elif (
+        isinstance(expected_plugin_build_sha, str)
+        and plugin_build_sha
+        and plugin_build_sha != expected_plugin_build_sha
+    ):
+        ide_label = _ide_reload_label(ide)
+        daemon.log(
+            f"  → installed VSIX version matches, but build hash is {plugin_build_sha}; "
+            f"daemon expects {expected_plugin_build_sha}. Action: in {ide_label} run "
+            "`Developer: Reload Window` then `koru: Connect autopilot daemon`. "
+            "If still mismatched after reload, rebuild and reinstall the VSIX.",
+        )
     elif expected and not plugin_version:
         daemon.log(
             f"  → plugin sent no version; daemon expects v{expected}. "
@@ -248,6 +279,10 @@ def _log_rejected_plugin_connection(
             "ide": ide,
             "version": plugin_version,
             "expected_version": expected,
+            "build_sha": plugin_build_sha,
+            "expected_build_sha": (
+                expected_plugin_build_sha if isinstance(expected_plugin_build_sha, str) else None
+            ),
             "message": message,
             "suppressed": suppressed,
             "at": time.time(),

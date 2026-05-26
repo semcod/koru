@@ -1,17 +1,17 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.31s
-# nodes: 430 | edges: 500 | modules: 97
-# CC̄=3.5
+# generated in 0.41s
+# nodes: 429 | edges: 500 | modules: 94
+# CC̄=3.9
 
 HUBS[20]:
-  scripts.koru-soak-monitor.print
-    CC=0  in:593  out:0  total:593
+  docs.deployment-events.print
+    CC=0  in:619  out:0  total:619
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:144  out:9  total:153
+    CC=5  in:149  out:9  total:158
   src.koruide.ide.normalize_ide_id
     CC=6  in:64  out:11  total:75
-  koru.activity_log.activity
-    CC=6  in:47  out:13  total:60
+  src.koru.activity_log.activity
+    CC=6  in:49  out:13  total:62
   src.koru.context_render.render_markdown_handoff
     CC=10  in:5  out:47  total:52
   src.koru.events.emit_management_event
@@ -26,39 +26,32 @@ HUBS[20]:
     CC=12  in:1  out:31  total:32
   src.koruide.socket.default_socket_path
     CC=4  in:16  out:15  total:31
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  plugins.koru-autopilot-shared.src.ack-payload.type
-    CC=3  in:25  out:0  total:25
-  src.koru.context.build_context
-    CC=6  in:8  out:16  total:24
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.queue.ticket.planfile_command
-    CC=5  in:17  out:7  total:24
-  examples.remote_orchestration_demo.run_multi_node_orchestration
+    CC=5  in:18  out:7  total:25
+  src.koruapi.dashboard_routes._post_remote_drive
     CC=9  in:0  out:24  total:24
   src.koruapi.dashboard_config._dashboard_config_request_kwargs
     CC=10  in:1  out:23  total:24
   src.koruapi.dashboard_tickets.create_ticket_from_dashboard
     CC=8  in:2  out:22  total:24
-  src.koruapi.dashboard_routes._post_remote_drive
+  examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
+  src.koru.context.build_context
+    CC=6  in:8  out:16  total:24
+  src.koruapi.topology_post.apply_topology_post_update
+    CC=14  in:1  out:22  total:23
 
 MODULES:
+  docs.deployment-events  [1 funcs]
+    print  CC=0  out:0
+  docs.plans.capture-providers-refactor  [1 funcs]
+    list_monitors  CC=0  out:0
   examples.remote_orchestration_demo  [1 funcs]
     run_multi_node_orchestration  CC=9  out:24
-  koru.activity_log  [1 funcs]
-    activity  CC=6  out:13
-  koru.ide_client  [1 funcs]
-    build_ide_client  CC=3  out:5
-  plugins.koru-autopilot-shared.src.ack-payload  [1 funcs]
-    type  CC=3  out:0
-  plugins.koru-autopilot-shared.src.autopilot-bridge  [2 funcs]
-    bytes  CC=5  out:4
-    next  CC=2  out:1
-  scripts.koru-soak-monitor  [1 funcs]
-    print  CC=0  out:0
   services.healing-webhook.app  [23 funcs]
     _build_planfile_command  CC=2  out:1
     _enrich_ticket_with_vallm  CC=8  out:16
@@ -70,9 +63,14 @@ MODULES:
     _resolve_affected_files  CC=11  out:24
     _resolve_strategy  CC=3  out:1
     _run_docker  CC=1  out:3
-  services.healing-webhook.ticket_builder  [2 funcs]
+  services.healing-webhook.ticket_builder  [5 funcs]
+    _default_acceptance  CC=2  out:1
+    _format_paths  CC=2  out:1
     _infer_paths  CC=7  out:1
+    _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
+  src.koru.activity_log  [1 funcs]
+    activity  CC=6  out:13
   src.koru.autonomous_process_guard  [2 funcs]
     find_existing_autonomous_processes  CC=11  out:16
     find_existing_wup_processes  CC=11  out:15
@@ -101,6 +99,8 @@ MODULES:
     environment_profile_payload  CC=1  out:2
   src.koru.events  [1 funcs]
     emit_management_event  CC=8  out:7
+  src.koru.ide_client  [1 funcs]
+    build_ide_client  CC=3  out:5
   src.koru.interface_registry  [3 funcs]
     blocker_interface_payload  CC=2  out:2
     iter_interfaces  CC=1  out:1
@@ -173,12 +173,9 @@ MODULES:
   src.koruapi.dashboard_context  [2 funcs]
     dashboard_context_payload  CC=3  out:6
     dashboard_handoff_markdown  CC=1  out:2
-  src.koruapi.dashboard_html  [3 funcs]
+  src.koruapi.dashboard_html  [2 funcs]
     render_action_error_html  CC=1  out:4
-    render_action_success_html  CC=1  out:5
     render_create_ticket_success_html  CC=4  out:6
-  src.koruapi.dashboard_http  [1 funcs]
-    _safe_respond_json  CC=3  out:7
   src.koruapi.dashboard_observability  [3 funcs]
     _stored_event_payload  CC=1  out:0
     _trace_event_matches  CC=7  out:4
@@ -342,8 +339,6 @@ MODULES:
     default_socket_path  CC=4  out:15
   src.koruide.strategy_prompt  [1 funcs]
     build_strategy_prompt  CC=6  out:9
-  src.korullm.strategies.base  [1 funcs]
-    __repr__  CC=1  out:1
   src.korullm.strategies.registry  [4 funcs]
     _fallback_strategy  CC=3  out:2
     get_llm_strategy  CC=3  out:3
@@ -358,6 +353,8 @@ MODULES:
   src.korumesh.keys  [2 funcs]
     load_mesh_key  CC=2  out:6
     write_mesh_key  CC=3  out:6
+  src.korumesh.transport  [1 funcs]
+    publish_envelope  CC=4  out:9
   src.koruobserve.bootstrap  [3 funcs]
     _config_has_v2_sections  CC=2  out:1
     ensure_mesh_key  CC=3  out:6
@@ -414,8 +411,6 @@ MODULES:
     providers_test_payload  CC=6  out:5
     providers_test_text  CC=13  out:20
     screencast_session_path  CC=1  out:1
-  src.koruos.strategies.base  [1 funcs]
-    __repr__  CC=1  out:1
   src.koruos.strategies.darwin  [1 funcs]
     focus_window  CC=4  out:5
   src.koruos.strategies.wayland_linux  [8 funcs]
@@ -431,15 +426,16 @@ MODULES:
     _focus_via_wmctrl  CC=4  out:3
     _focus_via_xdotool  CC=11  out:10
     _inject_via_xdotool  CC=3  out:4
-  src.koruvision.agent  [3 funcs]
+  src.koruvision.agent  [5 funcs]
+    _capture_cycle  CC=2  out:2
+    capture_all_once  CC=1  out:1
     capture_once  CC=1  out:1
     normalize_capture_interval  CC=2  out:2
     run_capture_loop  CC=11  out:6
-  src.koruvision.capture  [4 funcs]
+  src.koruvision.capture  [3 funcs]
     _frame  CC=1  out:1
     capture_all_monitors  CC=2  out:3
     capture_monitor_png  CC=1  out:3
-    list_monitors  CC=2  out:2
   src.koruvision.capture_mss  [11 funcs]
     _grab_all_mss_raw  CC=5  out:6
     _grab_single_mss_raw  CC=6  out:10
@@ -483,12 +479,11 @@ MODULES:
     rgb_mostly_black  CC=5  out:4
 
 EDGES:
-  examples.remote_orchestration_demo.run_multi_node_orchestration → scripts.koru-soak-monitor.print
+  examples.remote_orchestration_demo.run_multi_node_orchestration → docs.deployment-events.print
   services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._resolve_affected_files
   services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._run_vallm_check
   services.healing-webhook.app._execute_planfile_create → services.healing-webhook.app._extract_ticket_id_from_stdout
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._enrich_ticket_with_vallm
-  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.next
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._build_planfile_command
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._execute_planfile_create
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload
@@ -512,6 +507,9 @@ EDGES:
   services.healing-webhook.app.get_history → src.koru.wizard.gui.static.wizard.list
   services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
   services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.logfile
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.runtime_dir
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.pidfile
@@ -531,5 +529,3 @@ EDGES:
   src.koruobserve.lifecycle.observe_down → src.koruobserve.lifecycle._stop_orphan_observe_processes
   src.koruobserve.lifecycle.observe_down → src.koruobserve.lifecycle._stop_pid
   src.koruobserve.lifecycle.observe_down → src.koruobserve.paths.state_file
-  src.koruobserve.lifecycle.observe_status → src.koruobserve.lifecycle._read_pid
-  src.koruobserve.lifecycle.observe_status → src.koruobserve.lifecycle._is_alive

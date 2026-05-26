@@ -55,6 +55,7 @@ _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
         {
             "ide",
             "version",
+            "buildSha",
             "pid",
             "matchingCommands",
             "commandCatalog",
@@ -153,8 +154,11 @@ def hello(
     capabilities: list[str] | None = None,
     workspace_name: str | None = None,
     workspace_folders: list[str] | None = None,
+    build_sha: str | None = None,
 ) -> Message:
     data: dict[str, Any] = {"ide": ide, "version": version, "pid": pid}
+    if build_sha is not None:
+        data["buildSha"] = build_sha
     if protocol_version is not None:
         data["protocolVersion"] = protocol_version
     if capabilities is not None:

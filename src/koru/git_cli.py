@@ -181,10 +181,7 @@ def _action_last_repo(args: argparse.Namespace) -> int:
     return 0 if data.get("success") else 1
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="koru git", description="Commit and push via koru.")
-    sub = parser.add_subparsers(dest="action", required=True)
-
+def _add_commit_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     commit = sub.add_parser("commit", help="Create a Git commit with koru co-author attribution.")
     commit.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     commit.add_argument("-m", "--message", required=True, help="Commit message subject/body.")
@@ -214,6 +211,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commit.set_defaults(func=_action_commit)
 
+
+def _add_push_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     push = sub.add_parser("push", help="Push the current branch via koru.")
     push.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     push.add_argument("remote", nargs="?", default="origin", help="Remote name.")
@@ -233,6 +232,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     push.set_defaults(func=_action_push)
 
+
+def _add_github_status_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     github_status = sub.add_parser("github-status", help="Show GitHub auth status through gh2mcp.")
     github_status.add_argument("--env-file", default=".env", help="gh2mcp .env path.")
     github_status.add_argument(
@@ -242,6 +243,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     github_status.set_defaults(func=_action_github_status)
 
+
+def _add_last_repo_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     last_repo = sub.add_parser(
         "last-repo",
         help="Resolve the last pushed GitHub repo through gh2mcp.",
@@ -250,6 +253,15 @@ def build_parser() -> argparse.ArgumentParser:
     last_repo.add_argument("--owner", default=None, help="GitHub user/org; defaults via gh2mcp.")
     last_repo.add_argument("--limit", type=int, default=100, help="Repository scan limit.")
     last_repo.set_defaults(func=_action_last_repo)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="koru git", description="Commit and push via koru.")
+    sub = parser.add_subparsers(dest="action", required=True)
+    _add_commit_parser(sub)
+    _add_push_parser(sub)
+    _add_github_status_parser(sub)
+    _add_last_repo_parser(sub)
     return parser
 
 

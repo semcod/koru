@@ -80,6 +80,8 @@ def test_annotate_plugin_ack_marks_strict_when_winning_commands_exist() -> None:
         submit_requested=True,
     )
     assert info["verification"] == "strict"
+    assert info["intent_status"] == "fulfilled"
+    assert info["intent_confidence"] == "strong"
 
 
 def test_annotate_plugin_ack_rejects_vscodium_registered_submit_false_positive() -> None:
@@ -98,6 +100,8 @@ def test_annotate_plugin_ack_rejects_vscodium_registered_submit_false_positive()
     )
 
     assert info["verification"] == "submit_unverified"
+    assert info["intent_status"] == "unverified"
+    assert info["intent_confidence"] == "none"
     assert "registered submit command is not trusted" in info["submit_failure_reason"]
 
 
@@ -111,7 +115,12 @@ def test_annotate_plugin_ack_accepts_vscodium_registered_submit_with_verify_prob
             "winning_paste": "host-clipboard:wl-copy+xdotool key ctrl+v",
             "winning_submit": "workbench.action.chat.submit",
             "operation_trace": [
-                {"op": "submit", "route": "accepted", "ok": True},
+                {
+                    "op": "submit",
+                    "route": "accepted",
+                    "ok": True,
+                    "detail": {"requireEmptyAfterSubmit": True},
+                },
                 {"op": "submit_verify", "route": "chat-input-probe", "ok": True},
             ],
         },
@@ -121,6 +130,83 @@ def test_annotate_plugin_ack_accepts_vscodium_registered_submit_with_verify_prob
     )
 
     assert info["verification"] == "strict"
+
+
+def test_annotate_plugin_ack_rejects_vscodium_loose_submit_verify_probe() -> None:
+    info = DriveOrchestrator.annotate_plugin_ack(
+        info={
+            "delivered": True,
+            "opened": True,
+            "submitted": True,
+            "winning_focus_open": "workbench.panel.chat+workbench.action.chat.focusInput",
+            "winning_paste": "editor.action.clipboardPasteAction",
+            "winning_submit": "workbench.action.chat.submit",
+            "operation_trace": [
+                {
+                    "op": "submit",
+                    "route": "accepted",
+                    "ok": True,
+                    "detail": {"requireEmptyAfterSubmit": False},
+                },
+                {"op": "submit_verify", "route": "chat-input-probe", "ok": True},
+            ],
+        },
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="vscodium",
+    )
+
+    assert info["verification"] == "submit_unverified"
+    assert "empty-input" in info["submit_failure_reason"]
+
+
+def test_annotate_plugin_ack_accepts_vscodium_message_sent_event_after_loose_submit_probe() -> None:
+    info = DriveOrchestrator.annotate_plugin_ack(
+        info={
+            "delivered": True,
+            "opened": True,
+            "submitted": True,
+            "winning_focus_open": "workbench.panel.chat+workbench.action.chat.focusInput",
+            "winning_paste": "editor.action.clipboardPasteAction",
+            "winning_submit": "workbench.action.chat.submit",
+            "operation_trace": [
+                {
+                    "op": "submit",
+                    "route": "accepted",
+                    "ok": True,
+                    "detail": {"requireEmptyAfterSubmit": False},
+                },
+                {"op": "submit_verify", "route": "sentinel-clipboard", "ok": True},
+                {"op": "message_sent", "route": "plugin-event", "ok": True},
+            ],
+        },
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="vscodium",
+    )
+
+    assert info["verification"] == "event_only"
+    assert info["intent_status"] == "fulfilled"
+    assert info["intent_validator"] == "message.sent"
+    assert "message.sent event observed" in info["submit_success_reason"]
+
+
+def test_should_defer_submit_unverified_for_vscodium_message_sent_grace() -> None:
+    assert DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
+        info={"verification": "submit_unverified"},
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="vscodium",
+    )
+
+
+def test_should_not_defer_non_vscodium_submit_unverified() -> None:
+    assert not DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
+        info={"verification": "submit_unverified"},
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="vscode",
+    )
 
 
 def test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands() -> None:
@@ -170,6 +256,39 @@ def test_plugin_version_policy_can_block(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     info = {"plugin_version_mismatch": True}
 
+    assert DriveOrchestrator.should_block_plugin_version(info)
+
+
+def test_plugin_build_sha_blocks_same_version_stale_build(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: "0.2.7")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_build_sha", lambda _ide=None: "newbuild")
+
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscodium",
+        connected_version="0.2.7",
+        connected_build_sha="oldbuild",
+        protocol_version=2,
+    )
+
+    assert info["plugin_version_mismatch"] is False
+    assert info["plugin_build_mismatch"] is True
+    assert DriveOrchestrator.should_block_plugin_version(info)
+    assert "build mismatch" in DriveOrchestrator.plugin_version_block_message(info)
+
+
+def test_plugin_build_sha_missing_blocks_when_expected_build_known(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: "0.2.7")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_build_sha", lambda _ide=None: "newbuild")
+
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscodium",
+        connected_version="0.2.7",
+        protocol_version=2,
+    )
+
+    assert info["plugin_build_missing"] is True
     assert DriveOrchestrator.should_block_plugin_version(info)
 
 
@@ -342,6 +461,64 @@ def test_drive_outcome_dsl_includes_winners_and_reason() -> None:
         in line
     )
     assert 'reason="no fresh user bubble after 2.5s"' in line
+
+
+def test_drive_validation_dsl_separates_action_from_intent() -> None:
+    lines = DriveOrchestrator.drive_validation_dsl(
+        {
+            "verification": "submit_unverified",
+            "intent": "send_prompt",
+            "intent_status": "unverified",
+            "intent_confidence": "none",
+            "intent_validator": "submit_unverified",
+            "intent_reason": "type newline is not a chat send proof",
+        }
+    )
+
+    assert lines[0].startswith("#800 act=validate")
+    assert "validator=submit_unverified" in lines[0]
+    assert "ok=false" in lines[0]
+    assert "confidence=none" in lines[0]
+    assert lines[1].startswith("#801 act=intent name=send_prompt")
+    assert "status=unverified" in lines[1]
+
+
+def test_drive_operator_dsl_adds_diagnosis_next_replay_and_validate() -> None:
+    lines = DriveOrchestrator.drive_operator_dsl(
+        {
+            "delivered": False,
+            "verification": "submit_unverified",
+            "attempted_submit": "workbench.action.chat.submit",
+            "submit_failure_reason": "input still contains pasted text",
+            "replay_command": (
+                "KORU_AUTOPILOT_INSTANCE=vscodium koru autopilot drive --ide "
+                "vscodium --require-plugin --prompt-file /tmp/drive.prompt"
+            ),
+            "validate_command": (
+                "koru autopilot trace --project /tmp/project --format drive-dsl --limit 30"
+            ),
+        },
+        plugin_ok=False,
+    )
+
+    assert lines[0].startswith("#900 act=diagnose severity=error code=submit_not_verified")
+    assert 'because="input still contains pasted text"' in lines[0]
+    assert lines[1].startswith("#901 act=next owner=operator")
+    assert "inspect replay trace" in lines[1]
+    assert lines[2].startswith("#902 act=replay shell=")
+    assert "--prompt-file /tmp/drive.prompt" in lines[2]
+    assert lines[3].startswith("#903 act=validate shell=")
+    assert "--format drive-dsl" in lines[3]
+
+
+def test_drive_operator_dsl_marks_strict_submit_as_koru_owned_next_step() -> None:
+    lines = DriveOrchestrator.drive_operator_dsl(
+        {"delivered": True, "verification": "strict"},
+        plugin_ok=True,
+    )
+
+    assert lines[0].startswith("#900 act=diagnose severity=ok code=submit_verified")
+    assert lines[1].startswith("#901 act=next owner=koru")
 
 
 def test_strict_plugin_version_blocks_when_expected_version_missing(monkeypatch) -> None:

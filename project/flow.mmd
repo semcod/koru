@@ -1,41 +1,26 @@
 flowchart TD
-%% generated in 0.16s
+%% generated in 0.14s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
-    subgraph CLI
-        koru__ide_client__IDEControlClient__is_running["is_running"]
-        koru__ide_client__IDEControlClient__drive["drive"]
-        koru__ide_client__IDEControlClient__status["status"]
-        koru__ide_client__IDEControlClient__shutdown["shutdown"]
-        koru__ide_client__LegacyAutopilotClientAdapter__is_running["is_running"]
-        koru__ide_client__LegacyAutopilotClientAdapter__drive["drive"]
-        koru__ide_client__LegacyAutopilotClientAdapter__status["status"]
-        koru__ide_client__LegacyAutopilotClientAdapter__shutdown["shutdown"]
-        koru__ide_client__adapt_legacy_autopilot_client["adapt_legacy_autopilot_client"]
-        koru__ide_client__build_legacy_ide_client["build_legacy_ide_client"]
-        koru__ide_client__build_koruide_client["build_koruide_client"]
-        koru__ide_client__build_ide_client["build_ide_client"]
-    end
-
     subgraph Core
-        services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
-        services__healing_webhook__app__heal_annotate["heal_annotate"]
-        services__healing_webhook__app___run_vallm_validate["_run_vallm_validate"]
-        services__healing_webhook__app__heal_vallm_validate["heal_vallm_validate"]
-        services__healing_webhook__app__heal_redup_check["heal_redup_check"]
-        services__healing_webhook__app__healthz["healthz"]
-        services__healing_webhook__app__metrics["metrics"]
-        services__healing_webhook__app__get_history["get_history"]
-        services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
-        services__healing_webhook__app__probe_failure["probe_failure"]
-        services__healing_webhook__app__get_tickets["get_tickets"]
-        src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
-        src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
-        src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
-        src__koruobserve__cli___pip_install["_pip_install"]
-        ...["+2514 more"]
+        docs__deployment_events__on_deployment_start["on_deployment_start"]
+        docs__deployment_events__on_deployment_complete["on_deployment_complete"]
+        docs__deployment_events__on_deployment_error["on_deployment_error"]
+        docs__koru_auto_vs_observe_up__print["print"]
+        docs__plans__observation_mesh_plan__start["start"]
+        docs__plans__observation_mesh_plan__stop["stop"]
+        docs__plans__observation_mesh_plan__latest["latest"]
+        docs__plans__capture_providers_refactor__availability["availability"]
+        docs__plans__capture_providers_refactor__capture_all["capture_all"]
+        docs__plans__capture_providers_refactor__start_stream["start_stream"]
+        docs__refactoring__REFACTORING_PLAN___get_X["_get_X"]
+        docs__refactoring__REFACTORING_PLAN___get_dashboard["_get_dashboard"]
+        docs__refactoring__REFACTORING_PLAN__run["run"]
+        docs__refactor__ide_bridge_2026__detect["detect"]
+        docs__refactor__ide_bridge_2026__install_plugin["install_plugin"]
+        ...["+1375 more"]
     end
 
     subgraph Exporters
@@ -43,4 +28,4 @@ flowchart TD
         src__koru__cli___has_legacy_exports["_has_legacy_exports"]
     end
 
-    class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook,services__healing_webhook__app__probe_failure entry
+    class docs__deployment_events__on_deployment_start,docs__deployment_events__on_deployment_complete,docs__deployment_events__on_deployment_error,docs__koru_auto_vs_observe_up__print,docs__plans__observation_mesh_plan__start,docs__plans__observation_mesh_plan__stop,docs__plans__observation_mesh_plan__latest,docs__plans__capture_providers_refactor__availability,docs__plans__capture_providers_refactor__capture_all,docs__plans__capture_providers_refactor__start_stream entry

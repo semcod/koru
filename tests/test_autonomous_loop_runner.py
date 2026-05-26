@@ -338,7 +338,7 @@ def test_quick_action_create_ticket_uses_fast_action_endpoint() -> None:
     assert "/llm/prompt/create-ticket-for-project" not in create
 
 
-def test_quick_action_retry_submit_uses_selected_autopilot_ide() -> None:
+def test_quick_action_submit_unverified_surfaces_trace_instead_of_retry() -> None:
     actions = autonomous_loop_runner._quick_action_lines(
         project=None,
         queue_status="waiting_input",
@@ -347,9 +347,9 @@ def test_quick_action_retry_submit_uses_selected_autopilot_ide() -> None:
         autopilot_ide="vscodium",
     )
 
-    retry = next(line for line in actions if line.startswith("[retry submit]"))
-    assert "--ide vscodium" in retry
-    assert "--ide cursor" not in retry
+    assert not any(line.startswith("[retry submit]") for line in actions)
+    assert any(line.startswith("[validate submit trace]") for line in actions)
+    assert any("Manual IDE action required: submit was not verified" in line for line in actions)
 
 
 def test_quick_action_open_ticket_reuses_dashboard_tickets_url_with_hash(
@@ -375,11 +375,8 @@ def test_quick_action_open_ticket_reuses_dashboard_tickets_url_with_hash(
     )
 
     open_ticket = next(line for line in actions if line.startswith("[open ticket] "))
-    assert open_ticket == (
-        "[open ticket] "
-        "http://127.0.0.1:8765/?tab=tickets&project=%2Ftmp%2Frepo&ide=vscode"
-        "#STARTER-248"
-    )
+    assert open_ticket.startswith("[open ticket] `koru replay 'ticket open STARTER-248")
+    assert "tab=tickets&project=%2Ftmp%2Frepo&ide=vscode" in open_ticket
 
 
 def test_blocked_interface_action_lines_filter_to_jetbrains_lane() -> None:
@@ -439,4 +436,5 @@ def test_operator_quick_actions_emit_replayable_control_commands(tmp_path) -> No
     assert "GET /api/interfaces" in operations
     assert "bash" in operations
     assert "command_palette_sequence" in operations
-    assert any("planfile ticket input STARTER-277" in str(command["args"]) for command in commands)
+    assert any("koru replay" in str(command["args"]) for command in commands)
+    assert any("ticket input STARTER-277" in str(command["args"]) for command in commands)

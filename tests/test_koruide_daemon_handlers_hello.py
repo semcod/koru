@@ -24,15 +24,17 @@ def test_extract_hello_metadata_complete() -> None:
         data={
             "ide": "vscode",
             "version": "1.0.0",
+            "buildSha": "build123",
             "protocolVersion": 2,
             "capabilities": ["chat", "commands"],
             "workspaceName": "koru",
             "workspaceFolders": ["/repo/koru"],
         },
     )
-    ide, version, protocol, caps, workspace_name, workspace_folders = _extract_hello_metadata(msg)
+    ide, version, build_sha, protocol, caps, workspace_name, workspace_folders = _extract_hello_metadata(msg)
     assert ide == "vscode"
     assert version == "1.0.0"
+    assert build_sha == "build123"
     assert protocol == 2
     assert caps == ["chat", "commands"]
     assert workspace_name == "koru"
@@ -42,9 +44,10 @@ def test_extract_hello_metadata_complete() -> None:
 def test_extract_hello_metadata_minimal() -> None:
     """Test _extract_hello_metadata with minimal data."""
     msg = Message(type="hello", id="h-1", data={"ide": "cursor"})
-    ide, version, protocol, caps, workspace_name, workspace_folders = _extract_hello_metadata(msg)
+    ide, version, build_sha, protocol, caps, workspace_name, workspace_folders = _extract_hello_metadata(msg)
     assert ide == "cursor"
     assert version is None
+    assert build_sha is None
     assert protocol is None
     assert caps == []
     assert workspace_name is None
@@ -54,7 +57,7 @@ def test_extract_hello_metadata_minimal() -> None:
 def test_extract_hello_metadata_no_ide() -> None:
     """Test _extract_hello_metadata without ide field."""
     msg = Message(type="hello", id="h-1", data={})
-    ide, _version, _protocol, _caps, _workspace_name, _workspace_folders = _extract_hello_metadata(msg)
+    ide, _version, _build_sha, _protocol, _caps, _workspace_name, _workspace_folders = _extract_hello_metadata(msg)
     assert ide is None
 
 
@@ -69,6 +72,7 @@ def test_configure_plugin_client() -> None:
         client,
         ide="vscode",
         plugin_version="1.0.0",
+        build_sha="build123",
         protocol_version=2,
         capabilities=["chat"],
         workspace_name="koru",
@@ -78,6 +82,7 @@ def test_configure_plugin_client() -> None:
     assert client.role == "plugin"
     assert client.ide == "vscode"
     assert client.version == "1.0.0"
+    assert client.build_sha == "build123"
     assert client.protocol_version == 2
     assert client.capabilities == ["chat"]
     assert client.workspace_name == "koru"
@@ -94,6 +99,7 @@ def test_log_plugin_hello_accepted() -> None:
         daemon,
         ide="vscode",
         plugin_version="1.0.0",
+        build_sha="build123",
         protocol_version=2,
         capabilities=["chat", "commands"],
         version_info=version_info,

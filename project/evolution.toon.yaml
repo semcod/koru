@@ -1,42 +1,58 @@
-# code2llm/evolution | 4892 func | 419f | 2026-05-25
+# code2llm/evolution | 3369 func | 375f | 2026-05-26
 # generated in 0.02s
 
-NEXT[6] (ranked by impact):
-  [1] !! SPLIT           plugins/koru-autopilot-antigravity/src/extension.ts
-      WHY: 2704L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37856
+NEXT[10] (ranked by impact):
+  [1] !! SPLIT           src/koru/scan.py
+      WHY: 1585L, 0 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 20605
 
-  [2] !! SPLIT           plugins/koru-autopilot-windsurf/src/extension.ts
-      WHY: 2704L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37856
+  [2] !  SPLIT-FUNC      _handle_post_drive_verification  CC=19  fan=22
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 418
 
-  [3] !  SPLIT-FUNC      _handle_post_drive_verification  CC=18  fan=21
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 378
+  [3] !  SPLIT-FUNC      _known_replay_action  CC=24  fan=11
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 264
 
-  [4] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=16  fan=20
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 320
+  [4] !  SPLIT-FUNC      action_status  CC=15  fan=17
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 255
 
-  [5] !  SPLIT-FUNC      SharedAutopilotBridge._performInject  CC=16  fan=20
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 320
+  [5] !  SPLIT-FUNC      _apply_llx_chat_reflection  CC=21  fan=12
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 252
 
-  [6] !! SPLIT           planfile.yaml
+  [6] !  SPLIT-FUNC      _load_open_tickets_for_planning  CC=21  fan=10
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [7] !  SPLIT-FUNC      apply_autonomy_strategy_defaults  CC=15  fan=13
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 195
+
+  [8] !  SPLIT-FUNC      quick_action_to_replay  CC=15  fan=13
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 195
+
+  [9] !! SPLIT           CHANGELOG.md
+      WHY: 5918L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
+
+  [10] !! SPLIT           planfile.yaml
       WHY: 1357L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-antigravity/src/extension.ts may break 202 import paths
-  ⚠ Splitting plugins/koru-autopilot-windsurf/src/extension.ts may break 202 import paths
+  ⚠ Splitting CHANGELOG.md may break 0 import paths
+  ⚠ Splitting src/koru/scan.py may break 55 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
 
 METRICS-TARGET:
-  CC̄:          3.6 → ≤2.5
+  CC̄:          4.0 → ≤2.8
   max-CC:      30 → ≤15
-  god-modules: 13 → 0
-  high-CC(≥15): 6 → ≤3
+  god-modules: 27 → 0
+  high-CC(≥15): 22 → ≤11
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -64,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.6 → now CC̄=3.6
+  prev CC̄=3.6 → now CC̄=4.0

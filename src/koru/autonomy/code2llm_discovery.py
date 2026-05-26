@@ -15,6 +15,7 @@ the caller can fall back to the legacy "create operator ticket" flow.
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import subprocess
 import time
@@ -138,6 +139,55 @@ def _build_code2llm_cmd(
     return cmd
 
 
+def _file_evidence(project: Path, path: Path) -> dict[str, object]:
+    try:
+        stat = path.stat()
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        rel = str(path.relative_to(project))
+    except (OSError, ValueError):
+        return {}
+    return {
+        "path": rel,
+        "size_bytes": stat.st_size,
+        "mtime_ns": stat.st_mtime_ns,
+        "sha256": digest,
+    }
+
+
+def _source_evidence_context(project: Path, artifacts_dir: Path, item: dict[str, Any]) -> dict[str, Any]:
+    source_files = _string_list(item.get("files"))
+    return {
+        "evidence": {
+            "schema": "koru.ticket_evidence.v1",
+            "kind": "code2llm_discovery",
+            "artifact": _file_evidence(project, artifacts_dir / "analysis.toon.yaml"),
+            "planfile_tickets": _file_evidence(project, artifacts_dir / "planfile-tickets.yaml"),
+            "files": [
+                evidence
+                for rel in source_files
+                if (evidence := _file_evidence(project, project / rel))
+            ],
+            "regenerate_command": " ".join(
+                _build_code2llm_cmd(
+                    "code2llm",
+                    project=project,
+                    output_dir=artifacts_dir,
+                    formats=DEFAULT_FORMATS,
+                    excludes=DEFAULT_EXCLUDES,
+                    apply_planfile=True,
+                    planfile_source=str(item.get("source") or "koru-project-discovery"),
+                    planfile_sprint="current",
+                    planfile_limit=20,
+                )
+            ),
+            "staleness_check": (
+                "Regenerate artifacts and compare artifact.sha256 / files[].sha256 "
+                "before assuming this ticket is still current."
+            ),
+        }
+    }
+
+
 def _read_planfile_tickets_output(artifacts_dir: Path) -> tuple[list[str], list[str]]:
     """Parse ``planfile-tickets.yaml`` for the applied/skipped lists."""
     path = artifacts_dir / "planfile-tickets.yaml"
@@ -210,7 +260,13 @@ def _backfill_existing_dedupe_keys(
         return 0
     changed = 0
     for ticket in tickets.values():
-        if _backfill_ticket_dedupe_key(ticket, by_key, source):
+        if _backfill_ticket_dedupe_key(
+            ticket,
+            by_key,
+            source,
+            project=project,
+            artifacts_dir=artifacts_dir,
+        ):
             changed += 1
     if changed:
         try:
@@ -227,6 +283,9 @@ def _backfill_ticket_dedupe_key(
     ticket: Any,
     by_key: dict[tuple[str, tuple[str, ...]], dict[str, Any]],
     source: str,
+    *,
+    project: Path,
+    artifacts_dir: Path,
 ) -> bool:
     if not isinstance(ticket, dict):
         return False
@@ -234,7 +293,7 @@ def _backfill_ticket_dedupe_key(
     if not _ticket_source_matches(ticket_source, source):
         return False
     context = ticket_source.get("context")
-    if isinstance(context, dict) and context.get("dedupe_key"):
+    if isinstance(context, dict) and context.get("dedupe_key") and context.get("evidence"):
         return False
     item = by_key.get(_existing_ticket_match_key(ticket))
     if not item:
@@ -242,7 +301,13 @@ def _backfill_ticket_dedupe_key(
     dedupe_key = str(item.get("dedupe_key") or "").strip()
     if not dedupe_key:
         return False
-    ticket_source["context"] = _merged_ticket_source_context(context, item, dedupe_key)
+    ticket_source["context"] = _merged_ticket_source_context(
+        context,
+        item,
+        dedupe_key,
+        project=project,
+        artifacts_dir=artifacts_dir,
+    )
     return True
 
 
@@ -261,12 +326,16 @@ def _merged_ticket_source_context(
     context: Any,
     item: dict[str, Any],
     dedupe_key: str,
+    *,
+    project: Path,
+    artifacts_dir: Path,
 ) -> dict[str, Any]:
     new_context = dict(context) if isinstance(context, dict) else {}
     signal = str(item.get("signal") or "").strip()
     if signal:
         new_context.setdefault("signal", signal)
     new_context["dedupe_key"] = dedupe_key
+    new_context.update(_source_evidence_context(project, artifacts_dir, item))
     return new_context
 
 
@@ -288,7 +357,12 @@ def _apply_planfile_ticket_items(
     skipped: list[str] = []
     selected = items[:limit] if limit is not None and limit > 0 else items
     for item in selected:
-        scaffold = _ticket_item_scaffold(item, source)
+        scaffold = _ticket_item_scaffold(
+            item,
+            source,
+            project=project,
+            artifacts_dir=artifacts_dir,
+        )
         title = str(scaffold["title"])
         try:
             created = create_nl_task(
@@ -308,24 +382,41 @@ def _apply_planfile_ticket_items(
     return applied, skipped
 
 
-def _ticket_item_scaffold(item: dict[str, Any], source: str) -> dict[str, Any]:
+def _ticket_item_scaffold(
+    item: dict[str, Any],
+    source: str,
+    *,
+    project: Path | None = None,
+    artifacts_dir: Path | None = None,
+) -> dict[str, Any]:
     return {
         "title": str(item.get("title") or "code2llm discovery ticket").strip(),
         "labels": _string_list(item.get("labels")),
         "files": _string_list(item.get("files")),
         "source_tool": source,
-        "source_context": _ticket_item_source_context(item),
+        "source_context": _ticket_item_source_context(
+            item,
+            project=project,
+            artifacts_dir=artifacts_dir,
+        ),
         "executor_kind": "human",
         "executor_mode": "interactive",
     }
 
 
-def _ticket_item_source_context(item: dict[str, Any]) -> dict[str, Any]:
+def _ticket_item_source_context(
+    item: dict[str, Any],
+    *,
+    project: Path | None = None,
+    artifacts_dir: Path | None = None,
+) -> dict[str, Any]:
     source_context: dict[str, Any] = {}
     for key in ("signal", "dedupe_key"):
         value = str(item.get(key) or "").strip()
         if value:
             source_context[key] = value
+    if project is not None and artifacts_dir is not None:
+        source_context.update(_source_evidence_context(project, artifacts_dir, item))
     return source_context
 
 

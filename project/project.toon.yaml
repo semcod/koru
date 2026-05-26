@@ -1,55 +1,55 @@
-# koru | 4989 func | 439f | 105861L | python | 2026-05-25
+# koru | 3471 func | 396f | 113658L | python | 2026-05-26
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.5  critical=288 (limit:10)  dup=13  cycles=0
+  CC̄=3.9  critical=253 (limit:10)  dup=7  cycles=0
 
 ALERTS[20]:
   !!! cc_exceeded      decide = 30 (limit:15)
-  !!! high_fan_out     _drive_via_plugin = 29 (limit:10)
   !!! high_fan_out     run_api_request = 24 (limit:10)
+  !!! high_fan_out     run_cycle = 24 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
-  !!! high_fan_out     run_cycle = 23 (limit:10)
   !!! high_fan_out     observe_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     evaluate_bridge = 22 (limit:10)
-  !!! high_fan_out     AutopilotBridge.tryCursorComposerPromptFastPath = 22 (limit:10)
+  !!! high_fan_out     _handle_post_drive_verification = 22 (limit:10)
+  !!! high_fan_out     action_drive = 22 (limit:10)
 
-MODULES[626] (top by size):
-  M[plugins/koru-autopilot-shared/src/autopilot-bridge.ts] 3059L C:6 F:403 CC↑16 D:22 (typescript)
-  M[plugins/koru-autopilot-vscodium/src/extension.ts] 2746L C:1 F:204 CC↑14 D:0 (typescript)
-  M[plugins/koru-autopilot-antigravity/src/extension.ts] 2704L C:2 F:202 CC↑14 D:0 (typescript)
-  M[plugins/koru-autopilot-windsurf/src/extension.ts] 2704L C:2 F:202 CC↑14 D:0 (typescript)
+MODULES[653] (top by size):
+  M[CHANGELOG.md] 5918L C:0 F:0 CC↑0 D:0 (md)
   M[src/koru/doctor.py] 1670L C:2 F:71 CC↑13 D:2 (python)
+  M[src/koru/scan.py] 1585L C:0 F:55 CC↑13 D:3 (python)
   M[planfile.yaml] 1357L C:0 F:0 CC↑0 D:0 (yaml)
+  M[src/koru/autonomous_cycle.py] 1347L C:0 F:35 CC↑21 D:1 (python)
   M[src/koruapi/mcp_server.py] 1320L C:0 F:42 CC↑14 D:4 (python)
-  M[src/koru/scan.py] 1183L C:0 F:37 CC↑13 D:3 (python)
-  M[src/koru/autonomous_cycle.py] 1167L C:0 F:31 CC↑18 D:1 (python)
+  M[README.md] 1276L C:0 F:0 CC↑0 D:0 (md)
+  M[src/koru/autonomous_loop_runner.py] 1163L C:1 F:52 CC↑12 D:2 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1016L C:2 F:44 CC↑14 D:0 (python)
-  M[src/koru/autonomous_loop_runner.py] 1008L C:1 F:48 CC↑10 D:2 (python)
-  M[src/koru/autonomous.py] 987L C:0 F:62 CC↑4 D:4 (python)
+  M[src/koru/autonomous.py] 988L C:0 F:62 CC↑4 D:4 (python)
   M[src/koruide/plugin_installer.py] 927L C:1 F:43 CC↑12 D:8 (python)
   M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koruide/drive_orchestrator.py] 834L C:1 F:30 CC↑23 D:0 (python)
+  M[docs/cli-examples.md] 823L C:0 F:0 CC↑0 D:0 (md)
   M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:7 (python)
-  LANGS: python:448/typescript:62/shell:49/yaml:24/json:16/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
+  LANGS: python:459/md:94/shell:49/yaml:24/yml:10/json:9/other:4/txt:2/javascript:1/toml:1
 
 HOTSPOTS[10]:
-  ★ _drive_via_plugin fan=29  // Forward a drive request to a connected plugin for that IDE.
   ★ run_api_request fan=24  // Execute an HTTP API request.
+  ★ run_cycle fan=24  // Orchestrates 24 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
   ★ topology_main fan=23  // Orchestrates 23 calls
-  ★ run_cycle fan=23  // Orchestrates 23 calls
+  ★ observe_up fan=22  // Orchestrates 22 calls
 
 REFACTOR[15]:
   [1] H/L Split decide (CC=30)
-  [2] H/H Split god module src/koru/autonomous_cycle.py (1167L, 0 classes)
-  [3] H/H Split god module plugins/koru-autopilot-shared/src/autopilot-bridge.ts (3059L, 6 classes)
-  [4] H/H Split god module plugins/koru-autopilot-antigravity/src/extension.ts (2704L, 2 classes)
-  [5] H/H Split god module plugins/koru-autopilot-vscodium/src/extension.ts (2746L, 1 classes)
+  [2] H/H Split god module src/koruide/drive_orchestrator.py (834L, 1 classes)
+  [3] H/H Split god module src/koru/autonomous_cycle.py (1347L, 0 classes)
+  [4] H/H Split god module src/koru/autonomous_cycle_chat_activity.py (530L, 0 classes)
+  [5] H/H Split god module src/koru/autopilot/install_manager.py (508L, 1 classes)
 
 EVOLUTION:
-  2026-05-25 CC̄=3.5 crit=288 105861L // Automated analysis
+  2026-05-26 CC̄=3.9 crit=253 113658L // Automated analysis

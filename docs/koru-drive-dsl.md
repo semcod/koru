@@ -43,6 +43,19 @@ The drive's final verdict is emitted as a special `#999` line:
 [DSL] #999 act=drive intent="top-level autopilot drive pipeline" delivered=<true|false> verification=<probe> winners=focus=<cmd>|paste=<cmd>|submit=<cmd> [reason="..."]
 ```
 
+Operator diagnosis lines are emitted after the verdict:
+
+```text
+[DSL] #900 act=diagnose severity=<ok|warning|error> code=<diagnosis> because="..."
+[DSL] #901 act=next owner=<koru|operator> action="..."
+[DSL] #902 act=replay shell="KORU_AUTOPILOT_INSTANCE=<ide> koru autopilot drive --ide <ide> --require-plugin --prompt-file <path>"
+[DSL] #903 act=validate shell="koru autopilot trace --project <project> --format drive-dsl --limit 30"
+```
+
+`#902` is intentionally a complete copy-paste shell command. The daemon
+stores the exact prompt in `.planfile/.koru/replay/<corr>.prompt`, so
+the replay command does not depend on fragile shell quoting.
+
 ## Stable intent vocabulary
 
 The daemon maps every plugin `op` to a stable intent string so different
@@ -76,6 +89,10 @@ by `composer.sendToAgent` (no fresh `type=1` bubble) and then by
 [DSL] #005 act=submit intent="send the prompt as a user message" route=command:composer.sendToAgent ok=ambiguous reason="no fresh type=1 bubble after 2.5s"
 [DSL] #006 act=submit intent="send the prompt as a user message" route=command:composer.acceptComposerStep ok=false reason="executeCommand returned false"
 [DSL] #999 act=drive intent="top-level autopilot drive pipeline" delivered=false verification=submit_unverified winners=focus=composer.openComposer|paste=editor.action.clipboardPasteAction|submit=- reason="no fresh type=1 bubble after 2.5s"
+[DSL] #900 act=diagnose severity=error code=submit_not_verified because="no fresh type=1 bubble after 2.5s"
+[DSL] #901 act=next owner=operator action="do not redrive blindly; inspect replay trace and retry after submit strategy fix"
+[DSL] #902 act=replay shell="KORU_AUTOPILOT_INSTANCE=cursor koru autopilot drive --ide cursor --require-plugin --prompt-file /repo/.planfile/.koru/replay/cli-drive.prompt"
+[DSL] #903 act=validate shell="koru autopilot trace --project /repo --format drive-dsl --limit 30"
 ```
 
 A successful drive on the same IDE looks like:
@@ -85,6 +102,8 @@ A successful drive on the same IDE looks like:
 [DSL] #002 act=paste intent="write the prompt text into the chat input" route=command:editor.action.clipboardPasteAction ok=true
 [DSL] #003 act=submit intent="send the prompt as a user message" route=command:composer.sendToAgent ok=true
 [DSL] #999 act=drive intent="top-level autopilot drive pipeline" delivered=true verification=cursorDiskKV_bubble winners=focus=composer.openComposer|paste=editor.action.clipboardPasteAction|submit=composer.sendToAgent
+[DSL] #900 act=diagnose severity=ok code=submit_verified because="plugin ack carried required focus/paste/submit proofs"
+[DSL] #901 act=next owner=koru action="wait for IDE/LLM response or ticket state transition"
 ```
 
 ## How to consume it
@@ -98,10 +117,17 @@ A successful drive on the same IDE looks like:
   rg '\[DSL\]' /tmp/koru-autopilot-cursor.log | less -SR
   ```
 
+- **Operator (last drive DSL)**: print the persisted recent drive trace:
+
+  ```bash
+  koru autopilot trace --format drive-dsl --limit 30
+  ```
+
 - **Dashboard / autonomous**: the relayed ack envelope now carries
-  `drive_dsl: string[]` and `drive_dsl_outcome: string`. Any consumer
-  that already inspects `verification` / `winning_*` can also read these
-  fields without further parsing.
+  `drive_dsl: string[]`, `drive_dsl_outcome: string`, and
+  `drive_dsl_operator: string[]`. Any consumer that already inspects
+  `verification` / `winning_*` can also read these fields without further
+  parsing.
 
 ## Tuning the drive timeout
 

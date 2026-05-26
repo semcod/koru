@@ -55,10 +55,12 @@ def decision_next_step_hint(
     status = (autopilot_status or "").lower()
     if status == "ok":
         return "wait for IDE response, then advance queue"
+    if cycle_telemetry.get("autopilot_submit_unverified"):
+        return "manual send required; validate submit trace before any redrive"
     telemetry_hint = _telemetry_next_step_hint(cycle_telemetry)
     if telemetry_hint is not None:
         return telemetry_hint
-    if status == "failed":
+    if status.startswith("failed"):
         return "retry next cycle (cached winner discarded)"
     queue_status = (queue_status or "").lower()
     if queue_status == "waiting_input":

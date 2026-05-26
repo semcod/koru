@@ -100,32 +100,24 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
     _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
 
 
-def _drive_via_plugin(
+def _check_and_block_plugin_version(
     daemon: Any,
     client: _Client,
     msg: Message,
     plugin: _Client,
     text: str,
     submit: bool,
-    require_plugin: bool,
-    *,
-    strategy_hint: str | None = None,
-) -> None:
-    """Forward a drive request to a connected plugin for that IDE."""
-    daemon.log(
-        "drive_via_plugin: "
-        f"ide={plugin.ide}, version={plugin.version}, "
-        f"protocol={plugin.protocol_version}, capabilities={plugin.capabilities}"
-    )
-    corr = msg.id or f"drive-{time.monotonic_ns():x}"
+) -> bool:
+    """Check version info and policy block; returns True if blocked."""
     version_info = DriveOrchestrator.plugin_version_info(
         plugin_ide=plugin.ide,
         connected_version=plugin.version,
+        connected_build_sha=plugin.build_sha,
         protocol_version=plugin.protocol_version,
         capabilities=plugin.capabilities,
     )
     daemon.log(f"drive_via_plugin: version_info={version_info}")
-    if version_info.get("plugin_version_mismatch"):
+    if version_info.get("plugin_version_mismatch") or version_info.get("plugin_build_mismatch"):
         summary = DriveOrchestrator.plugin_ack_summary(version_info)
         daemon.log(f"drive plugin version drift: {summary}")
         daemon.audit.record(
@@ -133,6 +125,8 @@ def _drive_via_plugin(
             ide=plugin.ide,
             plugin_version=version_info.get("plugin_version"),
             expected_plugin_version=version_info.get("expected_plugin_version"),
+            plugin_build_sha=version_info.get("plugin_build_sha"),
+            expected_plugin_build_sha=version_info.get("expected_plugin_build_sha"),
             policy=version_info.get("plugin_version_policy"),
         )
     if DriveOrchestrator.should_block_plugin_version(version_info):
@@ -149,8 +143,24 @@ def _drive_via_plugin(
             error=message,
             plugin_version=version_info.get("plugin_version"),
             expected_plugin_version=version_info.get("expected_plugin_version"),
+            plugin_build_sha=version_info.get("plugin_build_sha"),
+            expected_plugin_build_sha=version_info.get("expected_plugin_build_sha"),
         )
-        return
+        return True
+    return False
+
+
+def _record_plugin_route_telemetry(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    plugin: _Client,
+    text: str,
+    submit: bool,
+    require_plugin: bool,
+    corr: str,
+) -> None:
+    """Record routing decision, integration actions, and emit telemetry."""
     plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text, require_plugin)
     daemon.log(
         "drive_via_plugin: route_decision "
@@ -222,6 +232,17 @@ def _drive_via_plugin(
         actor="autopilot-daemon",
         replayable=True,
     )
+
+
+def _deliver_chat_via_plugin_socket(
+    daemon: Any,
+    plugin: _Client,
+    text: str,
+    submit: bool,
+    corr: str,
+    strategy_hint: str | None,
+) -> None:
+    """Deliver chat.send payload to plugin, logging and emitting confirmation telemetry."""
     command_order: dict[str, list[str]] | None = None
     if command_picker_enabled():
         catalog = (
@@ -293,6 +314,32 @@ def _drive_via_plugin(
         submit=submit,
         ok=True,
     )
+
+
+def _drive_via_plugin(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    plugin: _Client,
+    text: str,
+    submit: bool,
+    require_plugin: bool,
+    *,
+    strategy_hint: str | None = None,
+) -> None:
+    """Forward a drive request to a connected plugin for that IDE."""
+    daemon.log(
+        "drive_via_plugin: "
+        f"ide={plugin.ide}, version={plugin.version}, build={getattr(plugin, 'build_sha', None) or '-'}, "
+        f"protocol={plugin.protocol_version}, capabilities={plugin.capabilities}"
+    )
+    corr = msg.id or f"drive-{time.monotonic_ns():x}"
+
+    if _check_and_block_plugin_version(daemon, client, msg, plugin, text, submit):
+        return
+
+    _record_plugin_route_telemetry(daemon, client, msg, plugin, text, submit, require_plugin, corr)
+    _deliver_chat_via_plugin_socket(daemon, plugin, text, submit, corr, strategy_hint)
 
 
 def _try_os_injector_drive(

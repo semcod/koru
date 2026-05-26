@@ -105,6 +105,13 @@ def test_classify_skip_code_prefers_waiting_ticket_closed_telemetry() -> None:
     )
 
 
+def test_classify_skip_code_submit_unverified_requires_manual_send() -> None:
+    assert (
+        classify_skip_code({"autopilot_submit_unverified": True}, "failed")
+        == "manual_send_required"
+    )
+
+
 def test_human_skip_reason_returns_known_descriptions() -> None:
     text = human_skip_reason("plugin_missing")
     assert "VSIX" in text or "plugin" in text.lower()
@@ -161,6 +168,33 @@ def test_build_decision_record_idle_no_ticket_uses_explicit_because() -> None:
     assert "blocked_by=idle_no_ticket" in record.evidence
     assert "diagnostics=skipped" in record.evidence
     assert "wup=changed" in record.evidence
+
+
+def test_build_decision_record_submit_unverified_does_not_plan_retry() -> None:
+    record = build_decision_record(
+        cycle=11,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-298",
+        stagnation_streak=0,
+        autopilot_status="failed",
+        autopilot_ide="vscodium",
+        autopilot_backend="plugin",
+        autopilot_drive_kind="ticket_prompt",
+        diag_status="skipped",
+        wup_status="changed",
+        cycle_telemetry={
+            "autopilot_submit_unverified": True,
+            "autopilot_submit_unverified_reason": "input still contains pasted text",
+        },
+        next_step="manual send required; validate submit trace before any redrive",
+    )
+    assert record.skip_code == "manual_send_required"
+    assert record.blocked_by == "manual_send_required"
+    assert record.decided == "manual_send_required"
+    assert record.action == "submit_unverified"
+    assert "input still contains pasted text" in record.skip_because
+    assert "blocked_by=manual_send_required" in record.evidence
+    assert "retry next cycle" not in record.compact_line()
 
 
 def test_build_decision_record_waiting_ticket_closed_uses_explicit_because() -> None:

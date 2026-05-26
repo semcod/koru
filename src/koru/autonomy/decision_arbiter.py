@@ -66,81 +66,112 @@ class ArbiterSignals:
 # Core decision function
 # ---------------------------------------------------------------------------
 
-def decide(signals: ArbiterSignals) -> ActionPlan:
-    """Produce an ``ActionPlan`` from the current signals.
+def _plan_wait(
+    signals: ArbiterSignals,
+    *,
+    reason: str,
+    sleep_seconds: float,
+) -> ActionPlan:
+    return ActionPlan(
+        action="wait",
+        ticket_id=signals.waiting_ticket or None,
+        reason=reason,
+        sleep_seconds=sleep_seconds,
+    )
 
-    The function applies the priority chain documented in the module
-    docstring.  Each rule can short-circuit with a return.
-    """
 
-    # 1. Heuristic vetoes --------------------------------------------------
+def _ticket_id_for_verdict(signals: ArbiterSignals, verdict: Verdict) -> str | None:
+    return verdict.ticket_id or signals.waiting_ticket or None
 
+
+def _verdict_plan(
+    signals: ArbiterSignals,
+    verdict: Verdict,
+    *,
+    action: ActionKind,
+    reason: str,
+) -> ActionPlan:
+    return ActionPlan(
+        action=action,
+        ticket_id=_ticket_id_for_verdict(signals, verdict),
+        reason=reason,
+        confidence=verdict.confidence,
+        evidence=verdict.to_dict(),
+    )
+
+
+def _decide_heuristic_veto(signals: ArbiterSignals) -> ActionPlan | None:
     if signals.cooldown_active:
-        return ActionPlan(
-            action="wait",
-            ticket_id=signals.waiting_ticket or None,
+        return _plan_wait(
+            signals,
             reason=f"cooldown active ({signals.cooldown_remaining_seconds:.0f}s)",
             sleep_seconds=signals.cooldown_remaining_seconds,
         )
 
     if signals.chat_activity_blocked:
-        return ActionPlan(
-            action="wait",
-            ticket_id=signals.waiting_ticket or None,
+        return _plan_wait(
+            signals,
             reason="chat activity cooldown (would clobber user)",
             sleep_seconds=30.0,
         )
 
     if signals.test_status in {"failing", "failed", "error", "down"}:
-        return ActionPlan(
-            action="wait",
-            ticket_id=signals.waiting_ticket or None,
+        return _plan_wait(
+            signals,
             reason=f"tests {signals.test_status} — waiting for fix",
             sleep_seconds=15.0,
         )
 
-    # 2. Verification verdict ----------------------------------------------
+    return None
 
-    if signals.verdict is not None:
-        verdict = signals.verdict
-        if verdict.outcome == "completed" and verdict.confidence >= 0.6:
-            return ActionPlan(
-                action="close_ticket",
-                ticket_id=verdict.ticket_id or signals.waiting_ticket or None,
-                reason=verdict.reason,
-                confidence=verdict.confidence,
-                evidence=verdict.to_dict(),
-            )
 
-        if verdict.outcome == "degraded":
-            return ActionPlan(
-                action="escalate_ticket",
-                ticket_id=verdict.ticket_id or signals.waiting_ticket or None,
-                reason=f"tests degraded after drive: {verdict.reason}",
-                confidence=verdict.confidence,
-                evidence=verdict.to_dict(),
-            )
+def _decide_verdict(signals: ArbiterSignals) -> ActionPlan | None:
+    verdict = signals.verdict
+    if verdict is None:
+        return None
 
-        if verdict.outcome == "no_change" and signals.drive_count_for_ticket >= 3:
-            return ActionPlan(
-                action="escalate_ticket",
-                ticket_id=verdict.ticket_id or signals.waiting_ticket or None,
-                reason=f"no change after {signals.drive_count_for_ticket} drives",
-                confidence=verdict.confidence,
-                evidence=verdict.to_dict(),
-            )
+    if verdict.outcome == "completed" and verdict.confidence >= 0.6:
+        return _verdict_plan(
+            signals,
+            verdict,
+            action="close_ticket",
+            reason=verdict.reason,
+        )
 
-        if verdict.outcome == "no_change" and signals.drive_count_for_ticket >= 2:
-            return ActionPlan(
-                action="redrive_improved",
-                ticket_id=verdict.ticket_id or signals.waiting_ticket or None,
-                reason=f"no change after {signals.drive_count_for_ticket} drives — retry with improved prompt",
-                confidence=verdict.confidence,
-                evidence=verdict.to_dict(),
-            )
+    if verdict.outcome == "degraded":
+        return _verdict_plan(
+            signals,
+            verdict,
+            action="escalate_ticket",
+            reason=f"tests degraded after drive: {verdict.reason}",
+        )
 
-    # 3. Queue-based decisions ---------------------------------------------
+    if verdict.outcome != "no_change":
+        return None
 
+    if signals.drive_count_for_ticket >= 3:
+        return _verdict_plan(
+            signals,
+            verdict,
+            action="escalate_ticket",
+            reason=f"no change after {signals.drive_count_for_ticket} drives",
+        )
+
+    if signals.drive_count_for_ticket >= 2:
+        return _verdict_plan(
+            signals,
+            verdict,
+            action="redrive_improved",
+            reason=(
+                f"no change after {signals.drive_count_for_ticket} drives "
+                "— retry with improved prompt"
+            ),
+        )
+
+    return None
+
+
+def _decide_queue_state(signals: ArbiterSignals) -> ActionPlan | None:
     if signals.queue_status == "idle" and not signals.has_open_tickets:
         return ActionPlan(
             action="run_discovery",
@@ -161,8 +192,10 @@ def decide(signals: ArbiterSignals) -> ActionPlan:
             reason=f"stagnation streak={signals.stagnation_streak}",
         )
 
-    # 4. Default: drive current ticket -------------------------------------
+    return None
 
+
+def _default_plan(signals: ArbiterSignals) -> ActionPlan:
     if signals.waiting_ticket:
         return ActionPlan(
             action="drive_ticket",
@@ -174,6 +207,19 @@ def decide(signals: ArbiterSignals) -> ActionPlan:
         action="noop",
         reason="no actionable signal",
     )
+
+
+def decide(signals: ArbiterSignals) -> ActionPlan:
+    """Produce an ``ActionPlan`` from the current signals.
+
+    The function applies the priority chain documented in the module
+    docstring.  Each rule can short-circuit with a return.
+    """
+    for decider in (_decide_heuristic_veto, _decide_verdict, _decide_queue_state):
+        plan = decider(signals)
+        if plan is not None:
+            return plan
+    return _default_plan(signals)
 
 
 __all__ = [

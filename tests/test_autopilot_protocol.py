@@ -117,13 +117,14 @@ def test_decode_drops_unknown_fields_for_strict_type() -> None:
     """``hello`` accepts known handshake fields; anything else is dropped."""
     raw = (
         b'{"type":"hello","id":"h","ide":"vscode","version":"0.1","pid":1,'
-        b'"protocolVersion":1,"capabilities":["chat.submit"],'
+        b'"buildSha":"abc123","protocolVersion":1,"capabilities":["chat.submit"],'
         b'"__proto__":"evil","arbitrary":"stuff"}\n'
     )
     msg = decode(raw)
     assert msg.data == {
         "ide": "vscode",
         "version": "0.1",
+        "buildSha": "abc123",
         "pid": 1,
         "protocolVersion": 1,
         "capabilities": ["chat.submit"],

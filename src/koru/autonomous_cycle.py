@@ -350,6 +350,86 @@ def _load_open_tickets_for_planning(
     return rows
 
 
+def _recent_verdicts_for_planning(state: AutoloopState) -> list[dict[str, Any]] | None:
+    last_verdict = getattr(state, "last_drive_verdict", None)
+    if isinstance(last_verdict, dict):
+        return [last_verdict]
+    if last_verdict is not None and callable(getattr(last_verdict, "to_dict", None)):
+        return [last_verdict.to_dict()]
+    return None
+
+
+def _run_phase4_ticket_priority_advice(
+    *,
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_name: str | None,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    try:
+        tickets = _load_open_tickets_for_planning(project, queue_name=queue_name)
+        advice = _llm_prioritize_tickets(
+            tickets=tickets,
+            test_status="unknown",
+            recent_verdicts=_recent_verdicts_for_planning(state),
+        )
+    except Exception:  # noqa: BLE001
+        advice = None
+    if advice is None:
+        return
+    payload = {
+        "cycle": cycle,
+        "ordered_ticket_ids": list(advice.ordered_ticket_ids),
+        "reason": advice.reason,
+        "confidence": advice.confidence,
+    }
+    cycle_telemetry["llm_ticket_priority"] = payload
+    _emit("LlmTicketPriority", payload)
+    _hp(
+        "  llm_ticket_priority: "
+        f"{len(advice.ordered_ticket_ids)} tickets (confidence={advice.confidence:.2f})",
+    )
+
+
+def _run_phase4_strategy_tuning_advice(
+    *,
+    project: Path,
+    cycle: int,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    try:
+        strategy = load_autonomy_strategy(project) or {}
+        recent_decisions = load_recent_decisions(project, limit=20)
+        strategy_doc = json.dumps(strategy, ensure_ascii=False, indent=2)
+        tuning = _llm_propose_strategy_tuning(
+            current_strategy_yaml=strategy_doc,
+            recent_decisions=recent_decisions,
+            cycle_metrics=cycle_telemetry,
+        )
+    except Exception:  # noqa: BLE001
+        tuning = None
+    if tuning is None:
+        return
+    payload = {
+        "cycle": cycle,
+        "reason": tuning.reason,
+        "confidence": tuning.confidence,
+        "patch": tuning.patch,
+    }
+    cycle_telemetry["llm_strategy_tuning"] = {
+        "reason": tuning.reason,
+        "confidence": tuning.confidence,
+        "patch_preview": tuning.patch[:200],
+    }
+    _emit("LlmStrategyTuningAdvice", payload)
+    _hp(f"  llm_strategy_tuning: confidence={tuning.confidence:.2f}")
+
+
 def _run_phase4_advisory_hooks(
     *,
     project: Path,
@@ -368,62 +448,24 @@ def _run_phase4_advisory_hooks(
         return
 
     if enable_priority:
-        try:
-            tickets = _load_open_tickets_for_planning(project, queue_name=queue_name)
-            last_verdict = getattr(state, "last_drive_verdict", None)
-            if isinstance(last_verdict, dict):
-                recent_verdicts = [last_verdict]
-            elif last_verdict is not None and callable(getattr(last_verdict, "to_dict", None)):
-                recent_verdicts = [last_verdict.to_dict()]
-            else:
-                recent_verdicts = None
-            advice = _llm_prioritize_tickets(
-                tickets=tickets,
-                test_status="unknown",
-                recent_verdicts=recent_verdicts,
-            )
-        except Exception:  # noqa: BLE001
-            advice = None
-        if advice is not None:
-            payload = {
-                "cycle": cycle,
-                "ordered_ticket_ids": list(advice.ordered_ticket_ids),
-                "reason": advice.reason,
-                "confidence": advice.confidence,
-            }
-            cycle_telemetry["llm_ticket_priority"] = payload
-            _emit("LlmTicketPriority", payload)
-            _hp(
-                "  llm_ticket_priority: "
-                f"{len(advice.ordered_ticket_ids)} tickets (confidence={advice.confidence:.2f})",
-            )
+        _run_phase4_ticket_priority_advice(
+            project=project,
+            state=state,
+            cycle=cycle,
+            queue_name=queue_name,
+            cycle_telemetry=cycle_telemetry,
+            _hp=_hp,
+            _emit=_emit,
+        )
 
     if enable_tuning:
-        try:
-            strategy = load_autonomy_strategy(project) or {}
-            recent_decisions = load_recent_decisions(project, limit=20)
-            strategy_doc = json.dumps(strategy, ensure_ascii=False, indent=2)
-            tuning = _llm_propose_strategy_tuning(
-                current_strategy_yaml=strategy_doc,
-                recent_decisions=recent_decisions,
-                cycle_metrics=cycle_telemetry,
-            )
-        except Exception:  # noqa: BLE001
-            tuning = None
-        if tuning is not None:
-            payload = {
-                "cycle": cycle,
-                "reason": tuning.reason,
-                "confidence": tuning.confidence,
-                "patch": tuning.patch,
-            }
-            cycle_telemetry["llm_strategy_tuning"] = {
-                "reason": tuning.reason,
-                "confidence": tuning.confidence,
-                "patch_preview": tuning.patch[:200],
-            }
-            _emit("LlmStrategyTuningAdvice", payload)
-            _hp(f"  llm_strategy_tuning: confidence={tuning.confidence:.2f}")
+        _run_phase4_strategy_tuning_advice(
+            project=project,
+            cycle=cycle,
+            cycle_telemetry=cycle_telemetry,
+            _hp=_hp,
+            _emit=_emit,
+        )
 
 
 def _attach_environment_profile(
@@ -760,7 +802,7 @@ def _handle_post_drive_verification(
     _emit: callable,
 ) -> None:
     """Collect evidence and assess verdict after autopilot drive (ADR AUTO-002 Phase 1)."""
-    if autopilot_status not in {"ok", "failed"}:
+    if autopilot_status != "ok" and not autopilot_status.startswith("failed"):
         return
     from koru.autonomy.verification_engine import Snapshot
 

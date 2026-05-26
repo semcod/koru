@@ -154,6 +154,29 @@ def check_plugin_version_missing_issue(
   return []
 
 
+def check_plugin_build_missing_issue(
+  daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+  if (
+    daemon.get("running")
+    and plugin.get("connected")
+    and plugin.get("expected_build_sha")
+    and not plugin.get("connected_build_sha")
+  ):
+    return [
+      ManagerIssue(
+        "plugin_build_missing",
+        "warning",
+        f"Connected {ide} plugin did not report a VSIX build hash.",
+        (
+          "Rebuild/reinstall the current VSIX, reload the IDE window, "
+          "then reconnect autopilot."
+        ),
+      ),
+    ]
+  return []
+
+
 def check_plugin_installed_version_mismatch_issue(
   plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
@@ -221,20 +244,29 @@ def check_plugin_live_host_stale_issue(
     for row in daemon.get("rejected_plugins", [])
     if isinstance(row, dict)
     and row.get("ide") == ide
-    and row.get("version")
-    and row.get("version") != expected_version
+    and (
+      (row.get("version") and row.get("version") != expected_version)
+      or (
+        row.get("version") == expected_version
+        and row.get("expected_build_sha")
+        and row.get("build_sha") != row.get("expected_build_sha")
+      )
+    )
   ]
   if not rejected:
     return []
   seen_versions = sorted({str(row.get("version")) for row in rejected if row.get("version")})
   versions = ", ".join(seen_versions)
+  seen_builds = sorted({str(row.get("build_sha") or "-") for row in rejected})
+  builds = ", ".join(seen_builds)
   return [
     ManagerIssue(
       "plugin_live_host_stale",
       "error",
       (
         f"{ide} extension is installed at {installed_version}, but the live IDE "
-        f"extension host is still reconnecting with stale version(s): {versions}."
+        f"extension host is still reconnecting with stale version/build(s): "
+        f"versions={versions or '-'} builds={builds or '-'}."
       ),
       (
         "Reload the IDE window with `Developer: Reload Window`, then run "
@@ -344,6 +376,35 @@ def check_plugin_version_mismatch_issue(
   return []
 
 
+def check_plugin_build_mismatch_issue(
+  daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+  connected_build = plugin.get("connected_build_sha")
+  expected_build = plugin.get("expected_build_sha")
+  if (
+    daemon.get("running")
+    and plugin.get("connected")
+    and connected_build
+    and expected_build
+    and connected_build != expected_build
+  ):
+    return [
+      ManagerIssue(
+        "plugin_build_mismatch",
+        "error",
+        (
+          f"Connected {ide} plugin build is {connected_build}, "
+          f"but the source VSIX/package build is {expected_build}."
+        ),
+        (
+          f"Run `koru autopilot manage --ide {ide} --fix`, fully reload the IDE "
+          "window, then run `koru: Connect autopilot daemon`."
+        ),
+      ),
+    ]
+  return []
+
+
 def check_plugin_not_connected_issue(
   daemon: dict[str, Any], plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
@@ -373,10 +434,12 @@ __all__ = [
   "check_version_mismatch_issue",
   "check_daemon_issues",
   "check_plugin_version_missing_issue",
+  "check_plugin_build_missing_issue",
   "check_plugin_installed_version_mismatch_issue",
   "check_plugin_installed_ok_but_not_connected_issue",
   "check_plugin_live_host_stale_issue",
   "check_plugin_socket_candidate_mismatch_issue",
   "check_plugin_version_mismatch_issue",
+  "check_plugin_build_mismatch_issue",
   "check_plugin_not_connected_issue",
 ]

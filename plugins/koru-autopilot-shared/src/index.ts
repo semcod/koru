@@ -51,4 +51,7 @@ export {
   filterUnsafeFocusOpenForIde,
   isSpecificChatInputFocusCommand,
   isTogglingFocusOpenCommand,
+  isVSCodiumSafeSubmitCommand,
+  filterVSCodiumSubmitCandidates,
+  isHostClipboardPasteCommand,
 } from "./bridge-helpers";

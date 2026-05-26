@@ -143,6 +143,27 @@ def test_drop_stale_plugins_keeps_workspace_aware_plugin_when_current_is_old() -
     assert 1 in clients and 2 not in clients and 3 in clients
 
 
+def test_drop_stale_plugins_keeps_different_workspaces_connected() -> None:
+    current = _Client(3, ide="vscode", workspace_name="koru", workspace_folders=["/repo/koru"])
+    other_workspace = _Client(1, ide="vscode", workspace_name="c2004", workspace_folders=["/repo/c2004"])
+    same_workspace = _Client(2, ide="vscode", workspace_name="koru-old", workspace_folders=["/repo/koru"])
+    legacy = _Client(4, ide="vscode")
+    clients = {1: other_workspace, 2: same_workspace, 3: current, 4: legacy}
+
+    def _drop(client: _Client) -> None:
+        client.dropped = True
+        clients.pop(client.fd, None)
+
+    router = PluginRouter(clients, drop_client=_drop)
+    dropped = router.drop_stale_plugins(current, "vscode")
+
+    assert dropped == 2
+    assert other_workspace.dropped is False
+    assert same_workspace.dropped is True
+    assert legacy.dropped is True
+    assert 1 in clients and 2 not in clients and 3 in clients and 4 not in clients
+
+
 def test_status_rows_include_only_plugin_clients() -> None:
     plugin = _Client(1, ide="vscode")
     cli = _Client(2, role="cli", ide=None)

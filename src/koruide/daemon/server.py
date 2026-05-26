@@ -266,6 +266,12 @@ class AutopilotDaemon:
             for plugin in self._clients.values():
                 pending = plugin.awaiting_plugin
                 if pending is not None and pending[0] is client:
+                    timer = getattr(plugin, "awaiting_plugin_timer", None)
+                    if timer is not None:
+                        with contextlib.suppress(Exception):
+                            timer.cancel()
+                    plugin.awaiting_plugin_timer = None
+                    plugin.awaiting_plugin_info = None
                     plugin.awaiting_plugin = None
                     self.log(
                         "drive → plugin ack pending when CLI client disconnected; "
@@ -309,6 +315,8 @@ class AutopilotDaemon:
         plugin_version: str | None,
         expected_plugin_version: Any,
         message: str,
+        plugin_build_sha: str | None = None,
+        expected_plugin_build_sha: Any = None,
     ) -> None:
         from koruide.daemon.handlers import _log_rejected_plugin_connection as _impl
         _impl(
@@ -316,6 +324,8 @@ class AutopilotDaemon:
             ide=ide,
             plugin_version=plugin_version,
             expected_plugin_version=expected_plugin_version,
+            plugin_build_sha=plugin_build_sha,
+            expected_plugin_build_sha=expected_plugin_build_sha,
             message=message,
         )
 

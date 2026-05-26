@@ -172,6 +172,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     ),
     "gate": lambda argv: _lazy_module_main("koru.cli_gate", "gate_main", argv),
     "queue": lambda argv: _lazy_module_main("koru.cli_queue", "queue_main", argv),
+    "replay": lambda argv: _lazy_module_main("koru.cli_replay", "replay_main", argv),
     "gc": lambda argv: _lazy_module_main("koru.cli_gc", "gc_main", argv),
     "git": git_main,
     "tools": lambda argv: _lazy_module_main("koru.cli_tools", "_tools_main", argv),

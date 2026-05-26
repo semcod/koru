@@ -104,11 +104,18 @@ def test_vscodium_matrix_uses_isolated_socket_with_vscode_terminal_env(
     assert default_socket_path().name == "koru-autopilot-vscodium.sock"
 
 
-def test_vscodium_plugin_uses_host_clipboard_for_webview_paste() -> None:
+def test_vscodium_plugin_gates_host_input_fallbacks() -> None:
     source = (
         ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
     ).read_text(encoding="utf-8")
+    package = (ROOT / "plugins" / "koru-autopilot-vscodium" / "package.json").read_text(
+        encoding="utf-8"
+    )
 
+    assert "allowVSCodiumHostInputFallback" in source
+    assert "KORU_VSCODIUM_ALLOW_HOST_INPUT_FALLBACK" in source
+    assert "vscodium-host-fallback-refused" in source
+    assert 'ide === "vscodium" && this.allowVSCodiumHostInputFallback()' in source
     assert "tryHostClipboardPaste" in source
     assert "wl-copy" in source
     assert "wtype\", [\"-M\", \"ctrl\", \"-k\", \"v\", \"-m\", \"ctrl\"]" in source
@@ -117,12 +124,14 @@ def test_vscodium_plugin_uses_host_clipboard_for_webview_paste() -> None:
     assert "host-clipboard:${clip}+${paste.command}" in source
     assert "HOST_CLIPBOARD_RESTORE" in source
     assert "paste_failure_reason" in source
+    assert "koruAutopilot.allowVSCodiumHostInputFallback" in package
 
 
 def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
+    shared_dir = ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared"
+    source = ""
+    for path in shared_dir.glob("*.ts"):
+        source += path.read_text(encoding="utf-8") + "\n"
 
     assert 'command: "vscodium-submit-unavailable"' in source
     assert 'verification: "submit_unverified"' in source
@@ -142,6 +151,39 @@ def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> No
     host_click = source.index("const hostClick = await this._tryHostClickSubmit")
     assert registered < host_click
     assert 'buildSubmitCommands("vscodium")' in source
+    assert 'this.orderWithServerOverride(\n      "submit",' in source
+
+
+def test_vscodium_submit_trace_reports_each_registered_candidate() -> None:
+    source = (
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
+    ).read_text(encoding="utf-8")
+
+    assert 'route: "registered-command"' in source
+    assert 'route: "registered-command-rejected"' in source
+    assert "post-submit verification failed; input still contains pasted text" in source
+
+
+def test_vscodium_submit_filters_unrelated_accept_input_commands() -> None:
+    source = (
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
+    ).read_text(encoding="utf-8")
+
+    assert "filterVSCodiumSubmitCandidates" in source
+    assert "unsafeRegisteredCandidatesFiltered" in source
+    assert "const typeFallback = await this._tryTypeSubmitFallbacks" in source
+    assert "if (typeFallback) return typeFallback" in source
+
+
+def test_vscodium_type_newline_is_not_trusted_as_submit_proof() -> None:
+    source = (
+        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
+    ).read_text(encoding="utf-8")
+
+    assert 'this.detectIde() === "vscodium"' in source
+    assert 'route: "type-newline-untrusted"' in source
+    assert "trusted chat send proof" in source
+    assert "unverified: true" in source
 
 
 def test_vscodium_plugin_supports_configured_submit_click() -> None:

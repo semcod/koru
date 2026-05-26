@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shlex
 import sys
 from typing import Any
@@ -9,12 +10,18 @@ from urllib.parse import parse_qs, urlparse
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
+from koru.autonomy.structured_report import emit_structured_cycle_report
+from koru.autonomy.replay_actions import quick_action_to_replay
+
+
 
 def _blocked_by_from_autopilot_status(autopilot_status: str) -> str:
     status = (autopilot_status or "").strip().lower()
+    if "submit_unverified" in status or "submit_failed" in status:
+        return "manual_send_required"
     if status.startswith("skipped("):
         return status[len("skipped("):].rstrip(")").strip()
-    if status == "failed":
+    if status.startswith("failed"):
         return "drive_failed"
     return ""
 
@@ -390,11 +397,26 @@ def _queue_quick_action_lines(
             "--prompt '<input needed>' --note '<what was verified>'`"
         )
         actions.append(f"[open ticket] {urls['tickets']}#{waiting_ticket}")
-    if "submit_unverified" in status or status == "failed":
-        retry_ide = autopilot_ide or "auto"
+    if "submit_unverified" in status:
         actions.append(
-            f"[retry submit] `koru autopilot drive --ide {retry_ide} --require-plugin "
-            f"-p 'continue with {waiting_ticket}'`"
+            "[validate submit trace] "
+            "`koru autopilot trace --project . --format drive-dsl --limit 30`"
+        )
+        actions.append(
+            f"[manual send required] `planfile ticket input {waiting_ticket} "
+            "--prompt 'Manual IDE action required: submit was not verified' "
+            "--note 'Koru pasted the prompt but refused unsafe host fallback; "
+            "send manually or fix plugin submit strategy'`"
+        )
+    elif status.startswith("failed"):
+        actions.append(
+            "[validate drive trace] "
+            "`koru autopilot trace --project . --format drive-dsl --limit 30`"
+        )
+        actions.append(
+            f"[mark ticket input] `planfile ticket input {waiting_ticket} "
+            "--prompt 'Manual IDE action required: autopilot drive failed' "
+            "--note 'Koru did not verify a safe submitted message; inspect drive trace before retrying'`"
         )
     return actions
 
@@ -457,7 +479,38 @@ def _quick_action_lines(
         )
     )
     actions.extend(_diagnostics_quick_action_lines(status))
-    return actions
+    return _replay_quick_action_lines(
+        actions,
+        autopilot_ide=autopilot_ide,
+        waiting_ticket=waiting_ticket,
+        base_url=_url_origin(urls.get("dashboard", "http://127.0.0.1:8765/")),
+    )
+
+
+def _replay_quick_action_lines(
+    actions: list[str],
+    *,
+    autopilot_ide: str,
+    waiting_ticket: str,
+    base_url: str,
+) -> list[str]:
+    replay_lines: list[str] = []
+    for action in actions:
+        replay = quick_action_to_replay(
+            action,
+            autopilot_ide=autopilot_ide,
+            waiting_ticket=waiting_ticket,
+            base_url=base_url,
+        )
+        if replay is None:
+            replay_lines.append(action)
+            continue
+        label, _body = _split_quick_action(action)
+        shell = replay.to_shell()
+        if not replay.replayable:
+            shell = f"{shell} --explain"
+        replay_lines.append(f"[{label}] `{shell}`")
+    return replay_lines
 
 
 def _record_quick_action_control_commands(
@@ -530,6 +583,7 @@ def _backtick_command(text: str) -> str:
 def _record_backtick_command(project: Any, *, corr: str, label: str, command: str) -> None:
     from koru.control_commands import shell_command
 
+    _record_replay_sidecar_command(project, corr=corr, command=command)
     url = _curl_url(command)
     if url:
         _record_url_command(project, corr=corr, label=label, url=url)
@@ -541,12 +595,55 @@ def _record_backtick_command(project: Any, *, corr: str, label: str, command: st
     )
 
 
+def _record_replay_sidecar_command(project: Any, *, corr: str, command: str) -> None:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return
+    if len(parts) < 3 or parts[:2] != ["koru", "replay"]:
+        return
+    try:
+        from koru.autonomy.replay_actions import parse_replay_dsl
+
+        action = parse_replay_dsl(parts[2])
+    except Exception:
+        return
+    if action.domain == "trace" and action.verb == "show-decisions":
+        _record_url_command(
+            project,
+            corr=corr,
+            label="show decision trace",
+            url=f"{action.args.get('url', 'http://127.0.0.1:8765').rstrip('/')}/api/autonomy/trace",
+        )
+    elif action.domain == "trace" and action.verb == "show-interfaces":
+        _record_url_command(
+            project,
+            corr=corr,
+            label="show interfaces",
+            url=f"{action.args.get('url', 'http://127.0.0.1:8765').rstrip('/')}/api/interfaces",
+        )
+    elif action.domain == "ticket" and action.verb == "open":
+        _record_url_command(
+            project,
+            corr=corr,
+            label="open ticket",
+            url=f"{action.args.get('url', 'http://127.0.0.1:8765')}#{action.positional[0] if action.positional else ''}",
+        )
+
+
 def _curl_url(command: str) -> str:
     parts = shlex.split(command)
     for part in parts:
         if part.startswith(("http://", "https://")):
             return part
     return ""
+
+
+def _url_origin(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return "http://127.0.0.1:8765"
 
 
 def _record_url_command(project: Any, *, corr: str, label: str, url: str) -> None:
@@ -879,6 +976,47 @@ def _emit_cycle_summary(
     )
 
 
+def _emit_structured_report(
+    *,
+    args: Any,
+    cycle: int,
+    queue_result: Any,
+    waiting_ticket: str,
+    loop_state: Any,
+    diag_result: Any,
+    autopilot_status: str,
+    autopilot_ide: str,
+    effective_sleep: float,
+) -> None:
+    if args.emit_events != "human":
+        return
+    if os.environ.get("KORU_STRUCTURED_CYCLE_REPORT", "").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return
+
+    from koru.activity_log import activity
+
+    def activity_fn(category: str, message: str) -> None:
+        activity(category, message, fmt="human")
+
+    emit_structured_cycle_report(
+        cycle=cycle,
+        queue_status=str(getattr(queue_result, "last_status", "") or ""),
+        waiting_ticket=waiting_ticket,
+        wup_status=str(getattr(loop_state, "wup_status", "ok")),
+        diag_status=str(getattr(diag_result, "status", "") or ""),
+        autopilot_status=autopilot_status,
+        autopilot_ide=autopilot_ide,
+        stagnation_streak=int(getattr(loop_state, "stagnation_streak", 0) or 0),
+        sleep_seconds=effective_sleep,
+        activity_fn=activity_fn,
+    )
+
+
 def run_autonomous_cycle(
     *,
     cycle: int,
@@ -999,6 +1137,17 @@ def run_autonomous_cycle(
         stop_reason=stop_reason,
         stdio_info=stdio_info,
         autopilot_ide=autopilot_ide,
+    )
+    _emit_structured_report(
+        args=args,
+        cycle=cycle,
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        loop_state=loop_state,
+        diag_result=diag_result,
+        autopilot_status=autopilot_status,
+        autopilot_ide=autopilot_ide,
+        effective_sleep=effective_sleep,
     )
     if handle_exit_conditions(args, queue_result, cycle, correlation_id):
         return True

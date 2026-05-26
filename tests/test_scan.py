@@ -466,6 +466,31 @@ class TestRunScan(unittest.TestCase):
                 if cmd[:3] == ["planfile", "ticket", "create"]:
                     self.assertNotIn(existing_titles[0], cmd)
 
+    def test_code2llm_suggestions_include_artifact_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            analysis = project / "project" / "analysis.toon.yaml"
+            analysis.parent.mkdir()
+            analysis.write_text("HEALTH\n  🔴 DUP   2 classes duplicated\n", encoding="utf-8")
+
+            suggestions = run_scan(
+                project,
+                skip_pytest=True,
+                include_semcod_artifacts=True,
+            ).suggestions
+
+            dup = next(item for item in suggestions if item.signal == "code2llm_dup")
+            evidence = dup.source_context["evidence"]
+            self.assertEqual(evidence["schema"], "koru.ticket_evidence.v1")
+            self.assertEqual(evidence["kind"], "code2llm_analysis")
+            artifact = evidence["artifact"]
+            self.assertEqual(artifact["path"], "project/analysis.toon.yaml")
+            self.assertEqual(artifact["size_bytes"], analysis.stat().st_size)
+            self.assertEqual(artifact["mtime_ns"], analysis.stat().st_mtime_ns)
+            self.assertRegex(artifact["sha256"], r"^[0-9a-f]{64}$")
+            self.assertIn("code2llm", evidence["regenerate_command"])
+            self.assertIn("--planfile-apply", evidence["regenerate_command"])
+
     def test_apply_create_failure_is_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -8,6 +8,9 @@ DSL trace generation) into a cohesive module.
 from __future__ import annotations
 
 import json
+import re
+import shlex
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +36,46 @@ def _persist_recent_dsl(daemon: Any) -> None:
         )
     except OSError:
         return
+
+
+def _safe_replay_name(corr: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9_.-]+", "-", str(corr or "drive")).strip(".-")
+    return safe or "drive"
+
+
+def _attach_drive_replay_commands(
+    daemon: Any,
+    info: dict[str, Any],
+    *,
+    corr: str,
+    ide: str,
+    original_text: str | None,
+) -> None:
+    """Persist enough context for a copy-paste replay/validation DSL line."""
+    project_raw = getattr(daemon, "project", None)
+    if project_raw is None:
+        return
+    project = Path(project_raw)
+    if not original_text:
+        return
+    replay_dir = project / ".planfile" / ".koru" / "replay"
+    prompt_path = replay_dir / f"{_safe_replay_name(corr)}.prompt"
+    try:
+        replay_dir.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_text(original_text, encoding="utf-8")
+    except OSError as exc:
+        info["replay_error"] = str(exc)
+        return
+    info["replay_artifact"] = str(prompt_path)
+    info["replay_command"] = (
+        f"KORU_AUTOPILOT_INSTANCE={shlex.quote(ide)} "
+        f"koru autopilot drive --ide {shlex.quote(ide)} "
+        f"--require-plugin --prompt-file {shlex.quote(str(prompt_path))}"
+    )
+    info["validate_command"] = (
+        "koru autopilot trace "
+        f"--project {shlex.quote(str(project))} --format drive-dsl --limit 30"
+    )
 
 
 def _plugin_ack_needs_os_fallback(
@@ -88,50 +131,166 @@ def _relay_os_fallback_ack(
     return True
 
 
-def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
-    """Use ``message.sent`` event as fallback completion for pending ``drive``."""
-    from koruide.daemon.handlers import _cli_client_still_connected
+def _strict_message_sent_completion_allowed(
+    daemon: Any,
+    client: _Client,
+    plugin_ide: str | None,
+) -> bool:
+    if not DriveOrchestrator.strict_plugin_ack_required():
+        return True
+    pending_info = getattr(client, "awaiting_plugin_info", None)
+    strict_deferred = (
+        isinstance(pending_info, dict)
+        and str(pending_info.get("verification") or "").lower() == "submit_unverified"
+        and str(plugin_ide or pending_info.get("ide") or "").lower() == "vscodium"
+    )
+    if strict_deferred:
+        daemon.log("drive → strict ack accepted late message.sent fallback for vscodium")
+        return True
+    daemon.log(
+        "drive → plugin event observed before strict ack; "
+        "waiting for full plugin ack"
+    )
+    return False
 
-    pending = client.awaiting_plugin
-    if pending is None:
-        return False
-    cli_client, corr, submit_requested, plugin_ide, _original_text, _require_plugin = pending
-    if DriveOrchestrator.strict_plugin_ack_required():
-        daemon.log(
-            "drive → plugin event observed before strict ack; "
-            "waiting for full plugin ack"
-        )
-        return False
+
+def _clear_pending_plugin_drive(client: _Client) -> None:
+    timer = getattr(client, "awaiting_plugin_timer", None)
+    if timer is not None:
+        try:
+            timer.cancel()
+        except Exception:
+            pass
+    client.awaiting_plugin_timer = None
+    client.awaiting_plugin_info = None
     client.awaiting_plugin = None
+
+
+def _message_sent_completion_info(
+    client: _Client,
+    msg: Message,
+    *,
+    submit_requested: bool,
+    plugin_ide: str | None,
+) -> dict[str, Any]:
     info = DriveOrchestrator.build_message_sent_info(
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
         event_data=msg.data,
     )
     info.update(
+        DriveOrchestrator.drive_intent_evidence(
+            info,
+            plugin_ok=True,
+            submit_requested=submit_requested,
+            plugin_ide=plugin_ide,
+        ),
+    )
+    info.update(
         DriveOrchestrator.plugin_version_info(
             plugin_ide=plugin_ide,
             connected_version=client.version,
+            connected_build_sha=client.build_sha if isinstance(client.build_sha, str) else None,
             protocol_version=client.protocol_version,
             capabilities=client.capabilities,
         ),
     )
-    daemon.log(
-        "drive → plugin event completion: "
-        + DriveOrchestrator.plugin_ack_summary(info)
-    )
+    return info
+
+
+def _send_message_sent_completion(
+    daemon: Any,
+    cli_client: _Client,
+    corr: str,
+    info: dict[str, Any],
+) -> None:
+    from koruide.daemon.handlers import _cli_client_still_connected
+
     if not _cli_client_still_connected(daemon, cli_client):
         daemon.log(
             "drive → plugin event completion arrived after CLI client disconnected; "
             "treating as late ack"
         )
-        return True
+        return
     if not daemon._send(cli_client, ack(corr, ok=True, info=info).encode()):
         daemon.log(
             "drive → plugin event completion arrived after CLI client disconnected; "
             "treating as late ack"
         )
+
+
+def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
+    """Use ``message.sent`` event as fallback completion for pending ``drive``."""
+    pending = client.awaiting_plugin
+    if pending is None:
+        return False
+    cli_client, corr, submit_requested, plugin_ide, _original_text, _require_plugin = pending
+    if not _strict_message_sent_completion_allowed(daemon, client, plugin_ide):
+        return False
+    _clear_pending_plugin_drive(client)
+    info = _message_sent_completion_info(
+        client,
+        msg,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+    )
+    daemon.log(
+        "drive → plugin event completion: "
+        + DriveOrchestrator.plugin_ack_summary(info)
+    )
+    _send_message_sent_completion(daemon, cli_client, corr, info)
     return True
+
+
+def _deferred_submit_unverified_grace_seconds() -> float:
+    return 0.75
+
+
+def _defer_submit_unverified_reply(
+    daemon: Any,
+    client: _Client,
+    cli_client: _Client,
+    corr: str,
+    fallback_ide: str,
+    *,
+    info: dict[str, Any],
+    plugin_ok: bool,
+    original_text: str | None,
+) -> None:
+    """Wait briefly for a late ``message.sent`` event before finalizing failure."""
+
+    def _finalize() -> None:
+        pending = client.awaiting_plugin
+        if pending is None:
+            return
+        pending_cli, pending_corr, _submit_requested, _plugin_ide, _text, _require_plugin = pending
+        if pending_cli is not cli_client or pending_corr != corr:
+            return
+        deferred_info = getattr(client, "awaiting_plugin_info", None)
+        if not isinstance(deferred_info, dict):
+            return
+        client.awaiting_plugin = None
+        client.awaiting_plugin_info = None
+        client.awaiting_plugin_timer = None
+        _send_plugin_ack_reply(
+            daemon,
+            cli_client,
+            corr,
+            fallback_ide,
+            info=deferred_info,
+            plugin_ok=plugin_ok,
+            original_text=original_text,
+        )
+
+    client.awaiting_plugin_info = dict(info)
+    timer = threading.Timer(_deferred_submit_unverified_grace_seconds(), _finalize)
+    timer.daemon = True
+    client.awaiting_plugin_timer = timer
+    timer.start()
+    daemon.log(
+        "drive → deferring submit_unverified reply briefly; "
+        "waiting for late message.sent event"
+    )
 
 
 def _relay_plugin_ack_os_fallback(
@@ -167,40 +326,57 @@ def _relay_plugin_ack_os_fallback(
     )
 
 
-def _send_plugin_ack_reply(
-    daemon: Any,
-    cli_client: _Client,
-    corr: str,
-    fallback_ide: str,
-    *,
-    info: dict[str, Any],
-    plugin_ok: bool,
-) -> None:
-    """Send final plugin ack reply to CLI client with DSL trace."""
-    from koruide.daemon.handlers import _cli_client_still_connected, _cap_ack_info_for_cli
-
+def _ensure_plugin_backend(info: dict[str, Any]) -> None:
     if info.get("delivered") is True and "backend" not in info:
         info["backend"] = "plugin"
+
+
+def _log_plugin_ack_trace(
+    daemon: Any,
+    info: dict[str, Any],
+    *,
+    plugin_ok: bool,
+) -> tuple[str, str, list[str], str, list[str]]:
     summary = DriveOrchestrator.plugin_ack_summary(info)
     daemon.log("drive → plugin ack: " + summary)
     route_summary = DriveOrchestrator.operation_trace_summary(info)
     if route_summary:
         daemon.log(f"drive → plugin operation trace: {route_summary}")
-    # Koru Drive DSL — one human-readable line per integration step.
-    # This is the *transparent* trace the operator asked for: each line
-    # carries act + intent + route + ok + reason, so a failed drive
-    # ("plugin wkleil ale nie wyslal") explains itself instead of just
-    # logging a single opaque "winning_submit=composer.sendToAgent".
+
     dsl_lines = DriveOrchestrator.operation_trace_dsl(info)
-    for dsl_line in dsl_lines:
-        daemon.log(f"[DSL] {dsl_line}")
+    validation_dsl_lines = DriveOrchestrator.drive_validation_dsl(info)
     final_dsl_line = DriveOrchestrator.drive_outcome_dsl(info)
-    daemon.log(f"[DSL] {final_dsl_line}")
+    operator_dsl_lines = DriveOrchestrator.drive_operator_dsl(info, plugin_ok=plugin_ok)
+    for dsl_line in [*dsl_lines, *validation_dsl_lines, final_dsl_line, *operator_dsl_lines]:
+        daemon.log(f"[DSL] {dsl_line}")
+    return summary, route_summary, dsl_lines + validation_dsl_lines, final_dsl_line, operator_dsl_lines
+
+
+def _persist_plugin_ack_dsl(
+    daemon: Any,
+    info: dict[str, Any],
+    *,
+    dsl_lines: list[str],
+    final_dsl_line: str,
+    operator_dsl_lines: list[str],
+) -> None:
     daemon._recent_dsl.extend(dsl_lines)
     daemon._recent_dsl.append(final_dsl_line)
+    daemon._recent_dsl.extend(operator_dsl_lines)
     if len(daemon._recent_dsl) > 50:
         daemon._recent_dsl = daemon._recent_dsl[-50:]
     _persist_recent_dsl(daemon)
+    if dsl_lines:
+        info["drive_dsl"] = dsl_lines
+    info["drive_dsl_outcome"] = final_dsl_line
+    info["drive_dsl_operator"] = operator_dsl_lines
+
+
+def _record_plugin_ack_command_telemetry(
+    daemon: Any,
+    fallback_ide: str,
+    info: dict[str, Any],
+) -> None:
     daemon._command_telemetry.record_from_ack(
         ide=fallback_ide,
         plugin_version=info.get("plugin_version")
@@ -208,21 +384,18 @@ def _send_plugin_ack_reply(
         else None,
         info=info,
     )
-    # Persist the DSL on the ack info so the CLI/autonomous receives it
-    # in the relay envelope and can echo it verbatim instead of having
-    # to ship its own renderer.
-    if dsl_lines:
-        info["drive_dsl"] = dsl_lines
-    info["drive_dsl_outcome"] = final_dsl_line
-    _record_plugin_ack_integration(
-        daemon,
-        corr=corr,
-        target_ide=fallback_ide,
-        info=info,
-        plugin_ok=plugin_ok,
-        summary=summary,
-        route_summary=route_summary,
-    )
+
+
+def _relay_plugin_ack_to_cli(
+    daemon: Any,
+    cli_client: _Client,
+    corr: str,
+    *,
+    info: dict[str, Any],
+    plugin_ok: bool,
+) -> None:
+    from koruide.daemon.handlers import _cli_client_still_connected, _cap_ack_info_for_cli
+
     if not _cli_client_still_connected(daemon, cli_client):
         daemon.log(
             "drive → plugin ack arrived after CLI client disconnected; "
@@ -235,6 +408,56 @@ def _send_plugin_ack_reply(
             "drive → plugin ack arrived after CLI client disconnected; "
             "treating as late ack"
         )
+
+
+def _send_plugin_ack_reply(
+    daemon: Any,
+    cli_client: _Client,
+    corr: str,
+    fallback_ide: str,
+    *,
+    info: dict[str, Any],
+    plugin_ok: bool,
+    original_text: str | None = None,
+) -> None:
+    """Send final plugin ack reply to CLI client with DSL trace."""
+    _attach_drive_replay_commands(
+        daemon,
+        info,
+        corr=corr,
+        ide=fallback_ide,
+        original_text=original_text,
+    )
+    _ensure_plugin_backend(info)
+    summary, route_summary, dsl_lines, final_dsl_line, operator_dsl_lines = _log_plugin_ack_trace(
+        daemon,
+        info,
+        plugin_ok=plugin_ok,
+    )
+    _persist_plugin_ack_dsl(
+        daemon,
+        info,
+        dsl_lines=dsl_lines,
+        final_dsl_line=final_dsl_line,
+        operator_dsl_lines=operator_dsl_lines,
+    )
+    _record_plugin_ack_command_telemetry(daemon, fallback_ide, info)
+    _record_plugin_ack_integration(
+        daemon,
+        corr=corr,
+        target_ide=fallback_ide,
+        info=info,
+        plugin_ok=plugin_ok,
+        summary=summary,
+        route_summary=route_summary,
+    )
+    _relay_plugin_ack_to_cli(
+        daemon,
+        cli_client,
+        corr,
+        info=info,
+        plugin_ok=plugin_ok,
+    )
 
 
 def _annotated_plugin_ack_info(
@@ -257,6 +480,7 @@ def _annotated_plugin_ack_info(
         DriveOrchestrator.plugin_version_info(
             plugin_ide=plugin_ide,
             connected_version=client.version,
+            connected_build_sha=client.build_sha if isinstance(client.build_sha, str) else None,
             protocol_version=client.protocol_version,
             capabilities=client.capabilities,
         ),
@@ -351,22 +575,41 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
     cli_client, corr, submit_requested, plugin_ide, original_text, require_plugin = pending
     if msg.id != corr:
         return
-    client.awaiting_plugin = None
-    plugin_ok = bool(msg.data.get("ok", True))
+    raw_plugin_ok = bool(msg.data.get("ok", True))
     info = _annotated_plugin_ack_info(
         client,
         msg,
-        plugin_ok=plugin_ok,
-        submit_requested=submit_requested,
-        plugin_ide=plugin_ide,
-    )
-    plugin_ok = _strict_plugin_ack_ok(
-        info,
-        plugin_ok=plugin_ok,
+        plugin_ok=raw_plugin_ok,
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
     )
     fallback_ide = plugin_ide or "auto"
+    if DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
+        info=info,
+        plugin_ok=raw_plugin_ok,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+    ):
+        _defer_submit_unverified_reply(
+            daemon,
+            client,
+            cli_client,
+            corr,
+            fallback_ide,
+            info=info,
+            plugin_ok=False,
+            original_text=original_text,
+        )
+        return
+    plugin_ok = _strict_plugin_ack_ok(
+        info,
+        plugin_ok=raw_plugin_ok,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+    )
+    client.awaiting_plugin = None
+    client.awaiting_plugin_info = None
+    client.awaiting_plugin_timer = None
     if _relay_plugin_ack_os_fallback(
         daemon,
         cli_client,
@@ -387,4 +630,5 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
         fallback_ide,
         info=info,
         plugin_ok=plugin_ok,
+        original_text=original_text,
     )

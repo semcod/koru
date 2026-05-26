@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.288-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$38.29-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-120.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.289-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.50-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-120.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $38.2883 (386 commits)
-- 👤 **Human dev:** ~$12020 (120.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $7.5000 (388 commits)
+- 👤 **Human dev:** ~$12070 (120.7h @ $100/h, 30min dedup)
 
 Generated on 2026-05-26 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -513,16 +513,17 @@ Newer autopilot functions you can use directly from CLI:
 
 `koru autopilot manage` reports the plugin state as:
 
-- `connected` / `version` — the live plugin currently attached to the daemon,
+- `connected` / `version` / `buildSha` — the live plugin currently attached to the daemon,
 - `installed` — the extension version reported by the editor CLI,
 - `expected` — the VSIX/package version bundled with the active koru runtime.
+- `expected_build` — the VSIX build hash expected by the active koru runtime.
 
 If `installed=expected` but `connected=False`, installation is healthy and the next
 step is runtime handshake: start the daemon, reload the IDE window and run
 `koru: Connect autopilot daemon`. If the daemon recently rejected old live plugin
-versions, `manage` reports `plugin_live_host_stale`; the extension is installed on
-disk, but the editor's live extension host still needs a reload. `koru auto`
-enables strict plugin version and strict submit ACK policy by default, so it skips
+versions or build hashes, `manage` reports `plugin_live_host_stale`; the extension
+is installed on disk, but the editor's live extension host still needs a reload.
+`koru auto` enables strict plugin version/build and strict submit ACK policy by default, so it skips
 chat drive instead of sending prompts through a stale or unverifiable plugin.
 
 Two injection paths, picked automatically:

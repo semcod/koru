@@ -141,6 +141,15 @@ def test_applies_planfile_tickets_with_dedupe_key(
     ticket = next(iter(tickets.values()))
     assert ticket["source"]["tool"] == "koru-project-discovery"
     assert ticket["source"]["context"]["dedupe_key"].startswith("code2llm:smell:")
+    evidence = ticket["source"]["context"]["evidence"]
+    assert evidence["schema"] == "koru.ticket_evidence.v1"
+    assert evidence["kind"] == "code2llm_discovery"
+    assert evidence["artifact"]["path"] == "project/analysis.toon.yaml"
+    assert evidence["artifact"]["size_bytes"] > 0
+    assert len(evidence["artifact"]["sha256"]) == 64
+    assert evidence["planfile_tickets"]["path"] == "project/planfile-tickets.yaml"
+    assert "code2llm" in evidence["regenerate_command"]
+    assert "--planfile-apply" in evidence["regenerate_command"]
 
 
 def test_backfills_existing_project_discovery_ticket_before_reuse(
@@ -205,6 +214,7 @@ def test_backfills_existing_project_discovery_ticket_before_reuse(
     ctx = tickets["STARTER-249"]["source"]["context"]
     assert ctx["signal"] == "code2llm_smell_god_function"
     assert ctx["dedupe_key"].startswith("code2llm:smell:")
+    assert ctx["evidence"]["artifact"]["path"] == "project/analysis.toon.yaml"
 
 
 def test_runner_failure_records_error(

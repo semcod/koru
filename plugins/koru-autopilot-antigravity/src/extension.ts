@@ -26,6 +26,12 @@ const ANTIGRAVITY_EXTENSION_CONFIG: IdeBridgeExtensionConfig = {
     `koru-autopilot-antigravity: not activating (appName="${appName}"; ` +
     "install the matching koru-autopilot-<ide> VSIX for this IDE)."
   ),
+  wireOptions: {
+    safeRegisterCommands: true,
+    onRegisterCommandError: (command: string, message: string) => {
+      console.warn(`koru-autopilot-antigravity: skipping duplicate command "${command}": ${message}`);
+    },
+  },
 };
 
 const runtime = createIdeBridgeExtension(ANTIGRAVITY_EXTENSION_CONFIG);

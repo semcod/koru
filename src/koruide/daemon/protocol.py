@@ -41,6 +41,7 @@ class _Client:
     role: str = "unknown"  # "plugin" | "cli" | "unknown"
     ide: str | None = None  # set when role == "plugin"
     version: str | None = None
+    build_sha: str | None = None
     protocol_version: int | None = None
     capabilities: list[str] = field(default_factory=list)
     command_catalog: dict[str, list[str]] | None = None
@@ -50,6 +51,8 @@ class _Client:
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.
     awaiting_plugin: tuple[_Client, str, bool, str | None, str, bool] | None = None
+    awaiting_plugin_info: dict[str, Any] | None = None
+    awaiting_plugin_timer: Any | None = None
 
 
 @dataclass(frozen=True)

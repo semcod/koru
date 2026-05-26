@@ -13,6 +13,7 @@ from koru.autopilot import cli_command, doctor_cli, install_plugin_cli, systemd_
 from koru.autopilot.cli_command import autopilot_main
 from koru.autopilot.commands import handoff
 from koru.autopilot.cli_parser import build_autopilot_parser
+from koru.autopilot.cli_trace import action_trace
 
 
 def test_autopilot_parser_requires_action() -> None:
@@ -26,14 +27,16 @@ def test_autopilot_parser_module_preserves_drive_and_trace_options() -> None:
     drive_args = parser.parse_args(
         ["drive", "--prompt", "hello", "--ide", "vscode", "--require-plugin"]
     )
-    trace_args = parser.parse_args(["trace", "--format", "dsl", "--limit", "3"])
+    replay_args = parser.parse_args(["drive", "--prompt-file", "prompt.txt", "--ide", "vscodium"])
+    trace_args = parser.parse_args(["trace", "--format", "drive-dsl", "--limit", "3"])
 
     assert drive_args.action == "drive"
     assert drive_args.prompt == "hello"
     assert drive_args.ide == "vscode"
     assert drive_args.require_plugin is True
+    assert replay_args.prompt_file == Path("prompt.txt")
     assert trace_args.action == "trace"
-    assert trace_args.format == "dsl"
+    assert trace_args.format == "drive-dsl"
     assert trace_args.limit == 3
 
 
@@ -49,6 +52,29 @@ def test_drive_missing_text_errors(capsys: pytest.CaptureFixture[str]) -> None:
     rc = autopilot_main(["drive"])
     assert rc == 2
     assert "missing text" in capsys.readouterr().err
+
+
+def test_trace_drive_dsl_reads_recent_lines(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    dsl_path = tmp_path / ".planfile" / ".koru" / "dsl_recent.json"
+    dsl_path.parent.mkdir(parents=True)
+    dsl_path.write_text(
+        json.dumps({"lines": ["#001 act=paste ok=true", "#900 act=diagnose severity=ok"]}),
+        encoding="utf-8",
+    )
+    parser = build_autopilot_parser()
+    args = parser.parse_args(
+        ["trace", "--project", str(tmp_path), "--format", "drive-dsl", "--limit", "1"]
+    )
+
+    rc = action_trace(args)
+
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "#900 act=diagnose severity=ok" in out
+    assert "#001 act=paste" not in out
 
 
 def test_client_uses_explicit_ide_socket_when_env_is_unset(

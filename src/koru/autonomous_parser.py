@@ -5,15 +5,7 @@ import re
 from pathlib import Path
 
 
-def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="koru autonomous",
-        description=(
-            "Bootstrap and run koru in autonomous mode (alias: ``koru auto``): "
-            "optional init, scan intake, queue drain, autopilot daemon thread, "
-            "optional WUP watch, and IDE drive loop."
-        ),
-    )
+def _add_socket_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--socket",
         type=Path,
@@ -23,8 +15,9 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
             "override with KORU_AUTOPILOT_SOCKET or KORU_AUTOPILOT_INSTANCE — see docs)."
         ),
     )
-    sub = parser.add_subparsers(dest="action", required=True)
 
+
+def _add_maintenance_subcommands(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     doctor = sub.add_parser(
         "doctor",
         help="Probe autodetect: IDE / MCP / autopilot socket. Read-only.",
@@ -42,7 +35,8 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
         help="Only print what would be repaired; do not mutate state.",
     )
 
-    up = sub.add_parser("up", help="Configure and start autonomous loop.")
+
+def _add_up_core_args(up: argparse.ArgumentParser) -> None:
     up.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     up.add_argument(
         "--replace-existing",
@@ -105,6 +99,9 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
         default=30.0,
         help="Sleep between cycles (default: 30s).",
     )
+
+
+def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
     up.add_argument(
         "--autopilot-ide",
         default="auto",
@@ -238,6 +235,9 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
         default="waiting_input",
         help="Comma-separated statuses skipped after repeated same waiting signature.",
     )
+
+
+def _add_up_backoff_and_scan_args(up: argparse.ArgumentParser) -> None:
     up.add_argument(
         "--autopilot-skip-drive-idle-streak",
         type=int,
@@ -302,6 +302,9 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
             "wup.yaml and `wup` binary are present). Use --no-wup-watch to disable."
         ),
     )
+
+
+def _add_up_wup_args(up: argparse.ArgumentParser) -> None:
     up.add_argument(
         "--wup-mode",
         choices=("default", "testql"),
@@ -369,6 +372,9 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
         default="default",
         help="Queue for WUP regression tickets.",
     )
+
+
+def _add_up_output_operator_args(up: argparse.ArgumentParser, *, default_stdio_format: str) -> None:
     up.add_argument(
         "--emit-events",
         choices=("human", "jsonl"),
@@ -413,6 +419,9 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
         default="high",
         help="Priority for operator-pipeline tickets.",
     )
+
+
+def _set_up_defaults(up: argparse.ArgumentParser) -> None:
     up.set_defaults(
         submit=True,
         enable_autopilot=True,
@@ -422,6 +431,35 @@ def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
         operator_pipeline=True,
         operator_tickets=True,
     )
+
+
+def _add_up_subcommand(
+    sub: argparse._SubParsersAction[argparse.ArgumentParser],
+    *,
+    default_stdio_format: str,
+) -> None:
+    up = sub.add_parser("up", help="Configure and start autonomous loop.")
+    _add_up_core_args(up)
+    _add_up_autopilot_args(up)
+    _add_up_backoff_and_scan_args(up)
+    _add_up_wup_args(up)
+    _add_up_output_operator_args(up, default_stdio_format=default_stdio_format)
+    _set_up_defaults(up)
+
+
+def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru autonomous",
+        description=(
+            "Bootstrap and run koru in autonomous mode (alias: ``koru auto``): "
+            "optional init, scan intake, queue drain, autopilot daemon thread, "
+            "optional WUP watch, and IDE drive loop."
+        ),
+    )
+    _add_socket_arg(parser)
+    sub = parser.add_subparsers(dest="action", required=True)
+    _add_maintenance_subcommands(sub)
+    _add_up_subcommand(sub, default_stdio_format=default_stdio_format)
 
     return parser
 

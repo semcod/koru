@@ -101,6 +101,7 @@ def test_annotated_plugin_ack_info_builds_metadata(monkeypatch: pytest.MonkeyPat
     
     client = mock.Mock()
     client.version = "1.0.0"
+    client.build_sha = "build123"
     client.protocol_version = 2
     client.capabilities = ["chat"]
     
@@ -119,6 +120,7 @@ def test_annotated_plugin_ack_info_builds_metadata(monkeypatch: pytest.MonkeyPat
     mock_version_info.assert_called_once_with(
         plugin_ide="vscode",
         connected_version="1.0.0",
+        connected_build_sha="build123",
         protocol_version=2,
         capabilities=["chat"],
     )
@@ -160,6 +162,60 @@ def test_relay_message_sent_ack_strict_waits(monkeypatch: pytest.MonkeyPatch) ->
     assert result is False
     daemon.log.assert_called_once()
     assert "waiting for full plugin ack" in daemon.log.call_args[0][0]
+
+
+def test_relay_message_sent_ack_strict_accepts_deferred_vscodium(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.strict_plugin_ack_required",
+        mock.Mock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.build_message_sent_info",
+        mock.Mock(return_value={"verification": "event_only", "event": "message.sent"}),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.drive_intent_evidence",
+        mock.Mock(return_value={"intent_status": "fulfilled"}),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.plugin_version_info",
+        mock.Mock(return_value={}),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers._cli_client_still_connected",
+        mock.Mock(return_value=True),
+    )
+
+    daemon = mock.Mock()
+    client = mock.Mock()
+    client.awaiting_plugin = (
+        mock.Mock(),
+        "corr-1",
+        True,
+        "vscodium",
+        "text",
+        True,
+    )
+    client.awaiting_plugin_info = {"verification": "submit_unverified", "ide": "vscodium"}
+    client.awaiting_plugin_timer = mock.Mock()
+    client.version = "0.2.7"
+    client.build_sha = "build123"
+    client.protocol_version = 2
+    client.capabilities = ["chat.events"]
+    daemon._send.return_value = True
+
+    msg = Message(type="message.sent", id="e-1", data={"chat": "default"})
+    result = _relay_message_sent_ack(daemon, client, msg)
+
+    assert result is True
+    assert client.awaiting_plugin is None
+    assert client.awaiting_plugin_info is None
+    assert client.awaiting_plugin_timer is None
+    daemon._send.assert_called_once()
+    assert any(
+        "strict ack accepted late message.sent fallback for vscodium" in call.args[0]
+        for call in daemon.log.call_args_list
+    )
 
 
 def test_handle_ack_no_pending() -> None:
@@ -257,6 +313,52 @@ def test_record_plugin_ack_integration_failure(monkeypatch: pytest.MonkeyPatch) 
     mock_record.assert_called_once()
     assert mock_record.call_args[1]["outcome"] == "failed"
     mock_emit_failure.assert_called_once()
+
+
+def test_send_plugin_ack_reply_persists_operator_replay_dsl(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack._record_plugin_ack_integration",
+        mock.Mock(),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers._cli_client_still_connected",
+        mock.Mock(return_value=True),
+    )
+    daemon = mock.Mock()
+    daemon.project = tmp_path
+    daemon._recent_dsl = []
+    daemon._command_telemetry.record_from_ack = mock.Mock()
+    daemon._send.return_value = True
+
+    info = {
+        "delivered": True,
+        "verification": "submit_unverified",
+        "attempted_submit": "workbench.action.chat.submit",
+        "submit_failure_reason": "input still contains pasted text",
+        "operation_trace": [{"op": "submit", "route": "vscodium", "ok": False}],
+    }
+
+    _send_plugin_ack_reply(
+        daemon,
+        mock.Mock(),
+        "corr/replay",
+        "vscodium",
+        info=info,
+        plugin_ok=False,
+        original_text="hello from replay",
+    )
+
+    replay_path = tmp_path / ".planfile" / ".koru" / "replay" / "corr-replay.prompt"
+    assert replay_path.read_text(encoding="utf-8") == "hello from replay"
+    assert "--prompt-file" in info["replay_command"]
+    assert info["drive_dsl_operator"][0].startswith(
+        "#900 act=diagnose severity=error code=submit_not_verified",
+    )
+    assert any(line.startswith("#902 act=replay") for line in daemon._recent_dsl)
+    assert (tmp_path / ".planfile" / ".koru" / "dsl_recent.json").exists()
 
 
 # ---------------------------------------------------------------------------

@@ -119,6 +119,13 @@ class LegacyAutopilotClientAdapter:
                 str(outcome_line),
                 data={"ide": ide, "phase": "outcome"},
             )
+        operator_lines = reply.get("drive_dsl_operator")
+        if isinstance(operator_lines, list):
+            for raw_line in operator_lines:
+                line = str(raw_line).strip()
+                if not line:
+                    continue
+                activity("DSL", line, data={"ide": ide, "phase": "operator"})
         return reply
 
     def status(self) -> dict[str, Any]:
