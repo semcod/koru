@@ -19,8 +19,10 @@ in isolation):
 - **gitignore drift** — ``.planfile/.koru/`` should be gitignored.
 - **Optional semcod / quality exports** — when ``--semcod-artifacts`` or
   ``KORU_SCAN_SEMCOD_ARTIFACTS=1``: read **jscpd** JSON, **code2llm**
-  ``analysis.toon*``, **TestQL** text export, optional **redup** JSON to
-  open backlog tickets for duplication / refactors / API regressions.
+  ``analysis.toon*``, **TestQL** text export, optional **redup** JSON, and
+  semcod-style reports from **vallm**, **pyqual**, **prefact**, **regix**,
+  and **redsl** to open backlog tickets for duplication / refactors /
+  validation failures / API regressions.
 
 The output is dry-run by default (a list of :class:`Suggestion`
 dataclasses); pass ``apply=True`` to ``run_scan`` to persist them as
@@ -727,8 +729,267 @@ def _scan_redup_changed(project: Path) -> list[Suggestion]:
     ]
 
 
+def _first_existing_artifact(project: Path, candidates: Sequence[str]) -> tuple[Path, str] | None:
+    for candidate in candidates:
+        path = project / candidate
+        if path.is_file():
+            return path, candidate
+    return None
+
+
+def _load_structured_artifact(path: Path) -> Any:
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None
+    if path.suffix.lower() == ".json":
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return None
+    try:
+        return yaml.safe_load(text)
+    except yaml.YAMLError:
+        return None
+
+
+def _intish(value: object) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"failed", "fail", "error", "errors", "red", "critical"}:
+            return 1
+        try:
+            return int(float(text))
+        except ValueError:
+            return 0
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return len(value)
+    return 0
+
+
+def _sum_structured_counts(data: object, keys: frozenset[str]) -> int:
+    """Best-effort issue counter for small semcod JSON/YAML reports."""
+    if isinstance(data, dict):
+        total = 0
+        for key, value in data.items():
+            key_text = str(key).lower().replace("-", "_")
+            if key_text in keys:
+                total += _intish(value)
+            elif key_text == "status" and str(value).strip().lower() in {
+                "failed",
+                "failure",
+                "error",
+                "red",
+            }:
+                total += 1
+            else:
+                total += _sum_structured_counts(value, keys)
+        return total
+    if isinstance(data, list):
+        return sum(_sum_structured_counts(item, keys) for item in data)
+    return 0
+
+
+def _scan_vallm_validation(project: Path) -> list[Suggestion]:
+    found = _first_existing_artifact(
+        project,
+        (
+            "validation.toon.yaml",
+            "project/validation.toon.yaml",
+            "vallm-validation.toon.yaml",
+            "vallm-report.yaml",
+            ".vallm/report.yaml",
+        ),
+    )
+    if found is None:
+        return []
+    path, rel = found
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    errors = 0
+    warnings = 0
+    err_match = re.search(r"(?m)^\s*ERRORS\[(?P<count>\d+)\]", text)
+    warn_match = re.search(r"(?m)^\s*WARNINGS\[(?P<count>\d+)\]", text)
+    if err_match:
+        errors = int(err_match.group("count"))
+    if warn_match:
+        warnings = int(warn_match.group("count"))
+    if errors <= 0 and warnings < 10:
+        return []
+    priority = "high" if errors > 0 else "normal"
+    return [
+        Suggestion(
+            signal="vallm_validation",
+            title="Repair VALLM validation findings",
+            description=(
+                f"`{rel}` reports {errors} error(s) and {warnings} warning(s). "
+                "Fix the highest-impact validation failures first, then re-run "
+                "`vallm validate` / the project validation task and refresh the report."
+            ),
+            priority=priority,
+            labels=("vallm", "validation", "scan"),
+            files=(rel,),
+        ),
+    ]
+
+
+def _scan_structured_semcod_report(
+    project: Path,
+    *,
+    candidates: Sequence[str],
+    signal: str,
+    title: str,
+    command_hint: str,
+    labels: tuple[str, ...],
+    keys: frozenset[str],
+    high_threshold: int = 10,
+) -> list[Suggestion]:
+    found = _first_existing_artifact(project, candidates)
+    if found is None:
+        return []
+    path, rel = found
+    data = _load_structured_artifact(path)
+    if data is None:
+        return []
+    count = _sum_structured_counts(data, keys)
+    if count <= 0:
+        return []
+    priority = "high" if count >= high_threshold else "normal"
+    return [
+        Suggestion(
+            signal=signal,
+            title=title,
+            description=(
+                f"`{rel}` reports {count} actionable finding(s). "
+                f"Triage and repair the report findings, then re-run `{command_hint}` "
+                "and refresh the artifact before closing the ticket."
+            ),
+            priority=priority,
+            labels=labels,
+            files=(rel,),
+        ),
+    ]
+
+
+def _scan_pyqual_report(project: Path) -> list[Suggestion]:
+    return _scan_structured_semcod_report(
+        project,
+        candidates=(
+            ".pyqual/report.json",
+            ".pyqual/report.yaml",
+            "pyqual-report.json",
+            "pyqual-report.yaml",
+            "quality-report.yaml",
+        ),
+        signal="pyqual_report",
+        title="Repair PyQual quality findings",
+        command_hint="pyqual check",
+        labels=("pyqual", "quality", "scan"),
+        keys=frozenset(
+            {
+                "failed",
+                "failures",
+                "failed_checks",
+                "errors",
+                "issues",
+                "violations",
+                "findings",
+            },
+        ),
+    )
+
+
+def _scan_prefact_report(project: Path) -> list[Suggestion]:
+    return _scan_structured_semcod_report(
+        project,
+        candidates=(
+            ".prefact/report.json",
+            ".prefact/results.json",
+            "prefact-report.json",
+            "prefact-results.json",
+        ),
+        signal="prefact_report",
+        title="Resolve Prefact pre-refactor findings",
+        command_hint="prefact check",
+        labels=("prefact", "refactor", "quality", "scan"),
+        keys=frozenset(
+            {
+                "failed",
+                "failures",
+                "errors",
+                "issues",
+                "findings",
+                "violations",
+                "blocking",
+            },
+        ),
+    )
+
+
+def _scan_regix_report(project: Path) -> list[Suggestion]:
+    return _scan_structured_semcod_report(
+        project,
+        candidates=(
+            ".regix/report.json",
+            ".regix/gates.json",
+            "regix-report.json",
+            "regix-gates.json",
+        ),
+        signal="regix_report",
+        title="Repair Regix regression gate findings",
+        command_hint="regix gates",
+        labels=("regix", "regression", "scan"),
+        keys=frozenset(
+            {
+                "failed",
+                "failures",
+                "failed_gates",
+                "regressions",
+                "errors",
+                "violations",
+            },
+        ),
+    )
+
+
+def _scan_redsl_report(project: Path) -> list[Suggestion]:
+    return _scan_structured_semcod_report(
+        project,
+        candidates=(
+            ".redsl/report.json",
+            ".redsl/gate.json",
+            "redsl-report.json",
+            "redsl-report.yaml",
+            "redsl-gate.json",
+        ),
+        signal="redsl_report",
+        title="Repair RedSL gate findings",
+        command_hint="redsl gate check .",
+        labels=("redsl", "gate", "scan"),
+        keys=frozenset(
+            {
+                "failed",
+                "failures",
+                "errors",
+                "issues",
+                "findings",
+                "violations",
+                "regressions",
+            },
+        ),
+    )
+
+
 def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
-    """Quality tickets from semcod-adjacent tool exports (jscpd, code2llm, testql, redup)."""
+    """Quality tickets from semcod-adjacent tool exports."""
     project = project.resolve()
     out: list[Suggestion] = []
     out.extend(_scan_jscpd_report(project))
@@ -736,7 +997,49 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     out.extend(_scan_testql_export(project))
     out.extend(_scan_redup_filtered(project))
     out.extend(_scan_redup_changed(project))
+    out.extend(_scan_vallm_validation(project))
+    out.extend(_scan_pyqual_report(project))
+    out.extend(_scan_prefact_report(project))
+    out.extend(_scan_regix_report(project))
+    out.extend(_scan_redsl_report(project))
     return out
+
+
+def _normalize_scan_filter_path(path: str | Path) -> str:
+    text = str(path).strip().replace("\\", "/")
+    while text.startswith("./"):
+        text = text[2:]
+    return text.rstrip("/")
+
+
+def _matches_scan_filter(value: str, wanted: str) -> bool:
+    value = _normalize_scan_filter_path(value)
+    if not value or not wanted:
+        return False
+    return value == wanted or value.startswith(f"{wanted}/") or wanted in value
+
+
+def _suggestion_matches_paths(suggestion: Suggestion, paths: Sequence[str | Path]) -> bool:
+    wanted_paths = tuple(
+        path for path in (_normalize_scan_filter_path(item) for item in paths) if path
+    )
+    if not wanted_paths:
+        return True
+    haystack = [*suggestion.files, suggestion.title, suggestion.description]
+    return any(
+        _matches_scan_filter(str(value), wanted)
+        for value in haystack
+        for wanted in wanted_paths
+    )
+
+
+def _filter_suggestions_by_paths(
+    suggestions: list[Suggestion],
+    paths: Sequence[str | Path] | None,
+) -> list[Suggestion]:
+    if not paths:
+        return suggestions
+    return [item for item in suggestions if _suggestion_matches_paths(item, paths)]
 
 
 # ---------------------------------------------------------------------------
@@ -749,6 +1052,7 @@ def collect_suggestions(
     *,
     skip_pytest: bool = False,
     include_semcod_artifacts: bool = False,
+    paths: Sequence[str | Path] | None = None,
 ) -> list[Suggestion]:
     """Run every probe and concatenate the results."""
     project = project.resolve()
@@ -761,7 +1065,7 @@ def collect_suggestions(
     out.extend(scan_gitignore_drift(project))
     if include_semcod_artifacts:
         out.extend(scan_semcod_quality_artifacts(project))
-    return out
+    return _filter_suggestions_by_paths(out, paths)
 
 
 def _record_scan_activity(
@@ -1156,6 +1460,7 @@ def run_scan(
     limit: int | None = None,
     skip_pytest: bool = False,
     include_semcod_artifacts: bool | None = None,
+    paths: Sequence[str | Path] | None = None,
     source: str = "koru-scan",
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> ScanResult:
@@ -1170,6 +1475,7 @@ def run_scan(
         project,
         skip_pytest=skip_pytest,
         include_semcod_artifacts=include_semcod_artifacts,
+        paths=paths,
     )
     # Stable ordering: priority (critical > high > normal > low), then signal.
     priority_rank = {"critical": 0, "high": 1, "normal": 2, "low": 3}

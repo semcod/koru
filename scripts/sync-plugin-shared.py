@@ -47,6 +47,10 @@ TARGET_PLUGINS = (
 def _sync_one(plugin_dir: Path) -> bool:
     """Mirror ``SHARED_SRC`` into ``plugin_dir / src / _shared``.
 
+    Uses a symlink when the platform supports it (avoids code2llm
+    duplicate-file noise) and falls back to a plain copy on Windows
+    or when symlinks require privileges.
+
     Returns ``True`` if the plugin exists and was synced; ``False`` if
     the plugin directory is absent (allowed during partial rollouts).
     """
@@ -55,9 +59,16 @@ def _sync_one(plugin_dir: Path) -> bool:
     if not src_root.exists():
         return False
     dest = src_root / "_shared"
-    if dest.exists():
+    if dest.is_symlink():
+        dest.unlink()
+    elif dest.exists():
         shutil.rmtree(dest)
-    shutil.copytree(SHARED_SRC, dest)
+
+    try:
+        dest.symlink_to(SHARED_SRC.resolve(), target_is_directory=True)
+    except OSError:
+        # Windows or other platforms where symlinks need privileges
+        shutil.copytree(SHARED_SRC, dest)
     return True
 
 

@@ -608,6 +608,11 @@ def _idle_no_ticket_warning(project: Any | None) -> tuple[str, str, dict[str, An
     message = "autonomia nie wykonuje zadania: brak otwartych ticketów w planfile"
     hint = (
         "plan: szczegół→ogół — najpierw planfile queue, potem idle scan/code2llm; "
+        "workflow standaryzowany: gdy po scan/code2llm brak pracy, system "
+        "auto-tworzy/reuzywa ticket discovery dla IDE LLM; "
+        "jezeli nadal brak ruchu, zlec IDE LLM pytanie: "
+        "'Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile.' "
+        "i zamien odpowiedz na tickety; "
         "prefact/metrun są narzędziami advisory bez automatycznych adapterów ticketów. "
         f"Napisz ticket w Web GUI: {urls['create_project_ticket']} ; "
         f"lista ticketów: {urls['tickets']}"

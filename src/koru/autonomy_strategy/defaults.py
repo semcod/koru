@@ -29,6 +29,16 @@ DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
         "enabled": True,
         "min_interval_seconds": 60,
         "duplicate_cooldown_behavior": "continue_to_general_discovery",
+        "ide_follow_up": {
+            "enabled": True,
+            "workflow": "standardized_project_discovery_ticket",
+            "trigger": "no_tickets_after_scan_and_code2llm",
+            "prompt": (
+                "Co jeszcze zostalo do wykonania? "
+                "zrob z tego nastepne tickety do planfile."
+            ),
+            "expected_output": "new_planfile_tickets_only",
+        },
         "tools": {
             "automated": ["koru_scan", "code2llm"],
             "artifact_sources": ["redup", "testql"],

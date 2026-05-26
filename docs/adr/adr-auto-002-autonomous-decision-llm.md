@@ -1,8 +1,8 @@
 # ADR AUTO-002 — Autonomiczna pętla decyzyjna: OpenRouter LLM + heurystyki + IDE LLM
 
-- Status: **ALL 4 phases implemented**
+- Status: **Phase 1-3 implemented; Phase 4 wired (reflection runtime + advisory hooks)**
 - Date: 2026-05-25
-- Updated: 2026-05-25
+- Updated: 2026-05-26
 - Related: `koru.yaml` `autonomy.strategy.planning_assistant`, `korullm`, `decision_engine.py`
 
 ## Kontekst
@@ -30,9 +30,9 @@ Cel: koru samo podejmuje decyzje, korzystając z trzech źródeł inteligencji:
 ## Architektura
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    koru autonomous loop                       │
-│                                                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    koru autonomous loop                     │
+│                                                             │
 │  ┌─────────────┐   ┌──────────────┐   ┌──────────────────┐  │
 │  │ Heuristic   │   │ Planning LLM │   │ Verification     │  │
 │  │ Engine      │   │ (OpenRouter) │   │ Engine           │  │
@@ -43,21 +43,21 @@ Cel: koru samo podejmuje decyzje, korzystając z trzech źródeł inteligencji:
 │  │ • streak    │   │ • redrive    │   │ • code2llm       │  │
 │  │ • wup       │   │ • reflect    │   │ • file changes   │  │
 │  └──────┬──────┘   └──────┬───────┘   └────────┬─────────┘  │
-│         │                 │                     │            │
-│         └────────┬────────┘                     │            │
-│                  ▼                              │            │
-│         ┌────────────────┐                      │            │
-│         │ Decision       │◄─────────────────────┘            │
-│         │ Arbiter        │                                   │
-│         │                │                                   │
-│         │ merge signals  │                                   │
-│         │ → ActionPlan   │                                   │
-│         └───────┬────────┘                                   │
-│                 ▼                                            │
+│         │                 │                    │            │
+│         └────────┬────────┘                    │            │
+│                  ▼                             │            │
+│         ┌────────────────┐                     │            │
+│         │ Decision       │◄────────────────────┘            │
+│         │ Arbiter        │                                  │
+│         │                │                                  │
+│         │ merge signals  │                                  │
+│         │ → ActionPlan   │                                  │
+│         └───────┬────────┘                                  │
+│                 ▼                                           │
 │         ┌────────────────┐         ┌─────────────────────┐   │
-│         │ Drive Engine   │────────►│ IDE LLM (executor)  │   │
-│         │ (autopilot)    │◄────────│ Cursor/Windsurf/... │   │
-│         └────────────────┘         └─────────────────────┘   │
+│         │ Drive Engine   │───────►│ IDE LLM (executor)  │   │
+│         │ (autopilot)    │◄───────│ Cursor/Windsurf/... │   │
+│         └────────────────┘        └─────────────────────┘   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -195,13 +195,18 @@ class ActionPlan:
 - Emituje eventy: `LlmEvaluation`, `LlmImprovedPrompt`
 - Testy: `tests/test_planning_llm.py` (38 testów)
 
-### Faza 4: Reflection + Self-Improvement ✅ DONE
+### Faza 4: Reflection + Self-Improvement ✅ WIRED (advisory)
 - `reflect_on_chat()` — OpenRouter-native chat reflection (dodane do `planning_llm.py`)
-- `propose_strategy_tuning()` — analiza telemetry + proposal YAML patch dla `koru.yaml`
-- `prioritize_tickets()` — multi-ticket planning, LLM widzi cały backlog i priorytetyzuje
+- Runtime chat reflection: `autonomous_cycle_chat_activity.py` używa `llx` first, fallback do `planning_llm.reflect_on_chat()`
+- Gating refleksji: aktywne gdy dostępne `llx` **lub** (`KORU_PLANNING_LLM` + `OPENROUTER_API_KEY`)
+- `propose_strategy_tuning()` — podpięte do cyklu jako event `LlmStrategyTuningAdvice` (advisory)
+- `prioritize_tickets()` — podpięte do cyklu jako event `LlmTicketPriority` (advisory)
+- Feature flags (domyślnie OFF):
+  - `KORU_PLANNING_LLM_STRATEGY_TUNING=1`
+  - `KORU_PLANNING_LLM_PRIORITIZE_TICKETS=1`
 - Nowe typy: `LlmReflection`, `StrategyTuning`, `TicketPriority`
 - Wszystkie funkcje fail-safe (None jeśli LLM niedostępny/over budget)
-- Testy: `tests/test_planning_llm.py` (+16 nowych testów Phase 4)
+- Testy: `tests/test_planning_llm.py` (+16 nowych testów Phase 4), `tests/test_autonomous.py` (fallback + advisory hooks)
 
 ## Integracja z istniejącym kodem
 
@@ -231,6 +236,52 @@ class ActionPlan:
 - **Drive efficiency**: zmniejszenie redrive'ów (cel: <2 drive'y na ticket)
 - **Verification accuracy**: false positive/negative rate zamykania ticketów
 - **LLM cost per ticket**: średni koszt OpenRouter na zamknięty ticket
+
+# Jak włączyć Phase 4 (runtime)
+
+Minimalna konfiguracja środowiska:
+
+```bash
+export OPENROUTER_API_KEY=sk-or-...
+export KORU_PLANNING_LLM=1
+```
+
+Włączenie advisory hooków (domyślnie OFF):
+
+```bash
+export KORU_PLANNING_LLM_PRIORITIZE_TICKETS=1
+export KORU_PLANNING_LLM_STRATEGY_TUNING=1
+```
+
+Uruchomienie pętli:
+
+```bash
+koru autonomous up --max-cycles 5 --sleep-seconds 30
+```
+
+Oczekiwane eventy telemetryczne:
+- `LlmTicketPriority`
+- `LlmStrategyTuningAdvice`
+- `autopilot_llx_reflection` (z `llx` lub fallback OpenRouter)
+
+Uwaga: hooki Phase 4 są advisory-only (brak automatycznej mutacji `koru.yaml`).
+
+## Rollback / disable
+
+Szybkie wyłączenie advisory hooków Phase 4:
+
+```bash
+export KORU_PLANNING_LLM_PRIORITIZE_TICKETS=0
+export KORU_PLANNING_LLM_STRATEGY_TUNING=0
+```
+
+Pełny fallback do heurystyk (bez Planning LLM):
+
+```bash
+export KORU_PLANNING_LLM=off
+```
+
+Efekt: pętla działa dalej przez Verification Engine + Decision Arbiter + heurystyki, bez wywołań OpenRouter.
 
 ## Decyzja
 

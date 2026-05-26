@@ -52,7 +52,7 @@ function sanitizeProbeCache(
 }
 
 function focusOpenCommandsDefaults(): string[] {
-  return [];
+  return ["workbench.action.chat.focusInput"];
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {

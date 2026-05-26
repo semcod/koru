@@ -47,6 +47,7 @@ function firstKey(cands: ReadonlyArray<[string, string[]]>): string {
 }
 
 const WAYLAND_ENV = { XDG_SESSION_TYPE: "wayland", WAYLAND_DISPLAY: "wayland-0" };
+const X11_ENV = { XDG_SESSION_TYPE: "x11" };
 
 function testVerifyFocusAfterOpen(): void {
   const file = { hasEditor: true, scheme: "file", isFileLike: true, text: "code" };
@@ -65,16 +66,29 @@ function testPlainHostKeyPrioritizerPreservesRows(): void {
   assert(prioritized.length === cands.length, "prioritizer keeps all host-key candidates");
 }
 
-function testHostKeyOrderVscodiumPrefersXdotoolBeforeYdotool(): void {
+function testHostKeyOrderVscodiumWaylandPrefersYdotoolBeforeXdotool(): void {
   const cands = buildHostKeySubmitCandidates("vscodium", "auto", WAYLAND_ENV);
   const rendered = cands.map(([cmd, args]) => `${cmd} ${args.join(" ")}`);
   assert(
+    rendered.indexOf("ydotool key ctrl+Return") < rendered.indexOf("xdotool key ctrl+Return"),
+    "VSCodium tries ydotool before xdotool for Ctrl+Return on Wayland",
+  );
+  assert(
+    rendered.indexOf("ydotool key Return") < rendered.indexOf("xdotool key Return"),
+    "VSCodium tries ydotool before xdotool for Return on Wayland",
+  );
+}
+
+function testHostKeyOrderVscodiumX11PrefersXdotoolBeforeYdotool(): void {
+  const cands = buildHostKeySubmitCandidates("vscodium", "auto", X11_ENV);
+  const rendered = cands.map(([cmd, args]) => `${cmd} ${args.join(" ")}`);
+  assert(
     rendered.indexOf("xdotool key ctrl+Return") < rendered.indexOf("ydotool key ctrl+Return"),
-    "VSCodium tries xdotool before ydotool for Ctrl+Return",
+    "VSCodium tries xdotool before ydotool for Ctrl+Return on X11",
   );
   assert(
     rendered.indexOf("xdotool key Return") < rendered.indexOf("ydotool key Return"),
-    "VSCodium tries xdotool before ydotool for Return",
+    "VSCodium tries xdotool before ydotool for Return on X11",
   );
 }
 
@@ -89,5 +103,6 @@ testPasteLandedInEditor();
 testMergeUnique();
 testHostKeyOrderVscodiumPrefersCtrlReturn();
 testPlainHostKeyPrioritizerPreservesRows();
-testHostKeyOrderVscodiumPrefersXdotoolBeforeYdotool();
+testHostKeyOrderVscodiumWaylandPrefersYdotoolBeforeXdotool();
+testHostKeyOrderVscodiumX11PrefersXdotoolBeforeYdotool();
 testBuildFocusInputUsesChatCommands();

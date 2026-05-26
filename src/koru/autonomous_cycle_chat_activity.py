@@ -72,6 +72,17 @@ from koru.autonomous_cycle_chat_activity_tickets import (
 )
 
 
+def _planning_chat_reflection_enabled() -> bool:
+    raw = os.environ.get("KORU_PLANNING_LLM", "1").strip().lower()
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return bool(os.environ.get("OPENROUTER_API_KEY", "").strip())
+
+
+def _chat_reflection_enabled() -> bool:
+    return _llx_chat_reflection_enabled() or _planning_chat_reflection_enabled()
+
+
 def _inject_reflection_summary_into_prompt(
     state: AutoloopState,
     queue_result: QueueLoopResult,
@@ -166,24 +177,63 @@ def _apply_llx_chat_reflection(
     reflection_events: list[Any],
     _hp: Any,
 ) -> tuple[bool, bool]:
-    try:
-        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat
-    except ImportError:
-        return False, False
-    if not llm_reflect_enabled():
-        return False, False
+    """Try llx first, then fall back to OpenRouter-native planning_llm.reflect_on_chat."""
     ticket_title = getattr(queue_result, "last_message", "") or ""
     raw_driven_prompt = getattr(state, "last_driven_prompt", "")
     driven_prompt = raw_driven_prompt if isinstance(raw_driven_prompt, str) else ""
-    reflection = reflect_on_chat(
-        ticket_id=waiting_ticket or "-",
-        ticket_title=ticket_title,
-        driven_prompt=driven_prompt or ticket_title,
-        ide=ide or "",
-        events=reflection_events or None,
-    )
+
+    # Phase 4a: try llx (subprocess) first
+    reflection: Any = None
+    try:
+        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat as _llx_reflect
+    except ImportError:
+        pass
+    else:
+        if llm_reflect_enabled():
+            reflection = _llx_reflect(
+                ticket_id=waiting_ticket or "-",
+                ticket_title=ticket_title,
+                driven_prompt=driven_prompt or ticket_title,
+                ide=ide or "",
+                events=reflection_events or None,
+            )
+
+    # Phase 4b: fallback to OpenRouter-native reflection
+    if reflection is None:
+        try:
+            from koru.autonomy.planning_llm import reflect_on_chat as _or_reflect
+        except ImportError:
+            return False, False
+        chat_events_payload: list[dict[str, Any]] = []
+        for ev in (reflection_events or []):
+            if isinstance(ev, dict):
+                chat_events_payload.append(
+                    {
+                        "type": ev.get("type"),
+                        "text": ev.get("text"),
+                        "summary": ev.get("summary"),
+                    },
+                )
+                continue
+            chat_events_payload.append(
+                {
+                    "type": getattr(ev, "type", ""),
+                    "text": getattr(ev, "text", ""),
+                    "summary": getattr(ev, "summary", ""),
+                },
+            )
+        reflection = _or_reflect(
+            ticket_id=waiting_ticket or "-",
+            ticket_title=ticket_title,
+            driven_prompt=driven_prompt or ticket_title,
+            chat_events=chat_events_payload,
+        )
+        if reflection is not None:
+            _hp("- llx reflect: using OpenRouter fallback")
+
     if reflection is None:
         return False, False
+
     cycle_telemetry["autopilot_llx_reflection"] = {
         "done": reflection.done,
         "needs_input": reflection.needs_input,
@@ -301,7 +351,7 @@ def _check_recent_self_drive_skip(
         self_drive_age is not None
         and self_drive_age <= cooldown
         and not has_received
-        and not _llx_chat_reflection_enabled()
+        and not _chat_reflection_enabled()
     ):
         age = f"{self_drive_age:.0f}s"
         cycle_telemetry["autopilot_skipped_chat_activity"] = True
@@ -343,7 +393,7 @@ def _apply_chat_activity_skip_decision(
     cycle_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
     _hp(f"- autopilot skipped ({explain_skip(decision)})")
     reflection_policy = decide_chat_reflection(
-        enabled=_llx_chat_reflection_enabled(),
+        enabled=_chat_reflection_enabled(),
         last_type=last_type,
         reflection_events=reflection_events,
     )

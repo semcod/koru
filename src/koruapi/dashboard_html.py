@@ -18,8 +18,9 @@ PROJECT_DISCOVERY_TITLE = "Project discovery: generate code2llm analysis and tic
 PROJECT_DISCOVERY_DESCRIPTION = (
   "Run a broad project discovery pass because the planfile queue is idle.\n\n"
   "1. Refresh project/code2llm artifacts when stale.\n"
-  "2. Review findings and create focused planfile tickets for concrete work.\n"
-  "3. Keep broad discovery scoped: stop when runnable tickets exist."
+  "2. Ask IDE LLM: 'Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile.'.\n"
+  "3. Review findings and create focused planfile tickets for concrete work.\n"
+  "4. Keep broad discovery scoped: stop when runnable tickets exist."
 )
 
 PROJECT_DISCOVERY_TICKET_FIELDS: dict[str, str] = {

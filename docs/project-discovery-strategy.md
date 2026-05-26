@@ -4,7 +4,12 @@ Ten dokument opisuje aktualna strategie Koru dla momentu, w ktorym kolejka
 `planfile` jest pusta. Celem nie jest dalsze wysylanie ogolnego promptu
 `continue with the next ticket` do IDE, tylko powrot z trybu lokalnej
 implementacji do szerokiej analizy calego projektu i wygenerowanie nowych,
-konkretnych ticketow.
+konkretnych ticketow. Dodatkowo, gdy po scan/code2llm dalej brak ticketow,
+strategia doklada jawne pytanie do IDE LLM o kolejne prace do zamiany na
+planfile.
+
+Macierz narzedzi i kontrakt raportow sa opisane osobno w
+[`semcod-ticket-sources.md`](./semcod-ticket-sources.md).
 
 ## Model pracy
 
@@ -15,9 +20,11 @@ Koru pracuje w dwoch rytmach:
    `waiting_input` i oczekuje, ze IDE LLM zakonczy prace jawna komenda
    `planfile`.
 2. **Ogol / discovery mode** - gdy kolejka jest pusta, Koru wraca do obrazu
-   calego repozytorium, uruchamia skan semcod/code2llm i zamienia wyniki na
-   nowe tickety. Po utworzeniu ticketow broad discovery konczy sie, a petla
-   wraca do trybu szczegolu.
+  calego repozytorium, uruchamia skan semcod/code2llm i zamienia wyniki na
+  nowe tickety. Jezeli po tych krokach dalej nie ma ticketow, Koru doklada
+  zadanie do IDE LLM: "Co jeszcze zostalo do wykonania? zrob z tego nastepne
+  tickety do planfile.". Po utworzeniu ticketow broad discovery konczy sie,
+  a petla wraca do trybu szczegolu.
 
 Ta strategia zapobiega dwom problemom: bezproduktywnemu zapetlaniu pustego
 promptu w IDE oraz zbyt szerokim edycjom bez jednoznacznego backlogu.
@@ -33,6 +40,9 @@ Automatyczne discovery po pustej kolejce jest aktywne, gdy:
 - wlaczone sa artefakty semcod: `--semcod-artifacts`;
 - `code2llm` jest dostepne w `PATH`;
 - rate-limit `--scan-after-idle-min-interval` pozwala na kolejny skan.
+
+Lista automatycznych narzedzi i zrodel artefaktow jest konfigurowalna w
+`koru.yaml` pod `autonomy.strategy.idle_discovery.tools`.
 
 W `koru auto` mozna to wylaczyc przez `--no-scan-after-idle-queue`. W trybie
 adaptacyjnym `KORU_AUTO_PIPELINE=1` moze wlaczyc te elementy dla etapow jakosci
@@ -85,7 +95,17 @@ koru autonomous up \
    przez reczna edycje YAML. Zrodlo ticketow jest oznaczane jako
    `koru-project-discovery`.
 
-6. Koru zapisuje wynik jako zdarzenie `Code2llmDiscoveryCompleted` oraz
+6. Jezeli intake scan i `code2llm` nie wygeneruja nowych ticketow,
+  Koru uruchamia **workflow standaryzowany**: auto-tworzy albo reuzywa
+  ticket discovery i dopiero wtedy follow-up do IDE LLM brzmi:
+
+  > Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile.
+
+  Oczekiwany wynik to lista kolejnych ticketow, nie szeroka implementacja bez
+  ticketu. Ticket discovery jest nosnikiem tego kroku i powinien przejsc
+  standardowy handoff `planfile` (done/input/fail).
+
+7. Koru zapisuje wynik jako zdarzenie `Code2llmDiscoveryCompleted` oraz
    telemetry:
 
    - `code2llm_discovery_run`;
@@ -155,6 +175,7 @@ Docelowy rytm autonomii wyglada tak:
 2. Po zamknieciu backlogu kolejka staje sie `idle`.
 3. Koru skanuje caly projekt przez semcod/code2llm.
 4. Wyniki analizy staja sie konkretnymi ticketami w `planfile`.
-5. Koru przerywa broad discovery i wraca do wykonywania ticketow.
-6. Gdy backlog znowu jest pusty, kolejny cykl discovery moze sie powtorzyc.
-
+5. Gdy `scan/code2llm` nie daje nowych ticketow, IDE LLM dostaje follow-up
+  pytanie o pozostaly zakres prac i zamiane na tickety.
+6. Koru przerywa broad discovery i wraca do wykonywania ticketow.
+7. Gdy backlog znowu jest pusty, kolejny cykl discovery moze sie powtorzyc.

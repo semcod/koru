@@ -1,6 +1,7 @@
 import { getStrategy } from "./registry";
 import {
   buildHostKeySubmitCandidates,
+  buildFocusOpenCommands,
   buildSubmitCommands,
   sanitizeProbeCacheForIde,
   PROBE_CACHE_VERSION,
@@ -48,12 +49,20 @@ function testSubmitCommandsTryRegisteredSubmitFirst() {
   assert(cmds[0] === "workbench.action.chat.submit", "vscodium tries native chat submit first");
 }
 
+function testFocusOpenAvoidsPanelOpenCommands() {
+  const cmds = buildFocusOpenCommands("vscodium", []);
+  assert(cmds[0] === "workbench.action.chat.focusInput", "vscodium focuses existing chat input first");
+  assert(!cmds.includes("workbench.panel.chat"), "vscodium must not use workbench.panel.chat as default focus_open");
+  assert(!cmds.includes("workbench.action.openChat"), "vscodium must not use openChat as default focus_open");
+}
+
 function run() {
   testRegistered();
   testPreferCtrlSubmit();
   testSubmitSanitize();
   testTrustFocusOpen();
   testSubmitCommandsTryRegisteredSubmitFirst();
+  testFocusOpenAvoidsPanelOpenCommands();
   console.log("vscodium-strategy tests: ok");
 }
 

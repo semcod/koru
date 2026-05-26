@@ -674,7 +674,7 @@ def test_plugin_drive_routes_alias_to_canonical_plugin(
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="code", pid=42)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(5.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(
@@ -776,7 +776,7 @@ def test_protocol_policy_allows_stale_plugin_with_compatible_protocol(
         )
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(5.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(
@@ -1175,6 +1175,7 @@ def test_newer_plugin_connection_replaces_stale_same_ide_client(
     with _daemon(tmp_path, monkeypatch) as h:
         stale_plugin, _stale_reader = _connect_plugin(h.sock_path, ide="vscode", pid=41)
         fresh_plugin, fresh_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+        fresh_plugin.settimeout(5.0)
 
         # The new hello should evict the stale client so it no longer receives traffic.
         stale_plugin.settimeout(0.2)

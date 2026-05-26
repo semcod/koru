@@ -254,6 +254,19 @@ export function filterRegistered(commands: string[], existing: Set<string>): str
 
 export type HostKeyCandidate = [string, string[]];
 
+function isCtrlHostKeyCandidate(candidate: HostKeyCandidate): boolean {
+  const [, args] = candidate;
+  return args.some((arg) => /\bctrl\b/i.test(arg));
+}
+
+export function prioritizePlainHostKeySubmitCandidates(
+  candidates: readonly HostKeyCandidate[]
+): HostKeyCandidate[] {
+  const plain = candidates.filter((candidate) => !isCtrlHostKeyCandidate(candidate));
+  const ctrl = candidates.filter(isCtrlHostKeyCandidate);
+  return [...plain, ...ctrl];
+}
+
 type Mod = "plain" | "ctrl";
 
 function injectorRow(mod: Mod): ReadonlyArray<HostKeyCandidate> {

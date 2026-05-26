@@ -154,6 +154,8 @@ def test_idle_no_ticket_warning_points_to_web_gui(monkeypatch) -> None:
     assert "/llm/prompt/create-ticket-for-project" in str(kwargs["hint"])
     assert "lista ticketów" in str(kwargs["hint"])
     assert "szczegół→ogół" in str(kwargs["hint"])
+    assert "workflow standaryzowany" in str(kwargs["hint"])
+    assert "Co jeszcze zostalo do wykonania?" in str(kwargs["hint"])
     assert "prefact/metrun" in str(kwargs["hint"])
     assert kwargs["data"]["blocked_by"] == "idle_no_ticket"
 

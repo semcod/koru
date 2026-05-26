@@ -3225,9 +3225,10 @@ sprint:
         code2llm to confirm the duplicate signal is gone.'
       execution:
         attempt: 0
+        finished_at: '2026-05-25T21:46:53.080070Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3245,6 +3246,16 @@ sprint:
           code2llm to confirm the duplicate signal is gone.'
         source: koru task
         timestamp: '2026-05-25T20:37:34.899611+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T21:46:53.101710+00:00'
       id: STARTER-289
       inputs:
         api_headers: {}
@@ -3284,9 +3295,9 @@ sprint:
         timestamp: '2026-05-25T20:37:34.899611+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T20:37:34.899611+00:00'
+      updated_at: '2026-05-25T21:46:53.101671+00:00'
     STARTER-290:
       blocked_by: []
       blocks: []
@@ -3300,9 +3311,10 @@ sprint:
         code2llm to confirm the duplicate signal is gone.'
       execution:
         attempt: 0
+        finished_at: '2026-05-25T21:53:04.606912Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3320,6 +3332,21 @@ sprint:
           code2llm to confirm the duplicate signal is gone.'
         source: koru task
         timestamp: '2026-05-25T20:37:35.180834+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T21:51:42.515153+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T21:53:04.628866+00:00'
       id: STARTER-290
       inputs:
         api_headers: {}
@@ -3359,9 +3386,9 @@ sprint:
         timestamp: '2026-05-25T20:37:35.180834+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T20:37:35.180834+00:00'
+      updated_at: '2026-05-25T21:53:04.628830+00:00'
     STARTER-291:
       blocked_by: []
       blocks: []
@@ -3375,9 +3402,10 @@ sprint:
         code2llm to confirm the duplicate signal is gone.'
       execution:
         attempt: 0
+        finished_at: '2026-05-25T23:05:29.150723Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3395,6 +3423,21 @@ sprint:
           code2llm to confirm the duplicate signal is gone.'
         source: koru task
         timestamp: '2026-05-25T20:37:35.463777+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T23:05:14.647559+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T23:05:29.170466+00:00'
       id: STARTER-291
       inputs:
         api_headers: {}
@@ -3434,9 +3477,9 @@ sprint:
         timestamp: '2026-05-25T20:37:35.463777+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T20:37:35.463777+00:00'
+      updated_at: '2026-05-25T23:05:29.170433+00:00'
     STARTER-292:
       blocked_by: []
       blocks: []
@@ -3450,9 +3493,10 @@ sprint:
         code2llm to confirm the duplicate signal is gone.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T06:16:43.195299Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3470,6 +3514,16 @@ sprint:
           code2llm to confirm the duplicate signal is gone.'
         source: koru task
         timestamp: '2026-05-25T20:37:35.767533+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T06:16:43.221187+00:00'
       id: STARTER-292
       inputs:
         api_headers: {}
@@ -3509,9 +3563,9 @@ sprint:
         timestamp: '2026-05-25T20:37:35.767533+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T20:37:35.767533+00:00'
+      updated_at: '2026-05-26T06:16:43.221151+00:00'
     STARTER-293:
       blocked_by: []
       blocks: []
@@ -3525,9 +3579,10 @@ sprint:
         code2llm to confirm the duplicate signal is gone.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T06:18:14.905667Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3545,6 +3600,16 @@ sprint:
           code2llm to confirm the duplicate signal is gone.'
         source: koru task
         timestamp: '2026-05-25T20:37:36.116100+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T06:18:14.928247+00:00'
       id: STARTER-293
       inputs:
         api_headers: {}
@@ -3584,9 +3649,9 @@ sprint:
         timestamp: '2026-05-25T20:37:36.116100+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T20:37:36.116100+00:00'
+      updated_at: '2026-05-26T06:18:14.928215+00:00'
     STARTER-294:
       blocked_by: []
       blocks: []
@@ -3600,9 +3665,10 @@ sprint:
         code2llm to confirm the duplicate signal is gone.'
       execution:
         attempt: 0
+        finished_at: '2026-05-26T06:48:53.632702Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3620,6 +3686,16 @@ sprint:
           code2llm to confirm the duplicate signal is gone.'
         source: koru task
         timestamp: '2026-05-25T20:37:36.415211+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-26T06:48:53.657045+00:00'
       id: STARTER-294
       inputs:
         api_headers: {}
@@ -3659,9 +3735,9 @@ sprint:
         timestamp: '2026-05-25T20:37:36.415211+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T20:37:36.415211+00:00'
+      updated_at: '2026-05-26T06:48:53.657013+00:00'
     STARTER-295:
       blocked_by: []
       blocks: []

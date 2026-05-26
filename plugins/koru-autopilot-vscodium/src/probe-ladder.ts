@@ -299,8 +299,15 @@ function reorderForXSession(
   );
 }
 
-function reorderForVscodiumHostKeys(row: ReadonlyArray<HostKeyCandidate>): HostKeyCandidate[] {
-  const order = ["wtype", "xdotool", "ydotool"];
+function reorderForVscodiumHostKeys(
+  row: ReadonlyArray<HostKeyCandidate>,
+  isWayland: boolean
+): HostKeyCandidate[] {
+  // On Wayland, xdotool can return success while targeting an unrelated
+  // XWayland surface (often the terminal), so prefer ydotool first.
+  const order = isWayland
+    ? ["wtype", "ydotool", "xdotool"]
+    : ["xdotool", "ydotool", "wtype"];
   return [...row].sort(
     (a, b) => order.indexOf(a[0]) - order.indexOf(b[0])
   );
@@ -340,11 +347,11 @@ export function buildHostKeySubmitCandidates(
     Boolean(env.WAYLAND_DISPLAY);
   const plain =
     ide === "vscodium"
-      ? reorderForVscodiumHostKeys(injectorRow("plain"))
+      ? reorderForVscodiumHostKeys(injectorRow("plain"), isWayland)
       : reorderForXSession(injectorRow("plain"), isWayland);
   const ctrl =
     ide === "vscodium"
-      ? reorderForVscodiumHostKeys(injectorRow("ctrl"))
+      ? reorderForVscodiumHostKeys(injectorRow("ctrl"), isWayland)
       : reorderForXSession(injectorRow("ctrl"), isWayland);
   if (normalized === "return" || normalized === "enter") {
     return [...plain, ...ctrl];

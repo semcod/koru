@@ -27,23 +27,26 @@ For LLM agents starting a session in a koru-driven repository:
    lane, multi-repo refactor).
 5. **[`llm-tools/`](./llm-tools/)** — per-tool docs and install scripts
    for every component in the koru pipeline.
-6. **[`agent-backends-architecture.md`](./agent-backends-architecture.md)** —
+6. **[`semcod-ticket-sources.md`](./semcod-ticket-sources.md)** — which semcod
+   analysis tools can generate Planfile tickets directly or through Koru
+   artifact adapters.
+7. **[`agent-backends-architecture.md`](./agent-backends-architecture.md)** —
    layered map: plugin+socket, MCP, vendor CLIs, OS injectors (no single
    universal “wake LLM” API).
-7. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
+8. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
    drive your IDE's LLM chat from a terminal (`koru autopilot`), including
    plugin install repair, version drift checks, and strict runtime gates.
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
    formal control-plane protocol: [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
-8. **[`ide-router.md`](./ide-router.md)** — how koru chooses the active IDE
+9. **[`ide-router.md`](./ide-router.md)** — how koru chooses the active IDE
    lane and keeps VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed separated.
-9. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
+10. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
-10. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
+11. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
    implemented doctor, guided repair, autopilot host repair, and safe
    autonomous diagnostic-ticket loops.
-11. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
+12. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
    how an idle planfile queue triggers whole-project `code2llm` discovery,
    `planfile` ticket generation, and explicit IDE LLM status handoff.
 

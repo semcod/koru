@@ -33,6 +33,16 @@ def build_scan_parser() -> argparse.ArgumentParser:
         help="Cap the number of suggestions (default: all).",
     )
     parser.add_argument(
+        "--path",
+        dest="paths",
+        action="append",
+        default=[],
+        help=(
+            "Limit suggestions to a file or directory path. "
+            "Can be repeated; matches suggestion files, titles, and descriptions."
+        ),
+    )
+    parser.add_argument(
         "--skip-pytest",
         action="store_true",
         help="Do not run `pytest --collect-only` (faster scan).",
@@ -42,7 +52,7 @@ def build_scan_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Include semcod-style quality exports (jscpd JSON, code2llm analysis.toon*, "
-            "testql_api_results.json, redup filtered JSON). "
+            "testql_api_results.json, redup/regix/redsl/pyqual/prefact/vallm reports). "
             "Otherwise only when KORU_SCAN_SEMCOD_ARTIFACTS is truthy."
         ),
     )
@@ -69,6 +79,7 @@ def scan_main(argv: list[str]) -> int:
         limit=args.limit,
         skip_pytest=args.skip_pytest,
         include_semcod_artifacts=args.semcod_artifacts,
+        paths=args.paths,
         source=args.source,
     )
     if args.output_format == "json":

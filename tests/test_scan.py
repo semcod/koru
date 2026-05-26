@@ -71,6 +71,24 @@ class TestScanCLI(unittest.TestCase):
         payload = json.loads(buf.getvalue())
         self.assertEqual(payload["suggestions"][0]["signal"], "semcod")
 
+    def test_cli_passes_path_filters_to_run_scan(self) -> None:
+        with mock.patch("koru.cli_scan.run_scan", return_value=ScanResult(suggestions=[])) as run:
+            rc = cli_scan.scan_main(
+                [
+                    "--project",
+                    "/tmp/project",
+                    "--path",
+                    "src/koru",
+                    "--path",
+                    "tests/test_scan.py",
+                    "--format",
+                    "json",
+                ],
+            )
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(run.call_args.kwargs["paths"], ["src/koru", "tests/test_scan.py"])
+
     def test_code2llm_god_and_refactor_share_file_dedupe_key(self) -> None:
         god = Suggestion(
             signal="code2llm_god",
@@ -916,6 +934,26 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             self.assertEqual(hotspots[0].priority, "high")
             self.assertIn("autonomous_cycle", hotspots[0].title)
 
+    def test_path_filter_limits_semcod_artifact_suggestions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[2]:\n"
+                "  🔴 GOD src/foo.py = 900L, 2 classes, 40m\n"
+                "  🔴 GOD src/bar.py = 900L, 2 classes, 40m\n",
+                encoding="utf-8",
+            )
+            result = run_scan(
+                project,
+                skip_pytest=True,
+                include_semcod_artifacts=True,
+                paths=("src/foo.py",),
+            )
+
+            self.assertEqual(len(result.suggestions), 1)
+            self.assertIn("src/foo.py", result.suggestions[0].title)
+
     def test_testql_export_emits_when_many_failures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
@@ -948,6 +986,60 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             )
             out = scan_semcod_quality_artifacts(project)
             self.assertTrue(any(s.signal == "redup_changed" for s in out))
+
+    def test_vallm_validation_emits_when_errors_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "validation.toon.yaml").write_text(
+                "# vallm batch | 12✓ 3⚠ 2✗\n"
+                "WARNINGS[3]:\n"
+                "ERRORS[2]:\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            ticket = next(s for s in out if s.signal == "vallm_validation")
+            self.assertEqual(ticket.priority, "high")
+
+    def test_pyqual_report_emits_when_failed_checks_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".pyqual").mkdir()
+            (project / ".pyqual" / "report.yaml").write_text(
+                "summary:\n  failed_checks: 2\n  passed: 10\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "pyqual_report" for s in out))
+
+    def test_prefact_report_emits_when_findings_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "prefact-report.json").write_text(
+                json.dumps({"findings": [{"id": "P1"}, {"id": "P2"}]}),
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "prefact_report" for s in out))
+
+    def test_regix_report_emits_when_regressions_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "regix-gates.json").write_text(
+                json.dumps({"regressions": 1}),
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "regix_report" for s in out))
+
+    def test_redsl_report_emits_when_gate_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "redsl-report.yaml").write_text(
+                "gate:\n  status: failed\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "redsl_report" for s in out))
 
 
 if __name__ == "__main__":

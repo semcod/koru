@@ -140,7 +140,6 @@ class DriveOrchestrator:
         return raw in {"1", "true", "yes", "on"}
 
     @staticmethod
-    @functools.lru_cache(maxsize=8)
     def expected_plugin_version(ide_id: str | None = None) -> str | None:
         """Resolve expected plugin VSIX version for ``ide_id``.
 

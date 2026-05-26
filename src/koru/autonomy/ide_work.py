@@ -30,9 +30,9 @@ then create concrete tickets and let the normal queue work through them.
 1. Generate fresh whole-project context:
     code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'
 
-2. Inspect the generated ./project artifacts, especially project/analysis.toon.yaml.
-    Use llx/OpenRouter or the IDE LLM for synthesis if useful, but keep the output
-    as actionable planfile tickets rather than direct broad edits.
+2. Ask IDE LLM after the code2llm refresh:
+    "Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile."
+    Keep the answer ticket-oriented (no broad multi-file edits in this step).
 
 3. Convert findings into tickets:
     koru scan --apply --semcod-artifacts --source koru-scan

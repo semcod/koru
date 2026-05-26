@@ -12,11 +12,26 @@ from pathlib import Path
 DEFAULT_PACKAGES: tuple[str, ...] = (
     "koru",
     "nfo",
+    "planfile",
+    "code2llm",
     "redup",
     "wup",
     "regix",
     "testql",
-    "planfile",
+    "prefact",
+    "redsl",
+    "vallm",
+    "pyqual",
+    "pfix",
+    "goal",
+    "costs",
+    "llx",
+    "doql",
+    "protogate",
+    "op3",
+    "mdflow",
+    "metrun",
+    "pretest",
 )
 
 Runner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]

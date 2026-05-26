@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from koru.autonomy import code2llm_discovery as code2llm_discovery_mod
+from koru.autonomy import ide_work as ide_work_mod
 from koru.autonomy.phases import scan_phase
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
@@ -261,3 +263,93 @@ def test_handle_scan_after_idle_remembers_duplicates_and_skips_next_attempt(
     assert calls["count"] == 1
     assert telemetry["scan_after_idle_skipped_duplicate_cooldown"] is True
     assert any("duplicate-only results" in line for line in logs)
+
+
+def test_run_code2llm_discovery_after_idle_ensures_standardized_follow_up_ticket(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    logs: list[str] = []
+    emits: list[tuple[str, dict]] = []
+    outcome = code2llm_discovery_mod.DiscoveryOutcome(
+        ran=True,
+        code2llm_returncode=0,
+        applied_titles=[],
+        skipped_titles=[],
+    )
+
+    monkeypatch.setattr(
+        code2llm_discovery_mod,
+        "run_code2llm_discovery",
+        lambda _project: outcome,
+    )
+    monkeypatch.setattr(
+        code2llm_discovery_mod,
+        "format_discovery_summary",
+        lambda _outcome: "code2llm discovery: applied=0 skipped=0",
+    )
+    monkeypatch.setattr(
+        ide_work_mod,
+        "ensure_project_discovery_ticket",
+        lambda _project, *, auto_run_code2llm: {
+            "id": "PLF-777",
+            "name": "Project discovery",
+        },
+    )
+
+    payload = scan_phase._run_code2llm_discovery_after_idle(
+        tmp_path,
+        logs.append,
+        lambda kind, payload, **_kwargs: emits.append((kind, payload)),
+    )
+
+    assert payload is not None
+    assert payload["follow_up_workflow"] == "standardized_project_discovery"
+    assert payload["follow_up_ticket_id"] == "PLF-777"
+    assert any("standardized follow-up ticket PLF-777" in line for line in logs)
+    assert emits and emits[-1][0] == "Code2llmDiscoveryCompleted"
+    assert emits[-1][1]["follow_up_ticket_id"] == "PLF-777"
+
+
+def test_run_code2llm_discovery_after_idle_skips_follow_up_when_tickets_applied(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    outcome = code2llm_discovery_mod.DiscoveryOutcome(
+        ran=True,
+        code2llm_returncode=0,
+        applied_titles=["Split god module"],
+        skipped_titles=[],
+    )
+    called = {"ensure": 0}
+
+    monkeypatch.setattr(
+        code2llm_discovery_mod,
+        "run_code2llm_discovery",
+        lambda _project: outcome,
+    )
+    monkeypatch.setattr(
+        code2llm_discovery_mod,
+        "format_discovery_summary",
+        lambda _outcome: "code2llm discovery: applied=1 skipped=0",
+    )
+
+    def _unexpected_ensure(_project, *, auto_run_code2llm):
+        called["ensure"] += 1
+        return {"id": "PLF-778"}
+
+    monkeypatch.setattr(
+        ide_work_mod,
+        "ensure_project_discovery_ticket",
+        _unexpected_ensure,
+    )
+
+    payload = scan_phase._run_code2llm_discovery_after_idle(
+        tmp_path,
+        lambda _line: None,
+        lambda *_args, **_kwargs: None,
+    )
+
+    assert payload is not None
+    assert "follow_up_ticket_id" not in payload
+    assert called["ensure"] == 0

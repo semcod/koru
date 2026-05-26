@@ -95,11 +95,19 @@ autonomy:
         - koru_scan
         - code2llm
         artifact_sources:
+        - jscpd
         - redup
         - testql
-        advisory:
+        - vallm
+        - pyqual
         - prefact
+        - regix
+        - redsl
+        advisory:
         - metrun
+        - pfix
+        - goal
+        - costs
     planning_assistant:
       enabled: true
       provider_order:

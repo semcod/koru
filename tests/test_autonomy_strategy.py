@@ -23,6 +23,12 @@ def test_ensure_autonomy_strategy_creates_koru_yaml(tmp_path: Path) -> None:
     assert strategy["idle_discovery"]["duplicate_cooldown_behavior"] == (
         "continue_to_general_discovery"
     )
+    assert strategy["idle_discovery"]["ide_follow_up"]["enabled"] is True
+    assert (
+        strategy["idle_discovery"]["ide_follow_up"]["workflow"]
+        == "standardized_project_discovery_ticket"
+    )
+    assert "Co jeszcze zostalo do wykonania?" in strategy["idle_discovery"]["ide_follow_up"]["prompt"]
 
 
 def test_ensure_autonomy_strategy_appends_to_existing_yaml_without_autonomy(

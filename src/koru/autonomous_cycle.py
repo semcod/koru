@@ -47,14 +47,19 @@ from koru.autonomy.planning_llm import (
     evaluate_drive_result as _llm_evaluate_drive_result,
     generate_better_prompt as _llm_generate_better_prompt,
     get_budget_tracker as _get_planning_budget,
+    prioritize_tickets as _llm_prioritize_tickets,
+    propose_strategy_tuning as _llm_propose_strategy_tuning,
 )
 from koru.autonomy.verification_engine import (
     assess_verdict,
     collect_evidence,
     take_snapshot,
 )
+from koru.autonomy.decision_trace import load_recent_decisions
+from koru.autonomy_strategy.config import load_autonomy_strategy
 from koru.environment_profile import environment_profile_payload
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
+from koru.queue.ticket import planfile_command
 from koru.queue import default_human_prompt as _default_human_prompt
 from koru.queue import run_api_request as _run_api_request
 from koru.queue import run_llm_request as _run_llm_request
@@ -290,6 +295,135 @@ def _initialize_cycle_telemetry() -> dict[str, Any]:
         "scan_after_idle_applied": 0,
         "scan_after_idle_skipped_rate_limit": False,
     }
+
+
+def _env_truthy(name: str, *, default: str = "0") -> bool:
+    raw = os.environ.get(name, default).strip().lower()
+    return raw in {"1", "true", "yes", "on", "auto"}
+
+
+def _load_open_tickets_for_planning(
+    project: Path,
+    *,
+    queue_name: str | None,
+) -> list[dict[str, Any]]:
+    try:
+        result = planfile_command(
+            project,
+            ["ticket", "list", "--format", "json"],
+            runner=lambda command, cwd: _run_process(list(command), cwd),
+        )
+    except Exception:  # noqa: BLE001
+        return []
+    if result.returncode != 0:
+        return []
+    try:
+        payload = json.loads((result.stdout or "").strip() or "[]")
+    except json.JSONDecodeError:
+        return []
+    if isinstance(payload, dict):
+        payload = [payload]
+    if not isinstance(payload, list):
+        return []
+
+    closed = {"done", "closed", "cancelled", "canceled"}
+    rows: list[dict[str, Any]] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        ticket_id = str(item.get("id") or "").strip()
+        if not ticket_id:
+            continue
+        ticket_queue = str(item.get("queue") or "").strip() or None
+        if queue_name and ticket_queue and ticket_queue != queue_name:
+            continue
+        status = str(item.get("status") or "open").strip().lower()
+        if status in closed:
+            continue
+        rows.append(
+            {
+                "id": ticket_id,
+                "title": str(item.get("name") or item.get("title") or "").strip(),
+                "status": status,
+            },
+        )
+    return rows
+
+
+def _run_phase4_advisory_hooks(
+    *,
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    queue_name: str | None,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    """Run optional Phase 4 advisory hooks (no state mutation side effects)."""
+    enable_priority = _env_truthy("KORU_PLANNING_LLM_PRIORITIZE_TICKETS", default="0")
+    enable_tuning = _env_truthy("KORU_PLANNING_LLM_STRATEGY_TUNING", default="0")
+    if not (enable_priority or enable_tuning):
+        return
+
+    if enable_priority:
+        try:
+            tickets = _load_open_tickets_for_planning(project, queue_name=queue_name)
+            last_verdict = getattr(state, "last_drive_verdict", None)
+            if isinstance(last_verdict, dict):
+                recent_verdicts = [last_verdict]
+            elif last_verdict is not None and callable(getattr(last_verdict, "to_dict", None)):
+                recent_verdicts = [last_verdict.to_dict()]
+            else:
+                recent_verdicts = None
+            advice = _llm_prioritize_tickets(
+                tickets=tickets,
+                test_status="unknown",
+                recent_verdicts=recent_verdicts,
+            )
+        except Exception:  # noqa: BLE001
+            advice = None
+        if advice is not None:
+            payload = {
+                "cycle": cycle,
+                "ordered_ticket_ids": list(advice.ordered_ticket_ids),
+                "reason": advice.reason,
+                "confidence": advice.confidence,
+            }
+            cycle_telemetry["llm_ticket_priority"] = payload
+            _emit("LlmTicketPriority", payload)
+            _hp(
+                "  llm_ticket_priority: "
+                f"{len(advice.ordered_ticket_ids)} tickets (confidence={advice.confidence:.2f})",
+            )
+
+    if enable_tuning:
+        try:
+            strategy = load_autonomy_strategy(project) or {}
+            recent_decisions = load_recent_decisions(project, limit=20)
+            strategy_doc = json.dumps(strategy, ensure_ascii=False, indent=2)
+            tuning = _llm_propose_strategy_tuning(
+                current_strategy_yaml=strategy_doc,
+                recent_decisions=recent_decisions,
+                cycle_metrics=cycle_telemetry,
+            )
+        except Exception:  # noqa: BLE001
+            tuning = None
+        if tuning is not None:
+            payload = {
+                "cycle": cycle,
+                "reason": tuning.reason,
+                "confidence": tuning.confidence,
+                "patch": tuning.patch,
+            }
+            cycle_telemetry["llm_strategy_tuning"] = {
+                "reason": tuning.reason,
+                "confidence": tuning.confidence,
+                "patch_preview": tuning.patch[:200],
+            }
+            _emit("LlmStrategyTuningAdvice", payload)
+            _hp(f"  llm_strategy_tuning: confidence={tuning.confidence:.2f}")
 
 
 def _attach_environment_profile(
@@ -552,7 +686,42 @@ def _run_code2llm_discovery_after_idle(
     summary = format_discovery_summary(outcome)
     _hp(f"  {summary}")
     payload = outcome.to_dict()
+    payload = _ensure_standardized_discovery_follow_up(project, payload=payload, _hp=_hp)
     _emit("Code2llmDiscoveryCompleted", payload)
+    return payload
+
+
+def _ensure_standardized_discovery_follow_up(
+    project: Path,
+    *,
+    payload: dict[str, Any],
+    _hp: callable,
+) -> dict[str, Any]:
+    """Guarantee a standard idle workflow ticket when discovery found no runnable work."""
+    applied = payload.get("applied")
+    if isinstance(applied, list) and applied:
+        return payload
+    try:
+        from koru.autonomy.ide_work import ensure_project_discovery_ticket
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"  idle workflow: standardized follow-up unavailable: {exc}")
+        return payload
+    try:
+        ticket = ensure_project_discovery_ticket(project, auto_run_code2llm=False)
+    except Exception as exc:  # noqa: BLE001 - best-effort fallback
+        _hp(f"  idle workflow: failed to ensure standardized follow-up ticket: {exc}")
+        return payload
+    if not isinstance(ticket, dict):
+        return payload
+    ticket_id = str(ticket.get("id") or "").strip()
+    if not ticket_id:
+        return payload
+    payload["follow_up_workflow"] = "standardized_project_discovery"
+    payload["follow_up_ticket_id"] = ticket_id
+    _hp(
+        "  idle workflow: standardized follow-up ticket "
+        f"{ticket_id} ready for IDE LLM",
+    )
     return payload
 
 
@@ -1140,6 +1309,17 @@ def run_cycle(
         wup_health,
         _hp,
         _emit,
+    )
+
+    _run_phase4_advisory_hooks(
+        project=project,
+        state=state,
+        cycle=cycle,
+        queue_result=queue_result,
+        queue_name=queue_name,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+        _emit=_emit,
     )
 
     _emit_cycle_completion_events(

@@ -37,6 +37,7 @@ import {
   mergeProbeCache,
   orderWithCache,
   pasteLandedInEditor,
+  prioritizePlainHostKeySubmitCandidates,
   type ProbeCacheEntry,
   sanitizeProbeCacheForIde,
   verifyFocusAfterOpen,
@@ -67,11 +68,15 @@ const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.chat.openask",
 ]);
 
-const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
+const UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS = new Set([
+  "workbench.action.openchat",
+  "workbench.action.chat.open",
   "workbench.panel.chat",
   "workbench.panel.chat.view.copilot.focus",
   "workbench.panel.aichat.view.copilot.focus",
 ]);
+
+const OPEN_CHAT_PANEL_DEBOUNCE_MS = 2000;
 
 function isAllowedFocusOpenCommand(command: unknown): command is string {
   return (
@@ -93,10 +98,10 @@ function sanitizeFocusOpenCandidates(commands: readonly string[]): string[] {
 }
 
 function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
-  if (ide !== "vscode") {
+  if (ide !== "vscode" && ide !== "vscodium") {
     return [...commands];
   }
-  return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
+  return commands.filter((command) => !UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
 }
 
 function isSpecificChatInputFocusCommand(command: string | undefined): boolean {
@@ -151,6 +156,16 @@ type FocusChatContext = {
   commands: string[];
   before: ReturnType<typeof captureEditorSnapshot>;
 };
+
+type VerifiedHostKeySubmitOptions = {
+  preserveFocus?: boolean;
+  preferPlain?: boolean;
+  ctrlOnly?: boolean;
+};
+
+function isHostClipboardPasteCommand(command: string | undefined): boolean {
+  return Boolean(command && command.includes("host-clipboard"));
+}
 type OperationTraceStep = {
   op: string;
   route: string;
@@ -215,6 +230,7 @@ export interface BridgeHandle {
   connect(): void;
   disconnect(): void;
   sendManualChat(text: string): Promise<void>;
+  openChatFromCommand(): Promise<void>;
   calibrateProbe(): Promise<void>;
   captureSubmitClickPosition(): Promise<void>;
 }
@@ -256,6 +272,9 @@ class SharedAutopilotBridge {
   private reconnectBlockedReason: string | null = null;
   private chatHistoryWatcher: ChatHistoryWatcher | null = null;
   private operationTrace: OperationTraceStep[] = [];
+  private openChatPanelInFlight: Promise<FocusOutcome> | null = null;
+  private lastOpenChatPanelAt = 0;
+  private lastOpenChatPanelOutcome: FocusOutcome | null = null;
   /**
    * Anchor ``rowid`` captured from Cursor's ``cursorDiskKV`` *just before*
    * the current drive's submit step. Used by ``verifySubmitStep`` to look
@@ -561,6 +580,10 @@ class SharedAutopilotBridge {
     if (!this.options.openChatOnConnect) {
       return;
     }
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    if (cfg.get<boolean>("openChatOnConnect", true) === false) {
+      return;
+    }
     setTimeout(() => {
       void this.openChatPanel("connect").catch((err) => {
         const detail = err instanceof Error ? err.message : String(err);
@@ -570,6 +593,29 @@ class SharedAutopilotBridge {
   }
 
   private async openChatPanel(reason: string): Promise<FocusOutcome> {
+    if (this.openChatPanelInFlight) {
+      return this.openChatPanelInFlight;
+    }
+    const now = Date.now();
+    if (
+      this.lastOpenChatPanelOutcome &&
+      now - this.lastOpenChatPanelAt < OPEN_CHAT_PANEL_DEBOUNCE_MS
+    ) {
+      return this.lastOpenChatPanelOutcome;
+    }
+
+    this.openChatPanelInFlight = this.performOpenChatPanel(reason);
+    try {
+      const outcome = await this.openChatPanelInFlight;
+      this.lastOpenChatPanelAt = Date.now();
+      this.lastOpenChatPanelOutcome = outcome;
+      return outcome;
+    } finally {
+      this.openChatPanelInFlight = null;
+    }
+  }
+
+  private async performOpenChatPanel(reason: string): Promise<FocusOutcome> {
     this.resetOperationTrace();
     this.traceOperation({
       op: "focus_open",
@@ -687,26 +733,59 @@ class SharedAutopilotBridge {
     }
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
     const override = cfg.get<string>("submitHostKey", "auto") || "auto";
-    const candidates = buildHostKeySubmitCandidates(ide, override);
+    const effectiveOverride = this.resolveSubmitHostKeyOverride(ide, override);
+    const candidates = buildHostKeySubmitCandidates(ide, effectiveOverride);
     return this.runHostKeyCandidates("SUBMIT_HOST_KEY", candidates);
+  }
+
+  private resolveSubmitHostKeyOverride(ide: string | undefined, override: string): string {
+    const normalized = (override || "auto").toLowerCase();
+    // VSCodium often reports host-key success on plain Return even when
+    // the chat webview only consumed a newline. Keep Ctrl+Return first in
+    // auto mode even if strategy registration/cache state is stale.
+    if (ide === "vscodium" && normalized === "auto") {
+      return "ctrl+Return";
+    }
+    return override;
+  }
+
+  private static isCtrlHostKeyCandidateArgs(args: string[]): boolean {
+    return args.some((arg) => /\bctrl\b/i.test(arg));
   }
 
   private async _tryVerifiedHostKeySubmit(
     ide: string,
-    verifyText: string | undefined
+    verifyText: string | undefined,
+    options: VerifiedHostKeySubmitOptions = {}
   ): Promise<SubmitOutcome> {
     if (process.platform !== "linux" || !verifyText) {
       return { ok: false };
     }
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
     const override = cfg.get<string>("submitHostKey", "auto") || "auto";
-    const candidates = buildHostKeySubmitCandidates(ide, override);
+    const effectiveOverride = this.resolveSubmitHostKeyOverride(ide, override);
+    const builtCandidates = buildHostKeySubmitCandidates(ide, effectiveOverride);
+    let candidates =
+      options.preferPlain && override.toLowerCase() === "auto"
+        ? prioritizePlainHostKeySubmitCandidates(builtCandidates)
+        : builtCandidates;
+    if (options.ctrlOnly) {
+      const ctrlOnly = candidates.filter(([, args]) => SharedAutopilotBridge.isCtrlHostKeyCandidateArgs(args));
+      if (ctrlOnly.length > 0) {
+        candidates = ctrlOnly;
+      }
+    }
     const attempts: string[] = [];
     this.traceOperation({
       op: "submit_host_key_verified",
       route: "host-key-candidates",
       ok: true,
-      detail: { candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`) },
+      detail: {
+        candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`),
+        preserveFocus: Boolean(options.preserveFocus),
+        preferPlain: Boolean(options.preferPlain),
+        ctrlOnly: Boolean(options.ctrlOnly),
+      },
     });
     for (const [command, args] of candidates) {
       const rendered = `${command} ${args.join(" ")}`;
@@ -745,12 +824,22 @@ class SharedAutopilotBridge {
         reason: "input still contains pasted text",
         detail: { observedLength: verify.observedLength },
       });
-      await this.focusChatInput();
+      if (!options.preserveFocus) {
+        await this.focusChatInput();
+      }
       await this.runHostKeyCandidates("SUBMIT_DESELECT", [
         ["wtype", ["-k", "End"]],
         ["xdotool", ["key", "End"]],
         ["ydotool", ["key", "End"]],
       ]);
+      if (options.preserveFocus) {
+        this.traceOperation({
+          op: "submit_deselect",
+          route: "preserve-focused-webview",
+          ok: true,
+          reason: "kept host focus on webview input and collapsed select-all selection before retry",
+        });
+      }
     }
     return {
       ok: false,
@@ -1253,17 +1342,18 @@ class SharedAutopilotBridge {
 
   private async _submitChatVSCodium(
     verifyText: string | undefined,
-    verifyEnabled: boolean
+    verifyEnabled: boolean,
+    pasteCommand?: string
   ): Promise<SubmitOutcome> {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
-    const candidates = filterRegistered(
-      orderWithCache(buildSubmitCommands("vscodium"), cache?.submit),
-      existing
-    );
+    const orderedCandidates = orderWithCache(buildSubmitCommands("vscodium"), cache?.submit);
+    const registeredCandidates = filterRegistered(orderedCandidates, existing);
+    const candidates = registeredCandidates.length > 0 ? registeredCandidates : orderedCandidates;
     const hostVerifyEnabled =
       verifyEnabled ||
       shouldRequireVerifiedHostSubmit("vscodium", verifyText, this.koruStepConfig());
+    const preserveWebviewFocus = isHostClipboardPasteCommand(pasteCommand);
     this.traceOperation({
       op: "submit",
       route: "vscodium",
@@ -1272,11 +1362,27 @@ class SharedAutopilotBridge {
         verifyEnabled,
         hostVerifyEnabled,
         trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
+        pasteCommand,
+        preserveWebviewFocus,
+        usedUnregisteredFallback: registeredCandidates.length === 0,
         registeredCandidates: candidates,
       },
     });
     const registered = await this._tryRegisteredCommands(candidates, verifyText, hostVerifyEnabled);
     if (registered) return registered;
+
+    let preservedFocusHostKey: SubmitOutcome | undefined;
+    if (hostVerifyEnabled && verifyText && preserveWebviewFocus) {
+      preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
+        preserveFocus: true,
+        // When host clipboard paste is used, plain Return can insert newline
+        // (or clobber selected text) in webview chat inputs. Try verified
+        // Ctrl+Return candidates only in this branch.
+        ctrlOnly: true,
+      });
+      if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
+      return preservedFocusHostKey;
+    }
 
     const hostClick = await this._tryHostClickSubmit();
     if (hostClick.ok && hostClick.command) {
@@ -1289,6 +1395,7 @@ class SharedAutopilotBridge {
       if (accepted) return accepted;
     }
     if (hostVerifyEnabled && verifyText) {
+      if (preservedFocusHostKey) return preservedFocusHostKey;
       const hostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText);
       if (hostKey.ok && hostKey.command) return hostKey;
       return hostKey;
@@ -1399,7 +1506,9 @@ class SharedAutopilotBridge {
     verifyText: string | undefined,
     verifyEnabled: boolean
   ): Promise<SubmitOutcome | null> {
-    for (const attempt of [() => this._tryTypeSubmit("\n"), () => this._tryTypeSubmit("\r")]) {
+    // ``type:\r`` can be interpreted as literal "r" in some chat/webview
+    // inputs; keep only newline fallback to avoid clobbering selected text.
+    for (const attempt of [() => this._tryTypeSubmit("\n")]) {
       const result = await attempt();
       if (result.ok && result.command) {
         const accepted = await this.finalizeSubmitCandidate(result.command, verifyText, verifyEnabled);
@@ -1409,7 +1518,7 @@ class SharedAutopilotBridge {
     return null;
   }
 
-  private async submitChat(verifyText?: string): Promise<SubmitOutcome> {
+  private async submitChat(verifyText?: string, pasteCommand?: string): Promise<SubmitOutcome> {
     const ide = this.detectIde();
     const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
     this.traceOperation({
@@ -1419,7 +1528,7 @@ class SharedAutopilotBridge {
       detail: { ide, verifyEnabled, verifyTextLength: verifyText?.length || 0 },
     });
     if (ide === "vscodium") {
-      return this._submitChatVSCodium(verifyText, verifyEnabled);
+      return this._submitChatVSCodium(verifyText, verifyEnabled, pasteCommand);
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
@@ -2892,7 +3001,7 @@ class SharedAutopilotBridge {
     await this.sleep(150);
     await this.focusChatInput();
     await this.captureCursorBubbleAnchor();
-    const submitResult = await this.submitChat(pastedText);
+    const submitResult = await this.submitChat(pastedText, pasted.command);
     if (submitResult.unverified) {
       this.traceOperation({
         op: "submit",
@@ -3048,6 +3157,10 @@ class SharedAutopilotBridge {
 
   async sendManualChat(text: string): Promise<void> {
     await this.injectChat({ type: "chat.send", text, submit: true });
+  }
+
+  async openChatFromCommand(): Promise<void> {
+    await this.openChatPanel("command");
   }
 }
 

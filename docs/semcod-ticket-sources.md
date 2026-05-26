@@ -25,7 +25,7 @@ when the queue is idle.
 | `regix` | metric/regression gates | `.regix/report.json`, `.regix/gates.json`, `regix-gates.json` | artifact adapter |
 | `redsl` | quality gate / improve lane | `.redsl/report.json`, `redsl-report.*`, `redsl-gate.json` | limited native planfile command; Koru reads gate artifacts |
 | `wup` | file/service change watcher | watcher state and changed artifacts from other tools | orchestration input, not a direct ticket generator |
-| `metrun` | execution intelligence | planned report adapter | local CLI currently needs repair before automation |
+| `metrun` | execution intelligence | `metrun.toon.yaml` / planned report adapter | CLI repaired locally; report adapter still planned |
 | `pfix`, `goal`, `costs` | repair, goal alignment, cost signals | advisory/manual until stable report contracts are defined | advisory |
 
 ## Report contract

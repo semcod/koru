@@ -288,6 +288,53 @@ def test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery(
     assert any("detail→general" in line for line in logs)
 
 
+def test_cycle_code2llm_discovery_ensures_standardized_follow_up_ticket(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    from koru.autonomy import code2llm_discovery as code2llm_discovery_mod
+    from koru.autonomy import ide_work as ide_work_mod
+
+    outcome = code2llm_discovery_mod.DiscoveryOutcome(
+        ran=True,
+        code2llm_returncode=0,
+        applied_titles=[],
+        skipped_titles=[],
+    )
+    emits: list[tuple[str, dict]] = []
+
+    monkeypatch.setattr(
+        code2llm_discovery_mod,
+        "run_code2llm_discovery",
+        lambda _project: outcome,
+    )
+    monkeypatch.setattr(
+        code2llm_discovery_mod,
+        "format_discovery_summary",
+        lambda _outcome: "code2llm discovery: applied=0 skipped=0",
+    )
+    monkeypatch.setattr(
+        ide_work_mod,
+        "ensure_project_discovery_ticket",
+        lambda _project, *, auto_run_code2llm: {
+            "id": "PLF-901",
+            "name": "Project discovery",
+        },
+    )
+
+    payload = autonomous_cycle_mod._run_code2llm_discovery_after_idle(
+        tmp_path,
+        lambda _line: None,
+        lambda kind, payload, **_kwargs: emits.append((kind, payload)),
+    )
+
+    assert payload is not None
+    assert payload["follow_up_workflow"] == "standardized_project_discovery"
+    assert payload["follow_up_ticket_id"] == "PLF-901"
+    assert emits and emits[-1][0] == "Code2llmDiscoveryCompleted"
+    assert emits[-1][1]["follow_up_ticket_id"] == "PLF-901"
+
+
 def test_scan_after_idle_min_interval_skips_second_scan(tmp_path, monkeypatch) -> None:
     calls: list[dict] = []
 
@@ -606,6 +653,84 @@ def test_auto_invocation_can_disable_after_idle_intake(tmp_path: Path, monkeypat
     assert rc == 0
     args = action_up.call_args.args[0]
     assert args.scan_after_idle_queue is False
+
+
+def test_auto_invocation_applies_koru_yaml_strategy_defaults(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    monkeypatch.delenv("KORU_PLANNING_LLM", raising=False)
+    monkeypatch.delenv("KORU_PLANNING_LLM_MODEL", raising=False)
+    (tmp_path / "koru.yaml").write_text(
+        """
+schema: '1.0'
+autonomy:
+  strategy:
+    idle_discovery:
+      enabled: false
+      min_interval_seconds: 123
+      tools:
+        automated: []
+        artifact_sources: []
+    planning_assistant:
+      enabled: false
+      openrouter:
+        model: openrouter/example/model
+""",
+        encoding="utf-8",
+    )
+
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(["--project", str(tmp_path)], invoked_as_auto=True)
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is False
+    assert args.scan_after_idle_min_interval == 123
+    assert args.semcod_artifacts is False
+    assert os.environ["KORU_PLANNING_LLM"] == "0"
+    assert os.environ["KORU_PLANNING_LLM_MODEL"] == "example/model"
+
+
+def test_auto_invocation_cli_flags_override_koru_yaml_strategy_defaults(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    (tmp_path / "koru.yaml").write_text(
+        """
+schema: '1.0'
+autonomy:
+  strategy:
+    idle_discovery:
+      enabled: false
+      min_interval_seconds: 123
+      tools:
+        automated: []
+        artifact_sources: []
+""",
+        encoding="utf-8",
+    )
+
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(
+            [
+                "--project",
+                str(tmp_path),
+                "--scan-after-idle-queue",
+                "--scan-after-idle-min-interval",
+                "7",
+                "--semcod-artifacts",
+            ],
+            invoked_as_auto=True,
+        )
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is True
+    assert args.scan_after_idle_min_interval == 7
+    assert args.semcod_artifacts is True
 
 
 def test_auto_invocation_can_enable_adaptive_pipeline(tmp_path: Path, monkeypatch) -> None:
@@ -2617,6 +2742,72 @@ def test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx(
     assert telemetry.get("autopilot_llx_operator_ticket") == "PLF-9903"
 
 
+def test_skip_due_to_recent_chat_activity_uses_openrouter_reflection_fallback(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2014"],
+        last_status="waiting_input",
+        last_message="Need API context",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Continue deployment task",
+            },
+            {
+                "ts": autonomous_cycle_mod.time.time() - 5.0,
+                "type": "message.received",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Done with the task.",
+            },
+        ],
+        last_driven_prompt="Continue deployment task",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    calls: dict[str, object] = {}
+
+    def _fake_openrouter_reflect(**kwargs):
+        calls["chat_events"] = kwargs.get("chat_events")
+        return SimpleNamespace(done=True, needs_input=False, summary="OpenRouter says done")
+
+    monkeypatch.setattr(
+        "koru.autonomy.planning_llm.reflect_on_chat",
+        _fake_openrouter_reflect,
+    )
+
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert telemetry.get("autopilot_skipped_chat_activity") is True
+    assert isinstance(telemetry.get("autopilot_llx_reflection"), dict)
+    assert telemetry["autopilot_llx_reflection"]["done"] is True
+    chat_events = calls.get("chat_events")
+    assert isinstance(chat_events, list)
+    assert chat_events
+
+
 def test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled(
     tmp_path,
     monkeypatch,
@@ -2672,6 +2863,89 @@ def test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled(
     assert should_skip is True
     assert create_calls == []
     assert telemetry.get("autopilot_needs_input_heuristic") is None
+
+
+def test_phase4_advisory_prioritize_tickets_emits_event(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KORU_PLANNING_LLM_PRIORITIZE_TICKETS", "1")
+    monkeypatch.delenv("KORU_PLANNING_LLM_STRATEGY_TUNING", raising=False)
+
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "_load_open_tickets_for_planning",
+        lambda *_args, **_kwargs: [
+            {"id": "PLF-1", "title": "A", "status": "open"},
+            {"id": "PLF-2", "title": "B", "status": "open"},
+        ],
+    )
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "_llm_prioritize_tickets",
+        lambda **_kwargs: SimpleNamespace(
+            ordered_ticket_ids=("PLF-2", "PLF-1"),
+            reason="B first",
+            confidence=0.8,
+        ),
+    )
+
+    emitted: list[tuple[str, dict[str, object]]] = []
+    cycle_telemetry: dict[str, object] = {}
+    autonomous_cycle_mod._run_phase4_advisory_hooks(
+        project=tmp_path,
+        state=autonomous_mod.AutoloopState(),
+        cycle=3,
+        queue_result=QueueLoopResult(1, [], [], [], "idle", ""),
+        queue_name=None,
+        cycle_telemetry=cycle_telemetry,
+        _hp=lambda _msg: None,
+        _emit=lambda event, payload: emitted.append((event, payload)),
+    )
+
+    assert emitted
+    assert emitted[0][0] == "LlmTicketPriority"
+    assert emitted[0][1]["ordered_ticket_ids"] == ["PLF-2", "PLF-1"]
+    assert isinstance(cycle_telemetry.get("llm_ticket_priority"), dict)
+
+
+def test_phase4_advisory_strategy_tuning_emits_event(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KORU_PLANNING_LLM_STRATEGY_TUNING", "1")
+    monkeypatch.delenv("KORU_PLANNING_LLM_PRIORITIZE_TICKETS", raising=False)
+
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "load_recent_decisions",
+        lambda *_args, **_kwargs: [{"cycle": 1, "skip_code": "idle_streak"}],
+    )
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "load_autonomy_strategy",
+        lambda *_args, **_kwargs: {"id": "accordion"},
+    )
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "_llm_propose_strategy_tuning",
+        lambda **_kwargs: SimpleNamespace(
+            reason="Reduce idle interval",
+            confidence=0.6,
+            patch="idle_discovery:\n  min_interval_seconds: 30",
+        ),
+    )
+
+    emitted: list[tuple[str, dict[str, object]]] = []
+    cycle_telemetry: dict[str, object] = {}
+    autonomous_cycle_mod._run_phase4_advisory_hooks(
+        project=tmp_path,
+        state=autonomous_mod.AutoloopState(),
+        cycle=4,
+        queue_result=QueueLoopResult(1, [], [], [], "idle", ""),
+        queue_name=None,
+        cycle_telemetry=cycle_telemetry,
+        _hp=lambda _msg: None,
+        _emit=lambda event, payload: emitted.append((event, payload)),
+    )
+
+    assert emitted
+    assert emitted[0][0] == "LlmStrategyTuningAdvice"
+    assert isinstance(cycle_telemetry.get("llm_strategy_tuning"), dict)
 
 
 def test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket(

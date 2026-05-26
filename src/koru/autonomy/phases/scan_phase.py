@@ -428,6 +428,12 @@ def _record_code2llm_discovery_telemetry(
     cycle_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
     cycle_telemetry["code2llm_discovery_applied"] = applied_count
     cycle_telemetry["code2llm_discovery_skipped"] = skipped_count
+    follow_up_ticket_id = str(discovery.get("follow_up_ticket_id") or "").strip()
+    if follow_up_ticket_id:
+        cycle_telemetry["code2llm_discovery_follow_up_ticket_id"] = follow_up_ticket_id
+        cycle_telemetry["code2llm_discovery_follow_up_workflow"] = str(
+            discovery.get("follow_up_workflow") or "",
+        ).strip() or "standardized_project_discovery"
 
 
 def _run_code2llm_discovery_after_idle(
@@ -450,7 +456,42 @@ def _run_code2llm_discovery_after_idle(
     summary = format_discovery_summary(outcome)
     _hp(f"  {summary}")
     payload = outcome.to_dict()
+    payload = _ensure_standardized_discovery_follow_up(project, payload=payload, _hp=_hp)
     _emit("Code2llmDiscoveryCompleted", payload)
+    return payload
+
+
+def _ensure_standardized_discovery_follow_up(
+    project: Path,
+    *,
+    payload: dict[str, Any],
+    _hp: Callable[..., Any],
+) -> dict[str, Any]:
+    """Guarantee a standard idle workflow ticket when discovery found no runnable work."""
+    applied = payload.get("applied")
+    if isinstance(applied, list) and applied:
+        return payload
+    try:
+        from koru.autonomy.ide_work import ensure_project_discovery_ticket
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"  idle workflow: standardized follow-up unavailable: {exc}")
+        return payload
+    try:
+        ticket = ensure_project_discovery_ticket(project, auto_run_code2llm=False)
+    except Exception as exc:  # noqa: BLE001 - best-effort fallback
+        _hp(f"  idle workflow: failed to ensure standardized follow-up ticket: {exc}")
+        return payload
+    if not isinstance(ticket, dict):
+        return payload
+    ticket_id = str(ticket.get("id") or "").strip()
+    if not ticket_id:
+        return payload
+    payload["follow_up_workflow"] = "standardized_project_discovery"
+    payload["follow_up_ticket_id"] = ticket_id
+    _hp(
+        "  idle workflow: standardized follow-up ticket "
+        f"{ticket_id} ready for IDE LLM",
+    )
     return payload
 
 
