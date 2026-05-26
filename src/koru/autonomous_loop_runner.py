@@ -172,7 +172,7 @@ def _handle_status_waiting_input(
     if "chat_activity" in autopilot_status:
         first = (
             f"1/3 wait {sleep_text}; chat cooldown is active for {ticket}, "
-            "so Koru will not paste over the IDE chat"
+            "so Koru will not paste over the IDE chat; this is not a daemon failure"
         )
     elif _is_plugin_blocker(_blocked_by_from_autopilot_status(autopilot_status)):
         first = (
@@ -681,7 +681,8 @@ def _current_mission_lines(
     elif blocker == "chat_activity":
         line_2 = (
             "koru autonomous: current mission next="
-            f"wait {effective_sleep:g}s for cooldown, then reconsider redrive"
+            f"wait {effective_sleep:g}s for chat cooldown, then reconsider redrive "
+            "(tune: KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS)"
         )
     elif queue_status == "waiting_input":
         line_2 = (

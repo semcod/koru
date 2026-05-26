@@ -8,6 +8,12 @@ const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
 ]);
 
 const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
+  "workbench.action.openchat",
+  "workbench.action.openquickchat",
+  "workbench.action.chat.open",
+  "workbench.action.chat.openinnewwindow",
+  "workbench.action.chat.opensessioninnewwindow",
+  "workbench.action.quickchat.openinchatview",
   "workbench.panel.chat",
   "workbench.panel.chat.view.copilot.focus",
   "workbench.panel.aichat.view.copilot.focus",
@@ -33,7 +39,7 @@ export function sanitizeFocusOpenCandidates(commands: readonly string[]): string
 }
 
 export function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
-  if (ide !== "vscode") {
+  if (ide !== "vscode" && ide !== "vscodium") {
     return [...commands];
   }
   return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));

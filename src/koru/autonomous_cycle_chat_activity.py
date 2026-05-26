@@ -309,7 +309,9 @@ def _check_recent_drive_ack_skip(
         _hp(
             "- autopilot skipped (recent_drive_ack "
             f"last=drive.ack age={age} cooldown={cooldown:.0f}s "
-            f"ticket={waiting_ticket})",
+            f"ticket={waiting_ticket}; not a daemon failure; "
+            "waiting avoids pasting over an active IDE chat; "
+            "tune with KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS)",
         )
         return True
     return False

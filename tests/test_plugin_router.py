@@ -20,6 +20,8 @@ class _Client:
     ide: str | None = None
     dropped: bool = False
     awaiting_plugin: object | None = None
+    workspace_name: str | None = None
+    workspace_folders: list[str] = field(default_factory=list)
     sock: _Sock = field(init=False)
 
     def __post_init__(self) -> None:
@@ -44,6 +46,23 @@ def test_plugin_for_matches_canonical_aliases() -> None:
 
     assert router.plugin_for("code") is vscode
     assert router.plugin_for("cursor") is cursor
+
+
+def test_plugin_for_prefers_workspace_matching_client() -> None:
+    other_workspace = _Client(2, ide="vscode", workspace_name="other", workspace_folders=["/tmp/other"])
+    matching = _Client(1, ide="vscode", workspace_name="koru", workspace_folders=["/repo/koru"])
+    clients = {1: matching, 2: other_workspace}
+    router = PluginRouter(clients, drop_client=lambda _c: None)
+
+    assert router.plugin_for("vscode", project="/repo/koru") is matching
+
+
+def test_plugin_for_rejects_workspace_mismatch() -> None:
+    other_workspace = _Client(1, ide="vscode", workspace_name="other", workspace_folders=["/tmp/other"])
+    clients = {1: other_workspace}
+    router = PluginRouter(clients, drop_client=lambda _c: None)
+
+    assert router.plugin_for("vscode", project="/repo/koru") is None
 
 
 def test_drop_stale_plugins_removes_older_same_ide() -> None:
@@ -102,6 +121,25 @@ def test_drop_stale_plugins_keeps_plugin_with_pending_drive() -> None:
     assert dropped == 1
     assert pending.dropped is False
     assert stale.dropped is True
+    assert 1 in clients and 2 not in clients and 3 in clients
+
+
+def test_drop_stale_plugins_keeps_workspace_aware_plugin_when_current_is_old() -> None:
+    current = _Client(3, ide="vscode")
+    workspace_aware = _Client(1, ide="vscode", workspace_folders=["/repo/koru"])
+    legacy = _Client(2, ide="vscode")
+    clients = {1: workspace_aware, 2: legacy, 3: current}
+
+    def _drop(client: _Client) -> None:
+        client.dropped = True
+        clients.pop(client.fd, None)
+
+    router = PluginRouter(clients, drop_client=_drop)
+    dropped = router.drop_stale_plugins(current, "vscode")
+
+    assert dropped == 1
+    assert workspace_aware.dropped is False
+    assert legacy.dropped is True
     assert 1 in clients and 2 not in clients and 3 in clients
 
 

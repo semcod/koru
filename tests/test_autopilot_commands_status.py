@@ -9,6 +9,7 @@ import pytest
 
 from koru.autopilot.commands.status import (
     _print_status_json,
+    _print_status_explain_summary,
     action_status,
 )
 
@@ -22,6 +23,27 @@ def test_print_status_json(capsys: pytest.CaptureFixture) -> None:
     assert '"plugins": []' in captured.out
     assert '"running": true' in captured.out
     assert '"version": "1.0"' in captured.out
+
+
+def test_print_status_explain_summary(capsys: pytest.CaptureFixture) -> None:
+    """Human status summary should explain the active daemon lane in stderr."""
+    _print_status_explain_summary(
+        {
+            "daemon": {
+                "pid": 123,
+                "version": "0.1.287",
+                "git_sha": "abc123",
+                "python_executable": "/venv/bin/python",
+            },
+            "plugins": [{"ide": "vscodium"}],
+        },
+        Path("/tmp/koru-autopilot-vscodium.sock"),
+    )
+
+    captured = capsys.readouterr()
+    assert "--- runtime ---" in captured.err
+    assert "pid=123" in captured.err
+    assert "plugins: 1 (vscodium)" in captured.err
 
 
 def test_action_status_daemon_not_running() -> None:
@@ -49,6 +71,31 @@ def test_action_status_daemon_not_running() -> None:
     
     assert result == 1
     assert mock_print.call_count == 2  # daemon not running + hint
+
+
+def test_action_status_daemon_not_running_explain(capsys: pytest.CaptureFixture) -> None:
+    """Explain mode should tell operators why status is empty after Ctrl+C."""
+    args = argparse.Namespace(
+        explain=True,
+        project=Path.cwd(),
+    )
+
+    mock_client = mock.Mock()
+    mock_client.is_running.return_value = False
+    mock_client.socket_path = Path("/tmp/test.sock")
+
+    result = action_status(
+        args,
+        client_fn=mock.Mock(return_value=mock_client),
+        daemon_start_hint_fn=mock.Mock(return_value="start it"),
+        normalize_ide_fn=mock.Mock(),
+        resolve_target_ide_fn=mock.Mock(),
+    )
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert "daemon is NOT running" in captured.out
+    assert "expected after Ctrl+C" in captured.err
 
 
 def test_action_status_success() -> None:

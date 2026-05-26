@@ -1,0 +1,696 @@
+source: code2llm
+# generated in 0.03s
+schema: code2llm.planfile_tickets.v1
+project_root: /home/tom/github/semcod/koru/plugins
+tickets:
+- signal: code2llm_god
+  title: 'Split god module: koru-autopilot-shared/src/autopilot-bridge.ts'
+  description: 'code2llm reports `koru-autopilot-shared/src/autopilot-bridge.ts` as
+    a large module (3172 lines, 4 classes).
+
+
+    Split it by responsibility, keep public imports stable, and add focused tests
+    around the moved behavior.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - god-module
+  - refactor
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: code2llm:god:koru-autopilot-shared/src/autopilot-bridge.ts
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-shared.src.autopilot-bridge'
+  description: 'code2llm reports `God Module: koru-autopilot-shared.src.autopilot-bridge`
+    in `koru-autopilot-shared/src/autopilot-bridge.ts:1`.
+
+
+    Module ''koru-autopilot-shared.src.autopilot-bridge'' is too large (407 functions,
+    4 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1:God
+    Module: koru-autopilot-shared.src.autopilot-bridge'
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
+    (CC=16)'
+  description: 'code2llm reports `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject`
+    at `koru-autopilot-shared/src/autopilot-bridge.ts:3033` with cyclomatic complexity
+    16 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: code2llm:cc:koru-autopilot-shared/src/autopilot-bridge.ts:koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _buildFocusChatContext'
+  description: 'code2llm reports `God Function: _buildFocusChatContext` in `koru-autopilot-shared/src/autopilot-bridge.ts:1555`.
+
+
+    Function ''_buildFocusChatContext'' is oversized: CC=6, fan-out=13, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1555:God
+    Function: _buildFocusChatContext'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _handleVersionMismatchRejection'
+  description: 'code2llm reports `God Function: _handleVersionMismatchRejection` in
+    `koru-autopilot-shared/src/autopilot-bridge.ts:2215`.
+
+
+    Function ''_handleVersionMismatchRejection'' is oversized: CC=7, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2215:God
+    Function: _handleVersionMismatchRejection'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: calibrateProbe'
+  description: 'code2llm reports `God Function: calibrateProbe` in `koru-autopilot-shared/src/autopilot-bridge.ts:3116`.
+
+
+    Function ''calibrateProbe'' is oversized: CC=6, fan-out=14, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:3116:God
+    Function: calibrateProbe'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: clipboardSeeded'
+  description: 'code2llm reports `God Function: clipboardSeeded` in `koru-autopilot-shared/src/autopilot-bridge.ts:1911`.
+
+
+    Function ''clipboardSeeded'' is oversized: CC=10, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1911:God
+    Function: clipboardSeeded'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: connected'
+  description: 'code2llm reports `God Function: connected` in `koru-autopilot-shared/src/autopilot-bridge.ts:435`.
+
+
+    Function ''connected'' is oversized: CC=4, fan-out=15, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:435:God
+    Function: connected'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: directCommands'
+  description: 'code2llm reports `God Function: directCommands` in `koru-autopilot-shared/src/autopilot-bridge.ts:1906`.
+
+
+    Function ''directCommands'' is oversized: CC=10, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1906:God
+    Function: directCommands'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: ensureWindsurfChatPanelVisible'
+  description: 'code2llm reports `God Function: ensureWindsurfChatPanelVisible` in
+    `koru-autopilot-shared/src/autopilot-bridge.ts:2702`.
+
+
+    Function ''ensureWindsurfChatPanelVisible'' is oversized: CC=8, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2702:God
+    Function: ensureWindsurfChatPanelVisible'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: focusChatInput'
+  description: 'code2llm reports `God Function: focusChatInput` in `koru-autopilot-shared/src/autopilot-bridge.ts:2067`.
+
+
+    Function ''focusChatInput'' is oversized: CC=8, fan-out=14, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2067:God
+    Function: focusChatInput'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: injectChat'
+  description: 'code2llm reports `God Function: injectChat` in `koru-autopilot-shared/src/autopilot-bridge.ts:2612`.
+
+
+    Function ''injectChat'' is oversized: CC=8, fan-out=14, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2612:God
+    Function: injectChat'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `koru-autopilot-antigravity/src/chat-history-watcher.test.ts:335`.
+
+
+    Function ''main'' is oversized: CC=1, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-antigravity/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-antigravity/src/chat-history-watcher.test.ts:335:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `koru-autopilot-cursor/src/chat-history-watcher.test.ts:345`.
+
+
+    Function ''main'' is oversized: CC=1, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-cursor/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-cursor/src/chat-history-watcher.test.ts:345:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `koru-autopilot-vscode/src/chat-history-watcher.test.ts:335`.
+
+
+    Function ''main'' is oversized: CC=1, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-vscode/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-vscode/src/chat-history-watcher.test.ts:335:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `koru-autopilot-windsurf/src/chat-history-watcher.test.ts:335`.
+
+
+    Function ''main'' is oversized: CC=1, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-windsurf/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-windsurf/src/chat-history-watcher.test.ts:335:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `koru-autopilot-vscodium/src/chat-history-watcher.test.ts:337`.
+
+
+    Function ''main'' is oversized: CC=1, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-vscodium/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-vscodium/src/chat-history-watcher.test.ts:337:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: pasteText'
+  description: 'code2llm reports `God Function: pasteText` in `koru-autopilot-shared/src/autopilot-bridge.ts:1809`.
+
+
+    Function ''pasteText'' is oversized: CC=10, fan-out=15, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1809:God
+    Function: pasteText'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: previousClip'
+  description: 'code2llm reports `God Function: previousClip` in `koru-autopilot-shared/src/autopilot-bridge.ts:1910`.
+
+
+    Function ''previousClip'' is oversized: CC=10, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1910:God
+    Function: previousClip'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run'
+  description: 'code2llm reports `God Function: run` in `koru-autopilot-cursor/src/ides/cursor.test.ts:256`.
+
+
+    Function ''run'' is oversized: CC=1, fan-out=11, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-cursor/src/ides/cursor.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-cursor/src/ides/cursor.test.ts:256:God
+    Function: run'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: sock'
+  description: 'code2llm reports `God Function: sock` in `koru-autopilot-shared/src/autopilot-bridge.ts:433`.
+
+
+    Function ''sock'' is oversized: CC=4, fan-out=15, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:433:God
+    Function: sock'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: startChatHistoryWatcherIfEligible'
+  description: 'code2llm reports `God Function: startChatHistoryWatcherIfEligible`
+    in `koru-autopilot-shared/src/autopilot-bridge.ts:528`.
+
+
+    Function ''startChatHistoryWatcherIfEligible'' is oversized: CC=9, fan-out=11,
+    mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:528:God
+    Function: startChatHistoryWatcherIfEligible'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: submitChat'
+  description: 'code2llm reports `God Function: submitChat` in `koru-autopilot-shared/src/autopilot-bridge.ts:1521`.
+
+
+    Function ''submitChat'' is oversized: CC=14, fan-out=15, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:1521:God
+    Function: submitChat'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: testProbeLadderUsesCursorStrategy'
+  description: 'code2llm reports `God Function: testProbeLadderUsesCursorStrategy`
+    in `koru-autopilot-cursor/src/ides/cursor.test.ts:114`.
+
+
+    Function ''testProbeLadderUsesCursorStrategy'' is oversized: CC=5, fan-out=13,
+    mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-cursor/src/ides/cursor.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-cursor/src/ides/cursor.test.ts:114:God
+    Function: testProbeLadderUsesCursorStrategy'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: tryAntigravitySendPromptFastPath'
+  description: 'code2llm reports `God Function: tryAntigravitySendPromptFastPath`
+    in `koru-autopilot-shared/src/autopilot-bridge.ts:2741`.
+
+
+    Function ''tryAntigravitySendPromptFastPath'' is oversized: CC=5, fan-out=11,
+    mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2741:God
+    Function: tryAntigravitySendPromptFastPath'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: tryConnectNext'
+  description: 'code2llm reports `God Function: tryConnectNext` in `koru-autopilot-shared/src/autopilot-bridge.ts:424`.
+
+
+    Function ''tryConnectNext'' is oversized: CC=9, fan-out=20, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:424:God
+    Function: tryConnectNext'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: tryCursorComposerPromptFastPath'
+  description: 'code2llm reports `God Function: tryCursorComposerPromptFastPath` in
+    `koru-autopilot-shared/src/autopilot-bridge.ts:2804`.
+
+
+    Function ''tryCursorComposerPromptFastPath'' is oversized: CC=13, fan-out=24,
+    mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2804:God
+    Function: tryCursorComposerPromptFastPath'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: tryWindsurfSendTextFastPath'
+  description: 'code2llm reports `God Function: tryWindsurfSendTextFastPath` in `koru-autopilot-shared/src/autopilot-bridge.ts:2649`.
+
+
+    Function ''tryWindsurfSendTextFastPath'' is oversized: CC=7, fan-out=11, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-shared/src/autopilot-bridge.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-shared/src/autopilot-bridge.ts:2649:God
+    Function: tryWindsurfSendTextFastPath'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-antigravity.src.chat-history-watcher.test'
+  description: 'code2llm reports `God Module: koru-autopilot-antigravity.src.chat-history-watcher.test`
+    in `koru-autopilot-antigravity/src/chat-history-watcher.test.ts:1`.
+
+
+    Module ''koru-autopilot-antigravity.src.chat-history-watcher.test'' is too large
+    (43 functions, 0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-antigravity/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-antigravity/src/chat-history-watcher.test.ts:1:God
+    Module: koru-autopilot-antigravity.src.chat-history-watcher.test'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-cursor.src.chat-history-watcher.test'
+  description: 'code2llm reports `God Module: koru-autopilot-cursor.src.chat-history-watcher.test`
+    in `koru-autopilot-cursor/src/chat-history-watcher.test.ts:1`.
+
+
+    Module ''koru-autopilot-cursor.src.chat-history-watcher.test'' is too large (43
+    functions, 0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-cursor/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-cursor/src/chat-history-watcher.test.ts:1:God
+    Module: koru-autopilot-cursor.src.chat-history-watcher.test'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-cursor.src.probe-ladder.test'
+  description: 'code2llm reports `God Module: koru-autopilot-cursor.src.probe-ladder.test`
+    in `koru-autopilot-cursor/src/probe-ladder.test.ts:1`.
+
+
+    Module ''koru-autopilot-cursor.src.probe-ladder.test'' is too large (48 functions,
+    0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-cursor/src/probe-ladder.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-cursor/src/probe-ladder.test.ts:1:God
+    Module: koru-autopilot-cursor.src.probe-ladder.test'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-vscode.src.chat-history-watcher.test'
+  description: 'code2llm reports `God Module: koru-autopilot-vscode.src.chat-history-watcher.test`
+    in `koru-autopilot-vscode/src/chat-history-watcher.test.ts:1`.
+
+
+    Module ''koru-autopilot-vscode.src.chat-history-watcher.test'' is too large (43
+    functions, 0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-vscode/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-vscode/src/chat-history-watcher.test.ts:1:God
+    Module: koru-autopilot-vscode.src.chat-history-watcher.test'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-vscodium.src.chat-history-watcher.test'
+  description: 'code2llm reports `God Module: koru-autopilot-vscodium.src.chat-history-watcher.test`
+    in `koru-autopilot-vscodium/src/chat-history-watcher.test.ts:1`.
+
+
+    Module ''koru-autopilot-vscodium.src.chat-history-watcher.test'' is too large
+    (43 functions, 0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-vscodium/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-vscodium/src/chat-history-watcher.test.ts:1:God
+    Module: koru-autopilot-vscodium.src.chat-history-watcher.test'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-vscodium.src.probe-ladder'
+  description: 'code2llm reports `God Module: koru-autopilot-vscodium.src.probe-ladder`
+    in `koru-autopilot-vscodium/src/probe-ladder.ts:1`.
+
+
+    Module ''koru-autopilot-vscodium.src.probe-ladder'' is too large (53 functions,
+    3 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-vscodium/src/probe-ladder.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-vscodium/src/probe-ladder.ts:1:God
+    Module: koru-autopilot-vscodium.src.probe-ladder'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: koru-autopilot-windsurf.src.chat-history-watcher.test'
+  description: 'code2llm reports `God Module: koru-autopilot-windsurf.src.chat-history-watcher.test`
+    in `koru-autopilot-windsurf/src/chat-history-watcher.test.ts:1`.
+
+
+    Module ''koru-autopilot-windsurf.src.chat-history-watcher.test'' is too large
+    (43 functions, 0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - koru-autopilot-windsurf/src/chat-history-watcher.test.ts
+  dedupe_key: 'code2llm:smell:god_function:koru-autopilot-windsurf/src/chat-history-watcher.test.ts:1:God
+    Module: koru-autopilot-windsurf.src.chat-history-watcher.test'
+applied: []
+skipped: []

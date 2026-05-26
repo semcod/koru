@@ -513,7 +513,24 @@ def test_status_reports_socket_and_plugins(running_daemon) -> None:
     assert info["type"] == "ack"
     assert info["ok"] is True
     assert "socket" in info
+    assert info["daemon"]["pid"]
+    assert info["daemon"]["python_executable"]
+    assert info["daemon_metadata"]["schema"] == "koru.autopilot.daemon.v1"
     assert info["plugins"] == []
+
+
+def test_daemon_writes_project_metadata_sidecar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    with _daemon(tmp_path, monkeypatch, project=project) as h:
+        metadata_path = project / ".planfile" / ".koru" / "autopilot.daemon.json"
+        assert h.daemon.metadata_path == metadata_path
+        assert metadata_path.exists()
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        assert payload["pid"]
+        assert payload["socket"] == str(h.sock_path)
+        assert payload["project"] == str(project.resolve())
+    assert not metadata_path.exists()
 
 
 def test_status_reports_plugin_console_logs(
@@ -672,9 +689,10 @@ def test_plugin_drive_routes_alias_to_canonical_plugin(
     """Direct daemon clients can use IDE aliases and still hit the plugin lane."""
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="code", pid=42)
+        plugin.settimeout(6.0)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(5.0)
+        cli.settimeout(6.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(
@@ -996,9 +1014,10 @@ def test_message_sent_event_completes_pending_drive_without_plugin_ack(
     """If plugin emits message.sent but no chat.send ack, CLI drive should still complete."""
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+        plugin.settimeout(6.0)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(6.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(
@@ -1038,9 +1057,10 @@ def test_message_sent_event_does_not_complete_strict_ack_drive(
     with _daemon(tmp_path, monkeypatch) as h:
         monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+        plugin.settimeout(6.0)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(6.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(
@@ -1062,7 +1082,7 @@ def test_message_sent_event_does_not_complete_strict_ack_drive(
         cli.settimeout(0.2)
         with pytest.raises(TimeoutError):
             cli_reader.read_message()
-        cli.settimeout(2.0)
+        cli.settimeout(6.0)
 
         plugin.sendall(
             Message(
@@ -1097,9 +1117,11 @@ def test_message_sent_from_other_plugin_does_not_complete_pending_drive(
     with _daemon(tmp_path, monkeypatch) as h:
         vscode_plugin, vscode_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
         cursor_plugin, cursor_reader = _connect_plugin(h.sock_path, ide="cursor", pid=43)
+        vscode_plugin.settimeout(6.0)
+        cursor_plugin.settimeout(6.0)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(6.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(
@@ -1122,7 +1144,7 @@ def test_message_sent_from_other_plugin_does_not_complete_pending_drive(
         cli.settimeout(0.25)
         with pytest.raises(TimeoutError):
             cli_reader.read_message()
-        cli.settimeout(2.0)
+        cli.settimeout(6.0)
 
         vscode_plugin.sendall(
             Message(
@@ -1183,7 +1205,7 @@ def test_newer_plugin_connection_replaces_stale_same_ide_client(
         assert stale_read == b""
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(5.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(

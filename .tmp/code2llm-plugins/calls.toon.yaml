@@ -1,0 +1,281 @@
+# code2llm call graph | /home/tom/github/semcod/koru/plugins
+# generated in 0.52s
+# nodes: 340 | edges: 500 | modules: 23
+# CC̄=2.4
+
+HUBS[20]:
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation
+    CC=2  in:50  out:4  total:54
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+    CC=1  in:53  out:0  total:53
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde
+    CC=3  in:30  out:1  total:31
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.send
+    CC=6  in:20  out:7  total:27
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryCursorComposerPromptFastPath
+    CC=13  in:1  out:24  total:25
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
+    CC=16  in:3  out:20  total:23
+  koru-autopilot-cursor.src.probe-ladder.test.assert
+    CC=2  in:22  out:1  total:23
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sleep
+    CC=1  in:21  out:2  total:23
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext
+    CC=9  in:1  out:20  total:21
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve
+    CC=1  in:18  out:2  total:20
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.pasteText
+    CC=10  in:3  out:15  total:18
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog
+    CC=1  in:18  out:0  total:18
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.injectChat
+    CC=8  in:3  out:14  total:17
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.submitChat
+    CC=14  in:1  out:15  total:16
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock
+    CC=4  in:0  out:15  total:15
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected
+    CC=4  in:0  out:15  total:15
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.focusChatInput
+    CC=8  in:1  out:14  total:15
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.calibrateProbe
+    CC=6  in:0  out:14  total:14
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._buildFocusChatContext
+    CC=6  in:1  out:13  total:14
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.startChatHistoryWatcherIfEligible
+    CC=9  in:3  out:11  total:14
+
+MODULES:
+  koru-autopilot-antigravity.src.ack-payload.test  [4 funcs]
+    assert  CC=2  out:1
+    bytes  CC=1  out:1
+    slim  CC=1  out:1
+    testStripsEditorSnapshotsFromDiagnosticsRejected  CC=4  out:6
+  koru-autopilot-antigravity.src.antigravity-fastpath.test  [4 funcs]
+    assert  CC=2  out:1
+    testCanUseAntigravitySendPromptAfterRefresh  CC=1  out:2
+    testSelectAntigravityOpenCommandPrefersNativeOpenOrder  CC=1  out:2
+    testSelectAntigravityOpenCommandReturnsNoneWhenMissing  CC=1  out:2
+  koru-autopilot-antigravity.src.chat-history-watcher  [6 funcs]
+    clearInterval  CC=1  out:1
+    cursorAdvances  CC=5  out:2
+    pollOnce  CC=10  out:7
+    start  CC=5  out:5
+    stop  CC=2  out:1
+    tick  CC=2  out:1
+  koru-autopilot-antigravity.src.chat-history-watcher.test  [14 funcs]
+    buildSqliteOutput  CC=1  out:2
+    call  CC=2  out:1
+    main  CC=1  out:12
+    r  CC=1  out:1
+    testBuildAdapterForIdeReturnsCorrectKind  CC=3  out:2
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor  CC=2  out:8
+    testParseCursorBubbleRowsHandlesMultilineText  CC=1  out:3
+    testParseVSCodeChatIndexExtractsAssistantResponses  CC=1  out:6
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage  CC=1  out:4
+    testUnsupportedAdapterEmitsNothing  CC=1  out:5
+  koru-autopilot-antigravity.src.command-catalog  [7 funcs]
+    capability  CC=2  out:1
+    catalog  CC=3  out:2
+    classifyCommand  CC=4  out:1
+    classifyCommands  CC=4  out:4
+    emptyCatalog  CC=1  out:0
+    matchingCommandsFlat  CC=3  out:1
+    pushUnique  CC=2  out:2
+  koru-autopilot-antigravity.src.command-catalog.test  [5 funcs]
+    assert  CC=2  out:1
+    testClassifiesCursorSubmitAndPaste  CC=1  out:2
+    testClassifyCommandsDeduplicates  CC=1  out:3
+    testFocusOpenVsInput  CC=1  out:2
+    testUnknownChatBucket  CC=1  out:2
+  koru-autopilot-antigravity.src.cursor-bubble-adapter  [7 funcs]
+    latestBubbleRowid  CC=4  out:6
+    SQLITE_QUERY_MAX_BUFFER  CC=1  out:1
+    SQLITE_ROWID_MAX_BUFFER  CC=1  out:1
+    execFileAsync  CC=1  out:0
+    result  CC=1  out:1
+    runSqliteCommand  CC=1  out:1
+    sqliteRunner  CC=2  out:1
+  koru-autopilot-antigravity.src.dispatch-plan.test  [10 funcs]
+    assert  CC=2  out:1
+    oldInstance  CC=4  out:3
+    oldRuntime  CC=4  out:3
+    oldSocket  CC=4  out:3
+    testShutdownPlan  CC=2  out:2
+    testSocketCandidatesDoNotCrossIdeFallback  CC=4  out:3
+    testSocketCandidatesOverrideIsStrict  CC=1  out:2
+    testSocketCandidatesPreferIdeInstanceBeforeSingleton  CC=4  out:3
+    testSocketCandidatesSeparateVscodeAndVscodium  CC=4  out:3
+    testUnknownTypePlan  CC=2  out:3
+  koru-autopilot-antigravity.src.host-click-submit.test  [4 funcs]
+    assert  CC=2  out:1
+    testBottomRightSubmitPoint  CC=1  out:2
+    testParseXdotoolGeometryShell  CC=2  out:3
+    testRejectsTinyOrIncompleteGeometry  CC=1  out:2
+  koru-autopilot-antigravity.src.probe-ladder.test  [7 funcs]
+    assert  CC=2  out:1
+    testBuildFocusOpenAntigravityEmpty  CC=1  out:2
+    testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance  CC=1  out:3
+    testChatFocusHeuristic  CC=1  out:2
+    testMergeUnique  CC=1  out:3
+    testOrderWithCache  CC=1  out:2
+    testPasteLandedInEditor  CC=1  out:2
+  koru-autopilot-antigravity.src.socketPath  [11 funcs]
+    defaultSocketCandidates  CC=7  out:6
+    defaultSocketPathFromEnv  CC=9  out:6
+    explicit  CC=2  out:1
+    inst  CC=2  out:1
+    name  CC=2  out:1
+    ov  CC=2  out:1
+    push  CC=2  out:2
+    slugInstance  CC=2  out:2
+    socketCandidatesFromEnv  CC=4  out:3
+    uid  CC=1  out:1
+  koru-autopilot-antigravity.src.step-decisions  [5 funcs]
+    decideBusyInputAction  CC=6  out:2
+    isKnownStaleKoruCommandDraft  CC=7  out:3
+    normalizeDraft  CC=1  out:2
+    readVerifySubmitEnabled  CC=2  out:0
+    shouldVerifyPostSubmit  CC=6  out:3
+  koru-autopilot-antigravity.src.step-decisions.test  [9 funcs]
+    assert  CC=2  out:1
+    testDecideBusyInputAction  CC=1  out:2
+    testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled  CC=1  out:2
+    testIdeStrategiesAreSeparated  CC=1  out:2
+    testInterpretPostSubmitProbeRetry  CC=1  out:2
+    testInterpretPostSubmitProbeStrictEmpty  CC=1  out:2
+    testReadVerifySubmitPrefersNewSetting  CC=1  out:2
+    testShouldVerifyPostSubmitAllPluginIdes  CC=2  out:2
+    testShouldVerifyPrePasteBusy  CC=1  out:2
+  koru-autopilot-antigravity.src.vscode-chat-session-adapter  [14 funcs]
+    after  CC=4  out:3
+    entries  CC=4  out:2
+    extractEntriesMap  CC=6  out:0
+    extractMessageText  CC=6  out:0
+    extractResponsesFromSession  CC=10  out:6
+    fetchNewer  CC=2  out:2
+    parseAfterCursor  CC=3  out:1
+    parseVSCodeChatIndex  CC=5  out:9
+    responses  CC=9  out:5
+    safeParseJson  CC=3  out:2
+  koru-autopilot-cursor.src.chat-history-watcher.test  [14 funcs]
+    buildSqliteOutput  CC=1  out:2
+    call  CC=2  out:1
+    main  CC=1  out:12
+    r  CC=1  out:1
+    testBuildAdapterForIdeReturnsCorrectKind  CC=5  out:4
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor  CC=2  out:8
+    testParseCursorBubbleRowsHandlesMultilineText  CC=1  out:3
+    testParseVSCodeChatIndexExtractsAssistantResponses  CC=1  out:6
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage  CC=1  out:4
+    testUnsupportedAdapterEmitsNothing  CC=1  out:5
+  koru-autopilot-cursor.src.probe-ladder.test  [4 funcs]
+    assert  CC=2  out:1
+    testChatFocusHeuristic  CC=1  out:2
+    testOrderWithCache  CC=2  out:3
+    testVerifyFocusAfterOpen  CC=1  out:2
+  koru-autopilot-shared.src.ack-payload  [12 funcs]
+    clipString  CC=3  out:1
+    copyDiagnosticScalar  CC=3  out:1
+    measureEnvelopeBytes  CC=2  out:2
+    sanitizeOutboundEnvelope  CC=12  out:5
+    slimDiagnosticStringList  CC=3  out:5
+    slimDiagnostics  CC=8  out:5
+    slimOperationTrace  CC=5  out:4
+    slimRejectedDiagnostics  CC=6  out:4
+    slimRejectedEntry  CC=6  out:2
+    slimSubmitAttempts  CC=3  out:5
+  koru-autopilot-shared.src.autopilot-bridge  [170 funcs]
+    COOLDOWN_MS  CC=3  out:2
+    _buildFocusChatContext  CC=6  out:13
+    _clearComposerDraft  CC=3  out:4
+    _focusChatAlreadyFocused  CC=5  out:3
+    _handleVersionMismatchRejection  CC=7  out:12
+    _performInject  CC=16  out:20
+    _probeChatInputContents  CC=5  out:10
+    _shouldPreflightFocusOnly  CC=4  out:2
+    _tryHostClickSubmit  CC=11  out:7
+    _tryHostKeySubmit  CC=4  out:4
+  koru-autopilot-shared.src.bridge-helpers  [2 funcs]
+    isAllowedFocusOpenCommand  CC=3  out:3
+    sanitizeFocusOpenCommand  CC=2  out:2
+  koru-autopilot-shared.src.chat-history-paths  [2 funcs]
+    defaultGlobalStateDbPath  CC=1  out:2
+    ideUserDir  CC=4  out:2
+  koru-autopilot-shared.src.host-click-submit  [2 funcs]
+    match  CC=2  out:0
+    parseXdotoolGeometryShell  CC=6  out:5
+  koru-autopilot-shared.src.socketPath  [11 funcs]
+    defaultSocketCandidates  CC=7  out:6
+    defaultSocketPathFromEnv  CC=9  out:6
+    explicit  CC=2  out:1
+    inst  CC=2  out:1
+    name  CC=2  out:1
+    ov  CC=2  out:1
+    push  CC=2  out:2
+    slugInstance  CC=2  out:2
+    socketCandidatesFromEnv  CC=4  out:3
+    uid  CC=1  out:1
+  koru-autopilot-vscodium.src.probe-ladder  [16 funcs]
+    buildFocusOpenCommands  CC=5  out:3
+    buildHostKeySubmitCandidates  CC=12  out:7
+    chatFocusHeuristic  CC=5  out:0
+    ideDefaults  CC=3  out:1
+    injectorRow  CC=2  out:0
+    isCtrlHostKeyCandidate  CC=1  out:2
+    isLikelyWaylandSession  CC=3  out:2
+    makeProbeCache  CC=1  out:2
+    mergeProbeCache  CC=9  out:1
+    mergeUnique  CC=4  out:3
+
+EDGES:
+  koru-autopilot-shared.src.autopilot-bridge.sanitizeFocusOpenCommand → koru-autopilot-shared.src.autopilot-bridge.isAllowedFocusOpenCommand
+  koru-autopilot-shared.src.autopilot-bridge.safeLog → koru-autopilot-shared.src.autopilot-bridge.safeLogPayload
+  koru-autopilot-shared.src.autopilot-bridge.safeLog → koru-autopilot-shared.src.autopilot-bridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.safeLog → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.send
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.reason → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.send
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.reason → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.probeLadderEnabled
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.reason → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.currentOperationTrace
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.cfg → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.override → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.isCtrlHostKeyCandidateArgs
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.disconnect
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.scheduleRetry
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.p → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.disconnect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.disconnect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.clearTimeout
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.startChatHistoryWatcherIfEligible → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.startChatHistoryWatcherIfEligible → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.startChatHistoryWatcherIfEligible → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.send
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.ide → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.initialCursor → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.initialCursor → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.send
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.scheduleRetry → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.setTimeout
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.scheduleRetry → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connect
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.delay → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.setTimeout
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.delay → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connect
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.setTimeout
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.openChatPanel
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.setTimeout → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.openChatPanel
+  koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.setTimeout → koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog

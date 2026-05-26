@@ -240,7 +240,8 @@ def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:
     assert logs[1:6] == [
         "koru autonomous: current mission ticket=STARTER-217 "
         "queue=waiting_input blocker=chat_activity",
-        "koru autonomous: current mission next=wait 60s for cooldown, then reconsider redrive",
+        "koru autonomous: current mission next=wait 60s for chat cooldown, "
+        "then reconsider redrive (tune: KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS)",
         "koru autonomous: next 1/3 stop now; reached max-cycles=3",
         "koru autonomous: next 2/3 preserve checkpoint with queue=waiting_input "
         "waiting=STARTER-217",
@@ -267,7 +268,7 @@ def test_operator_next_steps_explain_waiting_input_chat_cooldown() -> None:
 
     assert steps == [
         "1/3 wait 60s; chat cooldown is active for STARTER-217, "
-        "so Koru will not paste over the IDE chat",
+        "so Koru will not paste over the IDE chat; this is not a daemon failure",
         "2/3 rerun planfile queue (max 12) and check whether STARTER-217 moved",
         "3/3 if queue becomes idle, run scan/discovery; if still waiting, "
         "use chat events/reflection before any redrive",

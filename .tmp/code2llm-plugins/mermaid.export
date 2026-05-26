@@ -1,0 +1,998 @@
+flowchart TD
+%% generated in 0.01s
+    subgraph koru_autopilot_antigravity__src
+        koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__stdout["stdout"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__rows["rows"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__call["call"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__r["r"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__watcher["watcher"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__adapter["adapter"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__threw["threw"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__payload["payload"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__allRows["allRows"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__partialRows["partialRows"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__polls["polls"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__sqlArg["sqlArg"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__rowid["rowid"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
+        koru_autopilot_antigravity__src__chat_history_watcher__test__main["main"]
+        koru_autopilot_antigravity__src__extension__runtime["runtime"]
+        koru_autopilot_antigravity__src__extension__activate["activate"]
+        koru_autopilot_antigravity__src__extension__deactivate["deactivate"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__execFileAsync["execFileAsync"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__SQLITE_ROWID_MAX_BUFFER["SQLITE_ROWID_MAX_BUFFER"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__SQLITE_QUERY_MAX_BUFFER["SQLITE_QUERY_MAX_BUFFER"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__runSqliteCommand["runSqliteCommand"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__result["result"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__sqliteRunner["sqliteRunner"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__storeAvailable["storeAvailable"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__fetchNewer["fetchNewer"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__lastRowid["lastRowid"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__latestBubbleRowid["latestBubbleRowid"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__r["r"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__n["n"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__parseCursorBubbleRows("parseCursorBubbleRows CC=11")
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__recSep("recSep CC=8")
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__fldSep("fldSep CC=8")
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__fields["fields"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__rowid["rowid"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__type["type"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__keyParts["keyParts"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__conversationId["conversationId"]
+        koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__bubbleId["bubbleId"]
+        koru_autopilot_antigravity__src__vscode_chat_session_adapter__execFileAsync["execFileAsync"]
+        koru_autopilot_antigravity__src__vscode_chat_session_adapter__SQLITE_MAX_BUFFER["SQLITE_MAX_BUFFER"]
+        koru_autopilot_antigravity__src__vscode_chat_session_adapter__runSqliteCommand["runSqliteCommand"]
+        koru_autopilot_antigravity__src__vscode_chat_session_adapter__result["result"]
+        koru_autopilot_antigravity__src__vscode_chat_session_adapter__sqliteRunner["sqliteRunner"]
+        koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__storeAvailable["storeAvailable"]
+    end
+    subgraph koru_autopilot_cursor__src
+        koru_autopilot_cursor__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__stdout["stdout"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__rows["rows"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__call["call"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__r["r"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__watcher["watcher"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__adapter["adapter"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__threw["threw"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__payload["payload"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__allRows["allRows"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__partialRows["partialRows"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__polls["polls"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__sqlArg["sqlArg"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__rowid["rowid"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
+        koru_autopilot_cursor__src__chat_history_watcher__test__main["main"]
+        koru_autopilot_cursor__src__extension__runtime["runtime"]
+        koru_autopilot_cursor__src__extension__activate["activate"]
+        koru_autopilot_cursor__src__extension__deactivate["deactivate"]
+        koru_autopilot_cursor__src__probe_ladder__test__assert["assert"]
+        koru_autopilot_cursor__src__probe_ladder__test__testOrderWithCache["testOrderWithCache"]
+        koru_autopilot_cursor__src__probe_ladder__test__ordered["ordered"]
+        koru_autopilot_cursor__src__probe_ladder__test__testChatFocusHeuristic["testChatFocusHeuristic"]
+        koru_autopilot_cursor__src__probe_ladder__test__testVerifyFocusAfterOpen["testVerifyFocusAfterOpen"]
+        koru_autopilot_cursor__src__probe_ladder__test__testPasteLandedInEditor["testPasteLandedInEditor"]
+        koru_autopilot_cursor__src__probe_ladder__test__testMergeUnique["testMergeUnique"]
+        koru_autopilot_cursor__src__probe_ladder__test__testBuildFocusOpenCursorFirst["testBuildFocusOpenCursorFirst"]
+        koru_autopilot_cursor__src__probe_ladder__test__cmds["cmds"]
+        koru_autopilot_cursor__src__probe_ladder__test__testBuildFocusInputUsesChatCommands["testBuildFocusInputUsesChatCommands"]
+        koru_autopilot_cursor__src__probe_ladder__test__testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance["testBuildSubmitCommandsDoesNotUseQu"]
+        koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsTypeSubmit["testSanitizeCursorDiscardsTypeSubmi"]
+        koru_autopilot_cursor__src__probe_ladder__test__sanitized["sanitized"]
+        koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorPreservesNonTypeSubmit["testSanitizeCursorPreservesNonTypeS"]
+        koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsXdotoolSubmitOnWayland["testSanitizeCursorDiscardsXdotoolSu"]
+        koru_autopilot_cursor__src__probe_ladder__test__prev["prev"]
+        koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsHostPlainReturn["testSanitizeCursorDiscardsHostPlain"]
+        koru_autopilot_cursor__src__probe_ladder__test__testSanitizeIsIdempotent["testSanitizeIsIdempotent"]
+        koru_autopilot_cursor__src__probe_ladder__test__empty["empty"]
+        koru_autopilot_cursor__src__probe_ladder__test__firstKey["firstKey"]
+        koru_autopilot_cursor__src__probe_ladder__test__renderKey["renderKey"]
+        koru_autopilot_cursor__src__probe_ladder__test__testHostKeyOrderCursorPrefersCtrlReturn["testHostKeyOrderCursorPrefersCtrlRe"]
+        koru_autopilot_cursor__src__probe_ladder__test__cands["cands"]
+        koru_autopilot_cursor__src__probe_ladder__test__flat["flat"]
+        koru_autopilot_cursor__src__probe_ladder__test__testHostKeyOverrideReturnForcesPlainOnCursor["testHostKeyOverrideReturnForcesPlai"]
+        koru_autopilot_cursor__src__probe_ladder__test__testHostKeyWaylandPrefersYdotoolOverXdotool["testHostKeyWaylandPrefersYdotoolOve"]
+        koru_autopilot_cursor__src__probe_ladder__test__ydotoolPos["ydotoolPos"]
+    end
+    subgraph koru_autopilot_jetbrains__build
+        koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
+        koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
+        koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
+        koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
+    end
+    subgraph koru_autopilot_jetbrains__settings
+        koru_autopilot_jetbrains__settings__gradle__gradlePluginPortal["gradlePluginPortal"]
+        koru_autopilot_jetbrains__settings__gradle__mavenCentral["mavenCentral"]
+    end
+    subgraph koru_autopilot_jetbrains__src
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__reconnect["reconnect"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__disconnect["disconnect"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__sendHello["sendHello"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__startReadLoop["startReadLoop"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__withContext["withContext"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__when["when"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__openAiPanel["openAiPanel"]
+        koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__pasteViaClipboard["pasteViaClipboard"]
+    end
+    subgraph koru_autopilot_shared__src
+        koru_autopilot_shared__src__autopilot_bridge__DISALLOWED_FOCUS_OPEN_COMMANDS["DISALLOWED_FOCUS_OPEN_COMMANDS"]
+        koru_autopilot_shared__src__autopilot_bridge__UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS["UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COM"]
+        koru_autopilot_shared__src__autopilot_bridge__OPEN_CHAT_PANEL_DEBOUNCE_MS["OPEN_CHAT_PANEL_DEBOUNCE_MS"]
+        koru_autopilot_shared__src__autopilot_bridge__isAllowedFocusOpenCommand["isAllowedFocusOpenCommand"]
+        koru_autopilot_shared__src__autopilot_bridge__sanitizeFocusOpenCommand["sanitizeFocusOpenCommand"]
+        koru_autopilot_shared__src__autopilot_bridge__sanitizeFocusOpenCandidates["sanitizeFocusOpenCandidates"]
+        koru_autopilot_shared__src__autopilot_bridge__filterUnsafeFocusOpenForIde["filterUnsafeFocusOpenForIde"]
+        koru_autopilot_shared__src__autopilot_bridge__isSpecificChatInputFocusCommand["isSpecificChatInputFocusCommand"]
+        koru_autopilot_shared__src__autopilot_bridge__normalized["normalized"]
+        koru_autopilot_shared__src__autopilot_bridge__isTogglingFocusOpenCommand["isTogglingFocusOpenCommand"]
+        koru_autopilot_shared__src__autopilot_bridge__isHostClipboardPasteCommand["isHostClipboardPasteCommand"]
+        koru_autopilot_shared__src__autopilot_bridge__debugLog["debugLog"]
+        koru_autopilot_shared__src__autopilot_bridge__suffix["suffix"]
+        koru_autopilot_shared__src__autopilot_bridge__safeLogPayload("safeLogPayload CC=9")
+        koru_autopilot_shared__src__autopilot_bridge__snapshot["snapshot"]
+        koru_autopilot_shared__src__autopilot_bridge__safeLog["safeLog"]
+        koru_autopilot_shared__src__autopilot_bridge__resolveBridgeOptions["resolveBridgeOptions"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__isConnected["isConnected"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendConsoleLog["sendConsoleLog"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resetOperationTrace["resetOperationTrace"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__value["value"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__commands["commands"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__server["server"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation["traceOperation"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog["safeLog"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__emitLiveDsl["emitLiveDsl"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__seq["seq"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__okToken["okToken"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__routeToken["routeToken"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__reason["reason"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog["debugLog"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace["currentOperationTrace"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__socketPath["socketPath"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__cfg["cfg"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__override["override"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect["connect"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext("tryConnectNext CC=9")
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__p["p"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock["sock"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected["connected"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__commandCatalog["commandCatalog"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__matching["matching"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__disconnect["disconnect"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clearTimeout["clearTimeout"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible("startChatHistoryWatcherIfEligible CC=9")
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ide["ide"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__initialCursor["initialCursor"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__scheduleRetry["scheduleRetry"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__delay["delay"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect["maybeOpenChatOnConnect"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout["setTimeout"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detail["detail"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatPanel["openChatPanel"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now["now"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__outcome["outcome"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel["performOpenChatPanel"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focus["focus"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runCommand["runCommand"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__result["result"]
+        koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled["probeLadderEnabled"]
+    end
+    subgraph koru_autopilot_vscode__src
+        koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__stdout["stdout"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__rows["rows"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__call["call"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__r["r"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__watcher["watcher"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__adapter["adapter"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__threw["threw"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__payload["payload"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__allRows["allRows"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__partialRows["partialRows"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__polls["polls"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__sqlArg["sqlArg"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__rowid["rowid"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
+        koru_autopilot_vscode__src__chat_history_watcher__test__main["main"]
+        koru_autopilot_vscode__src__probe_ladder__test__assert["assert"]
+        koru_autopilot_vscode__src__probe_ladder__test__testOrderWithCache["testOrderWithCache"]
+        koru_autopilot_vscode__src__probe_ladder__test__testChatFocusHeuristic["testChatFocusHeuristic"]
+        koru_autopilot_vscode__src__probe_ladder__test__testPasteLandedInEditor["testPasteLandedInEditor"]
+        koru_autopilot_vscode__src__probe_ladder__test__testMergeUnique["testMergeUnique"]
+        koru_autopilot_vscode__src__probe_ladder__test__firstKey["firstKey"]
+        koru_autopilot_vscode__src__probe_ladder__test__testVerifyFocusAfterOpen["testVerifyFocusAfterOpen"]
+        koru_autopilot_vscode__src__probe_ladder__test__testBuildFocusOpenVscode["testBuildFocusOpenVscode"]
+        koru_autopilot_vscode__src__probe_ladder__test__cmds["cmds"]
+        koru_autopilot_vscode__src__probe_ladder__test__testSanitizeVscodeDropsUnsafeFocusOpenCache["testSanitizeVscodeDropsUnsafeFocusO"]
+        koru_autopilot_vscode__src__probe_ladder__test__sanitized["sanitized"]
+        koru_autopilot_vscode__src__probe_ladder__test__testHostKeyOrderVscodeKeepsPlainReturnFirst["testHostKeyOrderVscodeKeepsPlainRet"]
+        koru_autopilot_vscode__src__probe_ladder__test__cands["cands"]
+        koru_autopilot_vscode__src__probe_ladder__test__testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance["testBuildSubmitCommandsDoesNotUseQu"]
+        koru_autopilot_vscode__src__chat_history_adapters__buildAdapterForIde["buildAdapterForIde"]
+        koru_autopilot_vscode__src__ides__vscode__detect["detect"]
+        koru_autopilot_vscode__src__ides__vscode__lowered["lowered"]
+        koru_autopilot_vscode__src__ides__vscode__pasteDirectCommandsPrefix["pasteDirectCommandsPrefix"]
+        koru_autopilot_vscode__src__ides__vscode__submitCommandsOverride["submitCommandsOverride"]
+        koru_autopilot_vscode__src__ides__vscode__focusInputCommandsPrefix["focusInputCommandsPrefix"]
+        koru_autopilot_vscode__src__ides__vscode__preferCtrlSubmit["preferCtrlSubmit"]
+        koru_autopilot_vscode__src__ides__vscode__sanitizeProbeCache["sanitizeProbeCache"]
+        koru_autopilot_vscode__src__ides__vscode__unsafeFocusOpen["unsafeFocusOpen"]
+        koru_autopilot_vscode__src__ides__vscode__focusOpen["focusOpen"]
+        koru_autopilot_vscode__src__ides__vscode__focusOpenCommandsDefaults["focusOpenCommandsDefaults"]
+        koru_autopilot_vscode__src__ides__vscode__trustFocusOpenWithoutEditorSnapshot["trustFocusOpenWithoutEditorSnapshot"]
+        koru_autopilot_vscode__src__ides__registry__REGISTRY["REGISTRY"]
+        koru_autopilot_vscode__src__ides__registry__registerStrategy["registerStrategy"]
+        koru_autopilot_vscode__src__ides__registry__id["id"]
+        koru_autopilot_vscode__src__ides__registry__getStrategy["getStrategy"]
+    end
+    subgraph koru_autopilot_vscodium__src
+        koru_autopilot_vscodium__src__probe_ladder__PROBE_CACHE_VERSION["PROBE_CACHE_VERSION"]
+        koru_autopilot_vscodium__src__probe_ladder__captureEditorSnapshot["captureEditorSnapshot"]
+        koru_autopilot_vscodium__src__probe_ladder__scheme["scheme"]
+        koru_autopilot_vscodium__src__probe_ladder__isFileLike["isFileLike"]
+        koru_autopilot_vscodium__src__probe_ladder__decideSubmitCleared["decideSubmitCleared"]
+        koru_autopilot_vscodium__src__probe_ladder__trimmed["trimmed"]
+        koru_autopilot_vscodium__src__probe_ladder__original["original"]
+        koru_autopilot_vscodium__src__probe_ladder__tail["tail"]
+        koru_autopilot_vscodium__src__probe_ladder__chatFocusHeuristic["chatFocusHeuristic"]
+        koru_autopilot_vscodium__src__probe_ladder__verifyFocusAfterOpen("verifyFocusAfterOpen CC=9")
+        koru_autopilot_vscodium__src__probe_ladder__strategy["strategy"]
+        koru_autopilot_vscodium__src__probe_ladder__pasteLandedInEditor["pasteLandedInEditor"]
+        koru_autopilot_vscodium__src__probe_ladder__wasInBefore["wasInBefore"]
+        koru_autopilot_vscodium__src__probe_ladder__isInAfter["isInAfter"]
+        koru_autopilot_vscodium__src__probe_ladder__orderWithCache["orderWithCache"]
+        koru_autopilot_vscodium__src__probe_ladder__rest["rest"]
+        koru_autopilot_vscodium__src__probe_ladder__mergeUnique["mergeUnique"]
+        koru_autopilot_vscodium__src__probe_ladder__seen["seen"]
+        koru_autopilot_vscodium__src__probe_ladder__buildFocusOpenCommands["buildFocusOpenCommands"]
+        koru_autopilot_vscodium__src__probe_ladder__ideDefaults["ideDefaults"]
+        koru_autopilot_vscodium__src__probe_ladder__buildFocusInputCommands["buildFocusInputCommands"]
+        koru_autopilot_vscodium__src__probe_ladder__prefix["prefix"]
+        koru_autopilot_vscodium__src__probe_ladder__block["block"]
+        koru_autopilot_vscodium__src__probe_ladder__blocked["blocked"]
+        koru_autopilot_vscodium__src__probe_ladder__buildPasteDirectCommands["buildPasteDirectCommands"]
+        koru_autopilot_vscodium__src__probe_ladder__buildSubmitCommands["buildSubmitCommands"]
+        koru_autopilot_vscodium__src__probe_ladder__override["override"]
+        koru_autopilot_vscodium__src__probe_ladder__filterRegistered["filterRegistered"]
+        koru_autopilot_vscodium__src__probe_ladder__isCtrlHostKeyCandidate["isCtrlHostKeyCandidate"]
+        koru_autopilot_vscodium__src__probe_ladder__prioritizePlainHostKeySubmitCandidates["prioritizePlainHostKeySubmitCandida"]
+        koru_autopilot_vscodium__src__probe_ladder__plain["plain"]
+        koru_autopilot_vscodium__src__probe_ladder__ctrl["ctrl"]
+        koru_autopilot_vscodium__src__probe_ladder__injectorRow["injectorRow"]
+        koru_autopilot_vscodium__src__probe_ladder__reorderForXSession["reorderForXSession"]
+        koru_autopilot_vscodium__src__probe_ladder__buildHostKeySubmitCandidates("buildHostKeySubmitCandidates CC=12")
+        koru_autopilot_vscodium__src__probe_ladder__normalized["normalized"]
+        koru_autopilot_vscodium__src__probe_ladder__isLikelyWaylandSession["isLikelyWaylandSession"]
+        koru_autopilot_vscodium__src__probe_ladder__env["env"]
+        koru_autopilot_vscodium__src__probe_ladder__sanitizeProbeCacheForIde["sanitizeProbeCacheForIde"]
+        koru_autopilot_vscodium__src__probe_ladder__loadProbeCache["loadProbeCache"]
+        koru_autopilot_vscodium__src__probe_ladder__entry["entry"]
+        koru_autopilot_vscodium__src__probe_ladder__makeProbeCache["makeProbeCache"]
+        koru_autopilot_vscodium__src__probe_ladder__mergeProbeCache("mergeProbeCache CC=9")
+        koru_autopilot_vscodium__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__stdout["stdout"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__rows["rows"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__call["call"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__r["r"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__watcher["watcher"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__adapter["adapter"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__threw["threw"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
+        koru_autopilot_vscodium__src__chat_history_watcher__test__payload["payload"]
+    end
+    subgraph koru_autopilot_windsurf__src
+        koru_autopilot_windsurf__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__stdout["stdout"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__rows["rows"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor["testWatcherEmitsNewBubblesAndAdvanc"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__call["call"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__fakeRunner["fakeRunner"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__r["r"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__watcher["watcher"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse["testWatcherDoesNotAdvanceWhenDelive"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors["testWatcherSwallowsAdapterErrors"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing["testUnsupportedAdapterEmitsNothing"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__adapter["adapter"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind["testBuildAdapterForIdeReturnsCorrec"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__threw["threw"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses["testParseVSCodeChatIndexExtractsAss"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__payload["payload"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__allRows["allRows"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__partialRows["partialRows"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage["testParseVSCodeChatIndexReturnsEmpt"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable["testWatcherSkipsPollingWhenStoreUna"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__polls["polls"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor["testCursorBubbleAdapterFetchLatestU"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__sqlArg["sqlArg"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax["testCursorBubbleAdapterLatestBubble"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__rowid["rowid"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__adapterEmpty["adapterEmpty"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__emptyRunner["emptyRunner"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__rowidEmpty["rowidEmpty"]
+        koru_autopilot_windsurf__src__chat_history_watcher__test__main["main"]
+        koru_autopilot_windsurf__src__extension__runtime["runtime"]
+        koru_autopilot_windsurf__src__extension__activate["activate"]
+        koru_autopilot_windsurf__src__extension__deactivate["deactivate"]
+        koru_autopilot_windsurf__src__probe_ladder__test__assert["assert"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testOrderWithCache["testOrderWithCache"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testChatFocusHeuristic["testChatFocusHeuristic"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testPasteLandedInEditor["testPasteLandedInEditor"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testMergeUnique["testMergeUnique"]
+        koru_autopilot_windsurf__src__probe_ladder__test__firstKey["firstKey"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand["testBuildFocusOpenWindsurfDoesNotUs"]
+        koru_autopilot_windsurf__src__probe_ladder__test__cmds["cmds"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testSanitizeWindsurfDiscardsTypeSubmit["testSanitizeWindsurfDiscardsTypeSub"]
+        koru_autopilot_windsurf__src__probe_ladder__test__testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance["testBuildSubmitCommandsDoesNotUseQu"]
+        koru_autopilot_windsurf__src__chat_history_adapters__buildAdapterForIde["buildAdapterForIde"]
+        koru_autopilot_windsurf__src__ides__registry__REGISTRY["REGISTRY"]
+        koru_autopilot_windsurf__src__ides__registry__registerStrategy["registerStrategy"]
+        koru_autopilot_windsurf__src__ides__registry__id["id"]
+        koru_autopilot_windsurf__src__ides__registry__getStrategy["getStrategy"]
+        koru_autopilot_windsurf__src__ides__registry__allStrategies["allStrategies"]
+        koru_autopilot_windsurf__src__ides__registry__detectIdeViaStrategies["detectIdeViaStrategies"]
+        koru_autopilot_windsurf__src__ides__registry__bootstrapStrategies["bootstrapStrategies"]
+        koru_autopilot_windsurf__src__ides__windsurf__detect["detect"]
+        koru_autopilot_windsurf__src__ides__windsurf__pasteDirectCommandsPrefix["pasteDirectCommandsPrefix"]
+        koru_autopilot_windsurf__src__ides__windsurf__submitCommandsOverride["submitCommandsOverride"]
+        koru_autopilot_windsurf__src__ides__windsurf__focusInputCommandsPrefix["focusInputCommandsPrefix"]
+        koru_autopilot_windsurf__src__ides__windsurf__preferCtrlSubmit["preferCtrlSubmit"]
+        koru_autopilot_windsurf__src__ides__windsurf__sanitizeProbeCache["sanitizeProbeCache"]
+        koru_autopilot_windsurf__src__ides__windsurf__focusOpenCommandsDefaults["focusOpenCommandsDefaults"]
+        koru_autopilot_windsurf__src__ides__windsurf__trustFocusOpenWithoutEditorSnapshot["trustFocusOpenWithoutEditorSnapshot"]
+    end
+    koru_autopilot_shared__src__autopilot_bridge__sanitizeFocusOpenCommand --> koru_autopilot_shared__src__autopilot_bridge__isAllowedFocusOpenCommand
+    koru_autopilot_shared__src__autopilot_bridge__safeLog --> koru_autopilot_shared__src__autopilot_bridge__safeLogPayload
+    koru_autopilot_shared__src__autopilot_bridge__safeLog --> koru_autopilot_shared__src__autopilot_bridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__safeLog --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendConsoleLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendConsoleLog --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__commands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__emitLiveDsl
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__emitLiveDsl --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendConsoleLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__emitLiveDsl --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__reason --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__reason --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__reason --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__cfg --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__override --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__isCtrlHostKeyCandidateArgs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__disconnect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__scheduleRetry
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__p --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sock --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connected --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__disconnect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__disconnect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clearTimeout
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ide --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__initialCursor --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__initialCursor --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__scheduleRetry --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__scheduleRetry --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__delay --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__delay --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__connect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatPanel
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeOpenChatOnConnect --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatPanel
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detail --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resetOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__performOpenChatPanel --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__setTimeout
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__waitForCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__waitForCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__waitForCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__deadline --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__deadline --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__deadline --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__existing --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__existing --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__registered
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__next --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryTypeSubmit
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryTypeSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryTypeSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostKeySubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolveSubmitHostKeyOverride
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__effectiveOverride --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__isCtrlHostKeyCandidateArgs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__candidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__candidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__candidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__candidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__builtCandidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__isCtrlHostKeyCandidateArgs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__res --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verify --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verify --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardCachedSubmitWinner
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runHostCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__x --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__y --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__autoSubmitClickPoint --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runHostCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__autoSubmitClickPoint --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__geometry --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__parsed --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__point --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__point --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostClickSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostClickSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitClickPoint
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostClickSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__autoSubmitClickPoint
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostClickSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostClickSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__isWaylandSession
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__configuredPoint --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__configuredPoint --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__saveHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__saveHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runHostCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__saveHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runHostCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeHostClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreHostClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clearChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__koruStepConfig --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__legacyVerify --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__postSubmitVerifyEnabled --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__postSubmitVerifyEnabled --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__koruStepConfig
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardCachedSubmitWinner --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardCachedSubmitWinner --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmitStep --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmitStep --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmitStep --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmitStep --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmitStep --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dbResult --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__anchor --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tail --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tail --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tail --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__attempts --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__attempts --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__attempts --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__captureCursorBubbleAnchor --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__captureCursorBubbleAnchor --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__orderedCandidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__orderedCandidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__trustUnverifiedHostSubmit
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__registeredCandidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__registeredCandidates --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__trustUnverifiedHostSubmit
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__shouldRequireVerifiedHostSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__shouldRequireVerifiedHostSubmit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focus
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__preserveWebviewFocus --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__preserveWebviewFocus --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__trustUnverifiedHostSubmit
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__registered --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__accepted --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__hostKey --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__trustUnverifiedHostSubmit
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__strategy --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__strategy --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__postSubmitVerifyEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifyEnabled --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__filterUnsafeFocusOpenForIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__buildFocusOpenCommands
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__editorSnapshot
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__useProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__buildFocusOpenCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__before --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___focusChatAlreadyFocused --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___focusChatAlreadyFocused --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__inputFocus --> koru_autopilot_shared__src__autopilot_bridge__isSpecificChatInputFocusCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__inputFocus --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__inputFocus --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___buildFocusChatContext
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___focusChatAlreadyFocused
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___shouldPreflightFocusOnly
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___shouldPreflightFocusOnly --> koru_autopilot_shared__src__autopilot_bridge__isTogglingFocusOpenCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__hasNonToggleOpen --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__editorSnapshot
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__typed --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__hostPaste --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__direct --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directPasteReadsClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeClipboardVerified
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probePasteDelayMs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__editorSnapshot
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directPasteReadsClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeClipboardVerified
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probePasteDelayMs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__editorSnapshot
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directPasteReadsClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeClipboardVerified
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probePasteDelayMs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__editorSnapshot
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__readsClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeClipboardVerified
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__readsClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__readsClipboard --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__seeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__seeded --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__inputFocused --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clip --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ok --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__isSpecificChatInputFocusCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__app --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__wire --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__line --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__line --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__bytes --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__onData --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__onData --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__idx --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__idx --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__message --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___handleVersionMismatchRejection
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__disconnect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__plan --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__plan --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__plan --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__disconnect
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___handleVersionMismatchRejection --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___handleVersionMismatchRejection --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__enabled --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ctx --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__lastReloadAt --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__COOLDOWN_MS --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeClipboardVerified --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__writeClipboardVerified --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maxTries --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maxTries --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__observed --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__decideBusyInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__koruStepConfig
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__decideBusyInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__decideBusyInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__decideBusyInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__observedLength --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__action --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__now
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__saveClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___probeChatInputContents --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreHostClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previous --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitResult --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendFocusFailureAck --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendFocusFailureAck --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendFocusFailureAck --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendFocusFailureAck --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardToxicFocusOpenCache --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeLadderEnabled
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardToxicFocusOpenCache --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardToxicFocusOpenCache --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardToxicFocusOpenCache --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendMessageSent --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendMessageSent --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resetOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__saveClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__saveHostClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreHostClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__text --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__text --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submit --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__send
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__currentOperationTrace
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreHostClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousHost --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__restoreClipboard
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__waitForCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeKeepWindsurfChatPanelVisible
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendMessageSent
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__hasCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeKeepWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__maybeKeepWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__buildFocusOpenCommands
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryAntigravitySendPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryAntigravitySendPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryAntigravitySendPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryAntigravitySendPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendMessageSent
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__resolve
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__registered
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__captureCursorBubbleAnchor
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteCmd --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteCmd --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__registered
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifyResult --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifyResult --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendMessageSent
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___clearComposerDraft --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___clearComposerDraft --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__safeLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__traceOperation
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryAntigravitySendPromptFastPath
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryWindsurfSendTextFastPath
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendFocusFailureAck
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__decideBusyInput
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__text
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__busyInput --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__calibrateProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__detectIde
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__calibrateProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__calibrateProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sleep
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__calibrateProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__probeFocusDelayMs
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__calibrateProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__calibrateProbe --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__getProbeCache
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__captureSubmitClickPosition --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__runHostCommand
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__captureSubmitClickPosition --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__match
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__captureSubmitClickPosition --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__match --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__debugLog
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__sendManualChat --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat
+    koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatFromCommand --> koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__openChatPanel
+    koru_autopilot_shared__src__bridge_helpers__sanitizeFocusOpenCommand --> koru_autopilot_shared__src__bridge_helpers__isAllowedFocusOpenCommand
+    koru_autopilot_shared__src__chat_history_paths__defaultGlobalStateDbPath --> koru_autopilot_shared__src__chat_history_paths__ideUserDir
+    koru_autopilot_shared__src__host_click_submit__parseXdotoolGeometryShell --> koru_autopilot_shared__src__host_click_submit__match
+    koru_autopilot_shared__src__ack_payload__slimTraceStep --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__slimOperationTrace --> koru_autopilot_shared__src__ack_payload__slimTraceStep
+    koru_autopilot_shared__src__ack_payload__slimRejectedEntry --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__copyDiagnosticScalar --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__value --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__slimDiagnosticStringList --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__slimRejectedDiagnostics --> koru_autopilot_shared__src__ack_payload__slimRejectedEntry
+    koru_autopilot_shared__src__ack_payload__slimDiagnostics --> koru_autopilot_shared__src__ack_payload__copyDiagnosticScalar
+    koru_autopilot_shared__src__ack_payload__slimDiagnostics --> koru_autopilot_shared__src__ack_payload__slimDiagnosticStringList
+    koru_autopilot_shared__src__ack_payload__slimDiagnostics --> koru_autopilot_shared__src__ack_payload__slimRejectedDiagnostics
+    koru_autopilot_shared__src__ack_payload__slimSubmitAttempts --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope --> koru_autopilot_shared__src__ack_payload__clipString
+    koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope --> koru_autopilot_shared__src__ack_payload__slimOperationTrace
+    koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope --> koru_autopilot_shared__src__ack_payload__slimDiagnostics
+    koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope --> koru_autopilot_shared__src__ack_payload__slimSubmitAttempts
+    koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope --> koru_autopilot_shared__src__ack_payload__measureEnvelopeBytes
+    koru_autopilot_shared__src__socketPath__defaultSocketPathFromEnv --> koru_autopilot_shared__src__socketPath__slugInstance
+    koru_autopilot_shared__src__socketPath__explicit --> koru_autopilot_shared__src__socketPath__push
+    koru_autopilot_shared__src__socketPath__inst --> koru_autopilot_shared__src__socketPath__slugInstance
+    koru_autopilot_shared__src__socketPath__name --> koru_autopilot_shared__src__socketPath__slugInstance
+    koru_autopilot_shared__src__socketPath__xdg --> koru_autopilot_shared__src__socketPath__push
+    koru_autopilot_shared__src__socketPath__uid --> koru_autopilot_shared__src__socketPath__push
+    koru_autopilot_shared__src__socketPath__defaultSocketCandidates --> koru_autopilot_shared__src__socketPath__push
+    koru_autopilot_shared__src__socketPath__socketCandidatesFromEnv --> koru_autopilot_shared__src__socketPath__defaultSocketCandidates
+    koru_autopilot_shared__src__socketPath__ov --> koru_autopilot_shared__src__socketPath__defaultSocketCandidates
+    koru_autopilot_antigravity__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText --> koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor --> koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor --> koru_autopilot_antigravity__src__chat_history_watcher__test__r
+    koru_autopilot_antigravity__src__chat_history_watcher__test__call --> koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor --> koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor
+    koru_autopilot_antigravity__src__chat_history_watcher__test__main --> koru_autopilot_antigravity__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax
+    koru_autopilot_antigravity__src__cursor_bubble_adapter__SQLITE_ROWID_MAX_BUFFER --> koru_autopilot_antigravity__src__cursor_bubble_adapter__execFileAsync
+    koru_autopilot_antigravity__src__cursor_bubble_adapter__SQLITE_QUERY_MAX_BUFFER --> koru_autopilot_antigravity__src__cursor_bubble_adapter__execFileAsync
+    koru_autopilot_antigravity__src__cursor_bubble_adapter__runSqliteCommand --> koru_autopilot_antigravity__src__cursor_bubble_adapter__execFileAsync
+    koru_autopilot_antigravity__src__cursor_bubble_adapter__result --> koru_autopilot_antigravity__src__cursor_bubble_adapter__execFileAsync
+    koru_autopilot_antigravity__src__cursor_bubble_adapter__sqliteRunner --> koru_autopilot_antigravity__src__cursor_bubble_adapter__runSqliteCommand
+    koru_autopilot_antigravity__src__cursor_bubble_adapter__CursorBubbleAdapter__latestBubbleRowid --> koru_autopilot_antigravity__src__cursor_bubble_adapter__sqliteRunner
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__runSqliteCommand --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__execFileAsync
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__result --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__execFileAsync
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__sqliteRunner --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__runSqliteCommand
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__fetchNewer --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__sqliteRunner
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__fetchNewer --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractResponsesFromSession --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractMessageText
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__responses --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractMessageText
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractEntriesMap
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__safeParseJson
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseAfterCursor
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__entries
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__parseVSCodeChatIndex --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractResponsesFromSession
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__entries --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractResponsesFromSession
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__after --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__entries
+    koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__after --> koru_autopilot_antigravity__src__vscode_chat_session_adapter__VSCodeChatSessionAdapter__extractResponsesFromSession
+    koru_autopilot_antigravity__src__step_decisions__test__testReadVerifySubmitPrefersNewSetting --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testShouldVerifyPostSubmitAllPluginIdes --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testIdeStrategiesAreSeparated --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testShouldVerifyPrePasteBusy --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testDecideBusyInputAction --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testInterpretPostSubmitProbeRetry --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__step_decisions__test__testInterpretPostSubmitProbeStrictEmpty --> koru_autopilot_antigravity__src__step_decisions__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__testShutdownPlan --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__testUnknownTypePlan --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__testSocketCandidatesPreferIdeInstanceBeforeSingleton --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__oldSocket --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__oldInstance --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__oldRuntime --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__testSocketCandidatesDoNotCrossIdeFallback --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__testSocketCandidatesSeparateVscodeAndVscodium --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__dispatch_plan__test__testSocketCandidatesOverrideIsStrict --> koru_autopilot_antigravity__src__dispatch_plan__test__assert
+    koru_autopilot_antigravity__src__command_catalog__test__testClassifiesCursorSubmitAndPaste --> koru_autopilot_antigravity__src__command_catalog__test__assert
+    koru_autopilot_antigravity__src__command_catalog__test__testFocusOpenVsInput --> koru_autopilot_antigravity__src__command_catalog__test__assert
+    koru_autopilot_antigravity__src__command_catalog__test__testUnknownChatBucket --> koru_autopilot_antigravity__src__command_catalog__test__assert
+    koru_autopilot_antigravity__src__command_catalog__test__testClassifyCommandsDeduplicates --> koru_autopilot_antigravity__src__command_catalog__test__assert
+    koru_autopilot_antigravity__src__probe_ladder__test__testOrderWithCache --> koru_autopilot_antigravity__src__probe_ladder__test__assert
+    koru_autopilot_antigravity__src__probe_ladder__test__testChatFocusHeuristic --> koru_autopilot_antigravity__src__probe_ladder__test__assert
+    koru_autopilot_antigravity__src__probe_ladder__test__testPasteLandedInEditor --> koru_autopilot_antigravity__src__probe_ladder__test__assert
+    koru_autopilot_antigravity__src__probe_ladder__test__testMergeUnique --> koru_autopilot_antigravity__src__probe_ladder__test__assert
+    koru_autopilot_antigravity__src__probe_ladder__test__testBuildFocusOpenAntigravityEmpty --> koru_autopilot_antigravity__src__probe_ladder__test__assert
+    koru_autopilot_antigravity__src__probe_ladder__test__testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance --> koru_autopilot_antigravity__src__probe_ladder__test__assert
+    koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__start --> koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__pollOnce
+    koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__start --> koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__tick
+    koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__tick --> koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__pollOnce
+    koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__stop --> koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__clearInterval
+    koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__clearInterval --> koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__pollOnce
+    koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__pollOnce --> koru_autopilot_antigravity__src__chat_history_watcher__ChatHistoryWatcher__cursorAdvances
+    koru_autopilot_antigravity__src__command_catalog__classifyCommands --> koru_autopilot_antigravity__src__command_catalog__emptyCatalog
+    koru_autopilot_antigravity__src__command_catalog__classifyCommands --> koru_autopilot_antigravity__src__command_catalog__classifyCommand
+    koru_autopilot_antigravity__src__command_catalog__classifyCommands --> koru_autopilot_antigravity__src__command_catalog__pushUnique
+    koru_autopilot_antigravity__src__command_catalog__catalog --> koru_autopilot_antigravity__src__command_catalog__classifyCommand
+    koru_autopilot_antigravity__src__command_catalog__catalog --> koru_autopilot_antigravity__src__command_catalog__pushUnique
+    koru_autopilot_antigravity__src__command_catalog__capability --> koru_autopilot_antigravity__src__command_catalog__pushUnique
+    koru_autopilot_antigravity__src__command_catalog__matchingCommandsFlat --> koru_autopilot_antigravity__src__command_catalog__pushUnique
+    koru_autopilot_vscodium__src__probe_ladder__verifyFocusAfterOpen --> koru_autopilot_vscodium__src__probe_ladder__chatFocusHeuristic
+    koru_autopilot_vscodium__src__probe_ladder__strategy --> koru_autopilot_vscodium__src__probe_ladder__isLikelyWaylandSession
+    koru_autopilot_vscodium__src__probe_ladder__buildFocusOpenCommands --> koru_autopilot_vscodium__src__probe_ladder__mergeUnique
+    koru_autopilot_vscodium__src__probe_ladder__ideDefaults --> koru_autopilot_vscodium__src__probe_ladder__mergeUnique
+    koru_autopilot_vscodium__src__probe_ladder__prioritizePlainHostKeySubmitCandidates --> koru_autopilot_vscodium__src__probe_ladder__isCtrlHostKeyCandidate
+    koru_autopilot_vscodium__src__probe_ladder__buildHostKeySubmitCandidates --> koru_autopilot_vscodium__src__probe_ladder__reorderForVscodiumHostKeys
+    koru_autopilot_vscodium__src__probe_ladder__buildHostKeySubmitCandidates --> koru_autopilot_vscodium__src__probe_ladder__injectorRow
+    koru_autopilot_vscodium__src__probe_ladder__buildHostKeySubmitCandidates --> koru_autopilot_vscodium__src__probe_ladder__reorderForXSession
+    koru_autopilot_vscodium__src__probe_ladder__sanitizeProbeCacheForIde --> koru_autopilot_vscodium__src__probe_ladder__isLikelyWaylandSession
+    koru_autopilot_vscodium__src__probe_ladder__mergeProbeCache --> koru_autopilot_vscodium__src__probe_ladder__makeProbeCache
+    koru_autopilot_antigravity__src__antigravity_fastpath__test__testSelectAntigravityOpenCommandPrefersNativeOpenOrder --> koru_autopilot_antigravity__src__antigravity_fastpath__test__assert
+    koru_autopilot_antigravity__src__antigravity_fastpath__test__testSelectAntigravityOpenCommandReturnsNoneWhenMissing --> koru_autopilot_antigravity__src__antigravity_fastpath__test__assert
+    koru_autopilot_antigravity__src__antigravity_fastpath__test__testCanUseAntigravitySendPromptAfterRefresh --> koru_autopilot_antigravity__src__antigravity_fastpath__test__assert
+    koru_autopilot_antigravity__src__ack_payload__test__testStripsEditorSnapshotsFromDiagnosticsRejected --> koru_autopilot_antigravity__src__ack_payload__test__assert
+    koru_autopilot_antigravity__src__ack_payload__test__slim --> koru_autopilot_antigravity__src__ack_payload__test__assert
+    koru_autopilot_antigravity__src__ack_payload__test__bytes --> koru_autopilot_antigravity__src__ack_payload__test__assert
+    koru_autopilot_antigravity__src__host_click_submit__test__testParseXdotoolGeometryShell --> koru_autopilot_antigravity__src__host_click_submit__test__assert
+    koru_autopilot_antigravity__src__host_click_submit__test__testRejectsTinyOrIncompleteGeometry --> koru_autopilot_antigravity__src__host_click_submit__test__assert
+    koru_autopilot_antigravity__src__host_click_submit__test__testBottomRightSubmitPoint --> koru_autopilot_antigravity__src__host_click_submit__test__assert
+    koru_autopilot_antigravity__src__step_decisions__shouldVerifyPostSubmit --> koru_autopilot_antigravity__src__step_decisions__readVerifySubmitEnabled
+    koru_autopilot_antigravity__src__step_decisions__decideBusyInputAction --> koru_autopilot_antigravity__src__step_decisions__normalizeDraft
+    koru_autopilot_antigravity__src__step_decisions__decideBusyInputAction --> koru_autopilot_antigravity__src__step_decisions__isKnownStaleKoruCommandDraft
+    koru_autopilot_antigravity__src__socketPath__defaultSocketPathFromEnv --> koru_autopilot_antigravity__src__socketPath__slugInstance
+    koru_autopilot_antigravity__src__socketPath__explicit --> koru_autopilot_antigravity__src__socketPath__push
+    koru_autopilot_antigravity__src__socketPath__inst --> koru_autopilot_antigravity__src__socketPath__slugInstance
+    koru_autopilot_antigravity__src__socketPath__name --> koru_autopilot_antigravity__src__socketPath__slugInstance
+    koru_autopilot_antigravity__src__socketPath__xdg --> koru_autopilot_antigravity__src__socketPath__push
+    koru_autopilot_antigravity__src__socketPath__uid --> koru_autopilot_antigravity__src__socketPath__push
+    koru_autopilot_antigravity__src__socketPath__defaultSocketCandidates --> koru_autopilot_antigravity__src__socketPath__push
+    koru_autopilot_antigravity__src__socketPath__socketCandidatesFromEnv --> koru_autopilot_antigravity__src__socketPath__defaultSocketCandidates
+    koru_autopilot_antigravity__src__socketPath__ov --> koru_autopilot_antigravity__src__socketPath__defaultSocketCandidates
+    koru_autopilot_cursor__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText --> koru_autopilot_cursor__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor --> koru_autopilot_cursor__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor --> koru_autopilot_cursor__src__chat_history_watcher__test__r
+    koru_autopilot_cursor__src__chat_history_watcher__test__call --> koru_autopilot_cursor__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor --> koru_autopilot_cursor__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor
+    koru_autopilot_cursor__src__chat_history_watcher__test__main --> koru_autopilot_cursor__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax
+    koru_autopilot_cursor__src__probe_ladder__test__testOrderWithCache --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testChatFocusHeuristic --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testVerifyFocusAfterOpen --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testPasteLandedInEditor --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testMergeUnique --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testBuildFocusOpenCursorFirst --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testBuildFocusInputUsesChatCommands --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsTypeSubmit --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__sanitized --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorPreservesNonTypeSubmit --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsXdotoolSubmitOnWayland --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__prev --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testSanitizeCursorDiscardsHostPlainReturn --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testSanitizeIsIdempotent --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyOrderCursorPrefersCtrlReturn --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyOrderCursorPrefersCtrlReturn --> koru_autopilot_cursor__src__probe_ladder__test__firstKey
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyOverrideReturnForcesPlainOnCursor --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyOverrideReturnForcesPlainOnCursor --> koru_autopilot_cursor__src__probe_ladder__test__firstKey
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyWaylandPrefersYdotoolOverXdotool --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyX11KeepsXdotoolFirst --> koru_autopilot_cursor__src__probe_ladder__test__renderKey
+    koru_autopilot_cursor__src__probe_ladder__test__testHostKeyX11KeepsXdotoolFirst --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testDecideSubmitClearedNullProbeFallsClosedToCleared --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testDecideSubmitClearedEmptyInputMeansSubmitWorked --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__probe_ladder__test__testDecideSubmitClearedTextStillPresentMeansSubmitFailed --> koru_autopilot_cursor__src__probe_ladder__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__assertSanitizedCacheField --> koru_autopilot_cursor__src__ides__cursor__test__cursorCacheEntry
+    koru_autopilot_cursor__src__ides__cursor__test__assertSanitizedCacheField --> koru_autopilot_cursor__src__ides__cursor__test__eq
+    koru_autopilot_cursor__src__ides__cursor__test__testRegistry --> koru_autopilot_cursor__src__ides__cursor__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__testRegistry --> koru_autopilot_cursor__src__ides__cursor__test__eq
+    koru_autopilot_cursor__src__ides__cursor__test__testIdentity --> koru_autopilot_cursor__src__ides__cursor__test__eq
+    koru_autopilot_cursor__src__ides__cursor__test__testDetectIde --> koru_autopilot_cursor__src__ides__cursor__test__eq
+    koru_autopilot_cursor__src__ides__cursor__test__testPasteCommands --> koru_autopilot_cursor__src__ides__cursor__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__testSubmitCommands --> koru_autopilot_cursor__src__ides__cursor__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__testSubmitCommands --> koru_autopilot_cursor__src__ides__cursor__test__eq
+    koru_autopilot_cursor__src__ides__cursor__test__testHostKeyPreference --> koru_autopilot_cursor__src__ides__cursor__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__testSubmitFallbackPolicy --> koru_autopilot_cursor__src__ides__cursor__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__testProbeLadderUsesCursorStrategy --> koru_autopilot_cursor__src__ides__cursor__test__eq
+    koru_autopilot_cursor__src__ides__cursor__test__testProbeLadderUsesCursorStrategy --> koru_autopilot_cursor__src__ides__cursor__test__assert
+    koru_autopilot_cursor__src__ides__cursor__test__testProbeCacheSanitizationForCursor --> koru_autopilot_cursor__src__ides__cursor__test__testCursorSubmitCacheSanitization
+    koru_autopilot_cursor__src__ides__cursor__test__testProbeCacheSanitizationForCursor --> koru_autopilot_cursor__src__ides__cursor__test__testCursorPasteAndFocusInputCacheSanitization
+    koru_autopilot_cursor__src__ides__cursor__test__testProbeCacheSanitizationForCursor --> koru_autopilot_cursor__src__ides__cursor__test__testCursorFocusOpenCacheSanitization
+    koru_autopilot_cursor__src__ides__cursor__test__testCursorSubmitCacheSanitization --> koru_autopilot_cursor__src__ides__cursor__test__assertSanitizedCacheField
+    koru_autopilot_cursor__src__ides__cursor__test__testCursorPasteAndFocusInputCacheSanitization --> koru_autopilot_cursor__src__ides__cursor__test__assertSanitizedCacheField
+    koru_autopilot_cursor__src__ides__cursor__test__testCursorFocusOpenCacheSanitization --> koru_autopilot_cursor__src__ides__cursor__test__assertSanitizedCacheField
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testRegistry
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testIdentity
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testDetectIde
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testPasteCommands
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testSubmitCommands
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testHostKeyPreference
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testSubmitFallbackPolicy
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testProbeLadderUsesCursorStrategy
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testProbeCacheSanitizationForCursor
+    koru_autopilot_cursor__src__ides__cursor__test__run --> koru_autopilot_cursor__src__ides__cursor__test__testFocusOpenDefaultsExcludeNewChatTab
+    koru_autopilot_cursor__src__ides__registry__bootstrapStrategies --> koru_autopilot_cursor__src__ides__registry__registerStrategy
+    koru_autopilot_vscode__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText --> koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor --> koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor --> koru_autopilot_vscode__src__chat_history_watcher__test__r
+    koru_autopilot_vscode__src__chat_history_watcher__test__call --> koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_vscode__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor --> koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherEmitsNewBubblesAndAdvancesCursor
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherSwallowsAdapterErrors
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testUnsupportedAdapterEmitsNothing
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testBuildAdapterForIdeReturnsCorrectKind
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testParseVSCodeChatIndexExtractsAssistantResponses
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testParseVSCodeChatIndexReturnsEmptyOnGarbage
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testWatcherSkipsPollingWhenStoreUnavailable
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor
+    koru_autopilot_vscode__src__chat_history_watcher__test__main --> koru_autopilot_vscode__src__chat_history_watcher__test__testCursorBubbleAdapterLatestBubbleRowidParsesMax
+    koru_autopilot_vscode__src__probe_ladder__test__testOrderWithCache --> koru_autopilot_vscode__src__probe_ladder__test__assert
+    koru_autopilot_vscode__src__probe_ladder__test__testChatFocusHeuristic --> koru_autopilot_vscode__src__probe_ladder__test__assert
+    koru_autopilot_vscode__src__probe_ladder__test__testPasteLandedInEditor --> koru_autopilot_vscode__src__probe_ladder__test__assert
+    koru_autopilot_vscode__src__probe_ladder__test__testMergeUnique --> koru_autopilot_vscode__src__probe_ladder__test__assert
+
+    classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
+    class koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___performInject highCC
+    class koru_autopilot_shared__src__autopilot_bridge__safeLogPayload,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryConnectNext,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__startChatHistoryWatcherIfEligible,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge___tryHostClickSubmit,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__verifySubmitStep,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__hostKey,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__submitChat,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChat,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__pasteText,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__directCommands,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__previousClip,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__clipboardSeeded,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__focusChatInput,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__onData,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__dispatch,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__discardToxicFocusOpenCache,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__injectChat,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__ensureWindsurfChatPanelVisible,koru_autopilot_shared__src__autopilot_bridge__SharedAutopilotBridge__tryCursorComposerPromptFastPath,koru_autopilot_shared__src__ack_payload__MAX_ACK_WIRE_BYTES,koru_autopilot_shared__src__ack_payload__MAX_TRACE_STEPS,koru_autopilot_shared__src__ack_payload__MAX_TRACE_ATTEMPTS,koru_autopilot_shared__src__ack_payload__MAX_SHORT_FIELD,koru_autopilot_shared__src__ack_payload__MAX_MESSAGE_FIELD,koru_autopilot_shared__src__ack_payload__MAX_FOCUS_OPEN_CANDIDATES,koru_autopilot_shared__src__ack_payload__MAX_REJECTED_WIRE,koru_autopilot_shared__src__ack_payload__slimTraceStep,koru_autopilot_shared__src__ack_payload__slimDiagnostics,koru_autopilot_shared__src__ack_payload__sanitizeOutboundEnvelope,koru_autopilot_shared__src__socketPath__defaultSocketPathFromEnv medCC

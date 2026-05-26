@@ -20,7 +20,9 @@ from koruide.ide import normalize_ide_id
 from koruide.protocol import Message, ack, error, MIN_PLUGIN_PROTOCOL_VERSION
 
 
-def _extract_hello_metadata(msg: Message) -> tuple[str | None, str | None, int | None, list[str]]:
+def _extract_hello_metadata(
+    msg: Message,
+) -> tuple[str | None, str | None, int | None, list[str], str | None, list[str]]:
     """Extract and validate hello message metadata."""
     raw_ide = msg.data.get("ide")
     ide = normalize_ide_id(raw_ide) if isinstance(raw_ide, str) else raw_ide
@@ -34,7 +36,15 @@ def _extract_hello_metadata(msg: Message) -> tuple[str | None, str | None, int |
         if isinstance(capabilities_raw, list)
         else []
     )
-    return ide, plugin_version, protocol_version, capabilities
+    workspace_name_raw = msg.data.get("workspaceName")
+    workspace_name = workspace_name_raw if isinstance(workspace_name_raw, str) else None
+    folders_raw = msg.data.get("workspaceFolders")
+    workspace_folders = (
+        [item for item in folders_raw if isinstance(item, str)]
+        if isinstance(folders_raw, list)
+        else []
+    )
+    return ide, plugin_version, protocol_version, capabilities, workspace_name, workspace_folders
 
 
 def _handle_plugin_version_check(
@@ -84,6 +94,8 @@ def _configure_plugin_client(
     plugin_version: str | None,
     protocol_version: int | None,
     capabilities: list[str],
+    workspace_name: str | None,
+    workspace_folders: list[str],
 ) -> None:
     """Configure client as a plugin with provided metadata."""
     client.role = "plugin"
@@ -91,6 +103,8 @@ def _configure_plugin_client(
     client.version = plugin_version
     client.protocol_version = protocol_version
     client.capabilities = capabilities
+    client.workspace_name = workspace_name
+    client.workspace_folders = workspace_folders
     daemon._plugin_router.drop_stale_plugins(client, ide)
 
 
@@ -102,6 +116,8 @@ def _log_plugin_hello_accepted(
     capabilities: list[str],
     version_info: dict[str, Any],
     matching_cmds: Any,
+    workspace_name: str | None,
+    workspace_folders: list[str],
 ) -> None:
     """Log successful plugin hello acceptance."""
     command_count = len(matching_cmds) if isinstance(matching_cmds, list) else "-"
@@ -111,13 +127,21 @@ def _log_plugin_hello_accepted(
         f"expected={version_info.get('expected_plugin_version') or '-'} "
         f"policy={version_info.get('plugin_version_policy') or 'warn'} "
         f"protocol={protocol_version or '-'} min_protocol={MIN_PLUGIN_PROTOCOL_VERSION} "
-        f"capabilities={len(capabilities)} matching_commands={command_count}",
+        f"capabilities={len(capabilities)} matching_commands={command_count} "
+        f"workspace={workspace_name or '-'} folders={workspace_folders[:3] or '-'}",
     )
 
 
 def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
     """Handle plugin hello message."""
-    ide, plugin_version, protocol_version, capabilities = _extract_hello_metadata(msg)
+    (
+        ide,
+        plugin_version,
+        protocol_version,
+        capabilities,
+        workspace_name,
+        workspace_folders,
+    ) = _extract_hello_metadata(msg)
     if not isinstance(ide, str) or not ide:
         daemon._send(client, error(msg.id, "hello requires 'ide'").encode())
         return
@@ -134,7 +158,16 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         capabilities=capabilities,
     )
 
-    _configure_plugin_client(daemon, client, ide, plugin_version, protocol_version, capabilities)
+    _configure_plugin_client(
+        daemon,
+        client,
+        ide,
+        plugin_version,
+        protocol_version,
+        capabilities,
+        workspace_name,
+        workspace_folders,
+    )
     matching_cmds = msg.data.get("matchingCommands")
     catalog = parse_hello_command_catalog(msg.data)
     if catalog and command_catalog_enabled():
@@ -161,6 +194,8 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
         capabilities,
         version_info,
         matching_cmds,
+        workspace_name,
+        workspace_folders,
     )
     daemon._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
     daemon.audit.record(

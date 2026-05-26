@@ -152,6 +152,15 @@ def handle_status(daemon: Any, client: _Client, msg: Message) -> None:
         client.role = "cli"
     plugins = [row.to_dict() for row in daemon._plugin_router.status_rows()]
     daemon_version = _daemon_package_version()
+    metadata = (
+        daemon.daemon_metadata()
+        if hasattr(daemon, "daemon_metadata")
+        else {
+            "pid": os.getpid(),
+            "version": daemon_version,
+            "socket": str(daemon.socket_path),
+        }
+    )
     info = {
         "socket": str(daemon.socket_path),
         "daemon_pid": os.getpid(),
@@ -159,7 +168,15 @@ def handle_status(daemon: Any, client: _Client, msg: Message) -> None:
         "daemon": {
             "pid": os.getpid(),
             "version": daemon_version,
+            "metadata_path": str(getattr(daemon, "metadata_path", "")),
+            "git_sha": metadata.get("git_sha"),
+            "python": metadata.get("python"),
+            "python_executable": metadata.get("python_executable"),
+            "started_at": metadata.get("started_at"),
+            "uptime_seconds": metadata.get("uptime_seconds"),
+            "project": metadata.get("project"),
         },
+        "daemon_metadata": metadata,
         "plugins": plugins,
         "rejected_plugins": list(daemon._plugin_rejections),
         "console_logs": get_console_logs(limit=_STATUS_CONSOLE_LOGS_LIMIT),

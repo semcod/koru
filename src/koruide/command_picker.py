@@ -29,6 +29,19 @@ for _rows in IDE_ROWS.values():
 
 _LLM_CACHE: dict[str, tuple[float, list[str]]] = {}
 _LLM_CACHE_TTL_SECONDS = 24 * 3600
+_VSCODIUM_FOCUS_OPEN_AVOID = (
+    "openquickchat",
+    "quickchat.openinchatview",
+    "action.openchat",
+    "action.openchatview",
+    "action.chat.open",
+    "panel.chat",
+    "openagent",
+    "openask",
+)
+_VSCODIUM_FOCUS_OPEN_PREFERRED = (
+    "workbench.action.chat.focusInput",
+)
 
 
 def _llm_picker_mode() -> str:
@@ -38,6 +51,30 @@ def _llm_picker_mode() -> str:
 def _seed_order(capability: str) -> dict[str, int]:
     seed = _LADDER_SEED.get(capability, ())
     return {command: index for index, command in enumerate(seed)}
+
+
+def _sanitize_candidates(ide: str, capability: str, commands: list[str]) -> list[str]:
+    if ide.strip().lower() != "vscodium" or capability != "focus_open":
+        return commands
+    if os.environ.get("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN", "").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return []
+    filtered = [
+        command
+        for command in commands
+        if not any(marker in command.lower() for marker in _VSCODIUM_FOCUS_OPEN_AVOID)
+    ]
+    # VSCodium has a strategy-level focusInput-only opener. Re-add it when the
+    # live catalog only exposes high-risk open/new-chat commands.
+    ordered = [command for command in _VSCODIUM_FOCUS_OPEN_PREFERRED if command in filtered]
+    ordered.extend(command for command in filtered if command not in ordered)
+    if not ordered:
+        ordered = list(_VSCODIUM_FOCUS_OPEN_PREFERRED)
+    return ordered
 
 
 @dataclass
@@ -59,6 +96,7 @@ class HeuristicPicker:
         candidates = list((catalog or {}).get(capability) or [])
         if not candidates:
             candidates = list(_LADDER_SEED.get(capability, ()))
+        candidates = _sanitize_candidates(ide, capability, candidates)
         version = plugin_version or "unknown"
         seed_rank = _seed_order(capability)
 

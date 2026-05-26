@@ -54,9 +54,12 @@ class KoruIDEClient:
         late ack carried real diagnostics that nobody saw, and the
         autonomous loop logged a misleading "daemon unreachable" failure.
 
-        The new default is **45 seconds** (covers Cursor's worst case
-        plus headroom for Wayland host-key fallbacks). Operators can
-        tune via ``KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS``.
+        The new default is **120 seconds** (covers slow VS Code-family webview
+        focus/paste probes plus headroom for Wayland host-key fallbacks). The
+        autonomous loop still treats a missing ack as a failed drive, but this
+        avoids cutting off a plugin that is alive and still probing the IDE.
+
+        Operators can tune via ``KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS``.
         """
         raw = os.environ.get("KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS", "").strip()
         if raw:
@@ -64,7 +67,7 @@ class KoruIDEClient:
                 return max(self.timeout, float(raw))
             except ValueError:
                 pass
-        return max(self.timeout, 45.0)
+        return max(self.timeout, 120.0)
 
     def _connect(self, *, timeout: float | None = None) -> socket.socket:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

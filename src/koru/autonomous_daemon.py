@@ -75,9 +75,14 @@ def daemon_status_log_summary(
     if not status:
         return "status=unavailable"
     version_label = _daemon_status_version(status) or "-"
+    daemon = status.get("daemon") if isinstance(status, Mapping) else {}
+    daemon = daemon if isinstance(daemon, Mapping) else {}
+    pid = daemon.get("pid") or status.get("daemon_pid")
+    sha = daemon.get("git_sha") or "-"
+    py = daemon.get("python_executable") or "-"
     plugins = status.get("plugins")
     plugin_label = plugin_rows_summary(plugins if isinstance(plugins, list) else [])
-    return f"version={version_label} plugins={plugin_label}"
+    return f"pid={pid or '-'} version={version_label} sha={sha} python={py} plugins={plugin_label}"
 
 
 def _stop_reused_daemon(

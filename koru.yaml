@@ -71,6 +71,19 @@ when:
 
 # Default Koru autonomy strategy.
 autonomy:
+  daemon:
+    metadata_sidecar: .planfile/.koru/<socket-name>.daemon.json
+    restart_on_version_mismatch: true
+    require_plugin_version_match: true
+    focus_policy:
+      vscodium:
+        prefer:
+        - workbench.action.chat.focusInput
+        deny:
+        - openQuickChat
+        - quickchat.openInChatView
+        - action.openChat
+        - panel.chat
   strategy:
     schema: '1.0'
     id: accordion_detail_to_general

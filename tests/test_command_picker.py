@@ -103,3 +103,37 @@ def test_pick_command_order_returns_capabilities(monkeypatch, tmp_path) -> None:
     )
     assert "submit" in order
     assert order["submit"]
+
+
+def test_vscodium_focus_open_avoids_quick_chat(tmp_path) -> None:
+    order = pick_command_order(
+        ide="vscodium",
+        plugin_version="0.2.7",
+        catalog={
+            "focus_open": [
+                "workbench.action.openQuickChat",
+                "workbench.action.quickchat.openInChatView",
+                "workbench.action.chat.focusInput",
+            ],
+            "submit": ["workbench.action.chat.submit"],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+    assert "focus_open" not in order
+
+
+def test_vscodium_focus_open_override_can_be_enabled(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN", "1")
+    order = pick_command_order(
+        ide="vscodium",
+        plugin_version="0.2.7",
+        catalog={
+            "focus_open": [
+                "workbench.action.openQuickChat",
+                "workbench.action.quickchat.openInChatView",
+                "workbench.action.chat.focusInput",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+    assert order["focus_open"] == ["workbench.action.chat.focusInput"]

@@ -1,0 +1,1067 @@
+# plugins | 84f 13441L | md:6,json:7,typescript:62,yaml:1,kotlin:6,properties:1,xml:1 | 2026-05-26
+# generated in 0.02s
+# stats: 887 func | 0 cls | 84 mod | CC̄=2.4 | critical:1 | cycles:0
+# alerts[5]: fan-out SharedAutopilotBridge.tryCursorComposerPromptFastPath=24; fan-out SharedAutopilotBridge._performInject=20; fan-out SharedAutopilotBridge.tryConnectNext=20; CC SharedAutopilotBridge._performInject=16; fan-out SharedAutopilotBridge.connected=15
+# hotspots[5]: SharedAutopilotBridge.tryCursorComposerPromptFastPath fan=24; SharedAutopilotBridge.tryConnectNext fan=20; SharedAutopilotBridge._performInject fan=20; SharedAutopilotBridge.sock fan=15; SharedAutopilotBridge.connected fan=15
+# evolution: CC̄ 2.5→2.4 (improved -0.1)
+# Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
+M[84]:
+  README.md,50
+  koru-autopilot-antigravity/CHANGELOG.md,607
+  koru-autopilot-antigravity/README.md,169
+  koru-autopilot-antigravity/koru.yaml,69
+  koru-autopilot-antigravity/package.json,189
+  koru-autopilot-antigravity/src/ack-payload.test.ts,52
+  koru-autopilot-antigravity/src/antigravity-fastpath.ts,20
+  koru-autopilot-antigravity/src/antigravity-fastpath.test.ts,39
+  koru-autopilot-antigravity/src/chat-history-adapters.ts,24
+  koru-autopilot-antigravity/src/chat-history-watcher.ts,197
+  koru-autopilot-antigravity/src/chat-history-watcher.test.ts,353
+  koru-autopilot-antigravity/src/command-catalog.ts,126
+  koru-autopilot-antigravity/src/command-catalog.test.ts,53
+  koru-autopilot-antigravity/src/cursor-bubble-adapter.ts,159
+  koru-autopilot-antigravity/src/dispatch-plan.test.ts,118
+  koru-autopilot-antigravity/src/extension.ts,34
+  koru-autopilot-antigravity/src/host-click-submit.test.ts,39
+  koru-autopilot-antigravity/src/ide-control-strategy.ts,64
+  koru-autopilot-antigravity/src/ides/index.ts,8
+  koru-autopilot-antigravity/src/ides/antigravity.ts,59
+  koru-autopilot-antigravity/src/ides/ide-strategy.ts,108
+  koru-autopilot-antigravity/src/ides/registry.ts,42
+  koru-autopilot-antigravity/src/probe-ladder.test.ts,63
+  koru-autopilot-antigravity/src/socketPath.ts,61
+  koru-autopilot-antigravity/src/step-decisions.ts,145
+  koru-autopilot-antigravity/src/step-decisions.test.ts,148
+  koru-autopilot-antigravity/src/unsupported-chat-adapter.ts,19
+  koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts,146
+  koru-autopilot-antigravity/tsconfig.json,15
+  koru-autopilot-cursor/CHANGELOG.md,778
+  koru-autopilot-cursor/package.json,174
+  koru-autopilot-cursor/src/chat-history-adapters.ts,31
+  koru-autopilot-cursor/src/chat-history-watcher.test.ts,363
+  koru-autopilot-cursor/src/extension.ts,42
+  koru-autopilot-cursor/src/ides/cursor.ts,248
+  koru-autopilot-cursor/src/ides/cursor.test.ts,270
+  koru-autopilot-cursor/src/ides/registry.ts,63
+  koru-autopilot-cursor/src/probe-ladder.test.ts,297
+  koru-autopilot-jetbrains/README.md,58
+  koru-autopilot-jetbrains/build.gradle.kts,49
+  koru-autopilot-jetbrains/gradle.properties,6
+  koru-autopilot-jetbrains/settings.gradle.kts,8
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/ChatInjector.kt,74
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotReconnectAction.kt,10
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt,186
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/SocketPath.kt,33
+  koru-autopilot-jetbrains/src/main/resources/META-INF/plugin.xml,24
+  koru-autopilot-shared/package.json,10
+  koru-autopilot-shared/src/index.ts,54
+  koru-autopilot-shared/src/ack-payload.ts,260
+  koru-autopilot-shared/src/autopilot-bridge.ts,3172
+  koru-autopilot-shared/src/bridge-base.ts,64
+  koru-autopilot-shared/src/bridge-helpers.ts,63
+  koru-autopilot-shared/src/chat-history-paths.ts,29
+  koru-autopilot-shared/src/chat-history-types.ts,32
+  koru-autopilot-shared/src/dispatch-plan.ts,26
+  koru-autopilot-shared/src/extension-wrapper.ts,57
+  koru-autopilot-shared/src/host-click-submit.ts,35
+  koru-autopilot-shared/src/socketPath.ts,67
+  koru-autopilot-shared/src/types.ts,25
+  koru-autopilot-vscode/CHANGELOG.md,620
+  koru-autopilot-vscode/package.json,194
+  koru-autopilot-vscode/src/chat-history-adapters.ts,21
+  koru-autopilot-vscode/src/chat-history-watcher.test.ts,353
+  koru-autopilot-vscode/src/extension.ts,53
+  koru-autopilot-vscode/src/ides/registry.ts,45
+  koru-autopilot-vscode/src/ides/vscode.ts,81
+  koru-autopilot-vscode/src/probe-ladder.test.ts,93
+  koru-autopilot-vscodium/package.json,199
+  koru-autopilot-vscodium/src/chat-history-adapters.ts,21
+  koru-autopilot-vscodium/src/chat-history-watcher.test.ts,355
+  koru-autopilot-vscodium/src/extension.ts,45
+  koru-autopilot-vscodium/src/ides/registry.ts,42
+  koru-autopilot-vscodium/src/ides/vscodium.ts,78
+  koru-autopilot-vscodium/src/ides/vscodium.test.ts,69
+  koru-autopilot-vscodium/src/probe-ladder.ts,452
+  koru-autopilot-vscodium/src/probe-ladder.test.ts,108
+  koru-autopilot-windsurf/package.json,190
+  koru-autopilot-windsurf/src/chat-history-adapters.ts,24
+  koru-autopilot-windsurf/src/chat-history-watcher.test.ts,353
+  koru-autopilot-windsurf/src/extension.ts,34
+  koru-autopilot-windsurf/src/ides/registry.ts,42
+  koru-autopilot-windsurf/src/ides/windsurf.ts,108
+  koru-autopilot-windsurf/src/probe-ladder.test.ts,77
+D:
+  koru-autopilot-shared/src/autopilot-bridge.ts:
+    i: ../chat-history-watcher,../cursor-bubble-adapter,../ides/registry,./ack-payload,./dispatch-plan,./socketPath,child_process,fs,net,vscode
+    e: Envelope,BridgeOptions,BridgeHandle,SharedAutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS,OPEN_CHAT_PANEL_DEBOUNCE_MS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,isHostClipboardPasteCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix,resolveBridgeOptions
+    Envelope:
+    BridgeOptions:
+    BridgeHandle:
+    SharedAutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),value(-1),commands(-1),server(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),maybeOpenChatOnConnect(-1),cfg(-1),setTimeout(-1),detail(-1),safeLog(-1),openChatPanel(-1),now(-1),outcome(-1),performOpenChatPanel(-1),focus(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),effectiveOverride(-1),candidates(-1),resolveSubmitHostKeyOverride(-1),normalized(-1),isCtrlHostKeyCandidateArgs(-1),cfg(-1),override(-1),effectiveOverride(-1),builtCandidates(-1),ctrlOnly(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),orderedCandidates(-1),registeredCandidates(-1),candidates(-1),shouldRequireVerifiedHostSubmit(-1),preserveWebviewFocus(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),hasToggleOpen(-1),hasNonToggleOpen(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),reloadStrategies(-1),safeLog(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),debugLog(-1),discardToxicFocusOpenCache(-1),cache(-1),cached(-1),focusToken(-1),debugLog(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),tryCursorComposerPromptFastPath(-1),existing(-1),pasteCmd(-1),submitCmd(-1),safeLog(-1),detail(-1),safeLog(-1),safeLog(-1),detail(-1),safeLog(-1),verifyResult(-1),_clearComposerDraft(-1),detail(-1),safeLog(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),openChatFromCommand(-1),createBridgeController(-1)
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS()
+    OPEN_CHAT_PANEL_DEBOUNCE_MS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    isHostClipboardPasteCommand()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    safeLog()
+    suffix()
+    resolveBridgeOptions()
+  koru-autopilot-shared/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  koru-autopilot-vscodium/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,isCtrlHostKeyCandidate,prioritizePlainHostKeySubmitCandidates,plain,ctrl,injectorRow,reorderForXSession,reorderForVscodiumHostKeys,order,buildHostKeySubmitCandidates,normalized,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    isCtrlHostKeyCandidate()
+    prioritizePlainHostKeySubmitCandidates()
+    plain()
+    ctrl()
+    injectorRow()
+    reorderForXSession()
+    reorderForVscodiumHostKeys()
+    order()
+    buildHostKeySubmitCandidates()
+    normalized()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
+  koru-autopilot-antigravity/src/cursor-bubble-adapter.ts:
+    i: ./chat-history-paths,./chat-history-types,child_process,fs,util
+    e: CursorBubbleAdapter,execFileAsync,SQLITE_ROWID_MAX_BUFFER,SQLITE_QUERY_MAX_BUFFER,runSqliteCommand,result,sqliteRunner
+    CursorBubbleAdapter: storeAvailable(-1),fetchNewer(-1),lastRowid(-1),latestBubbleRowid(-1),r(-1),n(-1),r(-1),parseCursorBubbleRows(-1),recSep(-1),fldSep(-1),fields(-1),rowid(-1),type(-1),keyParts(-1),conversationId(-1),bubbleId(-1)
+    execFileAsync()
+    SQLITE_ROWID_MAX_BUFFER()
+    SQLITE_QUERY_MAX_BUFFER()
+    runSqliteCommand()
+    result()
+    sqliteRunner()
+  koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts:
+    i: ./chat-history-paths,./chat-history-types,child_process,fs,util
+    e: VSCodeChatSessionEntry,VSCodeChatSessionAdapter,execFileAsync,SQLITE_MAX_BUFFER,runSqliteCommand,result,sqliteRunner
+    VSCodeChatSessionEntry:
+    VSCodeChatSessionAdapter: storeAvailable(-1),fetchNewer(-1),r(-1),extractResponsesFromSession(-1),responses(-1),resp(-1),ts(-1),text(-1),safeParseJson(-1),trimmed(-1),extractEntriesMap(-1),entriesRaw(-1),parseAfterCursor(-1),parseVSCodeChatIndex(-1),entries(-1),after(-1),extractMessageText(-1)
+    execFileAsync()
+    SQLITE_MAX_BUFFER()
+    runSqliteCommand()
+    result()
+    sqliteRunner()
+  koru-autopilot-antigravity/src/chat-history-watcher.ts:
+    i: ./chat-history-adapters,./chat-history-types
+    e: ChatHistoryWatcherOptions,ChatHistoryWatcher
+    ChatHistoryWatcherOptions:
+    ChatHistoryWatcher: currentCursor(-1),adapterDescription(-1),setCursor(-1),start(-1),tick(-1),stop(-1),clearInterval(-1),pollOnce(-1),cursorAdvances(-1),a(-1),b(-1)
+  koru-autopilot-shared/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  koru-autopilot-antigravity/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  koru-autopilot-shared/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  koru-autopilot-antigravity/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+  koru-autopilot-vscode/src/ides/vscode.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,lowered,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,unsafeFocusOpen,focusOpen,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    lowered()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    unsafeFocusOpen()
+    focusOpen()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  koru-autopilot-vscode/src/extension.ts:
+    e: siblingIdeForAppName,lowered,siblingIde,runtime,activate,deactivate
+    siblingIdeForAppName()
+    lowered()
+    siblingIde()
+    runtime()
+    activate()
+    deactivate()
+  koru-autopilot-shared/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  koru-autopilot-antigravity/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  koru-autopilot-cursor/src/ides/cursor.test.ts:
+    i: ./cursor,./registry
+    e: assert,eq,cursorCacheEntry,assertSanitizedCacheField,sanitized,testRegistry,strat,testIdentity,testDetectIde,testPasteCommands,cmds,testSubmitCommands,cmds,testHostKeyPreference,testSubmitFallbackPolicy,testProbeLadderUsesCursorStrategy,paste,submit,hostKeys,firstArgs,focus,testProbeCacheSanitizationForCursor,testCursorSubmitCacheSanitization,testCursorPasteAndFocusInputCacheSanitization,testCursorFocusOpenCacheSanitization,testFocusOpenDefaultsExcludeNewChatTab,defaults,run
+    assert()
+    eq()
+    cursorCacheEntry()
+    assertSanitizedCacheField()
+    sanitized()
+    testRegistry()
+    strat()
+    testIdentity()
+    testDetectIde()
+    testPasteCommands()
+    cmds()
+    testSubmitCommands()
+    cmds()
+    testHostKeyPreference()
+    testSubmitFallbackPolicy()
+    testProbeLadderUsesCursorStrategy()
+    paste()
+    submit()
+    hostKeys()
+    firstArgs()
+    focus()
+    testProbeCacheSanitizationForCursor()
+    testCursorSubmitCacheSanitization()
+    testCursorPasteAndFocusInputCacheSanitization()
+    testCursorFocusOpenCacheSanitization()
+    testFocusOpenDefaultsExcludeNewChatTab()
+    defaults()
+    run()
+  koru-autopilot-cursor/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  koru-autopilot-vscode/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  koru-autopilot-windsurf/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  koru-autopilot-windsurf/src/ides/windsurf.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  koru-autopilot-vscodium/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  koru-autopilot-shared/src/bridge-base.ts:
+    i: ./autopilot-bridge,vscode
+    e: WireBridgeCommandsOptions,maybeAutoConnect,cfg,registerBridgeCommand,message,wireBridgeCommands,text
+    WireBridgeCommandsOptions:
+    maybeAutoConnect()
+    cfg()
+    registerBridgeCommand()
+    message()
+    wireBridgeCommands()
+    text()
+  koru-autopilot-cursor/src/chat-history-watcher.test.ts:
+    i: assert
+    e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,threw,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
+    buildSqliteOutput()
+    testParseCursorBubbleRowsHandlesMultilineText()
+    stdout()
+    rows()
+    testWatcherEmitsNewBubblesAndAdvancesCursor()
+    call()
+    fakeRunner()
+    r()
+    watcher()
+    testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse()
+    watcher()
+    testWatcherSwallowsAdapterErrors()
+    watcher()
+    rows()
+    testUnsupportedAdapterEmitsNothing()
+    adapter()
+    rows()
+    testBuildAdapterForIdeReturnsCorrectKind()
+    threw()
+    testParseVSCodeChatIndexExtractsAssistantResponses()
+    payload()
+    allRows()
+    partialRows()
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage()
+    payload()
+    rows()
+    allRows()
+    testWatcherSkipsPollingWhenStoreUnavailable()
+    polls()
+    watcher()
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor()
+    adapter()
+    fakeRunner()
+    rows()
+    sqlArg()
+    testCursorBubbleAdapterLatestBubbleRowidParsesMax()
+    adapter()
+    fakeRunner()
+    rowid()
+    adapterEmpty()
+    emptyRunner()
+    rowidEmpty()
+    main()
+  koru-autopilot-cursor/src/probe-ladder.test.ts:
+    e: assert,testOrderWithCache,ordered,testChatFocusHeuristic,testVerifyFocusAfterOpen,testPasteLandedInEditor,testMergeUnique,testBuildFocusOpenCursorFirst,cmds,testBuildFocusInputUsesChatCommands,cmds,testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance,cmds,testSanitizeCursorDiscardsTypeSubmit,sanitized,testSanitizeCursorPreservesNonTypeSubmit,sanitized,testSanitizeCursorDiscardsXdotoolSubmitOnWayland,prev,sanitized,testSanitizeCursorDiscardsHostPlainReturn,sanitized,testSanitizeIsIdempotent,empty,firstKey,renderKey,testHostKeyOrderCursorPrefersCtrlReturn,cands,flat,testHostKeyOverrideReturnForcesPlainOnCursor,cands,testHostKeyWaylandPrefersYdotoolOverXdotool,cands,flat,ydotoolPos,xdotoolPos,testHostKeyX11KeepsXdotoolFirst,cands,plainOnly,order,testDecideSubmitClearedNullProbeFallsClosedToCleared,decision,testDecideSubmitClearedEmptyInputMeansSubmitWorked,decision,testDecideSubmitClearedTextStillPresentMeansSubmitFailed,decision,testCaptureEditorSnapshotShape,_placeholder
+    assert()
+    testOrderWithCache()
+    ordered()
+    testChatFocusHeuristic()
+    testVerifyFocusAfterOpen()
+    testPasteLandedInEditor()
+    testMergeUnique()
+    testBuildFocusOpenCursorFirst()
+    cmds()
+    testBuildFocusInputUsesChatCommands()
+    cmds()
+    testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance()
+    cmds()
+    testSanitizeCursorDiscardsTypeSubmit()
+    sanitized()
+    testSanitizeCursorPreservesNonTypeSubmit()
+    sanitized()
+    testSanitizeCursorDiscardsXdotoolSubmitOnWayland()
+    prev()
+    sanitized()
+    testSanitizeCursorDiscardsHostPlainReturn()
+    sanitized()
+    testSanitizeIsIdempotent()
+    empty()
+    firstKey()
+    renderKey()
+    testHostKeyOrderCursorPrefersCtrlReturn()
+    cands()
+    flat()
+    testHostKeyOverrideReturnForcesPlainOnCursor()
+    cands()
+    testHostKeyWaylandPrefersYdotoolOverXdotool()
+    cands()
+    flat()
+    ydotoolPos()
+    xdotoolPos()
+    testHostKeyX11KeepsXdotoolFirst()
+    cands()
+    plainOnly()
+    order()
+    testDecideSubmitClearedNullProbeFallsClosedToCleared()
+    decision()
+    testDecideSubmitClearedEmptyInputMeansSubmitWorked()
+    decision()
+    testDecideSubmitClearedTextStillPresentMeansSubmitFailed()
+    decision()
+    testCaptureEditorSnapshotShape()
+    _placeholder()
+  koru-autopilot-cursor/src/ides/cursor.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,focusInputCommandsBlocklist,preferCtrlSubmit,sanitizeProbeCache,blocked,cmd,cmd,focusOpenCommandsDefaults,trustFocusOpenCommand,n,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    focusInputCommandsBlocklist()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    blocked()
+    cmd()
+    cmd()
+    focusOpenCommandsDefaults()
+    trustFocusOpenCommand()
+    n()
+    trustFocusOpenWithoutEditorSnapshot()
+  koru-autopilot-shared/src/bridge-helpers.ts:
+    e: DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+  koru-autopilot-shared/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  koru-autopilot-shared/src/extension-wrapper.ts:
+    i: vscode
+    e: IdeBridgeExtensionConfig,IdeBridgeExtensionRuntime,createIdeBridgeExtension,appName,bridge
+    IdeBridgeExtensionConfig:
+    IdeBridgeExtensionRuntime:
+    createIdeBridgeExtension()
+    appName()
+    bridge()
+  koru-autopilot-antigravity/src/dispatch-plan.test.ts:
+    i: ./dispatch-plan,./socketPath
+    e: assert,testShutdownPlan,plan,testUnknownTypePlan,plan,testSocketCandidatesPreferIdeInstanceBeforeSingleton,oldSocket,oldInstance,oldRuntime,candidates,testSocketCandidatesDoNotCrossIdeFallback,oldSocket,oldInstance,oldRuntime,candidates,testSocketCandidatesSeparateVscodeAndVscodium,oldSocket,oldInstance,oldRuntime,candidates,testSocketCandidatesOverrideIsStrict,candidates
+    assert()
+    testShutdownPlan()
+    plan()
+    testUnknownTypePlan()
+    plan()
+    testSocketCandidatesPreferIdeInstanceBeforeSingleton()
+    oldSocket()
+    oldInstance()
+    oldRuntime()
+    candidates()
+    testSocketCandidatesDoNotCrossIdeFallback()
+    oldSocket()
+    oldInstance()
+    oldRuntime()
+    candidates()
+    testSocketCandidatesSeparateVscodeAndVscodium()
+    oldSocket()
+    oldInstance()
+    oldRuntime()
+    candidates()
+    testSocketCandidatesOverrideIsStrict()
+    candidates()
+  koru-autopilot-antigravity/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  koru-autopilot-antigravity/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  koru-autopilot-antigravity/src/ack-payload.test.ts:
+    e: assert,testStripsEditorSnapshotsFromDiagnosticsRejected,slim,bytes,diag,rejected,first
+    assert()
+    testStripsEditorSnapshotsFromDiagnosticsRejected()
+    slim()
+    bytes()
+    diag()
+    rejected()
+    first()
+  koru-autopilot-vscodium/src/ides/vscodium.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,lowered,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,cmd,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    lowered()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    cmd()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  koru-autopilot-vscodium/src/extension.ts:
+    e: isVscodiumHost,lowered,runtime,activate,deactivate
+    isVscodiumHost()
+    lowered()
+    runtime()
+    activate()
+    deactivate()
+  koru-autopilot-antigravity/src/chat-history-watcher.test.ts:
+    i: assert
+    e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,threw,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
+    buildSqliteOutput()
+    testParseCursorBubbleRowsHandlesMultilineText()
+    stdout()
+    rows()
+    testWatcherEmitsNewBubblesAndAdvancesCursor()
+    call()
+    fakeRunner()
+    r()
+    watcher()
+    testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse()
+    watcher()
+    testWatcherSwallowsAdapterErrors()
+    watcher()
+    rows()
+    testUnsupportedAdapterEmitsNothing()
+    adapter()
+    rows()
+    testBuildAdapterForIdeReturnsCorrectKind()
+    threw()
+    testParseVSCodeChatIndexExtractsAssistantResponses()
+    payload()
+    allRows()
+    partialRows()
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage()
+    payload()
+    rows()
+    allRows()
+    testWatcherSkipsPollingWhenStoreUnavailable()
+    polls()
+    watcher()
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor()
+    adapter()
+    fakeRunner()
+    rows()
+    sqlArg()
+    testCursorBubbleAdapterLatestBubbleRowidParsesMax()
+    adapter()
+    fakeRunner()
+    rowid()
+    adapterEmpty()
+    emptyRunner()
+    rowidEmpty()
+    main()
+  koru-autopilot-antigravity/src/antigravity-fastpath.ts:
+    e: selectAntigravityOpenCommand,canUseAntigravitySendPrompt
+    selectAntigravityOpenCommand()
+    canUseAntigravitySendPrompt()
+  koru-autopilot-vscode/src/chat-history-watcher.test.ts:
+    i: assert
+    e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,threw,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
+    buildSqliteOutput()
+    testParseCursorBubbleRowsHandlesMultilineText()
+    stdout()
+    rows()
+    testWatcherEmitsNewBubblesAndAdvancesCursor()
+    call()
+    fakeRunner()
+    r()
+    watcher()
+    testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse()
+    watcher()
+    testWatcherSwallowsAdapterErrors()
+    watcher()
+    rows()
+    testUnsupportedAdapterEmitsNothing()
+    adapter()
+    rows()
+    testBuildAdapterForIdeReturnsCorrectKind()
+    threw()
+    testParseVSCodeChatIndexExtractsAssistantResponses()
+    payload()
+    allRows()
+    partialRows()
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage()
+    payload()
+    rows()
+    allRows()
+    testWatcherSkipsPollingWhenStoreUnavailable()
+    polls()
+    watcher()
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor()
+    adapter()
+    fakeRunner()
+    rows()
+    sqlArg()
+    testCursorBubbleAdapterLatestBubbleRowidParsesMax()
+    adapter()
+    fakeRunner()
+    rowid()
+    adapterEmpty()
+    emptyRunner()
+    rowidEmpty()
+    main()
+  koru-autopilot-vscode/src/probe-ladder.test.ts:
+    e: assert,testOrderWithCache,testChatFocusHeuristic,testPasteLandedInEditor,testMergeUnique,firstKey,testVerifyFocusAfterOpen,testBuildFocusOpenVscode,cmds,testSanitizeVscodeDropsUnsafeFocusOpenCache,sanitized,testHostKeyOrderVscodeKeepsPlainReturnFirst,cands,testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance
+    assert()
+    testOrderWithCache()
+    testChatFocusHeuristic()
+    testPasteLandedInEditor()
+    testMergeUnique()
+    firstKey()
+    testVerifyFocusAfterOpen()
+    testBuildFocusOpenVscode()
+    cmds()
+    testSanitizeVscodeDropsUnsafeFocusOpenCache()
+    sanitized()
+    testHostKeyOrderVscodeKeepsPlainReturnFirst()
+    cands()
+    testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance()
+  koru-autopilot-windsurf/src/chat-history-watcher.test.ts:
+    i: assert
+    e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,threw,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
+    buildSqliteOutput()
+    testParseCursorBubbleRowsHandlesMultilineText()
+    stdout()
+    rows()
+    testWatcherEmitsNewBubblesAndAdvancesCursor()
+    call()
+    fakeRunner()
+    r()
+    watcher()
+    testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse()
+    watcher()
+    testWatcherSwallowsAdapterErrors()
+    watcher()
+    rows()
+    testUnsupportedAdapterEmitsNothing()
+    adapter()
+    rows()
+    testBuildAdapterForIdeReturnsCorrectKind()
+    threw()
+    testParseVSCodeChatIndexExtractsAssistantResponses()
+    payload()
+    allRows()
+    partialRows()
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage()
+    payload()
+    rows()
+    allRows()
+    testWatcherSkipsPollingWhenStoreUnavailable()
+    polls()
+    watcher()
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor()
+    adapter()
+    fakeRunner()
+    rows()
+    sqlArg()
+    testCursorBubbleAdapterLatestBubbleRowidParsesMax()
+    adapter()
+    fakeRunner()
+    rowid()
+    adapterEmpty()
+    emptyRunner()
+    rowidEmpty()
+    main()
+  koru-autopilot-vscodium/src/chat-history-watcher.test.ts:
+    i: assert
+    e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,threw,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
+    buildSqliteOutput()
+    testParseCursorBubbleRowsHandlesMultilineText()
+    stdout()
+    rows()
+    testWatcherEmitsNewBubblesAndAdvancesCursor()
+    call()
+    fakeRunner()
+    r()
+    watcher()
+    testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse()
+    watcher()
+    testWatcherSwallowsAdapterErrors()
+    watcher()
+    rows()
+    testUnsupportedAdapterEmitsNothing()
+    adapter()
+    rows()
+    testBuildAdapterForIdeReturnsCorrectKind()
+    threw()
+    testParseVSCodeChatIndexExtractsAssistantResponses()
+    payload()
+    allRows()
+    partialRows()
+    testParseVSCodeChatIndexReturnsEmptyOnGarbage()
+    payload()
+    rows()
+    allRows()
+    testWatcherSkipsPollingWhenStoreUnavailable()
+    polls()
+    watcher()
+    testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor()
+    adapter()
+    fakeRunner()
+    rows()
+    sqlArg()
+    testCursorBubbleAdapterLatestBubbleRowidParsesMax()
+    adapter()
+    fakeRunner()
+    rowid()
+    adapterEmpty()
+    emptyRunner()
+    rowidEmpty()
+    main()
+  koru-autopilot-vscodium/src/probe-ladder.test.ts:
+    e: assert,testOrderWithCache,testChatFocusHeuristic,testPasteLandedInEditor,testMergeUnique,firstKey,testVerifyFocusAfterOpen,testHostKeyOrderVscodiumPrefersCtrlReturn,cands,testPlainHostKeyPrioritizerPreservesRows,cands,prioritized,testHostKeyOrderVscodiumWaylandPrefersYdotoolBeforeXdotool,cands,rendered,testHostKeyOrderVscodiumX11PrefersXdotoolBeforeYdotool,cands,rendered,testBuildFocusInputUsesChatCommands
+    assert()
+    testOrderWithCache()
+    testChatFocusHeuristic()
+    testPasteLandedInEditor()
+    testMergeUnique()
+    firstKey()
+    testVerifyFocusAfterOpen()
+    testHostKeyOrderVscodiumPrefersCtrlReturn()
+    cands()
+    testPlainHostKeyPrioritizerPreservesRows()
+    cands()
+    prioritized()
+    testHostKeyOrderVscodiumWaylandPrefersYdotoolBeforeXdotool()
+    cands()
+    rendered()
+    testHostKeyOrderVscodiumX11PrefersXdotoolBeforeYdotool()
+    cands()
+    rendered()
+    testBuildFocusInputUsesChatCommands()
+  koru-autopilot-vscodium/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  koru-autopilot-vscodium/src/ides/vscodium.test.ts:
+    i: ../probe-ladder,./registry
+    e: assert,testRegistered,testPreferCtrlSubmit,host,testSubmitSanitize,entry,testTrustFocusOpen,file,testSubmitCommandsTryRegisteredSubmitFirst,cmds,testFocusOpenAvoidsPanelOpenCommands,cmds,run
+    assert()
+    testRegistered()
+    testPreferCtrlSubmit()
+    host()
+    testSubmitSanitize()
+    entry()
+    testTrustFocusOpen()
+    file()
+    testSubmitCommandsTryRegisteredSubmitFirst()
+    cmds()
+    testFocusOpenAvoidsPanelOpenCommands()
+    cmds()
+    run()
+  koru-autopilot-antigravity/src/step-decisions.test.ts:
+    i: ./ide-control-strategy
+    e: assert,testReadVerifySubmitPrefersNewSetting,testShouldVerifyPostSubmitAllPluginIdes,testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled,testIdeStrategiesAreSeparated,testShouldVerifyPrePasteBusy,testDecideBusyInputAction,testInterpretPostSubmitProbeRetry,result,testInterpretPostSubmitProbeStrictEmpty,result,inconclusive,empty
+    assert()
+    testReadVerifySubmitPrefersNewSetting()
+    testShouldVerifyPostSubmitAllPluginIdes()
+    testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled()
+    testIdeStrategiesAreSeparated()
+    testShouldVerifyPrePasteBusy()
+    testDecideBusyInputAction()
+    testInterpretPostSubmitProbeRetry()
+    result()
+    testInterpretPostSubmitProbeStrictEmpty()
+    result()
+    inconclusive()
+    empty()
+  koru-autopilot-antigravity/src/command-catalog.test.ts:
+    i: ./command-catalog
+    e: assert,testClassifiesCursorSubmitAndPaste,testFocusOpenVsInput,testUnknownChatBucket,testClassifyCommandsDeduplicates,catalog
+    assert()
+    testClassifiesCursorSubmitAndPaste()
+    testFocusOpenVsInput()
+    testUnknownChatBucket()
+    testClassifyCommandsDeduplicates()
+    catalog()
+  koru-autopilot-antigravity/src/probe-ladder.test.ts:
+    e: assert,testOrderWithCache,testChatFocusHeuristic,testPasteLandedInEditor,testMergeUnique,firstKey,testBuildFocusOpenAntigravityEmpty,testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance
+    assert()
+    testOrderWithCache()
+    testChatFocusHeuristic()
+    testPasteLandedInEditor()
+    testMergeUnique()
+    firstKey()
+    testBuildFocusOpenAntigravityEmpty()
+    testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance()
+  koru-autopilot-antigravity/src/antigravity-fastpath.test.ts:
+    e: assert,testSelectAntigravityOpenCommandPrefersNativeOpenOrder,existing,cmd,testSelectAntigravityOpenCommandReturnsNoneWhenMissing,existing,cmd,testCanUseAntigravitySendPromptAfterRefresh,beforeOpen,afterOpen
+    assert()
+    testSelectAntigravityOpenCommandPrefersNativeOpenOrder()
+    existing()
+    cmd()
+    testSelectAntigravityOpenCommandReturnsNoneWhenMissing()
+    existing()
+    cmd()
+    testCanUseAntigravitySendPromptAfterRefresh()
+    beforeOpen()
+    afterOpen()
+  koru-autopilot-antigravity/src/host-click-submit.test.ts:
+    e: assert,testParseXdotoolGeometryShell,geometry,testRejectsTinyOrIncompleteGeometry,testBottomRightSubmitPoint,point
+    assert()
+    testParseXdotoolGeometryShell()
+    geometry()
+    testRejectsTinyOrIncompleteGeometry()
+    testBottomRightSubmitPoint()
+    point()
+  koru-autopilot-antigravity/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  koru-autopilot-antigravity/src/ides/antigravity.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  koru-autopilot-cursor/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  koru-autopilot-vscode/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  koru-autopilot-windsurf/src/probe-ladder.test.ts:
+    e: assert,testOrderWithCache,testChatFocusHeuristic,testPasteLandedInEditor,testMergeUnique,firstKey,testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand,cmds,testSanitizeWindsurfDiscardsTypeSubmit,testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance
+    assert()
+    testOrderWithCache()
+    testChatFocusHeuristic()
+    testPasteLandedInEditor()
+    testMergeUnique()
+    firstKey()
+    testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand()
+    cmds()
+    testSanitizeWindsurfDiscardsTypeSubmit()
+    testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance()
+  koru-autopilot-windsurf/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  koru-autopilot-antigravity/src/extension.ts:
+    e: runtime,activate,deactivate
+    runtime()
+    activate()
+    deactivate()
+  koru-autopilot-antigravity/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  koru-autopilot-cursor/src/extension.ts:
+    i: ./_shared/autopilot-bridge
+    e: runtime,activate,deactivate
+    runtime()
+    activate()
+    deactivate()
+  koru-autopilot-windsurf/src/extension.ts:
+    e: runtime,activate,deactivate
+    runtime()
+    activate()
+    deactivate()
+  README.md:
+  koru-autopilot-shared/package.json:
+  koru-autopilot-shared/src/types.ts:
+    e: Envelope
+    Envelope:
+  koru-autopilot-shared/src/index.ts:
+  koru-autopilot-shared/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  koru-autopilot-antigravity/koru.yaml:
+  koru-autopilot-antigravity/tsconfig.json:
+  koru-autopilot-antigravity/package.json:
+  koru-autopilot-antigravity/CHANGELOG.md:
+  koru-autopilot-antigravity/README.md:
+  koru-autopilot-antigravity/src/ides/index.ts:
+  koru-autopilot-antigravity/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
+  koru-autopilot-cursor/package.json:
+  koru-autopilot-cursor/CHANGELOG.md:
+  koru-autopilot-vscode/package.json:
+  koru-autopilot-vscode/CHANGELOG.md:
+  koru-autopilot-windsurf/package.json:
+  koru-autopilot-jetbrains/settings.gradle.kts:
+    e: gradlePluginPortal,mavenCentral
+    gradlePluginPortal()
+    mavenCentral()
+  koru-autopilot-jetbrains/build.gradle.kts:
+    e: jvmToolchain,mavenCentral,defaultRepositories,bundledPlugin
+    jvmToolchain()
+    mavenCentral()
+    defaultRepositories()
+    bundledPlugin()
+  koru-autopilot-jetbrains/gradle.properties:
+  koru-autopilot-jetbrains/README.md:
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt:
+    e: KoruAutopilotService,reconnect,disconnect,sendHello,startReadLoop,withContext,when,withContext,when
+    KoruAutopilotService:
+    reconnect()
+    disconnect()
+    sendHello()
+    startReadLoop()
+    withContext()
+    when()
+    withContext()
+    when()
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotReconnectAction.kt:
+    e: KoruAutopilotReconnectAction
+    KoruAutopilotReconnectAction:
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/SocketPath.kt:
+  koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/ChatInjector.kt:
+    e: openAiPanel,pasteViaClipboard
+    openAiPanel()
+    pasteViaClipboard()
+  koru-autopilot-jetbrains/src/main/resources/META-INF/plugin.xml:
+  koru-autopilot-vscodium/package.json:

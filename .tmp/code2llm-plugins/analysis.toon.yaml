@@ -1,0 +1,221 @@
+# code2llm | 84f 13441L | typescript:62,json:7,md:6,kotlin:6,yaml:1,properties:1,xml:1 | 2026-05-26
+# generated in 0.04s
+# CC̅=2.4 | critical:1/887 | dups:0 | cycles:0
+
+HEALTH[2]:
+  🔴 GOD   koru-autopilot-shared/src/autopilot-bridge.ts = 3172L, 4 classes, 223m, max CC=16
+  🟡 CC    _performInject CC=16 (limit:15)
+
+REFACTOR[2]:
+  1. split koru-autopilot-shared/src/autopilot-bridge.ts  (god module)
+  2. split 1 high-CC methods  (CC>15)
+
+PIPELINES[408]:
+  [1] Src [DISALLOWED_FOCUS_OPEN_COMMANDS]: DISALLOWED_FOCUS_OPEN_COMMANDS
+      PURITY: 100% pure
+  [2] Src [UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS]: UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS
+      PURITY: 100% pure
+  [3] Src [OPEN_CHAT_PANEL_DEBOUNCE_MS]: OPEN_CHAT_PANEL_DEBOUNCE_MS
+      PURITY: 100% pure
+  [4] Src [sanitizeFocusOpenCommand]: sanitizeFocusOpenCommand → isAllowedFocusOpenCommand
+      PURITY: 100% pure
+  [5] Src [sanitizeFocusOpenCandidates]: sanitizeFocusOpenCandidates
+      PURITY: 100% pure
+  [6] Src [isHostClipboardPasteCommand]: isHostClipboardPasteCommand
+      PURITY: 100% pure
+  [7] Src [suffix]: suffix
+      PURITY: 100% pure
+  [8] Src [safeLog]: safeLog → safeLogPayload
+      PURITY: 100% pure
+  [9] Src [value]: value
+      PURITY: 100% pure
+  [10] Src [commands]: commands → safeLog
+      PURITY: 100% pure
+  [11] Src [server]: server
+      PURITY: 100% pure
+  [12] Src [reason]: reason → send → debugLog
+      PURITY: 100% pure
+  [13] Src [socketPath]: socketPath
+      PURITY: 100% pure
+  [14] Src [cfg]: cfg → debugLog
+      PURITY: 100% pure
+  [15] Src [override]: override → isCtrlHostKeyCandidateArgs
+      PURITY: 100% pure
+  [16] Src [p]: p → debugLog
+      PURITY: 100% pure
+  [17] Src [sock]: sock → debugLog
+      PURITY: 100% pure
+  [18] Src [connected]: connected → debugLog
+      PURITY: 100% pure
+  [19] Src [commandCatalog]: commandCatalog
+      PURITY: 100% pure
+  [20] Src [matching]: matching
+      PURITY: 100% pure
+  [21] Src [ide]: ide → traceOperation → safeLog
+      PURITY: 100% pure
+  [22] Src [initialCursor]: initialCursor → debugLog
+      PURITY: 100% pure
+  [23] Src [delay]: delay → setTimeout → openChatPanel → now
+      PURITY: 100% pure
+  [24] Src [detail]: detail → safeLog
+      PURITY: 100% pure
+  [25] Src [deadline]: deadline → now
+      PURITY: 100% pure
+  [26] Src [existing]: existing → traceOperation → safeLog
+      PURITY: 100% pure
+  [27] Src [cache]: cache
+      PURITY: 100% pure
+  [28] Src [next]: next → _tryTypeSubmit → resolve
+      PURITY: 100% pure
+  [29] Src [_tryHostKeySubmit]: _tryHostKeySubmit → resolveSubmitHostKeyOverride
+      PURITY: 100% pure
+  [30] Src [effectiveOverride]: effectiveOverride → isCtrlHostKeyCandidateArgs
+      PURITY: 100% pure
+  [31] Src [candidates]: candidates → send → debugLog
+      PURITY: 100% pure
+  [32] Src [builtCandidates]: builtCandidates → isCtrlHostKeyCandidateArgs
+      PURITY: 100% pure
+  [33] Src [res]: res → debugLog
+      PURITY: 100% pure
+  [34] Src [verify]: verify → debugLog
+      PURITY: 100% pure
+  [35] Src [child]: child
+      PURITY: 100% pure
+  [36] Src [x]: x → debugLog
+      PURITY: 100% pure
+  [37] Src [y]: y → debugLog
+      PURITY: 100% pure
+  [38] Src [geometry]: geometry → traceOperation → safeLog
+      PURITY: 100% pure
+  [39] Src [parsed]: parsed → traceOperation → safeLog
+      PURITY: 100% pure
+  [40] Src [point]: point → debugLog
+      PURITY: 100% pure
+  [41] Src [move]: move
+      PURITY: 100% pure
+  [42] Src [click]: click
+      PURITY: 100% pure
+  [43] Src [xdotoolResult]: xdotoolResult
+      PURITY: 100% pure
+  [44] Src [_tryHostClickSubmit]: _tryHostClickSubmit → traceOperation → safeLog
+      PURITY: 100% pure
+  [45] Src [configuredPoint]: configuredPoint → debugLog
+      PURITY: 100% pure
+  [46] Src [clearChatInput]: clearChatInput → detectIde
+      PURITY: 100% pure
+  [47] Src [legacyVerify]: legacyVerify → probeLadderEnabled
+      PURITY: 100% pure
+  [48] Src [verifySubmit]: verifySubmit → probeLadderEnabled
+      PURITY: 100% pure
+  [49] Src [current]: current
+      PURITY: 100% pure
+  [50] Src [verifySubmitStep]: verifySubmitStep → sleep → setTimeout → openChatPanel → ...(1 more)
+      PURITY: 100% pure
+
+LAYERS:
+  koru-autopilot-shared/          CC̄=3.4    ←in:0  →out:0
+  │ !! autopilot-bridge.ts       3172L  4C  223m  CC=16     ←0
+  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
+  │ socketPath.ts               67L  0C   14m  CC=9      ←0
+  │ bridge-base.ts              64L  1C    6m  CC=5      ←0
+  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
+  │ extension-wrapper.ts        57L  2C    3m  CC=4      ←0
+  │ index.ts                    54L  0C    0m  CC=0.0    ←0
+  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
+  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
+  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
+  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
+  │ types.ts                    25L  1C    0m  CC=0.0    ←0
+  │ package.json                10L  0C    0m  CC=0.0    ←0
+  │
+  koru-autopilot-antigravity/     CC̄=2.3    ←in:0  →out:0
+  │ !! CHANGELOG.md               607L  0C    0m  CC=0.0    ←0
+  │ chat-history-watcher.test.ts   353L  0C   30m  CC=3      ←0
+  │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0
+  │ package.json               189L  0C    0m  CC=0.0    ←0
+  │ README.md                  169L  0C    0m  CC=0.0    ←0
+  │ cursor-bubble-adapter.ts   159L  1C   21m  CC=11     ←0
+  │ step-decisions.test.ts     148L  0C   12m  CC=2      ←0
+  │ vscode-chat-session-adapter.ts   146L  2C   22m  CC=10     ←0
+  │ step-decisions.ts          145L  1C   14m  CC=7      ←0
+  │ command-catalog.ts         126L  1C    7m  CC=4      ←0
+  │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
+  │ ide-strategy.ts            108L  2C    0m  CC=0.0    ←0
+  │ koru.yaml                   69L  0C    0m  CC=0.0    ←0
+  │ ide-control-strategy.ts     64L  1C    2m  CC=4      ←0
+  │ probe-ladder.test.ts        63L  0C    8m  CC=2      ←0
+  │ socketPath.ts               61L  0C   14m  CC=9      ←0
+  │ antigravity.ts              59L  0C    8m  CC=2      ←0
+  │ command-catalog.test.ts     53L  0C    6m  CC=2      ←0
+  │ ack-payload.test.ts         52L  0C    7m  CC=4      ←0
+  │ registry.ts                 42L  0C    7m  CC=6      ←0
+  │ antigravity-fastpath.test.ts    39L  0C    8m  CC=2      ←0
+  │ host-click-submit.test.ts    39L  0C    6m  CC=2      ←0
+  │ extension.ts                34L  0C    3m  CC=1      ←0
+  │ chat-history-adapters.ts    24L  0C    1m  CC=2      ←0
+  │ antigravity-fastpath.ts     20L  0C    2m  CC=3      ←0
+  │ unsupported-chat-adapter.ts    19L  1C    2m  CC=1      ←0
+  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
+  │ index.ts                     8L  0C    0m  CC=0.0    ←0
+  │
+  koru-autopilot-vscodium/        CC̄=2.1    ←in:0  →out:0
+  │ probe-ladder.ts            452L  3C   45m  CC=12     ←0
+  │ chat-history-watcher.test.ts   355L  0C   30m  CC=3      ←0
+  │ package.json               199L  0C    0m  CC=0.0    ←0
+  │ probe-ladder.test.ts       108L  0C   15m  CC=3      ←0
+  │ vscodium.ts                 78L  0C   10m  CC=4      ←0
+  │ vscodium.test.ts            69L  0C   12m  CC=3      ←0
+  │ extension.ts                45L  0C    5m  CC=4      ←0
+  │ registry.ts                 42L  0C    7m  CC=6      ←0
+  │ chat-history-adapters.ts    21L  0C    1m  CC=3      ←0
+  │
+  koru-autopilot-cursor/          CC̄=1.7    ←in:0  →out:0
+  │ !! CHANGELOG.md               778L  0C    0m  CC=0.0    ←0
+  │ chat-history-watcher.test.ts   363L  0C   30m  CC=5      ←0
+  │ probe-ladder.test.ts       297L  0C   37m  CC=5      ←0
+  │ cursor.test.ts             270L  0C   27m  CC=6      ←0
+  │ cursor.ts                  248L  0C   13m  CC=5      ←0
+  │ package.json               174L  0C    0m  CC=0.0    ←0
+  │ registry.ts                 63L  0C    7m  CC=6      ←0
+  │ extension.ts                42L  0C    3m  CC=1      ←0
+  │ chat-history-adapters.ts    31L  0C    1m  CC=2      ←0
+  │
+  koru-autopilot-vscode/          CC̄=1.7    ←in:0  →out:0
+  │ !! CHANGELOG.md               620L  0C    0m  CC=0.0    ←0
+  │ chat-history-watcher.test.ts   353L  0C   30m  CC=3      ←0
+  │ package.json               194L  0C    0m  CC=0.0    ←0
+  │ probe-ladder.test.ts        93L  0C   14m  CC=3      ←0
+  │ vscode.ts                   81L  0C   11m  CC=7      ←0
+  │ extension.ts                53L  0C    6m  CC=7      ←0
+  │ registry.ts                 45L  0C    7m  CC=6      ←0
+  │ chat-history-adapters.ts    21L  0C    1m  CC=2      ←0
+  │
+  koru-autopilot-windsurf/        CC̄=1.5    ←in:0  →out:0
+  │ chat-history-watcher.test.ts   353L  0C   30m  CC=3      ←0
+  │ package.json               190L  0C    0m  CC=0.0    ←0
+  │ windsurf.ts                108L  0C    8m  CC=6      ←0
+  │ probe-ladder.test.ts        77L  0C   10m  CC=2      ←0
+  │ registry.ts                 42L  0C    7m  CC=6      ←0
+  │ extension.ts                34L  0C    3m  CC=1      ←0
+  │ chat-history-adapters.ts    24L  0C    1m  CC=2      ←0
+  │
+  koru-autopilot-jetbrains/       CC̄=0.0    ←in:0  →out:0
+  │ KoruAutopilotService.kt    186L  1C    6m  CC=0.0    ←0
+  │ ChatInjector.kt             74L  0C    2m  CC=0.0    ←0
+  │ README.md                   58L  0C    0m  CC=0.0    ←0
+  │ build.gradle.kts            49L  0C    4m  CC=0.0    ←0
+  │ SocketPath.kt               33L  0C    0m  CC=0.0    ←0
+  │ plugin.xml                  24L  0C    0m  CC=0.0    ←0
+  │ KoruAutopilotReconnectAction.kt    10L  1C    0m  CC=0.0    ←0
+  │ settings.gradle.kts          8L  0C    2m  CC=0.0    ←0
+  │ gradle.properties            6L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ README.md                   50L  0C    0m  CC=0.0    ←0
+  │
+
+COUPLING: no cross-package imports detected
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon

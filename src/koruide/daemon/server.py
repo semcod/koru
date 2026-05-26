@@ -8,12 +8,19 @@ import socket
 import stat
 import struct
 import threading
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
 from koruide.audit import AuditLog
 from koruide.daemon.handlers import _default_handoff
+from koruide.daemon.metadata import (
+    build_daemon_metadata,
+    daemon_metadata_path,
+    remove_daemon_metadata,
+    write_daemon_metadata,
+)
 from koruide.daemon.protocol import _Client, _peer_uid
 from koruide.injector import Injector
 from koruide.command_catalog_store import CommandCatalogStore
@@ -59,6 +66,8 @@ class AutopilotDaemon:
         self.socket_path = socket_path or default_socket_path()
         self.injector = injector or Injector()
         self.project = project
+        self.started_at = time.time()
+        self.metadata_path = daemon_metadata_path(project, self.socket_path)
         self.log = log or (lambda _msg: None)
         self.audit = audit or AuditLog(enabled=False)
         if handoff is not None:
@@ -105,11 +114,24 @@ class AutopilotDaemon:
         srv.listen(16)
         self._server = srv
         self._sel.register(srv, selectors.EVENT_READ, data="server")
-        self.log(f"koru autopilot daemon: listening on {path}")
+        metadata = self.daemon_metadata()
+        write_daemon_metadata(metadata, self.metadata_path)
+        self.log(
+            "koru autopilot daemon: listening on "
+            f"{path} pid={metadata.get('pid')} version={metadata.get('version') or '-'} "
+            f"sha={metadata.get('git_sha') or '-'} python={metadata.get('python_executable')}"
+        )
         self.audit.record(
             "daemon_started",
             socket=str(path),
             handoff=self.handoff is not None,
+        )
+
+    def daemon_metadata(self) -> dict[str, Any]:
+        return build_daemon_metadata(
+            socket_path=self.socket_path,
+            project=self.project,
+            started_at=self.started_at,
         )
 
     def serve_forever(self) -> None:
@@ -141,6 +163,7 @@ class AutopilotDaemon:
             self._server = None
         with contextlib.suppress(OSError):
             self.socket_path.unlink()
+        remove_daemon_metadata(self.metadata_path, pid=os.getpid())
         self.log("koru autopilot daemon: stopped")
         self.audit.record("daemon_stopped")
         self.audit.close()
@@ -257,7 +280,7 @@ class AutopilotDaemon:
             client.sock.close()
 
     def _plugin_for(self, ide: str | None) -> _Client | None:
-        return cast(_Client | None, self._plugin_router.plugin_for(ide))
+        return cast(_Client | None, self._plugin_router.plugin_for(ide, project=self.project))
 
     # ----- back-compat method proxies -----------------------------------
     #

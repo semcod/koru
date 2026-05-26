@@ -8,6 +8,7 @@ import {
   verifyFocusAfterOpen,
 } from "../probe-ladder";
 import { captureEditorSnapshot } from "../probe-ladder";
+import { filterUnsafeFocusOpenForIde } from "../_shared/bridge-helpers";
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`vscodium-strategy test failed: ${message}`);
@@ -56,6 +57,22 @@ function testFocusOpenAvoidsPanelOpenCommands() {
   assert(!cmds.includes("workbench.action.openChat"), "vscodium must not use openChat as default focus_open");
 }
 
+function testFocusOpenFiltersQuickChatCommands() {
+  const cmds = filterUnsafeFocusOpenForIde(
+    [
+      "workbench.action.openQuickChat",
+      "workbench.action.quickchat.openInChatView",
+      "workbench.action.chat.openInNewWindow",
+      "workbench.action.chat.focusInput",
+    ],
+    "vscodium",
+  );
+  assert(
+    cmds.length === 1 && cmds[0] === "workbench.action.chat.focusInput",
+    "vscodium must not run QuickChat/new-window focus_open commands",
+  );
+}
+
 function run() {
   testRegistered();
   testPreferCtrlSubmit();
@@ -63,6 +80,7 @@ function run() {
   testTrustFocusOpen();
   testSubmitCommandsTryRegisteredSubmitFirst();
   testFocusOpenAvoidsPanelOpenCommands();
+  testFocusOpenFiltersQuickChatCommands();
   console.log("vscodium-strategy tests: ok");
 }
 

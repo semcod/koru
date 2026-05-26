@@ -44,6 +44,8 @@ class _Client:
     protocol_version: int | None = None
     capabilities: list[str] = field(default_factory=list)
     command_catalog: dict[str, list[str]] | None = None
+    workspace_name: str | None = None
+    workspace_folders: list[str] = field(default_factory=list)
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.

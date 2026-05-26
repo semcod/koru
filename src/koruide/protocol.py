@@ -60,6 +60,8 @@ _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
             "commandCatalog",
             "protocolVersion",
             "capabilities",
+            "workspaceName",
+            "workspaceFolders",
         }
     ),
     "session.started": frozenset({"chat"}),
@@ -149,12 +151,18 @@ def hello(
     id: str | None = None,
     protocol_version: int | None = None,
     capabilities: list[str] | None = None,
+    workspace_name: str | None = None,
+    workspace_folders: list[str] | None = None,
 ) -> Message:
     data: dict[str, Any] = {"ide": ide, "version": version, "pid": pid}
     if protocol_version is not None:
         data["protocolVersion"] = protocol_version
     if capabilities is not None:
         data["capabilities"] = capabilities
+    if workspace_name is not None:
+        data["workspaceName"] = workspace_name
+    if workspace_folders is not None:
+        data["workspaceFolders"] = workspace_folders
     return Message(type="hello", id=id, data=data)
 
 

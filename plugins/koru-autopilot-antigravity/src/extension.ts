@@ -1,13 +1,12 @@
 // koru autopilot — Antigravity entrypoint wrapper
 
-import * as vscode from "vscode";
 import {
-  createBridgeController,
-  debugLog,
-  type BridgeHandle,
   type BridgeOptions,
 } from "./_shared/autopilot-bridge";
-import { wireBridgeCommands } from "./_shared/bridge-base";
+import {
+  createIdeBridgeExtension,
+  type IdeBridgeExtensionConfig,
+} from "./_shared/extension-wrapper";
 
 const ANTIGRAVITY_BRIDGE_OPTIONS: BridgeOptions = {
   extensionPackageId: "semcod.koru-autopilot-antigravity",
@@ -19,39 +18,17 @@ const ANTIGRAVITY_BRIDGE_OPTIONS: BridgeOptions = {
   reloadCommandStrategies: ["workbench.action.reloadWindow"],
 };
 
-let activeBridge: BridgeHandle | null = null;
-
-function isAntigravityHost(appName: string): boolean {
-  return appName.toLowerCase().includes("antigravity");
-}
-
-function activateBridge(context: vscode.ExtensionContext): void {
-  const bridge = createBridgeController(context, ANTIGRAVITY_BRIDGE_OPTIONS);
-  activeBridge = bridge;
-  wireBridgeCommands(context, bridge);
-}
-
-export function activate(context: vscode.ExtensionContext): void {
-  const appName = vscode.env.appName || "";
-  debugLog("ACTIVATE", {
-    appName,
-    extensionMode: context.extensionMode,
-    extensionPath: context.extensionPath,
-  });
+const ANTIGRAVITY_EXTENSION_CONFIG: IdeBridgeExtensionConfig = {
+  bridgeOptions: ANTIGRAVITY_BRIDGE_OPTIONS,
+  isHost: (appName: string): boolean => appName.toLowerCase().includes("antigravity"),
   // ``koru-autopilot-antigravity`` is an Antigravity-only VSIX.
-  if (!isAntigravityHost(appName)) {
-    console.warn(
-      `koru-autopilot-antigravity: not activating (appName="${appName}"; ` +
-      "install the matching koru-autopilot-<ide> VSIX for this IDE)."
-    );
-    return;
-  }
-  activateBridge(context);
-}
+  notHostWarning: (appName: string): string => (
+    `koru-autopilot-antigravity: not activating (appName="${appName}"; ` +
+    "install the matching koru-autopilot-<ide> VSIX for this IDE)."
+  ),
+};
 
-export function deactivate(): void {
-  if (activeBridge) {
-    activeBridge.disconnect();
-    activeBridge = null;
-  }
-}
+const runtime = createIdeBridgeExtension(ANTIGRAVITY_EXTENSION_CONFIG);
+
+export const activate = runtime.activate;
+export const deactivate = runtime.deactivate;

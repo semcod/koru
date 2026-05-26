@@ -1,0 +1,49 @@
+# code2llm/evolution | 887 func | 61f | 2026-05-26
+# generated in 0.00s
+
+NEXT[2] (ranked by impact):
+  [1] !! SPLIT           koru-autopilot-shared/src/autopilot-bridge.ts
+      WHY: 3172L, 4 classes, max CC=16
+      EFFORT: ~4h  IMPACT: 50752
+
+  [2] !  SPLIT-FUNC      SharedAutopilotBridge._performInject  CC=16  fan=20
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 320
+
+
+RISKS[1]:
+  ⚠ Splitting koru-autopilot-shared/src/autopilot-bridge.ts may break 223 import paths
+
+METRICS-TARGET:
+  CC̄:          2.4 → ≤1.7
+  max-CC:      16 → ≤8
+  god-modules: 1 → 0
+  high-CC(≥15): 1 → ≤0
+  hub-types:   0 → ≤0
+
+PATTERNS (language parser shared logic):
+  _extract_declarations() in base.py — unified extraction for:
+    - TypeScript: interfaces, types, classes, functions, arrow funcs
+    - PHP: namespaces, traits, classes, functions, includes
+    - Ruby: modules, classes, methods, requires
+    - C++: classes, structs, functions, #includes
+    - C#: classes, interfaces, methods, usings
+    - Java: classes, interfaces, methods, imports
+    - Go: packages, functions, structs
+    - Rust: modules, functions, traits, use statements
+
+  Shared regex patterns per language:
+    - import: language-specific import/require/using patterns
+    - class: class/struct/trait declarations with inheritance
+    - function: function/method signatures with visibility
+    - brace_tracking: for C-family languages ({ })
+    - end_keyword_tracking: for Ruby (module/class/def...end)
+
+  Benefits:
+    - Consistent extraction logic across all languages
+    - Reduced code duplication (~70% reduction in parser LOC)
+    - Easier maintenance: fix once, apply everywhere
+    - Standardized FunctionInfo/ClassInfo models
+
+HISTORY:
+  prev CC̄=2.5 → now CC̄=2.4

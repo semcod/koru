@@ -70,7 +70,11 @@ const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
 
 const UNSAFE_VSCODE_FAMILY_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.openchat",
+  "workbench.action.openquickchat",
   "workbench.action.chat.open",
+  "workbench.action.chat.openinnewwindow",
+  "workbench.action.chat.opensessioninnewwindow",
+  "workbench.action.quickchat.openinchatview",
   "workbench.panel.chat",
   "workbench.panel.chat.view.copilot.focus",
   "workbench.panel.aichat.view.copilot.focus",
@@ -366,6 +370,12 @@ class SharedAutopilotBridge {
     this.emitLiveDsl(clipped);
   }
 
+  private workspaceFolders(): string[] {
+    return (vscode.workspace.workspaceFolders || [])
+      .map((folder) => folder.uri.fsPath)
+      .filter((path): path is string => typeof path === "string" && path.length > 0);
+  }
+
   /**
    * Emit a Koru Drive DSL line *immediately* to the daemon — i.e.
    * before the drive ack envelope is even built. This is what makes
@@ -465,6 +475,8 @@ class SharedAutopilotBridge {
             "command.catalog",
           ],
           pid: process.pid,
+          workspaceName: vscode.workspace.name || "",
+          workspaceFolders: this.workspaceFolders(),
           matchingCommands: matching,
           commandCatalog,
         });
@@ -2560,6 +2572,8 @@ class SharedAutopilotBridge {
     const isInputOnlyFocus =
       focusToken.includes("focuscomposer") ||
       focusToken.includes("focuscascade") ||
+      (this.detectIde() === "vscodium" && focusToken.includes("openquickchat")) ||
+      (this.detectIde() === "vscodium" && focusToken.includes("quickchat.openinchatview")) ||
       focusToken.startsWith("input-only");
     if (!isInputOnlyFocus) return;
     const cleared: ProbeCacheEntry = { ...cache, focusOpen: undefined };
