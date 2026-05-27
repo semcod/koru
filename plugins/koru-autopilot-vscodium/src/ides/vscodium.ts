@@ -15,7 +15,11 @@ const ID = "vscodium";
 
 function detect(appName: string): string | undefined {
   const lowered = appName.toLowerCase();
-  return lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss")
+  return lowered === ""
+    || lowered.includes("vscodium")
+    || lowered.includes("codium")
+    || lowered.includes("code - oss")
+    || lowered.includes("code-oss")
     ? ID
     : undefined;
 }

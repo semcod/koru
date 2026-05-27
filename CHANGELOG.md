@@ -113,6 +113,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.296] - 2026-05-27
+
+### Docs
+- Update README.md
+
+### Other
+- Update .koru/project.json
+- Update plugins/koru-autopilot-vscodium/src/ides/vscodium.test.ts
+- Update plugins/koru-autopilot-vscodium/src/ides/vscodium.ts
+- Update plugins/koru-autopilot-windsurf/package.json
+- Update wup.yaml
+
 ## [0.1.295] - 2026-05-27
 
 ### Docs

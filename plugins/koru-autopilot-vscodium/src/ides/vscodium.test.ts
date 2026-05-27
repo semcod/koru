@@ -1,4 +1,5 @@
 import { getStrategy } from "./registry";
+import { detectIdeViaStrategies } from "./registry";
 import {
   buildHostKeySubmitCandidates,
   buildFocusOpenCommands,
@@ -16,6 +17,13 @@ function assert(condition: unknown, message: string): void {
 
 function testRegistered() {
   assert(getStrategy("vscodium")?.id === "vscodium", "vscodium strategy registered");
+}
+
+function testDetectIdeFromHostNameVariants() {
+  assert(detectIdeViaStrategies("VSCodium") === "vscodium", "detects VSCodium host name");
+  assert(detectIdeViaStrategies("Codium") === "vscodium", "detects Codium host name");
+  assert(detectIdeViaStrategies("Code - OSS") === "vscodium", "detects Code - OSS host name");
+  assert(detectIdeViaStrategies("") === "vscodium", "detects empty host name as VSCodium runtime");
 }
 
 function testPreferCtrlSubmit() {
@@ -75,6 +83,7 @@ function testFocusOpenFiltersQuickChatCommands() {
 
 function run() {
   testRegistered();
+  testDetectIdeFromHostNameVariants();
   testPreferCtrlSubmit();
   testSubmitSanitize();
   testTrustFocusOpen();
