@@ -34,6 +34,7 @@ def test_live_plugin_version_matches_ide_case_insensitively() -> None:
 
 def test_plugin_reason_requires_reload_for_mismatch_protocol_and_empty_list() -> None:
     assert plugin_reason_requires_reload("connected autopilot plugin version mismatch")
+    assert plugin_reason_requires_reload("connected autopilot plugin build mismatch")
     assert plugin_reason_requires_reload("plugin protocol incompatible")
     assert plugin_reason_requires_reload("daemon status plugin list is empty")
     assert not plugin_reason_requires_reload("daemon status unavailable")

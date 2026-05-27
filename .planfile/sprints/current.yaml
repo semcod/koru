@@ -2202,7 +2202,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-26T16:10:39.072897Z'
+        finished_at: '2026-05-27T09:08:08.314007Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2330,6 +2330,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-26T16:10:39.111443+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-27T09:08:08.381279+00:00'
       id: STARTER-275
       inputs:
         api_headers: {}
@@ -2382,7 +2387,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-26T16:10:39.111412+00:00'
+      updated_at: '2026-05-27T09:08:08.381241+00:00'
     STARTER-276:
       blocked_by: []
       blocks: []

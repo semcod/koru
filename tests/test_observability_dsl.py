@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from argparse import Namespace
 from datetime import UTC, datetime
 
@@ -496,6 +497,83 @@ def test_plugin_gate_skip_emits_semantic_observability_trace(
     assert "failure(plugin_not_connected)" in terminal
 
 
+def test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import koru.autonomous_cycle_orchestrator as orchestrator
+    import koru.ide_adapters.ide_reload as ide_reload
+
+    reason = (
+        "ide=vscodium version=0.2.7 blocked: connected autopilot plugin "
+        "build mismatch: connected=old expected=new; reload the IDE window "
+        "after installing the current VSIX, then run `koru: Connect autopilot daemon`."
+    )
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-370"],
+        last_status="waiting_input",
+        last_message="",
+        last_ticket_id="STARTER-370",
+    )
+
+    class _Client:
+        def status(self) -> dict[str, object]:
+            return {
+                "plugins": [
+                    {
+                        "ide": "vscodium",
+                        "workspaceFolders": [str(tmp_path)],
+                    }
+                ]
+            }
+
+    class _Outcome:
+        attempted = True
+        ok = True
+        method = "reuse-window"
+        detail = None
+
+    reload_env: list[str | None] = []
+
+    def _fake_reload(ide: str, *, project) -> _Outcome:
+        assert ide == "vscodium"
+        assert project == tmp_path
+        reload_env.append(os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"))
+        return _Outcome()
+
+    orchestrator._PLUGIN_GATE_RECOVERY_LAST_TS.clear()
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.setattr(
+        orchestrator,
+        "_client_has_usable_plugin",
+        lambda _client, _ide: (False, reason),
+    )
+    monkeypatch.setattr(ide_reload, "try_reload_vscode_family_ide", _fake_reload)
+
+    telemetry: dict[str, object] = {}
+    messages: list[str] = []
+    status = _plugin_gate_status(
+        tmp_path,
+        1196,
+        queue_result,
+        _Client(),
+        "vscodium",
+        "continue STARTER-370",
+        True,
+        telemetry,
+        messages.append,
+    )
+
+    assert status == "skipped(plugin_version_mismatch)"
+    assert telemetry["autopilot_plugin_recovery_attempted"] is True
+    assert reload_env == ["1"]
+    assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
+    assert any("requested IDE reload/reconnect" in message for message in messages)
+
+
 def test_plugin_bootstrap_blocker_emits_control_command_dsl(tmp_path, capsys) -> None:
     emitted = _emit_plugin_bootstrap_blocker_trace(
         tmp_path,
@@ -571,6 +649,50 @@ def test_plugin_wait_trace_replaces_legacy_reload_lines(tmp_path) -> None:
         "status",
         "--explain",
     ]
+
+
+def test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    retry_env: list[str | None] = []
+
+    class _Client:
+        def status(self) -> dict:
+            return {
+                "plugins": [
+                    {
+                        "ide": "vscodium",
+                        "workspaceFolders": [str(tmp_path)],
+                    }
+                ]
+            }
+
+    def _retry(*_args, **_kwargs):
+        retry_env.append(os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"))
+        return True
+
+    result = wait_for_plugin_connection(
+        Namespace(autopilot_plugin_wait_seconds=0.0, emit_events="text"),
+        "vscodium",
+        "already_installed",
+        None,
+        client=_Client(),
+        project=tmp_path,
+        wait_for_plugin=lambda *_args, **_kwargs: False,
+        stdio_info=lambda *_args, **_kwargs: None,
+        plugin_status_reason=lambda *_args: (
+            "ide=vscodium version=0.2.7 blocked: connected autopilot "
+            "plugin build mismatch: connected=old expected=new"
+        ),
+        plugin_blocker_line=lambda reason, ide: f"blocker {ide} {reason}",
+        plugin_reason_requires_reload=lambda reason: "build mismatch" in reason,
+        retry_after_reload=_retry,
+    )
+
+    assert result is True
+    assert retry_env == ["1"]
+    assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
 
 
 def test_control_commands_cover_api_shell_plugin_and_desktop_surfaces(tmp_path) -> None:

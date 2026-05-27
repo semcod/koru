@@ -91,6 +91,7 @@ from koru.doctor_autopilot_checks import (
 from koru.doctor_autopilot_checks import (
     _check_autopilot_env,
     _check_autopilot_manage,
+    _check_autopilot_runtime_status,
     _check_autopilot_socket,
     _check_ide_runtime_presence,
     _resolve_autopilot_socket_for_doctor,
@@ -258,6 +259,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("ide_runtime_presence", _check_ide_runtime_presence),
         ("autopilot_socket", _check_autopilot_socket),
         ("autopilot_manage", _check_autopilot_manage),
+        ("autopilot_runtime_status", _check_autopilot_runtime_status),
         ("autopilot_debug_log", _check_autopilot_debug_log),
         ("autopilot_chat_control", _check_autopilot_chat_control),
         ("windsurf_chat_column_control", _check_windsurf_chat_column_control),
@@ -564,7 +566,16 @@ def _count_daemon_metrics(activity: list[str]) -> tuple[int, int, int, int]:
         for line in activity
     )
     daemon_failures = sum(
-        any(token in line for token in ("verification=plugin_error", "autopilot skipped"))
+        any(
+            token in line
+            for token in (
+                "verification=plugin_error",
+                "verification=submit_unverified",
+                "autopilot skipped",
+                "autopilot: failed",
+                "manual_send_required",
+            )
+        )
         for line in activity
     )
     last_activity_success_index = max(
@@ -582,7 +593,16 @@ def _count_daemon_metrics(activity: list[str]) -> tuple[int, int, int, int]:
         (
             idx
             for idx, line in enumerate(activity)
-            if any(token in line for token in ("verification=plugin_error", "autopilot skipped"))
+            if any(
+                token in line
+                for token in (
+                    "verification=plugin_error",
+                    "verification=submit_unverified",
+                    "autopilot skipped",
+                    "autopilot: failed",
+                    "manual_send_required",
+                )
+            )
         ),
         default=-1,
     )
@@ -632,6 +652,11 @@ def _count_chat_control_metrics(relevant: list[str]) -> dict[str, int | int]:
             "message.sent",
         )
     )
+    submit_unverified = sum(
+        "submit_unverified" in line or "intent_not_validated" in line
+        for line in relevant
+    )
+    manual_send_required = sum("manual_send_required" in line for line in relevant)
     return {
         "fast_send_errors": fast_send_errors,
         "paste_failures": paste_failures,
@@ -639,6 +664,8 @@ def _count_chat_control_metrics(relevant: list[str]) -> dict[str, int | int]:
         "paste_rejections": paste_rejections,
         "input_refusals": input_refusals,
         "send_successes": send_successes,
+        "submit_unverified": submit_unverified,
+        "manual_send_required": manual_send_required,
     }
 
 
@@ -741,6 +768,8 @@ def _build_chat_control_detail_bits(
         f"paste_rejections={chat_metrics['paste_rejections']}",
         f"input_refusals={chat_metrics['input_refusals']}",
         f"send_successes={chat_metrics['send_successes']}",
+        f"submit_unverified={chat_metrics['submit_unverified']}",
+        f"manual_send_required={chat_metrics['manual_send_required']}",
     ]
     if activity:
         detail_bits.append(f"daemon_events={len(activity)}")
@@ -798,8 +827,18 @@ def _chat_control_has_failures(chat_metrics: dict[str, int]) -> bool:
             chat_metrics["focus_rejections"],
             chat_metrics["paste_rejections"],
             chat_metrics["input_refusals"],
+            chat_metrics["submit_unverified"],
+            chat_metrics["manual_send_required"],
         )
     )
+
+
+def _chat_control_command_hints(project: Path, selected: str) -> list[str]:
+    return [
+        f"status_command=koru autopilot status --ide {selected} --explain",
+        f"probe_command=koru autopilot drive --ide {selected} --require-plugin 'probe test'",
+        f"validate_command=koru autopilot trace --project {project} --format drive-dsl --limit 30",
+    ]
 
 
 def _chat_control_recovered_after_retry(
@@ -889,7 +928,7 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         return early_status, early_detail
 
     analysis = _analyze_chat_control(selected, relevant, activity)
-    return _chat_control_result(
+    status, detail = _chat_control_result(
         detail_bits=analysis.detail_bits,
         command_missing_latest=analysis.command_missing_latest,
         chat_metrics=analysis.chat_metrics,
@@ -899,6 +938,9 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         last_activity_success_index=analysis.last_activity_success_index,
         last_activity_failure_index=analysis.last_activity_failure_index,
     )
+    if status == WARN:
+        detail = "; ".join([detail, *_chat_control_command_hints(project, selected)])
+    return status, detail
 
 
 def _windsurf_chat_column_indexes(relevant: list[str]) -> dict[str, list[int]]:

@@ -21,9 +21,9 @@ export abstract class SharedAutopilotBridgeFocusCore extends SharedAutopilotBrid
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  protected async runCommand(command: string): Promise<boolean> {
+  protected async runCommand(command: string, ...args: unknown[]): Promise<boolean> {
     try {
-      const result = await Promise.resolve(vscode.commands.executeCommand(command));
+      const result = await Promise.resolve(vscode.commands.executeCommand(command, ...args));
       if (result === false) {
         return false;
       }

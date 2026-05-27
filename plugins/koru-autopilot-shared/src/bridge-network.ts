@@ -382,5 +382,5 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
     return lowered.includes("plugin version mismatch") || lowered.includes("plugin build mismatch");
   }
 
-  protected abstract runCommand(command: string): Promise<boolean>;
+  protected abstract runCommand(command: string, ...args: unknown[]): Promise<boolean>;
 }

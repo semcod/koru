@@ -16,6 +16,39 @@ from koru.doctor_constants import FAIL, PASS, SKIP, WARN
 from koruide.socket import default_socket_path
 
 
+def _running_autopilot_ide_ids() -> list[str]:
+    seen: list[str] = []
+    for item in detect_running_ides():
+        ide = normalize_ide_id(getattr(item, "id", ""))
+        if ide and ide not in seen:
+            seen.append(ide)
+    return seen
+
+
+def _lane_matrix_bits(selected: str) -> list[str]:
+    running = _running_autopilot_ide_ids()
+    if len(running) < 2:
+        return []
+    summaries: list[str] = []
+    for ide in running:
+        try:
+            report = collect_install_manager_report(ide=ide)
+        except Exception:
+            summaries.append(f"{ide}:error")
+            continue
+        daemon = report.daemon if isinstance(report.daemon, dict) else {}
+        plugin = report.plugin if isinstance(report.plugin, dict) else {}
+        daemon_state = "running" if daemon.get("running") else "stopped"
+        plugin_state = "connected" if plugin.get("connected") else "disconnected"
+        marker = "*" if ide == selected else ""
+        summaries.append(f"{ide}{marker}:{daemon_state}/{plugin_state}")
+    return [
+        f"running_ides={','.join(running)}",
+        "explicit_env_required_when_multiple=true",
+        f"lane_matrix={','.join(summaries)}",
+    ]
+
+
 def _selected_autopilot_ide(*, include_terminal_hint: bool = True) -> str | None:
     raw_ide = os.environ.get("KORU_AUTOPILOT_IDE")
     raw_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
@@ -79,7 +112,8 @@ def _autopilot_env_status(values: dict[str, str]) -> tuple[str, list[str]]:
     if not _selected_autopilot_ide(include_terminal_hint=True):
         return SKIP, ["autopilot_env=unset"]
     if not (values["instance"] or values["ide"] or values["socket_env"]):
-        return WARN, ["autopilot_env=unset", "using_terminal_hint=true"]
+        selected = _selected_autopilot_ide(include_terminal_hint=True) or "auto"
+        return WARN, ["autopilot_env=unset", "using_terminal_hint=true", *_lane_matrix_bits(selected)]
     return PASS, []
 
 
@@ -142,3 +176,46 @@ def _check_autopilot_manage(_project: Path) -> tuple[str, str]:
     if severities:
         return WARN, detail
     return PASS, detail
+
+
+def _check_autopilot_runtime_status(_project: Path) -> tuple[str, str]:
+    if not _has_autopilot_selection():
+        return SKIP, "autopilot env unset"
+    selected = _selected_autopilot_ide() or "auto"
+    report = collect_install_manager_report(
+        ide=selected,
+        socket_path=_resolve_autopilot_socket_for_doctor(),
+    )
+    daemon = report.daemon if isinstance(report.daemon, dict) else {}
+    plugin = report.plugin if isinstance(report.plugin, dict) else {}
+    plugins = daemon.get("plugins") if isinstance(daemon.get("plugins"), list) else []
+    plugin_labels = [
+        str(row.get("ide") or row.get("id") or "?")
+        for row in plugins
+        if isinstance(row, dict)
+    ]
+    issue_rows = [issue.to_dict() for issue in report.issues]
+    severities = {str(row.get("severity")) for row in issue_rows}
+    detail_bits = [
+        f"ide={plugin.get('ide') or selected}",
+        f"daemon={'running' if daemon.get('running') else 'stopped'}",
+        f"socket={report.socket}",
+        f"plugins={len(plugins)}",
+        f"plugin_labels={','.join(plugin_labels) or '-'}",
+        f"connected={plugin.get('connected')}",
+        f"connected_version={plugin.get('connected_version') or '-'}",
+        f"connected_build={plugin.get('connected_build_sha') or '-'}",
+        f"installed_version={plugin.get('installed_version') or '-'}",
+        f"expected_version={plugin.get('expected_version') or '-'}",
+        f"expected_build={plugin.get('expected_build_sha') or '-'}",
+    ]
+    detail_bits.extend(_lane_matrix_bits(selected))
+    if "error" in severities:
+        issue_codes = ",".join(str(row.get("code")) for row in issue_rows) or "-"
+        return FAIL, "; ".join(detail_bits + [f"issues={issue_codes}"])
+    if severities or not daemon.get("running") or (
+        plugin.get("supported") is not False and not plugin.get("connected")
+    ):
+        issue_codes = ",".join(str(row.get("code")) for row in issue_rows) or "-"
+        return WARN, "; ".join(detail_bits + [f"issues={issue_codes}"])
+    return PASS, "; ".join(detail_bits + ["runtime_status=healthy"])

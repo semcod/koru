@@ -2,8 +2,6 @@ import * as vscode from "vscode";
 import { SharedAutopilotBridgeCommands } from "./bridge-commands";
 import { debugLog } from "./bridge-config";
 import {
-  bottomRightSubmitPoint,
-  parseXdotoolGeometryShell,
   type ScreenPoint,
 } from "./host-click-submit";
 import {
@@ -16,6 +14,7 @@ import {
   shouldRequireVerifiedHostSubmit,
   shouldVerifyPostSubmit,
   interpretPostSubmitProbe,
+  postSubmitProbeMaxAttempts,
   type KoruAutopilotStepConfig,
 } from "../step-decisions";
 import { getStrategy } from "../ides/registry";
@@ -174,7 +173,25 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       this.traceOperation({ op: "submit_verify", route: "skipped-by-configuration", ok: true });
       return { cleared: true, observedLength: 0 };
     }
-    const observed = await this.probeChatInputContents();
+    let observed = await this.probeChatInputContents();
+    const maxAttempts = postSubmitProbeMaxAttempts(ide, { requireEmpty: requireEmptyAfterSubmit });
+    for (let attempt = 2; observed === null && attempt <= maxAttempts; attempt += 1) {
+      await this.sleep(80 * attempt);
+      await this.focusChatInput();
+      observed = await this.probeChatInputContents();
+      const retryObservedLength = observed === null ? -1 : observed.trim().length;
+      this.traceOperation({
+        op: "submit_verify",
+        route: "sentinel-clipboard-retry",
+        ok: observed !== null,
+        detail: {
+          attempt,
+          observedLength: retryObservedLength,
+          verifyTextLength: originalText.length,
+          requireEmptyAfterSubmit,
+        },
+      });
+    }
     const verifyResult = interpretPostSubmitProbe(observed, originalText, { requireEmpty: requireEmptyAfterSubmit });
     const verified = verifyResult.cleared;
     const observedLength = observed === null ? -1 : observed.trim().length;
@@ -305,7 +322,13 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
         ctrlOnly: true,
       });
       if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
-      return preservedFocusHostKey;
+      this.traceOperation({
+        op: "submit",
+        route: "vscodium-preserve-focus-host-key-rejected",
+        ok: false,
+        command: preservedFocusHostKey.command,
+        reason: preservedFocusHostKey.reason,
+      });
     }
 
     if (!this.allowVSCodiumHostInputFallback()) {
@@ -336,7 +359,6 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       if (accepted) return accepted;
     }
     if (hostVerifyEnabled && verifyText) {
-      if (preservedFocusHostKey) return preservedFocusHostKey;
       const hostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText);
       if (hostKey.ok && hostKey.command) return hostKey;
       return hostKey;
@@ -427,7 +449,7 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     requireEmptyAfterSubmit = false
   ): Promise<SubmitOutcome | null> {
     for (const cmd of candidates) {
-      if (!(await this.runCommand(cmd))) {
+      if (!(await this.runSubmitCommand(cmd, verifyText))) {
         console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
         this.traceOperation({
           op: "submit",
@@ -461,6 +483,13 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       });
     }
     return null;
+  }
+
+  private async runSubmitCommand(command: string, verifyText: string | undefined): Promise<boolean> {
+    if (this.detectIde() !== "vscodium" || command !== "workbench.action.chat.submit" || !verifyText) {
+      return this.runCommand(command);
+    }
+    return this.runCommand(command, { inputValue: verifyText });
   }
 
   private async _tryTypeSubmitFallbacks(
@@ -639,41 +668,6 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     return { x, y };
   }
 
-  private async autoSubmitClickPoint(): Promise<ScreenPoint | null> {
-    const geometry = await this.runHostCommand("xdotool", [
-      "getactivewindow",
-      "getwindowgeometry",
-      "--shell",
-    ]);
-    if (!geometry.ok) {
-      this.traceOperation({
-        op: "submit",
-        route: "host-click:auto-point",
-        ok: false,
-        reason: "xdotool window geometry unavailable",
-      });
-      return null;
-    }
-    const parsed = parseXdotoolGeometryShell(geometry.stdout);
-    if (!parsed) {
-      this.traceOperation({
-        op: "submit",
-        route: "host-click:auto-point",
-        ok: false,
-        reason: "invalid xdotool window geometry",
-      });
-      return null;
-    }
-    const point = bottomRightSubmitPoint(parsed);
-    this.traceOperation({
-      op: "submit",
-      route: "host-click:auto-point",
-      ok: point !== null,
-      detail: point !== null ? { x: point.x, y: point.y } : {},
-    });
-    return point;
-  }
-
   private isWaylandSession(): boolean {
     return (
       (process.env.XDG_SESSION_TYPE || "").toLowerCase() === "wayland"
@@ -757,22 +751,22 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       return { ok: false };
     }
     const configuredPoint = this.submitClickPoint();
-    const point = configuredPoint ?? await this.autoSubmitClickPoint();
-    if (!point) {
+    if (!configuredPoint) {
       debugLog("SUBMIT_CLICK_SKIP", { reason: "missing submitClickX/submitClickY" });
       this.traceOperation({
         op: "submit",
         route: "host-click",
         ok: false,
-        reason: "missing submitClickX/submitClickY and auto point unavailable",
+        reason: "missing calibrated submitClickX/submitClickY",
       });
       return {
         ok: false,
-        reason: "missing submit click coordinates and auto point unavailable",
-        attempts: ["submit click skipped: no calibrated or auto bottom-right point"],
+        reason: "missing calibrated submit click coordinates",
+        attempts: ["submit click skipped: no calibrated submitClickX/submitClickY"],
       };
     }
-    const source = configuredPoint ? "configured" : "auto-bottom-right";
+    const point = configuredPoint;
+    const source = "configured";
     const details: string[] = [];
     const tryYdotoolFirst = this.isWaylandSession();
     const first = tryYdotoolFirst

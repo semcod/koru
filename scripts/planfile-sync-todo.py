@@ -75,21 +75,12 @@ def run_planfile(*args: str) -> str:
 
 
 def load_tickets() -> list[dict]:
-    """Prefer YAML because planfile's JSON mode can emit raw control chars in
-    description blocks. PyYAML round-trips them correctly; json.loads chokes."""
-    raw = run_planfile("ticket", "list", "--status", "all", "--format", "yaml")
+    """Load tickets using JSON format, which is fast and robust."""
+    raw = run_planfile("ticket", "list", "--status", "all", "--format", "json")
     try:
-        import yaml  # local import; only this script needs it
-    except ImportError:  # pragma: no cover
-        sys.stderr.write("PyYAML not installed; falling back to json (may lose tickets)\n")
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            return []
-    try:
-        data = yaml.safe_load(raw) or []
-        return data if isinstance(data, list) else []
-    except Exception:
+        return json.loads(raw)
+    except Exception as e:
+        sys.stderr.write(f"⚠️ Failed to parse JSON ticket list: {e}\n")
         return []
 
 

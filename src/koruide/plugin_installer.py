@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import subprocess
+import zipfile
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from importlib import resources
@@ -425,19 +426,128 @@ def _configure_socket_path(ide: str, socket_path: Path | None) -> Path | None:
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
-def _run(cmd: list[str], *, timeout: float = 30.0) -> subprocess.CompletedProcess[str]:
+def _run(
+    cmd: list[str],
+    *,
+    timeout: float = 30.0,
+    cwd: str | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         cmd,
         check=False,
         capture_output=True,
         text=True,
         timeout=timeout,
+        cwd=cwd,
     )
 
 
 def _env_reassert_extension_install() -> bool:
     raw = os.environ.get("KORU_AUTOPILOT_REASSERT_INSTALL", "1").strip().lower()
     return raw not in {"0", "false", "no", "off"}
+
+
+def _env_build_local_vsix() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_BUILD_LOCAL_VSIX", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _local_plugin_dir(target_ide: str | None) -> Path | None:
+    root = _repo_root()
+    if root is None:
+        return None
+    for dir_name in plugin_dir_names_for_ide(target_ide):
+        plugin_dir = root / "plugins" / dir_name
+        if (plugin_dir / "package.json").is_file():
+            return plugin_dir
+    return None
+
+
+def _package_build_sha(package_json: Path) -> str | None:
+    try:
+        data = json.loads(package_json.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    build = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
+    if isinstance(build, dict) and isinstance(build.get("sha"), str):
+        return build["sha"]
+    return None
+
+
+def _vsix_build_sha(vsix: Path) -> str | None:
+    try:
+        with zipfile.ZipFile(vsix) as archive:
+            with archive.open("extension/package.json") as package_file:
+                data = json.loads(package_file.read().decode("utf-8"))
+    except (OSError, KeyError, zipfile.BadZipFile, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    build = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
+    if isinstance(build, dict) and isinstance(build.get("sha"), str):
+        return build["sha"]
+    return None
+
+
+def _latest_plugin_source_mtime(plugin_dir: Path) -> float:
+    repo_root = _repo_root()
+    roots = [plugin_dir / "src", plugin_dir / "package.json", plugin_dir / "tsconfig.json"]
+    if repo_root is not None:
+        roots.append(repo_root / "plugins" / "koru-autopilot-shared" / "src")
+    latest = 0.0
+    for root in roots:
+        if root.is_file():
+            latest = max(latest, root.stat().st_mtime)
+            continue
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*"):
+            if not path.is_file():
+                continue
+            if any(part in {"node_modules", "out", ".git"} for part in path.parts):
+                continue
+            latest = max(latest, path.stat().st_mtime)
+    return latest
+
+
+def _local_vsix_needs_build(plugin_dir: Path, vsix: Path | None) -> bool:
+    if vsix is None or not vsix.is_file():
+        return True
+    expected_build = _package_build_sha(plugin_dir / "package.json")
+    vsix_build = _vsix_build_sha(vsix)
+    if expected_build and vsix_build != expected_build:
+        return True
+    try:
+        return _latest_plugin_source_mtime(plugin_dir) > vsix.stat().st_mtime
+    except OSError:
+        return True
+
+
+def _ensure_local_extension_vsix(
+    target_ide: str,
+    *,
+    dry_run: bool,
+    runner: Runner,
+) -> None:
+    if dry_run or not _env_reassert_extension_install() or not _env_build_local_vsix():
+        return
+    plugin_dir = _local_plugin_dir(target_ide)
+    if plugin_dir is None or not (plugin_dir / "package.json").is_file():
+        return
+    existing = _newest_plugin_dir_vsix(plugin_dir)
+    resolved = resolve_extension_vsix(target_ide)
+    if existing is not None and resolved is not None:
+        try:
+            if not resolved.resolve().is_relative_to(plugin_dir.resolve()):
+                return
+        except OSError:
+            return
+    if not _local_vsix_needs_build(plugin_dir, existing):
+        return
+    try:
+        proc = runner(["npm", "run", "package"], timeout=180.0, cwd=str(plugin_dir))
+    except (OSError, subprocess.SubprocessError):
+        return
+    if proc.returncode != 0:
+        return
 
 
 def _extension_is_installed(
@@ -853,6 +963,8 @@ def install_plugin_for_ide(
             status="missing_cli",
             message=f"{target} CLI is not in PATH; cannot install the extension automatically",
         )
+
+    _ensure_local_extension_vsix(target, dry_run=dry_run, runner=runner)
 
     settings_path = None if dry_run else _configure_socket_path(target, socket_path)
     socket_path_str = str(socket_path.resolve()) if socket_path is not None else None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -290,15 +291,24 @@ def wait_for_plugin_connection(
         plugin_install_status in {"installed", "already_installed"}
         and plugin_reason_requires_reload(reason)
     ):
-        reloaded_ready = retry_after_reload(
-            args,
+        reload_env = _temporary_reuse_window_reload_if_same_workspace(
+            client,
             autopilot_ide,
-            wait_seconds,
-            client=client,
-            project=project,
-            wait_for_plugin=wait_for_plugin,
-            stdio_info=stdio_info,
+            project,
+            reason,
         )
+        try:
+            reloaded_ready = retry_after_reload(
+                args,
+                autopilot_ide,
+                wait_seconds,
+                client=client,
+                project=project,
+                wait_for_plugin=wait_for_plugin,
+                stdio_info=stdio_info,
+            )
+        finally:
+            _restore_reuse_window_reload(reload_env)
         if reloaded_ready is not None:
             return reloaded_ready
 
@@ -321,6 +331,72 @@ def wait_for_plugin_connection(
             emit_fmt=args.emit_events,
             stdio_info=stdio_info,
         )
+    return False
+
+
+def _temporary_reuse_window_reload_if_same_workspace(
+    client: Any,
+    autopilot_ide: str,
+    project: Path | None,
+    reason: str,
+) -> tuple[bool, str | None] | None:
+    if project is None or not _reason_is_connected_plugin_mismatch(reason):
+        return None
+    if os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"):
+        return None
+    try:
+        status = client.status()
+    except (OSError, RuntimeError, TimeoutError):
+        return None
+    if not _status_has_plugin_workspace(status, autopilot_ide, project):
+        return None
+    previous = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+    os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = "1"
+    return True, previous
+
+
+def _restore_reuse_window_reload(snapshot: tuple[bool, str | None] | None) -> None:
+    if snapshot is None:
+        return
+    _changed, previous = snapshot
+    if previous is None:
+        os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
+    else:
+        os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = previous
+
+
+def _reason_is_connected_plugin_mismatch(reason: str) -> bool:
+    text = reason.lower()
+    return "connected autopilot plugin" in text and (
+        "build mismatch" in text or "version mismatch" in text
+    )
+
+
+def _status_has_plugin_workspace(status: Any, autopilot_ide: str, project: Path) -> bool:
+    if not isinstance(status, dict):
+        return False
+    plugins = status.get("plugins")
+    if not isinstance(plugins, list):
+        return False
+    wanted = autopilot_ide.strip().lower()
+    project_path = str(project.resolve())
+    for plugin in plugins:
+        if not isinstance(plugin, dict):
+            continue
+        plugin_ide = str(plugin.get("ide") or "").strip().lower()
+        if wanted not in {"", "auto"} and plugin_ide != wanted:
+            continue
+        folders = plugin.get("workspaceFolders")
+        if not isinstance(folders, list):
+            continue
+        for folder in folders:
+            if not isinstance(folder, str):
+                continue
+            try:
+                if str(Path(folder).resolve()) == project_path:
+                    return True
+            except OSError:
+                continue
     return False
 
 

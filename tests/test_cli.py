@@ -163,7 +163,14 @@ class TestDoctorDispatch(unittest.TestCase):
     def test_doctor_fix_text_is_guidance_only(self) -> None:
         code, output = _run_main("--doctor", "--fix", "--project", str(self.project))
         self.assertIn("Guided repair (--fix):", output)
+        self.assertIn("koru --doctor --repair --project", output)
         self.assertIn("koru autopilot doctor --fix", output)
+        self.assertIn("KORU_AUTOPILOT_INSTANCE=", output)
+        self.assertIn("koru autopilot daemon --project", output)
+        self.assertIn("koru autopilot status --ide", output)
+        self.assertIn("koru autopilot trace --project", output)
+        self.assertIn("koru ide doctor --ide", output)
+        self.assertIn("--gc-sockets", output)
         self.assertIn("koru autonomous safe-up --project", output)
         self.assertIsInstance(code, int)
 
@@ -180,6 +187,32 @@ class TestDoctorDispatch(unittest.TestCase):
         self.assertIn("fix", data)
         self.assertFalse(data["fix"]["writes_by_default"])
         self.assertIn("commands", data["fix"])
+        self.assertIsInstance(code, int)
+
+    def test_doctor_repair_text_applies_safe_actions(self) -> None:
+        fake_report = types.SimpleNamespace(ok=True, issues=[], actions=[])
+        fake_start = {
+            "action": "start_daemon",
+            "status": "started",
+            "pid": 123,
+            "socket": "/tmp/koru-autopilot-vscodium.sock",
+            "log": "/tmp/doctor-autopilot-vscodium.log",
+        }
+        with mock.patch("koru.cli_doctor.repair_installation", return_value=fake_report):
+            with mock.patch(
+                "koru.cli_doctor._start_autopilot_daemon_for_repair",
+                return_value=fake_start,
+            ):
+                code, output = _run_main(
+                    "--doctor",
+                    "--repair",
+                    "--project",
+                    str(self.project),
+                )
+        self.assertIn("Applied repair (--repair):", output)
+        self.assertIn("repair_installation: True", output)
+        self.assertIn("start_daemon: started", output)
+        self.assertIn("pid=123", output)
         self.assertIsInstance(code, int)
 
     def test_doctor_exit_0_on_no_failures(self) -> None:

@@ -96,6 +96,7 @@ def plugin_reason_requires_reload(reason: str) -> bool:
     text = reason.lower()
     return (
         "plugin version mismatch" in text
+        or "plugin build mismatch" in text
         or "plugin protocol" in text
         or "plugin list is empty" in text
     )

@@ -338,6 +338,7 @@ def _build_plugin_info_dict(
     }
     if connected_plugin:
         plugin["fd"] = connected_plugin.get("fd")
+        plugin["workspace_folders"] = connected_plugin.get("workspaceFolders")
     return plugin
 
 
@@ -419,8 +420,14 @@ def repair_installation(
     actions.append({"action": "install_plugin", "result": plugin_result.to_dict()})
     live_version = str(report.plugin.get("connected_version") or "").strip()
     installed_version = str(report.plugin.get("installed_version") or "").strip()
+    live_build = str(report.plugin.get("connected_build_sha") or "").strip()
+    expected_build = str(report.plugin.get("expected_build_sha") or "").strip()
+    build_aligned = not expected_build or (live_build and live_build == expected_build)
     plugin_already_aligned = bool(
-        live_version and installed_version and live_version == installed_version
+        live_version
+        and installed_version
+        and live_version == installed_version
+        and build_aligned
     )
     if plugin_already_aligned:
         actions.append(
@@ -438,20 +445,22 @@ def repair_installation(
         )
     elif report.daemon.get("running") and not dry_run:
         try:
-            shutdown = AutopilotClient(socket_path=Path(report.socket), timeout=1.5).shutdown()
+            shutdown = AutopilotClient(
+                socket_path=Path(report.socket),
+                timeout=1.5,
+            ).shutdown()
         except (OSError, RuntimeError) as exc:
             shutdown = {"ok": False, "message": str(exc)}
         actions.append({"action": "shutdown_daemon_for_reload", "result": shutdown})
     actions.append(
         {
             "action": "reload_ide_and_reconnect",
-            "result": {
-                "status": "manual",
-                "message": (
-                    "Reload the IDE window, then run `koru: Connect autopilot daemon` "
-                    "so the live extension matches the installed VSIX."
-                ),
-            },
+            "result": _reload_ide_after_plugin_fix(
+                resolved_ide,
+                source_root=Path(report.source_root),
+                daemon=report.daemon,
+                dry_run=dry_run,
+            ),
         },
     )
     if not dry_run:
@@ -460,6 +469,125 @@ def repair_installation(
         return refreshed
     report.actions = actions
     return report
+
+
+def _reload_ide_after_plugin_fix(
+    ide: str,
+    *,
+    source_root: Path,
+    daemon: dict[str, Any] | None = None,
+    dry_run: bool,
+) -> dict[str, Any]:
+    if dry_run:
+        return {
+            "status": "manual",
+            "message": (
+                "Reload the IDE window, then run `koru: Connect autopilot daemon` "
+                "so the live extension matches the installed VSIX."
+            ),
+        }
+    try:
+        from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+        snapshot = _temporary_reuse_window_reload_if_same_workspace(
+            daemon,
+            ide,
+            source_root,
+        )
+        try:
+            reload = try_reload_vscode_family_ide(ide, project=source_root)
+        finally:
+            _restore_reuse_window_reload(snapshot)
+    except Exception as exc:  # pragma: no cover - defensive around GUI adapters
+        return {
+            "status": "manual",
+            "ok": False,
+            "message": (
+                "Automatic IDE reload failed; run `Developer: Reload Window`, "
+                "then `koru: Connect autopilot daemon`."
+            ),
+            "detail": str(exc),
+        }
+    if getattr(reload, "attempted", False) and getattr(reload, "ok", False):
+        return {
+            "status": "automatic",
+            "ok": True,
+            "method": getattr(reload, "method", None),
+            "message": (
+                "Requested IDE Reload Window automatically; reconnect the "
+                "plugin if it does not reconnect by itself."
+            ),
+        }
+    return {
+        "status": "manual",
+        "ok": False,
+        "method": getattr(reload, "method", None),
+        "detail": getattr(reload, "detail", None),
+        "message": (
+            "Reload the IDE window with `Developer: Reload Window`, then run "
+            "`koru: Connect autopilot daemon` so the live extension matches "
+            "the installed VSIX."
+        ),
+    }
+
+
+def _temporary_reuse_window_reload_if_same_workspace(
+    daemon: dict[str, Any] | None,
+    ide: str,
+    source_root: Path,
+) -> tuple[bool, str | None] | None:
+    if os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"):
+        return None
+    if not _daemon_has_plugin_workspace(daemon, ide, source_root):
+        return None
+    previous = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+    os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = "1"
+    return True, previous
+
+
+def _restore_reuse_window_reload(snapshot: tuple[bool, str | None] | None) -> None:
+    if snapshot is None:
+        return
+    _changed, previous = snapshot
+    if previous is None:
+        os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
+    else:
+        os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = previous
+
+
+def _daemon_has_plugin_workspace(
+    daemon: dict[str, Any] | None,
+    ide: str,
+    source_root: Path,
+) -> bool:
+    if not isinstance(daemon, dict):
+        return False
+    plugins = daemon.get("plugins")
+    if not isinstance(plugins, list):
+        return False
+    wanted = ide.strip().lower()
+    try:
+        source_key = str(source_root.resolve())
+    except OSError:
+        source_key = str(source_root)
+    for plugin in plugins:
+        if not isinstance(plugin, dict):
+            continue
+        plugin_ide = str(plugin.get("ide") or "").strip().lower()
+        if wanted not in {"", "auto"} and plugin_ide != wanted:
+            continue
+        folders = plugin.get("workspaceFolders")
+        if not isinstance(folders, list):
+            continue
+        for folder in folders:
+            if not isinstance(folder, str):
+                continue
+            try:
+                if str(Path(folder).resolve()) == source_key:
+                    return True
+            except OSError:
+                continue
+    return False
 
 
 def format_install_manager_report(report: InstallManagerReport) -> str:

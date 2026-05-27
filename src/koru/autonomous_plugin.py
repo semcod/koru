@@ -70,7 +70,12 @@ def plugin_skip_code(reason: str) -> str:
     text = (reason or "").strip().lower()
     if not text:
         return "plugin_missing"
-    if "version mismatch" in text or "protocol mismatch" in text or "protocol missing" in text:
+    if (
+        "version mismatch" in text
+        or "build mismatch" in text
+        or "protocol mismatch" in text
+        or "protocol missing" in text
+    ):
         return "plugin_version_mismatch"
     if "daemon status unavailable" in text:
         return "plugin_status_unavailable"

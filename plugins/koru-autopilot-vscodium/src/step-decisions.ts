@@ -143,3 +143,13 @@ export function interpretPostSubmitProbe(
     action: decision.cleared ? "accept" : "retry",
   };
 }
+
+export function postSubmitProbeMaxAttempts(
+  ide: string,
+  opts: { requireEmpty?: boolean } = {}
+): number {
+  if (ide === "vscodium" && opts.requireEmpty) {
+    return 4;
+  }
+  return 1;
+}

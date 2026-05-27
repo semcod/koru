@@ -152,6 +152,15 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         ),
     ),
     ProblemCatalogEntry(
+        check="autopilot_runtime_status",
+        severity=WARN,
+        problem="Live autopilot daemon/plugin runtime state is incomplete or inconsistent.",
+        detection=(
+            "Doctor reads the active daemon status payload and validates daemon "
+            "liveness, connected plugins, versions, builds, and selected IDE routing."
+        ),
+    ),
+    ProblemCatalogEntry(
         check="autopilot_debug_log",
         severity=WARN,
         problem="No recent autopilot debug log activity for selected IDE/socket.",
@@ -166,7 +175,8 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         problem="No recent IDE chat focus/paste/submit symptoms from plugin logs.",
         detection=(
             "Doctor scans plugin debug logs for chat focus, paste, and submit "
-            "events (within last 5 minutes)."
+            "events, including submit_unverified/manual_send_required failures "
+            "(within last 5 minutes)."
         ),
     ),
     ProblemCatalogEntry(

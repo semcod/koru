@@ -272,6 +272,43 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(check.status, WARN)
             self.assertIn("instance_ide_mismatch=true", check.detail)
 
+    def test_autopilot_env_shows_lane_matrix_when_multiple_ides_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            fake_vscode = SimpleNamespace(id="vscode")
+            fake_vscodium = SimpleNamespace(id="vscodium")
+            reports = {
+                "vscode": SimpleNamespace(
+                    daemon={"running": False},
+                    plugin={"connected": False},
+                ),
+                "vscodium": SimpleNamespace(
+                    daemon={"running": True},
+                    plugin={"connected": True},
+                ),
+            }
+            with (
+                patch.dict(os.environ, _without_autopilot_env(), clear=True),
+                patch(
+                    "koru.doctor_autopilot_checks.detect_terminal_host_ide_id",
+                    return_value="vscode",
+                ),
+                patch(
+                    "koru.doctor_autopilot_checks.detect_running_ides",
+                    return_value=[fake_vscode, fake_vscodium],
+                ),
+                patch(
+                    "koru.doctor_autopilot_checks.collect_install_manager_report",
+                    side_effect=lambda ide, socket_path=None: reports[ide],
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_env")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("explicit_env_required_when_multiple=true", check.detail)
+            self.assertIn("lane_matrix=vscode*:stopped/disconnected,vscodium:running/connected", check.detail)
+
     def test_python_venv_alignment_warns_on_stale_virtual_env(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
@@ -429,6 +466,138 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             check = _named(report, "autopilot_manage")
             self.assertEqual(check.status, FAIL)
             self.assertIn("plugin_not_connected", check.detail)
+
+    def test_autopilot_runtime_status_surfaces_live_plugin_build_details(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            fake_report = SimpleNamespace(
+                issues=[],
+                plugin={
+                    "ide": "vscodium",
+                    "supported": True,
+                    "connected": True,
+                    "connected_version": "0.2.7",
+                    "connected_build_sha": "341728a18cd90915",
+                    "installed_version": "0.2.7",
+                    "expected_version": "0.2.7",
+                    "expected_build_sha": "341728a18cd90915",
+                },
+                daemon={
+                    "running": True,
+                    "plugins": [
+                        {"ide": "vscodium", "version": "0.2.7", "buildSha": "341728a18cd90915"}
+                    ],
+                },
+                socket="/run/user/1000/koru-autopilot-vscodium.sock",
+            )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "vscodium",
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor_autopilot_checks.collect_install_manager_report",
+                    return_value=fake_report,
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_runtime_status")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("connected_build=341728a18cd90915", check.detail)
+            self.assertIn("expected_build=341728a18cd90915", check.detail)
+            self.assertIn("runtime_status=healthy", check.detail)
+
+    def test_autopilot_runtime_status_shows_alternate_lane_health(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            fake_vscode = SimpleNamespace(id="vscode")
+            fake_vscodium = SimpleNamespace(id="vscodium")
+            fake_reports = {
+                "vscode": SimpleNamespace(
+                    issues=[SimpleNamespace(to_dict=lambda: {"code": "daemon_not_running", "severity": "error"})],
+                    plugin={
+                        "ide": "vscode",
+                        "supported": True,
+                        "connected": False,
+                        "connected_version": None,
+                        "connected_build_sha": None,
+                        "installed_version": "0.1.57",
+                        "expected_version": "0.2.0",
+                        "expected_build_sha": "caf883516b28b913",
+                    },
+                    daemon={"running": False, "plugins": []},
+                    socket="/run/user/1000/koru-autopilot-vscode.sock",
+                ),
+                "vscodium": SimpleNamespace(
+                    daemon={"running": True},
+                    plugin={"connected": True},
+                ),
+            }
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "vscode",
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor_autopilot_checks.detect_running_ides",
+                    return_value=[fake_vscode, fake_vscodium],
+                ),
+                patch(
+                    "koru.doctor_autopilot_checks.collect_install_manager_report",
+                    side_effect=lambda ide, socket_path=None: fake_reports[ide],
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_runtime_status")
+            self.assertEqual(check.status, FAIL)
+            self.assertIn("lane_matrix=vscode*:stopped/disconnected,vscodium:running/connected", check.detail)
+
+    def test_autopilot_chat_control_warns_on_submit_unverified_and_includes_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        (
+                            '2026-05-27T06:36:27Z OUT {"ide":"vscodium",'
+                            '"verification":"submit_unverified"}'
+                        ),
+                        (
+                            '2026-05-27T06:36:30Z OUT {"ide":"vscodium",'
+                            '"message":"host-key submit candidates ran but chat input still contains pasted text"}'
+                        ),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "vscodium",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_chat_control")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("submit_unverified=", check.detail)
+            self.assertIn("status_command=koru autopilot status --ide vscodium --explain", check.detail)
+            self.assertIn("probe_command=koru autopilot drive --ide vscodium --require-plugin 'probe test'", check.detail)
+            self.assertIn("validate_command=koru autopilot trace --project", check.detail)
 
     def test_autopilot_debug_log_warns_when_selected_ide_has_no_activity(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

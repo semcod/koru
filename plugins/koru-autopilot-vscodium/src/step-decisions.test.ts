@@ -1,6 +1,7 @@
 import {
   decideBusyInputAction,
   interpretPostSubmitProbe,
+  postSubmitProbeMaxAttempts,
   readVerifySubmitEnabled,
   shouldRequireVerifiedHostSubmit,
   shouldVerifyPostSubmit,
@@ -147,6 +148,21 @@ function testVSCodiumRegisteredSubmitMustVerifyEmptyInput(): void {
   assert(!result.cleared, "VSCodium registered submit requires an empty input after submit");
 }
 
+function testPostSubmitProbeMaxAttempts(): void {
+  assert(
+    postSubmitProbeMaxAttempts("vscodium", { requireEmpty: true }) === 4,
+    "VSCodium strict empty submit verify should retry inconclusive probes",
+  );
+  assert(
+    postSubmitProbeMaxAttempts("vscodium", { requireEmpty: false }) === 1,
+    "VSCodium loose submit verify should stay single-shot",
+  );
+  assert(
+    postSubmitProbeMaxAttempts("vscode", { requireEmpty: true }) === 1,
+    "VS Code should stay single-shot",
+  );
+}
+
 testReadVerifySubmitPrefersNewSetting();
 testShouldVerifyPostSubmitAllPluginIdes();
 testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled();
@@ -156,4 +172,5 @@ testDecideBusyInputAction();
 testInterpretPostSubmitProbeRetry();
 testInterpretPostSubmitProbeStrictEmpty();
 testVSCodiumRegisteredSubmitMustVerifyEmptyInput();
+testPostSubmitProbeMaxAttempts();
 console.log("step-decisions tests: ok");

@@ -485,8 +485,10 @@ def test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned(
                 "ide": "vscode",
                 "connected": True,
                 "connected_version": "0.1.70",
+                "connected_build_sha": "build-a",
                 "installed_version": "0.1.70",
                 "expected_version": "0.1.70",
+                "expected_build_sha": "build-a",
             },
             ides=[],
         ),
@@ -512,6 +514,81 @@ def test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned(
     assert report.actions[1]["action"] == "shutdown_daemon_for_reload"
     assert report.actions[1]["result"]["skipped"] is True
     assert report.actions[2]["action"] == "reload_ide_and_reconnect"
+
+
+def test_repair_installation_shutdowns_daemon_when_build_is_stale(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    before = install_manager.InstallManagerReport(
+        ok=False,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": True},
+        plugin={
+            "ide": "vscodium",
+            "connected": True,
+            "connected_version": "0.2.7",
+            "connected_build_sha": "old-build",
+            "installed_version": "0.2.7",
+            "expected_version": "0.2.7",
+            "expected_build_sha": "new-build",
+        },
+        ides=[],
+    )
+    after = install_manager.InstallManagerReport(
+        ok=True,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": False},
+        plugin={"ide": "vscodium", "connected": False},
+        ides=[],
+    )
+    reports = iter([before, after])
+    monkeypatch.setattr(
+        install_manager,
+        "collect_install_manager_report",
+        lambda ide, socket_path: next(reports),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "already_installed"}),
+    )
+
+    class _Client:
+        def __init__(self, *, socket_path: Path, timeout: float) -> None:
+            self.socket_path = socket_path
+            self.timeout = timeout
+
+        def shutdown(self) -> dict[str, object]:
+            return {"ok": True, "message": "stopped"}
+
+    monkeypatch.setattr(install_manager, "AutopilotClient", _Client)
+    monkeypatch.setattr(
+        install_manager,
+        "_reload_ide_after_plugin_fix",
+        lambda *_args, **_kwargs: {"status": "automatic"},
+    )
+
+    report = install_manager.repair_installation(
+        ide="vscodium",
+        socket_path=tmp_path / "koru.sock",
+        dry_run=False,
+    )
+
+    assert report.actions[1]["action"] == "shutdown_daemon_for_reload"
+    assert report.actions[1]["result"] == {"ok": True, "message": "stopped"}
 
 
 def test_repair_installation_returns_refreshed_report_after_plugin_fix(
@@ -582,6 +659,42 @@ def test_repair_installation_returns_refreshed_report_after_plugin_fix(
     assert report.ok is True
     assert report.plugin["installed_version"] == "0.1.72"
     assert report.actions[0] == {"action": "install_plugin", "result": {"status": "installed"}}
+
+
+def test_repair_fix_reload_uses_reuse_window_for_same_workspace(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    import koru.ide_adapters.ide_reload as ide_reload
+
+    reload_env: list[str | None] = []
+
+    def _fake_reload(ide: str, *, project: Path):
+        assert ide == "vscodium"
+        assert project == tmp_path
+        reload_env.append(os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"))
+        return SimpleNamespace(attempted=True, ok=True, method="reuse-window", detail=None)
+
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "try_reload_vscode_family_ide", _fake_reload)
+
+    result = install_manager._reload_ide_after_plugin_fix(
+        "vscodium",
+        source_root=tmp_path,
+        daemon={
+            "plugins": [
+                {
+                    "ide": "vscodium",
+                    "workspaceFolders": [str(tmp_path)],
+                }
+            ]
+        },
+        dry_run=False,
+    )
+
+    assert result["status"] == "automatic"
+    assert reload_env == ["1"]
+    assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
 
 
 def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_path: Path) -> None:

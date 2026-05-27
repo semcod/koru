@@ -14,6 +14,16 @@ def test_plugin_skip_code_classifies_version_mismatch() -> None:
     )
 
 
+def test_plugin_skip_code_classifies_build_mismatch() -> None:
+    assert (
+        plugin_skip_code(
+            "ide=vscodium version=0.2.7 blocked: connected autopilot "
+            "plugin build mismatch: connected=old expected=new"
+        )
+        == "plugin_version_mismatch"
+    )
+
+
 def test_plugin_skip_code_classifies_empty_plugin_list_as_not_connected() -> None:
     assert plugin_skip_code("daemon status plugin list is empty") == "plugin_not_connected"
 

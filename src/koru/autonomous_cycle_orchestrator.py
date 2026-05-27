@@ -13,6 +13,7 @@ from koru.autonomous_cycle_drive_retry import (
 )
 from koru.autonomous_cycle_skip_conditions import _check_autopilot_skip_conditions
 from koru.autonomous_plugin import plugin_skip_code
+from koru.autonomous_plugin_runtime import plugin_reason_requires_reload
 from koru.autonomy.env import (
     autopilot_terminal_conflict_reason as _autopilot_terminal_conflict_reason,
 )
@@ -29,6 +30,10 @@ from koru.observability_events import (
 )
 from koru.observability_writer import emit_terminal_observability_path
 from koru.queue import QueueLoopResult
+
+
+_PLUGIN_GATE_RECOVERY_COOLDOWN_SECONDS = 60.0
+_PLUGIN_GATE_RECOVERY_LAST_TS: dict[tuple[str, str, str], float] = {}
 
 
 def _drive_result_autopilot_status(
@@ -164,6 +169,15 @@ def _plugin_gate_status(
     cycle_telemetry["autopilot_skipped_plugin_missing"] = True
     cycle_telemetry["autopilot_skipped_plugin_blocker"] = blocker
     cycle_telemetry["autopilot_skipped_plugin_missing_reason"] = plugin_reason
+    if blocker == "plugin_version_mismatch" and plugin_reason_requires_reload(plugin_reason):
+        recovered = _attempt_plugin_gate_recovery(
+            project,
+            client,
+            autopilot_ide,
+            plugin_reason,
+            _hp,
+        )
+        cycle_telemetry["autopilot_plugin_recovery_attempted"] = recovered
     _emit_autopilot_preflight_skip(
         project=project,
         cycle=cycle,
@@ -176,6 +190,69 @@ def _plugin_gate_status(
         next_action="reload_reconnect_plugin",
     )
     return f"skipped({blocker})"
+
+
+def _attempt_plugin_gate_recovery(
+    project: Path,
+    client: Any,
+    autopilot_ide: str,
+    plugin_reason: str,
+    _hp: Callable[..., Any],
+) -> bool:
+    key = _plugin_gate_recovery_key(project, autopilot_ide, plugin_reason)
+    now = time.monotonic()
+    last = _PLUGIN_GATE_RECOVERY_LAST_TS.get(key)
+    if last is not None and now - last < _PLUGIN_GATE_RECOVERY_COOLDOWN_SECONDS:
+        remaining = _PLUGIN_GATE_RECOVERY_COOLDOWN_SECONDS - (now - last)
+        _hp(
+            "  → autopilot recovery: reload already attempted; "
+            f"retry in {remaining:.0f}s",
+        )
+        return False
+    _PLUGIN_GATE_RECOVERY_LAST_TS[key] = now
+
+    from koru.autonomous_plugin_wait import (
+        _restore_reuse_window_reload,
+        _temporary_reuse_window_reload_if_same_workspace,
+    )
+    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+    snapshot = _temporary_reuse_window_reload_if_same_workspace(
+        client,
+        autopilot_ide,
+        project,
+        plugin_reason,
+    )
+    try:
+        outcome = try_reload_vscode_family_ide(autopilot_ide, project=project)
+    finally:
+        _restore_reuse_window_reload(snapshot)
+
+    if outcome.attempted and outcome.ok:
+        _hp(
+            "  → autopilot recovery: requested IDE reload/reconnect; "
+            "the next cycle will re-check the plugin session.",
+        )
+        return True
+    detail = outcome.detail or outcome.method or "reload was not available"
+    _hp(f"  → autopilot recovery: automatic reload failed ({detail})")
+    return True
+
+
+def _plugin_gate_recovery_key(
+    project: Path,
+    autopilot_ide: str,
+    plugin_reason: str,
+) -> tuple[str, str, str]:
+    try:
+        project_key = str(project.resolve())
+    except OSError:
+        project_key = str(project)
+    return (
+        project_key,
+        autopilot_ide.strip().lower(),
+        plugin_reason.strip().lower()[:240],
+    )
 
 
 def _terminal_conflict_status(

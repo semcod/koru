@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -352,6 +353,60 @@ def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> N
     )
 
     assert result.status == "already_installed"
+
+
+def test_install_plugin_builds_stale_local_vsix_before_reassert(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    root = tmp_path / "koru"
+    plugin_dir = root / "plugins" / "koru-autopilot-vscodium"
+    (plugin_dir / "src").mkdir(parents=True)
+    (root / "plugins" / "koru-autopilot-shared" / "src").mkdir(parents=True)
+    (root / "pyproject.toml").write_text("[project]\nname='koru'\n", encoding="utf-8")
+    (plugin_dir / "src" / "extension.ts").write_text("new source", encoding="utf-8")
+    (plugin_dir / "package.json").write_text(
+        json.dumps(
+            {
+                "name": "koru-autopilot-vscodium",
+                "version": "0.2.7",
+                "koruAutopilotBuild": {"schema": 1, "sha": "newbuild"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    vsix = plugin_dir / "koru-autopilot-vscodium-0.2.7.vsix"
+    with zipfile.ZipFile(vsix, "w") as archive:
+        archive.writestr(
+            "extension/package.json",
+            json.dumps({"koruAutopilotBuild": {"schema": 1, "sha": "oldbuild"}}),
+        )
+    os.utime(vsix, (1, 1))
+
+    monkeypatch.setattr(plugin_installer, "_repo_root", lambda: root)
+    monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+    vscodium_ext_id = plugin_installer.extension_id_for_ide("vscodium")
+    calls: list[list[str]] = []
+
+    def fake_runner(cmd, **kwargs):
+        calls.append(list(cmd))
+        if cmd == ["npm", "run", "package"]:
+            assert kwargs.get("cwd") == str(plugin_dir)
+            return subprocess.CompletedProcess(cmd, 0, stdout="packed", stderr="")
+        if cmd[1] == "--list-extensions":
+            return subprocess.CompletedProcess(cmd, 0, stdout=vscodium_ext_id, stderr="")
+        if cmd[1] == "--install-extension":
+            return subprocess.CompletedProcess(cmd, 0, stdout="installed", stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="vscodium",
+        runner=fake_runner,
+    )
+
+    assert result.status == "already_installed"
+    assert ["npm", "run", "package"] in calls
+    assert ["/usr/bin/codium", "--install-extension", str(vsix.resolve()), "--force"] in calls
 
 
 def test_install_plugin_removes_conflicting_family_extension(monkeypatch) -> None:

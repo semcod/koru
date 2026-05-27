@@ -206,6 +206,13 @@ def _add_doctor_and_context_arguments(parser: argparse.ArgumentParser) -> None:
         ),
     )
     parser.add_argument(
+        "--repair",
+        action="store_true",
+        help=(
+            "With --doctor, apply safe autopilot repairs, then rerun diagnostics."
+        ),
+    )
+    parser.add_argument(
         "--catalog",
         action="store_true",
         help=(
