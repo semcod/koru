@@ -240,7 +240,7 @@ def test_resolve_agent_lane_explicit_zed_beats_generic_vscode_terminal(
     assert source == "env:KORU_AUTOPILOT_INSTANCE"
 
 
-def test_resolve_agent_lane_terminal_zed_overrides_conflicting_env_instance(
+def test_resolve_agent_lane_terminal_zed_does_not_override_explicit_plugin_instance(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -258,8 +258,8 @@ def test_resolve_agent_lane_terminal_zed_overrides_conflicting_env_instance(
             "auto",
             resolve_project_lane=lambda _p, lane_id: lane_id,
         )
-    assert lane == "zed"
-    assert source == "terminal:over-env:KORU_AUTOPILOT_INSTANCE"
+    assert lane == "cursor"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
 
 
 def test_resolve_agent_lane_prefers_antigravity_when_terminal_unknown(
@@ -673,7 +673,7 @@ def test_apply_agent_lane_environ_uses_running_ide(
     assert os.environ["KORU_AUTOPILOT_IDE"] == "vscode"
 
 
-def test_apply_agent_lane_environ_terminal_overrides_conflicting_env_instance(
+def test_apply_agent_lane_environ_nonplugin_terminal_does_not_override_explicit_instance(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -688,6 +688,6 @@ def test_apply_agent_lane_environ_terminal_overrides_conflicting_env_instance(
         patch("koru.autonomous_startup.detect_terminal_host_ide_id", return_value="jetbrains"),
     ):
         lane = _apply_agent_lane_environ(tmp_path, "auto")
-    assert lane == "jetbrains"
-    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "jetbrains"
-    assert os.environ["KORU_AUTOPILOT_IDE"] == "jetbrains"
+    assert lane == "antigravity"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "antigravity"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "antigravity"

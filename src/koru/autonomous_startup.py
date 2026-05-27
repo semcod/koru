@@ -101,7 +101,12 @@ def _resolve_lane_from_explicit(
     """Resolve lane from explicit KORU_AUTOPILOT_INSTANCE env var."""
     if not explicit:
         return None
-    if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
+    if (
+        terminal
+        and supports_autopilot_plugin_ide(terminal)
+        and terminal != explicit
+        and terminal != "vscode"
+    ):
         return terminal, f"terminal:over-{explicit_source}"
     # Stale ``KORU_AUTOPILOT_INSTANCE=jetbrains`` (or zed) is a common foot-gun:
     # the lane has no installable plugin, so koru falls back to raw ydotool/wtype

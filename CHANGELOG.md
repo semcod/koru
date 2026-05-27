@@ -113,6 +113,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.297] - 2026-05-27
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous_startup.py
+
 ## [0.1.296] - 2026-05-27
 
 ### Docs
