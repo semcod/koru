@@ -19,7 +19,14 @@ from typing import Any, Literal
 # Data types
 # ---------------------------------------------------------------------------
 
-VerdictOutcome = Literal["completed", "in_progress", "no_change", "degraded", "unknown"]
+VerdictOutcome = Literal[
+    "completed",
+    "in_progress",
+    "no_change",
+    "submitted_but_no_effect",
+    "degraded",
+    "unknown",
+]
 
 
 @dataclass(frozen=True)
@@ -35,6 +42,8 @@ class GitEvidence:
 @dataclass(frozen=True)
 class TestEvidence:
     """Evidence collected from WUP / TestQL health."""
+
+    __test__ = False
 
     status: str = "unknown"  # ok | changed | failing | unknown
     failing_services: tuple[str, ...] = ()

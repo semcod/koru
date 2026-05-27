@@ -799,19 +799,19 @@ def _build_self_service(
             "refresh_brief": "koru --project .",
         }
     tid = ticket.get("id") if isinstance(ticket, dict) else None
-    base = "planfile ticket"
+    ticket_command_prefix = "planfile ticket"
     block: dict[str, Any] = {
         "next_brief": "koru --project .",
         "autonomous_up": "koru autonomous up --project .",
         "autonomous_smoke": "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0",
-        "list_open": f"{base} list --status open --format json",
-        "show_ticket": f"{base} show <id> --format json",
-        "block_for_input": f'{base} block <id> --reason "<question or blocker>"',
+        "list_open": f"{ticket_command_prefix} list --status open --format json",
+        "show_ticket": f"{ticket_command_prefix} show <id> --format json",
+        "block_for_input": f'{ticket_command_prefix} block <id> --reason "<question or blocker>"',
     }
     if tid:
-        block["start_this"] = f"{base} start {tid}"
-        block["done_this"] = f"{base} done {tid}"
-        block["block_this"] = f'{base} block {tid} --reason "<question or blocker>"'
+        block["start_this"] = f"{ticket_command_prefix} start {tid}"
+        block["done_this"] = f"{ticket_command_prefix} done {tid}"
+        block["block_this"] = f'{ticket_command_prefix} block {tid} --reason "<question or blocker>"'
     if policy.ci_command:
         block["verify_ci"] = policy.ci_command
     return block

@@ -678,6 +678,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "strategy",
             "runtime-context",
             "refactor-planfile-handoff",
+            "tagi",
             "dev",
             "events",
             "self",

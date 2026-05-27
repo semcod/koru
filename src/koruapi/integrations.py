@@ -212,6 +212,42 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
         cli_equivalent="planfile ticket list --format json",
         tags=("planfile",),
     ),
+    IntegrationSpec(
+        id="lane.plan",
+        title="Lane: Generate task plan",
+        description="Generate 10-task engineering plan from project state, git history and LLM context.",
+        transport="lane",
+        methods=("plan", "tickets", "dry_run"),
+        cli_equivalent="lane tickets <dir> [--sync-todo|--sync-planfile|--export-yaml]",
+        tags=("lane", "llm", "planning", "tickets"),
+    ),
+    IntegrationSpec(
+        id="tagi.analyze",
+        title="Tagi: Analyze changes",
+        description="Analyze project changes using Tagi for priority and risk assessment.",
+        transport="koru",
+        methods=("analyze", "plan", "commit"),
+        cli_equivalent="tagi scan <dir> && tagi list-groups <dir>",
+        tags=("tagi", "analysis", "priority", "deployment"),
+    ),
+    IntegrationSpec(
+        id="tagi.deploy",
+        title="Tagi: Deploy changes",
+        description="Deploy changes using Tagi's intelligent deployment prioritization.",
+        transport="koru",
+        methods=("deploy", "dry_run"),
+        cli_equivalent="tagi deploy <dir>",
+        tags=("tagi", "deployment", "automation"),
+    ),
+    IntegrationSpec(
+        id="tagi.auto",
+        title="Tagi: Auto commit",
+        description="Auto-commit all changes using Tagi's auto-ordering.",
+        transport="koru",
+        methods=("commit", "dry_run"),
+        cli_equivalent="tagi auto <dir>",
+        tags=("tagi", "automation", "commit"),
+    ),
 )
 
 _INTEGRATION_BY_ID = {spec.id: spec for spec in INTEGRATIONS}

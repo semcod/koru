@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.291-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.50-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-121.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.292-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$35.78-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-122.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $7.5000 (390 commits)
-- 👤 **Human dev:** ~$12142 (121.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $35.7839 (391 commits)
+- 👤 **Human dev:** ~$12262 (122.6h @ $100/h, 30min dedup)
 
-Generated on 2026-05-26 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-27 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -316,6 +316,7 @@ brief / etc.).
 | `koru tools` | Inspect / dispatch the AI tool registry. |
 | `koru gate` / `koru queue` / `koru scan` | Run individual stages of the closed loop in isolation. |
 | `koru gc` | Garbage-collect old planfile tickets / artifacts (see [Queue GC](#queue-garbage-collection--koru-gc)). |
+| `koru tagi` | Run tagi-backed change analysis / safe commit orchestration. |
 | `koru git` | Git helpers used by the autopilot daemon. |
 | `koru doctor` | Detailed diagnostics catalog (alias for `koru --doctor`). |
 | `koru configure` | Edit `koru.yaml` interactively. |

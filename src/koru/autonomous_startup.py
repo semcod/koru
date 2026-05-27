@@ -285,7 +285,7 @@ class AutonomousStartupProbe:
 class _StartupProbeResolution:
     lane: str | None
     lane_source: str
-    autopilot_ide: str
+    resolved_ide: str
     autopilot_ide_source: str
 
 
@@ -304,12 +304,12 @@ def _normalized_cli_value(raw: str | None) -> str:
     return (raw or "auto").strip().lower()
 
 
-def _autopilot_socket_path_for_probe(autopilot_ide: str) -> str:
-    if not _should_probe_per_ide_socket(autopilot_ide):
+def _autopilot_socket_path_for_probe(ide_id: str) -> str:
+    if not _should_probe_per_ide_socket(ide_id):
         return str(default_socket_path())
     previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
     try:
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = ide_id
         return str(default_socket_path())
     finally:
         if previous_instance is None:
@@ -318,10 +318,10 @@ def _autopilot_socket_path_for_probe(autopilot_ide: str) -> str:
             os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
 
 
-def _should_probe_per_ide_socket(autopilot_ide: str) -> bool:
+def _should_probe_per_ide_socket(ide_id: str) -> bool:
     return (
-        bool(autopilot_ide)
-        and autopilot_ide != "auto"
+        bool(ide_id)
+        and ide_id != "auto"
         and not (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
         and not (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
     )
@@ -352,7 +352,7 @@ def _resolve_startup_probe_resolution(
         agent_lane_cli,
         resolve_project_lane=resolve_project_lane,
     )
-    autopilot_ide, ide_source = resolve_autopilot_ide_for_autonomous(
+    resolved_ide, ide_source = resolve_autopilot_ide_for_autonomous(
         autopilot_ide_cli,
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
@@ -360,16 +360,16 @@ def _resolve_startup_probe_resolution(
     return _StartupProbeResolution(
         lane=lane,
         lane_source=lane_source,
-        autopilot_ide=autopilot_ide,
+        resolved_ide=resolved_ide,
         autopilot_ide_source=ide_source,
     )
 
 
-def _startup_probe_runtime_fields(autopilot_ide: str) -> _StartupProbeRuntimeFields:
+def _startup_probe_runtime_fields(ide_id: str) -> _StartupProbeRuntimeFields:
     return _StartupProbeRuntimeFields(
         running_ides=_running_ide_labels(),
         terminal_lane=_terminal_agent_lane_from_env(),
-        socket_path=_autopilot_socket_path_for_probe(autopilot_ide),
+        socket_path=_autopilot_socket_path_for_probe(ide_id),
         session=_session_label(),
         term_program=_term_program_label(),
         headless=is_headless_environment(),
@@ -384,7 +384,7 @@ def _build_startup_probe_from_resolution(
     autopilot_ide_cli: str,
     resolution: _StartupProbeResolution,
 ) -> AutonomousStartupProbe:
-    runtime = _startup_probe_runtime_fields(resolution.autopilot_ide)
+    runtime = _startup_probe_runtime_fields(resolution.resolved_ide)
     return AutonomousStartupProbe(
         koru_version=koru_distribution_version(),
         python_version=sys.version.split()[0],
@@ -393,7 +393,7 @@ def _build_startup_probe_from_resolution(
         autopilot_ide_cli=_normalized_cli_value(autopilot_ide_cli),
         resolved_lane=resolution.lane,
         lane_source=resolution.lane_source,
-        resolved_autopilot_ide=resolution.autopilot_ide,
+        resolved_autopilot_ide=resolution.resolved_ide,
         autopilot_ide_source=resolution.autopilot_ide_source,
         running_ides=runtime.running_ides,
         terminal_lane=runtime.terminal_lane,

@@ -116,6 +116,18 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         ),
     ),
     ProblemCatalogEntry(
+        check="autonomous_service_stream",
+        severity=WARN,
+        problem=(
+            "Multiple active koru auto/WUP/autopilot socket streams may race "
+            "and generate conflicting queue or chat events."
+        ),
+        detection=(
+            "Doctor inspects running koru autonomous processes, WUP watchers, "
+            "and autopilot socket listeners/files for duplicate or orphaned streams."
+        ),
+    ),
+    ProblemCatalogEntry(
         check="ide_runtime_presence",
         severity=WARN,
         problem="Requested IDE is not running.",

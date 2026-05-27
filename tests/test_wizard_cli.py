@@ -70,10 +70,22 @@ def test_run_wizard_no_create_skips_planfile_write(project_with_planfile: Path) 
 
 def test_run_wizard_offers_running_ide(project_with_planfile: Path) -> None:
     ides = [
-        DetectedIDE(id="cursor", label="Cursor", running=True, pid=123, path="/opt/Cursor/cursor"),
-        DetectedIDE(id="vscode", label="VS Code", running=False, pid=None, path="/usr/bin/code"),
+        DetectedIDE(
+            id="cursor",
+            label="Cursor",
+            running=True,
+            pid=123,
+            path="/opt/Cursor/cursor",
+        ),
+        DetectedIDE(
+            id="vscode",
+            label="VS Code",
+            running=False,
+            pid=None,
+            path="/usr/bin/code",
+        ),
     ]
-    prompter = ScriptedPrompter(["cursor", "architecture", "ddd"])
+    prompter = ScriptedPrompter(["architecture", "ddd"])
 
     result = run_wizard(
         prompter=prompter,
@@ -91,10 +103,97 @@ def test_run_wizard_offers_running_ide(project_with_planfile: Path) -> None:
     assert result.path == ["architecture", "ddd"]
 
 
-def test_run_wizard_no_ide_skip_install_continues(monkeypatch, project_with_planfile: Path) -> None:
+def test_run_wizard_auto_picks_terminal_host_ide(
+    monkeypatch, project_with_planfile: Path
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setattr(
+        "koru.wizard.orchestrator.detect_terminal_host_ide_id",
+        lambda: "vscodium",
+    )
+    ides = [
+        DetectedIDE(
+            id="cursor",
+            label="Cursor",
+            running=True,
+            pid=123,
+            path="/opt/Cursor/cursor",
+        ),
+        DetectedIDE(
+            id="vscodium",
+            label="VSCodium",
+            running=True,
+            pid=456,
+            path="/usr/bin/codium",
+        ),
+    ]
+    prompter = ScriptedPrompter(["quality", "cc_refactor"])
+
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        ide_override=ides,
+        project_candidates_override=[],
+        create=False,
+        use_llx=False,
+    )
+
+    assert result.chosen_ide is not None
+    assert result.chosen_ide.id == "vscodium"
+    assert result.path == ["quality", "cc_refactor"]
+
+
+def test_run_wizard_prompts_when_multiple_running_ides_are_ambiguous(
+    monkeypatch, project_with_planfile: Path
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setattr(
+        "koru.wizard.orchestrator.detect_terminal_host_ide_id",
+        lambda: None,
+    )
+    ides = [
+        DetectedIDE(
+            id="cursor",
+            label="Cursor",
+            running=True,
+            pid=123,
+            path="/opt/Cursor/cursor",
+        ),
+        DetectedIDE(
+            id="vscodium",
+            label="VSCodium",
+            running=True,
+            pid=456,
+            path="/usr/bin/codium",
+        ),
+    ]
+    prompter = ScriptedPrompter(["cursor", "quality", "cc_refactor"])
+
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        ide_override=ides,
+        project_candidates_override=[],
+        create=False,
+        use_llx=False,
+    )
+
+    assert result.chosen_ide is not None
+    assert result.chosen_ide.id == "cursor"
+    assert result.path == ["quality", "cc_refactor"]
+
+
+def test_run_wizard_no_ide_skip_install_continues(
+    monkeypatch, project_with_planfile: Path
+) -> None:
     from koru.wizard import ide as wizard_ide
+    from koru.wizard import orchestrator as wizard_orchestrator
 
     monkeypatch.setattr(wizard_ide, "discover_installed_ides", lambda: [])
+    monkeypatch.setattr(wizard_orchestrator, "discover_installed_ides", lambda: [])
+    monkeypatch.setattr(wizard_orchestrator, "detect_terminal_host_ide_id", lambda: None)
     prompter = ScriptedPrompter(["__none", "quality", "cc_refactor"])
 
     result = run_wizard(

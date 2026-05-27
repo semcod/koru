@@ -184,7 +184,7 @@ def run_interactive_onboarding(
     result = run_wizard(
         prompter=StdinPrompter(stream_in=sys.stdin, stream_out=sys.stdout),
         strategies_path=strategies_path,
-        project_override=None,
+        project_override=project,
         create=create_ticket,
         use_llx=use_llx,
     )

@@ -751,26 +751,157 @@ def _launch_oom_monitor(
     return state
 
 
+def _run_ticket_queue_args(project: Path, arguments: dict[str, Any]) -> list[str]:
+    actor = arguments.get("actor")
+    queue_name = arguments.get("queue_name")
+    return build_koru_queue_argv(
+        project,
+        mode=arguments.get("mode", "apply"),
+        max_steps=arguments.get("max_steps"),
+        actor=actor if isinstance(actor, str) and actor.strip() else None,
+        queue_name=queue_name if isinstance(queue_name, str) and queue_name.strip() else None,
+    )
+
+
+def _run_ticket_timeout_response(
+    job_id: str,
+    project: Path,
+    ticket_id: str,
+    mode: str,
+) -> dict[str, Any]:
+    timeout_logs = [f"Operation timed out after {_RUN_TICKET_TIMEOUT_SECONDS} seconds."]
+    _update_job(
+        job_id,
+        project,
+        status="timeout",
+        current_step="timeout",
+        progress=1.0,
+        logs=timeout_logs,
+    )
+    return {
+        "status": "timeout",
+        "ticket_id": ticket_id,
+        "mode": mode,
+        "job_id": job_id,
+        "logs": timeout_logs,
+    }
+
+
+def _run_ticket_oom_response(
+    *,
+    job_id: str,
+    project: Path,
+    ticket_id: str,
+    mode: str,
+    cmd_args: list[str],
+    stdout: str,
+    stderr: str,
+    oom_logs: list[str],
+) -> dict[str, Any]:
+    logs = oom_logs + _collect_process_logs(
+        subprocess.CompletedProcess(
+            args=cmd_args,
+            returncode=-9,
+            stdout=stdout,
+            stderr=stderr,
+        ),
+    )
+    _update_job(
+        job_id,
+        project,
+        status="killed",
+        current_step="oom_killed",
+        progress=1.0,
+        logs=logs,
+    )
+    return {
+        "status": "killed",
+        "ticket_id": ticket_id,
+        "mode": mode,
+        "job_id": job_id,
+        "logs": logs,
+        "reason": "oom",
+    }
+
+
+def _run_ticket_completed_response(
+    *,
+    job_id: str,
+    project: Path,
+    ticket_id: str,
+    mode: str,
+    cmd_args: list[str],
+    returncode: int,
+    stdout: str,
+    stderr: str,
+) -> dict[str, Any]:
+    result = subprocess.CompletedProcess(
+        args=cmd_args,
+        returncode=returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
+    logs = _collect_process_logs(result)
+    is_success = result.returncode == 0
+    _update_job(
+        job_id,
+        project,
+        progress=1.0,
+        status="success" if is_success else "failed",
+        current_step="completed" if is_success else "failed",
+        logs=logs,
+    )
+
+    response: dict[str, Any] = {
+        "status": "success" if is_success else "failed",
+        "ticket_id": ticket_id,
+        "mode": mode,
+        "job_id": job_id,
+        "logs": logs,
+    }
+    if is_success:
+        response["note"] = (
+            "Queue execution is best-effort; current koru queue mode runs next runnable ticket."
+        )
+    else:
+        response["exit_code"] = result.returncode
+    return response
+
+
+def _run_ticket_error_response(
+    job_id: str,
+    project: Path,
+    ticket_id: str,
+    exc: Exception,
+) -> dict[str, Any]:
+    error_message = str(exc)
+    _update_job(
+        job_id,
+        project,
+        status="error",
+        current_step="error",
+        progress=1.0,
+        logs=[error_message],
+    )
+    return {
+        "status": "error",
+        "ticket_id": ticket_id,
+        "job_id": job_id,
+        "error": error_message,
+    }
+
+
 def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
     """Run the koru pipeline for a single ticket."""
     project = Path(arguments["project_root"]).resolve()
     ticket_id = arguments["ticket_id"]
     mode = arguments.get("mode", "apply")
-    max_steps = arguments.get("max_steps")
-    queue_name = arguments.get("queue_name")
-    actor = arguments.get("actor")
     oom_threshold = arguments.get("oom_kill_threshold_mb", 4096)
     oom_interval = arguments.get("oom_monitor_interval_seconds", 5)
     oom_action = arguments.get("oom_action", "kill")
 
     job_id = _create_job(ticket_id, mode, project)
-    cmd_args = build_koru_queue_argv(
-        project,
-        mode=mode,
-        max_steps=max_steps,
-        actor=actor if isinstance(actor, str) and actor.strip() else None,
-        queue_name=queue_name if isinstance(queue_name, str) and queue_name.strip() else None,
-    )
+    cmd_args = _run_ticket_queue_args(project, arguments)
     _update_job(job_id, project, current_step="running_queue", progress=0.3)
 
     try:
@@ -789,97 +920,33 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
         except subprocess.TimeoutExpired:
             proc.kill()
             stdout, stderr = proc.communicate()
-            timeout_logs = [f"Operation timed out after {_RUN_TICKET_TIMEOUT_SECONDS} seconds."]
-            _update_job(
-                job_id,
-                project,
-                status="timeout",
-                current_step="timeout",
-                progress=1.0,
-                logs=timeout_logs,
-            )
-            return {
-                "status": "timeout",
-                "ticket_id": ticket_id,
-                "mode": mode,
-                "job_id": job_id,
-                "logs": timeout_logs,
-            }
+            return _run_ticket_timeout_response(job_id, project, ticket_id, mode)
 
         oom_killed, oom_logs = oom_state[0], oom_state[1]
         if oom_killed:
-            logs = oom_logs + _collect_process_logs(
-                subprocess.CompletedProcess(
-                    args=cmd_args,
-                    returncode=-9,
-                    stdout=stdout,
-                    stderr=stderr,
-                ),
-            )
-            _update_job(
+            return _run_ticket_oom_response(
                 job_id,
-                project,
-                status="killed",
-                current_step="oom_killed",
-                progress=1.0,
-                logs=logs,
+                project=project,
+                ticket_id=ticket_id,
+                mode=mode,
+                cmd_args=cmd_args,
+                stdout=stdout,
+                stderr=stderr,
+                oom_logs=oom_logs,
             )
-            return {
-                "status": "killed",
-                "ticket_id": ticket_id,
-                "mode": mode,
-                "job_id": job_id,
-                "logs": logs,
-                "reason": "oom",
-            }
 
-        result = subprocess.CompletedProcess(
-            args=cmd_args,
+        return _run_ticket_completed_response(
+            job_id=job_id,
+            project=project,
+            ticket_id=ticket_id,
+            mode=mode,
+            cmd_args=cmd_args,
             returncode=proc.returncode,
             stdout=stdout,
             stderr=stderr,
         )
-        logs = _collect_process_logs(result)
-        is_success = result.returncode == 0
-        _update_job(
-            job_id,
-            project,
-            progress=1.0,
-            status="success" if is_success else "failed",
-            current_step="completed" if is_success else "failed",
-            logs=logs,
-        )
-
-        response: dict[str, Any] = {
-            "status": "success" if is_success else "failed",
-            "ticket_id": ticket_id,
-            "mode": mode,
-            "job_id": job_id,
-            "logs": logs,
-        }
-        if is_success:
-            response["note"] = (
-                "Queue execution is best-effort; current koru queue mode runs next runnable ticket."
-            )
-        else:
-            response["exit_code"] = result.returncode
-        return response
     except Exception as exc:
-        error_message = str(exc)
-        _update_job(
-            job_id,
-            project,
-            status="error",
-            current_step="error",
-            progress=1.0,
-            logs=[error_message],
-        )
-        return {
-            "status": "error",
-            "ticket_id": ticket_id,
-            "job_id": job_id,
-            "error": error_message,
-        }
+        return _run_ticket_error_response(job_id, project, ticket_id, exc)
 
 
 def tool_job_status(arguments: dict[str, Any]) -> dict[str, Any]:

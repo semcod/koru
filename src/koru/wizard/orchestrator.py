@@ -5,6 +5,7 @@ Core wizard flow: IDE detection → project pick → strategy tree walk → tick
 
 from __future__ import annotations
 
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +25,7 @@ from koru.wizard.tree import (
     render_ticket_body,
     walk_path,
 )
+from koruide.ide import detect_terminal_host_ide_id, normalize_ide_id
 
 
 @dataclass
@@ -45,6 +47,9 @@ def _pick_ide(prompter: Prompter, ides: list[DetectedIDE]) -> DetectedIDE | None
     if not ides:
         return None
     running_first = sorted(ides, key=lambda i: (not i.running, i.label.lower()))
+    auto_picked = _auto_pick_ide(running_first)
+    if auto_picked is not None:
+        return auto_picked
     options = tuple(
         TreeOption(
             id=ide.id,
@@ -60,6 +65,40 @@ def _pick_ide(prompter: Prompter, ides: list[DetectedIDE]) -> DetectedIDE | None
     if chosen.id == "__none":
         return None
     return next(ide for ide in running_first if ide.id == chosen.id)
+
+
+def _find_ide_by_id(
+    ides: list[DetectedIDE],
+    ide_id: str | None,
+    *,
+    running_only: bool = False,
+) -> DetectedIDE | None:
+    normalized = normalize_ide_id(ide_id)
+    if not normalized or normalized == "auto":
+        return None
+    matches = [ide for ide in ides if ide.id == normalized]
+    if running_only:
+        matches = [ide for ide in matches if ide.running]
+    if not matches:
+        return None
+    return next((ide for ide in matches if ide.running), matches[0])
+
+
+def _auto_pick_ide(ides: list[DetectedIDE]) -> DetectedIDE | None:
+    """Choose an IDE without prompting only when the runtime context is clear."""
+    for env_key in ("KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_IDE"):
+        selected = _find_ide_by_id(ides, os.environ.get(env_key), running_only=True)
+        if selected is not None:
+            return selected
+
+    selected = _find_ide_by_id(ides, detect_terminal_host_ide_id())
+    if selected is not None:
+        return selected
+
+    running = [ide for ide in ides if ide.running]
+    if len(running) == 1:
+        return running[0]
+    return None
 
 
 def _pick_project(
@@ -191,6 +230,85 @@ def _finalise_ticket(
     return task.ticket_id, body
 
 
+def _wizard_result(
+    *,
+    chosen_ide: DetectedIDE | None,
+    project: Path,
+    path: list[str],
+    template: TicketTemplate,
+    tree: StrategyTree,
+    ticket_id: str | None,
+    body: str,
+    create: bool,
+    quick: bool,
+) -> WizardResult:
+    return WizardResult(
+        chosen_ide=chosen_ide,
+        chosen_project=project,
+        path=path,
+        ticket_id=ticket_id,
+        ticket_title=template.title,
+        ticket_body=body,
+        skipped_creation=not create,
+        next_steps=tree.effective_next_steps(template.id),
+        quick_mode=quick,
+    )
+
+
+def _run_quick_wizard(
+    tree: StrategyTree,
+    *,
+    project_override: Path | None,
+    create: bool,
+    quick_strategy: str | None,
+) -> WizardResult:
+    path = list(_resolve_quick_path(tree, quick_strategy))
+    consumed, template = walk_path(tree, path)
+    project = (project_override or Path.cwd()).resolve()
+    ticket_id, body = _finalise_ticket(template, project, create=create)
+    return _wizard_result(
+        chosen_ide=None,
+        project=project,
+        path=consumed,
+        template=template,
+        tree=tree,
+        ticket_id=ticket_id,
+        body=body,
+        create=create,
+        quick=True,
+    )
+
+
+def _resolve_wizard_ide(
+    prompter: Prompter,
+    ide_override: list[DetectedIDE] | None,
+) -> tuple[list[DetectedIDE], DetectedIDE | None]:
+    ides = ide_override if ide_override is not None else discover_installed_ides()
+    if not ides and ide_override is None:
+        ides = offer_ide_install(prompter, sys.stdout)
+    chosen_ide = _pick_ide(prompter, ides) if ides else None
+    return ides, chosen_ide
+
+
+def _resolve_wizard_project(
+    prompter: Prompter,
+    *,
+    project_override: Path | None,
+    project_candidates_override: list[ProjectCandidate] | None,
+    ides: list[DetectedIDE],
+    chosen_ide: DetectedIDE | None,
+) -> Path:
+    if project_override is not None:
+        return project_override.resolve()
+    fallback = Path.cwd().resolve()
+    candidates = (
+        project_candidates_override
+        if project_candidates_override is not None
+        else propose_projects([chosen_ide] if chosen_ide else ides)
+    )
+    return _pick_project(prompter, candidates, fallback=fallback)
+
+
 def run_wizard(
     *,
     prompter: Prompter,
@@ -211,49 +329,31 @@ def run_wizard(
     )
 
     if quick:
-        path = list(_resolve_quick_path(tree, quick_strategy))
-        consumed, template = walk_path(tree, path)
-        project = (project_override or Path.cwd()).resolve()
-        ticket_id, body = _finalise_ticket(template, project, create=create)
-        return WizardResult(
-            chosen_ide=None,
-            chosen_project=project,
-            path=consumed,
-            ticket_id=ticket_id,
-            ticket_title=template.title,
-            ticket_body=body,
-            skipped_creation=not create,
-            next_steps=tree.effective_next_steps(template.id),
-            quick_mode=True,
+        return _run_quick_wizard(
+            tree,
+            project_override=project_override,
+            create=create,
+            quick_strategy=quick_strategy,
         )
 
-    ides = ide_override if ide_override is not None else discover_installed_ides()
-    if not ides and ide_override is None:
-        ides = offer_ide_install(prompter, sys.stdout)
-    chosen_ide = _pick_ide(prompter, ides) if ides else None
-
-    fallback = Path.cwd().resolve()
-    candidates = (
-        project_candidates_override
-        if project_candidates_override is not None
-        else propose_projects([chosen_ide] if chosen_ide else ides)
+    ides, chosen_ide = _resolve_wizard_ide(prompter, ide_override)
+    project = _resolve_wizard_project(
+        prompter,
+        project_override=project_override,
+        project_candidates_override=project_candidates_override,
+        ides=ides,
+        chosen_ide=chosen_ide,
     )
-    if project_override is not None:
-        project = project_override.resolve()
-    else:
-        project = _pick_project(prompter, candidates, fallback=fallback)
-
     path, template = _walk_with_llx(tree, prompter, project, use_llx=use_llx)
     ticket_id, body = _finalise_ticket(template, project, create=create)
-
-    return WizardResult(
+    return _wizard_result(
         chosen_ide=chosen_ide,
-        chosen_project=project,
+        project=project,
         path=path,
+        template=template,
+        tree=tree,
         ticket_id=ticket_id,
-        ticket_title=template.title,
-        ticket_body=body,
-        skipped_creation=not create,
-        next_steps=tree.effective_next_steps(template.id),
-        quick_mode=False,
+        body=body,
+        create=create,
+        quick=False,
     )

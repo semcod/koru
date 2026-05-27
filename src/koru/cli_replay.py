@@ -19,7 +19,8 @@ def build_replay_parser() -> argparse.ArgumentParser:
         description="Replay or validate a structured Koru operator action.",
     )
     parser.add_argument(
-        "action",
+        "replay_dsl",
+        metavar="action",
         nargs="?",
         help="Replay DSL, for example: 'trace show-decisions' or 'ticket input STARTER-1'.",
     )
@@ -56,24 +57,24 @@ def build_replay_parser() -> argparse.ArgumentParser:
 
 def replay_main(argv: list[str]) -> int:
     args = build_replay_parser().parse_args(argv)
-    if not args.action:
+    if not args.replay_dsl:
         print("koru replay: action is required")
         return 2
     try:
-        action = parse_replay_dsl(args.action)
+        replay_action = parse_replay_dsl(args.replay_dsl)
     except ValueError as exc:
         print(f"koru replay: {exc}")
         return 2
 
     if args.dry_run or args.explain:
-        payload = _action_payload(action)
+        payload = _replay_action_payload(replay_action)
         _print_payload(payload, args.output_format)
         return 0
 
     if args.validate:
-        result = validate_replay_action(action, project=args.project)
+        result = validate_replay_action(replay_action, project=args.project)
         payload = {
-            **_action_payload(action),
+            **_replay_action_payload(replay_action),
             "validation": {
                 "passed": result.passed,
                 "reason": result.reason,
@@ -83,9 +84,9 @@ def replay_main(argv: list[str]) -> int:
         _print_payload(payload, args.output_format)
         return 0 if result.passed else 1
 
-    result = execute_replay_action(action, project=args.project)
+    result = execute_replay_action(replay_action, project=args.project)
     payload = {
-        **_action_payload(action),
+        **_replay_action_payload(replay_action),
         "execution": {
             "ok": result.ok,
             "returncode": result.returncode,
@@ -96,19 +97,19 @@ def replay_main(argv: list[str]) -> int:
     return 0 if result.ok else 1
 
 
-def _action_payload(action) -> dict[str, object]:
+def _replay_action_payload(replay_action) -> dict[str, object]:
     return {
-        "dsl": action.to_dsl(),
-        "shell": action.to_shell(),
-        "domain": action.domain,
-        "verb": action.verb,
-        "positional": list(action.positional),
-        "args": dict(action.args),
-        "label": action.label,
-        "replayable": action.replayable,
-        "safe": action.safe,
-        "requires_active_window": action.requires_active_window,
-        "validate_cmd": action.validate_cmd,
+        "dsl": replay_action.to_dsl(),
+        "shell": replay_action.to_shell(),
+        "domain": replay_action.domain,
+        "verb": replay_action.verb,
+        "positional": list(replay_action.positional),
+        "args": dict(replay_action.args),
+        "label": replay_action.label,
+        "replayable": replay_action.replayable,
+        "safe": replay_action.safe,
+        "requires_active_window": replay_action.requires_active_window,
+        "validate_cmd": replay_action.validate_cmd,
     }
 
 

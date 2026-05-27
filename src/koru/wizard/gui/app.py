@@ -105,11 +105,11 @@ def _session_state(session: WizardGuiSession) -> dict[str, Any]:
 
 
 def _allowed_project_paths(session: WizardGuiSession) -> set[Path]:
-    allowed = {session.fallback_cwd.resolve()}
-    allowed.update(c.path.resolve() for c in session.project_candidates)
+    permitted_project_paths = {session.fallback_cwd.resolve()}
+    permitted_project_paths.update(c.path.resolve() for c in session.project_candidates)
     if session.project_path is not None:
-        allowed.add(session.project_path.resolve())
-    return allowed
+        permitted_project_paths.add(session.project_path.resolve())
+    return permitted_project_paths
 
 
 def _check_csrf(session: WizardGuiSession, token: str | None, HTTPException: Any) -> None:
@@ -178,8 +178,8 @@ def _select_project(session: WizardGuiSession, body: dict[str, Any]) -> None:
     _check_csrf(session, body.get("csrf"), HTTPException)
     raw = str(body.get("project_path") or "").strip()
     project = session.fallback_cwd if raw == "__cwd" else Path(raw).expanduser().resolve()
-    allowed = _allowed_project_paths(session)
-    if project not in allowed:
+    permitted_project_paths = _allowed_project_paths(session)
+    if project not in permitted_project_paths:
         raise HTTPException(status_code=400, detail="project path not in allowed list")
     session.project_path = project
     session.current_node_id = session.tree.root_id

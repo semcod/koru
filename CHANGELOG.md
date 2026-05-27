@@ -113,6 +113,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.292] - 2026-05-27
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+- Update project/src/context.md
+- Update project/src_part2/context.md
+- Update project/src_part3/context.md
+- Update project/src_part4/context.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_cycle_chat_activity_tickets.py
+- Update tests/test_autonomous_cycle_events.py
+- Update tests/test_autonomous_onboarding.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_cli.py
+- Update tests/test_docker_ide_matrix.py
+- Update tests/test_doctor.py
+- Update tests/test_verification_cycle_integration.py
+- Update tests/test_wizard_cli.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update package-lock.json
+- Update plugins/koru-autopilot-antigravity/src/chat-history-watcher.ts
+- Update plugins/koru-autopilot-antigravity/src/cursor-bubble-adapter.ts
+- Update plugins/koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts
+- Update plugins/koru-autopilot-cursor/src/chat-history-watcher.ts
+- Update plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts
+- Update plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts
+- ... and 56 more files
+
 ## [0.1.291] - 2026-05-26
 
 ### Docs

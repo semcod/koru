@@ -352,23 +352,23 @@ def _autopilot_quick_action_lines(
     blocked_by: str,
     autopilot_ide: str,
 ) -> list[str]:
-    actions = _blocked_interface_action_lines(blocked_by, autopilot_ide=autopilot_ide)
+    autopilot_actions = _blocked_interface_action_lines(blocked_by, autopilot_ide=autopilot_ide)
     if _is_plugin_blocker(blocked_by):
-        actions.append(
+        autopilot_actions.append(
             "[reconnect plugin] in IDE: Command Palette → `Developer: Reload Window`, "
             "then `koru: Connect autopilot daemon`"
         )
     if "ide_mismatch" in status:
-        actions.append(
+        autopilot_actions.append(
             "[switch lane] export KORU_AUTOPILOT_INSTANCE=<ide> "
             "(or rerun `koru auto --autopilot-ide <ide>`)"
         )
     if "chat_activity" in status:
-        actions.append(
+        autopilot_actions.append(
             "[pause autopilot 10m] "
             "`touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
         )
-    return actions
+    return autopilot_actions
 
 
 def _queue_quick_action_lines(
@@ -379,46 +379,46 @@ def _queue_quick_action_lines(
     autopilot_ide: str,
     urls: dict[str, str],
 ) -> list[str]:
-    actions: list[str] = []
+    queue_actions: list[str] = []
     if "idle_no_ticket" in status or queue_status == "idle":
-        actions.append(f"[create ticket] {urls['create_project_ticket_action']}")
-        actions.append(f"[reopen done ticket] {urls['tickets']}")
-        actions.append(
+        queue_actions.append(f"[create ticket] {urls['create_project_ticket_action']}")
+        queue_actions.append(f"[reopen done ticket] {urls['tickets']}")
+        queue_actions.append(
             "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
         )
     if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
         if "stuck_waiting_input" in status:
-            actions.append(
+            queue_actions.append(
                 "[auto llm-ready] enabled by default; set "
                 "`KORU_AUTOPILOT_AUTO_LLM_READY=0` to require manual approval"
             )
-        actions.append(
+        queue_actions.append(
             f"[mark ticket input] `planfile ticket input {waiting_ticket} "
             "--prompt '<input needed>' --note '<what was verified>'`"
         )
-        actions.append(f"[open ticket] {urls['tickets']}#{waiting_ticket}")
+        queue_actions.append(f"[open ticket] {urls['tickets']}#{waiting_ticket}")
     if "submit_unverified" in status:
-        actions.append(
+        queue_actions.append(
             "[validate submit trace] "
             "`koru autopilot trace --project . --format drive-dsl --limit 30`"
         )
-        actions.append(
+        queue_actions.append(
             f"[manual send required] `planfile ticket input {waiting_ticket} "
             "--prompt 'Manual IDE action required: submit was not verified' "
             "--note 'Koru pasted the prompt but refused unsafe host fallback; "
             "send manually or fix plugin submit strategy'`"
         )
     elif status.startswith("failed"):
-        actions.append(
+        queue_actions.append(
             "[validate drive trace] "
             "`koru autopilot trace --project . --format drive-dsl --limit 30`"
         )
-        actions.append(
+        queue_actions.append(
             f"[mark ticket input] `planfile ticket input {waiting_ticket} "
             "--prompt 'Manual IDE action required: autopilot drive failed' "
             "--note 'Koru did not verify a safe submitted message; inspect drive trace before retrying'`"
         )
-    return actions
+    return queue_actions
 
 
 def _diagnostics_quick_action_lines(status: str) -> list[str]:
@@ -461,15 +461,15 @@ def _quick_action_lines(
     queue_status = (queue_status or "").lower()
     blocked_by = _blocked_by_from_autopilot_status(autopilot_status)
 
-    actions = _base_quick_action_lines()
-    actions.extend(
+    quick_actions = _base_quick_action_lines()
+    quick_actions.extend(
         _autopilot_quick_action_lines(
             status=status,
             blocked_by=blocked_by,
             autopilot_ide=autopilot_ide,
         )
     )
-    actions.extend(
+    quick_actions.extend(
         _queue_quick_action_lines(
             status=status,
             queue_status=queue_status,
@@ -478,9 +478,9 @@ def _quick_action_lines(
             urls=urls,
         )
     )
-    actions.extend(_diagnostics_quick_action_lines(status))
+    quick_actions.extend(_diagnostics_quick_action_lines(status))
     return _replay_quick_action_lines(
-        actions,
+        quick_actions,
         autopilot_ide=autopilot_ide,
         waiting_ticket=waiting_ticket,
         base_url=_url_origin(urls.get("dashboard", "http://127.0.0.1:8765/")),
@@ -488,14 +488,14 @@ def _quick_action_lines(
 
 
 def _replay_quick_action_lines(
-    actions: list[str],
+    quick_actions: list[str],
     *,
     autopilot_ide: str,
     waiting_ticket: str,
     base_url: str,
 ) -> list[str]:
     replay_lines: list[str] = []
-    for action in actions:
+    for action in quick_actions:
         replay = quick_action_to_replay(
             action,
             autopilot_ide=autopilot_ide,
@@ -519,7 +519,7 @@ def _record_quick_action_control_commands(
     waiting_ticket: str,
     autopilot_status: str,
     autopilot_ide: str,
-    actions: list[str],
+    quick_actions: list[str],
 ) -> None:
     if project is None:
         return
@@ -534,7 +534,7 @@ def _record_quick_action_control_commands(
     corr_ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
     blocker = _blocked_by_from_autopilot_status(autopilot_status) or "none"
     corr = f"operator-action-{corr_ticket}-{blocker}"
-    for action in actions:
+    for action in quick_actions:
         _record_quick_action_control_command(
             project_path,
             corr=corr,
@@ -825,7 +825,7 @@ def _log_operator_next_steps(
         stop_reason=stop_reason,
     ):
         stdio_info(f"koru autonomous: next {line}", fmt=args.emit_events)
-    actions = _quick_action_lines(
+    quick_action_lines = _quick_action_lines(
         project=project,
         queue_status=str(getattr(queue_result, "last_status", "") or ""),
         waiting_ticket=waiting_ticket,
@@ -837,9 +837,9 @@ def _log_operator_next_steps(
         waiting_ticket=waiting_ticket,
         autopilot_status=autopilot_status,
         autopilot_ide=autopilot_ide,
-        actions=actions,
+        quick_actions=quick_action_lines,
     )
-    for action in actions:
+    for action in quick_action_lines:
         _emit_quick_action_line(args=args, action=action, stdio_info=stdio_info)
 
 
@@ -1017,9 +1017,13 @@ def _emit_structured_report(
     )
 
 
-def run_autonomous_cycle(
+def _print_cycle_header(args: Any, cycle: int) -> None:
+    if args.emit_events == "human":
+        print(f"\n=== koru autonomous cycle #{cycle} ===")
+
+
+def _prepare_cycle_run(
     *,
-    cycle: int,
     args: Any,
     project: Any,
     client: Any,
@@ -1031,27 +1035,16 @@ def run_autonomous_cycle(
     enable_scan: bool,
     autopilot_ide: str,
     loop_state: Any,
-    checkpoint_path: Any,
     diagnostic_state_dir: Any,
     wup_process: Any | None,
     correlation_id: str,
     auto_pipeline_state: Any | None,
+    cycle: int,
     restart_daemon_if_needed: Any,
     select_and_log_cycle_profile: Any,
     resolve_effective_cycle_flags: Any,
     build_cycle_run_kwargs: Any,
-    run_cycle: Any,
-    update_auto_pipeline_state: Any,
-    save_loop_checkpoint: Any,
-    queue_loop_waiting_ticket_label: Any,
-    handle_exit_conditions: Any,
-    compute_cycle_sleep: Any,
-    stdio_info: Any,
-    sleep: Any,
-) -> bool:
-    """Run one autonomous cycle and return True when the loop should exit."""
-    if args.emit_events == "human":
-        print(f"\n=== koru autonomous cycle #{cycle} ===")
+) -> dict[str, Any]:
     client, daemon, thread = restart_daemon_if_needed(
         args,
         client,
@@ -1074,7 +1067,7 @@ def run_autonomous_cycle(
         client=client,
         autopilot_ide=autopilot_ide,
     )
-    cycle_kwargs = build_cycle_run_kwargs(
+    return build_cycle_run_kwargs(
         args,
         profile,
         cycle=cycle,
@@ -1088,6 +1081,20 @@ def run_autonomous_cycle(
         wup_process=wup_process,
         correlation_id=correlation_id,
     )
+
+
+def _run_cycle_and_checkpoint(
+    *,
+    cycle_kwargs: dict[str, Any],
+    cycle: int,
+    loop_state: Any,
+    checkpoint_path: Any,
+    auto_pipeline_state: Any | None,
+    run_cycle: Any,
+    update_auto_pipeline_state: Any,
+    save_loop_checkpoint: Any,
+    queue_loop_waiting_ticket_label: Any,
+) -> tuple[Any, str, Any, str]:
     _scan_result, queue_result, autopilot_status, diag_result = run_cycle(**cycle_kwargs)
     if auto_pipeline_state is not None:
         update_auto_pipeline_state(
@@ -1104,7 +1111,26 @@ def run_autonomous_cycle(
         queue_loop_waiting_ticket_label=queue_loop_waiting_ticket_label,
         save_loop_checkpoint=save_loop_checkpoint,
     )
+    return queue_result, waiting_ticket, diag_result, autopilot_status
 
+
+def _finish_cycle(
+    *,
+    args: Any,
+    project: Any,
+    cycle: int,
+    queue_result: Any,
+    waiting_ticket: str,
+    loop_state: Any,
+    diag_result: Any,
+    autopilot_status: str,
+    autopilot_ide: str,
+    correlation_id: str,
+    handle_exit_conditions: Any,
+    compute_cycle_sleep: Any,
+    stdio_info: Any,
+    sleep: Any,
+) -> bool:
     effective_sleep = compute_cycle_sleep(args, loop_state, queue_result, autopilot_status)
     stop_reason = _cycle_stop_reason(args, queue_result, cycle)
     _emit_cycle_summary(
@@ -1155,6 +1181,91 @@ def run_autonomous_cycle(
     if effective_sleep > 0:
         sleep(effective_sleep)
     return False
+
+
+def run_autonomous_cycle(
+    *,
+    cycle: int,
+    args: Any,
+    project: Any,
+    client: Any,
+    daemon: Any,
+    thread: Any,
+    socket_path: Any,
+    autopilot_socket_observed_at_boot: bool,
+    queue_name: str | None,
+    enable_scan: bool,
+    autopilot_ide: str,
+    loop_state: Any,
+    checkpoint_path: Any,
+    diagnostic_state_dir: Any,
+    wup_process: Any | None,
+    correlation_id: str,
+    auto_pipeline_state: Any | None,
+    restart_daemon_if_needed: Any,
+    select_and_log_cycle_profile: Any,
+    resolve_effective_cycle_flags: Any,
+    build_cycle_run_kwargs: Any,
+    run_cycle: Any,
+    update_auto_pipeline_state: Any,
+    save_loop_checkpoint: Any,
+    queue_loop_waiting_ticket_label: Any,
+    handle_exit_conditions: Any,
+    compute_cycle_sleep: Any,
+    stdio_info: Any,
+    sleep: Any,
+) -> bool:
+    """Run one autonomous cycle and return True when the loop should exit."""
+    _print_cycle_header(args, cycle)
+    cycle_kwargs = _prepare_cycle_run(
+        args=args,
+        project=project,
+        client=client,
+        daemon=daemon,
+        thread=thread,
+        socket_path=socket_path,
+        autopilot_socket_observed_at_boot=autopilot_socket_observed_at_boot,
+        queue_name=queue_name,
+        enable_scan=enable_scan,
+        autopilot_ide=autopilot_ide,
+        loop_state=loop_state,
+        diagnostic_state_dir=diagnostic_state_dir,
+        wup_process=wup_process,
+        correlation_id=correlation_id,
+        auto_pipeline_state=auto_pipeline_state,
+        cycle=cycle,
+        restart_daemon_if_needed=restart_daemon_if_needed,
+        select_and_log_cycle_profile=select_and_log_cycle_profile,
+        resolve_effective_cycle_flags=resolve_effective_cycle_flags,
+        build_cycle_run_kwargs=build_cycle_run_kwargs,
+    )
+    queue_result, waiting_ticket, diag_result, autopilot_status = _run_cycle_and_checkpoint(
+        cycle_kwargs=cycle_kwargs,
+        cycle=cycle,
+        loop_state=loop_state,
+        checkpoint_path=checkpoint_path,
+        auto_pipeline_state=auto_pipeline_state,
+        run_cycle=run_cycle,
+        update_auto_pipeline_state=update_auto_pipeline_state,
+        queue_loop_waiting_ticket_label=queue_loop_waiting_ticket_label,
+        save_loop_checkpoint=save_loop_checkpoint,
+    )
+    return _finish_cycle(
+        args=args,
+        project=project,
+        cycle=cycle,
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        loop_state=loop_state,
+        diag_result=diag_result,
+        autopilot_status=autopilot_status,
+        autopilot_ide=autopilot_ide,
+        correlation_id=correlation_id,
+        handle_exit_conditions=handle_exit_conditions,
+        compute_cycle_sleep=compute_cycle_sleep,
+        stdio_info=stdio_info,
+        sleep=sleep,
+    )
 
 
 __all__ = [

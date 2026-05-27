@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -14,6 +15,21 @@ from koruide.socket import default_socket_path
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX_IDES = ("vscode", "vscodium", "cursor", "windsurf", "antigravity", "jetbrains", "zed")
 PLUGIN_REQUIRED_IDES = frozenset({"vscode", "vscodium", "cursor", "windsurf", "antigravity"})
+
+
+def _vscodium_shared_dir() -> Path:
+    return ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared"
+
+
+def _read_vscodium_shared_file(name: str) -> str:
+    return (_vscodium_shared_dir() / name).read_text(encoding="utf-8")
+
+
+def _read_vscodium_shared_source() -> str:
+    source = ""
+    for path in sorted(_vscodium_shared_dir().glob("*.ts")):
+        source += path.read_text(encoding="utf-8") + "\n"
+    return source
 
 
 @pytest.mark.parametrize("ide", MATRIX_IDES)
@@ -105,12 +121,12 @@ def test_vscodium_matrix_uses_isolated_socket_with_vscode_terminal_env(
 
 
 def test_vscodium_plugin_gates_host_input_fallbacks() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
-    package = (ROOT / "plugins" / "koru-autopilot-vscodium" / "package.json").read_text(
+    source = _read_vscodium_shared_source()
+    package_text = (ROOT / "plugins" / "koru-autopilot-vscodium" / "package.json").read_text(
         encoding="utf-8"
     )
+    package = json.loads(package_text)
+    properties = package["contributes"]["configuration"]["properties"]
 
     assert "allowVSCodiumHostInputFallback" in source
     assert "KORU_VSCODIUM_ALLOW_HOST_INPUT_FALLBACK" in source
@@ -124,7 +140,8 @@ def test_vscodium_plugin_gates_host_input_fallbacks() -> None:
     assert "host-clipboard:${clip}+${paste.command}" in source
     assert "HOST_CLIPBOARD_RESTORE" in source
     assert "paste_failure_reason" in source
-    assert "koruAutopilot.allowVSCodiumHostInputFallback" in package
+    assert "koruAutopilot.allowVSCodiumHostInputFallback" in package_text
+    assert properties["koruAutopilot.allowVSCodiumHostInputFallback"]["default"] is True
 
 
 def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> None:
@@ -143,9 +160,7 @@ def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> 
 
 
 def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
+    source = _read_vscodium_shared_file("bridge-submit.ts")
 
     registered = source.index("const registered = await this._tryRegisteredCommands")
     host_click = source.index("const hostClick = await this._tryHostClickSubmit")
@@ -155,9 +170,7 @@ def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> No
 
 
 def test_vscodium_submit_trace_reports_each_registered_candidate() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
+    source = _read_vscodium_shared_file("bridge-submit.ts")
 
     assert 'route: "registered-command"' in source
     assert 'route: "registered-command-rejected"' in source
@@ -165,9 +178,7 @@ def test_vscodium_submit_trace_reports_each_registered_candidate() -> None:
 
 
 def test_vscodium_submit_filters_unrelated_accept_input_commands() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
+    source = _read_vscodium_shared_file("bridge-submit.ts")
 
     assert "filterVSCodiumSubmitCandidates" in source
     assert "unsafeRegisteredCandidatesFiltered" in source
@@ -176,9 +187,7 @@ def test_vscodium_submit_filters_unrelated_accept_input_commands() -> None:
 
 
 def test_vscodium_type_newline_is_not_trusted_as_submit_proof() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
+    source = _read_vscodium_shared_file("bridge-submit.ts")
 
     assert 'this.detectIde() === "vscodium"' in source
     assert 'route: "type-newline-untrusted"' in source
@@ -187,9 +196,7 @@ def test_vscodium_type_newline_is_not_trusted_as_submit_proof() -> None:
 
 
 def test_vscodium_plugin_supports_configured_submit_click() -> None:
-    source = (
-        ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared" / "autopilot-bridge.ts"
-    ).read_text(encoding="utf-8")
+    source = _read_vscodium_shared_file("bridge-submit.ts")
     package = (
         ROOT / "plugins" / "koru-autopilot-vscodium" / "package.json"
     ).read_text(encoding="utf-8")

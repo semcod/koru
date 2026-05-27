@@ -20,8 +20,6 @@ import { ChatHistoryWatcher, SupportedIde } from "../chat-history-watcher";
 import { detectIdeViaStrategies } from "../ides/registry";
 import { Envelope, OperationTraceStep, FocusOutcome } from "./types";
 
-const OPEN_CHAT_PANEL_DEBOUNCE_MS = 2000;
-
 export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridgeBase {
   protected chatHistoryWatcher: ChatHistoryWatcher | null = null;
 

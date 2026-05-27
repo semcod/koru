@@ -210,6 +210,156 @@ def _handle_mcp_quality_gates(
     return tool_run_quality_gates({"project": str(project), **payload})
 
 
+def _handle_lane_plan(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Handle lane.plan integration - generate task plan via lane CLI."""
+    from koru.queue.runners import run_process
+
+    extra_context = payload.get("extra_context", "")
+    sync_todo = payload.get("sync_todo", False)
+    sync_planfile = payload.get("sync_planfile", False)
+    export_yaml = payload.get("export_yaml", False)
+
+    cmd = ["lane", "tickets", str(project)]
+
+    if extra_context:
+        cmd.extend(["--extra-context", extra_context])
+    if sync_todo:
+        cmd.append("--sync-todo")
+    if sync_planfile:
+        cmd.append("--sync-planfile")
+    if export_yaml:
+        cmd.append("--export-yaml")
+
+    result = run_process(cmd, project)
+
+    return {
+        "ok": result.returncode == 0,
+        "exit_code": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "method": method,
+        "sync_todo": sync_todo,
+        "sync_planfile": sync_planfile,
+        "export_yaml": export_yaml,
+        "koru_aware": koru_aware,
+    }
+
+
+def _handle_tagi_analyze(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Handle tagi.analyze integration - analyze changes using Tagi."""
+    try:
+        from koru.tagi_integration import analyze_project_changes
+        return analyze_project_changes(project)
+    except ImportError:
+        return {
+            "ok": False,
+            "error": "Tagi integration not available",
+            "message": "Install tagi: pip install tagi"
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e)
+        }
+
+
+def _handle_tagi_deploy(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Handle tagi.deploy integration - deploy changes using Tagi."""
+    try:
+        from koru.tagi_integration import TagiIntegration
+        tagi = TagiIntegration(project)
+        
+        if not tagi.is_available():
+            return {
+                "ok": False,
+                "error": "Tagi not available",
+                "message": "Install tagi: pip install tagi"
+            }
+        
+        dry_run = payload.get("dry_run", False)
+        deployment_plan = tagi.get_deployment_plan()
+        
+        if dry_run:
+            return {
+                "ok": True,
+                "dry_run": True,
+                "deployment_plan": deployment_plan
+            }
+        
+        # Execute deployment
+        success = True
+        deployed_groups = []
+        
+        for group in deployment_plan.get("deployment_groups", []):
+            group_name = group.get("name", "")
+            if group_name:
+                group_success = tagi.commit_changes(group_name)
+                if group_success:
+                    deployed_groups.append(group_name)
+                else:
+                    success = False
+                    break
+        
+        return {
+            "ok": success,
+            "deployed_groups": deployed_groups,
+            "deployment_plan": deployment_plan
+        }
+        
+    except ImportError:
+        return {
+            "ok": False,
+            "error": "Tagi integration not available",
+            "message": "Install tagi: pip install tagi"
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e)
+        }
+
+
+def _handle_tagi_auto(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Handle tagi.auto integration - auto-commit changes using Tagi."""
+    try:
+        from koru.tagi_integration import auto_commit_all_changes
+        message = payload.get("message", "Auto-commit changes via Koru")
+        dry_run = payload.get("dry_run", False)
+        
+        if dry_run:
+            from koru.tagi_integration import TagiIntegration
+            tagi = TagiIntegration(project)
+            analysis = tagi.analyze_priorities()
+            return {
+                "ok": True,
+                "dry_run": True,
+                "analysis": {
+                    "changes": len(analysis.changes),
+                    "groups": len(analysis.groups),
+                    "priority_order": analysis.priority_order,
+                    "recommendations": analysis.recommendations
+                }
+            }
+        
+        success = auto_commit_all_changes(project, message)
+        return {
+            "ok": success,
+            "message": message
+        }
+        
+    except ImportError:
+        return {
+            "ok": False,
+            "error": "Tagi integration not available",
+            "message": "Install tagi: pip install tagi"
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e)
+        }
+
+
 INTEGRATION_HANDLERS: dict[str, IntegrationHandler] = {
     "context.build": _handle_context_build,
     "doctor.run": _handle_doctor_run,
@@ -229,4 +379,8 @@ INTEGRATION_HANDLERS: dict[str, IntegrationHandler] = {
     "mcp.list_tickets": _handle_mcp_list_tickets,
     "mcp.run_ticket": _handle_mcp_run_ticket,
     "mcp.quality_gates": _handle_mcp_quality_gates,
+    "lane.plan": _handle_lane_plan,
+    "tagi.analyze": _handle_tagi_analyze,
+    "tagi.deploy": _handle_tagi_deploy,
+    "tagi.auto": _handle_tagi_auto,
 }

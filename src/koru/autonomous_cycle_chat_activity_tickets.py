@@ -91,7 +91,7 @@ def _upsert_chat_intake_operator_ticket(
     state: AutoloopState,
     recent_events: list[dict[str, Any]],
     cycle_telemetry: dict[str, Any],
-    _hp: Any,
+    report_progress: Any,
 ) -> str | None:
     if not _chat_intake_ticket_enabled():
         return None
@@ -142,17 +142,17 @@ def _upsert_chat_intake_operator_ticket(
             scaffold=scaffold,
         )
     except Exception as exc:
-        _hp(f"- chat intake: operator ticket upsert failed ({exc})")
+        report_progress(f"- chat intake: operator ticket upsert failed ({exc})")
         return None
 
     cycle_telemetry["autopilot_chat_intake_ticket"] = created.ticket_id
     if getattr(created, "reused", False):
-        _hp(
+        report_progress(
             "- chat intake: reused operator ticket "
             f"{created.ticket_id} (waiting={waiting_ticket})",
         )
     else:
-        _hp(
+        report_progress(
             "- chat intake: created operator ticket "
             f"{created.ticket_id} (waiting={waiting_ticket})",
         )
@@ -222,7 +222,7 @@ def _note_reused_llm_needs_input_operator_ticket(
     waiting_ticket: str,
     question: str,
     summary: str,
-    _hp: Any,
+    report_progress: Any,
 ) -> None:
     try:
         from koru.queue.planfile_ticket_note import append_shell_evidence_note
@@ -254,21 +254,110 @@ def _note_reused_llm_needs_input_operator_ticket(
             planfile_runner=_planfile_runner,
         )
         if result.returncode == 0:
-            _hp(
+            report_progress(
                 "- llx reflect: updated operator ticket "
                 f"{created.ticket_id} ({kind})",
             )
         else:
             detail = (result.stderr or result.stdout or "").strip()
-            _hp(
+            report_progress(
                 "- llx reflect: operator ticket note failed "
                 f"({created.ticket_id}: {detail})",
             )
     except Exception as exc:
-        _hp(
+        report_progress(
             "- llx reflect: operator ticket note skipped "
             f"({created.ticket_id}: {exc})",
         )
+
+
+def _llm_needs_input_signature(waiting_ticket: str, question: str, summary: str) -> str:
+    signature_key = question or summary
+    return f"{waiting_ticket}|{signature_key[:240]}"
+
+
+def _previous_llm_needs_input_ticket(
+    state: AutoloopState,
+    signature: str,
+) -> str | None:
+    previous_signature = str(getattr(state, "last_operator_needs_input_signature", "") or "")
+    if signature != previous_signature:
+        return None
+    previous_ticket = str(getattr(state, "last_operator_needs_input_ticket_id", "") or "")
+    return previous_ticket or None
+
+
+def _create_llm_needs_input_operator_task(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    waiting_ticket: str,
+    summary: str,
+    question: str,
+    queue_name: str,
+    priority: str,
+    report_progress: Any,
+) -> Any | None:
+    operator_payload = _llm_needs_input_operator_payload(
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        summary=summary,
+        question=question,
+    )
+    try:
+        # Resolve ``create_nl_task`` via ``koru.autonomous_cycle`` so existing
+        # tests that monkeypatch ``koru.autonomous_cycle.create_nl_task`` keep
+        # affecting this code path after the R7a extraction.
+        from koru import autonomous_cycle as _cycle_mod
+
+        create_task = getattr(_cycle_mod, "create_nl_task", create_nl_task)
+        return create_task(
+            project,
+            operator_payload[1],
+            queue_name=queue_name,
+            priority=priority,
+            scaffold=operator_payload[2],
+        )
+    except Exception as exc:
+        report_progress(f"- llx reflect: operator ticket upsert failed ({exc})")
+        return None
+
+
+def _remember_llm_needs_input_operator_ticket(
+    state: AutoloopState,
+    signature: str,
+    ticket_id: str,
+) -> None:
+    state.last_operator_needs_input_signature = signature
+    state.last_operator_needs_input_ticket_id = ticket_id
+
+
+def _report_llm_needs_input_operator_ticket(
+    *,
+    project: Path,
+    created: Any,
+    waiting_ticket: str,
+    question: str,
+    summary: str,
+    queue_name: str,
+    report_progress: Any,
+) -> None:
+    if getattr(created, "reused", False):
+        _note_reused_llm_needs_input_operator_ticket(
+            project=project,
+            created=created,
+            waiting_ticket=waiting_ticket,
+            question=question,
+            summary=summary,
+            report_progress=report_progress,
+        )
+    else:
+        report_progress(
+            "- llx reflect: created operator ticket "
+            f"{created.ticket_id} (queue={queue_name})",
+        )
+    if question:
+        report_progress(f"- llx reflect: operator question candidate={question!r}")
 
 
 def _upsert_llm_needs_input_operator_ticket(
@@ -278,7 +367,7 @@ def _upsert_llm_needs_input_operator_ticket(
     state: AutoloopState,
     reflection_summary: str,
     reflection_events: list[Any],
-    _hp: Any,
+    report_progress: Any,
 ) -> str | None:
     """Create/update one deduplicated operator ticket for ``llm needs_input``."""
     if not _llm_needs_input_ticket_enabled():
@@ -287,58 +376,34 @@ def _upsert_llm_needs_input_operator_ticket(
     waiting_ticket = _llm_needs_input_waiting_ticket(queue_result)
     summary = _llm_needs_input_summary(queue_result, reflection_summary)
     question = _extract_needs_input_question(reflection_events, summary)
-
-    signature_key = question or summary
-    signature = f"{waiting_ticket}|{signature_key[:240]}"
-    previous_signature = str(getattr(state, "last_operator_needs_input_signature", "") or "")
-    previous_ticket = str(getattr(state, "last_operator_needs_input_ticket_id", "") or "")
-    if signature == previous_signature:
-        return previous_ticket or None
+    signature = _llm_needs_input_signature(waiting_ticket, question, summary)
+    previous_ticket = _previous_llm_needs_input_ticket(state, signature)
+    if previous_ticket is not None:
+        return previous_ticket
 
     queue_name = _llm_needs_input_ticket_queue_name()
     priority = _llm_needs_input_ticket_priority()
-    _, prompt, scaffold = _llm_needs_input_operator_payload(
+    created = _create_llm_needs_input_operator_task(
+        project=project,
         queue_result=queue_result,
         waiting_ticket=waiting_ticket,
         summary=summary,
         question=question,
+        queue_name=queue_name,
+        priority=priority,
+        report_progress=report_progress,
     )
-
-    try:
-        # Resolve ``create_nl_task`` via ``koru.autonomous_cycle`` so existing
-        # tests that monkeypatch ``koru.autonomous_cycle.create_nl_task`` keep
-        # affecting this code path after the R7a extraction.
-        from koru import autonomous_cycle as _cycle_mod
-
-        create_task = getattr(_cycle_mod, "create_nl_task", create_nl_task)
-        created = create_task(
-            project,
-            prompt,
-            queue_name=queue_name,
-            priority=priority,
-            scaffold=scaffold,
-        )
-    except Exception as exc:
-        _hp(f"- llx reflect: operator ticket upsert failed ({exc})")
+    if created is None:
         return None
 
-    state.last_operator_needs_input_signature = signature
-    state.last_operator_needs_input_ticket_id = created.ticket_id
-
-    if getattr(created, "reused", False):
-        _note_reused_llm_needs_input_operator_ticket(
-            project=project,
-            created=created,
-            waiting_ticket=waiting_ticket,
-            question=question,
-            summary=summary,
-            _hp=_hp,
-        )
-    else:
-        _hp(
-            "- llx reflect: created operator ticket "
-            f"{created.ticket_id} (queue={queue_name})",
-        )
-    if question:
-        _hp(f"- llx reflect: operator question candidate={question!r}")
+    _remember_llm_needs_input_operator_ticket(state, signature, created.ticket_id)
+    _report_llm_needs_input_operator_ticket(
+        project=project,
+        created=created,
+        waiting_ticket=waiting_ticket,
+        question=question,
+        summary=summary,
+        queue_name=queue_name,
+        report_progress=report_progress,
+    )
     return created.ticket_id

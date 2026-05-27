@@ -146,6 +146,17 @@ def _decide_verdict(signals: ArbiterSignals) -> ActionPlan | None:
             reason=f"tests degraded after drive: {verdict.reason}",
         )
 
+    if verdict.outcome == "submitted_but_no_effect":
+        return _verdict_plan(
+            signals,
+            verdict,
+            action="escalate_ticket",
+            reason=(
+                "prompt was submitted but no local work was applied; "
+                f"{verdict.reason}"
+            ),
+        )
+
     if verdict.outcome != "no_change":
         return None
 

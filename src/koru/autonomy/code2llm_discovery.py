@@ -201,9 +201,9 @@ def _read_planfile_tickets_output(artifacts_dir: Path) -> tuple[list[str], list[
         return [], []
     if not isinstance(data, dict):
         return [], []
-    applied = [str(item) for item in (data.get("applied") or []) if isinstance(item, str)]
-    skipped = [str(item) for item in (data.get("skipped") or []) if isinstance(item, str)]
-    return applied, skipped
+    applied_titles = [str(item) for item in (data.get("applied") or []) if isinstance(item, str)]
+    skipped_titles = [str(item) for item in (data.get("skipped") or []) if isinstance(item, str)]
+    return applied_titles, skipped_titles
 
 
 def _read_planfile_ticket_items(artifacts_dir: Path) -> tuple[str, list[dict[str, Any]]]:
@@ -353,8 +353,8 @@ def _apply_planfile_ticket_items(
     _file_source, items = _read_planfile_ticket_items(artifacts_dir)
     if not items:
         return _read_planfile_tickets_output(artifacts_dir)
-    applied: list[str] = []
-    skipped: list[str] = []
+    created_titles: list[str] = []
+    skipped_titles: list[str] = []
     selected = items[:limit] if limit is not None and limit > 0 else items
     for item in selected:
         scaffold = _ticket_item_scaffold(
@@ -373,13 +373,13 @@ def _apply_planfile_ticket_items(
                 scaffold=scaffold,
             )
         except (OSError, ValueError) as exc:
-            skipped.append(f"{title}: {exc}")
+            skipped_titles.append(f"{title}: {exc}")
             continue
         if getattr(created, "reused", False):
-            skipped.append(title)
+            skipped_titles.append(title)
         else:
-            applied.append(title)
-    return applied, skipped
+            created_titles.append(title)
+    return created_titles, skipped_titles
 
 
 def _ticket_item_scaffold(
@@ -424,6 +424,84 @@ def _string_list(value: Any) -> list[str]:
     return [str(v) for v in (value or []) if str(v).strip()]
 
 
+def _apply_or_read_planfile_tickets(
+    project: Path,
+    artifacts_dir: Path,
+    *,
+    apply_planfile: bool,
+    planfile_source: str,
+    planfile_sprint: str,
+    planfile_limit: int | None,
+) -> tuple[list[str], list[str]]:
+    if apply_planfile:
+        return _apply_planfile_ticket_items(
+            project,
+            artifacts_dir,
+            source=planfile_source,
+            sprint=planfile_sprint,
+            limit=planfile_limit,
+        )
+    return _read_planfile_tickets_output(artifacts_dir)
+
+
+def _handle_fresh_artifacts(
+    outcome: DiscoveryOutcome,
+    project: Path,
+    artifacts_dir: Path,
+    *,
+    stale_minutes: float,
+    apply_planfile: bool,
+    planfile_source: str,
+    planfile_sprint: str,
+    planfile_limit: int | None,
+) -> DiscoveryOutcome:
+    outcome.skipped_reason = f"artifacts younger than {stale_minutes:.0f}m in {artifacts_dir}"
+    applied_titles, skipped_titles = _apply_or_read_planfile_tickets(
+        project,
+        artifacts_dir,
+        apply_planfile=apply_planfile,
+        planfile_source=planfile_source,
+        planfile_sprint=planfile_sprint,
+        planfile_limit=planfile_limit,
+    )
+    outcome.applied_titles = applied_titles
+    outcome.skipped_titles = skipped_titles
+    return outcome
+
+
+def _run_code2llm_command(
+    outcome: DiscoveryOutcome,
+    cmd: Sequence[str],
+    project: Path,
+    runner: Runner,
+) -> subprocess.CompletedProcess[str] | None:
+    start = time.monotonic()
+    try:
+        result = runner(cmd, project)
+    except subprocess.TimeoutExpired as exc:
+        outcome.error = f"code2llm timed out after {exc.timeout}s"
+        outcome.code2llm_duration_s = time.monotonic() - start
+        return None
+    except (OSError, ValueError) as exc:
+        outcome.error = f"code2llm exec failed: {exc}"
+        outcome.code2llm_duration_s = time.monotonic() - start
+        return None
+    outcome.code2llm_duration_s = time.monotonic() - start
+    outcome.code2llm_returncode = result.returncode
+    outcome.ran = True
+    return result
+
+
+def _record_code2llm_failure(
+    outcome: DiscoveryOutcome,
+    result: subprocess.CompletedProcess[str],
+) -> DiscoveryOutcome:
+    lines = (result.stderr or result.stdout or "").strip().splitlines()
+    fallback = f"code2llm rc={result.returncode}"
+    outcome.error = (lines[-1:] or [fallback])[0]
+    return outcome
+
+
 def run_code2llm_discovery(
     project: Path,
     *,
@@ -454,22 +532,16 @@ def run_code2llm_discovery(
     outcome.code2llm_path = binary
 
     if not force and _artifacts_fresh(artifacts_dir, stale_minutes=stale_minutes):
-        outcome.skipped_reason = (
-            f"artifacts younger than {stale_minutes:.0f}m in {artifacts_dir}"
+        return _handle_fresh_artifacts(
+            outcome,
+            project,
+            artifacts_dir,
+            stale_minutes=stale_minutes,
+            apply_planfile=apply_planfile,
+            planfile_source=planfile_source,
+            planfile_sprint=planfile_sprint,
+            planfile_limit=planfile_limit,
         )
-        if apply_planfile:
-            applied, skipped = _apply_planfile_ticket_items(
-                project,
-                artifacts_dir,
-                source=planfile_source,
-                sprint=planfile_sprint,
-                limit=planfile_limit,
-            )
-        else:
-            applied, skipped = _read_planfile_tickets_output(artifacts_dir)
-        outcome.applied_titles = applied
-        outcome.skipped_titles = skipped
-        return outcome
 
     cmd = _build_code2llm_cmd(
         binary,
@@ -482,39 +554,22 @@ def run_code2llm_discovery(
         planfile_sprint=planfile_sprint,
         planfile_limit=planfile_limit,
     )
-    start = time.monotonic()
-    try:
-        result = runner(cmd, project)
-    except subprocess.TimeoutExpired as exc:
-        outcome.error = f"code2llm timed out after {exc.timeout}s"
-        outcome.code2llm_duration_s = time.monotonic() - start
+    result = _run_code2llm_command(outcome, cmd, project, runner)
+    if result is None:
         return outcome
-    except (OSError, ValueError) as exc:
-        outcome.error = f"code2llm exec failed: {exc}"
-        outcome.code2llm_duration_s = time.monotonic() - start
-        return outcome
-    outcome.code2llm_duration_s = time.monotonic() - start
-    outcome.code2llm_returncode = result.returncode
-    outcome.ran = True
     if result.returncode != 0:
-        outcome.error = (result.stderr or result.stdout or "").strip().splitlines()[-1:] or [
-            f"code2llm rc={result.returncode}",
-        ]
-        outcome.error = outcome.error[0] if outcome.error else f"rc={result.returncode}"
-        return outcome
+        return _record_code2llm_failure(outcome, result)
 
-    if apply_planfile:
-        applied, skipped = _apply_planfile_ticket_items(
-            project,
-            artifacts_dir,
-            source=planfile_source,
-            sprint=planfile_sprint,
-            limit=planfile_limit,
-        )
-    else:
-        applied, skipped = _read_planfile_tickets_output(artifacts_dir)
-    outcome.applied_titles = applied
-    outcome.skipped_titles = skipped
+    applied_titles, skipped_titles = _apply_or_read_planfile_tickets(
+        project,
+        artifacts_dir,
+        apply_planfile=apply_planfile,
+        planfile_source=planfile_source,
+        planfile_sprint=planfile_sprint,
+        planfile_limit=planfile_limit,
+    )
+    outcome.applied_titles = applied_titles
+    outcome.skipped_titles = skipped_titles
     return outcome
 
 

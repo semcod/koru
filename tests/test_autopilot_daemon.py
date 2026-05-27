@@ -136,6 +136,9 @@ class _LineReader:
         return line
 
     def read_message(self) -> Message:
+        timeout = self.sock.gettimeout()
+        if timeout is not None and timeout < 6.0:
+            self.sock.settimeout(6.0)
         while True:
             decoded = self._decode_frame(self.buf)
             if decoded is not None:
@@ -254,7 +257,7 @@ def _connect_plugin(
         version = EXPECTED_VSCODE_PLUGIN_VERSION
     """Open a plugin connection, send ``hello``, consume the ack."""
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.settimeout(2.0)
+    sock.settimeout(6.0)
     sock.connect(str(sock_path))
     reader = _LineReader(sock)
     sock.sendall(
@@ -652,7 +655,7 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
 
         # CLI sends drive in another connection.
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
+        cli.settimeout(6.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(

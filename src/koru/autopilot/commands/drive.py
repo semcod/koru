@@ -42,22 +42,22 @@ def _drive_text_from_args(args: argparse.Namespace) -> tuple[str | None, int]:
 
 def _drive_command_argv(args: argparse.Namespace, text: str) -> list[str]:
     """Build command argv for shell_command logging."""
-    argv = ["koru", "autopilot", "drive", "--ide", str(args.ide)]
+    drive_argv = ["koru", "autopilot", "drive", "--ide", str(args.ide)]
     if not args.submit:
-        argv.append("--no-submit")
+        drive_argv.append("--no-submit")
     if args.require_plugin:
-        argv.append("--require-plugin")
+        drive_argv.append("--require-plugin")
     if getattr(args, "direct", False):
-        argv.append("--direct")
+        drive_argv.append("--direct")
     prompt_file = getattr(args, "prompt_file", None)
     if prompt_file is not None:
-        argv.extend(["--prompt-file", str(prompt_file)])
-        return argv
+        drive_argv.extend(["--prompt-file", str(prompt_file)])
+        return drive_argv
     if args.prompt is not None:
-        argv.extend(["--prompt", text])
+        drive_argv.extend(["--prompt", text])
     else:
-        argv.append(text)
-    return argv
+        drive_argv.append(text)
+    return drive_argv
 
 
 def _record_drive_command(args: argparse.Namespace, text: str) -> Path:

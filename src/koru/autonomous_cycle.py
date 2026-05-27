@@ -51,6 +51,7 @@ from koru.autonomy.planning_llm import (
     propose_strategy_tuning as _llm_propose_strategy_tuning,
 )
 from koru.autonomy.verification_engine import (
+    Verdict,
     assess_verdict,
     collect_evidence,
     take_snapshot,
@@ -119,7 +120,7 @@ def _cycle_human_progress(msg: str, *, stdio_format: str) -> None:
         activity("CHAT", msg.strip(), fmt=stdio_format)
     elif msg.startswith("- autopilot skipped"):
         activity("CHAT", msg[2:].strip(), fmt=stdio_format)
-    elif msg.startswith("  decision:"):
+    elif msg.startswith(("  decision:", "  drive_effect:")):
         activity("DECISION", msg.strip(), fmt=stdio_format)
     elif msg.startswith("  planfile snapshot:") or msg.startswith(
         ("  what koru auto", "  to give koru work", "  →")
@@ -269,22 +270,48 @@ def _autopilot_event_path() -> Path:
     return Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "koru-autopilot-events.ndjson"
 
 
-def _drain_autopilot_events(state: AutoloopState) -> list[dict[str, Any]]:
+def _coerce_event_ts(event: dict[str, Any]) -> float | None:
+    try:
+        return float(event.get("ts"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _drain_autopilot_events(
+    state: AutoloopState,
+    *,
+    autopilot_ide: str | None = None,
+) -> list[dict[str, Any]]:
     path = _autopilot_event_path()
     if not path.exists():
         return []
     raw = path.read_text(encoding="utf-8")
     events: list[dict[str, Any]] = []
+    cursor_ts = float(getattr(state, "autopilot_event_cursor_ts", 0.0) or 0.0)
+    max_seen_ts = cursor_ts
     for line in raw.splitlines():
         line = line.strip()
         if not line:
             continue
         try:
-            events.append(json.loads(line))
+            event = json.loads(line)
         except json.JSONDecodeError:
             continue
-    if events:
+        if not isinstance(event, dict):
+            continue
+        event_ts = _coerce_event_ts(event)
+        if event_ts is None:
+            continue
+        max_seen_ts = max(max_seen_ts, event_ts)
+        if event_ts < cursor_ts:
+            continue
+        if autopilot_ide and str(event.get("ide") or "") != autopilot_ide:
+            continue
+        events.append(event)
+    if raw.strip():
         path.write_text("", encoding="utf-8")
+    if max_seen_ts > cursor_ts:
+        state.autopilot_event_cursor_ts = max_seen_ts
     return events
 
 
@@ -500,8 +527,10 @@ def _heal_stale_socket() -> None:
 def _handle_autopilot_events(
     state: AutoloopState,
     _hp: callable,
+    *,
+    autopilot_ide: str | None = None,
 ) -> None:
-    events = _drain_autopilot_events(state)
+    events = _drain_autopilot_events(state, autopilot_ide=autopilot_ide)
     if events:
         for ev in events:
             ev_type = ev.get("type", "unknown")
@@ -791,58 +820,149 @@ def _take_pre_drive_snapshot(
     state.last_drive_snapshot = snapshot.to_dict()
 
 
-def _handle_post_drive_verification(
-    project: Path,
-    state: AutoloopState,
-    cycle: int,
-    queue_result: QueueLoopResult,
-    autopilot_status: str,
-    wup_health: Any,
-    _hp: callable,
-    _emit: callable,
-) -> None:
-    """Collect evidence and assess verdict after autopilot drive (ADR AUTO-002 Phase 1)."""
-    if autopilot_status != "ok" and not autopilot_status.startswith("failed"):
-        return
+def _drive_effect_payload(
+    *,
+    ticket_id: str,
+    queue_status: str,
+    evidence: Any,
+    drive_status: str,
+) -> dict[str, Any]:
+    prompt_submitted = drive_status == "ok" and bool(evidence.chat.has_message_sent)
+    ticket_still_waiting = queue_status == "waiting_input" and bool(ticket_id)
+    work_applied = evidence.git.files_changed > 0 or not ticket_still_waiting
+    planfile_delta = "still_waiting_input" if ticket_still_waiting else queue_status or "unknown"
+    return {
+        "prompt_submitted": prompt_submitted,
+        "work_applied": work_applied,
+        "ticket_before": ticket_id or "-",
+        "ticket_after": ticket_id if ticket_still_waiting else "-",
+        "git_delta": {
+            "files_changed": evidence.git.files_changed,
+            "insertions": evidence.git.insertions,
+            "deletions": evidence.git.deletions,
+        },
+        "planfile_delta": planfile_delta,
+        "test_delta": evidence.tests.status,
+        "chat_events_since_drive": evidence.chat.events_since_drive,
+    }
+
+
+def _submitted_but_no_effect(verdict: Verdict, effect: dict[str, Any]) -> Verdict:
+    reason = (
+        "prompt_submitted=true; work_applied=false; "
+        f"git_delta={effect['git_delta']['files_changed']} files; "
+        f"planfile_delta={effect['planfile_delta']}; "
+        f"test_delta={effect['test_delta']}"
+    )
+    return Verdict(
+        outcome="submitted_but_no_effect",
+        confidence=0.95,
+        reason=reason,
+        evidence=verdict.evidence,
+        ticket_id=verdict.ticket_id,
+    )
+
+
+def _snapshot_before_drive(state: AutoloopState) -> Any | None:
     from koru.autonomy.verification_engine import Snapshot
 
     snap_dict = state.last_drive_snapshot
-    before = Snapshot(
+    if not snap_dict:
+        return None
+    return Snapshot(
         git_head=str(snap_dict.get("git_head", "")),
         git_dirty_count=int(snap_dict.get("git_dirty_count", 0)),
         test_status=str(snap_dict.get("test_status", "unknown")),
         timestamp=float(snap_dict.get("timestamp", 0)),
-    ) if snap_dict else None
+    )
 
+
+def _post_drive_ticket_id(queue_result: QueueLoopResult) -> str:
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-    ticket_id = "" if waiting_ticket == "-" else waiting_ticket
+    return "" if waiting_ticket == "-" else waiting_ticket
 
-    # Track per-ticket drive count
-    if ticket_id and ticket_id == state.last_driven_ticket_for_count:
+
+def _update_drive_count(state: AutoloopState, ticket_id: str) -> None:
+    if not ticket_id:
+        return
+    if ticket_id == state.last_driven_ticket_for_count:
         state.drive_count_for_ticket += 1
-    elif ticket_id:
-        state.drive_count_for_ticket = 1
-        state.last_driven_ticket_for_count = ticket_id
+        return
+    state.drive_count_for_ticket = 1
+    state.last_driven_ticket_for_count = ticket_id
 
-    evidence = collect_evidence(
+
+def _collect_post_drive_evidence(
+    project: Path,
+    state: AutoloopState,
+    wup_health: Any,
+) -> Any:
+    return collect_evidence(
         project,
-        before=before,
+        before=_snapshot_before_drive(state),
         wup_health=wup_health,
         autopilot_events=state.autopilot_events,
         drive_timestamp=state.last_message_sent_ts,
     )
+
+
+def _post_drive_verdict(
+    state: AutoloopState,
+    evidence: Any,
+    ticket_id: str,
+    effect: dict[str, Any],
+) -> Verdict:
     verdict = assess_verdict(
         evidence,
         ticket_id=ticket_id,
         drive_count=state.drive_count_for_ticket,
     )
-    state.last_drive_verdict = verdict.to_dict()
+    if effect["prompt_submitted"] and not effect["work_applied"]:
+        return _submitted_but_no_effect(verdict, effect)
+    return verdict
 
-    _hp(
-        f"  verdict: {verdict.outcome} (confidence={verdict.confidence:.2f}) "
-        f"ticket={ticket_id or '-'} drives={state.drive_count_for_ticket}"
+
+def _emit_drive_effect_if_needed(
+    cycle: int,
+    ticket_id: str,
+    effect: dict[str, Any],
+    hp: callable,
+    emit: callable,
+) -> None:
+    if not (effect["prompt_submitted"] and not effect["work_applied"]):
+        return
+    hp(
+        "  drive_effect: submitted_but_no_effect "
+        f"ticket={ticket_id or '-'} git_delta={effect['git_delta']['files_changed']} "
+        f"planfile_delta={effect['planfile_delta']} test_delta={effect['test_delta']}"
     )
-    _emit(
+    emit(
+        "DriveEffect",
+        {
+            "cycle": cycle,
+            "ticket_id": ticket_id,
+            **effect,
+        },
+    )
+
+
+def _emit_drive_verdict(
+    *,
+    cycle: int,
+    ticket_id: str,
+    verdict: Verdict,
+    drive_count: int,
+    drive_status: str,
+    evidence: Any,
+    effect: dict[str, Any],
+    hp: callable,
+    emit: callable,
+) -> None:
+    hp(
+        f"  verdict: {verdict.outcome} (confidence={verdict.confidence:.2f}) "
+        f"ticket={ticket_id or '-'} drives={drive_count}"
+    )
+    emit(
         "DriveVerdict",
         {
             "cycle": cycle,
@@ -850,17 +970,31 @@ def _handle_post_drive_verification(
             "outcome": verdict.outcome,
             "confidence": verdict.confidence,
             "reason": verdict.reason,
-            "drive_count": state.drive_count_for_ticket,
-            "autopilot_status": autopilot_status,
+            "drive_count": drive_count,
+            "autopilot_status": drive_status,
             "git_files_changed": evidence.git.files_changed,
             "test_status": evidence.tests.status,
             "chat_events_since_drive": evidence.chat.events_since_drive,
+            "prompt_submitted": effect["prompt_submitted"],
+            "work_applied": effect["work_applied"],
+            "git_delta": effect["git_delta"],
+            "planfile_delta": effect["planfile_delta"],
+            "test_delta": effect["test_delta"],
         },
     )
 
-    # Phase 3: LLM-enhanced evaluation (optional, fail-safe)
-    llm_eval = None
-    llm_improved_prompt = None
+
+def _maybe_emit_llm_evaluation(
+    *,
+    cycle: int,
+    ticket_id: str,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    verdict: Verdict,
+    evidence: Any,
+    hp: callable,
+    emit: callable,
+) -> None:
     try:
         llm_eval = _llm_evaluate_drive_result(
             evidence,
@@ -870,54 +1004,77 @@ def _handle_post_drive_verification(
             heuristic_verdict=verdict,
         )
     except Exception:  # noqa: BLE001
-        pass
+        return
+    if llm_eval is None:
+        return
+    hp(
+        f"  llm_eval: {llm_eval.outcome} (confidence={llm_eval.confidence:.2f}) "
+        f"{llm_eval.reason[:80]}"
+    )
+    emit(
+        "LlmEvaluation",
+        {
+            "cycle": cycle,
+            "ticket_id": ticket_id,
+            "outcome": llm_eval.outcome,
+            "confidence": llm_eval.confidence,
+            "reason": llm_eval.reason,
+            "suggestion": llm_eval.suggestion,
+        },
+    )
 
-    if llm_eval is not None:
-        _hp(
-            f"  llm_eval: {llm_eval.outcome} (confidence={llm_eval.confidence:.2f}) "
-            f"{llm_eval.reason[:80]}"
-        )
-        _emit(
-            "LlmEvaluation",
-            {
-                "cycle": cycle,
-                "ticket_id": ticket_id,
-                "outcome": llm_eval.outcome,
-                "confidence": llm_eval.confidence,
-                "reason": llm_eval.reason,
-                "suggestion": llm_eval.suggestion,
-            },
-        )
 
-    if (
+def _maybe_emit_improved_prompt(
+    *,
+    cycle: int,
+    ticket_id: str,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    verdict: Verdict,
+    hp: callable,
+    emit: callable,
+) -> None:
+    if not (
         verdict.outcome == "no_change"
         and state.drive_count_for_ticket >= 2
         and state.last_driven_prompt
     ):
-        try:
-            llm_improved_prompt = _llm_generate_better_prompt(
-                ticket_id=ticket_id,
-                ticket_title=str(getattr(queue_result, "last_message", "") or ""),
-                original_prompt=state.last_driven_prompt,
-                drive_count=state.drive_count_for_ticket,
-                last_verdict_reason=verdict.reason,
-            )
-        except Exception:  # noqa: BLE001
-            pass
+        return
+    try:
+        llm_improved_prompt = _llm_generate_better_prompt(
+            ticket_id=ticket_id,
+            ticket_title=str(getattr(queue_result, "last_message", "") or ""),
+            original_prompt=state.last_driven_prompt,
+            drive_count=state.drive_count_for_ticket,
+            last_verdict_reason=verdict.reason,
+        )
+    except Exception:  # noqa: BLE001
+        return
+    if not llm_improved_prompt:
+        return
+    hp(f"  llm_prompt: improved prompt generated ({len(llm_improved_prompt)} chars)")
+    emit(
+        "LlmImprovedPrompt",
+        {
+            "cycle": cycle,
+            "ticket_id": ticket_id,
+            "original_length": len(state.last_driven_prompt),
+            "improved_length": len(llm_improved_prompt),
+        },
+    )
 
-        if llm_improved_prompt:
-            _hp(f"  llm_prompt: improved prompt generated ({len(llm_improved_prompt)} chars)")
-            _emit(
-                "LlmImprovedPrompt",
-                {
-                    "cycle": cycle,
-                    "ticket_id": ticket_id,
-                    "original_length": len(state.last_driven_prompt),
-                    "improved_length": len(llm_improved_prompt),
-                },
-            )
 
-    # Phase 2: Decision Arbiter — produce advisory ActionPlan
+def _emit_post_drive_action_plan(
+    *,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    evidence: Any,
+    verdict: Verdict,
+    ticket_id: str,
+    hp: callable,
+    emit: callable,
+) -> None:
     _get_planning_budget().reset_cycle()
     signals = ArbiterSignals(
         queue_status=str(queue_result.last_status or ""),
@@ -931,11 +1088,11 @@ def _handle_post_drive_verification(
     plan = decide(signals)
     state.last_drive_action_plan = plan.to_dict()
 
-    _hp(
+    hp(
         f"  decision: {plan.action} "
         f"(reason={plan.reason!r}, confidence={plan.confidence:.2f})"
     )
-    _emit(
+    emit(
         "ActionPlan",
         {
             "cycle": cycle,
@@ -945,6 +1102,75 @@ def _handle_post_drive_verification(
             "confidence": plan.confidence,
             "sleep_seconds": plan.sleep_seconds,
         },
+    )
+
+
+def _handle_post_drive_verification(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    drive_status: str,
+    wup_health: Any,
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    """Collect evidence and assess verdict after autopilot drive (ADR AUTO-002 Phase 1)."""
+    if drive_status != "ok" and not drive_status.startswith("failed"):
+        return
+
+    ticket_id = _post_drive_ticket_id(queue_result)
+    _update_drive_count(state, ticket_id)
+    evidence = _collect_post_drive_evidence(project, state, wup_health)
+    effect = _drive_effect_payload(
+        ticket_id=ticket_id,
+        queue_status=str(queue_result.last_status or ""),
+        evidence=evidence,
+        drive_status=drive_status,
+    )
+    verdict = _post_drive_verdict(state, evidence, ticket_id, effect)
+    state.last_drive_verdict = verdict.to_dict()
+
+    _emit_drive_effect_if_needed(cycle, ticket_id, effect, _hp, _emit)
+    _emit_drive_verdict(
+        cycle=cycle,
+        ticket_id=ticket_id,
+        verdict=verdict,
+        drive_count=state.drive_count_for_ticket,
+        drive_status=drive_status,
+        evidence=evidence,
+        effect=effect,
+        hp=_hp,
+        emit=_emit,
+    )
+    _maybe_emit_llm_evaluation(
+        cycle=cycle,
+        ticket_id=ticket_id,
+        queue_result=queue_result,
+        state=state,
+        verdict=verdict,
+        evidence=evidence,
+        hp=_hp,
+        emit=_emit,
+    )
+    _maybe_emit_improved_prompt(
+        cycle=cycle,
+        ticket_id=ticket_id,
+        queue_result=queue_result,
+        state=state,
+        verdict=verdict,
+        hp=_hp,
+        emit=_emit,
+    )
+    _emit_post_drive_action_plan(
+        cycle=cycle,
+        queue_result=queue_result,
+        state=state,
+        evidence=evidence,
+        verdict=verdict,
+        ticket_id=ticket_id,
+        hp=_hp,
+        emit=_emit,
     )
 
 
@@ -1024,7 +1250,7 @@ def _record_decision_trace(
     queue_result: QueueLoopResult,
     diag_result: DiagnosticResult,
     wup_health: WupHealthResult,
-    autopilot_status: str,
+    drive_status: str,
     autopilot_ide: str,
     autopilot_backend: str | None,
     autopilot_drive_kind: str | None,
@@ -1038,7 +1264,7 @@ def _record_decision_trace(
         queue_result=queue_result,
         diag_result=diag_result,
         wup_health=wup_health,
-        autopilot_status=autopilot_status,
+        autopilot_status=drive_status,
         autopilot_ide=autopilot_ide,
         autopilot_backend=autopilot_backend,
         autopilot_drive_kind=autopilot_drive_kind,
@@ -1051,12 +1277,12 @@ def _record_decision_trace(
 def _decision_next_step_hint(
     *,
     queue_status: str,
-    autopilot_status: str,
+    drive_status: str,
     cycle_telemetry: dict[str, Any],
 ) -> str:
     return _decision_next_step_hint_impl(
         queue_status=queue_status,
-        autopilot_status=autopilot_status,
+        autopilot_status=drive_status,
         cycle_telemetry=cycle_telemetry,
     )
 
@@ -1068,7 +1294,7 @@ def _emit_cycle_completion_events(
     queue_result: QueueLoopResult,
     diag_result: DiagnosticResult,
     wup_health: WupHealthResult,
-    autopilot_status: str,
+    drive_status: str,
     autopilot_ide: str,
     autopilot_backend: str | None,
     autopilot_drive_kind: str | None,
@@ -1086,7 +1312,7 @@ def _emit_cycle_completion_events(
         queue_result=queue_result,
         diag_result=diag_result,
         wup_health=wup_health,
-        autopilot_status=autopilot_status,
+        autopilot_status=drive_status,
         autopilot_ide=autopilot_ide,
         autopilot_backend=autopilot_backend,
         autopilot_drive_kind=autopilot_drive_kind,
@@ -1097,6 +1323,223 @@ def _emit_cycle_completion_events(
         hp=hp,
         emit=emit,
     )
+
+
+def _cycle_callbacks(
+    *,
+    stdio_format: str,
+    correlation_id: str,
+) -> tuple[callable, callable]:
+    def emit(event_type: str, payload: dict, command: str | None = None) -> None:
+        _emit_stdio_cycle_event(
+            event_type,
+            payload,
+            command=command,
+            stdio_format=stdio_format,
+            correlation_id=correlation_id,
+        )
+
+    def hp(msg: str) -> None:
+        _cycle_human_progress(msg, stdio_format=stdio_format)
+
+    return emit, hp
+
+
+def _run_pre_drive_cycle_phases(
+    *,
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    actor: str,
+    queue_name: str | None,
+    enable_scan: bool,
+    max_iterations: int,
+    include_semcod_artifacts: bool | None,
+    idle_diagnostics: str,
+    diagnostic_tickets: bool,
+    diagnostic_ticket_queue: str,
+    diagnostic_ticket_priority: str,
+    diagnostic_state_dir: Path | None,
+    wup_watch_enabled: bool,
+    wup_diagnostic_tickets: bool,
+    wup_ticket_queue: str,
+    scan_skip_if_clean: bool,
+    scan_skip_after: int,
+    scan_after_idle_queue: bool,
+    scan_after_idle_min_interval_seconds: float,
+    topology_integration: bool,
+    cycle_telemetry: dict[str, Any],
+    hp: callable,
+    emit: callable,
+) -> tuple[ScanResult | None, QueueLoopResult, DiagnosticResult, WupHealthResult]:
+    emit("CycleStarted", {"cycle": cycle, "project": str(project.resolve())})
+    _handle_queue_hygiene(project, cycle, hp, emit)
+    verify_config = _handle_post_run_verify_ide(project, state, cycle, hp, emit)
+    scan_result = _handle_scan_phase(
+        project,
+        state,
+        cycle,
+        enable_scan,
+        include_semcod_artifacts,
+        scan_skip_if_clean,
+        scan_skip_after,
+        topology_integration,
+        hp,
+        emit,
+    )
+    queue_result, verify_config = _handle_queue_loop_phase(
+        project,
+        state,
+        cycle,
+        actor,
+        queue_name,
+        max_iterations,
+        topology_integration,
+        verify_config,
+        hp,
+        emit,
+    )
+    idle_scan_result = _handle_scan_after_idle(
+        project,
+        state,
+        cycle,
+        queue_result,
+        scan_after_idle_queue,
+        include_semcod_artifacts,
+        scan_after_idle_min_interval_seconds,
+        topology_integration,
+        cycle_telemetry,
+        hp,
+        emit,
+    )
+    if idle_scan_result is not None:
+        scan_result = idle_scan_result
+    _update_stagnation_state(state, queue_result)
+    diag_result, wup_health = _handle_diagnostics(
+        project,
+        state,
+        cycle,
+        queue_result,
+        idle_diagnostics,
+        diagnostic_tickets,
+        diagnostic_ticket_queue,
+        diagnostic_ticket_priority,
+        diagnostic_state_dir,
+        wup_watch_enabled,
+        wup_diagnostic_tickets,
+        wup_ticket_queue,
+        topology_integration,
+        hp,
+        emit,
+    )
+    return scan_result, queue_result, diag_result, wup_health
+
+
+def _stop_on_strict_diagnostics_failure(
+    *,
+    strict_diagnostics: bool,
+    diag_result: DiagnosticResult,
+    cycle: int,
+    stdio_format: str,
+    emit: callable,
+) -> None:
+    if not (strict_diagnostics and diag_result.status == "failed"):
+        return
+    emit("AutonomousStopped", {"reason": "strict_diagnostics_failure", "cycle": cycle})
+    _stdio_info(
+        "koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure",
+        fmt=stdio_format,
+    )
+    raise SystemExit(2)
+
+
+def _run_drive_and_finalize(
+    *,
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    queue_name: str | None,
+    enable_autopilot: bool,
+    client: Any,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    autopilot_action: str,
+    autopilot_on_idle_only: bool,
+    autopilot_skip_on_diagnostics_fail: bool,
+    autopilot_skip_drive_idle_streak: int,
+    autopilot_skip_statuses: str,
+    diag_result: DiagnosticResult,
+    wup_health: WupHealthResult,
+    topology_integration: bool,
+    cycle_telemetry: dict[str, Any],
+    scan_after_idle_queue: bool,
+    scan_after_idle_min_interval_seconds: float,
+    hp: callable,
+    emit: callable,
+) -> str:
+    _take_pre_drive_snapshot(project, state, wup_health)
+    drive_status, autopilot_backend, autopilot_drive_kind = _handle_autopilot_phase(
+        project,
+        state,
+        cycle,
+        queue_result,
+        enable_autopilot,
+        client,
+        autopilot_ide,
+        drive_prompt,
+        submit,
+        autopilot_action,
+        autopilot_on_idle_only,
+        autopilot_skip_on_diagnostics_fail,
+        autopilot_skip_drive_idle_streak,
+        autopilot_skip_statuses,
+        diag_result,
+        topology_integration,
+        cycle_telemetry,
+        hp,
+        emit,
+    )
+    _handle_post_drive_verification(
+        project,
+        state,
+        cycle,
+        queue_result,
+        drive_status,
+        wup_health,
+        hp,
+        emit,
+    )
+    _run_phase4_advisory_hooks(
+        project=project,
+        state=state,
+        cycle=cycle,
+        queue_result=queue_result,
+        queue_name=queue_name,
+        cycle_telemetry=cycle_telemetry,
+        _hp=hp,
+        _emit=emit,
+    )
+    _emit_cycle_completion_events(
+        project=project,
+        state=state,
+        cycle=cycle,
+        queue_result=queue_result,
+        diag_result=diag_result,
+        wup_health=wup_health,
+        drive_status=drive_status,
+        autopilot_ide=autopilot_ide,
+        autopilot_backend=autopilot_backend,
+        autopilot_drive_kind=autopilot_drive_kind,
+        cycle_telemetry=cycle_telemetry,
+        scan_after_idle_queue=scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+        hp=hp,
+        emit=emit,
+    )
+    return drive_status
 
 
 
@@ -1228,162 +1671,74 @@ def run_cycle(
     cycle_telemetry = _initialize_cycle_telemetry()
     _attach_environment_profile(project, cycle_telemetry, autopilot_ide=autopilot_ide)
     _heal_stale_socket()
-
-    def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
-        _emit_stdio_cycle_event(
-            event_type,
-            payload,
-            command=command,
-            stdio_format=stdio_format,
-            correlation_id=correlation_id,
-        )
-
-    def _hp(msg: str) -> None:
-        _cycle_human_progress(msg, stdio_format=stdio_format)
-
-    _handle_autopilot_events(state, _hp)
-    scan_result: ScanResult | None = None
-    _emit("CycleStarted", {"cycle": cycle, "project": str(project.resolve())})
-
-    _handle_queue_hygiene(project, cycle, _hp, _emit)
-    verify_config = _handle_post_run_verify_ide(project, state, cycle, _hp, _emit)
-
-    scan_result = _handle_scan_phase(
-        project,
-        state,
-        cycle,
-        enable_scan,
-        include_semcod_artifacts,
-        scan_skip_if_clean,
-        scan_skip_after,
-        topology_integration,
-        _hp,
-        _emit,
+    _emit, _hp = _cycle_callbacks(
+        stdio_format=stdio_format,
+        correlation_id=correlation_id,
     )
 
-    queue_result, verify_config = _handle_queue_loop_phase(
-        project,
-        state,
-        cycle,
-        actor,
-        queue_name,
-        max_iterations,
-        topology_integration,
-        verify_config,
-        _hp,
-        _emit,
+    _handle_autopilot_events(state, _hp, autopilot_ide=autopilot_ide)
+    scan_result, queue_result, diag_result, wup_health = _run_pre_drive_cycle_phases(
+        project=project,
+        state=state,
+        cycle=cycle,
+        actor=actor,
+        queue_name=queue_name,
+        enable_scan=enable_scan,
+        max_iterations=max_iterations,
+        include_semcod_artifacts=include_semcod_artifacts,
+        idle_diagnostics=idle_diagnostics,
+        diagnostic_tickets=diagnostic_tickets,
+        diagnostic_ticket_queue=diagnostic_ticket_queue,
+        diagnostic_ticket_priority=diagnostic_ticket_priority,
+        diagnostic_state_dir=diagnostic_state_dir,
+        wup_watch_enabled=wup_watch_enabled,
+        wup_diagnostic_tickets=wup_diagnostic_tickets,
+        wup_ticket_queue=wup_ticket_queue,
+        scan_skip_if_clean=scan_skip_if_clean,
+        scan_skip_after=scan_skip_after,
+        scan_after_idle_queue=scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+        topology_integration=topology_integration,
+        cycle_telemetry=cycle_telemetry,
+        hp=_hp,
+        emit=_emit,
     )
 
-    idle_scan_result = _handle_scan_after_idle(
-        project,
-        state,
-        cycle,
-        queue_result,
-        scan_after_idle_queue,
-        include_semcod_artifacts,
-        scan_after_idle_min_interval_seconds,
-        topology_integration,
-        cycle_telemetry,
-        _hp,
-        _emit,
-    )
-    if idle_scan_result is not None:
-        scan_result = idle_scan_result
-
-    _update_stagnation_state(state, queue_result)
-
-    diag_result, wup_health = _handle_diagnostics(
-        project,
-        state,
-        cycle,
-        queue_result,
-        idle_diagnostics,
-        diagnostic_tickets,
-        diagnostic_ticket_queue,
-        diagnostic_ticket_priority,
-        diagnostic_state_dir,
-        wup_watch_enabled,
-        wup_diagnostic_tickets,
-        wup_ticket_queue,
-        topology_integration,
-        _hp,
-        _emit,
+    _stop_on_strict_diagnostics_failure(
+        strict_diagnostics=strict_diagnostics,
+        diag_result=diag_result,
+        cycle=cycle,
+        stdio_format=stdio_format,
+        emit=_emit,
     )
 
-    if strict_diagnostics and diag_result.status == "failed":
-        _emit("AutonomousStopped", {"reason": "strict_diagnostics_failure", "cycle": cycle})
-        _stdio_info(
-            "koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure",
-            fmt=stdio_format,
-        )
-        raise SystemExit(2)
-
-    _take_pre_drive_snapshot(project, state, wup_health)
-
-    autopilot_status, autopilot_backend, autopilot_drive_kind = _handle_autopilot_phase(
-        project,
-        state,
-        cycle,
-        queue_result,
-        enable_autopilot,
-        client,
-        autopilot_ide,
-        drive_prompt,
-        submit,
-        autopilot_action,
-        autopilot_on_idle_only,
-        autopilot_skip_on_diagnostics_fail,
-        autopilot_skip_drive_idle_streak,
-        autopilot_skip_statuses,
-        diag_result,
-        topology_integration,
-        cycle_telemetry,
-        _hp,
-        _emit,
-    )
-
-    _handle_post_drive_verification(
-        project,
-        state,
-        cycle,
-        queue_result,
-        autopilot_status,
-        wup_health,
-        _hp,
-        _emit,
-    )
-
-    _run_phase4_advisory_hooks(
+    drive_status = _run_drive_and_finalize(
         project=project,
         state=state,
         cycle=cycle,
         queue_result=queue_result,
         queue_name=queue_name,
-        cycle_telemetry=cycle_telemetry,
-        _hp=_hp,
-        _emit=_emit,
-    )
-
-    _emit_cycle_completion_events(
-        project=project,
-        state=state,
-        cycle=cycle,
-        queue_result=queue_result,
+        enable_autopilot=enable_autopilot,
+        client=client,
+        autopilot_ide=autopilot_ide,
+        drive_prompt=drive_prompt,
+        submit=submit,
+        autopilot_action=autopilot_action,
+        autopilot_on_idle_only=autopilot_on_idle_only,
+        autopilot_skip_on_diagnostics_fail=autopilot_skip_on_diagnostics_fail,
+        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+        autopilot_skip_statuses=autopilot_skip_statuses,
         diag_result=diag_result,
         wup_health=wup_health,
-        autopilot_status=autopilot_status,
-        autopilot_ide=autopilot_ide,
-        autopilot_backend=autopilot_backend,
-        autopilot_drive_kind=autopilot_drive_kind,
+        topology_integration=topology_integration,
         cycle_telemetry=cycle_telemetry,
         scan_after_idle_queue=scan_after_idle_queue,
         scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
-        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
         hp=_hp,
         emit=_emit,
     )
 
-    return scan_result, queue_result, autopilot_status, diag_result
+    return scan_result, queue_result, drive_status, diag_result
 
 
 __all__ = ["AutoloopState", "DiagnosticResult", "run_cycle"]

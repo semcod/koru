@@ -126,6 +126,57 @@ class TestKoruProjectPipelineProbe(unittest.TestCase):
             self.assertEqual(_named(report, "koru_project_pipeline").status, WARN)
 
 
+class TestAutonomousServiceStreamProbe(unittest.TestCase):
+    def test_autonomous_service_stream_passes_when_idle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with (
+                patch("koru.autonomous_processes._find_existing_autonomous_processes", return_value=[]),
+                patch("koru.autonomous_processes._find_existing_wup_processes", return_value=[]),
+                patch("koru.doctor._autopilot_stream_socket_summary", return_value=([], 0, 0)),
+            ):
+                report = _run(project)
+            check = _named(report, "autonomous_service_stream")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("stream=single_or_idle", check.detail)
+
+    def test_autonomous_service_stream_warns_on_duplicate_data_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            auto = [
+                SimpleNamespace(pid=111, command=f"koru auto --project {project}"),
+                SimpleNamespace(pid=222, command=f"koru autonomous up --project {project}"),
+            ]
+            wup = [
+                SimpleNamespace(pid=333, command=f"wup watch {project}"),
+                SimpleNamespace(pid=444, command=f"wup watch {project} --mode testql"),
+            ]
+            with (
+                patch("koru.autonomous_processes._find_existing_autonomous_processes", return_value=auto),
+                patch("koru.autonomous_processes._find_existing_wup_processes", return_value=wup),
+                patch(
+                    "koru.doctor._autopilot_stream_socket_summary",
+                    return_value=(
+                        [
+                            "koru-autopilot-vscodium.sock:listening",
+                            "koru-autopilot-vscode.sock:listening",
+                        ],
+                        2,
+                        0,
+                    ),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "autonomous_service_stream")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("multiple_autonomous_loops", check.detail)
+            self.assertIn("multiple_wup_watchers", check.detail)
+            self.assertIn("multiple_autopilot_socket_listeners", check.detail)
+            self.assertIn("pid=111", check.detail)
+
+
 class TestPlanfileCliVersionProbe(unittest.TestCase):
     def test_parses_version_from_stderr(self) -> None:
         from koru.doctor import _check_planfile_cli_version

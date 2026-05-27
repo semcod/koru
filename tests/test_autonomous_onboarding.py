@@ -154,8 +154,7 @@ def test_run_interactive_onboarding_updates_args_from_wizard(monkeypatch, tmp_pa
     monkeypatch.setattr(onboarding.sys, "stdout", SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr(onboarding, "llx_available", lambda: False)
 
-    chosen_project = (tmp_path / "app").resolve()
-    chosen_project.mkdir(parents=True)
+    chosen_project = tmp_path.resolve()
     wizard_result = SimpleNamespace(
         chosen_ide=DetectedIDE(
             id="vscode",
@@ -169,7 +168,13 @@ def test_run_interactive_onboarding_updates_args_from_wizard(monkeypatch, tmp_pa
         ticket_id="PLF-001",
         ticket_title="Quality: reduce complexity",
     )
-    monkeypatch.setattr(onboarding, "run_wizard", lambda **_kwargs: wizard_result)
+    wizard_kwargs: dict[str, object] = {}
+
+    def fake_run_wizard(**kwargs):
+        wizard_kwargs.update(kwargs)
+        return wizard_result
+
+    monkeypatch.setattr(onboarding, "run_wizard", fake_run_wizard)
 
     logs: list[str] = []
     out = onboarding.run_interactive_onboarding(
@@ -183,6 +188,7 @@ def test_run_interactive_onboarding_updates_args_from_wizard(monkeypatch, tmp_pa
     assert args.project == chosen_project
     assert out.created_ticket_id == "PLF-001"
     assert out.strategy_path == ("quality", "cc_refactor")
+    assert wizard_kwargs["project_override"] == tmp_path.resolve()
     assert any("created ticket" in line for line in logs)
 
     state = json.loads((chosen_project / ".koru" / "onboarding.json").read_text(encoding="utf-8"))

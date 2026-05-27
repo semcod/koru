@@ -134,7 +134,8 @@ class TestHandlePostDriveVerification:
             )
 
         assert state.last_drive_verdict["outcome"] in {
-            "completed", "in_progress", "no_change", "degraded", "unknown",
+            "completed", "in_progress", "no_change",
+            "submitted_but_no_effect", "degraded", "unknown",
         }
         assert state.last_drive_verdict["confidence"] >= 0.0
         assert hp.call_count == 2
@@ -203,6 +204,37 @@ class TestHandlePostDriveVerification:
             "escalate_ticket", "switch_ticket", "run_discovery",
             "wait", "reflect", "noop",
         }
+
+    def test_message_sent_without_local_effect_is_explicit_verdict(self, tmp_path: Path):
+        state = AutoloopState()
+        state.last_drive_snapshot = {
+            "git_head": "abc", "git_dirty_count": 0, "test_status": "ok", "timestamp": 100,
+        }
+        state.last_message_sent_ts = 100.0
+        state.autopilot_events = [{"type": "message.sent", "ts": 101.0, "ide": "vscodium"}]
+        hp = MagicMock()
+        emit = MagicMock()
+        qr = _make_queue_result(last_status="waiting_input", waiting=["T-1"])
+
+        with patch(
+            "koru.autonomy.verification_engine.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        ):
+            _handle_post_drive_verification(
+                tmp_path, state, 1, qr, "ok", _make_wup_health("ok"), hp, emit,
+            )
+
+        assert state.last_drive_verdict["outcome"] == "submitted_but_no_effect"
+        assert state.last_drive_verdict["confidence"] == 0.95
+        assert state.last_drive_action_plan["action"] == "escalate_ticket"
+        assert "prompt was submitted but no local work was applied" in state.last_drive_action_plan["reason"]
+        event_names = [call.args[0] for call in emit.call_args_list]
+        assert event_names == ["DriveEffect", "DriveVerdict", "ActionPlan"]
+        effect_payload = emit.call_args_list[0].args[1]
+        assert effect_payload["prompt_submitted"] is True
+        assert effect_payload["work_applied"] is False
+        assert effect_payload["planfile_delta"] == "still_waiting_input"
+        assert any("drive_effect: submitted_but_no_effect" in call.args[0] for call in hp.call_args_list)
 
 
 # ---------------------------------------------------------------------------

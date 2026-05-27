@@ -138,15 +138,15 @@ class AgentIntegrationConfig:
 def _parse_lane(raw: Any) -> LaneConfig | None:
     if not isinstance(raw, dict):
         return None
-    backend = raw.get("backend")
-    if not isinstance(backend, str) or not backend.strip():
+    backend_value = raw.get("backend")
+    if not isinstance(backend_value, str) or not backend_value.strip():
         return None
     ide = raw.get("ide")
     socket = raw.get("socket")
     mcp_server = raw.get("mcp_server")
     prompt_mode = raw.get("prompt_mode")
     return LaneConfig(
-        backend=normalize_agent_backend_id(backend),
+        backend=normalize_agent_backend_id(backend_value),
         ide=ide if isinstance(ide, str) else None,
         socket=socket if isinstance(socket, str) else None,
         mcp_server=mcp_server if isinstance(mcp_server, str) else None,

@@ -39,6 +39,10 @@ export abstract class SharedAutopilotBridgeBase {
     this.operationTrace = [];
   }
 
+  protected currentOperationTrace(): OperationTraceStep[] {
+    return this.operationTrace.slice(-40);
+  }
+
   protected updateStatus(text: string, tooltip: string): void {
     this.status.text = text;
     this.status.tooltip = tooltip;

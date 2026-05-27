@@ -100,8 +100,8 @@ def _parse_ps_row(raw_line: str) -> _PsRow | None:
     line = raw_line.strip()
     if not line:
         return None
-    pid_text, _, rest = line.partition(" ")
-    ppid_text, _, command = rest.strip().partition(" ")
+    pid_text, _pid_separator, rest = line.partition(" ")
+    ppid_text, _ppid_separator, command = rest.strip().partition(" ")
     try:
         return _PsRow(pid=int(pid_text), ppid=int(ppid_text), command=command)
     except ValueError:

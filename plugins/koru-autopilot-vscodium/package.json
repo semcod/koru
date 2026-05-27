@@ -154,8 +154,8 @@
         },
         "koruAutopilot.allowVSCodiumHostInputFallback": {
           "type": "boolean",
-          "default": false,
-          "description": "Allow VSCodium to use OS-level keyboard and clipboard fallbacks. Disabled by default because host input targets the active OS window and can paste or submit in another workspace."
+          "default": true,
+          "description": "Allow VSCodium to use OS-level keyboard fallbacks after registered chat submit commands no-op. Enabled by default because the fallback is accepted only when plugin verification proves the chat input was cleared after submit."
         },
         "koruAutopilot.verifySubmit": {
           "type": "boolean",
@@ -203,6 +203,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "c36d145db1014292"
+    "sha": "18228cba619fc284"
   }
 }

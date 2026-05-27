@@ -43,6 +43,18 @@ class ObserveProcesses:
         return data
 
 
+@dataclass(frozen=True)
+class _ObserveLaunchConfig:
+    project: Path
+    relay_host: str
+    relay_port: int
+    dashboard_host: str
+    dashboard_port: int
+    interval_seconds: float | None
+    key_path: Path
+    python: str
+
+
 def _resolve_serve_settings(config: dict[str, Any]) -> tuple[str, int]:
     serve = config.get("serve") if isinstance(config.get("serve"), dict) else {}
     host = str(serve.get("host") or "127.0.0.1")
@@ -178,34 +190,63 @@ def observe_up(
     project = project.expanduser().resolve()
     observe_down(project)
     runtime_dir(project).mkdir(parents=True, exist_ok=True)
+    launch = _prepare_observe_launch(
+        project,
+        relay_host=relay_host,
+        relay_port=relay_port,
+        dashboard_host=dashboard_host,
+        dashboard_port=dashboard_port,
+        interval_seconds=interval_seconds,
+    )
+    state = _spawn_observe_processes(launch)
+    _write_observe_state(project, state)
+    return state
+
+
+def _prepare_observe_launch(
+    project: Path,
+    *,
+    relay_host: str,
+    relay_port: int,
+    dashboard_host: str | None,
+    dashboard_port: int | None,
+    interval_seconds: float | None,
+) -> _ObserveLaunchConfig:
     config = ensure_observe_config(project)
     key_path = ensure_mesh_key(project, config)
-    python = resolve_observe_python()
-
     serve_host, serve_port = _resolve_serve_settings(config)
-    host = dashboard_host or serve_host
-    port = _pick_free_port(dashboard_port or serve_port)
-    relay_port_resolved = _pick_free_port(relay_port)
+    return _ObserveLaunchConfig(
+        project=project,
+        relay_host=relay_host,
+        relay_port=_pick_free_port(relay_port),
+        dashboard_host=dashboard_host or serve_host,
+        dashboard_port=_pick_free_port(dashboard_port or serve_port),
+        interval_seconds=interval_seconds,
+        key_path=key_path,
+        python=resolve_observe_python(),
+    )
 
+
+def _spawn_observe_processes(launch: _ObserveLaunchConfig) -> ObserveProcesses:
     relay_pid = _spawn(
         "relay",
         _koru_cmd(
-            python,
+            launch.python,
             "mesh",
             "relay",
             "--host",
-            relay_host,
+            launch.relay_host,
             "--port",
-            str(relay_port_resolved),
+            str(launch.relay_port),
             "--key-file",
-            str(key_path),
+            str(launch.key_path),
         ),
-        project,
+        launch.project,
     )
-    relay_url = f"ws://{relay_host}:{relay_port_resolved}"
+    relay_url = f"ws://{launch.relay_host}:{launch.relay_port}"
 
     vision_args = _koru_cmd(
-        python,
+        launch.python,
         "vision",
         "agent",
         "--publish-mesh",
@@ -214,40 +255,43 @@ def observe_up(
         "--peer-id",
         socket.gethostname(),
         "--key-file",
-        str(key_path),
+        str(launch.key_path),
     )
-    if interval_seconds is not None:
-        vision_args.extend(["--interval", str(interval_seconds)])
-    vision_pid = _spawn("vision", vision_args, project)
+    if launch.interval_seconds is not None:
+        vision_args.extend(["--interval", str(launch.interval_seconds)])
+    vision_pid = _spawn("vision", vision_args, launch.project)
 
     dashboard_pid = _spawn(
         "dashboard",
         _koru_cmd(
-            python,
+            launch.python,
             "serve",
             "--project",
-            str(project),
+            str(launch.project),
             "--host",
-            host,
+            launch.dashboard_host,
             "--port",
-            str(port),
+            str(launch.dashboard_port),
             "--no-open",
         ),
-        project,
+        launch.project,
     )
 
-    dashboard_url = f"http://{host}:{port}"
-    state = ObserveProcesses(
-        project=project,
+    dashboard_url = f"http://{launch.dashboard_host}:{launch.dashboard_port}"
+    return ObserveProcesses(
+        project=launch.project,
         relay_pid=relay_pid,
         vision_pid=vision_pid,
         dashboard_pid=dashboard_pid,
         relay_url=relay_url,
         dashboard_url=dashboard_url,
         grid_url=f"{dashboard_url}/grid",
-        key_path=key_path,
-        python=python,
+        key_path=launch.key_path,
+        python=launch.python,
     )
+
+
+def _write_observe_state(project: Path, state: ObserveProcesses) -> None:
     state_file(project).write_text(
         json.dumps(
             {
@@ -260,7 +304,6 @@ def observe_up(
         + "\n",
         encoding="utf-8",
     )
-    return state
 
 
 def observe_down(project: Path) -> dict[str, bool]:

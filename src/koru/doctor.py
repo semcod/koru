@@ -38,6 +38,8 @@ in this order so reports diff cleanly across runs):
                         project `.venv` alignment.
     autopilot_plugin_bundle — expected plugin version, package metadata, lockfile,
                         and bundled VSIX asset alignment.
+    autonomous_service_stream — active ``koru auto``/WUP/autopilot socket streams
+                        that may race when multiple services target one project.
     autopilot_env     — selected autopilot lane/IDE/socket environment.
     ide_runtime_presence — requested IDE is visible as a running process.
     autopilot_socket  — selected autopilot socket exists and accepts connects.
@@ -248,6 +250,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("policy_yaml", _check_policy_yaml),
         ("koru_project_pipeline", _check_koru_project_pipeline),
         ("autonomous_environ", autonomous_environ_doctor_probe),
+        ("autonomous_service_stream", _check_autonomous_service_stream),
         ("koru_runtime_identity", _check_koru_runtime_identity),
         ("python_venv_alignment", _check_python_venv_alignment),
         ("autopilot_plugin_bundle", _check_autopilot_plugin_bundle),
@@ -321,6 +324,136 @@ def _check_interface_registry(_project: Path) -> tuple[str, str]:
     family_summary = ", ".join(f"{name}={count}" for name, count in sorted(families.items()))
     preview = f"{', '.join(ids[:5])}{' ...' if len(ids) > 5 else ''}"
     return PASS, f"{len(ids)} interfaces: {preview}; families: {family_summary}"
+
+
+def _short_command(command: str, *, limit: int = 96) -> str:
+    normalized = " ".join(command.split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 1] + "…"
+
+
+def _autopilot_stream_socket_paths() -> list[Path]:
+    runtime = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+    try:
+        candidates = [
+            path
+            for path in runtime.glob("koru-autopilot*.sock")
+            if path.exists()
+        ]
+    except OSError:
+        candidates = []
+    selected = _resolve_autopilot_socket_for_doctor()
+    if selected.exists() and selected not in candidates:
+        candidates.append(selected)
+    return sorted(candidates, key=lambda path: str(path))
+
+
+def _autopilot_stream_socket_summary() -> tuple[list[str], int, int]:
+    from koru.autonomy.environment import probe_socket_health
+
+    summaries: list[str] = []
+    listening = 0
+    stale = 0
+    for path in _autopilot_stream_socket_paths():
+        health = probe_socket_health(path, connect_timeout=0.15)
+        if health.listening:
+            listening += 1
+            state = "listening"
+        elif health.stale:
+            stale += 1
+            state = "stale"
+        else:
+            state = "present"
+        summaries.append(f"{path.name}:{state}")
+    return summaries, listening, stale
+
+
+def _process_stream_summary(
+    processes: list[object],
+    *,
+    label: str,
+    limit: int = 3,
+) -> list[str]:
+    rows = []
+    for proc in processes[:limit]:
+        pid = getattr(proc, "pid", "?")
+        command = _short_command(str(getattr(proc, "command", "")))
+        rows.append(f"{label}[pid={pid} cmd={command!r}]")
+    remaining = len(processes) - len(rows)
+    if remaining > 0:
+        rows.append(f"{label}[+{remaining} more]")
+    return rows
+
+
+def _drop_non_service_autonomous_matches(processes: list[object]) -> list[object]:
+    filtered = []
+    for proc in processes:
+        command = str(getattr(proc, "command", ""))
+        lowered = command.lower()
+        if "pytest" in lowered or " tests/" in lowered:
+            continue
+        filtered.append(proc)
+    return filtered
+
+
+def _autonomous_stream_issue_codes(
+    *,
+    auto_count: int,
+    wup_count: int,
+    socket_count: int,
+    listening_socket_count: int,
+    stale_socket_count: int,
+) -> list[str]:
+    issues: list[str] = []
+    if auto_count > 1:
+        issues.append("multiple_autonomous_loops")
+    if wup_count > 1:
+        issues.append("multiple_wup_watchers")
+    if auto_count == 0 and wup_count > 0:
+        issues.append("orphan_wup_watcher")
+    if listening_socket_count > 1:
+        issues.append("multiple_autopilot_socket_listeners")
+    if stale_socket_count > 0:
+        issues.append("stale_autopilot_socket_stream")
+    if socket_count > 1 and listening_socket_count == 0:
+        issues.append("multiple_autopilot_socket_files")
+    return issues
+
+
+def _check_autonomous_service_stream(project: Path) -> tuple[str, str]:
+    from koru.autonomous_processes import (
+        _find_existing_autonomous_processes,
+        _find_existing_wup_processes,
+    )
+
+    auto_loops = _find_existing_autonomous_processes(project)
+    auto_loops = _drop_non_service_autonomous_matches(auto_loops)
+    wup_watchers = _find_existing_wup_processes(project)
+    socket_summaries, listening_sockets, stale_sockets = _autopilot_stream_socket_summary()
+    issues = _autonomous_stream_issue_codes(
+        auto_count=len(auto_loops),
+        wup_count=len(wup_watchers),
+        socket_count=len(socket_summaries),
+        listening_socket_count=listening_sockets,
+        stale_socket_count=stale_sockets,
+    )
+    detail_bits = [
+        f"autonomous_loops={len(auto_loops)}",
+        f"wup_watchers={len(wup_watchers)}",
+        f"autopilot_sockets={len(socket_summaries)}",
+        f"listening_sockets={listening_sockets}",
+    ]
+    if socket_summaries:
+        detail_bits.append(f"sockets={','.join(socket_summaries)}")
+    detail_bits.extend(_process_stream_summary(auto_loops, label="auto"))
+    detail_bits.extend(_process_stream_summary(wup_watchers, label="wup"))
+    if issues:
+        detail_bits.append(f"issues={','.join(issues)}")
+        detail_bits.append("recovery=stop duplicate koru auto/WUP services or gc stale sockets")
+        return WARN, "; ".join(detail_bits)
+    detail_bits.append("stream=single_or_idle")
+    return PASS, "; ".join(detail_bits)
 
 
 def _autopilot_debug_log_path() -> Path:
@@ -576,6 +709,18 @@ def _calculate_success_failure_indices(relevant: list[str]) -> tuple[int, int]:
     return last_success_index, last_failure_index
 
 
+@dataclass(frozen=True)
+class _ChatControlAnalysis:
+    detail_bits: list[str]
+    command_missing_latest: bool
+    chat_metrics: dict[str, int]
+    daemon_successes: int
+    last_success_index: int
+    last_failure_index: int
+    last_activity_success_index: int
+    last_activity_failure_index: int
+
+
 def _build_chat_control_detail_bits(
     selected: str,
     relevant: list[str],
@@ -701,11 +846,11 @@ def _chat_control_result(
     return WARN, "; ".join(detail_bits + ["no recent paste/submit success observed"])
 
 
-def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
-    selected, _path, relevant, activity, early_status, early_detail = _chat_control_context(project)
-    if early_status is not None and early_detail is not None:
-        return early_status, early_detail
-
+def _analyze_chat_control(
+    selected: str,
+    relevant: list[str],
+    activity: list[str],
+) -> _ChatControlAnalysis:
     (
         daemon_successes,
         daemon_failures,
@@ -716,30 +861,43 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
     command_available_index, command_missing_index = _calculate_command_indices(relevant)
     last_success_index, last_failure_index = _calculate_success_failure_indices(relevant)
 
-    command_available = command_available_index >= 0
-    command_missing_latest = command_missing_index > max(
-        command_available_index,
-        last_success_index,
-    )
-    detail_bits = _build_chat_control_detail_bits(
-        selected,
-        relevant,
-        chat_metrics,
-        daemon_successes,
-        daemon_failures,
-        activity,
-        command_available,
-        command_missing_index,
-    )
-    return _chat_control_result(
-        detail_bits=detail_bits,
-        command_missing_latest=command_missing_latest,
+    return _ChatControlAnalysis(
+        detail_bits=_build_chat_control_detail_bits(
+            selected,
+            relevant,
+            chat_metrics,
+            daemon_successes,
+            daemon_failures,
+            activity,
+            command_available_index >= 0,
+            command_missing_index,
+        ),
+        command_missing_latest=command_missing_index
+        > max(command_available_index, last_success_index),
         chat_metrics=chat_metrics,
         daemon_successes=daemon_successes,
         last_success_index=last_success_index,
         last_failure_index=last_failure_index,
         last_activity_success_index=last_activity_success_index,
         last_activity_failure_index=last_activity_failure_index,
+    )
+
+
+def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
+    selected, _path, relevant, activity, early_status, early_detail = _chat_control_context(project)
+    if early_status is not None and early_detail is not None:
+        return early_status, early_detail
+
+    analysis = _analyze_chat_control(selected, relevant, activity)
+    return _chat_control_result(
+        detail_bits=analysis.detail_bits,
+        command_missing_latest=analysis.command_missing_latest,
+        chat_metrics=analysis.chat_metrics,
+        daemon_successes=analysis.daemon_successes,
+        last_success_index=analysis.last_success_index,
+        last_failure_index=analysis.last_failure_index,
+        last_activity_success_index=analysis.last_activity_success_index,
+        last_activity_failure_index=analysis.last_activity_failure_index,
     )
 
 
@@ -1667,4 +1825,3 @@ def _check_ci_command(project: Path) -> tuple[str, str]:
     if Path(first).is_file():
         return PASS, f"`{policy.ci_command}` (file exists)"
     return FAIL, f"ci.command first token `{first}` not on PATH"
-

@@ -127,18 +127,18 @@ def _build_tools_parser() -> argparse.ArgumentParser:
     return parser
 
 def _tools_main(argv: list[str]) -> int:
-    args = _build_tools_parser().parse_args(argv)
-    if args.subcommand != 'detect':
-        print(f'koru tools: unknown subcommand {args.subcommand!r}', file=sys.stderr)
+    tools_args = _build_tools_parser().parse_args(argv)
+    if tools_args.subcommand != 'detect':
+        print(f'koru tools: unknown subcommand {tools_args.subcommand!r}', file=sys.stderr)
         return 2
-    registry, registry_path = load_tool_registry(args.registry)
-    results = detect_tools(args.project.resolve(), registry)
-    if args.output_format == 'json':
-        payload = {'project': str(args.project), 'registry': str(registry_path) if registry_path else None, 'tools': results}
+    registry, registry_path = load_tool_registry(tools_args.registry)
+    results = detect_tools(tools_args.project.resolve(), registry)
+    if tools_args.output_format == 'json':
+        payload = {'project': str(tools_args.project), 'registry': str(registry_path) if registry_path else None, 'tools': results}
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print(render_tools_detect_text(results, registry_path=registry_path))
-    emit_management_event(tool='koru.tools.detect', action='completed', status='completed', message=f'tools={len(results)}', details={'project': str(args.project), 'registry': str(registry_path) if registry_path else None, 'available': sum((1 for r in results if r.get('available')))})
+    emit_management_event(tool='koru.tools.detect', action='completed', status='completed', message=f'tools={len(results)}', details={'project': str(tools_args.project), 'registry': str(registry_path) if registry_path else None, 'available': sum((1 for r in results if r.get('available')))})
     return 0
 
 def _build_task_parser() -> argparse.ArgumentParser:
@@ -224,31 +224,31 @@ def _merge_cli_scaffold(scaffold: dict[str, Any] | None, *, source_tool: str | N
         scaffold['files'] = list(files)
     return scaffold
 
-def _print_task_result(created: object, args: Any) -> None:
+def _print_task_result(created: object, task_args: Any) -> None:
     action = 'reused' if getattr(created, 'reused', False) else 'created'
     print(f'koru task: ✓ {action} {created.ticket_id} in {created.path}')
     print(f'  name:  {created.name}')
-    print(f"  queue: {args.queue_name or 'default'}")
-    if args.tool_id:
-        print(f'  tool:  {args.tool_id}')
+    print(f"  queue: {task_args.queue_name or 'default'}")
+    if task_args.tool_id:
+        print(f'  tool:  {task_args.tool_id}')
         print('  note: scaffold ticket created — fill concrete executor inputs before queue run')
     print('Next: run `koru` to get the LLM prompt, or `koru --queue` to execute one task.')
-    emit_management_event(tool='koru.task', action='created', status='completed', message=created.name, queue=args.queue_name, details={'ticket_id': created.ticket_id, 'project': str(args.project), 'sprint': args.sprint, 'priority': args.priority})
+    emit_management_event(tool='koru.task', action='created', status='completed', message=created.name, queue=task_args.queue_name, details={'ticket_id': created.ticket_id, 'project': str(task_args.project), 'sprint': task_args.sprint, 'priority': task_args.priority})
 
 def _task_main(argv: list[str]) -> int:
-    args = _build_task_parser().parse_args(argv)
+    task_args = _build_task_parser().parse_args(argv)
     scaffold: dict[str, Any] | None = None
-    if args.tool_id:
-        scaffold, _registry_path, error_code = _load_tool_scaffold(args.tool_id, args.tool_registry, args.tool_kind)
+    if task_args.tool_id:
+        scaffold, _registry_path, error_code = _load_tool_scaffold(task_args.tool_id, task_args.tool_registry, task_args.tool_kind)
         if error_code is not None:
             return error_code
-    scaffold = _merge_cli_scaffold(scaffold, source_tool=args.source_tool, source_signal=args.source_signal, dedupe_key=args.dedupe_key, files=args.files)
+    scaffold = _merge_cli_scaffold(scaffold, source_tool=task_args.source_tool, source_signal=task_args.source_signal, dedupe_key=task_args.dedupe_key, files=task_args.files)
     try:
-        created = create_nl_task(args.project, ' '.join(args.text), sprint=args.sprint, queue_name=args.queue_name, priority=args.priority, scaffold=scaffold)
+        created = create_nl_task(task_args.project, ' '.join(task_args.text), sprint=task_args.sprint, queue_name=task_args.queue_name, priority=task_args.priority, scaffold=scaffold)
     except ValueError as exc:
         print(f'koru task: {exc}')
         return 2
-    _print_task_result(created, args)
+    _print_task_result(created, task_args)
     return 0
 
 def _serve_main(argv: list[str]) -> int:
@@ -261,24 +261,33 @@ def _local_serve_main(argv: list[str]) -> int:
 
 def _agent_main(argv: list[str]) -> int:
     from koru.agent_cli_helpers import print_agent_list, run_agent_handoff, try_agent_env_exports
-    args = _build_agent_parser().parse_args(argv)
-    project = args.project.resolve()
-    env_code = try_agent_env_exports(args)
+    agent_args = _build_agent_parser().parse_args(argv)
+    project = agent_args.project.resolve()
+    env_code = try_agent_env_exports(agent_args)
     if env_code is not None:
         return env_code
-    if args.list:
-        print_agent_list(args, detect_agent_options(project))
+    if agent_args.list:
+        print_agent_list(agent_args, detect_agent_options(project))
         return 0
-    return run_agent_handoff(project, args)
+    return run_agent_handoff(project, agent_args)
 
-def _is_bare_invocation(args: argparse.Namespace) -> bool:
+def _is_bare_invocation(cli_namespace: argparse.Namespace) -> bool:
     """True when the user typed only ``koru`` (or ``koru --project P``).
 
     Bare = no action flag (init/bootstrap/context/queue/watch) and no
     ``--command``. We route this to the markdown brief — the friendliest
     starting point for both humans and LLM agents.
     """
-    return not (args.init or args.init_agent_lane or args.doctor or args.bootstrap or args.context or args.queue or args.watch or args.command)
+    return not (
+        cli_namespace.init
+        or cli_namespace.init_agent_lane
+        or cli_namespace.doctor
+        or cli_namespace.bootstrap
+        or cli_namespace.context
+        or cli_namespace.queue
+        or cli_namespace.watch
+        or cli_namespace.command
+    )
 
 def _build_runtime_context_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog='koru runtime-context', description='Show the current project runtime context: systems, libraries, algorithms, APIs, applications, pipelines, and topology.')
@@ -301,15 +310,15 @@ def _render_runtime_context_text(context: dict[str, Any]) -> str:
     return '\n'.join(lines)
 
 def _runtime_context_main(argv: list[str]) -> int:
-    args = _build_runtime_context_parser().parse_args(argv)
+    runtime_args = _build_runtime_context_parser().parse_args(argv)
     try:
         from planfile.runtime_context import build_runtime_context
     except ImportError as exc:
         print('koru runtime-context: planfile.runtime_context is not available. Install/update semcod/planfile or add it to PYTHONPATH.', file=sys.stderr)
         print(str(exc), file=sys.stderr)
         return 2
-    context = build_runtime_context(args.project)
-    if args.output_format == 'text':
+    context = build_runtime_context(runtime_args.project)
+    if runtime_args.output_format == 'text':
         print(_render_runtime_context_text(context))
     else:
         print(json.dumps(context, indent=2, sort_keys=True, default=str))
@@ -331,16 +340,16 @@ def _agent_backends_main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog='koru agent-backends')
     parser.add_argument('--format', dest='output_format', choices=('text', 'json'), default='text')
     parser.add_argument('backend_id', nargs='?', default=None, metavar='BACKEND_ID', help='When set, print one profile; otherwise list every profile id.')
-    args = parser.parse_args(argv)
-    if args.backend_id:
-        profile = get_agent_backend_profile(args.backend_id)
+    backend_args = parser.parse_args(argv)
+    if backend_args.backend_id:
+        profile = get_agent_backend_profile(backend_args.backend_id)
         if profile is None:
-            sys.stderr.write(f'koru agent-backends: unknown id {args.backend_id!r}\n')
+            sys.stderr.write(f'koru agent-backends: unknown id {backend_args.backend_id!r}\n')
             sys.stderr.write('  run `koru agent-backends` for ids.\n')
             return 2
     else:
         profile = None
-    if args.output_format == 'json':
+    if backend_args.output_format == 'json':
         if profile:
             print(json.dumps(asdict(profile), indent=2, sort_keys=True))
         else:
@@ -369,8 +378,8 @@ def _refactor_planfile_handoff_main(argv: list[str]) -> int:
     from koru.refactor_planfile_handoff import render_planfile_refactor_handoff
     p = argparse.ArgumentParser(prog='koru refactor-planfile-handoff', description='Print markdown instructions for attaching project/analysis.toon.yaml and drafting planfile refactor tickets in the IDE chat.')
     p.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    args = p.parse_args(argv)
-    print(render_planfile_refactor_handoff(args.project), end='')
+    handoff_args = p.parse_args(argv)
+    print(render_planfile_refactor_handoff(handoff_args.project), end='')
     return 0
 
 def ide_router_main(argv: list[str]) -> int:
@@ -381,10 +390,10 @@ def ide_router_main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog='koru ide-router')
     p.add_argument('--cli-ide', default='auto', help='Preview merge as if autonomous passed --autopilot-ide (default: auto).')
     p.add_argument('--format', choices=('text', 'json'), default='text', help='text lines (default) or json for scripts')
-    args = p.parse_args(argv)
-    route = resolve_ide_route(cli_autopilot_ide=args.cli_ide)
+    router_args = p.parse_args(argv)
+    route = resolve_ide_route(cli_autopilot_ide=router_args.cli_ide)
     payload = {'autopilot_ide': route.autopilot_ide, 'headless': route.headless, 'primary_surface': route.primary_surface, 'recommend_mcp': route.recommend_mcp, 'recommend_autopilot_drive': route.recommend_autopilot_drive, 'notes': route.notes}
-    if args.format == 'json':
+    if router_args.format == 'json':
         print(json.dumps(payload, sort_keys=True))
     else:
         for key, val in payload.items():
@@ -477,39 +486,39 @@ def _auto_main(argv: list[str]) -> int:
     return autonomous_main(argv, invoked_as_auto=True)
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {'doctor': _doctor_subcommand_main, 'configure': lambda argv: __import__('koru.configurator', fromlist=['configure_main']).configure_main(argv), 'mesh': lambda argv: __import__('korumesh.cli', fromlist=['mesh_main']).mesh_main(argv), 'vision': lambda argv: __import__('koruvision.cli', fromlist=['vision_main']).vision_main(argv), 'observe': lambda argv: __import__('koruobserve.cli', fromlist=['observe_main']).observe_main(argv), 'init-ci': _init_ci_main, 'init-ide': _init_ide_main, 'agent-backends': _agent_backends_main, 'task': _task_main, 'agent': _agent_main, 'local-serve': _local_serve_main, 'serve': _serve_main, 'scan': _scan_main, 'refactor-planfile-handoff': _refactor_planfile_handoff_main, 'gate': _gate_main, 'queue': _queue_main, 'gc': _gc_main, 'git': git_main, 'tools': _tools_main, 'mcp-serve': _mcp_serve_main, 'ide-router': ide_router_main, 'autopilot': autopilot_main, 'autoloop': autoloop_main, 'autonomous': autonomous_main, 'auto': lambda argv: _auto_main(argv), 'wizard': lambda argv: __import__('koru.wizard.cli', fromlist=['wizard_main']).wizard_main(argv), 'dsl': _dsl_main, 'api': _api_main, 'topology': _topology_main, 'runtime-context': _runtime_context_main, 'dev': dev_main}
 
-def _context_main(args: argparse.Namespace) -> int:
-    ctx = build_context(project=args.project, ticket_id=args.ticket, queue_name=args.queue_name, include_fixtures=getattr(args, 'include_fixtures', None))
-    if args.output_format == 'markdown':
+def _context_main(context_args: argparse.Namespace) -> int:
+    ctx = build_context(project=context_args.project, ticket_id=context_args.ticket, queue_name=context_args.queue_name, include_fixtures=getattr(context_args, 'include_fixtures', None))
+    if context_args.output_format == 'markdown':
         print(render_markdown_handoff(ctx))
     else:
         print(json.dumps(ctx, indent=2, sort_keys=True))
     return 0
 
-def _bootstrap_main(args: argparse.Namespace) -> int:
-    emit_management_event(tool='koru.bootstrap', action='started', status='running', message=str(args.from_file or ''), queue=args.queue_name, details={'project': str(args.project), 'sprint': args.sprint})
-    if args.from_file is None:
+def _bootstrap_main(bootstrap_args: argparse.Namespace) -> int:
+    emit_management_event(tool='koru.bootstrap', action='started', status='running', message=str(bootstrap_args.from_file or ''), queue=bootstrap_args.queue_name, details={'project': str(bootstrap_args.project), 'sprint': bootstrap_args.sprint})
+    if bootstrap_args.from_file is None:
         parser = _build_parser()
         parser.error('--bootstrap requires --from PATH')
     try:
-        report = import_flat_pipeline(args.from_file, args.project, sprint=args.sprint, overwrite=args.force)
+        report = import_flat_pipeline(bootstrap_args.from_file, bootstrap_args.project, sprint=bootstrap_args.sprint, overwrite=bootstrap_args.force)
     except FileExistsError as exc:
         print(f'koru bootstrap: {exc}')
-        emit_management_event(tool='koru.bootstrap', action='failed', status='failed', level='error', message=str(exc), queue=args.queue_name)
+        emit_management_event(tool='koru.bootstrap', action='failed', status='failed', level='error', message=str(exc), queue=bootstrap_args.queue_name)
         return 1
     except (FileNotFoundError, ValueError) as exc:
         print(f'koru bootstrap: {exc}')
-        emit_management_event(tool='koru.bootstrap', action='failed', status='failed', level='error', message=str(exc), queue=args.queue_name)
+        emit_management_event(tool='koru.bootstrap', action='failed', status='failed', level='error', message=str(exc), queue=bootstrap_args.queue_name)
         return 2
     print('koru bootstrap: ✓ imported')
     print(report.summary())
-    emit_management_event(tool='koru.bootstrap', action='completed', status='completed', message=report.summary(), queue=args.queue_name, details={'project': str(args.project), 'sprint': args.sprint})
+    emit_management_event(tool='koru.bootstrap', action='completed', status='completed', message=report.summary(), queue=bootstrap_args.queue_name, details={'project': str(bootstrap_args.project), 'sprint': bootstrap_args.sprint})
     return 0
 
-def _command_loop_main(args: argparse.Namespace) -> int:
-    emit_management_event(tool='koru.loop', action='started', status='running', message=args.command, details={'workspace': str(args.workspace), 'include': args.include})
-    repositories = discover_repositories(args.workspace, args.include)
-    command = shlex.split(args.command)
-    report = run_closed_loop(command=command, repositories=repositories, max_rounds=args.max_rounds)
+def _command_loop_main(loop_args: argparse.Namespace) -> int:
+    emit_management_event(tool='koru.loop', action='started', status='running', message=loop_args.command, details={'workspace': str(loop_args.workspace), 'include': loop_args.include})
+    repositories = discover_repositories(loop_args.workspace, loop_args.include)
+    command = shlex.split(loop_args.command)
+    report = run_closed_loop(command=command, repositories=repositories, max_rounds=loop_args.max_rounds)
     print(f'koru: repos={len(report.succeeded) + len(report.failed)} succeeded={len(report.succeeded)} failed={len(report.failed)} rounds={report.rounds_executed}')
     for repository in report.failed:
         print(f'FAILED: {repository}')
@@ -537,21 +546,21 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
             print(f"koru: switching to project venv CLI: {' '.join(reexec_argv)}", file=sys.stderr)
             os.execvpe(reexec_argv[0], reexec_argv, env)
 
-def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int | None:
-    if args.doctor:
-        return _doctor_main(args, raw_args)
-    if args.init_agent_lane:
-        return _init_agent_lane_main(args)
-    if args.init:
-        return _init_main(args)
-    if args.context:
-        return _context_main(args)
-    if args.bootstrap:
-        return _bootstrap_main(args)
-    if args.watch:
-        return _watch_main(args)
-    if args.queue:
-        return _queue_run_main(args)
+def _dispatch_flag_action(cli_namespace: argparse.Namespace, raw_args: list[str]) -> int | None:
+    if cli_namespace.doctor:
+        return _doctor_main(cli_namespace, raw_args)
+    if cli_namespace.init_agent_lane:
+        return _init_agent_lane_main(cli_namespace)
+    if cli_namespace.init:
+        return _init_main(cli_namespace)
+    if cli_namespace.context:
+        return _context_main(cli_namespace)
+    if cli_namespace.bootstrap:
+        return _bootstrap_main(cli_namespace)
+    if cli_namespace.watch:
+        return _watch_main(cli_namespace)
+    if cli_namespace.queue:
+        return _queue_run_main(cli_namespace)
     return None
 
 def main() -> int:
@@ -561,20 +570,20 @@ def main() -> int:
     if subcommand in _SUBCOMMANDS:
         return _SUBCOMMANDS[subcommand](raw_args[1:])
     try:
-        args = _build_parser().parse_args(raw_args)
+        main_args = _build_parser().parse_args(raw_args)
     except SystemExit as exc:
         code = exc.code if isinstance(exc.code, int) else 1
         if code == 2 and ('doctor' in raw_args or '--doctor' in raw_args):
             _maybe_print_project_venv_hint(raw_args)
         return code
-    if _is_bare_invocation(args):
-        args.context = True
-        args.output_format = 'markdown'
-    if (rc := _dispatch_flag_action(args, raw_args)) is not None:
+    if _is_bare_invocation(main_args):
+        main_args.context = True
+        main_args.output_format = 'markdown'
+    if (rc := _dispatch_flag_action(main_args, raw_args)) is not None:
         return rc
-    if not args.command:
+    if not main_args.command:
         parser = _build_parser()
         parser.error('--command is required unless --queue is used')
-    return _command_loop_main(args)
+    return _command_loop_main(main_args)
 if __name__ == '__main__':
     raise SystemExit(main())

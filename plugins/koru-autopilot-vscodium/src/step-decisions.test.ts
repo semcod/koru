@@ -137,6 +137,16 @@ function testInterpretPostSubmitProbeStrictEmpty(): void {
   assert(empty.action === "accept", "strict host submit accepts empty input");
 }
 
+function testVSCodiumRegisteredSubmitMustVerifyEmptyInput(): void {
+  const result = interpretPostSubmitProbe(
+    "unrelated copied text from editor",
+    "Ticket prompt that was pasted into VSCodium chat",
+    { requireEmpty: true },
+  );
+  assert(result.action === "retry", "VSCodium registered submit must reject non-empty probe");
+  assert(!result.cleared, "VSCodium registered submit requires an empty input after submit");
+}
+
 testReadVerifySubmitPrefersNewSetting();
 testShouldVerifyPostSubmitAllPluginIdes();
 testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled();
@@ -145,4 +155,5 @@ testShouldVerifyPrePasteBusy();
 testDecideBusyInputAction();
 testInterpretPostSubmitProbeRetry();
 testInterpretPostSubmitProbeStrictEmpty();
+testVSCodiumRegisteredSubmitMustVerifyEmptyInput();
 console.log("step-decisions tests: ok");

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -14,6 +15,7 @@ class AutoloopState:
     scan_last_head: str = ""
     wup_seen_events: int = 0
     autopilot_events: list[dict[str, Any]] = field(default_factory=list)
+    autopilot_event_cursor_ts: float = field(default_factory=time.time)
     last_driven_prompt: str = ""
     last_driven_kind: str = ""
     last_llm_reflection_summary: str = ""

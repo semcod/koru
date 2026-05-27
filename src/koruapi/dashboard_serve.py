@@ -99,7 +99,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
 @dataclass(frozen=True)
 class _BoundDashboard:
     server: ThreadingHTTPServer
-    actual: int
+    bound_port: int
     requested: int
     url: str
     urls: list[str]
@@ -144,8 +144,8 @@ def _log_bind_summary(
     bound: _BoundDashboard,
     log: Callable[[str], None],
 ) -> None:
-    if config.auto_port and bound.requested != 0 and bound.actual != bound.requested:
-        log(f"koru serve: port {bound.requested} busy — bound to {bound.actual} instead")
+    if config.auto_port and bound.requested != 0 and bound.bound_port != bound.requested:
+        log(f"koru serve: port {bound.requested} busy — bound to {bound.bound_port} instead")
     log(f"koru serve: dashboard at {bound.url}")
     if len(bound.urls) > 1:
         log("koru serve: LAN URLs:")
@@ -155,11 +155,11 @@ def _log_bind_summary(
 
 
 def _prepare_bound_dashboard(config: ServeConfig) -> _BoundDashboard:
-    server, actual, requested = bind_serve_server(config)
+    server, bound_port, requested = bind_serve_server(config)
     write_serve_endpoint_file(config)
     return _BoundDashboard(
         server=server,
-        actual=actual,
+        bound_port=bound_port,
         requested=requested,
         url=f"http://{config.host}:{config.port}/",
         urls=_dashboard_urls(config),

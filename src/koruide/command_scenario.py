@@ -228,6 +228,57 @@ def _validate_mode(mode: str, errors: list[str], warnings: list[str]) -> None:
         )
 
 
+def _scenario_ide_and_steps(raw: dict[str, Any], errors: list[str]) -> tuple[str, list[Any]]:
+    ide = str(raw.get("ide") or "").strip().lower()
+    if ide not in supported_catalog_ides():
+        errors.append(f"unknown ide {ide!r}; supported: {', '.join(supported_catalog_ides())}")
+        ide = ide or "unknown"
+
+    steps = raw.get("steps")
+    if not isinstance(steps, list) or not steps:
+        errors.append("steps must be a non-empty array")
+        steps = []
+    return ide, steps
+
+
+def _validate_scenario_steps(
+    steps: list[Any],
+    ide: str,
+    errors: list[str],
+    warnings: list[str],
+) -> list[dict[str, Any]]:
+    catalog_rows = _rows_by_command(ide) if ide in supported_catalog_ides() else {}
+    normalized_steps: list[dict[str, Any]] = []
+    for index, step in enumerate(steps, start=1):
+        step_errors, step_warnings, normalized_step = _validate_step(
+            index,
+            step,
+            ide,
+            catalog_rows,
+        )
+        errors.extend(step_errors)
+        warnings.extend(step_warnings)
+        if normalized_step:
+            normalized_steps.append(normalized_step)
+    return normalized_steps
+
+
+def _normalized_scenario(
+    raw: dict[str, Any],
+    ide: str,
+    normalized_steps: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema": "koru.ide_command_scenario.v1",
+        "ide": ide,
+        "mode": str(raw.get("mode") or "plan"),
+        "requires_runtime_verification": bool(raw.get("requires_runtime_verification", True)),
+        "steps": normalized_steps,
+        **({"name": str(raw.get("name"))} if raw.get("name") else {}),
+        **({"description": str(raw.get("description"))} if raw.get("description") else {}),
+    }
+
+
 def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
     """Validate a scenario against Koru's static command catalog.
 
@@ -245,40 +296,11 @@ def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
             normalized={},
         )
 
-    ide = str(raw.get("ide") or "").strip().lower()
-    if ide not in supported_catalog_ides():
-        errors.append(f"unknown ide {ide!r}; supported: {', '.join(supported_catalog_ides())}")
-        ide = ide or "unknown"
-
-    steps = raw.get("steps")
-    if not isinstance(steps, list) or not steps:
-        errors.append("steps must be a non-empty array")
-        steps = []
-
-    catalog_rows = _rows_by_command(ide) if ide in supported_catalog_ides() else {}
-    normalized_steps: list[dict[str, Any]] = []
-    
-    for index, step in enumerate(steps, start=1):
-        step_errors, step_warnings, normalized_step = _validate_step(
-            index, step, ide, catalog_rows
-        )
-        errors.extend(step_errors)
-        warnings.extend(step_warnings)
-        if normalized_step:
-            normalized_steps.append(normalized_step)
-
-    normalized = {
-        "schema": "koru.ide_command_scenario.v1",
-        "ide": ide,
-        "mode": str(raw.get("mode") or "plan"),
-        "requires_runtime_verification": bool(raw.get("requires_runtime_verification", True)),
-        "steps": normalized_steps,
-        **({"name": str(raw.get("name"))} if raw.get("name") else {}),
-        **({"description": str(raw.get("description"))} if raw.get("description") else {}),
-    }
-    
+    ide, steps = _scenario_ide_and_steps(raw, errors)
+    normalized_steps = _validate_scenario_steps(steps, ide, errors, warnings)
+    normalized = _normalized_scenario(raw, ide, normalized_steps)
     _validate_mode(normalized["mode"], errors, warnings)
-    
+
     return ScenarioValidation(
         ok=not errors,
         errors=tuple(errors),

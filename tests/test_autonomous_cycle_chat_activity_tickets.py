@@ -104,7 +104,7 @@ def test_operator_payload_contains_expected_fields() -> None:
 
 def test_operator_payload_omits_question_line_when_empty() -> None:
     qr = _make_queue_result()
-    _, prompt, _ = _llm_needs_input_operator_payload(
+    _title, prompt, _scaffold = _llm_needs_input_operator_payload(
         queue_result=qr,
         waiting_ticket="-",
         summary="some summary",
@@ -130,7 +130,7 @@ def test_upsert_returns_none_when_disabled(monkeypatch: pytest.MonkeyPatch) -> N
         state=state,
         reflection_summary="x",
         reflection_events=[],
-        _hp=lambda *_a, **_k: None,
+        report_progress=lambda *_a, **_k: None,
     )
     assert result is None
 
@@ -161,7 +161,7 @@ def test_upsert_dedupes_on_signature(monkeypatch: pytest.MonkeyPatch, tmp_path) 
         state=state,
         reflection_summary="the summary",
         reflection_events=[],
-        _hp=lambda *_a, **_k: None,
+        report_progress=lambda *_a, **_k: None,
     )
     assert result == "STARTER-OP-9"
 
@@ -216,7 +216,7 @@ def test_upsert_creates_ticket_via_create_nl_task(
         state=state,
         reflection_summary="the summary",
         reflection_events=[],
-        _hp=lambda msg, *_a, **_k: notes.append(str(msg)),
+        report_progress=lambda msg, *_a, **_k: notes.append(str(msg)),
     )
     assert result == "STARTER-OP-100"
     assert state.last_operator_needs_input_ticket_id == "STARTER-OP-100"
@@ -267,7 +267,7 @@ def test_upsert_returns_none_on_create_failure(
         state=state,
         reflection_summary="x",
         reflection_events=[],
-        _hp=lambda msg, *_a, **_k: notes.append(str(msg)),
+        report_progress=lambda msg, *_a, **_k: notes.append(str(msg)),
     )
     assert result is None
     assert any("upsert failed" in n for n in notes)
@@ -328,7 +328,7 @@ def test_upsert_chat_intake_returns_none_when_disabled(monkeypatch: pytest.Monke
         state=mock.Mock(),
         recent_events=[],
         cycle_telemetry={},
-        _hp=lambda *_a, **_k: None,
+        report_progress=lambda *_a, **_k: None,
     )
     assert result is None
 
@@ -363,7 +363,7 @@ def test_upsert_chat_intake_creates_ticket(monkeypatch: pytest.MonkeyPatch, tmp_
         state=mock.Mock(),
         recent_events=[],
         cycle_telemetry=telemetry,
-        _hp=lambda *_a, **_k: None,
+        report_progress=lambda *_a, **_k: None,
     )
     assert result == "STARTER-OP-500"
     assert telemetry["autopilot_chat_intake_ticket"] == "STARTER-OP-500"

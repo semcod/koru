@@ -1,6 +1,7 @@
 """Markdown rendering functions for koru context handoff."""
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -426,6 +427,42 @@ def render_autonomy_loop_brief(ctx: dict[str, Any]) -> list[str]:
     return lines
 
 
+@dataclass(frozen=True)
+class _HandoffRenderParts:
+    project: Any
+    ticket: Any
+    policy: dict[str, Any]
+    environment: dict[str, Any]
+    initialised: bool
+    markers: dict[str, Any]
+    agents: list[Any]
+    semcod_tools: list[Any]
+
+
+def _handoff_render_parts(context: dict[str, Any]) -> _HandoffRenderParts:
+    env = context.get("environment") or {}
+    project_env = env.get("project") or {}
+    return _HandoffRenderParts(
+        project=context.get("project", "?"),
+        ticket=context.get("ticket"),
+        policy=context.get("policy", {}),
+        environment=env,
+        initialised=bool(env.get("planfile_initialised")),
+        markers=project_env.get("markers") or {},
+        agents=env.get("llm_agents") or [],
+        semcod_tools=env.get("semcod_tools") or [],
+    )
+
+
+def _render_ticket_scope(context: dict[str, Any], parts: _HandoffRenderParts) -> list[str]:
+    if not parts.initialised:
+        return render_setup_required(parts.project)
+    if parts.ticket:
+        return render_active_ticket(parts.ticket)
+    ticket_error = context.get("ticket_error") or "no ticket"
+    return render_no_active_ticket(ticket_error)
+
+
 def render_markdown_handoff(context: dict[str, Any]) -> str:
     """Turn a context dict into a Markdown brief for the operator.
 
@@ -433,38 +470,20 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     the LLM with the policy and ticket scope in one shot.
     """
     lines: list[str] = []
-    project = context.get("project", "?")
-    ticket = context.get("ticket")
-    policy = context.get("policy", {})
+    parts = _handoff_render_parts(context)
 
-    lines.extend(render_header(project))
-
-    env = context.get("environment") or {}
-    initialised = bool(env.get("planfile_initialised"))
-    project_env = env.get("project") or {}
-    markers = project_env.get("markers") or {}
-    agents = env.get("llm_agents") or []
-    semcod_tools = env.get("semcod_tools") or []
-
-    lines.extend(render_environment(env, project))
+    lines.extend(render_header(parts.project))
+    lines.extend(render_environment(parts.environment, parts.project))
     lines.extend(render_autonomy_loop_brief(context))
-    lines.extend(render_agent_lanes(agents))
-    lines.extend(render_semcod_tools(semcod_tools))
-
-    if not initialised:
-        lines.extend(render_setup_required(project))
-    elif ticket:
-        lines.extend(render_active_ticket(ticket))
-    else:
-        ticket_error = context.get("ticket_error") or "no ticket"
-        lines.extend(render_no_active_ticket(ticket_error))
-
-    lines.extend(render_autonomous_mode(planfile_initialised=initialised))
+    lines.extend(render_agent_lanes(parts.agents))
+    lines.extend(render_semcod_tools(parts.semcod_tools))
+    lines.extend(_render_ticket_scope(context, parts))
+    lines.extend(render_autonomous_mode(planfile_initialised=parts.initialised))
     lines.extend(render_ai_tool_support_2026())
 
     lines.extend(render_project_pipeline(context.get("project_pipeline")))
-    lines.extend(render_gates(markers))
-    lines.extend(render_policy(policy))
+    lines.extend(render_gates(parts.markers))
+    lines.extend(render_policy(parts.policy))
     lines.extend(render_rules(context.get("instructions", [])))
     lines.extend(render_self_service(context.get("self_service") or {}))
     lines.extend(render_dashboard())

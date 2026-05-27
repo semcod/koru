@@ -197,6 +197,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
         "_runtime_context_main",
         argv,
     ),
+    "tagi": lambda argv: _lazy_module_main("koru.cli_tagi", "tagi_main", argv),
     "dev": dev_main,
 }
 

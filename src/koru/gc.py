@@ -182,10 +182,10 @@ def collect_gc_candidates(
     """
     now = _now_utc()
     cutoff = now - timedelta(days=max_age_days)
-    all_tickets = _load_tickets_from_sprint(project, sprint)
+    sprint_tickets = _load_tickets_from_sprint(project, sprint)
 
     candidates: list[GcCandidate] = []
-    for ticket in all_tickets:
+    for ticket in sprint_tickets:
         status = ticket.get("status", "")
         if status not in statuses:
             continue
@@ -249,9 +249,9 @@ def _archive_tickets_before_delete(
 
     Returns archive file path if any tickets were archived, None otherwise.
     """
-    all_tickets = _load_tickets_from_sprint(project, sprint)
+    archive_source_tickets = _load_tickets_from_sprint(project, sprint)
     remove_ids = {c.ticket_id for c in to_remove}
-    tickets_to_archive = [t for t in all_tickets if t.get("id") in remove_ids]
+    tickets_to_archive = [t for t in archive_source_tickets if t.get("id") in remove_ids]
     if tickets_to_archive:
         return _archive_tickets(tickets_to_archive, project)
     return None

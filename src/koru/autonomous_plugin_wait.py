@@ -38,8 +38,8 @@ def prepare_plugin_wait(
         stdio_info=stdio_info,
         emit_fmt=args.emit_events,
     )
-    active = extension_active(autopilot_ide)
-    if active is not False:
+    extension_is_active = extension_active(autopilot_ide)
+    if extension_is_active is not False:
         return skip_plugin_wait, reload_after_install
 
     from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide

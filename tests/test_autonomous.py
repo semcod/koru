@@ -776,7 +776,7 @@ def test_auto_onboarding_flow_uses_simulated_stdin(tmp_path: Path, monkeypatch) 
         def isatty(self) -> bool:
             return True
 
-    stdin = _TTYInput("1\n1\nquality\ncc_refactor\n")
+    stdin = _TTYInput("quality\ncc_refactor\n")
     stdout = _TTYOutput()
     monkeypatch.setattr(autonomous_mod._autonomous_onboarding.sys, "stdin", stdin)
     monkeypatch.setattr(autonomous_mod._autonomous_onboarding.sys, "stdout", stdout)

@@ -129,6 +129,110 @@ def project_venv_warning_lines(project: Path) -> list[str]:
     ]
 
 
+@dataclass(frozen=True)
+class AutopilotSocketDecision:
+    lane: str | None
+    autopilot_ide: str
+    socket_path: Path
+    socket_source: str
+    env_socket: str
+    env_instance_before: str
+
+
+def _resolve_autopilot_lane(
+    args: Any,
+    *,
+    resolve_autopilot_ide: Any,
+    resolve_ide_route_fn: Any,
+) -> tuple[str | None, str]:
+    lane = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    autopilot_ide, _ = resolve_autopilot_ide(
+        args.autopilot_ide,
+        lane,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
+    if autopilot_ide and autopilot_ide != "auto":
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+        lane = autopilot_ide
+    return lane, autopilot_ide
+
+
+def _autopilot_socket_source(
+    args: Any,
+    *,
+    autopilot_ide: str,
+    env_socket: str,
+    env_instance_before: str,
+) -> str:
+    if args.socket:
+        return "cli --socket"
+    if env_socket:
+        return "env:KORU_AUTOPILOT_SOCKET"
+    if env_instance_before:
+        return f"env:KORU_AUTOPILOT_INSTANCE={env_instance_before}"
+    if autopilot_ide:
+        return f"resolved autopilot_ide={autopilot_ide}"
+    return "default socket"
+
+
+def _decide_autopilot_socket(
+    args: Any,
+    *,
+    resolve_autopilot_ide: Any,
+    resolve_ide_route_fn: Any,
+    default_socket_path: Any,
+) -> AutopilotSocketDecision:
+    lane, autopilot_ide = _resolve_autopilot_lane(
+        args,
+        resolve_autopilot_ide=resolve_autopilot_ide,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
+    env_socket = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+    env_instance_before = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    socket_source = _autopilot_socket_source(
+        args,
+        autopilot_ide=autopilot_ide,
+        env_socket=env_socket,
+        env_instance_before=env_instance_before,
+    )
+    socket_path = (args.socket or default_socket_path()).resolve()
+    return AutopilotSocketDecision(
+        lane=lane,
+        autopilot_ide=autopilot_ide,
+        socket_path=socket_path,
+        socket_source=socket_source,
+        env_socket=env_socket,
+        env_instance_before=env_instance_before,
+    )
+
+
+def _log_autopilot_socket_decision(
+    args: Any,
+    decision: AutopilotSocketDecision,
+    *,
+    stdio_info: Any,
+) -> None:
+    stdio_info(
+        "koru autonomous: autopilot socket decision: "
+        f"lane={decision.lane} ide={decision.autopilot_ide} "
+        f"source={decision.socket_source} path={decision.socket_path}",
+        fmt=args.emit_events,
+    )
+    activity(
+        "AUTOPILOT",
+        "socket decision",
+        fmt=args.emit_events,
+        data={
+            "lane": decision.lane,
+            "ide": decision.autopilot_ide,
+            "source": decision.socket_source,
+            "socket_path": str(decision.socket_path),
+            "env_socket": decision.env_socket,
+            "env_instance_before": decision.env_instance_before,
+        },
+    )
+
+
 def setup_autopilot_daemon(
     args: Any,
     project: Path,
@@ -149,43 +253,14 @@ def setup_autopilot_daemon(
 
     # apply_agent_lane_environ is already called in build_and_log_startup_probe
     # so we can read the lane directly from the environment
-    lane = os.environ.get("KORU_AUTOPILOT_INSTANCE")
-    autopilot_ide, _ = resolve_autopilot_ide(
-        args.autopilot_ide,
-        lane,
+    decision = _decide_autopilot_socket(
+        args,
+        resolve_autopilot_ide=resolve_autopilot_ide,
         resolve_ide_route_fn=resolve_ide_route_fn,
+        default_socket_path=default_socket_path,
     )
-    if autopilot_ide and autopilot_ide != "auto":
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-        lane = autopilot_ide
-    env_socket = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
-    env_instance_before = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-    socket_source = "cli --socket" if args.socket else "default socket"
-    if env_socket and not args.socket:
-        socket_source = "env:KORU_AUTOPILOT_SOCKET"
-    elif env_instance_before and not args.socket:
-        socket_source = f"env:KORU_AUTOPILOT_INSTANCE={env_instance_before}"
-    elif autopilot_ide and not args.socket:
-        socket_source = f"resolved autopilot_ide={autopilot_ide}"
-    socket_path = (args.socket or default_socket_path()).resolve()
-    stdio_info(
-        "koru autonomous: autopilot socket decision: "
-        f"lane={lane} ide={autopilot_ide} source={socket_source} path={socket_path}",
-        fmt=args.emit_events,
-    )
-    activity(
-        "AUTOPILOT",
-        "socket decision",
-        fmt=args.emit_events,
-        data={
-            "lane": lane,
-            "ide": autopilot_ide,
-            "source": socket_source,
-            "socket_path": str(socket_path),
-            "env_socket": env_socket,
-            "env_instance_before": env_instance_before,
-        },
-    )
+    socket_path = decision.socket_path
+    _log_autopilot_socket_decision(args, decision, stdio_info=stdio_info)
     client, daemon, thread = start_or_reuse_daemon(
         project=project,
         socket_path=socket_path,
