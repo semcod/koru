@@ -91,48 +91,6 @@ flowchart TD
         bridge_focus__SharedAutopilotBridgeFocus__performOpenChatPanel["performOpenChatPanel"]
         bridge_focus__SharedAutopilotBridgeFocus__focus["focus"]
     end
-    subgraph bridge_paste__SharedAutopilotBridgePaste
-        bridge_paste__SharedAutopilotBridgePaste__pasteText("pasteText CC=11")
-        bridge_paste__SharedAutopilotBridgePaste__ide["ide"]
-        bridge_paste__SharedAutopilotBridgePaste__useProbe["useProbe"]
-        bridge_paste__SharedAutopilotBridgePaste__existing["existing"]
-        bridge_paste__SharedAutopilotBridgePaste__cache["cache"]
-        bridge_paste__SharedAutopilotBridgePaste__before["before"]
-        bridge_paste__SharedAutopilotBridgePaste__clipboard["clipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__typed["typed"]
-        bridge_paste__SharedAutopilotBridgePaste__direct["direct"]
-        bridge_paste__SharedAutopilotBridgePaste__hostPaste["hostPaste"]
-        bridge_paste__SharedAutopilotBridgePaste__directPasteReadsClipboard["directPasteReadsClipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__directCommands("directCommands CC=10")
-        bridge_paste__SharedAutopilotBridgePaste__previousClip("previousClip CC=10")
-        bridge_paste__SharedAutopilotBridgePaste__clipboardSeeded("clipboardSeeded CC=10")
-        bridge_paste__SharedAutopilotBridgePaste__readsClipboard["readsClipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__seeded["seeded"]
-        bridge_paste__SharedAutopilotBridgePaste__debugLog["debugLog"]
-        bridge_paste__SharedAutopilotBridgePaste__result["result"]
-        bridge_paste__SharedAutopilotBridgePaste__after["after"]
-        bridge_paste__SharedAutopilotBridgePaste__inputFocused["inputFocused"]
-        bridge_paste__SharedAutopilotBridgePaste__guard["guard"]
-        bridge_paste__SharedAutopilotBridgePaste__clip["clip"]
-        bridge_paste__SharedAutopilotBridgePaste__paste["paste"]
-        bridge_paste__SharedAutopilotBridgePaste__ok["ok"]
-        bridge_paste__SharedAutopilotBridgePaste__guardVSCodiumTerminalRiskPaste["guardVSCodiumTerminalRiskPaste"]
-        bridge_paste__SharedAutopilotBridgePaste__observed["observed"]
-        bridge_paste__SharedAutopilotBridgePaste__probeChatInputContents["probeChatInputContents"]
-        bridge_paste__SharedAutopilotBridgePaste__previous["previous"]
-        bridge_paste__SharedAutopilotBridgePaste__collapseProbeSelection["collapseProbeSelection"]
-        bridge_paste__SharedAutopilotBridgePaste__fallbackOk["fallbackOk"]
-        bridge_paste__SharedAutopilotBridgePaste__saveClipboard["saveClipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__restoreClipboard["restoreClipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__writeClipboardVerified["writeClipboardVerified"]
-        bridge_paste__SharedAutopilotBridgePaste__maxTries["maxTries"]
-        bridge_paste__SharedAutopilotBridgePaste__allowVSCodiumHostInputFallback["allowVSCodiumHostInputFallback"]
-        bridge_paste__SharedAutopilotBridgePaste__cfg["cfg"]
-        bridge_paste__SharedAutopilotBridgePaste__saveHostClipboard["saveHostClipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__res["res"]
-        bridge_paste__SharedAutopilotBridgePaste__writeHostClipboard["writeHostClipboard"]
-        bridge_paste__SharedAutopilotBridgePaste__restoreHostClipboard["restoreHostClipboard"]
-    end
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -741,33 +699,6 @@ flowchart TD
         services__healing_webhook__ticket_builder___reproduction_for["_reproduction_for"]
         services__healing_webhook__ticket_builder__build_ticket_payload("build_ticket_payload CC=11")
     end
-    subgraph src__bridge_focus_core
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__sleep["sleep"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__runCommand["runCommand"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__result["result"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__probeLadderEnabled["probeLadderEnabled"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__probeFocusDelayMs["probeFocusDelayMs"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__probePasteDelayMs["probePasteDelayMs"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__waitForCommand["waitForCommand"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__deadline["deadline"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__existing["existing"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__editorSnapshot["editorSnapshot"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__getProbeCache["getProbeCache"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__ide["ide"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__raw["raw"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__cache["cache"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next["next"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__debugLog["debugLog"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__runHostCommand["runHostCommand"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__child["child"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__resolve["resolve"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__res["res"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__clearChatInput["clearChatInput"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__server["server"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__pendingCommandOrder["pendingCommandOrder"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__mergeUnique["mergeUnique"]
-        src__bridge_focus_core__SharedAutopilotBridgeFocusCore__seen["seen"]
-    end
     subgraph src__bridge_focus_strategy
         src__bridge_focus_strategy__SharedAutopilotBridgeFocusStrategy__focusChat["focusChat"]
         src__bridge_focus_strategy__SharedAutopilotBridgeFocusStrategy__primary["primary"]
@@ -795,62 +726,6 @@ flowchart TD
         src__bridge_focus_strategy__SharedAutopilotBridgeFocusStrategy__shouldTryInputOnlyPreflight["shouldTryInputOnlyPreflight"]
         src__bridge_focus_strategy__SharedAutopilotBridgeFocusStrategy__hasToggleOpen["hasToggleOpen"]
         src__bridge_focus_strategy__SharedAutopilotBridgeFocusStrategy__isAlreadyFocusedWithoutOpenCommand["isAlreadyFocusedWithoutOpenCommand"]
-    end
-    subgraph src__bridge_network
-        src__bridge_network__SharedAutopilotBridgeNetwork__openChatPanel["openChatPanel"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__injectChat["injectChat"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__detectIde["detectIde"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__app["app"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__socketPath["socketPath"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__cfg["cfg"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__override["override"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__connect["connect"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__tryConnectNext("tryConnectNext CC=10")
-        src__bridge_network__SharedAutopilotBridgeNetwork__p["p"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__debugLog["debugLog"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__sock["sock"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__connected["connected"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__commandCatalog["commandCatalog"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__matching["matching"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__extensionBuildSha["extensionBuildSha"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__raw["raw"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__disconnect["disconnect"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__clearTimeout["clearTimeout"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__startChatHistoryWatcherIfEligible("startChatHistoryWatcherIfEligible CC=9")
-        src__bridge_network__SharedAutopilotBridgeNetwork__ide["ide"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__initialCursor["initialCursor"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__scheduleRetry["scheduleRetry"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__delay["delay"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__maybeOpenChatOnConnect["maybeOpenChatOnConnect"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__setTimeout["setTimeout"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__detail["detail"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__safeLog["safeLog"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__emitLiveDsl["emitLiveDsl"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__seq["seq"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__okToken["okToken"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__routeToken["routeToken"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__reason["reason"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__sendConsoleLog["sendConsoleLog"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__send["send"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__wire["wire"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__line["line"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__bytes["bytes"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__onData("onData CC=10")
-        src__bridge_network__SharedAutopilotBridgeNetwork__idx["idx"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__env["env"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__message["message"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__dispatch("dispatch CC=10")
-        src__bridge_network__SharedAutopilotBridgeNetwork__plan["plan"]
-        src__bridge_network__SharedAutopilotBridgeNetwork___handleVersionMismatchRejection("_handleVersionMismatchRejection CC=8")
-        src__bridge_network__SharedAutopilotBridgeNetwork__enabled["enabled"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__ctx["ctx"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__lastReloadAt["lastReloadAt"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__COOLDOWN_MS["COOLDOWN_MS"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__strategies["strategies"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__ok["ok"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__isReloadablePluginMismatch["isReloadablePluginMismatch"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__lowered["lowered"]
-        src__bridge_network__SharedAutopilotBridgeNetwork__runCommand["runCommand"]
     end
     subgraph src__koru
         src__koru__autonomous_auto_pipeline___argv_has_option["_argv_has_option"]
@@ -1318,7 +1193,7 @@ flowchart TD
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___run_vallm_check
     services__healing_webhook__app___execute_planfile_create --> services__healing_webhook__app___extract_ticket_id_from_stdout
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___enrich_ticket_with_vallm
-    services__healing_webhook__app__create_planfile_ticket --> src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
+    services__healing_webhook__app__create_planfile_ticket --> plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___build_planfile_command
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___execute_planfile_create
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__ticket_builder__build_ticket_payload
@@ -1341,7 +1216,7 @@ flowchart TD
     services__healing_webhook__app__heal_redup_check --> services__healing_webhook__app___record_action
     services__healing_webhook__app__get_history --> src__koru__wizard__gui__static__wizard__list
     services__healing_webhook__app__alertmanager_webhook --> services__healing_webhook__app___resolve_strategy
-    services__healing_webhook__app__alertmanager_webhook --> plugins__koru_autopilot_shared__src__bridge_submit__SharedAutopilotBridgeSubmit__strategy
+    services__healing_webhook__app__alertmanager_webhook --> plugins__koru_autopilot_vscodium__src__probe_ladder__strategy
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__create_planfile_ticket
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_improve
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_gate
@@ -1481,7 +1356,7 @@ flowchart TD
     src__korudsl__library__library_to_dsl --> src__korudsl__library___emit_goals
     src__koruapi__runtime_insights___classify_process --> src__koruapi__runtime_insights___looks_project_related
     src__koruapi__runtime_insights___active_tools --> src__koruapi__runtime_insights___classify_process
-    src__koruapi__runtime_insights___active_tools --> src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
+    src__koruapi__runtime_insights___active_tools --> plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
     src__koruapi__runtime_insights___top_processes --> src__koruapi__runtime_insights___classify_process
     src__koruapi__runtime_insights___top_processes --> src__koruapi__runtime_insights___looks_project_related
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koruapi__runtime_insights___run_ps
@@ -1630,7 +1505,7 @@ flowchart TD
     src__koruapi__dashboard_tickets__update_ticket_from_dashboard --> src__koruapi__dashboard_tickets___write_sprint_file
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___find_ticket_in_sprints
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koru__wizard__gui__static__wizard__list
-    src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
+    src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___append_dashboard_history
     src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard --> src__koruapi__dashboard_tickets___write_sprint_file
     src__koruapi__dashboard_runtime___interface_runtime_payload --> src__koru__interface_registry__iter_interfaces
@@ -1916,5 +1791,5 @@ flowchart TD
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koruide__drive_orchestrator__DriveOrchestrator__drive_intent_evidence,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_version_info,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_version_block_message,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_ack_summary,src__koruide__drive_orchestrator__DriveOrchestrator__drive_diagnosis,src__koruide__plugin_router__PluginRouter__plugin_for,src__koruide__daemon__handlers_hello___log_rejected_plugin_connection,src__koru__observability_dsl___compact_data,src__koru__autonomous_cycle___load_open_tickets_for_planning,src__koru__ticket_evidence___validate_one_ticket,src__koru__cli_queue__queue_main,src__koru__cli_tagi__deploy,src__koru__autonomous_cycle_chat_activity___apply_llx_chat_reflection,src__koru__autonomous_plugin_wait__retry_plugin_wait_after_reload,src__koru__autonomous_cli_config__apply_autonomy_strategy_defaults,src__koru__autonomy__replay_actions___known_replay_action,src__koru__autonomy__replay_actions__quick_action_to_replay,src__koru__autopilot__install_manager__format_install_manager_report,src__koru__autopilot__install_checks__check_plugin_live_host_stale_issue,src__koru__autopilot__commands__status___print_status_explain_summary,src__koru__autopilot__commands__status__action_status,autopilot_bridge__SharedAutopilotBridge___performInject highCC
+    class src__koruide__drive_orchestrator__DriveOrchestrator__drive_intent_evidence,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_version_info,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_version_block_message,src__koruide__drive_orchestrator__DriveOrchestrator__plugin_ack_summary,src__koruide__drive_orchestrator__DriveOrchestrator__drive_diagnosis,src__koruide__plugin_router__PluginRouter__plugin_for,src__koruide__daemon__handlers_hello___log_rejected_plugin_connection,src__koru__observability_dsl___compact_data,src__koru__autonomous_cycle___load_open_tickets_for_planning,src__koru__ticket_evidence___validate_one_ticket,src__koru__cli_queue__queue_main,src__koru__cli_tagi__deploy,src__koru__autonomous_cycle_chat_activity___apply_llx_chat_reflection,src__koru__autonomous_cli_config__apply_autonomy_strategy_defaults,src__koru__autonomy__replay_actions___known_replay_action,src__koru__autonomy__replay_actions__quick_action_to_replay,src__koru__autopilot__install_checks__check_plugin_live_host_stale_issue,src__koru__autopilot__commands__status___print_status_explain_summary,src__koru__autopilot__commands__status__action_status,autopilot_bridge__SharedAutopilotBridge___performInject,src__koru__doctor_autopilot_checks___check_autopilot_runtime_status,src__koru__autonomous_plugin_wait__retry_plugin_wait_after_reload,src__koru__cli_doctor__doctor_main,src__koru__autopilot__install_manager__repair_installation,src__koru__autopilot__install_manager__format_install_manager_report highCC
     class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__cli___cmd_trace,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys,src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype,src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__dashboard_routes___get_autonomy_trace,src__koruapi__dashboard_routes___post_env_config,src__koruapi__dashboard_routes___post_waiting_input_bulk,src__koruapi__dashboard_routes___post_remote_drive,src__koruapi__dashboard_routes___handle_dashboard_get,src__koruapi__invoke_handlers___handle_tagi_deploy medCC

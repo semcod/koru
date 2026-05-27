@@ -266,6 +266,25 @@ _PATH_STEP_HANDLERS: dict[str, callable[[dict[str, Any]], str]] = {
     "autonomy.summary": _path_step_autonomy_summary,
 }
 
+_COMPACT_PICK_KEYS: dict[str, tuple[str, ...]] = {
+    "autopilot.intent": ("goal", "target", "ide", "submit", "require_plugin", "chars"),
+    "autopilot.route.decision": (
+        "name",
+        "chosen",
+        "because",
+        "transport",
+        "plugin_fd",
+        "cli_fd",
+        "protocol",
+    ),
+    "autopilot.drive.requested": ("name", "transport", "ide", "submit", "chars"),
+    "autopilot.drive.phase": ("name", "status", "transport", "ide"),
+    "autopilot.drive.verified": ("name", "status", "ide", "delivered", "submitted", "backend"),
+    "autopilot.drive.failed": ("code", "message", "verification", "ide", "delivered", "submitted"),
+    "autonomy.blocker": ("name", "because", "ide", "status"),
+    "autonomy.next": ("action", "ide", "decision_kind"),
+}
+
 
 def _path_step(event: KoruObsEvent) -> str:
     handler = _PATH_STEP_HANDLERS.get(event.kind)
@@ -276,53 +295,38 @@ def _path_step(event: KoruObsEvent) -> str:
 
 def _compact_data(event: KoruObsEvent) -> dict[str, Any]:
     data = dict(event.data)
-    if event.kind == "autopilot.intent":
-        return _pick(data, "goal", "target", "ide", "submit", "require_plugin", "chars")
-    if event.kind == "autopilot.route.decision":
-        return _pick(
-            data,
-            "name",
-            "chosen",
-            "because",
-            "transport",
-            "plugin_fd",
-            "cli_fd",
-            "protocol",
-        )
-    if event.kind == "autopilot.drive.requested":
-        return _pick(data, "name", "transport", "ide", "submit", "chars")
-    if event.kind == "autopilot.drive.phase":
-        return _pick(data, "name", "status", "transport", "ide")
-    if event.kind == "autopilot.drive.verified":
-        return _pick(data, "name", "status", "ide", "delivered", "submitted", "backend")
-    if event.kind == "autopilot.drive.failed":
-        return _pick(data, "code", "message", "verification", "ide", "delivered", "submitted")
-    if event.kind == "autonomy.blocker":
-        return _pick(data, "name", "because", "ide", "status")
-    if event.kind == "autonomy.next":
-        return _pick(data, "action", "ide", "decision_kind")
+    keys = _COMPACT_PICK_KEYS.get(event.kind)
+    if keys is not None:
+        return _pick(data, *keys)
     if event.kind == "control.command":
-        compact = _pick(
-            data,
-            "surface",
-            "interface_id",
-            "transport",
-            "operation",
-            "target",
-            "replayable",
-        )
-        args = data.get("args")
-        if isinstance(args, dict):
-            if isinstance(args.get("argv"), list):
-                compact["argv_text"] = _argv_text(args["argv"])
-            elif isinstance(args.get("query"), dict) and args["query"]:
-                compact["query"] = args["query"]
-            elif isinstance(args.get("commands"), list):
-                compact["commands"] = args["commands"]
-            else:
-                compact["args"] = args
-        return compact
+        return _compact_control_command_data(data)
     return data
+
+
+def _compact_control_command_data(data: dict[str, Any]) -> dict[str, Any]:
+    compact = _pick(
+        data,
+        "surface",
+        "interface_id",
+        "transport",
+        "operation",
+        "target",
+        "replayable",
+    )
+    args = data.get("args")
+    if isinstance(args, dict):
+        compact.update(_compact_control_command_args(args))
+    return compact
+
+
+def _compact_control_command_args(args: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(args.get("argv"), list):
+        return {"argv_text": _argv_text(args["argv"])}
+    if isinstance(args.get("query"), dict) and args["query"]:
+        return {"query": args["query"]}
+    if isinstance(args.get("commands"), list):
+        return {"commands": args["commands"]}
+    return {"args": args}
 
 
 def _pick(data: dict[str, Any], *keys: str) -> dict[str, Any]:

@@ -44,7 +44,7 @@ testql:
 
 # BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
 monitoring:
-  generated_at: '2026-05-27T09:08:03Z'
+  generated_at: '2026-05-27T18:55:23Z'
   generated_by: wup sync-testql --write (or wup watch startup)
   how_to_refresh: wup sync-testql . --write
   probe_interval_s: 60
@@ -55,6 +55,9 @@ monitoring:
   service_map_globs: []
   docker_compose_files:
   - docker-compose.yml
+  semcod_tools:
+    enabled: false
+    tools: {}
   wup_services:
     koru-shell:
       wup_paths: []

@@ -1,7 +1,7 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.28s
+# generated in 0.27s
 # nodes: 428 | edges: 500 | modules: 96
-# CC̄=3.5
+# CC̄=3.6
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
@@ -9,7 +9,7 @@ HUBS[20]:
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:149  out:9  total:158
   src.koruide.ide.normalize_ide_id
-    CC=6  in:65  out:11  total:76
+    CC=6  in:68  out:11  total:79
   src.koru.activity_log.activity
     CC=6  in:49  out:13  total:62
   src.koru.context_render.render_markdown_handoff
@@ -17,33 +17,33 @@ HUBS[20]:
   src.koru.events.emit_management_event
     CC=8  in:31  out:7  total:38
   src.koruide.ide.detect_running_ides
-    CC=13  in:24  out:10  total:34
+    CC=13  in:25  out:10  total:35
   src.koruide.socket.default_socket_path
     CC=4  in:16  out:15  total:31
   plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.type
     CC=1  in:25  out:2  total:27
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.queue.ticket.planfile_command
     CC=5  in:18  out:7  total:25
   src.koru.context.build_context
     CC=6  in:8  out:16  total:24
-  src.koruapi.dashboard_routes._post_remote_drive
-    CC=9  in:0  out:24  total:24
-  src.koruapi.dashboard_config._dashboard_config_request_kwargs
-    CC=10  in:1  out:23  total:24
   src.koruapi.dashboard_tickets.create_ticket_from_dashboard
     CC=8  in:2  out:22  total:24
+  src.koruapi.dashboard_config._dashboard_config_request_kwargs
+    CC=10  in:1  out:23  total:24
+  src.koruapi.dashboard_routes._post_remote_drive
+    CC=9  in:0  out:24  total:24
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
   src.koruapi.topology_post.apply_topology_post_update
     CC=14  in:1  out:22  total:23
   src.koruapi.dashboard_routes._post_waiting_input_bulk
     CC=9  in:0  out:22  total:22
-  src.koruobserve.providers_cli.providers_test_text
-    CC=13  in:1  out:20  total:21
+  src.koruapi.server._json_response
+    CC=1  in:12  out:9  total:21
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -52,6 +52,8 @@ MODULES:
     type  CC=1  out:2
   plugins.koru-autopilot-shared.src.ack-payload  [1 funcs]
     bytes  CC=2  out:0
+  plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
+    next  CC=2  out:1
   scripts.koru-soak-monitor  [1 funcs]
     print  CC=0  out:0
   services.healing-webhook.app  [23 funcs]
@@ -71,8 +73,6 @@ MODULES:
     _infer_paths  CC=7  out:1
     _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
-  src.bridge-focus-core  [1 funcs]
-    next  CC=2  out:1
   src.koru.activity_log  [1 funcs]
     activity  CC=6  out:13
   src.koru.autonomous_process_guard  [2 funcs]
@@ -473,7 +473,7 @@ EDGES:
   services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._run_vallm_check
   services.healing-webhook.app._execute_planfile_create → services.healing-webhook.app._extract_ticket_id_from_stdout
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._enrich_ticket_with_vallm
-  services.healing-webhook.app.create_planfile_ticket → src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
+  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._build_planfile_command
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._execute_planfile_create
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload

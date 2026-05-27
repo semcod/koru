@@ -75,6 +75,11 @@ def apply_autonomy_strategy_defaults(args: Any) -> None:
         return
 
     user_options = getattr(args, "_auto_user_options", set()) or set()
+    _apply_idle_discovery_strategy_defaults(args, strategy, user_options)
+    _apply_planning_assistant_strategy_defaults(strategy)
+
+
+def _apply_idle_discovery_strategy_defaults(args: Any, strategy: dict, user_options: set[str]) -> bool:
     idle = strategy.get("idle_discovery")
     idle_enabled = True
     if isinstance(idle, dict):
@@ -87,7 +92,10 @@ def apply_autonomy_strategy_defaults(args: Any) -> None:
         args.scan_after_idle_queue = idle_enabled
     if not user_options.intersection({"--semcod-artifacts", "--no-semcod-artifacts"}):
         args.semcod_artifacts = idle_enabled and _strategy_tools_enabled(strategy)
+    return idle_enabled
 
+
+def _apply_planning_assistant_strategy_defaults(strategy: dict) -> None:
     planning = strategy.get("planning_assistant")
     if isinstance(planning, dict):
         enabled = _truthy_strategy_value(planning.get("enabled"), True)

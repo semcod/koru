@@ -214,35 +214,56 @@ def doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
     problems = doctor_detected_problems(report)
     explicit_format = "--format" in raw_args
     if explicit_format and args.output_format == "json":
-        payload = report.to_dict()
-        payload["detected_problems"] = problems
-        if include_catalog:
-            payload["problem_catalog"] = doctor_problem_catalog()
-        if fix_payload is not None:
-            payload["fix"] = fix_payload
-        if repair_payload is not None:
-            payload["repair"] = repair_payload
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(_doctor_json_output(report, problems, fix_payload, repair_payload, include_catalog))
     elif explicit_format and args.output_format == "markdown":
-        text = (
-            render_doctor_with_repair(report, repair_payload)
-            if repair_payload is not None
-            else render_doctor_with_fix(report, fix_payload)
-        )
-        if include_catalog:
-            text = f"{text}\n\n{render_problem_catalog_text()}"
-        print(text)
+        print(_doctor_markdown_output(report, fix_payload, repair_payload, include_catalog))
     else:
-        text = (
-            render_doctor_with_repair(report, repair_payload)
-            if repair_payload is not None
-            else render_doctor_with_fix(report, fix_payload)
-        )
-        if include_catalog:
-            text = f"{text}\n\n{render_problem_catalog_text()}"
-        print(text)
+        print(_doctor_text_output(report, fix_payload, repair_payload, include_catalog))
     _doctor_emit_management_event(report, args)
     return 1 if report.has_failures else 0
+
+
+def _doctor_json_output(
+    report: Any,
+    problems: list[Any],
+    fix_payload: dict[str, Any] | None,
+    repair_payload: dict[str, Any] | None,
+    include_catalog: bool,
+) -> str:
+    payload = report.to_dict()
+    payload["detected_problems"] = problems
+    if include_catalog:
+        payload["problem_catalog"] = doctor_problem_catalog()
+    if fix_payload is not None:
+        payload["fix"] = fix_payload
+    if repair_payload is not None:
+        payload["repair"] = repair_payload
+    return json.dumps(payload, indent=2, sort_keys=True)
+
+
+def _doctor_markdown_output(
+    report: Any,
+    fix_payload: dict[str, Any] | None,
+    repair_payload: dict[str, Any] | None,
+    include_catalog: bool,
+) -> str:
+    return _doctor_text_output(report, fix_payload, repair_payload, include_catalog)
+
+
+def _doctor_text_output(
+    report: Any,
+    fix_payload: dict[str, Any] | None,
+    repair_payload: dict[str, Any] | None,
+    include_catalog: bool,
+) -> str:
+    text = (
+        render_doctor_with_repair(report, repair_payload)
+        if repair_payload is not None
+        else render_doctor_with_fix(report, fix_payload)
+    )
+    if include_catalog:
+        return f"{text}\n\n{render_problem_catalog_text()}"
+    return text
 
 
 def build_doctor_parser() -> argparse.ArgumentParser:

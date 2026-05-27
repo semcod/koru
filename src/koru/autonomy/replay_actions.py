@@ -21,7 +21,7 @@ import shlex
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 # ---------------------------------------------------------------------------
@@ -115,33 +115,79 @@ def _known_replay_action(
     positional: tuple[str, ...],
     args: dict[str, str],
 ) -> ReplayAction:
-    if domain == "ide" and verb == "reload-window":
-        return ide_reload_window(positional[0] if positional else args.get("ide", "auto"))
-    if domain == "ide" and verb == "connect-plugin":
-        return ide_connect_plugin(positional[0] if positional else args.get("ide", "auto"))
-    if domain == "trace" and verb == "show-decisions":
-        return trace_show_decisions(args.get("url", "http://127.0.0.1:8765"))
-    if domain == "trace" and verb == "show-interfaces":
-        return trace_show_interfaces(args.get("url", "http://127.0.0.1:8765"))
-    if domain == "ticket" and verb == "input":
-        ticket_id = positional[0] if positional else args.get("ticket", "")
-        return ticket_input(ticket_id, prompt=args.get("prompt", ""), note=args.get("note", ""))
-    if domain == "ticket" and verb == "open":
-        ticket_id = positional[0] if positional else args.get("ticket", "")
-        return ticket_open(ticket_id, args.get("url", "http://127.0.0.1:8765"))
-    if domain == "scan" and verb == "force":
-        return scan_force()
-    if domain == "wup" and verb in {"show-health", "show-track"}:
-        return wup_show_health()
-    if domain == "autopilot" and verb == "retry-drive":
-        ticket_id = positional[0] if positional else args.get("ticket", "")
-        return autopilot_retry_drive(args.get("ide", "auto"), ticket_id)
+    builder = _replay_action_builder(domain, verb)
+    if builder is not None:
+        return builder(positional, args)
     return ReplayAction(
         domain=domain,
         verb=verb,
         positional=positional,
         args=args,
     )
+
+
+ReplayBuilder = Callable[[tuple[str, ...], dict[str, str]], ReplayAction]
+
+
+def _replay_action_builder(domain: str, verb: str) -> ReplayBuilder | None:
+    if domain == "wup" and verb in {"show-health", "show-track"}:
+        return _build_wup_health_action
+    return _KNOWN_REPLAY_BUILDERS.get((domain, verb))
+
+
+def _first_positional_or_arg(positional: tuple[str, ...], args: dict[str, str], key: str, default: str) -> str:
+    return positional[0] if positional else args.get(key, default)
+
+
+def _build_ide_reload_action(positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    return ide_reload_window(_first_positional_or_arg(positional, args, "ide", "auto"))
+
+
+def _build_ide_connect_action(positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    return ide_connect_plugin(_first_positional_or_arg(positional, args, "ide", "auto"))
+
+
+def _build_trace_decisions_action(_positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    return trace_show_decisions(args.get("url", "http://127.0.0.1:8765"))
+
+
+def _build_trace_interfaces_action(_positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    return trace_show_interfaces(args.get("url", "http://127.0.0.1:8765"))
+
+
+def _build_ticket_input_action(positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    ticket_id = _first_positional_or_arg(positional, args, "ticket", "")
+    return ticket_input(ticket_id, prompt=args.get("prompt", ""), note=args.get("note", ""))
+
+
+def _build_ticket_open_action(positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    ticket_id = _first_positional_or_arg(positional, args, "ticket", "")
+    return ticket_open(ticket_id, args.get("url", "http://127.0.0.1:8765"))
+
+
+def _build_scan_force_action(_positional: tuple[str, ...], _args: dict[str, str]) -> ReplayAction:
+    return scan_force()
+
+
+def _build_wup_health_action(_positional: tuple[str, ...], _args: dict[str, str]) -> ReplayAction:
+    return wup_show_health()
+
+
+def _build_autopilot_retry_action(positional: tuple[str, ...], args: dict[str, str]) -> ReplayAction:
+    ticket_id = _first_positional_or_arg(positional, args, "ticket", "")
+    return autopilot_retry_drive(args.get("ide", "auto"), ticket_id)
+
+
+_KNOWN_REPLAY_BUILDERS: dict[tuple[str, str], ReplayBuilder] = {
+    ("ide", "reload-window"): _build_ide_reload_action,
+    ("ide", "connect-plugin"): _build_ide_connect_action,
+    ("trace", "show-decisions"): _build_trace_decisions_action,
+    ("trace", "show-interfaces"): _build_trace_interfaces_action,
+    ("ticket", "input"): _build_ticket_input_action,
+    ("ticket", "open"): _build_ticket_open_action,
+    ("scan", "force"): _build_scan_force_action,
+    ("autopilot", "retry-drive"): _build_autopilot_retry_action,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -427,7 +473,24 @@ def quick_action_to_replay(
     """
     label, body = _split_quick_action_text(action_text)
     label_lower = label.lower()
+    action = _quick_static_action(label_lower, base_url=base_url, autopilot_ide=autopilot_ide)
+    if action is not None:
+        return action
+    return _quick_ticket_action(
+        label_lower,
+        body,
+        autopilot_ide=autopilot_ide,
+        waiting_ticket=waiting_ticket,
+        base_url=base_url,
+    )
 
+
+def _quick_static_action(
+    label_lower: str,
+    *,
+    base_url: str,
+    autopilot_ide: str,
+) -> ReplayAction | None:
     if label_lower == "show decision trace":
         return trace_show_decisions(base_url)
     if label_lower == "show interfaces":
@@ -435,18 +498,30 @@ def quick_action_to_replay(
     if label_lower == "reconnect plugin":
         ide = autopilot_ide or "auto"
         return ide_connect_plugin(ide)
-    if label_lower == "mark ticket input" and waiting_ticket:
-        return ticket_input(waiting_ticket)
-    if label_lower == "open ticket" and waiting_ticket:
-        url = body.split("#", 1)[0].strip() if body.startswith(("http://", "https://")) else base_url
-        return ticket_open(waiting_ticket, url)
     if label_lower in ("force fresh scan", "force scan"):
         return scan_force()
     if label_lower == "show wup track":
         return wup_show_health()
+    return None
+
+
+def _quick_ticket_action(
+    label_lower: str,
+    body: str,
+    *,
+    autopilot_ide: str,
+    waiting_ticket: str,
+    base_url: str,
+) -> ReplayAction | None:
+    if not waiting_ticket:
+        return None
+    if label_lower == "mark ticket input":
+        return ticket_input(waiting_ticket)
+    if label_lower == "open ticket":
+        url = body.split("#", 1)[0].strip() if body.startswith(("http://", "https://")) else base_url
+        return ticket_open(waiting_ticket, url)
     if label_lower == "retry submit" and waiting_ticket:
         return autopilot_retry_drive(autopilot_ide or "auto", waiting_ticket)
-
     return None
 
 

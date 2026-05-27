@@ -400,16 +400,9 @@ def repair_installation(
     report = collect_install_manager_report(ide=ide, socket_path=socket_path)
     resolved_ide = str(report.plugin.get("ide") or ide)
     actions: list[dict[str, Any]] = []
-    if report.plugin.get("supported") is False:
-        actions.append(
-            {
-                "action": "install_plugin",
-                "result": {
-                    "status": "skipped",
-                    "message": f"ide={resolved_ide} does not use the VS Code-family plugin",
-                },
-            }
-        )
+    unsupported_action = _unsupported_plugin_repair_action(report.plugin, resolved_ide)
+    if unsupported_action is not None:
+        actions.append(unsupported_action)
         report.actions = actions
         return report
     plugin_result = install_plugin_for_ide(
@@ -418,51 +411,96 @@ def repair_installation(
         socket_path=Path(report.socket),
     )
     actions.append({"action": "install_plugin", "result": plugin_result.to_dict()})
-    live_version = str(report.plugin.get("connected_version") or "").strip()
-    installed_version = str(report.plugin.get("installed_version") or "").strip()
-    live_build = str(report.plugin.get("connected_build_sha") or "").strip()
-    expected_build = str(report.plugin.get("expected_build_sha") or "").strip()
-    build_aligned = not expected_build or (live_build and live_build == expected_build)
-    plugin_already_aligned = bool(
-        live_version
-        and installed_version
-        and live_version == installed_version
-        and build_aligned
+    shutdown_action = _shutdown_daemon_for_plugin_repair_action(report, dry_run=dry_run)
+    if shutdown_action is not None:
+        actions.append(shutdown_action)
+    actions.append(_reload_ide_reconnect_action(report, resolved_ide, dry_run=dry_run))
+    return _repair_report_with_actions(
+        report,
+        actions,
+        resolved_ide=resolved_ide,
+        dry_run=dry_run,
     )
-    if plugin_already_aligned:
-        actions.append(
-            {
-                "action": "shutdown_daemon_for_reload",
-                "result": {
-                    "ok": True,
-                    "skipped": True,
-                    "message": (
-                        "daemon kept running: live plugin version already matches "
-                        "installed VSIX"
-                    ),
-                },
-            }
-        )
-    elif report.daemon.get("running") and not dry_run:
-        try:
-            shutdown = AutopilotClient(
-                socket_path=Path(report.socket),
-                timeout=1.5,
-            ).shutdown()
-        except (OSError, RuntimeError) as exc:
-            shutdown = {"ok": False, "message": str(exc)}
-        actions.append({"action": "shutdown_daemon_for_reload", "result": shutdown})
-    actions.append(
-        {
-            "action": "reload_ide_and_reconnect",
-            "result": _reload_ide_after_plugin_fix(
-                resolved_ide,
-                source_root=Path(report.source_root),
-                daemon=report.daemon,
-                dry_run=dry_run,
-            ),
+
+
+def _unsupported_plugin_repair_action(
+    plugin: dict[str, Any],
+    resolved_ide: str,
+) -> dict[str, Any] | None:
+    if plugin.get("supported") is not False:
+        return None
+    return {
+        "action": "install_plugin",
+        "result": {
+            "status": "skipped",
+            "message": f"ide={resolved_ide} does not use the VS Code-family plugin",
         },
-    )
+    }
+
+
+def _plugin_already_aligned(plugin: dict[str, Any]) -> bool:
+    live_version = str(plugin.get("connected_version") or "").strip()
+    installed_version = str(plugin.get("installed_version") or "").strip()
+    live_build = str(plugin.get("connected_build_sha") or "").strip()
+    expected_build = str(plugin.get("expected_build_sha") or "").strip()
+    build_aligned = not expected_build or (live_build and live_build == expected_build)
+    return bool(live_version and installed_version and live_version == installed_version and build_aligned)
+
+
+def _shutdown_daemon_for_plugin_repair_action(
+    report: InstallManagerReport,
+    *,
+    dry_run: bool,
+) -> dict[str, Any] | None:
+    if _plugin_already_aligned(report.plugin):
+        return _skipped_shutdown_daemon_action()
+    if not report.daemon.get("running") or dry_run:
+        return None
+    return {"action": "shutdown_daemon_for_reload", "result": _shutdown_autopilot_daemon(report.socket)}
+
+
+def _skipped_shutdown_daemon_action() -> dict[str, Any]:
+    return {
+        "action": "shutdown_daemon_for_reload",
+        "result": {
+            "ok": True,
+            "skipped": True,
+            "message": "daemon kept running: live plugin version already matches installed VSIX",
+        },
+    }
+
+
+def _shutdown_autopilot_daemon(socket: str) -> dict[str, Any]:
+    try:
+        return AutopilotClient(socket_path=Path(socket), timeout=1.5).shutdown()
+    except (OSError, RuntimeError) as exc:
+        return {"ok": False, "message": str(exc)}
+
+
+def _reload_ide_reconnect_action(
+    report: InstallManagerReport,
+    resolved_ide: str,
+    *,
+    dry_run: bool,
+) -> dict[str, Any]:
+    return {
+        "action": "reload_ide_and_reconnect",
+        "result": _reload_ide_after_plugin_fix(
+            resolved_ide,
+            source_root=Path(report.source_root),
+            daemon=report.daemon,
+            dry_run=dry_run,
+        ),
+    }
+
+
+def _repair_report_with_actions(
+    report: InstallManagerReport,
+    actions: list[dict[str, Any]],
+    *,
+    resolved_ide: str,
+    dry_run: bool,
+) -> InstallManagerReport:
     if not dry_run:
         refreshed = collect_install_manager_report(ide=resolved_ide, socket_path=Path(report.socket))
         refreshed.actions = actions
@@ -593,7 +631,14 @@ def _daemon_has_plugin_workspace(
 def format_install_manager_report(report: InstallManagerReport) -> str:
     data = report.to_dict()
     color = _supports_color()
-    lines = [
+    lines = _install_manager_base_lines(data)
+    lines.extend(_install_manager_issue_lines(report, color=color))
+    lines.extend(_install_manager_action_lines(report))
+    return "\n".join(lines)
+
+
+def _install_manager_base_lines(data: dict[str, Any]) -> list[str]:
+    return [
         "koru autopilot manage",
         f"  ok: {str(data['ok']).lower()}",
         f"  source: {data['source_root']} (pyproject={data['source_version']})",
@@ -612,19 +657,28 @@ def format_install_manager_report(report: InstallManagerReport) -> str:
             f"expected_build={data['plugin'].get('expected_build_sha') or '-'}"
         ),
     ]
-    if report.issues:
-        lines.append("  issues:")
-        for issue in report.issues:
-            lines.append(f"    - [{issue.severity}] {issue.code}: {issue.message}")
-            if issue.fix:
-                lines.append(_yellow(f"      fix: {issue.fix}", enabled=color))
-    if report.actions:
-        lines.append("  actions:")
-        for action in report.actions:
-            result = action.get("result", {})
-            status = result.get("status") or result.get("ok")
-            lines.append(f"    - {action.get('action')}: {status}")
-    return "\n".join(lines)
+
+
+def _install_manager_issue_lines(report: InstallManagerReport, *, color: bool) -> list[str]:
+    if not report.issues:
+        return []
+    lines = ["  issues:"]
+    for issue in report.issues:
+        lines.append(f"    - [{issue.severity}] {issue.code}: {issue.message}")
+        if issue.fix:
+            lines.append(_yellow(f"      fix: {issue.fix}", enabled=color))
+    return lines
+
+
+def _install_manager_action_lines(report: InstallManagerReport) -> list[str]:
+    if not report.actions:
+        return []
+    lines = ["  actions:"]
+    for action in report.actions:
+        result = action.get("result", {})
+        status = result.get("status") or result.get("ok")
+        lines.append(f"    - {action.get('action')}: {status}")
+    return lines
 
 
 __all__ = [

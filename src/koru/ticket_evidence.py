@@ -185,38 +185,49 @@ def _load_ticket_detail(
 
 
 def _validate_one_ticket(project: Path, ticket: dict[str, Any]) -> TicketEvidenceValidation:
-    ticket_id = str(ticket.get("id") or ticket.get("ticket_id") or "-")
-    name = str(ticket.get("name") or ticket.get("title") or "")
-    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
-    context = source.get("context") if isinstance(source, dict) else None
-    evidence = context.get("evidence") if isinstance(context, dict) else None
+    ticket_id, name, status = _ticket_identity(ticket)
+    evidence = _ticket_evidence_block(ticket)
     if not isinstance(evidence, dict):
         return TicketEvidenceValidation(
             ticket_id=ticket_id,
             name=name,
-            status=str(ticket.get("status") or ""),
+            status=status,
             evidence_status="missing_evidence",
             reason="ticket has no source.context.evidence block",
         )
     checks = _evidence_checks(project, evidence)
-    if not checks:
-        evidence_status = "missing_evidence"
-        reason = "source.context.evidence has no artifact/files hashes to validate"
-    elif any(check.status in {"missing", "changed"} for check in checks):
-        evidence_status = "stale"
-        reason = "one or more evidence files no longer match the ticket snapshot"
-    else:
-        evidence_status = "current"
-        reason = "all evidence hashes match"
+    evidence_status, reason = _evidence_status_and_reason(checks)
     return TicketEvidenceValidation(
         ticket_id=ticket_id,
         name=name,
-        status=str(ticket.get("status") or ""),
+        status=status,
         evidence_status=evidence_status,
         regenerate_command=str(evidence.get("regenerate_command") or ""),
         checks=checks,
         reason=reason,
     )
+
+
+def _ticket_identity(ticket: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(ticket.get("id") or ticket.get("ticket_id") or "-"),
+        str(ticket.get("name") or ticket.get("title") or ""),
+        str(ticket.get("status") or ""),
+    )
+
+
+def _ticket_evidence_block(ticket: dict[str, Any]) -> Any:
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    context = source.get("context") if isinstance(source, dict) else None
+    return context.get("evidence") if isinstance(context, dict) else None
+
+
+def _evidence_status_and_reason(checks: list[EvidenceFileCheck]) -> tuple[str, str]:
+    if not checks:
+        return "missing_evidence", "source.context.evidence has no artifact/files hashes to validate"
+    if any(check.status in {"missing", "changed"} for check in checks):
+        return "stale", "one or more evidence files no longer match the ticket snapshot"
+    return "current", "all evidence hashes match"
 
 
 def _evidence_checks(project: Path, evidence: dict[str, Any]) -> list[EvidenceFileCheck]:

@@ -1,5 +1,5 @@
-# code2llm/evolution | 4471 func | 449f | 2026-05-27
-# generated in 0.01s
+# code2llm/evolution | 4512 func | 450f | 2026-05-27
+# generated in 0.02s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py
@@ -7,52 +7,52 @@ NEXT[10] (ranked by impact):
       EFFORT: ~4h  IMPACT: 36624
 
   [2] !! SPLIT           src/koru/doctor.py
-      WHY: 1827L, 3 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 23751
+      WHY: 1869L, 3 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 24297
 
   [3] !! SPLIT           src/koru/scan.py
       WHY: 1585L, 0 classes, max CC=13
       EFFORT: ~4h  IMPACT: 20605
 
-  [4] !  SPLIT-FUNC      deploy  CC=15  fan=23
+  [4] !! SPLIT-FUNC      _check_autopilot_runtime_status  CC=29  fan=14
+      WHY: CC=29 exceeds 15
+      EFFORT: ~1h  IMPACT: 406
+
+  [5] !  SPLIT-FUNC      deploy  CC=15  fan=23
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 345
 
-  [5] !  SPLIT-FUNC      _known_replay_action  CC=24  fan=11
+  [6] !  SPLIT-FUNC      _known_replay_action  CC=24  fan=11
       WHY: CC=24 exceeds 15
       EFFORT: ~1h  IMPACT: 264
 
-  [6] !  SPLIT-FUNC      action_status  CC=15  fan=17
+  [7] !  SPLIT-FUNC      action_status  CC=15  fan=17
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 255
 
-  [7] !  SPLIT-FUNC      SharedAutopilotBridge._performInject  CC=15  fan=17
+  [8] !  SPLIT-FUNC      SharedAutopilotBridge._performInject  CC=15  fan=17
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 255
 
-  [8] !  SPLIT-FUNC      _apply_llx_chat_reflection  CC=21  fan=12
+  [9] !  SPLIT-FUNC      _apply_llx_chat_reflection  CC=21  fan=12
       WHY: CC=21 exceeds 15
       EFFORT: ~1h  IMPACT: 252
 
-  [9] !  SPLIT-FUNC      _load_open_tickets_for_planning  CC=21  fan=10
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 210
-
-  [10] !  SPLIT-FUNC      apply_autonomy_strategy_defaults  CC=15  fan=13
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 195
+  [10] !  SPLIT-FUNC      doctor_main  CC=16  fan=14
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 224
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/doctor.py may break 79 import paths
+  ⚠ Splitting src/koru/doctor.py may break 80 import paths
   ⚠ Splitting src/koru/autonomous_cycle.py may break 55 import paths
   ⚠ Splitting src/koru/scan.py may break 55 import paths
 
 METRICS-TARGET:
   CC̄:          3.6 → ≤2.5
-  max-CC:      24 → ≤12
+  max-CC:      29 → ≤14
   god-modules: 29 → 0
-  high-CC(≥15): 22 → ≤11
+  high-CC(≥15): 25 → ≤12
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

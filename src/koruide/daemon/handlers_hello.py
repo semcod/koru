@@ -281,13 +281,53 @@ def _log_rejected_plugin_connection(
     key = (ide, plugin_version, expected)
     now = time.monotonic()
     last, suppressed = daemon._plugin_rejection_log_state.get(key, (0.0, 0))
-    if last and now - last < _plugin_rejection_log_interval_seconds():
+    if _plugin_rejection_rate_limited(last, now, _plugin_rejection_log_interval_seconds()):
         daemon._plugin_rejection_log_state[key] = (last, suppressed + 1)
         return
+    _log_plugin_rejection_header(daemon, ide=ide, message=message, suppressed=suppressed)
+    _log_plugin_rejection_guidance(
+        daemon,
+        ide=ide,
+        plugin_version=plugin_version,
+        expected=expected,
+        plugin_build_sha=plugin_build_sha,
+        expected_plugin_build_sha=expected_plugin_build_sha,
+        ide_reload_label=_ide_reload_label,
+    )
+    daemon._plugin_rejection_log_state[key] = (now, 0)
+    _remember_plugin_rejection(
+        daemon,
+        ide=ide,
+        plugin_version=plugin_version,
+        expected=expected,
+        plugin_build_sha=plugin_build_sha,
+        expected_plugin_build_sha=expected_plugin_build_sha,
+        message=message,
+        suppressed=suppressed,
+    )
+
+
+def _plugin_rejection_rate_limited(last: float, now: float, interval_seconds: float) -> bool:
+    return bool(last and now - last < interval_seconds)
+
+
+def _log_plugin_rejection_header(daemon: Any, *, ide: str, message: str, suppressed: int) -> None:
     suffix = f" (suppressed {suppressed} repeated reconnects)" if suppressed else ""
     daemon.log(f"rejecting plugin connection: ide={ide} {message}{suffix}")
+
+
+def _log_plugin_rejection_guidance(
+    daemon: Any,
+    *,
+    ide: str,
+    plugin_version: str | None,
+    expected: str | None,
+    plugin_build_sha: str | None,
+    expected_plugin_build_sha: Any,
+    ide_reload_label: Any,
+) -> None:
     if expected and plugin_version and plugin_version != expected:
-        ide_label = _ide_reload_label(ide)
+        ide_label = ide_reload_label(ide)
         daemon.log(
             f"  → installed VSIX is v{plugin_version} but daemon expects "
             f"v{expected}. The IDE is still running the older plugin. "
@@ -296,26 +336,44 @@ def _log_rejected_plugin_connection(
             "If still mismatched after reload, rebuild and reinstall the "
             "VSIX from plugins/koru-autopilot-vscode/.",
         )
-    elif (
-        isinstance(expected_plugin_build_sha, str)
-        and plugin_build_sha
-        and plugin_build_sha != expected_plugin_build_sha
-    ):
-        ide_label = _ide_reload_label(ide)
+        return
+    if _plugin_build_mismatch(plugin_build_sha, expected_plugin_build_sha):
+        ide_label = ide_reload_label(ide)
         daemon.log(
             f"  → installed VSIX version matches, but build hash is {plugin_build_sha}; "
             f"daemon expects {expected_plugin_build_sha}. Action: in {ide_label} run "
             "`Developer: Reload Window` then `koru: Connect autopilot daemon`. "
             "If still mismatched after reload, rebuild and reinstall the VSIX.",
         )
-    elif expected and not plugin_version:
+        return
+    if expected and not plugin_version:
         daemon.log(
             f"  → plugin sent no version; daemon expects v{expected}. "
             "This usually means the VSIX is older than the policy gate. "
             "Action: reinstall the VSIX from plugins/koru-autopilot-vscode/ "
             "and reload the IDE window.",
         )
-    daemon._plugin_rejection_log_state[key] = (now, 0)
+
+
+def _plugin_build_mismatch(plugin_build_sha: str | None, expected_plugin_build_sha: Any) -> bool:
+    return bool(
+        isinstance(expected_plugin_build_sha, str)
+        and plugin_build_sha
+        and plugin_build_sha != expected_plugin_build_sha
+    )
+
+
+def _remember_plugin_rejection(
+    daemon: Any,
+    *,
+    ide: str,
+    plugin_version: str | None,
+    expected: str | None,
+    plugin_build_sha: str | None,
+    expected_plugin_build_sha: Any,
+    message: str,
+    suppressed: int,
+) -> None:
     daemon._plugin_rejections.append(
         {
             "ide": ide,

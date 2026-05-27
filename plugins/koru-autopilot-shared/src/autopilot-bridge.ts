@@ -93,52 +93,20 @@ export class SharedAutopilotBridge extends SharedAutopilotBridgeSubmit implement
       ok: true,
       detail: { ide, submit, textLength: text.length },
     });
-    if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
-      this.traceOperation({ op: "drive", route: "antigravity-fastpath", ok: true });
+    if (await this.tryIdeFastPath(env, text, submit)) {
       return;
     }
-    if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
-      this.traceOperation({ op: "drive", route: "windsurf-fastpath", ok: true });
-      return;
-    }
-    if (
-      this.options.enableCursorComposerFastPath &&
-      await this.tryCursorComposerPromptFastPath(env, text, submit)
-    ) {
-      this.traceOperation({ op: "drive", route: "cursor-composer-fastpath", ok: true });
-      return;
-    }
-    if (ide === "windsurf") {
-      this.traceOperation({ op: "paste", route: "windsurf-fastpath-required", ok: false, reason: "fast path failed" });
-      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
-      return;
-    }
-    if (ide === "antigravity") {
-      this.traceOperation({ op: "paste", route: "antigravity-native-required", ok: false, reason: "native send command unavailable" });
-      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "native send command unavailable" });
+    if (this.sendNativeFastPathRequiredFailure(env, ide)) {
       return;
     }
 
-    const focus = await this.openChatPanel("inject");
-    if (focus.ok) {
-      await this.sleep(80);
-    }
-    if (!focus.ok) {
-      this.sendFocusFailureAck(env, focus);
+    const focus = await this.focusChatForInject(env);
+    if (focus === null) {
       return;
     }
     const busyInput = await this.decideBusyInput(text);
-    if (busyInput.action === "submit_existing") {
-      debugLog("CHAT_INPUT_BUSY_SUBMIT_EXISTING", { length: busyInput.observedLength });
-      await this.submitExistingChatInput(env, focus, text, submit);
+    if (await this.handleBusyInputBeforePaste(env, focus, busyInput, text, submit)) {
       return;
-    }
-    if (busyInput.action === "block") {
-      this.sendInputBusyAck(env, focus, busyInput.observedLength);
-      return;
-    }
-    if (busyInput.action === "replace_known_koru_draft") {
-      debugLog("CHAT_INPUT_BUSY_REPLACE_KORU_DRAFT", { length: busyInput.observedLength });
     }
     const pasted = await this.pasteText(text, busyInput.action === "replace_known_koru_draft");
     if (!pasted.ok) {
@@ -153,6 +121,73 @@ export class SharedAutopilotBridge extends SharedAutopilotBridgeSubmit implement
     if (submit) {
       this.sendMessageSent(text);
     }
+  }
+
+  private async tryIdeFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
+    if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
+      this.traceOperation({ op: "drive", route: "antigravity-fastpath", ok: true });
+      return true;
+    }
+    if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
+      this.traceOperation({ op: "drive", route: "windsurf-fastpath", ok: true });
+      return true;
+    }
+    if (
+      this.options.enableCursorComposerFastPath &&
+      await this.tryCursorComposerPromptFastPath(env, text, submit)
+    ) {
+      this.traceOperation({ op: "drive", route: "cursor-composer-fastpath", ok: true });
+      return true;
+    }
+    return false;
+  }
+
+  private sendNativeFastPathRequiredFailure(env: Envelope, ide: string): boolean {
+    if (ide === "windsurf") {
+      this.traceOperation({ op: "paste", route: "windsurf-fastpath-required", ok: false, reason: "fast path failed" });
+      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
+      return true;
+    }
+    if (ide === "antigravity") {
+      this.traceOperation({ op: "paste", route: "antigravity-native-required", ok: false, reason: "native send command unavailable" });
+      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "native send command unavailable" });
+      return true;
+    }
+    return false;
+  }
+
+  private async focusChatForInject(env: Envelope): Promise<any | null> {
+    const focus = await this.openChatPanel("inject");
+    if (focus.ok) {
+      await this.sleep(80);
+    }
+    if (!focus.ok) {
+      this.sendFocusFailureAck(env, focus);
+      return null;
+    }
+    return focus;
+  }
+
+  private async handleBusyInputBeforePaste(
+    env: Envelope,
+    focus: any,
+    busyInput: { action: string; observedLength: number },
+    text: string,
+    submit: boolean,
+  ): Promise<boolean> {
+    if (busyInput.action === "submit_existing") {
+      debugLog("CHAT_INPUT_BUSY_SUBMIT_EXISTING", { length: busyInput.observedLength });
+      await this.submitExistingChatInput(env, focus, text, submit);
+      return true;
+    }
+    if (busyInput.action === "block") {
+      this.sendInputBusyAck(env, focus, busyInput.observedLength);
+      return true;
+    }
+    if (busyInput.action === "replace_known_koru_draft") {
+      debugLog("CHAT_INPUT_BUSY_REPLACE_KORU_DRAFT", { length: busyInput.observedLength });
+    }
+    return false;
   }
 
 }

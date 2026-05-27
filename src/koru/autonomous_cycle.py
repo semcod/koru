@@ -334,6 +334,19 @@ def _load_open_tickets_for_planning(
     *,
     queue_name: str | None,
 ) -> list[dict[str, Any]]:
+    payload = _load_planfile_ticket_payload(project)
+    if payload is None:
+        return []
+    return [
+        row
+        for item in payload
+        if isinstance(item, dict)
+        for row in [_planning_ticket_row(item, queue_name)]
+        if row is not None
+    ]
+
+
+def _load_planfile_ticket_payload(project: Path) -> list[Any] | None:
     try:
         result = planfile_command(
             project,
@@ -347,34 +360,28 @@ def _load_open_tickets_for_planning(
     try:
         payload = json.loads((result.stdout or "").strip() or "[]")
     except json.JSONDecodeError:
-        return []
+        return None
     if isinstance(payload, dict):
         payload = [payload]
     if not isinstance(payload, list):
-        return []
+        return None
+    return payload
 
+
+def _planning_ticket_row(item: dict[str, Any], queue_name: str | None) -> dict[str, Any] | None:
     closed = {"done", "closed", "cancelled", "canceled"}
-    rows: list[dict[str, Any]] = []
-    for item in payload:
-        if not isinstance(item, dict):
-            continue
-        ticket_id = str(item.get("id") or "").strip()
-        if not ticket_id:
-            continue
-        ticket_queue = str(item.get("queue") or "").strip() or None
-        if queue_name and ticket_queue and ticket_queue != queue_name:
-            continue
-        status = str(item.get("status") or "open").strip().lower()
-        if status in closed:
-            continue
-        rows.append(
-            {
-                "id": ticket_id,
-                "title": str(item.get("name") or item.get("title") or "").strip(),
-                "status": status,
-            },
-        )
-    return rows
+    ticket_id = str(item.get("id") or "").strip()
+    ticket_queue = str(item.get("queue") or "").strip() or None
+    status = str(item.get("status") or "open").strip().lower()
+    if not ticket_id or status in closed:
+        return None
+    if queue_name and ticket_queue and ticket_queue != queue_name:
+        return None
+    return {
+        "id": ticket_id,
+        "title": str(item.get("name") or item.get("title") or "").strip(),
+        "status": status,
+    }
 
 
 def _recent_verdicts_for_planning(state: AutoloopState) -> list[dict[str, Any]] | None:

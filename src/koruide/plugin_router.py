@@ -66,42 +66,110 @@ class PluginRouter:
 
     def plugin_for(self, ide: str | None, *, project: str | Path | None = None) -> PluginClient | None:
         target_ide = normalize_ide_id(ide)
-        candidates = [
-            client
-            for client in reversed(list(self._clients.values()))
-            if client.role == "plugin"
-            and (target_ide in (None, "auto") or normalize_ide_id(client.ide) == target_ide)
-        ]
-        if project is not None:
-            for client in candidates:
-                if _workspace_matches_project(client.workspace_folders, project):
-                    self._log(
-                        "plugin_for: matched "
-                        f"ide={client.ide} fd={client.sock.fileno()} "
-                        f"workspace={client.workspace_name or '-'} "
-                        f"folders={client.workspace_folders[:3] or '-'}",
-                    )
-                    return client
-            workspace_aware = [client for client in candidates if client.workspace_folders]
-            if workspace_aware:
-                for client in workspace_aware:
-                    self._log(
-                        "plugin_for: skip workspace mismatch "
-                        f"ide={client.ide} fd={client.sock.fileno()} "
-                        f"project={project} folders={client.workspace_folders[:3]}",
-                    )
-                self._log(f"plugin_for: no workspace-matching plugin for ide={target_ide or 'auto'}")
-                return None
-        for client in candidates:
-            workspace_note = (
-                f" workspace={client.workspace_name or '-'} folders={client.workspace_folders[:3]}"
-                if client.workspace_folders
-                else " workspace=unknown"
-            )
-            self._log(f"plugin_for: matched ide={client.ide} fd={client.sock.fileno()}{workspace_note}")
-            return client
+        candidates = self._plugin_candidates(target_ide)
+        project_match = self._match_project_plugin(candidates, project, target_ide)
+        if project_match is not None:
+            return project_match
+        if self._project_mismatch_blocks_fallback(candidates, project, target_ide):
+            return None
+        generic_match = self._first_generic_plugin(candidates)
+        if generic_match is not None:
+            return generic_match
         self._log(f"plugin_for: no plugin for ide={target_ide or 'auto'}")
         return None
+
+    def _plugin_candidates(self, target_ide: str | None) -> list[PluginClient]:
+        return [
+            client
+            for client in reversed(list(self._clients.values()))
+            if self._matches_plugin_target(client, target_ide)
+        ]
+
+    @staticmethod
+    def _matches_plugin_target(client: PluginClient, target_ide: str | None) -> bool:
+        return client.role == "plugin" and (
+            target_ide in (None, "auto") or normalize_ide_id(client.ide) == target_ide
+        )
+
+    def _match_project_plugin(
+        self,
+        candidates: list[PluginClient],
+        project: str | Path | None,
+        target_ide: str | None,
+    ) -> PluginClient | None:
+        if project is None:
+            return None
+        matched = self._first_workspace_match(candidates, project)
+        if matched is not None:
+            self._log_project_match(matched)
+            return matched
+        return None
+
+    def _first_workspace_match(
+        self,
+        candidates: list[PluginClient],
+        project: str | Path,
+    ) -> PluginClient | None:
+        return next(
+            (
+                client
+                for client in candidates
+                if _workspace_matches_project(client.workspace_folders, project)
+            ),
+            None,
+        )
+
+    @staticmethod
+    def _has_workspace_aware_candidates(candidates: list[PluginClient]) -> bool:
+        return any(client.workspace_folders for client in candidates)
+
+    def _project_mismatch_blocks_fallback(
+        self,
+        candidates: list[PluginClient],
+        project: str | Path | None,
+        target_ide: str | None,
+    ) -> bool:
+        if project is None or not self._has_workspace_aware_candidates(candidates):
+            return False
+        self._log_workspace_mismatches(candidates, project, target_ide)
+        return True
+
+    def _log_project_match(self, client: PluginClient) -> None:
+        self._log(
+            "plugin_for: matched "
+            f"ide={client.ide} fd={client.sock.fileno()} "
+            f"workspace={client.workspace_name or '-'} "
+            f"folders={client.workspace_folders[:3] or '-'}",
+        )
+
+    def _log_workspace_mismatches(
+        self,
+        candidates: list[PluginClient],
+        project: str | Path,
+        target_ide: str | None,
+    ) -> None:
+        for client in candidates:
+            if client.workspace_folders:
+                self._log(
+                    "plugin_for: skip workspace mismatch "
+                    f"ide={client.ide} fd={client.sock.fileno()} "
+                    f"project={project} folders={client.workspace_folders[:3]}",
+                )
+        self._log(f"plugin_for: no workspace-matching plugin for ide={target_ide or 'auto'}")
+
+    def _first_generic_plugin(self, candidates: list[PluginClient]) -> PluginClient | None:
+        for client in candidates:
+            self._log_generic_match(client)
+            return client
+        return None
+
+    def _log_generic_match(self, client: PluginClient) -> None:
+        workspace_note = (
+            f" workspace={client.workspace_name or '-'} folders={client.workspace_folders[:3]}"
+            if client.workspace_folders
+            else " workspace=unknown"
+        )
+        self._log(f"plugin_for: matched ide={client.ide} fd={client.sock.fileno()}{workspace_note}")
 
     def drop_stale_plugins(self, current: PluginClient, ide: str) -> int:
         target_ide = normalize_ide_id(ide)

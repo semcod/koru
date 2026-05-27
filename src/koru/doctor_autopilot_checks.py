@@ -186,20 +186,54 @@ def _check_autopilot_runtime_status(_project: Path) -> tuple[str, str]:
         ide=selected,
         socket_path=_resolve_autopilot_socket_for_doctor(),
     )
-    daemon = report.daemon if isinstance(report.daemon, dict) else {}
-    plugin = report.plugin if isinstance(report.plugin, dict) else {}
-    plugins = daemon.get("plugins") if isinstance(daemon.get("plugins"), list) else []
-    plugin_labels = [
-        str(row.get("ide") or row.get("id") or "?")
-        for row in plugins
-        if isinstance(row, dict)
-    ]
-    issue_rows = [issue.to_dict() for issue in report.issues]
-    severities = {str(row.get("severity")) for row in issue_rows}
+    daemon = _report_mapping(report.daemon)
+    plugin = _report_mapping(report.plugin)
+    plugins = _daemon_plugin_rows(daemon)
+    issue_rows = _install_issue_rows(report)
+    detail_bits = _autopilot_runtime_detail_bits(
+        selected=selected,
+        report=report,
+        daemon=daemon,
+        plugin=plugin,
+        plugins=plugins,
+    )
+    status = _autopilot_runtime_check_status(daemon, plugin, issue_rows)
+    issue_codes = _install_issue_codes(issue_rows)
+    if status == FAIL:
+        return FAIL, "; ".join(detail_bits + [f"issues={issue_codes}"])
+    if status == WARN:
+        return WARN, "; ".join(detail_bits + [f"issues={issue_codes}"])
+    return PASS, "; ".join(detail_bits + ["runtime_status=healthy"])
+
+
+def _report_mapping(value: object) -> dict[str, object]:
+    return value if isinstance(value, dict) else {}
+
+
+def _daemon_plugin_rows(daemon: dict[str, object]) -> list[dict[str, object]]:
+    plugins = daemon.get("plugins")
+    if not isinstance(plugins, list):
+        return []
+    return [row for row in plugins if isinstance(row, dict)]
+
+
+def _install_issue_rows(report: object) -> list[dict[str, object]]:
+    return [issue.to_dict() for issue in getattr(report, "issues", [])]
+
+
+def _autopilot_runtime_detail_bits(
+    *,
+    selected: str,
+    report: object,
+    daemon: dict[str, object],
+    plugin: dict[str, object],
+    plugins: list[dict[str, object]],
+) -> list[str]:
+    plugin_labels = [str(row.get("ide") or row.get("id") or "?") for row in plugins]
     detail_bits = [
         f"ide={plugin.get('ide') or selected}",
         f"daemon={'running' if daemon.get('running') else 'stopped'}",
-        f"socket={report.socket}",
+        f"socket={getattr(report, 'socket', '-')}",
         f"plugins={len(plugins)}",
         f"plugin_labels={','.join(plugin_labels) or '-'}",
         f"connected={plugin.get('connected')}",
@@ -210,12 +244,23 @@ def _check_autopilot_runtime_status(_project: Path) -> tuple[str, str]:
         f"expected_build={plugin.get('expected_build_sha') or '-'}",
     ]
     detail_bits.extend(_lane_matrix_bits(selected))
+    return detail_bits
+
+
+def _autopilot_runtime_check_status(
+    daemon: dict[str, object],
+    plugin: dict[str, object],
+    issue_rows: list[dict[str, object]],
+) -> str:
+    severities = {str(row.get("severity")) for row in issue_rows}
     if "error" in severities:
-        issue_codes = ",".join(str(row.get("code")) for row in issue_rows) or "-"
-        return FAIL, "; ".join(detail_bits + [f"issues={issue_codes}"])
-    if severities or not daemon.get("running") or (
-        plugin.get("supported") is not False and not plugin.get("connected")
-    ):
-        issue_codes = ",".join(str(row.get("code")) for row in issue_rows) or "-"
-        return WARN, "; ".join(detail_bits + [f"issues={issue_codes}"])
-    return PASS, "; ".join(detail_bits + ["runtime_status=healthy"])
+        return FAIL
+    if severities or not daemon.get("running"):
+        return WARN
+    if plugin.get("supported") is not False and not plugin.get("connected"):
+        return WARN
+    return PASS
+
+
+def _install_issue_codes(issue_rows: list[dict[str, object]]) -> str:
+    return ",".join(str(row.get("code")) for row in issue_rows) or "-"

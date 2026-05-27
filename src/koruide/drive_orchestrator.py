@@ -166,54 +166,78 @@ class DriveOrchestrator:
         that a user message was created in the IDE chat.
         """
         verification = str(info.get("verification") or "").lower()
-        ide = str(plugin_ide or info.get("ide") or "").lower()
         if not submit_requested:
-            return {
-                "intent": "deliver_prompt",
-                "intent_status": "fulfilled" if plugin_ok is not False else "failed",
-                "intent_confidence": "strong" if plugin_ok is not False else "none",
-                "intent_validator": "paste_ack",
-                "intent_reason": "submit was not requested",
-            }
-        if plugin_ok is False or verification in {"plugin_error", "submit_unverified"}:
-            return {
-                "intent": "send_prompt",
-                "intent_status": "unverified" if info.get("delivered") else "failed",
-                "intent_confidence": "none",
-                "intent_validator": verification or "plugin_ack",
-                "intent_reason": str(
-                    info.get("submit_failure_reason")
-                    or info.get("reason")
-                    or info.get("message")
-                    or "no trusted proof that a user message was created"
-                ),
-            }
+            return DriveOrchestrator._deliver_prompt_evidence(plugin_ok)
+        if DriveOrchestrator._submit_evidence_is_untrusted(plugin_ok, verification):
+            return DriveOrchestrator._untrusted_submit_evidence(info, verification)
         if verification == "event_only":
-            return {
-                "intent": "send_prompt",
-                "intent_status": "fulfilled",
-                "intent_confidence": "medium",
-                "intent_validator": "message.sent",
-                "intent_reason": "message.sent event observed without full plugin ack proof",
-            }
+            return DriveOrchestrator._send_prompt_evidence(
+                status="fulfilled",
+                confidence="medium",
+                validator="message.sent",
+                reason="message.sent event observed without full plugin ack proof",
+            )
         if verification == "strict":
-            validator = "plugin_strict_ack"
-            confidence = "strong"
-            if ide == "vscodium":
-                validator = "vscodium_strict_ack"
-            return {
-                "intent": "send_prompt",
-                "intent_status": "fulfilled",
-                "intent_confidence": confidence,
-                "intent_validator": validator,
-                "intent_reason": "focus, paste, and submit proofs were accepted",
-            }
+            return DriveOrchestrator._strict_submit_evidence(info, plugin_ide)
+        return DriveOrchestrator._send_prompt_evidence(
+            status="unverified",
+            confidence="weak",
+            validator=verification or "plugin_ack",
+            reason=f"verification={verification or '-'} is not a send-proof",
+        )
+
+    @staticmethod
+    def _deliver_prompt_evidence(plugin_ok: bool | None) -> dict[str, str]:
+        fulfilled = plugin_ok is not False
+        return {
+            "intent": "deliver_prompt",
+            "intent_status": "fulfilled" if fulfilled else "failed",
+            "intent_confidence": "strong" if fulfilled else "none",
+            "intent_validator": "paste_ack",
+            "intent_reason": "submit was not requested",
+        }
+
+    @staticmethod
+    def _submit_evidence_is_untrusted(plugin_ok: bool | None, verification: str) -> bool:
+        return plugin_ok is False or verification in {"plugin_error", "submit_unverified"}
+
+    @staticmethod
+    def _untrusted_submit_evidence(info: dict[str, Any], verification: str) -> dict[str, str]:
+        return DriveOrchestrator._send_prompt_evidence(
+            status="unverified" if info.get("delivered") else "failed",
+            confidence="none",
+            validator=verification or "plugin_ack",
+            reason=DriveOrchestrator._submit_failure_reason(info),
+        )
+
+    @staticmethod
+    def _strict_submit_evidence(info: dict[str, Any], plugin_ide: str | None) -> dict[str, str]:
+        ide = str(plugin_ide or info.get("ide") or "").lower()
+        validator = "vscodium_strict_ack" if ide == "vscodium" else "plugin_strict_ack"
+        return DriveOrchestrator._send_prompt_evidence(
+            status="fulfilled",
+            confidence="strong",
+            validator=validator,
+            reason="focus, paste, and submit proofs were accepted",
+        )
+
+    @staticmethod
+    def _submit_failure_reason(info: dict[str, Any]) -> str:
+        return str(
+            info.get("submit_failure_reason")
+            or info.get("reason")
+            or info.get("message")
+            or "no trusted proof that a user message was created"
+        )
+
+    @staticmethod
+    def _send_prompt_evidence(*, status: str, confidence: str, validator: str, reason: str) -> dict[str, str]:
         return {
             "intent": "send_prompt",
-            "intent_status": "unverified",
-            "intent_confidence": "weak",
-            "intent_validator": verification or "plugin_ack",
-            "intent_reason": f"verification={verification or '-'} is not a send-proof",
+            "intent_status": status,
+            "intent_confidence": confidence,
+            "intent_validator": validator,
+            "intent_reason": reason,
         }
 
     @staticmethod
@@ -369,49 +393,76 @@ class DriveOrchestrator:
         capabilities: list[str] | None = None,
     ) -> dict[str, Any]:
         expected = expected_version or DriveOrchestrator.expected_plugin_version(plugin_ide)
-        expected_build = (
-            expected_build_sha
-            if expected_build_sha is not None
-            else DriveOrchestrator.expected_plugin_build_sha(plugin_ide)
-        )
+        expected_build = DriveOrchestrator._expected_plugin_build(plugin_ide, expected_build_sha)
         strict = DriveOrchestrator.strict_plugin_version_required()
-        mismatch = bool(connected_version and expected and connected_version != expected)
-        build_missing = bool(strict and expected_build and not connected_build_sha)
-        build_mismatch = bool(connected_build_sha and expected_build and connected_build_sha != expected_build)
-        protocol_missing = protocol_version is None
-        protocol_compatible = bool(
-            protocol_version is not None and protocol_version >= MIN_PLUGIN_PROTOCOL_VERSION
-        )
-        protocol_incompatible = bool(
-            protocol_missing or protocol_version < MIN_PLUGIN_PROTOCOL_VERSION
-        )
-        missing_connected = bool(strict and expected and connected_version is None)
-        unknown_expected = bool(strict and connected_version and not expected)
-        protocol_policy = DriveOrchestrator.protocol_plugin_version_policy()
         info: dict[str, Any] = {
             "plugin_version": connected_version,
             "expected_plugin_version": expected,
-            "plugin_version_mismatch": mismatch,
             "plugin_build_sha": connected_build_sha,
             "expected_plugin_build_sha": expected_build,
-            "plugin_build_missing": build_missing,
-            "plugin_build_mismatch": build_mismatch,
             "plugin_protocol_version": protocol_version,
             "minimum_plugin_protocol_version": MIN_PLUGIN_PROTOCOL_VERSION,
-            "plugin_protocol_missing": protocol_missing,
-            "plugin_protocol_compatible": protocol_compatible,
-            "plugin_protocol_incompatible": protocol_incompatible,
-            "plugin_version_missing": missing_connected,
-            "plugin_version_expected_missing": unknown_expected,
-            "plugin_version_policy": (
-                "protocol" if protocol_policy else "strict" if strict else "warn"
+            **DriveOrchestrator._plugin_version_flags(
+                strict=strict,
+                connected_version=connected_version,
+                expected_version=expected,
+                connected_build_sha=connected_build_sha,
+                expected_build_sha=expected_build,
             ),
+            **DriveOrchestrator._plugin_protocol_flags(protocol_version),
+            "plugin_version_policy": DriveOrchestrator._plugin_version_policy_label(strict),
         }
         if capabilities is not None:
             info["plugin_capabilities"] = capabilities
         if plugin_ide:
             info["ide"] = plugin_ide
         return info
+
+    @staticmethod
+    def _expected_plugin_build(plugin_ide: str | None, expected_build_sha: str | None) -> str | None:
+        if expected_build_sha is not None:
+            return expected_build_sha
+        return DriveOrchestrator.expected_plugin_build_sha(plugin_ide)
+
+    @staticmethod
+    def _plugin_version_flags(
+        *,
+        strict: bool,
+        connected_version: str | None,
+        expected_version: str | None,
+        connected_build_sha: str | None,
+        expected_build_sha: str | None,
+    ) -> dict[str, bool]:
+        return {
+            "plugin_version_mismatch": bool(
+                connected_version and expected_version and connected_version != expected_version
+            ),
+            "plugin_build_missing": bool(strict and expected_build_sha and not connected_build_sha),
+            "plugin_build_mismatch": bool(
+                connected_build_sha and expected_build_sha and connected_build_sha != expected_build_sha
+            ),
+            "plugin_version_missing": bool(strict and expected_version and connected_version is None),
+            "plugin_version_expected_missing": bool(strict and connected_version and not expected_version),
+        }
+
+    @staticmethod
+    def _plugin_protocol_flags(protocol_version: int | None) -> dict[str, bool]:
+        protocol_missing = protocol_version is None
+        return {
+            "plugin_protocol_missing": protocol_missing,
+            "plugin_protocol_compatible": bool(
+                protocol_version is not None and protocol_version >= MIN_PLUGIN_PROTOCOL_VERSION
+            ),
+            "plugin_protocol_incompatible": bool(
+                protocol_missing or protocol_version < MIN_PLUGIN_PROTOCOL_VERSION
+            ),
+        }
+
+    @staticmethod
+    def _plugin_version_policy_label(strict: bool) -> str:
+        if DriveOrchestrator.protocol_plugin_version_policy():
+            return "protocol"
+        return "strict" if strict else "warn"
 
     @staticmethod
     def should_block_plugin_version(info: dict[str, Any]) -> bool:
@@ -433,41 +484,47 @@ class DriveOrchestrator:
     @staticmethod
     def plugin_version_block_message(info: dict[str, Any]) -> str:
         if info.get("plugin_protocol_incompatible"):
-            if info.get("plugin_protocol_missing"):
-                return (
-                    "connected autopilot plugin protocol missing: "
-                    f"minimum={info.get('minimum_plugin_protocol_version') or '-'}; "
-                    "install the current VSIX, reload the IDE window, then run "
-                    "`koru: Connect autopilot daemon`."
-                )
+            return DriveOrchestrator._plugin_protocol_block_message(info)
+        if info.get("plugin_version_mismatch") or info.get("plugin_version_missing"):
+            return DriveOrchestrator._plugin_version_mismatch_message(info)
+        if info.get("plugin_build_missing") or info.get("plugin_build_mismatch"):
+            return DriveOrchestrator._plugin_build_mismatch_message(info)
+        return DriveOrchestrator._plugin_version_mismatch_message(info)
+
+    @staticmethod
+    def _plugin_protocol_block_message(info: dict[str, Any]) -> str:
+        if info.get("plugin_protocol_missing"):
             return (
-                "connected autopilot plugin protocol mismatch: "
-                f"connected={info.get('plugin_protocol_version') or '-'} "
+                "connected autopilot plugin protocol missing: "
                 f"minimum={info.get('minimum_plugin_protocol_version') or '-'}; "
                 "install the current VSIX, reload the IDE window, then run "
                 "`koru: Connect autopilot daemon`."
             )
-        if info.get("plugin_version_mismatch") or info.get("plugin_version_missing"):
-            return (
-                "connected autopilot plugin version mismatch: "
-                f"connected={info.get('plugin_version') or '-'} "
-                f"expected={info.get('expected_plugin_version') or '-'}; "
-                "reload the IDE window after installing the current VSIX, then run "
-                "`koru: Connect autopilot daemon`."
-            )
-        if info.get("plugin_build_missing") or info.get("plugin_build_mismatch"):
-            return (
-                "connected autopilot plugin build mismatch: "
-                f"connected={info.get('plugin_build_sha') or '-'} "
-                f"expected={info.get('expected_plugin_build_sha') or '-'} "
-                f"version={info.get('plugin_version') or '-'}; "
-                "reload the IDE window after installing the current VSIX, then run "
-                "`koru: Connect autopilot daemon`."
-            )
+        return (
+            "connected autopilot plugin protocol mismatch: "
+            f"connected={info.get('plugin_protocol_version') or '-'} "
+            f"minimum={info.get('minimum_plugin_protocol_version') or '-'}; "
+            "install the current VSIX, reload the IDE window, then run "
+            "`koru: Connect autopilot daemon`."
+        )
+
+    @staticmethod
+    def _plugin_version_mismatch_message(info: dict[str, Any]) -> str:
         return (
             "connected autopilot plugin version mismatch: "
             f"connected={info.get('plugin_version') or '-'} "
             f"expected={info.get('expected_plugin_version') or '-'}; "
+            "reload the IDE window after installing the current VSIX, then run "
+            "`koru: Connect autopilot daemon`."
+        )
+
+    @staticmethod
+    def _plugin_build_mismatch_message(info: dict[str, Any]) -> str:
+        return (
+            "connected autopilot plugin build mismatch: "
+            f"connected={info.get('plugin_build_sha') or '-'} "
+            f"expected={info.get('expected_plugin_build_sha') or '-'} "
+            f"version={info.get('plugin_version') or '-'}; "
             "reload the IDE window after installing the current VSIX, then run "
             "`koru: Connect autopilot daemon`."
         )
@@ -491,25 +548,44 @@ class DriveOrchestrator:
     @staticmethod
     def plugin_ack_summary(info: dict[str, Any]) -> str:
         parts: list[str] = []
-        verification = info.get("verification")
-        if verification:
-            parts.append(f"verification={verification}")
-        for key in (
+        parts.extend(DriveOrchestrator._plugin_ack_basic_parts(info))
+        parts.extend(DriveOrchestrator._plugin_ack_submit_parts(info))
+        parts.extend(DriveOrchestrator._plugin_ack_trace_parts(info))
+        parts.extend(DriveOrchestrator._plugin_ack_version_parts(info))
+        return " ".join(parts)
+
+    @staticmethod
+    def _plugin_ack_basic_parts(info: dict[str, Any]) -> list[str]:
+        parts: list[str] = []
+        if info.get("verification"):
+            parts.append(f"verification={info['verification']}")
+        if info.get("event"):
+            parts.append(f"event={info['event']}")
+        return parts
+
+    @staticmethod
+    def _plugin_ack_submit_parts(info: dict[str, Any]) -> list[str]:
+        keys = (
             "winning_focus_open",
             "winning_paste",
             "winning_submit",
             "attempted_submit",
             "submit_failure_reason",
-        ):
-            value = info.get(key)
-            if value:
-                parts.append(f"{key}={value}")
+        )
+        parts = [f"{key}={info[key]}" for key in keys if info.get(key)]
         attempts = info.get("submit_attempts")
         if isinstance(attempts, list) and attempts:
             parts.append("submit_attempts=" + " | ".join(str(item) for item in attempts))
+        return parts
+
+    @staticmethod
+    def _plugin_ack_trace_parts(info: dict[str, Any]) -> list[str]:
         route_trace = DriveOrchestrator.operation_trace_summary(info)
-        if route_trace:
-            parts.append(f"route_trace={route_trace}")
+        return [f"route_trace={route_trace}"] if route_trace else []
+
+    @staticmethod
+    def _plugin_ack_version_parts(info: dict[str, Any]) -> list[str]:
+        parts: list[str] = []
         if info.get("plugin_version_mismatch"):
             parts.append(
                 "plugin_version="
@@ -522,9 +598,7 @@ class DriveOrchestrator:
                 f"{info.get('plugin_build_sha') or '-'}"
                 f"/expected={info.get('expected_plugin_build_sha') or '-'}"
             )
-        if info.get("event"):
-            parts.append(f"event={info['event']}")
-        return " ".join(parts)
+        return parts
 
     @staticmethod
     def operation_trace_summary(info: dict[str, Any]) -> str:
@@ -723,54 +797,110 @@ class DriveOrchestrator:
     def drive_diagnosis(info: dict[str, Any], *, plugin_ok: bool | None = None) -> dict[str, str]:
         verification = str(info.get("verification") or "")
         intent_status = str(info.get("intent_status") or "")
-        reason = str(
-            info.get("submit_failure_reason")
-            or info.get("reason")
-            or info.get("message")
-            or ""
-        )
+        reason = DriveOrchestrator._drive_reason(info)
         winning_submit = str(info.get("winning_submit") or info.get("attempted_submit") or "")
-        if intent_status and intent_status != "fulfilled":
-            return {
-                "severity": "error",
-                "code": "intent_not_validated",
-                "because": reason or str(info.get("intent_reason") or "intent was not fulfilled"),
-                "next": "do not redrive blindly; inspect validation evidence and fix the failed validator",
-            }
-        if plugin_ok is False or verification in {"plugin_error", "submit_unverified"}:
-            code = "submit_not_verified" if "submit" in verification or winning_submit else "drive_not_verified"
-            return {
-                "severity": "error",
-                "code": code,
-                "because": reason or "plugin did not provide a trusted submit proof",
-                "next": "do not redrive blindly; inspect replay trace and retry after submit strategy fix",
-            }
-        if verification == "strict":
-            return {
-                "severity": "ok",
-                "code": "submit_verified",
-                "because": "plugin ack carried required focus/paste/submit proofs",
-                "next": "wait for IDE/LLM response or ticket state transition",
-            }
-        if verification == "event_only":
-            return {
-                "severity": "warning",
-                "code": "event_only",
-                "because": "message.sent event completed the drive without full ack proof",
-                "next": "prefer full plugin ack before considering the ticket advanced",
-            }
-        if verification == "input_busy":
-            return {
-                "severity": "warning",
-                "code": "chat_input_busy",
-                "because": reason or "chat input already contained text",
-                "next": "ask operator/IDE to submit or clear the existing draft before retry",
-            }
+        return (
+            DriveOrchestrator._intent_status_diagnosis(info, intent_status, reason)
+            or DriveOrchestrator._unverified_plugin_diagnosis(
+                plugin_ok=plugin_ok,
+                verification=verification,
+                winning_submit=winning_submit,
+                reason=reason,
+            )
+            or DriveOrchestrator._verification_diagnosis(verification, reason)
+            or DriveOrchestrator._ambiguous_diagnosis(verification, reason)
+        )
+
+    @staticmethod
+    def _drive_reason(info: dict[str, Any]) -> str:
+        return str(info.get("submit_failure_reason") or info.get("reason") or info.get("message") or "")
+
+    @staticmethod
+    def _intent_status_diagnosis(
+        info: dict[str, Any],
+        intent_status: str,
+        reason: str,
+    ) -> dict[str, str] | None:
+        if not intent_status or intent_status == "fulfilled":
+            return None
+        return DriveOrchestrator._diagnosis(
+            "error",
+            "intent_not_validated",
+            reason or str(info.get("intent_reason") or "intent was not fulfilled"),
+            "do not redrive blindly; inspect validation evidence and fix the failed validator",
+        )
+
+    @staticmethod
+    def _unverified_plugin_diagnosis(
+        *,
+        plugin_ok: bool | None,
+        verification: str,
+        winning_submit: str,
+        reason: str,
+    ) -> dict[str, str] | None:
+        if plugin_ok is not False and verification not in {"plugin_error", "submit_unverified"}:
+            return None
+        code = "submit_not_verified" if "submit" in verification or winning_submit else "drive_not_verified"
+        return DriveOrchestrator._diagnosis(
+            "error",
+            code,
+            reason or "plugin did not provide a trusted submit proof",
+            "do not redrive blindly; inspect replay trace and retry after submit strategy fix",
+        )
+
+    @staticmethod
+    def _verification_diagnosis(verification: str, reason: str) -> dict[str, str] | None:
+        known = {
+            "strict": DriveOrchestrator._strict_drive_diagnosis,
+            "event_only": DriveOrchestrator._event_only_drive_diagnosis,
+            "input_busy": lambda: DriveOrchestrator._input_busy_drive_diagnosis(reason),
+        }
+        builder = known.get(verification)
+        return builder() if builder else None
+
+    @staticmethod
+    def _strict_drive_diagnosis() -> dict[str, str]:
+        return DriveOrchestrator._diagnosis(
+            "ok",
+            "submit_verified",
+            "plugin ack carried required focus/paste/submit proofs",
+            "wait for IDE/LLM response or ticket state transition",
+        )
+
+    @staticmethod
+    def _event_only_drive_diagnosis() -> dict[str, str]:
+        return DriveOrchestrator._diagnosis(
+            "warning",
+            "event_only",
+            "message.sent event completed the drive without full ack proof",
+            "prefer full plugin ack before considering the ticket advanced",
+        )
+
+    @staticmethod
+    def _input_busy_drive_diagnosis(reason: str) -> dict[str, str]:
+        return DriveOrchestrator._diagnosis(
+            "warning",
+            "chat_input_busy",
+            reason or "chat input already contained text",
+            "ask operator/IDE to submit or clear the existing draft before retry",
+        )
+
+    @staticmethod
+    def _ambiguous_diagnosis(verification: str, reason: str) -> dict[str, str]:
+        return DriveOrchestrator._diagnosis(
+            "warning",
+            "ambiguous_drive",
+            reason or f"verification={verification or '-'}",
+            "inspect DSL trace before retrying",
+        )
+
+    @staticmethod
+    def _diagnosis(severity: str, code: str, because: str, next_step: str) -> dict[str, str]:
         return {
-            "severity": "warning",
-            "code": "ambiguous_drive",
-            "because": reason or f"verification={verification or '-'}",
-            "next": "inspect DSL trace before retrying",
+            "severity": severity,
+            "code": code,
+            "because": because,
+            "next": next_step,
         }
 
     @staticmethod

@@ -90,33 +90,7 @@ def deploy(project_path: str, dry_run: bool, format: str):
         output = {"dry_run": dry_run, "deployment_plan": deployment_plan}
         click.echo(json.dumps(output, indent=2))
     else:
-        # Table format
-        analysis = deployment_plan.get("analysis", {})
-        click.echo(f"\n📊 Deployment Analysis:")
-        click.echo(f"Total changes: {analysis.get('total_changes', 0)}")
-        click.echo(f"Total groups: {analysis.get('total_groups', 0)}")
-        
-        priority_order = analysis.get('priority_order', [])
-        if priority_order:
-            click.echo(f"\n🎯 Deployment Order:")
-            for i, group in enumerate(priority_order, 1):
-                risk = analysis.get('risk_assessment', {}).get(group, 0.0)
-                click.echo(f"  {i}. {group} (risk: {risk:.2f})")
-        
-        deployment_groups = deployment_plan.get("deployment_groups", [])
-        if deployment_groups:
-            click.echo(f"\n🚀 Deployment Groups:")
-            for group in deployment_groups:
-                click.echo(f"\n  {group['name'].upper()} (Priority: {group['priority']})")
-                click.echo(f"  Strategy: {group['deployment_strategy']}")
-                click.echo(f"  Files: {len(group['changes'])}")
-                click.echo(f"  Risk score: {group['risk_score']:.2f}")
-        
-        recommendations = analysis.get('recommendations', [])
-        if recommendations:
-            click.echo(f"\n💡 Recommendations:")
-            for rec in recommendations:
-                click.echo(f"  • {rec}")
+        _render_deployment_plan_table(deployment_plan)
     
     if dry_run:
         click.echo(f"\n🔍 DRY RUN - No deployment actions taken")
@@ -127,29 +101,67 @@ def deploy(project_path: str, dry_run: bool, format: str):
         click.echo("Deployment cancelled")
         return
     
-    click.echo(f"\n🚀 Starting deployment...")
-    
-    success = True
-    deployed_groups = []
-    
-    for group in deployment_plan.get("deployment_groups", []):
-        group_name = group.get("name", "")
-        if group_name:
-            click.echo(f"  Deploying {group_name}...")
-            group_success = tagi.commit_changes(group_name)
-            if group_success:
-                click.echo(f"  ✓ {group_name} deployed")
-                deployed_groups.append(group_name)
-            else:
-                click.echo(f"  ✗ {group_name} failed")
-                success = False
-                break
-    
+    success, deployed_groups = _execute_deployment_plan(tagi, deployment_plan)
     if success:
         click.echo(f"\n✅ Deployment completed successfully")
         click.echo(f"Deployed groups: {', '.join(deployed_groups)}")
     else:
         click.echo(f"\n❌ Deployment failed")
+
+
+def _render_deployment_plan_table(deployment_plan: dict):
+    analysis = deployment_plan.get("analysis", {})
+    click.echo(f"\n📊 Deployment Analysis:")
+    click.echo(f"Total changes: {analysis.get('total_changes', 0)}")
+    click.echo(f"Total groups: {analysis.get('total_groups', 0)}")
+    _render_priority_order(analysis)
+    _render_deployment_groups(deployment_plan.get("deployment_groups", []))
+    _render_recommendations(analysis.get("recommendations", []))
+
+
+def _render_priority_order(analysis: dict):
+    priority_order = analysis.get("priority_order", [])
+    if not priority_order:
+        return
+    click.echo(f"\n🎯 Deployment Order:")
+    for i, group in enumerate(priority_order, 1):
+        risk = analysis.get("risk_assessment", {}).get(group, 0.0)
+        click.echo(f"  {i}. {group} (risk: {risk:.2f})")
+
+
+def _render_deployment_groups(deployment_groups: list):
+    if not deployment_groups:
+        return
+    click.echo(f"\n🚀 Deployment Groups:")
+    for group in deployment_groups:
+        click.echo(f"\n  {group['name'].upper()} (Priority: {group['priority']})")
+        click.echo(f"  Strategy: {group['deployment_strategy']}")
+        click.echo(f"  Files: {len(group['changes'])}")
+        click.echo(f"  Risk score: {group['risk_score']:.2f}")
+
+
+def _render_recommendations(recommendations: list):
+    if not recommendations:
+        return
+    click.echo(f"\n💡 Recommendations:")
+    for rec in recommendations:
+        click.echo(f"  • {rec}")
+
+
+def _execute_deployment_plan(tagi: TagiIntegration, deployment_plan: dict) -> tuple[bool, list[str]]:
+    click.echo(f"\n🚀 Starting deployment...")
+    deployed_groups = []
+    for group in deployment_plan.get("deployment_groups", []):
+        group_name = group.get("name", "")
+        if not group_name:
+            continue
+        click.echo(f"  Deploying {group_name}...")
+        if not tagi.commit_changes(group_name):
+            click.echo(f"  ✗ {group_name} failed")
+            return False, deployed_groups
+        click.echo(f"  ✓ {group_name} deployed")
+        deployed_groups.append(group_name)
+    return True, deployed_groups
 
 
 @tagi.command()

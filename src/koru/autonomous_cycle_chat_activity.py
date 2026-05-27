@@ -182,51 +182,19 @@ def _apply_llx_chat_reflection(
     raw_driven_prompt = getattr(state, "last_driven_prompt", "")
     driven_prompt = raw_driven_prompt if isinstance(raw_driven_prompt, str) else ""
 
-    # Phase 4a: try llx (subprocess) first
-    reflection: Any = None
-    try:
-        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat as _llx_reflect
-    except ImportError:
-        pass
-    else:
-        if llm_reflect_enabled():
-            reflection = _llx_reflect(
-                ticket_id=waiting_ticket or "-",
-                ticket_title=ticket_title,
-                driven_prompt=driven_prompt or ticket_title,
-                ide=ide or "",
-                events=reflection_events or None,
-            )
-
-    # Phase 4b: fallback to OpenRouter-native reflection
+    reflection = _reflect_with_llx(
+        waiting_ticket=waiting_ticket,
+        ticket_title=ticket_title,
+        driven_prompt=driven_prompt,
+        ide=ide,
+        reflection_events=reflection_events,
+    )
     if reflection is None:
-        try:
-            from koru.autonomy.planning_llm import reflect_on_chat as _or_reflect
-        except ImportError:
-            return False, False
-        chat_events_payload: list[dict[str, Any]] = []
-        for ev in (reflection_events or []):
-            if isinstance(ev, dict):
-                chat_events_payload.append(
-                    {
-                        "type": ev.get("type"),
-                        "text": ev.get("text"),
-                        "summary": ev.get("summary"),
-                    },
-                )
-                continue
-            chat_events_payload.append(
-                {
-                    "type": getattr(ev, "type", ""),
-                    "text": getattr(ev, "text", ""),
-                    "summary": getattr(ev, "summary", ""),
-                },
-            )
-        reflection = _or_reflect(
-            ticket_id=waiting_ticket or "-",
+        reflection = _reflect_with_openrouter(
+            waiting_ticket=waiting_ticket,
             ticket_title=ticket_title,
-            driven_prompt=driven_prompt or ticket_title,
-            chat_events=chat_events_payload,
+            driven_prompt=driven_prompt,
+            reflection_events=reflection_events,
         )
         if reflection is not None:
             report_progress("- llx reflect: using OpenRouter fallback")
@@ -234,6 +202,87 @@ def _apply_llx_chat_reflection(
     if reflection is None:
         return False, False
 
+    return _record_llx_chat_reflection(
+        reflection=reflection,
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        reflection_events=reflection_events,
+        report_progress=report_progress,
+    )
+
+
+def _reflect_with_llx(
+    *,
+    waiting_ticket: str,
+    ticket_title: str,
+    driven_prompt: str,
+    ide: str | None,
+    reflection_events: list[Any],
+) -> Any | None:
+    try:
+        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat as _llx_reflect
+    except ImportError:
+        return None
+    if not llm_reflect_enabled():
+        return None
+    return _llx_reflect(
+        ticket_id=waiting_ticket or "-",
+        ticket_title=ticket_title,
+        driven_prompt=driven_prompt or ticket_title,
+        ide=ide or "",
+        events=reflection_events or None,
+    )
+
+
+def _reflect_with_openrouter(
+    *,
+    waiting_ticket: str,
+    ticket_title: str,
+    driven_prompt: str,
+    reflection_events: list[Any],
+) -> Any | None:
+    try:
+        from koru.autonomy.planning_llm import reflect_on_chat as _or_reflect
+    except ImportError:
+        return None
+    return _or_reflect(
+        ticket_id=waiting_ticket or "-",
+        ticket_title=ticket_title,
+        driven_prompt=driven_prompt or ticket_title,
+        chat_events=_reflection_chat_events_payload(reflection_events),
+    )
+
+
+def _reflection_chat_events_payload(reflection_events: list[Any]) -> list[dict[str, Any]]:
+    return [_reflection_chat_event_payload(event) for event in (reflection_events or [])]
+
+
+def _reflection_chat_event_payload(event: Any) -> dict[str, Any]:
+    if isinstance(event, dict):
+        return {
+            "type": event.get("type"),
+            "text": event.get("text"),
+            "summary": event.get("summary"),
+        }
+    return {
+        "type": getattr(event, "type", ""),
+        "text": getattr(event, "text", ""),
+        "summary": getattr(event, "summary", ""),
+    }
+
+
+def _record_llx_chat_reflection(
+    *,
+    reflection: Any,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    reflection_events: list[Any],
+    report_progress: Any,
+) -> tuple[bool, bool]:
     cycle_telemetry["autopilot_llx_reflection"] = {
         "done": reflection.done,
         "needs_input": reflection.needs_input,

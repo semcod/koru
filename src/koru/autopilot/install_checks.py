@@ -237,44 +237,69 @@ def check_plugin_live_host_stale_issue(
 ) -> list[ManagerIssue]:
   installed_version = plugin.get("installed_version")
   expected_version = plugin.get("expected_version")
-  if not daemon.get("running") or not installed_version or installed_version != expected_version:
+  if not _plugin_install_matches_expected(daemon, installed_version, expected_version):
     return []
-  rejected = [
+  rejected = _stale_rejected_plugins(daemon, ide, expected_version)
+  if not rejected:
+    return []
+  return [_plugin_live_host_stale_issue(ide, str(installed_version), rejected)]
+
+
+def _plugin_install_matches_expected(
+  daemon: dict[str, Any],
+  installed_version: Any,
+  expected_version: Any,
+) -> bool:
+  return bool(daemon.get("running") and installed_version and installed_version == expected_version)
+
+
+def _stale_rejected_plugins(
+  daemon: dict[str, Any],
+  ide: str,
+  expected_version: Any,
+) -> list[dict[str, Any]]:
+  return [
     row
     for row in daemon.get("rejected_plugins", [])
     if isinstance(row, dict)
     and row.get("ide") == ide
-    and (
-      (row.get("version") and row.get("version") != expected_version)
-      or (
-        row.get("version") == expected_version
-        and row.get("expected_build_sha")
-        and row.get("build_sha") != row.get("expected_build_sha")
-      )
+    and _is_stale_rejected_plugin(row, expected_version)
+  ]
+
+
+def _is_stale_rejected_plugin(row: dict[str, Any], expected_version: Any) -> bool:
+  version = row.get("version")
+  return bool(
+    (version and version != expected_version)
+    or (
+      version == expected_version
+      and row.get("expected_build_sha")
+      and row.get("build_sha") != row.get("expected_build_sha")
     )
-  ]
-  if not rejected:
-    return []
-  seen_versions = sorted({str(row.get("version")) for row in rejected if row.get("version")})
-  versions = ", ".join(seen_versions)
-  seen_builds = sorted({str(row.get("build_sha") or "-") for row in rejected})
-  builds = ", ".join(seen_builds)
-  return [
-    ManagerIssue(
-      "plugin_live_host_stale",
-      "error",
-      (
-        f"{ide} extension is installed at {installed_version}, but the live IDE "
-        f"extension host is still reconnecting with stale version/build(s): "
-        f"versions={versions or '-'} builds={builds or '-'}."
-      ),
-      (
-        "Reload the IDE window with `Developer: Reload Window`, then run "
-        "`koru: Connect autopilot daemon`. If stale reconnects continue, fully "
-        "close that IDE window and open the project again."
-      ),
+  )
+
+
+def _plugin_live_host_stale_issue(
+  ide: str,
+  installed_version: str,
+  rejected: list[dict[str, Any]],
+) -> ManagerIssue:
+  versions = ", ".join(sorted({str(row.get("version")) for row in rejected if row.get("version")}))
+  builds = ", ".join(sorted({str(row.get("build_sha") or "-") for row in rejected}))
+  return ManagerIssue(
+    "plugin_live_host_stale",
+    "error",
+    (
+      f"{ide} extension is installed at {installed_version}, but the live IDE "
+      f"extension host is still reconnecting with stale version/build(s): "
+      f"versions={versions or '-'} builds={builds or '-'}."
     ),
-  ]
+    (
+      "Reload the IDE window with `Developer: Reload Window`, then run "
+      "`koru: Connect autopilot daemon`. If stale reconnects continue, fully "
+      "close that IDE window and open the project again."
+    ),
+  )
 
 
 # ---------------------------------------------------------------------------

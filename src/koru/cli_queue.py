@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from koru.events import emit_management_event
 from koru.queue_clean import CleanupReport, clean_queue
@@ -161,23 +162,31 @@ def render_clean_report_text(report: CleanupReport) -> str:
 def queue_main(argv: list[str]) -> int:
     args = build_queue_parser().parse_args(argv)
     if args.subcommand == "validate-evidence":
-        try:
-            report = validate_ticket_evidence(
-                args.project,
-                ticket_id=args.ticket,
-                status="" if args.status == "all" else args.status,
-            )
-        except (RuntimeError, json.JSONDecodeError) as exc:
-            print(f"koru queue validate-evidence: {exc}", file=sys.stderr)
-            return 1
-        if args.output_format == "json":
-            print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
-        else:
-            print(render_ticket_evidence_report(report))
-        return 1 if report.stale_count or report.missing_evidence_count else 0
+        return _queue_validate_evidence_main(args)
     if args.subcommand != "clean":
         print(f"koru queue: unknown subcommand {args.subcommand!r}", file=sys.stderr)
         return 2
+    return _queue_clean_main(args)
+
+
+def _queue_validate_evidence_main(args: argparse.Namespace) -> int:
+    try:
+        report = validate_ticket_evidence(
+            args.project,
+            ticket_id=args.ticket,
+            status="" if args.status == "all" else args.status,
+        )
+    except (RuntimeError, json.JSONDecodeError) as exc:
+        print(f"koru queue validate-evidence: {exc}", file=sys.stderr)
+        return 1
+    if args.output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+    else:
+        print(render_ticket_evidence_report(report))
+    return 1 if report.stale_count or report.missing_evidence_count else 0
+
+
+def _queue_clean_main(args: argparse.Namespace) -> int:
     try:
         report = clean_queue(
             args.project,
@@ -191,11 +200,7 @@ def queue_main(argv: list[str]) -> int:
         print(f"koru queue clean: {exc}", file=sys.stderr)
         return 1
 
-    if args.output_format == "json":
-        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
-    else:
-        print(render_clean_report_text(report))
-
+    _print_clean_queue_report(report, args.output_format)
     emit_management_event(
         tool="koru.queue.clean",
         action="completed" if not report.failed else "failed",
@@ -212,6 +217,13 @@ def queue_main(argv: list[str]) -> int:
     if report.failed:
         return 1
     return 0
+
+
+def _print_clean_queue_report(report: Any, output_format: str) -> None:
+    if output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+    else:
+        print(render_clean_report_text(report))
 
 
 def queue_run_main(args: argparse.Namespace) -> int:

@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.12s
+%% generated in 0.11s
     autopilot_bridge__SharedAutopilotBridge["autopilot-bridge.SharedAutopilotBridge<br/>17 funcs"]
     bridge_fastpath__SharedAutopilotBridgeFastPath["bridge-fastpath.SharedAutopilotBridgeFastPath<br/>19 funcs"]
     docker__capture["docker.capture<br/>8 funcs"]
@@ -9,7 +9,8 @@ flowchart TD
     koruide__command_catalog_store["koruide.command_catalog_store<br/>13 funcs"]
     plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>192 funcs"]
     plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>118 funcs"]
-    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>169 funcs"]
+    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>287 funcs"]
+    plugins__koru_autopilot_vscodium["plugins.koru-autopilot-vscodium<br/>155 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
@@ -21,26 +22,24 @@ flowchart TD
     scripts__sync_vscode_plugin_version["scripts.sync-vscode-plugin-version<br/>6 funcs"]
     scripts__write_ide_plugin_tests["scripts.write-ide-plugin-tests<br/>3 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__bridge_focus_core["src.bridge-focus-core<br/>25 funcs"]
-    src__bridge_network["src.bridge-network<br/>54 funcs"]
-    src__koru["src.koru<br/>2398 funcs"]
+    src__koru["src.koru<br/>2417 funcs"]
     src__koruapi["src.koruapi<br/>248 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
-    src__koruide["src.koruide<br/>440 funcs"]
+    src__koruide["src.koruide<br/>447 funcs"]
     src__korullm["src.korullm<br/>39 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>57 funcs"]
     src__koruos["src.koruos<br/>39 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
     src__koru ==>|480| scripts__koru_soak_monitor
-    src__koru ==>|140| src__koruide
+    src__koru ==>|145| src__koruide
     src__koruapi ==>|90| src__koru
     src__koruide ==>|29| src__koru
     src__koruide ==>|27| scripts__koru_soak_monitor
     src__koruapi ==>|26| src__koruide
     src__koruobserve ==>|22| scripts__koru_soak_monitor
     src__koruide ==>|20| src__koruapi
-    src__koru ==>|19| src__bridge_focus_core
+    src__koru ==>|20| plugins__koru_autopilot_shared
     src__koruapi ==>|17| scripts__koru_soak_monitor
     src__koru ==>|16| src__koruvision
     src__koru ==>|13| koru__observability_events
@@ -49,17 +48,17 @@ flowchart TD
     src__koruide ==>|12| plugins__koru_autopilot_antigravity
     src__koruapi ==>|11| plugins__koru_autopilot_antigravity
     src__koru ==>|10| src__koruobserve
-    scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
     scripts__sync_vscode_plugin_version ==>|9| scripts__koru_soak_monitor
+    scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
     src__koruobserve ==>|8| src__koru
     src__koruvision ==>|8| src__korumesh
-    src__koru ==>|8| plugins__koru_autopilot_antigravity
     src__koru ==>|8| src__koruapi
+    src__koru ==>|8| plugins__koru_autopilot_antigravity
     scripts__sync_plugin_version ==>|8| scripts__koru_soak_monitor
     src__koruobserve ==>|7| src__koruvision
     src__korumesh ==>|7| scripts__koru_soak_monitor
+    src__koruide ==>|7| plugins__koru_autopilot_shared
     src__koruide ==>|7| koru__observability_events
-    src__koruide ==>|6| plugins__koru_autopilot_shared
     src__koru ==>|6| src__koruos
     src__koruvision ==>|5| src__koru
     src__koru ==>|5| autopilot_bridge__SharedAutopilotBridge
@@ -73,26 +72,23 @@ flowchart TD
     src__koru -->|3| src__korullm
     scripts__sync_plugin_shared -->|3| scripts__koru_soak_monitor
     scripts__scaffold_ide_plugin -->|3| scripts__koru_soak_monitor
-    src__koruapi -->|2| src__bridge_focus_core
+    src__koruapi -->|2| plugins__koru_autopilot_shared
+    src__koruvision -->|2| plugins__koru_autopilot_shared
     src__korumesh -->|2| src__koru
     src__korumesh -->|2| src__koruvision
     scripts__sync_plugin_build -->|2| scripts__koru_soak_monitor
-    services__healing_webhook -->|1| src__bridge_focus_core
-    services__healing_webhook -->|1| src__koru
     services__healing_webhook -->|1| plugins__koru_autopilot_shared
+    services__healing_webhook -->|1| src__koru
+    services__healing_webhook -->|1| plugins__koru_autopilot_vscodium
     src__koruobserve -->|1| src__korumesh
     src__koruos -->|1| plugins__koru_autopilot_antigravity
     src__koruos -->|1| src__koru
     src__korudsl -->|1| plugins__koru_autopilot_antigravity
     src__korullm -->|1| plugins__koru_autopilot_antigravity
-    src__koruvision -->|1| plugins__koru_autopilot_shared
-    src__koruvision -->|1| src__bridge_network
     src__koruvision -->|1| src__koruobserve
     src__korumesh -->|1| src__koruobserve
-    src__korumesh -->|1| src__bridge_network
+    src__korumesh -->|1| plugins__koru_autopilot_shared
     src__korumesh -->|1| plugins__koru_autopilot_antigravity
-    src__koruide -->|1| src__bridge_focus_core
-    src__koru -->|1| src__bridge_network
     src__koru -->|1| plugins__koru_autopilot_cursor
     src__koru -->|1| bridge_fastpath__SharedAutopilotBridgeFastPath
     koru__observability_events -->|1| src__koru

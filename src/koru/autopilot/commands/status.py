@@ -25,12 +25,8 @@ def _print_status_json(info: dict) -> None:
 def _print_status_explain_summary(info: dict, socket_path: object) -> None:
     """Print a compact human summary for shell operators."""
     daemon = info.get("daemon") if isinstance(info.get("daemon"), dict) else {}
-    plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
-    plugin_labels = [
-        str(row.get("ide") or row.get("id") or "?")
-        for row in plugins
-        if isinstance(row, dict)
-    ]
+    plugins = _status_plugin_rows(info)
+    plugin_labels = _status_plugin_labels(info)
     plugin_text = ", ".join(plugin_labels) if plugin_labels else "none"
     print("\n--- runtime ---", file=sys.stderr)
     print(
@@ -43,6 +39,15 @@ def _print_status_explain_summary(info: dict, socket_path: object) -> None:
     )
     print(f"socket: {socket_path}", file=sys.stderr)
     print(f"plugins: {len(plugins)} ({plugin_text})", file=sys.stderr)
+
+
+def _status_plugin_rows(info: dict) -> list[dict]:
+    plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
+    return [row for row in plugins if isinstance(row, dict)]
+
+
+def _status_plugin_labels(info: dict) -> list[str]:
+    return [str(row.get("ide") or row.get("id") or "?") for row in _status_plugin_rows(info)]
 
 
 def action_status(
@@ -87,26 +92,41 @@ def action_status(
     if args.explain:
         _print_status_explain_summary(info, getattr(client, "socket_path", "-"))
 
-    plugins = info.get("plugins") if isinstance(info, dict) else []
-    if args.explain and isinstance(plugins, list) and not plugins:
-        from koru.ide_adapters.bridge import evaluate_bridge, format_bridge_text
-        from koruide.plugin_installer import resolve_target_ide
-
-        requested = normalize_ide_fn(getattr(args, "ide", "auto"))
-        instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
-        ide = requested if requested and requested != "auto" else None
-        if ide is None:
-            ide = normalize_ide_fn(instance) if instance else resolve_target_ide("auto")
-        ide = ide or "cursor"
-        socket = getattr(client, "socket_path", None)
-        if socket is not None:
-            bridge = evaluate_bridge(
-                ide=ide,
-                socket_path=socket,
-                project=getattr(args, "project", Path.cwd()),
-                plugins=plugins,
-            )
-            print("\n--- explain ---", file=sys.stderr)
-            print(format_bridge_text(bridge, explain=True), file=sys.stderr)
-            print(f"hint: koru ide doctor --ide {ide} --fix", file=sys.stderr)
+    _maybe_print_empty_plugin_bridge_explain(args, info, client, normalize_ide_fn)
     return 0
+
+
+def _maybe_print_empty_plugin_bridge_explain(
+    args: argparse.Namespace,
+    info: dict,
+    client: object,
+    normalize_ide_fn: callable,
+) -> None:
+    plugins = info.get("plugins") if isinstance(info, dict) else []
+    if not (args.explain and isinstance(plugins, list) and not plugins):
+        return
+    socket = getattr(client, "socket_path", None)
+    if socket is None:
+        return
+    from koru.ide_adapters.bridge import evaluate_bridge, format_bridge_text
+
+    ide = _status_explain_target_ide(args, normalize_ide_fn)
+    bridge = evaluate_bridge(
+        ide=ide,
+        socket_path=socket,
+        project=getattr(args, "project", Path.cwd()),
+        plugins=plugins,
+    )
+    print("\n--- explain ---", file=sys.stderr)
+    print(format_bridge_text(bridge, explain=True), file=sys.stderr)
+    print(f"hint: koru ide doctor --ide {ide} --fix", file=sys.stderr)
+
+
+def _status_explain_target_ide(args: argparse.Namespace, normalize_ide_fn: callable) -> str:
+    from koruide.plugin_installer import resolve_target_ide
+
+    requested = normalize_ide_fn(getattr(args, "ide", "auto"))
+    instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
+    if requested and requested != "auto":
+        return requested
+    return (normalize_ide_fn(instance) if instance else resolve_target_ide("auto")) or "cursor"
