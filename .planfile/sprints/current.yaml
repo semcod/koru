@@ -1249,7 +1249,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-05-26T12:32:53.292417Z'
+        finished_at: '2026-05-27T19:41:55.951769Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1325,6 +1325,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-26T12:32:53.313103+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-27T19:41:56.028491+00:00'
       id: STARTER-266
       inputs:
         api_headers: {}
@@ -1379,7 +1384,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-26T12:32:53.313069+00:00'
+      updated_at: '2026-05-27T19:41:56.028448+00:00'
     STARTER-267:
       blocked_by: []
       blocks: []
@@ -12503,9 +12508,11 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-27T19:46:59.464301Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-05-27T19:46:37.577462Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -12523,20 +12530,42 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:38.265844+00:00'
+      - action: update
+        changes:
+        - execution
+        - inputs
+        - outputs
+        execution_state: waiting_input
+        previous_execution_state: ready
+        source: planfile.store
+        timestamp: '2026-05-27T19:44:12.671210+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: waiting_input
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-27T19:46:37.651718+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-27T19:46:59.536797+00:00'
       id: STARTER-370
       inputs:
         api_headers: {}
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: 'code2llm reports `Shotgun Surgery: action` in `src/koru/autonomous_plugin_runtime.py:104`.
-
-
-          Mutation of variable ''action'' spans 21 functions. Changing this logic
-          requires work in many places.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
+        prompt: <input needed>
       labels:
       - koru
       - nl-task
@@ -12547,7 +12576,8 @@ sprint:
       name: 'Address code smell: Shotgun Surgery: action'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - <what was verified>
       priority: high
       source:
         context:
@@ -12589,9 +12619,9 @@ sprint:
         timestamp: '2026-05-26T19:20:38.265844+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:38.265844+00:00'
+      updated_at: '2026-05-27T19:46:59.536758+00:00'
     STARTER-371:
       blocked_by: []
       blocks: []
