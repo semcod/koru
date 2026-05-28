@@ -399,22 +399,28 @@ def repair_installation(
 ) -> InstallManagerReport:
     report = collect_install_manager_report(ide=ide, socket_path=socket_path)
     resolved_ide = str(report.plugin.get("ide") or ide)
-    actions: list[dict[str, Any]] = []
-    unsupported_action = _unsupported_plugin_repair_action(report.plugin, resolved_ide)
-    if unsupported_action is not None:
-        actions.append(unsupported_action)
-        report.actions = actions
+
+    if unsupported_action := _unsupported_plugin_repair_action(report.plugin, resolved_ide):
+        report.actions = [unsupported_action]
         return report
-    plugin_result = install_plugin_for_ide(
-        ide=resolved_ide,
-        dry_run=dry_run,
-        socket_path=Path(report.socket),
-    )
-    actions.append({"action": "install_plugin", "result": plugin_result.to_dict()})
-    shutdown_action = _shutdown_daemon_for_plugin_repair_action(report, dry_run=dry_run)
-    if shutdown_action is not None:
-        actions.append(shutdown_action)
-    actions.append(_reload_ide_reconnect_action(report, resolved_ide, dry_run=dry_run))
+
+    actions = [
+        action
+        for action in (
+            {
+                "action": "install_plugin",
+                "result": install_plugin_for_ide(
+                    ide=resolved_ide,
+                    dry_run=dry_run,
+                    socket_path=Path(report.socket),
+                ).to_dict(),
+            },
+            _shutdown_daemon_for_plugin_repair_action(report, dry_run=dry_run),
+            _reload_ide_reconnect_action(report, resolved_ide, dry_run=dry_run),
+        )
+        if action is not None
+    ]
+
     return _repair_report_with_actions(
         report,
         actions,

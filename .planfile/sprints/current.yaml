@@ -1961,13 +1961,13 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-25T15:18:52.447431+00:00'
-      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
-        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
-        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
-        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
-        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
-        \                    ^^^^\nNameError: name 'json' is not defined. Did you
-        forget to import 'json'?"
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in\
+        \ collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,\
+        \ resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n\
+        \  File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\"\
+        , line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n\
+        \                     ^^^^\nNameError: name 'json' is not defined. Did you\
+        \ forget to import 'json'?"
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -9555,20 +9555,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-26T17:10:46.322326+00:00'
-      description: "Run a broad project discovery pass because the planfile queue
-        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-        strategy,\nthen create concrete tickets and let the normal queue work through
-        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
-        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
-        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
-        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
-        tests, and architecture seams that block future tickets.\n\n5. When new tickets
-        exist, stop broad discovery and work the tickets one by one.\n    After those
-        tickets are done and the queue is empty again, another discovery pass\n    is
-        allowed."
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy,\nthen create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
+        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
+        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
+        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
+        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
+        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
+        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
+        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
+        \    After those tickets are done and the queue is empty again, another discovery\
+        \ pass\n    is allowed."
       execution:
         attempt: 0
         finished_at: '2026-05-26T17:12:54.689674Z'
@@ -9582,20 +9582,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
         source: koru task
         timestamp: '2026-05-26T17:10:46.322326+00:00'
       - action: update
@@ -9619,20 +9619,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -9656,20 +9656,21 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-05-26T17:10:45.792586+00:00
           generation: '2026-05-26T17:10:45.792586+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is
-            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-            strategy,\nthen create concrete tickets and let the normal queue work
-            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
-            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
-            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
-            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
-            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
-            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
-            high-signal work: failing gates, god modules, duplicated code, high\n
-            \   cyclomatic complexity, missing tests, and architecture seams that
-            block future tickets.\n\n5. When new tickets exist, stop broad discovery
-            and work the tickets one by one.\n    After those tickets are done and
-            the queue is empty again, another discovery pass\n    is allowed."
+          input: "Run a broad project discovery pass because the planfile queue is\
+            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+            \ strategy,\nthen create concrete tickets and let the normal queue work\
+            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
+            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
+            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
+            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
+            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
+            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
+            \ discovery and work the tickets one by one.\n    After those tickets\
+            \ are done and the queue is empty again, another discovery pass\n    is\
+            \ allowed."
           signal: project_discovery
         timestamp: '2026-05-26T17:10:46.322326+00:00'
         tool: koru-project-discovery
@@ -12636,9 +12637,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-27T21:45:05.214118Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -12656,6 +12658,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:39.687763+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-27T21:45:05.291748+00:00'
       id: STARTER-371
       inputs:
         api_headers: {}
@@ -12722,9 +12734,9 @@ sprint:
         timestamp: '2026-05-26T19:20:39.687763+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:39.687763+00:00'
+      updated_at: '2026-05-27T21:45:05.291709+00:00'
     STARTER-372:
       blocked_by: []
       blocks: []
@@ -12739,9 +12751,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-05-27T21:46:26.784099Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -12759,6 +12772,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:40.917224+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-27T21:46:26.859547+00:00'
       id: STARTER-372
       inputs:
         api_headers: {}
@@ -12825,9 +12848,9 @@ sprint:
         timestamp: '2026-05-26T19:20:40.917224+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:40.917224+00:00'
+      updated_at: '2026-05-27T21:46:26.859506+00:00'
     STARTER-373:
       blocked_by: []
       blocks: []
@@ -14476,3 +14499,119 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-26T19:20:59.308029+00:00'
+    STARTER-389:
+      id: STARTER-389
+      name: '[OPERATOR] intake from IDE chat'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-autonomous-chat-intake
+        timestamp: '2026-05-27T21:47:20.111004+00:00'
+        context:
+          input: '[OPERATOR] intake from IDE chat
+
+
+            A new external chat message was sent in IDE while the queue is blocked
+            in waiting_input.
+
+            Create/update a dedicated operator task from this intake instead of re-driving
+            the old prompt.
+
+
+            Origin waiting ticket: STARTER-373
+
+            Incoming intake:
+
+            code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+            Mutation of variable ''actions'' spans 5 functions. Changing this logic
+            requires work in many places. Make t'
+          signal: chat_intake_message_sent
+          origin_waiting_ticket: STARTER-373
+          dedupe_key: autopilot:chat-intake:d8721ead9e50d285
+          intake_preview: 'code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+            Mutation of variable ''actions'' spans 5 functions. Changing this logic
+            requires work in many places. Make t'
+      description: '[OPERATOR] intake from IDE chat
+
+
+        A new external chat message was sent in IDE while the queue is blocked in
+        waiting_input.
+
+        Create/update a dedicated operator task from this intake instead of re-driving
+        the old prompt.
+
+
+        Origin waiting ticket: STARTER-373
+
+        Incoming intake:
+
+        code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+        Mutation of variable ''actions'' spans 5 functions. Changing this logic requires
+        work in many places. Make t'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-chat-intake
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: operator
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-373
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+          Mutation of variable ''actions'' spans 5 functions. Changing this logic
+          requires work in many places. Make t'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-27T21:47:20.111004+00:00'
+        action: created
+        source: koru task
+        message: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-373
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+          Mutation of variable ''actions'' spans 5 functions. Changing this logic
+          requires work in many places. Make t'
+      created_at: '2026-05-27T21:47:20.111004+00:00'
+      updated_at: '2026-05-27T21:47:20.111004+00:00'

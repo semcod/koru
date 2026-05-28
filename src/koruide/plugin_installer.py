@@ -619,6 +619,20 @@ def _extensions_metadata_path_for_ide(ide: str) -> Path | None:
     return roots.get(ide)
 
 
+def _active_extension_location_from_item(item: object) -> str | None:
+    if not isinstance(item, dict):
+        return None
+    relative = item.get("relativeLocation")
+    if isinstance(relative, str) and relative:
+        return relative.lower()
+    location = item.get("location")
+    if isinstance(location, dict):
+        raw_path = location.get("path") or location.get("fsPath")
+        if isinstance(raw_path, str) and raw_path:
+            return Path(raw_path).name.lower()
+    return None
+
+
 def _active_extension_locations(metadata_path: Path) -> set[str]:
     try:
         data = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -626,20 +640,10 @@ def _active_extension_locations(metadata_path: Path) -> set[str]:
         return set()
     if not isinstance(data, list):
         return set()
-    active: set[str] = set()
-    for item in data:
-        if not isinstance(item, dict):
-            continue
-        relative = item.get("relativeLocation")
-        if isinstance(relative, str) and relative:
-            active.add(relative.lower())
-            continue
-        location = item.get("location")
-        if isinstance(location, dict):
-            raw_path = location.get("path") or location.get("fsPath")
-            if isinstance(raw_path, str) and raw_path:
-                active.add(Path(raw_path).name.lower())
-    return active
+    return {
+        loc for item in data
+        if (loc := _active_extension_location_from_item(item)) is not None
+    }
 
 
 def _move_path_aside(path: Path, disabled_root: Path) -> Path:
