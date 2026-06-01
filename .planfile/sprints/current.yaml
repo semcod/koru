@@ -17615,3 +17615,379 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-06-01T19:11:24.675211+00:00'
+    STARTER-414:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T19:50:54.292887+00:00'
+      description: "Run a broad project discovery pass because the planfile queue
+        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+        strategy,\nthen create concrete tickets and let the normal queue work through
+        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
+        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
+        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
+        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
+        tests, and architecture seams that block future tickets.\n\n5. When new tickets
+        exist, stop broad discovery and work the tickets one by one.\n    After those
+        tickets are done and the queue is empty again, another discovery pass\n    is
+        allowed."
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T20:02:11.523729Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: "Run a broad project discovery pass because the planfile queue is
+          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+          strategy,\nthen create concrete tickets and let the normal queue work through
+          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
+          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
+          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
+          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
+          missing tests, and architecture seams that block future tickets.\n\n5. When
+          new tickets exist, stop broad discovery and work the tickets one by one.\n
+          \   After those tickets are done and the queue is empty again, another discovery
+          pass\n    is allowed."
+        source: koru task
+        timestamp: '2026-06-01T19:50:54.292887+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-06-01T20:02:10.245219+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T20:02:11.641715+00:00'
+      id: STARTER-414
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "Run a broad project discovery pass because the planfile queue is
+          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+          strategy,\nthen create concrete tickets and let the normal queue work through
+          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
+          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
+          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
+          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
+          missing tests, and architecture seams that block future tickets.\n\n5. When
+          new tickets exist, stop broad discovery and work the tickets one by one.\n
+          \   After those tickets are done and the queue is empty again, another discovery
+          pass\n    is allowed."
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - project-discovery
+      - code2llm
+      - scan
+      - strategy
+      name: 'Project discovery: generate code2llm analysis and tickets'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Discovery summary: attempted full code2llm refresh multiple times but command
+          repeatedly hung in this environment; IDE follow-up prompt was sent via autopilot
+          drive with strict ack success; ran koru scan apply with semcod artifacts;
+          scan surfaced high-signal hotspots but skipped as reused; materialized concrete
+          backlog as STARTER-415..STARTER-419; regression gate pytest -q tests/test_scan.py
+          passed (54/54).'
+      priority: high
+      source:
+        context:
+          dedupe_key: koru:project-discovery:2026-06-01T19:50:53.464792+00:00
+          generation: '2026-06-01T19:50:53.464792+00:00'
+          input: "Run a broad project discovery pass because the planfile queue is
+            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+            strategy,\nthen create concrete tickets and let the normal queue work
+            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
+            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
+            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
+            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
+            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
+            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
+            high-signal work: failing gates, god modules, duplicated code, high\n
+            \   cyclomatic complexity, missing tests, and architecture seams that
+            block future tickets.\n\n5. When new tickets exist, stop broad discovery
+            and work the tickets one by one.\n    After those tickets are done and
+            the queue is empty again, another discovery pass\n    is allowed."
+          signal: project_discovery
+        timestamp: '2026-06-01T19:50:54.292887+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-06-01T20:02:11.641682+00:00'
+    STARTER-415:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:00:14.342497Z'
+      description: project/analysis.toon.yaml marks autonomous_cycle as large/hot.
+        Extract orchestration seams and split into smaller modules with focused tests.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T20:30:51.676394Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      files:
+      - project/analysis.toon.yaml,src/koru/autonomous_cycle.py
+      history:
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-06-01T20:30:50.331785+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T20:30:51.802025+00:00'
+      id: STARTER-415
+      labels:
+      - project-discovery
+      - code2llm
+      - llm-ready
+      name: 'Split large module: autonomous_cycle'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Extracted post-drive verification/orchestration seam from src/koru/autonomous_cycle.py
+          into new module src/koru/autonomous_cycle_post_drive.py. Kept compatibility
+          wrappers in autonomous_cycle for _take_pre_drive_snapshot and _handle_post_drive_verification
+          to preserve imports and behavior. Validation: pytest -q tests/test_verification_cycle_integration.py
+          tests/test_autonomous_cycle_events.py (13 passed).'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:00:14.331402Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-06-01T20:30:51.801991+00:00'
+    STARTER-416:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:00:15.652754Z'
+      description: project/analysis.toon.yaml marks doctor as large/hot. Isolate runtime
+        checks, adapters, and reporting seams; keep behavior unchanged and add focused
+        tests.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T20:43:24.056826Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      files:
+      - project/analysis.toon.yaml,src/koru/doctor.py
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T20:43:24.176573+00:00'
+      id: STARTER-416
+      labels:
+      - project-discovery
+      - code2llm
+      - llm-ready
+      name: 'Split large module: doctor'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:00:15.641067Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-06-01T20:43:24.176538+00:00'
+    STARTER-417:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:00:16.952926Z'
+      description: project/analysis.toon.yaml marks mcp_server as large/hot. Split
+        transport/dispatch/schema handling into cohesive units with regression coverage.
+      files:
+      - project/analysis.toon.yaml,src/koru/mcp_server.py
+      history: []
+      id: STARTER-417
+      labels:
+      - project-discovery
+      - code2llm
+      name: 'Split large module: mcp_server'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:00:16.949129Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-01T20:00:16.952929Z'
+    STARTER-418:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:00:19.214840Z'
+      description: project/analysis.toon.yaml marks scan as large/hot. Separate suggestion
+        collection, dedupe policy, and ticket emission paths with tests.
+      files:
+      - project/analysis.toon.yaml,src/koru/scan.py
+      history: []
+      id: STARTER-418
+      labels:
+      - project-discovery
+      - code2llm
+      name: 'Split large module: scan'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:00:18.221510Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-01T20:00:19.214845Z'
+    STARTER-419:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:00:20.936831Z'
+      description: project/analysis.toon.yaml marks app as large/hot. Extract command
+        routing and bootstrap wiring to reduce coupling and future ticket blast radius.
+      files:
+      - project/analysis.toon.yaml,src/koru/app.py
+      history: []
+      id: STARTER-419
+      labels:
+      - project-discovery
+      - code2llm
+      name: 'Split large module: app'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:00:20.925437Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-01T20:00:20.936835Z'
+    STARTER-420:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:05:12.464745Z'
+      description: redup scan reports a high-impact structural duplication cluster
+        across IDE/LLM/OS strategy classes (id/label/config_folder_name and related
+        metadata accessors). Introduce shared base helpers/mixins to reduce duplicated
+        accessors while preserving public API and behavior.
+      files:
+      - src/koruide/ides,src/korullm/strategies,src/koruos/strategies
+      history: []
+      id: STARTER-420
+      labels:
+      - project-discovery
+      - duplication
+      name: Deduplicate strategy metadata accessors (id/label/config)
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:05:12.453317Z'
+        tool: redup
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-01T20:05:12.464749Z'
+    STARTER-421:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:05:13.777982Z'
+      description: redup scan reports repeated structural duplication between dedicated
+        CLI modules and src/koru/cli_cleaned.py (_build_* parsers and *_main wrappers).
+        Remove duplicated shim patterns by extracting shared parser/wrapper builders
+        and reducing copy-paste entrypoints.
+      files:
+      - src/koru/cli_cleaned.py,src/koru/cli_*.py,src/koru/cli_parser.py
+      history: []
+      id: STARTER-421
+      labels:
+      - project-discovery
+      - duplication
+      name: Consolidate duplicated CLI shim logic from cli_cleaned
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:05:13.766417Z'
+        tool: redup
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-01T20:05:13.777988Z'
+    STARTER-422:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-01T20:05:15.096983Z'
+      description: redup scan reports many repeated tiny helpers (_env_truthy/_env_disabled
+        and similar config toggles) across runtime and daemon modules. Centralize
+        env flag parsing helpers in one utility module and migrate callsites with
+        tests.
+      files:
+      - src/koru,src/koruide/daemon
+      history: []
+      id: STARTER-422
+      labels:
+      - project-discovery
+      - duplication
+      name: Deduplicate repeated env-flag helper functions
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-06-01T20:05:15.092971Z'
+        tool: redup
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-01T20:05:15.096986Z'

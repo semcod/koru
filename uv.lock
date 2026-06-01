@@ -1457,6 +1457,7 @@ version = "0.1.304"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
+    { name = "rich" },
 ]
 
 [package.optional-dependencies]
@@ -1630,6 +1631,7 @@ requires-dist = [
     { name = "redis", marker = "extra == 'queue'", specifier = ">=5.1,<8.0" },
     { name = "refurb", marker = "extra == 'all'", specifier = ">=2.0,<3.0" },
     { name = "refurb", marker = "extra == 'quality'", specifier = ">=2.0,<3.0" },
+    { name = "rich", specifier = ">=14.3.4" },
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.11,<0.16" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
     { name = "sentry-sdk", marker = "extra == 'all'", specifier = ">=2.18,<3.0" },

@@ -166,6 +166,42 @@ from koru.doctor_runtime_checks import (
 from koru.doctor_runtime_checks import (
     _read_project_version as _read_project_version,
 )
+from koru.doctor_reporting_checks import (
+    _classify_ide_console_lines as _classify_ide_console_lines_impl,
+)
+from koru.doctor_reporting_checks import (
+    _compact_console_excerpt as _compact_console_excerpt_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_build_detail as _ide_console_build_detail_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_category_counts as _ide_console_category_counts_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_error_count as _ide_console_error_count_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_line_is_diagnostic_headline as _ide_console_line_is_diagnostic_headline_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_line_is_interesting as _ide_console_line_is_interesting_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_log_roots as _ide_console_log_roots_impl,
+)
+from koru.doctor_reporting_checks import (
+    _ide_console_warn_count as _ide_console_warn_count_impl,
+)
+from koru.doctor_reporting_checks import (
+    _read_recent_ide_console_lines as _read_recent_ide_console_lines_impl,
+)
+from koru.doctor_reporting_checks import (
+    _recent_ide_console_log_files as _recent_ide_console_log_files_impl,
+)
+from koru.doctor_reporting_checks import (
+    check_ide_console_log as _check_ide_console_log_impl,
+)
 from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
@@ -1239,39 +1275,13 @@ def _plugin_debug_tail_is_daemon_offline_noise(
 
 
 def _ide_console_log_roots(selected: str) -> list[Path]:
-    override = os.environ.get("KORU_IDE_CONSOLE_LOG_DIR")
-    if override:
-        return [Path(override).expanduser()]
-    home = Path.home()
-    roots: dict[str, list[Path]] = {
-        "windsurf": [home / ".config" / "Windsurf" / "logs"],
-        "antigravity": [home / ".config" / "Antigravity" / "logs"],
-        "vscode": [home / ".config" / "Code" / "logs"],
-        "vscodium": [home / ".config" / "VSCodium" / "logs"],
-        "cursor": [home / ".config" / "Cursor" / "logs"],
-    }
-    return roots.get(selected, [])
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_log_roots_impl(selected)
 
 
 def _recent_ide_console_log_files(selected: str, *, max_sessions: int = 5) -> list[Path]:
-    files: list[Path] = []
-    for root in _ide_console_log_roots(selected):
-        if not root.is_dir():
-            continue
-        sessions = sorted(
-            (path for path in root.iterdir() if path.is_dir()),
-            key=lambda path: path.stat().st_mtime,
-            reverse=True,
-        )[:max_sessions]
-        root_files = [path for path in root.iterdir() if path.is_file()]
-        for session in sessions:
-            files.extend(
-                path
-                for path in session.rglob("*")
-                if path.is_file() and path.suffix.lower() in {".log", ".txt"}
-            )
-        files.extend(path for path in root_files if path.suffix.lower() in {".log", ".txt"})
-    return sorted(files, key=lambda path: path.stat().st_mtime, reverse=True)
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _recent_ide_console_log_files_impl(selected, max_sessions=max_sessions)
 
 
 def _read_recent_ide_console_lines(
@@ -1279,97 +1289,23 @@ def _read_recent_ide_console_lines(
     *,
     per_file_limit: int = 120,
 ) -> list[tuple[Path, str]]:
-    rows: list[tuple[Path, str]] = []
-    for path in files[:30]:
-        try:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
-            continue
-        rows.extend((path, line) for line in lines[-per_file_limit:] if line.strip())
-    return rows
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _read_recent_ide_console_lines_impl(files, per_file_limit=per_file_limit)
 
 
 def _ide_console_line_is_interesting(line: str) -> bool:
-    lowered = line.lower()
-    tokens = (
-        "[error]",
-        " error ",
-        " err ",
-        "[warn]",
-        " warn ",
-        "warning",
-        "exception",
-        "rejected promise",
-        "trustedscript",
-        "trustedtypepolicy",
-        "trustedstring",
-        "trusted types",
-        "language server has not been started",
-        "cannot register",
-        "already registered",
-        "overwriting grammar scope",
-        "marketplace",
-        "404",
-        "500",
-        "acknowledgecascadecodeedit",
-        "file or directory",
-        "does not exist",
-        "unable to read file",
-        "app icon customization is not supported",
-        "failed to find pyright executable",
-        "lifecyclephase.restored",
-        "extension host",
-        "koru",
-        "windsurf",
-        "cascade",
-        "chat",
-    )
-    return any(token in lowered for token in tokens)
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_line_is_interesting_impl(line)
 
 
 def _ide_console_line_is_diagnostic_headline(line: str) -> bool:
-    stripped = line.strip()
-    if stripped.startswith("at ") or stripped.startswith("at async "):
-        return False
-    lowered = stripped.lower()
-    return any(
-        token in lowered
-        for token in (
-            "[error]",
-            "[warn]",
-            "console.error",
-            "console.warn",
-            " error:",
-            " warn ",
-            " warning",
-            "rejected promise",
-            "trustedscript",
-            "trustedtypepolicy",
-            "trustedstring",
-            "trusted types",
-            "language server has not been started",
-            "cannot register",
-            "already registered",
-            "overwriting grammar scope",
-            "marketplace",
-            "acknowledgecascadecodeedit",
-            "file or directory",
-            "does not exist",
-            "unable to read file",
-            "app icon customization is not supported",
-            "failed to find pyright executable",
-            "lifecyclephase.restored",
-        )
-    )
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_line_is_diagnostic_headline_impl(line)
 
 
 def _compact_console_excerpt(path: Path, line: str, *, max_len: int = 220) -> str:
-    text = re.sub(r"\s+", " ", line).strip()
-    if len(text) > max_len:
-        text = text[: max_len - 3].rstrip() + "..."
-    parent = path.parent.name
-    label = f"{parent}/{path.name}" if parent else path.name
-    return f"{label}: {text}"
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _compact_console_excerpt_impl(path, line, max_len=max_len)
 
 
 _IDE_CONSOLE_WARN_TOKENS: tuple[str, ...] = (
@@ -1407,42 +1343,25 @@ _IDE_CONSOLE_CATEGORY_PATTERNS: dict[str, tuple[tuple[str, ...], ...]] = {
 
 
 def _ide_console_error_count(headlines: list[tuple[Path, str]]) -> int:
-    return sum("error" in line.lower() or "[err" in line.lower() for _path, line in headlines)
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_error_count_impl(headlines)
 
 
 def _ide_console_warn_count(headlines: list[tuple[Path, str]]) -> int:
-    return sum(
-        any(token in line.lower() for token in _IDE_CONSOLE_WARN_TOKENS)
-        for _path, line in headlines
-    )
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_warn_count_impl(headlines)
 
 
 def _ide_console_category_counts(interesting: list[tuple[Path, str]]) -> list[str]:
-    counts: list[str] = []
-    for name, patterns in _IDE_CONSOLE_CATEGORY_PATTERNS.items():
-        count = sum(
-            any(all(token in line.lower() for token in pattern) for pattern in patterns)
-            for _path, line in interesting
-        )
-        if count:
-            counts.append(f"{name}={count}")
-    return counts
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_category_counts_impl(interesting)
 
 
 def _classify_ide_console_lines(
     rows: list[tuple[Path, str]],
 ) -> tuple[list[tuple[Path, str]], list[tuple[Path, str]], list[tuple[Path, str]]]:
-    """Return (interesting, headlines, sample_rows) from raw log rows."""
-    interesting = [
-        (path, line) for path, line in rows if _ide_console_line_is_interesting(line)
-    ]
-    headlines = [
-        (path, line)
-        for path, line in interesting
-        if _ide_console_line_is_diagnostic_headline(line)
-    ]
-    sample_rows = headlines or interesting
-    return interesting, headlines, sample_rows
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _classify_ide_console_lines_impl(rows)
 
 
 def _ide_console_build_detail(
@@ -1455,53 +1374,24 @@ def _ide_console_build_detail(
     category_counts: list[str],
     sample_rows: list[tuple[Path, str]],
 ) -> str:
-    detail = (
-        f"ide={selected}; roots={','.join(str(path) for path in existing_roots)}; "
-        f"files={len(files)}; interesting={len(interesting)}; errors={error_count}; "
-        f"warnings={warn_count}"
+    """Compatibility wrapper; implementation lives in doctor_reporting_checks."""
+    return _ide_console_build_detail_impl(
+        selected,
+        existing_roots,
+        files,
+        interesting,
+        error_count,
+        warn_count,
+        category_counts,
+        sample_rows,
     )
-    if category_counts:
-        detail += "; categories=" + ",".join(category_counts)
-    if sample_rows:
-        samples = [_compact_console_excerpt(path, line) for path, line in sample_rows[-3:]]
-        detail += "; latest=" + " | ".join(samples)
-    return detail
 
 
 def _check_ide_console_log(_project: Path) -> tuple[str, str]:
-    selected = _selected_autopilot_ide()
-    if not selected:
-        return SKIP, "autopilot env unset"
-    roots = _ide_console_log_roots(selected)
-    if not roots:
-        return SKIP, f"no known console log root for ide={selected}"
-    existing_roots = [path for path in roots if path.is_dir()]
-    if not existing_roots:
-        roots_text = ", ".join(str(path) for path in roots)
-        return WARN, f"ide={selected}; log root missing: {roots_text}"
-
-    try:
-        files = _recent_ide_console_log_files(selected)
-        rows = _read_recent_ide_console_lines(files)
-    except OSError as exc:
-        return WARN, f"ide={selected}; cannot read console logs: {exc}"
-    if not files:
-        roots_text = ", ".join(str(path) for path in existing_roots)
-        return WARN, f"ide={selected}; no log files found under {roots_text}"
-    if not rows:
-        return WARN, f"ide={selected}; files={len(files)}; no readable recent log lines"
-
-    interesting, headlines, sample_rows = _classify_ide_console_lines(rows)
-    error_count = _ide_console_error_count(headlines)
-    warn_count = _ide_console_warn_count(headlines)
-    category_counts = _ide_console_category_counts(interesting)
-    detail = _ide_console_build_detail(
-        selected, existing_roots, files, interesting, error_count, warn_count,
-        category_counts, sample_rows,
+    del _project
+    return _check_ide_console_log_impl(
+        selected_autopilot_ide=_selected_autopilot_ide,
     )
-    if error_count or warn_count:
-        return WARN, detail
-    return PASS, detail + "; no recent warnings/errors"
 
 
 def _check_git_repo(project: Path) -> tuple[str, str]:

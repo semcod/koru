@@ -17,6 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "pyyaml>=6.0,<7.0",
+    "rich>=14.3.4",
 ]
 license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
@@ -148,6 +149,7 @@ koru = [
     "scripts/*.sh",
     "assets/koru-autopilot-vscode/*.vsix",
     "assets/*.json",
+    "data/koru-interface-registry.yaml",
     "wizard/strategies.json",
     "wizard/templates/*.json",
     "wizard/gui/templates/*.html",

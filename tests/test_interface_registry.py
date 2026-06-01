@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
+
 from koru.interface_registry import (
     blocker_interface_payload,
     get_interface_descriptor,
@@ -19,6 +23,30 @@ def test_interface_registry_loads_expected_schema() -> None:
 
 def test_interface_registry_path_exists() -> None:
     assert interface_registry_path().is_file()
+
+
+def test_interface_registry_loads_from_bundled_without_project_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    registry = load_interface_registry()
+    assert registry.schema == "koru.interface-registry/v1"
+    assert len(registry.interfaces) >= 10
+
+
+def test_interface_registry_prefers_project_docs_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    docs = tmp_path / "docs" / "interfaces"
+    docs.mkdir(parents=True)
+    registry_file = docs / "koru-interface-registry.yaml"
+    registry_file.write_text(
+        'schema: "koru.interface-registry/v1"\ninterfaces: []\n',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    assert interface_registry_path() == registry_file
+    assert load_interface_registry().interfaces == ()
 
 
 def test_interface_registry_contains_antigravity_and_mcp() -> None:

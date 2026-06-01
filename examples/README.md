@@ -13,6 +13,12 @@ Shared image layers are defined once in **`examples/docker/koru-e2e.Dockerfile`*
 The large flat pipeline sample **`examples/bootstrap.planfile.yaml`** stays at its
 historic path (referenced from CLI help and docs).
 
+These examples are **runtime smoke tests**, not whole-project discovery passes.
+They intentionally validate bounded CLI / protocol / server slices inside Docker.
+For `code2llm` refreshes, semcod ticket generation, and idle-queue discovery,
+use the root [README](../README.md) section `Idle queue discovery with code2llm`
+and the manual discovery commands documented there.
+
 ## Index
 
 | Path | One-line purpose |
@@ -33,6 +39,11 @@ historic path (referenced from CLI help and docs).
 
 If `docker` is not installed, the script **exits 0** so optional CI jobs can reuse
 it without failing non-Docker hosts.
+
+Examples do not mutate your real project backlog. They build an isolated image,
+run a bounded smoke scenario, and exit. Ticket generation workflows such as
+`koru scan --apply --semcod-artifacts` should be run from the real repo root,
+not inside these Docker E2E samples.
 
 ## Run one example
 

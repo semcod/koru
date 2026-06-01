@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 
 import yaml
+
+_REGISTRY_REL = Path("docs") / "interfaces" / "koru-interface-registry.yaml"
+_BUNDLED_REL = Path("data") / "koru-interface-registry.yaml"
 
 
 @dataclass(frozen=True)
@@ -35,12 +39,26 @@ class InterfaceRegistry:
     interfaces: tuple[InterfaceDescriptor, ...]
 
 
-def interface_registry_path() -> Path:
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        candidate = parent / "docs" / "interfaces" / "koru-interface-registry.yaml"
+def _find_upwards(start: Path, relative: Path) -> Path | None:
+    for parent in (start, *start.parents):
+        candidate = parent / relative
         if candidate.is_file():
             return candidate
+    return None
+
+
+def _bundled_registry_path() -> Path:
+    return Path(str(resources.files("koru").joinpath(_BUNDLED_REL)))
+
+
+def interface_registry_path() -> Path:
+    for start in (Path.cwd(), Path(__file__).resolve()):
+        found = _find_upwards(start, _REGISTRY_REL)
+        if found is not None:
+            return found
+    bundled = _bundled_registry_path()
+    if bundled.is_file():
+        return bundled
     raise FileNotFoundError("docs/interfaces/koru-interface-registry.yaml not found")
 
 

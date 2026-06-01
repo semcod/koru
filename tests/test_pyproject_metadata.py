@@ -18,7 +18,7 @@ def _uv_lock_koru_package() -> dict:
 def test_base_runtime_dependencies_stay_small() -> None:
     project = _pyproject()["project"]
 
-    assert project["dependencies"] == ["pyyaml>=6.0,<7.0"]
+    assert project["dependencies"] == ["pyyaml>=6.0,<7.0", "rich>=14.3.4"]
 
 
 def test_all_extra_matches_union_of_other_extras() -> None:

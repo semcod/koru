@@ -7,10 +7,10 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.304-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$33.02-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-128.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$31.88-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-128.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $33.0190 (403 commits)
+- 🤖 **LLM usage:** $31.8802 (404 commits)
 - 👤 **Human dev:** ~$12872 (128.7h @ $100/h, 30min dedup)
 
 Generated on 2026-06-01 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
@@ -180,6 +180,8 @@ pip install "koru[queue]"    # optional Redis/scheduler queue adapters
 pip install "koru[quality]"  # deeper refactor quality gates
 pip install "koru[all]"      # local workstation with every optional lane
 ```
+
+**PyPI release (maintainers):** `make publish` bumps patch, clears old `dist/koru-*` wheels, builds one version, runs `twine check`, then uploads only `dist/koru-<version>*` (set `PYPI_API_TOKEN` or `TWINE_USERNAME`/`TWINE_PASSWORD`).
 
 `koru autopilot` and the IDE control-plane socket protocol are part of the
 base package; see [`docs/IDE_PROTOCOL.md`](docs/IDE_PROTOCOL.md) for the
