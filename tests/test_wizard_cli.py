@@ -211,6 +211,10 @@ def test_run_wizard_no_ide_install_command_path(monkeypatch, project_with_planfi
     from koru.wizard import ide_install as wizard_ide_install
     from koru.wizard import orchestrator as wizard_orchestrator
 
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setattr(wizard_orchestrator, "detect_terminal_host_ide_id", lambda: None)
+
     state = {"n": 0}
 
     def fake_discover() -> list[DetectedIDE]:

@@ -91,13 +91,13 @@ def _auto_pick_ide(ides: list[DetectedIDE]) -> DetectedIDE | None:
         if selected is not None:
             return selected
 
-    selected = _find_ide_by_id(ides, detect_terminal_host_ide_id())
-    if selected is not None:
-        return selected
-
     running = [ide for ide in ides if ide.running]
     if len(running) == 1:
         return running[0]
+
+    selected = _find_ide_by_id(ides, detect_terminal_host_ide_id(), running_only=True)
+    if selected is not None:
+        return selected
     return None
 
 

@@ -333,6 +333,11 @@ def build_local_service_server(
     return ThreadingHTTPServer((config.host, config.port), handler), state.events
 
 
+def _bound_port(server: ThreadingHTTPServer) -> int:
+    """Return the OS-assigned port from a bound server socket."""
+    return int(server.server_address[1])
+
+
 def run_local_service(config: LocalServiceConfig) -> int:
     """Bind and block until Ctrl-C; returns 0 on clean shutdown."""
     try:
@@ -343,7 +348,7 @@ def run_local_service(config: LocalServiceConfig) -> int:
             file=sys.stderr,
         )
         return 1
-    actual = int(server.server_address[1])
+    actual = _bound_port(server)
     config.port = actual
     url = f"http://{config.host}:{config.port}/"
     print(f"koru local-serve: listening on {url}")
@@ -369,7 +374,7 @@ def start_local_service_background(
 ) -> tuple[ThreadingHTTPServer, threading.Thread, int]:
     """Run ``serve_forever`` on a daemon thread; caller must ``shutdown()`` + ``server_close()``."""
     server, _buf = build_local_service_server(config)
-    actual = int(server.server_address[1])
+    actual = _bound_port(server)
     config.port = actual
     thread = threading.Thread(
         target=server.serve_forever,

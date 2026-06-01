@@ -167,10 +167,15 @@ def build_server(config: ServeConfig) -> ThreadingHTTPServer:
     return ThreadingHTTPServer((config.host, config.port), _build_handler_for(config))
 
 
+def _bound_port(server: ThreadingHTTPServer) -> int:
+    """Return the OS-assigned port from a bound server socket."""
+    return int(server.server_address[1])
+
+
 def _bind_single(config: ServeConfig, port: int) -> tuple[ThreadingHTTPServer, int]:
     config.port = port
     server = build_server(config)
-    actual = int(server.server_address[1])
+    actual = _bound_port(server)
     config.port = actual
     return server, actual
 

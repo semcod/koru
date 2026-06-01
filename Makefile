@@ -6,7 +6,7 @@ PYTEST_ARGS ?=
 
 KORU_PYTEST_ENV := KORU_PYTEST_WORKERS="$(PYTEST_WORKERS)" KORU_PYTEST_DIST="$(PYTEST_DIST)"
 
-.PHONY: test test-fast test-parallel test-python-parallel test-api-parallel
+.PHONY: test test-fast test-parallel test-parallel-fast test-python-parallel test-api-parallel
 
 test:
 	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --verbose $(PYTEST_ARGS)
@@ -16,6 +16,9 @@ test-fast:
 
 test-parallel:
 	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --fast --maxfail=1 $(PYTEST_ARGS)
+
+test-parallel-fast:
+	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --quick $(PYTEST_ARGS)
 
 test-python-parallel: test-parallel
 

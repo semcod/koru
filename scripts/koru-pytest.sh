@@ -17,6 +17,36 @@ use_xdist=true
 changed_only=false
 explicit_selection=false
 
+_is_truthy() {
+  case "${1:-}" in
+    1|true|True|TRUE|yes|Yes|YES|on|On|ON)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+_has_xdist() {
+  "$PYTHON" -c "import xdist" >/dev/null 2>&1
+}
+
+_ensure_xdist() {
+  if _has_xdist; then
+    return 0
+  fi
+  if ! _is_truthy "${KORU_PYTEST_AUTO_INSTALL_XDIST:-1}"; then
+    return 1
+  fi
+  echo "pytest-xdist is missing; installing pytest-xdist into current environment..." >&2
+  if "$PYTHON" -m pip install --disable-pip-version-check -q pytest-xdist >/dev/null 2>&1; then
+    _has_xdist
+    return $?
+  fi
+  return 1
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --all)
@@ -79,12 +109,7 @@ case "$workers" in
     ;;
 esac
 
-pytest_help=""
-if [ "$use_xdist" = true ]; then
-  pytest_help="$("$PYTHON" -m pytest --help 2>/dev/null || true)"
-fi
-
-if [ "$use_xdist" = true ] && grep -q -- "--numprocesses" <<<"$pytest_help"; then
+if [ "$use_xdist" = true ] && _ensure_xdist; then
   if [ "$explicit_selection" = true ]; then
     # Explicit file/test selection — run exactly what was asked (may include daemon tests).
     pytest_args=(-n "$workers" --dist "$dist" "${pytest_args[@]}")
@@ -103,7 +128,7 @@ if [ "$use_xdist" = true ] && grep -q -- "--numprocesses" <<<"$pytest_help"; the
     fi
   done
 
-  "$PYTHON" -m pytest -n "$workers" --dist loadgroup "${daemon_excluded_args[@]}"
+  "$PYTHON" -m pytest -n "$workers" --dist "$dist" "${daemon_excluded_args[@]}"
   rc1=$?
 
   "$PYTHON" -m pytest -q tests/test_autopilot_daemon.py
@@ -114,7 +139,7 @@ if [ "$use_xdist" = true ] && grep -q -- "--numprocesses" <<<"$pytest_help"; the
   fi
   exit 0
 elif [ "$use_xdist" = true ]; then
-  echo "pytest-xdist is not installed; running tests serially. Install dev extras with: pip install -e '.[dev]'" >&2
+  echo "pytest-xdist is not installed; running tests serially. Install dev extras with: pip install -e '.[dev]' (or set KORU_PYTEST_AUTO_INSTALL_XDIST=1)." >&2
 fi
 
 exec "$PYTHON" -m pytest "${pytest_args[@]}"

@@ -1961,13 +1961,13 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-25T15:18:52.447431+00:00'
-      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in\
-        \ collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,\
-        \ resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n\
-        \  File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\"\
-        , line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n\
-        \                     ^^^^\nNameError: name 'json' is not defined. Did you\
-        \ forget to import 'json'?"
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
+        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
+        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
+        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
+        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
+        \                    ^^^^\nNameError: name 'json' is not defined. Did you
+        forget to import 'json'?"
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -2555,7 +2555,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-05-26T16:05:48.714084Z'
+        finished_at: '2026-06-01T14:38:06.113934Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2591,6 +2591,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-26T16:05:48.758480+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-01T14:38:06.184139+00:00'
       id: STARTER-278
       inputs:
         api_headers: {}
@@ -2645,7 +2650,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-26T16:05:48.758437+00:00'
+      updated_at: '2026-06-01T14:38:06.184105+00:00'
     STARTER-279:
       blocked_by: []
       blocks: []
@@ -9555,20 +9560,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-26T17:10:46.322326+00:00'
-      description: "Run a broad project discovery pass because the planfile queue\
-        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-        \ strategy,\nthen create concrete tickets and let the normal queue work through\
-        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
-        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
-        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
-        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
-        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
-        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
-        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
-        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
-        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
-        \    After those tickets are done and the queue is empty again, another discovery\
-        \ pass\n    is allowed."
+      description: "Run a broad project discovery pass because the planfile queue
+        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+        strategy,\nthen create concrete tickets and let the normal queue work through
+        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
+        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
+        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
+        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
+        tests, and architecture seams that block future tickets.\n\n5. When new tickets
+        exist, stop broad discovery and work the tickets one by one.\n    After those
+        tickets are done and the queue is empty again, another discovery pass\n    is
+        allowed."
       execution:
         attempt: 0
         finished_at: '2026-05-26T17:12:54.689674Z'
@@ -9582,20 +9587,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is\
-          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-          \ strategy,\nthen create concrete tickets and let the normal queue work\
-          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
-          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
-          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
-          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
-          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
-          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
-          \ high-signal work: failing gates, god modules, duplicated code, high\n\
-          \    cyclomatic complexity, missing tests, and architecture seams that block\
-          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
-          \ work the tickets one by one.\n    After those tickets are done and the\
-          \ queue is empty again, another discovery pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is
+          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+          strategy,\nthen create concrete tickets and let the normal queue work through
+          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
+          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
+          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
+          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
+          missing tests, and architecture seams that block future tickets.\n\n5. When
+          new tickets exist, stop broad discovery and work the tickets one by one.\n
+          \   After those tickets are done and the queue is empty again, another discovery
+          pass\n    is allowed."
         source: koru task
         timestamp: '2026-05-26T17:10:46.322326+00:00'
       - action: update
@@ -9619,20 +9624,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is\
-          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-          \ strategy,\nthen create concrete tickets and let the normal queue work\
-          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
-          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
-          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
-          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
-          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
-          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
-          \ high-signal work: failing gates, god modules, duplicated code, high\n\
-          \    cyclomatic complexity, missing tests, and architecture seams that block\
-          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
-          \ work the tickets one by one.\n    After those tickets are done and the\
-          \ queue is empty again, another discovery pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is
+          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+          strategy,\nthen create concrete tickets and let the normal queue work through
+          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
+          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
+          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
+          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
+          missing tests, and architecture seams that block future tickets.\n\n5. When
+          new tickets exist, stop broad discovery and work the tickets one by one.\n
+          \   After those tickets are done and the queue is empty again, another discovery
+          pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -9656,21 +9661,20 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-05-26T17:10:45.792586+00:00
           generation: '2026-05-26T17:10:45.792586+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is\
-            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-            \ strategy,\nthen create concrete tickets and let the normal queue work\
-            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
-            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
-            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
-            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
-            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
-            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
-            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
-            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
-            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
-            \ discovery and work the tickets one by one.\n    After those tickets\
-            \ are done and the queue is empty again, another discovery pass\n    is\
-            \ allowed."
+          input: "Run a broad project discovery pass because the planfile queue is
+            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+            strategy,\nthen create concrete tickets and let the normal queue work
+            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
+            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
+            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
+            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
+            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
+            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
+            high-signal work: failing gates, god modules, duplicated code, high\n
+            \   cyclomatic complexity, missing tests, and architecture seams that
+            block future tickets.\n\n5. When new tickets exist, stop broad discovery
+            and work the tickets one by one.\n    After those tickets are done and
+            the queue is empty again, another discovery pass\n    is allowed."
           signal: project_discovery
         timestamp: '2026-05-26T17:10:46.322326+00:00'
         tool: koru-project-discovery
@@ -12865,9 +12869,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:42:04.352121Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -12885,6 +12890,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:42.083994+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:42:04.423361+00:00'
       id: STARTER-373
       inputs:
         api_headers: {}
@@ -12951,9 +12966,9 @@ sprint:
         timestamp: '2026-05-26T19:20:42.083994+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:42.083994+00:00'
+      updated_at: '2026-06-01T14:42:04.423323+00:00'
     STARTER-374:
       blocked_by: []
       blocks: []
@@ -12968,9 +12983,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:52:53.138022Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -12988,6 +13004,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:43.307836+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:52:53.210268+00:00'
       id: STARTER-374
       inputs:
         api_headers: {}
@@ -13054,9 +13080,9 @@ sprint:
         timestamp: '2026-05-26T19:20:43.307836+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:43.307836+00:00'
+      updated_at: '2026-06-01T14:52:53.210232+00:00'
     STARTER-375:
       blocked_by: []
       blocks: []
@@ -13071,9 +13097,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:52:54.376125Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13091,6 +13118,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:44.355604+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:52:54.447610+00:00'
       id: STARTER-375
       inputs:
         api_headers: {}
@@ -13157,9 +13194,9 @@ sprint:
         timestamp: '2026-05-26T19:20:44.355604+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:44.355604+00:00'
+      updated_at: '2026-06-01T14:52:54.447574+00:00'
     STARTER-376:
       blocked_by: []
       blocks: []
@@ -13174,9 +13211,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:52:55.645520Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13194,6 +13232,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:45.444404+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:52:55.717557+00:00'
       id: STARTER-376
       inputs:
         api_headers: {}
@@ -13260,9 +13308,9 @@ sprint:
         timestamp: '2026-05-26T19:20:45.444404+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:45.444404+00:00'
+      updated_at: '2026-06-01T14:52:55.717518+00:00'
     STARTER-377:
       blocked_by: []
       blocks: []
@@ -13277,9 +13325,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:52:56.931279Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13297,6 +13346,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:46.527199+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:52:57.004883+00:00'
       id: STARTER-377
       inputs:
         api_headers: {}
@@ -13363,9 +13422,9 @@ sprint:
         timestamp: '2026-05-26T19:20:46.527199+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:46.527199+00:00'
+      updated_at: '2026-06-01T14:52:57.004849+00:00'
     STARTER-378:
       blocked_by: []
       blocks: []
@@ -13380,9 +13439,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:52:58.232422Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13400,6 +13460,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:47.647191+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:52:58.302666+00:00'
       id: STARTER-378
       inputs:
         api_headers: {}
@@ -13466,9 +13536,9 @@ sprint:
         timestamp: '2026-05-26T19:20:47.647191+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:47.647191+00:00'
+      updated_at: '2026-06-01T14:52:58.302628+00:00'
     STARTER-379:
       blocked_by: []
       blocks: []
@@ -13483,9 +13553,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:52:59.525629Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13503,6 +13574,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:48.796892+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:52:59.596191+00:00'
       id: STARTER-379
       inputs:
         api_headers: {}
@@ -13569,9 +13650,9 @@ sprint:
         timestamp: '2026-05-26T19:20:48.796892+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:48.796892+00:00'
+      updated_at: '2026-06-01T14:52:59.596159+00:00'
     STARTER-380:
       blocked_by: []
       blocks: []
@@ -13586,9 +13667,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:00.868189Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13606,6 +13688,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:49.935757+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:00.946176+00:00'
       id: STARTER-380
       inputs:
         api_headers: {}
@@ -13672,9 +13764,9 @@ sprint:
         timestamp: '2026-05-26T19:20:49.935757+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:49.935757+00:00'
+      updated_at: '2026-06-01T14:53:00.946143+00:00'
     STARTER-381:
       blocked_by: []
       blocks: []
@@ -13689,9 +13781,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:02.140024Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13709,6 +13802,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:51.063595+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:02.209756+00:00'
       id: STARTER-381
       inputs:
         api_headers: {}
@@ -13775,9 +13878,9 @@ sprint:
         timestamp: '2026-05-26T19:20:51.063595+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:51.063595+00:00'
+      updated_at: '2026-06-01T14:53:02.209721+00:00'
     STARTER-382:
       blocked_by: []
       blocks: []
@@ -13792,9 +13895,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:03.383142Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13812,6 +13916,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:52.241833+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:03.455815+00:00'
       id: STARTER-382
       inputs:
         api_headers: {}
@@ -13878,9 +13992,9 @@ sprint:
         timestamp: '2026-05-26T19:20:52.241833+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:52.241833+00:00'
+      updated_at: '2026-06-01T14:53:03.455781+00:00'
     STARTER-383:
       blocked_by: []
       blocks: []
@@ -13895,9 +14009,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:04.731164Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13915,6 +14030,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:53.396887+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:04.807093+00:00'
       id: STARTER-383
       inputs:
         api_headers: {}
@@ -13981,9 +14106,9 @@ sprint:
         timestamp: '2026-05-26T19:20:53.396887+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:53.396887+00:00'
+      updated_at: '2026-06-01T14:53:04.807058+00:00'
     STARTER-384:
       blocked_by: []
       blocks: []
@@ -13998,9 +14123,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:06.068656Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -14018,6 +14144,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:54.563585+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:06.142055+00:00'
       id: STARTER-384
       inputs:
         api_headers: {}
@@ -14084,9 +14220,9 @@ sprint:
         timestamp: '2026-05-26T19:20:54.563585+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:54.563585+00:00'
+      updated_at: '2026-06-01T14:53:06.142020+00:00'
     STARTER-385:
       blocked_by: []
       blocks: []
@@ -14101,9 +14237,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:07.322812Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -14121,6 +14258,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:55.724149+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:07.394713+00:00'
       id: STARTER-385
       inputs:
         api_headers: {}
@@ -14187,9 +14334,9 @@ sprint:
         timestamp: '2026-05-26T19:20:55.724149+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:55.724149+00:00'
+      updated_at: '2026-06-01T14:53:07.394680+00:00'
     STARTER-386:
       blocked_by: []
       blocks: []
@@ -14204,9 +14351,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:08.589820Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -14224,6 +14372,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:56.926427+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:08.666669+00:00'
       id: STARTER-386
       inputs:
         api_headers: {}
@@ -14290,9 +14448,9 @@ sprint:
         timestamp: '2026-05-26T19:20:56.926427+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:56.926427+00:00'
+      updated_at: '2026-06-01T14:53:08.666635+00:00'
     STARTER-387:
       blocked_by: []
       blocks: []
@@ -14307,9 +14465,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:50:34.087147Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -14327,6 +14486,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:58.094286+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:50:34.218673+00:00'
       id: STARTER-387
       inputs:
         api_headers: {}
@@ -14393,9 +14562,9 @@ sprint:
         timestamp: '2026-05-26T19:20:58.094286+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:58.094286+00:00'
+      updated_at: '2026-06-01T14:50:34.218624+00:00'
     STARTER-388:
       blocked_by: []
       blocks: []
@@ -14410,9 +14579,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-06-01T14:53:09.869021Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -14430,6 +14600,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-05-26T19:20:59.308029+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T14:53:09.949224+00:00'
       id: STARTER-388
       inputs:
         api_headers: {}
@@ -14496,42 +14676,13 @@ sprint:
         timestamp: '2026-05-26T19:20:59.308029+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-26T19:20:59.308029+00:00'
+      updated_at: '2026-06-01T14:53:09.949190+00:00'
     STARTER-389:
-      id: STARTER-389
-      name: '[OPERATOR] intake from IDE chat'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-autonomous-chat-intake
-        timestamp: '2026-05-27T21:47:20.111004+00:00'
-        context:
-          input: '[OPERATOR] intake from IDE chat
-
-
-            A new external chat message was sent in IDE while the queue is blocked
-            in waiting_input.
-
-            Create/update a dedicated operator task from this intake instead of re-driving
-            the old prompt.
-
-
-            Origin waiting ticket: STARTER-373
-
-            Incoming intake:
-
-            code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
-            Mutation of variable ''actions'' spans 5 functions. Changing this logic
-            requires work in many places. Make t'
-          signal: chat_intake_message_sent
-          origin_waiting_ticket: STARTER-373
-          dedupe_key: autopilot:chat-intake:d8721ead9e50d285
-          intake_preview: 'code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
-            Mutation of variable ''actions'' spans 5 functions. Changing this logic
-            requires work in many places. Make t'
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-27T21:47:20.111004+00:00'
       description: '[OPERATOR] intake from IDE chat
 
 
@@ -14549,53 +14700,17 @@ sprint:
         code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
         Mutation of variable ''actions'' spans 5 functions. Changing this logic requires
         work in many places. Make t'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - autopilot-chat-intake
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-373
-
-          Incoming intake:
-
-          code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
-          Mutation of variable ''actions'' spans 5 functions. Changing this logic
-          requires work in many places. Make t'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-05-27T21:47:20.111004+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: '[OPERATOR] intake from IDE chat
 
 
@@ -14613,5 +14728,70 @@ sprint:
           code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
           Mutation of variable ''actions'' spans 5 functions. Changing this logic
           requires work in many places. Make t'
-      created_at: '2026-05-27T21:47:20.111004+00:00'
+        source: koru task
+        timestamp: '2026-05-27T21:47:20.111004+00:00'
+      id: STARTER-389
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-373
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+          Mutation of variable ''actions'' spans 5 functions. Changing this logic
+          requires work in many places. Make t'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-chat-intake
+      name: '[OPERATOR] intake from IDE chat'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: autopilot:chat-intake:d8721ead9e50d285
+          input: '[OPERATOR] intake from IDE chat
+
+
+            A new external chat message was sent in IDE while the queue is blocked
+            in waiting_input.
+
+            Create/update a dedicated operator task from this intake instead of re-driving
+            the old prompt.
+
+
+            Origin waiting ticket: STARTER-373
+
+            Incoming intake:
+
+            code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+            Mutation of variable ''actions'' spans 5 functions. Changing this logic
+            requires work in many places. Make t'
+          intake_preview: 'code2llm reports `Shotgun Surgery: actions` in `src/koru/autopilot/install_manager.py:393`.
+            Mutation of variable ''actions'' spans 5 functions. Changing this logic
+            requires work in many places. Make t'
+          origin_waiting_ticket: STARTER-373
+          signal: chat_intake_message_sent
+        timestamp: '2026-05-27T21:47:20.111004+00:00'
+        tool: koru-autonomous-chat-intake
+      sprint: current
+      status: open
+      sync: {}
       updated_at: '2026-05-27T21:47:20.111004+00:00'
