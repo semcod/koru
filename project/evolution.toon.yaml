@@ -1,4 +1,4 @@
-# code2llm/evolution | 3616 func | 373f | 2026-06-01
+# code2llm/evolution | 4826 func | 476f | 2026-06-01
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py
@@ -20,7 +20,7 @@ RISKS[3]:
   ⚠ Splitting src/koru/scan.py may break 55 import paths
 
 METRICS-TARGET:
-  CC̄:          3.8 → ≤2.7
+  CC̄:          3.7 → ≤2.6
   max-CC:      14 → ≤7
   god-modules: 33 → 0
   high-CC(≥15): 0 → ≤0
@@ -51,4 +51,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.6 → now CC̄=3.8
+  prev CC̄=3.7 → now CC̄=3.7

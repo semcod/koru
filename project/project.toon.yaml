@@ -1,11 +1,12 @@
-# koru | 3726 func | 392f | 197911L | python | 2026-06-01
+# koru | 4936 func | 495f | 197933L | python | 2026-06-01
 
 HEALTH:
-  CC̄=3.8  critical=225 (limit:10)  dup=7  cycles=0
+  CC̄=3.6  critical=255 (limit:10)  dup=21  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     run_api_request = 24 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
+  !!! high_fan_out     SharedAutopilotBridgeNetwork.tryConnectNext = 22 (limit:10)
   !!! high_fan_out     setup_autonomous_session = 20 (limit:10)
   !!  high_fan_out     handle_status = 19 (limit:10)
   !!  high_fan_out     write_observability_event = 19 (limit:10)
@@ -13,9 +14,8 @@ ALERTS[20]:
   !!  high_fan_out     render_markdown_handoff = 18 (limit:10)
   !!  high_fan_out     _highlight_shell_data = 18 (limit:10)
   !!  high_fan_out     build_autopilot_parser = 18 (limit:10)
-  !!  high_fan_out     KoruIDEClient.request = 17 (limit:10)
 
-MODULES[505] (top by size):
+MODULES[662] (top by size):
   M[project/logic.pl] 8328L C:0 F:0 CC↑0 D:0 (perl)
   M[src/koru/doctor.py] 1869L C:3 F:80 CC↑13 D:2 (python)
   M[src/koru/autonomous_cycle.py] 1751L C:0 F:57 CC↑14 D:1 (python)
@@ -28,17 +28,17 @@ MODULES[505] (top by size):
   M[src/koruide/drive_orchestrator.py] 964L C:1 F:56 CC↑14 D:0 (python)
   M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:7 (python)
   M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
+  M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 792L C:1 F:63 CC↑13 D:1 (typescript)
   M[src/koruide/ide.py] 755L C:1 F:46 CC↑13 D:30 (python)
   M[src/koru/autopilot/install_manager.py] 702L C:1 F:36 CC↑14 D:3 (python)
-  M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
-  LANGS: python:463/shell:40/javascript:1/perl:1
+  LANGS: python:463/typescript:134/shell:58/kotlin:5/javascript:1/perl:1
 
 HOTSPOTS[10]:
   ★ run_api_request fan=24  // Execute an HTTP API request.
   ★ topology_main fan=23  // Orchestrates 23 calls
+  ★ SharedAutopilotBridgeNetwork.tryConnectNext fan=22  // Orchestrates 22 calls
   ★ setup_autonomous_session fan=20  // Orchestrates 20 calls
   ★ handle_status fan=19  // Orchestrates 19 calls
-  ★ write_observability_event fan=19  // Append an observability event and optionally mirror it as DSL text.
 
 REFACTOR[15]:
   [1] H/H Split god module src/koru/autonomous_cycle.py (1751L, 0 classes)
@@ -48,4 +48,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/cli_cleaned.py (589L, 0 classes)
 
 EVOLUTION:
-  2026-06-01 CC̄=3.8 crit=225 197911L // Automated analysis
+  2026-06-01 CC̄=3.6 crit=255 197933L // Automated analysis

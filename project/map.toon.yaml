@@ -1,10 +1,13 @@
-# koru | 504f 96013L | shell:40,python:462,javascript:1,perl:1 | 2026-06-01
-# stats: 3729 func | 0 cls | 504 mod | CC̄=3.8 | critical:0 | cycles:0
-# alerts[5]: fan-out run_api_request=24; fan-out topology_main=23; fan-out setup_autonomous_session=20; fan-out handle_status=19; fan-out write_observability_event=19
-# hotspots[5]: run_api_request fan=24; topology_main fan=23; setup_autonomous_session fan=20; handle_status fan=19; write_observability_event fan=19
-# evolution: CC̄ 3.8→3.8 (flat 0.0)
+# koru | 661f 108907L | shell:58,python:462,javascript:1,typescript:134,kotlin:5,perl:1 | 2026-06-01
+# stats: 4936 func | 0 cls | 661 mod | CC̄=3.6 | critical:0 | cycles:0
+# alerts[5]: fan-out run_api_request=24; fan-out topology_main=23; fan-out SharedAutopilotBridgeNetwork.tryConnectNext=22; fan-out setup_autonomous_session=20; fan-out handle_status=19
+# hotspots[5]: run_api_request fan=24; topology_main fan=23; SharedAutopilotBridgeNetwork.tryConnectNext fan=22; setup_autonomous_session fan=20; handle_status fan=19
+# evolution: CC̄ 3.7→3.6 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[504]:
+M[661]:
+  .planfile/.koru/run-autonomous.sh,6
+  .planfile/.koru/setup-autopilot-host.sh,13
+  .planfile/.koru/shell-env.sh,5
   docker/capture/entrypoint-x11.sh,35
   docker/capture/run.sh,58
   docker/capture/smoke.py,141
@@ -29,6 +32,160 @@ M[504]:
   docs/llm-tools/sumd/install.sh,80
   docs/llm-tools/toonic/install.sh,49
   docs/llm-tools/vallm/install.sh,55
+  plugins/koru-autopilot-antigravity/.planfile/.koru/run-autonomous.sh,6
+  plugins/koru-autopilot-antigravity/.planfile/.koru/setup-autopilot-host.sh,13
+  plugins/koru-autopilot-antigravity/.planfile/.koru/shell-env.sh,5
+  plugins/koru-autopilot-antigravity/src/ack-payload.ts,260
+  plugins/koru-autopilot-antigravity/src/antigravity-fastpath.ts,20
+  plugins/koru-autopilot-antigravity/src/chat-history-adapters.ts,24
+  plugins/koru-autopilot-antigravity/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-antigravity/src/chat-history-types.ts,32
+  plugins/koru-autopilot-antigravity/src/chat-history-watcher.ts,1
+  plugins/koru-autopilot-antigravity/src/command-catalog.ts,126
+  plugins/koru-autopilot-antigravity/src/cursor-bubble-adapter.ts,1
+  plugins/koru-autopilot-antigravity/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-antigravity/src/extension.ts,40
+  plugins/koru-autopilot-antigravity/src/host-click-submit.ts,35
+  plugins/koru-autopilot-antigravity/src/ide-control-strategy.ts,64
+  plugins/koru-autopilot-antigravity/src/ides/index.ts,8
+  plugins/koru-autopilot-antigravity/src/ides/antigravity.ts,59
+  plugins/koru-autopilot-antigravity/src/ides/ide-strategy.ts,108
+  plugins/koru-autopilot-antigravity/src/ides/registry.ts,42
+  plugins/koru-autopilot-antigravity/src/probe-ladder.ts,432
+  plugins/koru-autopilot-antigravity/src/socketPath.ts,61
+  plugins/koru-autopilot-antigravity/src/step-decisions.ts,155
+  plugins/koru-autopilot-antigravity/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts,1
+  plugins/koru-autopilot-cursor/.planfile/.koru/run-autonomous.sh,6
+  plugins/koru-autopilot-cursor/.planfile/.koru/setup-autopilot-host.sh,13
+  plugins/koru-autopilot-cursor/.planfile/.koru/shell-env.sh,5
+  plugins/koru-autopilot-cursor/src/ack-payload.ts,260
+  plugins/koru-autopilot-cursor/src/antigravity-fastpath.ts,20
+  plugins/koru-autopilot-cursor/src/chat-history-adapters.ts,31
+  plugins/koru-autopilot-cursor/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-cursor/src/chat-history-types.ts,32
+  plugins/koru-autopilot-cursor/src/chat-history-watcher.ts,1
+  plugins/koru-autopilot-cursor/src/command-catalog.ts,126
+  plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts,1
+  plugins/koru-autopilot-cursor/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-cursor/src/extension.ts,42
+  plugins/koru-autopilot-cursor/src/host-click-submit.ts,35
+  plugins/koru-autopilot-cursor/src/ide-control-strategy.ts,64
+  plugins/koru-autopilot-cursor/src/ides/index.ts,8
+  plugins/koru-autopilot-cursor/src/ides/cursor.ts,248
+  plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts,108
+  plugins/koru-autopilot-cursor/src/ides/registry.ts,63
+  plugins/koru-autopilot-cursor/src/probe-ladder.ts,432
+  plugins/koru-autopilot-cursor/src/socketPath.ts,61
+  plugins/koru-autopilot-cursor/src/step-decisions.ts,155
+  plugins/koru-autopilot-cursor/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts,1
+  plugins/koru-autopilot-jetbrains/settings.gradle.kts,8
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/ChatInjector.kt,74
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotReconnectAction.kt,10
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt,186
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/SocketPath.kt,33
+  plugins/koru-autopilot-shared/src/index.ts,57
+  plugins/koru-autopilot-shared/src/ack-payload.ts,260
+  plugins/koru-autopilot-shared/src/autopilot-bridge.ts,200
+  plugins/koru-autopilot-shared/src/bridge-ack.ts,169
+  plugins/koru-autopilot-shared/src/bridge-base.ts,64
+  plugins/koru-autopilot-shared/src/bridge-base-class.ts,69
+  plugins/koru-autopilot-shared/src/bridge-commands.ts,58
+  plugins/koru-autopilot-shared/src/bridge-config.ts,80
+  plugins/koru-autopilot-shared/src/bridge-fastpath.ts,270
+  plugins/koru-autopilot-shared/src/bridge-focus.ts,79
+  plugins/koru-autopilot-shared/src/bridge-focus-core.ts,182
+  plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts,303
+  plugins/koru-autopilot-shared/src/bridge-handle.ts,8
+  plugins/koru-autopilot-shared/src/bridge-helpers.ts,87
+  plugins/koru-autopilot-shared/src/bridge-network.ts,386
+  plugins/koru-autopilot-shared/src/bridge-paste.ts,433
+  plugins/koru-autopilot-shared/src/bridge-submit.ts,792
+  plugins/koru-autopilot-shared/src/bridge-watcher.ts,83
+  plugins/koru-autopilot-shared/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-shared/src/chat-history-types.ts,32
+  plugins/koru-autopilot-shared/src/chat-history-watcher.ts,197
+  plugins/koru-autopilot-shared/src/cursor-bubble-adapter.ts,159
+  plugins/koru-autopilot-shared/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-shared/src/extension-wrapper.ts,57
+  plugins/koru-autopilot-shared/src/host-click-submit.ts,35
+  plugins/koru-autopilot-shared/src/socketPath.ts,67
+  plugins/koru-autopilot-shared/src/types.ts,33
+  plugins/koru-autopilot-shared/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-shared/src/vscode-chat-session-adapter.ts,146
+  plugins/koru-autopilot-vscode/.planfile/.koru/run-autonomous.sh,6
+  plugins/koru-autopilot-vscode/.planfile/.koru/setup-autopilot-host.sh,13
+  plugins/koru-autopilot-vscode/.planfile/.koru/shell-env.sh,5
+  plugins/koru-autopilot-vscode/src/ack-payload.ts,260
+  plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts,20
+  plugins/koru-autopilot-vscode/src/chat-history-adapters.ts,21
+  plugins/koru-autopilot-vscode/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-vscode/src/chat-history-types.ts,32
+  plugins/koru-autopilot-vscode/src/chat-history-watcher.ts,1
+  plugins/koru-autopilot-vscode/src/command-catalog.ts,126
+  plugins/koru-autopilot-vscode/src/cursor-bubble-adapter.ts,1
+  plugins/koru-autopilot-vscode/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-vscode/src/extension.ts,53
+  plugins/koru-autopilot-vscode/src/host-click-submit.ts,35
+  plugins/koru-autopilot-vscode/src/ide-control-strategy.ts,64
+  plugins/koru-autopilot-vscode/src/ides/index.ts,8
+  plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts,108
+  plugins/koru-autopilot-vscode/src/ides/registry.ts,45
+  plugins/koru-autopilot-vscode/src/ides/vscode.ts,81
+  plugins/koru-autopilot-vscode/src/probe-ladder.ts,432
+  plugins/koru-autopilot-vscode/src/socketPath.ts,61
+  plugins/koru-autopilot-vscode/src/step-decisions.ts,155
+  plugins/koru-autopilot-vscode/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-vscode/src/vscode-chat-session-adapter.ts,1
+  plugins/koru-autopilot-vscodium/.planfile/.koru/run-autonomous.sh,6
+  plugins/koru-autopilot-vscodium/.planfile/.koru/setup-autopilot-host.sh,13
+  plugins/koru-autopilot-vscodium/.planfile/.koru/shell-env.sh,5
+  plugins/koru-autopilot-vscodium/src/ack-payload.ts,260
+  plugins/koru-autopilot-vscodium/src/antigravity-fastpath.ts,20
+  plugins/koru-autopilot-vscodium/src/chat-history-adapters.ts,21
+  plugins/koru-autopilot-vscodium/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-vscodium/src/chat-history-types.ts,32
+  plugins/koru-autopilot-vscodium/src/chat-history-watcher.ts,1
+  plugins/koru-autopilot-vscodium/src/command-catalog.ts,126
+  plugins/koru-autopilot-vscodium/src/cursor-bubble-adapter.ts,1
+  plugins/koru-autopilot-vscodium/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-vscodium/src/extension.ts,47
+  plugins/koru-autopilot-vscodium/src/host-click-submit.ts,35
+  plugins/koru-autopilot-vscodium/src/ide-control-strategy.ts,64
+  plugins/koru-autopilot-vscodium/src/ides/index.ts,8
+  plugins/koru-autopilot-vscodium/src/ides/ide-strategy.ts,108
+  plugins/koru-autopilot-vscodium/src/ides/registry.ts,42
+  plugins/koru-autopilot-vscodium/src/ides/vscodium.ts,82
+  plugins/koru-autopilot-vscodium/src/probe-ladder.ts,452
+  plugins/koru-autopilot-vscodium/src/socketPath.ts,61
+  plugins/koru-autopilot-vscodium/src/step-decisions.ts,155
+  plugins/koru-autopilot-vscodium/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-vscodium/src/vscode-chat-session-adapter.ts,1
+  plugins/koru-autopilot-windsurf/.planfile/.koru/run-autonomous.sh,6
+  plugins/koru-autopilot-windsurf/.planfile/.koru/setup-autopilot-host.sh,13
+  plugins/koru-autopilot-windsurf/.planfile/.koru/shell-env.sh,5
+  plugins/koru-autopilot-windsurf/src/ack-payload.ts,260
+  plugins/koru-autopilot-windsurf/src/antigravity-fastpath.ts,20
+  plugins/koru-autopilot-windsurf/src/chat-history-adapters.ts,24
+  plugins/koru-autopilot-windsurf/src/chat-history-paths.ts,29
+  plugins/koru-autopilot-windsurf/src/chat-history-types.ts,32
+  plugins/koru-autopilot-windsurf/src/chat-history-watcher.ts,1
+  plugins/koru-autopilot-windsurf/src/command-catalog.ts,126
+  plugins/koru-autopilot-windsurf/src/cursor-bubble-adapter.ts,1
+  plugins/koru-autopilot-windsurf/src/dispatch-plan.ts,26
+  plugins/koru-autopilot-windsurf/src/extension.ts,34
+  plugins/koru-autopilot-windsurf/src/host-click-submit.ts,35
+  plugins/koru-autopilot-windsurf/src/ide-control-strategy.ts,64
+  plugins/koru-autopilot-windsurf/src/ides/index.ts,8
+  plugins/koru-autopilot-windsurf/src/ides/ide-strategy.ts,108
+  plugins/koru-autopilot-windsurf/src/ides/registry.ts,42
+  plugins/koru-autopilot-windsurf/src/ides/windsurf.ts,108
+  plugins/koru-autopilot-windsurf/src/probe-ladder.ts,432
+  plugins/koru-autopilot-windsurf/src/socketPath.ts,61
+  plugins/koru-autopilot-windsurf/src/step-decisions.ts,155
+  plugins/koru-autopilot-windsurf/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-windsurf/src/vscode-chat-session-adapter.ts,1
   project.sh,59
   project/logic.pl,8328
   scripts/_koru_autodiag_filter_tickets.py,55
@@ -652,17 +809,6 @@ D:
     _build_runtime_context_parser()
     _render_runtime_context_text(context)
     _runtime_context_main(argv)
-  src/koru/autonomous_cycle_orchestrator.py:
-    e: _drive_result_autopilot_status,_handle_autopilot_phase,_plugin_gate_status,_attempt_plugin_gate_recovery,_plugin_gate_recovery_key,_terminal_conflict_status,_drive_autopilot_once,_emit_autopilot_preflight_skip,_emit_autopilot_observability_outcome
-    _drive_result_autopilot_status()
-    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
-    _plugin_gate_status(project;cycle;queue_result;client;autopilot_ide;drive_prompt;submit;cycle_telemetry;_hp)
-    _attempt_plugin_gate_recovery(project;client;autopilot_ide;plugin_reason;_hp)
-    _plugin_gate_recovery_key(project;autopilot_ide;plugin_reason)
-    _terminal_conflict_status(autopilot_ide;cycle_telemetry;_hp)
-    _drive_autopilot_once(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;cycle;cycle_telemetry;_hp)
-    _emit_autopilot_preflight_skip()
-    _emit_autopilot_observability_outcome()
   src/koru/autonomous_cycle.py:
     e: _stdio_info,_emit_stdio_cycle_event,_cycle_human_progress,_current_head,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_coerce_event_ts,_drain_autopilot_events,_initialize_cycle_telemetry,_env_truthy,_load_open_tickets_for_planning,_load_planfile_ticket_payload,_planning_ticket_row,_recent_verdicts_for_planning,_run_phase4_ticket_priority_advice,_run_phase4_strategy_tuning_advice,_run_phase4_advisory_hooks,_attach_environment_profile,_heal_stale_socket,_handle_autopilot_events,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_run_code2llm_discovery_after_idle,_ensure_standardized_discovery_follow_up,_update_stagnation_state,_take_pre_drive_snapshot,_drive_effect_payload,_submitted_but_no_effect,_snapshot_before_drive,_post_drive_ticket_id,_update_drive_count,_collect_post_drive_evidence,_post_drive_verdict,_emit_drive_effect_if_needed,_emit_drive_verdict,_maybe_emit_llm_evaluation,_maybe_emit_improved_prompt,_emit_post_drive_action_plan,_handle_post_drive_verification,_handle_diagnostics,_record_decision_trace,_decision_next_step_hint,_emit_cycle_completion_events,_cycle_callbacks,_run_pre_drive_cycle_phases,_stop_on_strict_diagnostics_failure,_run_drive_and_finalize,run_cycle
     _stdio_info(msg)
@@ -737,6 +883,17 @@ D:
     build_parser()
     _match_koru_auto_parts(parts)
     looks_like_autonomous_up_command(command)
+  src/koru/autonomous_cycle_orchestrator.py:
+    e: _drive_result_autopilot_status,_handle_autopilot_phase,_plugin_gate_status,_attempt_plugin_gate_recovery,_plugin_gate_recovery_key,_terminal_conflict_status,_drive_autopilot_once,_emit_autopilot_preflight_skip,_emit_autopilot_observability_outcome
+    _drive_result_autopilot_status()
+    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
+    _plugin_gate_status(project;cycle;queue_result;client;autopilot_ide;drive_prompt;submit;cycle_telemetry;_hp)
+    _attempt_plugin_gate_recovery(project;client;autopilot_ide;plugin_reason;_hp)
+    _plugin_gate_recovery_key(project;autopilot_ide;plugin_reason)
+    _terminal_conflict_status(autopilot_ide;cycle_telemetry;_hp)
+    _drive_autopilot_once(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;cycle;cycle_telemetry;_hp)
+    _emit_autopilot_preflight_skip()
+    _emit_autopilot_observability_outcome()
   src/koru/context_render.py:
     e: _HandoffRenderParts,render_header,render_environment,render_agent_lanes,render_autonomous_mode,render_ai_tool_support_2026,render_semcod_tools,render_setup_required,render_active_ticket,_compact_ticket_error,render_no_active_ticket,render_gates,render_project_pipeline,render_policy,render_rules,render_self_service,render_dashboard,render_autonomy_loop_brief,_handoff_render_parts,_render_ticket_scope,render_markdown_handoff
     _HandoffRenderParts:
@@ -917,19 +1074,6 @@ D:
     _truncate(text;limit)
     apply_verify_failure(project;ticket_id)
     verify_completed_tickets(project;ticket_ids)
-  src/koru/autonomy/environment.py:
-    e: IDEPresence,SocketHealth,EnvironmentReport,probe_ide_presence,probe_socket_health,_check_socket_health,_build_fixable_issues,_build_notes,probe_environment
-    IDEPresence:  # Per-IDE detection result...
-    SocketHealth:  # State of a Unix-socket file (typically autopilot)...
-    EnvironmentReport:  # Snapshot of the autonomy-relevant environment.
-
-Designed to ...
-    probe_ide_presence(project)
-    probe_socket_health(path)
-    _check_socket_health(autopilot_socket)
-    _build_fixable_issues(socket_health;ides)
-    _build_notes(headless;ides)
-    probe_environment(project)
   src/koru/autonomy/operator_pipeline.py:
     e: OperatorStep,OperatorPipelineResult,_operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_is_closed,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_autopilot_plugin_operator_hints,_host_injectors_ok,_self_control_autorepair_enabled,_first_self_control_problem,_self_control_problem_detail,_summarize_self_control_actions,_self_control_ok,_build_os_calibration_step,_build_planfile_api_step,_build_mcp_step,_build_plugin_step,_build_host_injectors_step,_build_self_control_step,_build_ready_step,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format
     OperatorStep:
@@ -978,6 +1122,19 @@ Designed to ...
     _emit_operator_step_event(out;index;total;step;stdio_format;correlation_id)
     run_startup_operator_pipeline()
     sys_stdout_for_format(fmt)
+  src/koru/autonomy/environment.py:
+    e: IDEPresence,SocketHealth,EnvironmentReport,probe_ide_presence,probe_socket_health,_check_socket_health,_build_fixable_issues,_build_notes,probe_environment
+    IDEPresence:  # Per-IDE detection result...
+    SocketHealth:  # State of a Unix-socket file (typically autopilot)...
+    EnvironmentReport:  # Snapshot of the autonomy-relevant environment.
+
+Designed to ...
+    probe_ide_presence(project)
+    probe_socket_health(path)
+    _check_socket_health(autopilot_socket)
+    _build_fixable_issues(socket_health;ides)
+    _build_notes(headless;ides)
+    probe_environment(project)
   src/koru/autonomy/verification_engine.py:
     e: GitEvidence,TestEvidence,ChatEvidence,FileEvidence,Evidence,Snapshot,Verdict,collect_git_evidence,collect_git_diff_between,collect_test_evidence,collect_chat_evidence,take_snapshot,collect_evidence,assess_verdict,_extract_leading_int,_git_head,_git_dirty_count
     GitEvidence:  # Evidence collected from ``git diff``...
@@ -1000,6 +1157,14 @@ Designed to ...
   src/koru/queue/loop.py:
     e: run_planfile_queue_loop
     run_planfile_queue_loop()
+  src/koru/wizard/cli_main.py:
+    e: _build_parser,_resolve_language,_handle_detect_only,_run_gui_mode,_run_cli_mode,wizard_main
+    _build_parser()
+    _resolve_language(language;bilingual)
+    _handle_detect_only(format_type)
+    _run_gui_mode(strategies_path;language;project_override;create;port;open_browser)
+    _run_cli_mode(strategies_path;language;project_override;create;use_llx;quick;quick_strategy)
+    wizard_main(argv)
   src/koru/autopilot/install_manager.py:
     e: InstallManagerReport,_supports_color,_yellow,_source_root,_source_version,_package_version,_repo_koru_bin,_path_koru_bin,_installed_editable_source_root,_expected_plugin_version,_expected_plugin_build_sha,_resolve_ide,_manager_socket_path,_daemon_status,_plugin_for_ide,_issue_list,_build_plugin_info_dict,_resolve_install_environment,collect_install_manager_report,repair_installation,_build_repair_steps,_unsupported_plugin_repair_step,_plugin_already_aligned,_shutdown_daemon_for_plugin_repair_action,_skipped_shutdown_daemon_action,_shutdown_autopilot_daemon,_reload_ide_reconnect_action,_apply_repair_steps,_reload_ide_after_plugin_fix,_temporary_reuse_window_reload_if_same_workspace,_restore_reuse_window_reload,_daemon_has_plugin_workspace,format_install_manager_report,_install_manager_base_lines,_install_manager_issue_lines,_install_manager_action_lines
     InstallManagerReport: to_dict(0)
@@ -1038,14 +1203,6 @@ Designed to ...
     _install_manager_base_lines(data)
     _install_manager_issue_lines(report)
     _install_manager_action_lines(report)
-  src/koru/wizard/cli_main.py:
-    e: _build_parser,_resolve_language,_handle_detect_only,_run_gui_mode,_run_cli_mode,wizard_main
-    _build_parser()
-    _resolve_language(language;bilingual)
-    _handle_detect_only(format_type)
-    _run_gui_mode(strategies_path;language;project_override;create;port;open_browser)
-    _run_cli_mode(strategies_path;language;project_override;create;use_llx;quick;quick_strategy)
-    wizard_main(argv)
   src/koru/wizard/llx.py:
     e: LlxExpansion,llx_available,_build_prompt,_parse_llx_response,expand_node
     LlxExpansion:  # Result of asking llx for extra branches...
@@ -1492,6 +1649,10 @@ Designed to ...
     selectStrategy()
     confirmTicket()
     escapeHtml()
+  plugins/koru-autopilot-shared/src/bridge-submit.ts:
+    i: ../ides/registry,./bridge-commands,./bridge-config,vscode
+    e: SharedAutopilotBridgeSubmit
+    SharedAutopilotBridgeSubmit: submitResult(-1),submitResult(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),ide(-1),config(-1),bubble(-1),observed(-1),maxAttempts(-1),retryObservedLength(-1),verifyResult(-1),verified(-1),observedLength(-1),verify(-1),debugLog(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),existing(-1),cache(-1),orderedCandidates(-1),buildSubmitCommands(-1),safeOrderedCandidates(-1),registeredCandidates(-1),candidates(-1),shouldRequireVerifiedHostSubmit(-1),preserveWebviewFocus(-1),registered(-1),typeFallback(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),runSubmitCommand(-1),result(-1),accepted(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),effectiveOverride(-1),candidates(-1),resolveSubmitHostKeyOverride(-1),normalized(-1),isCtrlHostKeyCandidateArgs(-1),cfg(-1),override(-1),effectiveOverride(-1),builtCandidates(-1),ctrlOnly(-1),res(-1),verify(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),debugLog(-1),point(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1)
   src/koruobserve/cli.py:
     e: _missing_observe_packages,_require_observe_runtime,_pip_install,_cmd_install,_cmd_up,_cmd_down,_cmd_status,_cmd_grid,_cmd_trace,_trace_event_matches,_cmd_providers,observe_main
     _missing_observe_packages()
@@ -1613,20 +1774,6 @@ Designed to ...
     _remember_llm_needs_input_operator_ticket(state;signature;ticket_id)
     _report_llm_needs_input_operator_ticket()
     _upsert_llm_needs_input_operator_ticket()
-  src/koru/control_commands.py:
-    e: control_command,emit_control_command,api_command,shell_command,plugin_socket_command,desktop_gui_command,_desktop_interface_id,parse_control_command_dsl,control_command_replay_plan,_require_control_command,_split_http_operation,_scrub_headers
-    control_command()
-    emit_control_command(project;command)
-    api_command(project)
-    shell_command(project)
-    plugin_socket_command(project)
-    desktop_gui_command(project)
-    _desktop_interface_id(backend)
-    parse_control_command_dsl(text)
-    control_command_replay_plan(event)
-    _require_control_command(event)
-    _split_http_operation(operation)
-    _scrub_headers(headers)
   src/koru/configurator.py:
     e: ConfigureResult,_ConfigureValues,ShellPrompter,_config_path,load_project_config,save_project_config,default_v2_feature_sections,merge_v2_feature_sections,migrate_project_config,toggle_feature_sections,_serve_command,render_text_summary,render_shell_exports,_previous_serve_config,_default_workspace_value,_default_serve_values,_default_configure_values,_prompt_configure_values,_build_project_config,configure_project,build_configure_parser,_split_feature_list,_emit_configure_output,_configure_migrate,_configure_toggle,_configure_write,configure_main
     ConfigureResult:
@@ -1656,6 +1803,20 @@ Designed to ...
     _configure_toggle(args)
     _configure_write(args)
     configure_main(argv)
+  src/koru/control_commands.py:
+    e: control_command,emit_control_command,api_command,shell_command,plugin_socket_command,desktop_gui_command,_desktop_interface_id,parse_control_command_dsl,control_command_replay_plan,_require_control_command,_split_http_operation,_scrub_headers
+    control_command()
+    emit_control_command(project;command)
+    api_command(project)
+    shell_command(project)
+    plugin_socket_command(project)
+    desktop_gui_command(project)
+    _desktop_interface_id(backend)
+    parse_control_command_dsl(text)
+    control_command_replay_plan(event)
+    _require_control_command(event)
+    _split_http_operation(operation)
+    _scrub_headers(headers)
   src/koru/autonomous_plugin.py:
     e: enable_autonomous_strict_plugin_policy,plugin_rows_log_summary,plugin_skip_code,_plugin_rows,_latest_rejected_plugin,_rejected_plugin_reason,_wanted_plugin_ide,_plugin_row_label,_plugin_row_ignored_reason,_plugin_protocol_version,_plugin_capabilities,_plugin_version_info,_accepted_plugin_reason,_matching_plugin_decision,plugin_status_decision,status_has_autopilot_plugin,_probe_plugin_status,_emit_plugin_wait_decision,wait_for_autopilot_plugin
     enable_autonomous_strict_plugin_policy(args)
@@ -1784,6 +1945,25 @@ Designed to ...
     _run_cycle_and_checkpoint()
     _finish_cycle()
     run_autonomous_cycle()
+  src/koru/self_control.py:
+    e: SelfCheck,SelfControlReport,_run,_source_version,_installed_version,_installed_editable_source_root,_check_package_identity,_is_relative_to,_check_entrypoint_identity,_install_manager_checks,_install_manager_issue_groups,_install_manager_check_detail,_check_interface_registry,_check_environment_profile,run_self_control,repair_self_control,format_self_control_report
+    SelfCheck: to_dict(0)
+    SelfControlReport: summary(0),to_dict(0)
+    _run(command;cwd)
+    _source_version(project)
+    _installed_version()
+    _installed_editable_source_root()
+    _check_package_identity(project)
+    _is_relative_to(path;parent)
+    _check_entrypoint_identity(project)
+    _install_manager_checks(project)
+    _install_manager_issue_groups(report)
+    _install_manager_check_detail(report)
+    _check_interface_registry()
+    _check_environment_profile(project)
+    run_self_control(project)
+    repair_self_control(project)
+    format_self_control_report(report)
   src/koru/autonomous_wup.py:
     e: WupWatchConfig,WupHealthResult,_WupEventState,_wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_load_project_env,_wup_subprocess_env,_parse_wup_services,_extract_docker_items,_profiled_compose_services,_compose_ps_command,_parse_compose_ps_json,_compose_field,_compose_health_ready,_compose_state_ready,_compose_status_ready,_compose_service_item_ready,_compose_service_ready,_wait_for_compose_service_ready,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_wup_service_names_from_yaml,_prune_stale_wup_health,_extract_wup_diagnostic_check_id,_complete_wup_diagnostic_ticket,_process_stale_ticket_batch,_resolve_stale_wup_diagnostic_tickets,_identify_failing_services,_identify_interrupted_services,_is_interrupted_wup_entry,_normalize_interrupted_wup_health,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health
     WupWatchConfig:
@@ -1828,25 +2008,6 @@ Designed to ...
     _create_wup_diagnostic_tickets(health;failing;project;ticket_queue;state_dir;create_diagnostic_ticket)
     _count_wup_events(events_path;previous_count)
     _read_wup_health()
-  src/koru/self_control.py:
-    e: SelfCheck,SelfControlReport,_run,_source_version,_installed_version,_installed_editable_source_root,_check_package_identity,_is_relative_to,_check_entrypoint_identity,_install_manager_checks,_install_manager_issue_groups,_install_manager_check_detail,_check_interface_registry,_check_environment_profile,run_self_control,repair_self_control,format_self_control_report
-    SelfCheck: to_dict(0)
-    SelfControlReport: summary(0),to_dict(0)
-    _run(command;cwd)
-    _source_version(project)
-    _installed_version()
-    _installed_editable_source_root()
-    _check_package_identity(project)
-    _is_relative_to(path;parent)
-    _check_entrypoint_identity(project)
-    _install_manager_checks(project)
-    _install_manager_issue_groups(report)
-    _install_manager_check_detail(report)
-    _check_interface_registry()
-    _check_environment_profile(project)
-    run_self_control(project)
-    repair_self_control(project)
-    format_self_control_report(report)
   src/koru/autonomy/decision_trace.py:
     e: DecisionRecord,now_utc_iso,decision_trace_path,_atomic_write_json,append_decision_record,load_recent_decisions,_plugin_missing_skip_code,_stuck_status_skip_code,_status_skip_code,classify_skip_code,human_skip_reason,_format_queue_observation,_decide_label,_action_label,_evidence_label,_chat_activity_skip_because,_idle_streak_skip_because,_plugin_skip_because,_waiting_ticket_closed_skip_because,_stuck_skip_because,_diagnostics_fail_skip_because,_skip_because_for_code,build_decision_record
     DecisionRecord: to_dict(0),compact_line(0)  # One structured ``observed → decided → action → evidence → ne...
@@ -1960,6 +2121,291 @@ Designed to ...
   src/koru/deployment_events/analyzer.py:
     e: DeploymentEventAnalyzer
     DeploymentEventAnalyzer: __init__(1),add_events(1),filter_by_type(1),filter_by_source(1),filter_by_correlation(1),filter_by_time_range(2),get_errors(0),get_plugin_events(1),get_deployment_summary(0),analyze_deployment_flow(1),reflect_on_development_session(1),_generate_recommendations(1)  # Analyzer for deployment event history with reflection capabi...
+  plugins/koru-autopilot-shared/src/bridge-ack.ts:
+    i: ./bridge-config,./bridge-paste,vscode
+    e: SharedAutopilotBridgeAck
+    SharedAutopilotBridgeAck: sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),debugLog(-1),discardToxicFocusOpenCache(-1),cache(-1),cached(-1),focusToken(-1),debugLog(-1),sendMessageSent(-1)
+  plugins/koru-autopilot-shared/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-antigravity/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-cursor/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-vscode/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-windsurf/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-vscodium/src/ack-payload.ts:
+    e: MAX_ACK_WIRE_BYTES,MAX_TRACE_STEPS,MAX_TRACE_ATTEMPTS,MAX_SHORT_FIELD,MAX_MESSAGE_FIELD,MAX_FOCUS_OPEN_CANDIDATES,MAX_REJECTED_WIRE,clipString,slimTraceStep,step,command,reason,detail,slimOperationTrace,step,slimRejectedEntry,entry,copyDiagnosticScalar,value,slimDiagnosticStringList,slimRejectedDiagnostics,entry,slimDiagnostics,diag,configuredCommands,focusCandidates,rejected,slimSubmitAttempts,sanitizeOutboundEnvelope,type,slim,slim,slim,bytes,measureEnvelopeBytes
+    MAX_ACK_WIRE_BYTES()
+    MAX_TRACE_STEPS()
+    MAX_TRACE_ATTEMPTS()
+    MAX_SHORT_FIELD()
+    MAX_MESSAGE_FIELD()
+    MAX_FOCUS_OPEN_CANDIDATES()
+    MAX_REJECTED_WIRE()
+    clipString()
+    slimTraceStep()
+    step()
+    command()
+    reason()
+    detail()
+    slimOperationTrace()
+    step()
+    slimRejectedEntry()
+    entry()
+    copyDiagnosticScalar()
+    value()
+    slimDiagnosticStringList()
+    slimRejectedDiagnostics()
+    entry()
+    slimDiagnostics()
+    diag()
+    configuredCommands()
+    focusCandidates()
+    rejected()
+    slimSubmitAttempts()
+    sanitizeOutboundEnvelope()
+    type()
+    slim()
+    slim()
+    slim()
+    bytes()
+    measureEnvelopeBytes()
+  plugins/koru-autopilot-vscodium/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,isCtrlHostKeyCandidate,prioritizePlainHostKeySubmitCandidates,plain,ctrl,injectorRow,reorderForXSession,reorderForVscodiumHostKeys,order,buildHostKeySubmitCandidates,normalized,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    isCtrlHostKeyCandidate()
+    prioritizePlainHostKeySubmitCandidates()
+    plain()
+    ctrl()
+    injectorRow()
+    reorderForXSession()
+    reorderForVscodiumHostKeys()
+    order()
+    buildHostKeySubmitCandidates()
+    normalized()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
   scripts/_koru_autodiag_filter_tickets.py:
     e: main
     main()
@@ -2009,20 +2455,6 @@ Designed to ...
     _capture_cycle(monitor_id;scale)
     normalize_capture_interval(interval_seconds)
     run_capture_loop()
-  src/koruvision/providers/obs_websocket.py:
-    e: ObsWebSocketProvider,obs_url,obs_password,obs_source_name,obs_screenshot_width,_obs_auth,_websockets_missing,_with_obs_connection,_obs_request,probe_obs_reachable,_run_obs_capture,_capture_source_png
-    ObsWebSocketProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    obs_url()
-    obs_password()
-    obs_source_name()
-    obs_screenshot_width()
-    _obs_auth(password;salt;challenge)
-    _websockets_missing()
-    _with_obs_connection(fn)
-    _obs_request(ws;request_type;request_data)
-    probe_obs_reachable()
-    _run_obs_capture(fn)
-    _capture_source_png(source_name)
   src/koruvision/providers/detector.py:
     e: monitors_via_xrandr,_forced_provider_rank,_auto_provider_order,_available_ranked_providers,rank_providers,list_provider_status,provider_diagnostics_rows,probe_capture_providers,_auto_failure_message,_provider_label,_should_report_auto_portal,_stamp_provider,capture_one_with_providers,capture_all_with_providers
     monitors_via_xrandr()
@@ -2039,6 +2471,20 @@ Designed to ...
     _stamp_provider(frame;provider_name)
     capture_one_with_providers(monitor_id;scale)
     capture_all_with_providers(scale)
+  src/koruvision/providers/obs_websocket.py:
+    e: ObsWebSocketProvider,obs_url,obs_password,obs_source_name,obs_screenshot_width,_obs_auth,_websockets_missing,_with_obs_connection,_obs_request,probe_obs_reachable,_run_obs_capture,_capture_source_png
+    ObsWebSocketProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
+    obs_url()
+    obs_password()
+    obs_source_name()
+    obs_screenshot_width()
+    _obs_auth(password;salt;challenge)
+    _websockets_missing()
+    _with_obs_connection(fn)
+    _obs_request(ws;request_type;request_data)
+    probe_obs_reachable()
+    _run_obs_capture(fn)
+    _capture_source_png(source_name)
   src/koru/agent_backends.py:
     e: AgentBackendProfile,LaneConfig,AgentIntegrationConfig,normalize_agent_backend_id,list_agent_backend_ids,iter_agent_backend_profiles,get_agent_backend_profile,_parse_lane,load_agent_integration_config,validate_agent_integration_config
     AgentBackendProfile:  # Static description of one way koru can reach an IDE-side age...
@@ -2151,6 +2597,14 @@ Designed to ...
     _build_scaffold_inputs(metadata;plugin_bridge;kind)
     build_tool_task_scaffold(tool)
     render_tools_detect_text(results)
+  src/koru/decision_engine.py:
+    e: ReloadDecision,FocusDecision,DriveRetryDecision,EnvironmentDecisionEngine,_live_plugin_version,build_decision_engine
+    ReloadDecision:  # Whether and how to reload the IDE after a VSIX install...
+    FocusDecision:  # Outcome of attempting to focus the IDE window...
+    DriveRetryDecision:  # What the autonomous loop should do after a failed drive...
+    EnvironmentDecisionEngine: __init__(1),focus_ide_window(0),assess_drive_failure(1),_submit_retry_is_known_unsafe(1),detect_stale_extension_host(1),reload_capability_detail(0),_window_name_hints(0),_ide_accepts_integrated_terminal(0)  # Resolve environment-scoped decisions from the three strategy...
+    _live_plugin_version(client;ide)
+    build_decision_engine(project)
   src/koru/gc.py:
     e: GcCandidate,GcResult,_now_utc,_parse_ts,_planfile_env,_run_planfile,_load_tickets_from_sprint,_archive_tickets,collect_gc_candidates,_apply_keep_last,_archive_tickets_before_delete,_delete_tickets,run_gc
     GcCandidate:  # A ticket eligible for garbage collection...
@@ -2166,14 +2620,6 @@ Designed to ...
     _archive_tickets_before_delete(to_remove;project;sprint)
     _delete_tickets(to_remove;project;planfile_runner)
     run_gc(project)
-  src/koru/decision_engine.py:
-    e: ReloadDecision,FocusDecision,DriveRetryDecision,EnvironmentDecisionEngine,_live_plugin_version,build_decision_engine
-    ReloadDecision:  # Whether and how to reload the IDE after a VSIX install...
-    FocusDecision:  # Outcome of attempting to focus the IDE window...
-    DriveRetryDecision:  # What the autonomous loop should do after a failed drive...
-    EnvironmentDecisionEngine: __init__(1),focus_ide_window(0),assess_drive_failure(1),_submit_retry_is_known_unsafe(1),detect_stale_extension_host(1),reload_capability_detail(0),_window_name_hints(0),_ide_accepts_integrated_terminal(0)  # Resolve environment-scoped decisions from the three strategy...
-    _live_plugin_version(client;ide)
-    build_decision_engine(project)
   src/koru/autonomous_plugin_runtime.py:
     e: ensure_trusted_publisher_for_plugin,extension_active_in_latest_session,live_plugin_version,detect_stale_extension_host,plugin_status_reason,plugin_reason_requires_reload,plugin_blocker_line,reload_retry_wait_seconds,report_unsupported_plugin_result,emit_reload_required_lines
     ensure_trusted_publisher_for_plugin(autopilot_ide)
@@ -2366,6 +2812,20 @@ Designed to ...
     _resolve_wizard_ide(prompter;ide_override)
     _resolve_wizard_project(prompter)
     run_wizard()
+  plugins/koru-autopilot-shared/src/cursor-bubble-adapter.ts:
+    i: ./chat-history-paths,./chat-history-types,child_process,fs,util
+    e: CursorBubbleAdapter,execFileAsync,SQLITE_ROWID_MAX_BUFFER,SQLITE_QUERY_MAX_BUFFER,runSqliteCommand,result,sqliteRunner
+    CursorBubbleAdapter: storeAvailable(-1),fetchNewer(-1),lastRowid(-1),latestBubbleRowid(-1),r(-1),n(-1),r(-1),parseCursorBubbleRows(-1),recSep(-1),fldSep(-1),fields(-1),rowid(-1),type(-1),keyParts(-1),conversationId(-1),bubbleId(-1)
+    execFileAsync()
+    SQLITE_ROWID_MAX_BUFFER()
+    SQLITE_QUERY_MAX_BUFFER()
+    runSqliteCommand()
+    result()
+    sqliteRunner()
+  plugins/koru-autopilot-shared/src/bridge-paste.ts:
+    i: ./bridge-config,./bridge-focus,vscode
+    e: SharedAutopilotBridgePaste
+    SharedAutopilotBridgePaste: pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),direct(-1),clipboard(-1),hostPaste(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),guard(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),guard(-1),ok(-1),debugLog(-1),after(-1),guardVSCodiumTerminalRiskPaste(-1),observed(-1),inputFocused(-1),debugLog(-1),after(-1),probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),collapseProbeSelection(-1),fallbackOk(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),allowVSCodiumHostInputFallback(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1)
   src/koruobserve/lifecycle.py:
     e: ObserveProcesses,_ObserveLaunchConfig,_resolve_serve_settings,_pick_free_port,_spawn,_is_alive,_read_pid,_stop_pid,_pids_matching_koru_cmdline,_stop_orphan_observe_processes,_koru_cmd,observe_up,_prepare_observe_launch,_spawn_observe_processes,_write_observe_state,observe_down,observe_status
     ObserveProcesses: to_json(0)
@@ -2385,22 +2845,6 @@ Designed to ...
     _write_observe_state(project;state)
     observe_down(project)
     observe_status(project)
-  src/koruapi/dashboard_config.py:
-    e: DashboardConfigDefaults,bool_from_dashboard,int_from_dashboard,_dotenv_path,_dotenv_payload,save_dashboard_dotenv,_saved_serve_config,_dashboard_config_path_payload,_effective_serve_config,_effective_dashboard_config,dashboard_config_payload,_dashboard_config_request_kwargs,_save_dashboard_dotenv_from_body,save_dashboard_config
-    DashboardConfigDefaults:  # Serve-time defaults used by the dashboard Settings API...
-    bool_from_dashboard(value)
-    int_from_dashboard(value)
-    _dotenv_path(project)
-    _dotenv_payload(project)
-    save_dashboard_dotenv(project;text)
-    _saved_serve_config(saved)
-    _dashboard_config_path_payload(project)
-    _effective_serve_config(serve;defaults)
-    _effective_dashboard_config(project;saved;defaults)
-    dashboard_config_payload(project;defaults)
-    _dashboard_config_request_kwargs(body;defaults)
-    _save_dashboard_dotenv_from_body(project;body)
-    save_dashboard_config(project;body;defaults)
   src/koruapi/dashboard_projects.py:
     e: dashboard_workspace,project_label,project_candidate_dict,looks_like_project,workspace_project_candidates,discover_dashboard_projects,_running_ide_to_detected,_read_workspace_folder,_workspace_storage_projects,_read_proc_comm,_read_proc_children,_walk_descendant_pids,_read_proc_cwd_path,integrated_terminal_cwds,_looks_like_real_project,_project_entry_from_terminal_cwd,_dedupe_project_entries,_collect_projects_for_ide,projects_by_ide,resolve_dashboard_project
     dashboard_workspace(project;configured_workspace)
@@ -2423,6 +2867,22 @@ Designed to ...
     _collect_projects_for_ide(ide)
     projects_by_ide(ides)
     resolve_dashboard_project(project;configured_workspace;raw)
+  src/koruapi/dashboard_config.py:
+    e: DashboardConfigDefaults,bool_from_dashboard,int_from_dashboard,_dotenv_path,_dotenv_payload,save_dashboard_dotenv,_saved_serve_config,_dashboard_config_path_payload,_effective_serve_config,_effective_dashboard_config,dashboard_config_payload,_dashboard_config_request_kwargs,_save_dashboard_dotenv_from_body,save_dashboard_config
+    DashboardConfigDefaults:  # Serve-time defaults used by the dashboard Settings API...
+    bool_from_dashboard(value)
+    int_from_dashboard(value)
+    _dotenv_path(project)
+    _dotenv_payload(project)
+    save_dashboard_dotenv(project;text)
+    _saved_serve_config(saved)
+    _dashboard_config_path_payload(project)
+    _effective_serve_config(serve;defaults)
+    _effective_dashboard_config(project;saved;defaults)
+    dashboard_config_payload(project;defaults)
+    _dashboard_config_request_kwargs(body;defaults)
+    _save_dashboard_dotenv_from_body(project;body)
+    save_dashboard_config(project;body;defaults)
   src/koruvision/providers/portal_screencast.py:
     e: PortalScreenCastProvider,_screencast_frames,_run_screencast_subprocess,_parse_screencast_stdout
     PortalScreenCastProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
@@ -2759,6 +3219,265 @@ Re-exported f...
     _confirm_ticket(session;body)
     _register_routes(app;session_store)
     create_app()
+  plugins/koru-autopilot-shared/src/vscode-chat-session-adapter.ts:
+    i: ./chat-history-paths,./chat-history-types,child_process,fs,util
+    e: VSCodeChatSessionEntry,VSCodeChatSessionAdapter,execFileAsync,SQLITE_MAX_BUFFER,runSqliteCommand,result,sqliteRunner
+    VSCodeChatSessionEntry:
+    VSCodeChatSessionAdapter: storeAvailable(-1),fetchNewer(-1),r(-1),extractResponsesFromSession(-1),responses(-1),resp(-1),ts(-1),text(-1),safeParseJson(-1),trimmed(-1),extractEntriesMap(-1),entriesRaw(-1),parseAfterCursor(-1),parseVSCodeChatIndex(-1),entries(-1),after(-1),extractMessageText(-1)
+    execFileAsync()
+    SQLITE_MAX_BUFFER()
+    runSqliteCommand()
+    result()
+    sqliteRunner()
+  plugins/koru-autopilot-shared/src/chat-history-watcher.ts:
+    i: ../chat-history-adapters,./chat-history-types
+    e: ChatHistoryWatcherOptions,ChatHistoryWatcher
+    ChatHistoryWatcherOptions:
+    ChatHistoryWatcher: currentCursor(-1),adapterDescription(-1),setCursor(-1),start(-1),tick(-1),stop(-1),clearInterval(-1),pollOnce(-1),cursorAdvances(-1),a(-1),b(-1)
+  plugins/koru-autopilot-shared/src/bridge-watcher.ts:
+    i: ../cursor-bubble-adapter,./bridge-config,./bridge-network
+    e: SharedAutopilotBridgeWatcher
+    SharedAutopilotBridgeWatcher: sleep(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1)
+  plugins/koru-autopilot-shared/src/bridge-network.ts:
+    i: ../chat-history-watcher,../ides/registry,./ack-payload,./bridge-base-class,./dispatch-plan,./types,fs,net,vscode
+    e: SharedAutopilotBridgeNetwork
+    SharedAutopilotBridgeNetwork: openChatPanel(-1),injectChat(-1),detectIde(-1),app(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),extensionBuildSha(-1),raw(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),maybeOpenChatOnConnect(-1),cfg(-1),setTimeout(-1),detail(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),sendConsoleLog(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),strategies(-1),debugLog(-1),ok(-1),isReloadablePluginMismatch(-1),lowered(-1),runCommand(-1)
+  plugins/koru-autopilot-antigravity/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,isCtrlHostKeyCandidate,prioritizePlainHostKeySubmitCandidates,plain,ctrl,injectorRow,reorderForXSession,buildHostKeySubmitCandidates,normalized,plain,ctrl,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    isCtrlHostKeyCandidate()
+    prioritizePlainHostKeySubmitCandidates()
+    plain()
+    ctrl()
+    injectorRow()
+    reorderForXSession()
+    buildHostKeySubmitCandidates()
+    normalized()
+    plain()
+    ctrl()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
+  plugins/koru-autopilot-cursor/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,isCtrlHostKeyCandidate,prioritizePlainHostKeySubmitCandidates,plain,ctrl,injectorRow,reorderForXSession,buildHostKeySubmitCandidates,normalized,plain,ctrl,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    isCtrlHostKeyCandidate()
+    prioritizePlainHostKeySubmitCandidates()
+    plain()
+    ctrl()
+    injectorRow()
+    reorderForXSession()
+    buildHostKeySubmitCandidates()
+    normalized()
+    plain()
+    ctrl()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
+  plugins/koru-autopilot-vscode/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,isCtrlHostKeyCandidate,prioritizePlainHostKeySubmitCandidates,plain,ctrl,injectorRow,reorderForXSession,buildHostKeySubmitCandidates,normalized,plain,ctrl,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    isCtrlHostKeyCandidate()
+    prioritizePlainHostKeySubmitCandidates()
+    plain()
+    ctrl()
+    injectorRow()
+    reorderForXSession()
+    buildHostKeySubmitCandidates()
+    normalized()
+    plain()
+    ctrl()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
+  plugins/koru-autopilot-windsurf/src/probe-ladder.ts:
+    i: ./ides/registry
+    e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,decideSubmitCleared,trimmed,original,tail,chatFocusHeuristic,verifyFocusAfterOpen,strategy,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,strategy,ideDefaults,buildFocusInputCommands,strategy,prefix,block,blocked,buildPasteDirectCommands,strategy,prefix,buildSubmitCommands,strategy,override,filterRegistered,isCtrlHostKeyCandidate,prioritizePlainHostKeySubmitCandidates,plain,ctrl,injectorRow,reorderForXSession,buildHostKeySubmitCandidates,normalized,plain,ctrl,strategy,isLikelyWaylandSession,env,sanitizeProbeCacheForIde,strategy,loadProbeCache,entry,makeProbeCache,mergeProbeCache
+    EditorSnapshot:
+    ProbeCacheEntry:
+    ProbeAttemptResult:
+    PROBE_CACHE_VERSION()
+    captureEditorSnapshot()
+    scheme()
+    isFileLike()
+    decideSubmitCleared()
+    trimmed()
+    original()
+    tail()
+    chatFocusHeuristic()
+    verifyFocusAfterOpen()
+    strategy()
+    pasteLandedInEditor()
+    trimmed()
+    wasInBefore()
+    isInAfter()
+    orderWithCache()
+    rest()
+    mergeUnique()
+    seen()
+    buildFocusOpenCommands()
+    strategy()
+    ideDefaults()
+    buildFocusInputCommands()
+    strategy()
+    prefix()
+    block()
+    blocked()
+    buildPasteDirectCommands()
+    strategy()
+    prefix()
+    buildSubmitCommands()
+    strategy()
+    override()
+    filterRegistered()
+    isCtrlHostKeyCandidate()
+    prioritizePlainHostKeySubmitCandidates()
+    plain()
+    ctrl()
+    injectorRow()
+    reorderForXSession()
+    buildHostKeySubmitCandidates()
+    normalized()
+    plain()
+    ctrl()
+    strategy()
+    isLikelyWaylandSession()
+    env()
+    sanitizeProbeCacheForIde()
+    strategy()
+    loadProbeCache()
+    entry()
+    makeProbeCache()
+    mergeProbeCache()
   src/koruos/strategies/wayland_linux.py:
     e: WaylandLinuxStrategy,_run,_scan_for_key,_gnome_compositor,_prefer_ydotool
     WaylandLinuxStrategy(OsStrategy): matches_current_environment(0),capabilities(0),focus_window(1),inject_keys(1),_focus_via_wmctrl(0),_inject_via_wtype(0),_inject_via_ydotool(0)
@@ -3100,6 +3819,16 @@ Re-exported f...
     e: PluginLifecycleHooks,setup_autopilot_plugin_lifecycle
     PluginLifecycleHooks:
     setup_autopilot_plugin_lifecycle(args;autopilot_ide;socket_path;client)
+  src/koru/agent_backend_runtime.py:
+    e: AgentBackend,PluginSocketBackend,McpToolBackend,NoopBackend,OsInjectorBackend,build_agent_backend
+    AgentBackend(Protocol): send_chat(2)  # Push a prompt toward the agent UI (chat / drive session) for...
+    PluginSocketBackend: send_chat(2)  # Plugin + unix socket — maps ``send_chat`` to autopilot ``dri...
+    McpToolBackend: send_chat(2)  # MCP-only backend (e.g. Cursor with koru_run_ticket).
+
+No soc...
+    NoopBackend: send_chat(2)  # Explicit no-op backend for headless / smoke / CI runs...
+    OsInjectorBackend: send_chat(2)  # Coordinate-based fallback backend (X11 + xdotool)...
+    build_agent_backend()
   src/koru/cli_strategy.py:
     e: strategy_main
     strategy_main(argv)
@@ -3125,16 +3854,6 @@ Re-exported f...
     _add_last_repo_parser(sub)
     build_parser()
     git_main(argv)
-  src/koru/agent_backend_runtime.py:
-    e: AgentBackend,PluginSocketBackend,McpToolBackend,NoopBackend,OsInjectorBackend,build_agent_backend
-    AgentBackend(Protocol): send_chat(2)  # Push a prompt toward the agent UI (chat / drive session) for...
-    PluginSocketBackend: send_chat(2)  # Plugin + unix socket — maps ``send_chat`` to autopilot ``dri...
-    McpToolBackend: send_chat(2)  # MCP-only backend (e.g. Cursor with koru_run_ticket).
-
-No soc...
-    NoopBackend: send_chat(2)  # Explicit no-op backend for headless / smoke / CI runs...
-    OsInjectorBackend: send_chat(2)  # Coordinate-based fallback backend (X11 + xdotool)...
-    build_agent_backend()
   src/koru/cli_topology.py:
     e: build_topology_parser,render_topology_text,topology_main
     build_topology_parser()
@@ -3228,15 +3947,6 @@ No soc...
     e: _build_brief,action_handoff
     _build_brief(project)
     action_handoff(args)
-  src/koru/wizard/ide_install.py:
-    e: IDEInstallSpec,_available_install_managers,_format_command,_open_download_page,_run_install_command,_build_install_method_options,offer_ide_install
-    IDEInstallSpec:
-    _available_install_managers()
-    _format_command(argv)
-    _open_download_page(url;out)
-    _run_install_command(argv;out)
-    _build_install_method_options(spec;available_managers)
-    offer_ide_install(prompter;out)
   src/koru/wizard/templates.py:
     e: TemplateInfo,_wizard_package_root,_templates_dir,_load_registry,_pick_description,list_templates,_resolve_packaged_file,resolve_template_name,is_https_url,_looks_like_url,fetch_remote_strategies,resolve_strategies_source,format_templates_list
     TemplateInfo:  # One entry from ``templates/registry.json``...
@@ -3252,6 +3962,15 @@ No soc...
     fetch_remote_strategies(url)
     resolve_strategies_source()
     format_templates_list()
+  src/koru/wizard/ide_install.py:
+    e: IDEInstallSpec,_available_install_managers,_format_command,_open_download_page,_run_install_command,_build_install_method_options,offer_ide_install
+    IDEInstallSpec:
+    _available_install_managers()
+    _format_command(argv)
+    _open_download_page(url;out)
+    _run_install_command(argv;out)
+    _build_install_method_options(spec;available_managers)
+    offer_ide_install(prompter;out)
   src/koru/ide_adapters/ide_reload.py:
     e: IdeReloadOutcome,_on_wayland,_ide_accepts_integrated_terminal,_os_strategy,_window_name_hints,_editor_cli_candidates,auto_reload_enabled,reuse_window_reload_enabled,new_window_reload_enabled,_run,_resolve_editor_cli,_focus_ide_window,reload_jetbrains_via_shortcut,reload_via_command_palette,reload_via_reopen_workspace,reload_via_new_window,_reload_fallback_reopen,_reload_explain_reuse_window_disabled,detect_reload_command,execute_reload,await_plugin_handshake,explain_reload_failure,try_reload_vscode_family_ide,try_open_vscode_family_ide_new_window
     IdeReloadOutcome:
@@ -3304,6 +4023,138 @@ No soc...
     settings_mismatch_hypothesis(settings)
     untrusted_publisher_hypothesis(ide)
     inactive_extension_hypothesis(ide)
+  plugins/koru-autopilot-shared/src/bridge-config.ts:
+    i: fs,vscode
+    e: BridgeOptions,resolveBridgeOptions,debugLog,suffix,safeLogPayload,snapshot,setBridgeInstance,safeLog,suffix
+    BridgeOptions:
+    resolveBridgeOptions()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    setBridgeInstance()
+    safeLog()
+    suffix()
+  plugins/koru-autopilot-shared/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  plugins/koru-autopilot-antigravity/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  plugins/koru-autopilot-cursor/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  plugins/koru-autopilot-vscode/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  plugins/koru-autopilot-windsurf/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
+  plugins/koru-autopilot-vscodium/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem,defaultSocketCandidates,push,r,explicit,xdg,uid,socketCandidatesFromEnv,ov
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+    defaultSocketCandidates()
+    push()
+    r()
+    explicit()
+    xdg()
+    uid()
+    socketCandidatesFromEnv()
+    ov()
   scripts/koru-gate-capture.py:
     e: _normalize_line,_first_nonempty_line,_is_noise_line,_first_meaningful_line,_run_planfile,_parse_args,_run_gate_command,_matched_failure_line,_extract_finding_keys_from_item,_existing_finding_tickets,_append_existing_note,_create_ticket,_handle_existing_finding,main
     _normalize_line(text)
@@ -3567,6 +4418,10 @@ No soc...
   src/koru/ide_adapters/vscode_family.py:
     e: VSCodeFamilyAdapter
     VSCodeFamilyAdapter: diagnose_activation(0),analyze_settings(0),collect_hypotheses(0),apply_safe_fixes(0)
+  plugins/koru-autopilot-shared/src/autopilot-bridge.ts:
+    i: ./bridge-handle,./bridge-submit,vscode
+    e: SharedAutopilotBridge
+    SharedAutopilotBridge: super(-1),value(-1),commands(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),pasted(-1),submitCmd(-1),tryIdeFastPath(-1),sendNativeFastPathRequiredFailure(-1),focusChatForInject(-1),focus(-1),debugLog(-1),debugLog(-1),createBridgeController(-1)
   src/koruobserve/cli_parser.py:
     e: _add_subproject,_register_up_arguments,build_observe_parser,project_path
     _add_subproject(parser)
@@ -3747,6 +4602,151 @@ No soc...
     _recent_jetbrains_projects()
     _dedup(items)
     propose_projects(ides)
+  plugins/koru-autopilot-shared/src/bridge-fastpath.ts:
+    i: ./bridge-ack,./bridge-config,./types,vscode
+    e: SharedAutopilotBridgeFastPath
+    SharedAutopilotBridgeFastPath: koruStepConfig(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),keepOpen(-1),safeLog(-1),safeLog(-1),safeLog(-1),existing(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),openCmd(-1),safeLog(-1),lastError(-1),safeLog(-1),existing(-1),safeLog(-1),safeLog(-1),busyInput(-1),replace(-1),pasted(-1),safeLog(-1),verifyResult(-1),clearComposerDraft(-1),detail(-1),safeLog(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1)
+  plugins/koru-autopilot-shared/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-antigravity/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-antigravity/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength,postSubmitProbeMaxAttempts
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+    postSubmitProbeMaxAttempts()
+  plugins/koru-autopilot-cursor/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-cursor/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength,postSubmitProbeMaxAttempts
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+    postSubmitProbeMaxAttempts()
+  plugins/koru-autopilot-vscode/src/extension.ts:
+    e: siblingIdeForAppName,lowered,siblingIde,runtime,activate,deactivate
+    siblingIdeForAppName()
+    lowered()
+    siblingIde()
+    runtime()
+    activate()
+    deactivate()
+  plugins/koru-autopilot-vscode/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-vscode/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength,postSubmitProbeMaxAttempts
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+    postSubmitProbeMaxAttempts()
+  plugins/koru-autopilot-vscode/src/ides/vscode.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,lowered,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,unsafeFocusOpen,focusOpen,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    lowered()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    unsafeFocusOpen()
+    focusOpen()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-windsurf/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-windsurf/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength,postSubmitProbeMaxAttempts
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+    postSubmitProbeMaxAttempts()
+  plugins/koru-autopilot-vscodium/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
+  plugins/koru-autopilot-vscodium/src/step-decisions.ts:
+    i: ./ide-control-strategy,./probe-ladder
+    e: KoruAutopilotStepConfig,readVerifySubmitEnabled,shouldVerifyPostSubmit,shouldRequireVerifiedHostSubmit,strategy,shouldVerifyPrePasteBusy,normalizeDraft,isKnownStaleKoruCommandDraft,withoutEnv,decideBusyInputAction,observed,requested,interpretPostSubmitProbe,decision,observedLength,postSubmitProbeMaxAttempts
+    KoruAutopilotStepConfig:
+    readVerifySubmitEnabled()
+    shouldVerifyPostSubmit()
+    shouldRequireVerifiedHostSubmit()
+    strategy()
+    shouldVerifyPrePasteBusy()
+    normalizeDraft()
+    isKnownStaleKoruCommandDraft()
+    withoutEnv()
+    decideBusyInputAction()
+    observed()
+    requested()
+    interpretPostSubmitProbe()
+    decision()
+    observedLength()
+    postSubmitProbeMaxAttempts()
   scripts/sync-plugin-shared.py:
     e: _sync_one,main
     _sync_one(plugin_dir)
@@ -3863,18 +4863,18 @@ Construct once ...
     e: EventLogEntry,EventLogProjection
     EventLogEntry:
     EventLogProjection: __init__(0),handle(1),reset(0),replay(1),recent(1)  # Collect StoredEvent objects for a single bounded context...
-  src/koru/autopilot/tail_cli.py:
-    e: format_tail_entry,render_tail_json,render_tail_text,action_tail
-    format_tail_entry(entry)
-    render_tail_json(tail)
-    render_tail_text(tail)
-    action_tail(args)
   src/koru/autopilot/systemd_cli.py:
     e: systemd_user_dir,resolve_koru_bin,render_unit,action_install_unit
     systemd_user_dir()
     resolve_koru_bin()
     render_unit(koru_bin)
     action_install_unit(args)
+  src/koru/autopilot/tail_cli.py:
+    e: format_tail_entry,render_tail_json,render_tail_text,action_tail
+    format_tail_entry(entry)
+    render_tail_json(tail)
+    render_tail_text(tail)
+    action_tail(args)
   src/koru/autopilot/commands/drive.py:
     e: _drive_text_from_args,_drive_command_argv,_record_drive_command,_connect_drive_client,_drive_daemon,_run_direct_fallback,_finish_drive_reply,action_drive
     _drive_text_from_args(args)
@@ -3890,6 +4890,147 @@ Construct once ...
     build_strategy_heuristics(project)
     _file_age_seconds(path)
     _recommendations(available_tools;has_code2llm_analysis)
+  plugins/koru-autopilot-shared/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-shared/src/bridge-commands.ts:
+    i: ./bridge-config,./bridge-fastpath,./types,vscode
+    e: SharedAutopilotBridgeCommands
+    SharedAutopilotBridgeCommands: injectChat(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),openChatFromCommand(-1)
+  plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts:
+    i: ../ides/registry,./bridge-config,./bridge-focus-core,vscode
+    e: SharedAutopilotBridgeFocusStrategy
+    SharedAutopilotBridgeFocusStrategy: focusChat(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),result(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),_trustedFocusOpenCommand(-1),debugLog(-1),_snapshotVerifiedFocusOpenCommand(-1),debugLog(-1),debugLog(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),result(-1),debugLog(-1),_tryFocusInputCommand(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),shouldTryInputOnlyPreflight(-1),hasToggleOpen(-1),isAlreadyFocusedWithoutOpenCommand(-1)
+  plugins/koru-autopilot-antigravity/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-antigravity/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  plugins/koru-autopilot-cursor/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-cursor/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  plugins/koru-autopilot-vscode/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-vscode/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  plugins/koru-autopilot-windsurf/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-windsurf/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
+  plugins/koru-autopilot-windsurf/src/ides/windsurf.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-vscodium/src/host-click-submit.ts:
+    e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
+    parseXdotoolGeometryShell()
+    match()
+    x()
+    y()
+    width()
+    height()
+    bottomRightSubmitPoint()
+  plugins/koru-autopilot-vscodium/src/ides/vscodium.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,lowered,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,cmd,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    lowered()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    cmd()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-vscodium/src/ides/registry.ts:
+    i: ./ide-strategy
+    e: REGISTRY,registerStrategy,id,getStrategy,allStrategies,detectIdeViaStrategies,id,bootstrapStrategies
+    REGISTRY()
+    registerStrategy()
+    id()
+    getStrategy()
+    allStrategies()
+    detectIdeViaStrategies()
+    id()
+    bootstrapStrategies()
   src/koruos/strategies/registry.py:
     e: register_os_strategy,get_os_strategy,list_os_strategy_ids,resolve_active_os_strategy
     register_os_strategy(strategy)
@@ -4076,6 +5217,37 @@ The constructor must be argument-l...
     OpenRouterStrategyResponse:
     call_openrouter_json(prompt)
     ask_openrouter_for_strategy_patch(prompt)
+  plugins/koru-autopilot-shared/src/bridge-base.ts:
+    i: ./autopilot-bridge,vscode
+    e: WireBridgeCommandsOptions,maybeAutoConnect,cfg,registerBridgeCommand,message,wireBridgeCommands,text
+    WireBridgeCommandsOptions:
+    maybeAutoConnect()
+    cfg()
+    registerBridgeCommand()
+    message()
+    wireBridgeCommands()
+    text()
+  plugins/koru-autopilot-shared/src/bridge-focus-core.ts:
+    i: ./bridge-config,./bridge-watcher,child_process,vscode
+    e: SharedAutopilotBridgeFocusCore
+    SharedAutopilotBridgeFocusCore: sleep(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),clearChatInput(-1),server(-1),pendingCommandOrder(-1),mergeUnique(-1),seen(-1)
+  plugins/koru-autopilot-cursor/src/ides/cursor.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,focusInputCommandsBlocklist,preferCtrlSubmit,sanitizeProbeCache,blocked,cmd,cmd,focusOpenCommandsDefaults,trustFocusOpenCommand,n,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    focusInputCommandsBlocklist()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    blocked()
+    cmd()
+    cmd()
+    focusOpenCommandsDefaults()
+    trustFocusOpenCommand()
+    n()
+    trustFocusOpenWithoutEditorSnapshot()
   src/koruos/strategies/darwin.py:
     e: DarwinStrategy,_run
     DarwinStrategy(OsStrategy): matches_current_environment(0),capabilities(0),focus_window(1),inject_keys(1)
@@ -4239,6 +5411,10 @@ The c...
     _pick_port(requested)
     _require_uvicorn()
     run_gui_server()
+  src/koru/wizard/gui/session.py:
+    e: WizardGuiSession,SessionStore
+    WizardGuiSession: touch(0),expired(0),new(-1)  # Server-side state for one browser wizard run...
+    SessionStore: __init__(0),create(1),get(1),delete(1),purge_expired(0)  # Thread-unsafe in-memory store (single localhost user)...
   src/koru/ide_adapters/base.py:
     e: Remediation,Hypothesis,ActivationReport,SettingsReport,BridgeStatus
     Remediation:
@@ -4252,13 +5428,25 @@ The c...
     load_autonomy_strategy(project)
     ensure_autonomy_strategy_config(project)
     _persist_missing_strategy(path;data)
-  src/koru/wizard/gui/session.py:
-    e: WizardGuiSession,SessionStore
-    WizardGuiSession: touch(0),expired(0),new(-1)  # Server-side state for one browser wizard run...
-    SessionStore: __init__(0),create(1),get(1),delete(1),purge_expired(0)  # Thread-unsafe in-memory store (single localhost user)...
   src/koru/autonomy_strategy/__init__.py:
     e: __getattr__
     __getattr__(name)
+  plugins/koru-autopilot-shared/src/bridge-helpers.ts:
+    i: ../probe-ladder
+    e: DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,isVSCodiumSafeSubmitCommand,normalized,filterVSCodiumSubmitCandidates,isHostClipboardPasteCommand
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    isVSCodiumSafeSubmitCommand()
+    normalized()
+    filterVSCodiumSubmitCandidates()
+    isHostClipboardPasteCommand()
   docker/capture/smoke.py:
     e: _png_size,_scan_providers,_diagnostics_payload,_capture_one,_capture_all,_run_headless,_run_x11,main
     _png_size(payload)
@@ -4269,6 +5457,144 @@ The c...
     _run_headless()
     _run_x11()
     main(argv)
+  plugins/koru-autopilot-shared/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-shared/src/extension-wrapper.ts:
+    i: vscode
+    e: IdeBridgeExtensionConfig,IdeBridgeExtensionRuntime,createIdeBridgeExtension,appName,bridge
+    IdeBridgeExtensionConfig:
+    IdeBridgeExtensionRuntime:
+    createIdeBridgeExtension()
+    appName()
+    bridge()
+  plugins/koru-autopilot-antigravity/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-antigravity/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  plugins/koru-autopilot-antigravity/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-cursor/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-cursor/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  plugins/koru-autopilot-cursor/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-vscode/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-vscode/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  plugins/koru-autopilot-vscode/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-windsurf/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-windsurf/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  plugins/koru-autopilot-windsurf/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-vscodium/src/extension.ts:
+    e: isVscodiumHost,lowered,runtime,activate,deactivate
+    isVscodiumHost()
+    lowered()
+    runtime()
+    activate()
+    deactivate()
+  plugins/koru-autopilot-vscodium/src/chat-history-paths.ts:
+    i: ./chat-history-types,os,path
+    e: ideUserDir,home,name,appdata,defaultGlobalStateDbPath
+    ideUserDir()
+    home()
+    name()
+    appdata()
+    defaultGlobalStateDbPath()
+  plugins/koru-autopilot-vscodium/src/ide-control-strategy.ts:
+    e: IdeControlStrategy,ideControlStrategy,key
+    IdeControlStrategy:
+    ideControlStrategy()
+    key()
+  plugins/koru-autopilot-vscodium/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
   src/koruobserve/bootstrap.py:
     e: _config_has_v2_sections,ensure_observe_config,ensure_mesh_key
     _config_has_v2_sections(config)
@@ -4350,11 +5676,6 @@ The c...
     setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
     run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
     unblock_queue_if_needed(project;stdio_format)
-  src/koru/cli_agent.py:
-    e: _detect_agent_options,_build_agent_parser,_agent_main
-    _detect_agent_options(project)
-    _build_agent_parser()
-    _agent_main(argv)
   src/koru/redup_integration.py:
     e: _redup_module_command,redup_scan_command,redup_check_command,redup_changed_scan_command,redup_changed_scan_runner_command,_redup_scan_supports,_redup_json_scan_command,_env_bool,_write_skipped_changed_report,run_changed_scan,main
     _redup_module_command()
@@ -4368,6 +5689,11 @@ The c...
     _write_skipped_changed_report(output)
     run_changed_scan()
     main(argv)
+  src/koru/cli_agent.py:
+    e: _detect_agent_options,_build_agent_parser,_agent_main
+    _detect_agent_options(project)
+    _build_agent_parser()
+    _agent_main(argv)
   src/koru/cli_ide_router.py:
     e: ide_router_main
     ide_router_main(argv)
@@ -4447,6 +5773,38 @@ The c...
     _build_adapters()
     get_adapter(ide)
     supported_adapter_ids()
+  plugins/koru-autopilot-shared/src/bridge-focus.ts:
+    i: ./bridge-focus-strategy
+    e: SharedAutopilotBridgeFocus
+    SharedAutopilotBridgeFocus: openChatFromCommand(-1),openChatPanel(-1),cached(-1),_cachedOpenChatPanelOutcome(-1),_lastOpenChatPanelOutcomeIsFresh(-1),_recordOpenChatPanelOutcome(-1),outcome(-1),performOpenChatPanel(-1),focus(-1)
+  plugins/koru-autopilot-shared/src/bridge-base-class.ts:
+    i: ./types,net,vscode
+    e: SharedAutopilotBridgeBase
+    SharedAutopilotBridgeBase: setBridgeInstance(-1),isConnected(-1),resetOperationTrace(-1),currentOperationTrace(-1),updateStatus(-1),workspaceFolders(-1),emitLiveDsl(-1),sendConsoleLog(-1),traceOperation(-1),safeLog(-1)
+  plugins/koru-autopilot-antigravity/src/antigravity-fastpath.ts:
+    e: selectAntigravityOpenCommand,canUseAntigravitySendPrompt
+    selectAntigravityOpenCommand()
+    canUseAntigravitySendPrompt()
+  plugins/koru-autopilot-cursor/src/antigravity-fastpath.ts:
+    e: selectAntigravityOpenCommand,canUseAntigravitySendPrompt
+    selectAntigravityOpenCommand()
+    canUseAntigravitySendPrompt()
+  plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts:
+    e: selectAntigravityOpenCommand,canUseAntigravitySendPrompt
+    selectAntigravityOpenCommand()
+    canUseAntigravitySendPrompt()
+  plugins/koru-autopilot-windsurf/src/antigravity-fastpath.ts:
+    e: selectAntigravityOpenCommand,canUseAntigravitySendPrompt
+    selectAntigravityOpenCommand()
+    canUseAntigravitySendPrompt()
+  plugins/koru-autopilot-vscodium/src/antigravity-fastpath.ts:
+    e: selectAntigravityOpenCommand,canUseAntigravitySendPrompt
+    selectAntigravityOpenCommand()
+    canUseAntigravitySendPrompt()
+  plugins/koru-autopilot-vscodium/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
   src/koruapi/mcp.py:
     e: mcp_main
     mcp_main(argv)
@@ -4460,15 +5818,15 @@ The c...
     list_monitors()
     capture_monitor_png(monitor_id;scale)
     capture_all_monitors(scale)
-  src/korullm/strategies/ollama.py:
-    e: OllamaStrategy
-    OllamaStrategy(LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
   src/koruvision/cli_parser.py:
     e: register_mesh_publish_args,_add_capture_subparser,_add_agent_subparser,build_vision_parser
     register_mesh_publish_args(parser)
     _add_capture_subparser(sub)
     _add_agent_subparser(sub)
     build_vision_parser()
+  src/korullm/strategies/ollama.py:
+    e: OllamaStrategy
+    OllamaStrategy(LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
   src/koruvision/providers/portal_screenshot.py:
     e: PortalScreenshotProvider
     PortalScreenshotProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
@@ -4536,9 +5894,6 @@ Subclasses are **pure data + thin...
     QueueLoopResult: summary(0)  # Aggregate result of draining the planfile queue with run_pla...
     ApiRunResult:  # Result of a direct HTTP API executor call...
     LlmRunResult:  # Result of an OpenRouter (or compatible) chat-completion call...
-  src/koru/deployment_events/batch.py:
-    e: DeploymentEventBatch
-    DeploymentEventBatch: add_event(1),to_dict(0),to_json(0),from_dict(1),from_json(1)  # Batch of events for efficient transmission...
   src/koru/cqrs/domain_event.py:
     e: DomainEvent
     DomainEvent: to_payload(0)  # Base helper for dataclass-backed domain events...
@@ -4549,6 +5904,9 @@ Subclasses are **pure data + thin...
     e: autopilot_local_manager_session,start_autopilot_manager_heartbeat
     autopilot_local_manager_session()
     start_autopilot_manager_heartbeat(manager;daemon)
+  src/koru/deployment_events/batch.py:
+    e: DeploymentEventBatch
+    DeploymentEventBatch: add_event(1),to_dict(0),to_json(0),from_dict(1),from_json(1)  # Batch of events for efficient transmission...
   src/koru/wizard/cli.py:
     e: discover_installed_ides,propose_projects,create_nl_task,_finalise_ticket,run_wizard
     discover_installed_ides()
@@ -4559,6 +5917,33 @@ Subclasses are **pure data + thin...
   src/koru/autonomy_strategy/prompts.py:
     e: build_strategy_update_prompt
     build_strategy_update_prompt(project)
+  plugins/koru-autopilot-antigravity/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  plugins/koru-autopilot-antigravity/src/ides/antigravity.ts:
+    i: ../probe-ladder,./ide-strategy,./registry
+    e: detect,pasteDirectCommandsPrefix,submitCommandsOverride,focusInputCommandsPrefix,preferCtrlSubmit,sanitizeProbeCache,focusOpenCommandsDefaults,trustFocusOpenWithoutEditorSnapshot
+    detect()
+    pasteDirectCommandsPrefix()
+    submitCommandsOverride()
+    focusInputCommandsPrefix()
+    preferCtrlSubmit()
+    sanitizeProbeCache()
+    focusOpenCommandsDefaults()
+    trustFocusOpenWithoutEditorSnapshot()
+  plugins/koru-autopilot-cursor/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  plugins/koru-autopilot-vscode/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
+  plugins/koru-autopilot-windsurf/src/chat-history-adapters.ts:
+    i: ./chat-history-types,./cursor-bubble-adapter,./unsupported-chat-adapter,./vscode-chat-session-adapter
+    e: buildAdapterForIde
+    buildAdapterForIde()
   scripts/sync-vscode-plugin-version.py:
     e: get_plugin_version_from_source,get_plugin_version_from_package,update_plugin_version_source,update_package_json,update_github_workflow,main
     get_plugin_version_from_source(root)
@@ -4587,9 +5972,6 @@ Subclasses are **pure data + thin...
     e: all_providers,provider_by_name
     all_providers()
     provider_by_name(name)
-  src/korullm/strategies/gpt.py:
-    e: GptStrategy
-    GptStrategy(LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
   src/korumesh/codec.py:
     e: envelope_to_wire,envelope_from_wire
     envelope_to_wire(envelope)
@@ -4597,6 +5979,9 @@ Subclasses are **pure data + thin...
   src/korumesh/cli_parser.py:
     e: build_mesh_parser
     build_mesh_parser()
+  src/korullm/strategies/gpt.py:
+    e: GptStrategy
+    GptStrategy(LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
   src/koruide/ports.py:
     e: DriveOutcome,ChatMessage,IdeChatPort,IdeChatHistoryPort,IdeLifecyclePort
     DriveOutcome:  # Result of a single chat drive attempt.
@@ -4704,29 +6089,69 @@ Th...
     e: default_autonomy_strategy_document,default_autonomy_strategy_yaml_block
     default_autonomy_strategy_document()
     default_autonomy_strategy_yaml_block()
-  tree.sh:
-  docs/llm-tools/prefact/install.sh:
+  plugins/koru-autopilot-shared/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  plugins/koru-autopilot-antigravity/src/extension.ts:
+    e: runtime,activate,deactivate
+    runtime()
+    activate()
+    deactivate()
+  plugins/koru-autopilot-antigravity/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  plugins/koru-autopilot-cursor/src/extension.ts:
+    i: ./_shared/autopilot-bridge
+    e: runtime,activate,deactivate
+    runtime()
+    activate()
+    deactivate()
+  plugins/koru-autopilot-cursor/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  plugins/koru-autopilot-vscode/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  plugins/koru-autopilot-windsurf/src/extension.ts:
+    e: runtime,activate,deactivate
+    runtime()
+    activate()
+    deactivate()
+  plugins/koru-autopilot-windsurf/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  plugins/koru-autopilot-vscodium/src/unsupported-chat-adapter.ts:
+    i: ./chat-history-types
+    e: UnsupportedAdapter
+    UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
   project.sh:
-  docs/llm-tools/redeploy/install.sh:
+  tree.sh:
   docs/llm-tools/costs/install.sh:
-  docs/llm-tools/metrun/install.sh:
-  docs/llm-tools/vallm/install.sh:
+  docs/llm-tools/redeploy/install.sh:
+  docs/llm-tools/prefact/install.sh:
   docs/llm-tools/aider/install.sh:
+  docs/llm-tools/vallm/install.sh:
+  docs/llm-tools/metrun/install.sh:
   docs/llm-tools/sumd/install.sh:
   docs/llm-tools/protogate/install.sh:
   docs/llm-tools/claude-code/install.sh:
-  docs/llm-tools/mdflow/install.sh:
   docs/llm-tools/planfile/install.sh:
+  docs/llm-tools/mdflow/install.sh:
   docs/llm-tools/pfix/install.sh:
   docs/llm-tools/goal/install.sh:
   docs/llm-tools/redup/install.sh:
-  docs/llm-tools/regix/install.sh:
-  docs/llm-tools/cursor/install.sh:
-  docs/llm-tools/toonic/install.sh:
   docs/llm-tools/doql/install.sh:
-  docs/llm-tools/llx/install.sh:
+  docs/llm-tools/cursor/install.sh:
+  docs/llm-tools/regix/install.sh:
+  docs/llm-tools/toonic/install.sh:
   docs/llm-tools/redsl/install.sh:
   docs/llm-tools/op3/install.sh:
+  docs/llm-tools/llx/install.sh:
   src/koruobserve/__init__.py:
   src/koruos/__init__.py:
   src/koruos/strategies/__init__.py:
@@ -4769,23 +6194,16 @@ Th...
   src/koru/autonomy/phases/__init__.py:
   src/koru/bounded_contexts/__init__.py:
   src/koru/bounded_contexts/wup/__init__.py:
-  src/koru/bounded_contexts/wup/commands/__init__.py:
-    e: EvaluateWupHealthCommand
-    EvaluateWupHealthCommand:
   src/koru/bounded_contexts/wup/queries/__init__.py:
     e: LoadWupHealthSnapshotQuery
     LoadWupHealthSnapshotQuery:
+  src/koru/bounded_contexts/wup/events/__init__.py:
+    e: WupHealthEvaluated
+    WupHealthEvaluated(DomainEvent):
   src/koru/bounded_contexts/planfile_queue/read_model.py:
     e: PlanfileQueueEventLogProjection
     PlanfileQueueEventLogProjection(EventLogProjection):  # In-memory read model for queue tick history...
   src/koru/bounded_contexts/planfile_queue/__init__.py:
-  src/koru/bounded_contexts/wup/events/__init__.py:
-    e: WupHealthEvaluated
-    WupHealthEvaluated(DomainEvent):
-  src/koru/bounded_contexts/planfile_queue/queries/__init__.py:
-    e: LoadNextRunnableTicketQuery,LoadPlanfileQueueHistoryQuery
-    LoadNextRunnableTicketQuery:
-    LoadPlanfileQueueHistoryQuery:
   src/koru/bounded_contexts/planfile_queue/commands/__init__.py:
     e: RunNextPlanfileTaskCommand
     RunNextPlanfileTaskCommand:
@@ -4801,24 +6219,27 @@ Th...
     e: WriteEnvConfigCommand,ApplyEnvUpdatesCommand
     WriteEnvConfigCommand:
     ApplyEnvUpdatesCommand:
+  src/koru/bounded_contexts/wup/commands/__init__.py:
+    e: EvaluateWupHealthCommand
+    EvaluateWupHealthCommand:
   src/koru/bounded_contexts/env_config/queries/__init__.py:
     e: LoadEnvConfigQuery,LoadEnvConfigHistoryQuery
     LoadEnvConfigQuery:
     LoadEnvConfigHistoryQuery:
+  src/koru/bounded_contexts/tasks/__init__.py:
   src/koru/bounded_contexts/env_config/events/__init__.py:
     e: EnvConfigWritten,EnvUpdatesApplied
     EnvConfigWritten(DomainEvent):
     EnvUpdatesApplied(DomainEvent):
-  src/koru/bounded_contexts/tasks/__init__.py:
   src/koru/bounded_contexts/tasks/commands/__init__.py:
     e: CreateNlTaskCommand
     CreateNlTaskCommand:
-  src/koru/bounded_contexts/local_manager/__init__.py:
   src/koru/bounded_contexts/tasks/queries/__init__.py:
     e: LoadTaskConfigQuery,LoadTaskSprintQuery,LoadTaskHistoryQuery
     LoadTaskConfigQuery:
     LoadTaskSprintQuery:
     LoadTaskHistoryQuery:
+  src/koru/bounded_contexts/local_manager/__init__.py:
   src/koru/bounded_contexts/tasks/events/__init__.py:
     e: TaskCreated,TaskReused
     TaskCreated(DomainEvent):
@@ -4829,13 +6250,6 @@ Th...
     QueueSnapshotQuery:
     WorkersSnapshotQuery:
     StateSnapshotQuery:
-  src/koru/bounded_contexts/local_manager/events/__init__.py:
-    e: ActionEnqueued,ActionClaimed,ActionCompleted,WorkerRegistered,WorkerHeartbeated
-    ActionEnqueued(DomainEvent):
-    ActionClaimed(DomainEvent):
-    ActionCompleted(DomainEvent):
-    WorkerRegistered(DomainEvent):
-    WorkerHeartbeated(DomainEvent):
   src/koru/bounded_contexts/local_manager/commands/__init__.py:
     e: EnqueueActionCommand,ClaimActionCommand,CompleteActionCommand,RegisterWorkerCommand,HeartbeatWorkerCommand
     EnqueueActionCommand:
@@ -4843,14 +6257,21 @@ Th...
     CompleteActionCommand:
     RegisterWorkerCommand:
     HeartbeatWorkerCommand:
+  src/koru/bounded_contexts/planfile_queue/queries/__init__.py:
+    e: LoadNextRunnableTicketQuery,LoadPlanfileQueueHistoryQuery
+    LoadNextRunnableTicketQuery:
+    LoadPlanfileQueueHistoryQuery:
   src/koru/bounded_contexts/autonomous_checkpoint/__init__.py:
+  src/koru/bounded_contexts/local_manager/events/__init__.py:
+    e: ActionEnqueued,ActionClaimed,ActionCompleted,WorkerRegistered,WorkerHeartbeated
+    ActionEnqueued(DomainEvent):
+    ActionClaimed(DomainEvent):
+    ActionCompleted(DomainEvent):
+    WorkerRegistered(DomainEvent):
+    WorkerHeartbeated(DomainEvent):
   src/koru/bounded_contexts/autonomous_checkpoint/read_model.py:
     e: AutonomousCheckpointEventLogProjection
     AutonomousCheckpointEventLogProjection(EventLogProjection):  # In-memory read model for checkpoint history...
-  src/koru/bounded_contexts/autonomous_checkpoint/commands/__init__.py:
-    e: SaveLoopCheckpointCommand,RestoreLoopCheckpointCommand
-    SaveLoopCheckpointCommand:
-    RestoreLoopCheckpointCommand:
   src/koru/bounded_contexts/autonomous_checkpoint/queries/__init__.py:
     e: LoadLoopCheckpointSnapshotQuery,LoadCheckpointHistoryQuery
     LoadLoopCheckpointSnapshotQuery:
@@ -4873,6 +6294,10 @@ Th...
     TogglePipelineCommand:
     PersistTopologyCommand:
   src/koru/cli/__main__.py:
+  src/koru/bounded_contexts/autonomous_checkpoint/commands/__init__.py:
+    e: SaveLoopCheckpointCommand,RestoreLoopCheckpointCommand
+    SaveLoopCheckpointCommand:
+    RestoreLoopCheckpointCommand:
   src/koru/scripts/koru-autoloop.sh:
     e: is_true,run_koru,ensure_autopilot_daemon,status_in_skip_list,current_head,init_topology_support,topology_is_enabled,compute_backoff_sleep,parse_waiting_ticket_id,on_exit,clear_diag_marker,mark_diag_failure,run_check,run_check_shell,cmd_is_disabled,run_idle_diagnostics,run_autopilot
     is_true()
@@ -4925,7 +6350,135 @@ Th...
   src/koru/ide_adapters/__init__.py:
   docker/capture/run.sh:
   docker/capture/entrypoint-x11.sh:
+  .planfile/.koru/setup-autopilot-host.sh:
+  .planfile/.koru/run-autonomous.sh:
+  .planfile/.koru/shell-env.sh:
+  plugins/koru-autopilot-shared/src/bridge-handle.ts:
+    e: BridgeHandle
+    BridgeHandle:
+  plugins/koru-autopilot-shared/src/types.ts:
+    i: ../probe-ladder
+    e: Envelope
+    Envelope:
+  plugins/koru-autopilot-shared/src/index.ts:
+  plugins/koru-autopilot-shared/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-antigravity/src/cursor-bubble-adapter.ts:
+  plugins/koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts:
+  plugins/koru-autopilot-antigravity/src/chat-history-watcher.ts:
+  plugins/koru-autopilot-antigravity/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-antigravity/src/ides/index.ts:
+  plugins/koru-autopilot-antigravity/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
+  plugins/koru-autopilot-antigravity/.planfile/.koru/setup-autopilot-host.sh:
+  plugins/koru-autopilot-antigravity/.planfile/.koru/shell-env.sh:
+  plugins/koru-autopilot-antigravity/.planfile/.koru/run-autonomous.sh:
+  plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts:
+  plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts:
+  plugins/koru-autopilot-cursor/src/chat-history-watcher.ts:
+  plugins/koru-autopilot-cursor/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-cursor/src/ides/index.ts:
+  plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
+  plugins/koru-autopilot-cursor/.planfile/.koru/setup-autopilot-host.sh:
+  plugins/koru-autopilot-cursor/.planfile/.koru/run-autonomous.sh:
+  plugins/koru-autopilot-cursor/.planfile/.koru/shell-env.sh:
+  plugins/koru-autopilot-vscode/src/cursor-bubble-adapter.ts:
+  plugins/koru-autopilot-vscode/src/vscode-chat-session-adapter.ts:
+  plugins/koru-autopilot-vscode/src/chat-history-watcher.ts:
+  plugins/koru-autopilot-vscode/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-vscode/src/ides/index.ts:
+  plugins/koru-autopilot-vscode/.planfile/.koru/setup-autopilot-host.sh:
+  plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
+  plugins/koru-autopilot-vscode/.planfile/.koru/run-autonomous.sh:
+  plugins/koru-autopilot-vscode/.planfile/.koru/shell-env.sh:
+  plugins/koru-autopilot-windsurf/src/cursor-bubble-adapter.ts:
+  plugins/koru-autopilot-windsurf/src/vscode-chat-session-adapter.ts:
+  plugins/koru-autopilot-windsurf/src/chat-history-watcher.ts:
+  plugins/koru-autopilot-windsurf/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-windsurf/src/ides/index.ts:
+  plugins/koru-autopilot-windsurf/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
+  plugins/koru-autopilot-windsurf/.planfile/.koru/setup-autopilot-host.sh:
+  plugins/koru-autopilot-windsurf/.planfile/.koru/run-autonomous.sh:
+  plugins/koru-autopilot-windsurf/.planfile/.koru/shell-env.sh:
+  plugins/koru-autopilot-jetbrains/settings.gradle.kts:
+    e: gradlePluginPortal,mavenCentral
+    gradlePluginPortal()
+    mavenCentral()
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotReconnectAction.kt:
+    e: KoruAutopilotReconnectAction
+    KoruAutopilotReconnectAction:
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt:
+    e: KoruAutopilotService,reconnect,disconnect,sendHello,startReadLoop,withContext,when,withContext,when
+    KoruAutopilotService:
+    reconnect()
+    disconnect()
+    sendHello()
+    startReadLoop()
+    withContext()
+    when()
+    withContext()
+    when()
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/SocketPath.kt:
+  plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/ChatInjector.kt:
+    e: openAiPanel,pasteViaClipboard
+    openAiPanel()
+    pasteViaClipboard()
+  plugins/koru-autopilot-vscodium/src/cursor-bubble-adapter.ts:
+  plugins/koru-autopilot-vscodium/src/vscode-chat-session-adapter.ts:
+  plugins/koru-autopilot-vscodium/src/chat-history-watcher.ts:
+  plugins/koru-autopilot-vscodium/src/chat-history-types.ts:
+    e: ChatHistoryRow,AdapterRunner,IdeAdapter
+    ChatHistoryRow:
+    AdapterRunner:
+    IdeAdapter:
+  plugins/koru-autopilot-vscodium/src/ides/index.ts:
+  plugins/koru-autopilot-vscodium/src/ides/ide-strategy.ts:
+    i: ../probe-ladder
+    e: SubmitFallbackPolicy,IdeStrategy
+    SubmitFallbackPolicy:
+    IdeStrategy:
+  plugins/koru-autopilot-vscodium/.planfile/.koru/setup-autopilot-host.sh:
+  plugins/koru-autopilot-vscodium/.planfile/.koru/run-autonomous.sh:
+  plugins/koru-autopilot-vscodium/.planfile/.koru/shell-env.sh:
   scripts/koru-from-repo.sh:
+  scripts/planfile-export-prompt.sh:
+    e: print,render
+    print()
+    render()
   scripts/koru-soak-monitor.sh:
     e: find_pid,pid_elapsed,state_field,print,print,error_count,write_report
     find_pid()
@@ -4935,10 +6488,6 @@ Th...
     print()
     error_count()
     write_report()
-  scripts/planfile-export-prompt.sh:
-    e: print,render
-    print()
-    render()
   scripts/activate-koru-dev.sh:
   scripts/docker-ide-matrix.sh:
     e: split_words,system_spec_for
@@ -4976,6 +6525,13 @@ Th...
     e: print,print
     print()
     print()
+  scripts/autopilot-ide-autodetect-smoke.sh:
+    e: StubInjector,__init__,type_text,_parser,main
+    StubInjector:
+    __init__()
+    type_text()
+    _parser()
+    main()
   scripts/koru-autoloop.sh:
     e: is_true,run_koru,ensure_autopilot_daemon,status_in_skip_list,current_head,init_topology_support,topology_is_enabled,compute_backoff_sleep,parse_waiting_ticket_id,on_exit,clear_diag_marker,mark_diag_failure,run_check,run_check_shell,cmd_is_disabled,run_idle_diagnostics,run_autopilot
     is_true()
@@ -4995,11 +6551,4 @@ Th...
     cmd_is_disabled()
     run_idle_diagnostics()
     run_autopilot()
-  scripts/autopilot-ide-autodetect-smoke.sh:
-    e: StubInjector,__init__,type_text,_parser,main
-    StubInjector:
-    __init__()
-    type_text()
-    _parser()
-    main()
   project/logic.pl:

@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.303-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.37-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-128.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.304-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$33.02-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-128.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $32.3706 (402 commits)
-- 👤 **Human dev:** ~$12822 (128.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $33.0190 (403 commits)
+- 👤 **Human dev:** ~$12872 (128.7h @ $100/h, 30min dedup)
 
 Generated on 2026-06-01 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -1110,6 +1110,35 @@ run the command above manually, then continue through the normal planfile queue.
 
 Full strategy details are in
 [`docs/project-discovery-strategy.md`](./docs/project-discovery-strategy.md).
+
+#### Manual whole-project discovery pass
+
+When the queue is already idle and you want to force a fresh operator-driven
+discovery pass, run the three steps explicitly instead of waiting for the next
+autonomous cycle:
+
+```bash
+code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'
+
+# Ask the IDE LLM a ticket-oriented follow-up, for example:
+# "Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile."
+
+koru scan --apply --semcod-artifacts --source koru-scan
+```
+
+This manual path keeps the same contract as the automatic idle discovery:
+
+- refresh `project/` semcod artifacts first;
+- keep the IDE LLM answer ticket-oriented rather than asking for broad direct
+  edits;
+- let `koru scan --apply` dedupe against existing planfile work instead of
+  creating duplicate tickets when the backlog already exists.
+
+In practice this means a healthy discovery pass may report high-signal findings
+such as god modules, complexity hotspots, duplicated logic, or architecture
+seams, but still reuse existing planfile tickets rather than creating new ones.
+That is expected; once the backlog exists, the next step is to work those
+tickets one by one, not to keep rerunning broad discovery.
 
 ### Auto-promotion & auto-repair for blocking tickets
 

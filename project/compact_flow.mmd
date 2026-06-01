@@ -1,16 +1,18 @@
 flowchart TD
     docker__capture["docker.capture<br/>8 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
+    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>148 funcs"]
+    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>440 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
-    scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
+    scripts__planfile_export_prompt["scripts.planfile-export-prompt<br/>2 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
     scripts__scaffold_ide_plugin["scripts.scaffold-ide-plugin<br/>7 funcs"]
     scripts__sync_plugin_shared["scripts.sync-plugin-shared<br/>2 funcs"]
     scripts__sync_plugin_version["scripts.sync-plugin-version<br/>4 funcs"]
     scripts__sync_vscode_plugin_version["scripts.sync-vscode-plugin-version<br/>6 funcs"]
     services__healing_webhook["services.healing-webhook<br/>27 funcs"]
-    src__koru["src.koru<br/>2515 funcs"]
+    src__koru["src.koru<br/>2518 funcs"]
     src__koruapi["src.koruapi<br/>249 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
     src__koruide["src.koruide<br/>502 funcs"]
@@ -19,45 +21,55 @@ flowchart TD
     src__koruobserve["src.koruobserve<br/>57 funcs"]
     src__koruos["src.koruos<br/>39 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
-    src__koru ==>|480| scripts__koru_soak_monitor
+    src__koru ==>|480| scripts__planfile_export_prompt
     src__koru ==>|150| src__koruide
     src__koruapi ==>|90| src__koru
     src__koruide ==>|36| src__koru
-    src__koruide ==>|27| scripts__koru_soak_monitor
+    src__koru ==>|33| plugins__koru_autopilot_shared
+    src__koruide ==>|27| scripts__planfile_export_prompt
     src__koruapi ==>|26| src__koruide
-    src__koruobserve ==>|22| scripts__koru_soak_monitor
+    src__koruobserve ==>|22| scripts__planfile_export_prompt
     src__koruide ==>|20| src__koruapi
-    src__koruapi ==>|17| scripts__koru_soak_monitor
+    src__koruapi ==>|17| scripts__planfile_export_prompt
     src__koru ==>|16| src__koruvision
-    examples__remote_orchestration_demo ==>|12| scripts__koru_soak_monitor
-    src__koruvision ==>|12| scripts__koru_soak_monitor
+    src__koruapi ==>|13| plugins__koru_autopilot_shared
+    examples__remote_orchestration_demo ==>|12| scripts__planfile_export_prompt
+    src__koruvision ==>|12| scripts__planfile_export_prompt
+    src__koruide ==>|10| plugins__koru_autopilot_shared
     src__koru ==>|10| src__koruobserve
-    scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
-    scripts__sync_vscode_plugin_version ==>|9| scripts__koru_soak_monitor
+    scripts__sync_vscode_plugin_version ==>|9| scripts__planfile_export_prompt
+    scripts__planfile_sync_todo ==>|9| scripts__planfile_export_prompt
     src__koruobserve ==>|8| src__koru
     src__koruvision ==>|8| src__korumesh
     src__koru ==>|8| src__koruapi
-    scripts__sync_plugin_version ==>|8| scripts__koru_soak_monitor
+    scripts__sync_plugin_version ==>|8| scripts__planfile_export_prompt
     src__koruobserve ==>|7| src__koruvision
-    src__korumesh ==>|7| scripts__koru_soak_monitor
+    src__korumesh ==>|7| scripts__planfile_export_prompt
     src__koru ==>|6| src__koruos
     src__koruvision ==>|5| src__koru
-    scripts__koru_gate_capture ==>|5| scripts__koru_soak_monitor
+    scripts__koru_gate_capture ==>|5| scripts__planfile_export_prompt
     src__koruapi ==>|4| src__korudsl
     docker__capture ==>|4| src__koruvision
     src__koruapi -->|3| src__korumesh
     src__koru -->|3| src__korudsl
     src__koru -->|3| src__korullm
-    scripts__sync_plugin_shared -->|3| scripts__koru_soak_monitor
-    scripts__scaffold_ide_plugin -->|3| scripts__koru_soak_monitor
+    scripts__sync_plugin_shared -->|3| scripts__planfile_export_prompt
+    scripts__scaffold_ide_plugin -->|3| scripts__planfile_export_prompt
+    services__healing_webhook -->|2| plugins__koru_autopilot_shared
+    src__koruvision -->|2| plugins__koru_autopilot_shared
     src__korumesh -->|2| src__koru
     src__korumesh -->|2| src__koruvision
+    src__korumesh -->|2| plugins__koru_autopilot_shared
     src__koruobserve -->|1| src__korumesh
     services__healing_webhook -->|1| src__koru
+    src__koruos -->|1| plugins__koru_autopilot_shared
+    src__korudsl -->|1| plugins__koru_autopilot_shared
     src__koruos -->|1| src__koru
+    src__korullm -->|1| plugins__koru_autopilot_shared
     src__korumesh -->|1| src__koruobserve
     src__koruvision -->|1| src__koruobserve
+    src__koruide -->|1| plugins__koru_autopilot_antigravity
     docker__capture -->|1| src__koruobserve
-    docker__capture -->|1| scripts__koru_soak_monitor
+    docker__capture -->|1| scripts__planfile_export_prompt
     scripts__sync_plugin_version -->|1| src__koru
-    scripts___koru_autodiag_filter_tickets -->|1| scripts__koru_soak_monitor
+    scripts___koru_autodiag_filter_tickets -->|1| scripts__planfile_export_prompt
