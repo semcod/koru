@@ -203,7 +203,7 @@ def _recent_chat_history_fallback(
     ):
         return None
     last = last_event(ide=ide, types=_CHAT_ACTIVITY_TYPES)
-    age = f"{last.age_seconds:.0f}s" if last is not None else "?"
+    age_label = f"{last.age_seconds:.0f}s" if last is not None else "?"
     last_type = last.type if last is not None else "?"
     if not reflection_events:
         reflection_events = read_events(
@@ -212,7 +212,7 @@ def _recent_chat_history_fallback(
             types=_CHAT_ACTIVITY_TYPES,
             limit=20,
         )
-    return last_type, age, reflection_events
+    return last_type, age_label, reflection_events
 
 
 def _determine_chat_activity_status(
@@ -244,8 +244,8 @@ def classify_chat_event(
         last_payload = recent_events[-1]
         last_type = str(last_payload.get("type") or "?")
         age_seconds = max(0.0, time.time() - _event_timestamp(last_payload, default=0.0))
-        age = f"{age_seconds:.0f}s"
-        return True, last_type, age, reflection_events
+        age_label = f"{age_seconds:.0f}s"
+        return True, last_type, age_label, reflection_events
 
     fallback = _recent_chat_history_fallback(
         ide=ide,
@@ -254,8 +254,8 @@ def classify_chat_event(
     )
     if fallback is None:
         return False, "", "", []
-    last_type, age, reflection_events = fallback
-    return True, last_type, age, reflection_events
+    last_type, age_label, reflection_events = fallback
+    return True, last_type, age_label, reflection_events
 
 
 def decide_intake_ticket(intake_ticket: str | None) -> bool:
@@ -272,18 +272,18 @@ def decide_redrive_cooldown(
 ) -> dict[str, str | bool]:
     """Pure cooldown decision used by chat-activity skip paths."""
     event = str(event_type or "?")
-    age = max(0.0, float(age_seconds))
+    event_age_seconds = max(0.0, float(age_seconds))
     cooldown = max(0.0, float(cooldown_seconds))
-    should_skip = bool(event and age <= cooldown)
+    should_skip = bool(event and event_age_seconds <= cooldown)
     because = (
-        f"recent_chat_activity last={event} age={age:.0f}s cooldown={cooldown:.0f}s "
+        f"recent_chat_activity last={event} age={event_age_seconds:.0f}s cooldown={cooldown:.0f}s "
         f"ticket={waiting_ticket}"
     )
     return {
         "should_skip": should_skip,
         "event_type": event,
         "because": because,
-        "age": f"{age:.0f}s",
+        "age": f"{event_age_seconds:.0f}s",
     }
 
 
@@ -292,10 +292,10 @@ def explain_skip(decision: dict[str, str | bool]) -> str:
     return str(decision.get("because") or "")
 
 
-def _age_seconds_from_label(age: str) -> float:
-    if age.endswith("s"):
+def _age_seconds_from_label(age_label: str) -> float:
+    if age_label.endswith("s"):
         try:
-            return float(age[:-1])
+            return float(age_label[:-1])
         except ValueError:
             return 0.0
     return 0.0

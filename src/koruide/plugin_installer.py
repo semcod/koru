@@ -468,9 +468,9 @@ def _package_build_sha(package_json: Path) -> str | None:
         data = json.loads(package_json.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    build = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
-    if isinstance(build, dict) and isinstance(build.get("sha"), str):
-        return build["sha"]
+    build_info = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
+    if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
+        return build_info["sha"]
     return None
 
 
@@ -481,9 +481,9 @@ def _vsix_build_sha(vsix: Path) -> str | None:
                 data = json.loads(package_file.read().decode("utf-8"))
     except (OSError, KeyError, zipfile.BadZipFile, UnicodeDecodeError, json.JSONDecodeError):
         return None
-    build = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
-    if isinstance(build, dict) and isinstance(build.get("sha"), str):
-        return build["sha"]
+    build_info = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
+    if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
+        return build_info["sha"]
     return None
 
 

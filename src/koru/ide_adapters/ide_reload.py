@@ -442,10 +442,10 @@ def await_plugin_handshake(
 
     deadline = time.time() + max(0.0, timeout_seconds)
     while time.time() <= deadline:
-        active = shared.extension_activated_in_exthost(ide)
-        if active is True:
+        handshake_state = shared.extension_activated_in_exthost(ide)
+        if handshake_state is True:
             return True, "plugin_handshake_ok"
-        if active is False:
+        if handshake_state is False:
             time.sleep(max(0.0, interval_seconds))
             continue
         return False, "plugin_handshake_unknown"

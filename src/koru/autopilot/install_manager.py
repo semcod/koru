@@ -399,14 +399,27 @@ def repair_installation(
 ) -> InstallManagerReport:
     report = collect_install_manager_report(ide=ide, socket_path=socket_path)
     resolved_ide = str(report.plugin.get("ide") or ide)
+    repair_steps = _build_repair_steps(report, resolved_ide=resolved_ide, dry_run=dry_run)
+    return _apply_repair_steps(
+        report,
+        repair_steps,
+        resolved_ide=resolved_ide,
+        dry_run=dry_run,
+    )
 
-    if unsupported_action := _unsupported_plugin_repair_action(report.plugin, resolved_ide):
-        report.actions = [unsupported_action]
-        return report
 
-    actions = [
-        action
-        for action in (
+def _build_repair_steps(
+    report: InstallManagerReport,
+    *,
+    resolved_ide: str,
+    dry_run: bool,
+) -> list[dict[str, Any]]:
+    if unsupported_step := _unsupported_plugin_repair_step(report.plugin, resolved_ide):
+        return [unsupported_step]
+
+    return [
+        step
+        for step in (
             {
                 "action": "install_plugin",
                 "result": install_plugin_for_ide(
@@ -418,18 +431,11 @@ def repair_installation(
             _shutdown_daemon_for_plugin_repair_action(report, dry_run=dry_run),
             _reload_ide_reconnect_action(report, resolved_ide, dry_run=dry_run),
         )
-        if action is not None
+        if step is not None
     ]
 
-    return _repair_report_with_actions(
-        report,
-        actions,
-        resolved_ide=resolved_ide,
-        dry_run=dry_run,
-    )
 
-
-def _unsupported_plugin_repair_action(
+def _unsupported_plugin_repair_step(
     plugin: dict[str, Any],
     resolved_ide: str,
 ) -> dict[str, Any] | None:
@@ -500,18 +506,18 @@ def _reload_ide_reconnect_action(
     }
 
 
-def _repair_report_with_actions(
+def _apply_repair_steps(
     report: InstallManagerReport,
-    actions: list[dict[str, Any]],
+    repair_steps: list[dict[str, Any]],
     *,
     resolved_ide: str,
     dry_run: bool,
 ) -> InstallManagerReport:
     if not dry_run:
         refreshed = collect_install_manager_report(ide=resolved_ide, socket_path=Path(report.socket))
-        refreshed.actions = actions
+        refreshed.actions = repair_steps
         return refreshed
-    report.actions = actions
+    report.actions = repair_steps
     return report
 
 

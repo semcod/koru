@@ -269,20 +269,20 @@ def _process_list_payload(
     """Process ticket list payload from planfile.
 
     Returns:
-        Tuple of (active_ticket, open_tickets, all_tickets, error)
+        Tuple of (active_ticket, open_tickets, ticket_history, error)
     """
     raw_list = [t for t in ticket_data if isinstance(t, dict)]
     open_tickets = [t for t in raw_list if t.get("status") in (None, "open", "ready", "todo")]
     include = _resolve_include_fixtures(include_fixtures)
     if not include:
         open_tickets = [t for t in open_tickets if not _is_fixture_ticket(t)]
-        all_tickets = [t for t in raw_list if not _is_fixture_ticket(t)]
+        ticket_history = [t for t in raw_list if not _is_fixture_ticket(t)]
     else:
-        all_tickets = list(raw_list)
+        ticket_history = list(raw_list)
 
     active_ticket = open_tickets[0] if open_tickets else None
     error = "queue is idle" if active_ticket is None else None
-    return active_ticket, open_tickets, all_tickets, error
+    return active_ticket, open_tickets, ticket_history, error
 
 
 def _process_dict_payload(
@@ -361,7 +361,7 @@ def _parse_ticket_response(
     ticket_data: dict[str, Any] | None = None
     ticket_error: str | None = None
     open_tickets: list[dict[str, Any]] = []
-    all_tickets: list[dict[str, Any]] = []
+    ticket_history: list[dict[str, Any]] = []
 
     ticket_data = _safe_json(ticket_proc.stdout)
     if ticket_data is None:
@@ -373,11 +373,11 @@ def _parse_ticket_response(
         if "No runnable ticket" in stripped or not stripped or json_null_idle:
             ticket_data = None
             ticket_error = "queue is idle"
-            all_tickets = _handle_idle_queue(project, planfile_runner, include_fixtures)
+            ticket_history = _handle_idle_queue(project, planfile_runner, include_fixtures)
         else:
             ticket_error = "planfile output was not JSON"
     elif isinstance(ticket_data, list):
-        ticket_data, open_tickets, all_tickets, ticket_error = _process_list_payload(
+        ticket_data, open_tickets, ticket_history, ticket_error = _process_list_payload(
             ticket_data,
             include_fixtures,
         )
@@ -388,13 +388,13 @@ def _parse_ticket_response(
             include_fixtures,
         )
         if ticket_data is not None:
-            all_tickets = _fetch_all_tickets(
+            ticket_history = _fetch_all_tickets(
                 project,
                 runner=planfile_runner,
                 include_fixtures=_resolve_include_fixtures(include_fixtures),
             )
 
-    return ticket_data, ticket_error, open_tickets, all_tickets
+    return ticket_data, ticket_error, open_tickets, ticket_history
 
 
 def _fetch_ticket_data(
@@ -408,7 +408,7 @@ def _fetch_ticket_data(
     """Fetch ticket data from planfile.
 
     Returns:
-        Tuple of (ticket_data, ticket_error, open_tickets, all_tickets)
+        Tuple of (ticket_data, ticket_error, open_tickets, ticket_history)
     """
     if not planfile_present:
         return None, "project not initialised", [], []
@@ -466,7 +466,7 @@ def build_context(
         (pf / "config.yaml").exists() and sprints_dir.is_dir() and any(sprints_dir.glob("*.yaml"))
     )
 
-    ticket_data, ticket_error, open_tickets, all_tickets = _fetch_ticket_data(
+    ticket_data, ticket_error, open_tickets, ticket_history = _fetch_ticket_data(
         project,
         ticket_id,
         queue_name,
@@ -499,7 +499,7 @@ def build_context(
         "ticket": ticket_data,
         "ticket_error": ticket_error,
         "open_tickets": open_tickets,
-        "all_tickets": all_tickets,
+        "all_tickets": ticket_history,
         "policy": resolved_policy.to_dict(),
         "environment": {
             "git": git_state,

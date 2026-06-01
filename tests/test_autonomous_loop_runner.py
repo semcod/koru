@@ -375,8 +375,8 @@ def test_quick_action_open_ticket_reuses_dashboard_tickets_url_with_hash(
     )
 
     open_ticket = next(line for line in actions if line.startswith("[open ticket] "))
-    assert open_ticket.startswith("[open ticket] `koru replay 'ticket open STARTER-248")
-    assert "tab=tickets&project=%2Ftmp%2Frepo&ide=vscode" in open_ticket
+    assert open_ticket.startswith("[open ticket] http://127.0.0.1:8765/?tab=tickets&project=%2Ftmp%2Frepo&ide=vscode")
+    assert open_ticket.endswith("#STARTER-248")
 
 
 def test_blocked_interface_action_lines_filter_to_jetbrains_lane() -> None:

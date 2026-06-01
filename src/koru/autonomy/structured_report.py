@@ -121,19 +121,19 @@ def _plan_lines(
     sleep_seconds: float,
 ) -> list[str]:
     """Human-readable plan lines (what koru intends to do next)."""
-    blocker = _extract_blocker(autopilot_status)
+    blocker_code = _extract_blocker(autopilot_status)
     lines: list[str] = []
 
-    if blocker == "plugin_missing":
+    if blocker_code == "plugin_missing":
         lines.append("skip drive → wait for plugin reconnect")
         lines.append(f"sleep {sleep_seconds:g}s, then recheck queue for {waiting_ticket}")
-    elif blocker == "chat_activity":
+    elif blocker_code == "chat_activity":
         lines.append(f"skip drive → chat cooldown active for {waiting_ticket}")
         lines.append(f"sleep {sleep_seconds:g}s, then reconsider redrive")
-    elif blocker == "drive_failed":
+    elif blocker_code == "drive_failed":
         lines.append("drive failed → retry next cycle")
         lines.append(f"sleep {sleep_seconds:g}s, then rerun queue")
-    elif blocker == "manual_send_required":
+    elif blocker_code == "manual_send_required":
         lines.append("submit not verified → do not redrive blindly")
         lines.append(f"sleep {sleep_seconds:g}s, then validate trace for {waiting_ticket}")
     elif queue_status == "idle":
@@ -165,33 +165,33 @@ def _build_cycle_actions(
 ) -> list[ReplayAction]:
     """Build the set of ReplayActions relevant to the current cycle state."""
     blocker = _extract_blocker(autopilot_status)
-    actions: list[ReplayAction] = []
+    replay_actions: list[ReplayAction] = []
 
     # Always include trace inspection
-    actions.append(trace_show_decisions(base_url))
+    replay_actions.append(trace_show_decisions(base_url))
 
     # Blocker-specific actions
     if blocker == "plugin_missing":
-        actions.append(ide_reload_window(autopilot_ide or "auto"))
-        actions.append(ide_connect_plugin(autopilot_ide or "auto"))
-        actions.append(trace_show_interfaces(base_url))
+        replay_actions.append(ide_reload_window(autopilot_ide or "auto"))
+        replay_actions.append(ide_connect_plugin(autopilot_ide or "auto"))
+        replay_actions.append(trace_show_interfaces(base_url))
 
     elif blocker == "drive_failed" and waiting_ticket and waiting_ticket != "-":
-        actions.append(autopilot_retry_drive(autopilot_ide or "auto", waiting_ticket))
+        replay_actions.append(autopilot_retry_drive(autopilot_ide or "auto", waiting_ticket))
 
     # Queue-specific actions
     if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
-        actions.append(ticket_input(waiting_ticket))
-        actions.append(ticket_open(waiting_ticket, base_url))
+        replay_actions.append(ticket_input(waiting_ticket))
+        replay_actions.append(ticket_open(waiting_ticket, base_url))
 
     if queue_status == "idle":
-        actions.append(scan_force())
+        replay_actions.append(scan_force())
 
     # WUP health if diagnostics failed
     if "diagnostics_fail" in (autopilot_status or "").lower():
-        actions.append(wup_show_health())
+        replay_actions.append(wup_show_health())
 
-    return actions
+    return replay_actions
 
 
 # ---------------------------------------------------------------------------
@@ -257,14 +257,14 @@ def emit_structured_cycle_report(
         activity_fn("PLAN", line)
 
     # ACTION section
-    actions = _build_cycle_actions(
+    replay_actions = _build_cycle_actions(
         queue_status=queue_status,
         autopilot_status=autopilot_status,
         autopilot_ide=autopilot_ide,
         waiting_ticket=waiting_ticket,
         base_url=base_url,
     )
-    for action in actions:
+    for action in replay_actions:
         if action.replayable:
             activity_fn("ACTION", action.to_shell())
         else:
@@ -276,7 +276,7 @@ def emit_structured_cycle_report(
     # Footer
     activity_fn("KORUAUTONOMOUS", _CYCLE_FOOTER)
 
-    return actions
+    return replay_actions
 
 
 __all__ = [

@@ -186,6 +186,10 @@ def _check_autopilot_runtime_status(_project: Path) -> tuple[str, str]:
         ide=selected,
         socket_path=_resolve_autopilot_socket_for_doctor(),
     )
+    return _autopilot_runtime_status_from_report(selected=selected, report=report)
+
+
+def _autopilot_runtime_status_from_report(*, selected: str, report: object) -> tuple[str, str]:
     daemon = _report_mapping(report.daemon)
     plugin = _report_mapping(report.plugin)
     plugins = _daemon_plugin_rows(daemon)
@@ -198,12 +202,23 @@ def _check_autopilot_runtime_status(_project: Path) -> tuple[str, str]:
         plugins=plugins,
     )
     status = _autopilot_runtime_check_status(daemon, plugin, issue_rows)
-    issue_codes = _install_issue_codes(issue_rows)
-    if status == FAIL:
-        return FAIL, "; ".join(detail_bits + [f"issues={issue_codes}"])
-    if status == WARN:
-        return WARN, "; ".join(detail_bits + [f"issues={issue_codes}"])
-    return PASS, "; ".join(detail_bits + ["runtime_status=healthy"])
+    return _autopilot_runtime_result(status=status, detail_bits=detail_bits, issue_rows=issue_rows)
+
+
+def _autopilot_runtime_result(
+    *,
+    status: str,
+    detail_bits: list[str],
+    issue_rows: list[dict[str, object]],
+) -> tuple[str, str]:
+    suffix = _autopilot_runtime_result_suffix(status=status, issue_rows=issue_rows)
+    return status, "; ".join(detail_bits + [suffix])
+
+
+def _autopilot_runtime_result_suffix(*, status: str, issue_rows: list[dict[str, object]]) -> str:
+    if status == PASS:
+        return "runtime_status=healthy"
+    return f"issues={_install_issue_codes(issue_rows)}"
 
 
 def _report_mapping(value: object) -> dict[str, object]:

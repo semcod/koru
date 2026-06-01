@@ -47,8 +47,8 @@ class ChatEvent:
 
 def default_events_path() -> Path:
     """Path daemon writes to (matches ``AutopilotDaemon._event_path``)."""
-    base = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
-    return Path(base) / "koru-autopilot-events.ndjson"
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+    return Path(runtime_dir) / "koru-autopilot-events.ndjson"
 
 
 def _parse_line(line: str) -> ChatEvent | None:

@@ -43,13 +43,19 @@ class WizardResult:
     quick_mode: bool = False
 
 
-def _pick_ide(prompter: Prompter, ides: list[DetectedIDE]) -> DetectedIDE | None:
+def _pick_ide(
+    prompter: Prompter,
+    ides: list[DetectedIDE],
+    *,
+    auto_pick: bool = True,
+) -> DetectedIDE | None:
     if not ides:
         return None
     running_first = sorted(ides, key=lambda i: (not i.running, i.label.lower()))
-    auto_picked = _auto_pick_ide(running_first)
-    if auto_picked is not None:
-        return auto_picked
+    if auto_pick:
+        auto_picked = _auto_pick_ide(running_first)
+        if auto_picked is not None:
+            return auto_picked
     options = tuple(
         TreeOption(
             id=ide.id,
@@ -95,7 +101,7 @@ def _auto_pick_ide(ides: list[DetectedIDE]) -> DetectedIDE | None:
     if len(running) == 1:
         return running[0]
 
-    selected = _find_ide_by_id(ides, detect_terminal_host_ide_id(), running_only=True)
+    selected = _find_ide_by_id(ides, detect_terminal_host_ide_id())
     if selected is not None:
         return selected
     return None
@@ -286,6 +292,8 @@ def _resolve_wizard_ide(
     ides = ide_override if ide_override is not None else discover_installed_ides()
     if not ides and ide_override is None:
         ides = offer_ide_install(prompter, sys.stdout)
+        chosen_ide = _pick_ide(prompter, ides, auto_pick=False) if ides else None
+        return ides, chosen_ide
     chosen_ide = _pick_ide(prompter, ides) if ides else None
     return ides, chosen_ide
 

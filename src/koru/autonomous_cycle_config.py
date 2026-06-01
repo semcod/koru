@@ -30,10 +30,10 @@ def configure_loop_state(
     # If lane is explicit, use it directly as autopilot_ide to respect the user's choice.
     # This ensures non-plugin lanes like jetbrains are not overridden by the router
     if lane and lane != "auto":
-        autopilot_ide = lane
+        selected_ide = lane
         _autopilot_ide_source = f"lane:{lane}"
     else:
-        autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide(
+        selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
             args.autopilot_ide,
             lane,
             resolve_ide_route_fn=resolve_ide_route_fn,
@@ -45,7 +45,7 @@ def configure_loop_state(
         state=loop_state,
         stdio_format=args.emit_events,
     )
-    return enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle
+    return enable_scan, queue_name, selected_ide, loop_state, checkpoint_path, restored_cycle
 
 
 def select_and_log_cycle_profile(

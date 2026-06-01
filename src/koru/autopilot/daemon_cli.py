@@ -43,9 +43,9 @@ def _start_local_manager(
     manager.start(project=project, metadata={"socket": str(socket_path), "handoff": handoff})
     if not manager.should_stop():
         return manager, None
-    action = lifecycle_decision_action(manager.last_reply)
-    print(f"koru autopilot daemon: local manager decision={action}; not starting")
-    return manager, 1 if action == "quarantine" else 0
+    decision = lifecycle_decision_action(manager.last_reply)
+    print(f"koru autopilot daemon: local manager decision={decision}; not starting")
+    return manager, 1 if decision == "quarantine" else 0
 
 
 def _record_daemon_start_failure(
@@ -66,7 +66,7 @@ def _stop_heartbeat(heartbeat: Any | None) -> None:
     thread.join(timeout=2.0)
 
 
-def action_daemon(
+def run_daemon_command(
     args: argparse.Namespace,
     *,
     default_socket_fn: Callable[[], Path] = default_socket_path,
@@ -124,7 +124,7 @@ def action_daemon(
     return 0
 
 
-def action_shutdown(args: argparse.Namespace, *, client_fn: Callable) -> int:
+def shutdown_daemon_command(args: argparse.Namespace, *, client_fn: Callable) -> int:
     client = client_fn(args)
     return call_daemon_method(
         client,
@@ -134,7 +134,7 @@ def action_shutdown(args: argparse.Namespace, *, client_fn: Callable) -> int:
     )
 
 
-def action_ide_list(_args: argparse.Namespace) -> int:
+def list_detected_ides_command(_args: argparse.Namespace) -> int:
     ides = detect_running_ides()
     if not ides:
         print("koru autopilot: no IDE processes detected")
@@ -144,3 +144,8 @@ def action_ide_list(_args: argparse.Namespace) -> int:
         suffix = "  [focused]" if focused is not None and ide.id == focused else ""
         print(f"  {ide.id:<10} pid={ide.pid:<7} {ide.label}  ({ide.exe}){suffix}")
     return 0
+
+
+action_daemon = run_daemon_command
+action_shutdown = shutdown_daemon_command
+action_ide_list = list_detected_ides_command

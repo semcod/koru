@@ -496,6 +496,12 @@ def _replay_quick_action_lines(
 ) -> list[str]:
     replay_lines: list[str] = []
     for action in quick_actions:
+        label, body = _split_quick_action(action)
+        # Keep ticket links as plain URLs so operators can reuse the active dashboard tab
+        # instead of triggering a separate replay shell path.
+        if label == "open ticket" and body.startswith(("http://", "https://")):
+            replay_lines.append(action)
+            continue
         replay = quick_action_to_replay(
             action,
             autopilot_ide=autopilot_ide,
@@ -505,7 +511,6 @@ def _replay_quick_action_lines(
         if replay is None:
             replay_lines.append(action)
             continue
-        label, _body = _split_quick_action(action)
         shell = replay.to_shell()
         if not replay.replayable:
             shell = f"{shell} --explain"

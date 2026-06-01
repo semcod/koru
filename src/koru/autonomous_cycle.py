@@ -776,8 +776,8 @@ def _ensure_standardized_discovery_follow_up(
     _hp: callable,
 ) -> dict[str, Any]:
     """Guarantee a standard idle workflow ticket when discovery found no runnable work."""
-    applied = payload.get("applied")
-    if isinstance(applied, list) and applied:
+    applied_items = payload.get("applied")
+    if isinstance(applied_items, list) and applied_items:
         return payload
     try:
         from koru.autonomy.ide_work import ensure_project_discovery_ticket

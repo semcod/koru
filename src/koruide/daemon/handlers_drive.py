@@ -508,9 +508,9 @@ def _drive_via_keyboard_backend(
     preview: str,
     target: Any,
 ) -> None:
-    backend = daemon.injector.select_backend()
+    backend_name = daemon.injector.select_backend()
     daemon.log(
-        f"drive → keyboard/{target_id}: {backend or 'no-backend'} "
+        f"drive → keyboard/{target_id}: {backend_name or 'no-backend'} "
         f"({len(text)} zn) «{preview}»",
     )
     try:

@@ -77,8 +77,10 @@ def _parse_ps_row(raw_line: str) -> _PsRow | None:
     line = raw_line.strip()
     if not line:
         return None
-    pid_text, _, rest = line.partition(" ")
-    ppid_text, _, command = rest.strip().partition(" ")
+    parts = line.split(maxsplit=2)
+    if len(parts) < 3:
+        return None
+    pid_text, ppid_text, command = parts
     try:
         return _PsRow(pid=int(pid_text), ppid=int(ppid_text), command=command)
     except ValueError:

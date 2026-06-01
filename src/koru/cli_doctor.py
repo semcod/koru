@@ -305,5 +305,5 @@ def build_doctor_parser() -> argparse.ArgumentParser:
 
 
 def doctor_subcommand_main(argv: list[str]) -> int:
-    args = build_doctor_parser().parse_args(argv)
-    return doctor_main(args, argv)
+    parsed_args = build_doctor_parser().parse_args(argv)
+    return doctor_main(parsed_args, argv)

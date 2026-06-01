@@ -65,32 +65,32 @@ def _koru_path_version_issues(
 ) -> tuple[str, list[str]]:
     """Return (status, extra_bits) for path-mismatch and version checks."""
     status = PASS
-    bits: list[str] = []
+    detail_bits: list[str] = []
     if project_koru.is_file() and path_koru:
         try:
             if Path(path_koru).resolve() != project_koru.resolve():
                 status = WARN
-                bits.append("path_mismatch=true")
+                detail_bits.append("path_mismatch=true")
         except OSError:
             status = WARN
-            bits.append("path_mismatch=unknown")
+            detail_bits.append("path_mismatch=unknown")
     auto_ok = _path_koru_supports_auto_subcommand(path_koru)
     if auto_ok is False:
         status = WARN
-        bits.append("koru_auto_unsupported=true")
+        detail_bits.append("koru_auto_unsupported=true")
         if project_koru.is_file():
-            bits.append(
+            detail_bits.append(
                 f"fix=export PATH={project_koru.parent}:$PATH; hash -r; or {project_koru} auto"
             )
         else:
-            bits.append("fix=pip install -e . && use koru autonomous")
+            detail_bits.append("fix=pip install -e . && use koru autonomous")
     if package_version and source_version and package_version != source_version:
         status = WARN
-        bits.append("version_mismatch=true")
+        detail_bits.append("version_mismatch=true")
     if package_version is None:
         status = WARN
-        bits.append("package_metadata=missing")
-    return status, bits
+        detail_bits.append("package_metadata=missing")
+    return status, detail_bits
 
 
 def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:

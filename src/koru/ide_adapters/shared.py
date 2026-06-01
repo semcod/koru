@@ -315,8 +315,8 @@ def extension_listed_in_extensions_json(ide: str) -> bool:
         ident = entry.get("identifier")
         if not isinstance(ident, dict):
             continue
-        candidate = ident.get("id")
-        if candidate == ext_id or candidate == EXTENSION_ID:
+        extension_entry_id = ident.get("id")
+        if extension_entry_id == ext_id or extension_entry_id == EXTENSION_ID:
             return True
     return False
 
