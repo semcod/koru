@@ -17855,6 +17855,7 @@ sprint:
       labels:
       - project-discovery
       - code2llm
+      - llm-ready
       name: 'Split large module: mcp_server'
       priority: high
       source:
