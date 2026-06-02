@@ -1,5 +1,5 @@
-# code2llm/evolution | 5401 func | 532f | 2026-06-02
-# generated in 0.02s
+# code2llm/evolution | 4701 func | 463f | 2026-06-02
+# generated in 0.01s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomy/operator_pipeline.py
@@ -25,7 +25,7 @@ RISKS[3]:
   ⚠ Splitting src/koru/autonomous.py may break 62 import paths
 
 METRICS-TARGET:
-  CC̄:          3.4 → ≤2.4
+  CC̄:          3.5 → ≤2.4
   max-CC:      22 → ≤11
   god-modules: 18 → 0
   high-CC(≥15): 1 → ≤0
@@ -56,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.2 → now CC̄=3.4
+  prev CC̄=3.4 → now CC̄=3.5

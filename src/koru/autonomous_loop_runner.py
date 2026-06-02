@@ -6,6 +6,9 @@ import os
 import shlex
 import sys
 from typing import Any
+
+from koru.autonomy.phases.contexts import SleepBackoffContext
+from koru.autonomy.phases.sleep_phase import finish_cycle_with_sleep
 from urllib.parse import parse_qs, urlparse
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
@@ -1136,56 +1139,29 @@ def _finish_cycle(
     stdio_info: Any,
     sleep: Any,
 ) -> bool:
-    effective_sleep = compute_cycle_sleep(args, loop_state, queue_result, autopilot_status)
-    stop_reason = _cycle_stop_reason(args, queue_result, cycle)
-    _emit_cycle_summary(
-        args=args,
-        project=project,
-        cycle=cycle,
-        queue_result=queue_result,
-        waiting_ticket=waiting_ticket,
-        loop_state=loop_state,
-        diag_result=diag_result,
-        autopilot_status=autopilot_status,
-        effective_sleep=effective_sleep,
+    return finish_cycle_with_sleep(
+        SleepBackoffContext(
+            args=args,
+            project=project,
+            cycle=cycle,
+            queue_result=queue_result,
+            waiting_ticket=waiting_ticket,
+            loop_state=loop_state,
+            diag_result=diag_result,
+            autopilot_status=autopilot_status,
+            autopilot_ide=autopilot_ide,
+            correlation_id=correlation_id,
+        ),
+        cycle_stop_reason=_cycle_stop_reason,
+        emit_cycle_summary=_emit_cycle_summary,
+        emit_idle_no_ticket_warning=_emit_idle_no_ticket_warning,
+        log_operator_next_steps=_log_operator_next_steps,
+        emit_structured_report=_emit_structured_report,
+        handle_exit_conditions=handle_exit_conditions,
+        compute_cycle_sleep=compute_cycle_sleep,
         stdio_info=stdio_info,
+        sleep=sleep,
     )
-    _emit_idle_no_ticket_warning(
-        args=args,
-        project=project,
-        queue_status=str(getattr(queue_result, "last_status", "") or ""),
-        waiting_ticket=waiting_ticket,
-        autopilot_status=autopilot_status,
-    )
-    _log_operator_next_steps(
-        args=args,
-        project=project,
-        queue_result=queue_result,
-        waiting_ticket=waiting_ticket,
-        autopilot_status=autopilot_status,
-        effective_sleep=effective_sleep,
-        loop_state=loop_state,
-        stop_reason=stop_reason,
-        stdio_info=stdio_info,
-        autopilot_ide=autopilot_ide,
-    )
-    _emit_structured_report(
-        args=args,
-        cycle=cycle,
-        queue_result=queue_result,
-        waiting_ticket=waiting_ticket,
-        loop_state=loop_state,
-        diag_result=diag_result,
-        autopilot_status=autopilot_status,
-        autopilot_ide=autopilot_ide,
-        effective_sleep=effective_sleep,
-    )
-    if handle_exit_conditions(args, queue_result, cycle, correlation_id):
-        return True
-
-    if effective_sleep > 0:
-        sleep(effective_sleep)
-    return False
 
 
 def run_autonomous_cycle(

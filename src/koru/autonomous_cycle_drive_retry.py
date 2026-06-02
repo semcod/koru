@@ -20,6 +20,7 @@ from koru.autonomy.env import (
     prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
 )
 from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_drive_prompt
+from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import PromptDecision, build_prompt
 from koru.autonomy.state import AutoloopState
 from koru.decision_engine import (
@@ -239,6 +240,11 @@ def _waiting_ticket_closed_skip_result(
     _hp: Callable[..., Any],
 ) -> tuple[dict[str, Any], bool, str, str | None]:
     waiting_ticket = _resolve_waiting_ticket_id(queue_result) or "-"
+    decision = AutopilotPolicyDecision.skip(
+        "waiting_ticket_closed",
+        because=f"ticket={waiting_ticket} is already closed in planfile",
+        action_hint="refresh queue and pick next open ticket",
+    )
     _hp(
         "- autopilot skipped (waiting_ticket_closed): "
         f"ticket {waiting_ticket} is already closed in planfile; "
@@ -252,7 +258,7 @@ def _waiting_ticket_closed_skip_result(
             "prompt": "",
         },
         False,
-        skip_reason or "skipped",
+        skip_reason or decision.status,
         idle_prompt_kind,
     )
 
@@ -265,6 +271,11 @@ def _idle_no_ticket_skip_result(
     from koru.autonomous_loop_runner import _dashboard_action_urls
     from koru.autonomy.ide_work import sprint_ticket_status_summary
 
+    decision = AutopilotPolicyDecision.skip(
+        "idle_no_ticket",
+        because="queue idle and no open ticket in planfile",
+        action_hint="run scan/discovery or create ticket",
+    )
     urls = _dashboard_action_urls(project)
     _hp(
         "- autopilot skipped (idle_no_ticket): "
@@ -295,7 +306,7 @@ def _idle_no_ticket_skip_result(
             "prompt": "",
         },
         False,
-        "idle_no_ticket",
+        decision.status,
         idle_prompt_kind,
     )
 

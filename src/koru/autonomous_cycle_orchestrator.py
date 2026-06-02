@@ -20,6 +20,7 @@ from koru.autonomy.env import (
 from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
+from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.state import AutoloopState
 from koru.observability_events import (
     emit_blocker,
@@ -44,10 +45,15 @@ def _drive_result_autopilot_status(
     decision_kind: str | None,
     cycle_telemetry: dict[str, Any],
 ) -> str:
-    if decision_kind == "idle_no_ticket":
+    normalized_decision_kind = (decision_kind or "").strip()
+    if normalized_decision_kind == "skipped(idle_no_ticket)":
+        normalized_decision_kind = "idle_no_ticket"
+    elif normalized_decision_kind == "skipped(waiting_ticket_closed)":
+        normalized_decision_kind = "waiting_ticket_closed"
+    if normalized_decision_kind == "idle_no_ticket":
         cycle_telemetry["autopilot_skipped_idle_no_ticket"] = True
         return "skipped(idle_no_ticket)"
-    if decision_kind == "waiting_ticket_closed":
+    if normalized_decision_kind == "waiting_ticket_closed":
         waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
         cycle_telemetry["autopilot_skipped_waiting_ticket_closed"] = True
         cycle_telemetry["autopilot_skipped_waiting_ticket_closed_ticket"] = waiting_ticket
@@ -159,6 +165,11 @@ def _plugin_gate_status(
     if plugin_ok:
         return None
     blocker = plugin_skip_code(plugin_reason)
+    decision = AutopilotPolicyDecision.skip(
+        blocker,
+        because=plugin_reason,
+        action_hint="reload IDE window and reconnect plugin",
+    )
     _hp(f"- autopilot skipped ({blocker}: {plugin_reason})")
     _hp(
         "  → VSIX plugin is not connected to the daemon socket. "
@@ -189,7 +200,7 @@ def _plugin_gate_status(
         reason=plugin_reason,
         next_action="reload_reconnect_plugin",
     )
-    return f"skipped({blocker})"
+    return decision.status
 
 
 def _attempt_plugin_gate_recovery(
@@ -266,9 +277,14 @@ def _terminal_conflict_status(
     )
     if not conflict_reason:
         return None
+    decision = AutopilotPolicyDecision.skip(
+        "ide_mismatch",
+        because=conflict_reason,
+        action_hint="align autopilot lane with active IDE",
+    )
     _hp(f"- autopilot skipped (ide_mismatch: {conflict_reason})")
     cycle_telemetry["autopilot_skipped_ide_mismatch"] = True
-    return "skipped(ide_mismatch)"
+    return decision.status
 
 
 def _drive_autopilot_once(
@@ -430,7 +446,12 @@ def _emit_autopilot_observability_outcome(
     if autopilot_status == "skipped(manual_focus)":
         blocker = "manual_focus_required"
         next_action = "focus_chat_or_open_interfaces"
-    elif decision_kind in {"idle_no_ticket", "waiting_ticket_closed"}:
+    elif decision_kind in {
+        "idle_no_ticket",
+        "waiting_ticket_closed",
+        "skipped(idle_no_ticket)",
+        "skipped(waiting_ticket_closed)",
+    }:
         return
     emit_blocker(
         project,

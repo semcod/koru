@@ -40,7 +40,19 @@ from koru.autonomy.cycle_trace import (
     record_decision_trace as _record_decision_trace_impl,
 )
 from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
-from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene
+from koru.autonomy.phases.contexts import (
+    CyclePhaseContext,
+    DrivePhaseConfig,
+    DrivePhaseInputs,
+    PhaseCallbacks,
+    PreDrivePhaseResult,
+    QueueScanPhaseConfig,
+)
+from koru.autonomy.phases.drive_phase import (
+    run_drive_phase as _run_drive_phase,
+    run_post_drive_phase as _run_post_drive_phase,
+)
+from koru.autonomy.phases import queue_phase as _queue_phase
 from koru.autonomy.phases.verify_phase import (
     handle_post_run_verify_ide as _handle_post_run_verify_ide,
 )
@@ -688,22 +700,25 @@ def _handle_queue_loop_phase(
     _hp: callable,
     _emit: callable,
 ) -> tuple[QueueLoopResult, Any]:
-    if not _is_topology_enabled(
+    _queue_phase.run_planfile_queue_loop = run_planfile_queue_loop
+    _queue_phase._run_process = _run_process
+    _queue_phase._run_shell_command = _run_shell_command
+    _queue_phase._run_api_request = _run_api_request
+    _queue_phase._run_llm_request = _run_llm_request
+    _queue_phase._default_human_prompt = _default_human_prompt
+    _queue_phase.verify_completed_tickets = verify_completed_tickets
+    return _queue_phase.handle_queue_loop_phase(
         project,
-        "autoloop:queue",
-        fallback=True,
-        enabled=topology_integration,
-    ):
-        _hp("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
-        queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
-    else:
-        qcmd = _build_queue_command(max_iterations, queue_name)
-        _hp(f"+ {qcmd}")
-        queue_result = _run_queue_loop(project, actor, queue_name, max_iterations)
-        _hp(f"  queue: {queue_result.summary()}")
-        _emit_queue_iteration_event(queue_result, cycle, queue_name, actor, qcmd, _emit)
-        _handle_post_run_verify(project, state, cycle, queue_result, verify_config, _hp, _emit)
-    return queue_result, verify_config
+        state,
+        cycle,
+        actor,
+        queue_name,
+        max_iterations,
+        topology_integration,
+        verify_config,
+        _hp,
+        _emit,
+    )
 
 
 def _handle_scan_after_idle(
@@ -1014,44 +1029,28 @@ def _cycle_callbacks(
 
 
 def _run_pre_drive_cycle_phases(
+    context: CyclePhaseContext,
+    config: QueueScanPhaseConfig,
     *,
-    project: Path,
-    state: AutoloopState,
-    cycle: int,
-    actor: str,
-    queue_name: str | None,
-    enable_scan: bool,
-    max_iterations: int,
-    include_semcod_artifacts: bool | None,
-    idle_diagnostics: str,
-    diagnostic_tickets: bool,
-    diagnostic_ticket_queue: str,
-    diagnostic_ticket_priority: str,
-    diagnostic_state_dir: Path | None,
-    wup_watch_enabled: bool,
-    wup_diagnostic_tickets: bool,
-    wup_ticket_queue: str,
-    scan_skip_if_clean: bool,
-    scan_skip_after: int,
-    scan_after_idle_queue: bool,
-    scan_after_idle_min_interval_seconds: float,
-    topology_integration: bool,
     cycle_telemetry: dict[str, Any],
-    hp: callable,
-    emit: callable,
-) -> tuple[ScanResult | None, QueueLoopResult, DiagnosticResult, WupHealthResult]:
+) -> PreDrivePhaseResult:
+    project = context.project
+    state = context.state
+    cycle = context.cycle
+    hp = context.callbacks.hp
+    emit = context.callbacks.emit
     emit("CycleStarted", {"cycle": cycle, "project": str(project.resolve())})
-    _handle_queue_hygiene(project, cycle, hp, emit)
+    _queue_phase.handle_queue_hygiene(project, cycle, hp, emit)
     verify_config = _handle_post_run_verify_ide(project, state, cycle, hp, emit)
     scan_result = _handle_scan_phase(
         project,
         state,
         cycle,
-        enable_scan,
-        include_semcod_artifacts,
-        scan_skip_if_clean,
-        scan_skip_after,
-        topology_integration,
+        config.enable_scan,
+        config.include_semcod_artifacts,
+        config.scan_skip_if_clean,
+        config.scan_skip_after,
+        config.topology_integration,
         hp,
         emit,
     )
@@ -1059,10 +1058,10 @@ def _run_pre_drive_cycle_phases(
         project,
         state,
         cycle,
-        actor,
-        queue_name,
-        max_iterations,
-        topology_integration,
+        config.actor,
+        config.queue_name,
+        config.max_iterations,
+        config.topology_integration,
         verify_config,
         hp,
         emit,
@@ -1072,10 +1071,10 @@ def _run_pre_drive_cycle_phases(
         state,
         cycle,
         queue_result,
-        scan_after_idle_queue,
-        include_semcod_artifacts,
-        scan_after_idle_min_interval_seconds,
-        topology_integration,
+        config.scan_after_idle_queue,
+        config.include_semcod_artifacts,
+        config.scan_after_idle_min_interval_seconds,
+        config.topology_integration,
         cycle_telemetry,
         hp,
         emit,
@@ -1088,19 +1087,24 @@ def _run_pre_drive_cycle_phases(
         state,
         cycle,
         queue_result,
-        idle_diagnostics,
-        diagnostic_tickets,
-        diagnostic_ticket_queue,
-        diagnostic_ticket_priority,
-        diagnostic_state_dir,
-        wup_watch_enabled,
-        wup_diagnostic_tickets,
-        wup_ticket_queue,
-        topology_integration,
+        config.idle_diagnostics,
+        config.diagnostic_tickets,
+        config.diagnostic_ticket_queue,
+        config.diagnostic_ticket_priority,
+        config.diagnostic_state_dir,
+        config.wup_watch_enabled,
+        config.wup_diagnostic_tickets,
+        config.wup_ticket_queue,
+        config.topology_integration,
         hp,
         emit,
     )
-    return scan_result, queue_result, diag_result, wup_health
+    return PreDrivePhaseResult(
+        scan_result=scan_result,
+        queue_result=queue_result,
+        diag_result=diag_result,
+        wup_health=wup_health,
+    )
 
 
 def _stop_on_strict_diagnostics_failure(
@@ -1122,92 +1126,27 @@ def _stop_on_strict_diagnostics_failure(
 
 
 def _run_drive_and_finalize(
-    *,
-    project: Path,
-    state: AutoloopState,
-    cycle: int,
-    queue_result: QueueLoopResult,
-    queue_name: str | None,
-    enable_autopilot: bool,
-    client: Any,
-    autopilot_ide: str,
-    drive_prompt: str,
-    submit: bool,
-    autopilot_action: str,
-    autopilot_on_idle_only: bool,
-    autopilot_skip_on_diagnostics_fail: bool,
-    autopilot_skip_drive_idle_streak: int,
-    autopilot_skip_statuses: str,
-    diag_result: DiagnosticResult,
-    wup_health: WupHealthResult,
-    topology_integration: bool,
-    cycle_telemetry: dict[str, Any],
-    scan_after_idle_queue: bool,
-    scan_after_idle_min_interval_seconds: float,
-    hp: callable,
-    emit: callable,
+    context: CyclePhaseContext,
+    config: DrivePhaseConfig,
+    inputs: DrivePhaseInputs,
 ) -> str:
-    _take_pre_drive_snapshot(project, state, wup_health)
-    drive_status, autopilot_backend, autopilot_drive_kind = _handle_autopilot_phase(
-        project,
-        state,
-        cycle,
-        queue_result,
-        enable_autopilot,
-        client,
-        autopilot_ide,
-        drive_prompt,
-        submit,
-        autopilot_action,
-        autopilot_on_idle_only,
-        autopilot_skip_on_diagnostics_fail,
-        autopilot_skip_drive_idle_streak,
-        autopilot_skip_statuses,
-        diag_result,
-        topology_integration,
-        cycle_telemetry,
-        hp,
-        emit,
+    drive_result = _run_drive_phase(
+        context,
+        config,
+        inputs,
+        take_pre_drive_snapshot=_take_pre_drive_snapshot,
+        handle_autopilot_phase=_handle_autopilot_phase,
     )
-    _handle_post_drive_verification(
-        project,
-        state,
-        cycle,
-        queue_result,
-        drive_status,
-        wup_health,
-        hp,
-        emit,
+    _run_post_drive_phase(
+        context,
+        config,
+        inputs,
+        drive_result,
+        handle_post_drive_verification=_handle_post_drive_verification,
+        run_advisory_hooks=_run_phase4_advisory_hooks,
+        emit_cycle_completion_events=_emit_cycle_completion_events,
     )
-    _run_phase4_advisory_hooks(
-        project=project,
-        state=state,
-        cycle=cycle,
-        queue_result=queue_result,
-        queue_name=queue_name,
-        cycle_telemetry=cycle_telemetry,
-        _hp=hp,
-        _emit=emit,
-    )
-    _emit_cycle_completion_events(
-        project=project,
-        state=state,
-        cycle=cycle,
-        queue_result=queue_result,
-        diag_result=diag_result,
-        wup_health=wup_health,
-        drive_status=drive_status,
-        autopilot_ide=autopilot_ide,
-        autopilot_backend=autopilot_backend,
-        autopilot_drive_kind=autopilot_drive_kind,
-        cycle_telemetry=cycle_telemetry,
-        scan_after_idle_queue=scan_after_idle_queue,
-        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
-        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
-        hp=hp,
-        emit=emit,
-    )
-    return drive_status
+    return drive_result.status
 
 
 
@@ -1343,34 +1282,42 @@ def run_cycle(
         stdio_format=stdio_format,
         correlation_id=correlation_id,
     )
-
-    _handle_autopilot_events(state, _hp, autopilot_ide=autopilot_ide)
-    scan_result, queue_result, diag_result, wup_health = _run_pre_drive_cycle_phases(
+    phase_context = CyclePhaseContext(
         project=project,
         state=state,
         cycle=cycle,
-        actor=actor,
-        queue_name=queue_name,
-        enable_scan=enable_scan,
-        max_iterations=max_iterations,
-        include_semcod_artifacts=include_semcod_artifacts,
-        idle_diagnostics=idle_diagnostics,
-        diagnostic_tickets=diagnostic_tickets,
-        diagnostic_ticket_queue=diagnostic_ticket_queue,
-        diagnostic_ticket_priority=diagnostic_ticket_priority,
-        diagnostic_state_dir=diagnostic_state_dir,
-        wup_watch_enabled=wup_watch_enabled,
-        wup_diagnostic_tickets=wup_diagnostic_tickets,
-        wup_ticket_queue=wup_ticket_queue,
-        scan_skip_if_clean=scan_skip_if_clean,
-        scan_skip_after=scan_skip_after,
-        scan_after_idle_queue=scan_after_idle_queue,
-        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
-        topology_integration=topology_integration,
-        cycle_telemetry=cycle_telemetry,
-        hp=_hp,
-        emit=_emit,
+        callbacks=PhaseCallbacks(hp=_hp, emit=_emit),
     )
+
+    _handle_autopilot_events(state, _hp, autopilot_ide=autopilot_ide)
+    pre_drive_result = _run_pre_drive_cycle_phases(
+        phase_context,
+        QueueScanPhaseConfig(
+            actor=actor,
+            queue_name=queue_name,
+            enable_scan=enable_scan,
+            max_iterations=max_iterations,
+            include_semcod_artifacts=include_semcod_artifacts,
+            idle_diagnostics=idle_diagnostics,
+            diagnostic_tickets=diagnostic_tickets,
+            diagnostic_ticket_queue=diagnostic_ticket_queue,
+            diagnostic_ticket_priority=diagnostic_ticket_priority,
+            diagnostic_state_dir=diagnostic_state_dir,
+            wup_watch_enabled=wup_watch_enabled,
+            wup_diagnostic_tickets=wup_diagnostic_tickets,
+            wup_ticket_queue=wup_ticket_queue,
+            scan_skip_if_clean=scan_skip_if_clean,
+            scan_skip_after=scan_skip_after,
+            scan_after_idle_queue=scan_after_idle_queue,
+            scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+            topology_integration=topology_integration,
+        ),
+        cycle_telemetry=cycle_telemetry,
+    )
+    scan_result = pre_drive_result.scan_result
+    queue_result = pre_drive_result.queue_result
+    diag_result = pre_drive_result.diag_result
+    wup_health = pre_drive_result.wup_health
 
     _stop_on_strict_diagnostics_failure(
         strict_diagnostics=strict_diagnostics,
@@ -1381,29 +1328,29 @@ def run_cycle(
     )
 
     drive_status = _run_drive_and_finalize(
-        project=project,
-        state=state,
-        cycle=cycle,
-        queue_result=queue_result,
-        queue_name=queue_name,
-        enable_autopilot=enable_autopilot,
-        client=client,
-        autopilot_ide=autopilot_ide,
-        drive_prompt=drive_prompt,
-        submit=submit,
-        autopilot_action=autopilot_action,
-        autopilot_on_idle_only=autopilot_on_idle_only,
-        autopilot_skip_on_diagnostics_fail=autopilot_skip_on_diagnostics_fail,
-        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
-        autopilot_skip_statuses=autopilot_skip_statuses,
-        diag_result=diag_result,
-        wup_health=wup_health,
-        topology_integration=topology_integration,
-        cycle_telemetry=cycle_telemetry,
-        scan_after_idle_queue=scan_after_idle_queue,
-        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
-        hp=_hp,
-        emit=_emit,
+        phase_context,
+        DrivePhaseConfig(
+            queue_name=queue_name,
+            enable_autopilot=enable_autopilot,
+            client=client,
+            autopilot_ide=autopilot_ide,
+            drive_prompt=drive_prompt,
+            submit=submit,
+            autopilot_action=autopilot_action,
+            autopilot_on_idle_only=autopilot_on_idle_only,
+            autopilot_skip_on_diagnostics_fail=autopilot_skip_on_diagnostics_fail,
+            autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+            autopilot_skip_statuses=autopilot_skip_statuses,
+            topology_integration=topology_integration,
+            scan_after_idle_queue=scan_after_idle_queue,
+            scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+        ),
+        DrivePhaseInputs(
+            queue_result=queue_result,
+            diag_result=diag_result,
+            wup_health=wup_health,
+            cycle_telemetry=cycle_telemetry,
+        ),
     )
 
     return scan_result, queue_result, drive_status, diag_result

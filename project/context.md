@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 478, typescript: 175, shell: 49, yaml: 29, json: 20
+- **Languages**: python: 479, typescript: 80, shell: 49, yaml: 25, json: 16
 - **Analysis Mode**: static
-- **Total Functions**: 5511
-- **Total Classes**: 448
-- **Modules**: 779
-- **Entry Points**: 2600
+- **Total Functions**: 4811
+- **Total Classes**: 395
+- **Modules**: 677
+- **Entry Points**: 2039
 
 ## Architecture by Module
 
@@ -62,21 +62,6 @@
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
 
-### plugins.koru-autopilot-cursor.src.probe-ladder
-- **Functions**: 53
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
-
-### plugins.koru-autopilot-vscode.src.probe-ladder
-- **Functions**: 53
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
-
-### plugins.koru-autopilot-windsurf.src.probe-ladder
-- **Functions**: 53
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
-
 ### plugins.koru-autopilot-vscodium.src.probe-ladder
 - **Functions**: 53
 - **Classes**: 3
@@ -107,6 +92,19 @@
 ### src.koru.autonomous_cycle
 - **Functions**: 44
 - **File**: `autonomous_cycle.py`
+
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 44
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
+
+### plugins.koru-autopilot-antigravity.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
+
+### plugins.koru-autopilot-cursor.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
 
 ## Key Entry Points
 
@@ -413,6 +411,12 @@ Cheap pre-flight gate: block
 > Parse redup-check.sh JSON payload into summary dict.
 - **Output to**: payload.get, int, int, sorted, s.get
 
+### services.healing-webhook.ticket_builder._format_paths
+- **Output to**: None.join
+
+### services.healing-webhook.ticket_builder._format_acceptance
+- **Output to**: None.join
+
 ### src.koruobserve.lifecycle._stop_orphan_observe_processes
 > SIGTERM stale observe children when pidfiles are missing (e.g. after crash).
 - **Output to**: needles.items, src.koruobserve.lifecycle._pids_matching_koru_cmdline, None.unlink, contextlib.suppress, os.kill
@@ -480,13 +484,6 @@ Returns (should_kill, logs) tuple.
 ### src.koruvision.cli_parser._add_capture_subparser
 - **Output to**: sub.add_parser, once.add_argument, src.koruvision.cli_parser.register_mesh_publish_args
 
-### src.koruvision.cli_parser._add_agent_subparser
-- **Output to**: sub.add_parser, agent.add_argument, agent.add_argument, agent.add_argument, src.koruvision.cli_parser.register_mesh_publish_args
-
-### src.koruvision.cli_parser.build_vision_parser
-> Build the ``koru vision`` argparse tree (capture + agent subcommands).
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, src.koruvision.cli_parser._add_capture_subparser, src.koruvision.cli_parser._add_agent_subparser
-
 ## Behavioral Patterns
 
 ### recursion__sum_structured_counts
@@ -546,8 +543,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_strategy.strategy_main` - 26 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 26 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 26 calls
-- `koru.cli_tagi.deploy` - 25 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
+- `koru.cli_tagi.deploy` - 25 calls
 - `examples.remote_orchestration_demo.run_multi_node_orchestration` - 24 calls
 - `src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack` - 24 calls
 - `src.koruide.drive_orchestrator.DriveOrchestrator.operation_trace_dsl` - 24 calls

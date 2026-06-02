@@ -105,6 +105,7 @@ from koru.autonomous_wup import (
 from koru.autonomy.env import plugin_required_for_ide
 from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from koru.autonomy.operator_pipeline import run_startup_operator_pipeline
+from koru.autonomy.phases.startup_phase import prepare_startup_context
 from koru.autonomy.prompts import build_prompt
 from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.autopilot import default_socket_path
@@ -895,15 +896,18 @@ def _autonomous_context_resource_kwargs(resources: tuple[object, ...]) -> dict[s
 def _prepare_autonomous_up_context(
     args: argparse.Namespace,
 ) -> tuple[AutonomousUpContext | None, int]:
-    return _prepare_autonomous_up_context_impl(
+    return prepare_startup_context(
         args,
-        setup_env_vars=_setup_autonomous_env_vars,
-        setup_session=_setup_autonomous_session,
-        prepare_startup_probe=_prepare_autonomous_startup_probe,
-        setup_resources=_autonomous_resources.setup_autonomous_resources,
-        enable_strict_plugin_policy=_enable_autonomous_strict_plugin_policy,
-        setup_autopilot_daemon=_setup_autopilot_daemon,
-        load_checkpoint=_load_loop_checkpoint,
+        prepare_up_context=lambda startup_args: _prepare_autonomous_up_context_impl(
+            startup_args,
+            setup_env_vars=_setup_autonomous_env_vars,
+            setup_session=_setup_autonomous_session,
+            prepare_startup_probe=_prepare_autonomous_startup_probe,
+            setup_resources=_autonomous_resources.setup_autonomous_resources,
+            enable_strict_plugin_policy=_enable_autonomous_strict_plugin_policy,
+            setup_autopilot_daemon=_setup_autopilot_daemon,
+            load_checkpoint=_load_loop_checkpoint,
+        ),
     )
 
 

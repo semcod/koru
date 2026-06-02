@@ -11,6 +11,12 @@ from koru.autonomous import (
     _run_cycle,
     autonomous_main,
 )
+from koru.autonomy.phases.contexts import (
+    CyclePhaseContext,
+    DrivePhaseConfig,
+    DrivePhaseInputs,
+    DrivePhaseResult,
+)
 
 
 def test_autonomous_main_safe_up_expands_args():
@@ -103,6 +109,85 @@ def test_autonomous_cycle_smoke_scenario():
                 assert scan_out is not None
                 assert queue_out.last_status == "idle"
                 assert diag_out.status in ("ok", "skipped")
+
+
+def test_autonomous_cycle_runs_through_phase_boundaries():
+    """Full cycle smoke: scan/queue plus drive and post-drive phase contexts."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project = Path(tmpdir)
+        state = AutoloopState()
+        queue_result = QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=[],
+            last_status="idle",
+            last_message="",
+            last_ticket_id=None,
+        )
+        scan_result = ScanResult(suggestions=[], applied=[], skipped=[])
+        phase_calls: list[str] = []
+
+        def fake_drive_phase(context, config, inputs, **_deps):
+            assert isinstance(context, CyclePhaseContext)
+            assert isinstance(config, DrivePhaseConfig)
+            assert isinstance(inputs, DrivePhaseInputs)
+            assert context.project == project
+            assert config.autopilot_ide == "auto"
+            assert inputs.queue_result is queue_result
+            phase_calls.append("drive")
+            return DrivePhaseResult(status="skipped", backend=None, drive_kind=None)
+
+        def fake_post_drive_phase(context, config, inputs, drive_result, **_deps):
+            assert isinstance(context, CyclePhaseContext)
+            assert isinstance(config, DrivePhaseConfig)
+            assert isinstance(inputs, DrivePhaseInputs)
+            assert drive_result.status == "skipped"
+            phase_calls.append("post_drive")
+
+        with patch("koru.autonomous.run_planfile_queue_loop", return_value=queue_result):
+            with patch("koru.autonomous.run_scan", return_value=scan_result):
+                with patch("koru.autonomous_cycle._run_drive_phase", fake_drive_phase):
+                    with patch("koru.autonomous_cycle._run_post_drive_phase", fake_post_drive_phase):
+                        scan_out, queue_out, drive_status, diag_out = _run_cycle(
+                            cycle=1,
+                            project=project,
+                            actor="test",
+                            queue_name=None,
+                            enable_scan=True,
+                            max_iterations=1,
+                            enable_autopilot=False,
+                            autopilot_ide="auto",
+                            drive_prompt="test prompt",
+                            submit=True,
+                            include_semcod_artifacts=None,
+                            client=None,
+                            state=state,
+                            idle_diagnostics="off",
+                            diagnostic_tickets=False,
+                            diagnostic_ticket_queue="default",
+                            diagnostic_ticket_priority="high",
+                            diagnostic_state_dir=None,
+                            wup_watch_enabled=False,
+                            wup_diagnostic_tickets=False,
+                            wup_ticket_queue="default",
+                            strict_diagnostics=False,
+                            autopilot_action="drive",
+                            autopilot_on_idle_only=False,
+                            autopilot_skip_on_diagnostics_fail=True,
+                            autopilot_skip_statuses="waiting_input",
+                            scan_skip_if_clean=False,
+                            scan_skip_after=1,
+                            topology_integration=False,
+                            stdio_format="human",
+                            correlation_id="phase-boundary-test",
+                        )
+
+        assert phase_calls == ["drive", "post_drive"]
+        assert scan_out is scan_result
+        assert queue_out is queue_result
+        assert drive_status == "skipped"
+        assert diag_out.status in ("ok", "skipped")
 
 
 def test_autonomous_cycle_autopilot_skipped_when_no_client():

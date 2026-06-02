@@ -11,6 +11,7 @@ from koru.autonomous_cycle_common import (
     _queue_loop_waiting_ticket_label,
     _status_in_skip_list,
 )
+from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
@@ -296,7 +297,7 @@ def _diagnostics_fail_skip_result(
     diag_result: DiagnosticResult,
     cycle_telemetry: dict[str, Any],
     _hp: callable,
-) -> tuple[bool, str] | None:
+) -> AutopilotPolicyDecision | None:
     if not enabled or diag_result.status != "failed":
         return None
     _hp("- autopilot skipped (diagnostics_fail)")
@@ -304,7 +305,11 @@ def _diagnostics_fail_skip_result(
     failed = list(getattr(diag_result, "failed", []) or [])
     if failed:
         cycle_telemetry["autopilot_skipped_diagnostics_failed_services"] = failed
-    return True, "skipped(diagnostics_fail)"
+    return AutopilotPolicyDecision.skip(
+        "diagnostics_fail",
+        because="pre-drive diagnostics failed and skip-on-fail is enabled",
+        action_hint="fix diagnostics, then retry drive",
+    )
 
 
 def _check_autopilot_skip_conditions(
@@ -329,15 +334,27 @@ def _check_autopilot_skip_conditions(
         enabled=topology_integration,
     ):
         _hp("- autopilot skipped (autopilot:drive disabled in topology)")
-        return True, "skipped(topology)"
+        return AutopilotPolicyDecision.skip(
+            "topology",
+            because="autopilot:drive disabled in topology",
+            action_hint="enable topology gate or switch profile",
+        ).as_skip_tuple()
 
     if autopilot_action == "off":
         _hp("- autopilot action set to off, skipping")
-        return True, "skipped(action_off)"
+        return AutopilotPolicyDecision.skip(
+            "action_off",
+            because="autopilot action explicitly set to off",
+            action_hint="set --autopilot-action drive",
+        ).as_skip_tuple()
 
     if autopilot_on_idle_only and queue_result.last_status != "idle":
         _hp("- autopilot skipped (idle_only)")
-        return True, "skipped(idle_only)"
+        return AutopilotPolicyDecision.skip(
+            "idle_only",
+            because="autopilot_on_idle_only enabled while queue is non-idle",
+            action_hint="wait for idle queue or disable idle-only mode",
+        ).as_skip_tuple()
 
     diagnostics_skip = _diagnostics_fail_skip_result(
         enabled=autopilot_skip_on_diagnostics_fail,
@@ -346,7 +363,7 @@ def _check_autopilot_skip_conditions(
         _hp=_hp,
     )
     if diagnostics_skip is not None:
-        return diagnostics_skip
+        return diagnostics_skip.as_skip_tuple()
 
     manual_send_skip = _manual_send_required_skip_result(
         queue_result=queue_result,
@@ -355,7 +372,7 @@ def _check_autopilot_skip_conditions(
         _hp=_hp,
     )
     if manual_send_skip is not None:
-        return manual_send_skip
+        return manual_send_skip.as_skip_tuple()
 
     if _should_skip_for_idle_streak(
         queue_result=queue_result,
@@ -368,7 +385,14 @@ def _check_autopilot_skip_conditions(
         )
         state.telemetry_autopilot_idle_streak_skips += 1
         cycle_telemetry["autopilot_skipped_idle_streak"] = True
-        return True, "skipped(idle_streak)"
+        return AutopilotPolicyDecision.skip(
+            "idle_streak",
+            because=(
+                "idle streak exceeded configured threshold "
+                f"({state.stagnation_streak}>={autopilot_skip_drive_idle_streak})"
+            ),
+            action_hint="backoff and re-check queue next cycle",
+        ).as_skip_tuple()
 
     if _is_waiting_llm_ready_ticket(queue_result=queue_result, project=project):
         if _skip_due_to_recent_chat_activity(
@@ -378,7 +402,11 @@ def _check_autopilot_skip_conditions(
             cycle_telemetry=cycle_telemetry,
             _hp=_hp,
         ):
-            return True, "skipped(chat_activity)"
+            return AutopilotPolicyDecision.skip(
+                "chat_activity",
+                because="recent chat activity is inside cooldown window",
+                action_hint="wait for cooldown expiration",
+            ).as_skip_tuple()
 
     if _is_stuck_status_skip_candidate(
         queue_result=queue_result,
@@ -404,7 +432,7 @@ def _check_autopilot_skip_conditions(
             _hp=_hp,
         )
 
-    return False, ""
+    return AutopilotPolicyDecision.proceed().as_skip_tuple()
 
 
 def _should_skip_for_idle_streak(
@@ -451,7 +479,7 @@ def _manual_send_required_skip_result(
     state: AutoloopState,
     cycle_telemetry: dict[str, Any],
     _hp: callable,
-) -> tuple[bool, str] | None:
+) -> AutopilotPolicyDecision | None:
     if not _previous_drive_needs_manual_send(state):
         return None
     waiting_ticket = _waiting_ticket_id(queue_result)
@@ -469,7 +497,14 @@ def _manual_send_required_skip_result(
         "previous drive pasted text but submit was not verified; "
         "manual send or submit strategy fix required before redrive"
     )
-    return True, "skipped(manual_send_required)"
+    return AutopilotPolicyDecision.skip(
+        "manual_send_required",
+        because=(
+            "previous drive pasted text but submit was not verified; "
+            "manual send or submit-strategy fix required before redrive"
+        ),
+        action_hint="manual send in IDE or fix submit strategy",
+    )
 
 
 def _handle_stuck_status_skip_candidate(
@@ -485,14 +520,14 @@ def _handle_stuck_status_skip_candidate(
             "- autopilot not skipped "
             f"(previous drive failed, streak={state.stagnation_streak})",
         )
-        return False, ""
+        return AutopilotPolicyDecision.proceed().as_skip_tuple()
 
     if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
         _hp(
             "- autopilot not skipped "
             f"(waiting ticket is llm-ready, streak={state.stagnation_streak})",
         )
-        return False, ""
+        return AutopilotPolicyDecision.proceed().as_skip_tuple()
 
     _hp(
         "- autopilot skipped "
@@ -505,4 +540,11 @@ def _handle_stuck_status_skip_candidate(
     cycle_telemetry["autopilot_skipped_stuck_status_streak"] = int(
         state.stagnation_streak or 0
     )
-    return True, f"skipped(stuck_{queue_result.last_status})"
+    return AutopilotPolicyDecision.skip(
+        f"stuck_{queue_result.last_status}",
+        because=(
+            f"queue stuck in status {queue_result.last_status} "
+            f"with streak={state.stagnation_streak}"
+        ),
+        action_hint="wait for operator/ticket transition before redrive",
+    ).as_skip_tuple()

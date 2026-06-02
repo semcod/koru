@@ -1,8 +1,8 @@
-# koru | 5511 func | 555f | 115073L | python | 2026-06-02
+# koru | 4811 func | 486f | 107769L | python | 2026-06-02
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.4  critical=258 (limit:10)  dup=21  cycles=0
+  CC̄=3.5  critical=245 (limit:10)  dup=13  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     run_api_request = 24 (limit:10)
@@ -16,7 +16,7 @@ ALERTS[20]:
   !!  high_fan_out     render_markdown_handoff = 18 (limit:10)
   !!  high_fan_out     _highlight_shell_data = 18 (limit:10)
 
-MODULES[779] (top by size):
+MODULES[677] (top by size):
   M[src/koru/doctor.py] 1759L C:3 F:80 CC↑12 D:2 (python)
   M[src/koru/scan.py] 1450L C:0 F:55 CC↑13 D:4 (python)
   M[src/koru/autonomous_cycle.py] 1412L C:0 F:44 CC↑14 D:1 (python)
@@ -30,9 +30,9 @@ MODULES[779] (top by size):
   M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
   M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:7 (python)
   M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
-  M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 792L C:1 F:63 CC↑13 D:0 (typescript)
+  M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 792L C:1 F:63 CC↑13 D:1 (typescript)
   M[src/koruide/ide.py] 755L C:1 F:46 CC↑13 D:30 (python)
-  LANGS: python:479/typescript:175/shell:49/yaml:29/json:20/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
+  LANGS: python:480/typescript:80/shell:49/yaml:25/json:16/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ run_api_request fan=24  // Execute an HTTP API request.
@@ -44,9 +44,9 @@ HOTSPOTS[10]:
 REFACTOR[15]:
   [1] H/H Split god module src/koruide/plugin_installer.py (1101L, 1 classes)
   [2] H/H Split god module src/koru/autonomous_cycle.py (1412L, 0 classes)
-  [3] H/H Split god module src/koru/autonomous_cycle_skip_conditions.py (508L, 0 classes)
+  [3] H/H Split god module src/koru/autonomous_cycle_skip_conditions.py (550L, 0 classes)
   [4] H/H Split god module src/koru/autonomy/operator_pipeline.py (1016L, 2 classes)
   [5] H/H Split god module src/koru/autopilot/install_manager.py (702L, 1 classes)
 
 EVOLUTION:
-  2026-06-02 CC̄=3.4 crit=258 115073L // Automated analysis
+  2026-06-02 CC̄=3.5 crit=245 107769L // Automated analysis
