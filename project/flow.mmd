@@ -1,25 +1,45 @@
 flowchart TD
+%% generated in 0.12s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
+    subgraph CLI
+        koru__cli_queue__build_queue_parser["build_queue_parser"]
+        koru__cli_queue__render_clean_report_text["render_clean_report_text"]
+        koru__cli_queue__queue_main["queue_main"]
+        koru__cli_queue___queue_validate_evidence_main["_queue_validate_evidence_main"]
+        koru__cli_queue___queue_clean_main["_queue_clean_main"]
+        koru__cli_queue___print_clean_queue_report["_print_clean_queue_report"]
+        koru__cli_queue__queue_run_main["queue_run_main"]
+        koru__cli_tagi__tagi["tagi"]
+        koru__cli_tagi__tagi_main["tagi_main"]
+        koru__cli_tagi__analyze["analyze"]
+        koru__cli_tagi__deploy["deploy"]
+        koru__cli_tagi___render_deployment_plan_table["_render_deployment_plan_table"]
+        koru__cli_tagi___render_priority_order["_render_priority_order"]
+        koru__cli_tagi___render_deployment_groups["_render_deployment_groups"]
+        koru__cli_tagi___render_recommendations["_render_recommendations"]
+        ...["+15 more"]
+    end
+
     subgraph Core
-        src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
-        src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
-        src__koruobserve__cli___pip_install["_pip_install"]
-        src__koruobserve__cli___cmd_install["_cmd_install"]
-        src__koruobserve__cli___cmd_up["_cmd_up"]
-        src__koruobserve__cli___cmd_down["_cmd_down"]
-        src__koruobserve__cli___cmd_status["_cmd_status"]
-        src__koruobserve__cli___cmd_grid["_cmd_grid"]
-        src__koruobserve__cli___cmd_trace["_cmd_trace"]
-        src__koruobserve__cli___trace_event_matches["_trace_event_matches"]
-        src__koruobserve__cli___cmd_providers["_cmd_providers"]
-        src__koruobserve__cli__observe_main["observe_main"]
-        src__koruobserve__providers_cli__screencast_session_path["screencast_session_path"]
-        src__koruobserve__providers_cli__providers_list_payload["providers_list_payload"]
-        src__koruobserve__providers_cli__providers_list_text["providers_list_text"]
-        ...["+2403 more"]
+        services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
+        services__healing_webhook__app__heal_annotate["heal_annotate"]
+        services__healing_webhook__app___run_vallm_validate["_run_vallm_validate"]
+        services__healing_webhook__app__heal_vallm_validate["heal_vallm_validate"]
+        services__healing_webhook__app__heal_redup_check["heal_redup_check"]
+        services__healing_webhook__app___resolve_strategy["_resolve_strategy"]
+        services__healing_webhook__app__healthz["healthz"]
+        services__healing_webhook__app__metrics["metrics"]
+        services__healing_webhook__app__get_history["get_history"]
+        services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
+        services__healing_webhook__app__probe_failure["probe_failure"]
+        services__healing_webhook__app__get_tickets["get_tickets"]
+        services__healing_webhook__app_bootstrap__create_webhook_app["create_webhook_app"]
+        services__healing_webhook__app_bootstrap__wire_routes["wire_routes"]
+        src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
+        ...["+2804 more"]
     end
 
     subgraph Exporters
@@ -27,4 +47,4 @@ flowchart TD
         src__koru__cli___has_legacy_exports["_has_legacy_exports"]
     end
 
-    class src__koruobserve__cli___missing_observe_packages,src__koruobserve__cli___require_observe_runtime,src__koruobserve__cli___pip_install,src__koruobserve__cli___cmd_install,src__koruobserve__cli___cmd_up,src__koruobserve__cli___cmd_down,src__koruobserve__cli___cmd_status,src__koruobserve__cli___cmd_grid,src__koruobserve__cli___cmd_trace,src__koruobserve__cli___trace_event_matches entry
+    class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app___resolve_strategy,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook entry

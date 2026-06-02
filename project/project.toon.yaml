@@ -1,37 +1,38 @@
-# koru | 4936 func | 495f | 197933L | python | 2026-06-01
+# koru | 5511 func | 555f | 115073L | python | 2026-06-02
+# generated in 0.00s
 
 HEALTH:
-  CC̄=3.6  critical=255 (limit:10)  dup=21  cycles=0
+  CC̄=3.4  critical=258 (limit:10)  dup=21  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     run_api_request = 24 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
   !!! high_fan_out     SharedAutopilotBridgeNetwork.tryConnectNext = 22 (limit:10)
   !!! high_fan_out     setup_autonomous_session = 20 (limit:10)
+  !!  cc_exceeded      _installed_extension_build_sha = 22 (limit:15)
   !!  high_fan_out     handle_status = 19 (limit:10)
   !!  high_fan_out     write_observability_event = 19 (limit:10)
   !!  high_fan_out     ensure_koru_mcp_not_disabled = 18 (limit:10)
   !!  high_fan_out     render_markdown_handoff = 18 (limit:10)
   !!  high_fan_out     _highlight_shell_data = 18 (limit:10)
-  !!  high_fan_out     build_autopilot_parser = 18 (limit:10)
 
-MODULES[662] (top by size):
-  M[project/logic.pl] 8328L C:0 F:0 CC↑0 D:0 (perl)
-  M[src/koru/doctor.py] 1869L C:3 F:80 CC↑13 D:2 (python)
-  M[src/koru/autonomous_cycle.py] 1751L C:0 F:57 CC↑14 D:1 (python)
-  M[src/koru/scan.py] 1585L C:0 F:55 CC↑13 D:3 (python)
-  M[src/koruapi/mcp_server.py] 1387L C:0 F:47 CC↑14 D:4 (python)
+MODULES[779] (top by size):
+  M[src/koru/doctor.py] 1759L C:3 F:80 CC↑12 D:2 (python)
+  M[src/koru/scan.py] 1450L C:0 F:55 CC↑13 D:4 (python)
+  M[src/koru/autonomous_cycle.py] 1412L C:0 F:44 CC↑14 D:1 (python)
+  M[planfile.yaml] 1344L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koru/autonomous_loop_runner.py] 1279L C:1 F:56 CC↑12 D:2 (python)
-  M[src/koruide/plugin_installer.py] 1043L C:1 F:51 CC↑13 D:8 (python)
+  M[src/koruide/plugin_installer.py] 1101L C:1 F:52 CC↑22 D:8 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1016L C:2 F:44 CC↑14 D:0 (python)
+  M[src/koruapi/mcp_server.py] 1001L C:0 F:47 CC↑14 D:4 (python)
   M[src/koru/autonomous.py] 988L C:0 F:62 CC↑4 D:4 (python)
   M[src/koruide/drive_orchestrator.py] 964L C:1 F:56 CC↑14 D:0 (python)
+  M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
   M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:7 (python)
   M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
-  M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 792L C:1 F:63 CC↑13 D:1 (typescript)
+  M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 792L C:1 F:63 CC↑13 D:0 (typescript)
   M[src/koruide/ide.py] 755L C:1 F:46 CC↑13 D:30 (python)
-  M[src/koru/autopilot/install_manager.py] 702L C:1 F:36 CC↑14 D:3 (python)
-  LANGS: python:463/typescript:134/shell:58/kotlin:5/javascript:1/perl:1
+  LANGS: python:479/typescript:175/shell:49/yaml:29/json:20/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ run_api_request fan=24  // Execute an HTTP API request.
@@ -41,11 +42,11 @@ HOTSPOTS[10]:
   ★ handle_status fan=19  // Orchestrates 19 calls
 
 REFACTOR[15]:
-  [1] H/H Split god module src/koru/autonomous_cycle.py (1751L, 0 classes)
-  [2] H/H Split god module src/koru/autonomous_cycle_skip_conditions.py (508L, 0 classes)
-  [3] H/H Split god module src/koru/autonomy/operator_pipeline.py (1016L, 2 classes)
-  [4] H/H Split god module src/koru/autopilot/install_manager.py (702L, 1 classes)
-  [5] H/H Split god module src/koru/cli_cleaned.py (589L, 0 classes)
+  [1] H/H Split god module src/koruide/plugin_installer.py (1101L, 1 classes)
+  [2] H/H Split god module src/koru/autonomous_cycle.py (1412L, 0 classes)
+  [3] H/H Split god module src/koru/autonomous_cycle_skip_conditions.py (508L, 0 classes)
+  [4] H/H Split god module src/koru/autonomy/operator_pipeline.py (1016L, 2 classes)
+  [5] H/H Split god module src/koru/autopilot/install_manager.py (702L, 1 classes)
 
 EVOLUTION:
-  2026-06-01 CC̄=3.6 crit=255 197933L // Automated analysis
+  2026-06-02 CC̄=3.4 crit=258 115073L // Automated analysis

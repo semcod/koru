@@ -18116,3 +18116,299 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-06-02T09:07:01.785912+00:00'
+    STARTER-423:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:11:34.139949+00:00'
+      description: "Run a broad project discovery pass because the planfile queue
+        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+        strategy,\nthen create concrete tickets and let the normal queue work through
+        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
+        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
+        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
+        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
+        tests, and architecture seams that block future tickets.\n\n5. When new tickets
+        exist, stop broad discovery and work the tickets one by one.\n    After those
+        tickets are done and the queue is empty again, another discovery pass\n    is
+        allowed."
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: "Run a broad project discovery pass because the planfile queue is
+          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+          strategy,\nthen create concrete tickets and let the normal queue work through
+          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
+          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
+          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
+          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
+          missing tests, and architecture seams that block future tickets.\n\n5. When
+          new tickets exist, stop broad discovery and work the tickets one by one.\n
+          \   After those tickets are done and the queue is empty again, another discovery
+          pass\n    is allowed."
+        source: koru task
+        timestamp: '2026-06-02T09:11:34.139949+00:00'
+      id: STARTER-423
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "Run a broad project discovery pass because the planfile queue is
+          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+          strategy,\nthen create concrete tickets and let the normal queue work through
+          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
+          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
+          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
+          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
+          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
+          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
+          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
+          missing tests, and architecture seams that block future tickets.\n\n5. When
+          new tickets exist, stop broad discovery and work the tickets one by one.\n
+          \   After those tickets are done and the queue is empty again, another discovery
+          pass\n    is allowed."
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - project-discovery
+      - code2llm
+      - scan
+      - strategy
+      name: 'Project discovery: generate code2llm analysis and tickets'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru:project-discovery:2026-06-02T09:11:33.240116+00:00
+          generation: '2026-06-02T09:11:33.240116+00:00'
+          input: "Run a broad project discovery pass because the planfile queue is
+            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
+            strategy,\nthen create concrete tickets and let the normal queue work
+            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
+            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
+            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
+            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
+            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
+            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
+            high-signal work: failing gates, god modules, duplicated code, high\n
+            \   cyclomatic complexity, missing tests, and architecture seams that
+            block future tickets.\n\n5. When new tickets exist, stop broad discovery
+            and work the tickets one by one.\n    After those tickets are done and
+            the queue is empty again, another discovery pass\n    is allowed."
+          signal: project_discovery
+        timestamp: '2026-06-02T09:11:34.139949+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:11:34.139949+00:00'
+    STARTER-424:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:35:07.766461Z'
+      description: 'SUMD hotspot cleanup: centralize drive/skip policy into one pure
+        decision contract consumed by cycle modules.\n\nScope:\n- Introduce one typed
+        decision payload for skip/drive outcomes (reason code, because text, action
+        hints).\n- Move policy logic out of side-effect functions; keep ticket updates/logging
+        in orchestration layer.\n- Ensure chat_activity / plugin_missing / idle_streak
+        / diagnostics_fail use one reason taxonomy.\n\nDefinition of Done:\n- Existing
+        behavior preserved for current env defaults.\n- Decision trace output still
+        emits human-readable reasons.\n- Focused tests added/updated for policy matrix
+        and reason-code classification.'
+      files:
+      - src/koru/autonomous_cycle_skip_conditions.py,src/koru/autonomous_cycle_drive_retry.py,src/koru/autonomous_cycle_chat_activity.py,src/koru/autonomy/decision_trace.py
+      history: []
+      id: STARTER-424
+      labels:
+      - refactor
+      - autonomy
+      - architecture
+      - llm-ready
+      name: Extract autonomous decision-policy contract
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-02T09:35:07.755203Z'
+        tool: sumd-refactor
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:35:07.766466Z'
+    STARTER-425:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:35:09.112097Z'
+      description: 'SUMD fan-out reduction: decompose autonomous startup and cycle
+        orchestration into explicit phase modules.\n\nScope:\n- Extract startup/session,
+        queue+scan, drive, post-drive verify, and sleep/backoff phases behind narrow
+        interfaces.\n- Remove cross-phase state mutation where possible; pass explicit
+        phase context objects.\n- Keep CLI surface and logs backward compatible.\n\nDefinition
+        of Done:\n- autonomous_main still supports current flags and profiles.\n-
+        Cycle telemetry/decision trace remains intact.\n- At least one integration
+        test exercises full cycle with new phase boundaries.'
+      files:
+      - src/koru/autonomous.py,src/koru/autonomous_cycle.py,src/koru/autonomous_cycle_orchestrator.py,src/koru/autonomous_checkpoint.py
+      history: []
+      id: STARTER-425
+      labels:
+      - refactor
+      - autonomy
+      - orchestration
+      - llm-ready
+      name: Split autonomous startup/session orchestration into phases
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-02T09:35:09.100748Z'
+        tool: sumd-refactor
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:35:09.112102Z'
+    STARTER-426:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:35:10.488542Z'
+      description: 'SUMD complexity reduction for plugin installer: separate IDE metadata
+        adapters from install/reassert policy execution.\n\nScope:\n- Extract per-IDE
+        metadata access to dedicated adapter layer.\n- Extract reassert decision policy
+        (install/skip/retry) into pure functions.\n- Keep command runner and side
+        effects isolated and testable.\n\nDefinition of Done:\n- Reassert no longer
+        triggers unnecessary IDE restarts when build SHA already matches.\n- Unit
+        tests cover policy branches: installed-match, stale-build, missing-vsix, retry
+        paths.\n- Public installer API and CLI behavior remain backward compatible.'
+      files:
+      - src/koruide/plugin_installer.py,src/koruide/daemon/server.py,src/koruide/daemon/handlers.py
+      history: []
+      id: STARTER-426
+      labels:
+      - refactor
+      - plugin
+      - ide
+      - llm-ready
+      name: Decompose plugin installer into adapters and reassert policy
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-06-02T09:35:10.477353Z'
+        tool: sumd-refactor
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:35:10.488546Z'
+    STARTER-427:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:35:11.851532Z'
+      description: Refactor dashboard routes into query/command handlers to reduce
+        coupling and simplify testing.\n\nScope:\n- Move read-only data assembly into
+        query handlers.\n- Move mutating operations (ticket actions, replay actions)
+        into command handlers.\n- Keep HTTP routes thin and declarative.\n\nDefinition
+        of Done:\n- API contract for existing endpoints unchanged.\n- Handler layer
+        has direct unit tests without HTTP server boot.\n- Route modules drop orchestration/business
+        logic weight.
+      files:
+      - src/koruapi/dashboard.py,src/koruapi/dashboard_tickets.py,src/koru/autonomy/replay_actions.py
+      history: []
+      id: STARTER-427
+      labels:
+      - refactor
+      - dashboard
+      - api
+      - llm-ready
+      name: Introduce dashboard CQRS-lite handlers
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-06-02T09:35:11.840119Z'
+        tool: sumd-refactor
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:35:11.851536Z'
+    STARTER-428:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:35:13.290210Z'
+      description: Consolidate env-driven behavior into one default map + parser path
+        for autonomous runtime.\n\nScope:\n- Define a single source of truth for autonomy
+        env keys, defaults, and coercion rules.\n- Remove duplicate/default drift
+        across env.py/config.py/cli-config helpers.\n- Keep operator-facing env names
+        unchanged.\n\nDefinition of Done:\n- No behavior drift for existing documented
+        env vars.\n- Regression tests cover coercion and precedence (CLI > env > defaults).\n-
+        Internal helpers for env truthy/disabled/int are reused consistently.
+      files:
+      - src/koru/autonomy/env.py,src/koru/autonomy/config.py,src/koru/env_flags.py,src/koru/autonomous_cli_config.py
+      history: []
+      id: STARTER-428
+      labels:
+      - refactor
+      - config
+      - autonomy
+      - llm-ready
+      name: Unify autonomy env/config defaults and parsing
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-06-02T09:35:13.285973Z'
+        tool: sumd-refactor
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:35:13.290214Z'
+    STARTER-429:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T09:35:14.695348Z'
+      description: Address SUMD test complexity alerts by splitting high-CC tests
+        into table-driven scenarios and focused fixtures.\n\nScope:\n- Break monolithic
+        assertions into parametrized cases with explicit intent per branch.\n- Extract
+        reusable fixture builders for telemetry/plugin ack payloads.\n- Preserve coverage
+        while improving readability and failure localization.\n\nDefinition of Done:\n-
+        Reported CC-alerted tests reduced below current thresholds where practical.\n-
+        Test names map clearly to one behavior each.\n- CI runtime impact neutral
+        or improved.
+      files:
+      - tests/test_autonomy_config.py,tests/test_structured_cycle_report.py,tests/test_koruide_plugin_installer.py,tests/test_koruide_plugin_ack.py
+      history: []
+      id: STARTER-429
+      labels:
+      - refactor
+      - tests
+      - autonomy
+      - plugin
+      - llm-ready
+      name: Reduce test hotspot complexity in autonomy/plugin suites
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-06-02T09:35:14.683680Z'
+        tool: sumd-refactor
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T09:35:14.695353Z'

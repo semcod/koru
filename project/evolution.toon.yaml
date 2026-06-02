@@ -1,29 +1,34 @@
-# code2llm/evolution | 4826 func | 476f | 2026-06-01
+# code2llm/evolution | 5401 func | 532f | 2026-06-02
+# generated in 0.02s
 
-NEXT[3] (ranked by impact):
-  [1] !! SPLIT           src/koru/autonomous_cycle.py
-      WHY: 1751L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 24514
+NEXT[4] (ranked by impact):
+  [1] !! SPLIT           src/koru/autonomy/operator_pipeline.py
+      WHY: 1016L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 14224
 
-  [2] !! SPLIT           src/koru/doctor.py
-      WHY: 1869L, 3 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 24297
+  [2] !! SPLIT           src/koru/autonomous.py
+      WHY: 988L, 0 classes, max CC=4
+      EFFORT: ~4h  IMPACT: 3952
 
-  [3] !! SPLIT           src/koru/scan.py
-      WHY: 1585L, 0 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 20605
+  [3] !  SPLIT-FUNC      _installed_extension_build_sha  CC=22  fan=16
+      WHY: CC=22 exceeds 15
+      EFFORT: ~1h  IMPACT: 352
+
+  [4] !! SPLIT           planfile.yaml
+      WHY: 1344L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/doctor.py may break 80 import paths
-  ⚠ Splitting src/koru/autonomous_cycle.py may break 57 import paths
-  ⚠ Splitting src/koru/scan.py may break 55 import paths
+  ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting src/koru/autonomy/operator_pipeline.py may break 44 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 62 import paths
 
 METRICS-TARGET:
-  CC̄:          3.7 → ≤2.6
-  max-CC:      14 → ≤7
-  god-modules: 33 → 0
-  high-CC(≥15): 0 → ≤0
+  CC̄:          3.4 → ≤2.4
+  max-CC:      22 → ≤11
+  god-modules: 18 → 0
+  high-CC(≥15): 1 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -51,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.7 → now CC̄=3.7
+  prev CC̄=1.2 → now CC̄=3.4
