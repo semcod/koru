@@ -18,6 +18,7 @@ from koruos.strategies.base import (
     KeySequence,
     OsCapabilities,
     OsStrategy,
+    StaticOsIdentityMixin,
 )
 from koruos.strategies.registry import register_os_strategy
 
@@ -33,14 +34,9 @@ def _run(argv: list[str], *, timeout: float = 10.0) -> subprocess.CompletedProce
 
 
 @dataclass(frozen=True)
-class DarwinStrategy(OsStrategy):
-    @property
-    def id(self) -> str:
-        return "darwin"
-
-    @property
-    def label(self) -> str:
-        return "macOS"
+class DarwinStrategy(StaticOsIdentityMixin, OsStrategy):
+    OS_ID = "darwin"
+    OS_LABEL = "macOS"
 
     def matches_current_environment(self) -> bool:
         return sys.platform == "darwin"

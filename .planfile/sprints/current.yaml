@@ -17848,24 +17848,44 @@ sprint:
       created_at: '2026-06-01T20:00:16.952926Z'
       description: project/analysis.toon.yaml marks mcp_server as large/hot. Split
         transport/dispatch/schema handling into cohesive units with regression coverage.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T20:49:05.016667Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - project/analysis.toon.yaml,src/koru/mcp_server.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T20:49:05.141523+00:00'
       id: STARTER-417
       labels:
       - project-discovery
       - code2llm
       - llm-ready
       name: 'Split large module: mcp_server'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-01T20:00:16.949129Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-01T20:00:16.952929Z'
+      updated_at: '2026-06-01T20:49:05.141487+00:00'
     STARTER-418:
       acceptance_criteria: []
       blocked_by: []
@@ -17873,23 +17893,44 @@ sprint:
       created_at: '2026-06-01T20:00:19.214840Z'
       description: project/analysis.toon.yaml marks scan as large/hot. Separate suggestion
         collection, dedupe policy, and ticket emission paths with tests.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T20:52:41.604800Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - project/analysis.toon.yaml,src/koru/scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T20:52:41.719669+00:00'
       id: STARTER-418
       labels:
       - project-discovery
       - code2llm
+      - llm-ready
       name: 'Split large module: scan'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-01T20:00:18.221510Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-01T20:00:19.214845Z'
+      updated_at: '2026-06-01T20:52:41.719633+00:00'
     STARTER-419:
       acceptance_criteria: []
       blocked_by: []
@@ -17897,23 +17938,44 @@ sprint:
       created_at: '2026-06-01T20:00:20.936831Z'
       description: project/analysis.toon.yaml marks app as large/hot. Extract command
         routing and bootstrap wiring to reduce coupling and future ticket blast radius.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T08:53:39.203285Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - project/analysis.toon.yaml,src/koru/app.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T08:53:39.331657+00:00'
       id: STARTER-419
       labels:
       - project-discovery
       - code2llm
+      - llm-ready
       name: 'Split large module: app'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-06-01T20:00:20.925437Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-01T20:00:20.936835Z'
+      updated_at: '2026-06-02T08:53:39.331619+00:00'
     STARTER-420:
       acceptance_criteria: []
       blocked_by: []
@@ -17923,23 +17985,44 @@ sprint:
         across IDE/LLM/OS strategy classes (id/label/config_folder_name and related
         metadata accessors). Introduce shared base helpers/mixins to reduce duplicated
         accessors while preserving public API and behavior.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T20:57:08.621702Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koruide/ides,src/korullm/strategies,src/koruos/strategies
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T20:57:08.734555+00:00'
       id: STARTER-420
       labels:
       - project-discovery
       - duplication
+      - llm-ready
       name: Deduplicate strategy metadata accessors (id/label/config)
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-01T20:05:12.453317Z'
         tool: redup
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-01T20:05:12.464749Z'
+      updated_at: '2026-06-01T20:57:08.734526+00:00'
     STARTER-421:
       acceptance_criteria: []
       blocked_by: []
@@ -17949,23 +18032,44 @@ sprint:
         CLI modules and src/koru/cli_cleaned.py (_build_* parsers and *_main wrappers).
         Remove duplicated shim patterns by extracting shared parser/wrapper builders
         and reducing copy-paste entrypoints.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-01T21:07:33.778984Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/cli_cleaned.py,src/koru/cli_*.py,src/koru/cli_parser.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-01T21:07:33.903420+00:00'
       id: STARTER-421
       labels:
       - project-discovery
       - duplication
+      - llm-ready
       name: Consolidate duplicated CLI shim logic from cli_cleaned
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-01T20:05:13.766417Z'
         tool: redup
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-01T20:05:13.777988Z'
+      updated_at: '2026-06-01T21:07:33.903385+00:00'
     STARTER-422:
       acceptance_criteria: []
       blocked_by: []
@@ -17975,20 +18079,40 @@ sprint:
         and similar config toggles) across runtime and daemon modules. Centralize
         env flag parsing helpers in one utility module and migrate callsites with
         tests.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T09:07:01.670825Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru,src/koruide/daemon
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T09:07:01.785946+00:00'
       id: STARTER-422
       labels:
       - project-discovery
       - duplication
       name: Deduplicate repeated env-flag helper functions
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-06-01T20:05:15.092971Z'
         tool: redup
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-01T20:05:15.096986Z'
+      updated_at: '2026-06-02T09:07:01.785912+00:00'

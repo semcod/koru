@@ -15,19 +15,15 @@ from korullm.strategies.base import (
     DriveFailureAssessment,
     LlmCapabilities,
     LlmStrategy,
+    StaticLlmIdentityMixin,
 )
 from korullm.strategies.registry import register_llm_strategy
 
 
 @dataclass(frozen=True)
-class IdeChatStrategy(LlmStrategy):
-    @property
-    def id(self) -> str:
-        return "ide_chat"
-
-    @property
-    def label(self) -> str:
-        return "IDE embedded chat"
+class IdeChatStrategy(StaticLlmIdentityMixin, LlmStrategy):
+    LLM_ID = "ide_chat"
+    LLM_LABEL = "IDE embedded chat"
 
     def matches_environment(self) -> bool:
         """Fallback strategy — matches when no explicit LLM env is set."""

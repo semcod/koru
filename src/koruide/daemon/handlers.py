@@ -74,8 +74,7 @@ def _cap_ack_info_for_cli(info: dict[str, Any]) -> dict[str, Any]:
     return trimmed
 
 
-def _env_truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+from koru.env_flags import env_truthy as _env_truthy
 
 
 from koruide.daemon.handlers_drive import (

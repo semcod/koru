@@ -10,6 +10,7 @@ from koruide.ides.base import (
     IdeStrategy,
     KeyboardPolicy,
     PluginPolicy,
+    StaticIdeIdentityMixin,
 )
 from koruide.ides.registry import register_strategy
 
@@ -19,14 +20,9 @@ _ZED_INSTALL_BLOCKED = (
 
 
 @dataclass(frozen=True)
-class ZedStrategy(IdeStrategy):
-    @property
-    def id(self) -> str:
-        return "zed"
-
-    @property
-    def label(self) -> str:
-        return "Zed"
+class ZedStrategy(StaticIdeIdentityMixin, IdeStrategy):
+    IDE_ID = "zed"
+    IDE_LABEL = "Zed"
 
     @property
     def detection(self) -> DetectionSignature:

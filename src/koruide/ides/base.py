@@ -12,6 +12,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import ClassVar
 
 
 @dataclass(frozen=True)
@@ -175,6 +176,31 @@ class IdeStrategy(ABC):
         return f"<{type(self).__name__} id={self.id!r}>"
 
 
+class StaticIdeIdentityMixin:
+    """Provide ``id``/``label`` from class-level constants."""
+
+    IDE_ID: ClassVar[str] = ""
+    IDE_LABEL: ClassVar[str] = ""
+
+    @property
+    def id(self) -> str:
+        return self.IDE_ID
+
+    @property
+    def label(self) -> str:
+        return self.IDE_LABEL
+
+
+class StaticVscodeFolderMixin:
+    """Provide ``config_folder_name`` from a class-level constant."""
+
+    CONFIG_FOLDER_NAME: ClassVar[str] = ""
+
+    @property
+    def config_folder_name(self) -> str:
+        return self.CONFIG_FOLDER_NAME
+
+
 @dataclass(frozen=True)
 class VscodeFamilyStrategy(IdeStrategy):
     """Common base strategy for VS Code-family IDEs (VS Code, VSCodium, Cursor, Windsurf, Antigravity)."""
@@ -221,6 +247,8 @@ __all__ = [
     "IdeStrategy",
     "KeyboardPolicy",
     "PluginPolicy",
+    "StaticIdeIdentityMixin",
+    "StaticVscodeFolderMixin",
     "TerminalSignature",
     "VscodeFamilyStrategy",
 ]

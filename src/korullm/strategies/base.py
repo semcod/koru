@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
+from typing import ClassVar
 
 DriveRetryKind = Literal[
     "stop",
@@ -109,9 +110,25 @@ class LlmStrategy(ABC):
         return f"<{type(self).__name__} id={self.id!r}>"
 
 
+class StaticLlmIdentityMixin:
+    """Provide ``id``/``label`` from class-level constants."""
+
+    LLM_ID: ClassVar[str] = ""
+    LLM_LABEL: ClassVar[str] = ""
+
+    @property
+    def id(self) -> str:
+        return self.LLM_ID
+
+    @property
+    def label(self) -> str:
+        return self.LLM_LABEL
+
+
 __all__ = [
     "DriveFailureAssessment",
     "DriveRetryKind",
     "LlmCapabilities",
     "LlmStrategy",
+    "StaticLlmIdentityMixin",
 ]

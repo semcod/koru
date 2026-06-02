@@ -5,6 +5,7 @@ from typing import Any
 
 from koru.autonomous_cycle_chat_activity_config import (
     autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
+    autopilot_os_injector_cooldown_seconds as _autopilot_os_injector_cooldown_seconds,
     autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,
 )
 from koru.autonomous_cycle_chat_activity_text import (
@@ -81,6 +82,11 @@ def _chat_activity_cooldown_for_state(state: AutoloopState) -> float:
     last_kind = str(getattr(state, "last_driven_kind", "") or "")
     if last_kind == "escalation_prompt":
         return _autopilot_escalation_cooldown_seconds(cooldown)
+    last_backend = str(getattr(state, "last_driven_backend", "") or "")
+    if last_backend == "os_injector":
+        os_cooldown = _autopilot_os_injector_cooldown_seconds()
+        # Only shorten — never allow os_injector to exceed the global cooldown.
+        return min(cooldown, os_cooldown)
     return cooldown
 
 

@@ -113,6 +113,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.306] - 2026-06-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli_shim_builders.py
+- Update tests/test_env_flags.py
+- Update tests/test_healing_webhook_split.py
+- Update tests/test_mcp_server_split.py
+- Update tests/test_scan_split.py
+- Update tests/test_strategy_metadata_accessors.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/sprints/current.yaml
+- Update services/healing-webhook/app.py
+- Update services/healing-webhook/app_bootstrap.py
+- Update services/healing-webhook/app_command_routing.py
+- Update wup.yaml
+
 ## [0.1.305] - 2026-06-01
 
 ### Docs

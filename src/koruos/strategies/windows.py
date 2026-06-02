@@ -15,19 +15,15 @@ from koruos.strategies.base import (
     KeySequence,
     OsCapabilities,
     OsStrategy,
+    StaticOsIdentityMixin,
 )
 from koruos.strategies.registry import register_os_strategy
 
 
 @dataclass(frozen=True)
-class WindowsStrategy(OsStrategy):
-    @property
-    def id(self) -> str:
-        return "windows"
-
-    @property
-    def label(self) -> str:
-        return "Windows"
+class WindowsStrategy(StaticOsIdentityMixin, OsStrategy):
+    OS_ID = "windows"
+    OS_LABEL = "Windows"
 
     def matches_current_environment(self) -> bool:
         return sys.platform.startswith("win")

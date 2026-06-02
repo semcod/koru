@@ -18,8 +18,9 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    KeyboardPolicy,
     PluginPolicy,
+    StaticIdeIdentityMixin,
+    StaticVscodeFolderMixin,
     TerminalSignature,
     VscodeFamilyStrategy,
 )
@@ -27,20 +28,12 @@ from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class CursorStrategy(VscodeFamilyStrategy):
+class CursorStrategy(StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy):
     """Strategy for Cursor (VS Code-fork by Anysphere)."""
 
-    @property
-    def id(self) -> str:
-        return "cursor"
-
-    @property
-    def label(self) -> str:
-        return "Cursor"
-
-    @property
-    def config_folder_name(self) -> str:
-        return "Cursor"
+    IDE_ID = "cursor"
+    IDE_LABEL = "Cursor"
+    CONFIG_FOLDER_NAME = "Cursor"
 
     @property
     def workspace_settings_folder_name(self) -> str:

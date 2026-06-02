@@ -45,14 +45,7 @@ DEFAULT_MAX_EVENTS = 256
 MAX_BODY_BYTES = 65_536
 
 
-def _env_int(name: str, default: int) -> int:
-    raw = os.environ.get(name, "").strip()
-    if not raw:
-        return default
-    try:
-        return int(raw)
-    except ValueError:
-        return default
+from koru.env_flags import env_int as _env_int
 
 
 @dataclass

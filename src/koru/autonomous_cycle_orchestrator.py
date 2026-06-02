@@ -309,6 +309,8 @@ def _drive_autopilot_once(
         state.last_message_sent_ts = time.time()
         state.last_message_sent_ide = autopilot_ide
         state.last_driven_ticket_id = waiting_ticket
+        if autopilot_backend:
+            state.last_driven_backend = autopilot_backend
     elif autopilot_status.startswith("failed(submit_") and reply.get("delivered") is True:
         state.last_driven_ticket_id = waiting_ticket
     state.last_autopilot_status = autopilot_status

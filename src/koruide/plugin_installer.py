@@ -646,6 +646,56 @@ def _active_extension_locations(metadata_path: Path) -> set[str]:
     }
 
 
+def _installed_extension_build_sha(target_ide: str, vsix: Path | None) -> str | None:
+    """Return the ``koruAutopilotBuild.sha`` of the currently installed extension.
+
+    Reads ``~/<ide>/extensions/extensions.json`` to find the active extension
+    directory, then reads its ``package.json`` to extract the build SHA.
+    Returns ``None`` when the installed SHA cannot be determined.
+    """
+    metadata_path = _extensions_metadata_path_for_ide(target_ide)
+    if metadata_path is None or not metadata_path.is_file():
+        return None
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, list):
+        return None
+    ext_id = extension_id_for_ide(target_ide).lower()
+    extensions_root = metadata_path.parent
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        # Match by extension ID recorded in the metadata.
+        item_id = str(item.get("identifier", {}).get("id", "") or "").lower()
+        if item_id != ext_id:
+            continue
+        # Resolve the installation directory.
+        rel_loc = item.get("relativeLocation")
+        if isinstance(rel_loc, str) and rel_loc:
+            ext_dir = extensions_root / rel_loc
+        else:
+            location = item.get("location") if isinstance(item, dict) else None
+            raw_path = None
+            if isinstance(location, dict):
+                raw_path = location.get("path") or location.get("fsPath")
+            if not isinstance(raw_path, str) or not raw_path:
+                continue
+            ext_dir = Path(raw_path)
+        pkg = ext_dir / "package.json"
+        if not pkg.is_file():
+            continue
+        try:
+            pkg_data = json.loads(pkg.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        build_info = pkg_data.get("koruAutopilotBuild") if isinstance(pkg_data, dict) else None
+        if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
+            return build_info["sha"] or None
+    return None
+
+
 def _move_path_aside(path: Path, disabled_root: Path) -> Path:
     disabled_root.mkdir(parents=True, exist_ok=True)
     target = disabled_root / path.name
@@ -745,6 +795,14 @@ def _reassert_extension_extra(
         return last_cmd, ""
     vsix = resolve_extension_vsix(target_ide)
     ext_id = extension_id_for_ide(target_ide)
+    # Skip --install-extension --force when the already-installed extension
+    # has the same build SHA as the VSIX we would install.  Running
+    # --install-extension triggers an IDE restart that reopens its previous
+    # workspace, so we must not do it unnecessarily.
+    installed_sha = _installed_extension_build_sha(target_ide or "", vsix)
+    expected_sha = _vsix_build_sha(vsix) if vsix is not None else None
+    if installed_sha and expected_sha and installed_sha == expected_sha:
+        return last_cmd, "; build sha match — reassert skipped"
     reassert_cmd = (
         [command, "--install-extension", str(vsix), "--force"]
         if vsix is not None

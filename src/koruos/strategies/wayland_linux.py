@@ -33,6 +33,7 @@ from koruos.strategies.base import (
     KeySequence,
     OsCapabilities,
     OsStrategy,
+    StaticOsIdentityMixin,
 )
 from koruos.strategies.registry import register_os_strategy
 
@@ -140,14 +141,9 @@ def _prefer_ydotool() -> bool:
 
 
 @dataclass(frozen=True)
-class WaylandLinuxStrategy(OsStrategy):
-    @property
-    def id(self) -> str:
-        return "linux-wayland"
-
-    @property
-    def label(self) -> str:
-        return "Linux / Wayland"
+class WaylandLinuxStrategy(StaticOsIdentityMixin, OsStrategy):
+    OS_ID = "linux-wayland"
+    OS_LABEL = "Linux / Wayland"
 
     def matches_current_environment(self) -> bool:
         import sys

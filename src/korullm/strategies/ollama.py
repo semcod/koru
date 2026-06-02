@@ -7,21 +7,17 @@ from dataclasses import dataclass
 from typing import Any
 
 from korullm.strategies.base import DriveFailureAssessment, LlmCapabilities, LlmStrategy
+from korullm.strategies.base import StaticLlmIdentityMixin
 from korullm.strategies.ide_chat import IdeChatStrategy
 from korullm.strategies.registry import register_llm_strategy
 
 
 @dataclass(frozen=True)
-class OllamaStrategy(LlmStrategy):
+class OllamaStrategy(StaticLlmIdentityMixin, LlmStrategy):
     _delegate: IdeChatStrategy = IdeChatStrategy()
 
-    @property
-    def id(self) -> str:
-        return "ollama"
-
-    @property
-    def label(self) -> str:
-        return "Ollama"
+    LLM_ID = "ollama"
+    LLM_LABEL = "Ollama"
 
     def matches_environment(self) -> bool:
         return bool(os.environ.get("OLLAMA_MODEL", "").strip())

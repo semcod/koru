@@ -24,8 +24,7 @@ _build_parser = _cli_parser._build_parser
 _command_value = _cli_parser._command_value
 
 
-def _env_truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+from koru.env_flags import env_truthy as _env_truthy
 
 
 

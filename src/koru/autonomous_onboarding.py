@@ -40,11 +40,7 @@ class OnboardingOutcome:
     created_ticket_title: str
 
 
-def _env_truthy(name: str, default: bool) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
+from koru.env_flags import env_truthy as _env_truthy
 
 
 def _resolve_strategies_path(project: Path) -> Path | None:
@@ -177,8 +173,8 @@ def run_interactive_onboarding(
 
     project = args.project.resolve()
     strategies_path = _resolve_strategies_path(project)
-    use_llx = _env_truthy("KORU_ONBOARDING_LLX", True) and llx_available()
-    create_ticket = _env_truthy("KORU_ONBOARDING_CREATE_TICKET", True)
+    use_llx = _env_truthy("KORU_ONBOARDING_LLX", default=True) and llx_available()
+    create_ticket = _env_truthy("KORU_ONBOARDING_CREATE_TICKET", default=True)
 
     stdio_info("koru auto onboarding: start (wizard)")
     result = run_wizard(

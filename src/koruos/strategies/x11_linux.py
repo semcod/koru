@@ -18,6 +18,7 @@ from koruos.strategies.base import (
     KeySequence,
     OsCapabilities,
     OsStrategy,
+    StaticOsIdentityMixin,
 )
 from koruos.strategies.registry import register_os_strategy
 
@@ -33,14 +34,9 @@ def _run(argv: list[str], *, timeout: float = 10.0) -> subprocess.CompletedProce
 
 
 @dataclass(frozen=True)
-class X11LinuxStrategy(OsStrategy):
-    @property
-    def id(self) -> str:
-        return "linux-x11"
-
-    @property
-    def label(self) -> str:
-        return "Linux / X11"
+class X11LinuxStrategy(StaticOsIdentityMixin, OsStrategy):
+    OS_ID = "linux-x11"
+    OS_LABEL = "Linux / X11"
 
     def matches_current_environment(self) -> bool:
         import sys

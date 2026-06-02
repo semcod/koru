@@ -84,8 +84,7 @@ def _path_is_relative_to(path: Path, parent: Path) -> bool:
     return True
 
 
-def _env_disabled(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"0", "false", "no", "off"}
+from koru.env_flags import env_disabled as _env_disabled
 
 
 def project_venv_reexec_argv(project: Path) -> list[str] | None:

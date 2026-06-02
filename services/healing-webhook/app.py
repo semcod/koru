@@ -47,6 +47,8 @@ from prometheus_client import (
 )
 
 from ticket_builder import build_ticket_payload
+from app_bootstrap import create_webhook_app, wire_routes
+from app_command_routing import route_alertmanager_payload, route_probe_failure_payload
 
 # ── Config ─────────────────────────────────────────────────────────────
 REPO_PATH = os.getenv("REPO_PATH", "/repo")
@@ -111,7 +113,7 @@ REDUP_BUDGET_BREACH = Gauge(
     "1 if duplicate budget breached (groups>max or lines>max), else 0.",
 )
 
-app = FastAPI(title="c2004 healing-webhook", version="1.0")
+app = create_webhook_app(title="c2004 healing-webhook", version="1.0")
 history: collections.deque = collections.deque(maxlen=50)
 _recent_actions: collections.deque = collections.deque(maxlen=MAX_ACTIONS_PER_HOUR * 4)
 
@@ -593,7 +595,6 @@ def _resolve_strategy(strategy_name: str):
 
 
 # ── Routes ─────────────────────────────────────────────────────────────
-@app.get("/healthz")
 def healthz() -> dict:
     return {
         "status": "ok",
@@ -603,83 +604,40 @@ def healthz() -> dict:
     }
 
 
-@app.get("/metrics")
 def metrics() -> PlainTextResponse:
     return PlainTextResponse(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-@app.get("/history")
 def get_history() -> list[dict]:
     return list(history)
 
 
-@app.post("/alertmanager")
 async def alertmanager_webhook(request: Request) -> dict[str, Any]:
     """Accept the Alertmanager webhook payload (v4)."""
     payload = await request.json()
-    results: list[dict] = []
-    for alert in payload.get("alerts", []):
-        labels = alert.get("labels", {})
-        severity = labels.get("severity", "info")
-        component = labels.get("component", "unknown")
-        strategy_name = labels.get("healing_strategy", "annotate")
-        status = alert.get("status", "firing")
-        ALERTS.labels(source="alertmanager", severity=severity).inc()
-        if status != "firing":
-            # resolution → annotate only, no ticket
-            strategy_name = "annotate"
-        strategy, effective_strategy_name = _resolve_strategy(strategy_name)
-        log.info(
-            "alert %s/%s → %s",
-            severity,
-            labels.get("alertname"),
-            effective_strategy_name,
-        )
-        strategy_result = strategy(component, {"labels": labels, "annotations": alert.get("annotations", {})})
-        ticket_result: dict[str, Any] = {"skipped": "severity_below_threshold"}
-        # Create a planfile ticket only for firing alerts at error/critical level.
-        if status == "firing" and severity in {"error", "critical"}:
-            ticket_result = create_planfile_ticket(alert, source="alertmanager")
-        results.append({"strategy": strategy_result, "ticket": ticket_result})
-    return {"received": len(payload.get("alerts", [])), "results": results}
+    return route_alertmanager_payload(
+        payload,
+        resolve_strategy=_resolve_strategy,
+        create_planfile_ticket=lambda alert: create_planfile_ticket(alert, source="alertmanager"),
+        alerts_counter=ALERTS,
+        log=log,
+    )
 
 
-@app.post("/probe-failure")
 async def probe_failure(request: Request) -> dict:
     """Accept the testql-watchdog probe-failure payload."""
     payload = await request.json()
-    ALERTS.labels(source="testql-watchdog", severity="error").inc()
-    failures = payload.get("failures", [])
-    log.info("probe-failure from %s — %d failures", payload.get("source"), len(failures))
-    # Aggregate: if >half of the probes are failing, prefer redsl_improve only
-    # when LLM autofix is explicitly enabled; otherwise stay LLM-free.
-    total = payload.get("total") or max(len(failures), 1)
-    ratio = len(failures) / total if total else 0.0
-    if ratio >= 0.5 and ENABLE_LLM_AUTOFIX:
-        result = heal_redsl_improve("backend", {"failures": failures, "ratio": ratio})
-    else:
-        result = heal_redsl_gate("backend", {"failures": failures, "ratio": ratio})
-    # One consolidated ticket per probe-failure payload (not per-endpoint,
-    # so the planfile doesn't drown in duplicates when a whole service goes down).
-    synthetic_alert = {
-        "labels": {
-            "alertname": "TestQLProbeFailure",
-            "severity": "critical" if ratio >= 0.5 else "error",
-            "component": "backend",
-            "instance": (failures[0].get("endpoint") if failures else "multiple"),
-        },
-        "annotations": {
-            "summary": f"{len(failures)} TestQL probe(s) failed out of {total} ({ratio:.0%}).",
-            "observed": f"{len(failures)}/{total} endpoints failing",
-        },
-        "failures": failures,
-        "startsAt": str(time.time()),
-    }
-    ticket_result = create_planfile_ticket(synthetic_alert, source="testql-watchdog")
-    return {"failures": len(failures), "result": result, "ticket": ticket_result}
+    return route_probe_failure_payload(
+        payload,
+        heal_redsl_improve=heal_redsl_improve,
+        heal_redsl_gate=heal_redsl_gate,
+        create_planfile_ticket=lambda alert: create_planfile_ticket(alert, source="testql-watchdog"),
+        alerts_counter=ALERTS,
+        enable_llm_autofix=ENABLE_LLM_AUTOFIX,
+        log=log,
+    )
 
 
-@app.get("/tickets")
 def get_tickets() -> dict:
     """List planfile tickets that were created by this webhook."""
     if not PLANFILE_ENABLED:
@@ -700,3 +658,14 @@ def get_tickets() -> dict:
         return {"enabled": True, "count": len(mine), "tickets": mine[:25]}
     except Exception as exc:  # noqa: BLE001
         return {"enabled": True, "error": str(exc)}
+
+
+wire_routes(
+    app,
+    healthz_handler=healthz,
+    metrics_handler=metrics,
+    history_handler=get_history,
+    alertmanager_handler=alertmanager_webhook,
+    probe_failure_handler=probe_failure,
+    tickets_handler=get_tickets,
+)

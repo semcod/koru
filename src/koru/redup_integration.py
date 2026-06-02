@@ -105,8 +105,7 @@ def _redup_json_scan_command(
     ]
 
 
-def _env_bool(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "y", "on"}
+from koru.env_flags import env_truthy as _env_bool
 
 
 def _write_skipped_changed_report(output: str | Path, *, reason: str) -> None:

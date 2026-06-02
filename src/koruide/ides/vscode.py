@@ -9,8 +9,8 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    KeyboardPolicy,
-    PluginPolicy,
+    StaticIdeIdentityMixin,
+    StaticVscodeFolderMixin,
     TerminalSignature,
     VscodeFamilyStrategy,
 )
@@ -18,18 +18,10 @@ from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class VscodeStrategy(VscodeFamilyStrategy):
-    @property
-    def id(self) -> str:
-        return "vscode"
-
-    @property
-    def label(self) -> str:
-        return "VS Code"
-
-    @property
-    def config_folder_name(self) -> str:
-        return "Code"
+class VscodeStrategy(StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy):
+    IDE_ID = "vscode"
+    IDE_LABEL = "VS Code"
+    CONFIG_FOLDER_NAME = "Code"
 
     @property
     def detection(self) -> DetectionSignature:

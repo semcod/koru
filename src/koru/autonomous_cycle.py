@@ -320,9 +320,7 @@ def _initialize_cycle_telemetry() -> dict[str, Any]:
     }
 
 
-def _env_truthy(name: str, *, default: str = "0") -> bool:
-    raw = os.environ.get(name, default).strip().lower()
-    return raw in {"1", "true", "yes", "on", "auto"}
+from koru.env_flags import env_truthy as _env_truthy
 
 
 def _load_open_tickets_for_planning(
@@ -472,8 +470,8 @@ def _run_phase4_advisory_hooks(
     _emit: callable,
 ) -> None:
     """Run optional Phase 4 advisory hooks (no state mutation side effects)."""
-    enable_priority = _env_truthy("KORU_PLANNING_LLM_PRIORITIZE_TICKETS", default="0")
-    enable_tuning = _env_truthy("KORU_PLANNING_LLM_STRATEGY_TUNING", default="0")
+    enable_priority = _env_truthy("KORU_PLANNING_LLM_PRIORITIZE_TICKETS")
+    enable_tuning = _env_truthy("KORU_PLANNING_LLM_STRATEGY_TUNING")
     if not (enable_priority or enable_tuning):
         return
 

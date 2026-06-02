@@ -25,8 +25,7 @@ def preview_text(text: str, *, limit: int = 120) -> str:
     return f"{one_line[: limit - 1]}…"
 
 
-def _env_disabled(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"0", "false", "no", "off"}
+from koru.env_flags import env_disabled as _env_disabled
 
 
 def configure_nfo_activity_log(project: Path) -> Path | None:

@@ -7,21 +7,17 @@ from dataclasses import dataclass
 from typing import Any
 
 from korullm.strategies.base import DriveFailureAssessment, LlmCapabilities, LlmStrategy
+from korullm.strategies.base import StaticLlmIdentityMixin
 from korullm.strategies.ide_chat import IdeChatStrategy
 from korullm.strategies.registry import register_llm_strategy
 
 
 @dataclass(frozen=True)
-class GptStrategy(LlmStrategy):
+class GptStrategy(StaticLlmIdentityMixin, LlmStrategy):
     _delegate: IdeChatStrategy = IdeChatStrategy()
 
-    @property
-    def id(self) -> str:
-        return "openai"
-
-    @property
-    def label(self) -> str:
-        return "OpenAI / GPT"
+    LLM_ID = "openai"
+    LLM_LABEL = "OpenAI / GPT"
 
     def matches_environment(self) -> bool:
         return bool(os.environ.get("OPENAI_MODEL", "").strip())

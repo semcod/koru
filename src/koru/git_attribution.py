@@ -25,8 +25,7 @@ class CoauthorHookResult:
     detail: str = ""
 
 
-def _env_disabled(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"0", "false", "no", "off"}
+from koru.env_flags import env_disabled as _env_disabled
 
 
 def _git_dir(project: Path) -> Path | None:

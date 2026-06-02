@@ -35,6 +35,25 @@ def autopilot_redrive_cooldown_seconds() -> float:
     return 300.0
 
 
+def autopilot_os_injector_cooldown_seconds() -> float:
+  """Cooldown for the OS-injector (keyboard) drive path (env: ``KORU_AUTOPILOT_OS_INJECTOR_COOLDOWN_SECONDS``).
+
+  When the last successful drive used the OS-injector backend (e.g. JetBrains
+  without a plugin), there is no IDE-side ``message.received`` confirmation.
+  The default 300 s global cooldown would block cycles 2 and 3 unnecessarily.
+  Defaults to 60 s so that a re-drive can happen after the first waiting cycle.
+  Set to ``0`` (or negative) to always re-drive immediately on the OS-injector
+  path (restores legacy behaviour).
+  """
+  raw = os.environ.get("KORU_AUTOPILOT_OS_INJECTOR_COOLDOWN_SECONDS", "").strip()
+  if not raw:
+    return 60.0
+  try:
+    return max(0.0, float(raw))
+  except ValueError:
+    return 60.0
+
+
 def autopilot_escalation_cooldown_seconds(base_cooldown: float) -> float:
   """Cooldown applied when the LAST drive was an ``escalation_prompt``.
 
@@ -95,6 +114,7 @@ def chat_intake_ticket_enabled() -> bool:
 
 __all__ = [
   "autopilot_redrive_cooldown_seconds",
+  "autopilot_os_injector_cooldown_seconds",
   "autopilot_escalation_cooldown_seconds",
   "llm_reflection_summary_max_age_seconds",
   "llm_needs_input_ticket_enabled",

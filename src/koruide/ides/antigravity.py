@@ -9,8 +9,9 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    KeyboardPolicy,
     PluginPolicy,
+    StaticIdeIdentityMixin,
+    StaticVscodeFolderMixin,
     TerminalSignature,
     VscodeFamilyStrategy,
 )
@@ -18,18 +19,10 @@ from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class AntigravityStrategy(VscodeFamilyStrategy):
-    @property
-    def id(self) -> str:
-        return "antigravity"
-
-    @property
-    def label(self) -> str:
-        return "Antigravity"
-
-    @property
-    def config_folder_name(self) -> str:
-        return "Antigravity"
+class AntigravityStrategy(StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy):
+    IDE_ID = "antigravity"
+    IDE_LABEL = "Antigravity"
+    CONFIG_FOLDER_NAME = "Antigravity"
 
     @property
     def detection(self) -> DetectionSignature:

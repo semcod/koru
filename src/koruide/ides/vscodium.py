@@ -9,26 +9,18 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    KeyboardPolicy,
-    PluginPolicy,
+    StaticIdeIdentityMixin,
+    StaticVscodeFolderMixin,
     VscodeFamilyStrategy,
 )
 from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class VscodiumStrategy(VscodeFamilyStrategy):
-    @property
-    def id(self) -> str:
-        return "vscodium"
-
-    @property
-    def label(self) -> str:
-        return "VSCodium"
-
-    @property
-    def config_folder_name(self) -> str:
-        return "VSCodium"
+class VscodiumStrategy(StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy):
+    IDE_ID = "vscodium"
+    IDE_LABEL = "VSCodium"
+    CONFIG_FOLDER_NAME = "VSCodium"
 
     @property
     def detection(self) -> DetectionSignature:

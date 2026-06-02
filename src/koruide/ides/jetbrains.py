@@ -10,6 +10,7 @@ from koruide.ides.base import (
     IdeStrategy,
     KeyboardPolicy,
     PluginPolicy,
+    StaticIdeIdentityMixin,
 )
 from koruide.ides.registry import register_strategy
 
@@ -20,14 +21,9 @@ _JETBRAINS_INSTALL_BLOCKED = (
 
 
 @dataclass(frozen=True)
-class JetbrainsStrategy(IdeStrategy):
-    @property
-    def id(self) -> str:
-        return "jetbrains"
-
-    @property
-    def label(self) -> str:
-        return "JetBrains IDE"
+class JetbrainsStrategy(StaticIdeIdentityMixin, IdeStrategy):
+    IDE_ID = "jetbrains"
+    IDE_LABEL = "JetBrains IDE"
 
     @property
     def detection(self) -> DetectionSignature:

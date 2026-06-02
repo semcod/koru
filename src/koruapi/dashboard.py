@@ -11,8 +11,7 @@ from koru.events import emit_management_event
 from koruapi.dashboard_serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
 
 
-def _env_truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+from koru.env_flags import env_truthy as _env_truthy
 
 
 def _argv_has_flag(argv: list[str], *names: str) -> bool:

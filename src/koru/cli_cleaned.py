@@ -37,20 +37,43 @@ from koru.queue import run_shell_command as _queue_run_shell_command
 from koru.queue_clean import CleanupReport, clean_queue
 from koru.scan import ScanResult, run_scan
 from koru.cli_scan import scan_main as _scan_main
+from koru.cli_shim_builders import build_main_delegate, build_parser_delegate
 from koru.cli_gate import gate_main as _gate_main
 from koru.cli_gc import gc_main as _gc_main
 from koru.cli_queue import queue_main as _queue_main
 from koru.cli_topology import topology_main as _topology_main
 from koru.cli_init import init_main as _init_main, init_agent_lane_main as _init_agent_lane_main
+from koru.cli_init import init_ci_main as _init_ci_main_impl
 from koru.cli_doctor import doctor_main as _doctor_main
 from koru.cli_watch import watch_main as _watch_main
+from koru.cli_agent import _agent_main as _agent_main_impl
+from koru.cli_agent import _build_agent_parser as _build_agent_parser_impl
+from koru.cli_agent_backends import agent_backends_main as _agent_backends_main_impl
+from koru.cli_ide_router import ide_router_main as _ide_router_main_impl
+from koru.cli_local_serve import _build_local_serve_parser as _build_local_serve_parser_impl
+from koru.cli_local_serve import _local_serve_main as _local_serve_main_impl
+from koru.cli_refactor_planfile_handoff import (
+    _refactor_planfile_handoff_main as _refactor_planfile_handoff_main_impl,
+)
+from koru.cli_runtime_context import (
+    _build_runtime_context_parser as _build_runtime_context_parser_impl,
+)
+from koru.cli_runtime_context import (
+    _render_runtime_context_text as _render_runtime_context_text_impl,
+)
+from koru.cli_runtime_context import _runtime_context_main as _runtime_context_main_impl
+from koru.cli_serve import _build_serve_parser as _build_serve_parser_impl
+from koru.cli_serve import _serve_main as _serve_main_impl
+from koru.cli_task import _build_task_parser as _build_task_parser_impl
+from koru.cli_task import _task_main as _task_main_impl
+from koru.cli_tools import _build_tools_parser as _build_tools_parser_impl
+from koru.cli_tools import _tools_main as _tools_main_impl
 from koru.serve import DEFAULT_HOST, DEFAULT_PORT
 from koru.tasks import create_nl_task
 from koru.tools import build_tool_task_scaffold, detect_tools, find_tool_entry, load_tool_registry, render_tools_detect_text
 from koru.watch import watch_planfile_events
 
-def _env_truthy(name: str) -> bool:
-    return os.environ.get(name, '').strip().lower() in ('1', 'true', 'yes', 'on')
+from koru.env_flags import env_truthy as _env_truthy
 
 def _command_value(value: str) -> str:
     stripped = value.strip()
@@ -117,159 +140,25 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_diagnostics_context_args(parser)
     return parser
 
-def _build_tools_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='koru tools', description='Inspect AI tool registry/detection status.')
-    sub = parser.add_subparsers(dest='subcommand', required=True)
-    detect = sub.add_parser('detect', help='Detect tools from the 2026 registry.')
-    detect.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    detect.add_argument('--registry', type=Path, default=None, help='Override registry YAML path (default: docs/ai-tool-registry-2026.yaml).')
-    detect.add_argument('--format', dest='output_format', choices=('text', 'json'), default='text', help='Output format (default: text).')
-    return parser
+_build_tools_parser = build_parser_delegate(_build_tools_parser_impl)
 
-def _tools_main(argv: list[str]) -> int:
-    tools_args = _build_tools_parser().parse_args(argv)
-    if tools_args.subcommand != 'detect':
-        print(f'koru tools: unknown subcommand {tools_args.subcommand!r}', file=sys.stderr)
-        return 2
-    registry, registry_path = load_tool_registry(tools_args.registry)
-    results = detect_tools(tools_args.project.resolve(), registry)
-    if tools_args.output_format == 'json':
-        payload = {'project': str(tools_args.project), 'registry': str(registry_path) if registry_path else None, 'tools': results}
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(render_tools_detect_text(results, registry_path=registry_path))
-    emit_management_event(tool='koru.tools.detect', action='completed', status='completed', message=f'tools={len(results)}', details={'project': str(tools_args.project), 'registry': str(registry_path) if registry_path else None, 'available': sum((1 for r in results if r.get('available')))})
-    return 0
+_tools_main = build_main_delegate(_tools_main_impl)
 
-def _build_task_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='koru task', description='Create a planfile ticket from a natural-language sentence.')
-    parser.add_argument('text', nargs='+', help='Natural-language task description.')
-    parser.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    parser.add_argument('--sprint', default='current', help='Target planfile sprint.')
-    parser.add_argument('--queue-name', default=None, help='Execution queue for the new ticket.')
-    parser.add_argument('--priority', default='normal', help='Ticket priority.')
-    parser.add_argument('--source-tool', default=None, help='Producer id stored in ticket source.tool (for plugin/tool intake).')
-    parser.add_argument('--source-signal', default=None, help='Producer signal stored in source.context.signal.')
-    parser.add_argument('--dedupe-key', default=None, help='Stable issue key shared by producers; an existing ticket with the same key is reused instead of creating a duplicate.')
-    parser.add_argument('--files', action='append', default=[], help='File path associated with the ticket. Repeat for multiple files.')
-    parser.add_argument('--tool', dest='tool_id', default=None, help='Build a tool-adapter scaffold ticket for this tool id (from docs/ai-tool-registry-2026.yaml).')
-    parser.add_argument('--tool-kind', dest='tool_kind', choices=('human', 'shell', 'api', 'llm'), default=None, help='Override scaffolded executor hint for --tool.')
-    parser.add_argument('--tool-registry', dest='tool_registry', type=Path, default=None, help='Override tool registry path for --tool lookup.')
-    return parser
+_build_task_parser = build_parser_delegate(_build_task_parser_impl)
 
-def _build_serve_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='koru serve', description='Run a local dashboard for koru (live LLM brief, ticket, policy, agent lanes). Binds to 127.0.0.1 by default.')
-    parser.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    parser.add_argument('--queue-name', default=None, help='Queue used when selecting the active ticket.')
-    parser.add_argument('--host', default=DEFAULT_HOST, help=f'Bind address (default {DEFAULT_HOST}).')
-    parser.add_argument('--port', type=int, default=DEFAULT_PORT, help=f'TCP port to listen on (default {DEFAULT_PORT}).')
-    parser.add_argument('--auto-port', action='store_true', help='If the port is busy, try the next ports (then an ephemeral port). Also on when KORU_SERVE_AUTO_PORT is 1/true/yes.')
-    open_group = parser.add_mutually_exclusive_group()
-    open_group.add_argument('--open', dest='open_browser', action='store_true', default=True, help='Open the dashboard URL in the default browser (default).')
-    open_group.add_argument('--no-open', dest='open_browser', action='store_false', help='Do not open a browser tab; just start the server.')
-    return parser
+_build_serve_parser = build_parser_delegate(_build_serve_parser_impl)
 
-def _build_local_serve_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='koru local-serve', description='Minimal localhost JSON/NDJSON hub for scripts and HTTP clients (see docs/local-service.md).')
-    parser.add_argument('--host', default=None, help='Bind address (default: KORU_LOCAL_SERVICE_HOST or 127.0.0.1).')
-    parser.add_argument('--port', type=int, default=None, help='TCP port (default: KORU_LOCAL_SERVICE_PORT or 18766). Use 0 for an ephemeral OS-assigned port.')
-    parser.add_argument('--max-events', type=int, default=None, help='Ring buffer size (default: KORU_LOCAL_SERVICE_MAX_EVENTS or 256).')
-    return parser
+_build_local_serve_parser = build_parser_delegate(_build_local_serve_parser_impl)
 
-def _build_agent_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='koru agent', description='Print or launch the best available LLM/IDE handoff for this project.')
-    parser.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    parser.add_argument('--queue-name', default=None, help='Queue used when selecting the active ticket.')
-    parser.add_argument('--ticket', default=None, help='Render prompt for a specific ticket id.')
-    parser.add_argument('--agent', dest='agent_id', default=None, help='Agent id to select.')
-    parser.add_argument('--launch', action='store_true', help='Launch the selected agent if it has a CLI.')
-    parser.add_argument('--list', action='store_true', help='List detected agents and exit.')
-    parser.add_argument('--format', dest='output_format', choices=('text', 'json'), default='text', help='With --list: machine-readable json (default: text).')
-    parser.add_argument('--lane', dest='lane_id', default=None, help='Agent lane id for --env-exports / --env-json (e.g. cursor, windsurf, claude-code). Falls back to --agent when set.')
-    parser.add_argument('--env-exports', action='store_true', help='Print shell exports for KORU_AUTOPILOT_* / queue actor hints; requires --lane or --agent.')
-    parser.add_argument('--env-json', action='store_true', help='Print recommended lane env as JSON (requires --lane or --agent).')
-    return parser
+_build_agent_parser = build_parser_delegate(_build_agent_parser_impl)
 
-def _load_tool_scaffold(tool_id: str, tool_registry: str | None, tool_kind: str | None) -> tuple[dict[str, Any] | None, Path | None, int | None]:
-    """Load scaffold from tool registry. Returns (scaffold, registry_path, error_code)."""
-    registry, registry_path = load_tool_registry(tool_registry)
-    if not registry:
-        print('koru task: tool registry is empty or missing. Use --tool-registry PATH or ensure docs/ai-tool-registry-2026.yaml exists.')
-        return (None, None, 2)
-    tool = find_tool_entry(registry, tool_id)
-    if tool is None:
-        known = ', '.join(sorted((str(t.get('id')) for t in registry if t.get('id'))))
-        print(f"koru task: unknown --tool '{tool_id}'. Known ids: {known}")
-        return (None, None, 2)
-    scaffold = build_tool_task_scaffold(tool, adapter_kind=tool_kind)
-    if registry_path is not None:
-        scaffold.setdefault('source_context', {})
-        if isinstance(scaffold.get('source_context'), dict):
-            scaffold['source_context']['registry'] = str(registry_path)
-    return (scaffold, registry_path, None)
+_task_main = build_main_delegate(_task_main_impl)
 
-def _merge_cli_scaffold(scaffold: dict[str, Any] | None, *, source_tool: str | None, source_signal: str | None, dedupe_key: str | None, files: list[str] | None) -> dict[str, Any] | None:
-    if not (source_tool or source_signal or dedupe_key or files):
-        return scaffold
-    scaffold = dict(scaffold or {})
-    if source_tool:
-        scaffold['source_tool'] = source_tool
-    context = dict(scaffold.get('source_context')) if isinstance(scaffold.get('source_context'), dict) else {}
-    if source_signal:
-        context['signal'] = source_signal
-    if dedupe_key:
-        context['dedupe_key'] = dedupe_key
-    scaffold['source_context'] = context
-    if files:
-        scaffold['files'] = list(files)
-    return scaffold
+_serve_main = build_main_delegate(_serve_main_impl)
 
-def _print_task_result(created: object, task_args: Any) -> None:
-    action = 'reused' if getattr(created, 'reused', False) else 'created'
-    print(f'koru task: ✓ {action} {created.ticket_id} in {created.path}')
-    print(f'  name:  {created.name}')
-    print(f"  queue: {task_args.queue_name or 'default'}")
-    if task_args.tool_id:
-        print(f'  tool:  {task_args.tool_id}')
-        print('  note: scaffold ticket created — fill concrete executor inputs before queue run')
-    print('Next: run `koru` to get the LLM prompt, or `koru --queue` to execute one task.')
-    emit_management_event(tool='koru.task', action='created', status='completed', message=created.name, queue=task_args.queue_name, details={'ticket_id': created.ticket_id, 'project': str(task_args.project), 'sprint': task_args.sprint, 'priority': task_args.priority})
+_local_serve_main = build_main_delegate(_local_serve_main_impl)
 
-def _task_main(argv: list[str]) -> int:
-    task_args = _build_task_parser().parse_args(argv)
-    scaffold: dict[str, Any] | None = None
-    if task_args.tool_id:
-        scaffold, _registry_path, error_code = _load_tool_scaffold(task_args.tool_id, task_args.tool_registry, task_args.tool_kind)
-        if error_code is not None:
-            return error_code
-    scaffold = _merge_cli_scaffold(scaffold, source_tool=task_args.source_tool, source_signal=task_args.source_signal, dedupe_key=task_args.dedupe_key, files=task_args.files)
-    try:
-        created = create_nl_task(task_args.project, ' '.join(task_args.text), sprint=task_args.sprint, queue_name=task_args.queue_name, priority=task_args.priority, scaffold=scaffold)
-    except ValueError as exc:
-        print(f'koru task: {exc}')
-        return 2
-    _print_task_result(created, task_args)
-    return 0
-
-def _serve_main(argv: list[str]) -> int:
-    from koruapi.dashboard import dashboard_main
-    return dashboard_main(argv)
-
-def _local_serve_main(argv: list[str]) -> int:
-    from koruapi.local import local_main
-    return local_main(argv)
-
-def _agent_main(argv: list[str]) -> int:
-    from koru.agent_cli_helpers import print_agent_list, run_agent_handoff, try_agent_env_exports
-    agent_args = _build_agent_parser().parse_args(argv)
-    project = agent_args.project.resolve()
-    env_code = try_agent_env_exports(agent_args)
-    if env_code is not None:
-        return env_code
-    if agent_args.list:
-        print_agent_list(agent_args, detect_agent_options(project))
-        return 0
-    return run_agent_handoff(project, agent_args)
+_agent_main = build_main_delegate(_agent_main_impl)
 
 def _is_bare_invocation(cli_namespace: argparse.Namespace) -> bool:
     """True when the user typed only ``koru`` (or ``koru --project P``).
@@ -289,116 +178,27 @@ def _is_bare_invocation(cli_namespace: argparse.Namespace) -> bool:
         or cli_namespace.command
     )
 
-def _build_runtime_context_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='koru runtime-context', description='Show the current project runtime context: systems, libraries, algorithms, APIs, applications, pipelines, and topology.')
-    parser.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    parser.add_argument('--format', dest='output_format', choices=('json', 'text'), default='json', help='Output format (default json).')
-    return parser
+_build_runtime_context_parser = build_parser_delegate(_build_runtime_context_parser_impl)
 
-def _render_runtime_context_text(context: dict[str, Any]) -> str:
-    summary = context.get('summary') or {}
-    lines = [f"koru runtime-context: {summary.get('project') or context.get('project_root')}", f"  version: {summary.get('version') or '-'}", f"  services: {summary.get('services', 0)}", f"  workspaces: {summary.get('workspaces', 0)}", f"  pipelines: {summary.get('pipelines', 0)}", f"  topology nodes: {summary.get('topology_nodes', 0)}", '', 'Systems:']
-    for service in context.get('systems') or []:
-        ports = ', '.join(service.get('ports') or []) or '-'
-        files = ', '.join(service.get('compose_files') or []) or '-'
-        lines.append(f"  {service.get('name')}: ports={ports} compose={files}")
-    lines.append('')
-    lines.append('Pipelines:')
-    for pipeline in context.get('pipelines') or []:
-        mode = 'interactive' if pipeline.get('interactive') else 'batch'
-        lines.append(f"  {pipeline.get('name')}: {mode} — {pipeline.get('description') or '-'}")
-    return '\n'.join(lines)
+_render_runtime_context_text = _render_runtime_context_text_impl
 
-def _runtime_context_main(argv: list[str]) -> int:
-    runtime_args = _build_runtime_context_parser().parse_args(argv)
-    try:
-        from planfile.runtime_context import build_runtime_context
-    except ImportError as exc:
-        print('koru runtime-context: planfile.runtime_context is not available. Install/update semcod/planfile or add it to PYTHONPATH.', file=sys.stderr)
-        print(str(exc), file=sys.stderr)
-        return 2
-    context = build_runtime_context(runtime_args.project)
-    if runtime_args.output_format == 'text':
-        print(_render_runtime_context_text(context))
-    else:
-        print(json.dumps(context, indent=2, sort_keys=True, default=str))
-    return 0
+_runtime_context_main = build_main_delegate(_runtime_context_main_impl)
 
-def _init_ci_main(_argv: list[str]) -> int:
-    """Print where to copy the reference GitHub Actions workflow (Epic 2 thin CI)."""
-    print('koru init-ci:\n  After copying the reference workflow, it should live at:\n    .github/workflows/koru-ci.yml\n  Upstream reference (semcod/koru):\n    https://github.com/semcod/koru/blob/main/.github/workflows/koru-ci.yml\n  How to adapt for your repo:\n    https://github.com/semcod/koru/blob/main/docs/ci-github.md\n  GitLab — example pipeline in this repo:\n    examples/ci/gitlab-ci.example.yml\n    https://github.com/semcod/koru/blob/main/examples/ci/gitlab-ci.example.yml\n  GitLab — how to adapt:\n    https://github.com/semcod/koru/blob/main/docs/ci-gitlab.md')
-    return 0
+_init_ci_main = build_main_delegate(_init_ci_main_impl)
 
 def _mcp_serve_main(argv: list[str]) -> int:
     from koruapi.mcp import mcp_main
     return mcp_main(argv)
 
-def _agent_backends_main(argv: list[str]) -> int:
-    """List or describe IDE agent backend profiles (``agent_backends``)."""
-    from dataclasses import asdict
-    from koru.agent_backends import get_agent_backend_profile, iter_agent_backend_profiles
-    parser = argparse.ArgumentParser(prog='koru agent-backends')
-    parser.add_argument('--format', dest='output_format', choices=('text', 'json'), default='text')
-    parser.add_argument('backend_id', nargs='?', default=None, metavar='BACKEND_ID', help='When set, print one profile; otherwise list every profile id.')
-    backend_args = parser.parse_args(argv)
-    if backend_args.backend_id:
-        profile = get_agent_backend_profile(backend_args.backend_id)
-        if profile is None:
-            sys.stderr.write(f'koru agent-backends: unknown id {backend_args.backend_id!r}\n')
-            sys.stderr.write('  run `koru agent-backends` for ids.\n')
-            return 2
-    else:
-        profile = None
-    if backend_args.output_format == 'json':
-        if profile:
-            print(json.dumps(asdict(profile), indent=2, sort_keys=True))
-        else:
-            print(json.dumps([asdict(p) for p in iter_agent_backend_profiles()], indent=2, sort_keys=True))
-        return 0
-    if profile:
-        print(f'id                 {profile.id}')
-        print(f'transport          {profile.transport}')
-        print(f'can_push_chat      {profile.can_push_chat}')
-        print(f'can_pull_chat_text {profile.can_pull_chat_text}')
-        print(f'needs_gui_session  {profile.needs_gui_session}')
-        print(f'mcp_tools_only     {profile.mcp_tools_only}')
-        print(f'primary_code       {profile.primary_code}')
-        return 0
-    for p in iter_agent_backend_profiles():
-        print(p.id)
-    return 0
+_agent_backends_main = build_main_delegate(_agent_backends_main_impl)
 
 def _init_ide_main(argv: list[str]) -> int:
     from koru.mcp_provision import init_ide_main
     return init_ide_main(argv)
 
-def _refactor_planfile_handoff_main(argv: list[str]) -> int:
-    """CLI: ``koru refactor-planfile-handoff`` — markdown for IDE chat (planfile tickets)."""
-    import argparse
-    from koru.refactor_planfile_handoff import render_planfile_refactor_handoff
-    p = argparse.ArgumentParser(prog='koru refactor-planfile-handoff', description='Print markdown instructions for attaching project/analysis.toon.yaml and drafting planfile refactor tickets in the IDE chat.')
-    p.add_argument('--project', type=Path, default=Path.cwd(), help='Project root.')
-    handoff_args = p.parse_args(argv)
-    print(render_planfile_refactor_handoff(handoff_args.project), end='')
-    return 0
+_refactor_planfile_handoff_main = build_main_delegate(_refactor_planfile_handoff_main_impl)
 
-def ide_router_main(argv: list[str]) -> int:
-    """CLI: ``koru ide-router`` — print resolved IDE / headless routing."""
-    import argparse
-    import json
-    from koru.ide_router import resolve_ide_route
-    p = argparse.ArgumentParser(prog='koru ide-router')
-    p.add_argument('--cli-ide', default='auto', help='Preview merge as if autonomous passed --autopilot-ide (default: auto).')
-    p.add_argument('--format', choices=('text', 'json'), default='text', help='text lines (default) or json for scripts')
-    router_args = p.parse_args(argv)
-    route = resolve_ide_route(cli_autopilot_ide=router_args.cli_ide)
-    payload = {'autopilot_ide': route.autopilot_ide, 'headless': route.headless, 'primary_surface': route.primary_surface, 'recommend_mcp': route.recommend_mcp, 'recommend_autopilot_drive': route.recommend_autopilot_drive, 'notes': route.notes}
-    if router_args.format == 'json':
-        print(json.dumps(payload, sort_keys=True))
-    else:
-        for key, val in payload.items():
-            print(f'{key}: {val}')
-    return 0
+ide_router_main = build_main_delegate(_ide_router_main_impl)
 
 def _dsl_main(argv: list[str]) -> int:
     from korudsl.cli import main as dsl_main

@@ -9,8 +9,9 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    KeyboardPolicy,
     PluginPolicy,
+    StaticIdeIdentityMixin,
+    StaticVscodeFolderMixin,
     TerminalSignature,
     VscodeFamilyStrategy,
 )
@@ -18,18 +19,10 @@ from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class WindsurfStrategy(VscodeFamilyStrategy):
-    @property
-    def id(self) -> str:
-        return "windsurf"
-
-    @property
-    def label(self) -> str:
-        return "Windsurf"
-
-    @property
-    def config_folder_name(self) -> str:
-        return "Windsurf"
+class WindsurfStrategy(StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy):
+    IDE_ID = "windsurf"
+    IDE_LABEL = "Windsurf"
+    CONFIG_FOLDER_NAME = "Windsurf"
 
     @property
     def detection(self) -> DetectionSignature:

@@ -12,6 +12,7 @@ from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 
 @dataclass(frozen=True)
@@ -122,9 +123,25 @@ class OsStrategy(ABC):
         return f"<{type(self).__name__} id={self.id!r}>"
 
 
+class StaticOsIdentityMixin:
+    """Provide ``id``/``label`` from class-level constants."""
+
+    OS_ID: ClassVar[str] = ""
+    OS_LABEL: ClassVar[str] = ""
+
+    @property
+    def id(self) -> str:
+        return self.OS_ID
+
+    @property
+    def label(self) -> str:
+        return self.OS_LABEL
+
+
 __all__ = [
     "FocusOutcome",
     "KeySequence",
     "OsCapabilities",
     "OsStrategy",
+    "StaticOsIdentityMixin",
 ]
