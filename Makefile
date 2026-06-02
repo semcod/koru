@@ -48,6 +48,9 @@ sync-plugin-shared:
 VERSION = $(shell $(PYTHON) scripts/bump_version.py --show)
 
 .PHONY: build clean-dist bump-patch bump-minor bump-major publish publish-test check-dist
+.PHONY: packages-build packages-check packages-publish-test packages-publish
+
+PACKAGE_DIRS := $(shell find packages -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)
 
 clean-dist:
 	rm -f dist/koru-*
@@ -109,3 +112,80 @@ publish:
 	@$(PYTHON) -m pip install -q twine
 	@$(PYTHON) -m twine upload dist/koru-$(VERSION)*
 	@echo "✓ Published koru $(VERSION) to PyPI"
+
+
+# =============================================================================
+# Packages/* release helpers (coru, koruenv, ...)
+# =============================================================================
+
+packages-build:
+	@set -euo pipefail; \
+	if [ -z "$(PACKAGE_DIRS)" ]; then \
+		echo "No package directories found under packages/"; \
+		exit 1; \
+	fi; \
+	$(PYTHON) -m pip install -q build; \
+	for pkg in $(PACKAGE_DIRS); do \
+		if [ ! -f "$$pkg/pyproject.toml" ]; then \
+			echo "- skipping $$pkg (no pyproject.toml)"; \
+			continue; \
+		fi; \
+		echo "📦 building $$pkg"; \
+		rm -rf "$$pkg/dist" "$$pkg/build" "$$pkg"/*.egg-info "$$pkg/src"/*.egg-info; \
+		$(PYTHON) -m build "$$pkg"; \
+	done
+
+packages-check:
+	@set -euo pipefail; \
+	$(PYTHON) -m pip install -q twine; \
+	for pkg in $(PACKAGE_DIRS); do \
+		if [ ! -f "$$pkg/pyproject.toml" ]; then \
+			continue; \
+		fi; \
+		if ls "$$pkg"/dist/* >/dev/null 2>&1; then \
+			echo "🔎 twine check $$pkg/dist/*"; \
+			$(PYTHON) -m twine check "$$pkg"/dist/*; \
+		else \
+			echo "No artifacts in $$pkg/dist (run: make packages-build)"; \
+			exit 1; \
+		fi; \
+	done
+
+packages-publish-test: packages-build packages-check
+	@echo "🚀 Publishing packages/* to TestPyPI..."
+	@bash -c '\
+	if [ -n "$${PYPI_API_TOKEN}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \
+		export TWINE_USERNAME=__token__ TWINE_PASSWORD="$${PYPI_API_TOKEN}"; \
+	fi; \
+	if [ -z "$${TWINE_USERNAME}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \
+		echo "⚠️  No PyPI credentials. Set TWINE_USERNAME/TWINE_PASSWORD or PYPI_API_TOKEN"; \
+		echo "   Skipping upload (artifacts are built and twine-checked)."; \
+		exit 0; \
+	fi; \
+	for pkg in $(PACKAGE_DIRS); do \
+		if [ ! -f "$$pkg/pyproject.toml" ]; then \
+			continue; \
+		fi; \
+		echo "⬆️  testpypi upload $$pkg/dist/*"; \
+		$(PYTHON) -m twine upload --repository testpypi "$$pkg"/dist/*; \
+	done; \
+	echo "✓ Published all packages/* to TestPyPI"'
+
+packages-publish: packages-build packages-check
+	@echo "🚀 Publishing packages/* to PyPI..."
+	@bash -c '\
+	if [ -n "$${PYPI_API_TOKEN}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \
+		export TWINE_USERNAME=__token__ TWINE_PASSWORD="$${PYPI_API_TOKEN}"; \
+	fi; \
+	if [ -z "$${TWINE_USERNAME}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \
+		echo "⚠️  No PyPI credentials. Set TWINE_USERNAME/TWINE_PASSWORD or PYPI_API_TOKEN"; \
+		exit 1; \
+	fi; \
+	for pkg in $(PACKAGE_DIRS); do \
+		if [ ! -f "$$pkg/pyproject.toml" ]; then \
+			continue; \
+		fi; \
+		echo "⬆️  pypi upload $$pkg/dist/*"; \
+		$(PYTHON) -m twine upload "$$pkg"/dist/*; \
+	done; \
+	echo "✓ Published all packages/* to PyPI"'

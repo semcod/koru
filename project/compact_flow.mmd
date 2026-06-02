@@ -12,8 +12,10 @@ flowchart TD
     koru__observability_events["koru.observability_events<br/>10 funcs"]
     koru__ticket_evidence["koru.ticket_evidence<br/>17 funcs"]
     koruide__command_catalog_store["koruide.command_catalog_store<br/>13 funcs"]
-    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>192 funcs"]
-    plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>133 funcs"]
+    packages__coru["packages.coru<br/>19 funcs"]
+    packages__koruenv["packages.koruenv<br/>11 funcs"]
+    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>177 funcs"]
+    plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>118 funcs"]
     plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>444 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__bump_version["scripts.bump_version<br/>5 funcs"]
@@ -49,6 +51,7 @@ flowchart TD
     src__koruapi ==>|17| scripts__koru_soak_monitor
     src__koru ==>|16| src__koruvision
     src__koruapi ==>|13| plugins__koru_autopilot_shared
+    packages__coru ==>|13| scripts__koru_soak_monitor
     examples__remote_orchestration_demo ==>|12| scripts__koru_soak_monitor
     src__koruvision ==>|12| scripts__koru_soak_monitor
     koru__autonomous_plugin_wait ==>|12| src__koru
@@ -74,6 +77,7 @@ flowchart TD
     src__koruvision ==>|5| src__koru
     koru__autonomous_plugin_wait ==>|5| koru__observability_events
     scripts__koru_gate_capture ==>|5| scripts__koru_soak_monitor
+    packages__coru ==>|5| src__koru
     src__koruapi ==>|4| src__korudsl
     src__koruide ==>|4| koruide__command_catalog_store
     docker__capture ==>|4| src__koruvision
@@ -85,6 +89,7 @@ flowchart TD
     koru__cli_tagi -->|3| src__koru
     scripts__sync_plugin_shared -->|3| scripts__koru_soak_monitor
     scripts__scaffold_ide_plugin -->|3| scripts__koru_soak_monitor
+    packages__koruenv -->|3| scripts__koru_soak_monitor
     services__healing_webhook -->|2| plugins__koru_autopilot_shared
     src__koruvision -->|2| plugins__koru_autopilot_shared
     src__korumesh -->|2| src__koru
@@ -95,6 +100,7 @@ flowchart TD
     src__koru -->|2| koru__autonomous_cycle_chat_activity
     koru__autopilot -->|2| src__koru
     scripts__sync_plugin_build -->|2| scripts__koru_soak_monitor
+    packages__koruenv -->|2| src__koru
     services__healing_webhook -->|1| src__koru
     src__koruobserve -->|1| src__korumesh
     src__koruobserve -->|1| koru__observability_dsl

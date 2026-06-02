@@ -5,9 +5,9 @@
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:595  out:0  total:595
+    CC=0  in:611  out:0  total:611
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:148  out:9  total:157
+    CC=5  in:155  out:9  total:164
   src.koruide.ide.normalize_ide_id
     CC=6  in:68  out:11  total:79
   src.koru.activity_log.activity
@@ -28,12 +28,12 @@ HUBS[20]:
     CC=11  in:1  out:25  total:26
   src.koru.queue.ticket.planfile_command
     CC=5  in:18  out:7  total:25
-  src.koruapi.dashboard_config._dashboard_config_request_kwargs
-    CC=10  in:1  out:23  total:24
-  examples.remote_orchestration_demo.run_multi_node_orchestration
-    CC=9  in:0  out:24  total:24
   src.koruapi.dashboard_routes._post_remote_drive
     CC=9  in:0  out:24  total:24
+  examples.remote_orchestration_demo.run_multi_node_orchestration
+    CC=9  in:0  out:24  total:24
+  src.koruapi.dashboard_config._dashboard_config_request_kwargs
+    CC=10  in:1  out:23  total:24
   src.koru.context.build_context
     CC=6  in:8  out:16  total:24
   src.koruapi.topology_post.apply_topology_post_update
@@ -42,8 +42,8 @@ HUBS[20]:
     CC=8  in:0  out:22  total:22
   src.koruapi.dashboard_routes._post_waiting_input_bulk
     CC=9  in:0  out:22  total:22
-  src.koruapi.server._json_response
-    CC=1  in:12  out:9  total:21
+  src.koruobserve.providers_cli.providers_test_text
+    CC=13  in:1  out:20  total:21
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]

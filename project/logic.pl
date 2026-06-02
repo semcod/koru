@@ -41,10 +41,14 @@ project_file('examples/remote_orchestration_demo.py', 70, 'python').
 project_file('examples/run-e2e.sh', 44, 'shell').
 project_file('examples/runtime/koru-serve-health/e2e.sh', 22, 'shell').
 project_file('examples/runtime/koru-serve-health/run-docker.sh', 8, 'shell').
+project_file('packages/coru/src/coru/__init__.py', 4, 'python').
+project_file('packages/coru/src/coru/cli.py', 435, 'python').
+project_file('packages/coru/tests/test_coru_cli.py', 168, 'python').
 project_file('packages/koruenv/scripts/koruenv-lane.sh', 5, 'shell').
 project_file('packages/koruenv/src/koruenv/__init__.py', 10, 'python').
 project_file('packages/koruenv/src/koruenv/cli.py', 95, 'python').
 project_file('packages/koruenv/src/koruenv/lane.py', 94, 'python').
+project_file('packages/koruenv/tests/test_koruenv_package.py', 26, 'python').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/autopilot-bridge.js', 171, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-ack.js', 174, 'javascript').
@@ -532,7 +536,7 @@ project_file('scripts/docker-ide-matrix.sh', 93, 'shell').
 project_file('scripts/koru-autoloop-reset-diag-markers.sh', 97, 'shell').
 project_file('scripts/koru-autoloop.sh', 677, 'shell').
 project_file('scripts/koru-autopilot-lane.sh', 11, 'shell').
-project_file('scripts/koru-autopilot-lanes.sh', 129, 'shell').
+project_file('scripts/koru-autopilot-lanes.sh', 126, 'shell').
 project_file('scripts/koru-from-repo.sh', 11, 'shell').
 project_file('scripts/koru-gate-capture.py', 315, 'python').
 project_file('scripts/koru-pytest.sh', 146, 'shell').
@@ -918,9 +922,6 @@ project_file('src/korudsl/__init__.py', 26, 'python').
 project_file('src/korudsl/cli.py', 91, 'python').
 project_file('src/korudsl/library.py', 208, 'python').
 project_file('src/korudsl/transform.py', 71, 'python').
-project_file('src/koruenv/__init__.py', 10, 'python').
-project_file('src/koruenv/cli.py', 95, 'python').
-project_file('src/koruenv/lane.py', 94, 'python').
 project_file('src/koruide/__init__.py', 81, 'python').
 project_file('src/koruide/audit.py', 155, 'python').
 project_file('src/koruide/chat_history.py', 167, 'python').
@@ -1169,7 +1170,6 @@ project_file('tests/test_koru_queue_argv.py', 24, 'python').
 project_file('tests/test_koruapi.py', 167, 'python').
 project_file('tests/test_koruapi_transports.py', 21, 'python').
 project_file('tests/test_korudsl.py', 41, 'python').
-project_file('tests/test_koruenv_cli.py', 68, 'python').
 project_file('tests/test_koruide_bridges.py', 78, 'python').
 project_file('tests/test_koruide_client.py', 197, 'python').
 project_file('tests/test_koruide_daemon_handlers_ack.py', 376, 'python').
@@ -1224,7 +1224,7 @@ project_file('tests/test_scan_split.py', 117, 'python').
 project_file('tests/test_screencast_session.py', 40, 'python').
 project_file('tests/test_self_control.py', 128, 'python').
 project_file('tests/test_semcod_tools.py', 52, 'python').
-project_file('tests/test_serve.py', 888, 'python').
+project_file('tests/test_serve.py', 891, 'python').
 project_file('tests/test_shell_evidence.py', 51, 'python').
 project_file('tests/test_stdio_autonomous_jsonl.py', 99, 'python').
 project_file('tests/test_strategy_metadata_accessors.py', 78, 'python').
@@ -1262,6 +1262,39 @@ python_function('docker/capture/smoke.py', '_run_headless', 0, 2, 4).
 python_function('docker/capture/smoke.py', '_run_x11', 0, 3, 6).
 python_function('docker/capture/smoke.py', 'main', 1, 4, 9).
 python_function('examples/remote_orchestration_demo.py', 'run_multi_node_orchestration', 0, 9, 8).
+python_function('packages/coru/src/coru/cli.py', '_run', 1, 2, 3).
+python_function('packages/coru/src/coru/cli.py', '_cmd_exists', 1, 1, 1).
+python_function('packages/coru/src/coru/cli.py', '_python_module_exists', 1, 2, 1).
+python_function('packages/coru/src/coru/cli.py', '_tool_argv', 3, 3, 3).
+python_function('packages/coru/src/coru/cli.py', '_ensure_commands', 1, 10, 8).
+python_function('packages/coru/src/coru/cli.py', '_repo_root', 0, 4, 3).
+python_function('packages/coru/src/coru/cli.py', '_local_install_target', 1, 6, 4).
+python_function('packages/coru/src/coru/cli.py', '_lane_env', 3, 2, 3).
+python_function('packages/coru/src/coru/cli.py', '_lane_status', 2, 2, 3).
+python_function('packages/coru/src/coru/cli.py', '_lane_auto', 3, 4, 5).
+python_function('packages/coru/src/coru/cli.py', '_heuristic_plan', 1, 11, 6).
+python_function('packages/coru/src/coru/cli.py', '_llm_plan', 1, 10, 9).
+python_function('packages/coru/src/coru/cli.py', '_resolve_defaults', 1, 10, 2).
+python_function('packages/coru/src/coru/cli.py', '_default_lane', 2, 5, 1).
+python_function('packages/coru/src/coru/cli.py', '_execute_plan', 1, 11, 7).
+python_function('packages/coru/src/coru/cli.py', '_build_plan_chain', 1, 10, 7).
+python_function('packages/coru/src/coru/cli.py', '_execute_plans', 1, 9, 3).
+python_function('packages/coru/src/coru/cli.py', '_chat_loop', 0, 9, 8).
+python_function('packages/coru/src/coru/cli.py', '_build_parser', 0, 1, 4).
+python_function('packages/coru/src/coru/cli.py', 'main', 1, 15, 14).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_heuristic_plan_auto', 0, 3, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_execute_text_uses_heuristic', 1, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_ensure_without_install_missing', 1, 2, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_ensure_with_install_calls_pip', 1, 3, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_local_install_target_koruenv', 0, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_build_plan_chain_for_auto_intent', 0, 2, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_text_executes_chain', 1, 3, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_main_shorthand_routes_to_text', 1, 3, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_auto_without_lane_uses_defaults', 1, 5, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_lane_status_defaults_can_use_env', 1, 3, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_no_args_starts_chat', 1, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_status_alias_routes_to_lane_status', 1, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_env_alias_routes_to_lane', 1, 3, 2).
 python_function('packages/koruenv/src/koruenv/cli.py', '_build_parser', 0, 1, 4).
 python_function('packages/koruenv/src/koruenv/cli.py', '_render_exports', 1, 4, 3).
 python_function('packages/koruenv/src/koruenv/cli.py', '_strip_double_dash', 1, 3, 1).
@@ -1273,6 +1306,8 @@ python_function('packages/koruenv/src/koruenv/lane.py', '_fallback_temp_dir', 1,
 python_function('packages/koruenv/src/koruenv/lane.py', 'resolve_lane_socket', 1, 1, 1).
 python_function('packages/koruenv/src/koruenv/lane.py', 'resolve_lane_socket_for_os', 1, 5, 7).
 python_function('packages/koruenv/src/koruenv/lane.py', 'build_lane_environ', 0, 2, 5).
+python_function('packages/koruenv/tests/test_koruenv_package.py', 'test_lane_env_xdg_runtime', 0, 4, 1).
+python_function('packages/koruenv/tests/test_koruenv_package.py', 'test_cli_env_bash', 1, 4, 2).
 python_function('scripts/_koru_autodiag_filter_tickets.py', 'main', 0, 12, 11).
 python_function('scripts/bump_version.py', 'read_version', 0, 2, 4).
 python_function('scripts/bump_version.py', 'bump', 2, 5, 3).
@@ -3888,17 +3923,6 @@ python_function('src/korudsl/transform.py', 'library_from_any', 1, 12, 9).
 python_function('src/korudsl/transform.py', 'library_to_any', 1, 2, 3).
 python_function('src/korudsl/transform.py', 'dsl_roundtrip_report', 1, 1, 4).
 python_function('src/korudsl/transform.py', 'load_path', 1, 3, 2).
-python_function('src/koruenv/cli.py', '_build_parser', 0, 1, 4).
-python_function('src/koruenv/cli.py', '_render_exports', 1, 4, 3).
-python_function('src/koruenv/cli.py', '_strip_double_dash', 1, 3, 1).
-python_function('src/koruenv/cli.py', '_run_with_overlay', 2, 1, 5).
-python_function('src/koruenv/cli.py', 'main', 1, 5, 7).
-python_function('src/koruenv/lane.py', 'validate_ide', 1, 3, 6).
-python_function('src/koruenv/lane.py', 'validate_instance', 1, 3, 4).
-python_function('src/koruenv/lane.py', '_fallback_temp_dir', 1, 5, 4).
-python_function('src/koruenv/lane.py', 'resolve_lane_socket', 1, 1, 1).
-python_function('src/koruenv/lane.py', 'resolve_lane_socket_for_os', 1, 5, 7).
-python_function('src/koruenv/lane.py', 'build_lane_environ', 0, 2, 5).
 python_function('src/koruide/audit.py', 'default_log_path', 0, 2, 3).
 python_function('src/koruide/audit.py', '_isoformat_utc', 1, 2, 4).
 python_function('src/koruide/chat_history.py', 'default_events_path', 0, 1, 2).
@@ -5720,10 +5744,6 @@ python_function('tests/test_koruapi_transports.py', 'test_mcp_main_version_exit'
 python_function('tests/test_korudsl.py', 'test_normalize_and_roundtrip', 0, 4, 3).
 python_function('tests/test_korudsl.py', 'test_library_to_dsl_objectives', 0, 2, 2).
 python_function('tests/test_korudsl.py', 'test_koru_dsl_version_exits_zero', 1, 3, 4).
-python_function('tests/test_koruenv_cli.py', 'test_build_lane_environ_prefers_xdg_runtime', 1, 4, 2).
-python_function('tests/test_koruenv_cli.py', 'test_build_lane_environ_windows_temp', 1, 3, 3).
-python_function('tests/test_koruenv_cli.py', 'test_cli_env_powershell', 1, 4, 2).
-python_function('tests/test_koruenv_cli.py', 'test_cli_status_executes_koru_with_overlay', 1, 6, 4).
 python_function('tests/test_koruide_bridges.py', 'test_koruide_ide_bridge_exports_legacy_symbols', 0, 4, 0).
 python_function('tests/test_koruide_bridges.py', 'test_koruide_injector_bridge_exports_legacy_symbols', 0, 4, 0).
 python_function('tests/test_koruide_bridges.py', 'test_koruide_os_injector_bridge_exports_legacy_symbols', 0, 5, 0).
@@ -6089,9 +6109,9 @@ python_function('tests/test_serve.py', '_get', 2, 1, 4).
 python_function('tests/test_serve.py', '_get_no_redirect', 2, 2, 4).
 python_function('tests/test_serve.py', '_post_json', 3, 1, 7).
 python_function('tests/test_serve.py', 'test_cmdline_suggests_koru_serve_from_bytes', 0, 4, 1).
-python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_approve', 0, 4, 5).
-python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_approve_without_claim_command', 0, 4, 5).
-python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_reject', 0, 6, 6).
+python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_approve', 0, 4, 6).
+python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_approve_without_claim_command', 0, 4, 6).
+python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_reject', 0, 6, 7).
 python_function('tests/test_serve.py', 'test_start_serve_background_shutdown', 0, 3, 10).
 python_function('tests/test_serve.py', 'test_start_serve_background_emits_event_and_endpoint', 0, 10, 12).
 python_function('tests/test_shell_evidence.py', 'test_format_shell_run_note_includes_meta_and_streams', 0, 7, 5).
@@ -6289,6 +6309,8 @@ python_function('tests/test_wup_taskfile.py', 'test_operator_pipeline_taskfile_c
 python_function('tests/test_wup_taskfile.py', 'test_wup_yaml_is_bootstrapped_for_koru_project', 0, 5, 1).
 
 % ── Python Classes ───────────────────────────────────────
+python_class('packages/coru/src/coru/cli.py', 'Plan').
+python_class('packages/coru/src/coru/cli.py', 'SessionContext').
 python_class('src/koru/agent_backend_runtime.py', 'AgentBackend').
 python_method('AgentBackend', 'send_chat', 2, 2, 0).
 python_class('src/koru/agent_backend_runtime.py', 'PluginSocketBackend').

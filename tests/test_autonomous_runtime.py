@@ -185,6 +185,46 @@ def test_setup_autopilot_daemon_keeps_lane_and_socket_in_sync(
     )
 
 
+def test_build_and_log_startup_probe_reconciles_stale_koruenv_socket(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "windsurf")
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "windsurf-main")
+    monkeypatch.setenv(
+        "KORU_AUTOPILOT_SOCKET",
+        "/run/user/1000/koru-autopilot-windsurf-main.sock",
+    )
+
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        agent_lane="auto",
+        autopilot_ide="auto",
+        socket=None,
+        emit_events="human",
+    )
+    probe = SimpleNamespace(
+        resolved_lane="cursor",
+        resolved_autopilot_ide="cursor",
+        socket_path="/run/user/1000/koru-autopilot-cursor.sock",
+    )
+
+    autonomous_runtime.build_and_log_startup_probe(
+        args,
+        tmp_path,
+        apply_agent_lane_environ=lambda *_args, **_kwargs: None,
+        build_startup_probe=lambda *_args, **_kwargs: probe,
+        format_startup_banner=lambda _probe: [],
+        resolve_project_lane=lambda *_args, **_kwargs: "cursor",
+        stdio_info=lambda *_args, **_kwargs: None,
+    )
+
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "cursor"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "cursor"
+    assert os.environ["KORU_AUTOPILOT_SOCKET"] == "/run/user/1000/koru-autopilot-cursor.sock"
+
+
 def test_setup_autopilot_daemon_sets_instance_before_default_socket(
     tmp_path: Path,
     monkeypatch,

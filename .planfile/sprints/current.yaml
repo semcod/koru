@@ -1249,7 +1249,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-05-27T19:41:55.951769Z'
+        finished_at: '2026-06-02T10:59:04.310513Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1330,6 +1330,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-27T19:41:56.028491+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T10:59:04.437718+00:00'
       id: STARTER-266
       inputs:
         api_headers: {}
@@ -1384,7 +1389,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-27T19:41:56.028448+00:00'
+      updated_at: '2026-06-02T10:59:04.437683+00:00'
     STARTER-267:
       blocked_by: []
       blocks: []
@@ -2103,7 +2108,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-06-02T09:49:45.702002Z'
+        finished_at: '2026-06-02T12:05:15.080087Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2146,6 +2151,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-02T09:49:45.826442+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T12:05:15.209760+00:00'
       id: STARTER-274
       inputs:
         api_headers: {}
@@ -2199,7 +2209,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-02T09:49:45.826384+00:00'
+      updated_at: '2026-06-02T12:05:15.209719+00:00'
     STARTER-275:
       blocked_by: []
       blocks: []
@@ -18370,9 +18380,37 @@ sprint:
         triggers unnecessary IDE restarts when build SHA already matches.\n- Unit
         tests cover policy branches: installed-match, stale-build, missing-vsix, retry
         paths.\n- Public installer API and CLI behavior remain backward compatible.'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T10:45:02.214676Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-06-02T10:44:59.171116Z'
+        state: done
       files:
       - src/koruide/plugin_installer.py,src/koruide/daemon/server.py,src/koruide/daemon/handlers.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-06-02T10:44:59.300309+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T10:45:02.369217+00:00'
       id: STARTER-426
       labels:
       - refactor
@@ -18380,15 +18418,25 @@ sprint:
       - ide
       - llm-ready
       name: Decompose plugin installer into adapters and reassert policy
+      outputs:
+        artifacts: []
+        notes:
+        - Added policy branch tests for installed-match, stale-build, expected-sha-missing,
+          and missing-vsix retry discriminator.
+        result:
+          failed: 0
+          passed: 20
+          tests:
+          - .venv/bin/python -m pytest -q tests/test_autopilot_plugin_installer.py
       priority: high
       source:
         context: {}
         timestamp: '2026-06-02T09:35:10.477353Z'
         tool: sumd-refactor
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T09:35:10.488546Z'
+      updated_at: '2026-06-02T10:45:02.369162+00:00'
     STARTER-427:
       acceptance_criteria: []
       blocked_by: []
@@ -18401,9 +18449,37 @@ sprint:
         of Done:\n- API contract for existing endpoints unchanged.\n- Handler layer
         has direct unit tests without HTTP server boot.\n- Route modules drop orchestration/business
         logic weight.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T10:47:56.183844Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-06-02T10:47:53.119343Z'
+        state: done
       files:
       - src/koruapi/dashboard.py,src/koruapi/dashboard_tickets.py,src/koru/autonomy/replay_actions.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-06-02T10:47:53.266626+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T10:47:56.339792+00:00'
       id: STARTER-427
       labels:
       - refactor
@@ -18411,15 +18487,26 @@ sprint:
       - api
       - llm-ready
       name: Introduce dashboard CQRS-lite handlers
+      outputs:
+        artifacts: []
+        notes:
+        - Extracted replay read/write execution into ReplayQueryHandlers and ReplayCommandHandlers;
+          legacy replay executors now delegate to handlers.
+        result:
+          failed: 0
+          passed: 30
+          tests:
+          - .venv/bin/python -m pytest -q tests/test_dashboard_ticket_handlers.py
+            tests/test_replay_actions.py tests/test_autopilot_plugin_installer.py
       priority: normal
       source:
         context: {}
         timestamp: '2026-06-02T09:35:11.840119Z'
         tool: sumd-refactor
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T09:35:11.851536Z'
+      updated_at: '2026-06-02T10:47:56.339757+00:00'
     STARTER-428:
       acceptance_criteria: []
       blocked_by: []
@@ -18432,9 +18519,37 @@ sprint:
         unchanged.\n\nDefinition of Done:\n- No behavior drift for existing documented
         env vars.\n- Regression tests cover coercion and precedence (CLI > env > defaults).\n-
         Internal helpers for env truthy/disabled/int are reused consistently.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T10:50:07.385103Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-06-02T10:50:04.422442Z'
+        state: done
       files:
       - src/koru/autonomy/env.py,src/koru/autonomy/config.py,src/koru/env_flags.py,src/koru/autonomous_cli_config.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-06-02T10:50:04.564324+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T10:50:07.536704+00:00'
       id: STARTER-428
       labels:
       - refactor
@@ -18442,15 +18557,25 @@ sprint:
       - autonomy
       - llm-ready
       name: Unify autonomy env/config defaults and parsing
+      outputs:
+        artifacts: []
+        notes:
+        - AutonomyConfig.from_env now consumes AUTOLOOP_ENV_DEFAULTS and shared parsers
+          to reduce default drift while preserving operator-facing env names.
+        result:
+          failed: 0
+          passed: 57
+          tests:
+          - .venv/bin/python -m pytest -q tests/test_autonomy_config.py tests/test_env_flags.py
       priority: normal
       source:
         context: {}
         timestamp: '2026-06-02T09:35:13.285973Z'
         tool: sumd-refactor
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T09:35:13.290214Z'
+      updated_at: '2026-06-02T10:50:07.536656+00:00'
     STARTER-429:
       acceptance_criteria: []
       blocked_by: []
@@ -18464,9 +18589,37 @@ sprint:
         Reported CC-alerted tests reduced below current thresholds where practical.\n-
         Test names map clearly to one behavior each.\n- CI runtime impact neutral
         or improved.
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T10:51:11.270457Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-06-02T10:51:08.177719Z'
+        state: done
       files:
       - tests/test_autonomy_config.py,tests/test_structured_cycle_report.py,tests/test_koruide_plugin_installer.py,tests/test_koruide_plugin_ack.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-06-02T10:51:08.317374+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T10:51:11.412768+00:00'
       id: STARTER-429
       labels:
       - refactor
@@ -18475,15 +18628,28 @@ sprint:
       - plugin
       - llm-ready
       name: Reduce test hotspot complexity in autonomy/plugin suites
+      outputs:
+        artifacts: []
+        notes:
+        - Added direct unit tests for extracted CQRS-lite handlers (dashboard ticket
+          queries/commands, replay query/command handlers) to improve failure localization
+          without HTTP server boot.
+        result:
+          failed: 0
+          passed: 87
+          tests:
+          - .venv/bin/python -m pytest -q tests/test_autopilot_plugin_installer.py
+            tests/test_dashboard_ticket_handlers.py tests/test_replay_actions.py tests/test_autonomy_config.py
+            tests/test_env_flags.py
       priority: normal
       source:
         context: {}
         timestamp: '2026-06-02T09:35:14.683680Z'
         tool: sumd-refactor
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T09:35:14.695353Z'
+      updated_at: '2026-06-02T10:51:11.412728+00:00'
     STARTER-430:
       blocked_by: []
       blocks: []
@@ -18503,7 +18669,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide windsurf --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-06-02T09:57:45.465665Z'
+        finished_at: '2026-06-02T10:46:12.547750Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -18538,6 +18704,11 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-06-02T09:57:45.590117+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T10:46:12.707644+00:00'
       id: STARTER-430
       inputs:
         api_headers: {}
@@ -18596,4 +18767,514 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-02T09:57:45.590081+00:00'
+      updated_at: '2026-06-02T10:46:12.707597+00:00'
+    STARTER-431:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T10:59:13.596051+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomy/replay_actions.py`
+        as a god module (617 lines, 5 classes, 42 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T11:28:32.092870Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomy/replay_actions.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomy/replay_actions.py`
+          as a god module (617 lines, 5 classes, 42 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-06-02T10:59:13.596051+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T11:23:23.604759+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T11:25:59.145718+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T11:27:19.892328+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T11:28:32.248703+00:00'
+      id: STARTER-431
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomy/replay_actions.py`
+          as a god module (617 lines, 5 classes, 42 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomy/replay_actions.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: semcod:code2llm:refactor:src/koru/autonomy/replay_actions.py
+          evidence:
+            artifact:
+              mtime_ns: 1780397274239860029
+              path: project/analysis.toon.yaml
+              sha256: b525497204e434311a0e3221f6aed59f2216905a1c162ce39708801c59d5c6d9
+              size_bytes: 60157
+            kind: code2llm_analysis
+            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
+              --no-chunk --exclude '*.md' --planfile-apply --planfile-source koru-project-discovery
+              --planfile-sprint current --planfile-project /home/tom/github/semcod/koru
+              --planfile-limit 20
+            schema: koru.ticket_evidence.v1
+            staleness_check: Regenerate the artifact and compare artifact.sha256 before
+              assuming this ticket still reflects the current code.
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomy/replay_actions.py`
+            as a god module (617 lines, 5 classes, 42 methods). Split into focused
+            submodules by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-06-02T10:59:13.596051+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-06-02T11:28:32.248662+00:00'
+    STARTER-432:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T11:21:13.391058+00:00'
+      description: '[OPERATOR] Kalibracja czatu OS injectora (windsurf-main)
+
+
+        brak kalibracji chatu dla windsurf-main — task koru:ide-os:calibrate IDE=windsurf-main
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=windsurf-main`'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T11:36:57.160174Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Kalibracja czatu OS injectora (windsurf-main)
+
+
+          brak kalibracji chatu dla windsurf-main — task koru:ide-os:calibrate IDE=windsurf-main
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=windsurf-main`'
+        source: koru task
+        timestamp: '2026-06-02T11:21:13.391058+00:00'
+      - action: update
+        changes:
+        - execution
+        - inputs
+        - outputs
+        execution_state: waiting_input
+        previous_execution_state: ready
+        source: planfile.store
+        timestamp: '2026-06-02T11:31:35.727528+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: waiting_input
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T11:32:04.675303+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T11:32:05.755310+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T11:36:57.296253+00:00'
+      id: STARTER-432
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Uruchom interaktywnie: task koru:ide-os:calibrate IDE=windsurf-main,
+          kliknij/skalibruj pole chatu, a potem potwierdz wynik (success/failure +
+          ewentualny błąd).'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:os_calibrate
+      name: '[OPERATOR] Kalibracja czatu OS injectora (windsurf-main) brak kalibracji
+        chatu dla windsurf-main — task koru:ide-os:c...'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Zweryfikowano: ticket STARTER-432 jest open/waiting_input; autopilot używa
+          fallback ydotool/wtype i nie ma profilu OS injectora dla windsurf-main,
+          więc bez kalibracji nie ruszy dalej.'
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-kalibracja-czatu-os-injectora-windsurf-main-brak-kalibracji-chatu-dla-windsurf-main-task-koru-ide-os-c...
+          detail: brak kalibracji chatu dla windsurf-main — task koru:ide-os:calibrate
+            IDE=windsurf-main
+          input: '[OPERATOR] Kalibracja czatu OS injectora (windsurf-main)
+
+
+            brak kalibracji chatu dla windsurf-main — task koru:ide-os:calibrate IDE=windsurf-main
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=windsurf-main`'
+          step_id: os_calibrate
+          task_command: task koru:ide-os:calibrate IDE=windsurf-main
+        timestamp: '2026-06-02T11:21:13.391058+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-06-02T11:36:57.296206+00:00'
+    STARTER-433:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T11:30:35.629385+00:00'
+      description: '`costs` is listed in `pyproject.toml` dependencies but is neither
+        in PATH nor importable. Install it so shell / api / llm tickets that depend
+        on it can run.
+
+
+        Role: AI cost tracking + badge.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '`costs` is listed in `pyproject.toml` dependencies but is neither
+          in PATH nor importable. Install it so shell / api / llm tickets that depend
+          on it can run.
+
+
+          Role: AI cost tracking + badge.'
+        source: koru task
+        timestamp: '2026-06-02T11:30:35.629385+00:00'
+      id: STARTER-433
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`costs` is listed in `pyproject.toml` dependencies but is neither
+          in PATH nor importable. Install it so shell / api / llm tickets that depend
+          on it can run.
+
+
+          Role: AI cost tracking + badge.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - bootstrap
+      - deps
+      - scan
+      name: Install semcod tool `costs` (declared in pyproject)
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: koru-scan:missing_tool:install semcod tool `costs` (declared
+            in pyproject)
+          input: '`costs` is listed in `pyproject.toml` dependencies but is neither
+            in PATH nor importable. Install it so shell / api / llm tickets that depend
+            on it can run.
+
+
+            Role: AI cost tracking + badge.'
+          signal: missing_tool
+        timestamp: '2026-06-02T11:30:35.629385+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T11:30:35.629385+00:00'
+    STARTER-434:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T11:30:38.232782+00:00'
+      description: '`goal` is listed in `pyproject.toml` dependencies but is neither
+        in PATH nor importable. Install it so shell / api / llm tickets that depend
+        on it can run.
+
+
+        Role: strategic goal alignment.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '`goal` is listed in `pyproject.toml` dependencies but is neither
+          in PATH nor importable. Install it so shell / api / llm tickets that depend
+          on it can run.
+
+
+          Role: strategic goal alignment.'
+        source: koru task
+        timestamp: '2026-06-02T11:30:38.232782+00:00'
+      id: STARTER-434
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`goal` is listed in `pyproject.toml` dependencies but is neither
+          in PATH nor importable. Install it so shell / api / llm tickets that depend
+          on it can run.
+
+
+          Role: strategic goal alignment.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - bootstrap
+      - deps
+      - scan
+      name: Install semcod tool `goal` (declared in pyproject)
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: koru-scan:missing_tool:install semcod tool `goal` (declared
+            in pyproject)
+          input: '`goal` is listed in `pyproject.toml` dependencies but is neither
+            in PATH nor importable. Install it so shell / api / llm tickets that depend
+            on it can run.
+
+
+            Role: strategic goal alignment.'
+          signal: missing_tool
+        timestamp: '2026-06-02T11:30:38.232782+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T11:30:38.232782+00:00'
+    STARTER-435:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T12:05:17.186505+00:00'
+      description: '[OPERATOR] Kalibracja czatu OS injectora (main)
+
+
+        brak kalibracji chatu dla main — task koru:ide-os:calibrate IDE=main
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=main`'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-02T12:11:07.332075Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Kalibracja czatu OS injectora (main)
+
+
+          brak kalibracji chatu dla main — task koru:ide-os:calibrate IDE=main
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=main`'
+        source: koru task
+        timestamp: '2026-06-02T12:05:17.186505+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-02T12:06:09.190095+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-02T12:11:07.449751+00:00'
+      id: STARTER-435
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (main)
+
+
+          brak kalibracji chatu dla main — task koru:ide-os:calibrate IDE=main
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=main`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:os_calibrate
+      name: '[OPERATOR] Kalibracja czatu OS injectora (main) brak kalibracji chatu
+        dla main — task koru:ide-os:calibrate IDE=main ...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-kalibracja-czatu-os-injectora-main-brak-kalibracji-chatu-dla-main-task-koru-ide-os-calibrate-ide-main-...
+          detail: brak kalibracji chatu dla main — task koru:ide-os:calibrate IDE=main
+          input: '[OPERATOR] Kalibracja czatu OS injectora (main)
+
+
+            brak kalibracji chatu dla main — task koru:ide-os:calibrate IDE=main
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=main`'
+          step_id: os_calibrate
+          task_command: task koru:ide-os:calibrate IDE=main
+        timestamp: '2026-06-02T12:05:17.186505+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-06-02T12:11:07.449717+00:00'
+    STARTER-436:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-06-02T12:05:41.815318+00:00'
+      description: koru:ide-os:calibrate IDE=main
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: koru:ide-os:calibrate IDE=main
+        source: koru task
+        timestamp: '2026-06-02T12:05:41.815318+00:00'
+      id: STARTER-436
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: koru:ide-os:calibrate IDE=main
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: koru:ide-os:calibrate IDE=main
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: koru:ide-os:calibrate IDE=main
+        timestamp: '2026-06-02T12:05:41.815318+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-06-02T12:05:41.815318+00:00'

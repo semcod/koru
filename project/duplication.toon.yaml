@@ -1,12 +1,12 @@
-# redup/duplication | 121 groups | 474f 84903L | 2026-06-02
+# redup/duplication | 121 groups | 476f 85329L | 2026-06-02
 
 SUMMARY:
-  files_scanned: 474
-  total_lines:   84903
+  files_scanned: 476
+  total_lines:   85329
   dup_groups:    121
   dup_fragments: 298
   saved_lines:   1461
-  scan_ms:       4974
+  scan_ms:       4420
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli_cleaned.py  dup=154L  groups=14  frags=17  (0.2%)

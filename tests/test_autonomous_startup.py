@@ -46,6 +46,50 @@ def test_resolve_autopilot_ide_for_autonomous_returns_string_lane() -> None:
     assert source == "lane"
 
 
+def test_canonical_autopilot_ide_id_maps_instance_slug() -> None:
+    assert startup.canonical_autopilot_ide_id("windsurf-main") == "windsurf"
+    assert startup.canonical_autopilot_ide_id("cursor-b") == "cursor"
+    assert startup.canonical_autopilot_ide_id("jetbrains") == "jetbrains"
+
+
+def test_resolve_autopilot_ide_for_autonomous_maps_windsurf_main_instance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.ide_router import resolve_ide_route
+
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "windsurf-main")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "windsurf")
+    ide, source = startup.resolve_autopilot_ide_for_autonomous(
+        "auto",
+        "windsurf-main",
+        resolve_ide_route_fn=resolve_ide_route,
+    )
+    assert ide == "windsurf"
+    assert source == "lane"
+
+
+def test_build_startup_probe_keeps_instance_socket_for_windsurf_main(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "windsurf-main")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "windsurf")
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=[]),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value=None),
+    ):
+        probe = startup.build_startup_probe(
+            tmp_path,
+            agent_lane_cli="auto",
+            autopilot_ide_cli="auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert probe.resolved_lane == "windsurf-main"
+    assert probe.resolved_autopilot_ide == "windsurf"
+    assert probe.socket_path.endswith("koru-autopilot-windsurf-main.sock")
+
+
 def test_resolve_agent_lane_prefers_cursor_over_jetbrains_terminal_when_both_running(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -627,6 +671,48 @@ def test_build_startup_probe_reports_per_ide_socket_for_explicit_ide(
 
     assert probe.socket_path == "/run/user/1000/koru-autopilot-vscodium.sock"
     assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
+
+
+def test_build_startup_probe_ignores_stale_koruenv_socket_for_explicit_ide(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+    monkeypatch.setenv(
+        "KORU_AUTOPILOT_SOCKET",
+        "/run/user/1000/koru-autopilot-vscode.sock",
+    )
+
+    probe = startup.build_startup_probe(
+        tmp_path,
+        agent_lane_cli="none",
+        autopilot_ide_cli="cursor",
+        resolve_project_lane=lambda _p, _a: None,
+    )
+
+    assert probe.socket_path == "/run/user/1000/koru-autopilot-cursor.sock"
+
+
+def test_build_startup_probe_ignores_stale_instance_and_socket_for_explicit_ide(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "jetbrains")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+    monkeypatch.setenv(
+        "KORU_AUTOPILOT_SOCKET",
+        "/run/user/1000/koru-autopilot-vscode.sock",
+    )
+
+    probe = startup.build_startup_probe(
+        tmp_path,
+        agent_lane_cli="none",
+        autopilot_ide_cli="cursor",
+        resolve_project_lane=lambda _p, _a: None,
+    )
+
+    assert probe.socket_path == "/run/user/1000/koru-autopilot-cursor.sock"
 
 
 def test_build_startup_probe_reports_per_ide_socket_for_antigravity(

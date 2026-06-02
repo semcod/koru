@@ -1,5 +1,5 @@
-# koru | 1249f 194808L | python:708,javascript:304,typescript:175,shell:60,less:1,css:1 | 2026-06-02
-# stats: 5034 func | 537 cls | 1249 mod | CC̄=3.9 | critical:251 | cycles:0
+# koru | 1249f 195174L | python:708,javascript:304,typescript:175,shell:60,less:1,css:1 | 2026-06-02
+# stats: 5054 func | 539 cls | 1249 mod | CC̄=3.9 | critical:258 | cycles:0
 # alerts[5]: CC test_structured_cycle_report_emits_diagnostics_and_plans=23; CC _installed_extension_build_sha=22; CC test_ide_metadata_accessors_stable=20; CC test_autonomy_config_from_env=16; CC test_plugin_ack_with_shutdown_info_is_relayed=16
 # hotspots[5]: topology_main fan=23; run_api_request fan=21; test_repeated_stale_plugin_hello_rejections_are_log_throttled fan=21; setup_autonomous_session fan=20; test_local_manager_commands_emit_domain_events fan=20
 # evolution: baseline
@@ -44,10 +44,14 @@ M[1249]:
   examples/run-e2e.sh,44
   examples/runtime/koru-serve-health/e2e.sh,22
   examples/runtime/koru-serve-health/run-docker.sh,8
+  packages/coru/src/coru/__init__.py,4
+  packages/coru/src/coru/cli.py,435
+  packages/coru/tests/test_coru_cli.py,168
   packages/koruenv/scripts/koruenv-lane.sh,5
   packages/koruenv/src/koruenv/__init__.py,10
   packages/koruenv/src/koruenv/cli.py,95
   packages/koruenv/src/koruenv/lane.py,94
+  packages/koruenv/tests/test_koruenv_package.py,26
   plugins/koru-autopilot-antigravity/out/_shared/ack-payload.js,233
   plugins/koru-autopilot-antigravity/out/_shared/autopilot-bridge.js,171
   plugins/koru-autopilot-antigravity/out/_shared/bridge-ack.js,174
@@ -535,7 +539,7 @@ M[1249]:
   scripts/koru-autoloop-reset-diag-markers.sh,97
   scripts/koru-autoloop.sh,677
   scripts/koru-autopilot-lane.sh,11
-  scripts/koru-autopilot-lanes.sh,129
+  scripts/koru-autopilot-lanes.sh,126
   scripts/koru-from-repo.sh,11
   scripts/koru-gate-capture.py,315
   scripts/koru-pytest.sh,146
@@ -921,9 +925,6 @@ M[1249]:
   src/korudsl/cli.py,91
   src/korudsl/library.py,208
   src/korudsl/transform.py,71
-  src/koruenv/__init__.py,10
-  src/koruenv/cli.py,95
-  src/koruenv/lane.py,94
   src/koruide/__init__.py,81
   src/koruide/audit.py,155
   src/koruide/chat_history.py,167
@@ -1172,7 +1173,6 @@ M[1249]:
   tests/test_koruapi.py,167
   tests/test_koruapi_transports.py,21
   tests/test_korudsl.py,41
-  tests/test_koruenv_cli.py,68
   tests/test_koruide_bridges.py,78
   tests/test_koruide_client.py,197
   tests/test_koruide_daemon_handlers_ack.py,376
@@ -1227,7 +1227,7 @@ M[1249]:
   tests/test_screencast_session.py,40
   tests/test_self_control.py,128
   tests/test_semcod_tools.py,52
-  tests/test_serve.py,888
+  tests/test_serve.py,891
   tests/test_shell_evidence.py,51
   tests/test_stdio_autonomous_jsonl.py,99
   tests/test_strategy_metadata_accessors.py,78
@@ -1268,6 +1268,46 @@ D:
   examples/remote_orchestration_demo.py:
     e: run_multi_node_orchestration
     run_multi_node_orchestration()
+  packages/coru/src/coru/__init__.py:
+  packages/coru/src/coru/cli.py:
+    e: _run,_cmd_exists,_python_module_exists,_tool_argv,_ensure_commands,_repo_root,_local_install_target,_lane_env,_lane_status,_lane_auto,_heuristic_plan,_llm_plan,_resolve_defaults,_default_lane,_execute_plan,_build_plan_chain,_execute_plans,_chat_loop,_build_parser,main,Plan,SessionContext
+    Plan:
+    SessionContext:
+    _run(command)
+    _cmd_exists(name)
+    _python_module_exists(module_name)
+    _tool_argv(binary;module;args)
+    _ensure_commands(install)
+    _repo_root()
+    _local_install_target(package)
+    _lane_env(ide;instance;shell)
+    _lane_status(ide;instance)
+    _lane_auto(ide;instance;extra_args)
+    _heuristic_plan(text)
+    _llm_plan(text)
+    _resolve_defaults(plan)
+    _default_lane(ide;instance)
+    _execute_plan(plan)
+    _build_plan_chain(prompt)
+    _execute_plans(plans)
+    _chat_loop()
+    _build_parser()
+    main(argv)
+  packages/coru/tests/test_coru_cli.py:
+    e: test_heuristic_plan_auto,test_execute_text_uses_heuristic,test_ensure_without_install_missing,test_ensure_with_install_calls_pip,test_local_install_target_koruenv,test_build_plan_chain_for_auto_intent,test_text_executes_chain,test_main_shorthand_routes_to_text,test_auto_without_lane_uses_defaults,test_lane_status_defaults_can_use_env,test_no_args_starts_chat,test_status_alias_routes_to_lane_status,test_env_alias_routes_to_lane
+    test_heuristic_plan_auto()
+    test_execute_text_uses_heuristic(monkeypatch)
+    test_ensure_without_install_missing(monkeypatch)
+    test_ensure_with_install_calls_pip(monkeypatch)
+    test_local_install_target_koruenv()
+    test_build_plan_chain_for_auto_intent()
+    test_text_executes_chain(monkeypatch)
+    test_main_shorthand_routes_to_text(monkeypatch)
+    test_auto_without_lane_uses_defaults(monkeypatch)
+    test_lane_status_defaults_can_use_env(monkeypatch)
+    test_no_args_starts_chat(monkeypatch)
+    test_status_alias_routes_to_lane_status(monkeypatch)
+    test_env_alias_routes_to_lane(monkeypatch)
   packages/koruenv/src/koruenv/__init__.py:
   packages/koruenv/src/koruenv/cli.py:
     e: _build_parser,_render_exports,_strip_double_dash,_run_with_overlay,main
@@ -1284,6 +1324,10 @@ D:
     resolve_lane_socket(instance)
     resolve_lane_socket_for_os(instance)
     build_lane_environ()
+  packages/koruenv/tests/test_koruenv_package.py:
+    e: test_lane_env_xdg_runtime,test_cli_env_bash
+    test_lane_env_xdg_runtime()
+    test_cli_env_bash(capsys)
   scripts/_koru_autodiag_filter_tickets.py:
     e: main
     main()
@@ -4884,22 +4928,6 @@ D:
     library_to_any(library)
     dsl_roundtrip_report(dsl_text)
     load_path(path)
-  src/koruenv/__init__.py:
-  src/koruenv/cli.py:
-    e: _build_parser,_render_exports,_strip_double_dash,_run_with_overlay,main
-    _build_parser()
-    _render_exports(env_overlay)
-    _strip_double_dash(rest)
-    _run_with_overlay(argv;overlay)
-    main(argv)
-  src/koruenv/lane.py:
-    e: validate_ide,validate_instance,_fallback_temp_dir,resolve_lane_socket,resolve_lane_socket_for_os,build_lane_environ
-    validate_ide(ide)
-    validate_instance(instance)
-    _fallback_temp_dir(environ)
-    resolve_lane_socket(instance)
-    resolve_lane_socket_for_os(instance)
-    build_lane_environ()
   src/koruide/__init__.py:
   src/koruide/audit.py:
     e: default_log_path,_isoformat_utc,_JSONFormatter,AuditLog
@@ -7387,12 +7415,6 @@ D:
     test_normalize_and_roundtrip()
     test_library_to_dsl_objectives()
     test_koru_dsl_version_exits_zero(capsys)
-  tests/test_koruenv_cli.py:
-    e: test_build_lane_environ_prefers_xdg_runtime,test_build_lane_environ_windows_temp,test_cli_env_powershell,test_cli_status_executes_koru_with_overlay
-    test_build_lane_environ_prefers_xdg_runtime(monkeypatch)
-    test_build_lane_environ_windows_temp(monkeypatch)
-    test_cli_env_powershell(capsys)
-    test_cli_status_executes_koru_with_overlay(monkeypatch)
   tests/test_koruide_bridges.py:
     e: test_koruide_ide_bridge_exports_legacy_symbols,test_koruide_injector_bridge_exports_legacy_symbols,test_koruide_os_injector_bridge_exports_legacy_symbols,test_autopilot_daemon_shim_points_to_koruide_implementation,test_autopilot_audit_shim_points_to_koruide_implementation,test_autopilot_host_setup_shim_points_to_koruide_implementation,test_autopilot_plugin_installer_shim_points_to_koruide_implementation,test_autopilot_config_shim_points_to_koruide_implementation
     test_koruide_ide_bridge_exports_legacy_symbols()

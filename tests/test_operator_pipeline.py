@@ -165,6 +165,37 @@ def test_build_operator_steps_skips_os_calibration_for_plugin_ide(
     assert profile_checks == []
 
 
+def test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    windsurf_probe = replace(
+        probe,
+        resolved_lane="windsurf-main",
+        resolved_autopilot_ide="windsurf",
+        terminal_lane="windsurf-main",
+        socket_path="/run/user/1000/koru-autopilot-windsurf-main.sock",
+    )
+    profile_checks: list[str] = []
+    monkeypatch.setattr(
+        op,
+        "_os_profile_ok",
+        lambda ide, _project: profile_checks.append(ide) or (False, "missing"),
+    )
+
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=windsurf_probe,
+        plugin_connected=True,
+    )
+    os_step = next(s for s in steps if s.step_id == "os_calibrate")
+
+    assert os_step.status == "skipped"
+    assert os_step.task_command is None
+    assert profile_checks == []
+
+
 def test_build_operator_steps_adds_self_control_step(
     tmp_path: Path,
     probe: AutonomousStartupProbe,

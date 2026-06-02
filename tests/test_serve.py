@@ -35,7 +35,7 @@ from koruapi.dashboard_serve_utils import (
     read_serve_endpoint,
     write_serve_endpoint_file,
 )
-from koruapi.dashboard_tickets import bulk_waiting_input_action
+from koruapi.dashboard_tickets import DashboardTicketQueries, bulk_waiting_input_action
 
 
 def _minimal_planfile_project() -> tuple[tempfile.TemporaryDirectory, Path]:
@@ -721,9 +721,10 @@ def test_cmdline_suggests_koru_serve_from_bytes() -> None:
 def test_bulk_waiting_input_action_approve() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)
-        tickets = [{"id": "A-1", "status": "waiting_input"}]
         ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
-        with mock.patch("koruapi.dashboard_tickets.list_tickets", return_value=tickets):
+        with mock.patch.object(
+            DashboardTicketQueries, "waiting_input_ticket_ids", return_value={"A-1"}
+        ):
             with mock.patch("koruapi.dashboard_tickets.planfile_command", return_value=ok) as cmd:
                 out = bulk_waiting_input_action(
                     project,
@@ -739,7 +740,6 @@ def test_bulk_waiting_input_action_approve() -> None:
 def test_bulk_waiting_input_action_approve_without_claim_command() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)
-        tickets = [{"id": "A-1", "status": "waiting_input"}]
         missing_claim = subprocess.CompletedProcess(
             args=["planfile"],
             returncode=2,
@@ -748,7 +748,9 @@ def test_bulk_waiting_input_action_approve_without_claim_command() -> None:
             "Error: No such command 'claim'.",
         )
         ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
-        with mock.patch("koruapi.dashboard_tickets.list_tickets", return_value=tickets):
+        with mock.patch.object(
+            DashboardTicketQueries, "waiting_input_ticket_ids", return_value={"A-1"}
+        ):
             with mock.patch(
                 "koruapi.dashboard_tickets.planfile_command",
                 side_effect=[missing_claim, ok, ok],
@@ -767,9 +769,10 @@ def test_bulk_waiting_input_action_approve_without_claim_command() -> None:
 def test_bulk_waiting_input_action_reject() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)
-        tickets = [{"id": "A-2", "status": "waiting_input"}]
         ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
-        with mock.patch("koruapi.dashboard_tickets.list_tickets", return_value=tickets):
+        with mock.patch.object(
+            DashboardTicketQueries, "waiting_input_ticket_ids", return_value={"A-2"}
+        ):
             with mock.patch("koruapi.dashboard_tickets.planfile_command", return_value=ok) as cmd:
                 out = bulk_waiting_input_action(
                     project,

@@ -39,12 +39,13 @@ flowchart TD
         services__healing_webhook__app_bootstrap__create_webhook_app["create_webhook_app"]
         services__healing_webhook__app_bootstrap__wire_routes["wire_routes"]
         src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
-        ...["+2318 more"]
+        ...["+2281 more"]
     end
 
     subgraph Exporters
         src__koru__agent_cli_helpers__try_agent_env_exports["try_agent_env_exports"]
         src__koru__cli___has_legacy_exports["_has_legacy_exports"]
+        packages__koruenv__src__koruenv__cli___render_exports["_render_exports"]
     end
 
     class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app___resolve_strategy,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook entry

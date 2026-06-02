@@ -210,6 +210,40 @@ flowchart TD
         koruide__command_catalog_store__CommandCatalogStore___load_from_disk("_load_from_disk CC=9")
         koruide__command_catalog_store__parse_hello_command_catalog["parse_hello_command_catalog"]
     end
+    subgraph packages__coru
+        packages__coru__src__coru__cli___run["_run"]
+        packages__coru__src__coru__cli___cmd_exists["_cmd_exists"]
+        packages__coru__src__coru__cli___python_module_exists["_python_module_exists"]
+        packages__coru__src__coru__cli___tool_argv["_tool_argv"]
+        packages__coru__src__coru__cli___ensure_commands("_ensure_commands CC=10")
+        packages__coru__src__coru__cli___repo_root["_repo_root"]
+        packages__coru__src__coru__cli___local_install_target["_local_install_target"]
+        packages__coru__src__coru__cli___lane_env["_lane_env"]
+        packages__coru__src__coru__cli___lane_status["_lane_status"]
+        packages__coru__src__coru__cli___lane_auto["_lane_auto"]
+        packages__coru__src__coru__cli___heuristic_plan("_heuristic_plan CC=11")
+        packages__coru__src__coru__cli___llm_plan("_llm_plan CC=10")
+        packages__coru__src__coru__cli___resolve_defaults("_resolve_defaults CC=10")
+        packages__coru__src__coru__cli___execute_plan("_execute_plan CC=11")
+        packages__coru__src__coru__cli___build_plan_chain("_build_plan_chain CC=10")
+        packages__coru__src__coru__cli___execute_plans("_execute_plans CC=9")
+        packages__coru__src__coru__cli___chat_loop("_chat_loop CC=9")
+        packages__coru__src__coru__cli___build_parser["_build_parser"]
+        packages__coru__src__coru__cli__main("main CC=13")
+    end
+    subgraph packages__koruenv
+        packages__koruenv__src__koruenv__cli___build_parser["_build_parser"]
+        packages__koruenv__src__koruenv__cli___render_exports["_render_exports"]
+        packages__koruenv__src__koruenv__cli___strip_double_dash["_strip_double_dash"]
+        packages__koruenv__src__koruenv__cli___run_with_overlay["_run_with_overlay"]
+        packages__koruenv__src__koruenv__cli__main["main"]
+        packages__koruenv__src__koruenv__lane__validate_ide["validate_ide"]
+        packages__koruenv__src__koruenv__lane__validate_instance["validate_instance"]
+        packages__koruenv__src__koruenv__lane___fallback_temp_dir["_fallback_temp_dir"]
+        packages__koruenv__src__koruenv__lane__resolve_lane_socket["resolve_lane_socket"]
+        packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os["resolve_lane_socket_for_os"]
+        packages__koruenv__src__koruenv__lane__build_lane_environ["build_lane_environ"]
+    end
     subgraph plugins__koru_autopilot_antigravity
         plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
         plugins__koru_autopilot_antigravity__src__chat_history_watcher__test__testParseCursorBubbleRowsHandlesMultilineText["testParseCursorBubbleRowsHandlesMul"]
@@ -595,7 +629,6 @@ flowchart TD
         plugins__koru_autopilot_windsurf__src__ides__windsurf__sanitizeProbeCache["sanitizeProbeCache"]
         plugins__koru_autopilot_windsurf__src__ides__windsurf__focusOpenCommandsDefaults["focusOpenCommandsDefaults"]
         plugins__koru_autopilot_windsurf__src__ides__windsurf__trustFocusOpenWithoutEditorSnapshot["trustFocusOpenWithoutEditorSnapshot"]
-        plugins__koru_autopilot_windsurf__src__socketPath__slugInstance["slugInstance"]
     end
     subgraph scripts___koru_autodiag_filter_tickets
         scripts___koru_autodiag_filter_tickets__main("main CC=12")
@@ -623,19 +656,10 @@ flowchart TD
     subgraph scripts__koru_autoloop_reset_diag_markers
         scripts__koru_autoloop_reset_diag_markers__is_true["is_true"]
     end
-    subgraph scripts__koru_autopilot_lane
-        scripts__koru_autopilot_lane__usage["usage"]
-        scripts__koru_autopilot_lane__die["die"]
-        scripts__koru_autopilot_lane__is_valid_ide["is_valid_ide"]
-        scripts__koru_autopilot_lane__is_valid_instance["is_valid_instance"]
-        scripts__koru_autopilot_lane__resolve_socket["resolve_socket"]
-        scripts__koru_autopilot_lane__emit_env["emit_env"]
-        scripts__koru_autopilot_lane__run_status["run_status"]
-        scripts__koru_autopilot_lane__main["main"]
-    end
     subgraph scripts__koru_autopilot_lanes
         scripts__koru_autopilot_lanes___koru_lane_root["_koru_lane_root"]
         scripts__koru_autopilot_lanes___koru_lane_script["_koru_lane_script"]
+        scripts__koru_autopilot_lanes___koru_lane_exec["_koru_lane_exec"]
         scripts__koru_autopilot_lanes___koru_lane_require_helper["_koru_lane_require_helper"]
         scripts__koru_autopilot_lanes___koru_lane_is_ide["_koru_lane_is_ide"]
     end
@@ -939,13 +963,6 @@ flowchart TD
         src__korudsl__library___emit_goal("_emit_goal CC=9")
         src__korudsl__library___emit_goals["_emit_goals"]
         src__korudsl__library__library_to_dsl["library_to_dsl"]
-    end
-    subgraph src__koruenv
-        src__koruenv__lane__validate_ide["validate_ide"]
-        src__koruenv__lane__validate_instance["validate_instance"]
-        src__koruenv__lane___fallback_temp_dir["_fallback_temp_dir"]
-        src__koruenv__lane__resolve_lane_socket["resolve_lane_socket"]
-        src__koruenv__lane__build_lane_environ["build_lane_environ"]
     end
     subgraph src__koruide
         src__koruide__chat_history__default_events_path["default_events_path"]

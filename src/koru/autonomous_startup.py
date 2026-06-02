@@ -247,6 +247,24 @@ def resolve_agent_lane(
     return "auto", "project-markers"
 
 
+def canonical_autopilot_ide_id(raw: str) -> str:
+    """Map lane/instance slugs (e.g. ``windsurf-main``) to canonical IDE ids."""
+    normalized = normalize_ide_id(raw) or raw
+    valid = supported_autopilot_ide_ids()
+    if normalized in valid and normalized != "auto":
+        return normalized
+    env_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
+    if env_ide and env_ide in valid and env_ide != "auto":
+        return env_ide
+    for ide_id in _AUTOPILOT_PLUGIN_LANES:
+        if normalized == ide_id or normalized.startswith(f"{ide_id}-"):
+            return ide_id
+    for ide_id in valid:
+        if ide_id != "auto" and normalized.startswith(f"{ide_id}-"):
+            return ide_id
+    return normalized
+
+
 def resolve_autopilot_ide_for_autonomous(
     autopilot_ide_cli: str,
     lane: str | None,
@@ -259,9 +277,10 @@ def resolve_autopilot_ide_for_autonomous(
     if raw != "auto":
         route = resolve_ide_route_fn(cli_autopilot_ide=raw)
         return route.autopilot_ide, f"cli:{raw}"
-    # Respect the lane even for non-plugin IDEs (e.g., jetbrains) when explicitly set
+    # Respect the lane even for non-plugin IDEs (e.g., jetbrains) when explicitly set.
+    # Instance slugs like windsurf-main map to canonical IDE ids (windsurf).
     if lane and lane != "auto":
-        return lane, "lane"
+        return canonical_autopilot_ide_id(lane), "lane"
     route = resolve_ide_route_fn(cli_autopilot_ide="auto")
     return route.autopilot_ide, "router:auto"
 
@@ -310,26 +329,24 @@ def _normalized_cli_value(raw: str | None) -> str:
 
 
 def _autopilot_socket_path_for_probe(ide_id: str) -> str:
-    if not _should_probe_per_ide_socket(ide_id):
+    if not ide_id or ide_id == "auto":
         return str(default_socket_path())
     previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    previous_socket = os.environ.get("KORU_AUTOPILOT_SOCKET")
     try:
         os.environ["KORU_AUTOPILOT_INSTANCE"] = ide_id
+        # Ignore stale koruenv socket overlays; compute the expected per-IDE path.
+        os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
         return str(default_socket_path())
     finally:
         if previous_instance is None:
             os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
         else:
             os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
-
-
-def _should_probe_per_ide_socket(ide_id: str) -> bool:
-    return (
-        bool(ide_id)
-        and ide_id != "auto"
-        and not (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-        and not (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
-    )
+        if previous_socket is None:
+            os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
+        else:
+            os.environ["KORU_AUTOPILOT_SOCKET"] = previous_socket
 
 
 def _running_ide_labels() -> tuple[str, ...]:
@@ -389,7 +406,8 @@ def _build_startup_probe_from_resolution(
     autopilot_ide_cli: str,
     resolution: _StartupProbeResolution,
 ) -> AutonomousStartupProbe:
-    runtime = _startup_probe_runtime_fields(resolution.resolved_ide)
+    instance_for_socket = resolution.lane or resolution.resolved_ide
+    runtime = _startup_probe_runtime_fields(instance_for_socket)
     return AutonomousStartupProbe(
         koru_version=koru_distribution_version(),
         python_version=sys.version.split()[0],
@@ -671,6 +689,7 @@ __all__ = [
     "format_post_startup_operator_hints",
     "format_startup_banner",
     "koru_distribution_version",
+    "canonical_autopilot_ide_id",
     "resolve_agent_lane",
     "resolve_agent_lane_id",
     "resolve_autopilot_ide_for_autonomous",

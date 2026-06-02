@@ -1608,6 +1608,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     )
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
 
     rc = autonomous_mod.autonomous_main(
         [

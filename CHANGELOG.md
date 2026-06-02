@@ -113,6 +113,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.309] - 2026-06-02
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/README.md
+- Update docs/autopilot-quickstart.md
+- Update docs/ide-isolation.md
+- Update docs/package-extraction-plan.md
+- Update packages/coru/README.md
+- Update packages/koruenv/README.md
+- ... and 2 more files
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_runtime.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_ide_doctor_cli.py
+- Update tests/test_operator_pipeline.py
+- Update tests/test_serve.py
+
+### Other
+- Update .cursor/settings.json
+- Update .koru/project.json
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update Makefile
+- Update app.doql.less
+- Update packages/coru/pyproject.toml
+- Update packages/coru/src/coru/__init__.py
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/tests/test_coru_cli.py
+- ... and 32 more files
+
 ## [0.1.308] - 2026-06-02
 
 ### Docs

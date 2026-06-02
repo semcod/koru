@@ -1,0 +1,59 @@
+name: koruenv CI
+
+on:
+  pull_request:
+    paths:
+      - "packages/koruenv/**"
+      - "scripts/koru-autopilot-lane.sh"
+      - "scripts/koru-autopilot-lanes.sh"
+      - ".github/workflows/koruenv-ci.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "packages/koruenv/**"
+      - "scripts/koru-autopilot-lane.sh"
+      - "scripts/koru-autopilot-lanes.sh"
+      - ".github/workflows/koruenv-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            packages/koruenv/pyproject.toml
+
+      - name: Install koruenv package + pytest
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./packages/koruenv pytest
+
+      - name: Run standalone package tests
+        run: python -m pytest packages/koruenv/tests -q
+
+      - name: CLI smoke
+        run: |
+          koruenv env windsurf windsurf-main
+          scripts/koru-autopilot-lane.sh env windsurf windsurf-main
+
+      - name: Guard against shim fallback mode
+        run: |
+          set -euo pipefail
+          PATH="/usr/bin:/bin" scripts/koru-autopilot-lane.sh env windsurf windsurf-main >/tmp/koruenv-guard.out 2>/tmp/koruenv-guard.err || rc=$?
+          rc=${rc:-0}
+          if [ "$rc" -eq 0 ]; then
+            echo "expected failure when koruenv is not on PATH, but command succeeded"
+            exit 1
+          fi
+          grep -q "koruenv command not found" /tmp/koruenv-guard.err

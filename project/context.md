@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 485, typescript: 84, shell: 51, yaml: 25, json: 16
+- **Languages**: python: 488, typescript: 79, shell: 52, yaml: 25, json: 16
 - **Analysis Mode**: static
-- **Total Functions**: 4911
-- **Total Classes**: 409
-- **Modules**: 689
-- **Entry Points**: 2127
+- **Total Functions**: 4854
+- **Total Classes**: 411
+- **Modules**: 690
+- **Entry Points**: 2061
 
 ## Architecture by Module
 
@@ -507,6 +507,11 @@ Returns (should_kill, logs) tuple.
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
+
+### recursion_main
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: packages.coru.src.coru.cli.main
 
 ### state_machine_EventBuffer
 - **Type**: state_machine

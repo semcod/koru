@@ -87,6 +87,32 @@ fight each other:
 | **Ticket ownership** | Before `ticket start`, koru runs **`planfile ticket claim --assigned-to <actor> --lease-seconds …`**. Give each lane a distinct **`--actor`** name so ownership is visible. Tune lease with **`KORU_TICKET_LEASE_SECONDS`** (default 3600, clamped). |
 | **Shell per lane** | Run `eval "$(koru agent --env-exports --lane cursor)"` (or `--agent cursor`) in each IDE terminal. For JSON (CI), use `koru agent --env-json --lane windsurf`. |
 
+Helper script for strict IDE+instance binding:
+
+```bash
+# bind current shell to one lane
+eval "$(koruenv env cursor cursor-main)"
+
+# run one command in a pinned lane (without changing current shell)
+koruenv run cursor cursor-main -- koru autopilot status --explain
+```
+
+Ergonomic shell shortcuts (source once per shell):
+
+```bash
+source scripts/koru-autopilot-lanes.sh
+lane:cursor
+lane:status
+lane:run -- koru autopilot status --explain
+```
+
+PowerShell equivalent:
+
+```powershell
+koruenv env cursor cursor-main --shell powershell | Invoke-Expression
+koruenv status cursor cursor-main
+```
+
 ## What gets installed where
 
 | Piece                              | Lives in                                            | Purpose                                  |

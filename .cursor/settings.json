@@ -1,0 +1,4 @@
+{
+  "koruAutopilot.socketPath": "/run/user/1000/koru-autopilot-cursor-main.sock",
+  "koruAutopilot.autoConnect": true
+}

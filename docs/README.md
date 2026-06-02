@@ -41,14 +41,22 @@ For LLM agents starting a session in a koru-driven repository:
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
 9. **[`ide-router.md`](./ide-router.md)** — how koru chooses the active IDE
    lane and keeps VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed separated.
-10. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
+10. **[`ide-isolation.md`](./ide-isolation.md)** (PL) — granice izolacji lane/socket,
+    dlaczego nie ma pełnego sandboxu między IDE i jak ustawić hardening,
+    żeby uniknąć cross-lane chat/event leakage.
+11. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
-11. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
+12. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
    implemented doctor, guided repair, autopilot host repair, and safe
    autonomous diagnostic-ticket loops.
-12. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
+13. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
    how an idle planfile queue triggers whole-project `code2llm` discovery,
    `planfile` ticket generation, and explicit IDE LLM status handoff.
+14. **[`../packages/coru/README.md`](../packages/coru/README.md)** — thin client
+   layer (`coru`) that keeps user-facing commands stable while `koruenv` + `koru`
+   internals can be refactored independently.
+15. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
+   incremental plan for moving selected modules from `src` to `packages/*`.
 
 For human operators / DevOps:
 

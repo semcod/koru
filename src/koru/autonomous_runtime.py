@@ -331,9 +331,18 @@ def build_and_log_startup_probe(
         autopilot_ide_cli=args.autopilot_ide,
         resolve_project_lane=resolve_project_lane,
     )
-    # Keep later socket computations aligned with the resolved IDE, not stale env.
-    if hasattr(startup_probe, "resolved_autopilot_ide") and startup_probe.resolved_autopilot_ide:
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = startup_probe.resolved_autopilot_ide
+    # Keep later socket computations aligned with the resolved lane, not stale koruenv overlay.
+    instance = getattr(startup_probe, "resolved_lane", None) or getattr(
+        startup_probe, "resolved_autopilot_ide", None
+    )
+    ide = getattr(startup_probe, "resolved_autopilot_ide", None)
+    if instance:
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
+    if ide:
+        os.environ["KORU_AUTOPILOT_IDE"] = ide
+    expected_socket = getattr(startup_probe, "socket_path", None)
+    if expected_socket:
+        os.environ["KORU_AUTOPILOT_SOCKET"] = str(expected_socket)
     for line in format_startup_banner(startup_probe):
         stdio_info(line, fmt=args.emit_events)
     return startup_probe

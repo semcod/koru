@@ -29,7 +29,8 @@ def _resolve_ide(raw: str) -> str | None:
 def _resolve_socket(args: argparse.Namespace, ide: str) -> Path:
     if args.socket:
         return Path(args.socket).expanduser().resolve()
-    instance = (args.instance or ide or "").strip()
+    env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    instance = (args.instance or env_instance or ide or "").strip()
     if not instance:
         return default_socket_path()
     previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")

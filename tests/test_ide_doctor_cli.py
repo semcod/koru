@@ -159,3 +159,17 @@ def test_ide_doctor_instance_overrides_selected_lane(
     socket = _resolve_socket(args, "cursor")
 
     assert socket == tmp_path / "koru-autopilot-vscodium.sock"
+
+
+def test_ide_doctor_uses_env_instance_when_arg_missing(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "cursor-main")
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    args = type("Args", (), {"socket": None, "instance": None})()
+
+    socket = _resolve_socket(args, "cursor")
+
+    assert socket == tmp_path / "koru-autopilot-cursor-main.sock"
