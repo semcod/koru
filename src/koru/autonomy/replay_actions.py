@@ -79,6 +79,111 @@ class ValidationResult:
     regression_point: str | None = None
 
 
+@dataclass(frozen=True)
+class ReplayQueryHandlers:
+    """Read-only replay handlers."""
+
+    def show_decisions(self, action: ReplayAction, *, project: Path) -> ReplayResult:
+        url = action.args.get("url", "http://127.0.0.1:8765")
+        result = subprocess.run(
+            ["bash", "-lc", f"curl -s {url}/api/autonomy/trace | jq .decisions"],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return ReplayResult(
+            ok=result.returncode == 0,
+            output=result.stdout,
+            returncode=result.returncode,
+            action=action,
+        )
+
+    def show_interfaces(self, action: ReplayAction, *, project: Path) -> ReplayResult:
+        url = action.args.get("url", "http://127.0.0.1:8765")
+        result = subprocess.run(
+            ["bash", "-lc", f"curl -s {url}/api/interfaces | jq '.families, .blockers'"],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return ReplayResult(
+            ok=result.returncode == 0,
+            output=result.stdout,
+            returncode=result.returncode,
+            action=action,
+        )
+
+
+@dataclass(frozen=True)
+class ReplayCommandHandlers:
+    """Mutating replay handlers."""
+
+    def ticket_input(self, action: ReplayAction, *, project: Path) -> ReplayResult:
+        ticket_id = action.positional[0] if action.positional else ""
+        if not ticket_id:
+            return ReplayResult(ok=False, output="ticket_id required", action=action)
+        cmd_parts = ["planfile", "ticket", "input", ticket_id]
+        prompt = action.args.get("prompt", "<input needed>")
+        note = action.args.get("note", "<what was verified>")
+        cmd_parts.extend(["--prompt", prompt, "--note", note])
+        result = subprocess.run(cmd_parts, cwd=project, capture_output=True, text=True, check=False)
+        return ReplayResult(
+            ok=result.returncode == 0,
+            output=result.stdout,
+            returncode=result.returncode,
+            action=action,
+        )
+
+    def scan_force(self, action: ReplayAction, *, project: Path) -> ReplayResult:
+        result = subprocess.run(
+            ["bash", "-lc", "rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto --max-cycles 1"],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return ReplayResult(
+            ok=result.returncode == 0,
+            output=result.stdout,
+            returncode=result.returncode,
+            action=action,
+        )
+
+    def retry_drive(self, action: ReplayAction, *, project: Path) -> ReplayResult:
+        ticket_id = action.positional[0] if action.positional else ""
+        if not ticket_id:
+            return ReplayResult(ok=False, output="ticket_id required", returncode=2, action=action)
+        ide = action.args.get("ide", "auto")
+        result = subprocess.run(
+            [
+                "koru",
+                "autopilot",
+                "drive",
+                "--ide",
+                ide,
+                "--require-plugin",
+                "-p",
+                f"continue with {ticket_id}",
+            ],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return ReplayResult(
+            ok=result.returncode == 0,
+            output=result.stdout,
+            returncode=result.returncode,
+            action=action,
+        )
+
+
+_REPLAY_QUERIES = ReplayQueryHandlers()
+_REPLAY_COMMANDS = ReplayCommandHandlers()
+
+
 # ---------------------------------------------------------------------------
 # DSL parsing
 # ---------------------------------------------------------------------------
@@ -326,41 +431,17 @@ def _register_executor(domain: str, verb: str):
 
 @_register_executor("trace", "show-decisions")
 def _exec_trace_show_decisions(action: ReplayAction, *, project: Path) -> ReplayResult:
-    url = action.args.get("url", "http://127.0.0.1:8765")
-    result = subprocess.run(
-        ["bash", "-lc", f"curl -s {url}/api/autonomy/trace | jq .decisions"],
-        cwd=project,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return ReplayResult(ok=result.returncode == 0, output=result.stdout, returncode=result.returncode, action=action)
+    return _REPLAY_QUERIES.show_decisions(action, project=project)
 
 
 @_register_executor("trace", "show-interfaces")
 def _exec_trace_show_interfaces(action: ReplayAction, *, project: Path) -> ReplayResult:
-    url = action.args.get("url", "http://127.0.0.1:8765")
-    result = subprocess.run(
-        ["bash", "-lc", f"curl -s {url}/api/interfaces | jq '.families, .blockers'"],
-        cwd=project,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return ReplayResult(ok=result.returncode == 0, output=result.stdout, returncode=result.returncode, action=action)
+    return _REPLAY_QUERIES.show_interfaces(action, project=project)
 
 
 @_register_executor("ticket", "input")
 def _exec_ticket_input(action: ReplayAction, *, project: Path) -> ReplayResult:
-    ticket_id = action.positional[0] if action.positional else ""
-    if not ticket_id:
-        return ReplayResult(ok=False, output="ticket_id required", action=action)
-    cmd_parts = ["planfile", "ticket", "input", ticket_id]
-    prompt = action.args.get("prompt", "<input needed>")
-    note = action.args.get("note", "<what was verified>")
-    cmd_parts.extend(["--prompt", prompt, "--note", note])
-    result = subprocess.run(cmd_parts, cwd=project, capture_output=True, text=True, check=False)
-    return ReplayResult(ok=result.returncode == 0, output=result.stdout, returncode=result.returncode, action=action)
+    return _REPLAY_COMMANDS.ticket_input(action, project=project)
 
 
 @_register_executor("ticket", "open")
@@ -378,30 +459,12 @@ def _exec_ticket_open(action: ReplayAction, *, project: Path) -> ReplayResult:
 
 @_register_executor("scan", "force")
 def _exec_scan_force(action: ReplayAction, *, project: Path) -> ReplayResult:
-    result = subprocess.run(
-        ["bash", "-lc", "rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto --max-cycles 1"],
-        cwd=project,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return ReplayResult(ok=result.returncode == 0, output=result.stdout, returncode=result.returncode, action=action)
+    return _REPLAY_COMMANDS.scan_force(action, project=project)
 
 
 @_register_executor("autopilot", "retry-drive")
 def _exec_autopilot_retry_drive(action: ReplayAction, *, project: Path) -> ReplayResult:
-    ticket_id = action.positional[0] if action.positional else ""
-    if not ticket_id:
-        return ReplayResult(ok=False, output="ticket_id required", returncode=2, action=action)
-    ide = action.args.get("ide", "auto")
-    result = subprocess.run(
-        ["koru", "autopilot", "drive", "--ide", ide, "--require-plugin", "-p", f"continue with {ticket_id}"],
-        cwd=project,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return ReplayResult(ok=result.returncode == 0, output=result.stdout, returncode=result.returncode, action=action)
+    return _REPLAY_COMMANDS.retry_drive(action, project=project)
 
 
 def execute_replay_action(action: ReplayAction, *, project: Path) -> ReplayResult:

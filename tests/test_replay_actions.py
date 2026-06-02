@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import subprocess
+from unittest import mock
+
 from koru.autonomy.replay_actions import (
+    ReplayAction,
+    ReplayCommandHandlers,
+    ReplayQueryHandlers,
     execute_replay_action,
     ide_reload_window,
     parse_replay_dsl,
@@ -51,3 +57,26 @@ def test_replay_cli_dry_run_explains_non_replayable_action(capsys) -> None:
     out = capsys.readouterr().out
     assert "replayable: False" in out
     assert "requires_active_window" not in out
+
+
+def test_replay_query_handlers_show_decisions_uses_shell_pipeline(tmp_path) -> None:
+    handlers = ReplayQueryHandlers()
+    action = ReplayAction(domain="trace", verb="show-decisions", args={"url": "http://127.0.0.1:8765"})
+    ok = subprocess.CompletedProcess(["bash"], 0, stdout="[]", stderr="")
+
+    with mock.patch("koru.autonomy.replay_actions.subprocess.run", return_value=ok) as run:
+        result = handlers.show_decisions(action, project=tmp_path)
+
+    assert result.ok is True
+    assert result.output == "[]"
+    assert run.call_args.kwargs["cwd"] == tmp_path
+
+
+def test_replay_command_handlers_ticket_input_requires_ticket_id(tmp_path) -> None:
+    handlers = ReplayCommandHandlers()
+    action = ReplayAction(domain="ticket", verb="input")
+
+    result = handlers.ticket_input(action, project=tmp_path)
+
+    assert result.ok is False
+    assert "ticket_id required" in result.output

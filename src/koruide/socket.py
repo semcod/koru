@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import tempfile
 from pathlib import Path
 
 
@@ -35,10 +36,22 @@ def default_socket_path() -> Path:
         with contextlib.suppress(OSError):
             path.parent.mkdir(parents=True, exist_ok=True)
         return path
+    if os.name == "nt":
+        base = (
+            os.environ.get("LOCALAPPDATA")
+            or os.environ.get("TEMP")
+            or tempfile.gettempdir()
+        )
+        path = Path(base) / name
+        with contextlib.suppress(OSError):
+            path.parent.mkdir(parents=True, exist_ok=True)
+        return path
+
+    uid = str(getattr(os, "getuid", lambda: 0)())
     if name == "koru-autopilot.sock":
-        return Path(f"/tmp/koru-autopilot-{os.getuid()}.sock")
+        return Path(f"/tmp/koru-autopilot-{uid}.sock")
     stem = name.removesuffix(".sock")
-    return Path(f"/tmp/{stem}-{os.getuid()}.sock")
+    return Path(f"/tmp/{stem}-{uid}.sock")
 
 
 __all__ = ["default_socket_path"]

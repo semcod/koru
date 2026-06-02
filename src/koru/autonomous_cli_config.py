@@ -5,17 +5,11 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from koru.env_flags import parse_boolish
+
 
 def _truthy_strategy_value(value: Any, default: bool) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"1", "true", "yes", "y", "on"}:
-            return True
-        if normalized in {"0", "false", "no", "n", "off"}:
-            return False
-    return default
+    return parse_boolish(value, default=default)
 
 
 def _strategy_float(value: Any) -> float | None:

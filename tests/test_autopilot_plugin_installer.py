@@ -9,7 +9,19 @@ import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from koru.autopilot import plugin_installer
+
+
+def _cp(
+    cmd: list[str],
+    *,
+    returncode: int = 0,
+    stdout: str = "",
+    stderr: str = "",
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(cmd, returncode, stdout=stdout, stderr=stderr)
 
 
 def test_resolve_target_ide_prefers_autopilot_env(monkeypatch) -> None:
@@ -433,6 +445,51 @@ def test_install_plugin_removes_conflicting_family_extension(monkeypatch) -> Non
     assert result.status == "already_installed"
     assert result.conflicts_removed == (conflict_ext_id,)
     assert ["/usr/bin/codium", "--uninstall-extension", conflict_ext_id] in calls
+
+
+@pytest.mark.parametrize(
+    ("installed_sha", "expected_sha", "should_reassert", "expected_message"),
+    [
+        ("abc123", "abc123", False, "build sha match"),
+        ("old", "new", True, ""),
+        ("old", None, True, ""),
+    ],
+)
+def test_reassert_policy_matrix(
+    installed_sha: str,
+    expected_sha: str | None,
+    should_reassert: bool,
+    expected_message: str,
+) -> None:
+    decision = plugin_installer._decide_reassert_policy(
+        dry_run=False,
+        reassert_enabled=True,
+        installed_sha=installed_sha,
+        expected_sha=expected_sha,
+    )
+
+    assert decision.should_reassert is should_reassert
+    if expected_message:
+        assert expected_message in decision.skip_message
+    else:
+        assert decision.skip_message == ""
+
+
+def test_should_retry_missing_vsix_only_for_missing_file_errors(tmp_path: Path) -> None:
+    missing_vsix = tmp_path / "missing.vsix"
+    proc_missing = _cp(
+        ["codium", "--install-extension", str(missing_vsix)],
+        returncode=1,
+        stderr="ENOENT: no such file",
+    )
+    proc_other = _cp(
+        ["codium", "--install-extension", str(missing_vsix)],
+        returncode=1,
+        stderr="permission denied",
+    )
+
+    assert plugin_installer._should_retry_missing_vsix(missing_vsix, proc_missing) is True
+    assert plugin_installer._should_retry_missing_vsix(missing_vsix, proc_other) is False
 
 
 def test_install_plugin_moves_stale_family_extension_dirs(

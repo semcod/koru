@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.27s
-# nodes: 427 | edges: 500 | modules: 99
+# generated in 0.26s
+# nodes: 431 | edges: 500 | modules: 100
 # CC̄=3.5
 
 HUBS[20]:
@@ -14,36 +14,36 @@ HUBS[20]:
     CC=6  in:49  out:13  total:62
   src.koru.context_render.render_markdown_handoff
     CC=2  in:5  out:33  total:38
+  src.koruide.socket.default_socket_path
+    CC=7  in:16  out:21  total:37
   src.koru.events.emit_management_event
     CC=8  in:29  out:7  total:36
   src.koruide.ide.detect_running_ides
     CC=13  in:25  out:10  total:35
-  src.koruide.socket.default_socket_path
-    CC=4  in:16  out:15  total:31
   plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.type
     CC=1  in:25  out:2  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.queue.ticket.planfile_command
     CC=5  in:18  out:7  total:25
-  src.koruapi.dashboard_tickets.create_ticket_from_dashboard
-    CC=8  in:2  out:22  total:24
   src.koruapi.dashboard_config._dashboard_config_request_kwargs
     CC=10  in:1  out:23  total:24
-  src.koru.context.build_context
-    CC=6  in:8  out:16  total:24
-  src.koruapi.dashboard_routes._post_remote_drive
-    CC=9  in:0  out:24  total:24
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
+  src.koruapi.dashboard_routes._post_remote_drive
+    CC=9  in:0  out:24  total:24
+  src.koru.context.build_context
+    CC=6  in:8  out:16  total:24
   src.koruapi.topology_post.apply_topology_post_update
     CC=14  in:1  out:22  total:23
+  src.koruapi.dashboard_tickets.create_ticket_from_dashboard
+    CC=8  in:0  out:22  total:22
   src.koruapi.dashboard_routes._post_waiting_input_bulk
     CC=9  in:0  out:22  total:22
-  src.koruobserve.providers_cli.providers_test_text
-    CC=13  in:1  out:20  total:21
+  src.koruapi.server._json_response
+    CC=1  in:12  out:9  total:21
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -57,7 +57,7 @@ MODULES:
   plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
     next  CC=2  out:1
   plugins.koru-autopilot-shared.src.bridge-submit  [1 funcs]
-    strategy  CC=2  out:3
+    strategy  CC=5  out:4
   plugins.koru-autopilot-shared.src.cursor-bubble-adapter  [1 funcs]
     type  CC=1  out:2
   scripts.koru-soak-monitor  [1 funcs]
@@ -125,6 +125,8 @@ MODULES:
     observability_event_store_path  CC=1  out:1
   src.koru.queue.koru_queue_argv  [1 funcs]
     build_koru_queue_argv  CC=5  out:7
+  src.koru.queue.locking  [1 funcs]
+    ticket_claim_command_missing  CC=2  out:1
   src.koru.queue.loop  [1 funcs]
     run_planfile_queue_loop  CC=14  out:9
   src.koru.queue.runners  [1 funcs]
@@ -255,17 +257,17 @@ MODULES:
     dashboard_state  CC=3  out:8
     dashboard_urls  CC=3  out:3
     local_lan_addresses  CC=2  out:13
-  src.koruapi.dashboard_tickets  [11 funcs]
+  src.koruapi.dashboard_tickets  [14 funcs]
+    bulk_waiting_input_action  CC=10  out:10
+    create_ticket_from_dashboard  CC=1  out:1
+    reorder_ticket_from_dashboard  CC=1  out:1
+    update_ticket_from_dashboard  CC=1  out:1
+    list_tickets  CC=9  out:6
     _append_dashboard_history  CC=2  out:7
     _build_ticket_scaffold  CC=8  out:9
     _find_ticket_in_sprints  CC=5  out:10
     _load_sprint_file  CC=3  out:3
     _write_sprint_file  CC=1  out:2
-    bulk_waiting_input_action  CC=14  out:15
-    create_ticket_from_dashboard  CC=8  out:22
-    list_tickets  CC=9  out:6
-    reorder_ticket_from_dashboard  CC=9  out:15
-    run_planfile  CC=1  out:2
   src.koruapi.dashboard_topology  [2 funcs]
     apply_dashboard_topology_update  CC=1  out:1
     dashboard_topology_payload  CC=1  out:2
@@ -363,7 +365,7 @@ MODULES:
     detect_running_ides  CC=13  out:10
     normalize_ide_id  CC=6  out:11
   src.koruide.socket  [1 funcs]
-    default_socket_path  CC=4  out:15
+    default_socket_path  CC=7  out:21
   src.koruide.strategy_prompt  [1 funcs]
     build_strategy_prompt  CC=6  out:9
   src.korullm.strategies.base  [1 funcs]

@@ -2,10 +2,8 @@ flowchart TD
 %% generated in 0.11s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
-    koru__autonomous_cli_config["koru.autonomous_cli_config<br/>11 funcs"]
     koru__autonomous_cycle_chat_activity["koru.autonomous_cycle_chat_activity<br/>18 funcs"]
     koru__autonomous_plugin_wait["koru.autonomous_plugin_wait<br/>16 funcs"]
-    koru__autonomy["koru.autonomy<br/>37 funcs"]
     koru__autopilot["koru.autopilot<br/>28 funcs"]
     koru__bootstrap["koru.bootstrap<br/>21 funcs"]
     koru__cli_queue["koru.cli_queue<br/>7 funcs"]
@@ -14,9 +12,9 @@ flowchart TD
     koru__observability_events["koru.observability_events<br/>10 funcs"]
     koru__ticket_evidence["koru.ticket_evidence<br/>17 funcs"]
     koruide__command_catalog_store["koruide.command_catalog_store<br/>13 funcs"]
-    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>191 funcs"]
-    plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>118 funcs"]
-    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>440 funcs"]
+    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>192 funcs"]
+    plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>133 funcs"]
+    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>444 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__bump_version["scripts.bump_version<br/>5 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
@@ -29,10 +27,10 @@ flowchart TD
     scripts__sync_vscode_plugin_version["scripts.sync-vscode-plugin-version<br/>6 funcs"]
     scripts__write_ide_plugin_tests["scripts.write-ide-plugin-tests<br/>3 funcs"]
     services__healing_webhook["services.healing-webhook<br/>38 funcs"]
-    src__koru["src.koru<br/>2336 funcs"]
-    src__koruapi["src.koruapi<br/>259 funcs"]
+    src__koru["src.koru<br/>2395 funcs"]
+    src__koruapi["src.koruapi<br/>265 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
-    src__koruide["src.koruide<br/>488 funcs"]
+    src__koruide["src.koruide<br/>490 funcs"]
     src__korullm["src.korullm<br/>39 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>57 funcs"]
@@ -50,7 +48,6 @@ flowchart TD
     src__koruide ==>|18| src__koruapi
     src__koruapi ==>|17| scripts__koru_soak_monitor
     src__koru ==>|16| src__koruvision
-    src__koru ==>|14| koru__autonomy
     src__koruapi ==>|13| plugins__koru_autopilot_shared
     examples__remote_orchestration_demo ==>|12| scripts__koru_soak_monitor
     src__koruvision ==>|12| scripts__koru_soak_monitor
@@ -93,11 +90,11 @@ flowchart TD
     src__korumesh -->|2| src__koru
     src__korumesh -->|2| src__koruvision
     src__korumesh -->|2| plugins__koru_autopilot_shared
+    src__koru -->|2| koru__autonomous_plugin_wait
     koru__cli_queue -->|2| koru__ticket_evidence
+    src__koru -->|2| koru__autonomous_cycle_chat_activity
     koru__autopilot -->|2| src__koru
     scripts__sync_plugin_build -->|2| scripts__koru_soak_monitor
-    src__koru -->|2| koru__autonomous_plugin_wait
-    src__koru -->|2| koru__autonomous_cycle_chat_activity
     services__healing_webhook -->|1| src__koru
     src__koruobserve -->|1| src__korumesh
     src__koruobserve -->|1| koru__observability_dsl
@@ -109,7 +106,6 @@ flowchart TD
     src__korumesh -->|1| src__koruobserve
     src__koru -->|1| plugins__koru_autopilot_cursor
     koru__ticket_evidence -->|1| src__koru
-    koru__autonomous_cli_config -->|1| src__koru
     koru__observability_events -->|1| src__koru
     koru__autopilot -->|1| src__koruide
     docker__capture -->|1| src__koruobserve

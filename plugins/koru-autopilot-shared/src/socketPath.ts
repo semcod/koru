@@ -26,6 +26,10 @@ export function defaultSocketPathFromEnv(): string {
   const xdg = process.env.XDG_RUNTIME_DIR;
   if (xdg) return path.join(xdg, name);
 
+  if (process.platform === "win32") {
+    return path.join(os.tmpdir(), name);
+  }
+
   const uid = (process.getuid?.() ?? 0).toString();
   if (name === "koru-autopilot.sock") return `/tmp/koru-autopilot-${uid}.sock`;
   const stem = name.replace(/\.sock$/i, "");
@@ -50,6 +54,10 @@ function defaultSocketCandidates(ideId: string): string[] {
   if (xdg) {
     push(path.join(xdg, `koru-autopilot-${ideId}.sock`));
     push(path.join(xdg, "koru-autopilot.sock"));
+  } else if (process.platform === "win32") {
+    const tmp = os.tmpdir();
+    push(path.join(tmp, `koru-autopilot-${ideId}.sock`));
+    push(path.join(tmp, "koru-autopilot.sock"));
   } else {
     const uid = (process.getuid?.() ?? 0).toString();
     push(`/tmp/koru-autopilot-${ideId}-${uid}.sock`);

@@ -1,4 +1,10 @@
 // Mirrors koru Python ``default_socket_path()`` / ``KORU_AUTOPILOT_*`` env.
+//
+// SHARED MODULE — copied verbatim into every per-IDE plugin's
+// ``src/_shared/`` at prebuild time by ``scripts/sync-plugin-shared.py``.
+// Do NOT add IDE-specific branches here; if a single IDE needs different
+// behaviour, fork the file into that plugin's own ``src/`` and remove the
+// import.
 
 import * as os from "os";
 import * as path from "path";
@@ -19,6 +25,10 @@ export function defaultSocketPathFromEnv(): string {
   const name = inst ? `koru-autopilot-${slugInstance(inst)}.sock` : "koru-autopilot.sock";
   const xdg = process.env.XDG_RUNTIME_DIR;
   if (xdg) return path.join(xdg, name);
+
+  if (process.platform === "win32") {
+    return path.join(os.tmpdir(), name);
+  }
 
   const uid = (process.getuid?.() ?? 0).toString();
   if (name === "koru-autopilot.sock") return `/tmp/koru-autopilot-${uid}.sock`;
@@ -44,6 +54,10 @@ function defaultSocketCandidates(ideId: string): string[] {
   if (xdg) {
     push(path.join(xdg, `koru-autopilot-${ideId}.sock`));
     push(path.join(xdg, "koru-autopilot.sock"));
+  } else if (process.platform === "win32") {
+    const tmp = os.tmpdir();
+    push(path.join(tmp, `koru-autopilot-${ideId}.sock`));
+    push(path.join(tmp, "koru-autopilot.sock"));
   } else {
     const uid = (process.getuid?.() ?? 0).toString();
     push(`/tmp/koru-autopilot-${ideId}-${uid}.sock`);

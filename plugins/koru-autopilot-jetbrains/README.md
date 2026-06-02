@@ -1,13 +1,13 @@
 # koru autopilot — JetBrains plugin
 
-> **Status:** Gradle / IntelliJ Platform scaffold with a minimal unix-socket
-> bridge. Chat injection and AI Assistant lifecycle hooks remain Phase 3 work.
+> **Status:** Gradle / IntelliJ Platform scaffold with a unix-socket bridge
+> and experimental AI Assistant chat injection.
 
 The JetBrains plugin mirrors the first layer of the VS Code extension:
-connect to the koru autopilot daemon unix socket and send a `hello`
-frame. It deliberately does not pretend to control JetBrains AI Assistant
-yet; that code is isolated behind `ChatInjector.kt` until a stable API or
-polling fallback is selected.
+connect to the koru autopilot daemon unix socket, send a `hello` frame,
+listen for `chat.send`, and attempt to paste/submit into JetBrains AI
+Assistant. Chat control is still experimental because JetBrains does not
+provide the same stable chat command surface as VS Code-family IDEs.
 
 ## Layout
 
@@ -23,7 +23,7 @@ plugins/koru-autopilot-jetbrains/
     ├── KoruAutopilotService.kt        ← same-UID unix-socket bridge
     ├── SocketPath.kt                  ← KORU_AUTOPILOT_* socket resolution
     ├── KoruAutopilotReconnectAction.kt
-    └── ChatInjector.kt                ← AI Assistant hook placeholder
+    └── ChatInjector.kt                ← AI Assistant action + Robot injector
 ```
 
 ## Build
@@ -46,12 +46,17 @@ Current bridge behavior:
 
 - resolves the socket using `KORU_AUTOPILOT_SOCKET`,
   `KORU_AUTOPILOT_INSTANCE`, `XDG_RUNTIME_DIR`, and `/tmp` fallback rules;
-- sends a `hello` frame with `ide=jetbrains`;
+- sends a `hello` frame with `ide=jetbrains`, protocol version, and
+  chat capabilities;
+- listens for daemon `chat.send` frames;
+- opens JetBrains AI Assistant via known action ids, pastes through the
+  system clipboard, and submits with Ctrl+Enter;
+- emits an ACK with paste/submit route evidence plus a `message.sent`
+  event when the local injection attempt succeeds;
 - exposes **Tools → Reconnect koru Autopilot** for manual reconnect.
 
-Remaining Phase 3 work:
+Remaining lifecycle work:
 
-- listen for daemon `chat.send` frames and paste/submit into AI Assistant;
 - emit real `session.ended` once JetBrains exposes a stable lifecycle hook
   or a polling fallback is implemented;
 - add a smoke test that validates Kotlin client frames against the Python

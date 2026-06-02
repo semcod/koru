@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from koru.autonomy.env import env_truthy
+from koru.autonomy.env import AUTOLOOP_ENV_DEFAULTS, env_get, env_int, env_truthy
 
 
 @dataclass(frozen=True)
@@ -73,50 +73,73 @@ class AutonomyConfig:
         """Create config from environment variables (shell compatibility)."""
         import os
 
-        _idle_raw = os.getenv("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", "0")
-        autopilot_skip_drive_idle_streak = 0
-        if _idle_raw is not None and str(_idle_raw).strip():
-            try:
-                autopilot_skip_drive_idle_streak = max(0, int(str(_idle_raw).strip()))
-            except ValueError:
-                autopilot_skip_drive_idle_streak = 0
+        env = os.environ
+        autopilot_skip_drive_idle_streak = max(
+            0,
+            env_int(
+                "AUTOPILOT_SKIP_DRIVE_IDLE_STREAK",
+                int(AUTOLOOP_ENV_DEFAULTS["AUTOPILOT_SKIP_DRIVE_IDLE_STREAK"]),
+                environ=env,
+            ),
+        )
 
         return cls(
-            project=Path(os.getenv("PROJECT", str(Path.cwd()))),
-            actor=os.getenv("ACTOR", os.getenv("ACTOR_NAME", "koru-shell")),
-            queue_name=os.getenv("QUEUE_NAME", ""),
-            use_all_queues=env_truthy("USE_ALL_QUEUES", False),
-            max_iterations=int(os.getenv("MAX_ITERATIONS", "50")),
-            max_cycles=int(os.getenv("MAX_CYCLES", "0")),
-            sleep_seconds=int(os.getenv("SLEEP_SECONDS", "120")),
-            initial_delay_seconds=int(os.getenv("INITIAL_DELAY_SECONDS", "0")),
-            enable_scan=env_truthy("ENABLE_SCAN", True),
-            ticket_sources=os.getenv("TICKET_SOURCES", "queue"),  # type: ignore[arg-type]
-            enable_interactive=env_truthy("ENABLE_INTERACTIVE", False),
-            enable_autopilot_drive=env_truthy("ENABLE_AUTOPILOT_DRIVE", True),
-            autopilot_action=os.getenv("AUTOPILOT_ACTION", "drive"),  # type: ignore[arg-type]
-            autopilot_ide=os.getenv("AUTOPILOT_IDE", "auto"),
-            autopilot_submit=env_truthy("AUTOPILOT_SUBMIT", True),
-            autopilot_on_idle_only=env_truthy("AUTOPILOT_ON_IDLE_ONLY", False),
+            project=Path(env_get("PROJECT", str(Path.cwd()), environ=env) or str(Path.cwd())),
+            actor=(
+                env_get("ACTOR", None, environ=env)
+                or env_get("ACTOR_NAME", None, environ=env)
+                or "koru-shell"
+            ),
+            queue_name=env_get("QUEUE_NAME", "", environ=env) or "",
+            use_all_queues=env_truthy("USE_ALL_QUEUES", False, environ=env),
+            max_iterations=env_int("MAX_ITERATIONS", int(AUTOLOOP_ENV_DEFAULTS["MAX_ITERATIONS"]), environ=env),
+            max_cycles=env_int("MAX_CYCLES", int(AUTOLOOP_ENV_DEFAULTS["MAX_CYCLES"]), environ=env),
+            sleep_seconds=env_int("SLEEP_SECONDS", int(AUTOLOOP_ENV_DEFAULTS["SLEEP_SECONDS"]), environ=env),
+            initial_delay_seconds=env_int(
+                "INITIAL_DELAY_SECONDS",
+                int(AUTOLOOP_ENV_DEFAULTS["INITIAL_DELAY_SECONDS"]),
+                environ=env,
+            ),
+            enable_scan=env_truthy("ENABLE_SCAN", True, environ=env),
+            ticket_sources=env_get("TICKET_SOURCES", AUTOLOOP_ENV_DEFAULTS["TICKET_SOURCES"], environ=env),  # type: ignore[arg-type]
+            enable_interactive=env_truthy("ENABLE_INTERACTIVE", False, environ=env),
+            enable_autopilot_drive=env_truthy("ENABLE_AUTOPILOT_DRIVE", True, environ=env),
+            autopilot_action=env_get("AUTOPILOT_ACTION", AUTOLOOP_ENV_DEFAULTS["AUTOPILOT_ACTION"], environ=env),  # type: ignore[arg-type]
+            autopilot_ide=env_get("AUTOPILOT_IDE", AUTOLOOP_ENV_DEFAULTS["AUTOPILOT_IDE"], environ=env) or "auto",
+            autopilot_submit=env_truthy("AUTOPILOT_SUBMIT", True, environ=env),
+            autopilot_on_idle_only=env_truthy("AUTOPILOT_ON_IDLE_ONLY", False, environ=env),
             autopilot_skip_on_diagnostics_fail=env_truthy(
                 "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL",
                 True,
+                environ=env,
             ),
-            drive_prompt=os.getenv("DRIVE_PROMPT", "continue with the next ticket"),
-            enable_idle_diagnostics=env_truthy("ENABLE_IDLE_DIAGNOSTICS", False),
-            idle_diagnostics_profile=os.getenv("IDLE_DIAGNOSTICS_PROFILE", "off"),  # type: ignore[arg-type]
-            strict_diagnostics=env_truthy("STRICT_DIAGNOSTICS", False),
-            enable_diagnostic_tickets=env_truthy("ENABLE_DIAGNOSTIC_TICKETS", False),
-            diagnostic_ticket_queue=os.getenv("DIAGNOSTIC_TICKET_QUEUE", "default"),
-            diagnostic_ticket_priority=os.getenv("DIAGNOSTIC_TICKET_PRIORITY", "high"),
-            diag_state_dir=Path(os.getenv("DIAG_STATE_DIR", ".planfile/.koru/autoloop-diag")),
-            autopilot_skip_statuses=os.getenv("AUTOPILOT_SKIP_STATUSES", "waiting_input"),
+            drive_prompt=env_get("DRIVE_PROMPT", "continue with the next ticket", environ=env)
+            or "continue with the next ticket",
+            enable_idle_diagnostics=env_truthy("ENABLE_IDLE_DIAGNOSTICS", False, environ=env),
+            idle_diagnostics_profile=env_get("IDLE_DIAGNOSTICS_PROFILE", "off", environ=env),  # type: ignore[arg-type]
+            strict_diagnostics=env_truthy("STRICT_DIAGNOSTICS", False, environ=env),
+            enable_diagnostic_tickets=env_truthy("ENABLE_DIAGNOSTIC_TICKETS", False, environ=env),
+            diagnostic_ticket_queue=env_get(
+                "DIAGNOSTIC_TICKET_QUEUE",
+                AUTOLOOP_ENV_DEFAULTS["DIAGNOSTIC_TICKET_QUEUE"],
+                environ=env,
+            )
+            or "default",
+            diagnostic_ticket_priority=env_get(
+                "DIAGNOSTIC_TICKET_PRIORITY",
+                AUTOLOOP_ENV_DEFAULTS["DIAGNOSTIC_TICKET_PRIORITY"],
+                environ=env,
+            )
+            or "high",
+            diag_state_dir=Path(env_get("DIAG_STATE_DIR", ".planfile/.koru/autoloop-diag", environ=env) or ".planfile/.koru/autoloop-diag"),
+            autopilot_skip_statuses=env_get("AUTOPILOT_SKIP_STATUSES", "waiting_input", environ=env)
+            or "waiting_input",
             autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
-            backoff_on_stagnation=env_truthy("BACKOFF_ON_STAGNATION", True),
-            max_sleep_seconds=int(os.getenv("MAX_SLEEP_SECONDS", "900")),
-            scan_skip_if_clean=env_truthy("SCAN_SKIP_IF_CLEAN", False),
-            scan_skip_after=int(os.getenv("SCAN_SKIP_AFTER", "1")),
-            topology_integration=env_truthy("TOPOLOGY_INTEGRATION", True),
+            backoff_on_stagnation=env_truthy("BACKOFF_ON_STAGNATION", True, environ=env),
+            max_sleep_seconds=env_int("MAX_SLEEP_SECONDS", 900, environ=env),
+            scan_skip_if_clean=env_truthy("SCAN_SKIP_IF_CLEAN", False, environ=env),
+            scan_skip_after=env_int("SCAN_SKIP_AFTER", 1, environ=env),
+            topology_integration=env_truthy("TOPOLOGY_INTEGRATION", True, environ=env),
         )
 
 

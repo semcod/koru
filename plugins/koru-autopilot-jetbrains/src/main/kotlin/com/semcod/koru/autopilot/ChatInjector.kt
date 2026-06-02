@@ -9,13 +9,21 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
 
+data class ChatInjectResult(
+    val ok: Boolean,
+    val focusCommand: String = "",
+    val pasteCommand: String = "",
+    val submitCommand: String = "",
+    val reason: String = "",
+)
+
 /**
  * Injects text into the JetBrains AI Assistant chat input.
  *
  * Strategy:
  * 1. Open the AI Assistant tool window via ActionManager.
  * 2. Place the text on the system clipboard.
- * 3. Send Ctrl+V (paste) + optionally Enter (submit) via AWT Robot.
+ * 3. Send Ctrl+V (paste) + optionally Ctrl+Enter (submit) via AWT Robot.
  */
 object ChatInjector {
     private val log = Logger.getInstance(ChatInjector::class.java)
@@ -27,33 +35,60 @@ object ChatInjector {
         "Grazie.OpenAssistant",
     )
 
-    fun sendToChat(text: String, submit: Boolean = true): Boolean {
+    fun sendToChat(text: String, submit: Boolean = true): ChatInjectResult {
         return try {
-            ApplicationManager.getApplication().invokeLater {
-                openAiPanel()
-                pasteViaClipboard(text, submit)
-            }
-            true
+            val focusCommand = openAiPanelOnEdt()
+            Thread.sleep(300)
+            val pasteCommand = pasteViaClipboard(text, submit)
+            ChatInjectResult(
+                ok = true,
+                focusCommand = focusCommand ?: "",
+                pasteCommand = pasteCommand,
+                submitCommand = if (submit) "jetbrains.robot.ctrlEnter" else "",
+                reason = if (focusCommand == null) {
+                    "no AI Assistant open-action found; pasted into the current focus"
+                } else {
+                    ""
+                },
+            )
         } catch (e: Exception) {
             log.warn("ChatInjector.sendToChat failed", e)
-            false
+            ChatInjectResult(ok = false, reason = e.message ?: e.javaClass.simpleName)
         }
     }
 
-    private fun openAiPanel() {
+    private fun openAiPanelOnEdt(): String? {
+        val app = ApplicationManager.getApplication()
+        if (app.isDispatchThread) {
+            return openAiPanel()
+        }
+        var openedAction: String? = null
+        var failure: Throwable? = null
+        app.invokeAndWait {
+            try {
+                openedAction = openAiPanel()
+            } catch (t: Throwable) {
+                failure = t
+            }
+        }
+        failure?.let { throw RuntimeException("failed to open JetBrains AI Assistant", it) }
+        return openedAction
+    }
+
+    private fun openAiPanel(): String? {
         val am = ActionManager.getInstance()
         for (actionId in AI_OPEN_ACTIONS) {
             val action = am.getAction(actionId) ?: continue
             val event = AnActionEvent.createFromAnAction(action, null, "koru", DataContext.EMPTY_CONTEXT)
             action.actionPerformed(event)
             log.info("ChatInjector: opened AI panel via action $actionId")
-            Thread.sleep(300)
-            return
+            return actionId
         }
         log.warn("ChatInjector: no AI Assistant open-action found; tried $AI_OPEN_ACTIONS")
+        return null
     }
 
-    private fun pasteViaClipboard(text: String, submit: Boolean) {
+    private fun pasteViaClipboard(text: String, submit: Boolean): String {
         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
         clipboard.setContents(StringSelection(text), null)
         Thread.sleep(100)
@@ -66,9 +101,12 @@ object ChatInjector {
 
         if (submit) {
             Thread.sleep(50)
+            robot.keyPress(KeyEvent.VK_CONTROL)
             robot.keyPress(KeyEvent.VK_ENTER)
             robot.keyRelease(KeyEvent.VK_ENTER)
+            robot.keyRelease(KeyEvent.VK_CONTROL)
         }
         log.info("ChatInjector: pasted ${text.length} chars via clipboard, submit=$submit")
+        return "jetbrains.robot.clipboardPaste"
     }
 }

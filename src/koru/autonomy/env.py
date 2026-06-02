@@ -18,6 +18,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
 
+from koru.env_flags import parse_boolish
+
 from koruide.ide import (
     detect_terminal_host_ide_id,
     normalize_ide_id,
@@ -62,10 +64,26 @@ AUTOLOOP_ENV_DEFAULTS: dict[str, str] = {
 def env_truthy(name: str, default: bool, *, environ: Mapping[str, str] | None = None) -> bool:
     """Parse env *name* as boolean (same truth set as koru-autoloop ``is_true``)."""
     env = os.environ if environ is None else environ
+    return parse_boolish(env.get(name), default=default)
+
+
+def env_get(name: str, default: str | None, *, environ: Mapping[str, str] | None = None) -> str | None:
+    """Return stripped env value or ``default`` when missing/blank."""
+    env = os.environ if environ is None else environ
     raw = env.get(name)
+    if raw is None or not str(raw).strip():
+        return default
+    return str(raw).strip()
+
+
+def env_int(name: str, default: int, *, environ: Mapping[str, str] | None = None) -> int:
+    """Return non-empty integer env value or ``default`` when invalid."""
+    raw = env_get(name, None, environ=environ)
     if raw is None:
         return default
-    return raw.strip().lower() in {"1", "true", "yes", "y", "on"}
+    with contextlib.suppress(ValueError):
+        return int(raw)
+    return default
 
 
 def effective_ticket_source_flags(ticket_sources: str) -> tuple[bool, bool]:
@@ -94,14 +112,6 @@ def _env_ticket_sources(cli_value: str, environ: Mapping[str, str] | None) -> st
     return cli_value
 
 
-def _env_get(name: str, default: str | None, environ: Mapping[str, str] | None) -> str | None:
-    env = os.environ if environ is None else environ
-    raw = env.get(name)
-    if raw is None or not str(raw).strip():
-        return default
-    return str(raw).strip()
-
-
 def _apply_ticket_and_diagnostics_env(
     args: argparse.Namespace,
     environ: Mapping[str, str] | None,
@@ -109,12 +119,12 @@ def _apply_ticket_and_diagnostics_env(
     """Apply ticket sources and diagnostics environment overrides."""
     args.ticket_sources = _env_ticket_sources(args.ticket_sources, environ)
     args.idle_diagnostics = (
-        _env_get(
+        env_get(
             "IDLE_DIAGNOSTICS_PROFILE",
             "full"
             if env_truthy("ENABLE_IDLE_DIAGNOSTICS", False, environ=environ)
             else args.idle_diagnostics,
-            environ,
+            environ=environ,
         )
         or args.idle_diagnostics
     )
@@ -124,23 +134,23 @@ def _apply_ticket_and_diagnostics_env(
         environ=environ,
     )
     args.diagnostic_ticket_queue = (
-        _env_get(
+        env_get(
             "DIAGNOSTIC_TICKET_QUEUE",
             args.diagnostic_ticket_queue,
-            environ,
+            environ=environ,
         )
         or args.diagnostic_ticket_queue
     )
     args.diagnostic_ticket_priority = (
-        _env_get(
+        env_get(
             "DIAGNOSTIC_TICKET_PRIORITY",
             args.diagnostic_ticket_priority,
-            environ,
+            environ=environ,
         )
         or args.diagnostic_ticket_priority
     )
     args.diagnostic_state_dir = (
-        _env_get("DIAG_STATE_DIR", args.diagnostic_state_dir, environ) or args.diagnostic_state_dir
+        env_get("DIAG_STATE_DIR", args.diagnostic_state_dir, environ=environ) or args.diagnostic_state_dir
     )
     args.strict_diagnostics = env_truthy(
         "STRICT_DIAGNOSTICS", args.strict_diagnostics, environ=environ
@@ -152,7 +162,7 @@ def _apply_autopilot_env(
     environ: Mapping[str, str] | None,
 ) -> None:
     """Apply autopilot environment overrides."""
-    ap_action = _env_get("AUTOPILOT_ACTION", args.autopilot_action, environ)
+    ap_action = env_get("AUTOPILOT_ACTION", args.autopilot_action, environ=environ)
     args.autopilot_action = str(ap_action).lower() if ap_action else args.autopilot_action
     if args.autopilot_action not in {"drive", "handoff", "off"}:
         args.autopilot_action = "drive"
@@ -167,14 +177,14 @@ def _apply_autopilot_env(
         environ=environ,
     )
     args.autopilot_skip_statuses = (
-        _env_get(
+        env_get(
             "AUTOPILOT_SKIP_STATUSES",
             args.autopilot_skip_statuses,
-            environ,
+            environ=environ,
         )
         or args.autopilot_skip_statuses
     )
-    _idle_streak_raw = _env_get("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", None, environ)
+    _idle_streak_raw = env_get("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", None, environ=environ)
     if _idle_streak_raw is not None and str(_idle_streak_raw).strip():
         with contextlib.suppress(ValueError):
             args.autopilot_skip_drive_idle_streak = max(0, int(str(_idle_streak_raw).strip()))
@@ -198,7 +208,7 @@ def _apply_scan_env(
         args.scan_after_idle_queue,
         environ=environ,
     )
-    _idle_min_raw = _env_get("SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS", None, environ)
+    _idle_min_raw = env_get("SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS", None, environ=environ)
     if _idle_min_raw is not None and str(_idle_min_raw).strip():
         with contextlib.suppress(ValueError):
             args.scan_after_idle_min_interval = max(0.0, float(str(_idle_min_raw).strip()))
@@ -218,19 +228,19 @@ def _apply_wup_env(
         args.wup_watch = str(env_wup_watch).strip().lower() in {"1", "true", "yes", "y", "on"}
     elif args.wup_watch is None:
         args.wup_watch = None
-    wm = _env_get("WUP_MODE", args.wup_mode, environ)
+    wm = env_get("WUP_MODE", args.wup_mode, environ=environ)
     args.wup_mode = str(wm).lower() if wm else args.wup_mode
     if args.wup_mode not in {"default", "testql"}:
         args.wup_mode = "testql"
-    args.wup_deps = _env_get("WUP_DEPS", args.wup_deps, environ) or args.wup_deps
+    args.wup_deps = env_get("WUP_DEPS", args.wup_deps, environ=environ) or args.wup_deps
     args.wup_scenarios_dir = (
-        _env_get("WUP_SCENARIOS_DIR", args.wup_scenarios_dir, environ) or args.wup_scenarios_dir
+        env_get("WUP_SCENARIOS_DIR", args.wup_scenarios_dir, environ=environ) or args.wup_scenarios_dir
     )
     args.wup_testql_bin = (
-        _env_get("WUP_TESTQL_BIN", args.wup_testql_bin, environ) or args.wup_testql_bin
+        env_get("WUP_TESTQL_BIN", args.wup_testql_bin, environ=environ) or args.wup_testql_bin
     )
     args.wup_track_dir = (
-        _env_get("WUP_TRACK_DIR", args.wup_track_dir, environ) or args.wup_track_dir
+        env_get("WUP_TRACK_DIR", args.wup_track_dir, environ=environ) or args.wup_track_dir
     )
     args.wup_diagnostic_tickets = env_truthy(
         "WUP_DIAGNOSTIC_TICKETS",
@@ -238,7 +248,7 @@ def _apply_wup_env(
         environ=environ,
     )
     args.wup_ticket_queue = (
-        _env_get("WUP_TICKET_QUEUE", args.wup_ticket_queue, environ) or args.wup_ticket_queue
+        env_get("WUP_TICKET_QUEUE", args.wup_ticket_queue, environ=environ) or args.wup_ticket_queue
     )
 
 
@@ -261,12 +271,12 @@ def _apply_operator_env(
         )
     if hasattr(args, "operator_ticket_queue"):
         args.operator_ticket_queue = (
-            _env_get("OPERATOR_TICKET_QUEUE", args.operator_ticket_queue, environ)
+            env_get("OPERATOR_TICKET_QUEUE", args.operator_ticket_queue, environ=environ)
             or args.operator_ticket_queue
         )
     if hasattr(args, "operator_ticket_priority"):
         args.operator_ticket_priority = (
-            _env_get("OPERATOR_TICKET_PRIORITY", args.operator_ticket_priority, environ)
+            env_get("OPERATOR_TICKET_PRIORITY", args.operator_ticket_priority, environ=environ)
             or args.operator_ticket_priority
         )
 

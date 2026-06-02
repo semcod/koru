@@ -5,17 +5,17 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 479, typescript: 80, shell: 49, yaml: 25, json: 16
+- **Languages**: python: 485, typescript: 84, shell: 51, yaml: 25, json: 16
 - **Analysis Mode**: static
-- **Total Functions**: 4811
-- **Total Classes**: 395
-- **Modules**: 677
-- **Entry Points**: 2039
+- **Total Functions**: 4911
+- **Total Classes**: 409
+- **Modules**: 689
+- **Entry Points**: 2127
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-shared.src.bridge-submit
-- **Functions**: 90
+- **Functions**: 95
 - **Classes**: 1
 - **File**: `bridge-submit.ts`
 
@@ -52,6 +52,11 @@
 - **Functions**: 55
 - **File**: `scan.py`
 
+### src.koruide.plugin_installer
+- **Functions**: 54
+- **Classes**: 3
+- **File**: `plugin_installer.py`
+
 ### plugins.koru-autopilot-shared.src.bridge-focus-strategy
 - **Functions**: 53
 - **Classes**: 1
@@ -66,11 +71,6 @@
 - **Functions**: 53
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
-
-### src.koruide.plugin_installer
-- **Functions**: 52
-- **Classes**: 1
-- **File**: `plugin_installer.py`
 
 ### plugins.koru-autopilot-cursor.src.probe-ladder.test
 - **Functions**: 48
@@ -115,7 +115,7 @@ Main execution flows into the system:
 
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
-- **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koruvision.providers.env.env_truthy
+- **Calls**: max, cls, src.koru.env_flags.env_int, int, Path, src.koruvision.providers.env.env_truthy, src.koru.env_flags.env_int, src.koru.env_flags.env_int
 
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
@@ -205,20 +205,16 @@ enforces on the wire) so
 - **Calls**: src.koru.autonomous_processes._find_existing_autonomous_processes, src.koru.doctor._drop_non_service_autonomous_matches, src.koru.autonomous_processes._find_existing_wup_processes, src.koru.doctor._autopilot_stream_socket_summary, src.koru.doctor._autonomous_stream_issue_codes, detail_bits.extend, detail_bits.extend, detail_bits.append
 
 ### src.koruapi.dashboard_routes._post_waiting_input_bulk
-- **Calls**: None.lower, body.get, None.strip, src.koruapi.dashboard_tickets.bulk_waiting_input_action, handler._send_json, handler._send_json, isinstance, handler._send_json
+- **Calls**: None.lower, body.get, None.strip, src.koruapi.dashboard_tickets.DashboardTicketCommands.bulk_waiting_input_action, handler._send_json, handler._send_json, isinstance, handler._send_json
+
+### src.koruapi.dashboard_tickets.create_ticket_from_dashboard
+- **Calls**: None.strip, None.strip, None.strip, None.strip, src.koruide.ide.normalize_ide_id, src.koruapi.dashboard_tickets._build_ticket_scaffold, src.koru.tasks.create_nl_task, ValueError
 
 ### src.koruide.client.KoruIDEClient.request
 - **Calls**: getattr, req, self._connect, sock.sendall, bytearray, callable, RuntimeError, msg.encode
 
 ### src.koruide.daemon.server.AutopilotDaemon._on_readable
 - **Calls**: client.buf.extend, client.sock.recv, src.koruide.daemon.server._verbose_io, self._drop, len, self._send, self._drop, client.buf.partition
-
-### src.koru.gate.parse_authorizations
-> Extract all gate authorizations recorded on a ticket.
-
-Returns them in insertion order so callers can pick the most
-recent one with ``parse_authorizat
-- **Calls**: str, out.append, isinstance, note.startswith, json.loads, payload.get, payload.get, isinstance
 
 ## Process Flows
 
@@ -234,6 +230,7 @@ _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
 ### Flow 2: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
+  └─ →> env_int
 ```
 
 ### Flow 3: run_api_request
@@ -297,7 +294,7 @@ from_dict [src.koru.deployment_events.models.DeploymentEvent]
 ## Key Classes
 
 ### plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit
-- **Methods**: 90
+- **Methods**: 95
 - **Key Methods**: plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.submitResult, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.submitResult, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.koruStepConfig, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.cfg, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.legacyVerify, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.verifySubmit, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.postSubmitVerifyEnabled, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.discardCachedSubmitWinner, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.current, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.ide
 
 ### plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork
@@ -486,6 +483,21 @@ Returns (should_kill, logs) tuple.
 
 ## Behavioral Patterns
 
+### recursion_create_ticket_from_dashboard
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.create_ticket_from_dashboard
+
+### recursion_update_ticket_from_dashboard
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.update_ticket_from_dashboard
+
+### recursion_reorder_ticket_from_dashboard
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.reorder_ticket_from_dashboard
+
 ### recursion__sum_structured_counts
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -520,7 +532,7 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
+- `src.koru.autonomy.config.AutonomyConfig.from_env` - 46 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
@@ -570,10 +582,10 @@ graph TD
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
-    from_env --> getenv
-    from_env --> cls
-    from_env --> strip
     from_env --> max
+    from_env --> cls
+    from_env --> env_int
+    from_env --> int
     from_env --> Path
     run_api_request --> get
     run_api_request --> str

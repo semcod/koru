@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -21,18 +22,136 @@ def run_planfile(command: Sequence[str], project: Path) -> Any:
   return run_process(list(command), project)
 
 
+@dataclass(frozen=True)
+class DashboardTicketQueries:
+  """Read-only dashboard ticket queries."""
+
+  def list_tickets(self, project: Path) -> list[dict[str, Any]]:
+    result = planfile_command(project, ["ticket", "list", "--format", "json"], runner=run_planfile)
+    if result.returncode != 0:
+      return []
+    try:
+      payload = json.loads((result.stdout or "").strip() or "[]")
+    except json.JSONDecodeError:
+      return []
+    if isinstance(payload, list):
+      return [item for item in payload if isinstance(item, dict)]
+    return [payload] if isinstance(payload, dict) else []
+
+  def waiting_input_ticket_ids(self, project: Path) -> set[str]:
+    tickets = self.list_tickets(project)
+    return {
+      str(t.get("id"))
+      for t in tickets
+      if isinstance(t, dict) and str(t.get("status") or "") == "waiting_input"
+    }
+
+
+@dataclass(frozen=True)
+class DashboardTicketCommands:
+  """Mutating dashboard ticket commands."""
+
+  queries: DashboardTicketQueries = DashboardTicketQueries()
+
+  def bulk_waiting_input_action(
+    self,
+    project: Path,
+    *,
+    ticket_ids: list[str],
+    action: str,
+    reason: str,
+  ) -> dict[str, Any]:
+    waiting = self.queries.waiting_input_ticket_ids(project)
+    selected = [tid for tid in ticket_ids if tid in waiting]
+    if not selected:
+      return {"ok": False, "error": "no waiting_input tickets selected", "applied": []}
+
+    applied: list[dict[str, Any]] = []
+    for tid in selected:
+      if action == "approve":
+        claim = planfile_command(
+          project,
+          ["ticket", "claim", tid, "--assigned-to", "koru-web"],
+          runner=run_planfile,
+        )
+        if claim.returncode != 0:
+          if not ticket_claim_command_missing(claim):
+            applied.append(
+              {"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]}
+            )
+            continue
+        start = planfile_command(project, ["ticket", "start", tid], runner=run_planfile)
+        if start.returncode != 0:
+          applied.append(
+            {"id": tid, "ok": False, "step": "start", "stderr": start.stderr[-500:]}
+          )
+          continue
+        done = planfile_command(project, ["ticket", "done", tid], runner=run_planfile)
+        applied.append(
+          {
+            "id": tid,
+            "ok": done.returncode == 0,
+            "action": "approve",
+            "stderr": done.stderr[-500:],
+          },
+        )
+        continue
+
+      block = planfile_command(
+        project,
+        ["ticket", "block", tid, "--reason", reason or "Rejected in koru web dashboard"],
+        runner=run_planfile,
+      )
+      applied.append(
+        {
+          "id": tid,
+          "ok": block.returncode == 0,
+          "action": "reject",
+          "stderr": block.stderr[-500:],
+        },
+      )
+
+    return {"ok": True, "action": action, "requested": ticket_ids, "applied": applied}
+
+  def create_ticket_from_dashboard(self, project: Path, body: dict[str, Any]) -> dict[str, Any]:
+    return create_ticket_from_dashboard(project, body)
+
+  def update_ticket_from_dashboard(
+    self,
+    project: Path,
+    *,
+    ticket_id: str,
+    priority: str | None = None,
+    queue_name: str | None = None,
+  ) -> dict[str, Any]:
+    return update_ticket_from_dashboard(
+      project,
+      ticket_id=ticket_id,
+      priority=priority,
+      queue_name=queue_name,
+    )
+
+  def reorder_ticket_from_dashboard(
+    self,
+    project: Path,
+    *,
+    ticket_id: str,
+    direction: str,
+  ) -> dict[str, Any]:
+    return reorder_ticket_from_dashboard(
+      project,
+      ticket_id=ticket_id,
+      direction=direction,
+    )
+
+
+_QUERY_HANDLERS = DashboardTicketQueries()
+_COMMAND_HANDLERS = DashboardTicketCommands(queries=_QUERY_HANDLERS)
+
+
 def list_tickets(project: Path) -> list[dict[str, Any]]:
   """Return all planfile tickets as JSON list (empty on errors)."""
-  result = planfile_command(project, ["ticket", "list", "--format", "json"], runner=run_planfile)
-  if result.returncode != 0:
-    return []
-  try:
-    payload = json.loads((result.stdout or "").strip() or "[]")
-  except json.JSONDecodeError:
-    return []
-  if isinstance(payload, list):
-    return [item for item in payload if isinstance(item, dict)]
-  return [payload] if isinstance(payload, dict) else []
+  return _QUERY_HANDLERS.list_tickets(project)
 
 
 def bulk_waiting_input_action(
@@ -42,62 +161,12 @@ def bulk_waiting_input_action(
   action: str,
   reason: str,
 ) -> dict[str, Any]:
-  tickets = list_tickets(project)
-  waiting = {
-    str(t.get("id"))
-    for t in tickets
-    if isinstance(t, dict) and str(t.get("status") or "") == "waiting_input"
-  }
-  selected = [tid for tid in ticket_ids if tid in waiting]
-  if not selected:
-    return {"ok": False, "error": "no waiting_input tickets selected", "applied": []}
-
-  applied: list[dict[str, Any]] = []
-  for tid in selected:
-    if action == "approve":
-      claim = planfile_command(
-        project,
-        ["ticket", "claim", tid, "--assigned-to", "koru-web"],
-        runner=run_planfile,
-      )
-      if claim.returncode != 0:
-        if not ticket_claim_command_missing(claim):
-          applied.append(
-            {"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]}
-          )
-          continue
-      start = planfile_command(project, ["ticket", "start", tid], runner=run_planfile)
-      if start.returncode != 0:
-        applied.append(
-          {"id": tid, "ok": False, "step": "start", "stderr": start.stderr[-500:]}
-        )
-        continue
-      done = planfile_command(project, ["ticket", "done", tid], runner=run_planfile)
-      applied.append(
-        {
-          "id": tid,
-          "ok": done.returncode == 0,
-          "action": "approve",
-          "stderr": done.stderr[-500:],
-        },
-      )
-      continue
-
-    block = planfile_command(
-      project,
-      ["ticket", "block", tid, "--reason", reason or "Rejected in koru web dashboard"],
-      runner=run_planfile,
-    )
-    applied.append(
-      {
-        "id": tid,
-        "ok": block.returncode == 0,
-        "action": "reject",
-        "stderr": block.stderr[-500:],
-      },
-    )
-
-  return {"ok": True, "action": action, "requested": ticket_ids, "applied": applied}
+  return _COMMAND_HANDLERS.bulk_waiting_input_action(
+    project,
+    ticket_ids=ticket_ids,
+    action=action,
+    reason=reason,
+  )
 
 
 def _build_ticket_scaffold(body: dict[str, Any], ide: str, executor_kind: str) -> dict[str, Any]:

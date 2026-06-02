@@ -101,13 +101,82 @@ class KoruAutopilotService : Disposable {
                 val submit = extractJsonBool(line, "submit") ?: true
                 val msgId = extractJsonString(line, "id")
                 log.info("koru chat.send: ${text.length} chars, submit=$submit")
-                val ok = ChatInjector.sendToChat(text, submit = submit)
-                val status = if (ok) "ok" else "error"
+                val result = ChatInjector.sendToChat(text, submit = submit)
+                val status = if (result.ok) "ok" else "error"
                 val replyId = msgId ?: "jetbrains-ack-${UUID.randomUUID()}"
-                scope.launch { channel?.let { writeJsonLine(it, mapOf("type" to "ack", "id" to replyId, "status" to status)) } }
+                scope.launch {
+                    channel?.let {
+                        writeJsonLine(it, buildAck(replyId, status, submit, result))
+                        if (result.ok) {
+                            writeJsonLine(it, buildMessageSent(text))
+                        }
+                    }
+                }
             }
             else -> log.debug("koru autopilot: unhandled message type=$type")
         }
+    }
+
+    private fun buildAck(
+        replyId: String,
+        status: String,
+        submit: Boolean,
+        result: ChatInjectResult,
+    ): Map<String, Any?> {
+        val strictVerified = result.ok &&
+            result.focusCommand.isNotBlank() &&
+            result.pasteCommand.isNotBlank() &&
+            (!submit || result.submitCommand.isNotBlank())
+        val trace = mutableListOf<Map<String, Any?>>(
+            mapOf(
+                "op" to "focus_open",
+                "route" to result.focusCommand,
+                "ok" to (result.ok && result.focusCommand.isNotBlank()),
+            ),
+            mapOf(
+                "op" to "paste",
+                "route" to result.pasteCommand,
+                "ok" to result.ok,
+            ),
+        )
+        if (submit) {
+            trace.add(
+                mapOf(
+                    "op" to "submit",
+                    "route" to result.submitCommand,
+                    "ok" to result.ok,
+                ),
+            )
+        }
+        return mapOf(
+            "type" to "ack",
+            "id" to replyId,
+            "ok" to result.ok,
+            "status" to status,
+            "backend" to "plugin",
+            "ide" to "jetbrains",
+            "delivered" to result.ok,
+            "opened" to result.ok,
+            "submitted" to (result.ok && submit),
+            "verification" to if (strictVerified && submit) "strict" else "plugin_ack",
+            "winning_focus_open" to result.focusCommand,
+            "winning_paste" to result.pasteCommand,
+            "winning_submit" to if (submit) result.submitCommand else "",
+            "attempted_paste" to result.pasteCommand,
+            "attempted_submit" to if (submit) result.submitCommand else "",
+            "reason" to result.reason,
+            "operation_trace" to trace,
+        )
+    }
+
+    private fun buildMessageSent(text: String): Map<String, Any?> {
+        return mapOf(
+            "type" to "message.sent",
+            "id" to "jetbrains-sent-${UUID.randomUUID()}",
+            "chat" to "jetbrains",
+            "text" to text,
+            "length" to text.length,
+        )
     }
 
     private fun extractJsonString(json: String, key: String): String? {
@@ -132,12 +201,13 @@ class KoruAutopilotService : Disposable {
                 "ide" to "jetbrains",
                 "version" to appInfo.fullVersion,
                 "pid" to ProcessHandle.current().pid(),
-                "capabilities" to listOf("chat.paste", "chat.submit").joinToString(",", "[", "]") { "\"$it\"" },
+                "protocolVersion" to 2,
+                "capabilities" to listOf("chat.paste", "chat.submit", "chat.events"),
             ),
         )
     }
 
-    private suspend fun writeJsonLine(ch: SocketChannel, payload: Map<String, Any>) {
+    private suspend fun writeJsonLine(ch: SocketChannel, payload: Map<String, Any?>) {
         withContext(Dispatchers.IO) {
             val writer = BufferedWriter(
                 Channels.newWriter(ch, StandardCharsets.UTF_8.newEncoder(), -1),
@@ -148,13 +218,21 @@ class KoruAutopilotService : Disposable {
         }
     }
 
-    private fun toJsonObject(payload: Map<String, Any>): String {
+    private fun toJsonObject(payload: Map<String, Any?>): String {
         return payload.entries.joinToString(prefix = "{", postfix = "}") { (key, value) ->
-            val encodedValue = when (value) {
-                is Number, is Boolean -> value.toString()
-                else -> "\"${escapeJson(value.toString())}\""
+            "\"${escapeJson(key)}\":${toJsonValue(value)}"
+        }
+    }
+
+    private fun toJsonValue(value: Any?): String {
+        return when (value) {
+            null -> "null"
+            is Number, is Boolean -> value.toString()
+            is Map<*, *> -> value.entries.joinToString(prefix = "{", postfix = "}") { entry ->
+                "\"${escapeJson(entry.key.toString())}\":${toJsonValue(entry.value)}"
             }
-            "\"${escapeJson(key)}\":$encodedValue"
+            is Iterable<*> -> value.joinToString(prefix = "[", postfix = "]") { item -> toJsonValue(item) }
+            else -> "\"${escapeJson(value.toString())}\""
         }
     }
 
