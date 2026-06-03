@@ -103,6 +103,12 @@ def test_factory_resolves_sllm_shell() -> None:
     assert backend.client_id == "claude-code"
 
 
+def test_factory_uses_sllm_backend_aliases() -> None:
+    backend = build_agent_backend(backend_id="vendor_cli", shell_client_id="aider")
+    assert isinstance(backend, SllmShellBackend)
+    assert backend.client_id == "aider"
+
+
 def test_sllm_shell_backend_delegates_to_bridge(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: dict[str, object] = {}
 

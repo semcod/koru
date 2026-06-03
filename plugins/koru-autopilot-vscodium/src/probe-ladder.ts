@@ -203,7 +203,7 @@ export function buildFocusInputCommands(ide: string): string[] {
   let merged: string[];
   if (strategy) {
     const prefix = strategy.focusInputCommandsPrefix();
-    merged = prefix.length ? [...prefix, ...generic] : generic;
+    merged = prefix.length ? mergeUnique(prefix, generic) : generic;
     const block = strategy.focusInputCommandsBlocklist?.() ?? [];
     if (block.length > 0) {
       const blocked = new Set(block.map((c) => c.toLowerCase()));

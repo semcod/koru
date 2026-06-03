@@ -61,12 +61,12 @@ const RULES: Rule[] = [
   {
     capability: "focus_input",
     pattern:
-      /(?:focusInput|focusComposer|focus.*(?:chat|composer|cascade)|chat\.action\.focus|focusLastFocused)/i,
+      /(?:focusInput|focusComposer|focus.*(?:chat|composer|cascade)|chat\.action\.focus|focusLastFocused|chatgpt\.sidebar.*\.focus)/i,
   },
   {
     capability: "focus_open",
     pattern:
-      /(?:openComposer|showComposer|open.*(?:chat|composer|cascade|agent)|newchataction|panel\.chat|composer\.open|cascadePanel\.open)/i,
+      /(?:chatgpt\.(?:openSidebar|sidebar.*\.open|newChat)|openComposer|showComposer|open.*(?:chat|composer|cascade|agent)|newchataction|panel\.chat|composer\.open|cascadePanel\.open)/i,
   },
 ];
 

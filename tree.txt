@@ -1,0 +1,2722 @@
+.
+├── app.doql.less
+├── assert
+├── CHANGELOG.md
+├── ci_output.log
+├── code2llm_output
+│   ├── analysis.toon.yaml
+│   ├── batch_1
+│   ├── context.md
+│   ├── map.toon.yaml
+│   ├── README.md
+│   ├── src
+│   ├── src_part2
+│   ├── src_part3
+│   ├── src_part4
+│   └── src_part5
+├── coverage.json
+├── deps.json
+├── docker
+│   └── capture
+│       ├── Dockerfile
+│       ├── entrypoint-x11.sh
+│       ├── run.sh
+│       └── smoke.py
+├── docker-compose.yml
+├── Dockerfile
+├── duplication.toon
+├── examples
+│   ├── bootstrap.planfile.yaml
+│   ├── bootstrap.planfile.yaml.new
+│   ├── ci
+│   │   ├── gitlab-ci.example.yml
+│   │   └── headless-autonomous-jsonl
+│   │       ├── docker-compose.yml
+│   │       ├── e2e.sh
+│   │       ├── README.md
+│   │       └── run-docker.sh
+│   ├── docker
+│   │   └── koru-e2e.Dockerfile
+│   ├── docker-compose-remote-mesh.yml
+│   ├── env
+│   │   ├── autopilot-ide-auto
+│   │   │   ├── docker-compose.yml
+│   │   │   ├── e2e.sh
+│   │   │   ├── README.md
+│   │   │   └── run-docker.sh
+│   │   └── autopilot-ide-cursor
+│   │       ├── docker-compose.yml
+│   │       ├── e2e.sh
+│   │       ├── README.md
+│   │       └── run-docker.sh
+│   ├── planfile
+│   │   ├── http-api-curl
+│   │   │   ├── docker-compose.yml
+│   │   │   ├── e2e.sh
+│   │   │   ├── README.md
+│   │   │   └── run-docker.sh
+│   │   └── queue-cli-dryrun
+│   │       ├── docker-compose.yml
+│   │       ├── e2e.sh
+│   │       ├── README.md
+│   │       └── run-docker.sh
+│   ├── protocol
+│   │   └── autopilot-socket-smoke
+│   │       ├── docker-compose.yml
+│   │       ├── e2e.sh
+│   │       ├── README.md
+│   │       └── run-docker.sh
+│   ├── README.md
+│   ├── remote_orchestration_demo.py
+│   ├── run-e2e.sh
+│   └── runtime
+│       └── koru-serve-health
+│           ├── docker-compose.yml
+│           ├── e2e.sh
+│           ├── README.md
+│           └── run-docker.sh
+├── goal.yaml
+├── img.png
+├── koru.mp4
+├── koru.yaml
+├── LICENSE
+├── Makefile
+├── MANIFEST.in
+├── maori-koru-bold-400w.png
+├── output.txt
+├── package.json
+├── package-lock.json
+├── packages
+│   ├── coru
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   ├── coru
+│   │   │   │   ├── cli.py
+│   │   │   │   ├── ecosystem.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── repair
+│   │   │   │   │   ├── commands.py
+│   │   │   │   │   ├── diagnostics.py
+│   │   │   │   │   ├── domain.py
+│   │   │   │   │   ├── events.py
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── pipeline.py
+│   │   │   │   │   ├── projector.py
+│   │   │   │   │   ├── query.py
+│   │   │   │   │   ├── registry.py
+│   │   │   │   │   ├── service.py
+│   │   │   │   │   └── store.py
+│   │   │   │   ├── repair_registry.py
+│   │   │   │   └── supervisor
+│   │   │   │       ├── cli.py
+│   │   │   │       ├── daemon_ctl.py
+│   │   │   │       ├── editor_cli.py
+│   │   │   │       ├── http_server.py
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── models.py
+│   │   │   │       ├── paths.py
+│   │   │   │       ├── probe.py
+│   │   │   │       ├── registry.py
+│   │   │   │       ├── service.py
+│   │   │   │       ├── socket_path.py
+│   │   │   │       └── systemd_unit.py
+│   │   │   └── coru.egg-info
+│   │   │       ├── dependency_links.txt
+│   │   │       ├── entry_points.txt
+│   │   │       ├── PKG-INFO
+│   │   │       ├── requires.txt
+│   │   │       ├── SOURCES.txt
+│   │   │       └── top_level.txt
+│   │   └── tests
+│   │       ├── test_coru_cli.py
+│   │       ├── test_ecosystem.py
+│   │       ├── test_repair_es.py
+│   │       ├── test_repair_registry.py
+│   │       └── test_supervisor.py
+│   └── koruenv
+│       ├── pyproject.toml
+│       ├── README.md
+│       ├── scripts
+│       │   ├── koruenv-lane.ps1
+│       │   └── koruenv-lane.sh
+│       ├── src
+│       │   ├── koruenv
+│       │   │   ├── cli.py
+│       │   │   ├── __init__.py
+│       │   │   └── lane.py
+│       │   └── koruenv.egg-info
+│       │       ├── dependency_links.txt
+│       │       ├── entry_points.txt
+│       │       ├── PKG-INFO
+│       │       ├── SOURCES.txt
+│       │       └── top_level.txt
+│       └── tests
+│           ├── conftest.py
+│           └── test_koruenv_package.py
+├── pipeline.yaml
+├── planfile.yaml
+├── plugins
+│   ├── koru-autopilot-antigravity
+│   │   ├── CHANGELOG.md
+│   │   ├── koru-autopilot-antigravity-0.1.77.vsix
+│   │   ├── koru-autopilot-antigravity-0.2.0.vsix
+│   │   ├── koru.yaml
+│   │   ├── LICENSE
+│   │   ├── out
+│   │   │   ├── ack-payload.js
+│   │   │   ├── ack-payload.js.map
+│   │   │   ├── ack-payload.test.js
+│   │   │   ├── ack-payload.test.js.map
+│   │   │   ├── antigravity-fastpath.js
+│   │   │   ├── antigravity-fastpath.js.map
+│   │   │   ├── antigravity-fastpath.test.js
+│   │   │   ├── antigravity-fastpath.test.js.map
+│   │   │   ├── chat-history-adapters.js
+│   │   │   ├── chat-history-adapters.js.map
+│   │   │   ├── chat-history-paths.js
+│   │   │   ├── chat-history-paths.js.map
+│   │   │   ├── chat-history-types.js
+│   │   │   ├── chat-history-types.js.map
+│   │   │   ├── chat-history-watcher.js
+│   │   │   ├── chat-history-watcher.js.map
+│   │   │   ├── chat-history-watcher.test.js
+│   │   │   ├── chat-history-watcher.test.js.map
+│   │   │   ├── command-catalog.js
+│   │   │   ├── command-catalog.js.map
+│   │   │   ├── command-catalog.test.js
+│   │   │   ├── command-catalog.test.js.map
+│   │   │   ├── cursor-bubble-adapter.js
+│   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   ├── dispatch-plan.js
+│   │   │   ├── dispatch-plan.js.map
+│   │   │   ├── dispatch-plan.test.js
+│   │   │   ├── dispatch-plan.test.js.map
+│   │   │   ├── extension.js
+│   │   │   ├── extension.js.map
+│   │   │   ├── host-click-submit.js
+│   │   │   ├── host-click-submit.js.map
+│   │   │   ├── host-click-submit.test.js
+│   │   │   ├── host-click-submit.test.js.map
+│   │   │   ├── ide-control-strategy.js
+│   │   │   ├── ide-control-strategy.js.map
+│   │   │   ├── ides
+│   │   │   │   ├── antigravity.js
+│   │   │   │   ├── antigravity.js.map
+│   │   │   │   ├── ide-strategy.js
+│   │   │   │   ├── ide-strategy.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── registry.js
+│   │   │   │   └── registry.js.map
+│   │   │   ├── probe-ladder.js
+│   │   │   ├── probe-ladder.js.map
+│   │   │   ├── probe-ladder.test.js
+│   │   │   ├── probe-ladder.test.js.map
+│   │   │   ├── _shared
+│   │   │   │   ├── ack-payload.js
+│   │   │   │   ├── ack-payload.js.map
+│   │   │   │   ├── autopilot-bridge.js
+│   │   │   │   ├── autopilot-bridge.js.map
+│   │   │   │   ├── bridge-ack.js
+│   │   │   │   ├── bridge-ack.js.map
+│   │   │   │   ├── bridge-base-class.js
+│   │   │   │   ├── bridge-base-class.js.map
+│   │   │   │   ├── bridge-base.js
+│   │   │   │   ├── bridge-base.js.map
+│   │   │   │   ├── bridge-commands.js
+│   │   │   │   ├── bridge-commands.js.map
+│   │   │   │   ├── bridge-config.js
+│   │   │   │   ├── bridge-config.js.map
+│   │   │   │   ├── bridge-fastpath.js
+│   │   │   │   ├── bridge-fastpath.js.map
+│   │   │   │   ├── bridge-focus-core.js
+│   │   │   │   ├── bridge-focus-core.js.map
+│   │   │   │   ├── bridge-focus.js
+│   │   │   │   ├── bridge-focus.js.map
+│   │   │   │   ├── bridge-focus-strategy.js
+│   │   │   │   ├── bridge-focus-strategy.js.map
+│   │   │   │   ├── bridge-handle.js
+│   │   │   │   ├── bridge-handle.js.map
+│   │   │   │   ├── bridge-helpers.js
+│   │   │   │   ├── bridge-helpers.js.map
+│   │   │   │   ├── bridge-network.js
+│   │   │   │   ├── bridge-network.js.map
+│   │   │   │   ├── bridge-paste.js
+│   │   │   │   ├── bridge-paste.js.map
+│   │   │   │   ├── bridge-submit.js
+│   │   │   │   ├── bridge-submit.js.map
+│   │   │   │   ├── bridge-watcher.js
+│   │   │   │   ├── bridge-watcher.js.map
+│   │   │   │   ├── chat-history-adapters.js
+│   │   │   │   ├── chat-history-adapters.js.map
+│   │   │   │   ├── chat-history-paths.js
+│   │   │   │   ├── chat-history-paths.js.map
+│   │   │   │   ├── chat-history-types.js
+│   │   │   │   ├── chat-history-types.js.map
+│   │   │   │   ├── chat-history-watcher.js
+│   │   │   │   ├── chat-history-watcher.js.map
+│   │   │   │   ├── cursor-bubble-adapter.js
+│   │   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   │   ├── dispatch-plan.js
+│   │   │   │   ├── dispatch-plan.js.map
+│   │   │   │   ├── extension-wrapper.js
+│   │   │   │   ├── extension-wrapper.js.map
+│   │   │   │   ├── host-click-submit.js
+│   │   │   │   ├── host-click-submit.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── socketPath.js
+│   │   │   │   ├── socketPath.js.map
+│   │   │   │   ├── types.js
+│   │   │   │   ├── types.js.map
+│   │   │   │   ├── unsupported-chat-adapter.js
+│   │   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   │   └── vscode-chat-session-adapter.js.map
+│   │   │   ├── socketPath.js
+│   │   │   ├── socketPath.js.map
+│   │   │   ├── step-decisions.js
+│   │   │   ├── step-decisions.js.map
+│   │   │   ├── step-decisions.test.js
+│   │   │   ├── step-decisions.test.js.map
+│   │   │   ├── unsupported-chat-adapter.js
+│   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   └── vscode-chat-session-adapter.js.map
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   ├── ack-payload.test.ts
+│   │   │   ├── ack-payload.ts
+│   │   │   ├── antigravity-fastpath.test.ts
+│   │   │   ├── antigravity-fastpath.ts
+│   │   │   ├── chat-history-adapters.ts
+│   │   │   ├── chat-history-paths.ts
+│   │   │   ├── chat-history-types.ts
+│   │   │   ├── chat-history-watcher.test.ts
+│   │   │   ├── chat-history-watcher.ts
+│   │   │   ├── command-catalog.test.ts
+│   │   │   ├── command-catalog.ts
+│   │   │   ├── cursor-bubble-adapter.ts
+│   │   │   ├── dispatch-plan.test.ts
+│   │   │   ├── dispatch-plan.ts
+│   │   │   ├── extension.ts
+│   │   │   ├── host-click-submit.test.ts
+│   │   │   ├── host-click-submit.ts
+│   │   │   ├── ide-control-strategy.ts
+│   │   │   ├── ides
+│   │   │   │   ├── antigravity.ts
+│   │   │   │   ├── ide-strategy.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── registry.ts
+│   │   │   ├── probe-ladder.test.ts
+│   │   │   ├── probe-ladder.ts
+│   │   │   ├── _shared -> /home/tom/github/semcod/koru/plugins/koru-autopilot-shared/src
+│   │   │   ├── socketPath.ts
+│   │   │   ├── step-decisions.test.ts
+│   │   │   ├── step-decisions.ts
+│   │   │   ├── unsupported-chat-adapter.ts
+│   │   │   └── vscode-chat-session-adapter.ts
+│   │   └── tsconfig.json
+│   ├── koru-autopilot-cursor
+│   │   ├── CHANGELOG.md
+│   │   ├── koru-autopilot-cursor-0.1.82.vsix
+│   │   ├── koru-autopilot-cursor-0.2.1.vsix
+│   │   ├── koru-autopilot-cursor-0.2.2.vsix
+│   │   ├── koru-autopilot-cursor-0.2.3.vsix
+│   │   ├── koru-autopilot-cursor-0.2.4.vsix
+│   │   ├── koru-autopilot-cursor-0.2.5.vsix
+│   │   ├── koru.yaml
+│   │   ├── LICENSE
+│   │   ├── out
+│   │   │   ├── ack-payload.js
+│   │   │   ├── ack-payload.js.map
+│   │   │   ├── ack-payload.test.js
+│   │   │   ├── ack-payload.test.js.map
+│   │   │   ├── antigravity-fastpath.js
+│   │   │   ├── antigravity-fastpath.js.map
+│   │   │   ├── chat-history-adapters.js
+│   │   │   ├── chat-history-adapters.js.map
+│   │   │   ├── chat-history-paths.js
+│   │   │   ├── chat-history-paths.js.map
+│   │   │   ├── chat-history-types.js
+│   │   │   ├── chat-history-types.js.map
+│   │   │   ├── chat-history-watcher.js
+│   │   │   ├── chat-history-watcher.js.map
+│   │   │   ├── chat-history-watcher.test.js
+│   │   │   ├── chat-history-watcher.test.js.map
+│   │   │   ├── command-catalog.js
+│   │   │   ├── command-catalog.js.map
+│   │   │   ├── command-catalog.test.js
+│   │   │   ├── command-catalog.test.js.map
+│   │   │   ├── cursor-bubble-adapter.js
+│   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   ├── dispatch-plan.js
+│   │   │   ├── dispatch-plan.js.map
+│   │   │   ├── dispatch-plan.test.js
+│   │   │   ├── dispatch-plan.test.js.map
+│   │   │   ├── extension.js
+│   │   │   ├── extension.js.map
+│   │   │   ├── host-click-submit.js
+│   │   │   ├── host-click-submit.js.map
+│   │   │   ├── host-click-submit.test.js
+│   │   │   ├── host-click-submit.test.js.map
+│   │   │   ├── ide-control-strategy.js
+│   │   │   ├── ide-control-strategy.js.map
+│   │   │   ├── ides
+│   │   │   │   ├── cursor.js
+│   │   │   │   ├── cursor.js.map
+│   │   │   │   ├── cursor.test.js
+│   │   │   │   ├── cursor.test.js.map
+│   │   │   │   ├── ide-strategy.js
+│   │   │   │   ├── ide-strategy.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── registry.js
+│   │   │   │   └── registry.js.map
+│   │   │   ├── probe-ladder.js
+│   │   │   ├── probe-ladder.js.map
+│   │   │   ├── probe-ladder.test.js
+│   │   │   ├── probe-ladder.test.js.map
+│   │   │   ├── _shared
+│   │   │   │   ├── ack-payload.js
+│   │   │   │   ├── ack-payload.js.map
+│   │   │   │   ├── autopilot-bridge.js
+│   │   │   │   ├── autopilot-bridge.js.map
+│   │   │   │   ├── bridge-ack.js
+│   │   │   │   ├── bridge-ack.js.map
+│   │   │   │   ├── bridge-base-class.js
+│   │   │   │   ├── bridge-base-class.js.map
+│   │   │   │   ├── bridge-base.js
+│   │   │   │   ├── bridge-base.js.map
+│   │   │   │   ├── bridge-commands.js
+│   │   │   │   ├── bridge-commands.js.map
+│   │   │   │   ├── bridge-config.js
+│   │   │   │   ├── bridge-config.js.map
+│   │   │   │   ├── bridge-fastpath.js
+│   │   │   │   ├── bridge-fastpath.js.map
+│   │   │   │   ├── bridge-focus-core.js
+│   │   │   │   ├── bridge-focus-core.js.map
+│   │   │   │   ├── bridge-focus.js
+│   │   │   │   ├── bridge-focus.js.map
+│   │   │   │   ├── bridge-focus-strategy.js
+│   │   │   │   ├── bridge-focus-strategy.js.map
+│   │   │   │   ├── bridge-handle.js
+│   │   │   │   ├── bridge-handle.js.map
+│   │   │   │   ├── bridge-helpers.js
+│   │   │   │   ├── bridge-helpers.js.map
+│   │   │   │   ├── bridge-network.js
+│   │   │   │   ├── bridge-network.js.map
+│   │   │   │   ├── bridge-paste.js
+│   │   │   │   ├── bridge-paste.js.map
+│   │   │   │   ├── bridge-submit.js
+│   │   │   │   ├── bridge-submit.js.map
+│   │   │   │   ├── bridge-watcher.js
+│   │   │   │   ├── bridge-watcher.js.map
+│   │   │   │   ├── chat-history-adapters.js
+│   │   │   │   ├── chat-history-adapters.js.map
+│   │   │   │   ├── chat-history-paths.js
+│   │   │   │   ├── chat-history-paths.js.map
+│   │   │   │   ├── chat-history-types.js
+│   │   │   │   ├── chat-history-types.js.map
+│   │   │   │   ├── chat-history-watcher.js
+│   │   │   │   ├── chat-history-watcher.js.map
+│   │   │   │   ├── cursor-bubble-adapter.js
+│   │   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   │   ├── dispatch-plan.js
+│   │   │   │   ├── dispatch-plan.js.map
+│   │   │   │   ├── extension-wrapper.js
+│   │   │   │   ├── extension-wrapper.js.map
+│   │   │   │   ├── host-click-submit.js
+│   │   │   │   ├── host-click-submit.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── operator-hints.js
+│   │   │   │   ├── operator-hints.js.map
+│   │   │   │   ├── socketPath.js
+│   │   │   │   ├── socketPath.js.map
+│   │   │   │   ├── submit-match.js
+│   │   │   │   ├── submit-match.js.map
+│   │   │   │   ├── types.js
+│   │   │   │   ├── types.js.map
+│   │   │   │   ├── unsupported-chat-adapter.js
+│   │   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   │   └── vscode-chat-session-adapter.js.map
+│   │   │   ├── socketPath.js
+│   │   │   ├── socketPath.js.map
+│   │   │   ├── step-decisions.js
+│   │   │   ├── step-decisions.js.map
+│   │   │   ├── step-decisions.test.js
+│   │   │   ├── step-decisions.test.js.map
+│   │   │   ├── unsupported-chat-adapter.js
+│   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   └── vscode-chat-session-adapter.js.map
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   ├── ack-payload.test.ts
+│   │   │   ├── ack-payload.ts
+│   │   │   ├── antigravity-fastpath.ts
+│   │   │   ├── chat-history-adapters.ts
+│   │   │   ├── chat-history-paths.ts
+│   │   │   ├── chat-history-types.ts
+│   │   │   ├── chat-history-watcher.test.ts
+│   │   │   ├── chat-history-watcher.ts
+│   │   │   ├── command-catalog.test.ts
+│   │   │   ├── command-catalog.ts
+│   │   │   ├── cursor-bubble-adapter.ts
+│   │   │   ├── dispatch-plan.test.ts
+│   │   │   ├── dispatch-plan.ts
+│   │   │   ├── extension.ts
+│   │   │   ├── host-click-submit.test.ts
+│   │   │   ├── host-click-submit.ts
+│   │   │   ├── ide-control-strategy.ts
+│   │   │   ├── ides
+│   │   │   │   ├── cursor.test.ts
+│   │   │   │   ├── cursor.ts
+│   │   │   │   ├── ide-strategy.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── registry.ts
+│   │   │   ├── probe-ladder.test.ts
+│   │   │   ├── probe-ladder.ts
+│   │   │   ├── _shared -> /home/tom/github/semcod/koru/plugins/koru-autopilot-shared/src
+│   │   │   ├── socketPath.ts
+│   │   │   ├── step-decisions.test.ts
+│   │   │   ├── step-decisions.ts
+│   │   │   ├── unsupported-chat-adapter.ts
+│   │   │   └── vscode-chat-session-adapter.ts
+│   │   └── tsconfig.json
+│   ├── koru-autopilot-jetbrains
+│   │   ├── build.gradle.kts
+│   │   ├── gradle.properties
+│   │   ├── README.md
+│   │   ├── settings.gradle.kts
+│   │   └── src
+│   │       └── main
+│   │           ├── kotlin
+│   │           │   └── com
+│   │           └── resources
+│   │               └── META-INF
+│   ├── koru-autopilot-shared
+│   │   ├── package.json
+│   │   └── src
+│   │       ├── ack-payload.ts
+│   │       ├── autopilot-bridge.ts
+│   │       ├── bridge-ack.ts
+│   │       ├── bridge-base-class.ts
+│   │       ├── bridge-base.ts
+│   │       ├── bridge-commands.ts
+│   │       ├── bridge-config.ts
+│   │       ├── bridge-fastpath.ts
+│   │       ├── bridge-focus-core.ts
+│   │       ├── bridge-focus-strategy.ts
+│   │       ├── bridge-focus.ts
+│   │       ├── bridge-handle.ts
+│   │       ├── bridge-helpers.ts
+│   │       ├── bridge-network.ts
+│   │       ├── bridge-paste.ts
+│   │       ├── bridge-submit.ts
+│   │       ├── bridge-watcher.ts
+│   │       ├── chat-history-paths.ts
+│   │       ├── chat-history-types.ts
+│   │       ├── chat-history-watcher.ts
+│   │       ├── cursor-bubble-adapter.ts
+│   │       ├── dispatch-plan.ts
+│   │       ├── extension-wrapper.ts
+│   │       ├── host-click-submit.ts
+│   │       ├── index.ts
+│   │       ├── operator-hints.ts
+│   │       ├── socketPath.ts
+│   │       ├── submit-match.ts
+│   │       ├── types.ts
+│   │       ├── unsupported-chat-adapter.ts
+│   │       └── vscode-chat-session-adapter.ts
+│   ├── koru-autopilot-vscode
+│   │   ├── CHANGELOG.md
+│   │   ├── koru-autopilot-0.1.26.vsix
+│   │   ├── koru-autopilot-0.1.27.vsix
+│   │   ├── koru-autopilot-0.1.28.vsix
+│   │   ├── koru-autopilot-0.1.29.vsix
+│   │   ├── koru-autopilot-0.1.30.vsix
+│   │   ├── koru-autopilot-0.1.31.vsix
+│   │   ├── koru-autopilot-0.1.32.vsix
+│   │   ├── koru-autopilot-0.1.33.vsix
+│   │   ├── koru-autopilot-0.1.34.vsix
+│   │   ├── koru-autopilot-0.1.35.vsix
+│   │   ├── koru-autopilot-0.1.36.vsix
+│   │   ├── koru-autopilot-0.1.37.vsix
+│   │   ├── koru-autopilot-0.1.38.vsix
+│   │   ├── koru-autopilot-0.1.39.vsix
+│   │   ├── koru-autopilot-0.1.40.vsix
+│   │   ├── koru-autopilot-0.1.41.vsix
+│   │   ├── koru-autopilot-0.1.42.vsix
+│   │   ├── koru-autopilot-0.1.43.vsix
+│   │   ├── koru-autopilot-0.1.44.vsix
+│   │   ├── koru-autopilot-0.1.45.vsix
+│   │   ├── koru-autopilot-0.1.46.vsix
+│   │   ├── koru-autopilot-0.1.47.vsix
+│   │   ├── koru-autopilot-0.1.52.vsix
+│   │   ├── koru-autopilot-0.1.53.vsix
+│   │   ├── koru-autopilot-0.1.54.vsix
+│   │   ├── koru-autopilot-0.1.55.vsix
+│   │   ├── koru-autopilot-0.1.56.vsix
+│   │   ├── koru-autopilot-0.1.57.vsix
+│   │   ├── koru-autopilot-0.1.58.vsix
+│   │   ├── koru-autopilot-0.1.59.vsix
+│   │   ├── koru-autopilot-0.1.60.vsix
+│   │   ├── koru-autopilot-0.1.61.vsix
+│   │   ├── koru-autopilot-0.1.62.vsix
+│   │   ├── koru-autopilot-0.1.65.vsix
+│   │   ├── koru-autopilot-0.1.66.vsix
+│   │   ├── koru-autopilot-0.1.67.vsix
+│   │   ├── koru-autopilot-0.1.68.vsix
+│   │   ├── koru-autopilot-0.1.69.vsix
+│   │   ├── koru-autopilot-0.1.70.vsix
+│   │   ├── koru-autopilot-0.1.71.vsix
+│   │   ├── koru-autopilot-0.1.72.vsix
+│   │   ├── koru-autopilot-0.1.73.vsix
+│   │   ├── koru-autopilot-0.1.74.vsix
+│   │   ├── koru-autopilot-0.1.75.vsix
+│   │   ├── koru-autopilot-0.1.76.vsix
+│   │   ├── koru-autopilot-0.1.77.vsix
+│   │   ├── koru-autopilot-0.1.78.vsix
+│   │   ├── koru-autopilot-0.2.0.vsix
+│   │   ├── koru.yaml
+│   │   ├── LICENSE
+│   │   ├── out
+│   │   │   ├── ack-payload.js
+│   │   │   ├── ack-payload.js.map
+│   │   │   ├── ack-payload.test.js
+│   │   │   ├── ack-payload.test.js.map
+│   │   │   ├── antigravity-fastpath.js
+│   │   │   ├── antigravity-fastpath.js.map
+│   │   │   ├── antigravity-fastpath.test.js
+│   │   │   ├── antigravity-fastpath.test.js.map
+│   │   │   ├── chat-history-adapters.js
+│   │   │   ├── chat-history-adapters.js.map
+│   │   │   ├── chat-history-paths.js
+│   │   │   ├── chat-history-paths.js.map
+│   │   │   ├── chat-history-types.js
+│   │   │   ├── chat-history-types.js.map
+│   │   │   ├── chat-history-watcher.js
+│   │   │   ├── chat-history-watcher.js.map
+│   │   │   ├── chat-history-watcher.test.js
+│   │   │   ├── chat-history-watcher.test.js.map
+│   │   │   ├── command-catalog.js
+│   │   │   ├── command-catalog.js.map
+│   │   │   ├── command-catalog.test.js
+│   │   │   ├── command-catalog.test.js.map
+│   │   │   ├── cursor-bubble-adapter.js
+│   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   ├── dispatch-plan.js
+│   │   │   ├── dispatch-plan.js.map
+│   │   │   ├── dispatch-plan.test.js
+│   │   │   ├── dispatch-plan.test.js.map
+│   │   │   ├── extension.js
+│   │   │   ├── extension.js.map
+│   │   │   ├── host-click-submit.js
+│   │   │   ├── host-click-submit.js.map
+│   │   │   ├── host-click-submit.test.js
+│   │   │   ├── host-click-submit.test.js.map
+│   │   │   ├── ide-control-strategy.js
+│   │   │   ├── ide-control-strategy.js.map
+│   │   │   ├── ides
+│   │   │   │   ├── antigravity.js
+│   │   │   │   ├── antigravity.js.map
+│   │   │   │   ├── cursor.js
+│   │   │   │   ├── cursor.js.map
+│   │   │   │   ├── cursor.test.js
+│   │   │   │   ├── cursor.test.js.map
+│   │   │   │   ├── ide-strategy.js
+│   │   │   │   ├── ide-strategy.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── registry.js
+│   │   │   │   ├── registry.js.map
+│   │   │   │   ├── vscode.js
+│   │   │   │   ├── vscode.js.map
+│   │   │   │   ├── vscodium.js
+│   │   │   │   ├── vscodium.js.map
+│   │   │   │   ├── vscodium.test.js
+│   │   │   │   ├── vscodium.test.js.map
+│   │   │   │   ├── windsurf.js
+│   │   │   │   └── windsurf.js.map
+│   │   │   ├── probe-ladder.js
+│   │   │   ├── probe-ladder.js.map
+│   │   │   ├── probe-ladder.test.js
+│   │   │   ├── probe-ladder.test.js.map
+│   │   │   ├── _shared
+│   │   │   │   ├── ack-payload.js
+│   │   │   │   ├── ack-payload.js.map
+│   │   │   │   ├── autopilot-bridge.js
+│   │   │   │   ├── autopilot-bridge.js.map
+│   │   │   │   ├── bridge-ack.js
+│   │   │   │   ├── bridge-ack.js.map
+│   │   │   │   ├── bridge-base-class.js
+│   │   │   │   ├── bridge-base-class.js.map
+│   │   │   │   ├── bridge-base.js
+│   │   │   │   ├── bridge-base.js.map
+│   │   │   │   ├── bridge-commands.js
+│   │   │   │   ├── bridge-commands.js.map
+│   │   │   │   ├── bridge-config.js
+│   │   │   │   ├── bridge-config.js.map
+│   │   │   │   ├── bridge-fastpath.js
+│   │   │   │   ├── bridge-fastpath.js.map
+│   │   │   │   ├── bridge-focus-core.js
+│   │   │   │   ├── bridge-focus-core.js.map
+│   │   │   │   ├── bridge-focus.js
+│   │   │   │   ├── bridge-focus.js.map
+│   │   │   │   ├── bridge-focus-strategy.js
+│   │   │   │   ├── bridge-focus-strategy.js.map
+│   │   │   │   ├── bridge-handle.js
+│   │   │   │   ├── bridge-handle.js.map
+│   │   │   │   ├── bridge-helpers.js
+│   │   │   │   ├── bridge-helpers.js.map
+│   │   │   │   ├── bridge-network.js
+│   │   │   │   ├── bridge-network.js.map
+│   │   │   │   ├── bridge-paste.js
+│   │   │   │   ├── bridge-paste.js.map
+│   │   │   │   ├── bridge-submit.js
+│   │   │   │   ├── bridge-submit.js.map
+│   │   │   │   ├── bridge-watcher.js
+│   │   │   │   ├── bridge-watcher.js.map
+│   │   │   │   ├── chat-history-adapters.js
+│   │   │   │   ├── chat-history-adapters.js.map
+│   │   │   │   ├── chat-history-paths.js
+│   │   │   │   ├── chat-history-paths.js.map
+│   │   │   │   ├── chat-history-types.js
+│   │   │   │   ├── chat-history-types.js.map
+│   │   │   │   ├── chat-history-watcher.js
+│   │   │   │   ├── chat-history-watcher.js.map
+│   │   │   │   ├── cursor-bubble-adapter.js
+│   │   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   │   ├── dispatch-plan.js
+│   │   │   │   ├── dispatch-plan.js.map
+│   │   │   │   ├── extension-wrapper.js
+│   │   │   │   ├── extension-wrapper.js.map
+│   │   │   │   ├── host-click-submit.js
+│   │   │   │   ├── host-click-submit.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── socketPath.js
+│   │   │   │   ├── socketPath.js.map
+│   │   │   │   ├── types.js
+│   │   │   │   ├── types.js.map
+│   │   │   │   ├── unsupported-chat-adapter.js
+│   │   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   │   └── vscode-chat-session-adapter.js.map
+│   │   │   ├── socketPath.js
+│   │   │   ├── socketPath.js.map
+│   │   │   ├── step-decisions.js
+│   │   │   ├── step-decisions.js.map
+│   │   │   ├── step-decisions.test.js
+│   │   │   ├── step-decisions.test.js.map
+│   │   │   ├── unsupported-chat-adapter.js
+│   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   └── vscode-chat-session-adapter.js.map
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   ├── ack-payload.test.ts
+│   │   │   ├── ack-payload.ts
+│   │   │   ├── antigravity-fastpath.test.ts
+│   │   │   ├── antigravity-fastpath.ts
+│   │   │   ├── chat-history-adapters.ts
+│   │   │   ├── chat-history-paths.ts
+│   │   │   ├── chat-history-types.ts
+│   │   │   ├── chat-history-watcher.test.ts
+│   │   │   ├── chat-history-watcher.ts
+│   │   │   ├── command-catalog.test.ts
+│   │   │   ├── command-catalog.ts
+│   │   │   ├── cursor-bubble-adapter.ts
+│   │   │   ├── dispatch-plan.test.ts
+│   │   │   ├── dispatch-plan.ts
+│   │   │   ├── extension.ts
+│   │   │   ├── host-click-submit.test.ts
+│   │   │   ├── host-click-submit.ts
+│   │   │   ├── ide-control-strategy.ts
+│   │   │   ├── ides
+│   │   │   │   ├── ide-strategy.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── registry.ts
+│   │   │   │   └── vscode.ts
+│   │   │   ├── probe-ladder.test.ts
+│   │   │   ├── probe-ladder.ts
+│   │   │   ├── _shared -> /home/tom/github/semcod/koru/plugins/koru-autopilot-shared/src
+│   │   │   ├── socketPath.ts
+│   │   │   ├── step-decisions.test.ts
+│   │   │   ├── step-decisions.ts
+│   │   │   ├── unsupported-chat-adapter.ts
+│   │   │   └── vscode-chat-session-adapter.ts
+│   │   └── tsconfig.json
+│   ├── koru-autopilot-vscodium
+│   │   ├── CHANGELOG.md
+│   │   ├── koru-autopilot-vscodium-0.1.77.vsix
+│   │   ├── koru-autopilot-vscodium-0.1.78.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.0.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.10.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.1.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.2.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.3.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.4.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.5.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.6.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.7.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.8.vsix
+│   │   ├── koru-autopilot-vscodium-0.2.9.vsix
+│   │   ├── koru.yaml
+│   │   ├── LICENSE
+│   │   ├── out
+│   │   │   ├── ack-payload.js
+│   │   │   ├── ack-payload.js.map
+│   │   │   ├── ack-payload.test.js
+│   │   │   ├── ack-payload.test.js.map
+│   │   │   ├── antigravity-fastpath.js
+│   │   │   ├── antigravity-fastpath.js.map
+│   │   │   ├── antigravity-fastpath.test.js
+│   │   │   ├── antigravity-fastpath.test.js.map
+│   │   │   ├── chat-history-adapters.js
+│   │   │   ├── chat-history-adapters.js.map
+│   │   │   ├── chat-history-paths.js
+│   │   │   ├── chat-history-paths.js.map
+│   │   │   ├── chat-history-types.js
+│   │   │   ├── chat-history-types.js.map
+│   │   │   ├── chat-history-watcher.js
+│   │   │   ├── chat-history-watcher.js.map
+│   │   │   ├── chat-history-watcher.test.js
+│   │   │   ├── chat-history-watcher.test.js.map
+│   │   │   ├── command-catalog.js
+│   │   │   ├── command-catalog.js.map
+│   │   │   ├── command-catalog.test.js
+│   │   │   ├── command-catalog.test.js.map
+│   │   │   ├── cursor-bubble-adapter.js
+│   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   ├── dispatch-plan.js
+│   │   │   ├── dispatch-plan.js.map
+│   │   │   ├── dispatch-plan.test.js
+│   │   │   ├── dispatch-plan.test.js.map
+│   │   │   ├── extension.js
+│   │   │   ├── extension.js.map
+│   │   │   ├── host-click-submit.js
+│   │   │   ├── host-click-submit.js.map
+│   │   │   ├── host-click-submit.test.js
+│   │   │   ├── host-click-submit.test.js.map
+│   │   │   ├── ide-control-strategy.js
+│   │   │   ├── ide-control-strategy.js.map
+│   │   │   ├── ides
+│   │   │   │   ├── ide-strategy.js
+│   │   │   │   ├── ide-strategy.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── registry.js
+│   │   │   │   ├── registry.js.map
+│   │   │   │   ├── vscodium.js
+│   │   │   │   ├── vscodium.js.map
+│   │   │   │   ├── vscodium.test.js
+│   │   │   │   └── vscodium.test.js.map
+│   │   │   ├── probe-ladder.js
+│   │   │   ├── probe-ladder.js.map
+│   │   │   ├── probe-ladder.test.js
+│   │   │   ├── probe-ladder.test.js.map
+│   │   │   ├── _shared
+│   │   │   │   ├── ack-payload.js
+│   │   │   │   ├── ack-payload.js.map
+│   │   │   │   ├── autopilot-bridge.js
+│   │   │   │   ├── autopilot-bridge.js.map
+│   │   │   │   ├── bridge-ack.js
+│   │   │   │   ├── bridge-ack.js.map
+│   │   │   │   ├── bridge-base-class.js
+│   │   │   │   ├── bridge-base-class.js.map
+│   │   │   │   ├── bridge-base.js
+│   │   │   │   ├── bridge-base.js.map
+│   │   │   │   ├── bridge-commands.js
+│   │   │   │   ├── bridge-commands.js.map
+│   │   │   │   ├── bridge-config.js
+│   │   │   │   ├── bridge-config.js.map
+│   │   │   │   ├── bridge-fastpath.js
+│   │   │   │   ├── bridge-fastpath.js.map
+│   │   │   │   ├── bridge-focus-core.js
+│   │   │   │   ├── bridge-focus-core.js.map
+│   │   │   │   ├── bridge-focus.js
+│   │   │   │   ├── bridge-focus.js.map
+│   │   │   │   ├── bridge-focus-strategy.js
+│   │   │   │   ├── bridge-focus-strategy.js.map
+│   │   │   │   ├── bridge-handle.js
+│   │   │   │   ├── bridge-handle.js.map
+│   │   │   │   ├── bridge-helpers.js
+│   │   │   │   ├── bridge-helpers.js.map
+│   │   │   │   ├── bridge-network.js
+│   │   │   │   ├── bridge-network.js.map
+│   │   │   │   ├── bridge-paste.js
+│   │   │   │   ├── bridge-paste.js.map
+│   │   │   │   ├── bridge-submit.js
+│   │   │   │   ├── bridge-submit.js.map
+│   │   │   │   ├── bridge-watcher.js
+│   │   │   │   ├── bridge-watcher.js.map
+│   │   │   │   ├── chat-history-adapters.js
+│   │   │   │   ├── chat-history-adapters.js.map
+│   │   │   │   ├── chat-history-paths.js
+│   │   │   │   ├── chat-history-paths.js.map
+│   │   │   │   ├── chat-history-types.js
+│   │   │   │   ├── chat-history-types.js.map
+│   │   │   │   ├── chat-history-watcher.js
+│   │   │   │   ├── chat-history-watcher.js.map
+│   │   │   │   ├── cursor-bubble-adapter.js
+│   │   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   │   ├── dispatch-plan.js
+│   │   │   │   ├── dispatch-plan.js.map
+│   │   │   │   ├── extension-wrapper.js
+│   │   │   │   ├── extension-wrapper.js.map
+│   │   │   │   ├── host-click-submit.js
+│   │   │   │   ├── host-click-submit.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── operator-hints.js
+│   │   │   │   ├── operator-hints.js.map
+│   │   │   │   ├── socketPath.js
+│   │   │   │   ├── socketPath.js.map
+│   │   │   │   ├── submit-match.js
+│   │   │   │   ├── submit-match.js.map
+│   │   │   │   ├── types.js
+│   │   │   │   ├── types.js.map
+│   │   │   │   ├── unsupported-chat-adapter.js
+│   │   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   │   └── vscode-chat-session-adapter.js.map
+│   │   │   ├── socketPath.js
+│   │   │   ├── socketPath.js.map
+│   │   │   ├── step-decisions.js
+│   │   │   ├── step-decisions.js.map
+│   │   │   ├── step-decisions.test.js
+│   │   │   ├── step-decisions.test.js.map
+│   │   │   ├── unsupported-chat-adapter.js
+│   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   └── vscode-chat-session-adapter.js.map
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   ├── ack-payload.test.ts
+│   │   │   ├── ack-payload.ts
+│   │   │   ├── antigravity-fastpath.test.ts
+│   │   │   ├── antigravity-fastpath.ts
+│   │   │   ├── chat-history-adapters.ts
+│   │   │   ├── chat-history-paths.ts
+│   │   │   ├── chat-history-types.ts
+│   │   │   ├── chat-history-watcher.test.ts
+│   │   │   ├── chat-history-watcher.ts
+│   │   │   ├── command-catalog.test.ts
+│   │   │   ├── command-catalog.ts
+│   │   │   ├── cursor-bubble-adapter.ts
+│   │   │   ├── dispatch-plan.test.ts
+│   │   │   ├── dispatch-plan.ts
+│   │   │   ├── extension.ts
+│   │   │   ├── host-click-submit.test.ts
+│   │   │   ├── host-click-submit.ts
+│   │   │   ├── ide-control-strategy.ts
+│   │   │   ├── ides
+│   │   │   │   ├── ide-strategy.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── registry.ts
+│   │   │   │   ├── vscodium.test.ts
+│   │   │   │   └── vscodium.ts
+│   │   │   ├── probe-ladder.test.ts
+│   │   │   ├── probe-ladder.ts
+│   │   │   ├── _shared -> /home/tom/github/semcod/koru/plugins/koru-autopilot-shared/src
+│   │   │   ├── socketPath.ts
+│   │   │   ├── step-decisions.test.ts
+│   │   │   ├── step-decisions.ts
+│   │   │   ├── unsupported-chat-adapter.ts
+│   │   │   └── vscode-chat-session-adapter.ts
+│   │   └── tsconfig.json
+│   ├── koru-autopilot-windsurf
+│   │   ├── CHANGELOG.md
+│   │   ├── koru-autopilot-windsurf-0.1.77.vsix
+│   │   ├── koru-autopilot-windsurf-0.2.0.vsix
+│   │   ├── koru-autopilot-windsurf-0.2.1.vsix
+│   │   ├── koru-autopilot-windsurf-0.2.2.vsix
+│   │   ├── koru.yaml
+│   │   ├── LICENSE
+│   │   ├── out
+│   │   │   ├── ack-payload.js
+│   │   │   ├── ack-payload.js.map
+│   │   │   ├── ack-payload.test.js
+│   │   │   ├── ack-payload.test.js.map
+│   │   │   ├── antigravity-fastpath.js
+│   │   │   ├── antigravity-fastpath.js.map
+│   │   │   ├── antigravity-fastpath.test.js
+│   │   │   ├── antigravity-fastpath.test.js.map
+│   │   │   ├── chat-history-adapters.js
+│   │   │   ├── chat-history-adapters.js.map
+│   │   │   ├── chat-history-paths.js
+│   │   │   ├── chat-history-paths.js.map
+│   │   │   ├── chat-history-types.js
+│   │   │   ├── chat-history-types.js.map
+│   │   │   ├── chat-history-watcher.js
+│   │   │   ├── chat-history-watcher.js.map
+│   │   │   ├── chat-history-watcher.test.js
+│   │   │   ├── chat-history-watcher.test.js.map
+│   │   │   ├── command-catalog.js
+│   │   │   ├── command-catalog.js.map
+│   │   │   ├── command-catalog.test.js
+│   │   │   ├── command-catalog.test.js.map
+│   │   │   ├── cursor-bubble-adapter.js
+│   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   ├── dispatch-plan.js
+│   │   │   ├── dispatch-plan.js.map
+│   │   │   ├── dispatch-plan.test.js
+│   │   │   ├── dispatch-plan.test.js.map
+│   │   │   ├── extension.js
+│   │   │   ├── extension.js.map
+│   │   │   ├── host-click-submit.js
+│   │   │   ├── host-click-submit.js.map
+│   │   │   ├── host-click-submit.test.js
+│   │   │   ├── host-click-submit.test.js.map
+│   │   │   ├── ide-control-strategy.js
+│   │   │   ├── ide-control-strategy.js.map
+│   │   │   ├── ides
+│   │   │   │   ├── ide-strategy.js
+│   │   │   │   ├── ide-strategy.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── registry.js
+│   │   │   │   ├── registry.js.map
+│   │   │   │   ├── windsurf.js
+│   │   │   │   └── windsurf.js.map
+│   │   │   ├── probe-ladder.js
+│   │   │   ├── probe-ladder.js.map
+│   │   │   ├── probe-ladder.test.js
+│   │   │   ├── probe-ladder.test.js.map
+│   │   │   ├── _shared
+│   │   │   │   ├── ack-payload.js
+│   │   │   │   ├── ack-payload.js.map
+│   │   │   │   ├── autopilot-bridge.js
+│   │   │   │   ├── autopilot-bridge.js.map
+│   │   │   │   ├── bridge-ack.js
+│   │   │   │   ├── bridge-ack.js.map
+│   │   │   │   ├── bridge-base-class.js
+│   │   │   │   ├── bridge-base-class.js.map
+│   │   │   │   ├── bridge-base.js
+│   │   │   │   ├── bridge-base.js.map
+│   │   │   │   ├── bridge-commands.js
+│   │   │   │   ├── bridge-commands.js.map
+│   │   │   │   ├── bridge-config.js
+│   │   │   │   ├── bridge-config.js.map
+│   │   │   │   ├── bridge-fastpath.js
+│   │   │   │   ├── bridge-fastpath.js.map
+│   │   │   │   ├── bridge-focus-core.js
+│   │   │   │   ├── bridge-focus-core.js.map
+│   │   │   │   ├── bridge-focus.js
+│   │   │   │   ├── bridge-focus.js.map
+│   │   │   │   ├── bridge-focus-strategy.js
+│   │   │   │   ├── bridge-focus-strategy.js.map
+│   │   │   │   ├── bridge-handle.js
+│   │   │   │   ├── bridge-handle.js.map
+│   │   │   │   ├── bridge-helpers.js
+│   │   │   │   ├── bridge-helpers.js.map
+│   │   │   │   ├── bridge-network.js
+│   │   │   │   ├── bridge-network.js.map
+│   │   │   │   ├── bridge-paste.js
+│   │   │   │   ├── bridge-paste.js.map
+│   │   │   │   ├── bridge-submit.js
+│   │   │   │   ├── bridge-submit.js.map
+│   │   │   │   ├── bridge-watcher.js
+│   │   │   │   ├── bridge-watcher.js.map
+│   │   │   │   ├── chat-history-adapters.js
+│   │   │   │   ├── chat-history-adapters.js.map
+│   │   │   │   ├── chat-history-paths.js
+│   │   │   │   ├── chat-history-paths.js.map
+│   │   │   │   ├── chat-history-types.js
+│   │   │   │   ├── chat-history-types.js.map
+│   │   │   │   ├── chat-history-watcher.js
+│   │   │   │   ├── chat-history-watcher.js.map
+│   │   │   │   ├── cursor-bubble-adapter.js
+│   │   │   │   ├── cursor-bubble-adapter.js.map
+│   │   │   │   ├── dispatch-plan.js
+│   │   │   │   ├── dispatch-plan.js.map
+│   │   │   │   ├── extension-wrapper.js
+│   │   │   │   ├── extension-wrapper.js.map
+│   │   │   │   ├── host-click-submit.js
+│   │   │   │   ├── host-click-submit.js.map
+│   │   │   │   ├── index.js
+│   │   │   │   ├── index.js.map
+│   │   │   │   ├── operator-hints.js
+│   │   │   │   ├── operator-hints.js.map
+│   │   │   │   ├── socketPath.js
+│   │   │   │   ├── socketPath.js.map
+│   │   │   │   ├── submit-match.js
+│   │   │   │   ├── submit-match.js.map
+│   │   │   │   ├── types.js
+│   │   │   │   ├── types.js.map
+│   │   │   │   ├── unsupported-chat-adapter.js
+│   │   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   │   └── vscode-chat-session-adapter.js.map
+│   │   │   ├── socketPath.js
+│   │   │   ├── socketPath.js.map
+│   │   │   ├── step-decisions.js
+│   │   │   ├── step-decisions.js.map
+│   │   │   ├── step-decisions.test.js
+│   │   │   ├── step-decisions.test.js.map
+│   │   │   ├── unsupported-chat-adapter.js
+│   │   │   ├── unsupported-chat-adapter.js.map
+│   │   │   ├── vscode-chat-session-adapter.js
+│   │   │   └── vscode-chat-session-adapter.js.map
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   ├── ack-payload.test.ts
+│   │   │   ├── ack-payload.ts
+│   │   │   ├── antigravity-fastpath.test.ts
+│   │   │   ├── antigravity-fastpath.ts
+│   │   │   ├── chat-history-adapters.ts
+│   │   │   ├── chat-history-paths.ts
+│   │   │   ├── chat-history-types.ts
+│   │   │   ├── chat-history-watcher.test.ts
+│   │   │   ├── chat-history-watcher.ts
+│   │   │   ├── command-catalog.test.ts
+│   │   │   ├── command-catalog.ts
+│   │   │   ├── cursor-bubble-adapter.ts
+│   │   │   ├── dispatch-plan.test.ts
+│   │   │   ├── dispatch-plan.ts
+│   │   │   ├── extension.ts
+│   │   │   ├── host-click-submit.test.ts
+│   │   │   ├── host-click-submit.ts
+│   │   │   ├── ide-control-strategy.ts
+│   │   │   ├── ides
+│   │   │   │   ├── ide-strategy.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── registry.ts
+│   │   │   │   └── windsurf.ts
+│   │   │   ├── probe-ladder.test.ts
+│   │   │   ├── probe-ladder.ts
+│   │   │   ├── _shared -> /home/tom/github/semcod/koru/plugins/koru-autopilot-shared/src
+│   │   │   ├── socketPath.ts
+│   │   │   ├── step-decisions.test.ts
+│   │   │   ├── step-decisions.ts
+│   │   │   ├── unsupported-chat-adapter.ts
+│   │   │   └── vscode-chat-session-adapter.ts
+│   │   └── tsconfig.json
+│   └── README.md
+├── prefact.yaml
+├── project.sh
+├── publish-env
+│   ├── bin
+│   │   ├── activate
+│   │   ├── activate.csh
+│   │   ├── activate.fish
+│   │   ├── Activate.ps1
+│   │   ├── docutils
+│   │   ├── idna
+│   │   ├── keyring
+│   │   ├── markdown-it
+│   │   ├── normalizer
+│   │   ├── pip
+│   │   ├── pip3
+│   │   ├── pip3.13
+│   │   ├── pygmentize
+│   │   ├── python -> python3.13
+│   │   ├── python3 -> python3.13
+│   │   ├── python3.13 -> /home/tom/miniconda3/bin/python3.13
+│   │   ├── rst2html
+│   │   ├── rst2html4
+│   │   ├── rst2html5
+│   │   ├── rst2latex
+│   │   ├── rst2man
+│   │   ├── rst2odt
+│   │   ├── rst2pseudoxml
+│   │   ├── rst2s5
+│   │   ├── rst2xetex
+│   │   ├── rst2xml
+│   │   └── twine
+│   ├── include
+│   │   └── python3.13
+│   ├── lib
+│   │   └── python3.13
+│   │       └── site-packages
+│   │           ├── 81d243bd2c585b0f4821__mypyc.cpython-313-x86_64-linux-gnu.so
+│   │           ├── certifi
+│   │           │   ├── cacert.pem
+│   │           │   ├── core.py
+│   │           │   ├── __init__.py
+│   │           │   ├── __main__.py
+│   │           │   └── py.typed
+│   │           ├── certifi-2026.5.20.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── cffi
+│   │           │   ├── api.py
+│   │           │   ├── backend_ctypes.py
+│   │           │   ├── _cffi_errors.h
+│   │           │   ├── _cffi_include.h
+│   │           │   ├── cffi_opcode.py
+│   │           │   ├── commontypes.py
+│   │           │   ├── cparser.py
+│   │           │   ├── _embedding.h
+│   │           │   ├── error.py
+│   │           │   ├── ffiplatform.py
+│   │           │   ├── _imp_emulation.py
+│   │           │   ├── __init__.py
+│   │           │   ├── lock.py
+│   │           │   ├── model.py
+│   │           │   ├── parse_c_type.h
+│   │           │   ├── pkgconfig.py
+│   │           │   ├── recompiler.py
+│   │           │   ├── setuptools_ext.py
+│   │           │   ├── _shimmed_dist_utils.py
+│   │           │   ├── vengine_cpy.py
+│   │           │   ├── vengine_gen.py
+│   │           │   └── verifier.py
+│   │           ├── cffi-2.0.0.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── _cffi_backend.cpython-313-x86_64-linux-gnu.so
+│   │           ├── charset_normalizer
+│   │           │   ├── api.py
+│   │           │   ├── cd.cpython-313-x86_64-linux-gnu.so
+│   │           │   ├── cd.py
+│   │           │   ├── cli
+│   │           │   ├── constant.py
+│   │           │   ├── __init__.py
+│   │           │   ├── legacy.py
+│   │           │   ├── __main__.py
+│   │           │   ├── md.cpython-313-x86_64-linux-gnu.so
+│   │           │   ├── md.py
+│   │           │   ├── models.py
+│   │           │   ├── py.typed
+│   │           │   ├── utils.py
+│   │           │   └── version.py
+│   │           ├── charset_normalizer-3.4.7.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── cryptography
+│   │           │   ├── __about__.py
+│   │           │   ├── exceptions.py
+│   │           │   ├── fernet.py
+│   │           │   ├── hazmat
+│   │           │   ├── __init__.py
+│   │           │   ├── py.typed
+│   │           │   ├── utils.py
+│   │           │   └── x509
+│   │           ├── cryptography-48.0.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── sboms
+│   │           │   └── WHEEL
+│   │           ├── docutils
+│   │           │   ├── core.py
+│   │           │   ├── docutils.conf
+│   │           │   ├── examples.py
+│   │           │   ├── frontend.py
+│   │           │   ├── __init__.py
+│   │           │   ├── io.py
+│   │           │   ├── languages
+│   │           │   ├── __main__.py
+│   │           │   ├── nodes.py
+│   │           │   ├── parsers
+│   │           │   ├── readers
+│   │           │   ├── statemachine.py
+│   │           │   ├── transforms
+│   │           │   ├── utils
+│   │           │   └── writers
+│   │           ├── docutils-0.23.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── id
+│   │           │   ├── __init__.py
+│   │           │   ├── _internal
+│   │           │   ├── __main__.py
+│   │           │   └── py.typed
+│   │           ├── id-1.6.1.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── idna
+│   │           │   ├── cli.py
+│   │           │   ├── codec.py
+│   │           │   ├── compat.py
+│   │           │   ├── core.py
+│   │           │   ├── idnadata.py
+│   │           │   ├── __init__.py
+│   │           │   ├── intranges.py
+│   │           │   ├── __main__.py
+│   │           │   ├── package_data.py
+│   │           │   ├── py.typed
+│   │           │   └── uts46data.py
+│   │           ├── idna-3.17.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── jaraco
+│   │           │   ├── classes
+│   │           │   ├── context
+│   │           │   └── functools
+│   │           ├── jaraco.classes-3.4.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── LICENSE
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── jaraco_context-6.1.2.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── jaraco_functools-4.5.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── jeepney
+│   │           │   ├── auth.py
+│   │           │   ├── bindgen.py
+│   │           │   ├── bus_messages.py
+│   │           │   ├── bus.py
+│   │           │   ├── fds.py
+│   │           │   ├── __init__.py
+│   │           │   ├── io
+│   │           │   ├── low_level.py
+│   │           │   ├── tests
+│   │           │   └── wrappers.py
+│   │           ├── jeepney-0.9.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── keyring
+│   │           │   ├── backend_complete.bash
+│   │           │   ├── backend_complete.zsh
+│   │           │   ├── backend.py
+│   │           │   ├── backends
+│   │           │   ├── cli.py
+│   │           │   ├── compat
+│   │           │   ├── completion.py
+│   │           │   ├── core.py
+│   │           │   ├── credentials.py
+│   │           │   ├── devpi_client.py
+│   │           │   ├── errors.py
+│   │           │   ├── http.py
+│   │           │   ├── __init__.py
+│   │           │   ├── __main__.py
+│   │           │   ├── py.typed
+│   │           │   ├── testing
+│   │           │   └── util
+│   │           ├── keyring-25.7.0.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── markdown_it
+│   │           │   ├── cli
+│   │           │   ├── common
+│   │           │   ├── _compat.py
+│   │           │   ├── helpers
+│   │           │   ├── __init__.py
+│   │           │   ├── main.py
+│   │           │   ├── parser_block.py
+│   │           │   ├── parser_core.py
+│   │           │   ├── parser_inline.py
+│   │           │   ├── port.yaml
+│   │           │   ├── presets
+│   │           │   ├── _punycode.py
+│   │           │   ├── py.typed
+│   │           │   ├── renderer.py
+│   │           │   ├── ruler.py
+│   │           │   ├── rules_block
+│   │           │   ├── rules_core
+│   │           │   ├── rules_inline
+│   │           │   ├── token.py
+│   │           │   ├── tree.py
+│   │           │   └── utils.py
+│   │           ├── markdown_it_py-4.2.0.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── mdurl
+│   │           │   ├── _decode.py
+│   │           │   ├── _encode.py
+│   │           │   ├── _format.py
+│   │           │   ├── __init__.py
+│   │           │   ├── _parse.py
+│   │           │   ├── py.typed
+│   │           │   └── _url.py
+│   │           ├── mdurl-0.1.2.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── LICENSE
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── more_itertools
+│   │           │   ├── __init__.py
+│   │           │   ├── __init__.pyi
+│   │           │   ├── more.py
+│   │           │   ├── more.pyi
+│   │           │   ├── py.typed
+│   │           │   ├── recipes.py
+│   │           │   └── recipes.pyi
+│   │           ├── more_itertools-11.1.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── nh3
+│   │           │   ├── __init__.py
+│   │           │   ├── __init__.pyi
+│   │           │   ├── nh3.abi3.so
+│   │           │   └── py.typed
+│   │           ├── nh3-0.3.5.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── sboms
+│   │           │   └── WHEEL
+│   │           ├── packaging
+│   │           │   ├── dependency_groups.py
+│   │           │   ├── direct_url.py
+│   │           │   ├── _elffile.py
+│   │           │   ├── errors.py
+│   │           │   ├── __init__.py
+│   │           │   ├── licenses
+│   │           │   ├── _manylinux.py
+│   │           │   ├── markers.py
+│   │           │   ├── metadata.py
+│   │           │   ├── _musllinux.py
+│   │           │   ├── _parser.py
+│   │           │   ├── pylock.py
+│   │           │   ├── py.typed
+│   │           │   ├── requirements.py
+│   │           │   ├── specifiers.py
+│   │           │   ├── _structures.py
+│   │           │   ├── tags.py
+│   │           │   ├── _tokenizer.py
+│   │           │   ├── utils.py
+│   │           │   └── version.py
+│   │           ├── packaging-26.2.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── pip
+│   │           │   ├── __init__.py
+│   │           │   ├── _internal
+│   │           │   ├── __main__.py
+│   │           │   ├── __pip-runner__.py
+│   │           │   ├── py.typed
+│   │           │   └── _vendor
+│   │           ├── pip-25.1.1.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── REQUESTED
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── pycparser
+│   │           │   ├── _ast_gen.py
+│   │           │   ├── ast_transforms.py
+│   │           │   ├── _c_ast.cfg
+│   │           │   ├── c_ast.py
+│   │           │   ├── c_generator.py
+│   │           │   ├── c_lexer.py
+│   │           │   ├── c_parser.py
+│   │           │   └── __init__.py
+│   │           ├── pycparser-3.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── pygments
+│   │           │   ├── cmdline.py
+│   │           │   ├── console.py
+│   │           │   ├── filter.py
+│   │           │   ├── filters
+│   │           │   ├── formatter.py
+│   │           │   ├── formatters
+│   │           │   ├── __init__.py
+│   │           │   ├── lexer.py
+│   │           │   ├── lexers
+│   │           │   ├── __main__.py
+│   │           │   ├── modeline.py
+│   │           │   ├── plugin.py
+│   │           │   ├── regexopt.py
+│   │           │   ├── scanner.py
+│   │           │   ├── sphinxext.py
+│   │           │   ├── style.py
+│   │           │   ├── styles
+│   │           │   ├── token.py
+│   │           │   ├── unistring.py
+│   │           │   └── util.py
+│   │           ├── pygments-2.20.0.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── readme_renderer
+│   │           │   ├── clean.py
+│   │           │   ├── __init__.py
+│   │           │   ├── __main__.py
+│   │           │   ├── markdown.py
+│   │           │   ├── py.typed
+│   │           │   ├── rst.py
+│   │           │   └── txt.py
+│   │           ├── readme_renderer-44.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── LICENSE
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── requests
+│   │           │   ├── adapters.py
+│   │           │   ├── api.py
+│   │           │   ├── auth.py
+│   │           │   ├── certs.py
+│   │           │   ├── compat.py
+│   │           │   ├── cookies.py
+│   │           │   ├── exceptions.py
+│   │           │   ├── help.py
+│   │           │   ├── hooks.py
+│   │           │   ├── __init__.py
+│   │           │   ├── _internal_utils.py
+│   │           │   ├── models.py
+│   │           │   ├── packages.py
+│   │           │   ├── py.typed
+│   │           │   ├── sessions.py
+│   │           │   ├── status_codes.py
+│   │           │   ├── structures.py
+│   │           │   ├── _types.py
+│   │           │   ├── utils.py
+│   │           │   └── __version__.py
+│   │           ├── requests-2.34.2.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── requests_toolbelt
+│   │           │   ├── adapters
+│   │           │   ├── auth
+│   │           │   ├── _compat.py
+│   │           │   ├── cookies
+│   │           │   ├── downloadutils
+│   │           │   ├── exceptions.py
+│   │           │   ├── __init__.py
+│   │           │   ├── multipart
+│   │           │   ├── sessions.py
+│   │           │   ├── streaming_iterator.py
+│   │           │   ├── threaded
+│   │           │   └── utils
+│   │           ├── requests_toolbelt-1.0.0.dist-info
+│   │           │   ├── AUTHORS.rst
+│   │           │   ├── INSTALLER
+│   │           │   ├── LICENSE
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── rfc3986
+│   │           │   ├── abnf_regexp.py
+│   │           │   ├── api.py
+│   │           │   ├── builder.py
+│   │           │   ├── compat.py
+│   │           │   ├── exceptions.py
+│   │           │   ├── __init__.py
+│   │           │   ├── iri.py
+│   │           │   ├── misc.py
+│   │           │   ├── _mixin.py
+│   │           │   ├── normalizers.py
+│   │           │   ├── parseresult.py
+│   │           │   ├── uri.py
+│   │           │   └── validators.py
+│   │           ├── rfc3986-2.0.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── LICENSE
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── rich
+│   │           │   ├── abc.py
+│   │           │   ├── align.py
+│   │           │   ├── ansi.py
+│   │           │   ├── bar.py
+│   │           │   ├── box.py
+│   │           │   ├── cells.py
+│   │           │   ├── color.py
+│   │           │   ├── color_triplet.py
+│   │           │   ├── columns.py
+│   │           │   ├── console.py
+│   │           │   ├── constrain.py
+│   │           │   ├── containers.py
+│   │           │   ├── control.py
+│   │           │   ├── default_styles.py
+│   │           │   ├── diagnose.py
+│   │           │   ├── _emoji_codes.py
+│   │           │   ├── emoji.py
+│   │           │   ├── _emoji_replace.py
+│   │           │   ├── errors.py
+│   │           │   ├── _export_format.py
+│   │           │   ├── _extension.py
+│   │           │   ├── _fileno.py
+│   │           │   ├── file_proxy.py
+│   │           │   ├── filesize.py
+│   │           │   ├── highlighter.py
+│   │           │   ├── __init__.py
+│   │           │   ├── _inspect.py
+│   │           │   ├── json.py
+│   │           │   ├── jupyter.py
+│   │           │   ├── layout.py
+│   │           │   ├── live.py
+│   │           │   ├── live_render.py
+│   │           │   ├── logging.py
+│   │           │   ├── _log_render.py
+│   │           │   ├── _loop.py
+│   │           │   ├── __main__.py
+│   │           │   ├── markdown.py
+│   │           │   ├── markup.py
+│   │           │   ├── measure.py
+│   │           │   ├── _null_file.py
+│   │           │   ├── padding.py
+│   │           │   ├── pager.py
+│   │           │   ├── palette.py
+│   │           │   ├── _palettes.py
+│   │           │   ├── panel.py
+│   │           │   ├── _pick.py
+│   │           │   ├── pretty.py
+│   │           │   ├── progress_bar.py
+│   │           │   ├── progress.py
+│   │           │   ├── prompt.py
+│   │           │   ├── protocol.py
+│   │           │   ├── py.typed
+│   │           │   ├── _ratio.py
+│   │           │   ├── region.py
+│   │           │   ├── repr.py
+│   │           │   ├── rule.py
+│   │           │   ├── scope.py
+│   │           │   ├── screen.py
+│   │           │   ├── segment.py
+│   │           │   ├── spinner.py
+│   │           │   ├── _spinners.py
+│   │           │   ├── _stack.py
+│   │           │   ├── status.py
+│   │           │   ├── styled.py
+│   │           │   ├── style.py
+│   │           │   ├── syntax.py
+│   │           │   ├── table.py
+│   │           │   ├── terminal_theme.py
+│   │           │   ├── text.py
+│   │           │   ├── theme.py
+│   │           │   ├── themes.py
+│   │           │   ├── _timer.py
+│   │           │   ├── traceback.py
+│   │           │   ├── tree.py
+│   │           │   ├── _unicode_data
+│   │           │   ├── _win32_console.py
+│   │           │   ├── _windows.py
+│   │           │   ├── _windows_renderer.py
+│   │           │   └── _wrap.py
+│   │           ├── rich-15.0.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   └── WHEEL
+│   │           ├── secretstorage
+│   │           │   ├── collection.py
+│   │           │   ├── defines.py
+│   │           │   ├── dhcrypto.py
+│   │           │   ├── exceptions.py
+│   │           │   ├── __init__.py
+│   │           │   ├── item.py
+│   │           │   ├── py.typed
+│   │           │   └── util.py
+│   │           ├── secretstorage-3.5.0.dist-info
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── twine
+│   │           │   ├── auth.py
+│   │           │   ├── cli.py
+│   │           │   ├── commands
+│   │           │   ├── distribution.py
+│   │           │   ├── exceptions.py
+│   │           │   ├── __init__.py
+│   │           │   ├── __main__.py
+│   │           │   ├── package.py
+│   │           │   ├── py.typed
+│   │           │   ├── repository.py
+│   │           │   ├── sdist.py
+│   │           │   ├── settings.py
+│   │           │   ├── utils.py
+│   │           │   └── wheel.py
+│   │           ├── twine-6.2.0.dist-info
+│   │           │   ├── entry_points.txt
+│   │           │   ├── INSTALLER
+│   │           │   ├── licenses
+│   │           │   ├── METADATA
+│   │           │   ├── RECORD
+│   │           │   ├── REQUESTED
+│   │           │   ├── top_level.txt
+│   │           │   └── WHEEL
+│   │           ├── urllib3
+│   │           │   ├── _base_connection.py
+│   │           │   ├── _collections.py
+│   │           │   ├── connectionpool.py
+│   │           │   ├── connection.py
+│   │           │   ├── contrib
+│   │           │   ├── exceptions.py
+│   │           │   ├── fields.py
+│   │           │   ├── filepost.py
+│   │           │   ├── http2
+│   │           │   ├── __init__.py
+│   │           │   ├── poolmanager.py
+│   │           │   ├── py.typed
+│   │           │   ├── _request_methods.py
+│   │           │   ├── response.py
+│   │           │   ├── util
+│   │           │   └── _version.py
+│   │           └── urllib3-2.7.0.dist-info
+│   │               ├── INSTALLER
+│   │               ├── licenses
+│   │               ├── METADATA
+│   │               ├── RECORD
+│   │               └── WHEEL
+│   ├── lib64 -> lib
+│   └── pyvenv.cfg
+├── pyproject.toml
+├── README.md
+├── redeploy
+│   ├── device
+│   │   ├── diagnose.md
+│   │   ├── manifest.yaml
+│   │   └── migration.md
+│   └── local
+│       └── deployment.md
+├── regix.yaml
+├── schemas
+│   └── koru-stdio-event.schema.json
+├── scripts
+│   ├── activate-koru-dev.sh
+│   ├── autopilot-ide-autodetect-smoke.sh
+│   ├── bump_version.py
+│   ├── docker-ide-matrix-entrypoint.sh
+│   ├── docker-ide-matrix.sh
+│   ├── _koru_autodiag_filter_tickets.py
+│   ├── koru-autoloop-reset-diag-markers.sh
+│   ├── koru-autoloop.sh
+│   ├── koru-autopilot-lane.sh
+│   ├── koru-autopilot-lanes.sh
+│   ├── koru-from-repo.sh
+│   ├── koru-gate-capture.py
+│   ├── koru-pytest.sh
+│   ├── koru-queue-diagnose.sh
+│   ├── koru-semcod-gates.sh
+│   ├── koru-soak-monitor.sh
+│   ├── koru-soak-start.sh
+│   ├── koru-soak-status.sh
+│   ├── koru-soak-stop.sh
+│   ├── koru-wup-testql
+│   ├── planfile-export-prompt.sh
+│   ├── planfile-sync-todo.py
+│   ├── scaffold-ide-plugin.py
+│   ├── simulate-multi-lane-docker.sh
+│   ├── sync-plugin-build.py
+│   ├── sync-plugin-shared.py
+│   ├── sync-plugin-version.py
+│   ├── sync-vscode-plugin-version.py
+│   └── write-ide-plugin-tests.py
+├── services
+│   └── healing-webhook
+│       ├── app_bootstrap.py
+│       ├── app_command_routing.py
+│       ├── app.py
+│       ├── Dockerfile
+│       └── ticket_builder.py
+├── soak.log
+├── src
+│   ├── koru
+│   │   ├── activity_log.py
+│   │   ├── agent_backend_runtime.py
+│   │   ├── agent_backends.py
+│   │   ├── agent_cli_helpers.py
+│   │   ├── agents.py
+│   │   ├── api
+│   │   │   └── __init__.py
+│   │   ├── assets
+│   │   │   └── koru-autopilot-vscode
+│   │   │       ├── koru-autopilot-0.1.29.vsix
+│   │   │       ├── koru-autopilot-0.1.30.vsix
+│   │   │       ├── koru-autopilot-0.1.32.vsix
+│   │   │       ├── koru-autopilot-0.1.35.vsix
+│   │   │       ├── koru-autopilot-0.1.36.vsix
+│   │   │       ├── koru-autopilot-0.1.38.vsix
+│   │   │       ├── koru-autopilot-0.1.39.vsix
+│   │   │       ├── koru-autopilot-0.1.40.vsix
+│   │   │       ├── koru-autopilot-0.1.41.vsix
+│   │   │       ├── koru-autopilot-0.1.42.vsix
+│   │   │       ├── koru-autopilot-0.1.43.vsix
+│   │   │       ├── koru-autopilot-0.1.44.vsix
+│   │   │       ├── koru-autopilot-0.1.45.vsix
+│   │   │       ├── koru-autopilot-0.1.46.vsix
+│   │   │       ├── koru-autopilot-0.1.55.vsix
+│   │   │       ├── koru-autopilot-0.1.56.vsix
+│   │   │       ├── koru-autopilot-0.1.57.vsix
+│   │   │       └── koru-autopilot-0.2.0.vsix
+│   │   ├── autoloop_cli.py
+│   │   ├── autonomous_auto_pipeline.py
+│   │   ├── autonomous_checkpoint.py
+│   │   ├── autonomous_cli_config.py
+│   │   ├── autonomous_cycle_bridge.py
+│   │   ├── autonomous_cycle_chat_activity_analyzer.py
+│   │   ├── autonomous_cycle_chat_activity_config.py
+│   │   ├── autonomous_cycle_chat_activity.py
+│   │   ├── autonomous_cycle_chat_activity_text.py
+│   │   ├── autonomous_cycle_chat_activity_tickets.py
+│   │   ├── autonomous_cycle_common.py
+│   │   ├── autonomous_cycle_config.py
+│   │   ├── autonomous_cycle_drive_retry.py
+│   │   ├── autonomous_cycle_gate.py
+│   │   ├── autonomous_cycle_orchestrator.py
+│   │   ├── autonomous_cycle_post_drive.py
+│   │   ├── autonomous_cycle.py
+│   │   ├── autonomous_cycle_skip_conditions.py
+│   │   ├── autonomous_daemon.py
+│   │   ├── autonomous_diag_markers.py
+│   │   ├── autonomous_diagnostics.py
+│   │   ├── autonomous_drive_retry_policy.py
+│   │   ├── autonomous_env.py
+│   │   ├── autonomous_loop_runner.py
+│   │   ├── autonomous_onboarding.py
+│   │   ├── autonomous_operator.py
+│   │   ├── autonomous_parser.py
+│   │   ├── autonomous_plugin_lifecycle.py
+│   │   ├── autonomous_plugin.py
+│   │   ├── autonomous_plugin_runtime.py
+│   │   ├── autonomous_plugin_wait.py
+│   │   ├── autonomous_processes.py
+│   │   ├── autonomous_process_guard.py
+│   │   ├── autonomous.py
+│   │   ├── autonomous_readiness.py
+│   │   ├── autonomous_resources.py
+│   │   ├── autonomous_runtime.py
+│   │   ├── autonomous_startup.py
+│   │   ├── autonomous_submit_strategy.py
+│   │   ├── autonomous_up.py
+│   │   ├── autonomous_wup.py
+│   │   ├── autonomy
+│   │   │   ├── code2llm_discovery.py
+│   │   │   ├── config.py
+│   │   │   ├── cycle_finalize.py
+│   │   │   ├── cycle_trace.py
+│   │   │   ├── decision_arbiter.py
+│   │   │   ├── decision_trace.py
+│   │   │   ├── environment.py
+│   │   │   ├── env.py
+│   │   │   ├── events.py
+│   │   │   ├── heal.py
+│   │   │   ├── ide_operator_guidance.py
+│   │   │   ├── ide_work.py
+│   │   │   ├── __init__.py
+│   │   │   ├── operator_pipeline.py
+│   │   │   ├── phases
+│   │   │   │   ├── contexts.py
+│   │   │   │   ├── drive_phase.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queue_phase.py
+│   │   │   │   ├── scan_phase.py
+│   │   │   │   ├── sleep_phase.py
+│   │   │   │   ├── startup_phase.py
+│   │   │   │   ├── utils.py
+│   │   │   │   └── verify_phase.py
+│   │   │   ├── planfile_handoff.py
+│   │   │   ├── planning_llm_budget.py
+│   │   │   ├── planning_llm_parsing.py
+│   │   │   ├── planning_llm_prompts.py
+│   │   │   ├── planning_llm.py
+│   │   │   ├── planning_llm_runtime.py
+│   │   │   ├── planning_llm_types.py
+│   │   │   ├── policy_decision.py
+│   │   │   ├── post_run_verify.py
+│   │   │   ├── prompts.py
+│   │   │   ├── reflection_policy.py
+│   │   │   ├── replay_actions.py
+│   │   │   ├── replay_builders.py
+│   │   │   ├── replay_execution.py
+│   │   │   ├── replay_handlers.py
+│   │   │   ├── replay_parser.py
+│   │   │   ├── replay_quick_actions.py
+│   │   │   ├── replay_types.py
+│   │   │   ├── state.py
+│   │   │   ├── structured_report.py
+│   │   │   ├── telemetry_snapshot.py
+│   │   │   └── verification_engine.py
+│   │   ├── autonomy_strategy
+│   │   │   ├── config.py
+│   │   │   ├── defaults.py
+│   │   │   ├── heuristics.py
+│   │   │   ├── __init__.py
+│   │   │   ├── openrouter.py
+│   │   │   └── prompts.py
+│   │   ├── autopilot
+│   │   │   ├── audit.py
+│   │   │   ├── calibrate_cli.py
+│   │   │   ├── cli_command.py
+│   │   │   ├── cli_direct_drive.py
+│   │   │   ├── client.py
+│   │   │   ├── cli_parser.py
+│   │   │   ├── cli_trace.py
+│   │   │   ├── commands
+│   │   │   │   ├── drive.py
+│   │   │   │   ├── handoff.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── manage.py
+│   │   │   │   ├── shutdown.py
+│   │   │   │   └── status.py
+│   │   │   ├── config.py
+│   │   │   ├── daemon_cli.py
+│   │   │   ├── daemon.py
+│   │   │   ├── doctor_cli.py
+│   │   │   ├── drive_repair_policy.py
+│   │   │   ├── host_setup.py
+│   │   │   ├── ide.py
+│   │   │   ├── __init__.py
+│   │   │   ├── injector.py
+│   │   │   ├── install_checks.py
+│   │   │   ├── install_manager.py
+│   │   │   ├── install_plugin_cli.py
+│   │   │   ├── lane_context.py
+│   │   │   ├── local_manager.py
+│   │   │   ├── log_contract.py
+│   │   │   ├── os_injector.py
+│   │   │   ├── plugin_installer.py
+│   │   │   ├── protocol.py
+│   │   │   ├── systemd_cli.py
+│   │   │   ├── tail_cli.py
+│   │   │   └── utils
+│   │   │       ├── client_helpers.py
+│   │   │       └── __init__.py
+│   │   ├── bootstrap.py
+│   │   ├── bounded_contexts
+│   │   │   ├── autonomous_checkpoint
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   ├── env_config
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   ├── __init__.py
+│   │   │   ├── local_manager
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   ├── planfile_queue
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   ├── repairs
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   ├── tasks
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   ├── topology
+│   │   │   │   ├── application.py
+│   │   │   │   ├── commands
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── events
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── queries
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── read_model.py
+│   │   │   └── wup
+│   │   │       ├── application.py
+│   │   │       ├── commands
+│   │   │       │   └── __init__.py
+│   │   │       ├── events
+│   │   │       │   └── __init__.py
+│   │   │       ├── __init__.py
+│   │   │       ├── queries
+│   │   │       │   └── __init__.py
+│   │   │       └── read_model.py
+│   │   ├── cli
+│   │   │   ├── commands.py
+│   │   │   ├── __init__.py
+│   │   │   ├── __main__.py
+│   │   │   └── parsers.py
+│   │   ├── cli_agent_backends.py
+│   │   ├── cli_agent.py
+│   │   ├── cli_auto.py
+│   │   ├── cli_bootstrap.py
+│   │   ├── cli_cleaned.py
+│   │   ├── cli_context.py
+│   │   ├── cli_doctor.py
+│   │   ├── cli_events.py
+│   │   ├── cli_gate.py
+│   │   ├── cli_gc.py
+│   │   ├── cli_ide.py
+│   │   ├── cli_ide_router.py
+│   │   ├── cli_init.py
+│   │   ├── cli_local_serve.py
+│   │   ├── cli_loop.py
+│   │   ├── cli_parser.py
+│   │   ├── cli.py
+│   │   ├── cli_queue.py
+│   │   ├── cli_refactor_planfile_handoff.py
+│   │   ├── cli_replay.py
+│   │   ├── cli_runtime_context.py
+│   │   ├── cli_scan.py
+│   │   ├── cli_self.py
+│   │   ├── cli_serve.py
+│   │   ├── cli_shim_builders.py
+│   │   ├── cli_strategy.py
+│   │   ├── cli_tagi.py
+│   │   ├── cli_task.py
+│   │   ├── cli_tools.py
+│   │   ├── cli_topology.py
+│   │   ├── cli_watch.py
+│   │   ├── configurator.py
+│   │   ├── context.py
+│   │   ├── context_render.py
+│   │   ├── control_commands.py
+│   │   ├── cqrs
+│   │   │   ├── domain_event.py
+│   │   │   ├── event_bus.py
+│   │   │   ├── event_log_projection.py
+│   │   │   ├── event_log_query.py
+│   │   │   ├── event_store.py
+│   │   │   └── __init__.py
+│   │   ├── data
+│   │   │   └── koru-interface-registry.yaml -> ../../../docs/interfaces/koru-interface-registry.yaml
+│   │   ├── decision_engine.py
+│   │   ├── deployment_events
+│   │   │   ├── analyzer.py
+│   │   │   ├── batch.py
+│   │   │   ├── emitter.py
+│   │   │   ├── enums.py
+│   │   │   ├── __init__.py
+│   │   │   └── models.py
+│   │   ├── deployment_events.proto
+│   │   ├── dev_sync.py
+│   │   ├── doctor_autonomous_streams.py
+│   │   ├── doctor_autopilot_checks.py
+│   │   ├── doctor_chat_control.py
+│   │   ├── doctor_constants.py
+│   │   ├── doctor_plugin_bundle.py
+│   │   ├── doctor_plugin_console.py
+│   │   ├── doctor_project_checks.py
+│   │   ├── doctor_project_health.py
+│   │   ├── doctor.py
+│   │   ├── doctor_render.py
+│   │   ├── doctor_reporting_checks.py
+│   │   ├── doctor_runtime_checks.py
+│   │   ├── domain
+│   │   │   └── env
+│   │   │       └── __init__.py
+│   │   ├── dotenv_loader.py
+│   │   ├── dsl
+│   │   │   └── __init__.py
+│   │   ├── env_config.py
+│   │   ├── env_flags.py
+│   │   ├── environment_profile.py
+│   │   ├── events.py
+│   │   ├── gate.py
+│   │   ├── gc_cli_helpers.py
+│   │   ├── gc.py
+│   │   ├── git_attribution.py
+│   │   ├── git_cli.py
+│   │   ├── ide_adapters
+│   │   │   ├── base.py
+│   │   │   ├── bridge.py
+│   │   │   ├── ide_reload.py
+│   │   │   ├── __init__.py
+│   │   │   ├── registry.py
+│   │   │   ├── shared.py
+│   │   │   └── vscode_family.py
+│   │   ├── ide_client.py
+│   │   ├── ide_doctor_cli.py
+│   │   ├── ide_router.py
+│   │   ├── ide_runtime.py
+│   │   ├── init_host_environment.py
+│   │   ├── __init__.py
+│   │   ├── init.py
+│   │   ├── integration_ledger.py
+│   │   ├── interface_registry.py
+│   │   ├── llm_reflect.py
+│   │   ├── local_manager_client.py
+│   │   ├── local_manager_state.py
+│   │   ├── local_service.py
+│   │   ├── loop.py
+│   │   ├── __main__.py
+│   │   ├── mcp_provision.py
+│   │   ├── mcp_server.py
+│   │   ├── observability_dsl.py
+│   │   ├── observability_events.py
+│   │   ├── observability_writer.py
+│   │   ├── planfile_queue.py
+│   │   ├── policy.py
+│   │   ├── project_pipeline.py
+│   │   ├── queue
+│   │   │   ├── human.py
+│   │   │   ├── __init__.py
+│   │   │   ├── koru_queue_argv.py
+│   │   │   ├── local_manager.py
+│   │   │   ├── locking.py
+│   │   │   ├── loop.py
+│   │   │   ├── planfile_ticket_note.py
+│   │   │   ├── runner.py
+│   │   │   ├── runners.py
+│   │   │   ├── shell_evidence.py
+│   │   │   ├── ticket.py
+│   │   │   └── types.py
+│   │   ├── queue_clean.py
+│   │   ├── queue_cli_helpers.py
+│   │   ├── redup_integration.py
+│   │   ├── refactor_planfile_handoff.py
+│   │   ├── remote
+│   │   │   ├── client.py
+│   │   │   └── __init__.py
+│   │   ├── run_log.py
+│   │   ├── runtime.py
+│   │   ├── scan_collection.py
+│   │   ├── scan_dedupe_policy.py
+│   │   ├── scan.py
+│   │   ├── scan_render.py
+│   │   ├── scan_ticket_emission.py
+│   │   ├── scan_types.py
+│   │   ├── scripts
+│   │   │   └── koru-autoloop.sh
+│   │   ├── self_control.py
+│   │   ├── semcod_tools.py
+│   │   ├── serve.py
+│   │   ├── sllm_bridge.py
+│   │   ├── stdio_events.py
+│   │   ├── tagi_integration.py
+│   │   ├── task_dedupe.py
+│   │   ├── task_intake.py
+│   │   ├── task_io.py
+│   │   ├── task_models.py
+│   │   ├── tasks.py
+│   │   ├── task_ticket.py
+│   │   ├── ticket_evidence.py
+│   │   ├── tools.py
+│   │   ├── topology_cli.py
+│   │   ├── topology.py
+│   │   ├── utils
+│   │   │   ├── __init__.py
+│   │   │   └── subprocess_runner.py
+│   │   ├── watch.py
+│   │   ├── wizard
+│   │   │   ├── cli_main.py
+│   │   │   ├── cli.py
+│   │   │   ├── gui
+│   │   │   │   ├── app.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── server.py
+│   │   │   │   ├── session.py
+│   │   │   │   ├── static
+│   │   │   │   │   ├── wizard.css
+│   │   │   │   │   └── wizard.js
+│   │   │   │   └── templates
+│   │   │   │       └── wizard.html
+│   │   │   ├── ide_install.py
+│   │   │   ├── ide.py
+│   │   │   ├── __init__.py
+│   │   │   ├── llx.py
+│   │   │   ├── orchestrator.py
+│   │   │   ├── project.py
+│   │   │   ├── prompters.py
+│   │   │   ├── strategies.json
+│   │   │   ├── templates
+│   │   │   │   ├── cli-tool.json
+│   │   │   │   ├── library.json
+│   │   │   │   ├── ml-research.json
+│   │   │   │   ├── registry.json
+│   │   │   │   └── web-app.json
+│   │   │   ├── templates.py
+│   │   │   └── tree.py
+│   │   └── wup_testql_compat.py
+│   ├── koruapi
+│   │   ├── cli.py
+│   │   ├── dashboard_config.py
+│   │   ├── dashboard_context.py
+│   │   ├── dashboard_html.py
+│   │   ├── dashboard_http.py
+│   │   ├── dashboard_observability.py
+│   │   ├── dashboard_plugin_logs.py
+│   │   ├── dashboard_projects.py
+│   │   ├── dashboard.py
+│   │   ├── dashboard_routes.py
+│   │   ├── dashboard_runtime.py
+│   │   ├── dashboard_serve.py
+│   │   ├── dashboard_serve_utils.py
+│   │   ├── dashboard_state.py
+│   │   ├── dashboard_template.html
+│   │   ├── dashboard_tickets.py
+│   │   ├── dashboard_topology.py
+│   │   ├── __init__.py
+│   │   ├── integrations.py
+│   │   ├── invoke_handlers.py
+│   │   ├── invoke.py
+│   │   ├── local.py
+│   │   ├── mcp.py
+│   │   ├── mcp_server_dispatch.py
+│   │   ├── mcp_server.py
+│   │   ├── mcp_server_schema.py
+│   │   ├── mcp_server_transport.py
+│   │   ├── openapi.py
+│   │   ├── runtime_insights.py
+│   │   ├── server.py
+│   │   └── topology_post.py
+│   ├── korudsl
+│   │   ├── cli.py
+│   │   ├── __init__.py
+│   │   ├── library.py
+│   │   └── transform.py
+│   ├── koru.egg-info
+│   │   ├── dependency_links.txt
+│   │   ├── entry_points.txt
+│   │   ├── PKG-INFO
+│   │   ├── requires.txt
+│   │   ├── SOURCES.txt
+│   │   └── top_level.txt
+│   ├── koruenv
+│   ├── koruide
+│   │   ├── audit.py
+│   │   ├── chat_history.py
+│   │   ├── client.py
+│   │   ├── command_catalog.py
+│   │   ├── command_catalog_store.py
+│   │   ├── command_picker.py
+│   │   ├── command_scenario.py
+│   │   ├── command_telemetry.py
+│   │   ├── config.py
+│   │   ├── daemon
+│   │   │   ├── handlers_ack.py
+│   │   │   ├── handlers_drive.py
+│   │   │   ├── handlers_hello.py
+│   │   │   ├── handlers_plugin_event.py
+│   │   │   ├── handlers.py
+│   │   │   ├── __init__.py
+│   │   │   ├── metadata.py
+│   │   │   ├── protocol.py
+│   │   │   ├── server.py
+│   │   │   └── storage.py
+│   │   ├── daemon_storage.py
+│   │   ├── drive_orchestrator.py
+│   │   ├── host_setup.py
+│   │   ├── ide_control.py
+│   │   ├── ide.py
+│   │   ├── ides
+│   │   │   ├── antigravity.py
+│   │   │   ├── base.py
+│   │   │   ├── cursor.py
+│   │   │   ├── fallback.py
+│   │   │   ├── __init__.py
+│   │   │   ├── jetbrains.py
+│   │   │   ├── registry.py
+│   │   │   ├── vscode.py
+│   │   │   ├── vscodium.py
+│   │   │   ├── windsurf.py
+│   │   │   └── zed.py
+│   │   ├── __init__.py
+│   │   ├── plugin_installer.py
+│   │   ├── plugin_router.py
+│   │   ├── plugin_version.py
+│   │   ├── ports.py
+│   │   ├── protocol.py
+│   │   ├── socket.py
+│   │   ├── strategy_prompt.py
+│   │   └── utils.py
+│   ├── korullm
+│   │   ├── __init__.py
+│   │   └── strategies
+│   │       ├── base.py
+│   │       ├── claude.py
+│   │       ├── codex.py
+│   │       ├── gpt.py
+│   │       ├── ide_chat.py
+│   │       ├── __init__.py
+│   │       ├── ollama.py
+│   │       └── registry.py
+│   ├── korumesh
+│   │   ├── browser_capture.py
+│   │   ├── capture_host.html
+│   │   ├── cli_commands.py
+│   │   ├── cli_parser.py
+│   │   ├── cli.py
+│   │   ├── codec.py
+│   │   ├── dashboard_parse.py
+│   │   ├── dashboard.py
+│   │   ├── envelope.py
+│   │   ├── grid_template.html
+│   │   ├── __init__.py
+│   │   ├── keys.py
+│   │   ├── store_persistence.py
+│   │   ├── store.py
+│   │   └── transport.py
+│   ├── koruobserve
+│   │   ├── bootstrap.py
+│   │   ├── cli_parser.py
+│   │   ├── cli.py
+│   │   ├── diagnostics.py
+│   │   ├── __init__.py
+│   │   ├── lifecycle.py
+│   │   ├── paths.py
+│   │   └── providers_cli.py
+│   ├── koruos
+│   │   ├── __init__.py
+│   │   └── strategies
+│   │       ├── base.py
+│   │       ├── darwin.py
+│   │       ├── __init__.py
+│   │       ├── registry.py
+│   │       ├── wayland_linux.py
+│   │       ├── windows.py
+│   │       └── x11_linux.py
+│   └── koruvision
+│       ├── agent.py
+│       ├── capture_mss.py
+│       ├── capture_probe.py
+│       ├── capture.py
+│       ├── cli_parser.py
+│       ├── cli.py
+│       ├── __init__.py
+│       ├── mesh.py
+│       ├── portal_capture.py
+│       ├── providers
+│       │   ├── base.py
+│       │   ├── browser_getdisplay.py
+│       │   ├── cli_tools.py
+│       │   ├── detector.py
+│       │   ├── env.py
+│       │   ├── grim.py
+│       │   ├── __init__.py
+│       │   ├── mss.py
+│       │   ├── obs_websocket.py
+│       │   ├── portal_screencast.py
+│       │   ├── portal_screenshot.py
+│       │   ├── registry.py
+│       │   └── screencast_session.py
+│       └── scaling.py
+├── SUMD.md
+├── SUMR.md
+├── systemd
+│   ├── coru-supervisor.service
+│   └── koru-autopilot.service
+├── Taskfile.yml
+├── templates
+│   ├── docker-compose.quality.yml.template
+│   ├── git-hooks
+│   │   ├── install.sh.template
+│   │   ├── post-commit.template
+│   │   └── post-merge.template
+│   ├── github-workflows
+│   │   ├── code-quality.yml.template
+│   │   └── version-drift.yml.template
+│   ├── llx.toml.template
+│   ├── llx.yaml.template
+│   ├── observability
+│   │   ├── alertmanager
+│   │   │   └── alertmanager.yml.template
+│   │   ├── docker-compose.observability.yml.template
+│   │   ├── prometheus
+│   │   │   ├── prometheus.yml.template
+│   │   │   └── rules
+│   │   │       └── app-alerts.yml.template
+│   │   └── README.md
+│   ├── prefact.yaml.template
+│   ├── pyqual.yaml.template
+│   ├── python-monorepo
+│   │   └── shared-compat
+│   │       ├── _compat.py.template
+│   │       └── README.md
+│   ├── redeploy
+│   │   ├── device
+│   │   │   ├── diagnose.md.template
+│   │   │   ├── manifest.yaml.template
+│   │   │   └── migration.md.template
+│   │   ├── local
+│   │   │   └── deployment.md.template
+│   │   ├── README.md
+│   │   └── runtime
+│   │       └── quadlet
+│   │           ├── app-backend.container.template
+│   │           ├── app-frontend.container.template
+│   │           ├── app.network.template
+│   │           └── README.md
+│   ├── redsl.yaml.template
+│   ├── redup.toml.template
+│   ├── regix.yaml.template
+│   ├── scripts
+│   │   ├── check-taskfile-escapes.sh.template
+│   │   ├── check-version-drift.sh.template
+│   │   ├── redsl-gate-precommit.sh.template
+│   │   ├── redup-check.sh.template
+│   │   ├── redup-precommit.sh.template
+│   │   ├── regix-precommit.sh.template
+│   │   └── sumr-refresh.sh.template
+│   ├── sumr-refresh.sh.template
+│   ├── sumr-weekly.yml.template
+│   └── wup.yaml.template
+├── test
+│   └── koru-autopilot-plugins-workspace.test.js
+├── test-data
+├── testql-deps.json
+├── testql-scenarios
+│   ├── cli-koru_api.testql.toon.yaml
+│   ├── cli-koru_dsl.testql.toon.yaml
+│   ├── cli-koru-live.testql.toon.yaml
+│   ├── cli-koru.testql.toon.yaml
+│   ├── cli-koru_wup_testql.testql.toon.yaml
+│   ├── cli-smoke.testql.toon.yaml
+│   ├── generated-cli-tests.testql.toon.yaml
+│   └── generated-from-pytests.testql.toon.yaml
+├── testql-testing
+│   └── scenarios
+│       └── realtime-health.testql.toon.yaml
+├── tests
+│   ├── conftest.py
+│   ├── docker
+│   │   └── ide-matrix.Dockerfile
+│   ├── e2e
+│   │   ├── bootstrap.sh
+│   │   ├── init.sh
+│   │   ├── README.md
+│   │   └── smoke.sh
+│   ├── ides
+│   │   ├── __init__.py
+│   │   ├── test_all_ide_strategies.py
+│   │   └── test_cursor_strategy.py
+│   ├── test_activity_log.py
+│   ├── test_agent_backend_runtime.py
+│   ├── test_agent_backends_cli.py
+│   ├── test_agent_backends.py
+│   ├── test_agent_cli.py
+│   ├── test_agents.py
+│   ├── test_autoloop_cli.py
+│   ├── test_autonomous_cycle_bridge.py
+│   ├── test_autonomous_cycle_chat_activity_analyzer.py
+│   ├── test_autonomous_cycle_chat_activity_config.py
+│   ├── test_autonomous_cycle_chat_activity_text.py
+│   ├── test_autonomous_cycle_chat_activity_tickets.py
+│   ├── test_autonomous_cycle_config.py
+│   ├── test_autonomous_cycle_drive_retry.py
+│   ├── test_autonomous_cycle_events.py
+│   ├── test_autonomous_cycle_skip_conditions.py
+│   ├── test_autonomous_daemon_metadata.py
+│   ├── test_autonomous_diag_markers.py
+│   ├── test_autonomous_diagnostics.py
+│   ├── test_autonomous_loop_runner.py
+│   ├── test_autonomous_onboarding.py
+│   ├── test_autonomous_operator.py
+│   ├── test_autonomous_operator_reload.py
+│   ├── test_autonomous_operator_unsupported_ide.py
+│   ├── test_autonomous_parser_detection.py
+│   ├── test_autonomous_plugin_lifecycle.py
+│   ├── test_autonomous_plugin_runtime.py
+│   ├── test_autonomous_process_detection.py
+│   ├── test_autonomous_process_guard.py
+│   ├── test_autonomous.py
+│   ├── test_autonomous_readiness.py
+│   ├── test_autonomous_redrive_cooldown.py
+│   ├── test_autonomous_runtime.py
+│   ├── test_autonomous_scenarios.py
+│   ├── test_autonomous_startup.py
+│   ├── test_autonomous_submit_strategy.py
+│   ├── test_autonomous_up.py
+│   ├── test_autonomy_config.py
+│   ├── test_autonomy_environment.py
+│   ├── test_autonomy_env.py
+│   ├── test_autonomy_events.py
+│   ├── test_autonomy_policy_decision.py
+│   ├── test_autonomy_prompts.py
+│   ├── test_autonomy_strategy.py
+│   ├── test_autopilot_audit.py
+│   ├── test_autopilot_cli_direct_drive.py
+│   ├── test_autopilot_client_drive_errors.py
+│   ├── test_autopilot_cli.py
+│   ├── test_autopilot_commands_drive.py
+│   ├── test_autopilot_commands_handoff.py
+│   ├── test_autopilot_commands_manage.py
+│   ├── test_autopilot_commands_shutdown.py
+│   ├── test_autopilot_commands_status.py
+│   ├── test_autopilot_config.py
+│   ├── test_autopilot_daemon.py
+│   ├── test_autopilot_host_setup.py
+│   ├── test_autopilot_ide.py
+│   ├── test_autopilot_injector.py
+│   ├── test_autopilot_jetbrains_scaffold.py
+│   ├── test_autopilot_lane_context.py
+│   ├── test_autopilot_os_injector.py
+│   ├── test_autopilot_plugin_installer.py
+│   ├── test_autopilot_protocol.py
+│   ├── test_autopilot_socket_path.py
+│   ├── test_bootstrap.py
+│   ├── test_capture_host_template.py
+│   ├── test_chat_history.py
+│   ├── test_cli.py
+│   ├── test_cli_shim_builders.py
+│   ├── test_code2llm_discovery.py
+│   ├── test_command_catalog_store.py
+│   ├── test_command_picker.py
+│   ├── test_command_telemetry.py
+│   ├── test_configurator.py
+│   ├── test_configurator_toggle.py
+│   ├── test_context.py
+│   ├── test_cqrs_autonomous_checkpoint_context.py
+│   ├── test_cqrs_env_config_context.py
+│   ├── test_cqrs_local_manager_context.py
+│   ├── test_cqrs_planfile_queue_context.py
+│   ├── test_cqrs_primitives.py
+│   ├── test_cqrs_repairs_context.py
+│   ├── test_cqrs_tasks_context.py
+│   ├── test_cqrs_topology_context.py
+│   ├── test_cqrs_wup_context.py
+│   ├── test_cycle_trace.py
+│   ├── test_dashboard_html.py
+│   ├── test_dashboard_projects_by_ide.py
+│   ├── test_dashboard_ticket_handlers.py
+│   ├── test_dashboard_topology_post.py
+│   ├── test_decision_arbiter.py
+│   ├── test_decision_engine.py
+│   ├── test_decision_trace.py
+│   ├── test_deployment_events.py
+│   ├── test_dev_sync.py
+│   ├── test_docker_capture.py
+│   ├── test_docker_e2e.py
+│   ├── test_docker_ide_matrix_config.py
+│   ├── test_docker_ide_matrix.py
+│   ├── test_docs_ide_control_surfaces.py
+│   ├── test_doctor_facade.py
+│   ├── test_doctor_koru_auto_probe.py
+│   ├── test_doctor.py
+│   ├── test_doctor_reporting_checks.py
+│   ├── test_dotenv_loader.py
+│   ├── test_drive_orchestrator.py
+│   ├── test_drive_repair_policy.py
+│   ├── test_e2e.py
+│   ├── test_env_config.py
+│   ├── test_env_flags.py
+│   ├── test_environment_profile.py
+│   ├── test_events.py
+│   ├── test_gate.py
+│   ├── test_gc_cli_helpers.py
+│   ├── test_gc.py
+│   ├── test_git_attribution.py
+│   ├── test_git_cli.py
+│   ├── test_healing_webhook_split.py
+│   ├── test_ide_adapters.py
+│   ├── test_ide_client_contract.py
+│   ├── test_ide_client.py
+│   ├── test_ide_command_catalog.py
+│   ├── test_ide_doctor_cli.py
+│   ├── test_ide_operator_guidance.py
+│   ├── test_ide_reload.py
+│   ├── test_ide_router.py
+│   ├── test_ide_runtime.py
+│   ├── test_ide_work.py
+│   ├── test_init.py
+│   ├── test_install_checks.py
+│   ├── test_install_manager.py
+│   ├── test_integration_ledger.py
+│   ├── test_interface_registry.py
+│   ├── test_koruapi.py
+│   ├── test_koruapi_transports.py
+│   ├── test_korudsl.py
+│   ├── test_koru_gate_capture.py
+│   ├── test_koruide_bridges.py
+│   ├── test_koruide_client.py
+│   ├── test_koruide_daemon_handlers_ack.py
+│   ├── test_koruide_daemon_handlers_console_log.py
+│   ├── test_koruide_daemon_handlers_drive.py
+│   ├── test_koruide_daemon_handlers_hello.py
+│   ├── test_koruide_daemon_handlers_plugin_event.py
+│   ├── test_koruide_ports.py
+│   ├── test_korumesh_envelope.py
+│   ├── test_korumesh_store.py
+│   ├── test_korumesh_transport.py
+│   ├── test_koruobserve_diagnostics.py
+│   ├── test_koruobserve_lifecycle.py
+│   ├── test_koru_queue_argv.py
+│   ├── test_koruvision_agent.py
+│   ├── test_koruvision_capture.py
+│   ├── test_koruvision_mesh.py
+│   ├── test_lane_plugin_matching.py
+│   ├── test_llm_reflect.py
+│   ├── test_llm_strategies.py
+│   ├── test_local_service.py
+│   ├── test_loop.py
+│   ├── test_mcp_provision.py
+│   ├── test_mcp_server.py
+│   ├── test_mcp_server_split.py
+│   ├── test_observability_dsl.py
+│   ├── test_observation_mesh_e2e.py
+│   ├── test_observe_providers_cli.py
+│   ├── test_operator_pipeline.py
+│   ├── test_os_strategies.py
+│   ├── test_planfile_queue.py
+│   ├── test_planning_llm.py
+│   ├── test_plugin_router.py
+│   ├── test_policy.py
+│   ├── test_post_run_verify.py
+│   ├── test_provider_browser_upload.py
+│   ├── test_provider_obs.py
+│   ├── test_provider_portal_screencast.py
+│   ├── test_pyproject_metadata.py
+│   ├── test_queue_clean.py
+│   ├── test_queue_cli_helpers.py
+│   ├── test_redup_integration.py
+│   ├── test_refactor_planfile_handoff.py
+│   ├── test_reflection_policy.py
+│   ├── test_regix_taskfile.py
+│   ├── test_remote_control.py
+│   ├── test_replay_actions.py
+│   ├── test_run_log.py
+│   ├── test_runtime_insights.py
+│   ├── test_runtime.py
+│   ├── test_scan_phase.py
+│   ├── test_scan.py
+│   ├── test_scan_split.py
+│   ├── test_screencast_session.py
+│   ├── test_self_control.py
+│   ├── test_semcod_tools.py
+│   ├── test_serve.py
+│   ├── test_shell_evidence.py
+│   ├── test_stdio_autonomous_jsonl.py
+│   ├── test_strategy_metadata_accessors.py
+│   ├── test_strategy_prompt.py
+│   ├── test_structured_report.py
+│   ├── test_sync_plugin_build.py
+│   ├── test_tasks.py
+│   ├── test_ticket_evidence.py
+│   ├── test_tools.py
+│   ├── test_topology_cli.py
+│   ├── test_topology.py
+│   ├── test_verification_cycle_integration.py
+│   ├── test_verification_engine.py
+│   ├── test_vision_interval_floor.py
+│   ├── test_vision_provider_mime.py
+│   ├── test_watch.py
+│   ├── test_wizard_cli.py
+│   ├── test_wizard_env_e2e.py
+│   ├── test_wizard_gui.py
+│   ├── test_wizard_ide_extras.py
+│   ├── test_wizard_ide.py
+│   ├── test_wizard_llx.py
+│   ├── test_wizard_project.py
+│   ├── test_wizard_templates.py
+│   ├── test_wizard_tree.py
+│   └── test_wup_taskfile.py
+├── TODO.md
+├── todo.txt
+├── tree.sh
+├── tree.txt
+├── uv.lock
+├── VERSION
+├── workflows
+│   ├── aider-docker-autoloop.md
+│   ├── observability-bootstrap.md
+│   ├── on-change-gates.md
+│   ├── redeploy-multi-device.md
+│   ├── sumr-refresh-loop.md
+│   └── testql-autoloop.md
+├── wup-shell-only.yaml
+└── wup.yaml
+
+324 directories, 2396 files

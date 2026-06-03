@@ -1558,6 +1558,9 @@ queue = [
     { name = "arq" },
     { name = "redis" },
 ]
+sllm = [
+    { name = "sllm" },
+]
 vision = [
     { name = "mss" },
 ]
@@ -1636,6 +1639,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
     { name = "sentry-sdk", marker = "extra == 'all'", specifier = ">=2.18,<3.0" },
     { name = "sentry-sdk", marker = "extra == 'obs'", specifier = ">=2.18,<3.0" },
+    { name = "sllm", marker = "extra == 'sllm'", directory = "/home/tom/github/semcod/sllm" },
     { name = "structlog", marker = "extra == 'all'", specifier = ">=24.4,<26.0" },
     { name = "structlog", marker = "extra == 'obs'", specifier = ">=24.4,<26.0" },
     { name = "tagi", marker = "extra == 'all'", specifier = ">=0.49.0" },
@@ -1651,7 +1655,7 @@ requires-dist = [
     { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'watch'", specifier = ">=12.0,<17.0" },
 ]
-provides-extras = ["watch", "vision", "mesh", "observe", "dev", "api", "agent", "obs", "queue", "quality", "all"]
+provides-extras = ["watch", "vision", "mesh", "observe", "dev", "api", "agent", "sllm", "obs", "queue", "quality", "all"]
 
 [[package]]
 name = "libcst"
@@ -3469,6 +3473,28 @@ sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
 ]
+
+[[package]]
+name = "sllm"
+version = "0.1.2"
+source = { directory = "/home/tom/github/semcod/sllm" }
+
+[package.metadata]
+requires-dist = [
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "intract", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/intract" },
+    { name = "intract", marker = "extra == 'intent'", directory = "/home/tom/github/semcod/intract" },
+    { name = "llx", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/llx" },
+    { name = "nlp2dsl", marker = "extra == 'ecosystem'", directory = "/home/tom/github/wronai/nlp2dsl" },
+    { name = "nlp2dsl", marker = "extra == 'nlp'", directory = "/home/tom/github/wronai/nlp2dsl" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "proxym", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/proxym" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0,<10.0" },
+    { name = "redsl", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/redsl" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
+]
+provides-extras = ["nlp", "intent", "ecosystem", "dev"]
 
 [[package]]
 name = "smmap"

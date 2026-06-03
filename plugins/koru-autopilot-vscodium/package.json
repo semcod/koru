@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscodium",
   "displayName": "koru autopilot (VSCodium)",
   "description": "Bridge between VSCodium / Code - OSS and the koru autopilot daemon. Standalone VSIX for VSCodium / Code - OSS only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -154,8 +154,8 @@
         },
         "koruAutopilot.trustUnverifiedHostSubmit": {
           "type": "boolean",
-          "default": true,
-          "description": "For VSCodium on Linux, treat a successful host Return/Ctrl+Return submit key as accepted when VS Code APIs cannot verify chat submission."
+          "default": false,
+          "description": "For VSCodium on Linux, treat a successful host Return/Ctrl+Return submit key as accepted when VS Code APIs cannot verify chat submission. Disabled by default because unverified host keys can target the wrong IDE surface."
         },
         "koruAutopilot.allowVSCodiumHostInputFallback": {
           "type": "boolean",
@@ -208,6 +208,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "b2b5737f434dd14d"
+    "sha": "b4914fff9b0aaaf9"
   }
 }

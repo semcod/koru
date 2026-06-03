@@ -1,17 +1,19 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.19s
-# nodes: 252 | edges: 500 | modules: 27
-# CC̄=4.0
+# generated in 0.28s
+# nodes: 256 | edges: 500 | modules: 26
+# CC̄=3.7
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:762  out:0  total:762
+    CC=0  in:765  out:0  total:765
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:179  out:9  total:188
+    CC=5  in:180  out:9  total:189
   packages.coru.src.coru.repair.pipeline.run_repair_pipeline
     CC=33  in:0  out:43  total:43
   src.koruide.ide.detect_running_ides
-    CC=13  in:29  out:10  total:39
+    CC=13  in:30  out:10  total:40
+  packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report
+    CC=25  in:0  out:40  total:40
   packages.coru.src.coru.cli._attempt_plugin_self_heal
     CC=12  in:2  out:36  total:38
   packages.coru.src.coru.repair.pipeline.manual_vsix_unpack
@@ -24,29 +26,27 @@ HUBS[20]:
     CC=15  in:3  out:31  total:34
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
-  packages.coru.src.coru.cli._lane_status_payload
-    CC=14  in:10  out:20  total:30
   packages.coru.src.coru.repair.pipeline._emit
     CC=2  in:29  out:1  total:30
+  packages.coru.src.coru.cli._lane_status_payload
+    CC=14  in:10  out:20  total:30
   packages.coru.src.coru.cli._run_lane_repair
     CC=7  in:5  out:24  total:29
+  packages.coru.src.coru.repair.diagnostics.collect_problems_from_status
+    CC=19  in:0  out:28  total:28
+  packages.coru.src.coru.repair.diagnostics._collect_plugin_alignment_problems
+    CC=19  in:1  out:26  total:27
   packages.coru.src.coru.cli._auto_ownership_gate
     CC=22  in:2  out:25  total:27
+  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
+    CC=2  in:25  out:1  total:26
   packages.coru.src.coru.cli._run_default_autonomous
     CC=10  in:2  out:24  total:26
-  packages.coru.src.coru.cli._maybe_reexec_into_project_python
-    CC=12  in:1  out:25  total:26
   packages.coru.src.coru.repair.projector._project_one_session
     CC=19  in:1  out:25  total:26
-  packages.coru.src.coru.cli._terminal_shell_context_fallback
-    CC=21  in:1  out:24  total:25
-  packages.coru.src.coru.cli._start_autopilot_daemon_for_lane
-    CC=13  in:3  out:21  total:24
-  packages.coru.src.coru.supervisor.socket_path.socket_path_for_instance
-    CC=8  in:1  out:22  total:23
 
 MODULES:
-  packages.coru.src.coru.cli  [152 funcs]
+  packages.coru.src.coru.cli  [154 funcs]
     _add_lane_identifiers  CC=1  out:2
     _add_shell_argument  CC=1  out:1
     _agent_lane_from_auto_args  CC=7  out:7
@@ -57,9 +57,23 @@ MODULES:
     _auto_readiness_gate  CC=22  out:33
     _autonomous_startup_chain  CC=2  out:8
     _binary_path  CC=6  out:8
-  packages.coru.src.coru.repair.diagnostics  [2 funcs]
+  packages.coru.src.coru.ecosystem  [5 funcs]
+    _default_runner  CC=1  out:2
+    _detect_running_plugin_ides  CC=4  out:2
+    _local_package_paths  CC=5  out:7
+    sync_ecosystem  CC=12  out:13
+    sync_python_packages  CC=6  out:5
+  packages.coru.src.coru.repair.diagnostics  [15 funcs]
+    _collect_plugin_alignment_problems  CC=19  out:26
+    _dedupe_problems  CC=3  out:3
+    _drive_intent_unverified_problem  CC=8  out:11
+    _focus_risk_problem  CC=4  out:6
+    _host_key_trace_problem  CC=10  out:11
+    _installed_extension_dir  CC=4  out:6
+    _paste_risk_problem  CC=5  out:7
     _plugin_row_for_ide  CC=7  out:7
     _read_package_build_sha  CC=6  out:7
+    _submit_unverified_problem  CC=10  out:15
   packages.coru.src.coru.repair.events  [1 funcs]
     aggregate_id_for  CC=1  out:3
   packages.coru.src.coru.repair.pipeline  [10 funcs]
@@ -103,28 +117,13 @@ MODULES:
     cmd_active  CC=6  out:14
     cmd_daemon  CC=3  out:7
     cmd_lanes  CC=2  out:5
-  packages.coru.src.coru.supervisor.daemon_ctl  [2 funcs]
-    _lane_environ  CC=2  out:1
-    start_daemon  CC=9  out:7
   packages.coru.src.coru.supervisor.editor_cli  [1 funcs]
     resolve_editor_cli  CC=9  out:8
-  packages.coru.src.coru.supervisor.paths  [6 funcs]
-    default_http_host  CC=3  out:2
-    default_http_port  CC=3  out:3
-    pid_path  CC=1  out:1
+  packages.coru.src.coru.supervisor.paths  [3 funcs]
     registry_path  CC=1  out:1
     state_dir  CC=5  out:11
     supervisor_url  CC=3  out:5
-  packages.coru.src.coru.supervisor.probe  [8 funcs]
-    _failure_health  CC=4  out:4
-    _iso_now  CC=1  out:4
-    _lane_environ  CC=2  out:1
-    _run_status_probe  CC=2  out:6
-    _select_plugin  CC=10  out:7
-    _status_command  CC=2  out:1
-    _success_health  CC=13  out:18
-    probe_lane_health  CC=5  out:10
-  packages.coru.src.coru.supervisor.registry  [10 funcs]
+  packages.coru.src.coru.supervisor.registry  [9 funcs]
     _ensure_state_dir  CC=1  out:2
     _iso_now  CC=1  out:4
     _registry_lock  CC=2  out:7
@@ -134,17 +133,10 @@ MODULES:
     remove_lane  CC=3  out:5
     save_registry  CC=2  out:8
     set_active_lane  CC=2  out:5
-    update_lane_health  CC=2  out:4
-  packages.coru.src.coru.supervisor.service  [4 funcs]
-    run  CC=5  out:12
+  packages.coru.src.coru.supervisor.service  [3 funcs]
     read_supervisor_pid  CC=3  out:6
     stop_supervisor_process  CC=5  out:11
     supervisor_running  CC=3  out:2
-  packages.coru.src.coru.supervisor.socket_path  [2 funcs]
-    socket_basename  CC=5  out:5
-    socket_path_for_instance  CC=8  out:22
-  packages.coru.src.coru.supervisor.systemd_unit  [1 funcs]
-    action_install_unit  CC=9  out:15
   packages.koruenv.src.koruenv.cli  [6 funcs]
     _emit_log  CC=5  out:7
     _iso_ts  CC=1  out:4
@@ -159,6 +151,10 @@ MODULES:
     resolve_lane_socket_for_os  CC=5  out:10
     validate_ide  CC=3  out:6
     validate_instance  CC=3  out:4
+  plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
+    next  CC=2  out:1
+  plugins.koru-autopilot-shared.src.bridge-network  [1 funcs]
+    dispatch  CC=10  out:6
   scripts.koru-soak-monitor  [1 funcs]
     print  CC=0  out:0
   src.koru.autonomy.env  [1 funcs]
@@ -167,7 +163,7 @@ MODULES:
     terminal_kind_label  CC=3  out:0
   src.koru.ide_adapters.ide_reload  [2 funcs]
     connect_via_command_palette  CC=1  out:1
-    try_reload_vscode_family_ide  CC=10  out:11
+    try_reload_vscode_family_ide  CC=9  out:11
   src.koru.scripts.koru-autoloop  [1 funcs]
     run_koru  CC=0  out:0
   src.koru.wizard.gui.static.wizard  [1 funcs]
@@ -193,6 +189,11 @@ EDGES:
   packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.validate_ide
   packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.validate_instance
   packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os
+  packages.coru.src.coru.ecosystem.sync_python_packages → packages.coru.src.coru.ecosystem._local_package_paths
+  packages.coru.src.coru.ecosystem._default_runner → src.koru.wizard.gui.static.wizard.list
+  packages.coru.src.coru.ecosystem._detect_running_plugin_ides → src.koruide.ide.detect_running_ides
+  packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem._detect_running_plugin_ides
+  packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem.sync_python_packages
   packages.coru.src.coru.cli._current_log_format → packages.coru.src.coru.cli._normalize_log_format
   packages.coru.src.coru.cli._emit_log → packages.coru.src.coru.cli._current_log_format
   packages.coru.src.coru.cli._emit_log → scripts.koru-soak-monitor.print
@@ -222,8 +223,3 @@ EDGES:
   packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._choose_option
   packages.coru.src.coru.cli._extract_global_flags → src.koru.wizard.gui.static.wizard.list
   packages.coru.src.coru.cli._extract_global_flags → packages.coru.src.coru.cli._normalize_log_format
-  packages.coru.src.coru.cli._run → src.koru.wizard.gui.static.wizard.list
-  packages.coru.src.coru.cli._cmd_exists → packages.coru.src.coru.cli._binary_path
-  packages.coru.src.coru.cli._binary_path → packages.coru.src.coru.cli._repo_root
-  packages.coru.src.coru.cli._tool_argv → packages.coru.src.coru.cli._binary_path
-  packages.coru.src.coru.cli._tool_argv → packages.coru.src.coru.cli._python_module_exists

@@ -892,6 +892,6 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
 
   private trustUnverifiedHostSubmit(): boolean {
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    return cfg.get<boolean>("trustUnverifiedHostSubmit", true);
+    return cfg.get<boolean>("trustUnverifiedHostSubmit", false);
   }
 }

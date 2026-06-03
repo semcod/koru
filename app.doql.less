@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.308;
+  version: 0.1.309;
 }
 
 dependencies {
@@ -144,6 +144,86 @@ workflow[name="publish"] {
   step-15: run cmd=$(PYTHON) -m pip install -q twine;
   step-16: run cmd=$(PYTHON) -m twine upload dist/koru-$(VERSION)*;
   step-17: run cmd=echo "✓ Published koru $(VERSION) to PyPI";
+}
+
+workflow[name="packages-build"] {
+  trigger: manual;
+  step-1: run cmd=set -euo pipefail; \;
+  step-2: run cmd=if [ -z "$(PACKAGE_DIRS)" ]; then \;
+  step-3: run cmd=echo "No package directories found under packages/"; \;
+  step-4: run cmd=exit 1; \;
+  step-5: run cmd=fi; \;
+  step-6: run cmd=$(PYTHON) -m pip install -q build; \;
+  step-7: run cmd=for pkg in $(PACKAGE_DIRS); do \;
+  step-8: run cmd=if [ ! -f "$$pkg/pyproject.toml" ]; then \;
+  step-9: run cmd=echo "- skipping $$pkg (no pyproject.toml)"; \;
+  step-10: run cmd=continue; \;
+  step-11: run cmd=fi; \;
+  step-12: run cmd=echo "📦 building $$pkg"; \;
+  step-13: run cmd=rm -rf "$$pkg/dist" "$$pkg/build" "$$pkg"/*.egg-info "$$pkg/src"/*.egg-info; \;
+  step-14: run cmd=$(PYTHON) -m build "$$pkg"; \;
+  step-15: run cmd=done;
+}
+
+workflow[name="packages-check"] {
+  trigger: manual;
+  step-1: run cmd=set -euo pipefail; \;
+  step-2: run cmd=$(PYTHON) -m pip install -q twine; \;
+  step-3: run cmd=for pkg in $(PACKAGE_DIRS); do \;
+  step-4: run cmd=if [ ! -f "$$pkg/pyproject.toml" ]; then \;
+  step-5: run cmd=continue; \;
+  step-6: run cmd=fi; \;
+  step-7: run cmd=if ls "$$pkg"/dist/* >/dev/null 2>&1; then \;
+  step-8: run cmd=echo "🔎 twine check $$pkg/dist/*"; \;
+  step-9: run cmd=$(PYTHON) -m twine check "$$pkg"/dist/*; \;
+  step-10: run cmd=else \;
+  step-11: run cmd=echo "No artifacts in $$pkg/dist (run: make packages-build)"; \;
+  step-12: run cmd=exit 1; \;
+  step-13: run cmd=fi; \;
+  step-14: run cmd=done;
+}
+
+workflow[name="packages-publish-test"] {
+  trigger: manual;
+  step-1: run cmd=echo "🚀 Publishing packages/* to TestPyPI...";
+  step-2: run cmd=bash -c '\;
+  step-3: run cmd=if [ -n "$${PYPI_API_TOKEN}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \;
+  step-4: run cmd=export TWINE_USERNAME=__token__ TWINE_PASSWORD="$${PYPI_API_TOKEN}"; \;
+  step-5: run cmd=fi; \;
+  step-6: run cmd=if [ -z "$${TWINE_USERNAME}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \;
+  step-7: run cmd=echo "⚠️  No PyPI credentials. Set TWINE_USERNAME/TWINE_PASSWORD or PYPI_API_TOKEN"; \;
+  step-8: run cmd=echo "   Skipping upload (artifacts are built and twine-checked)."; \;
+  step-9: run cmd=exit 0; \;
+  step-10: run cmd=fi; \;
+  step-11: run cmd=for pkg in $(PACKAGE_DIRS); do \;
+  step-12: run cmd=if [ ! -f "$$pkg/pyproject.toml" ]; then \;
+  step-13: run cmd=continue; \;
+  step-14: run cmd=fi; \;
+  step-15: run cmd=echo "⬆️  testpypi upload $$pkg/dist/*"; \;
+  step-16: run cmd=$(PYTHON) -m twine upload --repository testpypi "$$pkg"/dist/*; \;
+  step-17: run cmd=done; \;
+  step-18: run cmd=echo "✓ Published all packages/* to TestPyPI"';
+}
+
+workflow[name="packages-publish"] {
+  trigger: manual;
+  step-1: run cmd=echo "🚀 Publishing packages/* to PyPI...";
+  step-2: run cmd=bash -c '\;
+  step-3: run cmd=if [ -n "$${PYPI_API_TOKEN}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \;
+  step-4: run cmd=export TWINE_USERNAME=__token__ TWINE_PASSWORD="$${PYPI_API_TOKEN}"; \;
+  step-5: run cmd=fi; \;
+  step-6: run cmd=if [ -z "$${TWINE_USERNAME}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \;
+  step-7: run cmd=echo "⚠️  No PyPI credentials. Set TWINE_USERNAME/TWINE_PASSWORD or PYPI_API_TOKEN"; \;
+  step-8: run cmd=exit 1; \;
+  step-9: run cmd=fi; \;
+  step-10: run cmd=for pkg in $(PACKAGE_DIRS); do \;
+  step-11: run cmd=if [ ! -f "$$pkg/pyproject.toml" ]; then \;
+  step-12: run cmd=continue; \;
+  step-13: run cmd=fi; \;
+  step-14: run cmd=echo "⬆️  pypi upload $$pkg/dist/*"; \;
+  step-15: run cmd=$(PYTHON) -m twine upload "$$pkg"/dist/*; \;
+  step-16: run cmd=done; \;
+  step-17: run cmd=echo "✓ Published all packages/* to PyPI"';
 }
 
 workflow[name="default"] {

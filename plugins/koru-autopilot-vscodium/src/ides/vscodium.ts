@@ -33,7 +33,12 @@ function submitCommandsOverride(): string[] | null {
 }
 
 function focusInputCommandsPrefix(): string[] {
-  return [];
+  return [
+    "chatgpt.sidebarView.focus",
+    "chatgpt.sidebarSecondaryView.focus",
+    "chat.action.focus",
+    "workbench.action.chat.focusInput",
+  ];
 }
 
 function preferCtrlSubmit(): boolean {
@@ -60,15 +65,26 @@ function sanitizeProbeCache(
 
 function isUnsafeVSCodiumFocusOpen(command: string): boolean {
   const normalized = command.trim().toLowerCase();
-  return normalized.includes("settings") || normalized.includes("preferences");
+  return (
+    normalized.includes("settings") ||
+    normalized.includes("preferences") ||
+    normalized.includes("focusinput")
+  );
 }
 
 function focusOpenCommandsDefaults(): string[] {
-  return ["workbench.action.chat.focusInput"];
+  return [
+    "chatgpt.sidebarView.open",
+    "chatgpt.openSidebar",
+    "chatgpt.sidebarSecondaryView.open",
+    "workbench.action.chat.openInSidebar",
+    "workbench.panel.chat",
+    "workbench.panel.chat.view.copilot.focus",
+  ];
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {
-  return true;
+  return false;
 }
 
 export const vscodiumStrategy: IdeStrategy = {

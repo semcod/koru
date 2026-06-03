@@ -12,8 +12,7 @@ ustawione 2026-05-10 po empirycznym A/B teście — patrz
 
 Wszystkie narzędzia LLM-driven dziedziczą ten model przez:
 
-- env var `LLM_MODEL` (lub specyficzny — `PFIX_MODEL`, `AIDER_MODEL`,
-  `REFACTOR_LLM_MODEL`)
+- env var `LLM_MODEL` (lub specyficzny — `PFIX_MODEL`, `REFACTOR_LLM_MODEL`)
 - config plik tool'a (`pyqual.yaml`, `redsl.yaml`, `llx.yaml`)
 
 ## Mapa narzędzi — według warstwy
@@ -22,7 +21,7 @@ Wszystkie narzędzia LLM-driven dziedziczą ten model przez:
 WYKRYWANIE (LLM-free):              ROZWIĄZYWANIE (LLM):           WALIDACJA (LLM-free):
   regix     [regression]              llx       [model router]       ruff       [linter]
   redup     [duplicates]              pfix      [error fix]          pytest     [tests]
-  prefact   [LLM-aware lint]          aider     [interactive]        regix      [regressions]
+  prefact   [LLM-aware lint]          sllm      [shell clients]      regix      [regressions]
   testql    [declarative scenarios]   redsl     [quality gate +      vallm      [tier-1 syntax]
   planfile  [ticket store]                       improve]
   vallm/1   [syntax check]            windsurf  [primary IDE,
@@ -54,8 +53,12 @@ ON-CHANGE GATES TRIAD (LLM-free, continuous):
 
   ALTERNATIVES:
     cursor       [IDE alternative to Windsurf]
-    claude-code  [CLI agent alternative]
+    claude-code  [CLI agent alternative via semcod/sllm]
 ```
+
+Shell LLM clients such as `aider` and `claude-code` are now documented and
+controlled by the external `semcod/sllm` plugin. Koru keeps GUI/IDE and
+pipeline docs here, while SLLM owns shell-client launch details.
 
 ## Ranking wymaganej konfiguracji
 
@@ -66,7 +69,6 @@ ON-CHANGE GATES TRIAD (LLM-free, continuous):
 | **pfix** | ✅ OPENROUTER_API_KEY | ✅ `PFIX_*` env | [`pfix/`](./pfix/) |
 | **vallm** | optional (tier-2) | brak | [`vallm/`](./vallm/) |
 | **prefact** | optional (autonomous) | ✅ `prefact.yaml` | [`prefact/`](./prefact/) |
-| **aider** | ✅ OPENROUTER_API_KEY | ✅ docker-compose | [`aider/`](./aider/) |
 | **planfile** | optional (init) | ✅ `planfile.yaml` | [`planfile/`](./planfile/) |
 | **testql** | brak | ✅ scenariusze YAML | [`testql/`](./testql/) |
 | **regix** | brak | ✅ `regix.yaml` | [`regix/`](./regix/) |
@@ -85,13 +87,13 @@ ON-CHANGE GATES TRIAD (LLM-free, continuous):
 | **metrun** | brak | brak (CLI flags) | [`metrun/`](./metrun/) |
 | **windsurf** | (subskrypcja IDE) | ✅ `.windsurf/rules.md` | [`../windsurf-agent-guide.md`](../windsurf-agent-guide.md) |
 | **cursor** | (subskrypcja IDE) | ✅ `.cursorrules` | [`cursor/`](./cursor/) |
-| **claude-code** | ✅ ANTHROPIC_API_KEY | ✅ `.claude/` | [`claude-code/`](./claude-code/) |
+| **shell LLM clients** | client-specific | client-specific | `semcod/sllm` |
 
 ## Quick install (wszystko)
 
 ```bash
 # Z głównego katalogu c2004
-for tool in redsl llx pfix vallm prefact planfile regix redup sumd redeploy goal doql costs op3 toonic protogate rebuild mdflow metrun testql aider; do
+for tool in redsl llx pfix vallm prefact planfile regix redup sumd redeploy goal doql costs op3 toonic protogate rebuild mdflow metrun testql; do
   bash docs/llm-tools/$tool/install.sh
 done
 ```
@@ -106,7 +108,7 @@ dwoma trybami:
 - **Default path** — ticket-driven development z agentem IDE
   (Windsurf/Cursor/Claude Code), bez zdalnych wywołań LLM.
 - **Opt-in automation lane** — narzędzia LLM-backed (`redsl improve`,
-  `llx`, `aider`) do smoke-testów, jakościowej infrastruktury i
+  `llx`, shell clients through `sllm`) do smoke-testów, jakościowej infrastruktury i
   headless auto-fixów, tylko gdy user explicite tego chce.
 
 W praktyce wygląda to tak:
@@ -275,5 +277,5 @@ sekcja 5b — w razie zmiany modelu domyślnego, edycja w 10 plikach:
 # Quick check current model:
 grep -h "^LLM_MODEL=" .env
 grep "deepseek-v4-pro" .env .env.example */.\env* docker-compose.quality.yml \
-     llx.yaml pyqual.yaml .aider/docker-compose.yml 2>/dev/null
+     llx.yaml pyqual.yaml 2>/dev/null
 ```

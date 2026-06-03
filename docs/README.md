@@ -90,7 +90,7 @@ out-of-band, automated, headless processing.
 |---|---|---|
 | **DETECT** | Prometheus alertmanager, blackbox-exporter, TestQL probes, redup, regix | [`llm-tools/redup`](./llm-tools/redup/), [`llm-tools/regix`](./llm-tools/regix/), [`llm-tools/testql`](./llm-tools/testql/) |
 | **PLAN** | planfile (ticket backlog), healing-webhook (auto-tickets) | [`llm-tools/planfile`](./llm-tools/planfile/), [`planfile-llm-guide.md`](./planfile-llm-guide.md) |
-| **EXECUTE** | Windsurf / Cursor / Claude Code / aider, vallm, prefact | [`llm-tools/cursor`](./llm-tools/cursor/), [`llm-tools/aider`](./llm-tools/aider/), [`llm-tools/vallm`](./llm-tools/vallm/), [`llm-tools/prefact`](./llm-tools/prefact/) |
+| **EXECUTE** | Windsurf / Cursor, shell LLM clients via SLLM, vallm, prefact | [`llm-tools/cursor`](./llm-tools/cursor/), [`llm-tools/vallm`](./llm-tools/vallm/), [`llm-tools/prefact`](./llm-tools/prefact/) |
 | **VERIFY** | regix, ruff, pytest, TestQL, vallm tier-1/2 | [`llm-tools/regix`](./llm-tools/regix/), [`llm-tools/vallm`](./llm-tools/vallm/) |
 | **HEAL** | healing-webhook, retry strategies | (see reference deployment c2004) |
 | **AUTO** *(opt-in)* | redsl improve, llx fix | [`llm-tools/redsl`](./llm-tools/redsl/), [`llm-tools/llx`](./llm-tools/llx/) |

@@ -16,6 +16,8 @@ from typing import Any, Final
 
 import yaml
 
+from koru.sllm_bridge import shell_agent_backend_aliases, shell_agent_backend_profiles
+
 
 @dataclass(frozen=True)
 class AgentBackendProfile:
@@ -67,15 +69,6 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
         mcp_tools_only=False,
         primary_code="src/koru/autopilot/injector.py",
     ),
-    AgentBackendProfile(
-        id="vendor_agent_cli",
-        transport="sllm shell subprocess (aider, claude, codex, devin, …)",
-        can_push_chat=True,
-        can_pull_chat_text=False,
-        needs_gui_session=False,
-        mcp_tools_only=False,
-        primary_code="/home/tom/github/semcod/sllm",
-    ),
 )
 
 # Short names used in ``koru.yaml`` ``ide_integration.lanes.*.backend``.
@@ -83,18 +76,59 @@ _BACKEND_ALIASES: Final[dict[str, str]] = {
     "plugin_socket": "vscode_family_plugin_socket",
     "mcp_tool": "mcp_stdio_server",
     "os_injector": "os_keyboard_injector",
-    "sllm_shell": "vendor_agent_cli",
-    "cursor_cli": "vendor_agent_cli",
-    "vendor_cli": "vendor_agent_cli",
 }
+
+
+def _normalize_key(raw: str) -> str:
+    return raw.strip().lower().replace("-", "_")
+
+
+def _agent_backend_profile_from_mapping(row: dict[str, object]) -> AgentBackendProfile | None:
+    profile_id = row.get("id")
+    transport = row.get("transport")
+    primary_code = row.get("primary_code")
+    if not isinstance(profile_id, str) or not isinstance(transport, str):
+        return None
+    if not isinstance(primary_code, str):
+        return None
+    return AgentBackendProfile(
+        id=profile_id,
+        transport=transport,
+        can_push_chat=bool(row.get("can_push_chat")),
+        can_pull_chat_text=bool(row.get("can_pull_chat_text")),
+        needs_gui_session=bool(row.get("needs_gui_session")),
+        mcp_tools_only=bool(row.get("mcp_tools_only")),
+        primary_code=primary_code,
+    )
+
+
+def _external_backend_profiles() -> tuple[AgentBackendProfile, ...]:
+    profiles: list[AgentBackendProfile] = []
+    for row in shell_agent_backend_profiles():
+        profile = _agent_backend_profile_from_mapping(row)
+        if profile is not None:
+            profiles.append(profile)
+    return tuple(profiles)
+
+
+def _backend_aliases() -> dict[str, str]:
+    aliases = dict(_BACKEND_ALIASES)
+    aliases.update(
+        {
+            _normalize_key(alias): target
+            for alias, target in shell_agent_backend_aliases().items()
+        }
+    )
+    return aliases
 
 
 def normalize_agent_backend_id(raw: str) -> str:
     """Map alias / shorthand to a canonical :attr:`AgentBackendProfile.id`."""
-    key = raw.strip().lower().replace("-", "_")
-    if key in _BACKEND_ALIASES:
-        return _BACKEND_ALIASES[key]
-    for profile in _PROFILES:
+    key = _normalize_key(raw)
+    aliases = _backend_aliases()
+    if key in aliases:
+        return aliases[key]
+    for profile in iter_agent_backend_profiles():
         if profile.id == key:
             return profile.id
     return key
@@ -102,18 +136,18 @@ def normalize_agent_backend_id(raw: str) -> str:
 
 def list_agent_backend_ids() -> tuple[str, ...]:
     """Return stable backend profile ids (for config validation / docs)."""
-    return tuple(p.id for p in _PROFILES)
+    return tuple(p.id for p in iter_agent_backend_profiles())
 
 
 def iter_agent_backend_profiles() -> tuple[AgentBackendProfile, ...]:
     """Return every registered profile (stable order)."""
-    return _PROFILES
+    return (*_PROFILES, *_external_backend_profiles())
 
 
 def get_agent_backend_profile(backend_id: str) -> AgentBackendProfile | None:
     """Return a profile or ``None`` if *backend_id* is unknown."""
     nid = normalize_agent_backend_id(backend_id)
-    for p in _PROFILES:
+    for p in iter_agent_backend_profiles():
         if p.id == nid:
             return p
     return None

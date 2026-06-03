@@ -8,7 +8,6 @@ import {
   PROBE_CACHE_VERSION,
   verifyFocusAfterOpen,
 } from "../probe-ladder";
-import { captureEditorSnapshot } from "../probe-ladder";
 import { filterUnsafeFocusOpenForIde } from "../_shared/bridge-helpers";
 
 function assert(condition: unknown, message: string): void {
@@ -63,8 +62,8 @@ function testFocusOpenSanitizeRejectsSettings() {
 }
 
 function testTrustFocusOpen() {
-  const file = captureEditorSnapshot(undefined);
-  assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium trusts focus open");
+  const file = { hasEditor: true, scheme: "file", isFileLike: true, text: "code" };
+  assert(!verifyFocusAfterOpen(file, file, "vscodium"), "vscodium does not trust unchanged focus snapshot");
 }
 
 function testSubmitCommandsTryRegisteredSubmitFirst() {
@@ -74,8 +73,9 @@ function testSubmitCommandsTryRegisteredSubmitFirst() {
 
 function testFocusOpenAvoidsPanelOpenCommands() {
   const cmds = buildFocusOpenCommands("vscodium", []);
-  assert(cmds[0] === "workbench.action.chat.focusInput", "vscodium focuses existing chat input first");
-  assert(!cmds.includes("workbench.panel.chat"), "vscodium must not use workbench.panel.chat as default focus_open");
+  assert(cmds[0] === "chatgpt.sidebarView.open", "vscodium opens ChatGPT sidebar first");
+  assert(!cmds.includes("workbench.action.chat.focusInput"), "vscodium must not use focusInput as focus_open");
+  assert(cmds.includes("workbench.panel.chat"), "vscodium may open the chat panel after ChatGPT sidebar candidates");
   assert(!cmds.includes("workbench.action.openChat"), "vscodium must not use openChat as default focus_open");
 }
 
@@ -87,12 +87,14 @@ function testFocusOpenFiltersQuickChatCommands() {
       "workbench.action.chat.openInNewWindow",
       "workbench.action.chat.openChatEmptyStateSettings",
       "workbench.action.chat.focusInput",
+      "chatgpt.sidebarView.open",
+      "workbench.panel.chat",
     ],
     "vscodium",
   );
   assert(
-    cmds.length === 1 && cmds[0] === "workbench.action.chat.focusInput",
-    "vscodium must not run QuickChat/new-window focus_open commands",
+    cmds.join(",") === "chatgpt.sidebarView.open,workbench.panel.chat",
+    "vscodium must only keep real chat open commands",
   );
 }
 

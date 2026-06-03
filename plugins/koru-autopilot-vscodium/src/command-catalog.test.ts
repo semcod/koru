@@ -15,6 +15,14 @@ function testClassifiesCursorSubmitAndPaste(): void {
 function testFocusOpenVsInput(): void {
   assert(classifyCommand("composer.openComposer") === "focus_open", "openComposer → focus_open");
   assert(classifyCommand("composer.focusComposer") === "focus_input", "focusComposer → focus_input");
+  assert(
+    classifyCommand("chatgpt.sidebarView.open") === "focus_open",
+    "ChatGPT sidebar open → focus_open",
+  );
+  assert(
+    classifyCommand("chatgpt.sidebarView.focus") === "focus_input",
+    "ChatGPT sidebar focus → focus_input",
+  );
 }
 
 function testSettingsCommandsAreNotFocusOpen(): void {

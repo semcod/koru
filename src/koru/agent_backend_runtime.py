@@ -25,6 +25,7 @@ from typing import Any, Protocol
 
 from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
 
+from koru.agent_backends import normalize_agent_backend_id
 from koru.ide_client import IDEControlClient
 from koru.sllm_bridge import drive_shell_chat
 
@@ -189,20 +190,21 @@ def build_agent_backend(
     Lane ids follow :mod:`koru.agent_backends` (``plugin_socket``,
     ``mcp_tool``, ``os_injector``, ``none``).
     """
-    bid = (backend_id or "").strip().lower()
-    if bid == "plugin_socket":
+    bid = (backend_id or "").strip().lower().replace("-", "_")
+    normalized = normalize_agent_backend_id(backend_id or "")
+    if bid == "plugin_socket" or normalized == "vscode_family_plugin_socket":
         if client is None:
             raise ValueError("plugin_socket backend requires an IDEControlClient")
         return PluginSocketBackend(client=client)
-    if bid == "mcp_tool":
+    if bid == "mcp_tool" or normalized == "mcp_stdio_server":
         return McpToolBackend(mcp_server=mcp_server)
-    if bid in ("sllm_shell", "vendor_agent_cli", "cursor_cli"):
+    if normalized == "vendor_agent_cli":
         return SllmShellBackend(
             client_id=shell_client_id or os.environ.get("KORU_SLLM_CLIENT", "aider"),
             execute=os.environ.get("KORU_SLLM_DRY_RUN", "").strip().lower()
             not in {"1", "true", "yes", "on"},
         )
-    if bid == "os_injector":
+    if bid == "os_injector" or normalized == "os_keyboard_injector":
         profile = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
         if not profile:
             raise ValueError("os_injector backend requires KORU_OS_INJECTOR_PROFILE")

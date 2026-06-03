@@ -19,12 +19,10 @@ const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.openquickchat",
   "workbench.action.chat.open",
   "workbench.action.chat.openchatemptystatesettings",
+  "workbench.action.chat.focusinput",
   "workbench.action.chat.openinnewwindow",
   "workbench.action.chat.opensessioninnewwindow",
   "workbench.action.quickchat.openinchatview",
-  "workbench.panel.chat",
-  "workbench.panel.chat.view.copilot.focus",
-  "workbench.panel.aichat.view.copilot.focus",
 ]);
 
 export function isAllowedFocusOpenCommand(command: unknown): command is string {

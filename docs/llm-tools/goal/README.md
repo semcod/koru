@@ -2,7 +2,7 @@
 
 ## Co to jest
 
-`goal` (PyPI: `goal>=2.1.218`) to **enterprise-grade commit intelligence**
+`goal` (PyPI: `goal>=2.1.241`) to **enterprise-grade commit intelligence**
 + automated git push z deep code analysis. Generuje conventional commits,
 zarządza versioning (semver/calver), aktualizuje CHANGELOG.md i orchestruje
 release workflow.
@@ -86,7 +86,7 @@ quality:
 ## Komendy
 
 ```bash
-goal --version                    # 2.1.218+
+goal --version                    # 2.1.241+
 goal --help                       # all subcommands
 
 # Smart commit (90% use case)
@@ -160,6 +160,7 @@ Produkcyjnie w `maskservice/c2004`:
 | "No version drift detected" gdy jest | `goal check-versions --verbose` pokaże mismatch lub plik bez `version:` field |
 | Commit message zawiera "update" / "fix" | `quality.commit_summary.generic_terms` w `goal.yaml` blokuje generic terms; przepisz |
 | `goal -a` zawisa na `pytest` | używa `strategies.python.test` z `goal.yaml` — uruchom ręcznie `pytest -q --maxfail=1 tests/` i napraw pierwszy błąd |
+| `ModuleNotFoundError` w `tests/tests/test_*_tests.py::test_import` | zaktualizuj `goal` do >=2.1.241; usuń zagnieżdżony scaffold lub zmień import na `tests` — patrz goal `docs/troubleshooting.md` |
 | Bump version niezgodny z conventional commits | sprawdź `versioning.bump_rules` (patch=10 = wystarczy 10 nieprzyłapanych zmian dla bumpa) |
 
 Szybka ścieżka dla koru (najkrótszy feedback loop):
@@ -178,6 +179,6 @@ goal -a
 ## Linki
 
 - Repo / PyPI: https://pypi.org/project/goal/
-- Wersja (2026-05-10): `goal==2.1.218`
+- Wersja (2026-06-03): `goal==2.1.241` (fix scaffold importów w katalogu `tests/`)
 - Reference: koru `goal.yaml` (510 linii, pełna konfiguracja); c2004 `goal.yaml`
 - Companion: `costs` (cost badges), `nfo` (logging), pre-commit framework

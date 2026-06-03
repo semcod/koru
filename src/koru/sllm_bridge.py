@@ -71,6 +71,24 @@ def shell_tool_registry_entries() -> tuple[dict[str, object], ...]:
     return tool_registry_entries()
 
 
+def shell_agent_backend_profiles() -> tuple[dict[str, object], ...]:
+    ensure_local_sllm_path()
+    try:
+        from sllm.compat import agent_backend_profiles
+    except ImportError:
+        return ()
+    return agent_backend_profiles()
+
+
+def shell_agent_backend_aliases() -> dict[str, str]:
+    ensure_local_sllm_path()
+    try:
+        from sllm.compat import agent_backend_aliases
+    except ImportError:
+        return {}
+    return agent_backend_aliases()
+
+
 def launch_shell_agent(
     *,
     agent_id: str,
@@ -121,6 +139,8 @@ __all__ = [
     "ensure_local_sllm_path",
     "is_shell_agent",
     "launch_shell_agent",
+    "shell_agent_backend_aliases",
+    "shell_agent_backend_profiles",
     "shell_agent_available",
     "shell_agent_process_patterns",
     "shell_tool_registry_entries",

@@ -51,7 +51,7 @@ const X11_ENV = { XDG_SESSION_TYPE: "x11" };
 
 function testVerifyFocusAfterOpen(): void {
   const file = { hasEditor: true, scheme: "file", isFileLike: true, text: "code" };
-  assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium may trust unchanged snapshot");
+  assert(!verifyFocusAfterOpen(file, file, "vscodium"), "VSCodium rejects unchanged file snapshot");
 }
 
 function testHostKeyOrderVscodiumPrefersCtrlReturn(): void {
@@ -93,7 +93,14 @@ function testHostKeyOrderVscodiumX11PrefersXdotoolBeforeYdotool(): void {
 }
 
 function testBuildFocusInputUsesChatCommands(): void {
-  assert(buildFocusInputCommands("vscodium")[0] === "workbench.action.chat.focusInput", "focus input first");
+  const commands = buildFocusInputCommands("vscodium");
+  assert(commands[0] === "chatgpt.sidebarView.focus", "ChatGPT sidebar focus first");
+  assert(commands.includes("workbench.action.chat.focusInput"), "generic chat focus retained");
+  assert(
+    commands.indexOf("workbench.action.chat.focusInput")
+      === commands.lastIndexOf("workbench.action.chat.focusInput"),
+    "focus input commands are deduplicated",
+  );
 }
 
 testOrderWithCache();
