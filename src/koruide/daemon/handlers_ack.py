@@ -139,18 +139,47 @@ def _strict_message_sent_completion_allowed(
     if not DriveOrchestrator.strict_plugin_ack_required():
         return True
     pending_info = getattr(client, "awaiting_plugin_info", None)
+    ide = str(plugin_ide or (pending_info or {}).get("ide") or "").lower()
     strict_deferred = (
         isinstance(pending_info, dict)
         and str(pending_info.get("verification") or "").lower() == "submit_unverified"
-        and str(plugin_ide or pending_info.get("ide") or "").lower() == "vscodium"
+        and ide in {"vscodium", "cursor"}
     )
     if strict_deferred:
-        daemon.log("drive → strict ack accepted late message.sent fallback for vscodium")
+        if _pending_info_has_poisoned_late_message_sent(pending_info, ide):
+            daemon.log(
+                "drive → late message.sent ignored for poisoned submit_unverified "
+                f"trace ide={ide}"
+            )
+            return False
+        daemon.log(f"drive → strict ack accepted late message.sent fallback for {ide}")
         return True
     daemon.log(
         "drive → plugin event observed before strict ack; "
         "waiting for full plugin ack"
     )
+    return False
+
+
+def _pending_info_has_poisoned_late_message_sent(info: dict[str, Any], ide: str) -> bool:
+    if ide != "vscodium":
+        return False
+    if str(info.get("attempted_submit") or info.get("winning_submit") or "") != (
+        "workbench.action.chat.submit"
+    ):
+        return False
+    trace = info.get("operation_trace")
+    if not isinstance(trace, list):
+        return False
+    for step in trace:
+        if not isinstance(step, dict) or step.get("op") != "submit_verify":
+            continue
+        detail = step.get("detail")
+        detail = detail if isinstance(detail, dict) else {}
+        if detail.get("observedLength") == -1:
+            return True
+        if detail.get("requireEmptyAfterSubmit") is not True:
+            return True
     return False
 
 
@@ -243,7 +272,9 @@ def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
 
 
 def _deferred_submit_unverified_grace_seconds() -> float:
-    return 0.75
+    # Cursor/VSCodium may emit message.sent shortly after submit verification
+    # reports submit_unverified. Keep a short grace window before final failure.
+    return 2.0
 
 
 def _defer_submit_unverified_reply(
@@ -450,6 +481,18 @@ def _send_plugin_ack_reply(
         plugin_ok=plugin_ok,
         summary=summary,
         route_summary=route_summary,
+    )
+    daemon.audit.record(
+        "drive",
+        ide=fallback_ide,
+        backend=info.get("backend", "plugin"),
+        chars=len(original_text or ""),
+        submit=bool(info.get("submitted")) or bool(info.get("attempted_submit")),
+        ok=plugin_ok,
+        verification=info.get("verification"),
+        delivered=info.get("delivered"),
+        submitted=info.get("submitted"),
+        corr=corr,
     )
     _relay_plugin_ack_to_cli(
         daemon,

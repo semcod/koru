@@ -404,6 +404,27 @@ def wait_for_plugin_connection(
         if reloaded_ready is not None:
             return reloaded_ready
 
+    if plugin_install_status in {"installed", "already_installed"}:
+        reconnected = _try_plugin_reconnect_pipeline(
+            args,
+            autopilot_ide,
+            wait_seconds,
+            client=client,
+            wait_for_plugin=wait_for_plugin,
+            stdio_info=stdio_info,
+        )
+        if reconnected:
+            force_reload_if_stale(
+                args,
+                autopilot_ide,
+                wait_seconds,
+                client=client,
+                project=project,
+                wait_for_plugin=wait_for_plugin,
+                stdio_info=stdio_info,
+            )
+            return True
+
     stdio_info(
         "koru autonomous: no connected autopilot plugin "
         f"for ide={autopilot_ide} after {wait_seconds:.1f}s; "
@@ -423,6 +444,59 @@ def wait_for_plugin_connection(
             emit_fmt=args.emit_events,
             stdio_info=stdio_info,
         )
+    return False
+
+
+def _try_plugin_reconnect_pipeline(
+    args: Any,
+    autopilot_ide: str,
+    wait_seconds: float,
+    *,
+    client: Any,
+    wait_for_plugin: Any,
+    stdio_info: Any,
+) -> bool:
+    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+    project = Path(getattr(args, "project", ".")).expanduser().resolve()
+
+    def _reload() -> bool:
+        reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
+        return bool(reload.attempted and reload.ok)
+
+    def _wait(timeout: float) -> bool:
+        return bool(
+            wait_for_plugin(
+                client,
+                autopilot_ide,
+                timeout_seconds=max(0.5, timeout),
+                stdio_format=args.emit_events,
+            )
+        )
+
+    stdio_info(
+        "koru autonomous: plugin reconnect pipeline "
+        f"(reload + connect retry, ide={autopilot_ide})",
+        fmt=args.emit_events,
+    )
+    from koru.autonomous_readiness import run_plugin_reconnect_pipeline
+
+    if run_plugin_reconnect_pipeline(
+        reload_window=_reload,
+        wait_connected=_wait,
+        attempts=3,
+        base_timeout_seconds=max(8.0, min(wait_seconds, 20.0)),
+    ):
+        stdio_info(
+            f"koru autonomous: plugin reconnected after pipeline ide={autopilot_ide}",
+            fmt=args.emit_events,
+        )
+        return True
+    stdio_info(
+        "koru autonomous: plugin reconnect pipeline exhausted "
+        f"ide={autopilot_ide}",
+        fmt=args.emit_events,
+    )
     return False
 
 
@@ -575,6 +649,7 @@ def _emit_plugin_bootstrap_blocker_trace(
 
 __all__ = [
     "_emit_plugin_bootstrap_blocker_trace",
+    "_try_plugin_reconnect_pipeline",
     "force_reload_if_extension_host_stale",
     "prepare_plugin_wait",
     "retry_plugin_wait_after_reload",

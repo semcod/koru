@@ -521,6 +521,25 @@ class TestMarkdownHandoff(unittest.TestCase):
             self.assertIn("AI tool support (2026)", md)
             self.assertIn("ai-tool-support-roadmap-2026.md", md)
 
+    def test_autonomy_loop_brief_tolerates_non_dict_block(self) -> None:
+        ctx = {
+            "project": "/tmp/project",
+            "ticket": None,
+            "ticket_error": "queue is idle",
+            "policy": {},
+            "environment": {
+                "planfile_initialised": True,
+                "project": {"name": "project", "markers": {}},
+            },
+            "instructions": [],
+            "autonomy_loop": "corrupt",
+        }
+
+        md = render_markdown_handoff(ctx)
+
+        self.assertIn("Autonomy loop (koru autonomous)", md)
+        self.assertIn("No autonomy telemetry file yet", md)
+
 
 class TestProjectPipelineInHandoff(unittest.TestCase):
     def test_context_includes_pipeline_when_koru_yaml_present(self) -> None:

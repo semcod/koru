@@ -6,9 +6,13 @@ import importlib.metadata
 import json
 import os
 import shutil
+import signal
+import subprocess
 import sys
+import time
 import tomllib
 import urllib.parse
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -43,6 +47,7 @@ from koru.autopilot.plugin_installer import (
     install_plugin_for_ide,
     installed_extension_version_for_ide,
 )
+from koru.ide_adapters.ide_reload import new_window_reload_enabled
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
@@ -58,7 +63,9 @@ _check_daemon_issues = check_daemon_issues
 _check_plugin_version_missing_issue = check_plugin_version_missing_issue
 _check_plugin_build_missing_issue = check_plugin_build_missing_issue
 _check_plugin_installed_version_mismatch_issue = check_plugin_installed_version_mismatch_issue
-_check_plugin_installed_ok_but_not_connected_issue = check_plugin_installed_ok_but_not_connected_issue
+_check_plugin_installed_ok_but_not_connected_issue = (
+    check_plugin_installed_ok_but_not_connected_issue
+)
 _check_plugin_live_host_stale_issue = check_plugin_live_host_stale_issue
 _check_plugin_socket_candidate_mismatch_issue = check_plugin_socket_candidate_mismatch_issue
 _check_plugin_version_mismatch_issue = check_plugin_version_mismatch_issue
@@ -417,22 +424,132 @@ def _build_repair_steps(
     if unsupported_step := _unsupported_plugin_repair_step(report.plugin, resolved_ide):
         return [unsupported_step]
 
-    return [
+    if mismatch_step := _plugin_workspace_mismatch_repair_step(report, resolved_ide):
+        return [mismatch_step]
+
+    steps = [
         step
         for step in (
             {
                 "action": "install_plugin",
-                "result": install_plugin_for_ide(
-                    ide=resolved_ide,
+                "result": _install_plugin_repair_result(
+                    report,
+                    resolved_ide=resolved_ide,
                     dry_run=dry_run,
-                    socket_path=Path(report.socket),
-                ).to_dict(),
+                ),
             },
             _shutdown_daemon_for_plugin_repair_action(report, dry_run=dry_run),
+            _start_daemon_for_plugin_repair_action(report, resolved_ide, dry_run=dry_run),
             _reload_ide_reconnect_action(report, resolved_ide, dry_run=dry_run),
+            _wait_for_plugin_reconnect_action(report, resolved_ide, dry_run=dry_run),
         )
         if step is not None
     ]
+    steps.extend(
+        _build_plugin_build_mismatch_escalation_steps(
+            report,
+            steps,
+            resolved_ide=resolved_ide,
+            dry_run=dry_run,
+        )
+    )
+    return steps
+
+
+def _build_plugin_build_mismatch_escalation_steps(
+    report: InstallManagerReport,
+    steps: list[dict[str, Any]],
+    *,
+    resolved_ide: str,
+    dry_run: bool,
+) -> list[dict[str, Any]]:
+    wait_result = _latest_action_result(steps, "wait_for_plugin_reconnect")
+    if wait_result.get("status") != "build_mismatch":
+        return []
+    if dry_run:
+        return [
+            {
+                "action": "open_new_ide_window_for_plugin_build",
+                "result": {
+                    "status": "dry_run",
+                    "message": (
+                        "would open a fresh IDE window when "
+                        "KORU_AUTOPILOT_NEW_WINDOW_RELOAD=1"
+                    ),
+                },
+            }
+        ]
+    if not new_window_reload_enabled() and not _restart_ide_on_build_mismatch_enabled():
+        return [
+            {
+                "action": "open_new_ide_window_for_plugin_build",
+                "result": {
+                    "status": "skipped",
+                    "ok": False,
+                    "message": (
+                        "connected plugin still reports an old build; set "
+                        "KORU_AUTOPILOT_NEW_WINDOW_RELOAD=1 to open a fresh "
+                        "IDE window and start a new extension host"
+                    ),
+                },
+            }
+        ]
+    escalation_steps: list[dict[str, Any]] = []
+    if new_window_reload_enabled():
+        escalation_steps.append(
+            _open_new_ide_window_for_plugin_build_action(
+                report,
+                resolved_ide=resolved_ide,
+                dry_run=dry_run,
+            )
+        )
+        if wait_step := _wait_for_plugin_reconnect_action(
+            report,
+            resolved_ide,
+            dry_run=dry_run,
+        ):
+            escalation_steps.append(wait_step)
+    if (
+        _restart_ide_on_build_mismatch_enabled()
+        and _latest_action_result([*steps, *escalation_steps], "wait_for_plugin_reconnect").get(
+            "status"
+        )
+        == "build_mismatch"
+    ):
+        escalation_steps.append(
+            _restart_ide_for_plugin_build_action(
+                report,
+                resolved_ide=resolved_ide,
+                dry_run=dry_run,
+            )
+        )
+        if wait_step := _wait_for_plugin_reconnect_action(
+            report,
+            resolved_ide,
+            dry_run=dry_run,
+        ):
+            escalation_steps.append(wait_step)
+    return escalation_steps
+
+
+def _latest_action_result(
+    steps: list[dict[str, Any]],
+    action: str,
+) -> dict[str, Any]:
+    for step in reversed(steps):
+        if step.get("action") != action:
+            continue
+        result = step.get("result")
+        return result if isinstance(result, dict) else {}
+    return {}
+
+
+def _restart_ide_on_build_mismatch_enabled() -> bool:
+    raw = os.environ.get(
+        "KORU_AUTOPILOT_RESTART_IDE_ON_PLUGIN_BUILD_MISMATCH",
+        "",
+    ).strip().lower()
+    return raw in {"1", "true", "yes", "on"}
 
 
 def _unsupported_plugin_repair_step(
@@ -450,13 +567,57 @@ def _unsupported_plugin_repair_step(
     }
 
 
+@contextmanager
+def _force_reassert_install_when(enabled: bool):
+    previous = os.environ.get("KORU_AUTOPILOT_FORCE_REASSERT_INSTALL")
+    if enabled:
+        os.environ["KORU_AUTOPILOT_FORCE_REASSERT_INSTALL"] = "1"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("KORU_AUTOPILOT_FORCE_REASSERT_INSTALL", None)
+        else:
+            os.environ["KORU_AUTOPILOT_FORCE_REASSERT_INSTALL"] = previous
+
+
+def _plugin_connected_build_stale(plugin: dict[str, Any]) -> bool:
+    live_build = str(plugin.get("connected_build_sha") or "").strip()
+    expected_build = str(plugin.get("expected_build_sha") or "").strip()
+    return bool(live_build and expected_build and live_build != expected_build)
+
+
+def _install_plugin_repair_result(
+    report: InstallManagerReport,
+    *,
+    resolved_ide: str,
+    dry_run: bool,
+) -> dict[str, Any]:
+    force_reassert = _plugin_connected_build_stale(report.plugin)
+    with _force_reassert_install_when(force_reassert):
+        result = install_plugin_for_ide(
+            ide=resolved_ide,
+            dry_run=dry_run,
+            socket_path=Path(report.socket),
+        ).to_dict()
+    if force_reassert:
+        result["forced_reassert"] = True
+        result["reassert_reason"] = "connected_plugin_build_mismatch"
+    return result
+
+
 def _plugin_already_aligned(plugin: dict[str, Any]) -> bool:
     live_version = str(plugin.get("connected_version") or "").strip()
     installed_version = str(plugin.get("installed_version") or "").strip()
     live_build = str(plugin.get("connected_build_sha") or "").strip()
     expected_build = str(plugin.get("expected_build_sha") or "").strip()
     build_aligned = not expected_build or (live_build and live_build == expected_build)
-    return bool(live_version and installed_version and live_version == installed_version and build_aligned)
+    return bool(
+        live_version
+        and installed_version
+        and live_version == installed_version
+        and build_aligned
+    )
 
 
 def _shutdown_daemon_for_plugin_repair_action(
@@ -468,7 +629,10 @@ def _shutdown_daemon_for_plugin_repair_action(
         return _skipped_shutdown_daemon_action()
     if not report.daemon.get("running") or dry_run:
         return None
-    return {"action": "shutdown_daemon_for_reload", "result": _shutdown_autopilot_daemon(report.socket)}
+    return {
+        "action": "shutdown_daemon_for_reload",
+        "result": _shutdown_autopilot_daemon(report.socket),
+    }
 
 
 def _skipped_shutdown_daemon_action() -> dict[str, Any]:
@@ -489,6 +653,87 @@ def _shutdown_autopilot_daemon(socket: str) -> dict[str, Any]:
         return {"ok": False, "message": str(exc)}
 
 
+def _start_daemon_for_plugin_repair_action(
+    report: InstallManagerReport,
+    resolved_ide: str,
+    *,
+    dry_run: bool,
+) -> dict[str, Any] | None:
+    if _plugin_already_aligned(report.plugin):
+        return None
+    return {
+        "action": "start_daemon_for_reconnect",
+        "result": _start_autopilot_daemon_for_plugin_repair(
+            report,
+            resolved_ide,
+            dry_run=dry_run,
+        ),
+    }
+
+
+def _start_autopilot_daemon_for_plugin_repair(
+    report: InstallManagerReport,
+    resolved_ide: str,
+    *,
+    dry_run: bool,
+) -> dict[str, Any]:
+    if dry_run:
+        return {
+            "status": "dry_run",
+            "message": "would start idempotent autopilot daemon before plugin reconnect",
+        }
+    if _daemon_status(Path(report.socket)).get("running"):
+        return {"status": "already_running", "ok": True, "socket": report.socket}
+
+    root = Path(report.source_root)
+    log_dir = root / ".planfile" / ".koru"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"autopilot-manage-repair-{resolved_ide}.log"
+    koru_bin = report.repo_koru or report.path_koru or "koru"
+    env = os.environ.copy()
+    env["KORU_AUTOPILOT_INSTANCE"] = resolved_ide
+    env["KORU_AUTOPILOT_IDE"] = resolved_ide
+    env["KORU_AUTOPILOT_SOCKET"] = report.socket
+    cmd = [
+        str(koru_bin),
+        "autopilot",
+        "daemon",
+        "--idempotent",
+        "--project",
+        str(root),
+    ]
+    try:
+        with log_path.open("ab") as stream:
+            proc = subprocess.Popen(
+                cmd,
+                cwd=root,
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=stream,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+                close_fds=True,
+            )
+    except OSError as exc:
+        return {"status": "failed", "ok": False, "message": str(exc), "command": cmd}
+
+    deadline = time.monotonic() + 5.0
+    running = False
+    while time.monotonic() < deadline:
+        if _daemon_status(Path(report.socket)).get("running"):
+            running = True
+            break
+        time.sleep(0.2)
+    return {
+        "status": "started" if running else "starting",
+        "ok": running,
+        "pid": proc.pid,
+        "socket": report.socket,
+        "log": str(log_path),
+        "command": cmd,
+    }
+
+
 def _reload_ide_reconnect_action(
     report: InstallManagerReport,
     resolved_ide: str,
@@ -506,6 +751,228 @@ def _reload_ide_reconnect_action(
     }
 
 
+def _wait_for_plugin_reconnect_action(
+    report: InstallManagerReport,
+    resolved_ide: str,
+    *,
+    dry_run: bool,
+) -> dict[str, Any] | None:
+    if _plugin_already_aligned(report.plugin):
+        return None
+    return {
+        "action": "wait_for_plugin_reconnect",
+        "result": _wait_for_plugin_reconnect(
+            report.socket,
+            resolved_ide,
+            expected_build=str(report.plugin.get("expected_build_sha") or "") or None,
+            dry_run=dry_run,
+        ),
+    }
+
+
+def _open_new_ide_window_for_plugin_build_action(
+    report: InstallManagerReport,
+    *,
+    resolved_ide: str,
+    dry_run: bool,
+) -> dict[str, Any]:
+    return {
+        "action": "open_new_ide_window_for_plugin_build",
+        "result": _open_new_ide_window_for_plugin_build(
+            resolved_ide,
+            source_root=Path(report.source_root),
+            dry_run=dry_run,
+        ),
+    }
+
+
+def _open_new_ide_window_for_plugin_build(
+    ide: str,
+    *,
+    source_root: Path,
+    dry_run: bool,
+) -> dict[str, Any]:
+    if dry_run:
+        return {
+            "status": "dry_run",
+            "message": "would open a fresh IDE window for the updated plugin build",
+        }
+    try:
+        from koru.ide_adapters.ide_reload import try_open_vscode_family_ide_new_window
+
+        outcome = try_open_vscode_family_ide_new_window(ide, project=source_root)
+    except Exception as exc:  # pragma: no cover - defensive around GUI adapters
+        return {
+            "status": "failed",
+            "ok": False,
+            "message": "failed to open a fresh IDE window for plugin activation",
+            "detail": str(exc),
+        }
+    return {
+        "status": "automatic" if outcome.ok else "failed",
+        "ok": bool(outcome.ok),
+        "attempted": bool(outcome.attempted),
+        "method": outcome.method,
+        "message": (
+            "Opened a fresh IDE window to start a new extension host"
+            if outcome.ok
+            else "Could not open a fresh IDE window for plugin activation"
+        ),
+        "detail": outcome.detail,
+    }
+
+
+def _restart_ide_for_plugin_build_action(
+    report: InstallManagerReport,
+    *,
+    resolved_ide: str,
+    dry_run: bool,
+) -> dict[str, Any]:
+    return {
+        "action": "restart_ide_for_plugin_build",
+        "result": _restart_ide_for_plugin_build(
+            resolved_ide,
+            source_root=Path(report.source_root),
+            dry_run=dry_run,
+        ),
+    }
+
+
+def _restart_ide_for_plugin_build(
+    ide: str,
+    *,
+    source_root: Path,
+    dry_run: bool,
+) -> dict[str, Any]:
+    if dry_run:
+        return {
+            "status": "dry_run",
+            "message": "would restart the IDE so the updated plugin build is loaded",
+        }
+    running = [entry for entry in detect_running_ides() if entry.id == ide]
+    if not running:
+        return {
+            "status": "failed",
+            "ok": False,
+            "message": f"no running {ide} process found to restart",
+        }
+    terminate_results = [_terminate_process(entry.pid) for entry in running]
+    if not all(result.get("ok") for result in terminate_results):
+        return {
+            "status": "failed",
+            "ok": False,
+            "message": f"could not stop all running {ide} processes",
+            "terminated": terminate_results,
+        }
+    try:
+        from koru.ide_adapters.ide_reload import reload_via_new_window
+
+        outcome = reload_via_new_window(ide, source_root)
+    except Exception as exc:  # pragma: no cover - defensive around GUI adapters
+        return {
+            "status": "failed",
+            "ok": False,
+            "message": f"stopped {ide}, but failed to reopen it",
+            "terminated": terminate_results,
+            "detail": str(exc),
+        }
+    return {
+        "status": "automatic" if outcome.ok else "failed",
+        "ok": bool(outcome.ok),
+        "attempted": bool(outcome.attempted),
+        "method": outcome.method,
+        "message": (
+            f"Restarted {ide} to start a fresh extension host"
+            if outcome.ok
+            else f"Stopped {ide}, but could not reopen the project"
+        ),
+        "terminated": terminate_results,
+        "detail": outcome.detail,
+    }
+
+
+def _terminate_process(pid: int, *, timeout_seconds: float = 8.0) -> dict[str, Any]:
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return {"pid": pid, "ok": True, "status": "already_stopped"}
+    except OSError as exc:
+        return {"pid": pid, "ok": False, "status": "failed", "message": str(exc)}
+
+    deadline = time.monotonic() + max(0.0, timeout_seconds)
+    while time.monotonic() < deadline:
+        if not _process_exists(pid):
+            return {"pid": pid, "ok": True, "status": "stopped"}
+        time.sleep(0.2)
+    return {"pid": pid, "ok": False, "status": "timeout"}
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except OSError:
+        return True
+    return True
+
+
+def _wait_for_plugin_reconnect(
+    socket: str,
+    resolved_ide: str,
+    *,
+    dry_run: bool,
+    expected_build: str | None = None,
+    timeout_seconds: float = 8.0,
+) -> dict[str, Any]:
+    if dry_run:
+        return {"status": "dry_run", "message": "would wait for plugin reconnect"}
+    deadline = time.monotonic() + max(0.0, timeout_seconds)
+    last_status: dict[str, Any] = {}
+    while time.monotonic() < deadline:
+        last_status = _daemon_status(Path(socket))
+        plugin = _plugin_for_ide(last_status, resolved_ide)
+        if plugin is not None:
+            build = str(plugin.get("buildSha") or "").strip()
+            if expected_build and build != expected_build:
+                last_status = {
+                    **last_status,
+                    "_last_plugin_build": build,
+                    "_expected_plugin_build": expected_build,
+                }
+                time.sleep(0.25)
+                continue
+            return {
+                "status": "connected",
+                "ok": True,
+                "ide": resolved_ide,
+                "version": plugin.get("version"),
+                "build": build or None,
+            }
+        time.sleep(0.25)
+    last_build = str(last_status.get("_last_plugin_build") or "").strip()
+    expected = str(last_status.get("_expected_plugin_build") or expected_build or "").strip()
+    status = (
+        "build_mismatch"
+        if expected and last_build and last_build != expected
+        else "not_connected"
+    )
+    return {
+        "status": status,
+        "ok": False,
+        "ide": resolved_ide,
+        "socket": socket,
+        "message": (
+            "plugin did not reconnect with the expected build after repair; "
+            "reload the IDE window and run "
+            "`koru: Connect autopilot daemon`"
+        ),
+        "build": last_build or None,
+        "expected_build": expected or None,
+        "daemon_running": bool(last_status.get("running")),
+    }
+
+
 def _apply_repair_steps(
     report: InstallManagerReport,
     repair_steps: list[dict[str, Any]],
@@ -514,7 +981,10 @@ def _apply_repair_steps(
     dry_run: bool,
 ) -> InstallManagerReport:
     if not dry_run:
-        refreshed = collect_install_manager_report(ide=resolved_ide, socket_path=Path(report.socket))
+        refreshed = collect_install_manager_report(
+            ide=resolved_ide,
+            socket_path=Path(report.socket),
+        )
         refreshed.actions = repair_steps
         return refreshed
     report.actions = repair_steps
@@ -638,6 +1108,96 @@ def _daemon_has_plugin_workspace(
             except OSError:
                 continue
     return False
+
+
+def _resolved_folder_key(folder: str) -> str:
+    try:
+        return str(Path(folder).resolve())
+    except OSError:
+        return folder
+
+
+def _plugin_workspace_folders(plugin: Any, ide: str) -> list[str]:
+    """String workspace folders for ``plugin`` when it targets ``ide``."""
+    if not isinstance(plugin, dict):
+        return []
+    wanted = ide.strip().lower()
+    plugin_ide = str(plugin.get("ide") or "").strip().lower()
+    if wanted not in {"", "auto"} and plugin_ide != wanted:
+        return []
+    folders = plugin.get("workspaceFolders")
+    if not isinstance(folders, list):
+        return []
+    return [folder for folder in folders if isinstance(folder, str)]
+
+
+def _daemon_other_workspace_plugin_folders(
+    daemon: dict[str, Any] | None,
+    ide: str,
+    source_root: Path,
+) -> list[str]:
+    """Workspace folders of connected ``ide`` plugins that do NOT match ``source_root``.
+
+    Returns the folders reported by plugins bound to a *different* workspace.
+    Plugins that match the project, or that report no workspace at all, are
+    ignored — so an empty result means "no evidence of a wrong-workspace plugin".
+    """
+    if not isinstance(daemon, dict):
+        return []
+    plugins = daemon.get("plugins")
+    if not isinstance(plugins, list):
+        return []
+    source_key = _resolved_folder_key(str(source_root))
+    mismatched: list[str] = []
+    for plugin in plugins:
+        folders = _plugin_workspace_folders(plugin, ide)
+        if not folders:
+            continue
+        if not any(_resolved_folder_key(folder) == source_key for folder in folders):
+            mismatched.extend(folders)
+    return mismatched
+
+
+def _plugin_workspace_mismatch_repair_step(
+    report: InstallManagerReport,
+    resolved_ide: str,
+) -> dict[str, Any] | None:
+    """Refuse window-opening repair when the only connected plugin for this IDE
+    belongs to a different workspace.
+
+    The drive router (:mod:`koruide.plugin_router`) already declines to inject
+    into a wrong-workspace window. The repair path is otherwise IDE-only and
+    would reload / open / restart windows for whichever ``ide`` window happens
+    to be running — disturbing the user's unrelated session. Mirror the router's
+    rule here so ``coru`` never spawns or hijacks a window for the wrong project.
+    """
+    if resolved_ide in ("", "auto"):
+        return None
+    source_root = Path(report.source_root)
+    if _daemon_has_plugin_workspace(report.daemon, resolved_ide, source_root):
+        return None
+    mismatched = _daemon_other_workspace_plugin_folders(
+        report.daemon,
+        resolved_ide,
+        source_root,
+    )
+    if not mismatched:
+        return None
+    shown = ", ".join(dict.fromkeys(mismatched))[:200]
+    return {
+        "action": "workspace_mismatch",
+        "result": {
+            "status": "skipped",
+            "ok": False,
+            "message": (
+                f"A {resolved_ide} plugin is connected for a different workspace "
+                f"({shown}), not this project ({source_root}). Refusing to reload "
+                f"or open {resolved_ide} windows so the open session is left intact. "
+                f"Open {source_root} in {resolved_ide}, or run coru from the project "
+                f"that is already open, so the autopilot drives the matching window."
+            ),
+        },
+    }
 
 
 def format_install_manager_report(report: InstallManagerReport) -> str:

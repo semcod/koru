@@ -218,6 +218,107 @@ def test_relay_message_sent_ack_strict_accepts_deferred_vscodium(monkeypatch: py
     )
 
 
+def test_relay_message_sent_ack_rejects_poisoned_deferred_vscodium(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.strict_plugin_ack_required",
+        mock.Mock(return_value=True),
+    )
+
+    daemon = mock.Mock()
+    client = mock.Mock()
+    client.awaiting_plugin = (
+        mock.Mock(),
+        "corr-1",
+        True,
+        "vscodium",
+        "text",
+        True,
+    )
+    client.awaiting_plugin_info = {
+        "verification": "submit_unverified",
+        "ide": "vscodium",
+        "attempted_submit": "workbench.action.chat.submit",
+        "operation_trace": [
+            {
+                "op": "submit_verify",
+                "route": "sentinel-clipboard",
+                "ok": True,
+                "detail": {
+                    "observedLength": -1,
+                    "requireEmptyAfterSubmit": False,
+                },
+            }
+        ],
+    }
+
+    msg = Message(type="message.sent", id="e-1", data={"chat": "default"})
+    result = _relay_message_sent_ack(daemon, client, msg)
+
+    assert result is False
+    assert client.awaiting_plugin is not None
+    daemon._send.assert_not_called()
+    assert any(
+        "late message.sent ignored for poisoned submit_unverified" in call.args[0]
+        for call in daemon.log.call_args_list
+    )
+
+
+def test_relay_message_sent_ack_strict_accepts_deferred_cursor(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.strict_plugin_ack_required",
+        mock.Mock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.build_message_sent_info",
+        mock.Mock(return_value={"verification": "event_only", "event": "message.sent"}),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.drive_intent_evidence",
+        mock.Mock(return_value={"intent_status": "fulfilled"}),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_ack.DriveOrchestrator.plugin_version_info",
+        mock.Mock(return_value={}),
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers._cli_client_still_connected",
+        mock.Mock(return_value=True),
+    )
+
+    daemon = mock.Mock()
+    client = mock.Mock()
+    client.awaiting_plugin = (
+        mock.Mock(),
+        "corr-1",
+        True,
+        "cursor",
+        "text",
+        True,
+    )
+    client.awaiting_plugin_info = {"verification": "submit_unverified", "ide": "cursor"}
+    client.awaiting_plugin_timer = mock.Mock()
+    client.version = "0.2.7"
+    client.build_sha = "build123"
+    client.protocol_version = 2
+    client.capabilities = ["chat.events"]
+    daemon._send.return_value = True
+
+    msg = Message(type="message.sent", id="e-1", data={"chat": "default"})
+    result = _relay_message_sent_ack(daemon, client, msg)
+
+    assert result is True
+    assert client.awaiting_plugin is None
+    assert client.awaiting_plugin_info is None
+    assert client.awaiting_plugin_timer is None
+    daemon._send.assert_called_once()
+    assert any(
+        "strict ack accepted late message.sent fallback for cursor" in call.args[0]
+        for call in daemon.log.call_args_list
+    )
+
+
 def test_handle_ack_no_pending() -> None:
     """Test handle_ack returns early when no pending drive."""
     daemon = mock.Mock()
@@ -359,6 +460,18 @@ def test_send_plugin_ack_reply_persists_operator_replay_dsl(
     )
     assert any(line.startswith("#902 act=replay") for line in daemon._recent_dsl)
     assert (tmp_path / ".planfile" / ".koru" / "dsl_recent.json").exists()
+    daemon.audit.record.assert_called_once_with(
+        "drive",
+        ide="vscodium",
+        backend="plugin",
+        chars=len("hello from replay"),
+        submit=True,
+        ok=False,
+        verification="submit_unverified",
+        delivered=True,
+        submitted=None,
+        corr="corr/replay",
+    )
 
 
 # ---------------------------------------------------------------------------

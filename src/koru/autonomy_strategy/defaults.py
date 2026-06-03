@@ -41,8 +41,19 @@ DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
         },
         "tools": {
             "automated": ["koru_scan", "code2llm"],
-            "artifact_sources": ["redup", "testql"],
-            "advisory": ["prefact", "metrun"],
+            "artifact_sources": [
+                "jscpd",
+                "redup",
+                "testql",
+                "vallm",
+                "pyqual",
+                "prefact",
+                "regix",
+                "redsl",
+                "metrun",
+                "pfix",
+            ],
+            "advisory": ["goal", "costs"],
         },
     },
     "planning_assistant": {

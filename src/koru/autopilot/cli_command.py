@@ -13,10 +13,10 @@ import sys
 import time
 from pathlib import Path
 
+from koru.agents import agent_lane_environment
 from koru.autopilot import (
     calibrate_cli,
     daemon_cli,
-    default_socket_path,
     doctor_cli,
     install_plugin_cli,
     systemd_cli,
@@ -68,6 +68,12 @@ from koru.autopilot.ide import (
     normalize_ide_id,
     resolve_drive_target,
 )
+from koru.autopilot.lane_context import (
+    format_lane_env_exports,
+    resolve_autopilot_instance,
+    resolve_client_socket_path,
+    resolve_lane_context,
+)
 from koru.autopilot.injector import Injector
 from koru.control_commands import shell_command
 
@@ -102,15 +108,13 @@ def _temporary_autopilot_instance(instance: str):
 
 
 def _resolve_cli_ide_lane(args: argparse.Namespace) -> str | None:
-    requested = normalize_ide_id(getattr(args, "ide", None))
-    if requested and requested != "auto":
-        return requested
-    instance = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
-    if instance and instance != "auto":
+    project = getattr(args, "project", None) or Path.cwd()
+    instance, _source = resolve_autopilot_instance(
+        requested_ide=getattr(args, "ide", None),
+        project=Path(project),
+    )
+    if instance:
         return instance
-    env_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
-    if env_ide and env_ide != "auto":
-        return env_ide
     terminal = normalize_ide_id(detect_terminal_host_ide_id())
     if terminal:
         return terminal
@@ -120,22 +124,60 @@ def _resolve_cli_ide_lane(args: argparse.Namespace) -> str | None:
     return None
 
 
-def _resolve_client_socket(args: argparse.Namespace) -> Path | None:
-    if getattr(args, "socket", None) is not None:
-        return args.socket
-    if (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip():
-        return None
-    if (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip():
-        return None
-    lane = _resolve_cli_ide_lane(args)
-    if not lane:
-        return None
-    with _temporary_autopilot_instance(lane):
-        return default_socket_path()
-
-
 def _client(args: argparse.Namespace) -> AutopilotClient:
-    return AutopilotClient(socket_path=_resolve_client_socket(args))
+    project = getattr(args, "project", None) or Path.cwd()
+    return AutopilotClient(
+        socket_path=resolve_client_socket_path(args, project=Path(project)),
+    )
+
+
+def _action_env(args: argparse.Namespace) -> int:
+    project = getattr(args, "project", None) or Path.cwd()
+    try:
+        if getattr(args, "format", "shell") == "json":
+            ctx = resolve_lane_context(
+                requested_ide=getattr(args, "ide", None),
+                project=Path(project),
+            )
+            if not ctx.instance:
+                print(
+                    json.dumps({"ok": False, "error": "could not resolve lane"}),
+                    file=sys.stderr,
+                )
+                return 1
+            env = dict(agent_lane_environment(ctx.instance))
+            env["KORU_AUTOPILOT_IDE"] = ctx.ide
+            env["KORU_AUTOPILOT_SOCKET"] = str(ctx.socket_path)
+            print(
+                json.dumps(
+                    {
+                        "ok": True,
+                        "instance": ctx.instance,
+                        "ide": ctx.ide,
+                        "socket": str(ctx.socket_path),
+                        "source": ctx.source,
+                        "env": env,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 0
+        body, ctx = format_lane_env_exports(
+            requested_ide=getattr(args, "ide", None),
+            project=Path(project),
+        )
+        print(body, end="")
+        if getattr(args, "explain", False):
+            print(
+                f"# instance={ctx.instance} ide={ctx.ide} socket={ctx.socket_path} "
+                f"source={ctx.source}",
+                file=sys.stderr,
+            )
+        return 0
+    except RuntimeError as exc:
+        print(f"koru autopilot env: {exc}", file=sys.stderr)
+        return 1
 
 
 def _daemon_start_hint(args: argparse.Namespace) -> str:
@@ -267,6 +309,7 @@ _ACTIONS = {
     "calibrate": _action_calibrate,
     "session-start": _action_session_start,
     "status": _action_status,
+    "env": _action_env,
     "shutdown": _action_shutdown,
     "ide-list": _action_ide_list,
     "doctor": _action_doctor,

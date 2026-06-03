@@ -12,6 +12,7 @@ from koru.autopilot.cli_direct_drive import (
     _auto_direct_fallback_enabled,
     _emit_direct_drive_auto_selection,
     _emit_json_payload,
+    _selected_keyboard_backend,
     _should_fallback_to_direct,
 )
 from koru.observability_writer import observability_event_store_path
@@ -121,6 +122,21 @@ def test_emit_auto_selection_silent_when_os_profile(capsys: pytest.CaptureFixtur
     args = _ns(ide="auto", os_profile="windsurf")
     _emit_direct_drive_auto_selection(args, "windsurf", "auto:profile")
     assert capsys.readouterr().err == ""
+
+
+def test_selected_keyboard_backend_prefers_select_backend() -> None:
+    class _Injector:
+        session = "wayland"
+
+        def select_backend(self) -> str:
+            return "wtype"
+
+    assert _selected_keyboard_backend(_Injector()) == "wtype"
+
+
+def test_selected_keyboard_backend_falls_back_to_session_or_keyboard() -> None:
+    assert _selected_keyboard_backend(_ns(session="x11")) == "x11"
+    assert _selected_keyboard_backend(_ns(session="")) == "keyboard"
 
 
 # ---------------------------------------------------------------------------

@@ -62,6 +62,63 @@ export abstract class SharedAutopilotBridgeFocusCore extends SharedAutopilotBrid
     return captureEditorSnapshot(vscode.window.activeTextEditor);
   }
 
+  protected async quietIDELayoutForChatFocus(): Promise<void> {
+    const ide = this.detectIde();
+    if (!this.shouldQuietIDELayoutBeforeChatFocus(ide)) {
+      return;
+    }
+    await this.closeActiveUtilityEditorForChatFocus();
+    await this.runQuietLayoutCommand("workbench.action.closeQuickOpen");
+    await this.runQuietLayoutCommand("workbench.action.closePanel");
+  }
+
+  private shouldQuietIDELayoutBeforeChatFocus(ide: string): boolean {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const configured = cfg.get<boolean>("quietLayoutBeforeChatFocus");
+    if (typeof configured === "boolean") {
+      return configured;
+    }
+    return ide === "vscodium";
+  }
+
+  private async closeActiveUtilityEditorForChatFocus(): Promise<void> {
+    const label = String(vscode.window.tabGroups.activeTabGroup.activeTab?.label || "");
+    if (!/\b(settings|preferences|search|extensions|welcome|release notes)\b/i.test(label)) {
+      return;
+    }
+    const ok = await this.runCommand("workbench.action.closeActiveEditor");
+    this.traceOperation({
+      op: "focus_open",
+      route: "close-utility-editor",
+      ok,
+      command: "workbench.action.closeActiveEditor",
+      detail: { label },
+    });
+    await this.sleep(80);
+  }
+
+  private async runQuietLayoutCommand(command: string): Promise<void> {
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    if (!existing.has(command)) {
+      this.traceOperation({
+        op: "focus_open",
+        route: "quiet-layout",
+        ok: false,
+        command,
+        reason: "command not registered",
+      });
+      return;
+    }
+    const ok = await this.runCommand(command);
+    this.traceOperation({
+      op: "focus_open",
+      route: "quiet-layout",
+      ok,
+      command,
+    });
+    await this.sleep(50);
+  }
+
   protected getProbeCache(): ProbeCacheEntry | undefined {
     const ide = this.detectIde();
     const raw = this.context.globalState.get<unknown>("probeCache.v3");

@@ -14,6 +14,11 @@ from koru.autonomy.replay_actions import (
     ticket_open,
     trace_show_decisions,
 )
+from koru.autonomy.replay_handlers import ReplayQueryHandlers as MovedReplayQueryHandlers
+from koru.autonomy.replay_parser import parse_replay_dsl as moved_parse_replay_dsl
+from koru.autonomy.replay_quick_actions import (
+    quick_action_to_replay as moved_quick_action_to_replay,
+)
 from koru.cli_replay import replay_main
 
 
@@ -30,6 +35,12 @@ def test_parse_replay_dsl_restores_known_action_metadata() -> None:
     assert action == ide_reload_window("vscodium")
     assert action.replayable is False
     assert action.requires_active_window is True
+
+
+def test_replay_actions_facade_keeps_moved_public_imports_stable() -> None:
+    assert ReplayQueryHandlers is MovedReplayQueryHandlers
+    assert parse_replay_dsl is moved_parse_replay_dsl
+    assert quick_action_to_replay is moved_quick_action_to_replay
 
 
 def test_quick_action_to_replay_maps_open_ticket_url() -> None:
@@ -64,7 +75,7 @@ def test_replay_query_handlers_show_decisions_uses_shell_pipeline(tmp_path) -> N
     action = ReplayAction(domain="trace", verb="show-decisions", args={"url": "http://127.0.0.1:8765"})
     ok = subprocess.CompletedProcess(["bash"], 0, stdout="[]", stderr="")
 
-    with mock.patch("koru.autonomy.replay_actions.subprocess.run", return_value=ok) as run:
+    with mock.patch("koru.autonomy.replay_handlers.subprocess.run", return_value=ok) as run:
         result = handlers.show_decisions(action, project=tmp_path)
 
     assert result.ok is True

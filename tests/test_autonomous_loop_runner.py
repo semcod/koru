@@ -156,7 +156,7 @@ def test_idle_no_ticket_warning_points_to_web_gui(monkeypatch) -> None:
     assert "szczegół→ogół" in str(kwargs["hint"])
     assert "workflow standaryzowany" in str(kwargs["hint"])
     assert "Co jeszcze zostalo do wykonania?" in str(kwargs["hint"])
-    assert "prefact/metrun" in str(kwargs["hint"])
+    assert "goal/costs" in str(kwargs["hint"])
     assert kwargs["data"]["blocked_by"] == "idle_no_ticket"
 
 

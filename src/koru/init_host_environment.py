@@ -20,18 +20,27 @@ from koru.ide_runtime import build_host_setup_report
 from koru.runtime import runtime_dir
 
 
+def _parse_os_release_line(line: str) -> tuple[str, str] | None:
+    stripped = line.strip()
+    if "=" not in stripped or stripped.startswith("#"):
+        return None
+    key, value = stripped.split("=", 1)
+    key = key.strip()
+    if not key:
+        return None
+    return key, value.strip().strip('"')
+
+
 def _read_os_release() -> dict[str, str]:
     path = Path("/etc/os-release")
     if not path.is_file():
         return {}
     out: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        if "=" in line and not line.strip().startswith("#"):
-            k, _, v = line.partition("=")
-            key = k.strip()
-            val = v.strip().strip('"')
-            if key:
-                out[key] = val
+        parsed = _parse_os_release_line(line)
+        if parsed is not None:
+            key, val = parsed
+            out[key] = val
     return out
 
 
@@ -76,7 +85,6 @@ def build_host_environment_report() -> dict[str, Any]:
     base = build_host_setup_report()
     os_release = _read_os_release()
     groups = _id_group_names()
-    (base.get("session") or "").lower()
     extras: dict[str, Any] = {
         "koru_platform": sys.platform,
         "os_release_id": os_release.get("ID", ""),

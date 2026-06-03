@@ -16,7 +16,7 @@ Each ACTION line is a valid shell command that can be copy-pasted to execute.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from dataclasses import dataclass
 
 from koru.autonomy.replay_actions import (
     ReplayAction,
@@ -34,6 +34,17 @@ from koru.autonomy.replay_actions import (
 # Header/footer decoration constants.
 _CYCLE_HEADER = "══════"
 _CYCLE_FOOTER = "──────────────────────"
+
+
+@dataclass(frozen=True)
+class _BlockerContext:
+    code: str
+    detail: str | None = None
+    diagnostics_failed: bool = False
+
+    @property
+    def blocked(self) -> bool:
+        return bool(self.code)
 
 
 # ---------------------------------------------------------------------------
@@ -64,21 +75,20 @@ def _diag_status_line(
 
 def _diag_blocker_line(
     *,
-    autopilot_status: str,
+    context: _BlockerContext,
     autopilot_ide: str,
 ) -> str | None:
     """Secondary line: blocker detail (only if blocked)."""
-    blocker = _extract_blocker(autopilot_status)
-    if not blocker:
+    if not context.blocked:
         return None
-    parts = [f"blocker={blocker}"]
+    parts = [f"blocker={context.code}"]
     if autopilot_ide:
         parts.append(f"ide={autopilot_ide}")
     return " ".join(parts)
 
 
-def _diag_blocker_detail(autopilot_status: str) -> str | None:
-    """Tertiary line: compact blocker reason (mismatch hashes, etc.)."""
+def _extract_blocker_detail(autopilot_status: str) -> str | None:
+    """Extract compact blocker reason (mismatch hashes, etc.)."""
     raw = (autopilot_status or "").strip()
     if "rejected:" not in raw:
         return None
@@ -96,7 +106,7 @@ def _diag_blocker_detail(autopilot_status: str) -> str | None:
     return compact[:120]
 
 
-def _extract_blocker(autopilot_status: str) -> str:
+def _extract_blocker_code(autopilot_status: str) -> str:
     """Extract the blocker name from an autopilot status like ``skipped(plugin_missing)``."""
     status = (autopilot_status or "").strip().lower()
     if status.startswith("skipped("):
@@ -108,6 +118,15 @@ def _extract_blocker(autopilot_status: str) -> str:
     return ""
 
 
+def _blocker_context(autopilot_status: str) -> _BlockerContext:
+    status = (autopilot_status or "").lower()
+    return _BlockerContext(
+        code=_extract_blocker_code(autopilot_status),
+        detail=_extract_blocker_detail(autopilot_status),
+        diagnostics_failed="diagnostics_fail" in status,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Plan section builders
 # ---------------------------------------------------------------------------
@@ -116,24 +135,23 @@ def _extract_blocker(autopilot_status: str) -> str:
 def _plan_lines(
     *,
     queue_status: str,
-    autopilot_status: str,
+    context: _BlockerContext,
     waiting_ticket: str,
     sleep_seconds: float,
 ) -> list[str]:
     """Human-readable plan lines (what koru intends to do next)."""
-    blocker_code = _extract_blocker(autopilot_status)
     lines: list[str] = []
 
-    if blocker_code == "plugin_missing":
+    if context.code == "plugin_missing":
         lines.append("skip drive → wait for plugin reconnect")
         lines.append(f"sleep {sleep_seconds:g}s, then recheck queue for {waiting_ticket}")
-    elif blocker_code == "chat_activity":
+    elif context.code == "chat_activity":
         lines.append(f"skip drive → chat cooldown active for {waiting_ticket}")
         lines.append(f"sleep {sleep_seconds:g}s, then reconsider redrive")
-    elif blocker_code == "drive_failed":
+    elif context.code == "drive_failed":
         lines.append("drive failed → retry next cycle")
         lines.append(f"sleep {sleep_seconds:g}s, then rerun queue")
-    elif blocker_code == "manual_send_required":
+    elif context.code == "manual_send_required":
         lines.append("submit not verified → do not redrive blindly")
         lines.append(f"sleep {sleep_seconds:g}s, then validate trace for {waiting_ticket}")
     elif queue_status == "idle":
@@ -158,25 +176,24 @@ def _plan_lines(
 def _build_cycle_actions(
     *,
     queue_status: str,
-    autopilot_status: str,
+    context: _BlockerContext,
     autopilot_ide: str,
     waiting_ticket: str,
     base_url: str = "http://127.0.0.1:8765",
 ) -> list[ReplayAction]:
     """Build the set of ReplayActions relevant to the current cycle state."""
-    blocker = _extract_blocker(autopilot_status)
     replay_actions: list[ReplayAction] = []
 
     # Always include trace inspection
     replay_actions.append(trace_show_decisions(base_url))
 
     # Blocker-specific actions
-    if blocker == "plugin_missing":
+    if context.code == "plugin_missing":
         replay_actions.append(ide_reload_window(autopilot_ide or "auto"))
         replay_actions.append(ide_connect_plugin(autopilot_ide or "auto"))
         replay_actions.append(trace_show_interfaces(base_url))
 
-    elif blocker == "drive_failed" and waiting_ticket and waiting_ticket != "-":
+    elif context.code == "drive_failed" and waiting_ticket and waiting_ticket != "-":
         replay_actions.append(autopilot_retry_drive(autopilot_ide or "auto", waiting_ticket))
 
     # Queue-specific actions
@@ -188,7 +205,7 @@ def _build_cycle_actions(
         replay_actions.append(scan_force())
 
     # WUP health if diagnostics failed
-    if "diagnostics_fail" in (autopilot_status or "").lower():
+    if context.diagnostics_failed:
         replay_actions.append(wup_show_health())
 
     return replay_actions
@@ -224,6 +241,7 @@ def emit_structured_cycle_report(
     """
     # Header
     activity_fn("KORUAUTONOMOUS", f"{_CYCLE_HEADER} cycle {cycle} {_CYCLE_HEADER}")
+    context = _blocker_context(autopilot_status)
 
     # DIAG section
     status_line = _diag_status_line(
@@ -237,20 +255,19 @@ def emit_structured_cycle_report(
     activity_fn("DIAG", status_line)
 
     blocker_line = _diag_blocker_line(
-        autopilot_status=autopilot_status,
+        context=context,
         autopilot_ide=autopilot_ide,
     )
     if blocker_line:
         activity_fn("DIAG", blocker_line)
 
-    blocker_detail = _diag_blocker_detail(autopilot_status)
-    if blocker_detail:
-        activity_fn("DIAG", blocker_detail)
+    if context.detail:
+        activity_fn("DIAG", context.detail)
 
     # PLAN section
     for line in _plan_lines(
         queue_status=queue_status,
-        autopilot_status=autopilot_status,
+        context=context,
         waiting_ticket=waiting_ticket,
         sleep_seconds=sleep_seconds,
     ):
@@ -259,7 +276,7 @@ def emit_structured_cycle_report(
     # ACTION section
     replay_actions = _build_cycle_actions(
         queue_status=queue_status,
-        autopilot_status=autopilot_status,
+        context=context,
         autopilot_ide=autopilot_ide,
         waiting_ticket=waiting_ticket,
         base_url=base_url,

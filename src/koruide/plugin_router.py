@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from koruide.ide import normalize_ide_id
+from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
 
 
 class PluginClient(Protocol):
@@ -65,7 +66,11 @@ class PluginRouter:
         self._log = log or (lambda _msg: None)
 
     def plugin_for(self, ide: str | None, *, project: str | Path | None = None) -> PluginClient | None:
-        target_ide = normalize_ide_id(ide)
+        raw = normalize_ide_id(ide)
+        if not raw or raw == "auto":
+            target_ide = raw
+        else:
+            target_ide = canonical_autopilot_ide_id(raw)
         candidates = self._plugin_candidates(target_ide)
         project_match = self._match_project_plugin(candidates, project, target_ide)
         if project_match is not None:
@@ -87,9 +92,13 @@ class PluginRouter:
 
     @staticmethod
     def _matches_plugin_target(client: PluginClient, target_ide: str | None) -> bool:
-        return client.role == "plugin" and (
-            target_ide in (None, "auto") or normalize_ide_id(client.ide) == target_ide
-        )
+        if client.role != "plugin":
+            return False
+        if target_ide in (None, "auto"):
+            return True
+        target = canonical_autopilot_ide_id(target_ide or "")
+        client_ide = canonical_autopilot_ide_id(client.ide or "")
+        return client_ide == target
 
     def _match_project_plugin(
         self,
@@ -172,14 +181,14 @@ class PluginRouter:
         self._log(f"plugin_for: matched ide={client.ide} fd={client.sock.fileno()}{workspace_note}")
 
     def drop_stale_plugins(self, current: PluginClient, ide: str) -> int:
-        target_ide = normalize_ide_id(ide)
+        target_ide = canonical_autopilot_ide_id(normalize_ide_id(ide) or ide)
         current_has_workspace = bool(current.workspace_folders)
         stale = [
             other
             for other in self._clients.values()
             if other is not current
             and other.role == "plugin"
-            and normalize_ide_id(other.ide) == target_ide
+            and canonical_autopilot_ide_id(normalize_ide_id(other.ide) or other.ide or "") == target_ide
             and other.awaiting_plugin is None
             and (
                 not other.workspace_folders
@@ -193,6 +202,31 @@ class PluginRouter:
             self._log(f"dropping stale plugin connection: ide={target_ide} fd={other.sock.fileno()}")
             self._drop_client(other)
         return len(stale)
+
+    def drop_version_mismatch_plugins(self) -> int:
+        """Disconnect live plugin sessions that fail strict version/build policy."""
+        dropped = 0
+        for client in list(self._clients.values()):
+            if client.role != "plugin" or not client.ide:
+                continue
+            version_info = DriveOrchestrator.plugin_version_info(
+                plugin_ide=client.ide,
+                connected_version=getattr(client, "version", None),
+                connected_build_sha=getattr(client, "build_sha", None),
+                protocol_version=getattr(client, "protocol_version", None),
+                capabilities=getattr(client, "capabilities", None) or [],
+            )
+            if not DriveOrchestrator.should_block_plugin_version(version_info):
+                continue
+            self._log(
+                "dropping plugin with version/build mismatch: "
+                f"ide={client.ide} fd={client.sock.fileno()} "
+                f"build={getattr(client, 'build_sha', None) or '-'} "
+                f"expected={version_info.get('expected_plugin_build_sha') or '-'}",
+            )
+            self._drop_client(client)
+            dropped += 1
+        return dropped
 
     def status_rows(self) -> list[PluginStatusRow]:
         return [

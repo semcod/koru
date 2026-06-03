@@ -116,9 +116,9 @@ autonomy:
         - prefact
         - regix
         - redsl
-        advisory:
         - metrun
         - pfix
+        advisory:
         - goal
         - costs
     planning_assistant:

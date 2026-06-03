@@ -21,6 +21,7 @@ from typing import Final
 from koru.env_flags import parse_boolish
 
 from koruide.ide import (
+    canonical_autopilot_ide_id,
     detect_terminal_host_ide_id,
     normalize_ide_id,
     supports_vscode_extension_plugin,
@@ -343,13 +344,13 @@ def keyboard_fallback_when_plugin_missing(autopilot_ide: str) -> bool:
     """
     raw = os.environ.get("KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN", "0").strip().lower()
     if raw in {"1", "true", "yes", "on"}:
-        ide = normalize_ide_id(autopilot_ide) or ""
+        ide = canonical_autopilot_ide_id(normalize_ide_id(autopilot_ide) or autopilot_ide)
         return supports_vscode_extension_plugin(ide)
     return False
 
 
 def plugin_required_for_ide(autopilot_ide: str) -> bool:
-    ide = normalize_ide_id(autopilot_ide) or ""
+    ide = canonical_autopilot_ide_id(normalize_ide_id(autopilot_ide) or autopilot_ide)
     if ide != "auto" and not supports_vscode_extension_plugin(ide):
         return False
     if allow_keyboard_autopilot_fallback() or prefer_keyboard_autopilot():
@@ -377,7 +378,7 @@ def autopilot_terminal_conflict_reason(
         return None
     if allow_cross_ide_autopilot():
         return None
-    wanted = normalize_ide_id(autopilot_ide)
+    wanted = canonical_autopilot_ide_id(normalize_ide_id(autopilot_ide) or autopilot_ide)
     terminal = normalize_ide_id(detect_terminal_host_ide_id())
     if not wanted or wanted == "auto" or not terminal or terminal == wanted:
         return None

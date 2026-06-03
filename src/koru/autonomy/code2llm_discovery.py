@@ -14,7 +14,6 @@ the caller can fall back to the legacy "create operator ticket" flow.
 
 from __future__ import annotations
 
-import json
 import hashlib
 import shutil
 import subprocess
@@ -53,6 +52,23 @@ DEFAULT_EXCLUDES: tuple[str, ...] = (
 )
 DEFAULT_STALE_MINUTES = 60.0
 DEFAULT_SOURCE = "koru-project-discovery"
+DEFAULT_SOURCE_SUFFIXES = frozenset({".py", ".ts", ".tsx", ".js", ".jsx"})
+DEFAULT_SOURCE_SKIP_DIRS = frozenset(
+    {
+        ".code2llm_cache",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        ".venv",
+        "__pycache__",
+        "code2llm_output",
+        "node_modules",
+        "plugins",
+        DEFAULT_OUTPUT_SUBDIR,
+    }
+)
 
 
 @dataclass
@@ -94,9 +110,58 @@ def _default_runner(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProces
     )
 
 
-def _artifacts_fresh(artifacts_dir: Path, *, stale_minutes: float) -> bool:
+def _source_newer_than_analysis(
+    source: Path,
+    analysis: Path,
+    *,
+    project: Path,
+    artifacts_dir: Path,
+) -> bool:
+    try:
+        analysis_mtime = analysis.stat().st_mtime
+    except OSError:
+        return True
+
+    if source.is_file():
+        try:
+            return source.stat().st_mtime > analysis_mtime
+        except OSError:
+            return True
+
+    for path in source.rglob("*"):
+        if not path.is_file() or path.suffix not in DEFAULT_SOURCE_SUFFIXES:
+            continue
+        parts = (
+            set(path.relative_to(project).parts)
+            if path.is_relative_to(project)
+            else set(path.parts)
+        )
+        if parts & DEFAULT_SOURCE_SKIP_DIRS:
+            continue
+        try:
+            if path.resolve().is_relative_to(artifacts_dir):
+                continue
+        except OSError:
+            continue
+        try:
+            if path.stat().st_mtime > analysis_mtime:
+                return True
+        except OSError:
+            return True
+    return False
+
+
+def _artifacts_fresh(
+    artifacts_dir: Path,
+    *,
+    stale_minutes: float,
+    source: Path,
+    project: Path,
+) -> bool:
     analysis = artifacts_dir / "analysis.toon.yaml"
     if not analysis.is_file():
+        return False
+    if _source_newer_than_analysis(source, analysis, project=project, artifacts_dir=artifacts_dir):
         return False
     age_s = max(0.0, time.time() - analysis.stat().st_mtime)
     return age_s < stale_minutes * 60.0
@@ -117,10 +182,11 @@ def _build_code2llm_cmd(
     planfile_source: str,
     planfile_sprint: str,
     planfile_limit: int | None,
+    source: Path | None = None,
 ) -> list[str]:
     cmd = [
         binary,
-        str(project),
+        str(source or project),
         "-f",
         formats,
         "-o",
@@ -154,7 +220,11 @@ def _file_evidence(project: Path, path: Path) -> dict[str, object]:
     }
 
 
-def _source_evidence_context(project: Path, artifacts_dir: Path, item: dict[str, Any]) -> dict[str, Any]:
+def _source_evidence_context(
+    project: Path,
+    artifacts_dir: Path,
+    item: dict[str, Any],
+) -> dict[str, Any]:
     source_files = _string_list(item.get("files"))
     return {
         "evidence": {
@@ -234,6 +304,69 @@ def _ticket_item_match_key(item: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
     title = str(item.get("title") or "").strip()
     files = tuple(str(v) for v in (item.get("files") or []) if str(v).strip())
     return title, files
+
+
+def _code2llm_issue_key_from_parts(
+    *,
+    signal: str,
+    dedupe_key: str,
+    files: Sequence[str],
+) -> tuple[str, str, str] | None:
+    if not signal.startswith("code2llm_"):
+        return None
+    file_path = str(files[0]).strip() if files else ""
+    if not file_path:
+        return None
+    if signal == "code2llm_god":
+        return signal, file_path, "module"
+    if not dedupe_key:
+        return None
+    symbol = dedupe_key.rsplit(":", 1)[-1].strip()
+    symbol_tail = symbol.rsplit(".", 1)[-1].strip()
+    if not symbol_tail:
+        return None
+    return signal, file_path, symbol_tail
+
+
+def _code2llm_issue_key_from_item(item: dict[str, Any]) -> tuple[str, str, str] | None:
+    return _code2llm_issue_key_from_parts(
+        signal=str(item.get("signal") or "").strip(),
+        dedupe_key=str(item.get("dedupe_key") or "").strip(),
+        files=_string_list(item.get("files")),
+    )
+
+
+def _code2llm_issue_key_from_ticket(ticket: Any) -> tuple[str, str, str] | None:
+    if not isinstance(ticket, dict):
+        return None
+    source = ticket.get("source")
+    context = source.get("context") if isinstance(source, dict) else None
+    if not isinstance(context, dict):
+        return None
+    return _code2llm_issue_key_from_parts(
+        signal=str(context.get("signal") or "").strip(),
+        dedupe_key=str(context.get("dedupe_key") or "").strip(),
+        files=_string_list(ticket.get("files")),
+    )
+
+
+def _existing_code2llm_issue_keys(project: Path, *, sprint: str) -> set[tuple[str, str, str]]:
+    try:
+        import yaml
+
+        sprint_path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, Exception):  # noqa: BLE001 - best-effort duplicate guard
+        return set()
+    sprint_data = data.get("sprint") if isinstance(data, dict) else None
+    tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
+    if not isinstance(tickets, dict):
+        return set()
+    return {
+        key
+        for ticket in tickets.values()
+        if (key := _code2llm_issue_key_from_ticket(ticket)) is not None
+    }
 
 
 def _backfill_existing_dedupe_keys(
@@ -355,6 +488,7 @@ def _apply_planfile_ticket_items(
         return _read_planfile_tickets_output(artifacts_dir)
     created_titles: list[str] = []
     skipped_titles: list[str] = []
+    existing_issue_keys = _existing_code2llm_issue_keys(project, sprint=sprint)
     selected = items[:limit] if limit is not None and limit > 0 else items
     for item in selected:
         scaffold = _ticket_item_scaffold(
@@ -364,6 +498,10 @@ def _apply_planfile_ticket_items(
             artifacts_dir=artifacts_dir,
         )
         title = str(scaffold["title"])
+        issue_key = _code2llm_issue_key_from_item(item)
+        if issue_key is not None and issue_key in existing_issue_keys:
+            skipped_titles.append(title)
+            continue
         try:
             created = create_nl_task(
                 project,
@@ -379,6 +517,8 @@ def _apply_planfile_ticket_items(
             skipped_titles.append(title)
         else:
             created_titles.append(title)
+            if issue_key is not None:
+                existing_issue_keys.add(issue_key)
     return created_titles, skipped_titles
 
 
@@ -514,6 +654,7 @@ def run_code2llm_discovery(
     planfile_limit: int | None = 20,
     stale_minutes: float = DEFAULT_STALE_MINUTES,
     force: bool = False,
+    scope_paths: Sequence[str] | None = None,
     runner: Runner = _default_runner,
 ) -> DiscoveryOutcome:
     """Run ``code2llm`` to refresh project artifacts and apply planfile tickets.
@@ -531,7 +672,20 @@ def run_code2llm_discovery(
         return outcome
     outcome.code2llm_path = binary
 
-    if not force and _artifacts_fresh(artifacts_dir, stale_minutes=stale_minutes):
+    from koru.scan import resolve_code2llm_source
+
+    source = resolve_code2llm_source(project, scope_paths)
+
+    if (
+        not force
+        and not scope_paths
+        and _artifacts_fresh(
+            artifacts_dir,
+            stale_minutes=stale_minutes,
+            source=source,
+            project=project,
+        )
+    ):
         return _handle_fresh_artifacts(
             outcome,
             project,
@@ -546,6 +700,7 @@ def run_code2llm_discovery(
     cmd = _build_code2llm_cmd(
         binary,
         project=project,
+        source=source,
         output_dir=artifacts_dir,
         formats=formats,
         excludes=excludes,

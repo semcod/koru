@@ -309,12 +309,11 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       candidates,
       verifyText,
       hostVerifyEnabled,
-      // requireEmptyAfterSubmit=false: the clipboard probe (select-copy) never returns content
-      // from VSCodium's chat webview input, so probeChatInputContents() always returns null.
-      // decideSubmitCleared(null, …) correctly returns cleared=true in that case — let it.
-      // Host-key fallbacks below still use requireEmpty=true because they are OS-level and
-      // can report rc=0 even when the chat webview ignored the keystroke.
-      false
+      // VSCodium can report command success while the prompt remains in the
+      // chat input. Treat inconclusive post-submit probes as unverified so the
+      // bridge can fall through to repair/fallback instead of emitting
+      // message.sent for a paste-only drive.
+      true
     );
     if (registered) return registered;
 
@@ -420,21 +419,34 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
           unverified: true,
         };
       }
+      if (hostVerifyEnabled && verifyText) {
+        const hostKey = await this._tryVerifiedHostKeySubmit("cursor", verifyText, {
+          preserveFocus: true,
+          ctrlOnly: true,
+        });
+        if (hostKey.ok && hostKey.command) return hostKey;
+        this.traceOperation({
+          op: "submit",
+          route: "cursor-verified-host-key-rejected",
+          ok: false,
+          command: hostKey.command,
+          reason: hostKey.reason,
+          attempts: hostKey.attempts,
+        });
+      }
       this.traceOperation({
         op: "submit",
         route: "cursor-host-fallback-refused",
         ok: false,
-        reason: "registered submit commands exhausted; host-click fallback "
-          + "was unavailable or failed; host-key would target whatever OS "
-          + "control has keyboard focus (typically the terminal running "
-          + "`koru auto`), not the Cursor chat input",
+        reason: "registered submit commands exhausted; verified host-click/host-key "
+          + "fallbacks were unavailable or did not create a Cursor user bubble",
       });
       return {
         ok: false,
         command: "cursor-submit-unavailable",
         reason: "registered Cursor submit commands no-oped and verified "
-          + "host-click submit fallback was unavailable; host-key fallback "
-          + "refused because Cursor may not have chat-input keyboard focus",
+          + "host-click/host-key submit fallbacks were unavailable or did not "
+          + "create a Cursor user bubble",
         unverified: true,
       };
     }
@@ -478,6 +490,9 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     requireEmptyAfterSubmit = false
   ): Promise<SubmitOutcome | null> {
     for (const cmd of candidates) {
+      if (this.detectIde() === "cursor") {
+        await this.captureCursorBubbleAnchor();
+      }
       if (!(await this.runSubmitCommand(cmd, verifyText))) {
         console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
         this.traceOperation({
@@ -651,6 +666,20 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
         });
         return { ok: true, command: rendered, attempts };
       }
+      if (ide === "vscodium" && verify.observedLength < 0 && this.trustUnverifiedHostSubmit()) {
+        if (this.probeLadderEnabled()) {
+          await this.saveProbeCache({ submit: rendered });
+        }
+        this.traceOperation({
+          op: "submit",
+          route: "accepted-unverified-host-key",
+          ok: true,
+          command: rendered,
+          reason: "post-submit probe unavailable; trusting successful VSCodium host key",
+          detail: { verifyEnabled: true, requireEmptyAfterSubmit: true, observedLength: verify.observedLength },
+        });
+        return { ok: true, command: rendered, attempts };
+      }
       await this.discardCachedSubmitWinner(rendered);
       this.traceOperation({
         op: "submit",
@@ -663,11 +692,7 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       if (!options.preserveFocus) {
         await this.focusChatInput();
       }
-      await this.runHostKeyCandidates("SUBMIT_DESELECT", [
-        ["wtype", ["-k", "End"]],
-        ["xdotool", ["key", "End"]],
-        ["ydotool", ["key", "End"]],
-      ]);
+      await this.runHostKeyCandidates("SUBMIT_DESELECT", this.submitDeselectKeyCandidates());
       if (options.preserveFocus) {
         this.traceOperation({
           op: "submit_deselect",
@@ -698,6 +723,16 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
 
   private async activeWindowSubmitClickPoint(): Promise<{ point: ScreenPoint; source: string } | null> {
     if (process.platform !== "linux") {
+      return null;
+    }
+    if (this.isWaylandSession()) {
+      this.traceOperation({
+        op: "submit",
+        route: "host-click:active-window-geometry",
+        ok: false,
+        command: "xdotool getactivewindow getwindowgeometry --shell",
+        reason: "xdotool active-window geometry skipped on Wayland; calibrate submitClickX/submitClickY",
+      });
       return null;
     }
     const geometry = await this.runHostCommand("xdotool", ["getactivewindow", "getwindowgeometry", "--shell"]);
@@ -841,6 +876,18 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     }
     this.traceOperation({ op: "submit", route: "host-click", ok: false, reason: "submit click failed", attempts: details });
     return { ok: false, reason: "submit click failed", attempts: details };
+  }
+
+  private submitDeselectKeyCandidates(): Array<[string, string[]]> {
+    const endKeys: Array<[string, string[]]> = [
+      ["wtype", ["-k", "End"]],
+      ["ydotool", ["key", "End"]],
+      ["xdotool", ["key", "End"]],
+    ];
+    if (this.isWaylandSession()) {
+      return endKeys.filter(([command]) => command !== "xdotool");
+    }
+    return endKeys;
   }
 
   private trustUnverifiedHostSubmit(): boolean {

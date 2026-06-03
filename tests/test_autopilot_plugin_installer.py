@@ -24,6 +24,11 @@ def _cp(
     return subprocess.CompletedProcess(cmd, returncode, stdout=stdout, stderr=stderr)
 
 
+@pytest.fixture(autouse=True)
+def _hide_live_editor_bins(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
+
+
 def test_resolve_target_ide_prefers_autopilot_env(monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "windsurf")
     monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: "cursor")
@@ -271,6 +276,7 @@ def test_install_plugin_explicit_vscode_does_not_use_codium_hint(
     monkeypatch.setenv("VSCODE_PID", "123")
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
     monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
@@ -315,6 +321,10 @@ def test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint(
     monkeypatch.setattr(
         plugin_installer,
         "detect_running_ides",
+        lambda: [SimpleNamespace(id="vscode", exe="/snap/code/240/usr/share/code/code")],
+    )
+    monkeypatch.setattr(
+        "koruide.ide.detect_running_ides",
         lambda: [SimpleNamespace(id="vscode", exe="/snap/code/240/usr/share/code/code")],
     )
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
@@ -473,6 +483,19 @@ def test_reassert_policy_matrix(
         assert expected_message in decision.skip_message
     else:
         assert decision.skip_message == ""
+
+
+def test_reassert_policy_force_overrides_matching_build_sha() -> None:
+    decision = plugin_installer._decide_reassert_policy(
+        dry_run=False,
+        reassert_enabled=True,
+        force_reassert=True,
+        installed_sha="abc123",
+        expected_sha="abc123",
+    )
+
+    assert decision.should_reassert is True
+    assert decision.skip_message == ""
 
 
 def test_should_retry_missing_vsix_only_for_missing_file_errors(tmp_path: Path) -> None:

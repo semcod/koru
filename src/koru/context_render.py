@@ -397,10 +397,15 @@ def render_dashboard() -> list[str]:
     ]
 
 
+def _autonomy_loop_block(ctx: dict[str, Any]) -> dict[str, Any]:
+    value = ctx.get("autonomy_loop") or {}
+    return value if isinstance(value, dict) else {}
+
+
 def render_autonomy_loop_brief(ctx: dict[str, Any]) -> list[str]:
-    block = ctx.get("autonomy_loop") or {}
+    autonomy_loop = _autonomy_loop_block(ctx)
     lines: list[str] = ["## Autonomy loop (koru autonomous)", ""]
-    snap = block.get("last_run_snapshot")
+    snap = autonomy_loop.get("last_run_snapshot")
     if isinstance(snap, dict) and snap:
         lines.append("_Last completed cycle (`.planfile/.koru/autonomy-telemetry.json`):_")
         lines.append("")
@@ -414,13 +419,13 @@ def render_autonomy_loop_brief(ctx: dict[str, Any]) -> list[str]:
             "`koru autonomous up` cycle._",
         )
         lines.append("")
-    hints = block.get("environment_hints") or {}
+    hints = autonomy_loop.get("environment_hints") or {}
     if hints:
         lines.append("Relevant process environment (only non-empty keys):")
         for key in sorted(hints):
             lines.append(f"- `{key}`={hints[key]!r}")
         lines.append("")
-    tf = block.get("telemetry_file")
+    tf = autonomy_loop.get("telemetry_file")
     if tf:
         lines.append(f"Telemetry path: `{tf}`")
         lines.append("")

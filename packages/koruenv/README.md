@@ -10,6 +10,7 @@ package, so environment policy can evolve independently.
 - `koruenv env <ide> <instance>`: emit environment exports for one strict lane
 - `koruenv run <ide> <instance> -- <command> ...`: run any command in lane env
 - `koruenv status <ide> <instance>`: run `koru autopilot status --explain` in lane env
+- `koruenv --log-format jsonl ...`: emit structured debug events
 
 ## Install (from monorepo)
 
@@ -30,4 +31,18 @@ PowerShell:
 ```powershell
 koruenv env vscode vscode-main --shell powershell | Invoke-Expression
 koruenv status vscode vscode-main
+```
+
+## Logging contract
+
+`koruenv` supports `--log-format human|jsonl`.
+
+In `jsonl`, events include the standard fields:
+
+- `ts`, `corr`, `component`, `level`, `action`, `result`, `rc`
+
+Example:
+
+```bash
+koruenv --log-format jsonl env cursor cursor-main --shell bash
 ```

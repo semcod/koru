@@ -3,12 +3,14 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
+from unittest.mock import patch
 
 from koru import cli_scan
 from koru.scan import (
@@ -1065,6 +1067,66 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             )
             out = scan_semcod_quality_artifacts(project)
             self.assertTrue(any(s.signal == "redsl_report" for s in out))
+
+    def test_metrun_report_emits_when_bottlenecks_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "metrun.toon.yaml").write_text(
+                "SUMMARY:\n  bottlenecks: 2\n  top_score: 9.5\n  top_name: slow_fn\n"
+                "BOTTLENECKS[2]:\n  slow_fn score=9.5\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            metrun = next(s for s in out if s.signal == "metrun_report")
+            self.assertEqual(metrun.priority, "high")
+            self.assertIn("slow_fn", metrun.title)
+
+    def test_pfix_diagnose_emits_when_critical_errors_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".pfix").mkdir()
+            (project / ".pfix" / "diagnose.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "category": "python",
+                            "check_name": "venv",
+                            "status": "error",
+                            "message": "missing venv",
+                            "abs_path": "src/app.py",
+                        },
+                        {"category": "deps", "check_name": "pip", "status": "ok"},
+                    ],
+                ),
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            pfix = next(s for s in out if s.signal == "pfix_diagnose")
+            self.assertIn("src/app.py", pfix.files)
+            self.assertEqual(pfix.priority, "normal")
+
+    def test_resolve_scan_paths_merges_env_and_explicit(self) -> None:
+        from koru.scan import resolve_scan_paths
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            with patch.dict(os.environ, {"KORU_SCAN_PATHS": "src/a.py,tests"}):
+                paths = resolve_scan_paths(
+                    project,
+                    explicit_paths=("src/b.py",),
+                )
+            self.assertEqual(paths, ("src/a.py", "tests", "src/b.py"))
+
+    def test_resolve_code2llm_source_uses_single_existing_path(self) -> None:
+        from koru.scan import resolve_code2llm_source
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            target = project / "src" / "mod.py"
+            target.parent.mkdir(parents=True)
+            target.write_text("x = 1\n", encoding="utf-8")
+            source = resolve_code2llm_source(project, ("src/mod.py",))
+            self.assertEqual(source, target.resolve())
 
 
 if __name__ == "__main__":

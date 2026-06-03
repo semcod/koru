@@ -21,8 +21,9 @@ in isolation):
   ``KORU_SCAN_SEMCOD_ARTIFACTS=1``: read **jscpd** JSON, **code2llm**
   ``analysis.toon*``, **TestQL** text export, optional **redup** JSON, and
   semcod-style reports from **vallm**, **pyqual**, **prefact**, **regix**,
-  and **redsl** to open backlog tickets for duplication / refactors /
-  validation failures / API regressions.
+  **redsl**, **metrun**, and **pfix** diagnose exports to open backlog tickets for
+  duplication / refactors / validation failures / API regressions / performance
+  hotspots / environment blockers.
 
 The output is dry-run by default (a list of :class:`Suggestion`
 dataclasses); pass ``apply=True`` to ``run_scan`` to persist them as
@@ -1127,6 +1128,127 @@ def _scan_redsl_report(project: Path) -> list[Suggestion]:
     )
 
 
+_METRUN_BOTTLENECKS_RE = re.compile(r"(?m)^BOTTLENECKS\[(?P<count>\d+)\]")
+_METRUN_TOP_SCORE_RE = re.compile(r"(?m)^\s*top_score:\s*(?P<score>[0-9.]+)")
+_METRUN_TOP_NAME_RE = re.compile(r"(?m)^\s*top_name:\s*(?P<name>\S+)")
+
+
+_PFIX_FAIL_STATUSES = frozenset({"critical", "error", "fail", "failed", "failure"})
+
+
+def _count_pfix_diagnose_issues(data: object) -> tuple[int, tuple[str, ...]]:
+    if not isinstance(data, list):
+        return 0, ()
+    count = 0
+    files: list[str] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status") or "").strip().lower()
+        if status not in _PFIX_FAIL_STATUSES:
+            continue
+        count += 1
+        path = str(item.get("abs_path") or item.get("file") or "").strip()
+        if path:
+            files.append(path.replace("\\", "/"))
+    return count, tuple(dict.fromkeys(files))
+
+
+def _scan_pfix_report(project: Path) -> list[Suggestion]:
+    found = _first_existing_artifact(
+        project,
+        (
+            ".pfix/diagnose.json",
+            "pfix-diagnose.json",
+            "diag_report.json",
+        ),
+    )
+    if found is None:
+        return []
+    path, rel = found
+    data = _load_structured_artifact(path)
+    if data is None:
+        return []
+    count, files = _count_pfix_diagnose_issues(data)
+    if count <= 0:
+        count = _sum_structured_counts(
+            data,
+            frozenset(
+                {
+                    "failed",
+                    "failures",
+                    "errors",
+                    "issues",
+                    "findings",
+                    "violations",
+                    "critical",
+                },
+            ),
+        )
+    if count <= 0:
+        return []
+    priority = "high" if count >= 3 else "normal"
+    file_hint = f" Affected paths: {', '.join(files[:5])}." if files else ""
+    return [
+        Suggestion(
+            signal="pfix_diagnose",
+            title="Resolve Pfix environment diagnostic findings",
+            description=(
+                f"`{rel}` reports {count} critical/error diagnostic(s). "
+                f"Run `pfix diagnose --json --output {rel}` (or fix manually), "
+                "then refresh the report before closing the ticket."
+                f"{file_hint}"
+            ),
+            priority=priority,
+            labels=("pfix", "diagnostics", "scan"),
+            files=((rel, *files[:8]) if files else (rel,)),
+        ),
+    ]
+
+
+def _scan_metrun_report(project: Path) -> list[Suggestion]:
+    found = _first_existing_artifact(
+        project,
+        (
+            "project/metrun.toon.yaml",
+            "metrun.toon.yaml",
+            ".metrun/metrun.toon.yaml",
+        ),
+    )
+    if found is None:
+        return []
+    path, rel = found
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    count_match = _METRUN_BOTTLENECKS_RE.search(text)
+    bottlenecks = int(count_match.group("count")) if count_match else 0
+    if bottlenecks <= 0:
+        return []
+    score_match = _METRUN_TOP_SCORE_RE.search(text)
+    top_score = float(score_match.group("score")) if score_match else 0.0
+    name_match = _METRUN_TOP_NAME_RE.search(text)
+    top_name = name_match.group("name") if name_match else "hotspot"
+    priority = "high" if bottlenecks >= 3 or top_score >= 8.0 else "normal"
+    return [
+        Suggestion(
+            signal="metrun_report",
+            title=f"Address Metrun performance bottleneck: {top_name}",
+            description=(
+                f"`{rel}` reports {bottlenecks} bottleneck(s) "
+                f"(top `{top_name}`, score={top_score:.2f}). "
+                "Review the critical path and suggestions in the report, "
+                "then re-run `metrun scan <script>` or `metrun profile` "
+                "and refresh the artifact before closing the ticket."
+            ),
+            priority=priority,
+            labels=("metrun", "performance", "scan"),
+            files=(rel,),
+        ),
+    ]
+
+
 def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     """Quality tickets from semcod-adjacent tool exports."""
     project = project.resolve()
@@ -1141,6 +1263,8 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     out.extend(_scan_prefact_report(project))
     out.extend(_scan_regix_report(project))
     out.extend(_scan_redsl_report(project))
+    out.extend(_scan_metrun_report(project))
+    out.extend(_scan_pfix_report(project))
     return out
 
 
@@ -1179,6 +1303,53 @@ def _filter_suggestions_by_paths(
     if not paths:
         return suggestions
     return [item for item in suggestions if _suggestion_matches_paths(item, paths)]
+
+
+def resolve_scan_paths(
+    project: Path,
+    *,
+    explicit_paths: Sequence[str | Path] | None = None,
+    from_env: bool = True,
+) -> tuple[str, ...] | None:
+    """Merge CLI/env path filters for scoped semcod intake and discovery."""
+    merged: list[str] = []
+    if from_env:
+        raw = os.environ.get("KORU_SCAN_PATHS", "").strip()
+        if raw:
+            for part in re.split(r"[:,]+", raw):
+                normalized = _normalize_scan_filter_path(part)
+                if normalized:
+                    merged.append(normalized)
+    if explicit_paths:
+        for item in explicit_paths:
+            normalized = _normalize_scan_filter_path(item)
+            if normalized:
+                merged.append(normalized)
+    deduped = tuple(dict.fromkeys(merged))
+    return deduped or None
+
+
+def resolve_code2llm_source(project: Path, scope_paths: Sequence[str] | None) -> Path:
+    """Pick a code2llm source root when a single scoped path is requested."""
+    project = project.resolve()
+    if scope_paths and len(scope_paths) == 1:
+        candidate = project / _normalize_scan_filter_path(scope_paths[0])
+        if candidate.exists():
+            return candidate.resolve()
+    return project
+
+
+def apply_scan_path_environ(paths: Sequence[str | Path] | None) -> None:
+    """Publish scoped scan paths for autonomous cycles via ``KORU_SCAN_PATHS``."""
+    if not paths:
+        return
+    normalized = [
+        item
+        for item in (_normalize_scan_filter_path(part) for part in paths)
+        if item
+    ]
+    if normalized:
+        os.environ["KORU_SCAN_PATHS"] = ":".join(normalized)
 
 
 # ---------------------------------------------------------------------------

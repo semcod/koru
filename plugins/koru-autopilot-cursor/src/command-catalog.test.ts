@@ -8,7 +8,10 @@ function assert(condition: unknown, message: string): void {
 
 function testClassifiesCursorSubmitAndPaste(): void {
   assert(classifyCommand("composer.sendToAgent") === "submit", "composer.sendToAgent → submit");
-  assert(classifyCommand("composer.startComposerPrompt2") === "paste", "startComposerPrompt2 → paste");
+  assert(
+    classifyCommand("composer.startComposerPrompt2") === "unknown_chat",
+    "startComposerPrompt2 is fast-path-only, not paste",
+  );
   assert(classifyCommand("workbench.action.chat.submit") === "submit", "chat.submit → submit");
 }
 
@@ -23,6 +26,10 @@ function testUnknownChatBucket(): void {
     "unknown chat hint → unknown_chat",
   );
   assert(classifyCommand("workbench.files.save") === null, "non-chat → null");
+  assert(
+    classifyCommand("workbench.action.terminal.paste") === null,
+    "terminal.paste must not be classified as chat paste",
+  );
 }
 
 function testClassifyCommandsDeduplicates(): void {

@@ -122,6 +122,21 @@ function testSanitizeCursorDiscardsTypeSubmit(): void {
   );
 }
 
+function testSanitizeCursorDiscardsSelectionClipboardPaste(): void {
+  const poisoned = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "cursor",
+    appName: "Cursor",
+    updatedAt: "2026-06-02T20:00:00Z",
+    paste: "editor.action.selectionClipboardPaste",
+  };
+  const sanitized = sanitizeProbeCacheForIde(poisoned, "cursor");
+  assert(
+    sanitized?.paste === undefined,
+    "Cursor: selectionClipboardPaste paste cache must be discarded (reads selection clipboard, not drive text)",
+  );
+}
+
 function testSanitizeCursorPreservesNonTypeSubmit(): void {
   const good = {
     version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
@@ -196,6 +211,7 @@ testBuildFocusOpenCursorFirst();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
 testSanitizeCursorDiscardsTypeSubmit();
+testSanitizeCursorDiscardsSelectionClipboardPaste();
 testSanitizeCursorPreservesNonTypeSubmit();
 testSanitizeCursorDiscardsXdotoolSubmitOnWayland();
 testSanitizeCursorDiscardsHostPlainReturn();

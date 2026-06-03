@@ -14,6 +14,29 @@ import {
 } from "./types";
 
 export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFocus {
+  private isSubmitRequestedForCurrentDrive(): boolean {
+    const trace = this.currentOperationTrace();
+    for (let idx = trace.length - 1; idx >= 0; idx -= 1) {
+      const step = trace[idx];
+      if (step.op !== "drive") {
+        continue;
+      }
+      const submit = step.detail?.submit;
+      if (typeof submit === "boolean") {
+        return submit;
+      }
+    }
+    return true;
+  }
+
+  private directPasteMayImplicitlySubmit(ide: string, command: string): boolean {
+    if (ide !== "cursor") {
+      return false;
+    }
+    const lower = command.toLowerCase();
+    return lower.includes("startcomposerprompt");
+  }
+
   protected async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {
     const ide = this.detectIde();
     const useProbe = this.probeLadderEnabled();
@@ -53,16 +76,25 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
       return { ok: false };
     }
 
-    const clipboard = await this.tryClipboardPaste(text, before, useProbe);
-    if (clipboard.handled) {
+    if (ide !== "cursor") {
+      const clipboard = await this.tryClipboardPaste(text, before, useProbe);
+      if (clipboard.handled) {
+        this.traceOperation({
+          op: "paste",
+          route: "vscode-clipboard",
+          ok: clipboard.result.ok,
+          command: clipboard.result.command,
+          reason: clipboard.result.reason,
+        });
+        return clipboard.result;
+      }
+    } else {
       this.traceOperation({
         op: "paste",
         route: "vscode-clipboard",
-        ok: clipboard.result.ok,
-        command: clipboard.result.command,
-        reason: clipboard.result.reason,
+        ok: false,
+        reason: "clipboard paste skipped on Cursor; use typeText fast path or type command",
       });
-      return clipboard.result;
     }
 
     if (ide === "vscodium" && this.allowVSCodiumHostInputFallback()) {
@@ -85,13 +117,23 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     return typed;
   }
 
-  private static directPasteReadsClipboard(cmd: string): boolean {
-    return (
+  /** Paste commands that read OS/selection clipboard instead of the drive text arg. */
+  static isClipboardReadingPasteCommand(cmd: string): boolean {
+    if (
       cmd === "editor.action.clipboardPasteAction"
+      || cmd === "editor.action.selectionClipboardPaste"
       || cmd === "editor.action.pasteAs"
       || cmd === "execPaste"
       || cmd === "paste"
-    );
+    ) {
+      return true;
+    }
+    const lower = cmd.toLowerCase();
+    return /clipboard.*paste|paste.*clipboard/.test(lower);
+  }
+
+  private static directPasteReadsClipboard(cmd: string): boolean {
+    return SharedAutopilotBridgePaste.isClipboardReadingPasteCommand(cmd);
   }
 
   private async tryDirectPasteCommands(
@@ -106,10 +148,50 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
       this.orderWithServerOverride("paste", buildPasteDirectCommands(ide), cache?.paste),
       existing
     );
+    const submitRequested = this.isSubmitRequestedForCurrentDrive();
     const previousClip = await this.saveClipboard();
     let clipboardSeeded = false;
     try {
       for (const cmd of directCommands) {
+        if (cmd.toLowerCase().includes("terminal.paste")) {
+          this.traceOperation({
+            op: "paste",
+            route: `direct-command:${cmd}`,
+            ok: false,
+            reason: "terminal paste targets the integrated terminal, not chat",
+          });
+          continue;
+        }
+        if (
+          ide === "cursor" &&
+          cmd.toLowerCase().includes("startcomposerprompt")
+        ) {
+          this.traceOperation({
+            op: "paste",
+            route: `direct-command:${cmd}`,
+            ok: false,
+            reason: "startComposerPrompt* is reserved for the Cursor composer fast path",
+          });
+          continue;
+        }
+        if (ide === "cursor" && SharedAutopilotBridgePaste.directPasteReadsClipboard(cmd)) {
+          this.traceOperation({
+            op: "paste",
+            route: `direct-command:${cmd}`,
+            ok: false,
+            reason: "clipboard-reading paste is unsafe on Cursor (targets active TextEditor, not chat webview)",
+          });
+          continue;
+        }
+        if (!submitRequested && this.directPasteMayImplicitlySubmit(ide, cmd)) {
+          this.traceOperation({
+            op: "paste",
+            route: `direct-command:${cmd}`,
+            ok: false,
+            reason: "command may implicitly submit/toggle chat and was skipped because submit=false",
+          });
+          continue;
+        }
         const readsClipboard = SharedAutopilotBridgePaste.directPasteReadsClipboard(cmd);
         if (readsClipboard) {
           const seeded = await this.writeClipboardVerified(text);

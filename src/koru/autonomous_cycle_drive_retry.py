@@ -217,13 +217,16 @@ def _drive_autopilot_once(
     submit: bool,
     autopilot_ide: str,
     require_plugin: bool,
+    strategy_hint: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
-    reply = client.drive(
-        prompt,
-        submit=submit,
-        ide=autopilot_ide,
-        require_plugin=require_plugin,
-    )
+    drive_kwargs: dict[str, Any] = {
+        "submit": submit,
+        "ide": autopilot_ide,
+        "require_plugin": require_plugin,
+    }
+    if strategy_hint:
+        drive_kwargs["strategy_hint"] = strategy_hint
+    reply = client.drive(prompt, **drive_kwargs)
     ok = bool(reply.get("ok", True))
     if ok or require_plugin:
         return reply, ok
@@ -404,6 +407,7 @@ def _run_drive_retry_loop(
     require_plugin: bool,
     attempts: int,
     engine: EnvironmentDecisionEngine,
+    strategy_hint: str | None = None,
     _hp: Callable[..., Any],
 ) -> tuple[dict[str, Any], bool]:
     previous_signature: str | None = None
@@ -414,6 +418,7 @@ def _run_drive_retry_loop(
             submit=submit,
             autopilot_ide=autopilot_ide,
             require_plugin=require_plugin,
+            strategy_hint=strategy_hint,
         )
         if ok:
             break
@@ -470,6 +475,11 @@ def _execute_autopilot_drive(
     require_plugin = _resolve_drive_plugin_requirement(client, autopilot_ide)
     attempts = _max_drive_retries()
     engine = _active_decision_engine(project, autopilot_ide)
+    from koru.autonomous_submit_strategy import consume_pending_submit_strategy_hint
+
+    strategy_hint = consume_pending_submit_strategy_hint(state)
+    if strategy_hint:
+        _hp(f"  autopilot: submit strategy hint={strategy_hint}")
     reply, ok = _run_drive_retry_loop(
         client,
         prompt=decision.prompt,
@@ -478,6 +488,7 @@ def _execute_autopilot_drive(
         require_plugin=require_plugin,
         attempts=attempts,
         engine=engine,
+        strategy_hint=strategy_hint,
         _hp=_hp,
     )
 

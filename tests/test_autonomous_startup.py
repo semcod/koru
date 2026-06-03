@@ -33,6 +33,78 @@ def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(
     assert source.startswith("running:")
 
 
+def test_resolve_agent_lane_prefers_focused_ide_over_terminal_hint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=42, exe="/usr/bin/cursor"),
+        RunningIDE(id="vscode", label="VS Code", pid=43, exe="/usr/bin/code"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._focused_agent_lane_from_desktop", return_value="cursor"),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscode"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+
+    assert lane == "cursor"
+    assert source == "focused"
+
+
+def test_resolve_agent_lane_focus_beats_conflicting_explicit_instance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=42, exe="/usr/bin/cursor"),
+        RunningIDE(id="vscode", label="VS Code", pid=43, exe="/usr/bin/code"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._focused_agent_lane_from_desktop", return_value="cursor"),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value=None),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+
+    assert lane == "cursor"
+    assert source == "focused"
+
+
+def test_resolve_agent_lane_focus_maps_to_project_lane_suffix(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=42, exe="/usr/bin/cursor"),
+        RunningIDE(id="vscode", label="VS Code", pid=43, exe="/usr/bin/code"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._focused_agent_lane_from_desktop", return_value="cursor"),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value=None),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: "cursor-main" if lane_id == "cursor" else lane_id,
+        )
+
+    assert lane == "cursor-main"
+    assert source == "focused"
+
+
 def test_resolve_autopilot_ide_for_autonomous_returns_string_lane() -> None:
     from koru.ide_router import resolve_ide_route
 
@@ -165,6 +237,27 @@ def test_resolve_agent_lane_terminal_hint_overrides_conflicting_env_instance(
         )
     assert lane == "vscodium"
     assert source == "terminal:over-env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_preserves_suffixed_explicit_instance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "cursor-main")
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="cursor"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "cursor-main"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
 
 
 def test_resolve_agent_lane_prefers_vscodium_target_over_generic_vscode_terminal(

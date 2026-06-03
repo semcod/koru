@@ -239,6 +239,8 @@ def check_plugin_live_host_stale_issue(
   expected_version = plugin.get("expected_version")
   if not _plugin_install_matches_expected(daemon, installed_version, expected_version):
     return []
+  if _plugin_live_connection_matches_expected(plugin):
+    return []
   rejected = _stale_rejected_plugins(daemon, ide, expected_version)
   if not rejected:
     return []
@@ -251,6 +253,18 @@ def _plugin_install_matches_expected(
   expected_version: Any,
 ) -> bool:
   return bool(daemon.get("running") and installed_version and installed_version == expected_version)
+
+
+def _plugin_live_connection_matches_expected(plugin: dict[str, Any]) -> bool:
+  connected_version = str(plugin.get("connected_version") or "").strip()
+  expected_version = str(plugin.get("expected_version") or "").strip()
+  if not connected_version or not expected_version or connected_version != expected_version:
+    return False
+  expected_build = str(plugin.get("expected_build_sha") or "").strip()
+  if not expected_build:
+    return True
+  connected_build = str(plugin.get("connected_build_sha") or "").strip()
+  return bool(connected_build and connected_build == expected_build)
 
 
 def _stale_rejected_plugins(

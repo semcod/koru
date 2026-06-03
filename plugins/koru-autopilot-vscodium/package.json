@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscodium",
   "displayName": "koru autopilot (VSCodium)",
   "description": "Bridge between VSCodium / Code - OSS and the koru autopilot daemon. Standalone VSIX for VSCodium / Code - OSS only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -88,6 +88,11 @@
           "type": "boolean",
           "default": true,
           "description": "After connecting to the koru daemon, open/focus the existing AI chat surface without sending text. The extension uses the configured chatOpenCommands/default focus ladder and does not request a new agent/chat mode."
+        },
+        "koruAutopilot.quietLayoutBeforeChatFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Before focusing chat, close active utility editors such as Settings/Search/Extensions and hide the bottom Panel (Terminal/Output/Problems) so paste/submit cannot land there. Side Bar and Auxiliary Bar are left visible because chat often lives there."
         },
         "koruAutopilot.probeLadder": {
           "type": "boolean",
@@ -189,8 +194,8 @@
     "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/ides/vscodium.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
-    "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-vscodium",
-    "package": "vsce package --no-dependencies --out koru-autopilot-vscodium-${npm_package_version}.vsix",
+    "prepackage": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-vscodium",
+    "package": "vsce package --no-dependencies --out koru-autopilot-vscodium-$(node -p \"require('./package.json').version\").vsix",
     "prepublish": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-vscodium",
     "publish": "vsce publish --no-dependencies",
     "clean": "rm -rf out node_modules src/_shared *.vsix"
@@ -203,6 +208,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "aeef985c95d21fd2"
+    "sha": "b2b5737f434dd14d"
   }
 }

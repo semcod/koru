@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from unittest import mock
 
@@ -210,6 +211,34 @@ def test_action_status_explain_skipped_with_plugins(monkeypatch: pytest.MonkeyPa
     
     assert result == 0
     mock_evaluate.assert_not_called()
+
+
+def test_action_status_emits_jsonl_contract(capsys: pytest.CaptureFixture) -> None:
+    args = argparse.Namespace(
+        explain=False,
+        project=Path.cwd(),
+        ide="cursor",
+        log_format="jsonl",
+    )
+
+    mock_client = mock.Mock()
+    mock_client.is_running.return_value = True
+    mock_client.socket_path = Path("/tmp/test.sock")
+    mock_client.status.return_value = {"plugins": [], "running": True}
+
+    result = action_status(
+        args,
+        client_fn=mock.Mock(return_value=mock_client),
+        daemon_start_hint_fn=mock.Mock(),
+        normalize_ide_fn=mock.Mock(),
+        resolve_target_ide_fn=mock.Mock(),
+    )
+
+    assert result == 0
+    err_lines = [line for line in capsys.readouterr().err.splitlines() if line.strip().startswith("{")]
+    assert err_lines
+    payload = json.loads(err_lines[0])
+    assert set(["ts", "corr", "component", "level", "action", "result"]).issubset(payload)
 
 
 # ---------------------------------------------------------------------------

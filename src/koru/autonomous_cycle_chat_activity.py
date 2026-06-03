@@ -125,19 +125,35 @@ def _recent_message_sent_allows_redrive(
 
     has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
     last_kind = str(getattr(state, "last_driven_kind", "") or "")
+    no_change_after_drive = _last_drive_verdict_no_change(state)
+    ticket_is_llm_ready = _waiting_ticket_has_label(project, queue_result, "llm-ready")
     if not (
         last_type == "message.sent"
         and not has_received
         and getattr(queue_result, "last_status", "") == "waiting_input"
         and last_kind != "escalation_prompt"
-        and not _waiting_ticket_has_label(project, queue_result, "llm-ready")
+        and (not ticket_is_llm_ready or no_change_after_drive)
     ):
         return False
+    reason = (
+        "no_change after drive"
+        if no_change_after_drive
+        else "message.sent without message.received"
+    )
     report_progress(
-        "- autopilot redrive allowed (message.sent without "
-        f"message.received age={age_label} ticket={waiting_ticket})",
+        "- autopilot redrive allowed ("
+        f"{reason} age={age_label} ticket={waiting_ticket})",
     )
     return True
+
+
+def _last_drive_verdict_no_change(state: AutoloopState) -> bool:
+    verdict = getattr(state, "last_drive_verdict", None)
+    return isinstance(verdict, dict) and str(verdict.get("outcome") or "") == "no_change"
+
+
+def _recent_events_have_response(recent_events: list[dict[str, Any]]) -> bool:
+    return any(str(event.get("type") or "") == "message.received" for event in recent_events)
 
 
 def _upsert_reflection_needs_input_ticket(
@@ -343,6 +359,7 @@ def _check_recent_drive_ack_skip(
     cooldown: float,
     waiting_ticket: str,
     ide: str | None,
+    recent_events: list[dict[str, Any]],
     cycle_telemetry: dict[str, Any],
     report_progress: Any,
 ) -> bool:
@@ -353,6 +370,13 @@ def _check_recent_drive_ack_skip(
     )
     if drive_ack_age is not None and drive_ack_age <= cooldown:
         drive_ack_age_label = f"{drive_ack_age:.0f}s"
+        if _last_drive_verdict_no_change(state) and not _recent_events_have_response(recent_events):
+            cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+            report_progress(
+                "- autopilot redrive allowed (recent_drive_ack had no_change verdict "
+                f"and no message.received age={drive_ack_age_label} ticket={waiting_ticket})",
+            )
+            return False
         cycle_telemetry["autopilot_skipped_chat_activity"] = True
         cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
         report_progress(
@@ -509,16 +533,6 @@ def _skip_due_to_recent_chat_activity(
     ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
 
-    if _check_recent_drive_ack_skip(
-        state,
-        cooldown,
-        waiting_ticket,
-        ide,
-        cycle_telemetry,
-        report_progress,
-    ):
-        return True
-
     recent_events = _recent_chat_activity_events(
         state,
         ide=ide,
@@ -536,6 +550,17 @@ def _skip_due_to_recent_chat_activity(
         waiting_ticket,
     )
     reflection_events = _state_events_to_chat_events(recent_events)
+
+    if _check_recent_drive_ack_skip(
+        state,
+        cooldown,
+        waiting_ticket,
+        ide,
+        recent_events,
+        cycle_telemetry,
+        report_progress,
+    ):
+        return True
 
     if _check_chat_intake_skip(
         project,

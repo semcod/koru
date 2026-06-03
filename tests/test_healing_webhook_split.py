@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -172,3 +173,40 @@ def test_bootstrap_wires_expected_routes() -> None:
     route_paths = {route.path for route in app.routes}
     for path in {"/healthz", "/metrics", "/history", "/alertmanager", "/probe-failure", "/tickets"}:
         assert path in route_paths
+
+
+def test_run_docker_uses_expected_command(monkeypatch) -> None:
+    pytest.importorskip("fastapi")
+    pytest.importorskip("prometheus_client")
+    module = _load_module(
+        "healing_app_main",
+        Path("services/healing-webhook/app.py"),
+    )
+    captured: list[list[str]] = []
+
+    def fake_run(command, **_kwargs):  # noqa: ANN001
+        captured.append(list(command))
+        return subprocess.CompletedProcess(command, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    code, out, err = module._run_docker("image:tag", ["tool", "arg"], timeout=7)
+
+    assert code == 0
+    assert out == "ok"
+    assert err == ""
+    assert captured == [
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--network=c2004-quality-net",
+            "-v",
+            f"{module.REPO_PATH}:/mnt/project:rw",
+            "-w",
+            "/mnt/project",
+            "image:tag",
+            "tool",
+            "arg",
+        ]
+    ]

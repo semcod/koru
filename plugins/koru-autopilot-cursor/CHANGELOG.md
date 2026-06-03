@@ -4,6 +4,50 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.4] — 2026-06-02
+
+### Fixed
+- **Cursor drive hid the chat panel and pasted into the terminal.**
+  `workbench.panel.chat` is a toggle — when Composer was already visible
+  it closed the panel the user was watching, so paste/submit targeted an
+  invisible webview. The command is now treated like `composer.openAsPane`:
+  excluded from Cursor focus_open defaults, invalidated in probe cache,
+  and covered by the input-only preflight when toggles are in the ladder.
+- **`workbench.action.terminal.paste` no longer wins the paste ladder.**
+  Running `koru auto` from the integrated terminal caused the command
+  catalog to classify `terminal.paste` as a chat paste candidate; cached
+  as winner it pasted into the terminal instead of Composer. Terminal
+  paste is now blocked in the daemon picker, plugin direct-paste path,
+  and Cursor probe-cache sanitization.
+
+## [0.2.3] — 2026-06-02
+
+### Fixed
+- **Cursor Wayland submit_unverified: toxic paste cache + submit verify hardening.**
+  Block `editor.action.selectionClipboardPaste` and other clipboard-reading
+  paste commands from the probe cache (they ignore drive text). Composer
+  fast path now retries with `workbench.action.chat.typeText` when
+  `startComposerPrompt*` paste fails bubble verification. Re-anchor bubble
+  DB before each registered submit candidate; extend default verify poll to
+  4s (`koruAutopilot.submitVerifyTimeoutMs`). On Wayland, skip xdotool
+  active-window geometry for host-click and prefer ydotool/wtype for
+  submit-deselect End keys.
+
+## [0.2.2] — 2026-06-02
+
+### Fixed
+- **Cursor drive: new chat opened but prompt not visible / submit_unverified.**
+  A regression rewrote the composer fast path to require
+  `composer.focusComposer` + `pasteText` + `composer.sendToAgent`. On
+  Cursor 1.x builds that expose `composer.startComposerPrompt` but not
+  that pair, the fast path was skipped and the probe ladder cached
+  `composer.startComposerPrompt` as the paste winner — opening a fresh
+  Composer tab while the user watched another chat. Restored the
+  `startComposerPrompt2` / `startComposerPrompt` fast path (paste once,
+  then registered `workbench.action.chat.*` submit + `cursorDiskKV`
+  verify). Probe cache and direct-paste ladder no longer use
+  `startComposerPrompt*` outside the fast path.
+
 ## [0.1.82] — 2026-05-25
 
 ### Fixed

@@ -48,6 +48,20 @@ function testSubmitSanitize() {
   assert(entry?.submit === "workbench.action.chat.submit", "registered chat submit retained");
 }
 
+function testFocusOpenSanitizeRejectsSettings() {
+  const entry = sanitizeProbeCacheForIde(
+    {
+      version: PROBE_CACHE_VERSION,
+      ide: "vscodium",
+      appName: "VSCodium",
+      focusOpen: "workbench.action.chat.openChatEmptyStateSettings",
+      updatedAt: "",
+    },
+    "vscodium",
+  );
+  assert(entry?.focusOpen === undefined, "settings focus_open cache must be cleared");
+}
+
 function testTrustFocusOpen() {
   const file = captureEditorSnapshot(undefined);
   assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium trusts focus open");
@@ -71,6 +85,7 @@ function testFocusOpenFiltersQuickChatCommands() {
       "workbench.action.openQuickChat",
       "workbench.action.quickchat.openInChatView",
       "workbench.action.chat.openInNewWindow",
+      "workbench.action.chat.openChatEmptyStateSettings",
       "workbench.action.chat.focusInput",
     ],
     "vscodium",
@@ -86,6 +101,7 @@ function run() {
   testDetectIdeFromHostNameVariants();
   testPreferCtrlSubmit();
   testSubmitSanitize();
+  testFocusOpenSanitizeRejectsSettings();
   testTrustFocusOpen();
   testSubmitCommandsTryRegisteredSubmitFirst();
   testFocusOpenAvoidsPanelOpenCommands();

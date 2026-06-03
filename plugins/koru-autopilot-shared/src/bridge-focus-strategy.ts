@@ -58,6 +58,7 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
 
   private async _buildFocusChatContext(primary: string[]): Promise<FocusChatContext> {
     const ide = this.detectIde();
+    await this.quietIDELayoutForChatFocus();
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const useProbe = this.probeLadderEnabled();

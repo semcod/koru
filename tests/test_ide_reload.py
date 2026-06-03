@@ -27,6 +27,7 @@ def test_keyboard_fallback_when_plugin_missing_default_off(
     monkeypatch.delenv("KORU_AUTOPILOT_VISIBLE_TYPING", raising=False)
     assert autonomy_env.keyboard_fallback_when_plugin_missing("cursor") is False
     assert autonomy_env.plugin_required_for_ide("cursor") is True
+    assert autonomy_env.plugin_required_for_ide("cursor-main") is True
 
 
 def test_keyboard_fallback_when_plugin_missing_opt_in(
@@ -136,7 +137,8 @@ def test_try_reload_does_not_call_reuse_window_by_default(
         "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to protect the user's open workspace"
     )
     assert outcome.ok is False
-    assert "reuse-window fallback disabled" in (outcome.detail or "")
+    assert "command-palette reload disabled by default" in (outcome.detail or "")
+    assert "KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD=1" in (outcome.detail or "")
 
 
 def test_try_reload_calls_reuse_window_when_opted_in(

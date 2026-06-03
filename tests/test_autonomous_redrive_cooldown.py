@@ -242,6 +242,36 @@ def test_skip_when_recent_successful_drive_for_same_waiting_ticket(
     assert any("recent_drive_ack" in line for line in logs)
 
 
+def test_no_skip_when_recent_drive_ack_has_no_change_verdict_without_response(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "300")
+
+    state = mock.Mock()
+    state.stagnation_streak = 1
+    state.autopilot_events = []
+    state.last_driven_kind = "ticket_prompt"
+    state.last_message_sent_ts = time.time() - 20.0
+    state.last_driven_ticket_id = "STARTER-184"
+    state.last_drive_verdict = {"outcome": "no_change", "confidence": 0.1}
+
+    telemetry: dict[str, Any] = {}
+    logs: list[str] = []
+    skipped = _skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=_FakeQueue(ticket="STARTER-184"),
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert skipped is False
+    assert telemetry.get("autopilot_recent_drive_ack_weak_no_response") is True
+    assert any("no_change verdict" in line for line in logs)
+
+
 def test_recent_successful_drive_fallback_does_not_block_different_ticket(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

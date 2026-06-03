@@ -1,6 +1,8 @@
+import * as vscode from "vscode";
 import { SharedAutopilotBridgeNetwork } from "./bridge-network";
 import { debugLog } from "./bridge-config";
 import { CursorBubbleAdapter } from "../cursor-bubble-adapter";
+import { cursorBubbleTextMatchesPrompt } from "./submit-match";
 
 export abstract class SharedAutopilotBridgeWatcher extends SharedAutopilotBridgeNetwork {
   protected cursorBubbleAnchorRowid: number | null = null;
@@ -22,8 +24,9 @@ export abstract class SharedAutopilotBridgeWatcher extends SharedAutopilotBridge
       debugLog("CURSOR_BUBBLE_VERIFY_DB_UNAVAILABLE");
       return null;
     }
-    const tail = originalText.trim().slice(-40);
-    const deadline = Date.now() + 2500;
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const timeoutMs = Math.max(500, Math.trunc(cfg.get<number>("submitVerifyTimeoutMs", 4000)));
+    const deadline = Date.now() + timeoutMs;
     let attempts = 0;
     let lastRows: number = 0;
     while (Date.now() <= deadline) {
@@ -37,12 +40,17 @@ export abstract class SharedAutopilotBridgeWatcher extends SharedAutopilotBridge
       }
       lastRows = rows.length;
       for (const row of rows) {
-        if (row.type === 1 && typeof row.text === "string" && row.text.includes(tail)) {
+        if (row.type !== 1 || typeof row.text !== "string") {
+          continue;
+        }
+        const match = cursorBubbleTextMatchesPrompt(row.text, originalText);
+        if (match.matched) {
           debugLog("CURSOR_BUBBLE_VERIFY_MATCH", {
             attempts,
             rowid: row.cursor,
             bubbleId: row.bubbleId,
             textLength: row.text.length,
+            mode: match.mode,
           });
           return { matched: true, newUserBubbles: rows.length };
         }
@@ -52,7 +60,7 @@ export abstract class SharedAutopilotBridgeWatcher extends SharedAutopilotBridge
     debugLog("CURSOR_BUBBLE_VERIFY_NO_MATCH", {
       attempts,
       anchor,
-      tailLength: tail.length,
+      promptLength: originalText.trim().length,
       newUserBubbles: lastRows,
     });
     return { matched: false, newUserBubbles: lastRows };

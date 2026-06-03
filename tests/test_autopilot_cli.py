@@ -40,6 +40,13 @@ def test_autopilot_parser_module_preserves_drive_and_trace_options() -> None:
     assert trace_args.limit == 3
 
 
+def test_autopilot_parser_accepts_log_format_global_flag() -> None:
+    parser = build_autopilot_parser()
+    args = parser.parse_args(["--log-format", "jsonl", "status"])
+    assert args.log_format == "jsonl"
+    assert args.action == "status"
+
+
 def test_drive_without_daemon_errors(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     socket = tmp_path / "missing.sock"
     rc = autopilot_main(["--socket", str(socket), "drive", "hello"])
@@ -705,6 +712,7 @@ def test_install_plugin_dry_run_auto_detect_from_term_program(
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
     monkeypatch.setattr(install_plugin_cli, "detect_terminal_host_ide_id", lambda: None)
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(
         install_plugin_cli.shutil,
         "which",
@@ -773,6 +781,91 @@ def test_install_plugin_auto_detect_ambiguous_running_ides_errors(
     assert "multiple supported IDEs detected" in err
 
 
+def test_resolve_plugin_editor_bin_skips_appimage_mount_in_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    appimage = tmp_path / ".mount_cursor" / "usr" / "bin" / "cursor"
+    appimage.parent.mkdir(parents=True)
+    appimage.write_text("#!/bin/sh\n", encoding="utf-8")
+    appimage.chmod(0o755)
+    system_cursor = tmp_path / "usr" / "share" / "cursor" / "bin" / "cursor"
+    system_cursor.parent.mkdir(parents=True)
+    system_cursor.write_text("#!/bin/sh\n", encoding="utf-8")
+    system_cursor.chmod(0o755)
+
+    monkeypatch.setattr(
+        install_plugin_cli.shutil,
+        "which",
+        lambda name: str(appimage) if name == "cursor" else None,
+    )
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "IDE_CLI_FALLBACKS",
+        {"cursor": (str(system_cursor),)},
+    )
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
+
+    assert install_plugin_cli.resolve_plugin_editor_bin("cursor") == str(system_cursor.resolve())
+
+
+def test_resolve_plugin_editor_bin_skips_appimage_mount_for_cli_install(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    appimage = tmp_path / ".mount_cursor" / "usr" / "share" / "cursor" / "cursor"
+    appimage.parent.mkdir(parents=True)
+    appimage.write_text("#!/bin/sh\n", encoding="utf-8")
+    appimage.chmod(0o755)
+    path_cursor = tmp_path / "usr" / "bin" / "cursor"
+    path_cursor.parent.mkdir(parents=True)
+    path_cursor.write_text("#!/bin/sh\n", encoding="utf-8")
+    path_cursor.chmod(0o755)
+
+    monkeypatch.setattr(
+        install_plugin_cli.shutil,
+        "which",
+        lambda name: str(path_cursor) if name == "cursor" else None,
+    )
+    monkeypatch.setattr(
+        "koruide.ide.detect_running_ides",
+        lambda: [
+            SimpleNamespace(
+                id="cursor",
+                label="Cursor",
+                pid=99,
+                exe=str(appimage),
+            ),
+        ],
+    )
+    monkeypatch.setattr(install_plugin_cli, "IDE_CLI_FALLBACKS", {})
+
+    assert install_plugin_cli.resolve_plugin_editor_bin("cursor") == str(path_cursor)
+
+
+def test_resolve_plugin_editor_bin_skips_snap_app_executable_for_cli_install(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        install_plugin_cli.shutil,
+        "which",
+        lambda name: "/usr/bin/code" if name == "code" else None,
+    )
+    monkeypatch.setattr(
+        "koruide.ide.detect_running_ides",
+        lambda: [
+            SimpleNamespace(
+                id="vscode",
+                label="VS Code",
+                pid=99,
+                exe="/snap/code/242/usr/share/code/code",
+            ),
+        ],
+    )
+
+    assert install_plugin_cli.resolve_plugin_editor_bin("vscode") == "/usr/bin/code"
+
+
 def test_install_plugin_exec_success_json_payload(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
@@ -816,6 +909,7 @@ def test_install_plugin_vscodium_dry_run_uses_codium_cli(
         "which",
         lambda name: "/usr/bin/codium" if name == "codium" else None,
     )
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_plugin_cli, "resolve_plugin_vsix_path", lambda _p: vsix)
 
     rc = autopilot_main(["install-plugin", "--ide", "vscodium", "--dry-run", "--format", "json"])

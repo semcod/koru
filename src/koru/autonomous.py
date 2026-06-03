@@ -972,6 +972,9 @@ def _parse_autonomous_args(argv: list[str], *, invoked_as_auto: bool) -> argpars
     args._auto_user_options = auto_user_options
     _apply_replace_existing_flags(args, invoked_as_auto)
     _autonomous_cli_config.apply_autonomy_strategy_defaults(args)
+    from koru.scan import apply_scan_path_environ
+
+    apply_scan_path_environ(getattr(args, "paths", None))
     return args
 
 

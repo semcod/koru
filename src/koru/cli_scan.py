@@ -52,7 +52,7 @@ def build_scan_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Include semcod-style quality exports (jscpd JSON, code2llm analysis.toon*, "
-            "testql_api_results.json, redup/regix/redsl/pyqual/prefact/vallm reports). "
+            "testql_api_results.json, redup/regix/redsl/pyqual/prefact/vallm/metrun/pfix reports). "
             "Otherwise only when KORU_SCAN_SEMCOD_ARTIFACTS is truthy."
         ),
     )

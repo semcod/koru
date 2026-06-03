@@ -44,8 +44,15 @@ def test_structured_cycle_report_emits_diagnostics_and_plans() -> None:
 
     # Verify ACTION lines contain correct commands/notes
     action_msgs = [msg for cat, msg in emitted if cat == "ACTION"]
-    assert any("[manual] Reload antigravity IDE window: ide reload-window antigravity" in msg for msg in action_msgs)
-    assert any("[manual] Connect autopilot plugin for antigravity: ide connect-plugin antigravity" in msg for msg in action_msgs)
+    assert any(
+        "[manual] Reload antigravity IDE window: ide reload-window antigravity" in msg
+        for msg in action_msgs
+    )
+    assert any(
+        "[manual] Connect autopilot plugin for antigravity: ide connect-plugin antigravity"
+        in msg
+        for msg in action_msgs
+    )
 
     # Verify action objects are built properly
     assert len(actions) > 0

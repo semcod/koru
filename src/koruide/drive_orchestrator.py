@@ -313,9 +313,10 @@ class DriveOrchestrator:
         plugin_ide: str | None,
     ) -> bool:
         """Allow a short grace window for late ``message.sent`` plugin events."""
-        if not submit_requested or not plugin_ok:
+        if not submit_requested:
             return False
-        if str(plugin_ide or info.get("ide") or "").lower() != "vscodium":
+        ide = str(plugin_ide or info.get("ide") or "").lower()
+        if ide not in {"vscodium", "cursor"}:
             return False
         return str(info.get("verification") or "").lower() == "submit_unverified"
 

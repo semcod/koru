@@ -180,15 +180,18 @@ def _plugin_gate_status(
     cycle_telemetry["autopilot_skipped_plugin_missing"] = True
     cycle_telemetry["autopilot_skipped_plugin_blocker"] = blocker
     cycle_telemetry["autopilot_skipped_plugin_missing_reason"] = plugin_reason
-    if blocker == "plugin_version_mismatch" and plugin_reason_requires_reload(plugin_reason):
-        recovered = _attempt_plugin_gate_recovery(
-            project,
-            client,
-            autopilot_ide,
-            plugin_reason,
-            _hp,
-        )
-        cycle_telemetry["autopilot_plugin_recovery_attempted"] = recovered
+    recovered = _attempt_plugin_gate_recovery(
+        project,
+        client,
+        autopilot_ide,
+        plugin_reason,
+        _hp,
+    )
+    cycle_telemetry["autopilot_plugin_recovery_attempted"] = recovered
+    if recovered:
+        plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
+        if plugin_ok:
+            return None
     _emit_autopilot_preflight_skip(
         project=project,
         cycle=cycle,
@@ -226,6 +229,7 @@ def _attempt_plugin_gate_recovery(
         _restore_reuse_window_reload,
         _temporary_reuse_window_reload_if_same_workspace,
     )
+    from koru.autonomous_readiness import attempt_plugin_gate_recovery
     from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
 
     snapshot = _temporary_reuse_window_reload_if_same_workspace(
@@ -234,19 +238,40 @@ def _attempt_plugin_gate_recovery(
         project,
         plugin_reason,
     )
-    try:
-        outcome = try_reload_vscode_family_ide(autopilot_ide, project=project)
-    finally:
-        _restore_reuse_window_reload(snapshot)
 
-    if outcome.attempted and outcome.ok:
-        _hp(
-            "  → autopilot recovery: requested IDE reload/reconnect; "
-            "the next cycle will re-check the plugin session.",
-        )
+    def _reload() -> bool:
+        try:
+            outcome = try_reload_vscode_family_ide(autopilot_ide, project=project)
+        finally:
+            _restore_reuse_window_reload(snapshot)
+        if outcome.attempted and outcome.ok:
+            _hp(
+                "  → autopilot recovery: requested IDE reload/reconnect; "
+                "re-checking plugin session.",
+            )
+            return True
+        detail = outcome.detail or outcome.method or "reload was not available"
+        _hp(f"  → autopilot recovery: automatic reload failed ({detail})")
+        return False
+
+    def _wait(_timeout: float) -> bool:
+        ok, _reason = _client_has_usable_plugin(client, autopilot_ide)
+        return ok
+
+    ok_after, reason_after = attempt_plugin_gate_recovery(
+        client,
+        autopilot_ide,
+        project,
+        plugin_ok_fn=lambda: _client_has_usable_plugin(client, autopilot_ide),
+        reload_window=_reload,
+        wait_connected=_wait,
+        attempts=1 if plugin_reason_requires_reload(plugin_reason) else 3,
+    )
+    if ok_after:
+        _hp("  → autopilot recovery: plugin connected after reconnect pipeline")
         return True
-    detail = outcome.detail or outcome.method or "reload was not available"
-    _hp(f"  → autopilot recovery: automatic reload failed ({detail})")
+    if reason_after:
+        _hp(f"  → autopilot recovery: still not connected ({reason_after})")
     return True
 
 
@@ -283,7 +308,13 @@ def _terminal_conflict_status(
         action_hint="align autopilot lane with active IDE",
     )
     _hp(f"- autopilot skipped (ide_mismatch: {conflict_reason})")
+    _hp(
+        "  → lane/terminal mismatch: run `koru auto` from the target IDE integrated "
+        "terminal, pick the same IDE at `coru` prompt, or set "
+        "KORU_AUTOPILOT_ALLOW_CROSS_IDE=1 if intentional.",
+    )
     cycle_telemetry["autopilot_skipped_ide_mismatch"] = True
+    cycle_telemetry["autopilot_skipped_ide_mismatch_reason"] = conflict_reason
     return decision.status
 
 
@@ -321,14 +352,37 @@ def _drive_autopilot_once(
     )
     autopilot_backend = str(reply.get("backend")) if reply.get("backend") is not None else None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    from koru.autonomous_cycle_drive_retry import _drive_failure_signature
+    from koru.autonomous_submit_strategy import record_submit_drive_outcome
+
     if ok:
         state.last_message_sent_ts = time.time()
         state.last_message_sent_ide = autopilot_ide
         state.last_driven_ticket_id = waiting_ticket
+        state.last_submit_unverified_ts = 0.0
+        state.last_submit_unverified_ticket_id = ""
         if autopilot_backend:
             state.last_driven_backend = autopilot_backend
     elif autopilot_status.startswith("failed(submit_") and reply.get("delivered") is True:
         state.last_driven_ticket_id = waiting_ticket
+        state.last_submit_unverified_ts = time.time()
+        state.last_submit_unverified_ticket_id = waiting_ticket
+    from koru.autonomous_submit_strategy import record_submit_drive_outcome, risky_paste_winner
+
+    record_submit_drive_outcome(
+        state,
+        queue_result=queue_result,
+        reply=reply,
+        ok=ok,
+        autopilot_status=autopilot_status,
+        failure_signature=_drive_failure_signature(reply),
+    )
+    if risky := risky_paste_winner(reply):
+        cycle_telemetry["autopilot_risky_paste_winner"] = risky
+        _hp(
+            "  → risky paste winner detected "
+            f"({risky}); next drive will prefer alternate submit strategy"
+        )
     state.last_autopilot_status = autopilot_status
     _update_autopilot_state(
         state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")

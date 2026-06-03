@@ -178,6 +178,34 @@ def test_check_plugin_live_host_stale_issue_flags_stale_reconnects() -> None:
     assert "0.1.70, 0.1.72" in issues[0].message
 
 
+def test_live_host_stale_ignores_old_rejection_when_live_plugin_aligned() -> None:
+    issues = check_plugin_live_host_stale_issue(
+        {
+            "running": True,
+            "rejected_plugins": [
+                {
+                    "ide": "vscodium",
+                    "version": "0.2.7",
+                    "build_sha": "old-build",
+                    "expected_version": "0.2.8",
+                    "expected_build_sha": "new-build",
+                },
+            ],
+        },
+        {
+            "connected": True,
+            "connected_version": "0.2.8",
+            "connected_build_sha": "new-build",
+            "installed_version": "0.2.8",
+            "expected_version": "0.2.8",
+            "expected_build_sha": "new-build",
+        },
+        "vscodium",
+    )
+
+    assert issues == []
+
+
 def test_check_plugin_version_mismatch_issue_flags_connected_mismatch() -> None:
     issues = check_plugin_version_mismatch_issue(
         {"running": True},

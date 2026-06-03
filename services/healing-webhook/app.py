@@ -13,7 +13,7 @@ Decision matrix (label → action)
 -------------------------------------------------------------
 healing_strategy = annotate         → log only
 healing_strategy = redsl_gate       → docker run semcod/redsl:local gate check
-healing_strategy = redsl_improve    → docker run semcod/redsl:local improve --max-actions 1 --dry-run
+healing_strategy = redsl_improve    → docker run semcod/redsl:local improve --max-actions 1
 healing_strategy = rebuild_restore  → docker run semcod/rebuild:local restore <endpoint>
 
 Every alert with severity >= error **also** creates a ticket in the
@@ -37,7 +37,9 @@ import sys
 import time
 from typing import Any
 
-from fastapi import FastAPI, Request
+from app_bootstrap import create_webhook_app, wire_routes
+from app_command_routing import route_alertmanager_payload, route_probe_failure_payload
+from fastapi import Request
 from fastapi.responses import PlainTextResponse
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -45,10 +47,7 @@ from prometheus_client import (
     Gauge,
     generate_latest,
 )
-
 from ticket_builder import build_ticket_payload
-from app_bootstrap import create_webhook_app, wire_routes
-from app_command_routing import route_alertmanager_payload, route_probe_failure_payload
 
 # ── Config ─────────────────────────────────────────────────────────────
 REPO_PATH = os.getenv("REPO_PATH", "/repo")
@@ -150,9 +149,9 @@ def _enrich_ticket_with_vallm(alert: dict, payload: dict) -> None:
         if files:
             vallm_results = [_run_vallm_check(f) for f in files]
             avg = sum(r.get("score", 0.0) for r in vallm_results) / len(vallm_results)
-            lines = [f"\n## 🔍 vallm pre-flight (tier-1 syntax check)\n"]
+            lines = ["\n## 🔍 vallm pre-flight (tier-1 syntax check)\n"]
             lines.append(f"**Average score:** {avg:.2f} ({len(files)} file(s) checked)\n")
-            for f, r in zip(files, vallm_results):
+            for f, r in zip(files, vallm_results, strict=True):
                 icon = "✅" if r.get("ok") else "❌"
                 rel = f.replace(f"{REPO_PATH}/", "")
                 lines.append(f"- {icon} `{rel}` — score `{r.get('score', 0):.2f}`")
@@ -248,9 +247,8 @@ def create_planfile_ticket(alert: dict, *, source: str = "healing-webhook") -> d
     return _execute_planfile_create(cmd, severity)
 
 
-def _run_docker(image: str, cmd: list[str], timeout: int = 120) -> tuple[int, str, str]:
-    """Run a one-shot docker container, bind-mount the repo read-write."""
-    argv = [
+def _docker_run_command(image: str, cmd: list[str]) -> list[str]:
+    return [
         "docker",
         "run",
         "--rm",
@@ -262,16 +260,29 @@ def _run_docker(image: str, cmd: list[str], timeout: int = 120) -> tuple[int, st
         image,
         *cmd,
     ]
-    log.info("→ %s", " ".join(argv))
-    proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+
+
+def _run_docker(image: str, cmd: list[str], timeout: int = 120) -> tuple[int, str, str]:
+    """Run a one-shot docker container, bind-mount the repo read-write."""
+    command = _docker_run_command(image, cmd)
+    log.info("→ %s", " ".join(command))
+    proc = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
     return proc.returncode, proc.stdout, proc.stderr
 
 
 # ── Healing strategies ─────────────────────────────────────────────────
 def heal_redsl_gate(component: str, detail: dict) -> dict:
-    code, out, err = _run_docker(REDSL_IMAGE, ["python", "-m", "redsl", "gate", "check", "/mnt/project"])
+    code, out, err = _run_docker(
+        REDSL_IMAGE,
+        ["python", "-m", "redsl", "gate", "check", "/mnt/project"],
+    )
     outcome = "success" if code == 0 else "violations"
-    _record_action("redsl_gate", outcome, component, {"exit": code, "stdout": out[-500:], "stderr": err[-500:]})
+    _record_action(
+        "redsl_gate",
+        outcome,
+        component,
+        {"exit": code, "stdout": out[-500:], "stderr": err[-500:]},
+    )
     return {"action": "redsl_gate", "exit": code, "outcome": outcome}
 
 
@@ -298,7 +309,12 @@ def heal_redsl_improve(component: str, detail: dict) -> dict:
         cmd.append("--dry-run")
     code, out, err = _run_docker(REDSL_IMAGE, cmd, timeout=300)
     outcome = "success" if code == 0 else "failed"
-    _record_action("redsl_improve", outcome, component, {"exit": code, "stdout": out[-500:], "stderr": err[-500:]})
+    _record_action(
+        "redsl_improve",
+        outcome,
+        component,
+        {"exit": code, "stdout": out[-500:], "stderr": err[-500:]},
+    )
     return {"action": "redsl_improve", "exit": code, "outcome": outcome}
 
 
@@ -398,9 +414,10 @@ def _resolve_affected_files(component: str, labels: dict, max_files: int = 10) -
     Reuses ticket_builder._infer_paths logic but materialises directory
     globs into actual file paths within REPO_PATH (capped at max_files).
     """
-    from ticket_builder import _infer_paths
     import glob as _glob
     from pathlib import Path as _Path
+
+    from ticket_builder import _infer_paths
 
     candidates = _infer_paths(component, labels)
     files: list[str] = []
@@ -450,7 +467,10 @@ def heal_vallm_validate(component: str, detail: dict) -> dict:
             "files_checked": len(files),
             "failures": len(failures),
             "avg_score": round(avg_score, 3),
-            "results": [{"file": f, "ok": r.get("ok"), "score": r.get("score")} for f, r in zip(files, results)],
+            "results": [
+                {"file": f, "ok": r.get("ok"), "score": r.get("score")}
+                for f, r in zip(files, results, strict=True)
+            ],
         },
     )
     return {
@@ -525,7 +545,7 @@ def _run_redup_check(timeout: int = 180) -> dict:
     summary = {"groups": 0, "saved_lines": 0, "top_groups": []}
     try:
         import json as _json
-        with open(filtered_json, "r", encoding="utf-8") as fh:
+        with open(filtered_json, encoding="utf-8") as fh:
             payload = _json.load(fh)
         summary = _parse_redup_summary(payload)
     except Exception as exc:  # noqa: BLE001
@@ -631,7 +651,10 @@ async def probe_failure(request: Request) -> dict:
         payload,
         heal_redsl_improve=heal_redsl_improve,
         heal_redsl_gate=heal_redsl_gate,
-        create_planfile_ticket=lambda alert: create_planfile_ticket(alert, source="testql-watchdog"),
+        create_planfile_ticket=lambda alert: create_planfile_ticket(
+            alert,
+            source="testql-watchdog",
+        ),
         alerts_counter=ALERTS,
         enable_llm_autofix=ENABLE_LLM_AUTOFIX,
         log=log,

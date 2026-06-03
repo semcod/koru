@@ -26,6 +26,12 @@ class AutoloopState:
     last_message_sent_ide: str = ""
     last_driven_ticket_id: str = ""
     last_autopilot_status: str = ""
+    last_submit_unverified_ts: float = 0.0
+    last_submit_unverified_ticket_id: str = ""
+    submit_unverified_streak: int = 0
+    last_submit_failure_signature: str = ""
+    pending_submit_strategy_hint: str = ""
+    autopilot_plugin_ready: bool = True
     telemetry_autopilot_idle_streak_skips: int = 0
     telemetry_scan_after_idle_runs: int = 0
     telemetry_scan_after_idle_tickets_applied: int = 0

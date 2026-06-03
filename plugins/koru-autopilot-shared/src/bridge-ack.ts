@@ -2,6 +2,11 @@ import * as vscode from "vscode";
 import { SharedAutopilotBridgePaste } from "./bridge-paste";
 import { debugLog } from "./bridge-config";
 import {
+  chatFocusOperatorHint,
+  manualSendOperatorHint,
+  pasteProbeOperatorHint,
+} from "./operator-hints";
+import {
   Envelope,
   FocusOutcome,
   SubmitOutcome,
@@ -50,7 +55,8 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
         "chat input is not focused/open; "
         + `ide=${details.ide || this.detectIde()} app=${details.appName || vscode.env.appName}; `
         + `focus_open_candidates=${candidates || "(none)"}; `
-        + "log=/tmp/koru-plugin-debug.log. Open chat input manually, then retry.",
+        + `${chatFocusOperatorHint(String(details.ide || this.detectIde()))}; `
+        + "log=/tmp/koru-plugin-debug.log",
     });
   }
 
@@ -60,6 +66,11 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
     pasted: { ok: boolean; command?: string; reason?: string }
   ): void {
     const reason = pasted.reason || "unknown paste failure";
+    const ide = this.detectIde();
+    const operatorHint =
+      reason.includes("probe inconclusive") || reason.includes("sentinel")
+        ? pasteProbeOperatorHint(ide)
+        : chatFocusOperatorHint(ide);
     this.send({
       type: "ack",
       id: env.id,
@@ -69,8 +80,9 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
       winning_focus_open: focus.command,
       attempted_paste: pasted.command,
       paste_failure_reason: reason,
+      operator_hint: operatorHint,
       operation_trace: this.currentOperationTrace(),
-      message: `chat opened but paste command failed (${reason})`,
+      message: `chat opened but paste command failed (${reason}). ${operatorHint}`,
     });
   }
 
@@ -100,10 +112,12 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
       submit_failure_reason: submitDetails?.reason,
       submit_attempts: submitDetails?.attempts,
       verification: "submit_unverified",
+      operator_hint: manualSendOperatorHint(this.detectIde()),
       operation_trace: this.currentOperationTrace(),
       message:
         "chat opened and text injected, but submit could not be verified; "
-        + "manual Send may be required. Input was cleared before paste to avoid prompt concatenation.",
+        + `${manualSendOperatorHint(this.detectIde())} `
+        + "Input was cleared before paste to avoid prompt concatenation.",
     });
   }
 
@@ -141,13 +155,14 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
     pasted: { ok: boolean; command?: string },
     submitCmd: string | undefined
   ): void {
+    const submitted = Boolean(submitCmd);
     this.send({
       type: "ack",
       id: env.id,
       ok: true,
       delivered: true,
       opened: true,
-      submitted: true,
+      submitted,
       probe_ladder: this.probeLadderEnabled(),
       winning_focus_open: focus.command,
       winning_paste: pasted.command,

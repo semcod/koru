@@ -57,6 +57,7 @@ def setup_autonomous_session(
         os.execvpe(reexec_argv[0], reexec_argv, env)
     for line in project_venv_warning_lines(project):
         stdio_info(line, fmt=args.emit_events)
+    _log_runtime_readiness_gate(args, project, stdio_info=stdio_info)
     guard_rc = guard_existing_processes(args, project)
     os.environ["KORU_STDIO_FORMAT"] = args.emit_events
     if args.emit_events == "jsonl":
@@ -144,15 +145,21 @@ def _resolve_autopilot_lane(
     resolve_autopilot_ide: Any,
     resolve_ide_route_fn: Any,
 ) -> tuple[str | None, str]:
-    lane = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    lane = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip() or None
     autopilot_ide, _ = resolve_autopilot_ide(
         args.autopilot_ide,
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
     )
     if autopilot_ide and autopilot_ide != "auto":
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-        lane = autopilot_ide
+        if not lane or lane == "auto":
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+            lane = autopilot_ide
+        elif lane == autopilot_ide or lane.startswith(f"{autopilot_ide}-"):
+            pass
+        else:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+            lane = autopilot_ide
     return lane, autopilot_ide
 
 
@@ -265,7 +272,79 @@ def setup_autopilot_daemon(
         socket_path=socket_path,
         stdio_format=args.emit_events,
     )
+    _apply_autopilot_readiness_after_daemon(
+        args,
+        project,
+        socket_path,
+        client,
+        decision.autopilot_ide,
+        stdio_info=stdio_info,
+    )
     return client, daemon, thread, socket_path
+
+
+def _log_runtime_readiness_gate(
+    args: Any,
+    project: Path,
+    *,
+    stdio_info: Any,
+) -> None:
+    from koru.autonomous_readiness import check_runtime_consistency, format_readiness_lines
+
+    strict = os.environ.get("KORU_READINESS_STRICT", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    runtime = check_runtime_consistency(project, strict=strict)
+    for line in format_readiness_lines(runtime, prefix="koru autonomous"):
+        stdio_info(line, fmt=args.emit_events)
+
+
+def _apply_autopilot_readiness_after_daemon(
+    args: Any,
+    project: Path,
+    socket_path: Path,
+    client: Any | None,
+    autopilot_ide: str,
+    *,
+    stdio_info: Any,
+) -> None:
+    from koru.autonomous_readiness import (
+        apply_socket_ownership_repairs,
+        check_daemon_client_alignment,
+        check_workspace_socket_ownership,
+        format_readiness_lines,
+    )
+
+    status: dict[str, Any] | None = None
+    if client is not None:
+        try:
+            status = client.status()
+        except (OSError, RuntimeError, TimeoutError):
+            status = None
+
+    daemon = check_daemon_client_alignment(status, project=project, socket_path=socket_path)
+    socket = check_workspace_socket_ownership(
+        project,
+        socket_path,
+        status,
+        autopilot_ide=autopilot_ide,
+    )
+    readiness_issues = list(daemon.issues) + list(socket.issues)
+    from koru.autonomous_readiness import ReadinessResult
+
+    readiness = ReadinessResult(
+        ok=daemon.ok and socket.ok,
+        issues=tuple(readiness_issues),
+        primary_fix=daemon.primary_fix or socket.primary_fix,
+    )
+    repairs = apply_socket_ownership_repairs(project, socket_path, readiness)
+    for action in repairs:
+        stdio_info(f"koru autonomous: readiness repair: {action}", fmt=args.emit_events)
+
+    for line in format_readiness_lines(readiness, prefix="koru autonomous"):
+        stdio_info(line, fmt=args.emit_events)
 
 
 def cleanup_autonomous_session(

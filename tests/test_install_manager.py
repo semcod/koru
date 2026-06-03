@@ -461,7 +461,12 @@ def test_repair_installation_records_plugin_action(monkeypatch, tmp_path: Path) 
     )
 
     assert report.actions[0] == {"action": "install_plugin", "result": {"status": "dry_run"}}
-    assert report.actions[1]["action"] == "reload_ide_and_reconnect"
+    assert [action["action"] for action in report.actions] == [
+        "install_plugin",
+        "start_daemon_for_reconnect",
+        "reload_ide_and_reconnect",
+        "wait_for_plugin_reconnect",
+    ]
 
 
 def test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned(
@@ -580,6 +585,27 @@ def test_repair_installation_shutdowns_daemon_when_build_is_stale(
         "_reload_ide_after_plugin_fix",
         lambda *_args, **_kwargs: {"status": "automatic"},
     )
+    monkeypatch.setattr(
+        install_manager,
+        "_start_autopilot_daemon_for_plugin_repair",
+        lambda *_args, **_kwargs: {"status": "started", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_wait_for_plugin_reconnect",
+        lambda *_args, **_kwargs: {"status": "connected", "ok": True},
+    )
+    force_env: list[str | None] = []
+
+    def fake_install_plugin_for_ide(**_kwargs):
+        force_env.append(os.environ.get("KORU_AUTOPILOT_FORCE_REASSERT_INSTALL"))
+        return SimpleNamespace(to_dict=lambda: {"status": "already_installed"})
+
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        fake_install_plugin_for_ide,
+    )
 
     report = install_manager.repair_installation(
         ide="vscodium",
@@ -589,6 +615,8 @@ def test_repair_installation_shutdowns_daemon_when_build_is_stale(
 
     assert report.actions[1]["action"] == "shutdown_daemon_for_reload"
     assert report.actions[1]["result"] == {"ok": True, "message": "stopped"}
+    assert force_env == ["1"]
+    assert report.actions[0]["result"]["forced_reassert"] is True
 
 
 def test_repair_installation_returns_refreshed_report_after_plugin_fix(
@@ -659,6 +687,284 @@ def test_repair_installation_returns_refreshed_report_after_plugin_fix(
     assert report.ok is True
     assert report.plugin["installed_version"] == "0.1.72"
     assert report.actions[0] == {"action": "install_plugin", "result": {"status": "installed"}}
+
+
+def test_wait_for_plugin_reconnect_requires_expected_build(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    calls = {"n": 0}
+
+    def fake_daemon_status(_socket: Path) -> dict[str, object]:
+        calls["n"] += 1
+        return {
+            "running": True,
+            "plugins": [
+                {
+                    "ide": "vscodium",
+                    "version": "0.2.7",
+                    "buildSha": "old-build",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(install_manager, "_daemon_status", fake_daemon_status)
+    monkeypatch.setattr(install_manager.time, "sleep", lambda _seconds: None)
+
+    result = install_manager._wait_for_plugin_reconnect(
+        str(tmp_path / "koru.sock"),
+        "vscodium",
+        dry_run=False,
+        expected_build="new-build",
+        timeout_seconds=0.01,
+    )
+
+    assert result["ok"] is False
+    assert result["status"] == "build_mismatch"
+    assert result["build"] == "old-build"
+    assert result["expected_build"] == "new-build"
+
+
+def test_repair_skips_new_window_escalation_without_opt_in(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", raising=False)
+    report = install_manager.InstallManagerReport(
+        ok=False,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": True},
+        plugin={
+            "ide": "vscodium",
+            "connected": True,
+            "connected_version": "0.2.7",
+            "connected_build_sha": "old-build",
+            "installed_version": "0.2.7",
+            "expected_version": "0.2.7",
+            "expected_build_sha": "new-build",
+        },
+        ides=[],
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "installed"}),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_shutdown_autopilot_daemon",
+        lambda _socket: {"ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_start_autopilot_daemon_for_plugin_repair",
+        lambda *_args, **_kwargs: {"status": "started", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_reload_ide_after_plugin_fix",
+        lambda *_args, **_kwargs: {"status": "automatic", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_wait_for_plugin_reconnect",
+        lambda *_args, **_kwargs: {"status": "build_mismatch", "ok": False},
+    )
+
+    steps = install_manager._build_repair_steps(
+        report,
+        resolved_ide="vscodium",
+        dry_run=False,
+    )
+
+    assert [step["action"] for step in steps] == [
+        "install_plugin",
+        "shutdown_daemon_for_reload",
+        "start_daemon_for_reconnect",
+        "reload_ide_and_reconnect",
+        "wait_for_plugin_reconnect",
+        "open_new_ide_window_for_plugin_build",
+    ]
+    assert steps[-1]["result"]["status"] == "skipped"
+
+
+def test_repair_opens_new_window_after_build_mismatch_with_opt_in(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
+    report = install_manager.InstallManagerReport(
+        ok=False,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": True},
+        plugin={
+            "ide": "vscodium",
+            "connected": True,
+            "connected_version": "0.2.7",
+            "connected_build_sha": "old-build",
+            "installed_version": "0.2.7",
+            "expected_version": "0.2.7",
+            "expected_build_sha": "new-build",
+        },
+        ides=[],
+    )
+    wait_results = iter(
+        [
+            {"status": "build_mismatch", "ok": False, "build": "old-build"},
+            {"status": "connected", "ok": True, "build": "new-build"},
+        ]
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "installed"}),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_shutdown_autopilot_daemon",
+        lambda _socket: {"ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_start_autopilot_daemon_for_plugin_repair",
+        lambda *_args, **_kwargs: {"status": "started", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_reload_ide_after_plugin_fix",
+        lambda *_args, **_kwargs: {"status": "automatic", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_open_new_ide_window_for_plugin_build",
+        lambda *_args, **_kwargs: {"status": "automatic", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_wait_for_plugin_reconnect",
+        lambda *_args, **_kwargs: next(wait_results),
+    )
+
+    steps = install_manager._build_repair_steps(
+        report,
+        resolved_ide="vscodium",
+        dry_run=False,
+    )
+
+    assert [step["action"] for step in steps] == [
+        "install_plugin",
+        "shutdown_daemon_for_reload",
+        "start_daemon_for_reconnect",
+        "reload_ide_and_reconnect",
+        "wait_for_plugin_reconnect",
+        "open_new_ide_window_for_plugin_build",
+        "wait_for_plugin_reconnect",
+    ]
+    assert steps[-2]["result"]["status"] == "automatic"
+    assert steps[-1]["result"]["status"] == "connected"
+
+
+def test_repair_restarts_ide_when_new_window_still_has_old_build(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
+    monkeypatch.setenv("KORU_AUTOPILOT_RESTART_IDE_ON_PLUGIN_BUILD_MISMATCH", "1")
+    report = install_manager.InstallManagerReport(
+        ok=False,
+        source_root=str(tmp_path),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": True},
+        plugin={
+            "ide": "vscodium",
+            "connected": True,
+            "connected_version": "0.2.7",
+            "connected_build_sha": "old-build",
+            "installed_version": "0.2.7",
+            "expected_version": "0.2.7",
+            "expected_build_sha": "new-build",
+        },
+        ides=[],
+    )
+    wait_results = iter(
+        [
+            {"status": "build_mismatch", "ok": False, "build": "old-build"},
+            {"status": "build_mismatch", "ok": False, "build": "old-build"},
+            {"status": "connected", "ok": True, "build": "new-build"},
+        ]
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "installed"}),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_shutdown_autopilot_daemon",
+        lambda _socket: {"ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_start_autopilot_daemon_for_plugin_repair",
+        lambda *_args, **_kwargs: {"status": "started", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_reload_ide_after_plugin_fix",
+        lambda *_args, **_kwargs: {"status": "automatic", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_open_new_ide_window_for_plugin_build",
+        lambda *_args, **_kwargs: {"status": "automatic", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_restart_ide_for_plugin_build",
+        lambda *_args, **_kwargs: {"status": "automatic", "ok": True},
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "_wait_for_plugin_reconnect",
+        lambda *_args, **_kwargs: next(wait_results),
+    )
+
+    steps = install_manager._build_repair_steps(
+        report,
+        resolved_ide="vscodium",
+        dry_run=False,
+    )
+
+    assert [step["action"] for step in steps] == [
+        "install_plugin",
+        "shutdown_daemon_for_reload",
+        "start_daemon_for_reconnect",
+        "reload_ide_and_reconnect",
+        "wait_for_plugin_reconnect",
+        "open_new_ide_window_for_plugin_build",
+        "wait_for_plugin_reconnect",
+        "restart_ide_for_plugin_build",
+        "wait_for_plugin_reconnect",
+    ]
+    assert steps[-2]["result"]["status"] == "automatic"
+    assert steps[-1]["result"]["status"] == "connected"
 
 
 def test_repair_fix_reload_uses_reuse_window_for_same_workspace(
@@ -757,3 +1063,85 @@ def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_pat
     print(f"DEBUG codes: {codes}")
     assert "plugin_not_connected" in codes
     assert report.plugin["supported"] is True
+
+
+def _mismatch_report(tmp_path: Path, *, plugins: list[dict]) -> "install_manager.InstallManagerReport":
+    project = tmp_path / "koru"
+    project.mkdir(exist_ok=True)
+    return install_manager.InstallManagerReport(
+        ok=False,
+        source_root=str(project),
+        package_version="1.0",
+        source_version="1.0",
+        python="/python",
+        path_koru="/bin/koru",
+        repo_koru="/repo/.venv/bin/koru",
+        socket=str(tmp_path / "koru.sock"),
+        daemon={"running": True, "plugins": plugins},
+        plugin={
+            "ide": "windsurf",
+            "connected": True,
+            "connected_version": "0.2.0",
+            "connected_build_sha": "old",
+            "installed_version": "0.2.1",
+            "expected_version": "0.2.1",
+            "expected_build_sha": "new",
+            "workspace_folders": [str(tmp_path / "nexu")],
+        },
+        ides=[],
+    )
+
+
+def test_repair_refuses_window_ops_on_workspace_mismatch(tmp_path: Path) -> None:
+    report = _mismatch_report(
+        tmp_path,
+        plugins=[{"ide": "windsurf", "workspaceFolders": [str(tmp_path / "nexu")]}],
+    )
+
+    steps = install_manager._build_repair_steps(
+        report,
+        resolved_ide="windsurf",
+        dry_run=False,
+    )
+
+    assert [step["action"] for step in steps] == ["workspace_mismatch"]
+    result = steps[0]["result"]
+    assert result["status"] == "skipped"
+    assert result["ok"] is False
+    assert str(tmp_path / "nexu") in result["message"]
+    assert str(tmp_path / "koru") in result["message"]
+
+
+def test_repair_proceeds_when_a_matching_workspace_plugin_exists(tmp_path: Path) -> None:
+    project = tmp_path / "koru"
+    report = _mismatch_report(
+        tmp_path,
+        plugins=[
+            {"ide": "windsurf", "workspaceFolders": [str(tmp_path / "nexu")]},
+            {"ide": "windsurf", "workspaceFolders": [str(project)]},
+        ],
+    )
+
+    steps = install_manager._build_repair_steps(
+        report,
+        resolved_ide="windsurf",
+        dry_run=True,
+    )
+
+    assert [step["action"] for step in steps] != ["workspace_mismatch"]
+    assert "install_plugin" in [step["action"] for step in steps]
+
+
+def test_repair_proceeds_when_plugin_workspace_unknown(tmp_path: Path) -> None:
+    report = _mismatch_report(
+        tmp_path,
+        plugins=[{"ide": "windsurf"}],  # no workspaceFolders → unknown, do not block
+    )
+
+    steps = install_manager._build_repair_steps(
+        report,
+        resolved_ide="windsurf",
+        dry_run=True,
+    )
+
+    assert [step["action"] for step in steps] != ["workspace_mismatch"]

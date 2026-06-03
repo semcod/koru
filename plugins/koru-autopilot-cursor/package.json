@@ -2,7 +2,7 @@
   "name": "koru-autopilot-cursor",
   "displayName": "koru autopilot (Cursor)",
   "description": "Bridge between Cursor and the koru autopilot daemon. Standalone VSIX dedicated to Cursor IDE; sibling VSIX packages cover VS Code, VSCodium, Windsurf and Antigravity so a regression in this plugin cannot leak into another IDE's runtime.",
-  "version": "0.2.1",
+  "version": "0.2.5",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -147,6 +147,12 @@
           "default": true,
           "description": "Deprecated alias for koruAutopilot.verifySubmit (kept for settings migration)."
         },
+        "koruAutopilot.submitVerifyTimeoutMs": {
+          "type": "number",
+          "default": 4000,
+          "minimum": 500,
+          "description": "How long to poll cursorDiskKV for a new user bubble after submit (ms). Increase on slow machines if submit_unverified traces show cursor-bubble-db ok=false with newUserBubbles=0 despite a visible send."
+        },
         "koruAutopilot.reloadOnVersionMismatch": {
           "type": "boolean",
           "default": true,
@@ -163,8 +169,8 @@
     "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/ides/cursor.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
-    "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-cursor",
-    "package": "vsce package --no-dependencies --out koru-autopilot-cursor-${npm_package_version}.vsix",
+    "prepackage": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor",
+    "package": "vsce package --no-dependencies --out koru-autopilot-cursor-$(node -p \"require('./package.json').version\").vsix",
     "prepublish": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-cursor",
     "publish": "vsce publish --no-dependencies",
     "clean": "rm -rf out node_modules src/_shared *.vsix"
@@ -177,6 +183,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "c142e54663a37904"
+    "sha": "6892b57ade9773ab"
   }
 }

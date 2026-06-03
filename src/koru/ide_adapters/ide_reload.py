@@ -98,6 +98,20 @@ def reuse_window_reload_enabled() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def command_palette_reload_enabled() -> bool:
+    """Whether automatic ``Developer: Reload Window`` via keyboard UI is allowed.
+
+    This is deliberately opt-in. Opening the command palette and typing a
+    command is visible UI automation; if focus detection is wrong it can write
+    into the user's editor, terminal, or chat input.
+    """
+    raw = os.environ.get(
+        "KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD",
+        "",
+    ).strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 def new_window_reload_enabled() -> bool:
     """Whether opening a fresh IDE window is allowed after reopen fails.
 
@@ -205,6 +219,77 @@ def reload_jetbrains_via_shortcut() -> IdeReloadOutcome:
     return IdeReloadOutcome(attempted=True, ok=True, method="jetbrains_shortcut")
 
 
+_CONNECT_COMMAND = "koru: Connect autopilot daemon"
+
+
+def _run_command_palette_sequence(
+    ide: str,
+    *,
+    command_text: str,
+    method: str,
+) -> IdeReloadOutcome:
+    """Focus IDE window and run a command-palette entry via OS keyboard injection."""
+    strategy = _os_strategy()
+    capabilities = strategy.capabilities()
+    if not capabilities.can_inject_keys:
+        return IdeReloadOutcome(
+            attempted=False,
+            ok=False,
+            detail=(
+                f"{strategy.label}: no keyboard-injection tool available "
+                f"(strategy={strategy.id})"
+            ),
+        )
+    focused, focus_method = _focus_ide_window(ide)
+    if not focused:
+        wayland = "wayland" if _on_wayland() else "x11"
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method=method,
+            detail=(
+                f"could not focus {ide} window (session={wayland}, "
+                f"strategy={strategy.id}, methods={capabilities.focus_methods})"
+            ),
+        )
+    if focus_method == "integrated_terminal":
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method=method,
+            detail=(
+                "refusing command-palette injection from integrated terminal focus; "
+                "typing here would write into the shell. Enable "
+                "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 for CLI reload fallback."
+            ),
+        )
+    time.sleep(0.6)
+    if not strategy.inject_keys(KeySequence(modifiers=("ctrl", "shift"), key="p")):
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method=method,
+            detail=f"failed to open command palette ({capabilities.keyboard_tool})",
+        )
+    time.sleep(0.5)
+    if not strategy.inject_keys(KeySequence(literal_text=command_text)):
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method=method,
+            detail=f"failed to type command palette entry ({command_text!r})",
+        )
+    time.sleep(0.2)
+    if not strategy.inject_keys(KeySequence(key="Return")):
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method=method,
+            detail="failed to confirm command palette entry",
+        )
+    return IdeReloadOutcome(attempted=True, ok=True, method=method)
+
+
 def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
     """Open the command palette and run ``Developer: Reload Window``.
 
@@ -269,31 +354,20 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
                 "reuse-window fallback."
             ),
         )
-    time.sleep(0.6)
-    if not strategy.inject_keys(KeySequence(modifiers=("ctrl", "shift"), key="p")):
-        return IdeReloadOutcome(
-            attempted=True,
-            ok=False,
-            method="command_palette",
-            detail=f"failed to open command palette ({capabilities.keyboard_tool})",
-        )
-    time.sleep(0.5)
-    if not strategy.inject_keys(KeySequence(literal_text="Developer: Reload Window")):
-        return IdeReloadOutcome(
-            attempted=True,
-            ok=False,
-            method="command_palette",
-            detail="failed to type reload command",
-        )
-    time.sleep(0.2)
-    if not strategy.inject_keys(KeySequence(key="Return")):
-        return IdeReloadOutcome(
-            attempted=True,
-            ok=False,
-            method="command_palette",
-            detail="failed to confirm reload command",
-        )
-    return IdeReloadOutcome(attempted=True, ok=True, method="command_palette")
+    return _run_command_palette_sequence(
+        ide,
+        command_text="Developer: Reload Window",
+        method="command_palette",
+    )
+
+
+def connect_via_command_palette(ide: str) -> IdeReloadOutcome:
+    """Open the command palette and run ``koru: Connect autopilot daemon``."""
+    return _run_command_palette_sequence(
+        ide,
+        command_text=_CONNECT_COMMAND,
+        method="connect_palette",
+    )
 
 
 def reload_via_reopen_workspace(ide: str, project: Path) -> IdeReloadOutcome:
@@ -392,6 +466,16 @@ def detect_reload_command(
         return "jetbrains_shortcut", None
     if config_home_for_ide(ide) is None:
         return None, "unknown config home"
+    if not command_palette_reload_enabled():
+        if reuse_window_reload_enabled():
+            return "reuse_window", None
+        return (
+            None,
+            "command-palette reload disabled by default; set "
+            "KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD=1 to allow visible "
+            "keyboard UI automation, or set KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 "
+            "to opt in to the CLI reuse-window fallback",
+        )
     return "command_palette", None
 
 
@@ -407,6 +491,16 @@ def execute_reload(
 
     if method == "jetbrains_shortcut":
         return reload_jetbrains_via_shortcut()
+
+    if method == "reuse_window":
+        if project is None or not project.is_dir():
+            return IdeReloadOutcome(
+                attempted=False,
+                ok=False,
+                method="reuse_window",
+                detail="project directory missing",
+            )
+        return reload_via_reopen_workspace(ide, project)
 
     if method != "command_palette":
         return IdeReloadOutcome(
@@ -467,18 +561,41 @@ def explain_reload_failure(
     return detail
 
 
+def enable_reuse_window_reload_for_session() -> tuple[str | None, bool]:
+    """Opt in to ``cursor -r`` reload for this process; return previous env value."""
+    previous = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+    os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = "1"
+    return previous, True
+
+
+def restore_reuse_window_reload(previous: str | None, changed: bool = True) -> None:
+    if not changed:
+        return
+    if previous is None:
+        os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
+    else:
+        os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = previous
+
+
 def try_reload_vscode_family_ide(
     ide: str,
     *,
     project: Path | None = None,
     dry_run: bool = False,
+    allow_reuse_window: bool = False,
 ) -> IdeReloadOutcome:
     """Reload a VS Code–family IDE so a newly installed VSIX can activate."""
-    method, reason = detect_reload_command(ide, dry_run=dry_run)
-    if method is None:
-        return IdeReloadOutcome(attempted=False, ok=False, detail=reason)
-
-    outcome = execute_reload(ide, method=method, project=project)
+    reuse_snapshot: tuple[str | None, bool] | None = None
+    if allow_reuse_window and not reuse_window_reload_enabled():
+        reuse_snapshot = enable_reuse_window_reload_for_session()
+    try:
+        method, reason = detect_reload_command(ide, dry_run=dry_run)
+        if method is None:
+            return IdeReloadOutcome(attempted=False, ok=False, detail=reason)
+        outcome = execute_reload(ide, method=method, project=project)
+    finally:
+        if reuse_snapshot is not None:
+            restore_reuse_window_reload(*reuse_snapshot)
     if not outcome.ok:
         return IdeReloadOutcome(
             attempted=outcome.attempted,
@@ -534,13 +651,17 @@ __all__ = [
     "IdeReloadOutcome",
     "await_plugin_handshake",
     "auto_reload_enabled",
+    "command_palette_reload_enabled",
+    "connect_via_command_palette",
     "detect_reload_command",
+    "enable_reuse_window_reload_for_session",
     "execute_reload",
     "explain_reload_failure",
     "reload_via_command_palette",
     "reload_via_new_window",
     "reload_via_reopen_workspace",
     "new_window_reload_enabled",
+    "restore_reuse_window_reload",
     "reuse_window_reload_enabled",
     "try_open_vscode_family_ide_new_window",
     "try_reload_vscode_family_ide",

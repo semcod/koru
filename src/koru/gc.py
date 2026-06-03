@@ -96,35 +96,28 @@ def _planfile_env() -> dict[str, str]:
     return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
 
 
+def _planfile_command_base() -> list[str]:
+    configured = os.getenv("KORU_PLANFILE_CMD")
+    if configured:
+        import shlex
+
+        return shlex.split(configured)
+    if find_spec("planfile") is not None:
+        return [sys.executable, "-m", "planfile.cli"]
+    return ["planfile"]
+
+
 def _run_planfile(
     args: Sequence[str],
     project: Path,
     runner: Callable[[Sequence[str], Path], Any] | None = None,
 ) -> Any:
     """Run a planfile CLI command."""
+    command = [*_planfile_command_base(), *args]
     if runner is not None:
-        configured = os.getenv("KORU_PLANFILE_CMD")
-        if configured:
-            import shlex
-
-            base = shlex.split(configured)
-        elif find_spec("planfile") is not None:
-            base = [sys.executable, "-m", "planfile.cli"]
-        else:
-            base = ["planfile"]
-        return runner([*base, *args], project)
-
-    configured = os.getenv("KORU_PLANFILE_CMD")
-    if configured:
-        import shlex
-
-        base = shlex.split(configured)
-    elif find_spec("planfile") is not None:
-        base = [sys.executable, "-m", "planfile.cli"]
-    else:
-        base = ["planfile"]
+        return runner(command, project)
     return subprocess.run(
-        [*base, *args],
+        command,
         cwd=project,
         text=True,
         capture_output=True,

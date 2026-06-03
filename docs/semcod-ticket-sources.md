@@ -25,8 +25,9 @@ when the queue is idle.
 | `regix` | metric/regression gates | `.regix/report.json`, `.regix/gates.json`, `regix-gates.json` | artifact adapter |
 | `redsl` | quality gate / improve lane | `.redsl/report.json`, `redsl-report.*`, `redsl-gate.json` | limited native planfile command; Koru reads gate artifacts |
 | `wup` | file/service change watcher | watcher state and changed artifacts from other tools | orchestration input, not a direct ticket generator |
-| `metrun` | execution intelligence | `metrun.toon.yaml` / planned report adapter | CLI repaired locally; report adapter still planned |
-| `pfix`, `goal`, `costs` | repair, goal alignment, cost signals | advisory/manual until stable report contracts are defined | advisory |
+| `metrun` | execution intelligence / bottlenecks | `metrun.toon.yaml`, `project/metrun.toon.yaml`, `.metrun/metrun.toon.yaml` | artifact adapter |
+| `pfix` | environment / runtime diagnostics | `.pfix/diagnose.json`, `pfix-diagnose.json`, `diag_report.json` | artifact adapter |
+| `goal`, `costs` | goal alignment, cost signals | advisory/manual until stable report contracts are defined | advisory |
 
 ## Report contract
 
@@ -43,12 +44,25 @@ preferred when a tool already supports it, especially `code2llm`, but adapters
 keep the rest of the ecosystem useful without forcing every package to import
 Planfile.
 
+`task quality:semcod:planfile` (or `bash scripts/koru-semcod-gates.sh`) now:
+
+1. runs `metrun scan` when `metrun` is installed (default script:
+   `scripts/koru-pytest.sh`, override with `METRUN_SCRIPT`);
+2. runs `pfix diagnose --json --output .pfix/diagnose.json`;
+3. runs `koru scan --apply --semcod-artifacts` to turn fresh exports into tickets.
+
 For focused work, limit intake to selected files or directories:
 
 ```bash
 koru scan --semcod-artifacts --path src/koru/scan.py --apply
 koru scan --semcod-artifacts --path plugins/koru-autopilot-vscodium --path tests
+koru autonomous up --semcod-artifacts --path src/koru/scan.py --scan-after-idle-queue
 ```
+
+`koru autonomous up --path …` sets `KORU_SCAN_PATHS` for the session so idle
+`koru scan` and scoped `code2llm` discovery stay on the selected files or
+directories. With exactly one path, `code2llm` uses that path as its analysis
+source instead of the whole repository.
 
 The filter matches the proposed ticket files, title, and description, so it can
 work with native Koru signals and semcod artifacts whose reports mention the

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "koru": {
+      "command": "/home/tom/.venv/bin/koru",
+      "args": [
+        "mcp-serve"
+      ],
+      "env": {
+        "KORU_PROJECT_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}

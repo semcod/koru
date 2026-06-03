@@ -90,6 +90,12 @@ function pushUnique(bucket: string[], command: string): void {
 }
 
 export function classifyCommand(command: string): CommandCapability | null {
+  if (/composer\.startComposerPrompt/i.test(command)) {
+    return "unknown_chat";
+  }
+  if (/terminal\.paste/i.test(command)) {
+    return null;
+  }
   for (const rule of RULES) {
     if (rule.pattern.test(command)) {
       return rule.capability;

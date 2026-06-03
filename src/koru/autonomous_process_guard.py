@@ -257,10 +257,15 @@ def terminate_existing_processes(
             pass
 
 
+def _confirm_replace_response(raw: str) -> bool:
+    return raw.strip().lower() in {"y", "yes", "t", "tak"}
+
+
 def confirm_replace_existing(processes: list[ExistingManagedProcess]) -> bool:
     print("koru autonomous: existing managed process(es) for this project are already running:")
     for proc in processes:
         where = f" cwd={proc.cwd}" if proc.cwd else ""
         print(f"  {proc.kind} pid={proc.pid}{where} :: {proc.command}")
-    answer = input("Stop existing process(es) and start this one? [y/N] ").strip().lower()
-    return answer in {"y", "yes", "t", "tak"}
+    return _confirm_replace_response(
+        input("Stop existing process(es) and start this one? [y/N] ")
+    )

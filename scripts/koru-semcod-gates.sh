@@ -38,6 +38,42 @@ run_gate() {
     "${extra_args[@]}"
 }
 
+# Generate tool artifacts before koru scan so --semcod-artifacts can open tickets.
+if has_cmd metrun; then
+  metrun_out="${METRUN_OUTPUT:-project}"
+  metrun_script="${METRUN_SCRIPT:-}"
+  if [ -z "$metrun_script" ] && [ -f "$ROOT/scripts/koru-pytest.sh" ]; then
+    metrun_script="scripts/koru-pytest.sh"
+  fi
+  if [ -n "$metrun_script" ] && [ -f "$ROOT/$metrun_script" ]; then
+    if [ "$DRY_RUN" = "1" ] || [ "$DRY_RUN" = "true" ]; then
+      echo "semcod gate: metrun scan skipped (DRY_RUN; would run on ${metrun_script})"
+    else
+      echo "=== semcod gate: metrun scan ==="
+      metrun scan "$ROOT/$metrun_script" -o "$ROOT/$metrun_out" -n "${METRUN_TOP:-10}" || true
+    fi
+  else
+    echo "semcod gate: metrun skipped (set METRUN_SCRIPT to a Python entry script)"
+  fi
+else
+  echo "semcod gate: metrun skipped (command not found)"
+fi
+
+if has_cmd pfix; then
+  if [ "$DRY_RUN" = "1" ] || [ "$DRY_RUN" = "true" ]; then
+    echo "semcod gate: pfix diagnose skipped (DRY_RUN)"
+  else
+    echo "=== semcod gate: pfix diagnose ==="
+    mkdir -p "$ROOT/.pfix"
+    (
+      cd "$ROOT" || exit 0
+      pfix diagnose --json --check --output .pfix/diagnose.json
+    ) || true
+  fi
+else
+  echo "semcod gate: pfix skipped (command not found)"
+fi
+
 echo "=== koru semcod scan -> planfile ==="
 scan_args=(scan --project "$ROOT" --semcod-artifacts)
 if [ "$DRY_RUN" != "1" ] && [ "$DRY_RUN" != "true" ]; then

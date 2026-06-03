@@ -10,6 +10,8 @@ import argparse
 import json
 from typing import TYPE_CHECKING
 
+from koru.autopilot.log_contract import emit_log
+
 if TYPE_CHECKING:
     from koru.autopilot.install_manager import InstallManagerReport
 
@@ -34,6 +36,16 @@ def action_manage(
     Returns:
         Exit code (0 success, 1 error)
     """
+    emit_log(
+        args,
+        component="autopilot.manage",
+        level="info",
+        action="request",
+        result="started",
+        ide=str(args.ide),
+        fix=bool(args.fix),
+        dry_run=bool(args.dry_run),
+    )
     report: InstallManagerReport = (
         repair_fn(ide=args.ide, socket_path=args.socket, dry_run=args.dry_run)
         if args.fix
@@ -43,4 +55,13 @@ def action_manage(
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
     else:
         print(format_report_fn(report))
-    return 0 if report.ok else 1
+    rc = 0 if report.ok else 1
+    emit_log(
+        args,
+        component="autopilot.manage",
+        level="info" if rc == 0 else "error",
+        action="request",
+        result="ok" if rc == 0 else "failed",
+        rc=rc,
+    )
+    return rc

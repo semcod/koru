@@ -405,6 +405,51 @@ def test_detect_terminal_host_ide_id_zed_term_program(
     assert ide_mod.detect_terminal_host_ide_id() == "zed"
 
 
+def test_detect_terminal_host_context_vscode_pid_beats_cursor_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("CURSOR_AGENT", "1")
+    monkeypatch.setenv("CHROME_DESKTOP", "cursor.desktop")
+    monkeypatch.setattr(ide_mod, "_ide_from_vscode_pid", lambda: "vscode")
+
+    ctx = ide_mod.detect_terminal_host_context()
+    assert ctx.ide == "vscode"
+    assert ctx.source == "env:VSCODE_PID.exe"
+    assert ctx.kind == "integrated"
+    assert ctx.integrated is True
+
+
+def test_detect_terminal_host_context_system_shell_when_no_markers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "TERM_PROGRAM",
+        "TERM_PROGRAM_VERSION",
+        "VSCODE_PID",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_CWD",
+        "WINDSURF_CASCADE_TERMINAL",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(ide_mod, "_terminal_ide_from_parent_chain", lambda _pid: None)
+
+    ctx = ide_mod.detect_terminal_host_context(_start_pid=999)
+    assert ctx.ide is None
+    assert ctx.source == "none"
+    assert ctx.kind == "system"
+    assert ctx.integrated is False
+
+
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
@@ -418,6 +463,48 @@ def test_detect_terminal_host_ide_id_zed_term_program(
 )
 def test_normalize_ide_id_aliases(raw: str, expected: str) -> None:
     assert ide_mod.normalize_ide_id(raw) == expected
+
+
+def test_detect_terminal_host_context_parent_chain_is_ide_adjacent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "TERM_PROGRAM",
+        "VSCODE_PID",
+        "VSCODE_NLS_CONFIG",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(ide_mod, "_terminal_ide_from_parent_chain", lambda _pid: "vscodium")
+
+    ctx = ide_mod.detect_terminal_host_context(_start_pid=999)
+
+    assert ctx.ide == "vscodium"
+    assert ctx.kind == "ide_adjacent"
+    assert ctx.integrated is False
+    assert "parent_chain" in ctx.source
+
+
+def test_terminal_host_prefers_vscodium_flavor_over_generic_vscode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv(
+        "VSCODE_NLS_CONFIG",
+        '{"defaultMessagesFile":"/snap/codium/current/usr/share/codium/resources/app/out/nls.messages.json"}',
+    )
+    monkeypatch.delenv("VSCODE_PID", raising=False)
+    monkeypatch.delenv("CHROME_DESKTOP", raising=False)
+    monkeypatch.setattr(ide_mod, "_terminal_ide_from_parent_chain", lambda _pid: None)
+
+    ctx = ide_mod.detect_terminal_host_context(_start_pid=999)
+
+    assert ctx.ide == "vscodium"
+    assert ctx.source == "env:VSCODE_*"
+    assert ctx.kind == "integrated"
+    assert ctx.integrated is True
 
 
 def test_pick_target_prefers_terminal_host_over_signature_order(

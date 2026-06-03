@@ -132,6 +132,34 @@ def test_action_manage_failure_returns_1() -> None:
     assert result == 1
 
 
+def test_action_manage_emits_jsonl_contract(capsys) -> None:
+    args = argparse.Namespace(
+        ide="cursor",
+        socket=None,
+        fix=False,
+        dry_run=False,
+        output_format="text",
+        log_format="jsonl",
+    )
+
+    mock_report = mock.Mock()
+    mock_report.ok = True
+    mock_report.to_dict.return_value = {"ok": True}
+
+    rc = action_manage(
+        args,
+        collect_report_fn=mock.Mock(return_value=mock_report),
+        format_report_fn=mock.Mock(return_value="Report: OK"),
+        repair_fn=mock.Mock(),
+    )
+
+    assert rc == 0
+    err_lines = [line for line in capsys.readouterr().err.splitlines() if line.strip().startswith("{")]
+    assert err_lines
+    payload = json.loads(err_lines[0])
+    assert set(["ts", "corr", "component", "level", "action", "result"]).issubset(payload)
+
+
 # ---------------------------------------------------------------------------
 # Backward compatibility tests
 # ---------------------------------------------------------------------------

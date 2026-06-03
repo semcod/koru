@@ -35,6 +35,24 @@ PLUGIN_INSTALL_IDES = frozenset(
     {"antigravity", "windsurf", "vscode", "vscodium", "cursor", "jetbrains"}
 )
 
+# System installs that share extension dirs with AppImage/snap runtimes but
+# can spawn ``--install-extension`` without zygote/sandbox failures.
+IDE_CLI_FALLBACKS: dict[str, tuple[str, ...]] = {
+    "cursor": (
+        "/usr/share/cursor/bin/cursor",
+        "/usr/local/bin/cursor",
+    ),
+    "vscode": (
+        "/usr/share/code/bin/code",
+        "/usr/bin/code",
+    ),
+    "vscodium": (
+        "/usr/share/codium/bin/codium",
+        "/usr/bin/codium",
+        "/usr/bin/vscodium",
+    ),
+}
+
 
 def plugin_repo_dir(ide: str | None = None) -> Path:
     """Return the plugin source directory for ``ide``.
@@ -212,6 +230,28 @@ def resolve_plugin_target_ide(raw_ide: str) -> str:
     )
 
 
+def _which_cli_safe_editor(name: str) -> str | None:
+    resolved = shutil.which(name)
+    if resolved and _editor_bin_usable_for_cli_install(resolved):
+        return resolved
+    return None
+
+
+def _fallback_cli_editor_bins(ide: str) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for candidate in IDE_CLI_FALLBACKS.get(ide, ()):
+        path = Path(candidate)
+        if not path.is_file() or not _editor_bin_usable_for_cli_install(candidate):
+            continue
+        resolved = str(path.resolve())
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        out.append(resolved)
+    return out
+
+
 def resolve_plugin_editor_bin(ide: str) -> str:
     if ide == "jetbrains":
         raise RuntimeError(
@@ -226,12 +266,62 @@ def resolve_plugin_editor_bin(ide: str) -> str:
         )
     if ide not in PLUGIN_IDE_CLI:
         raise RuntimeError(f"unsupported editor for plugin install: {ide}")
+    running = _running_editor_bin_for_ide(ide)
+    if running is not None:
+        return running
     for candidate in PLUGIN_IDE_CLI[ide]:
-        resolved = shutil.which(candidate)
+        resolved = _which_cli_safe_editor(candidate)
         if resolved:
             return resolved
+    for resolved in _fallback_cli_editor_bins(ide):
+        return resolved
     choices = "|".join(PLUGIN_IDE_CLI[ide])
     raise RuntimeError(f"could not find editor CLI in PATH for {ide} (tried: {choices})")
+
+
+def _editor_bin_usable_for_cli_install(exe: str) -> bool:
+    """Return False for binaries that crash when spawned from an external shell.
+
+    Cursor AppImage mounts under ``/.mount_*`` cannot start a second instance for
+    ``--install-extension`` (zygote/sandbox failure). Those installs share
+    ``~/.cursor/extensions`` with the apt/snap CLI, so PATH ``cursor`` is enough.
+    """
+    normalized = exe.replace("\\", "/")
+    if "/.mount_" in normalized:
+        return False
+    if normalized.startswith("/snap/") and not normalized.startswith("/snap/bin/"):
+        return False
+    return Path(exe).is_file()
+
+
+def _running_editor_bin_for_ide(ide: str) -> str | None:
+    """Prefer a live, CLI-safe IDE binary when it differs from a stale PATH shim."""
+    try:
+        from koruide.ide import detect_running_ides
+    except Exception:  # noqa: BLE001 - optional import during packaging
+        return None
+    path_bin: str | None = None
+    for candidate in PLUGIN_IDE_CLI.get(ide, ()):
+        resolved = shutil.which(candidate)
+        if resolved:
+            path_bin = resolved
+            break
+    best_exe: str | None = None
+    for row in detect_running_ides():
+        if row.id != ide:
+            continue
+        exe = (row.exe or "").strip()
+        if not exe or not _editor_bin_usable_for_cli_install(exe):
+            continue
+        resolved = str(Path(exe).resolve())
+        if path_bin:
+            try:
+                if os.path.samefile(resolved, path_bin):
+                    return path_bin
+            except OSError:
+                pass
+        return resolved
+    return None
 
 
 def render_install_plugin_dry_run(

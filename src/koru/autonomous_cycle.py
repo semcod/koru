@@ -758,6 +758,8 @@ def _run_code2llm_discovery_after_idle(
     project: Path,
     _hp: callable,
     _emit: callable,
+    *,
+    scope_paths: tuple[str, ...] | None = None,
 ) -> dict[str, Any] | None:
     """Run broad code2llm ticket discovery after an idle scan found no new work."""
     try:
@@ -765,11 +767,13 @@ def _run_code2llm_discovery_after_idle(
             format_discovery_summary,
             run_code2llm_discovery,
         )
+        from koru.scan import resolve_scan_paths
     except Exception as exc:  # noqa: BLE001 - optional integration
         _hp(f"- code2llm discovery unavailable: {exc}")
         return None
 
-    outcome = run_code2llm_discovery(project)
+    paths = scope_paths if scope_paths is not None else resolve_scan_paths(project)
+    outcome = run_code2llm_discovery(project, scope_paths=paths)
     summary = format_discovery_summary(outcome)
     _hp(f"  {summary}")
     payload = outcome.to_dict()
@@ -1026,6 +1030,76 @@ def _cycle_callbacks(
         _cycle_human_progress(msg, stdio_format=stdio_format)
 
     return emit, hp
+
+
+def _cycle_socket_path(client: Any) -> Path | None:
+    raw = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+    if raw:
+        return Path(raw).expanduser()
+    if client is not None:
+        raw_path = getattr(client, "socket_path", None)
+        if raw_path is not None:
+            return Path(raw_path)
+    return None
+
+
+def _apply_pre_drive_plugin_readiness(
+    *,
+    project: Path,
+    state: AutoloopState,
+    client: Any,
+    autopilot_ide: str,
+    socket_path: Path | None,
+    queue_result: QueueLoopResult,
+    cycle_telemetry: dict[str, Any],
+    hp: callable,
+) -> None:
+    import os
+
+    from koru.autonomous_cycle_drive_retry import _client_has_usable_plugin
+    from koru.autonomous_readiness import (
+        check_lane_terminal_socket_alignment,
+        check_queue_runner_contention,
+        format_readiness_lines,
+        warn_pre_drive_queue_without_plugin,
+    )
+
+    lane_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip() or None
+    for line in format_readiness_lines(
+        check_lane_terminal_socket_alignment(
+            autopilot_ide=autopilot_ide,
+            lane_instance=lane_instance,
+            socket_path=socket_path,
+        ),
+        prefix="- pre-drive",
+    ):
+        hp(line)
+        cycle_telemetry.setdefault("autopilot_pre_drive_readiness_lines", []).append(line)
+
+    for line in format_readiness_lines(
+        check_queue_runner_contention(project),
+        prefix="- pre-drive",
+    ):
+        hp(line)
+
+    plugin_required = _plugin_required_for_ide(autopilot_ide)
+    if not plugin_required or client is None:
+        state.autopilot_plugin_ready = True
+        return
+    plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
+    state.autopilot_plugin_ready = plugin_ok
+    cycle_telemetry["autopilot_plugin_ready"] = plugin_ok
+    if plugin_reason:
+        cycle_telemetry["autopilot_plugin_ready_reason"] = plugin_reason
+    warning = warn_pre_drive_queue_without_plugin(
+        queue_result.last_status,
+        plugin_required=plugin_required,
+        plugin_ok=plugin_ok,
+        plugin_reason=plugin_reason,
+    )
+    if warning:
+        hp(f"- pre-drive readiness: {warning}")
+        cycle_telemetry["autopilot_pre_drive_plugin_warning"] = warning
 
 
 def _run_pre_drive_cycle_phases(
@@ -1325,6 +1399,16 @@ def run_cycle(
         cycle=cycle,
         stdio_format=stdio_format,
         emit=_emit,
+    )
+    _apply_pre_drive_plugin_readiness(
+        project=project,
+        state=state,
+        client=client,
+        autopilot_ide=autopilot_ide,
+        socket_path=_cycle_socket_path(client),
+        queue_result=queue_result,
+        cycle_telemetry=cycle_telemetry,
+        hp=_hp,
     )
 
     drive_status = _run_drive_and_finalize(

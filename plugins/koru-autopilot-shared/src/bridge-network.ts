@@ -344,8 +344,19 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
       "koruAutopilot.lastVersionMismatchReloadAt",
       0,
     );
+    const lastReloadTarget = ctx.globalState.get<string>(
+      "koruAutopilot.lastVersionMismatchReloadTarget",
+      "",
+    );
+    const target = this.extractExpectedReloadTarget(message);
     const COOLDOWN_MS = 60_000;
-    if (Date.now() - lastReloadAt < COOLDOWN_MS) {
+    // The cooldown prevents reload loops, but it must not strand the IDE on a
+    // stale extension host when a *newer* VSIX has been installed since the last
+    // reload. Key the cooldown on the expected build/version target: a changed
+    // target means a fresh VSIX landed after the previous reload, so the reload
+    // that would actually load it must be allowed through immediately.
+    const sameTarget = target !== "" && target === lastReloadTarget;
+    if (sameTarget && Date.now() - lastReloadAt < COOLDOWN_MS) {
       void vscode.window.showWarningMessage(
         `koru autopilot: ${message} (reload skipped — already attempted within last 60s; ` +
           "run `Developer: Reload Window` manually if the IDE has not loaded the fresh VSIX)",
@@ -353,6 +364,7 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
       return;
     }
     await ctx.globalState.update("koruAutopilot.lastVersionMismatchReloadAt", Date.now());
+    await ctx.globalState.update("koruAutopilot.lastVersionMismatchReloadTarget", target);
     const strategies = this.options.reloadCommandStrategies;
     const failures: Array<{ id: string; detail: string }> = [];
     for (const strategy of strategies) {
@@ -380,6 +392,23 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
   private isReloadablePluginMismatch(message: string): boolean {
     const lowered = message.toLowerCase();
     return lowered.includes("plugin version mismatch") || lowered.includes("plugin build mismatch");
+  }
+
+  /**
+   * Pull the daemon's expected build/version token out of a rejection
+   * message so the reload cooldown can be keyed to the target the daemon
+   * actually wants loaded. The daemon emits both
+   * `expected=<build sha> version=<x>` (build mismatch) and
+   * `expected=<version>` (version mismatch); the build sha is the most
+   * specific identity, so prefer it and fall back to the version.
+   */
+  private extractExpectedReloadTarget(message: string): string {
+    const build = /expected=([^\s;]+)/i.exec(message);
+    const version = /version=([^\s;]+)/i.exec(message);
+    const parts: string[] = [];
+    if (build?.[1] && build[1] !== "-") parts.push(build[1]);
+    if (version?.[1] && version[1] !== "-") parts.push(version[1]);
+    return parts.join("@");
   }
 
   protected abstract runCommand(command: string, ...args: unknown[]): Promise<boolean>;

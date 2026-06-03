@@ -20,7 +20,11 @@ function detect(appName: string): string | undefined {
 }
 
 function pasteDirectCommandsPrefix(): string[] {
+  // Cursor 1.x removed ``composer.*`` / ``cursor.action.*`` on many builds;
+  // ``workbench.action.chat.typeText`` is the registered paste on Agent/Glass.
   return [
+    "workbench.action.chat.typeText",
+    "workbench.action.chat.insertText",
     "cursor.action.chat.typeText",
     "composer.typeText",
     "aichat.typeText",
@@ -42,6 +46,7 @@ function submitCommandsOverride(): string[] {
   // ``composer.sendToAgent`` is kept at the tail for compatibility
   // with older builds where ``getCommands`` still lists it.
   return [
+    "workbench.action.chat.stopListeningAndSubmit",
     "workbench.action.chat.submit",
     "workbench.action.chat.acceptInput",
     "workbench.action.chat.send",
@@ -79,6 +84,24 @@ function focusInputCommandsBlocklist(): string[] {
   ];
 }
 
+function isToxicCursorPasteCache(paste: string): boolean {
+  if (
+    paste === "editor.action.clipboardPasteAction" ||
+    paste === "editor.action.selectionClipboardPaste" ||
+    paste === "editor.action.pasteAs" ||
+    paste === "execPaste" ||
+    paste === "paste" ||
+    paste === "workbench.action.terminal.paste"
+  ) {
+    return true;
+  }
+  const lower = paste.toLowerCase();
+  return (
+    /clipboard.*paste|paste.*clipboard/.test(lower)
+    || lower.includes("terminal.paste")
+  );
+}
+
 function preferCtrlSubmit(): boolean {
   // Cursor's chat textarea treats plain `Return` as a newline; only
   // `Ctrl+Return` actually submits.
@@ -94,12 +117,16 @@ function sanitizeProbeCache(
   // be replaced by whatever the user had copied earlier. Prefer re-probing
   // ``cursor.action.chat.typeText`` / ``composer.typeText`` which take text
   // directly (or clipboard paste after verified seed in extension.ts).
+  if (typeof entry.paste === "string" && isToxicCursorPasteCache(entry.paste)) {
+    entry.paste = undefined;
+  }
+  // ``composer.startComposerPrompt*`` is handled only by the dedicated
+  // Cursor fast path. Cached as the probe-ladder paste winner it opens a
+  // fresh Composer tab while the user watches another chat — paste looks
+  // successful in traces but the visible chat stays empty.
   if (
     typeof entry.paste === "string" &&
-    (entry.paste === "editor.action.clipboardPasteAction" ||
-      entry.paste === "editor.action.pasteAs" ||
-      entry.paste === "execPaste" ||
-      entry.paste === "paste")
+    /startcomposerprompt/i.test(entry.paste)
   ) {
     entry.paste = undefined;
   }
@@ -119,12 +146,15 @@ function sanitizeProbeCache(
   // already had Composer visible. Never cache it — re-probe each drive
   // so the ladder picks the non-toggling ``composer.openComposer`` when
   // Composer is closed and the focus-only short-circuit when it is open.
-  if (
-    typeof entry.focusOpen === "string" &&
-    (entry.focusOpen === "aichat.newchataction" ||
-      entry.focusOpen === "composer.openAsPane")
-  ) {
-    entry.focusOpen = undefined;
+  if (typeof entry.focusOpen === "string") {
+    const focusOpen = entry.focusOpen.split("+")[0]?.trim() ?? entry.focusOpen;
+    if (
+      focusOpen === "aichat.newchataction" ||
+      focusOpen === "composer.openAsPane" ||
+      focusOpen === "workbench.panel.chat"
+    ) {
+      entry.focusOpen = undefined;
+    }
   }
   // ``workbench.action.focusAuxiliaryBar`` exits 0 but only focuses the
   // auxiliary bar chrome — not the Composer textarea. Cached as focusInput
@@ -191,7 +221,6 @@ function focusOpenCommandsDefaults(): string[] {
     "workbench.action.openChat",
     "workbench.panel.chat.view.copilot.focus",
     "workbench.panel.aichat.view.copilot.focus",
-    "workbench.panel.chat",
     "composer.openComposer",
     "composer.focusComposer",
     "cursor.composer.open",
@@ -207,14 +236,15 @@ function focusOpenCommandsDefaults(): string[] {
  */
 function trustFocusOpenCommand(command: string): boolean {
   const n = command.toLowerCase();
-  if (n === "aichat.newchataction") {
+  if (n === "aichat.newchataction" || n === "workbench.panel.chat") {
     return false;
   }
   return (
     n.startsWith("composer.")
-    || n.includes("panel.chat")
+    || n.includes("panel.chat.view")
     || n.includes("panel.aichat")
     || n.includes("cursor.composer")
+    || n.startsWith("workbench.action.chat.open")
   );
 }
 

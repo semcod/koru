@@ -10,6 +10,7 @@ import {
   UnsupportedAdapter,
   VSCodeChatSessionAdapter,
 } from "./chat-history-watcher";
+import { cursorBubbleTextMatchesPrompt } from "./_shared/submit-match";
 
 function buildSqliteOutput(rows: ChatHistoryRow[]): string {
   return rows
@@ -342,6 +343,54 @@ async function testCursorBubbleAdapterLatestBubbleRowidParsesMax(): Promise<void
   assert.strictEqual(rowidEmpty, 0, "empty stdout must yield 0 instead of NaN");
 }
 
+
+async function testCursorBubbleMatchAcceptsNormalizedTail(): Promise<void> {
+  const prompt = "Planfile status handoff:\n- run: planfile ticket done STARTER-437";
+  const bubble = "Planfile status handoff:   - run: planfile ticket done STARTER-437";
+  const result = cursorBubbleTextMatchesPrompt(bubble, prompt);
+
+  assert.strictEqual(result.matched, true);
+  assert.strictEqual(result.mode, "tail");
+}
+
+
+async function testCursorBubbleMatchAcceptsNormalizedHeadWhenTailMissing(): Promise<void> {
+  const prompt = [
+    "code2llm reports packages.coru.src.coru.cli._chat_loop with CC=36.",
+    "Extract smaller functions and keep tests green.",
+    "Planfile status handoff:",
+    "- planfile ticket done STARTER-437",
+  ].join("\n");
+  const bubble = "code2llm reports packages.coru.src.coru.cli._chat_loop with CC=36. Extract smaller functions and keep tests green.";
+  const result = cursorBubbleTextMatchesPrompt(bubble, prompt);
+
+  assert.strictEqual(result.matched, true);
+  assert.strictEqual(result.mode, "head");
+}
+
+
+async function testCursorBubbleMatchAcceptsMiddleSliceForLongPrompts(): Promise<void> {
+  const prefix = "A".repeat(200);
+  const middle = "Shotgun Surgery: allowed in src/koruide/protocol.py spans 5 functions";
+  const suffix = "B".repeat(200);
+  const prompt = `${prefix}${middle}${suffix}`;
+  const bubble = `…${middle}…`;
+  const result = cursorBubbleTextMatchesPrompt(bubble, prompt);
+
+  assert.strictEqual(result.matched, true);
+  assert.strictEqual(result.mode, "middle");
+}
+
+
+async function testCursorBubbleMatchRejectsUnrelatedText(): Promise<void> {
+  const prompt = "planfile ticket done STARTER-437";
+  const bubble = "unrelated user message in another chat";
+  const result = cursorBubbleTextMatchesPrompt(bubble, prompt);
+
+  assert.strictEqual(result.matched, false);
+  assert.strictEqual(result.mode, "none");
+}
+
 async function main(): Promise<void> {
   await testParseCursorBubbleRowsHandlesMultilineText();
   await testWatcherEmitsNewBubblesAndAdvancesCursor();
@@ -354,6 +403,10 @@ async function main(): Promise<void> {
   await testWatcherSkipsPollingWhenStoreUnavailable();
   await testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor();
   await testCursorBubbleAdapterLatestBubbleRowidParsesMax();
+  await testCursorBubbleMatchAcceptsNormalizedTail();
+  await testCursorBubbleMatchAcceptsNormalizedHeadWhenTailMissing();
+  await testCursorBubbleMatchAcceptsMiddleSliceForLongPrompts();
+  await testCursorBubbleMatchRejectsUnrelatedText();
   console.log("chat-history-watcher tests: ok");
 }
 

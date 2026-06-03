@@ -17,6 +17,13 @@ function testFocusOpenVsInput(): void {
   assert(classifyCommand("composer.focusComposer") === "focus_input", "focusComposer → focus_input");
 }
 
+function testSettingsCommandsAreNotFocusOpen(): void {
+  assert(
+    classifyCommand("workbench.action.chat.openChatEmptyStateSettings") === "window",
+    "chat empty-state settings must not be focus_open",
+  );
+}
+
 function testUnknownChatBucket(): void {
   assert(
     classifyCommand("cursor.chat.experimentalFoo") === "unknown_chat",
@@ -47,6 +54,7 @@ function testClassifyCommandsDeduplicates(): void {
 
 testClassifiesCursorSubmitAndPaste();
 testFocusOpenVsInput();
+testSettingsCommandsAreNotFocusOpen();
 testUnknownChatBucket();
 testClassifyCommandsDeduplicates();
 

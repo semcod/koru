@@ -467,10 +467,40 @@ def _is_waiting_llm_ready_ticket(*, queue_result: QueueLoopResult, project: Path
     )
 
 
+def _clear_submit_unverified_state(state: AutoloopState) -> None:
+    state.last_autopilot_status = ""
+    state.last_submit_unverified_ts = 0.0
+    state.last_submit_unverified_ticket_id = ""
+    state.submit_unverified_streak = 0
+    state.last_submit_failure_signature = ""
+    state.pending_submit_strategy_hint = ""
+
+
 def _previous_drive_needs_manual_send(state: AutoloopState) -> bool:
     return str(getattr(state, "last_autopilot_status", "") or "").startswith(
         "failed(submit_"
     )
+
+
+def _manual_send_can_be_cleared_by_message_sent(
+    *,
+    state: AutoloopState,
+    waiting_ticket: str,
+) -> bool:
+    if not waiting_ticket:
+        return False
+    tracked_ticket = str(getattr(state, "last_submit_unverified_ticket_id", "") or "")
+    if tracked_ticket and tracked_ticket != waiting_ticket:
+        return False
+    try:
+        sent_ts = float(getattr(state, "last_message_sent_ts", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        sent_ts = 0.0
+    try:
+        failed_ts = float(getattr(state, "last_submit_unverified_ts", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        failed_ts = 0.0
+    return sent_ts > 0 and sent_ts >= failed_ts > 0
 
 
 def _manual_send_required_skip_result(
@@ -488,9 +518,45 @@ def _manual_send_required_skip_result(
         cycle_telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] = True
         cycle_telemetry["autopilot_submit_unverified_previous_ticket"] = previous_ticket
         cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
-        state.last_autopilot_status = ""
+        _clear_submit_unverified_state(state)
+        return None
+    if _manual_send_can_be_cleared_by_message_sent(state=state, waiting_ticket=waiting_ticket):
+        cycle_telemetry["autopilot_submit_unverified_cleared_by_message_sent"] = True
+        cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
+        _clear_submit_unverified_state(state)
+        return None
+    from koru.autonomous_submit_strategy import (
+        should_block_manual_send,
+        submit_alt_attempt_limit,
+    )
+
+    if not should_block_manual_send(state):
+        limit = submit_alt_attempt_limit()
+        streak = int(getattr(state, "submit_unverified_streak", 0) or 0)
+        hint = str(getattr(state, "pending_submit_strategy_hint", "") or "")
+        _hp(
+            "- autopilot: retrying drive with alternate submit strategy "
+            f"(streak={streak}/{limit}, hint={hint or 'pending'})",
+        )
+        cycle_telemetry["autopilot_submit_alt_retry_allowed"] = True
+        cycle_telemetry["autopilot_submit_unverified_streak"] = streak
         return None
     _hp("- autopilot skipped (manual_send_required after submit_unverified)")
+    from koru.autonomy.ide_operator_guidance import (
+        emit_operator_guidance,
+        ide_label,
+        manual_send_operator_steps,
+    )
+    from koruide.ide import normalize_ide_id
+
+    lane_raw = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    autopilot_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE")) or normalize_ide_id(
+        lane_raw.split("-", 1)[0] if lane_raw else None
+    )
+    emit_operator_guidance(
+        manual_send_operator_steps(autopilot_ide, ticket_id=waiting_ticket),
+        title=f"Operator — manual send in {ide_label(autopilot_ide)}",
+    )
     cycle_telemetry["autopilot_submit_unverified"] = True
     cycle_telemetry["autopilot_skipped_manual_send_required"] = True
     cycle_telemetry["autopilot_submit_unverified_reason"] = (

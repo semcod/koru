@@ -48,6 +48,7 @@ class BridgeStatus:
     socket_path: str
     daemon_running: bool
     plugins_connected: bool
+    plugins_compatible: bool = False
     project: str | None = None
     activation: ActivationReport | None = None
     settings: SettingsReport | None = None
@@ -56,7 +57,7 @@ class BridgeStatus:
 
     @property
     def ready(self) -> bool:
-        return self.daemon_running and self.plugins_connected
+        return self.daemon_running and self.plugins_connected and self.plugins_compatible
 
     def top_hypothesis(self) -> Hypothesis | None:
         if not self.hypotheses:

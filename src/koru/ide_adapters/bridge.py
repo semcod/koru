@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any
 
 from koru.autopilot.client import AutopilotClient
-from koru.ide_adapters.base import BridgeStatus, Hypothesis
 from koru.ide_adapters import shared
+from koru.ide_adapters.base import BridgeStatus, Hypothesis
 from koru.ide_adapters.registry import get_adapter
+from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides, normalize_ide_id
 
 
@@ -79,6 +80,113 @@ def _plugins_connected(plugin_list: list, ide: str) -> bool:
     )
 
 
+def _plugin_covers_project(plugin: dict[str, Any], project: Path | None) -> bool:
+    if project is None:
+        return True
+    folders = plugin.get("workspaceFolders")
+    if not isinstance(folders, list):
+        return False
+    project_path = str(project.resolve())
+    for folder in folders:
+        if not isinstance(folder, str):
+            continue
+        try:
+            if str(Path(folder).resolve()) == project_path:
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def _plugin_version_compatible(plugin: dict[str, Any], ide: str) -> bool:
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide=ide,
+        connected_version=str(plugin.get("version") or "") or None,
+        connected_build_sha=str(plugin.get("buildSha") or "") or None,
+        protocol_version=(
+            int(plugin["protocolVersion"])
+            if isinstance(plugin.get("protocolVersion"), int)
+            else None
+        ),
+        capabilities=(
+            plugin.get("capabilities") if isinstance(plugin.get("capabilities"), list) else None
+        ),
+    )
+    return not DriveOrchestrator.should_block_plugin_version(info)
+
+
+def _plugins_compatible(plugin_list: list, ide: str, project: Path | None) -> bool:
+    for plugin in plugin_list:
+        if not isinstance(plugin, dict):
+            continue
+        if normalize_ide_id(str(plugin.get("ide", ""))) != ide:
+            continue
+        if not _plugin_covers_project(plugin, project):
+            continue
+        if _plugin_version_compatible(plugin, ide):
+            return True
+    return False
+
+
+def _incompatible_plugin_hypothesis(
+    *,
+    ide: str,
+    plugin_list: list,
+    project: Path | None,
+    expected_socket: str,
+) -> Hypothesis | None:
+    rows = [
+        plugin for plugin in plugin_list
+        if isinstance(plugin, dict) and normalize_ide_id(str(plugin.get("ide", ""))) == ide
+    ]
+    if not rows:
+        return None
+    project_path = str(project.resolve()) if project is not None else ""
+    for plugin in rows:
+        if project is not None and not _plugin_covers_project(plugin, project):
+            continue
+        if not _plugin_version_compatible(plugin, ide):
+            expected = DriveOrchestrator.expected_plugin_build_sha(ide) or "-"
+            connected = str(plugin.get("buildSha") or "-")
+            return Hypothesis(
+                id=f"{ide}.plugin.build_mismatch",
+                confidence=0.95,
+                evidence=(
+                    f"Plugin {ide} for workspace {project_path or '-'} has build "
+                    f"{connected}, expected {expected}"
+                ),
+                remediation=shared.Remediation(
+                    kind="manual",
+                    summary=(
+                        "Developer: Reload Window, then koru: Connect autopilot daemon "
+                        f"(socket {expected_socket})"
+                    ),
+                ),
+            )
+    if project is not None:
+        folders = [
+            folder for plugin in rows
+            for folder in plugin.get("workspaceFolders", [])
+            if isinstance(folder, str)
+        ]
+        return Hypothesis(
+            id=f"{ide}.plugin.workspace_mismatch",
+            confidence=0.9,
+            evidence=(
+                f"Connected plugin workspaces do not include project {project_path}; "
+                f"plugin folders={folders!r}"
+            ),
+            remediation=shared.Remediation(
+                kind="manual",
+                summary=(
+                    f"Open {project_path} in {ide}, then run "
+                    f"`koru: Connect autopilot daemon` (socket {expected_socket})"
+                ),
+            ),
+        )
+    return None
+
+
 def _bridge_status_base(
     *,
     ide: str,
@@ -86,12 +194,14 @@ def _bridge_status_base(
     project: Path | None,
     daemon_running: bool,
     plugins_connected: bool,
+    plugins_compatible: bool,
 ) -> BridgeStatus:
     return BridgeStatus(
         ide=ide,
         socket_path=sock,
         daemon_running=daemon_running,
         plugins_connected=plugins_connected,
+        plugins_compatible=plugins_compatible,
         project=str(project.resolve()) if project is not None else None,
     )
 
@@ -148,6 +258,27 @@ def _append_stale_plugin_hypothesis(
     status.hypotheses.sort(key=lambda h: h.confidence, reverse=True)
 
 
+def _append_incompatible_plugin_hypothesis(
+    status: BridgeStatus,
+    *,
+    plugin_list: list,
+    project: Path | None,
+    sock: str,
+) -> None:
+    if status.plugins_compatible:
+        return
+    hypothesis = _incompatible_plugin_hypothesis(
+        ide=status.ide,
+        plugin_list=plugin_list,
+        project=project,
+        expected_socket=sock,
+    )
+    if hypothesis is None:
+        return
+    status.hypotheses.append(hypothesis)
+    status.hypotheses.sort(key=lambda h: h.confidence, reverse=True)
+
+
 def evaluate_bridge(
     *,
     ide: str,
@@ -171,6 +302,7 @@ def evaluate_bridge(
         project=project,
         daemon_running=daemon_running,
         plugins_connected=_plugins_connected(plugin_list, ide),
+        plugins_compatible=_plugins_compatible(plugin_list, ide, project),
     )
     _populate_adapter_diagnostics(
         status,
@@ -180,6 +312,12 @@ def evaluate_bridge(
     _append_stale_plugin_hypothesis(
         status,
         daemon_status=daemon_status,
+        sock=sock,
+    )
+    _append_incompatible_plugin_hypothesis(
+        status,
+        plugin_list=plugin_list,
+        project=project,
         sock=sock,
     )
     return status
@@ -213,7 +351,9 @@ def gc_stale_sockets_for_lane(socket_path: Path) -> list[str]:
             removed.append(str(socket_path))
         except OSError:
             pass
-    removed.extend(shared.gc_stale_autopilot_sockets(keep=socket_path, runtime_dir=socket_path.parent))
+    removed.extend(
+        shared.gc_stale_autopilot_sockets(keep=socket_path, runtime_dir=socket_path.parent),
+    )
     return removed
 
 
@@ -224,6 +364,8 @@ def format_bridge_text(status: BridgeStatus, *, explain: bool = False) -> str:
     if status.daemon_running:
         plug_mark = "✔" if status.plugins_connected else "✘"
         lines.append(f"{plug_mark} plugin connected (ide={status.ide})")
+        compat_mark = "✔" if status.plugins_compatible else "✘"
+        lines.append(f"{compat_mark} plugin compatible for project")
     if status.settings is not None and status.settings.mismatch:
         lines.append(
             f"✘ settings: workspace={status.settings.workspace_socket} "

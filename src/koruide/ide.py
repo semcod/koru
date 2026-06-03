@@ -15,6 +15,9 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
+
+TerminalKind = Literal["integrated", "ide_adjacent", "system"]
 
 # Map of IDE id -> (process-name patterns, friendly label).
 # Patterns are matched against ``comm`` (basename of the executable)
@@ -106,6 +109,19 @@ def supports_vscode_extension_plugin(ide: str | None) -> bool:
     return bool(normalized and normalized in _VSCODE_EXTENSION_PLUGIN_IDES)
 
 
+def canonical_autopilot_ide_id(raw: str) -> str:
+    """Map lane/instance slugs (e.g. ``cursor-main``) to canonical IDE ids."""
+    normalized = normalize_ide_id(raw) or (raw or "").strip().lower()
+    if normalized in _SUPPORTED_AUTOPILOT_IDES and normalized != "auto":
+        return normalized
+    for ide_id in _AUTOPILOT_IDE_ORDER:
+        if ide_id == "auto":
+            continue
+        if normalized == ide_id or normalized.startswith(f"{ide_id}-"):
+            return ide_id
+    return normalized
+
+
 @dataclass(frozen=True)
 class RunningIDE:
     """A single IDE process discovered on the system."""
@@ -117,6 +133,23 @@ class RunningIDE:
 
     def to_dict(self) -> dict[str, object]:
         return {"id": self.id, "label": self.label, "pid": self.pid, "exe": self.exe}
+
+
+TerminalKind = Literal["integrated", "ide_adjacent", "system"]
+
+
+@dataclass(frozen=True)
+class TerminalHostContext:
+    """Resolved host context for the terminal running Koru/Coru."""
+
+    ide: str | None
+    source: str
+    kind: TerminalKind = "system"
+
+    @property
+    def integrated(self) -> bool:
+        """True only for IDE integrated terminals (env markers), not external shells."""
+        return self.kind == "integrated"
 
 
 def _iter_proc_pids() -> list[int]:
@@ -341,6 +374,8 @@ _VSCODE_FAMILY_ENV_KEYS = (
     "VSCODE_IPC_HOOK",
     "VSCODE_CODE_CACHE_PATH",
     "VSCODE_CWD",
+    "CHROME_DESKTOP",
+    "GIO_LAUNCHED_DESKTOP_FILE",
 )
 
 
@@ -395,6 +430,39 @@ def _vscode_family_terminal_hint(term_program: str) -> str | None:
     return None
 
 
+def _jetbrains_terminal_env_hint() -> bool:
+    terminal_emulator = os.environ.get("TERMINAL_EMULATOR", "").strip().lower()
+    return bool(
+        "jetbrains" in terminal_emulator
+        or "jediterm" in terminal_emulator
+        or os.environ.get("IDEA_INITIAL_DIRECTORY")
+        or os.environ.get("PYCHARM_HOSTED")
+        or os.environ.get("JETBRAINS_IDE")
+    )
+
+
+def _ide_from_vscode_pid() -> str | None:
+    pid = (os.environ.get("VSCODE_PID") or "").strip()
+    if not pid.isdigit():
+        return None
+    exe_path = Path(f"/proc/{pid}/exe")
+    try:
+        target = str(exe_path.resolve()).lower()
+    except OSError:
+        return None
+    if "antigravity" in target:
+        return "antigravity"
+    if "cursor" in target:
+        return "cursor"
+    if "windsurf" in target:
+        return "windsurf"
+    if "codium" in target or "vscodium" in target or "code-oss" in target:
+        return "vscodium"
+    if "code" in target or "vscode" in target:
+        return "vscode"
+    return None
+
+
 def _known_terminal_ide_hint(term_ide: str | None, chrome_ide: str | None) -> str | None:
     if term_ide in _IDE_SIGNATURES:
         return term_ide
@@ -428,24 +496,51 @@ def _terminal_ide_env_candidates(
     )
 
 
-def _terminal_ide_from_env() -> str | None:
+def _terminal_ide_from_env_with_source() -> tuple[str | None, str | None]:
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
     chrome_ide = normalize_ide_id(chrome)
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
     term_ide = normalize_ide_id(term_program)
-    return next(
-        (
-            candidate
-            for candidate in _terminal_ide_env_candidates(
-                chrome,
-                chrome_ide,
-                term_program,
-                term_ide,
-            )
-            if candidate
-        ),
-        None,
-    )
+
+    if _jetbrains_terminal_env_hint():
+        return "jetbrains", "env:TERMINAL_EMULATOR"
+
+    # VS Code-family integrated terminals should first use VSCODE_PID executable
+    # probe. Cursor also exports VSCODE_* vars, so this avoids stale CURSOR_* env
+    # values forcing wrong host IDE when current shell is in plain VS Code.
+    if term_program in {"vscode", "code"} and (os.environ.get("VSCODE_PID") or "").strip():
+        via_pid = _ide_from_vscode_pid()
+        if via_pid is not None:
+            return via_pid, "env:VSCODE_PID.exe"
+        flavor = _vscode_family_flavor_from_env() if _vscode_family_env_present() else None
+        if flavor is not None:
+            return flavor, "env:VSCODE_*"
+    if term_program in {"vscode", "code"} and _vscode_family_env_present():
+        flavor = _vscode_family_flavor_from_env()
+        if flavor is not None:
+            return flavor, "env:VSCODE_*"
+
+    if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower():
+        return "antigravity", "env:GIO_LAUNCHED_DESKTOP_FILE"
+    if _cursor_terminal_env_hint(chrome_ide):
+        return "cursor", "env:CURSOR_*"
+    if _windsurf_primary_terminal_env_hint(chrome_ide):
+        return "windsurf", "env:WINDSURF_*"
+    known = _known_terminal_ide_hint(term_ide, chrome_ide)
+    if known is not None:
+        return known, "env:TERM_PROGRAM/CHROME_DESKTOP"
+    if _vscode_family_env_present():
+        flavor = _vscode_family_flavor_from_env()
+        if flavor is not None:
+            return flavor, "env:VSCODE_*"
+    if _legacy_windsurf_terminal_env_hint(chrome):
+        return "windsurf", "env:WINDSURF_LEGACY"
+    return None, None
+
+
+def _terminal_ide_from_env() -> str | None:
+    ide, _source = _terminal_ide_from_env_with_source()
+    return ide
 
 
 def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:
@@ -492,16 +587,46 @@ def detect_terminal_host_ide_id(
     ``/proc`` parents. Cursor must be checked before generic ``VSCODE_*``
     because Cursor also sets ``VSCODE_PID``.
     """
-    from_env = _terminal_ide_from_env()
+    from_env, source = _terminal_ide_from_env_with_source()
     if from_env is not None:
         if _log:
-            _log(f"terminal_host_ide: detected={from_env} (from env)")
+            _log(f"terminal_host_ide: detected={from_env} ({source or 'env'})")
         return from_env
     start = _start_pid if _start_pid is not None else os.getpid()
     ide = _terminal_ide_from_parent_chain(start)
     if _log:
         _log(f"terminal_host_ide: detected={ide or 'none'} (parent chain from pid={start})")
     return ide
+
+
+def detect_terminal_host_context(
+    *, _start_pid: int | None = None, _log: Callable[[str], None] | None = None
+) -> TerminalHostContext:
+    """Return terminal host IDE plus source and integrated/system classification."""
+
+    from_env, source = _terminal_ide_from_env_with_source()
+    if from_env is not None:
+        if _log:
+            _log(f"terminal_host_context: ide={from_env} source={source or 'env'} kind=integrated")
+        return TerminalHostContext(ide=from_env, source=source or "env", kind="integrated")
+
+    start = _start_pid if _start_pid is not None else os.getpid()
+    ide = _terminal_ide_from_parent_chain(start)
+    if ide is not None:
+        if _log:
+            _log(
+                f"terminal_host_context: ide={ide} "
+                f"source=parent_chain(pid={start}) kind=ide_adjacent"
+            )
+        return TerminalHostContext(
+            ide=ide,
+            source=f"parent_chain(pid={start})",
+            kind="ide_adjacent",
+        )
+
+    if _log:
+        _log("terminal_host_context: ide=none source=none kind=system")
+    return TerminalHostContext(ide=None, source="none", kind="system")
 
 
 def focused_ide(
@@ -738,10 +863,14 @@ def resolve_drive_target(
 
 __all__ = [
     "RunningIDE",
+    "TerminalHostContext",
+    "TerminalKind",
     "autopilot_ide_choices",
+    "canonical_autopilot_ide_id",
     "detect_running_ides",
     "detect_running_ides_cached",
     "detect_focused_ide_id",
+    "detect_terminal_host_context",
     "detect_terminal_host_ide_id",
     "clear_detect_cache",
     "focused_ide",

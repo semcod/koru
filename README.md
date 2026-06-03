@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.309-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$28.91-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-132.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$27.03-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-134.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $28.9099 (410 commits)
-- 👤 **Human dev:** ~$13275 (132.8h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $27.0283 (411 commits)
+- 👤 **Human dev:** ~$13418 (134.2h @ $100/h, 30min dedup)
 
-Generated on 2026-06-02 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-06-03 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -208,6 +208,30 @@ with `--emit-events human`). In `jsonl` mode, incidental status lines go to
 `QueueIteration`, `DiagnosticsCompleted`, `WupHealthChanged`,
 `PostRunVerifyCompleted`, `PostRunVerifyIdeCompleted`, `QueueStaleReleased`,
 `AutopilotDecision`, `CycleCompleted`, and `AutonomousStopped`.
+
+### Autopilot command debug (JSONL)
+
+For command-level debugging in the IDE control path, use the same JSONL contract
+on `koru autopilot` commands:
+
+```bash
+koru autopilot --log-format jsonl status --explain
+koru autopilot --log-format jsonl drive --ide cursor "zrob refaktor"
+koru autopilot --log-format jsonl handoff --project . --ide cursor
+koru autopilot --log-format jsonl manage --ide cursor
+```
+
+`jsonl` events are written to stderr and include standard fields:
+
+- `ts`
+- `corr`
+- `component`
+- `level`
+- `action`
+- `result`
+- `rc`
+
+This contract is now shared across `drive`, `status`, `handoff`, and `manage`.
 
 ### Post-run verify (closed loop after `done`)
 
@@ -1015,11 +1039,13 @@ task quality:semcod:planfile
 
 That command is intentionally LLM-free. It:
 
-1. runs `koru scan --apply --semcod-artifacts`;
-2. detects configured `semcod/*` tools (`wup`, `testql`, `regix`, `redup`,
-   `sumr/sumd`, `doql`, `redsl`, plus the rest surfaced in the Koru brief);
-3. runs only the gates that are both installed and configured in the project;
-4. uses `scripts/koru-gate-capture.py` to create or update deduplicated
+1. runs `metrun scan` when installed (writes `project/metrun.toon.yaml` by default);
+2. runs `pfix diagnose --json --output .pfix/diagnose.json`;
+3. runs `koru scan --apply --semcod-artifacts`;
+4. runs configured `semcod/*` gates (`wup`, `testql`, `regix`, `redup`,
+   `sumr/sumd`, `doql`, `redsl`, plus the rest surfaced in the Koru brief)
+   when installed and configured in the project;
+5. uses `scripts/koru-gate-capture.py` to create or update deduplicated
    `planfile` tickets marked with `[gate-finding:<hash>]`.
 
 Useful variants:

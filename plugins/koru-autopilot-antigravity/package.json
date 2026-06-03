@@ -174,8 +174,8 @@
     "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/antigravity-fastpath.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
-    "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-antigravity && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-antigravity && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-antigravity",
-    "package": "vsce package --no-dependencies --out koru-autopilot-antigravity-${npm_package_version}.vsix",
+    "prepackage": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-antigravity && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-antigravity && python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-antigravity",
+    "package": "vsce package --no-dependencies --out koru-autopilot-antigravity-$(node -p \"require('./package.json').version\").vsix",
     "prepublish": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-antigravity && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-antigravity",
     "publish": "vsce publish --no-dependencies",
     "clean": "rm -rf out node_modules src/_shared *.vsix"

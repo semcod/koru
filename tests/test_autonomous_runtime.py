@@ -223,6 +223,8 @@ def test_build_and_log_startup_probe_reconciles_stale_koruenv_socket(
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "cursor"
     assert os.environ["KORU_AUTOPILOT_IDE"] == "cursor"
     assert os.environ["KORU_AUTOPILOT_SOCKET"] == "/run/user/1000/koru-autopilot-cursor.sock"
+    for key in ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET"):
+        os.environ.pop(key, None)
 
 
 def test_setup_autopilot_daemon_sets_instance_before_default_socket(

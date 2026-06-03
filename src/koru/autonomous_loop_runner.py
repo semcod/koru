@@ -718,7 +718,7 @@ def _idle_no_ticket_warning(project: Any | None) -> tuple[str, str, dict[str, An
         "jezeli nadal brak ruchu, zlec IDE LLM pytanie: "
         "'Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile.' "
         "i zamien odpowiedz na tickety; "
-        "prefact/metrun są narzędziami advisory bez automatycznych adapterów ticketów. "
+        "goal/costs są advisory; metrun/prefact/pfix czytane z artefaktów przez koru scan. "
         f"Napisz ticket w Web GUI: {urls['create_project_ticket']} ; "
         f"lista ticketów: {urls['tickets']}"
     )

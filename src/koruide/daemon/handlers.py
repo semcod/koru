@@ -149,6 +149,11 @@ from koruide.daemon.handlers_hello import (
 def handle_status(daemon: Any, client: _Client, msg: Message) -> None:
     if client.role == "unknown":
         client.role = "cli"
+    dropped = daemon._plugin_router.drop_version_mismatch_plugins()
+    if dropped:
+        daemon.log(
+            f"status: dropped {dropped} stale plugin connection(s) with version/build mismatch",
+        )
     plugins = [row.to_dict() for row in daemon._plugin_router.status_rows()]
     daemon_version = _daemon_package_version()
     metadata = (

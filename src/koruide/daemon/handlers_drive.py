@@ -307,12 +307,13 @@ def _deliver_chat_via_plugin_socket(
         data={"chars": len(text), "submit": submit, "corr": corr},
     )
     daemon.audit.record(
-        "drive",
+        "drive_requested",
         ide=plugin.ide,
         backend="plugin",
         chars=len(text),
         submit=submit,
-        ok=True,
+        status="awaiting_ack",
+        corr=corr,
     )
 
 

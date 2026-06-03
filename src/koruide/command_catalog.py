@@ -127,6 +127,15 @@ GENERIC_VSCODE_FAMILY: tuple[IdeCommand, ...] = (
         notes="Focus candidates need editor-snapshot or chat-event verification before reuse.",
     ),
     *_rows(
+        "focus_open_avoid",
+        (
+            "workbench.action.chat.openChatEmptyStateSettings",
+        ),
+        confidence="runtime_introspected",
+        risk="high",
+        notes="Opens Settings instead of the chat surface; never use as an autopilot opener.",
+    ),
+    *_rows(
         "paste_text",
         (
             "workbench.action.chat.insertText",
@@ -230,8 +239,6 @@ CURSOR_SPECIFIC: tuple[IdeCommand, ...] = (
         (
             "composer.sendToAgent",
             "composer.acceptComposerStep",
-            "composer.startComposerPrompt",
-            "composer.startComposerPrompt2",
             "composer.submit",
             "aichat.submit",
         ),

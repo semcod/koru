@@ -9,10 +9,16 @@ const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.chat.openask",
 ]);
 
+const GLOBALLY_UNSAFE_FOCUS_OPEN_MARKERS = [
+  "settings",
+  "preferences",
+];
+
 const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.openchat",
   "workbench.action.openquickchat",
   "workbench.action.chat.open",
+  "workbench.action.chat.openchatemptystatesettings",
   "workbench.action.chat.openinnewwindow",
   "workbench.action.chat.opensessioninnewwindow",
   "workbench.action.quickchat.openinchatview",
@@ -25,7 +31,8 @@ export function isAllowedFocusOpenCommand(command: unknown): command is string {
   return (
     typeof command === "string" &&
     command.trim().length > 0 &&
-    !DISALLOWED_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase())
+    !DISALLOWED_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()) &&
+    !isGloballyUnsafeFocusOpenCommand(command)
   );
 }
 
@@ -41,10 +48,16 @@ export function sanitizeFocusOpenCandidates(commands: readonly string[]): string
 }
 
 export function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
+  const globallySafe = commands.filter((command) => !isGloballyUnsafeFocusOpenCommand(command));
   if (ide !== "vscode" && ide !== "vscodium") {
-    return [...commands];
+    return globallySafe;
   }
-  return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
+  return globallySafe.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
+}
+
+function isGloballyUnsafeFocusOpenCommand(command: string): boolean {
+  const normalized = command.trim().toLowerCase();
+  return GLOBALLY_UNSAFE_FOCUS_OPEN_MARKERS.some((marker) => normalized.includes(marker));
 }
 
 export function isSpecificChatInputFocusCommand(command: string | undefined): boolean {
@@ -57,6 +70,9 @@ export function isSpecificChatInputFocusCommand(command: string | undefined): bo
 
 const TOGGLING_FOCUS_OPEN_COMMANDS: ReadonlySet<string> = new Set([
   "composer.openaspane",
+  // Toggles the chat panel: when Composer is already visible this hides it
+  // and the next paste/submit targets an invisible webview.
+  "workbench.panel.chat",
   "workbench.action.toggleauxiliarybar",
   "workbench.action.togglepanel",
   "workbench.action.togglesidebar",

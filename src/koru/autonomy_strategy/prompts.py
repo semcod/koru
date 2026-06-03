@@ -33,7 +33,7 @@ def build_strategy_update_prompt(project: Path) -> str:
         "runnable tickets, ask IDE LLM: \"Co jeszcze zostalo do wykonania? zrob z "
         "tego nastepne tickety do planfile.\" and keep output ticket-oriented.\n"
         "- Do not invent tools as automated unless they are available and have a "
-        "ticket adapter. Mark prefact/metrun as advisory unless configured otherwise.\n"
+        "Mark goal/costs as advisory unless configured otherwise.\n"
         "- Use `ide_command_api` as a candidate map only: prefer low-risk public or "
         "runtime-verified commands, require live command/action verification before "
         "private IDE commands, and avoid new-chat/pane-toggle commands unless requested.\n"

@@ -26,8 +26,21 @@ from koru.init import (
     refresh_init_agent_lane,
     resolve_project_agent_lane,
 )
+from koru.init_host_environment import _parse_os_release_line
 from koru.policy import load_policy
 from koru.runtime import planfile_dir, runtime_dir
+
+
+class TestHostEnvironmentParsing(unittest.TestCase):
+    def test_parse_os_release_line(self) -> None:
+        self.assertEqual(
+            _parse_os_release_line('PRETTY_NAME="Ubuntu 24.04 LTS"'),
+            ("PRETTY_NAME", "Ubuntu 24.04 LTS"),
+        )
+        self.assertEqual(_parse_os_release_line("ID=ubuntu"), ("ID", "ubuntu"))
+        self.assertIsNone(_parse_os_release_line("# comment"))
+        self.assertIsNone(_parse_os_release_line("MALFORMED"))
+        self.assertIsNone(_parse_os_release_line("=missing-key"))
 
 
 def _detach_ci_env() -> dict[str, str]:

@@ -12,10 +12,21 @@ from typing import Any
 from koru.autonomy.phases.utils import current_head, is_topology_enabled
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
-from koru.scan import ScanResult, run_scan
+from koru.scan import ScanResult, resolve_scan_paths, run_scan
 
 _CREATE_FAILED_SCAN_COOLDOWN_SECONDS = 120.0
 _DUPLICATE_ONLY_SCAN_COOLDOWN_SECONDS = 300.0
+
+
+def _scan_paths_for_project(project: Path) -> tuple[str, ...] | None:
+    return resolve_scan_paths(project)
+
+
+def _scan_path_suffix(paths: tuple[str, ...] | None) -> str:
+    if not paths:
+        return ""
+    joined = " ".join(f"--path {item}" for item in paths)
+    return f" {joined}"
 
 
 def _format_scan_summary_line(result: ScanResult) -> str:
@@ -255,14 +266,16 @@ def handle_scan_phase(
                     },
                 )
             else:
+                scan_paths = _scan_paths_for_project(project)
                 scan_cmd = "koru scan --apply" + (
                     " --semcod-artifacts" if include_semcod_artifacts else ""
-                )
+                ) + _scan_path_suffix(scan_paths)
                 _hp("+ " + scan_cmd)
                 scan_result = run_scan(
                     project=project,
                     apply=True,
                     include_semcod_artifacts=include_semcod_artifacts,
+                    paths=scan_paths,
                 )
                 _remember_scan_create_failed_state(state, scan_result, now=time.time())
                 _remember_scan_duplicate_state(state, scan_result, now=time.time())
@@ -437,7 +450,12 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
             "  idle strategy: detailed scan is in duplicate cooldown; "
             "continue detail→general by checking whole-project discovery",
         )
-        discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
+        discovery = _run_code2llm_discovery_after_idle(
+            project,
+            _hp,
+            _emit,
+            scope_paths=_scan_paths_for_project(project),
+        )
         _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
     return True
 
@@ -452,18 +470,28 @@ def _run_scan_after_idle(
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> ScanResult:
-    scan_cmd = "koru scan --apply" f"{' --semcod-artifacts' if include_semcod_artifacts else ''}"
+    scan_paths = _scan_paths_for_project(project)
+    scan_cmd = (
+        "koru scan --apply"
+        f"{' --semcod-artifacts' if include_semcod_artifacts else ''}"
+        f"{_scan_path_suffix(scan_paths)}"
+    )
     if include_semcod_artifacts:
+        scope_note = (
+            f" (scoped to {', '.join(scan_paths)})" if scan_paths else ""
+        )
         _hp(
             "  idle strategy: detail→general; first apply concrete scan "
-            "signals, then run whole-project code2llm discovery if no "
-            "tickets were created",
+            f"signals{scope_note}, then run "
+            f"{'scoped' if scan_paths else 'whole-project'} code2llm discovery "
+            "if no tickets were created",
         )
     _hp(f"+ {scan_cmd} (queue idle → intake scan)")
     idle_scan = run_scan(
         project=project,
         apply=True,
         include_semcod_artifacts=include_semcod_artifacts,
+        paths=scan_paths,
     )
     _record_scan_after_idle_result(
         state,
@@ -477,7 +505,12 @@ def _run_scan_after_idle(
         _emit,
     )
     if include_semcod_artifacts and not idle_scan.applied:
-        discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
+        discovery = _run_code2llm_discovery_after_idle(
+            project,
+            _hp,
+            _emit,
+            scope_paths=scan_paths,
+        )
         _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
     return idle_scan
 
@@ -541,6 +574,8 @@ def _run_code2llm_discovery_after_idle(
     project: Path,
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
+    *,
+    scope_paths: tuple[str, ...] | None = None,
 ) -> dict[str, Any] | None:
     """Run broad code2llm ticket discovery after an idle scan found no new work."""
     _hp(_format_idle_discovery_toolchain_line(project))
@@ -553,7 +588,7 @@ def _run_code2llm_discovery_after_idle(
         _hp(f"- code2llm discovery unavailable: {exc}")
         return None
 
-    outcome = run_code2llm_discovery(project)
+    outcome = run_code2llm_discovery(project, scope_paths=scope_paths)
     summary = format_discovery_summary(outcome)
     _hp(f"  {summary}")
     payload = outcome.to_dict()
@@ -604,7 +639,7 @@ def _format_idle_discovery_toolchain_line(project: Path) -> str:
     except Exception:  # noqa: BLE001 - advisory log only
         return (
             "  discovery toolchain: automated sources=koru scan + code2llm; "
-            "optional prefact/metrun status unavailable"
+            "optional semcod tool status unavailable"
         )
     interesting = []
     for tool_id in ("code2llm", "redup", "testql", "prefact", "metrun"):
@@ -615,6 +650,6 @@ def _format_idle_discovery_toolchain_line(project: Path) -> str:
     suffix = ", ".join(interesting) if interesting else "no optional tools detected"
     return (
         "  discovery toolchain: automated sources=koru scan + code2llm; "
-        f"tool availability: {suffix}; prefact/metrun are advisory until "
-        "dedicated ticket adapters are enabled"
+        f"tool availability: {suffix}; goal/costs stay advisory until "
+        "stable report contracts exist"
     )

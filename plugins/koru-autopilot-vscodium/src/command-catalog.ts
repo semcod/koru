@@ -42,7 +42,7 @@ type Rule = { capability: CommandCapability; pattern: RegExp };
 
 /** First matching rule wins (ordered most-specific → generic). */
 const RULES: Rule[] = [
-  { capability: "window", pattern: /(?:reloadWindow|reloadExtensions|restartExtensionHost|newWindow|openFolder)/i },
+  { capability: "window", pattern: /(?:settings|preferences|reloadWindow|reloadExtensions|restartExtensionHost|newWindow|openFolder)/i },
   { capability: "history", pattern: /(?:chat.*history|clear.*chat|delete.*chat|reset.*chat)/i },
   {
     capability: "visibility",

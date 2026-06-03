@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +45,26 @@ def _package_without_build_metadata(package_json: Path) -> bytes:
     data = json.loads(package_json.read_text(encoding="utf-8"))
     if isinstance(data, dict):
         data.pop("koruAutopilotBuild", None)
+        # The version is intentionally excluded so the content sha stays stable
+        # across automatic version bumps. Otherwise bumping the version would
+        # change the sha, which would request another bump on the next build —
+        # an endless ratchet. The sha must describe *source content only*.
+        data.pop("version", None)
     return json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _bump_patch(version: str) -> str | None:
+    """Return ``version`` with its patch component incremented.
+
+    Only plain ``major.minor.patch`` semver is bumped automatically. Anything
+    with a pre-release/build suffix is left untouched so we never corrupt a
+    deliberately pinned version string.
+    """
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version.strip())
+    if not match:
+        return None
+    major, minor, patch = (int(part) for part in match.groups())
+    return f"{major}.{minor}.{patch + 1}"
 
 
 def compute_build_sha(plugin_dir: Path) -> str:
@@ -76,6 +96,20 @@ def update_package(plugin_dir: Path) -> bool:
     if data.get("koruAutopilotBuild") == new_build:
         print(f"  ✓ {plugin_dir.name} build sha already {sha}")
         return False
+    # The source content changed since the last packaged build. Bump the patch
+    # version so VS Code-family IDEs treat the freshly installed VSIX as a real
+    # upgrade instead of silently keeping the previous extension host loaded
+    # (the 'same 0.2.7, different build' trap).
+    old_version = str(data.get("version") or "")
+    bumped = _bump_patch(old_version)
+    if bumped is not None and bumped != old_version:
+        data["version"] = bumped
+        print(f"  ✓ Bumped {plugin_dir.name} version {old_version} → {bumped} (source changed)")
+    elif bumped is None:
+        print(
+            f"  ⚠ {plugin_dir.name} version {old_version!r} is not plain semver; "
+            "skipping auto-bump (build sha still updated)"
+        )
     data["koruAutopilotBuild"] = new_build
     package_json.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(f"  ✓ Updated {plugin_dir.name} build sha to {sha}")

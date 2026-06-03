@@ -159,6 +159,12 @@ def _try_profile_direct_drive(
     return True, 0, os_res
 
 
+def _selected_keyboard_backend(injector: Injector) -> str:
+    select_backend = getattr(injector, "select_backend", None)
+    selected = select_backend() if callable(select_backend) else getattr(injector, "session", "")
+    return str(selected or "keyboard")
+
+
 def _type_text_direct_drive(
     args: argparse.Namespace,
     text: str,
@@ -168,13 +174,11 @@ def _type_text_direct_drive(
     injector: Injector,
     emit_payload: bool,
 ) -> tuple[int, dict[str, Any] | None]:
-    select_backend = getattr(injector, "select_backend", None)
-    backend = select_backend() if callable(select_backend) else getattr(injector, "session", "")
     _emit_desktop_drive_command(
         args,
         corr=corr,
         operation="injector.type_text",
-        backend=str(backend or "keyboard"),
+        backend=_selected_keyboard_backend(injector),
         target=target_id,
         text=text,
         ide=target_id,

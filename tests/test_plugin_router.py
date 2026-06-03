@@ -172,3 +172,30 @@ def test_status_rows_include_only_plugin_clients() -> None:
 
     rows = router.status_rows()
     assert [row.to_dict() for row in rows] == [{"ide": "vscode", "fd": 1}]
+
+
+def test_drop_version_mismatch_plugins_removes_stale_build(monkeypatch) -> None:
+    client = _Client(1, ide="vscodium")
+    client.version = "0.2.7"
+    client.build_sha = "oldbuild"
+    client.protocol_version = 2
+    client.capabilities = ["chat.submit"]
+    clients = {1: client}
+
+    def _drop(dropped: _Client) -> None:
+        dropped.dropped = True
+        clients.pop(dropped.fd, None)
+
+    monkeypatch.setattr(
+        "koruide.plugin_router.DriveOrchestrator.strict_plugin_version_required",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        "koruide.plugin_router.DriveOrchestrator.expected_plugin_build_sha",
+        lambda _ide: "newbuild",
+    )
+
+    router = PluginRouter(clients, drop_client=_drop)
+    assert router.drop_version_mismatch_plugins() == 1
+    assert client.dropped is True
+    assert 1 not in clients

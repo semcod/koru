@@ -258,6 +258,34 @@ def test_action_handoff_context_exception() -> None:
     assert result == 1
 
 
+def test_action_handoff_emits_jsonl_contract(capsys) -> None:
+    args = argparse.Namespace(
+        project=Path("/test"),
+        dry_run=False,
+        submit=True,
+        ide="cursor",
+        require_plugin=False,
+        log_format="jsonl",
+    )
+
+    mock_client = mock.Mock()
+    mock_client.is_running.return_value = True
+    mock_client.drive.return_value = {"ok": True, "delivered": True, "backend": "plugin"}
+
+    rc = action_handoff(
+        args,
+        client_fn=mock.Mock(return_value=mock_client),
+        build_context_fn=mock.Mock(return_value={}),
+        render_markdown_handoff_fn=mock.Mock(return_value="# Brief"),
+    )
+
+    assert rc == 0
+    err_lines = [line for line in capsys.readouterr().err.splitlines() if line.strip().startswith("{")]
+    assert err_lines
+    payload = json.loads(err_lines[0])
+    assert set(["ts", "corr", "component", "level", "action", "result"]).issubset(payload)
+
+
 # ---------------------------------------------------------------------------
 # Backward compatibility tests
 # ---------------------------------------------------------------------------

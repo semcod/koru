@@ -1,530 +1,229 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.26s
-# nodes: 431 | edges: 500 | modules: 100
-# CC̄=3.5
+# generated in 0.19s
+# nodes: 252 | edges: 500 | modules: 27
+# CC̄=4.0
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:611  out:0  total:611
+    CC=0  in:762  out:0  total:762
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:155  out:9  total:164
-  src.koruide.ide.normalize_ide_id
-    CC=6  in:68  out:11  total:79
-  src.koru.activity_log.activity
-    CC=6  in:49  out:13  total:62
-  src.koru.context_render.render_markdown_handoff
-    CC=2  in:5  out:33  total:38
-  src.koruide.socket.default_socket_path
-    CC=7  in:16  out:21  total:37
-  src.koru.events.emit_management_event
-    CC=8  in:29  out:7  total:36
+    CC=5  in:179  out:9  total:188
+  packages.coru.src.coru.repair.pipeline.run_repair_pipeline
+    CC=33  in:0  out:43  total:43
   src.koruide.ide.detect_running_ides
-    CC=13  in:25  out:10  total:35
-  plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.type
-    CC=1  in:25  out:2  total:27
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
-  src.koru.queue.ticket.planfile_command
-    CC=5  in:18  out:7  total:25
-  src.koruapi.dashboard_routes._post_remote_drive
-    CC=9  in:0  out:24  total:24
-  examples.remote_orchestration_demo.run_multi_node_orchestration
-    CC=9  in:0  out:24  total:24
-  src.koruapi.dashboard_config._dashboard_config_request_kwargs
-    CC=10  in:1  out:23  total:24
-  src.koru.context.build_context
-    CC=6  in:8  out:16  total:24
-  src.koruapi.topology_post.apply_topology_post_update
-    CC=14  in:1  out:22  total:23
-  src.koruapi.dashboard_tickets.create_ticket_from_dashboard
-    CC=8  in:0  out:22  total:22
-  src.koruapi.dashboard_routes._post_waiting_input_bulk
-    CC=9  in:0  out:22  total:22
-  src.koruobserve.providers_cli.providers_test_text
-    CC=13  in:1  out:20  total:21
+    CC=13  in:29  out:10  total:39
+  packages.coru.src.coru.cli._attempt_plugin_self_heal
+    CC=12  in:2  out:36  total:38
+  packages.coru.src.coru.repair.pipeline.manual_vsix_unpack
+    CC=14  in:2  out:34  total:36
+  packages.coru.src.coru.supervisor.cli.cmd_start
+    CC=15  in:1  out:35  total:36
+  packages.coru.src.coru.cli._auto_readiness_gate
+    CC=22  in:1  out:33  total:34
+  packages.coru.src.coru.cli._diagnose_lane
+    CC=15  in:3  out:31  total:34
+  packages.coru.src.coru.supervisor.registry.load_registry
+    CC=5  in:21  out:11  total:32
+  packages.coru.src.coru.cli._lane_status_payload
+    CC=14  in:10  out:20  total:30
+  packages.coru.src.coru.repair.pipeline._emit
+    CC=2  in:29  out:1  total:30
+  packages.coru.src.coru.cli._run_lane_repair
+    CC=7  in:5  out:24  total:29
+  packages.coru.src.coru.cli._auto_ownership_gate
+    CC=22  in:2  out:25  total:27
+  packages.coru.src.coru.cli._run_default_autonomous
+    CC=10  in:2  out:24  total:26
+  packages.coru.src.coru.cli._maybe_reexec_into_project_python
+    CC=12  in:1  out:25  total:26
+  packages.coru.src.coru.repair.projector._project_one_session
+    CC=19  in:1  out:25  total:26
+  packages.coru.src.coru.cli._terminal_shell_context_fallback
+    CC=21  in:1  out:24  total:25
+  packages.coru.src.coru.cli._start_autopilot_daemon_for_lane
+    CC=13  in:3  out:21  total:24
+  packages.coru.src.coru.supervisor.socket_path.socket_path_for_instance
+    CC=8  in:1  out:22  total:23
 
 MODULES:
-  examples.remote_orchestration_demo  [1 funcs]
-    run_multi_node_orchestration  CC=9  out:24
-  koru.observability_dsl  [3 funcs]
-    render_observability_path  CC=5  out:3
-    stored_event_to_compact_line  CC=1  out:2
-    stored_event_to_dsl  CC=1  out:2
-  plugins.koru-autopilot-shared.src.ack-payload  [1 funcs]
-    bytes  CC=2  out:0
-  plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
-    next  CC=2  out:1
-  plugins.koru-autopilot-shared.src.bridge-submit  [1 funcs]
-    strategy  CC=5  out:4
-  plugins.koru-autopilot-shared.src.cursor-bubble-adapter  [1 funcs]
-    type  CC=1  out:2
+  packages.coru.src.coru.cli  [152 funcs]
+    _add_lane_identifiers  CC=1  out:2
+    _add_shell_argument  CC=1  out:1
+    _agent_lane_from_auto_args  CC=7  out:7
+    _attempt_plugin_self_heal  CC=12  out:36
+    _auto_default_instance  CC=4  out:3
+    _auto_ownership_gate  CC=22  out:25
+    _auto_readiness_can_continue_with_keyboard_fallback  CC=7  out:6
+    _auto_readiness_gate  CC=22  out:33
+    _autonomous_startup_chain  CC=2  out:8
+    _binary_path  CC=6  out:8
+  packages.coru.src.coru.repair.diagnostics  [2 funcs]
+    _plugin_row_for_ide  CC=7  out:7
+    _read_package_build_sha  CC=6  out:7
+  packages.coru.src.coru.repair.events  [1 funcs]
+    aggregate_id_for  CC=1  out:3
+  packages.coru.src.coru.repair.pipeline  [10 funcs]
+    _emit  CC=2  out:1
+    _execute_step  CC=19  out:20
+    _expected_build_from_problems  CC=9  out:7
+    _installed_extension_dir  CC=4  out:6
+    _poll_plugin_ready  CC=6  out:8
+    _resolve_repo_vsix  CC=6  out:6
+    _run_reload_and_connect  CC=8  out:11
+    manual_vsix_unpack  CC=14  out:34
+    plugin_build_aligned  CC=4  out:5
+    run_repair_pipeline  CC=33  out:43
+  packages.coru.src.coru.repair.projector  [4 funcs]
+    _project_one_session  CC=19  out:25
+    format_case_llm  CC=5  out:5
+    format_history_llm  CC=3  out:2
+    project_repair_cases  CC=9  out:10
+  packages.coru.src.coru.repair.query  [3 funcs]
+    cases  CC=2  out:2
+    cases_for_lane  CC=5  out:4
+    format_llm  CC=2  out:3
+  packages.coru.src.coru.repair.registry  [3 funcs]
+    playbook_for_codes  CC=5  out:6
+    registry_step  CC=3  out:0
+    registry_steps_for_code  CC=3  out:1
+  packages.coru.src.coru.repair.service  [3 funcs]
+    record_diagnosis  CC=2  out:5
+    run_session  CC=1  out:6
+    run_repair_with_events  CC=3  out:7
+  packages.coru.src.coru.repair_registry  [1 funcs]
+    run_repair_pipeline  CC=1  out:1
+  packages.coru.src.coru.supervisor.cli  [18 funcs]
+    _print_lanes_human  CC=6  out:6
+    _register_daemon_commands  CC=1  out:5
+    _register_install_unit_command  CC=1  out:4
+    _register_registry_commands  CC=1  out:19
+    _register_start_command  CC=1  out:10
+    _resolve_koru_argv  CC=3  out:3
+    build_parser  CC=1  out:6
+    cmd_active  CC=6  out:14
+    cmd_daemon  CC=3  out:7
+    cmd_lanes  CC=2  out:5
+  packages.coru.src.coru.supervisor.daemon_ctl  [2 funcs]
+    _lane_environ  CC=2  out:1
+    start_daemon  CC=9  out:7
+  packages.coru.src.coru.supervisor.editor_cli  [1 funcs]
+    resolve_editor_cli  CC=9  out:8
+  packages.coru.src.coru.supervisor.paths  [6 funcs]
+    default_http_host  CC=3  out:2
+    default_http_port  CC=3  out:3
+    pid_path  CC=1  out:1
+    registry_path  CC=1  out:1
+    state_dir  CC=5  out:11
+    supervisor_url  CC=3  out:5
+  packages.coru.src.coru.supervisor.probe  [8 funcs]
+    _failure_health  CC=4  out:4
+    _iso_now  CC=1  out:4
+    _lane_environ  CC=2  out:1
+    _run_status_probe  CC=2  out:6
+    _select_plugin  CC=10  out:7
+    _status_command  CC=2  out:1
+    _success_health  CC=13  out:18
+    probe_lane_health  CC=5  out:10
+  packages.coru.src.coru.supervisor.registry  [10 funcs]
+    _ensure_state_dir  CC=1  out:2
+    _iso_now  CC=1  out:4
+    _registry_lock  CC=2  out:7
+    active_lane_pair  CC=2  out:2
+    load_registry  CC=5  out:11
+    register_lane  CC=14  out:15
+    remove_lane  CC=3  out:5
+    save_registry  CC=2  out:8
+    set_active_lane  CC=2  out:5
+    update_lane_health  CC=2  out:4
+  packages.coru.src.coru.supervisor.service  [4 funcs]
+    run  CC=5  out:12
+    read_supervisor_pid  CC=3  out:6
+    stop_supervisor_process  CC=5  out:11
+    supervisor_running  CC=3  out:2
+  packages.coru.src.coru.supervisor.socket_path  [2 funcs]
+    socket_basename  CC=5  out:5
+    socket_path_for_instance  CC=8  out:22
+  packages.coru.src.coru.supervisor.systemd_unit  [1 funcs]
+    action_install_unit  CC=9  out:15
+  packages.koruenv.src.koruenv.cli  [6 funcs]
+    _emit_log  CC=5  out:7
+    _iso_ts  CC=1  out:4
+    _normalize_log_format  CC=3  out:2
+    _run_with_overlay  CC=4  out:11
+    _strip_double_dash  CC=3  out:1
+    main  CC=5  out:18
+  packages.koruenv.src.koruenv.lane  [6 funcs]
+    _fallback_temp_dir  CC=5  out:5
+    build_lane_environ  CC=2  out:5
+    resolve_lane_socket  CC=1  out:1
+    resolve_lane_socket_for_os  CC=5  out:10
+    validate_ide  CC=3  out:6
+    validate_instance  CC=3  out:4
   scripts.koru-soak-monitor  [1 funcs]
     print  CC=0  out:0
-  services.healing-webhook.app  [22 funcs]
-    _build_planfile_command  CC=2  out:1
-    _enrich_ticket_with_vallm  CC=8  out:16
-    _execute_planfile_create  CC=8  out:12
-    _extract_ticket_id_from_stdout  CC=6  out:4
-    _parse_redup_summary  CC=9  out:16
-    _rate_limit_ok  CC=3  out:3
-    _record_action  CC=1  out:7
-    _resolve_affected_files  CC=11  out:24
-    _run_docker  CC=1  out:3
-    _run_redup_check  CC=6  out:7
-  services.healing-webhook.app_command_routing  [2 funcs]
-    route_alertmanager_payload  CC=5  out:17
-    route_probe_failure_payload  CC=7  out:19
-  services.healing-webhook.ticket_builder  [5 funcs]
-    _default_acceptance  CC=2  out:1
-    _format_paths  CC=2  out:1
-    _infer_paths  CC=7  out:1
-    _reproduction_for  CC=5  out:5
-    build_ticket_payload  CC=11  out:25
-  src.koru.activity_log  [1 funcs]
-    activity  CC=6  out:13
-  src.koru.autonomous_process_guard  [2 funcs]
-    find_existing_autonomous_processes  CC=1  out:5
-    find_existing_wup_processes  CC=1  out:5
-  src.koru.autonomy.decision_trace  [1 funcs]
-    load_recent_decisions  CC=9  out:8
-  src.koru.configurator  [4 funcs]
-    configure_project  CC=2  out:9
-    load_project_config  CC=4  out:5
-    migrate_project_config  CC=2  out:9
-    toggle_feature_sections  CC=6  out:13
-  src.koru.context  [1 funcs]
-    build_context  CC=6  out:16
-  src.koru.context_render  [1 funcs]
-    render_markdown_handoff  CC=2  out:33
-  src.koru.control_commands  [1 funcs]
-    api_command  CC=4  out:4
-  src.koru.doctor  [1 funcs]
-    run_diagnostics  CC=6  out:11
-  src.koru.dotenv_loader  [1 funcs]
-    load_dotenv  CC=7  out:5
-  src.koru.env_config  [3 funcs]
-    apply_env_updates  CC=1  out:6
-    env_config_payload  CC=1  out:3
-    write_env_config  CC=1  out:4
-  src.koru.environment_profile  [1 funcs]
-    environment_profile_payload  CC=1  out:2
-  src.koru.events  [1 funcs]
-    emit_management_event  CC=8  out:7
-  src.koru.ide_client  [1 funcs]
-    build_ide_client  CC=3  out:5
-  src.koru.interface_registry  [3 funcs]
-    blocker_interface_payload  CC=2  out:2
-    iter_interfaces  CC=1  out:1
-    summarize_interfaces_by_family  CC=2  out:2
-  src.koru.local_service  [2 funcs]
-    default_local_service_config  CC=2  out:7
-    run_local_service  CC=3  out:12
-  src.koru.observability_writer  [1 funcs]
-    observability_event_store_path  CC=1  out:1
-  src.koru.queue.koru_queue_argv  [1 funcs]
-    build_koru_queue_argv  CC=5  out:7
-  src.koru.queue.locking  [1 funcs]
-    ticket_claim_command_missing  CC=2  out:1
-  src.koru.queue.loop  [1 funcs]
-    run_planfile_queue_loop  CC=14  out:9
-  src.koru.queue.runners  [1 funcs]
-    run_process  CC=1  out:4
-  src.koru.queue.ticket  [1 funcs]
-    planfile_command  CC=5  out:7
-  src.koru.redup_integration  [1 funcs]
-    redup_check_command  CC=1  out:3
-  src.koru.scan  [1 funcs]
-    run_scan  CC=5  out:9
-  src.koru.tagi_integration  [2 funcs]
-    analyze_project_changes  CC=2  out:3
-    auto_commit_all_changes  CC=2  out:4
-  src.koru.tasks  [1 funcs]
-    create_nl_task  CC=1  out:4
-  src.koru.topology  [2 funcs]
-    load_topology  CC=1  out:9
-    set_component_enabled  CC=1  out:1
-  src.koru.utils.subprocess_runner  [1 funcs]
-    get_python_cmd  CC=3  out:3
-  src.koru.wizard.cli  [1 funcs]
-    propose_projects  CC=1  out:1
+  src.koru.autonomy.env  [1 funcs]
+    plugin_required_for_ide  CC=7  out:6
+  src.koru.autonomy.ide_operator_guidance  [1 funcs]
+    terminal_kind_label  CC=3  out:0
+  src.koru.ide_adapters.ide_reload  [2 funcs]
+    connect_via_command_palette  CC=1  out:1
+    try_reload_vscode_family_ide  CC=10  out:11
+  src.koru.scripts.koru-autoloop  [1 funcs]
+    run_koru  CC=0  out:0
   src.koru.wizard.gui.static.wizard  [1 funcs]
     list  CC=5  out:9
-  src.koru.wizard.project  [1 funcs]
-    _candidates_from_running_ide  CC=7  out:10
-  src.koruapi.cli  [8 funcs]
-    _action_dashboard  CC=1  out:1
-    _action_invoke  CC=3  out:9
-    _action_list  CC=2  out:4
-    _action_local  CC=1  out:1
-    _action_mcp  CC=1  out:1
-    _build_parser  CC=2  out:17
-    _parse_body  CC=3  out:5
-    main  CC=3  out:6
-  src.koruapi.dashboard  [10 funcs]
-    _argv_has_flag  CC=4  out:2
-    _resolve_serve_auto_port  CC=4  out:5
-    _resolve_serve_config  CC=3  out:11
-    _resolve_serve_host  CC=5  out:3
-    _resolve_serve_lan  CC=3  out:4
-    _resolve_serve_port  CC=3  out:3
-    _resolve_serve_queue_name  CC=4  out:2
-    _resolve_serve_workspace  CC=3  out:3
-    build_serve_parser  CC=1  out:12
-    dashboard_main  CC=5  out:10
-  src.koruapi.dashboard_config  [13 funcs]
-    _dashboard_config_path_payload  CC=1  out:3
-    _dashboard_config_request_kwargs  CC=10  out:23
-    _dotenv_path  CC=1  out:1
-    _dotenv_payload  CC=3  out:4
-    _effective_dashboard_config  CC=7  out:11
-    _effective_serve_config  CC=4  out:10
-    _save_dashboard_dotenv_from_body  CC=4  out:5
-    _saved_serve_config  CC=2  out:2
-    bool_from_dashboard  CC=3  out:4
-    dashboard_config_payload  CC=1  out:6
-  src.koruapi.dashboard_context  [2 funcs]
-    dashboard_context_payload  CC=3  out:6
-    dashboard_handoff_markdown  CC=1  out:2
-  src.koruapi.dashboard_html  [3 funcs]
-    render_action_error_html  CC=1  out:4
-    render_action_success_html  CC=1  out:5
-    render_create_ticket_success_html  CC=4  out:6
-  src.koruapi.dashboard_http  [1 funcs]
-    _safe_respond_json  CC=3  out:7
-  src.koruapi.dashboard_observability  [3 funcs]
-    _stored_event_payload  CC=1  out:0
-    _trace_event_matches  CC=7  out:4
-    dashboard_observability_trace_payload  CC=7  out:10
-  src.koruapi.dashboard_plugin_logs  [5 funcs]
-    _daemon_plugin_logs  CC=3  out:5
-    _debug_log_row  CC=3  out:3
-    _file_plugin_logs  CC=5  out:5
-    _plugin_debug_log_path  CC=1  out:1
-    dashboard_plugin_logs_payload  CC=2  out:3
-  src.koruapi.dashboard_projects  [20 funcs]
-    _collect_projects_for_ide  CC=8  out:16
-    _dedupe_project_entries  CC=3  out:3
-    _looks_like_real_project  CC=3  out:6
-    _project_entry_from_terminal_cwd  CC=6  out:5
-    _read_proc_children  CC=6  out:9
-    _read_proc_comm  CC=2  out:3
-    _read_proc_cwd_path  CC=4  out:4
-    _read_workspace_folder  CC=8  out:12
-    _running_ide_to_detected  CC=1  out:1
-    _walk_descendant_pids  CC=6  out:8
-  src.koruapi.dashboard_routes  [31 funcs]
-    _build_dashboard_handler_impl  CC=1  out:9
-    _config_defaults  CC=1  out:4
-    _first_query_value  CC=4  out:3
-    _get_autonomy_trace  CC=8  out:17
-    _get_config  CC=1  out:4
-    _get_context  CC=1  out:3
-    _get_create_project_ticket_action  CC=2  out:8
-    _get_dashboard  CC=1  out:2
-    _get_env_config  CC=1  out:3
-    _get_environment  CC=1  out:3
-  src.koruapi.dashboard_runtime  [4 funcs]
-    _interface_runtime_payload  CC=5  out:3
-    runtime_context_error_payload  CC=1  out:5
-    runtime_context_payload  CC=1  out:5
-    save_runtime_context_config  CC=5  out:7
-  src.koruapi.dashboard_serve  [10 funcs]
-    _announce_bound_dashboard  CC=2  out:3
-    _bind_or_print  CC=3  out:4
-    _build_handler  CC=1  out:1
-    _dashboard_urls  CC=1  out:1
-    _emit_serve_event  CC=2  out:2
-    _log_bind_summary  CC=6  out:6
-    _prepare_bound_dashboard  CC=1  out:4
-    _schedule_browser_open  CC=1  out:4
-    serve  CC=3  out:7
-    start_serve_background  CC=1  out:5
-  src.koruapi.dashboard_serve_utils  [19 funcs]
-    _address_in_use  CC=4  out:4
-    _bind_auto_port  CC=7  out:5
-    _bind_fixed_port  CC=4  out:4
-    _bind_single  CC=1  out:2
-    _bound_port  CC=1  out:1
-    _build_handler_for  CC=1  out:1
-    _cmdline_suggests_koru_serve  CC=3  out:3
-    _cmdline_suggests_koru_serve_from_bytes  CC=3  out:7
-    _dashboard_urls_for  CC=1  out:1
-    _kill_prior_listeners  CC=5  out:5
-  src.koruapi.dashboard_state  [4 funcs]
-    dashboard_ide_rows  CC=7  out:7
-    dashboard_state  CC=3  out:8
-    dashboard_urls  CC=3  out:3
-    local_lan_addresses  CC=2  out:13
-  src.koruapi.dashboard_tickets  [14 funcs]
-    bulk_waiting_input_action  CC=10  out:10
-    create_ticket_from_dashboard  CC=1  out:1
-    reorder_ticket_from_dashboard  CC=1  out:1
-    update_ticket_from_dashboard  CC=1  out:1
-    list_tickets  CC=9  out:6
-    _append_dashboard_history  CC=2  out:7
-    _build_ticket_scaffold  CC=8  out:9
-    _find_ticket_in_sprints  CC=5  out:10
-    _load_sprint_file  CC=3  out:3
-    _write_sprint_file  CC=1  out:2
-  src.koruapi.dashboard_topology  [2 funcs]
-    apply_dashboard_topology_update  CC=1  out:1
-    dashboard_topology_payload  CC=1  out:2
-  src.koruapi.integrations  [2 funcs]
-    get_integration  CC=1  out:1
-    list_integrations  CC=4  out:2
-  src.koruapi.invoke  [1 funcs]
-    invoke_integration  CC=4  out:6
-  src.koruapi.invoke_handlers  [21 funcs]
-    _handle_autopilot_drive  CC=5  out:17
-    _handle_autopilot_status  CC=2  out:3
-    _handle_context_build  CC=1  out:3
-    _handle_doctor_run  CC=1  out:2
-    _handle_dsl_roundtrip  CC=3  out:6
-    _handle_dsl_to_dsl  CC=2  out:3
-    _handle_dsl_to_library  CC=3  out:4
-    _handle_gate_regix  CC=3  out:5
-    _handle_ide_commands  CC=3  out:6
-    _handle_ide_scenario_schema  CC=1  out:1
-  src.koruapi.local  [2 funcs]
-    build_local_parser  CC=1  out:4
-    local_main  CC=6  out:9
-  src.koruapi.mcp  [1 funcs]
-    mcp_main  CC=2  out:2
-  src.koruapi.mcp_server  [34 funcs]
-    _collect_process_logs  CC=3  out:6
-    _create_job  CC=1  out:4
-    _detect_enabled_gates  CC=5  out:6
-    _find_ticket  CC=3  out:1
-    _gate_commands  CC=1  out:6
-    _get_job_store_path  CC=2  out:1
-    _get_process_memory_mb  CC=3  out:2
-    _get_python_cmd  CC=1  out:1
-    _launch_oom_monitor  CC=3  out:3
-    _load_jobs  CC=3  out:4
-  src.koruapi.mcp_server_dispatch  [7 funcs]
-    build_method_handlers  CC=1  out:3
-    handle_initialize  CC=1  out:0
-    handle_message  CC=6  out:9
-    handle_tools_call  CC=4  out:6
-    handle_tools_list  CC=1  out:0
-    jsonrpc_error  CC=2  out:0
-    jsonrpc_response  CC=1  out:0
-  src.koruapi.mcp_server_transport  [3 funcs]
-    log_stderr  CC=1  out:1
-    run_stdio_loop  CC=7  out:10
-    write_json  CC=1  out:3
-  src.koruapi.openapi  [1 funcs]
-    build_openapi_document  CC=2  out:1
-  src.koruapi.runtime_insights  [6 funcs]
-    _active_tools  CC=8  out:13
-    _classify_process  CC=5  out:8
-    _looks_project_related  CC=1  out:2
-    _run_ps  CC=9  out:11
-    _top_processes  CC=2  out:9
-    collect_runtime_insights  CC=4  out:14
-  src.koruapi.server  [8 funcs]
-    do_GET  CC=9  out:21
-    do_POST  CC=2  out:4
-    log_message  CC=1  out:2
-    _handle_invoke_post  CC=5  out:13
-    _json_response  CC=1  out:9
-    _parse_invoke_request  CC=9  out:16
-    _read_json_body  CC=5  out:7
-    serve  CC=2  out:8
-  src.koruapi.topology_post  [1 funcs]
-    apply_topology_post_update  CC=14  out:22
-  src.korudsl.cli  [3 funcs]
-    _build_parser  CC=1  out:13
-    _read_input  CC=2  out:2
-    main  CC=11  out:18
-  src.korudsl.library  [11 funcs]
-    _apply_prefixed_line  CC=4  out:3
-    _emit_functions  CC=4  out:8
-    _emit_goal  CC=9  out:12
-    _emit_goals  CC=3  out:4
-    _emit_objective  CC=5  out:5
-    _handle_func  CC=3  out:1
-    _start_goal  CC=2  out:2
-    convert_goals_json_to_library  CC=9  out:7
-    ensure_library_structure  CC=2  out:4
-    library_to_dsl  CC=4  out:6
-  src.korudsl.transform  [3 funcs]
-    dsl_roundtrip_report  CC=1  out:7
-    library_from_any  CC=12  out:15
-    library_to_any  CC=2  out:3
-  src.koruide.command_catalog  [2 funcs]
-    build_ide_command_catalog  CC=4  out:4
-    command_catalog_for_llm  CC=4  out:4
-  src.koruide.command_scenario  [2 funcs]
-    ide_command_scenario_schema  CC=1  out:0
-    validate_ide_command_scenario  CC=2  out:9
-  src.koruide.ide  [3 funcs]
-    autopilot_ide_choices  CC=1  out:0
+  src.koruide.ide  [2 funcs]
     detect_running_ides  CC=13  out:10
-    normalize_ide_id  CC=6  out:11
-  src.koruide.socket  [1 funcs]
-    default_socket_path  CC=7  out:21
-  src.koruide.strategy_prompt  [1 funcs]
-    build_strategy_prompt  CC=6  out:9
-  src.korullm.strategies.base  [1 funcs]
-    __repr__  CC=1  out:1
-  src.korullm.strategies.registry  [4 funcs]
-    _fallback_strategy  CC=3  out:2
-    get_llm_strategy  CC=3  out:3
-    resolve_active_llm_strategy  CC=1  out:1
-    resolve_llm_strategy_from_environment  CC=9  out:17
-  src.korumesh.browser_capture  [1 funcs]
-    serve_browser_capture_http  CC=10  out:14
-  src.korumesh.dashboard  [1 funcs]
-    serve_mesh_http  CC=2  out:2
-  src.korumesh.keys  [1 funcs]
-    write_mesh_key  CC=3  out:6
-  src.koruobserve.bootstrap  [3 funcs]
-    _config_has_v2_sections  CC=2  out:1
-    ensure_mesh_key  CC=3  out:6
-    ensure_observe_config  CC=3  out:9
-  src.koruobserve.cli  [11 funcs]
-    _cmd_down  CC=2  out:4
-    _cmd_grid  CC=2  out:8
-    _cmd_install  CC=2  out:2
-    _cmd_providers  CC=5  out:11
-    _cmd_status  CC=3  out:6
-    _cmd_trace  CC=12  out:16
-    _cmd_up  CC=2  out:6
-    _missing_observe_packages  CC=3  out:1
-    _pip_install  CC=2  out:4
-    _require_observe_runtime  CC=5  out:6
-  src.koruobserve.cli_parser  [4 funcs]
-    _add_subproject  CC=1  out:1
-    _register_up_arguments  CC=1  out:5
-    build_observe_parser  CC=7  out:17
-    project_path  CC=3  out:6
-  src.koruobserve.diagnostics  [8 funcs]
-    _last_failure_line  CC=3  out:4
-    _monitors_from_mss  CC=8  out:9
-    _monitors_from_xrandr  CC=6  out:10
-    _read_log_tail  CC=3  out:5
-    _session_type  CC=4  out:3
-    _wayland_hint  CC=2  out:0
-    capture_diagnostics  CC=7  out:7
-    detect_monitors  CC=3  out:2
-  src.koruobserve.lifecycle  [15 funcs]
-    _is_alive  CC=2  out:1
-    _koru_cmd  CC=1  out:0
-    _pick_free_port  CC=3  out:6
-    _pids_matching_koru_cmdline  CC=10  out:11
-    _prepare_observe_launch  CC=3  out:7
-    _read_pid  CC=3  out:5
-    _resolve_serve_settings  CC=4  out:7
-    _spawn  CC=1  out:11
-    _spawn_observe_processes  CC=2  out:15
-    _stop_orphan_observe_processes  CC=3  out:6
-  src.koruobserve.paths  [4 funcs]
-    logfile  CC=1  out:1
-    pidfile  CC=1  out:1
-    runtime_dir  CC=1  out:1
-    state_file  CC=1  out:1
-  src.koruobserve.providers_cli  [10 funcs]
-    cmd_providers_list  CC=2  out:5
-    cmd_providers_reset  CC=2  out:5
-    cmd_providers_test  CC=3  out:6
-    providers_list_payload  CC=1  out:1
-    providers_list_text  CC=13  out:16
-    providers_reset_consent  CC=5  out:9
-    providers_reset_text  CC=3  out:2
-    providers_test_payload  CC=6  out:5
-    providers_test_text  CC=13  out:20
-    screencast_session_path  CC=1  out:1
-  src.koruos.strategies.base  [1 funcs]
-    __repr__  CC=1  out:1
-  src.koruos.strategies.darwin  [1 funcs]
-    focus_window  CC=4  out:5
-  src.koruos.strategies.wayland_linux  [8 funcs]
-    _focus_via_wmctrl  CC=4  out:3
-    _inject_via_wtype  CC=9  out:7
-    _inject_via_ydotool  CC=7  out:10
-    inject_keys  CC=9  out:8
-    _gnome_compositor  CC=4  out:3
-    _prefer_ydotool  CC=3  out:4
-    _run  CC=1  out:1
-    _scan_for_key  CC=5  out:1
-  src.koruos.strategies.x11_linux  [3 funcs]
-    _focus_via_wmctrl  CC=4  out:3
-    _focus_via_xdotool  CC=11  out:10
-    _inject_via_xdotool  CC=3  out:4
-  src.koruvision.agent  [1 funcs]
-    normalize_capture_interval  CC=2  out:2
-  src.koruvision.capture  [1 funcs]
-    list_monitors  CC=2  out:2
-  src.koruvision.capture_probe  [2 funcs]
-    python_can_capture  CC=2  out:2
-    resolve_observe_python  CC=7  out:7
-  src.koruvision.cli  [3 funcs]
-    _maybe_publish_mesh  CC=2  out:7
-    _mesh_publish_enabled  CC=5  out:11
-    _vision_interval  CC=4  out:8
-  src.koruvision.mesh  [2 funcs]
-    publish_vision_frame  CC=1  out:3
-    resolve_mesh_publish  CC=8  out:12
-  src.koruvision.providers.detector  [2 funcs]
-    probe_capture_providers  CC=10  out:19
-    provider_diagnostics_rows  CC=4  out:7
-  src.koruvision.providers.screencast_session  [2 funcs]
-    clear_session_file  CC=3  out:3
-    session_file_for_project  CC=1  out:1
-  src.koruvision.scaling  [1 funcs]
-    downscale_rgb_nearest  CC=6  out:5
+    detect_terminal_host_context  CC=9  out:9
 
 EDGES:
-  examples.remote_orchestration_demo.run_multi_node_orchestration → scripts.koru-soak-monitor.print
-  services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._resolve_affected_files
-  services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._run_vallm_check
-  services.healing-webhook.app._execute_planfile_create → services.healing-webhook.app._extract_ticket_id_from_stdout
-  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._enrich_ticket_with_vallm
-  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
-  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._build_planfile_command
-  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._execute_planfile_create
-  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload
-  services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._run_docker
-  services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._run_docker
-  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._rate_limit_ok
-  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._run_docker
-  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._rate_limit_ok
-  services.healing-webhook.app.heal_annotate → services.healing-webhook.app._record_action
-  services.healing-webhook.app._resolve_affected_files → services.healing-webhook.ticket_builder._infer_paths
-  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._resolve_affected_files
-  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._run_vallm_check
-  services.healing-webhook.app._run_redup_check → services.healing-webhook.app._update_redup_metrics
-  services.healing-webhook.app._run_redup_check → services.healing-webhook.app._parse_redup_summary
-  services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._run_redup_check
-  services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._record_action
-  services.healing-webhook.app.get_history → src.koru.wizard.gui.static.wizard.list
-  services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app_command_routing.route_alertmanager_payload
-  services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app.create_planfile_ticket
-  services.healing-webhook.app.probe_failure → services.healing-webhook.app_command_routing.route_probe_failure_payload
-  services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
-  services.healing-webhook.app_command_routing.route_alertmanager_payload → plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.strategy
-  services.healing-webhook.app_command_routing.route_probe_failure_payload → services.healing-webhook.app.create_planfile_ticket
-  services.healing-webhook.app_command_routing.route_probe_failure_payload → services.healing-webhook.app.heal_redsl_improve
-  services.healing-webhook.app_command_routing.route_probe_failure_payload → services.healing-webhook.app.heal_redsl_gate
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
-  src.koruobserve.lifecycle._spawn → src.koruobserve.paths.logfile
-  src.koruobserve.lifecycle._spawn → src.koruobserve.paths.runtime_dir
-  src.koruobserve.lifecycle._spawn → src.koruobserve.paths.pidfile
-  src.koruobserve.lifecycle._read_pid → src.koruobserve.paths.pidfile
-  src.koruobserve.lifecycle._stop_pid → src.koruobserve.lifecycle._read_pid
-  src.koruobserve.lifecycle._stop_pid → src.koruobserve.paths.pidfile
-  src.koruobserve.lifecycle._pids_matching_koru_cmdline → src.koru.wizard.gui.static.wizard.list
-  src.koruobserve.lifecycle._stop_orphan_observe_processes → src.koruobserve.lifecycle._pids_matching_koru_cmdline
-  src.koruobserve.lifecycle._stop_orphan_observe_processes → src.koruobserve.paths.pidfile
-  src.koruobserve.lifecycle.observe_up → src.koruobserve.lifecycle.observe_down
-  src.koruobserve.lifecycle.observe_up → src.koruobserve.lifecycle._prepare_observe_launch
-  src.koruobserve.lifecycle.observe_up → src.koruobserve.lifecycle._spawn_observe_processes
+  packages.koruenv.src.koruenv.cli._emit_log → packages.koruenv.src.koruenv.cli._iso_ts
+  packages.koruenv.src.koruenv.cli._strip_double_dash → src.koru.wizard.gui.static.wizard.list
+  packages.koruenv.src.koruenv.cli._run_with_overlay → packages.koruenv.src.koruenv.cli._emit_log
+  packages.koruenv.src.koruenv.cli._run_with_overlay → src.koru.wizard.gui.static.wizard.list
+  packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.cli._normalize_log_format
+  packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.cli._strip_double_dash
+  packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.cli._run_with_overlay
+  packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.lane.build_lane_environ
+  packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.cli._emit_log
+  packages.koruenv.src.koruenv.cli.main → scripts.koru-soak-monitor.print
+  packages.koruenv.src.koruenv.lane.resolve_lane_socket → packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os
+  packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os → packages.koruenv.src.koruenv.lane.validate_instance
+  packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os → packages.koruenv.src.koruenv.lane._fallback_temp_dir
+  packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.validate_ide
+  packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.validate_instance
+  packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os
+  packages.coru.src.coru.cli._current_log_format → packages.coru.src.coru.cli._normalize_log_format
+  packages.coru.src.coru.cli._emit_log → packages.coru.src.coru.cli._current_log_format
+  packages.coru.src.coru.cli._emit_log → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._print_runtime_versions → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._print_runtime_versions → packages.coru.src.coru.cli._distribution_version
+  packages.coru.src.coru.cli._startup_mode → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._autonomous_startup_chain → packages.coru.src.coru.cli._resolve_defaults
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._agent_lane_from_auto_args
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._resolve_defaults
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._terminal_shell_context
+  packages.coru.src.coru.cli._run_default_autonomous → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._print_runtime_versions
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._print_troubleshooting_log_locations
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._repo_root
+  packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._autonomous_startup_chain
+  packages.coru.src.coru.cli._running_ide_choices → src.koruide.ide.detect_running_ides
+  packages.coru.src.coru.cli._supervisor_project_choices → packages.coru.src.coru.supervisor.registry.load_registry
+  packages.coru.src.coru.cli._supervisor_project_choices → packages.coru.src.coru.supervisor.paths.registry_path
+  packages.coru.src.coru.cli._instance_for_ide_choice → packages.coru.src.coru.cli._instance_matches_ide
+  packages.coru.src.coru.cli._instance_for_ide_choice → packages.coru.src.coru.supervisor.registry.load_registry
+  packages.coru.src.coru.cli._instance_for_ide_choice → packages.coru.src.coru.supervisor.paths.registry_path
+  packages.coru.src.coru.cli._choose_option → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._running_ide_choices
+  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._supervisor_project_choices
+  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._repo_root
+  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._terminal_shell_context
+  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._choose_option
+  packages.coru.src.coru.cli._extract_global_flags → src.koru.wizard.gui.static.wizard.list
+  packages.coru.src.coru.cli._extract_global_flags → packages.coru.src.coru.cli._normalize_log_format
+  packages.coru.src.coru.cli._run → src.koru.wizard.gui.static.wizard.list
+  packages.coru.src.coru.cli._cmd_exists → packages.coru.src.coru.cli._binary_path
+  packages.coru.src.coru.cli._binary_path → packages.coru.src.coru.cli._repo_root
+  packages.coru.src.coru.cli._tool_argv → packages.coru.src.coru.cli._binary_path
+  packages.coru.src.coru.cli._tool_argv → packages.coru.src.coru.cli._python_module_exists

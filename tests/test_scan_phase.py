@@ -281,7 +281,7 @@ def test_run_code2llm_discovery_after_idle_ensures_standardized_follow_up_ticket
     monkeypatch.setattr(
         code2llm_discovery_mod,
         "run_code2llm_discovery",
-        lambda _project: outcome,
+        lambda _project, **_: outcome,
     )
     monkeypatch.setattr(
         code2llm_discovery_mod,
@@ -326,7 +326,7 @@ def test_run_code2llm_discovery_after_idle_skips_follow_up_when_tickets_applied(
     monkeypatch.setattr(
         code2llm_discovery_mod,
         "run_code2llm_discovery",
-        lambda _project: outcome,
+        lambda _project, **_: outcome,
     )
     monkeypatch.setattr(
         code2llm_discovery_mod,

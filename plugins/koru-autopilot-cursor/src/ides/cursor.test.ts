@@ -90,11 +90,11 @@ function testSubmitCommands(): void {
   const cmds = cursorStrategy.submitCommandsOverride();
   assert(cmds !== null, "Cursor must override the submit command list");
   if (cmds === null) return;
-  // Cursor 1.x removed ``composer.*`` entirely; the only registered
-  // submit on modern builds is ``workbench.action.chat.submit``. The
-  // legacy ``composer.sendToAgent`` is kept as a tail fallback for
-  // older builds that still register it.
-  eq(cmds[0], "workbench.action.chat.submit", "workbench.action.chat.submit MUST be first (Cursor 1.x)");
+  // Cursor 1.x / Glass: ``workbench.action.chat.stopListeningAndSubmit`` is the
+  // registered send on some Agent/Glass builds; ``workbench.action.chat.submit``
+  // is the generic fallback. Legacy ``composer.sendToAgent`` stays at the tail.
+  eq(cmds[0], "workbench.action.chat.stopListeningAndSubmit", "stopListeningAndSubmit first for Glass/Agents");
+  assert(cmds.includes("workbench.action.chat.submit"), "workbench.action.chat.submit must be present");
   assert(cmds.includes("composer.sendToAgent"), "legacy composer.sendToAgent retained as tail fallback");
 }
 
@@ -114,10 +114,14 @@ function testSubmitFallbackPolicy(): void {
 function testProbeLadderUsesCursorStrategy(): void {
   // buildPasteDirectCommands delegates to the strategy prefix
   const paste = buildPasteDirectCommands("cursor");
-  eq(paste[0], "cursor.action.chat.typeText", "paste command 0 must come from strategy");
+  eq(paste[0], "workbench.action.chat.typeText", "paste command 0 must prefer workbench.action.chat.typeText (Cursor 1.x)");
   // buildSubmitCommands returns the strategy override
   const submit = buildSubmitCommands("cursor");
-  eq(submit[0], "workbench.action.chat.submit", "submit command 0 must come from strategy (Cursor 1.x)");
+  eq(
+    submit[0],
+    "workbench.action.chat.stopListeningAndSubmit",
+    "submit command 0 must come from strategy (Glass/Agents)",
+  );
   // buildHostKeySubmitCandidates puts Ctrl+Return first for Cursor (auto mode)
   const hostKeys = buildHostKeySubmitCandidates("cursor", "auto", { XDG_SESSION_TYPE: "wayland" });
   const firstArgs = hostKeys[0]?.[1] || [];
@@ -180,6 +184,27 @@ function testCursorPasteAndFocusInputCacheSanitization(): void {
   );
 
   assertSanitizedCacheField(
+    { paste: "editor.action.selectionClipboardPaste" },
+    "paste",
+    undefined,
+    "selectionClipboardPaste paste cache must be cleared for Cursor",
+  );
+
+  assertSanitizedCacheField(
+    { paste: "composer.startComposerPrompt" },
+    "paste",
+    undefined,
+    "startComposerPrompt paste cache must be cleared for Cursor (fast path only)",
+  );
+
+  assertSanitizedCacheField(
+    { paste: "composer.startComposerPrompt2" },
+    "paste",
+    undefined,
+    "startComposerPrompt2 paste cache must be cleared for Cursor (fast path only)",
+  );
+
+  assertSanitizedCacheField(
     { focusInput: "workbench.action.focusAuxiliaryBar" },
     "focusInput",
     undefined,
@@ -214,6 +239,28 @@ function testCursorFocusOpenCacheSanitization(): void {
     "composer.openAsPane focus_open cache must be cleared for Cursor "
       + "(toggle hides an already-open chat panel)",
   );
+
+  assertSanitizedCacheField(
+    { focusOpen: "workbench.panel.chat" },
+    "focusOpen",
+    undefined,
+    "workbench.panel.chat focus_open cache must be cleared for Cursor "
+      + "(toggle hides an already-open chat panel)",
+  );
+
+  assertSanitizedCacheField(
+    { focusOpen: "workbench.panel.chat+composer.focusComposer" },
+    "focusOpen",
+    undefined,
+    "combined workbench.panel.chat focus_open cache must be cleared for Cursor",
+  );
+
+  assertSanitizedCacheField(
+    { paste: "workbench.action.terminal.paste" },
+    "paste",
+    undefined,
+    "terminal.paste cache must be cleared for Cursor",
+  );
 }
 
 function testFocusOpenDefaultsExcludeNewChatTab(): void {
@@ -240,6 +287,12 @@ function testFocusOpenDefaultsExcludeNewChatTab(): void {
     throw new Error(
       "Cursor focus_open defaults must NOT include composer.openAsPane " +
         "(toggle: hides an already-open Composer panel)",
+    );
+  }
+  if (defaults.includes("workbench.panel.chat")) {
+    throw new Error(
+      "Cursor focus_open defaults must NOT include workbench.panel.chat " +
+        "(toggle: hides an already-open chat panel)",
     );
   }
   // Cursor 1.x: the modern primary focus_open command is

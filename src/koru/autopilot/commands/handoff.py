@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from koru.autopilot.log_contract import emit_log
+
 if TYPE_CHECKING:
     from koru.autopilot.client import AutopilotClient
 
@@ -57,6 +59,16 @@ def action_handoff(
         Exit code (0 success, 1 error, 2 daemon not running)
     """
     project = args.project.resolve()
+    emit_log(
+        args,
+        component="autopilot.handoff",
+        level="info",
+        action="request",
+        result="started",
+        ide=str(args.ide),
+        submit=bool(args.submit),
+        require_plugin=bool(args.require_plugin),
+    )
     try:
         brief = _build_brief(
             project,
@@ -65,18 +77,52 @@ def action_handoff(
         )
     except Exception as exc:  # pragma: no cover — surfaces context errors
         print(f"koru autopilot handoff: {exc}", file=sys.stderr)
+        emit_log(
+            args,
+            component="autopilot.handoff",
+            level="error",
+            action="build_brief",
+            result="failed",
+            rc=1,
+            reason=str(exc),
+        )
         return 1
     if not brief.strip():
         print("koru autopilot handoff: empty brief, refusing to drive", file=sys.stderr)
+        emit_log(
+            args,
+            component="autopilot.handoff",
+            level="error",
+            action="validate_brief",
+            result="failed",
+            rc=1,
+        )
         return 1
     if args.dry_run:
         print(brief)
+        emit_log(
+            args,
+            component="autopilot.handoff",
+            level="info",
+            action="dry_run",
+            result="ok",
+            rc=0,
+            chars=len(brief),
+        )
         return 0
     client = client_fn(args)
     if not client.is_running():
         print(
             "koru autopilot handoff: daemon not running. Start it with `koru autopilot daemon`.",
             file=sys.stderr,
+        )
+        emit_log(
+            args,
+            component="autopilot.handoff",
+            level="error",
+            action="check_daemon",
+            result="failed",
+            rc=2,
         )
         return 2
     try:
@@ -88,6 +134,15 @@ def action_handoff(
         )
     except (OSError, RuntimeError) as exc:
         print(f"koru autopilot handoff: {exc}", file=sys.stderr)
+        emit_log(
+            args,
+            component="autopilot.handoff",
+            level="error",
+            action="drive",
+            result="failed",
+            rc=1,
+            reason=str(exc),
+        )
         return 1
     summary = {
         "ok": reply.get("ok", False),
@@ -97,4 +152,15 @@ def action_handoff(
         "backend": reply.get("backend") or ("plugin" if reply.get("delivered") else "?"),
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
-    return 0 if reply.get("ok", True) else 1
+    rc = 0 if reply.get("ok", True) else 1
+    emit_log(
+        args,
+        component="autopilot.handoff",
+        level="info" if rc == 0 else "error",
+        action="drive",
+        result="ok" if rc == 0 else "failed",
+        rc=rc,
+        chars=len(brief),
+        backend=summary.get("backend"),
+    )
+    return rc

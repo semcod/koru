@@ -9,6 +9,8 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
+from koru.autopilot.log_contract import emit_log
+
 if TYPE_CHECKING:
     from koru.autopilot.client import AutopilotClient
 
@@ -29,4 +31,20 @@ def action_shutdown(
     Returns:
         Exit code (0 success, 1 error)
     """
-    return daemon_shutdown_fn(args, client_fn=client_fn)
+    emit_log(
+        args,
+        component="autopilot.shutdown",
+        level="info",
+        action="request",
+        result="started",
+    )
+    rc = daemon_shutdown_fn(args, client_fn=client_fn)
+    emit_log(
+        args,
+        component="autopilot.shutdown",
+        level="info" if rc == 0 else "error",
+        action="request",
+        result="ok" if rc == 0 else "failed",
+        rc=rc,
+    )
+    return rc

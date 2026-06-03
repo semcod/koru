@@ -1,12 +1,11 @@
 """Tagi integration for Koru - change analysis and prioritization."""
 
 import json
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-
 import logging
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +13,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TagiChangeAnalysis:
     """Analysis result from Tagi."""
-    changes: List[Dict[str, Any]]
-    groups: List[Dict[str, Any]]
-    priority_order: List[str]
-    risk_assessment: Dict[str, float]
-    recommendations: List[str]
+
+    changes: list[dict[str, Any]]
+    groups: list[dict[str, Any]]
+    priority_order: list[str]
+    risk_assessment: dict[str, float]
+    recommendations: list[str]
 
 
 class TagiIntegration:
@@ -27,7 +27,7 @@ class TagiIntegration:
     def __init__(self, project_path: Path):
         self.project_path = project_path
     
-    def _run_tagi_command(self, command: List[str]) -> Dict[str, Any]:
+    def _run_tagi_command(self, command: list[str]) -> dict[str, Any]:
         """Run tagi command and return parsed output."""
         try:
             result = subprocess.run(
@@ -56,7 +56,7 @@ class TagiIntegration:
             logger.error(f"Error running tagi command: {e}")
             return {}
     
-    def scan_changes(self) -> List[Dict[str, Any]]:
+    def scan_changes(self) -> list[dict[str, Any]]:
         """Scan changes using tagi scan."""
         result = self._run_tagi_command(["python", "-m", "tagi", "scan", ".", "--format", "json"])
         
@@ -83,11 +83,13 @@ class TagiIntegration:
             )
         
         # Get grouped analysis
-        groups_result = self._run_tagi_command(["python", "-m", "tagi", "list-groups", ".", "--format", "json"])
+        groups_result = self._run_tagi_command(
+            ["python", "-m", "tagi", "list-groups", ".", "--format", "json"]
+        )
         groups = groups_result.get("groups", [])
         
         # Get priority analysis
-        priority_result = self._run_tagi_command(["python", "-m", "tagi", "safe", ".", "--format", "json"])
+        self._run_tagi_command(["python", "-m", "tagi", "safe", ".", "--format", "json"])
         
         # Build priority order based on tagi's analysis
         priority_order = []
@@ -108,7 +110,9 @@ class TagiIntegration:
         # Check for risky changes
         risky_groups = [g for g in groups if g.get("avg_risk", 0.0) > 0.7]
         if risky_groups:
-            recommendations.append(f"⚠️ {len(risky_groups)} high-risk groups detected - deploy with caution")
+            recommendations.append(
+                f"⚠️ {len(risky_groups)} high-risk groups detected - deploy with caution"
+            )
         
         # Check for large changes
         large_groups = [g for g in groups if g.get("total_lines", 0) > 100]
@@ -131,26 +135,26 @@ class TagiIntegration:
             recommendations=recommendations
         )
     
-    def get_deployment_plan(self) -> Dict[str, Any]:
+    def get_deployment_plan(self) -> dict[str, Any]:
         """Get deployment plan using tagi analysis."""
-        analysis = self.analyze_priorities()
+        priority_report = self.analyze_priorities()
         
         # Build deployment plan
         deployment_plan = {
             "analysis": {
-                "total_changes": len(analysis.changes),
-                "total_groups": len(analysis.groups),
-                "priority_order": analysis.priority_order,
-                "risk_assessment": analysis.risk_assessment,
-                "recommendations": analysis.recommendations
+                "total_changes": len(priority_report.changes),
+                "total_groups": len(priority_report.groups),
+                "priority_order": priority_report.priority_order,
+                "risk_assessment": priority_report.risk_assessment,
+                "recommendations": priority_report.recommendations
             },
             "deployment_groups": [],
             "strategy": "tagi_priority"
         }
         
         # Create deployment groups based on tagi analysis
-        for group_name in analysis.priority_order:
-            group = next((g for g in analysis.groups if g.get("name") == group_name), None)
+        for group_name in priority_report.priority_order:
+            group = next((g for g in priority_report.groups if g.get("name") == group_name), None)
             if group:
                 deployment_group = {
                     "name": group_name,
@@ -158,7 +162,10 @@ class TagiIntegration:
                     "priority": len(deployment_plan["deployment_groups"]) + 1,
                     "risk_score": group.get("avg_risk", 0.0),
                     "total_lines": group.get("total_lines", 0),
-                    "deployment_strategy": self._get_deployment_strategy(group_name, group.get("avg_risk", 0.0))
+                    "deployment_strategy": self._get_deployment_strategy(
+                        group_name,
+                        group.get("avg_risk", 0.0),
+                    )
                 }
                 deployment_plan["deployment_groups"].append(deployment_group)
         
@@ -175,7 +182,7 @@ class TagiIntegration:
         else:
             return "automated_deployment"
     
-    def commit_changes(self, group_name: str, message: Optional[str] = None) -> bool:
+    def commit_changes(self, group_name: str, message: str | None = None) -> bool:
         """Commit changes for a specific group using tagi."""
         if not message:
             message = f"Deploy {group_name} changes via Koru"
@@ -187,7 +194,7 @@ class TagiIntegration:
         
         return result.get("success", False)
     
-    def auto_commit_all(self, message: Optional[str] = None) -> bool:
+    def auto_commit_all(self, message: str | None = None) -> bool:
         """Auto-commit all changes using tagi auto."""
         if not message:
             message = "Auto-commit all changes via Koru"
@@ -199,7 +206,7 @@ class TagiIntegration:
         
         return result.get("success", False)
     
-    def _parse_text_scan_output(self, output: str) -> List[Dict[str, Any]]:
+    def _parse_text_scan_output(self, output: str) -> list[dict[str, Any]]:
         """Parse text output from tagi scan."""
         changes = []
         lines = output.strip().split('\n')
@@ -212,7 +219,11 @@ class TagiIntegration:
                     changes.append({
                         "path": parts[0].strip(),
                         "type": parts[1].strip() if len(parts) > 1 else "unknown",
-                        "lines": int(parts[2].strip()) if len(parts) > 2 and parts[2].strip().isdigit() else 0,
+                        "lines": (
+                            int(parts[2].strip())
+                            if len(parts) > 2 and parts[2].strip().isdigit()
+                            else 0
+                        ),
                         "tags": parts[3].strip().split(',') if len(parts) > 3 else []
                     })
         
@@ -234,7 +245,7 @@ class TagiIntegration:
 
 
 # Integration functions for Koru workflows
-def analyze_project_changes(project_path: Path) -> Dict[str, Any]:
+def analyze_project_changes(project_path: Path) -> dict[str, Any]:
     """Analyze project changes using Tagi integration."""
     tagi = TagiIntegration(project_path)
     
@@ -247,7 +258,7 @@ def analyze_project_changes(project_path: Path) -> Dict[str, Any]:
     return tagi.get_deployment_plan()
 
 
-def commit_safe_changes(project_path: Path, message: Optional[str] = None) -> bool:
+def commit_safe_changes(project_path: Path, message: str | None = None) -> bool:
     """Commit safe changes using Tagi."""
     tagi = TagiIntegration(project_path)
     
@@ -256,11 +267,11 @@ def commit_safe_changes(project_path: Path, message: Optional[str] = None) -> bo
         return False
     
     # Get analysis
-    analysis = tagi.analyze_priorities()
+    priority_report = tagi.analyze_priorities()
     
     # Find safe groups (risk < 0.3)
     safe_groups = [
-        group for group in analysis.groups 
+        group for group in priority_report.groups
         if group.get("avg_risk", 0.0) < 0.3
     ]
     
@@ -280,7 +291,7 @@ def commit_safe_changes(project_path: Path, message: Optional[str] = None) -> bo
     return True
 
 
-def auto_commit_all_changes(project_path: Path, message: Optional[str] = None) -> bool:
+def auto_commit_all_changes(project_path: Path, message: str | None = None) -> bool:
     """Auto-commit all changes using Tagi."""
     tagi = TagiIntegration(project_path)
     

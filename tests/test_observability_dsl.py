@@ -5,6 +5,7 @@ import os
 from argparse import Namespace
 from datetime import UTC, datetime
 
+from koru import autonomous_plugin_wait as plugin_wait_mod
 from koru.autonomous_cycle_orchestrator import (
     _emit_autopilot_observability_outcome,
     _plugin_gate_status,
@@ -656,6 +657,7 @@ def test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace(
     monkeypatch,
 ) -> None:
     retry_env: list[str | None] = []
+    reconnect_calls: list[str] = []
 
     class _Client:
         def status(self) -> dict:
@@ -671,6 +673,12 @@ def test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace(
     def _retry(*_args, **_kwargs):
         retry_env.append(os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"))
         return True
+
+    monkeypatch.setattr(
+        plugin_wait_mod,
+        "_try_plugin_reconnect_pipeline",
+        lambda *_args, **_kwargs: reconnect_calls.append("reconnect") or False,
+    )
 
     result = wait_for_plugin_connection(
         Namespace(autopilot_plugin_wait_seconds=0.0, emit_events="text"),
@@ -692,6 +700,7 @@ def test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace(
 
     assert result is True
     assert retry_env == ["1"]
+    assert reconnect_calls == []
     assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
 
 

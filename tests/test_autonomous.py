@@ -186,7 +186,7 @@ def test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty(
     )
     discoveries: list[Path] = []
 
-    def fake_discovery(project, _hp, _emit):
+    def fake_discovery(project, _hp, _emit, **_kwargs):
         discoveries.append(project)
         return {"ran": True, "applied": ["Split god module: src/a.py"], "skipped": []}
 
@@ -244,7 +244,7 @@ def test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery(
     discoveries: list[Path] = []
     logs: list[str] = []
 
-    def fake_discovery(project, _hp, _emit):
+    def fake_discovery(project, _hp, _emit, **_kwargs):
         discoveries.append(project)
         return {"ran": False, "applied": ["Project-wide finding"], "skipped": []}
 
@@ -308,7 +308,7 @@ def test_cycle_code2llm_discovery_ensures_standardized_follow_up_ticket(
     monkeypatch.setattr(
         code2llm_discovery_mod,
         "run_code2llm_discovery",
-        lambda _project: outcome,
+        lambda _project, *, scope_paths=None: outcome,
     )
     monkeypatch.setattr(
         code2llm_discovery_mod,
@@ -1632,6 +1632,8 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     assert rc == 0
     assert install_calls == ["cursor:koru-autopilot-cursor.sock"]
     assert "KORU_STRICT_PLUGIN_VERSION" not in os.environ
+    for key in ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET"):
+        os.environ.pop(key, None)
 
 
 def test_setup_autopilot_plugin_unsupported_skips_wait(tmp_path, monkeypatch) -> None:
@@ -3010,6 +3012,57 @@ sprint:
     assert not any("redrive allowed" in line for line in logs)
 
 
+def test_skip_chat_activity_allows_llm_ready_redrive_after_no_change_verdict(
+    tmp_path, monkeypatch
+) -> None:
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-2001:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2001"],
+        last_status="waiting_input",
+        last_message="continue CQRS refactor",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 30.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Architektura: wprowadź CQRS",
+            },
+        ],
+        last_drive_verdict={"outcome": "no_change", "confidence": 0.1},
+    )
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is False
+    assert telemetry.get("autopilot_skipped_chat_activity") is None
+    assert any("no_change after drive" in line for line in logs)
+
+
 def test_skip_chat_activity_allows_redrive_when_sent_without_received(
     tmp_path, monkeypatch
 ) -> None:
@@ -3602,6 +3655,48 @@ def test_submit_unverified_previous_drive_skips_redrive(tmp_path: Path) -> None:
     assert any("manual_send_required" in line for line in lines)
 
 
+def test_submit_unverified_previous_drive_allows_alt_strategy_before_limit(
+    tmp_path: Path,
+) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-299"],
+        last_status="waiting_input",
+    )
+    state = autonomous_mod.AutoloopState(
+        last_autopilot_status="failed(submit_unverified)",
+        last_driven_ticket_id="STARTER-299",
+        submit_unverified_streak=1,
+        pending_submit_strategy_hint="submit_alt_registered",
+        stagnation_streak=1,
+    )
+    telemetry: dict[str, object] = {}
+    lines: list[str] = []
+
+    should_skip, reason = skip_conditions_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="waiting_input",
+        diag_result=autonomous_cycle_mod.DiagnosticResult("skipped", []),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=lines.append,
+    )
+
+    assert should_skip is False
+    assert reason == ""
+    assert telemetry["autopilot_submit_alt_retry_allowed"] is True
+    assert telemetry["autopilot_submit_unverified_streak"] == 1
+    assert any("alternate submit strategy" in line for line in lines)
+
+
 def test_submit_unverified_previous_drive_does_not_block_next_ticket(tmp_path: Path) -> None:
     queue_result = QueueLoopResult(
         iterations=1,
@@ -3638,6 +3733,90 @@ def test_submit_unverified_previous_drive_does_not_block_next_ticket(tmp_path: P
     assert telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] is True
     assert telemetry["autopilot_submit_unverified_previous_ticket"] == "STARTER-301"
     assert telemetry["autopilot_submit_unverified_current_ticket"] == "STARTER-302"
+
+
+def test_submit_unverified_previous_drive_clears_after_message_sent_same_ticket(
+    tmp_path: Path,
+) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-437"],
+        last_status="waiting_input",
+    )
+    state = autonomous_mod.AutoloopState(
+        last_autopilot_status="failed(submit_unverified)",
+        last_driven_ticket_id="STARTER-437",
+        last_submit_unverified_ticket_id="STARTER-437",
+        last_submit_unverified_ts=100.0,
+        last_message_sent_ts=101.0,
+        stagnation_streak=1,
+    )
+    telemetry: dict[str, object] = {}
+
+    should_skip, reason = skip_conditions_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="",
+        diag_result=autonomous_cycle_mod.DiagnosticResult("skipped", []),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=lambda _line: None,
+    )
+
+    assert should_skip is False
+    assert reason == ""
+    assert state.last_autopilot_status == ""
+    assert state.last_submit_unverified_ts == 0.0
+    assert state.last_submit_unverified_ticket_id == ""
+    assert telemetry["autopilot_submit_unverified_cleared_by_message_sent"] is True
+    assert telemetry["autopilot_submit_unverified_current_ticket"] == "STARTER-437"
+
+
+def test_submit_unverified_previous_drive_not_cleared_by_stale_message_sent(
+    tmp_path: Path,
+) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-437"],
+        last_status="waiting_input",
+    )
+    state = autonomous_mod.AutoloopState(
+        last_autopilot_status="failed(submit_unverified)",
+        last_driven_ticket_id="STARTER-437",
+        last_submit_unverified_ticket_id="STARTER-437",
+        last_submit_unverified_ts=100.0,
+        last_message_sent_ts=99.0,
+        stagnation_streak=1,
+    )
+    telemetry: dict[str, object] = {}
+
+    should_skip, reason = skip_conditions_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="",
+        diag_result=autonomous_cycle_mod.DiagnosticResult("skipped", []),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=lambda _line: None,
+    )
+
+    assert should_skip is True
+    assert reason == "skipped(manual_send_required)"
+    assert telemetry["autopilot_skipped_manual_send_required"] is True
 
 
 def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(

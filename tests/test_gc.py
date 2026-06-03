@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta
@@ -12,6 +13,7 @@ import yaml
 
 from koru.gc import (
     GcResult,
+    _planfile_command_base,
     collect_gc_candidates,
     run_gc,
 )
@@ -152,6 +154,17 @@ class TestCollectGcCandidates(unittest.TestCase):
 
 
 class TestRunGc(unittest.TestCase):
+    def test_planfile_command_base_uses_env_override(self) -> None:
+        old = os.environ.get("KORU_PLANFILE_CMD")
+        os.environ["KORU_PLANFILE_CMD"] = "python -m custom.planfile"
+        try:
+            self.assertEqual(_planfile_command_base(), ["python", "-m", "custom.planfile"])
+        finally:
+            if old is None:
+                os.environ.pop("KORU_PLANFILE_CMD", None)
+            else:
+                os.environ["KORU_PLANFILE_CMD"] = old
+
     def test_dry_run_does_not_delete(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -7,12 +7,27 @@ import {
   selectAntigravityOpenCommand,
 } from "../antigravity-fastpath";
 import {
+  buildSubmitCommands,
+  filterRegistered,
+} from "../probe-ladder";
+import {
   decideBusyInputAction,
   shouldVerifyPrePasteBusy,
   type BusyInputAction,
   type KoruAutopilotStepConfig,
 } from "../step-decisions";
-import { Envelope } from "./types";
+import { CommandOutcome, Envelope } from "./types";
+
+const CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS = [
+  "composer.startComposerPrompt2",
+  "composer.startComposerPrompt",
+] as const;
+
+const CURSOR_COMPOSER_SAFE_PASTE_COMMANDS = [
+  "workbench.action.chat.typeText",
+  "workbench.action.chat.insertText",
+  "cursor.action.chat.typeText",
+] as const;
 
 export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridgeAck {
   protected abstract koruStepConfig(): KoruAutopilotStepConfig;
@@ -170,73 +185,181 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       return false;
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const pasteCmd = "composer.focusComposer";
-    const submitCmd = "composer.sendToAgent";
-    if (!existing.has(pasteCmd) || !existing.has(submitCmd)) {
+    const promptPastes = CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
+    const safePastes = CURSOR_COMPOSER_SAFE_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
+    const pasteQueue = [
+      ...promptPastes,
+      ...safePastes.filter((cmd) => !promptPastes.includes(cmd as typeof promptPastes[number])),
+    ];
+    if (pasteQueue.length === 0) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_ABORT_NO_PASTE_COMMANDS");
+      this.traceOperation({
+        op: "paste",
+        route: "cursor-composer-fastpath",
+        ok: false,
+        reason: "no registered composer paste commands",
+      });
       return false;
     }
-    safeLog("CURSOR_COMPOSER_FASTPATH_START", { submit, textLength: text.length });
+    const submitCandidates = filterRegistered(buildSubmitCommands("cursor"), existing);
+    if (submit && submitCandidates.length === 0) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_ABORT_NO_SUBMIT_COMMANDS");
+      this.traceOperation({
+        op: "submit",
+        route: "cursor-composer-fastpath",
+        ok: false,
+        reason: "no registered submit commands",
+      });
+      return false;
+    }
+    for (const pasteCmd of pasteQueue) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_START", {
+        submit,
+        textLength: text.length,
+        pasteCmd,
+        submitCandidates,
+      });
+      const succeeded = await this._runCursorComposerFastPathPaste(
+        env,
+        text,
+        submit,
+        pasteCmd,
+        submitCandidates
+      );
+      if (succeeded) {
+        return true;
+      }
+      const riskyPaste = /startcomposerprompt/i.test(pasteCmd);
+      if (riskyPaste) {
+        safeLog("CURSOR_COMPOSER_FASTPATH_RETRY_AFTER_PROMPT_PASTE", { failedPasteCmd: pasteCmd });
+        this.traceOperation({
+          op: "paste",
+          route: "cursor-composer-fastpath",
+          ok: false,
+          reason: `startComposerPrompt paste failed verification; retrying with typeText fallback`,
+          detail: { failedPasteCmd: pasteCmd },
+        });
+      }
+      await this.clearComposerDraft();
+    }
+    safeLog("CURSOR_COMPOSER_FASTPATH_EXHAUSTED", { pasteQueue });
     this.traceOperation({
-      op: "focus_open",
-      route: "composer-fastpath",
-      ok: true,
-      command: pasteCmd,
+      op: "paste",
+      route: "cursor-composer-fastpath",
+      ok: false,
+      reason: "all composer fast-path paste candidates failed",
+      detail: { pasteQueue },
     });
-    try {
-      await vscode.commands.executeCommand(pasteCmd);
-    } catch (err) {
-      safeLog("CURSOR_COMPOSER_FASTPATH_FOCUS_FAILED", { error: String(err) });
-      return false;
-    }
-    await this.sleep(this.probeFocusDelayMs());
-    const busyInput = await this.decideBusyInput(text);
-    if (busyInput.action === "block") {
-      this.sendInputBusyAck(env, { ok: true, command: pasteCmd }, busyInput.observedLength);
-      return true;
-    }
-    const replace = busyInput.action === "replace_known_koru_draft";
-    const pasted = await this.pasteText(text, replace);
-    if (!pasted.ok) {
-      return false;
-    }
-    if (!submit) {
-      this.sendSuccessAck(env, { ok: true, command: pasteCmd }, pasted, undefined);
-      return true;
-    }
+    return false;
+  }
+
+  private async _runCursorComposerFastPathPaste(
+    env: Envelope,
+    text: string,
+    submit: boolean,
+    pasteCmd: string,
+    submitCandidates: string[]
+  ): Promise<boolean> {
     await this.captureCursorBubbleAnchor();
     this.traceOperation({
-      op: "submit",
-      route: "composer-fastpath",
+      op: "paste",
+      route: `cursor-composer-fastpath:${pasteCmd}`,
       ok: true,
-      command: submitCmd,
+      command: pasteCmd,
+      detail: { textLength: text.length },
     });
     try {
-      await vscode.commands.executeCommand(submitCmd);
+      const result = await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
+      if (result === false) {
+        this.traceOperation({
+          op: "paste",
+          route: `cursor-composer-fastpath:${pasteCmd}`,
+          ok: false,
+          reason: "command returned false",
+        });
+        return false;
+      }
     } catch (err) {
-      safeLog("CURSOR_COMPOSER_FASTPATH_SUBMIT_FAILED", { error: String(err) });
+      safeLog("CURSOR_COMPOSER_FASTPATH_PASTE_FAILED", { pasteCmd, error: String(err) });
+      this.traceOperation({
+        op: "paste",
+        route: `cursor-composer-fastpath:${pasteCmd}`,
+        ok: false,
+        reason: String(err),
+      });
       return false;
     }
-    const verifyResult = await this._verifySubmitViaCursorBubble(text);
-    if (verifyResult && verifyResult.matched) {
-      this.traceOperation({ op: "submit", route: "success", ok: true, command: submitCmd });
-      this.sendSuccessAck(env, { ok: true, command: pasteCmd }, pasted, submitCmd);
-      this.sendMessageSent(text);
+    await this.sleep(this.probePasteDelayMs());
+    const focus: CommandOutcome = { ok: true, command: pasteCmd };
+    const pasted: CommandOutcome = { ok: true, command: pasteCmd };
+    if (!submit) {
+      this.sendSuccessAck(env, focus, pasted, undefined);
       return true;
     }
-    this.traceOperation({
-      op: "submit_verify",
-      route: "cursor-bubble-db",
-      ok: false,
-      reason: "no new user bubble in cursorDiskKV after composer fastpath (paste+sendToAgent)",
-      detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult?.newUserBubbles },
-    });
-    await this.clearComposerDraft();
+    for (const submitCmd of submitCandidates) {
+      await this.captureCursorBubbleAnchor();
+      this.traceOperation({
+        op: "submit",
+        route: `cursor-composer-fastpath:${submitCmd}`,
+        ok: true,
+        command: submitCmd,
+      });
+      if (!(await this.runCommand(submitCmd))) {
+        this.traceOperation({
+          op: "submit",
+          route: `cursor-composer-fastpath:${submitCmd}`,
+          ok: false,
+          reason: "command unavailable or returned false",
+        });
+        continue;
+      }
+      const verifyResult = await this._verifySubmitViaCursorBubble(text);
+      if (verifyResult === null) {
+        this.traceOperation({
+          op: "submit_verify",
+          route: "cursor-bubble-db",
+          ok: true,
+          reason: "bubble db unavailable; trusting registered submit command",
+        });
+        this.traceOperation({ op: "submit", route: "success", ok: true, command: submitCmd });
+        this.sendSuccessAck(env, focus, pasted, submitCmd);
+        this.sendMessageSent(text);
+        return true;
+      }
+      if (verifyResult.matched) {
+        this.traceOperation({
+          op: "submit_verify",
+          route: "cursor-bubble-db",
+          ok: true,
+          detail: { newUserBubbles: verifyResult.newUserBubbles },
+        });
+        this.traceOperation({ op: "submit", route: "success", ok: true, command: submitCmd });
+        this.sendSuccessAck(env, focus, pasted, submitCmd);
+        this.sendMessageSent(text);
+        return true;
+      }
+      this.traceOperation({
+        op: "submit_verify",
+        route: "cursor-bubble-db",
+        ok: false,
+        reason: "no new user bubble in cursorDiskKV after composer fastpath",
+        detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult.newUserBubbles },
+      });
+    }
     return false;
   }
 
   private async clearComposerDraft(): Promise<void> {
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const focusCmd = [
+      "workbench.action.chat.focusInput",
+      "composer.focusComposer",
+    ].find((cmd) => existing.has(cmd));
+    if (!focusCmd) {
+      return;
+    }
     try {
-      await vscode.commands.executeCommand("composer.focusComposer");
+      await vscode.commands.executeCommand(focusCmd);
       await this.sleep(60);
       await vscode.commands.executeCommand("editor.action.selectAll");
       await this.sleep(40);

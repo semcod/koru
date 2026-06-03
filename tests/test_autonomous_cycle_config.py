@@ -23,8 +23,15 @@ def test_configure_loop_state_uses_existing_agent_lane_env(
     def fail_apply_agent_lane_environ(project: Path, agent_lane: str) -> str:
         raise AssertionError("existing KORU_AUTOPILOT_INSTANCE should be reused")
 
-    def fail_resolve_autopilot_ide(*args: object, **kwargs: object) -> tuple[str, str]:
-        raise AssertionError("explicit lane should be used directly")
+    def resolve_autopilot_ide(
+        autopilot_ide_cli: str,
+        lane: str | None,
+        *,
+        resolve_ide_route_fn: object,
+    ) -> tuple[str, str]:
+        assert autopilot_ide_cli == "auto"
+        assert lane == "vscode"
+        return "vscode", "lane:vscode"
 
     enable_scan, queue_name, autopilot_ide, restored_state, checkpoint_path, restored_cycle = (
         configure_loop_state(
@@ -32,7 +39,7 @@ def test_configure_loop_state_uses_existing_agent_lane_env(
             tmp_path,
             effective_flags=lambda ticket_sources: (True, False),
             apply_agent_lane_environ=fail_apply_agent_lane_environ,
-            resolve_autopilot_ide=fail_resolve_autopilot_ide,
+            resolve_autopilot_ide=resolve_autopilot_ide,
             resolve_ide_route_fn=lambda *_args, **_kwargs: None,
             state_factory=lambda: loop_state,
             load_checkpoint=lambda *_args, **_kwargs: 7,
@@ -45,6 +52,39 @@ def test_configure_loop_state_uses_existing_agent_lane_env(
     assert restored_state is loop_state
     assert checkpoint_path == (tmp_path / ".planfile/.koru/autonomous-state.json").resolve()
     assert restored_cycle == 7
+
+
+def test_configure_loop_state_canonicalizes_lane_slug(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "cursor-main")
+    args = SimpleNamespace(
+        ticket_sources="default",
+        queue_name="default",
+        agent_lane="auto",
+        autopilot_ide="auto",
+        emit_events="human",
+    )
+
+    def resolve_autopilot_ide(
+        autopilot_ide_cli: str,
+        lane: str | None,
+        *,
+        resolve_ide_route_fn: object,
+    ) -> tuple[str, str]:
+        assert lane == "cursor-main"
+        return "cursor", "lane:cursor-main"
+
+    _, _, autopilot_ide, *_rest = configure_loop_state(
+        args,
+        tmp_path,
+        effective_flags=lambda ticket_sources: (True, False),
+        apply_agent_lane_environ=lambda *_args: "cursor-main",
+        resolve_autopilot_ide=resolve_autopilot_ide,
+        resolve_ide_route_fn=lambda *_args, **_kwargs: None,
+        state_factory=lambda: object(),
+        load_checkpoint=lambda *_args, **_kwargs: None,
+    )
+
+    assert autopilot_ide == "cursor"
 
 
 def test_compute_cycle_sleep_caps_plugin_reconnect_blockers() -> None:

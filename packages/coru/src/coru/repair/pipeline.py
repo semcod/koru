@@ -1,0 +1,666 @@
+"""Repair pipeline execution (write model) with optional event emission."""
+
+from __future__ import annotations
+
+import json
+import shutil
+import time
+import zipfile
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
+from typing import Any
+
+from coru.repair.domain import RepairAttempt, RepairPlan, RepairProblem, RepairStepDef
+from coru.repair.diagnostics import _plugin_row_for_ide, _read_package_build_sha
+from coru.repair.registry import REPAIR_REGISTRY, registry_step, registry_steps_for_code
+
+RunKoru = Callable[[Sequence[str]], int]
+ReplayFn = Callable[[str, str, Sequence[str]], int]
+StatusPayloadFn = Callable[[str, str], dict[str, Any] | None]
+IdeReloadFn = Callable[[str, Path | None], RepairAttempt]
+IdeConnectFn = Callable[[str], RepairAttempt]
+StrictHandshakeFn = Callable[[], RepairAttempt]
+EventCallback = Callable[[str, dict[str, Any]], None]
+
+_EXTENSION_LAYOUT: dict[str, tuple[str, str]] = {
+    "cursor": (".cursor/extensions", "semcod.koru-autopilot-cursor"),
+    "vscode": (".vscode/extensions", "semcod.koru-autopilot-vscode"),
+    "vscodium": (".vscode-oss/extensions", "semcod.koru-autopilot-vscodium"),
+    "windsurf": (".windsurf/extensions", "semcod.koru-autopilot-windsurf"),
+    "antigravity": (".antigravity/extensions", "semcod.koru-autopilot-antigravity"),
+}
+
+_PLUGIN_DIR_NAMES: dict[str, str] = {
+    "cursor": "koru-autopilot-cursor",
+    "vscode": "koru-autopilot-vscode",
+    "vscodium": "koru-autopilot-vscodium",
+    "windsurf": "koru-autopilot-windsurf",
+    "antigravity": "koru-autopilot-antigravity",
+}
+
+
+def _emit(on_event: EventCallback | None, event_type: str, payload: dict[str, Any]) -> None:
+    if on_event is not None:
+        on_event(event_type, payload)
+
+
+def _installed_extension_dir(ide: str) -> Path | None:
+    layout = _EXTENSION_LAYOUT.get(ide)
+    if layout is None:
+        return None
+    rel_root, ext_prefix = layout
+    ext_root = Path.home() / rel_root
+    if not ext_root.is_dir():
+        return None
+    matches = sorted(ext_root.glob(f"{ext_prefix}-*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return matches[0] if matches else None
+
+
+def _resolve_repo_vsix(repo_root: Path, ide: str, version: str | None) -> Path | None:
+    dir_name = _PLUGIN_DIR_NAMES.get(ide)
+    if not dir_name:
+        return None
+    plugin_dir = repo_root / "plugins" / dir_name
+    if not plugin_dir.is_dir():
+        return None
+    if version:
+        candidate = plugin_dir / f"{dir_name}-{version}.vsix"
+        if candidate.is_file():
+            return candidate
+    vsix_files = sorted(plugin_dir.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return vsix_files[0] if vsix_files else None
+
+
+def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
+    layout = _EXTENSION_LAYOUT.get(ide)
+    if layout is None:
+        return RepairAttempt(
+            action_id="manual_vsix_unpack",
+            mode="auto",
+            ok=False,
+            message=f"unsupported ide for manual VSIX unpack: {ide}",
+        )
+    rel_root, ext_prefix = layout
+    ext_root = Path.home() / rel_root
+    ext_root.mkdir(parents=True, exist_ok=True)
+
+    version = None
+    installed_dir = _installed_extension_dir(ide)
+    if installed_dir is not None:
+        pkg = installed_dir / "package.json"
+        if pkg.is_file():
+            try:
+                version = str(json.loads(pkg.read_text(encoding="utf-8")).get("version") or "").strip() or None
+            except (OSError, json.JSONDecodeError):
+                version = None
+    vsix = _resolve_repo_vsix(repo_root, ide, version)
+    if vsix is None:
+        return RepairAttempt(
+            action_id="manual_vsix_unpack",
+            mode="auto",
+            ok=False,
+            message=f"no VSIX found under {repo_root}/plugins for ide={ide}",
+        )
+
+    try:
+        with zipfile.ZipFile(vsix) as archive:
+            pkg = json.loads(archive.read("extension/package.json"))
+    except (OSError, KeyError, zipfile.BadZipFile, json.JSONDecodeError):
+        return RepairAttempt(
+            action_id="manual_vsix_unpack",
+            mode="auto",
+            ok=False,
+            message=f"cannot read VSIX package.json from {vsix}",
+        )
+
+    version = str(pkg.get("version") or "0.0.0")
+    target = ext_root / f"{ext_prefix}-{version}"
+    if target.exists():
+        shutil.rmtree(target)
+    tmp = ext_root / f".{ext_prefix}-{version}.tmp"
+    if tmp.exists():
+        shutil.rmtree(tmp)
+    tmp.mkdir(parents=True, exist_ok=True)
+    try:
+        with zipfile.ZipFile(vsix) as archive:
+            archive.extractall(tmp)
+        extracted = tmp / "extension"
+        if not extracted.is_dir():
+            return RepairAttempt(
+                action_id="manual_vsix_unpack",
+                mode="auto",
+                ok=False,
+                message=f"VSIX layout missing extension/ in {vsix}",
+            )
+        shutil.move(str(extracted), str(target))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    build_sha = _read_package_build_sha(target / "package.json")
+    return RepairAttempt(
+        action_id="manual_vsix_unpack",
+        mode="auto",
+        ok=True,
+        message=f"installed {target.name} build={build_sha or '-'} from {vsix.name}; reload IDE window required",
+    )
+
+
+def plugin_build_aligned(status: Mapping[str, Any] | None, *, ide: str, expected_build: str | None) -> bool:
+    if not expected_build:
+        return _plugin_row_for_ide(status, ide) is not None
+    row = _plugin_row_for_ide(status, ide)
+    if row is None:
+        return False
+    return str(row.get("buildSha") or "").strip() == expected_build
+
+
+def _expected_build_from_problems(problems: Sequence[RepairProblem]) -> str | None:
+    for problem in problems:
+        ctx = problem.context
+        if isinstance(ctx, Mapping) and ctx.get("expected_build"):
+            return str(ctx["expected_build"])
+    for problem in problems:
+        if "build" in problem.code and isinstance(problem.context, Mapping):
+            value = str(problem.context.get("expected_build") or "").strip()
+            if value:
+                return value
+    return None
+
+
+def _poll_plugin_ready(
+    *,
+    ide: str,
+    instance: str,
+    fetch_status: StatusPayloadFn,
+    expected_build: str | None,
+    timeout_seconds: float,
+) -> tuple[bool, Mapping[str, Any] | None]:
+    deadline = time.monotonic() + max(0.0, timeout_seconds)
+    last_status: Mapping[str, Any] | None = None
+    while time.monotonic() < deadline:
+        status = fetch_status(ide, instance)
+        if isinstance(status, dict):
+            last_status = status
+        if plugin_build_aligned(status, ide=ide, expected_build=expected_build):
+            return True, last_status
+        if expected_build is None and _plugin_row_for_ide(status, ide) is not None:
+            return True, last_status
+        time.sleep(0.5)
+    return False, last_status
+
+
+def _run_reload_and_connect(
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    fetch_status: StatusPayloadFn,
+    expected_build: str | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    if ide_reload is None:
+        return [
+            RepairAttempt(
+                action_id="reload_and_connect",
+                mode="auto",
+                ok=False,
+                message="no IDE reload handler registered",
+            )
+        ]
+    out: list[RepairAttempt] = []
+    reload_attempt = ide_reload(ide, repo_root)
+    out.append(reload_attempt)
+    if reload_attempt.ok:
+        time.sleep(5.0)
+    ready, _status = _poll_plugin_ready(
+        ide=ide,
+        instance=instance,
+        fetch_status=fetch_status,
+        expected_build=expected_build,
+        timeout_seconds=20.0 if reload_attempt.ok else 4.0,
+    )
+    connect_attempt: RepairAttempt | None = None
+    if not ready and ide_connect is not None:
+        connect_attempt = ide_connect(ide)
+        out.append(connect_attempt)
+        if connect_attempt.ok:
+            time.sleep(2.0)
+        ready, _status = _poll_plugin_ready(
+            ide=ide,
+            instance=instance,
+            fetch_status=fetch_status,
+            expected_build=expected_build,
+            timeout_seconds=15.0,
+        )
+    out.append(
+        RepairAttempt(
+            action_id="reload_and_connect",
+            mode="auto",
+            ok=ready,
+            message=(
+                f"reload ok={reload_attempt.ok} "
+                f"connect ok={connect_attempt.ok if connect_attempt else 'skipped'} "
+                f"plugin_ready={ready}"
+            ),
+        )
+    )
+    return out
+
+
+def _execute_step(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    if step.action_id == "ensure_daemon":
+        return [
+            RepairAttempt(action_id=step.action_id, mode=step.mode, ok=False, message="skipped in step loop")
+        ]
+    if step.action_id == "manage_fix":
+        rc = run_koru(["autopilot", "manage", "--ide", ide, "--fix"])
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode=step.mode,
+                ok=rc == 0,
+                message="manage --fix completed" if rc == 0 else f"manage --fix rc={rc}",
+            )
+        ]
+    if step.action_id == "manual_vsix_unpack":
+        if repo_root is None:
+            return [
+                RepairAttempt(
+                    action_id=step.action_id,
+                    mode=step.mode,
+                    ok=False,
+                    message="repo root unknown; cannot unpack VSIX",
+                )
+            ]
+        return [manual_vsix_unpack(ide=ide, repo_root=repo_root)]
+    if step.action_id == "plugin_upgrade_and_reload":
+        if repo_root is None:
+            return [
+                RepairAttempt(
+                    action_id=step.action_id,
+                    mode="auto",
+                    ok=False,
+                    message="repo root unknown; cannot upgrade plugin",
+                )
+            ]
+        unpack = manual_vsix_unpack(ide=ide, repo_root=repo_root)
+        if not unpack.ok:
+            return [
+                unpack,
+                RepairAttempt(
+                    action_id=step.action_id,
+                    mode="auto",
+                    ok=False,
+                    message=f"upgrade failed at unpack: {unpack.message}",
+                ),
+            ]
+        reload_steps = _run_reload_and_connect(
+            ide=ide,
+            instance=instance,
+            repo_root=repo_root,
+            fetch_status=fetch_status,
+            expected_build=expected_build,
+            ide_reload=ide_reload,
+            ide_connect=ide_connect,
+        )
+        ready = reload_steps[-1].ok if reload_steps else False
+        return [
+            unpack,
+            *reload_steps[:-1],
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="auto",
+                ok=ready,
+                message=reload_steps[-1].message if reload_steps else "reload/connect failed",
+            ),
+        ]
+    if step.action_id == "strict_handshake_cycle":
+        if strict_handshake is None:
+            return [
+                RepairAttempt(
+                    action_id=step.action_id,
+                    mode="auto",
+                    ok=False,
+                    message="no strict handshake handler registered",
+                )
+            ]
+        hs_attempt = strict_handshake()
+        if hs_attempt.ok:
+            time.sleep(3.0)
+        ready, _status = _poll_plugin_ready(
+            ide=ide,
+            instance=instance,
+            fetch_status=fetch_status,
+            expected_build=expected_build,
+            timeout_seconds=40.0 if hs_attempt.ok else 6.0,
+        )
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="auto",
+                ok=ready,
+                message=f"{hs_attempt.message}; plugin_ready={ready}",
+            )
+        ]
+    if step.action_id == "reload_and_connect":
+        return _run_reload_and_connect(
+            ide=ide,
+            instance=instance,
+            repo_root=repo_root,
+            fetch_status=fetch_status,
+            expected_build=expected_build,
+            ide_reload=ide_reload,
+            ide_connect=ide_connect,
+        )
+    if step.action_id == "cross_ide_guidance":
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="manual",
+                ok=True,
+                automated=False,
+                message=(
+                    "terminal/lane mismatch: run from target IDE terminal, or "
+                    "export KORU_AUTOPILOT_ALLOW_CROSS_IDE=1"
+                ),
+            )
+        ]
+    if step.action_id == "submit_unverified_guidance":
+        step_def = registry_step(step.action_id)
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="manual",
+                ok=True,
+                automated=False,
+                message=step_def.llm_playbook if step_def else "submit manually in IDE chat",
+            )
+        ]
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode="manual",
+            ok=True,
+            automated=False,
+            message="see manage report fix hint or coru doctor output",
+        )
+    ]
+
+
+def _apply_round_resolution(
+    remaining: list[RepairProblem],
+    round_actions: Sequence[RepairAttempt],
+) -> tuple[list[RepairProblem], bool]:
+    resolved = False
+    if any(a.action_id == "manual_vsix_unpack" and a.ok for a in round_actions):
+        remaining = [
+            p
+            for p in remaining
+            if p.code
+            not in {
+                "plugin_extension_stale_on_disk",
+                "install_plugin_failed",
+                "install_plugin_cli_sandbox",
+                "plugin_installed_version_mismatch",
+            }
+        ]
+    if any(a.action_id == "plugin_upgrade_and_reload" and a.ok for a in round_actions):
+        remaining = [
+            p
+            for p in remaining
+            if p.code
+            not in {
+                "probe_cache_toxic",
+                "chat_focus_toggle_risk",
+                "terminal_paste_risk",
+                "plugin_extension_stale_on_disk",
+            }
+        ]
+    if any(a.action_id == "strict_handshake_cycle" and a.ok for a in round_actions):
+        remaining = [
+            p
+            for p in remaining
+            if p.code
+            not in {
+                "plugin_build_mismatch",
+                "plugin_version_mismatch",
+                "plugin_extension_stale_in_memory",
+                "plugin_live_host_stale",
+                "plugin_rejected_by_daemon",
+            }
+        ]
+    if any(a.action_id == "reload_and_connect" and a.ok for a in round_actions):
+        remaining = [
+            p
+            for p in remaining
+            if p.code
+            not in {
+                "plugin_build_mismatch",
+                "plugin_version_mismatch",
+                "plugin_extension_stale_in_memory",
+                "plugin_live_host_stale",
+                "plugin_not_connected",
+                "plugin_installed_ok_but_not_connected",
+            }
+        ]
+    if not remaining:
+        resolved = True
+    return remaining, resolved
+
+
+def run_repair_pipeline(
+    *,
+    session_id: str,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    problems: Sequence[RepairProblem],
+    run_koru: RunKoru,
+    replay: ReplayFn,
+    fetch_status: StatusPayloadFn,
+    ensure_daemon: Callable[[], int] | None = None,
+    ide_reload: IdeReloadFn | None = None,
+    ide_connect: IdeConnectFn | None = None,
+    strict_handshake: StrictHandshakeFn | None = None,
+    max_rounds: int = 3,
+    trigger: str = "manual",
+    on_event: EventCallback | None = None,
+) -> RepairPlan:
+    """Execute registry repairs until problems clear or rounds exhaust."""
+
+    attempts: list[RepairAttempt] = []
+    remaining = list(problems)
+    resolved = not remaining
+    expected_build = _expected_build_from_problems(problems)
+
+    _emit(
+        on_event,
+        "repair.session.started",
+        {
+            "session_id": session_id,
+            "ide": ide,
+            "instance": instance,
+            "trigger": trigger,
+            "problem_count": len(problems),
+        },
+    )
+    _emit(
+        on_event,
+        "repair.problems.detected",
+        {
+            "session_id": session_id,
+            "problems": [
+                {
+                    "code": p.code,
+                    "severity": p.severity,
+                    "message": p.message,
+                    "fix_hint": p.fix_hint,
+                    "context": dict(p.context),
+                }
+                for p in problems
+            ],
+        },
+    )
+
+    for _round in range(max(1, max_rounds)):
+        if not remaining:
+            resolved = True
+            break
+
+        codes = {problem.code for problem in remaining}
+        if "daemon_not_running" in codes and ensure_daemon is not None:
+            _emit(
+                on_event,
+                "repair.command.dispatched",
+                {"session_id": session_id, "action_id": "ensure_daemon", "round": _round},
+            )
+            started = time.monotonic()
+            rc = ensure_daemon()
+            attempt = RepairAttempt(
+                action_id="ensure_daemon",
+                mode="auto",
+                ok=rc == 0,
+                message="daemon ensure ok" if rc == 0 else f"daemon ensure failed rc={rc}",
+                duration_ms=(time.monotonic() - started) * 1000,
+            )
+            attempts.append(attempt)
+            _emit(on_event, "repair.attempt.finished", {"session_id": session_id, **attempt.__dict__})
+            if rc != 0:
+                break
+            remaining = [p for p in remaining if p.code != "daemon_not_running"]
+            if not remaining:
+                resolved = True
+                break
+            codes = {problem.code for problem in remaining}
+
+        steps: list[RepairStepDef] = []
+        for code in codes:
+            steps.extend(registry_steps_for_code(code))
+        steps = sorted({step.action_id: step for step in steps}.values(), key=lambda s: s.priority)
+        mapped_codes = {code for step in steps for code in step.issue_codes}
+        unmapped_codes = sorted(code for code in codes if code not in mapped_codes)
+        round_start = len(attempts)
+
+        for step in steps:
+            if step.action_id == "ensure_daemon":
+                continue
+            _emit(
+                on_event,
+                "repair.command.dispatched",
+                {
+                    "session_id": session_id,
+                    "action_id": step.action_id,
+                    "mode": step.mode,
+                    "round": _round,
+                    "targets": sorted(step.issue_codes & codes),
+                },
+            )
+            started = time.monotonic()
+            step_attempts = _execute_step(
+                step,
+                ide=ide,
+                instance=instance,
+                repo_root=repo_root,
+                expected_build=expected_build,
+                run_koru=run_koru,
+                fetch_status=fetch_status,
+                strict_handshake=strict_handshake,
+                ide_reload=ide_reload,
+                ide_connect=ide_connect,
+            )
+            elapsed_ms = (time.monotonic() - started) * 1000
+            if len(step_attempts) == 1:
+                step_attempts[0].duration_ms = elapsed_ms
+            for attempt in step_attempts:
+                attempts.append(attempt)
+                _emit(on_event, "repair.attempt.finished", {"session_id": session_id, **attempt.__dict__})
+
+        for code in unmapped_codes:
+            attempt = RepairAttempt(
+                action_id=f"manual_guidance:{code}",
+                mode="manual",
+                ok=True,
+                automated=False,
+                message=(
+                    f"no automatic repair registered for issue code {code}; "
+                    "add a RepairStepDef to coru.repair.registry.REPAIR_REGISTRY"
+                ),
+            )
+            attempts.append(attempt)
+            _emit(on_event, "repair.attempt.finished", {"session_id": session_id, **attempt.__dict__})
+
+        status = fetch_status(ide, instance)
+        if expected_build is None:
+            expected_build = _expected_build_from_problems(remaining)
+        if plugin_build_aligned(status, ide=ide, expected_build=expected_build):
+            remaining = []
+            resolved = True
+            break
+        if _plugin_row_for_ide(status, ide) is not None and not expected_build:
+            remaining = [p for p in remaining if p.code not in {"plugin_not_connected"}]
+            if not remaining:
+                resolved = True
+                break
+
+        round_actions = attempts[round_start:]
+        remaining, round_resolved = _apply_round_resolution(remaining, round_actions)
+        if round_resolved:
+            resolved = True
+            break
+
+    _emit(
+        on_event,
+        "repair.session.finished",
+        {
+            "session_id": session_id,
+            "resolved": resolved,
+            "attempt_count": len(attempts),
+            "remaining_codes": sorted({p.code for p in remaining}),
+        },
+    )
+
+    return RepairPlan(
+        session_id=session_id,
+        problems=tuple(problems),
+        attempts=tuple(attempts),
+        resolved=resolved,
+        trigger=trigger,
+    )
+
+
+def format_repair_lines(plan: RepairPlan, *, prefix: str = "[coru] repair") -> list[str]:
+    lines: list[str] = []
+    for problem in plan.problems:
+        lines.append(f"{prefix}: [{problem.severity.upper()}] {problem.code}: {problem.message}")
+        if problem.fix_hint:
+            lines.append(f"{prefix}: hint → {problem.fix_hint}")
+    for attempt in plan.attempts:
+        state = "ok" if attempt.ok else "failed"
+        auto = "auto" if attempt.automated else "manual"
+        lines.append(f"{prefix}: action {attempt.action_id} ({auto}) → {state}: {attempt.message}")
+    if plan.resolved:
+        lines.append(f"{prefix}: bridge repair complete (session={plan.session_id})")
+    elif plan.problems:
+        lines.append(f"{prefix}: bridge still blocked after repair attempts (session={plan.session_id})")
+    return lines
+
+
+__all__ = [
+    "format_repair_lines",
+    "manual_vsix_unpack",
+    "plugin_build_aligned",
+    "run_repair_pipeline",
+]

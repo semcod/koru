@@ -2,7 +2,7 @@
   "name": "koru-autopilot-windsurf",
   "displayName": "koru autopilot (Windsurf)",
   "description": "Bridge between Windsurf and the koru autopilot daemon. Standalone VSIX for Windsurf only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -175,8 +175,8 @@
     "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
-    "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-windsurf && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-windsurf && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-windsurf",
-    "package": "vsce package --no-dependencies --out koru-autopilot-windsurf-${npm_package_version}.vsix",
+    "prepackage": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-windsurf && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-windsurf && python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-windsurf",
+    "package": "vsce package --no-dependencies --out koru-autopilot-windsurf-$(node -p \"require('./package.json').version\").vsix",
     "prepublish": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-windsurf && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-windsurf",
     "publish": "vsce publish --no-dependencies",
     "clean": "rm -rf out node_modules src/_shared *.vsix"
@@ -189,6 +189,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "1ad989a52850e2f5"
+    "sha": "b22363e20edcbb7e"
   }
 }

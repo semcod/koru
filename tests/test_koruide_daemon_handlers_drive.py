@@ -7,6 +7,7 @@ from unittest import mock
 import pytest
 
 from koruide.daemon.handlers_drive import (
+    _deliver_chat_via_plugin_socket,
     _drive_via_keyboard,
     _drive_via_keyboard_backend,
     _drive_via_os_injector_backend,
@@ -286,6 +287,45 @@ def test_drive_via_keyboard_backend_failure() -> None:
     call_args = daemon._send.call_args[0]
     assert call_args[0] == client
     assert "error" in call_args[1].decode().lower()
+
+
+def test_deliver_chat_via_plugin_socket_audits_request_not_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    daemon = mock.Mock()
+    daemon.project = "/tmp/test"
+    daemon._command_catalog_store = mock.Mock()
+    daemon._command_telemetry = mock.Mock()
+    daemon._recent_dsl = []
+    daemon._send.return_value = True
+
+    plugin = mock.Mock()
+    plugin.ide = "cursor"
+    plugin.version = "0.2.1"
+    plugin.command_catalog = None
+
+    monkeypatch.setattr("koruide.daemon.handlers_drive.command_picker_enabled", lambda: False)
+    monkeypatch.setattr("koruide.daemon.handlers_drive.emit_phase", mock.Mock())
+    monkeypatch.setattr("koruide.daemon.handlers_drive.record_integration_action", mock.Mock())
+
+    _deliver_chat_via_plugin_socket(
+        daemon,
+        plugin,
+        "hello",
+        True,
+        "corr-1",
+        strategy_hint=None,
+    )
+
+    daemon.audit.record.assert_called_once_with(
+        "drive_requested",
+        ide="cursor",
+        backend="plugin",
+        chars=5,
+        submit=True,
+        status="awaiting_ack",
+        corr="corr-1",
+    )
 
 
 # ---------------------------------------------------------------------------

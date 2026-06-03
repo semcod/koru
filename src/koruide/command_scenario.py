@@ -99,6 +99,14 @@ class ScenarioValidation:
         }
 
 
+@dataclass(frozen=True)
+class ScenarioStepDraft:
+    raw: dict[str, Any]
+    kind: str
+    command: str
+    catalog_row: dict[str, Any] | None
+
+
 def ide_command_scenario_schema() -> dict[str, Any]:
     return SCENARIO_SCHEMA
 
@@ -117,90 +125,107 @@ def _validate_step(
         errors.append(f"steps[{index}] must be an object")
         return errors, warnings, {}
     
-    action = str(step.get("action") or "").strip()
-    if not action:
+    draft = _scenario_step_draft(step, catalog_rows)
+    if not draft.kind:
         errors.append(f"steps[{index}].action is required")
         return errors, warnings, {}
     
-    command = str(step.get("command") or "").strip()
-    row = catalog_rows.get(command) if command else None
+    _validate_step_kind(index, draft, errors)
+    _validate_step_command(index, draft, errors)
+    _validate_step_catalog(index, draft, ide, warnings)
+    _validate_step_category(index, draft, warnings)
+    _validate_step_risk(index, draft, errors, warnings)
     
-    _validate_step_action(index, action, errors)
-    _validate_step_command(index, action, command, errors)
-    _validate_step_catalog(index, command, row, ide, warnings)
-    _validate_step_category(index, command, row, action, warnings)
-    _validate_step_risk(index, command, row, step, errors, warnings)
-    
-    normalized = _normalize_step(step, action, command)
+    normalized = _normalize_step(draft)
     return errors, warnings, normalized
 
 
-def _validate_step_action(index: int, action: str, errors: list[str]) -> None:
+def _scenario_step_draft(
+    step: dict[str, Any],
+    catalog_rows: dict[str, dict[str, Any]],
+) -> ScenarioStepDraft:
+    command = str(step.get("command") or "").strip()
+    return ScenarioStepDraft(
+        raw=step,
+        kind=str(step.get("action") or "").strip(),
+        command=command,
+        catalog_row=catalog_rows.get(command) if command else None,
+    )
+
+
+def _validate_step_kind(
+    index: int,
+    draft: ScenarioStepDraft,
+    errors: list[str],
+) -> None:
     """Validate step action is allowed."""
-    if action not in _allowed_actions():
-        errors.append(f"steps[{index}].action {action!r} is not allowed")
+    if draft.kind not in _allowed_actions():
+        errors.append(f"steps[{index}].action {draft.kind!r} is not allowed")
 
 
-def _validate_step_command(index: int, action: str, command: str, errors: list[str]) -> None:
+def _validate_step_command(
+    index: int,
+    draft: ScenarioStepDraft,
+    errors: list[str],
+) -> None:
     """Validate step command is required for certain actions."""
-    if action not in {"wait", "diagnostics"} and not command:
-        errors.append(f"steps[{index}].command is required for action {action!r}")
+    if draft.kind not in {"wait", "diagnostics"} and not draft.command:
+        errors.append(f"steps[{index}].command is required for action {draft.kind!r}")
 
 
 def _validate_step_catalog(
     index: int,
-    command: str,
-    row: dict[str, Any] | None,
+    draft: ScenarioStepDraft,
     ide: str,
     warnings: list[str],
 ) -> None:
     """Validate step command exists in catalog."""
-    if command and row is None:
-        warnings.append(f"steps[{index}].command {command!r} is not in catalog for {ide}")
+    if draft.command and draft.catalog_row is None:
+        warnings.append(
+            f"steps[{index}].command {draft.command!r} is not in catalog for {ide}",
+        )
 
 
 def _validate_step_category(
     index: int,
-    command: str,
-    row: dict[str, Any] | None,
-    action: str,
+    draft: ScenarioStepDraft,
     warnings: list[str],
 ) -> None:
     """Validate step command category matches action."""
-    if row is not None and row["category"] != action:
+    if draft.catalog_row is not None and draft.catalog_row["category"] != draft.kind:
         warnings.append(
-            f"steps[{index}].command {command!r} is category {row['category']!r}, "
-            f"not action {action!r}",
+            f"steps[{index}].command {draft.command!r} is category "
+            f"{draft.catalog_row['category']!r}, not action {draft.kind!r}",
         )
 
 
 def _validate_step_risk(
     index: int,
-    command: str,
-    row: dict[str, Any] | None,
-    step: dict[str, Any],
+    draft: ScenarioStepDraft,
     errors: list[str],
     warnings: list[str],
 ) -> None:
     """Validate step command risk level."""
-    if row is not None and row["risk"] not in SAFE_EXECUTION_RISKS:
-        reason = str(step.get("risk_override_reason") or "").strip()
+    if draft.catalog_row is not None and draft.catalog_row["risk"] not in SAFE_EXECUTION_RISKS:
+        reason = str(draft.raw.get("risk_override_reason") or "").strip()
         if reason:
             warnings.append(
-                f"steps[{index}].command {command!r} is high risk; override recorded",
+                f"steps[{index}].command {draft.command!r} is high risk; "
+                "override recorded",
             )
         else:
             errors.append(
-                f"steps[{index}].command {command!r} is high risk and needs "
+                f"steps[{index}].command {draft.command!r} is high risk and needs "
                 "risk_override_reason",
             )
 
 
-def _normalize_step(step: dict[str, Any], action: str, command: str) -> dict[str, Any]:
+def _normalize_step(draft: ScenarioStepDraft) -> dict[str, Any]:
     """Normalize step data."""
+    step = draft.raw
     return {
-        "action": action,
-        **({"command": command} if command else {}),
+        "action": draft.kind,
+        **({"command": draft.command} if draft.command else {}),
         **({"args": step.get("args")} if isinstance(step.get("args"), dict) else {}),
         **({"expect": step.get("expect")} if isinstance(step.get("expect"), dict) else {}),
         **({"optional": bool(step.get("optional"))} if "optional" in step else {}),

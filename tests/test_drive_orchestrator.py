@@ -209,6 +209,30 @@ def test_should_not_defer_non_vscodium_submit_unverified() -> None:
     )
 
 
+def test_should_defer_submit_unverified_for_cursor_message_sent_grace() -> None:
+    assert DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
+        info={"verification": "submit_unverified"},
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="cursor",
+    )
+
+
+def test_should_defer_submit_unverified_when_plugin_ack_not_ok() -> None:
+    assert DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
+        info={"verification": "submit_unverified"},
+        plugin_ok=False,
+        submit_requested=True,
+        plugin_ide="cursor",
+    )
+    assert not DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
+        info={"verification": "submit_unverified"},
+        plugin_ok=False,
+        submit_requested=False,
+        plugin_ide="cursor",
+    )
+
+
 def test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands() -> None:
     info = DriveOrchestrator.annotate_plugin_ack(
         info={"delivered": True, "opened": True, "submitted": True},

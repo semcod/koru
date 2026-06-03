@@ -40,6 +40,12 @@ def build_autopilot_parser() -> argparse.ArgumentParser:
             "KORU_AUTOPILOT_INSTANCE / XDG_RUNTIME_DIR - see koru autopilot docs)."
         ),
     )
+    parser.add_argument(
+        "--log-format",
+        choices=("human", "jsonl"),
+        default=None,
+        help="logging format for structured CLI events (default: human)",
+    )
     sub = parser.add_subparsers(dest="action", required=True)
 
     _add_daemon_parser(sub)
@@ -47,6 +53,7 @@ def build_autopilot_parser() -> argparse.ArgumentParser:
     _add_calibrate_parser(sub)
     _add_session_start_parser(sub)
     _add_status_parser(sub)
+    _add_env_parser(sub)
     sub.add_parser("shutdown", help="Ask a running daemon to stop.")
     _add_trace_parser(sub)
     sub.add_parser("ide-list", help="List currently running IDEs (process scan).")
@@ -274,6 +281,36 @@ def _add_status_parser(sub: argparse._SubParsersAction) -> None:
         type=Path,
         default=Path.cwd(),
         help="Project root for workspace settings checks with --explain.",
+    )
+
+
+def _add_env_parser(sub: argparse._SubParsersAction) -> None:
+    env = sub.add_parser(
+        "env",
+        help="Print shell exports for the resolved autopilot lane (eval in bash/zsh).",
+    )
+    env.add_argument(
+        "--ide",
+        default="auto",
+        choices=IDE_CHOICES,
+        help="IDE to resolve (default: auto from settings, supervisor, or daemon metadata).",
+    )
+    env.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root for workspace settings and daemon metadata lookup.",
+    )
+    env.add_argument(
+        "--format",
+        choices=("shell", "json"),
+        default="shell",
+        help="Output shell exports or JSON payload (default: shell).",
+    )
+    env.add_argument(
+        "--explain",
+        action="store_true",
+        help="With --format shell, print resolution source on stderr.",
     )
 
 

@@ -40,6 +40,10 @@ def test_command_catalog_contains_supported_ide_surfaces() -> None:
         "zed",
     }
     assert "workbench.action.chat.open" in _ids(catalog, "vscode", "focus_open")
+    assert (
+        "workbench.action.chat.openChatEmptyStateSettings"
+        in _ids(catalog, "vscodium", "focus_open_avoid")
+    )
     assert "composer.sendToAgent" in _ids(catalog, "cursor", "submit")
     assert "windsurf.sendTextToChat" in _ids(catalog, "windsurf", "atomic_send")
     assert "AIAssistant.OpenAIAssistantToolWindow" in _ids(catalog, "jetbrains", "focus_open")

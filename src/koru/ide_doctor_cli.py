@@ -9,6 +9,15 @@ import sys
 from pathlib import Path
 
 from koru.autopilot import default_socket_path
+from koru.bounded_contexts.repairs import RepairCommandService, RepairQueryService
+from koru.bounded_contexts.repairs.commands import (
+    RecordRepairAttemptCommand,
+    RecordRepairDiagnosticCommand,
+)
+from koru.bounded_contexts.repairs.queries import LoadRepairHistoryQuery
+from koru.bounded_contexts.repairs.read_model import format_repair_history_for_llm
+from koru.cqrs import runtime_for_project
+from koru.ide_adapters import shared as adapter_shared
 from koru.ide_adapters.bridge import (
     apply_bridge_fixes,
     evaluate_bridge,
@@ -16,7 +25,7 @@ from koru.ide_adapters.bridge import (
     gc_stale_sockets_for_lane,
 )
 from koru.ide_adapters.registry import get_adapter, supported_adapter_ids
-from koruide.ide import normalize_ide_id
+from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
 from koruide.plugin_installer import resolve_target_ide
 
 
@@ -26,11 +35,43 @@ def _resolve_ide(raw: str) -> str | None:
     return normalize_ide_id(raw)
 
 
+def _instance_from_socket_path(socket_path: str, ide: str) -> str | None:
+    """Infer lane slug from ``koru-autopilot-<lane>.sock`` setting values."""
+    name = Path(socket_path).name
+    prefix = "koru-autopilot-"
+    suffix = ".sock"
+    if not (name.startswith(prefix) and name.endswith(suffix)):
+        return None
+    lane = name[len(prefix) : -len(suffix)].strip()
+    if not lane or canonical_autopilot_ide_id(lane) != ide:
+        return None
+    return lane
+
+
+def _infer_instance_from_settings(project: Path | None, ide: str) -> str | None:
+    """Best-effort lane inference from workspace/user socket settings."""
+    if project is not None:
+        ws_path = adapter_shared.workspace_settings_path(project, ide)
+        ws_socket = adapter_shared.read_socket_from_settings(ws_path)
+        if ws_socket:
+            lane = _instance_from_socket_path(ws_socket, ide)
+            if lane:
+                return lane
+    user_path = adapter_shared.user_settings_path(ide)
+    user_socket = adapter_shared.read_socket_from_settings(user_path)
+    if user_socket:
+        return _instance_from_socket_path(user_socket, ide)
+    return None
+
+
 def _resolve_socket(args: argparse.Namespace, ide: str) -> Path:
     if args.socket:
         return Path(args.socket).expanduser().resolve()
+    project_arg = getattr(args, "project", None)
+    project = Path(project_arg).expanduser().resolve() if project_arg is not None else None
     env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-    instance = (args.instance or env_instance or ide or "").strip()
+    inferred_instance = _infer_instance_from_settings(project, ide)
+    instance = (args.instance or env_instance or inferred_instance or ide or "").strip()
     if not instance:
         return default_socket_path()
     previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")
@@ -42,6 +83,75 @@ def _resolve_socket(args: argparse.Namespace, ide: str) -> Path:
             os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
         else:
             os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
+
+
+def _bridge_subject(ide: str, project: Path) -> str:
+    return f"ide-bridge:{ide}:{project.resolve()}"
+
+
+def _bridge_hypotheses_payload(status) -> list[dict[str, object]]:
+    return [
+        {
+            "id": h.id,
+            "confidence": h.confidence,
+            "evidence": h.evidence,
+            "remediation": h.remediation.summary,
+            "remediation_kind": h.remediation.kind,
+            "remediation_command": h.remediation.command,
+        }
+        for h in status.hypotheses
+    ]
+
+
+def _bridge_status_payload(status) -> dict[str, object]:
+    return {
+        "ide": status.ide,
+        "socket": status.socket_path,
+        "project": status.project,
+        "daemon_running": status.daemon_running,
+        "plugins_connected": status.plugins_connected,
+        "plugins_compatible": status.plugins_compatible,
+        "ready": status.ready,
+        "fixes_applied": list(status.fixes_applied),
+    }
+
+
+def _record_bridge_repair_history(
+    *,
+    project: Path,
+    status,
+    fix_requested: bool,
+) -> None:
+    runtime = runtime_for_project(project)
+    commands = RepairCommandService(runtime)
+    subject = _bridge_subject(status.ide, project)
+    hypotheses = _bridge_hypotheses_payload(status)
+    primary = hypotheses[0]["id"] if hypotheses else "ready"
+    commands.record_diagnostic(
+        RecordRepairDiagnosticCommand(
+            subject=subject,
+            repair_kind="ide_bridge",
+            project=str(project),
+            summary=f"ide={status.ide} ready={status.ready} primary={primary}",
+            status=_bridge_status_payload(status),
+            hypotheses=hypotheses,
+        )
+    )
+    if fix_requested or status.fixes_applied:
+        actions = list(status.fixes_applied)
+        if fix_requested and not actions:
+            actions = ["safe autofix requested; no safe automatic changes were available"]
+        commands.record_attempt(
+            RecordRepairAttemptCommand(
+                subject=subject,
+                repair_kind="ide_bridge",
+                project=str(project),
+                attempted=bool(fix_requested or actions),
+                ok=status.ready,
+                actions=actions,
+                summary=f"ide={status.ide} autofix ok={status.ready}",
+            )
+        )
 
 
 def _add_discover_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -106,6 +216,22 @@ def _add_doctor_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser])
         default="text",
     )
     doctor.add_argument("--explain", action="store_true", help="Always print hypothesis details.")
+
+
+def _add_history_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    history = sub.add_parser(
+        "history",
+        help="Print persisted repair history for LLM diagnostics.",
+    )
+    history.add_argument("--ide", default="auto", help="IDE lane or all.")
+    history.add_argument("--project", type=Path, default=Path.cwd())
+    history.add_argument("--limit", type=int, default=20)
+    history.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
 
 
 def _add_reload_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -177,6 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="action", required=True)
     _add_discover_parser(sub)
     _add_doctor_parser(sub)
+    _add_history_parser(sub)
     _add_reload_parser(sub)
     _add_command_catalog_parser(sub)
     _add_scenario_parsers(sub)
@@ -206,12 +333,14 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
             *status.fixes_applied,
             *[f"removed stale socket {p}" for p in removed],
         ]
+    _record_bridge_repair_history(project=project, status=status, fix_requested=args.fix)
     if args.output_format == "json":
         payload = {
             "ide": status.ide,
             "socket": status.socket_path,
             "daemon_running": status.daemon_running,
             "plugins_connected": status.plugins_connected,
+            "plugins_compatible": status.plugins_compatible,
             "ready": status.ready,
             "project": status.project,
             "fixes_applied": status.fixes_applied,
@@ -240,6 +369,37 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
         return 0 if status.ready else 1
     print(format_bridge_text(status, explain=args.explain))
     return 0 if status.ready else 1
+
+
+def action_ide_history(args: argparse.Namespace) -> int:
+    project = args.project.expanduser().resolve()
+    ide = None if args.ide == "all" else _resolve_ide(args.ide)
+    if args.ide != "all" and ide is None:
+        print(
+            "koru ide history: could not resolve IDE (pass --ide all|cursor|vscode|...)",
+            file=sys.stderr,
+        )
+        return 2
+    subject = None if ide is None else _bridge_subject(ide, project)
+    runtime = runtime_for_project(project)
+    history = RepairQueryService(runtime).history(
+        LoadRepairHistoryQuery(subject=subject, limit=args.limit)
+    )
+    if args.output_format == "json":
+        payload = [
+            {
+                "sequence": entry.sequence,
+                "event_type": entry.event_type,
+                "aggregate_id": entry.aggregate_id,
+                "occurred_at": entry.occurred_at,
+                "payload": entry.payload,
+            }
+            for entry in history
+        ]
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(format_repair_history_for_llm(history))
+    return 0
 
 
 def action_ide_reload(args: argparse.Namespace) -> int:
@@ -388,6 +548,8 @@ def ide_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.action == "doctor":
         return action_ide_doctor(args)
+    if args.action == "history":
+        return action_ide_history(args)
     if args.action == "discover":
         return action_ide_discover(args)
     if args.action == "reload":

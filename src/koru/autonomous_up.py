@@ -144,7 +144,7 @@ def run_autonomous_up_loop(
     stop_state = StopSignalState()
     previous_sigterm = install_sigterm_handler(context.args, stop_state)
     try:
-        run_pre_checks(
+        _mcp_provision_ran, plugin_connected = run_pre_checks(
             context.args,
             context.project,
             context.startup_probe,
@@ -153,6 +153,11 @@ def run_autonomous_up_loop(
             context.client,
             context.correlation_id,
         )
+        del _mcp_provision_ran
+        from koru.autonomy.env import plugin_required_for_ide
+
+        if plugin_required_for_ide(context.autopilot_ide):
+            context.loop_state.autopilot_plugin_ready = bool(plugin_connected)
 
         cycle = context.restored_cycle or 0
         while True:

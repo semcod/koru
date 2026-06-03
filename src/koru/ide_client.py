@@ -29,6 +29,7 @@ class IDEControlClient(Protocol):
         submit: bool = True,
         ide: str = "auto",
         require_plugin: bool = False,
+        strategy_hint: str | None = None,
     ) -> dict[str, Any]: ...
 
     def status(self) -> dict[str, Any]: ...
@@ -52,18 +53,21 @@ class LegacyAutopilotClientAdapter:
         submit: bool = True,
         ide: str = "auto",
         require_plugin: bool = False,
+        strategy_hint: str | None = None,
     ) -> dict[str, Any]:
         from koru.activity_log import activity
 
         activity(
             "CHAT",
             f"drive → ide={ide} submit={submit} require_plugin={require_plugin} "
+            f"strategy_hint={strategy_hint or '-'} "
             f"({len(text)} znaków)",
             preview=text,
             data={
                 "ide": ide,
                 "submit": submit,
                 "require_plugin": require_plugin,
+                "strategy_hint": strategy_hint or "",
                 "chars": len(text),
             },
         )
@@ -72,6 +76,7 @@ class LegacyAutopilotClientAdapter:
             submit=submit,
             ide=ide,
             require_plugin=require_plugin,
+            strategy_hint=strategy_hint,
         )
         backend = reply.get("backend", "?")
         ok = bool(reply.get("ok", True))

@@ -27,17 +27,12 @@ def configure_loop_state(
         project,
         args.agent_lane,
     )
-    # If lane is explicit, use it directly as autopilot_ide to respect the user's choice.
-    # This ensures non-plugin lanes like jetbrains are not overridden by the router
-    if lane and lane != "auto":
-        selected_ide = lane
-        _autopilot_ide_source = f"lane:{lane}"
-    else:
-        selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
-            args.autopilot_ide,
-            lane,
-            resolve_ide_route_fn=resolve_ide_route_fn,
-        )
+    # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
+    selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
+        args.autopilot_ide,
+        lane,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
     loop_state = state_factory()
     checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
     restored_cycle = load_checkpoint(

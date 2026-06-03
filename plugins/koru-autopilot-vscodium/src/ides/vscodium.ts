@@ -44,6 +44,9 @@ function sanitizeProbeCache(
   entry: ProbeCacheEntry,
   _opts: { isWayland: boolean }
 ): void {
+  if (typeof entry.focusOpen === "string" && isUnsafeVSCodiumFocusOpen(entry.focusOpen)) {
+    entry.focusOpen = undefined;
+  }
   if (typeof entry.submit !== "string") return;
   const cmd = entry.submit;
   const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);
@@ -53,6 +56,11 @@ function sanitizeProbeCache(
   if (!hasCtrl && isHostPlainReturn) {
     entry.submit = undefined;
   }
+}
+
+function isUnsafeVSCodiumFocusOpen(command: string): boolean {
+  const normalized = command.trim().toLowerCase();
+  return normalized.includes("settings") || normalized.includes("preferences");
 }
 
 function focusOpenCommandsDefaults(): string[] {

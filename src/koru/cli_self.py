@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -39,26 +40,48 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+@dataclass(frozen=True)
+class _SelfCommandOptions:
+    command: str
+    project: Path
+    ide: str
+    socket_path: Path | None
+    emit_json: bool
+    yes: bool
+
+    @classmethod
+    def from_namespace(cls, namespace: argparse.Namespace) -> _SelfCommandOptions:
+        project = (namespace.project or Path.cwd()).expanduser().resolve()
+        return cls(
+            command=namespace.command or "doctor",
+            project=project,
+            ide=namespace.ide or "auto",
+            socket_path=namespace.socket,
+            emit_json=bool(namespace.json),
+            yes=bool(getattr(namespace, "yes", False)),
+        )
+
+
 def self_main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
-    args = parser.parse_args(argv)
-    command = args.command or "doctor"
-    project = (args.project or Path.cwd()).expanduser().resolve()
-    ide = args.ide or "auto"
-    socket_path = args.socket
-    if command == "doctor":
-        report = run_self_control(project, ide=ide, socket_path=socket_path)
-    elif command == "repair":
+    options = _SelfCommandOptions.from_namespace(parser.parse_args(argv))
+    if options.command == "doctor":
+        report = run_self_control(
+            options.project,
+            ide=options.ide,
+            socket_path=options.socket_path,
+        )
+    elif options.command == "repair":
         report = repair_self_control(
-            project,
-            ide=ide,
-            socket_path=socket_path,
-            yes=bool(args.yes),
+            options.project,
+            ide=options.ide,
+            socket_path=options.socket_path,
+            yes=options.yes,
         )
     else:  # pragma: no cover - argparse owns this
-        parser.error(f"unknown command: {command}")
+        parser.error(f"unknown command: {options.command}")
 
-    if args.json:
+    if options.emit_json:
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
     else:
         print(format_self_control_report(report))

@@ -16,7 +16,11 @@ const VSCODIUM_BRIDGE_OPTIONS: BridgeOptions = {
   preflightFocusOnlyPolicy: "all-toggle",
   enableCursorComposerFastPath: false,
   enableDiscardToxicFocusOpenCache: true,
-  reloadCommandStrategies: ["workbench.action.reloadWindow"],
+  reloadCommandStrategies: [
+    "workbench.action.restartExtensionHost",
+    "workbench.action.reloadWindow",
+    "workbench.action.reloadExtensions",
+  ],
 };
 
 function isVscodiumHost(appName: string): boolean {

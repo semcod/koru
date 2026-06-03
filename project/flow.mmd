@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.11s
+%% generated in 0.53s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
@@ -24,28 +24,28 @@ flowchart TD
     end
 
     subgraph Core
-        services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
-        services__healing_webhook__app__heal_annotate["heal_annotate"]
-        services__healing_webhook__app___run_vallm_validate["_run_vallm_validate"]
-        services__healing_webhook__app__heal_vallm_validate["heal_vallm_validate"]
-        services__healing_webhook__app__heal_redup_check["heal_redup_check"]
-        services__healing_webhook__app___resolve_strategy["_resolve_strategy"]
-        services__healing_webhook__app__healthz["healthz"]
-        services__healing_webhook__app__metrics["metrics"]
-        services__healing_webhook__app__get_history["get_history"]
-        services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
-        services__healing_webhook__app__probe_failure["probe_failure"]
-        services__healing_webhook__app__get_tickets["get_tickets"]
-        services__healing_webhook__app_bootstrap__create_webhook_app["create_webhook_app"]
-        services__healing_webhook__app_bootstrap__wire_routes["wire_routes"]
-        src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
-        ...["+2281 more"]
+        packages__koruenv__src__koruenv__cli___normalize_log_format["_normalize_log_format"]
+        packages__koruenv__src__koruenv__cli___iso_ts["_iso_ts"]
+        packages__koruenv__src__koruenv__cli___emit_log["_emit_log"]
+        packages__koruenv__src__koruenv__cli___build_parser["_build_parser"]
+        packages__koruenv__src__koruenv__cli___strip_double_dash["_strip_double_dash"]
+        packages__koruenv__src__koruenv__cli___run_with_overlay["_run_with_overlay"]
+        packages__koruenv__src__koruenv__cli__main["main"]
+        packages__koruenv__src__koruenv__lane__resolve_lane_socket["resolve_lane_socket"]
+        packages__coru__src__coru__cli___normalize_log_format["_normalize_log_format"]
+        packages__coru__src__coru__cli___current_log_format["_current_log_format"]
+        packages__coru__src__coru__cli___emit_log["_emit_log"]
+        packages__coru__src__coru__cli___distribution_version["_distribution_version"]
+        packages__coru__src__coru__cli___print_runtime_versions["_print_runtime_versions"]
+        packages__coru__src__coru__cli___startup_mode["_startup_mode"]
+        packages__coru__src__coru__cli___autonomous_startup_chain["_autonomous_startup_chain"]
+        ...["+1745 more"]
     end
 
     subgraph Exporters
+        packages__koruenv__src__koruenv__cli___render_exports["_render_exports"]
         src__koru__agent_cli_helpers__try_agent_env_exports["try_agent_env_exports"]
         src__koru__cli___has_legacy_exports["_has_legacy_exports"]
-        packages__koruenv__src__koruenv__cli___render_exports["_render_exports"]
     end
 
-    class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app___resolve_strategy,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook entry
+    class packages__koruenv__src__koruenv__cli___normalize_log_format,packages__koruenv__src__koruenv__cli___iso_ts,packages__koruenv__src__koruenv__cli___emit_log,packages__koruenv__src__koruenv__cli___build_parser,packages__koruenv__src__koruenv__cli___render_exports,packages__koruenv__src__koruenv__cli___strip_double_dash,packages__koruenv__src__koruenv__cli___run_with_overlay,packages__koruenv__src__koruenv__cli__main,packages__koruenv__src__koruenv__lane__resolve_lane_socket,packages__coru__src__coru__cli___normalize_log_format entry

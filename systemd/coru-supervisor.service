@@ -1,0 +1,30 @@
+# coru supervisor — systemd --user unit
+#
+# Install:
+#   cp systemd/coru-supervisor.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now coru-supervisor.service
+#
+# Register a lane first:
+#   coru supervisor register cursor cursor-main --project ~/work/koru --set-active
+#
+# Logs:
+#   journalctl --user -u coru-supervisor -f
+
+[Unit]
+Description=coru supervisor — lane registry and autopilot health watcher
+Documentation=https://github.com/semcod/koru/tree/main/packages/coru
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/coru supervisor start --foreground --refresh-interval 30
+Restart=on-failure
+RestartSec=3
+Environment="CORU_SUPERVISOR_PORT=8766"
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

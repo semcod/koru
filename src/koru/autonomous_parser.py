@@ -167,6 +167,16 @@ def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
         help="Force `koru --init` re-initialization if project is already initialized.",
     )
     up.add_argument(
+        "--path",
+        dest="paths",
+        action="append",
+        default=[],
+        help=(
+            "Limit `koru scan` and scoped code2llm discovery to a file or directory. "
+            "Repeatable; also sets KORU_SCAN_PATHS for the autonomous session."
+        ),
+    )
+    up.add_argument(
         "--semcod-artifacts",
         action="store_true",
         default=None,

@@ -35,12 +35,29 @@ _VSCODIUM_FOCUS_OPEN_AVOID = (
     "action.openchat",
     "action.openchatview",
     "action.chat.open",
+    "settings",
+    "preferences",
     "panel.chat",
     "openagent",
     "openask",
 )
 _VSCODIUM_FOCUS_OPEN_PREFERRED = (
     "workbench.action.chat.focusInput",
+)
+_CURSOR_SUBMIT_EXACT_ALLOW = {
+    "workbench.action.chat.submit",
+    "workbench.action.chat.acceptInput",
+    "workbench.action.chat.send",
+    "workbench.action.chat.sendMessage",
+    "workbench.action.chat.stopListeningAndSubmit",
+}
+_CURSOR_SUBMIT_PREFIX_ALLOW = (
+    "composer.",
+    "aichat.",
+)
+_CURSOR_FAST_PATH_ONLY = (
+    "composer.startComposerPrompt",
+    "composer.startComposerPrompt2",
 )
 
 
@@ -54,27 +71,111 @@ def _seed_order(capability: str) -> dict[str, int]:
 
 
 def _sanitize_candidates(ide: str, capability: str, commands: list[str]) -> list[str]:
-    if ide.strip().lower() != "vscodium" or capability != "focus_open":
+    ide_id = ide.strip().lower()
+
+    if ide_id == "vscodium" and capability == "focus_open":
+        if os.environ.get("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN", "").strip().lower() not in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            return []
+        filtered = [
+            command
+            for command in commands
+            if not any(marker in command.lower() for marker in _VSCODIUM_FOCUS_OPEN_AVOID)
+        ]
+        # VSCodium has a strategy-level focusInput-only opener. Re-add it when the
+        # live catalog only exposes high-risk open/new-chat commands.
+        ordered = [command for command in _VSCODIUM_FOCUS_OPEN_PREFERRED if command in filtered]
+        ordered.extend(command for command in filtered if command not in ordered)
+        if not ordered:
+            ordered = list(_VSCODIUM_FOCUS_OPEN_PREFERRED)
+        return ordered
+
+    if ide_id == "cursor" and capability == "submit":
+        filtered = [
+            command
+            for command in commands
+            if command not in _CURSOR_FAST_PATH_ONLY
+            and (
+                command in _CURSOR_SUBMIT_EXACT_ALLOW
+                or command.startswith(_CURSOR_SUBMIT_PREFIX_ALLOW)
+            )
+        ]
+        if not filtered:
+            filtered = ["composer.sendToAgent", "workbench.action.chat.submit"]
+        return filtered
+
+    if ide_id == "cursor" and capability == "paste":
+        filtered = [
+            command
+            for command in commands
+            if command not in _CURSOR_FAST_PATH_ONLY
+            and command
+            not in {
+                "editor.action.clipboardPasteAction",
+                "editor.action.pasteAs",
+                "execPaste",
+                "paste",
+                "workbench.action.terminal.paste",
+            }
+        ]
+        if filtered:
+            return filtered
+        return [
+            "workbench.action.chat.typeText",
+            "workbench.action.chat.insertText",
+            "cursor.action.chat.typeText",
+            "composer.typeText",
+        ]
+
+    return commands
+
+
+def _reorder_cursor_submit_default(commands: list[str]) -> list[str]:
+    def rank(command: str) -> tuple[int, int]:
+        if command == "workbench.action.chat.stopListeningAndSubmit":
+            return 0, 0
+        if command in _CURSOR_SUBMIT_EXACT_ALLOW:
+            return 1, 0
+        if command.startswith(("composer.", "aichat.")):
+            return 2, 0
+        return 3, 0
+
+    return sorted(commands, key=rank)
+
+
+def _reorder_submit_for_hint(
+    ide: str,
+    commands: list[str],
+    hint: str | None,
+) -> list[str]:
+    if not hint or ide.strip().lower() != "cursor":
         return commands
-    if os.environ.get("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN", "").strip().lower() not in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
-        return []
-    filtered = [
-        command
-        for command in commands
-        if not any(marker in command.lower() for marker in _VSCODIUM_FOCUS_OPEN_AVOID)
-    ]
-    # VSCodium has a strategy-level focusInput-only opener. Re-add it when the
-    # live catalog only exposes high-risk open/new-chat commands.
-    ordered = [command for command in _VSCODIUM_FOCUS_OPEN_PREFERRED if command in filtered]
-    ordered.extend(command for command in filtered if command not in ordered)
-    if not ordered:
-        ordered = list(_VSCODIUM_FOCUS_OPEN_PREFERRED)
-    return ordered
+    normalized = hint.strip().lower()
+    if normalized == "submit_alt_glass_first":
+
+        def sort_key(command: str) -> tuple[int, int]:
+            if command.startswith(("composer.", "aichat.")):
+                return 0, 0
+            if command in _CURSOR_SUBMIT_EXACT_ALLOW:
+                return 1, 0
+            return 2, 0
+
+    elif normalized == "submit_alt_registered":
+
+        def sort_key(command: str) -> tuple[int, int]:
+            if command in _CURSOR_SUBMIT_EXACT_ALLOW:
+                return 0, 0
+            if command.startswith(("composer.", "aichat.")):
+                return 1, 0
+            return 2, 0
+
+    else:
+        return commands
+    return sorted(commands, key=sort_key)
 
 
 @dataclass
@@ -92,7 +193,7 @@ class HeuristicPicker:
         hint: str | None = None,
         limit: int = 12,
     ) -> list[str]:
-        del recent_dsl, hint
+        del recent_dsl
         candidates = list((catalog or {}).get(capability) or [])
         if not candidates:
             candidates = list(_LADDER_SEED.get(capability, ()))
@@ -109,6 +210,10 @@ class HeuristicPicker:
             return (-rate, -float(attempts), seed_rank.get(command, 9999))
 
         ordered = sorted(candidates, key=sort_key)
+        if capability == "submit" and ide.strip().lower() == "cursor":
+            ordered = _reorder_cursor_submit_default(ordered)
+        if capability == "submit" and hint:
+            ordered = _reorder_submit_for_hint(ide, ordered, hint)
         return ordered[:limit]
 
 

@@ -1,25 +1,44 @@
 import * as vscode from "vscode";
 import { SharedAutopilotBridgeFastPath } from "./bridge-fastpath";
 import { debugLog } from "./bridge-config";
+import { chatFocusOperatorHint } from "./operator-hints";
 import { Envelope } from "./types";
 
 export abstract class SharedAutopilotBridgeCommands extends SharedAutopilotBridgeFastPath {
   protected abstract injectChat(env: Envelope): Promise<void>;
 
   async calibrateProbe(): Promise<void> {
+    const ide = this.detectIde();
+    const prep = await vscode.window.showInformationMessage(
+      `koru autopilot: open the ${ide} chat panel and click inside the chat input `
+      + "(blinking cursor) before calibrating.",
+      { modal: true },
+      "Chat input is focused",
+      "Cancel",
+    );
+    if (prep !== "Chat input is focused") {
+      void vscode.window.showWarningMessage(
+        "koru autopilot: calibration cancelled — focus the chat input first.",
+      );
+      return;
+    }
     const token = `__koru_probe_${Math.random().toString(36).slice(2, 10)}__`;
     const lines: string[] = [`IDE: ${this.detectIde()} (${vscode.env.appName})`];
     const focus = await this.openChatPanel("probe");
     lines.push(focus.ok ? `focus open: ${focus.command}` : "focus open: FAILED");
     if (!focus.ok) {
-      void vscode.window.showWarningMessage(`koru autopilot: could not open chat.\n${lines.join("\n")}`);
+      void vscode.window.showWarningMessage(
+        `${chatFocusOperatorHint(ide)}\n${lines.join("\n")}`,
+      );
       return;
     }
     await this.sleep(this.probeFocusDelayMs());
     const pasted = await this.pasteText(token);
     lines.push(pasted.ok ? `paste: ${pasted.command}` : "paste: FAILED");
     if (!pasted.ok) {
-      void vscode.window.showWarningMessage(`koru autopilot: paste failed.\n${lines.join("\n")}`);
+      void vscode.window.showWarningMessage(
+        `${chatFocusOperatorHint(ide)}\n${lines.join("\n")}`,
+      );
       return;
     }
     const cache = this.getProbeCache();

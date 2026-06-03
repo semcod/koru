@@ -9,6 +9,7 @@ from typing import Any
 
 from koru.ide_client import IDEControlClient
 from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.ide import canonical_autopilot_ide_id
 
 
 def enable_autonomous_strict_plugin_policy(
@@ -131,7 +132,7 @@ def _rejected_plugin_reason(row: Mapping[str, Any]) -> str:
 
 
 def _wanted_plugin_ide(ide: str) -> str:
-    return (ide or "auto").strip().lower()
+    return canonical_autopilot_ide_id((ide or "auto").strip().lower())
 
 
 def _plugin_row_label(plugin_ide: str, version: object) -> str:

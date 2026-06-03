@@ -82,11 +82,25 @@ _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
 }
 
 
+@dataclass(frozen=True)
+class FieldPolicy:
+    """Controls which non-envelope fields are accepted for one message type."""
+
+    accepted_fields: frozenset[str] | None
+
+    def filter_data(self, obj: dict[str, Any]) -> dict[str, Any]:
+        if self.accepted_fields is None:
+            return {k: v for k, v in obj.items() if k not in ("type", "id")}
+        return {k: v for k, v in obj.items() if k in self.accepted_fields}
+
+
+def _field_policy_for(msg_type: str) -> FieldPolicy:
+    return FieldPolicy(_FIELD_SCHEMA.get(msg_type, frozenset()))
+
+
 def _filter_extras(msg_type: str, obj: dict[str, Any]) -> dict[str, Any]:
-    allowed = _FIELD_SCHEMA.get(msg_type, frozenset())
-    if allowed is None:
-        return {k: v for k, v in obj.items() if k not in ("type", "id")}
-    return {k: v for k, v in obj.items() if k in allowed}
+    return _field_policy_for(msg_type).filter_data(obj)
+
 
 
 class ProtocolError(ValueError):

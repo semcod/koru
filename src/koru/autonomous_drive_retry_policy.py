@@ -39,6 +39,20 @@ def _warn_autopilot_focus_retry(
     attempts: int,
     reply: dict[str, Any] | None = None,
 ) -> None:
+    from koru.autonomy.ide_operator_guidance import (
+        chat_focus_operator_steps,
+        emit_operator_guidance,
+    )
+
+    ide = None
+    if reply:
+        diagnostics = reply.get("diagnostics")
+        if isinstance(diagnostics, dict):
+            ide = str(diagnostics.get("ide") or "") or None
+    emit_operator_guidance(
+        chat_focus_operator_steps(ide, context="focus"),
+        title="Operator — chat focus required",
+    )
     print("\033[1;31m")  # bold red
     print("================================================================================")
     print("[AUTOPILOT FOCUS ERROR] Please place your cursor inside the IDE chat input!")
@@ -53,7 +67,20 @@ def _warn_autopilot_focus_retry(
 
 def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -> None:
     from koru.activity_log import activity
+    from koru.autonomy.ide_operator_guidance import (
+        chat_focus_operator_steps,
+        emit_operator_guidance,
+    )
 
+    ide = None
+    if reply:
+        diagnostics = reply.get("diagnostics")
+        if isinstance(diagnostics, dict):
+            ide = str(diagnostics.get("ide") or "") or None
+    emit_operator_guidance(
+        chat_focus_operator_steps(ide, context="focus"),
+        title="Operator — chat focus required",
+    )
     print("\033[1;31m")  # bold red
     print("================================================================================")
     print("[AUTOPILOT FOCUS REQUIRED] Please place your cursor inside the IDE chat input.")
@@ -92,6 +119,20 @@ def _warn_autopilot_submit_retry(
     attempts: int,
     reply: dict[str, Any] | None = None,
 ) -> None:
+    from koru.autonomy.ide_operator_guidance import (
+        emit_operator_guidance,
+        manual_send_operator_steps,
+    )
+
+    ide = None
+    if reply:
+        diagnostics = reply.get("diagnostics")
+        if isinstance(diagnostics, dict):
+            ide = str(diagnostics.get("ide") or "") or None
+    emit_operator_guidance(
+        manual_send_operator_steps(ide),
+        title="Operator — manual send / chat focus",
+    )
     print("\033[1;33m")  # bold yellow
     print("================================================================================")
     print("[AUTOPILOT SUBMIT RETRY] Text was pasted, but Send was not confirmed.")
