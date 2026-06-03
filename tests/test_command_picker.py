@@ -229,6 +229,7 @@ def test_vscodium_focus_open_override_can_be_enabled(monkeypatch, tmp_path) -> N
         plugin_version="0.2.7",
         catalog={
             "focus_open": [
+                "chatgpt.sidebarView.open",
                 "workbench.action.openQuickChat",
                 "workbench.action.quickchat.openInChatView",
                 "workbench.action.chat.focusInput",
@@ -236,7 +237,7 @@ def test_vscodium_focus_open_override_can_be_enabled(monkeypatch, tmp_path) -> N
         },
         telemetry=CommandTelemetry(tmp_path),
     )
-    assert order["focus_open"] == ["workbench.action.chat.focusInput"]
+    assert order["focus_open"] == ["chatgpt.sidebarView.open"]
 
 
 def test_vscodium_focus_open_override_rejects_settings(monkeypatch, tmp_path) -> None:
@@ -252,4 +253,4 @@ def test_vscodium_focus_open_override_rejects_settings(monkeypatch, tmp_path) ->
         },
         telemetry=CommandTelemetry(tmp_path),
     )
-    assert order["focus_open"] == ["workbench.action.chat.focusInput"]
+    assert order.get("focus_open", []) == []

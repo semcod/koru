@@ -133,8 +133,8 @@ def render_ai_tool_support_2026() -> list[str]:
         "2. **adapter lane** — tool used via `planfile` executors (`shell` / `api` / `llm`).",
         "3. **manual lane** — no stable automation API yet; operator uses it directly.",
         "",
-        "Current native lane includes: `windsurf`, `vscode`, `cursor`, `jetbrains`, `zed`, "
-        "`claude-code`, `aider`, `codex` and OpenRouter-compatible `llm` tickets.",
+        "Current native GUI lane includes: `windsurf`, `vscode`, `cursor`, `jetbrains`, `zed`. "
+        "Shell LLM clients such as `claude-code`, `aider`, and `codex` are delegated to `sllm`.",
         "",
         "For tools not listed as native (e.g. Gemini CLI, Cline, OpenCode, Qwen Code, "
         "Copilot/Tabnine plugins, app builders), use adapter lane first; promote to native "
@@ -471,7 +471,7 @@ def _render_ticket_scope(context: dict[str, Any], parts: _HandoffRenderParts) ->
 def render_markdown_handoff(context: dict[str, Any]) -> str:
     """Turn a context dict into a Markdown brief for the operator.
 
-    Designed to be pasted into a Cascade/Cursor/aider chat to onboard
+    Designed to be pasted into an IDE chat or SLLM shell-client prompt to onboard
     the LLM with the policy and ticket scope in one shot.
     """
     lines: list[str] = []

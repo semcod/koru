@@ -69,12 +69,12 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
     ),
     AgentBackendProfile(
         id="vendor_agent_cli",
-        transport="subprocess (cursor agent, claude, …)",
+        transport="sllm shell subprocess (aider, claude, codex, devin, …)",
         can_push_chat=True,
         can_pull_chat_text=False,
         needs_gui_session=False,
         mcp_tools_only=False,
-        primary_code="src/koru/queue.py (run_process pattern)",
+        primary_code="/home/tom/github/semcod/sllm",
     ),
 )
 
@@ -83,6 +83,9 @@ _BACKEND_ALIASES: Final[dict[str, str]] = {
     "plugin_socket": "vscode_family_plugin_socket",
     "mcp_tool": "mcp_stdio_server",
     "os_injector": "os_keyboard_injector",
+    "sllm_shell": "vendor_agent_cli",
+    "cursor_cli": "vendor_agent_cli",
+    "vendor_cli": "vendor_agent_cli",
 }
 
 

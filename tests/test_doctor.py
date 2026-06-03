@@ -16,6 +16,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 from koru.doctor import (
     FAIL,
     PASS,
@@ -29,6 +31,9 @@ from koru.doctor import (
     render_text,
     run_diagnostics,
 )
+
+# These tests use subprocess and are slow; skip by default
+pytestmark = pytest.mark.slow
 
 _AUTOPILOT_ENV_KEYS = (
     "KORU_AUTOPILOT_IDE",

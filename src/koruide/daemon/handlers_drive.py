@@ -25,7 +25,7 @@ from koruide.command_picker import pick_command_order
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
-from koruide.injector import InjectorError
+from gillm.injection.errors import InjectorError
 from koruide.protocol import Message, ack, chat_send, error
 
 
@@ -348,7 +348,7 @@ def _try_os_injector_drive(
 ) -> dict[str, Any] | None:
     """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
     daemon.log(f"try_os_injector_drive: target_id={target_id}, chars={len(text)}, submit={submit}")
-    from koruide import os_injector as oi
+    from gillm.injection import os_injector as oi
 
     try:
         result = oi.try_drive_with_profile(

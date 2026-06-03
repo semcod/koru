@@ -33,7 +33,7 @@ from koruide.daemon.storage import (
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
-from koruide.injector import InjectorError
+from gillm.injection.errors import InjectorError
 from koruide.protocol import (
     MIN_PLUGIN_PROTOCOL_VERSION,
     Message,

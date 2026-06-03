@@ -13,8 +13,20 @@ from .config import AutopilotConfig, cached_config, clear_config_cache, load_con
 from .daemon import AutopilotDaemon
 from .host_setup import build_setup_host_report, install_ydotoold_user_service, run_host_setup
 from .ide import RunningIDE, detect_focused_ide_id, detect_running_ides, pick_target
-from .injector import Injector, InjectorError
-from .os_injector import OsInjectorError, inject_with_profile, load_profile, try_drive_with_profile
+import sys
+import gillm.injection.injector as _injector
+import gillm.injection.errors as _errors
+import gillm.injection.os_injector as _os_injector
+import gillm.injection.backends as _backends
+
+sys.modules["koruide.injector"] = _injector
+sys.modules["koruide.injector_errors"] = _errors
+sys.modules["koruide.os_injector"] = _os_injector
+sys.modules["koruide.injector_backends"] = _backends
+
+from gillm.injection.injector import Injector
+from gillm.injection.errors import InjectorError
+from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile, try_drive_with_profile
 from .plugin_installer import (
     PluginInstallResult,
     format_plugin_install_result,

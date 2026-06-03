@@ -9,23 +9,19 @@ from collections.abc import Callable
 from pathlib import Path
 
 import koru.cli_parser as _cli_parser
-from koru.agents import detect_agent_options
+from koru.agents import detect_agent_options  # noqa: F401 - legacy CLI monkeypatch hook
 from koru.autoloop_cli import autoloop_main
 from koru.autonomous import autonomous_main
-from koru.autonomous_processes import stop_prior_autonomous_for_auto_start
 from koru.autonomous_runtime import project_venv_reexec_argv
 from koru.autopilot.cli_command import autopilot_main
 from koru.cli_loop import command_loop_main as _command_loop_main
 from koru.cli_scan import scan_main as _scan_main
 from koru.dev_sync import dev_main
+from koru.env_flags import env_truthy as _env_truthy
 from koru.git_cli import git_main
 
 _build_parser = _cli_parser._build_parser
 _command_value = _cli_parser._command_value
-
-
-from koru.env_flags import env_truthy as _env_truthy
-
 
 
 def _is_bare_invocation(args: argparse.Namespace) -> bool:
@@ -63,6 +59,26 @@ def _api_main(argv: list[str]) -> int:
     from koruapi.cli import main as api_main
 
     return api_main(argv)
+
+
+def _sllm_main(argv: list[str]) -> int:
+    try:
+        from koru.sllm_bridge import sllm_cli_main
+        return sllm_cli_main(argv)
+    except ImportError as exc:
+        print(
+            "koru sllm: missing SLLM plugin. Install it with "
+            "`pip install -e /home/tom/github/semcod/sllm`.",
+            file=sys.stderr,
+        )
+        print(f"koru sllm: import error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _agent_backends_main(argv: list[str]) -> int:
+    from koru.cli_agent_backends import agent_backends_main
+
+    return agent_backends_main(argv)
 
 
 def _peek_project_from_argv(argv: list[str]) -> Path:
@@ -149,13 +165,10 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "observe": lambda argv: _lazy_module_main("koruobserve.cli", "observe_main", argv),
     "init-ci": lambda argv: _lazy_module_main("koru.cli_init", "init_ci_main", argv),
     "init-ide": lambda argv: _lazy_module_main("koru.mcp_provision", "init_ide_main", argv),
-    "agent-backends": lambda argv: _lazy_module_main(
-        "koru.cli_agent_backends",
-        "agent_backends_main",
-        argv,
-    ),
+    "agent-backends": _agent_backends_main,
     "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
     "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
+    "sllm": _sllm_main,
     "local-serve": lambda argv: _lazy_module_main(
         "koru.cli_local_serve",
         "_local_serve_main",

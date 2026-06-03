@@ -15,6 +15,9 @@ from koru.autonomous_cycle import (
 from koru.autonomous_wup import WupHealthResult
 from koru.queue import QueueLoopResult
 
+# These tests use subprocess and are slow; skip by default
+pytestmark = pytest.mark.slow
+
 
 # ---------------------------------------------------------------------------
 # Helpers

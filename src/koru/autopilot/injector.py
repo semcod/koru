@@ -4,6 +4,6 @@ from __future__ import annotations
 
 import sys
 
-from koruide import injector as _koruide_injector
+import gillm.injection.injector as _gillm_injector
 
-sys.modules[__name__] = _koruide_injector
+sys.modules[__name__] = _gillm_injector

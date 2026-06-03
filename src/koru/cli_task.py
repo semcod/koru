@@ -1,17 +1,10 @@
 import argparse
-import asyncio
-import os
-import sys
 from pathlib import Path
 from typing import Any
+
 from koru.events import emit_management_event
 from koru.tasks import create_nl_task
-from koru.tools import build_tool_task_scaffold, detect_tools, find_tool_entry, load_tool_registry, render_tools_detect_text
-from koru.serve import DEFAULT_HOST, DEFAULT_PORT
-from koru.agents import detect_agent_options
-from koru.context import build_context, render_markdown_handoff
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
-from koru.bootstrap import import_flat_pipeline
+from koru.tools import build_tool_task_scaffold, find_tool_entry, load_tool_registry
 
 
 def _build_task_parser() -> argparse.ArgumentParser:
@@ -158,7 +151,9 @@ def _task_main(argv: list[str]) -> int:
 
     if args.tool_id:
         scaffold, _registry_path, error_code = _load_tool_scaffold(
-            args.tool_id, args.tool_registry, args.tool_kind,
+            args.tool_id,
+            args.tool_registry,
+            args.tool_kind,
         )
         if error_code is not None:
             return error_code
@@ -185,5 +180,4 @@ def _task_main(argv: list[str]) -> int:
         return 2
     _print_task_result(created, args)
     return 0
-
 

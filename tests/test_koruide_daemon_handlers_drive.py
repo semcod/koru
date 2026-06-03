@@ -145,7 +145,7 @@ def test_try_os_injector_drive_returns_none_when_no_profile(monkeypatch: pytest.
     daemon.log = mock.Mock()
     
     monkeypatch.setattr(
-        "koruide.os_injector.try_drive_with_profile",
+        "gillm.injection.os_injector.try_drive_with_profile",
         lambda **kwargs: None,
     )
     
@@ -159,13 +159,13 @@ def test_try_os_injector_drive_raises_on_error(monkeypatch: pytest.MonkeyPatch) 
     daemon.project = "/tmp/test"
     daemon.log = mock.Mock()
     
-    from koruide import os_injector as oi_module
+    from gillm.injection import os_injector as oi_module
     
     def raise_error(**kwargs):
         raise oi_module.OsInjectorError("test error")
     
     monkeypatch.setattr(
-        "koruide.os_injector.try_drive_with_profile",
+        "gillm.injection.os_injector.try_drive_with_profile",
         raise_error,
     )
     
@@ -212,7 +212,7 @@ def test_drive_via_os_injector_backend_success() -> None:
 def test_drive_via_os_injector_backend_failure() -> None:
     """Test _drive_via_os_injector_backend returns False on failure."""
     daemon = mock.Mock()
-    from koruide.injector import InjectorError
+    from gillm.injection.errors import InjectorError
     daemon._try_os_injector_drive.side_effect = InjectorError("test error")
     
     client = mock.Mock()
@@ -265,7 +265,7 @@ def test_drive_via_keyboard_backend_failure() -> None:
     """Test _drive_via_keyboard_backend sends error on failure."""
     daemon = mock.Mock()
     daemon.injector.select_backend.return_value = "wtype"
-    from koruide.injector import InjectorError
+    from gillm.injection.errors import InjectorError
     daemon.injector.type_text.side_effect = InjectorError("test error")
     
     client = mock.Mock()

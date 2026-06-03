@@ -15,20 +15,18 @@ from koru.autonomous_process_guard import (
     find_existing_autonomous_processes,
     find_existing_wup_processes,
 )
+from koru.sllm_bridge import shell_agent_process_patterns
 from koruide.ide import detect_running_ides
 
 _PS_COLUMNS = ("pid", "pcpu", "pmem", "rss", "etime", "comm", "args")
 
-_TOOL_PATTERNS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+_CORE_TOOL_PATTERNS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("koru", "Koru", ("koru", "python -m koru.cli", "koru autonomous", "koru auto")),
     ("wup", "WUP", ("wup watch", "koru-wup-testql", "wup")),
     ("planfile", "Planfile", ("planfile",)),
     ("pytest", "Pytest", ("pytest",)),
     ("playwright", "Playwright", ("playwright", "chrome-headless-shell", "chromium")),
     ("docker", "Docker", ("docker compose", "dockerd", "containerd")),
-    ("codex", "Codex", ("codex",)),
-    ("claude-code", "Claude Code", ("claude", "claude-code")),
-    ("gemini-cli", "Gemini CLI", ("gemini",)),
     ("antigravity", "Antigravity", ("antigravity",)),
     ("cursor", "Cursor", ("cursor",)),
     ("windsurf", "Windsurf", ("windsurf",)),
@@ -36,6 +34,10 @@ _TOOL_PATTERNS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("vscode", "VS Code", ("code", "vscode")),
     ("jetbrains", "JetBrains", ("pycharm", "idea", "jetbrains")),
 )
+
+
+def _tool_patterns() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
+    return (*shell_agent_process_patterns(), *_CORE_TOOL_PATTERNS)
 
 
 def _run_ps() -> list[dict[str, Any]]:
@@ -89,7 +91,7 @@ def _classify_process(proc: dict[str, Any], project: Path) -> str:
     args = str(proc.get("args", "")).lower()
     comm = str(proc.get("comm", "")).lower()
     haystack = f"{comm} {args}"
-    for tool_id, _label, patterns in _TOOL_PATTERNS:
+    for tool_id, _label, patterns in _tool_patterns():
         if any(pattern in haystack for pattern in patterns):
             return tool_id
     if _looks_project_related(args, project):
@@ -105,7 +107,7 @@ def _active_tools(
         tool_id = _classify_process(proc, project)
         if tool_id in {"other", "project"}:
             continue
-        label = next((label for tid, label, _ in _TOOL_PATTERNS if tid == tool_id), tool_id)
+        label = next((label for tid, label, _ in _tool_patterns() if tid == tool_id), tool_id)
         out.append(
             {
                 "id": tool_id,

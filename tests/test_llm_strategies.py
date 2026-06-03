@@ -92,6 +92,19 @@ class CodexStrategyTests(unittest.TestCase):
         )
         self.assertEqual(assessment.kind, "retry_focus")
 
+    def test_matches_environment_uses_sllm_bridge_for_cli_detection(self) -> None:
+        from korullm.strategies.codex import CodexStrategy
+
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch(
+                "korullm.strategies.codex.shell_agent_available",
+                return_value=True,
+            ) as check,
+        ):
+            self.assertTrue(CodexStrategy().matches_environment())
+        check.assert_called_once_with("codex")
+
 
 if __name__ == "__main__":
     unittest.main()

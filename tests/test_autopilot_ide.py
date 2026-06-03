@@ -22,6 +22,10 @@ def _clear_antigravity_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "WINDSURF_VERSION",
         "WINDSURF_CSRF_TOKEN",
         "WINDSURF_CASCADE_TERMINAL",
+        "TERMINAL_EMULATOR",
+        "IDEA_INITIAL_DIRECTORY",
+        "PYCHARM_HOSTED",
+        "JETBRAINS_IDE",
     ):
         monkeypatch.delenv(key, raising=False)
 

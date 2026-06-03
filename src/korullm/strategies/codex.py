@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import os
-import shutil
 from dataclasses import dataclass
 from typing import Any
 
-from korullm.strategies.base import DriveFailureAssessment, LlmCapabilities, LlmStrategy
-from korullm.strategies.base import StaticLlmIdentityMixin
+from koru.sllm_bridge import shell_agent_available
+from korullm.strategies.base import (
+    DriveFailureAssessment,
+    LlmCapabilities,
+    LlmStrategy,
+    StaticLlmIdentityMixin,
+)
 from korullm.strategies.ide_chat import IdeChatStrategy
 from korullm.strategies.registry import register_llm_strategy
 
@@ -21,8 +25,6 @@ class CodexStrategy(StaticLlmIdentityMixin, LlmStrategy):
     LLM_LABEL = "OpenAI Codex CLI"
 
     def matches_environment(self) -> bool:
-        import os
-
         if os.environ.get("KORU_LLM_PROVIDER", "").strip().lower() == "codex":
             return True
         if os.environ.get("KORU_LLM_BACKEND", "").strip().lower() == "codex":
@@ -34,7 +36,7 @@ class CodexStrategy(StaticLlmIdentityMixin, LlmStrategy):
             for key in ("OPENAI_MODEL", "ANTHROPIC_MODEL", "OLLAMA_MODEL")
         ):
             return False
-        return shutil.which("codex") is not None
+        return shell_agent_available("codex")
 
     def capabilities(self) -> LlmCapabilities:
         return LlmCapabilities(

@@ -8,6 +8,7 @@ from pathlib import Path
 from koru.tools import (
     build_tool_task_scaffold,
     detect_tools,
+    find_tool_entry,
     infer_adapter_kind,
     load_tool_registry,
 )
@@ -34,6 +35,24 @@ def test_load_registry_from_explicit_path(tmp_path: Path) -> None:
     assert used == reg.resolve()
     assert len(entries) == 1
     assert entries[0]["id"] == "sample"
+
+
+def test_default_registry_includes_sllm_shell_clients(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_TOOL_REGISTRY", raising=False)
+
+    entries, used = load_tool_registry()
+
+    assert used is not None
+    gemini = find_tool_entry(entries, "gemini-cli")
+    codex = find_tool_entry(entries, "codex-cli")
+    assert gemini is not None
+    assert codex is not None
+    assert gemini["invoke"] == (
+        "koru sllm drive --client gemini-cli --prompt '<prompt>' --execute"
+    )
+    assert codex["invoke"] == (
+        "koru sllm drive --client codex --prompt '<prompt>' --execute"
+    )
 
 
 def test_detect_tools_marks_available_via_command(tmp_path: Path) -> None:

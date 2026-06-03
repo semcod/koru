@@ -12,6 +12,7 @@ from koru.agent_backend_runtime import (
     NoopBackend,
     OsInjectorBackend,
     PluginSocketBackend,
+    SllmShellBackend,
     build_agent_backend,
 )
 
@@ -94,6 +95,30 @@ def test_factory_resolves_mcp_tool_without_server() -> None:
     backend = build_agent_backend(backend_id="mcp_tool")
     assert isinstance(backend, McpToolBackend)
     assert backend.mcp_server is None
+
+
+def test_factory_resolves_sllm_shell() -> None:
+    backend = build_agent_backend(backend_id="sllm_shell", shell_client_id="claude-code")
+    assert isinstance(backend, SllmShellBackend)
+    assert backend.client_id == "claude-code"
+
+
+def test_sllm_shell_backend_delegates_to_bridge(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: dict[str, object] = {}
+
+    def fake_drive_shell_chat(**kwargs):
+        calls.update(kwargs)
+        return {"ok": True, "backend": "sllm_shell", "client_id": kwargs["client_id"]}
+
+    monkeypatch.setattr("koru.agent_backend_runtime.drive_shell_chat", fake_drive_shell_chat)
+    backend = SllmShellBackend(client_id="aider", execute=False)
+
+    out = backend.send_chat(Path("/tmp/project"), "fix tests", ide="auto", submit=True)
+
+    assert out["ok"] is True
+    assert calls["client_id"] == "aider"
+    assert calls["prompt"] == "fix tests"
+    assert calls["execute"] is False
 
 
 def test_factory_resolves_none_to_noop() -> None:

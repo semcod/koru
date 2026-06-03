@@ -61,6 +61,8 @@ from koru.cli_agent_backends import agent_backends_main as _agent_backends_main 
 from koru.cli_auto import _auto_main  # noqa: E402
 from koru.cli_ide_router import ide_router_main  # noqa: E402
 
+_sllm_main = getattr(_legacy, "_sllm_main", None)
+
 if not hasattr(_legacy, "_auto_main"):
     _legacy._auto_main = _auto_main
 if not hasattr(_legacy, "_agent_backends_main"):
@@ -84,6 +86,7 @@ __all__ = [
     "_command_value",
     "_auto_main",
     "_agent_backends_main",
+    "_sllm_main",
     "_peek_project_from_argv",
     "_should_suggest_wizard",
     "ide_router_main",

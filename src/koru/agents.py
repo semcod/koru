@@ -7,12 +7,19 @@ import platform
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from koru.runtime import runtime_dir
 from koru.semcod_tools import detect_semcod_tools
+from koru.sllm_bridge import (
+    autopilot_backend_for_shell_agent,
+    detect_shell_agent_rows,
+    is_shell_agent,
+    launch_shell_agent,
+)
 
 
 def normalize_agent_lane_id(raw: str) -> str:
@@ -34,16 +41,9 @@ def autopilot_backend_for_agent_id(agent_id: str) -> str:
     norm = normalize_agent_lane_id(agent_id)
     if norm in {"openrouter"}:
         return "headless"
-    if norm in {
-        "claude-code",
-        "codex",
-        "gemini-cli",
-        "cline",
-        "qwen-code",
-        "opencode",
-        "aider",
-    }:
-        return "cursor_cli"
+    shell_backend = autopilot_backend_for_shell_agent(norm)
+    if shell_backend is not None:
+        return shell_backend
     return "plugin_socket"
 
 
@@ -86,18 +86,11 @@ def _koru_package_version() -> str:
         return "unknown"
 
 
-def _detect_agent_commands() -> dict[str, str | None]:
-    """Detect all available agent CLI commands."""
+def _detect_gui_agent_commands() -> dict[str, str | None]:
+    """Detect GUI IDE commands that still belong to Koru."""
     return {
         "windsurf": _which("windsurf"),
         "cursor": _which("cursor"),
-        "claude": _which("claude"),
-        "aider": _which("aider"),
-        "codex": _which("codex"),
-        "gemini": _which("gemini"),
-        "cline": _which("cline"),
-        "qwen": _which("qwen-code") or _which("qwen"),
-        "opencode": _which("opencode"),
     }
 
 
@@ -134,10 +127,28 @@ def _build_cli_agent_option(
     )
 
 
+def _build_agent_option_from_mapping(row: Mapping[str, Any]) -> AgentOption:
+    command = row.get("command")
+    return AgentOption(
+        id=str(row["id"]),
+        label=str(row["label"]),
+        available=bool(row["available"]),
+        launchable=bool(row["launchable"]),
+        command=command if isinstance(command, str) else None,
+        reason=str(row.get("reason") or ""),
+        project_hint=bool(row.get("project_hint")),
+        autopilot_backend=str(row.get("autopilot_backend") or "plugin_socket"),
+    )
+
+
 def detect_agent_options(project: Path) -> list[AgentOption]:
     """Return known LLM/IDE lanes ordered by koru preference."""
     project = project.resolve()
-    commands = _detect_agent_commands()
+    commands = _detect_gui_agent_commands()
+    shell_agents = [
+        _build_agent_option_from_mapping(row)
+        for row in detect_shell_agent_rows()
+    ]
 
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
     antigravity_home = Path.home() / ".gemini" / "antigravity"
@@ -157,15 +168,9 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
                 else "Antigravity environment not found."
             ),
         ),
-        _build_cli_agent_option("claude-code", "Claude Code", commands["claude"], project),
-        _build_cli_agent_option("codex", "Codex CLI", commands["codex"], project),
-        _build_cli_agent_option("gemini-cli", "Gemini CLI", commands["gemini"], project),
-        _build_cli_agent_option("cline", "Cline", commands["cline"], project),
-        _build_cli_agent_option("qwen-code", "Qwen Code", commands["qwen"], project),
-        _build_cli_agent_option("opencode", "OpenCode", commands["opencode"], project),
+        *shell_agents,
         _build_cli_agent_option("cursor", "Cursor", commands["cursor"], project, ".cursor"),
         _build_cli_agent_option("windsurf", "Windsurf", commands["windsurf"], project, ".windsurf"),
-        _build_cli_agent_option("aider", "aider", commands["aider"], project),
         AgentOption(
             id="openrouter",
             label="OpenRouter automation lane",
@@ -274,13 +279,6 @@ _LANE_AUTOPILOT_IDE: dict[str, str] = {
     "vscodium": "vscodium",
     "jetbrains": "jetbrains",
     "zed": "zed",
-    "claude-code": "auto",
-    "codex": "auto",
-    "gemini-cli": "auto",
-    "cline": "auto",
-    "qwen-code": "auto",
-    "opencode": "auto",
-    "aider": "auto",
     "openrouter": "auto",
 }
 
@@ -292,7 +290,11 @@ def agent_lane_environment(agent_id: str) -> dict[str, str]:
     so Unix sockets, actors, and drive targets stay isolated.
     """
     norm = normalize_agent_lane_id(agent_id)
-    ide = _LANE_AUTOPILOT_IDE.get(norm, "auto")
+    ide = _LANE_AUTOPILOT_IDE.get(norm)
+    if ide is None and is_shell_agent(norm):
+        ide = "auto"
+    if ide is None:
+        ide = "auto"
     actor = f"koru-{norm}"
     env: dict[str, str] = {
         "KORU_AUTOPILOT_INSTANCE": norm,
@@ -321,6 +323,23 @@ def format_agent_lane_exports(env: dict[str, str]) -> str:
 def launch_agent(agent: AgentOption, project: Path, prompt: str) -> int:
     """Launch an agent CLI from the project root after saving the prompt."""
     prompt_path = save_agent_prompt(project, prompt)
+    if agent.autopilot_backend == "sllm_shell" and is_shell_agent(agent.id):
+        if not agent.launchable or not agent.command:
+            print(f"koru agent: {agent.label} is not launchable from PATH.")
+            print(f"Prompt saved: {prompt_path}")
+            return 2
+        try:
+            return launch_shell_agent(
+                agent_id=agent.id,
+                project=project,
+                prompt=prompt,
+                command=agent.command,
+            )
+        except ImportError as exc:
+            print("koru agent: missing SLLM plugin; install /home/tom/github/semcod/sllm.")
+            print(f"koru agent: import error: {exc}")
+            print(f"Prompt saved: {prompt_path}")
+            return 2
     if not agent.launchable or not agent.command:
         print(f"koru agent: {agent.label} is not launchable from PATH.")
         print(f"Prompt saved: {prompt_path}")

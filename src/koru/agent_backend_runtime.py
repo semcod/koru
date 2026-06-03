@@ -11,6 +11,8 @@ the small :class:`AgentBackend` protocol and concrete implementations:
     loop running when no plugin socket is available.
   * :class:`NoopBackend` — explicit "headless / smoke" backend; useful for CI
     and `--no-autopilot` smoke tests.
+  * :class:`SllmShellBackend` — shell LLM client via the external ``sllm``
+    plugin/package (aider, Claude Code, Codex CLI, Devin, ...).
 
 Lane → backend resolution lives in :func:`build_agent_backend`.
 """
@@ -21,9 +23,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
+from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 from koru.ide_client import IDEControlClient
+from koru.sllm_bridge import drive_shell_chat
 
 
 class AgentBackend(Protocol):
@@ -116,6 +119,40 @@ class NoopBackend:
 
 
 @dataclass
+class SllmShellBackend:
+    """Shell LLM client backend delegated to the external ``sllm`` package."""
+
+    client_id: str = "aider"
+    execute: bool = True
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del ide, submit, ticket_id
+        try:
+            return drive_shell_chat(
+                client_id=self.client_id,
+                project=project,
+                prompt=prompt,
+                execute=self.execute,
+            )
+        except Exception as exc:
+            return {
+                "ok": False,
+                "backend": "sllm_shell",
+                "client_id": self.client_id,
+                "message": str(exc),
+                "type": "error",
+            }
+
+
+@dataclass
 class OsInjectorBackend:
     """Coordinate-based fallback backend (X11 + xdotool)."""
 
@@ -145,6 +182,7 @@ def build_agent_backend(
     client: IDEControlClient | None = None,
     mcp_server: str | None = None,
     noop_reason: str = "headless",
+    shell_client_id: str | None = None,
 ) -> AgentBackend:
     """Resolve a lane backend id into a concrete :class:`AgentBackend`.
 
@@ -158,6 +196,12 @@ def build_agent_backend(
         return PluginSocketBackend(client=client)
     if bid == "mcp_tool":
         return McpToolBackend(mcp_server=mcp_server)
+    if bid in ("sllm_shell", "vendor_agent_cli", "cursor_cli"):
+        return SllmShellBackend(
+            client_id=shell_client_id or os.environ.get("KORU_SLLM_CLIENT", "aider"),
+            execute=os.environ.get("KORU_SLLM_DRY_RUN", "").strip().lower()
+            not in {"1", "true", "yes", "on"},
+        )
     if bid == "os_injector":
         profile = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
         if not profile:
@@ -174,6 +218,7 @@ __all__ = [
     "AgentBackend",
     "PluginSocketBackend",
     "McpToolBackend",
+    "SllmShellBackend",
     "OsInjectorBackend",
     "NoopBackend",
     "build_agent_backend",

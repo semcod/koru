@@ -67,12 +67,13 @@ def _start(project: Path, port: int) -> ThreadingHTTPServer:
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     # Wait briefly so the listener is accepting.
+    # Optimized: shorter sleep with fewer retries (0.25s max vs 1s max)
     for _ in range(50):
         try:
-            with closing(socket.create_connection(("127.0.0.1", port), 0.1)):
+            with closing(socket.create_connection(("127.0.0.1", port), 0.05)):
                 break
         except OSError:
-            time.sleep(0.02)
+            time.sleep(0.005)
     return server
 
 
@@ -657,7 +658,13 @@ class TestServeAutoPort(unittest.TestCase):
             self.assertEqual(data["http_base"], f"http://127.0.0.1:{actual}")
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
-            time.sleep(0.05)
+            # Poll for server startup instead of fixed sleep
+            for _ in range(10):
+                try:
+                    with closing(socket.create_connection(("127.0.0.1", actual), 0.05)):
+                        break
+                except OSError:
+                    time.sleep(0.01)
             server.shutdown()
             server.server_close()
             thread.join(timeout=2.0)

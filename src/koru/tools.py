@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from koru.sllm_bridge import shell_tool_registry_entries
+
 
 def default_registry_path() -> Path:
     """Return the default in-repo registry path."""
@@ -63,6 +65,13 @@ def load_tool_registry(
         if not isinstance(tool_id, str) or not tool_id.strip():
             continue
         normalized.append(item)
+    if path_override is None and not os.getenv("KORU_TOOL_REGISTRY"):
+        seen = {str(item.get("id") or "").strip().lower() for item in normalized}
+        for item in shell_tool_registry_entries():
+            tool_id = str(item.get("id") or "").strip().lower()
+            if tool_id and tool_id not in seen:
+                normalized.append(dict(item))
+                seen.add(tool_id)
     return normalized, path
 
 

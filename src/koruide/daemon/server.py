@@ -22,7 +22,7 @@ from koruide.daemon.metadata import (
     write_daemon_metadata,
 )
 from koruide.daemon.protocol import _Client, _peer_uid
-from koruide.injector import Injector
+from gillm.injection.injector import Injector
 from koruide.command_catalog_store import CommandCatalogStore
 from koruide.command_telemetry import CommandTelemetry
 from koruide.plugin_router import PluginRouter

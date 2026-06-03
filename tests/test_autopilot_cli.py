@@ -16,6 +16,32 @@ from koru.autopilot.cli_parser import build_autopilot_parser
 from koru.autopilot.cli_trace import action_trace
 
 
+@pytest.fixture(autouse=True)
+def _clear_host_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in (
+        "GIO_LAUNCHED_DESKTOP_FILE",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_CWD",
+        "CHROME_DESKTOP",
+        "TERM_PROGRAM",
+        "TERM_PROGRAM_VERSION",
+        "CURSOR_CLI",
+        "CURSOR_AGENT",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "WINDSURF_CASCADE_TERMINAL",
+        "TERMINAL_EMULATOR",
+        "IDEA_INITIAL_DIRECTORY",
+        "PYCHARM_HOSTED",
+        "JETBRAINS_IDE",
+        "KORU_AUTOPILOT_INSTANCE",
+        "KORU_AUTOPILOT_SOCKET",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
 def test_autopilot_parser_requires_action() -> None:
     with pytest.raises(SystemExit):
         autopilot_main([])
@@ -91,8 +117,10 @@ def test_client_uses_explicit_ide_socket_when_env_is_unset(
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setenv("HOME", str(tmp_path))
 
-    client = cli_command._client(SimpleNamespace(socket=None, ide="cursor"))
+    client = cli_command._client(SimpleNamespace(socket=None, ide="cursor", project=tmp_path))
 
     assert client.socket_path == tmp_path / "koru-autopilot-cursor.sock"
     assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
@@ -718,6 +746,11 @@ def test_install_plugin_dry_run_auto_detect_from_term_program(
         "which",
         lambda name: "/usr/bin/code" if name == "code" else None,
     )
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "_editor_bin_usable_for_cli_install",
+        lambda exe: True,
+    )
     monkeypatch.setattr(install_plugin_cli, "resolve_plugin_vsix_path", lambda _p: vsix)
 
     rc = autopilot_main(["install-plugin", "--dry-run", "--format", "json"])
@@ -908,6 +941,11 @@ def test_install_plugin_vscodium_dry_run_uses_codium_cli(
         install_plugin_cli.shutil,
         "which",
         lambda name: "/usr/bin/codium" if name == "codium" else None,
+    )
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "_editor_bin_usable_for_cli_install",
+        lambda exe: True,
     )
     monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_plugin_cli, "resolve_plugin_vsix_path", lambda _p: vsix)

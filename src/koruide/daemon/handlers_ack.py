@@ -17,7 +17,7 @@ from typing import Any
 from koruide.daemon.protocol import _Client, _daemon_package_version
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import normalize_ide_id
-from koruide.injector import InjectorError
+from gillm.injection.errors import InjectorError
 from koruide.protocol import Message, ack, MIN_PLUGIN_PROTOCOL_VERSION
 from koru.integration_ledger import record_integration_action
 from koru.observability_events import emit_failure, emit_verify

@@ -10,7 +10,7 @@ from koru.agents import agent_lane_environment
 from koru.autonomous_startup import resolve_agent_lane_id
 from koru.ide_router import resolve_ide_route
 from koru.init import resolve_project_agent_lane
-from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
+from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 
 def try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:

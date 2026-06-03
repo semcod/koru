@@ -37,12 +37,17 @@ _VSCODIUM_FOCUS_OPEN_AVOID = (
     "action.chat.open",
     "settings",
     "preferences",
-    "panel.chat",
     "openagent",
     "openask",
+    "focusinput",
 )
 _VSCODIUM_FOCUS_OPEN_PREFERRED = (
-    "workbench.action.chat.focusInput",
+    "chatgpt.sidebarView.open",
+    "chatgpt.openSidebar",
+    "chatgpt.sidebarSecondaryView.open",
+    "workbench.action.chat.openInSidebar",
+    "workbench.panel.chat",
+    "workbench.panel.chat.view.copilot.focus",
 )
 _CURSOR_SUBMIT_EXACT_ALLOW = {
     "workbench.action.chat.submit",
@@ -86,12 +91,8 @@ def _sanitize_candidates(ide: str, capability: str, commands: list[str]) -> list
             for command in commands
             if not any(marker in command.lower() for marker in _VSCODIUM_FOCUS_OPEN_AVOID)
         ]
-        # VSCodium has a strategy-level focusInput-only opener. Re-add it when the
-        # live catalog only exposes high-risk open/new-chat commands.
         ordered = [command for command in _VSCODIUM_FOCUS_OPEN_PREFERRED if command in filtered]
         ordered.extend(command for command in filtered if command not in ordered)
-        if not ordered:
-            ordered = list(_VSCODIUM_FOCUS_OPEN_PREFERRED)
         return ordered
 
     if ide_id == "cursor" and capability == "submit":

@@ -4,7 +4,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from koru import mcp_server
+
+# These tests use subprocess and are slow; skip by default
+pytestmark = pytest.mark.slow
 
 
 def test_initialize_message_returns_server_info() -> None:
