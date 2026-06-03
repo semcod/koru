@@ -61,7 +61,7 @@ def _patch_no_running_ides(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class _StubInjector:
-    """Replaces :class:`koru.autopilot.injector.Injector` for tests."""
+    """Replaces :class:`gillm.injection.injector.Injector` for tests (koru/koruide shims)."""
 
     def __init__(self, *, fail: bool = False) -> None:
         self.fail = fail
@@ -360,9 +360,9 @@ def test_drive_uses_os_injector_when_profile_available(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koruide import os_injector as oi_mod
+    from gillm.injection import os_injector as oi_mod
 
-    # handlers_drive imports gillm.injection.os_injector at request time (koruide alias)
+    # handlers_drive: from gillm.injection import os_injector (canonical; koruide re-exports)
     monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
     monkeypatch.delenv("KORU_OS_INJECTOR", raising=False)
     monkeypatch.delenv("CURSOR_AGENT", raising=False)
@@ -406,7 +406,10 @@ def test_drive_uses_os_injector_when_profile_available(
             "input_method": "type",
         }
 
-    monkeypatch.setattr(oi_mod, "try_drive_with_profile", fake_try_drive)
+    monkeypatch.setattr(
+        "gillm.injection.os_injector.try_drive_with_profile",
+        fake_try_drive,
+    )
 
     with _daemon(tmp_path, monkeypatch, project=repo, patch_ides=False) as h:
         reply = h.client().drive("hello", submit=False, ide="auto")

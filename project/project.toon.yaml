@@ -1,8 +1,8 @@
-# koru | 5399 func | 537f | 122343L | python | 2026-06-03
+# koru | 5342 func | 534f | 123744L | python | 2026-06-03
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.7  critical=332 (limit:10)  dup=16  cycles=0
+  CC̄=3.7  critical=332 (limit:10)  dup=15  cycles=0
 
 ALERTS[20]:
   !!! cc_exceeded      run_repair_pipeline = 33 (limit:15)
@@ -16,8 +16,9 @@ ALERTS[20]:
   !!! high_fan_out     _attempt_plugin_self_heal = 22 (limit:10)
   !!! high_fan_out     run_repair_pipeline = 22 (limit:10)
 
-MODULES[747] (top by size):
+MODULES[739] (top by size):
   M[packages/coru/src/coru/cli.py] 3207L C:3 F:159 CC↑23 D:4 (python)
+  M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[src/koru/scan.py] 1621L C:0 F:61 CC↑13 D:7 (python)
   M[src/koru/autonomous_cycle.py] 1443L C:0 F:46 CC↑14 D:1 (python)
   M[planfile.yaml] 1344L C:0 F:0 CC↑0 D:0 (yaml)
@@ -25,14 +26,13 @@ MODULES[747] (top by size):
   M[src/koru/autonomous_loop_runner.py] 1255L C:1 F:56 CC↑12 D:2 (python)
   M[src/koruide/plugin_installer.py] 1163L C:3 F:55 CC↑22 D:8 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1016L C:2 F:44 CC↑14 D:0 (python)
-  M[src/koruapi/mcp_server.py] 1001L C:0 F:47 CC↑14 D:4 (python)
+  M[src/koruapi/mcp_server.py] 1001L C:0 F:47 CC↑14 D:3 (python)
   M[src/koru/autonomous.py] 995L C:0 F:62 CC↑4 D:3 (python)
   M[src/koruide/drive_orchestrator.py] 965L C:1 F:56 CC↑14 D:0 (python)
   M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
   M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 897L C:1 F:67 CC↑13 D:1 (typescript)
-  M[src/koruide/ide.py] 884L C:2 F:51 CC↑18 D:36 (python)
-  M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:7 (python)
-  LANGS: python:539/typescript:85/shell:53/yaml:25/json:16/yml:10/kotlin:6/other:4/toml:3/txt:2/javascript:1/md:1/properties:1/xml:1
+  M[src/koruide/ide.py] 884L C:2 F:51 CC↑18 D:35 (python)
+  LANGS: python:533/typescript:85/shell:50/yaml:25/json:16/yml:10/kotlin:6/other:4/txt:3/toml:3/javascript:1/md:1/properties:1/xml:1
 
 HOTSPOTS[10]:
   ★ make_handler fan=30  // Orchestrates 30 calls
@@ -49,4 +49,4 @@ REFACTOR[15]:
   [5] H/H Split god module packages/coru/src/coru/repair/pipeline.py (666L, 0 classes)
 
 EVOLUTION:
-  2026-06-03 CC̄=3.7 crit=332 122343L // Automated analysis
+  2026-06-03 CC̄=3.7 crit=332 123744L // Automated analysis

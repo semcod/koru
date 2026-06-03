@@ -804,27 +804,11 @@ flowchart TD
         src__koru__runtime__runs_dir["runs_dir"]
         src__koru__runtime__new_run_id["new_run_id"]
         src__koru__runtime__ensure_runs_dir["ensure_runs_dir"]
-        src__koru__agent_backends__normalize_agent_backend_id["normalize_agent_backend_id"]
-        src__koru__agent_backends__list_agent_backend_ids["list_agent_backend_ids"]
-        src__koru__agent_backends__iter_agent_backend_profiles["iter_agent_backend_profiles"]
-        src__koru__agent_backends__get_agent_backend_profile["get_agent_backend_profile"]
-        src__koru__agent_backends___parse_lane("_parse_lane CC=8")
-        src__koru__agent_backends__load_agent_integration_config("load_agent_integration_config CC=11")
-        src__koru__agent_backends__validate_agent_integration_config["validate_agent_integration_config"]
         src__koru__gc_cli_helpers__gc_statuses_from_args["gc_statuses_from_args"]
         src__koru__gc_cli_helpers__gc_result_to_json["gc_result_to_json"]
         src__koru__gc_cli_helpers__print_gc_text_report("print_gc_text_report CC=12")
         src__koru__gc_cli_helpers__emit_gc_management_event["emit_gc_management_event"]
         src__koru__gc_cli_helpers__print_gc_report["print_gc_report"]
-        src__koru__dev_sync___default_semcod_root["_default_semcod_root"]
-        src__koru__dev_sync___venv_python["_venv_python"]
-        src__koru__dev_sync___target_python["_target_python"]
-        src__koru__dev_sync___run["_run"]
-        src__koru__dev_sync___is_dirty["_is_dirty"]
-        src__koru__dev_sync___pull_repo["_pull_repo"]
-        src__koru__dev_sync___sync_single_package("_sync_single_package CC=11")
-        src__koru__dev_sync__sync_developer_packages["sync_developer_packages"]
-        src__koru__dev_sync__dev_main("dev_main CC=9")
         src__koru__ide_router__is_headless_environment("is_headless_environment CC=8")
         src__koru__ide_router__resolve_ide_route("resolve_ide_route CC=10")
         src__koru__doctor_chat_control__autopilot_debug_event_name["autopilot_debug_event_name"]
@@ -850,14 +834,24 @@ flowchart TD
         src__koru__autonomous_diagnostics__run_idle_check_loop["run_idle_check_loop"]
         src__koru__autonomous_diagnostics__create_diagnostic_ticket["create_diagnostic_ticket"]
         src__koru__autonomous_diagnostics__clear_diagnostic_marker["clear_diagnostic_marker"]
+        src__koru__autonomous_diagnostics__run_command_check["run_command_check"]
+        src__koru__autonomous_diagnostics__read_wup_health["read_wup_health"]
+        src__koru__autonomous_diagnostics__run_idle_diagnostics["run_idle_diagnostics"]
+        src__koru__env_config__env_config_payload["env_config_payload"]
+        src__koru__env_config__write_env_config["write_env_config"]
+        src__koru__env_config__apply_env_updates["apply_env_updates"]
+        src__koru__autonomous_processes___command_project["_command_project"]
+        src__koru__autonomous_processes___process_cwd["_process_cwd"]
+        src__koru__autonomous_processes___ancestor_pids["_ancestor_pids"]
+        src__koru__autonomous_processes___looks_like_autonomous_up_command["_looks_like_autonomous_up_command"]
+        src__koru__autonomous_processes___ps_rows["_ps_rows"]
+        src__koru__autonomous_processes___parse_ps_row["_parse_ps_row"]
+        src__koru__autonomous_processes___autonomous_process_matches_project["_autonomous_process_matches_project"]
+        src__koru__autonomous_processes___wup_process_matches_project["_wup_process_matches_project"]
+        src__koru__autonomous_processes___find_existing_autonomous_processes["_find_existing_autonomous_processes"]
+        src__koru__autonomous_processes___find_existing_wup_processes["_find_existing_wup_processes"]
     end
     subgraph src__koruapi
-        src__koruapi__runtime_insights___run_ps("_run_ps CC=9")
-        src__koruapi__runtime_insights___looks_project_related["_looks_project_related"]
-        src__koruapi__runtime_insights___classify_process["_classify_process"]
-        src__koruapi__runtime_insights___active_tools("_active_tools CC=8")
-        src__koruapi__runtime_insights___top_processes["_top_processes"]
-        src__koruapi__runtime_insights__collect_runtime_insights["collect_runtime_insights"]
         src__koruapi__mcp__mcp_main["mcp_main"]
         src__koruapi__dashboard_routes___load_dashboard_html["_load_dashboard_html"]
         src__koruapi__dashboard_routes___config_defaults["_config_defaults"]
@@ -912,6 +906,12 @@ flowchart TD
         src__koruapi__cli___action_serve["_action_serve"]
         src__koruapi__cli___action_dashboard["_action_dashboard"]
         src__koruapi__cli___action_mcp["_action_mcp"]
+        src__koruapi__cli___action_local["_action_local"]
+        src__koruapi__cli__main["main"]
+        src__koruapi__dashboard_state__local_lan_addresses["local_lan_addresses"]
+        src__koruapi__dashboard_state__dashboard_urls["dashboard_urls"]
+        src__koruapi__dashboard_state__dashboard_ide_rows["dashboard_ide_rows"]
+        src__koruapi__dashboard_state__dashboard_state["dashboard_state"]
     end
     subgraph src__korudsl
         src__korudsl__cli___build_parser["_build_parser"]
@@ -941,19 +941,6 @@ flowchart TD
         src__korudsl__library___emit_goal("_emit_goal CC=9")
         src__korudsl__library___emit_goals["_emit_goals"]
         src__korudsl__library__library_to_dsl["library_to_dsl"]
-    end
-    subgraph src__korugllm
-        src__korugllm__injection__backends__ydotool_enter_keycode["ydotool_enter_keycode"]
-        src__korugllm__injection__backends__ydotool_submit_mode["ydotool_submit_mode"]
-        src__korugllm__injection__backends__ydotool_ctrl_keycode["ydotool_ctrl_keycode"]
-        src__korugllm__injection__backends__extra_enter_count["extra_enter_count"]
-        src__korugllm__injection__backends___log["_log"]
-        src__korugllm__injection__backends__type_with_xdotool["type_with_xdotool"]
-        src__korugllm__injection__backends__press_wtype["press_wtype"]
-        src__korugllm__injection__backends__type_with_wtype["type_with_wtype"]
-        src__korugllm__injection__backends___ydotool_submit_command["_ydotool_submit_command"]
-        src__korugllm__injection__backends__type_with_ydotool["type_with_ydotool"]
-        src__korugllm__injection__backends__type_with_backend["type_with_backend"]
     end
     subgraph src__koruide
         src__koruide__chat_history__default_events_path["default_events_path"]
@@ -1018,11 +1005,6 @@ flowchart TD
         src__koruide__command_catalog__format_command_catalog_text("format_command_catalog_text CC=9")
     end
     subgraph src__korullm
-        src__korullm__strategies__codex__CodexStrategy__matches_environment["matches_environment"]
-        src__korullm__strategies__codex__CodexStrategy__capabilities["capabilities"]
-        src__korullm__strategies__codex__CodexStrategy__assess_drive_failure["assess_drive_failure"]
-        src__korullm__strategies__codex__CodexStrategy__idle_marker_patterns["idle_marker_patterns"]
-        src__korullm__strategies__codex__CodexStrategy__prompt_envelope["prompt_envelope"]
         src__korullm__strategies__base__LlmStrategy__matches_environment["matches_environment"]
         src__korullm__strategies__base__LlmStrategy__capabilities["capabilities"]
         src__korullm__strategies__base__LlmStrategy__assess_drive_failure["assess_drive_failure"]
@@ -1057,6 +1039,11 @@ flowchart TD
         src__korullm__strategies__ide_chat__IdeChatStrategy___requires_manual_chat_focus["_requires_manual_chat_focus"]
         src__korullm__strategies__ide_chat__IdeChatStrategy___needs_submit_retry("_needs_submit_retry CC=9")
         src__korullm__strategies__ide_chat__IdeChatStrategy___needs_plugin_retry("_needs_plugin_retry CC=9")
+        src__korullm__strategies__codex__CodexStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__codex__CodexStrategy__capabilities["capabilities"]
+        src__korullm__strategies__codex__CodexStrategy__assess_drive_failure["assess_drive_failure"]
+        src__korullm__strategies__codex__CodexStrategy__idle_marker_patterns["idle_marker_patterns"]
+        src__korullm__strategies__codex__CodexStrategy__prompt_envelope["prompt_envelope"]
     end
     subgraph src__korumesh
         src__korumesh__dashboard__grid_html["grid_html"]

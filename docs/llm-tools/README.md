@@ -59,6 +59,8 @@ ON-CHANGE GATES TRIAD (LLM-free, continuous):
 Shell LLM clients such as `aider` and `claude-code` are now documented and
 controlled by the external `semcod/sllm` plugin. Koru keeps GUI/IDE and
 pipeline docs here, while SLLM owns shell-client launch details.
+Legacy client-specific workflows, including the old aider Docker autoloop,
+also live in `semcod/sllm`.
 
 ## Ranking wymaganej konfiguracji
 
@@ -96,6 +98,7 @@ pipeline docs here, while SLLM owns shell-client launch details.
 for tool in redsl llx pfix vallm prefact planfile regix redup sumd redeploy goal doql costs op3 toonic protogate rebuild mdflow metrun testql; do
   bash docs/llm-tools/$tool/install.sh
 done
+pip install -e /home/tom/github/semcod/sllm
 ```
 
 Każdy `install.sh` jest **idempotentny** — bezpiecznie uruchamiać wielokrotnie.

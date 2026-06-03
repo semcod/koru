@@ -36,7 +36,7 @@ Potrzebna jest jednoznaczna granica odpowiedzialności, aby:
 | Wire protocol (`hello/drive/status/ack/error`) | `koruide` | kontrakt transportowy |
 | Daemon/control server (UDS, później remote) | `koruide` | control-plane IDE |
 | IDE discovery/focus (`ide.py`) | `koruide` | platform-specific |
-| Keyboard/OS injectors (`injector.py`, `os_injector.py`) | `koruide` | platform-specific |
+| Keyboard/OS injectors (`injector.py`, `os_injector.py`) | `koruide` → PyPI **`gillm`** (`gillm.injection.*`) | platform-specific; unit tests w `gillm/tests/` |
 | Plugin install / host setup / audit | `koruide` | operacje środowiskowe |
 | Kompatybilność legacy autopilot | `koru` + `koruide` | przejściowo przez shimy |
 

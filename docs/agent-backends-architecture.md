@@ -50,7 +50,7 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | JetBrains scaffold | `plugins/koru-autopilot-jetbrains/` |
 | MCP tools | `src/koru/mcp_server.py`, `mcp_provision.py` |
 | OS injector | `src/koru/autopilot/injector.py` |
-| Experimental registry (profiles) | `src/koru/agent_backends.py`, `koru agent-backends` |
+| Experimental registry (core profiles + SLLM-exported shell profile) | `src/koru/agent_backends.py`, `koru agent-backends`, `/home/tom/github/semcod/sllm` |
 | Runtime ``AgentBackend`` (socket ``drive`` + SLLM shell backend) | `src/koru/agent_backend_runtime.py` |
 | Shell LLM control plugin | `/home/tom/github/semcod/sllm` |
 | Tool registry YAML | `docs/ai-tool-registry-2026.yaml` |
@@ -89,11 +89,11 @@ ide_integration:
       mcp_server: koru
 ```
 
-Backend aliases are normalized by `koru.agent_backends`:
-`plugin_socket` maps to `vscode_family_plugin_socket`, and `mcp_tool` maps
-to `mcp_stdio_server`. `sllm_shell` and the legacy `cursor_cli` alias map to
-`vendor_agent_cli`. `koru --doctor` reports invalid lane/backend combinations
-as `agent_integration_config` failures.
+Backend aliases are normalized by `koru.agent_backends`: `plugin_socket` maps
+to `vscode_family_plugin_socket`, and `mcp_tool` maps to `mcp_stdio_server`.
+The `sllm_shell` and legacy `cursor_cli` aliases are supplied by SLLM and map
+to `vendor_agent_cli`. `koru --doctor` reports invalid lane/backend
+combinations as `agent_integration_config` failures.
 
 ## References (external)
 

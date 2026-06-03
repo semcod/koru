@@ -8,10 +8,10 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$29.40-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-135.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.05-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-136.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $29.4043 (412 commits)
-- 👤 **Human dev:** ~$13518 (135.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $32.0492 (414 commits)
+- 👤 **Human dev:** ~$13643 (136.4h @ $100/h, 30min dedup)
 
 Generated on 2026-06-03 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -36,7 +36,7 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
 ├──────────┼──────────┼──────────┼──────────┼─────────┼──────────┤
 │ redup    │ planfile │ Windsurf │ regix    │ healing │ pyqual   │
 │ regix    │ tickets  │ Cursor   │ pytest   │ webhook │ metrics  │
-│ TestQL   │ Promet.  │ aider    │ TestQL   │ retry   │dashboards│
+│ TestQL   │ Promet.  │ SLLM     │ TestQL   │ retry   │dashboards│
 │ Probe    │ Alertmgr │ vallm    │ vallm    │         │          │
 └──────────┴──────────┴──────────┴──────────┴─────────┴──────────┘
         ↑                                                  │
@@ -60,7 +60,7 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
 cd /path/to/your/project
 pip install koru
 koru --init                # 1. set up .planfile/ + .koru/ + .gitignore
-koru                       # 2. print the LLM brief (paste into Cascade/Cursor/aider)
+koru                       # 2. print the LLM brief (paste into Cascade/Cursor/SLLM)
 koru --queue --loop        # 3. drain the queue (the agent works on each ticket)
 ```
 
@@ -418,7 +418,7 @@ Natural-language intake and housekeeping are built in:
 
 ```bash
 koru task "Dodaj feature importu raportów"
-koru agent --list          # show Windsurf/Cursor/Claude Code/aider/OpenRouter lanes
+koru agent --list          # show Windsurf/Cursor/SLLM/OpenRouter lanes
 koru agent                 # print and save the current LLM handoff prompt
 koru agent --launch        # launch the best available CLI agent when possible
 koru scan                  # auto-generate tickets from repo signals (TODOs, pytest errors)
@@ -878,7 +878,7 @@ koru artefacts elsewhere, please open an issue.
 
 ## LLM agent contract — koru as the gate
 
-When an LLM agent (Cascade, Cursor, aider, claude-code, local model, …)
+When an LLM agent (Cascade, Cursor, SLLM shell client, local model, ...)
 drives a koru-managed project, it must **read its instructions from
 koru, not from the human chat**.
 
@@ -1315,8 +1315,7 @@ The full documentation lives in [`docs/`](./docs/):
   - [`rebuild/`](./docs/llm-tools/rebuild/) — code evolution intelligence (git history walker)
   - [`mdflow/`](./docs/llm-tools/mdflow/) — markdown dependency analyzer
   - [`metrun/`](./docs/llm-tools/metrun/) — execution intelligence + bottleneck detection
-  - [`aider/`](./docs/llm-tools/aider/) — pair-programming agent
-  - [`claude-code/`](./docs/llm-tools/claude-code/) — Anthropic agent
+  - [`sllm`](../sllm/) — shell LLM clients (`aider`, `claude-code`, Codex, Gemini, Qwen, OpenCode, Devin)
   - [`cursor/`](./docs/llm-tools/cursor/) — Cursor IDE setup
   - [`testql/`](./docs/llm-tools/testql/) — declarative HTTP tests
 

@@ -1,29 +1,29 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.28s
+# generated in 0.34s
 # nodes: 256 | edges: 500 | modules: 26
 # CC̄=3.7
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:765  out:0  total:765
+    CC=0  in:772  out:0  total:772
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:180  out:9  total:189
   packages.coru.src.coru.repair.pipeline.run_repair_pipeline
     CC=33  in:0  out:43  total:43
-  src.koruide.ide.detect_running_ides
-    CC=13  in:30  out:10  total:40
   packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report
     CC=25  in:0  out:40  total:40
+  src.koruide.ide.detect_running_ides
+    CC=13  in:29  out:10  total:39
   packages.coru.src.coru.cli._attempt_plugin_self_heal
     CC=12  in:2  out:36  total:38
-  packages.coru.src.coru.repair.pipeline.manual_vsix_unpack
-    CC=14  in:2  out:34  total:36
   packages.coru.src.coru.supervisor.cli.cmd_start
     CC=15  in:1  out:35  total:36
-  packages.coru.src.coru.cli._auto_readiness_gate
-    CC=22  in:1  out:33  total:34
+  packages.coru.src.coru.repair.pipeline.manual_vsix_unpack
+    CC=14  in:2  out:34  total:36
   packages.coru.src.coru.cli._diagnose_lane
     CC=15  in:3  out:31  total:34
+  packages.coru.src.coru.cli._auto_readiness_gate
+    CC=22  in:1  out:33  total:34
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
   packages.coru.src.coru.repair.pipeline._emit
@@ -34,16 +34,16 @@ HUBS[20]:
     CC=7  in:5  out:24  total:29
   packages.coru.src.coru.repair.diagnostics.collect_problems_from_status
     CC=19  in:0  out:28  total:28
-  packages.coru.src.coru.repair.diagnostics._collect_plugin_alignment_problems
-    CC=19  in:1  out:26  total:27
   packages.coru.src.coru.cli._auto_ownership_gate
     CC=22  in:2  out:25  total:27
-  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
-    CC=2  in:25  out:1  total:26
+  packages.coru.src.coru.repair.diagnostics._collect_plugin_alignment_problems
+    CC=19  in:1  out:26  total:27
   packages.coru.src.coru.cli._run_default_autonomous
     CC=10  in:2  out:24  total:26
   packages.coru.src.coru.repair.projector._project_one_session
     CC=19  in:1  out:25  total:26
+  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
+    CC=2  in:25  out:1  total:26
 
 MODULES:
   packages.coru.src.coru.cli  [154 funcs]

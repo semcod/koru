@@ -213,6 +213,19 @@ koru autopilot handoff        # = koru --context --format markdown | koru autopi
 `koru autopilot daemon` is **idempotent**: if the socket already
 serves a healthy daemon, it exits 0 with `daemon already running`.
 
+## Testing split (koru vs gillm)
+
+Low-level GUI injection (xdotool / wtype / ydotool, clipboard paste,
+calibrated OS injector profiles) is implemented in the **`gillm`** PyPI
+package (`gillm.injection.*`). Unit tests for that behaviour live under
+`semcod/gillm/tests/` (`test_injector.py`, `test_os_injector.py`,
+`test_drive_backend.py`). Requires ``gillm>=0.1.5`` for
+``gillm.injection.drive_backend``.
+
+Koru keeps **integration** tests only: unix-socket daemon, IDE shims,
+CLI drive paths, plugin routing, and `tests/test_koruide_bridges.py` for
+legacy import aliases.
+
 ## Phases
 
 | Phase | Scope                                                             |

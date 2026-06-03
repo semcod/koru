@@ -33,7 +33,7 @@ c2004 monorepo uses ticket-driven workflow. Use YOUR LLM (Cursor's), not OpenRou
 
 ## Constraints
 - Do NOT modify generated code: **/*_pb2*.py, archive/**
-- Do NOT call `redsl improve`, `llx fix`, `aider` (those use OpenRouter)
+- Do NOT call `redsl improve`, `llx fix`, shell clients via `sllm` (those use external LLM automation)
 - Always include regression test
 - Patch ≤ 80 lines diff per ticket
 

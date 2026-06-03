@@ -8,6 +8,8 @@ if [ -n "${KORU_PYTHON:-}" ]; then
   PYTHON="$KORU_PYTHON"
 elif [ -x "$ROOT/.venv/bin/python" ]; then
   PYTHON="$ROOT/.venv/bin/python"
+elif [ -x "./.venv/bin/python" ]; then
+  PYTHON="./.venv/bin/python"
 else
   PYTHON="python3"
 fi

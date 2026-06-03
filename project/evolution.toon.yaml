@@ -1,4 +1,4 @@
-# code2llm/evolution | 5283 func | 513f | 2026-06-03
+# code2llm/evolution | 5226 func | 510f | 2026-06-03
 # generated in 0.02s
 
 NEXT[10] (ranked by impact):
@@ -10,49 +10,49 @@ NEXT[10] (ranked by impact):
       WHY: 1621L, 0 classes, max CC=13
       EFFORT: ~4h  IMPACT: 21073
 
-  [3] !! SPLIT           src/koru/autonomous_cycle.py
-      WHY: 1443L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 20202
-
-  [4] !! SPLIT-FUNC      run_repair_pipeline  CC=33  fan=22
+  [3] !! SPLIT-FUNC      run_repair_pipeline  CC=33  fan=22
       WHY: CC=33 exceeds 15
       EFFORT: ~1h  IMPACT: 726
 
-  [5] !! SPLIT-FUNC      check_lane_terminal_socket_alignment  CC=32  fan=19
+  [4] !! SPLIT-FUNC      check_lane_terminal_socket_alignment  CC=32  fan=19
       WHY: CC=32 exceeds 15
       EFFORT: ~1h  IMPACT: 608
 
-  [6] !! SPLIT-FUNC      check_runtime_consistency  CC=27  fan=21
+  [5] !! SPLIT-FUNC      check_runtime_consistency  CC=27  fan=21
       WHY: CC=27 exceeds 15
       EFFORT: ~1h  IMPACT: 567
 
-  [7] !  SPLIT-FUNC      _auto_ownership_gate  CC=22  fan=20
+  [6] !  SPLIT-FUNC      _auto_ownership_gate  CC=22  fan=20
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 440
 
-  [8] !  SPLIT-FUNC      _live_daemon_instance  CC=20  fan=18
+  [7] !  SPLIT-FUNC      _live_daemon_instance  CC=20  fan=18
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 360
 
-  [9] !  SPLIT-FUNC      _auto_readiness_gate  CC=22  fan=16
+  [8] !  SPLIT-FUNC      _auto_readiness_gate  CC=22  fan=16
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 352
 
-  [10] !  SPLIT-FUNC      _installed_extension_build_sha  CC=22  fan=16
+  [9] !  SPLIT-FUNC      _installed_extension_build_sha  CC=22  fan=16
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 352
+
+  [10] !! SPLIT-FUNC      collect_problems_from_manage_report  CC=25  fan=14
+      WHY: CC=25 exceeds 15
+      EFFORT: ~1h  IMPACT: 350
 
 
 RISKS[3]:
   ⚠ Splitting packages/coru/src/coru/cli.py may break 159 import paths
+  ⚠ Splitting tree.txt may break 0 import paths
   ⚠ Splitting src/koru/scan.py may break 61 import paths
-  ⚠ Splitting src/koru/autonomous_cycle.py may break 46 import paths
 
 METRICS-TARGET:
   CC̄:          3.7 → ≤2.6
   max-CC:      33 → ≤16
   god-modules: 37 → 0
-  high-CC(≥15): 33 → ≤16
+  high-CC(≥15): 35 → ≤17
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

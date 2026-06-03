@@ -1,11 +1,11 @@
 # LLM Agent Guide — koru-driven repositories
 
-> **Audience:** LLM agent (Windsurf, Cursor, Claude Code, aider). Read this
+> **Audience:** LLM agent (Windsurf, Cursor, Claude Code, SLLM shell clients). Read this
 > document before the first session in any **koru-driven repository**.
 >
 > **TL;DR:** use `task tickets:next` as the entry point, edit code, validate
 > with `task quality:regix:local` + pytest, commit. **By default**, do NOT
-> invoke remote LLM APIs (`redsl improve`, `llx fix`, `aider`) — koru repos
+> invoke remote LLM APIs (`redsl improve`, `llx fix`, shell clients via `sllm`) — koru repos
 > use **your** LLM (the IDE's, e.g. Windsurf). The OpenRouter path exists as
 > an **opt-in automation lane** for infrastructure tests and headless
 > auto-fixes.
@@ -89,7 +89,7 @@ Jeśli MCP nie skonfigurowane — używaj CLI (`planfile ticket show ...`).
 |---|---|
 | `redsl improve` | Domyślny workflow nie potrzebuje OpenRouter. Używaj tylko w opt-in automation lane lub przy jawnej prośbie usera. |
 | `llx fix` | Jak wyżej. |
-| `aider` | Jak wyżej. |
+| shell clients via `sllm` | Jak wyżej. |
 | `vallm validate` (tier-2) | Wywołuje LLM-as-judge → kosztuje. Używaj tylko gdy ticket dotyczy walidacji ścieżki LLM-backed. |
 | `requests.get(<public URL>)` | Brak kontroli, nie rób network calls. |
 

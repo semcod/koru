@@ -76,6 +76,7 @@ def test_contract_drive_legacy() -> None:
                 "submit": False,
                 "ide": "cursor",
                 "require_plugin": True,
+                "strategy_hint": None,
             },
         ),
     ]
