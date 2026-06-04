@@ -8,6 +8,7 @@ import {
   createIdeBridgeExtension,
   type IdeBridgeExtensionConfig,
 } from "./_shared/extension-wrapper";
+import { isVscodiumHost } from "./ides/vscodium-host";
 
 const VSCODIUM_BRIDGE_OPTIONS: BridgeOptions = {
   extensionPackageId: "semcod.koru-autopilot-vscodium",
@@ -22,11 +23,6 @@ const VSCODIUM_BRIDGE_OPTIONS: BridgeOptions = {
     "workbench.action.reloadExtensions",
   ],
 };
-
-function isVscodiumHost(appName: string): boolean {
-  const lowered = appName.toLowerCase();
-  return lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss") || lowered === "";
-}
 
 const VSCODIUM_EXTENSION_CONFIG: IdeBridgeExtensionConfig = {
   bridgeOptions: VSCODIUM_BRIDGE_OPTIONS,

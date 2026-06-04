@@ -326,6 +326,12 @@ def allow_keyboard_autopilot_fallback() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def allow_gillm_autopilot_fallback() -> bool:
+    """Opt-in Gillm GuiDriver fallback when the VSIX plugin drive fails."""
+    raw = os.environ.get("KORU_AUTOPILOT_GILLM_FALLBACK", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 def prefer_keyboard_autopilot() -> bool:
     for key in ("KORU_AUTOPILOT_PREFER_KEYBOARD", "KORU_AUTOPILOT_VISIBLE_TYPING"):
         if os.environ.get(key, "").strip().lower() in {"1", "true", "yes", "on"}:
@@ -354,6 +360,8 @@ def plugin_required_for_ide(autopilot_ide: str) -> bool:
     if ide != "auto" and not supports_vscode_extension_plugin(ide):
         return False
     if allow_keyboard_autopilot_fallback() or prefer_keyboard_autopilot():
+        return False
+    if allow_gillm_autopilot_fallback():
         return False
     if keyboard_fallback_when_plugin_missing(autopilot_ide):
         return False

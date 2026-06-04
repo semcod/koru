@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.activity_log import activity, configure_nfo_activity_log
+from koru.env_flags import env_disabled as _env_disabled
 
 
 def setup_autonomous_session(
@@ -48,7 +49,7 @@ def setup_autonomous_session(
         },
     )
     if reexec_argv := project_venv_reexec_argv(project):
-        env = dict(os.environ)
+        env = project_venv_reexec_env(project)
         env["KORU_AUTONOMOUS_REEXECED"] = "1"
         stdio_info(
             f"koru autonomous: switching to project venv: {' '.join(reexec_argv)}",
@@ -85,9 +86,6 @@ def _path_is_relative_to(path: Path, parent: Path) -> bool:
     return True
 
 
-from koru.env_flags import env_disabled as _env_disabled
-
-
 def project_venv_reexec_argv(project: Path) -> list[str] | None:
     """Return argv for re-execing autonomous mode inside the repo-local venv."""
     if os.environ.get("KORU_AUTONOMOUS_REEXECED") or _env_disabled("KORU_AUTO_REEXEC"):
@@ -105,6 +103,22 @@ def project_venv_reexec_argv(project: Path) -> list[str] | None:
         return None
 
     return [str(local_koru), *sys.argv[1:]]
+
+
+def project_venv_reexec_env(
+    project: Path,
+    *,
+    base_env: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Return an env aligned with the repo-local virtualenv for ``execvpe``."""
+    env = dict(os.environ if base_env is None else base_env)
+    local_venv = (project / ".venv").resolve()
+    local_bin = local_venv / "bin"
+    old_path = env.get("PATH", "")
+    parts = [part for part in old_path.split(os.pathsep) if part and part != str(local_bin)]
+    env["VIRTUAL_ENV"] = str(local_venv)
+    env["PATH"] = os.pathsep.join([str(local_bin), *parts])
+    return env
 
 
 def project_venv_warning_lines(project: Path) -> list[str]:
@@ -476,6 +490,7 @@ def handle_autonomous_interrupt(
 __all__ = [
     "StopSignalState",
     "build_and_log_startup_probe",
+    "project_venv_reexec_env",
     "project_venv_warning_lines",
     "setup_autonomous_session",
     "setup_autopilot_daemon",

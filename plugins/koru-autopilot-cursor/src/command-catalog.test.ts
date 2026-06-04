@@ -13,6 +13,11 @@ function testClassifiesCursorSubmitAndPaste(): void {
     "startComposerPrompt2 is fast-path-only, not paste",
   );
   assert(classifyCommand("workbench.action.chat.submit") === "submit", "chat.submit → submit");
+  assert(
+    classifyCommand("workbench.action.chat.stopListeningAndSubmit") === "submit",
+    "stopListeningAndSubmit → submit",
+  );
+  assert(classifyCommand("koruAutopilot.sendChat") === "submit", "koruAutopilot.sendChat → submit");
 }
 
 function testFocusOpenVsInput(): void {

@@ -15,7 +15,7 @@ from koruide.command_catalog_store import (
     command_catalog_enabled,
     parse_hello_command_catalog,
 )
-from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import normalize_ide_id
 from koruide.protocol import Message, ack, error, MIN_PLUGIN_PROTOCOL_VERSION
 

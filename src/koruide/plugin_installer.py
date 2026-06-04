@@ -385,16 +385,23 @@ def _newest_existing_vsix(candidates: Iterable[Path]) -> Path | None:
 
 def _resolve_ide_command(ide: str) -> str | None:
     try:
-        from koru.autopilot.install_plugin_cli import _running_editor_bin_for_ide
+        from koru.autopilot.install_plugin_cli import resolve_plugin_editor_bin
 
-        running = _running_editor_bin_for_ide(ide)
-        if running:
-            return running
+        return resolve_plugin_editor_bin(ide)
+    except RuntimeError:
+        return None
     except Exception:  # noqa: BLE001 - install path may run without full koru tree
         pass
     for name in _IDE_COMMANDS.get(ide, ()):
         resolved = shutil.which(name)
-        if resolved:
+        if not resolved:
+            continue
+        try:
+            from koru.autopilot.install_plugin_cli import _editor_bin_usable_for_cli_install
+
+            if _editor_bin_usable_for_cli_install(resolved):
+                return resolved
+        except Exception:  # noqa: BLE001
             return resolved
     return None
 

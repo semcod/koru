@@ -1,17 +1,13 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.34s
-# nodes: 256 | edges: 500 | modules: 26
-# CC̄=3.7
+# generated in 0.22s
+# nodes: 261 | edges: 500 | modules: 25
+# CC̄=3.6
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
     CC=0  in:772  out:0  total:772
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:180  out:9  total:189
-  packages.coru.src.coru.repair.pipeline.run_repair_pipeline
-    CC=33  in:0  out:43  total:43
-  packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report
-    CC=25  in:0  out:40  total:40
   src.koruide.ide.detect_running_ides
     CC=13  in:29  out:10  total:39
   packages.coru.src.coru.cli._attempt_plugin_self_heal
@@ -20,30 +16,34 @@ HUBS[20]:
     CC=15  in:1  out:35  total:36
   packages.coru.src.coru.repair.pipeline.manual_vsix_unpack
     CC=14  in:2  out:34  total:36
-  packages.coru.src.coru.cli._diagnose_lane
-    CC=15  in:3  out:31  total:34
   packages.coru.src.coru.cli._auto_readiness_gate
     CC=22  in:1  out:33  total:34
+  packages.coru.src.coru.cli._diagnose_lane
+    CC=15  in:3  out:31  total:34
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
-  packages.coru.src.coru.repair.pipeline._emit
-    CC=2  in:29  out:1  total:30
   packages.coru.src.coru.cli._lane_status_payload
     CC=14  in:10  out:20  total:30
   packages.coru.src.coru.cli._run_lane_repair
     CC=7  in:5  out:24  total:29
+  packages.coru.src.coru.repair.pipeline._emit
+    CC=2  in:27  out:1  total:28
   packages.coru.src.coru.repair.diagnostics.collect_problems_from_status
     CC=19  in:0  out:28  total:28
   packages.coru.src.coru.cli._auto_ownership_gate
     CC=22  in:2  out:25  total:27
   packages.coru.src.coru.repair.diagnostics._collect_plugin_alignment_problems
     CC=19  in:1  out:26  total:27
-  packages.coru.src.coru.cli._run_default_autonomous
-    CC=10  in:2  out:24  total:26
+  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
+    CC=2  in:26  out:1  total:27
   packages.coru.src.coru.repair.projector._project_one_session
     CC=19  in:1  out:25  total:26
-  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
-    CC=2  in:25  out:1  total:26
+  packages.coru.src.coru.cli._run_default_autonomous
+    CC=10  in:2  out:24  total:26
+  packages.coru.src.coru.cli._maybe_reexec_into_project_python
+    CC=12  in:1  out:25  total:26
+  packages.coru.src.coru.cli._terminal_shell_context_fallback
+    CC=21  in:1  out:24  total:25
 
 MODULES:
   packages.coru.src.coru.cli  [154 funcs]
@@ -61,9 +61,11 @@ MODULES:
     _default_runner  CC=1  out:2
     _detect_running_plugin_ides  CC=4  out:2
     _local_package_paths  CC=5  out:7
-    sync_ecosystem  CC=12  out:13
+    sync_ecosystem  CC=14  out:13
     sync_python_packages  CC=6  out:5
-  packages.coru.src.coru.repair.diagnostics  [15 funcs]
+  packages.coru.src.coru.repair.diagnostics  [19 funcs]
+    _collect_manage_action_problems  CC=4  out:3
+    _collect_manage_issue_problems  CC=4  out:3
     _collect_plugin_alignment_problems  CC=19  out:26
     _dedupe_problems  CC=3  out:3
     _drive_intent_unverified_problem  CC=8  out:11
@@ -72,21 +74,19 @@ MODULES:
     _installed_extension_dir  CC=4  out:6
     _paste_risk_problem  CC=5  out:7
     _plugin_row_for_ide  CC=7  out:7
-    _read_package_build_sha  CC=6  out:7
-    _submit_unverified_problem  CC=10  out:15
   packages.coru.src.coru.repair.events  [1 funcs]
     aggregate_id_for  CC=1  out:3
-  packages.coru.src.coru.repair.pipeline  [10 funcs]
+  packages.coru.src.coru.repair.pipeline  [25 funcs]
+    _apply_round_actions  CC=1  out:1
+    _apply_round_resolution  CC=22  out:4
+    _attempt_ensure_daemon  CC=7  out:6
+    _clear_plugin_not_connected_if_ready  CC=5  out:1
     _emit  CC=2  out:1
+    _emit_problems_detected  CC=2  out:2
+    _emit_session_finished  CC=2  out:3
+    _emit_session_started  CC=1  out:1
     _execute_step  CC=19  out:20
     _expected_build_from_problems  CC=9  out:7
-    _installed_extension_dir  CC=4  out:6
-    _poll_plugin_ready  CC=6  out:8
-    _resolve_repo_vsix  CC=6  out:6
-    _run_reload_and_connect  CC=8  out:11
-    manual_vsix_unpack  CC=14  out:34
-    plugin_build_aligned  CC=4  out:5
-    run_repair_pipeline  CC=33  out:43
   packages.coru.src.coru.repair.projector  [4 funcs]
     _project_one_session  CC=19  out:25
     format_case_llm  CC=5  out:5
@@ -106,32 +106,25 @@ MODULES:
     run_repair_with_events  CC=3  out:7
   packages.coru.src.coru.repair_registry  [1 funcs]
     run_repair_pipeline  CC=1  out:1
-  packages.coru.src.coru.supervisor.cli  [18 funcs]
+  packages.coru.src.coru.supervisor.cli  [10 funcs]
     _print_lanes_human  CC=6  out:6
-    _register_daemon_commands  CC=1  out:5
-    _register_install_unit_command  CC=1  out:4
-    _register_registry_commands  CC=1  out:19
-    _register_start_command  CC=1  out:10
     _resolve_koru_argv  CC=3  out:3
-    build_parser  CC=1  out:6
     cmd_active  CC=6  out:14
-    cmd_daemon  CC=3  out:7
     cmd_lanes  CC=2  out:5
-  packages.coru.src.coru.supervisor.editor_cli  [1 funcs]
-    resolve_editor_cli  CC=9  out:8
-  packages.coru.src.coru.supervisor.paths  [3 funcs]
+    cmd_refresh  CC=4  out:16
+    cmd_register  CC=4  out:11
+    cmd_remove  CC=2  out:4
+    cmd_start  CC=15  out:35
+    cmd_status  CC=4  out:10
+    cmd_stop  CC=3  out:4
+  packages.coru.src.coru.supervisor.paths  [2 funcs]
     registry_path  CC=1  out:1
-    state_dir  CC=5  out:11
     supervisor_url  CC=3  out:5
-  packages.coru.src.coru.supervisor.registry  [9 funcs]
-    _ensure_state_dir  CC=1  out:2
-    _iso_now  CC=1  out:4
-    _registry_lock  CC=2  out:7
+  packages.coru.src.coru.supervisor.registry  [5 funcs]
     active_lane_pair  CC=2  out:2
     load_registry  CC=5  out:11
     register_lane  CC=14  out:15
     remove_lane  CC=3  out:5
-    save_registry  CC=2  out:8
     set_active_lane  CC=2  out:5
   packages.coru.src.coru.supervisor.service  [3 funcs]
     read_supervisor_pid  CC=3  out:6
@@ -192,8 +185,8 @@ EDGES:
   packages.coru.src.coru.ecosystem.sync_python_packages → packages.coru.src.coru.ecosystem._local_package_paths
   packages.coru.src.coru.ecosystem._default_runner → src.koru.wizard.gui.static.wizard.list
   packages.coru.src.coru.ecosystem._detect_running_plugin_ides → src.koruide.ide.detect_running_ides
-  packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem._detect_running_plugin_ides
   packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem.sync_python_packages
+  packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem._detect_running_plugin_ides
   packages.coru.src.coru.cli._current_log_format → packages.coru.src.coru.cli._normalize_log_format
   packages.coru.src.coru.cli._emit_log → packages.coru.src.coru.cli._current_log_format
   packages.coru.src.coru.cli._emit_log → scripts.koru-soak-monitor.print

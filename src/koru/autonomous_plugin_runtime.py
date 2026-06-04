@@ -93,12 +93,19 @@ def plugin_status_reason(client: Any, autopilot_ide: str) -> str:
 
 
 def plugin_reason_requires_reload(reason: str) -> bool:
+    """True when the running extension host must reload to pick up a new VSIX.
+
+    An empty plugin list after an installed/already-installed VSIX commonly
+    means the extension host has not loaded the plugin yet; reload first, then
+    wait for the plugin to reconnect.
+    """
     text = reason.lower()
     return (
-        "plugin version mismatch" in text
-        or "plugin build mismatch" in text
-        or "plugin protocol" in text
+        "connected autopilot plugin version mismatch" in text
+        or "connected autopilot plugin build mismatch" in text
         or "plugin list is empty" in text
+        or "no connected autopilot plugin" in text
+        or "plugin protocol" in text
     )
 
 
@@ -107,9 +114,15 @@ def plugin_blocker_line(reason: str, autopilot_ide: str) -> str:
 
     blocker = plugin_skip_code(reason)
     recovery_actions = {
-        "plugin_version_mismatch": "reload IDE window after current VSIX install, then reconnect plugin",
-        "plugin_status_unavailable": "check daemon socket and run `koru autopilot status --explain`",
-        "plugin_not_connected": "run `Developer: Reload Window`, then `koru: Connect autopilot daemon`",
+        "plugin_version_mismatch": (
+            "reload IDE window after current VSIX install, then reconnect plugin"
+        ),
+        "plugin_status_unavailable": (
+            "check daemon socket and run `koru autopilot status --explain`"
+        ),
+        "plugin_not_connected": (
+            "run `Developer: Reload Window`, then `koru: Connect autopilot daemon`"
+        ),
     }
     action = recovery_actions.get(blocker, "reload/reconnect the autopilot plugin")
     return (

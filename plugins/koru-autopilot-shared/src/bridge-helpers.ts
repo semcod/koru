@@ -25,6 +25,21 @@ const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.quickchat.openinchatview",
 ]);
 
+const UNSAFE_ANTIGRAVITY_FOCUS_OPEN_COMMANDS = new Set([
+  "antigravity.openagent",
+]);
+
+const UNSAFE_CURSOR_FOCUS_OPEN_COMMANDS = new Set([
+  "workbench.panel.chat",
+  "composer.openaspane",
+  "aichat.newchataction",
+  "workbench.action.toggleauxiliarybar",
+  "workbench.view.chat.toggle",
+  "workbench.panel.chat.view.copilot.focus",
+  "workbench.panel.aichat.view.copilot.focus",
+  "composer.focuscomposer",
+]);
+
 export function isAllowedFocusOpenCommand(command: unknown): command is string {
   return (
     typeof command === "string" &&
@@ -47,7 +62,22 @@ export function sanitizeFocusOpenCandidates(commands: readonly string[]): string
 
 export function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
   const globallySafe = commands.filter((command) => !isGloballyUnsafeFocusOpenCommand(command));
-  if (ide !== "vscode" && ide !== "vscodium") {
+  const normalizedIde = ide.trim().toLowerCase();
+  if (normalizedIde === "cursor") {
+    return globallySafe.filter((command) => {
+      const normalized = command.trim().toLowerCase();
+      if (UNSAFE_CURSOR_FOCUS_OPEN_COMMANDS.has(normalized)) {
+        return false;
+      }
+      return !normalized.includes("panel.chat.view") && !normalized.includes("panel.aichat.view");
+    });
+  }
+  if (normalizedIde === "antigravity") {
+    return globallySafe.filter(
+      (command) => !UNSAFE_ANTIGRAVITY_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()),
+    );
+  }
+  if (normalizedIde !== "vscode" && normalizedIde !== "vscodium") {
     return globallySafe;
   }
   return globallySafe.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
@@ -63,7 +93,10 @@ export function isSpecificChatInputFocusCommand(command: string | undefined): bo
     return false;
   }
   const normalized = command.toLowerCase();
-  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
+  if (normalized.includes("openagent") || normalized.includes("openask") || normalized.includes("agentsidepanel.open")) {
+    return false;
+  }
+  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade") || normalized.includes("agent");
 }
 
 const TOGGLING_FOCUS_OPEN_COMMANDS: ReadonlySet<string> = new Set([
@@ -81,7 +114,13 @@ export function isTogglingFocusOpenCommand(command: string | undefined): boolean
   if (!command) {
     return false;
   }
-  return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
+  const normalized = command.trim().toLowerCase();
+  if (TOGGLING_FOCUS_OPEN_COMMANDS.has(normalized)) {
+    return true;
+  }
+  // Cursor panel view focus commands toggle visibility when the chat column is
+  // already open — users see the Agent/Glass column briefly disappear.
+  return normalized.includes("panel.chat.view") || normalized.includes("panel.aichat.view");
 }
 
 export function isVSCodiumSafeSubmitCommand(command: string): boolean {

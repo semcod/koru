@@ -843,8 +843,17 @@ wheels = [
 ]
 
 [[package]]
+name = "fullm"
+version = "0.1.22"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/97/020e0ad6f3cff75d6b3accb8cb434c4a0830d87ab86be7397712712574a7/fullm-0.1.22.tar.gz", hash = "sha256:95caee1e25ce26f753d8458f338fd2621102a037cef6c71b12c11e8dbc9717e8", size = 17244, upload-time = "2026-06-03T16:27:49.005Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/0f/6ba057fd9faf419368fd714f2021415ba4dd4bec5101986a24874d7e2eb5/fullm-0.1.22-py3-none-any.whl", hash = "sha256:eaab2e043a953d9cc39b3498f269088f9df598cf86223f785bfc09350c117319", size = 20172, upload-time = "2026-06-03T16:27:47.577Z" },
+]
+
+[[package]]
 name = "gillm"
-version = "0.1.4"
+version = "0.1.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mss" },
@@ -852,9 +861,9 @@ dependencies = [
     { name = "requests" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9d/90/9df5e3901adfefa6b3589c7ec8dbe742aab7f8ffff28bddb958bf9218f73/gillm-0.1.4.tar.gz", hash = "sha256:170c831422906484d58bc7718f59588681611d7d8f4d65ff0fb4426d909a3973", size = 29305, upload-time = "2026-06-03T12:48:55.673Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/14/52/bd014bc4f91dc6bad10907e0c6a1316ffd15b6e2d23300f1928268bbb11a/gillm-0.1.9.tar.gz", hash = "sha256:1fbdea847dcf01a828a3594d7cd992c49daaa2976110aa2e38e5568c106903db", size = 47152, upload-time = "2026-06-03T17:59:43.786Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/58/401a342b86cae6d986128427a93e43508864d56f8634cda50a41a1983223/gillm-0.1.4-py3-none-any.whl", hash = "sha256:e2e05256f026f189bc5b3d4bf1107185b9e233df382e36b0ca9849951d752ac5", size = 36087, upload-time = "2026-06-03T12:48:54.487Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/67/0a31a536d0b4c33a88b601ac21e9a54ecff72c43ce351a99f765049e06e7/gillm-0.1.9-py3-none-any.whl", hash = "sha256:47d84de9938d3e3997eed55482941695665d6205c3d3c0fe1c75a749a7ab5739", size = 51354, upload-time = "2026-06-03T17:59:42.445Z" },
 ]
 
 [[package]]
@@ -1468,7 +1477,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.309"
+version = "0.1.310"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1488,6 +1497,8 @@ all = [
     { name = "arq" },
     { name = "costs" },
     { name = "fastapi" },
+    { name = "fullm" },
+    { name = "gillm" },
     { name = "goal" },
     { name = "httpx" },
     { name = "hypothesis" },
@@ -1517,7 +1528,6 @@ all = [
     { name = "refurb" },
     { name = "ruff" },
     { name = "sentry-sdk" },
-    { name = "sllm" },
     { name = "structlog" },
     { name = "tagi" },
     { name = "tiktoken" },
@@ -1533,6 +1543,7 @@ api = [
 ]
 dev = [
     { name = "costs" },
+    { name = "gillm" },
     { name = "goal" },
     { name = "hypothesis" },
     { name = "mypy" },
@@ -1547,6 +1558,9 @@ dev = [
     { name = "ruff" },
     { name = "tagi" },
     { name = "types-pyyaml" },
+]
+fullm = [
+    { name = "fullm" },
 ]
 mesh = [
     { name = "websockets" },
@@ -1576,7 +1590,7 @@ queue = [
     { name = "redis" },
 ]
 sllm = [
-    { name = "sllm" },
+    { name = "fullm" },
 ]
 vision = [
     { name = "mss" },
@@ -1595,7 +1609,12 @@ requires-dist = [
     { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
     { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.115,<1.0" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115,<1.0" },
-    { name = "gillm", specifier = ">=0.1.3" },
+    { name = "fullm", marker = "extra == 'all'", specifier = ">=0.1.22" },
+    { name = "fullm", marker = "extra == 'fullm'", specifier = ">=0.1.22" },
+    { name = "fullm", marker = "extra == 'sllm'", specifier = ">=0.1.22" },
+    { name = "gillm", specifier = ">=0.1.9" },
+    { name = "gillm", marker = "extra == 'all'", specifier = ">=0.1.9" },
+    { name = "gillm", marker = "extra == 'dev'", specifier = ">=0.1.9" },
     { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.0" },
     { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27,<1.0" },
@@ -1657,8 +1676,6 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
     { name = "sentry-sdk", marker = "extra == 'all'", specifier = ">=2.18,<3.0" },
     { name = "sentry-sdk", marker = "extra == 'obs'", specifier = ">=2.18,<3.0" },
-    { name = "sllm", marker = "extra == 'all'", directory = "/home/tom/github/semcod/sllm" },
-    { name = "sllm", marker = "extra == 'sllm'", directory = "/home/tom/github/semcod/sllm" },
     { name = "structlog", marker = "extra == 'all'", specifier = ">=24.4,<26.0" },
     { name = "structlog", marker = "extra == 'obs'", specifier = ">=24.4,<26.0" },
     { name = "tagi", marker = "extra == 'all'", specifier = ">=0.49.0" },
@@ -1674,7 +1691,7 @@ requires-dist = [
     { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'watch'", specifier = ">=12.0,<17.0" },
 ]
-provides-extras = ["watch", "vision", "mesh", "observe", "dev", "api", "agent", "sllm", "obs", "queue", "quality", "all"]
+provides-extras = ["watch", "vision", "mesh", "observe", "dev", "api", "agent", "fullm", "sllm", "obs", "queue", "quality", "all"]
 
 [[package]]
 name = "libcst"
@@ -3492,28 +3509,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
 ]
-
-[[package]]
-name = "sllm"
-version = "0.1.6"
-source = { directory = "/home/tom/github/semcod/sllm" }
-
-[package.metadata]
-requires-dist = [
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "intract", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/intract" },
-    { name = "intract", marker = "extra == 'intent'", directory = "/home/tom/github/semcod/intract" },
-    { name = "llx", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/llx" },
-    { name = "nlp2dsl", marker = "extra == 'ecosystem'", directory = "/home/tom/github/wronai/nlp2dsl" },
-    { name = "nlp2dsl", marker = "extra == 'nlp'", directory = "/home/tom/github/wronai/nlp2dsl" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "proxym", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/proxym" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0,<10.0" },
-    { name = "redsl", marker = "extra == 'ecosystem'", directory = "/home/tom/github/semcod/redsl" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
-]
-provides-extras = ["nlp", "intent", "ecosystem", "dev"]
 
 [[package]]
 name = "smmap"

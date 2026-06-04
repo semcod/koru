@@ -6,9 +6,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from gillm.focus.wayland import WaylandLinuxStrategy
+
 from koru.decision_engine import build_decision_engine
 from korullm.strategies.ide_chat import IdeChatStrategy
-from koruos.strategies.wayland_linux import WaylandLinuxStrategy
 
 
 class DecisionEngineTests(unittest.TestCase):

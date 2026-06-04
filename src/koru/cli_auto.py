@@ -30,15 +30,21 @@ def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
 
 
 def _enable_auto_reload_reuse_window_for_auto() -> None:
-    """Let ``koru auto`` recover a cold VSIX plugin without manual reload.
+    """Let ``koru auto`` recover a cold VSIX plugin without fresh windows.
 
     The lower-level reload module keeps ``--reuse-window`` off by default
     because library callers may not be running the target project in the
-    target IDE. ``koru auto`` is an explicit autonomous IDE session, so its
-    startup path opts in unless the operator set a value already.
+    target IDE. ``koru auto`` opts in only when Koru is **not** running from
+    the target IDE integrated terminal — from there ``cursor -r`` tends to
+    spawn duplicate windows and command-palette automation is refused (would
+    type into the shell). Operators in an integrated terminal should reload
+    manually or run ``koru: Connect autopilot daemon``.
     """
+    from koruide.ide import detect_terminal_host_ide_id
+
+    if detect_terminal_host_ide_id() is not None:
+        return
     os.environ.setdefault("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
-    os.environ.setdefault("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
 
 
 def _auto_main(argv: list[str]) -> int:

@@ -195,7 +195,7 @@ def test_os_injector_no_profile_emits_activity_warn(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """try_drive_with_profile must call activity_warn when no calibration profile exists."""
-    from koruide import os_injector as oi
+    import gillm.injection.os_injector as oi
 
     monkeypatch.setattr(oi, "try_load_profile", lambda *_a, **_kw: None)
     warned: list[tuple] = []

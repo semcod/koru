@@ -15,7 +15,7 @@ from koru.environment_profile import (
     EnvironmentProfile,
     resolve_environment_profile,
 )
-from koruos import OsStrategy, resolve_active_os_strategy
+from gillm.focus import OsStrategy, resolve_active_os_strategy
 from korullm import (
     DriveFailureAssessment,
     LlmStrategy,
@@ -201,6 +201,12 @@ class EnvironmentDecisionEngine:
             f"os={self.os_strategy.id}; keyboard={caps.keyboard_tool or '-'}; "
             f"focus={','.join(caps.focus_methods) or '-'}"
         )
+
+    def recovery_hints_for_drive_reply(self, reply: dict[str, Any]) -> list[str]:
+        """Structured operator hints from gillm recovery layer."""
+        from koru.ide_adapters.gillm_recovery import recovery_hints_from_drive_reply
+
+        return recovery_hints_from_drive_reply(reply)
 
     def _window_name_hints(self) -> tuple[str, ...]:
         if self._ide_strategy is not None:

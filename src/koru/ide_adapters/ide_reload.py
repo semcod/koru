@@ -3,7 +3,7 @@
 This module orchestrates the *IDE-side* reload sequence
 (``Developer: Reload Window``). Every OS-level decision (which focus
 tool, which keyboard injector, Wayland-vs-X11 quirks) is delegated to
-:mod:`koruos` — the OS strategy is the single source of truth.
+:mod:`gillm.focus` — the OS strategy is the single source of truth.
 """
 
 from __future__ import annotations
@@ -15,9 +15,10 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from koru.ide_adapters.gillm_recovery import recovery_hints_for_ide_reload
 from koru.ide_adapters.shared import config_home_for_ide
 from koruide.ides import get_strategy as _get_ide_strategy
-from koruos import (
+from gillm.focus import (
     FocusOutcome,
     KeySequence,
     OsStrategy,
@@ -138,6 +139,13 @@ def _run(argv: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProce
 
 
 def _resolve_editor_cli(ide: str) -> str | None:
+    if ide in _VSCODE_FAMILY_IDES:
+        try:
+            from koru.autopilot.install_plugin_cli import resolve_plugin_editor_bin
+
+            return resolve_plugin_editor_bin(ide)
+        except RuntimeError:
+            pass
     for name in _editor_cli_candidates(ide):
         path = shutil.which(name)
         if path:
@@ -318,13 +326,9 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
     if not focused:
         wayland = "wayland" if _on_wayland() else "x11"
         if wayland == "wayland":
-            help_text = (
-                "Wayland: auto-focus requires wmctrl (with XWayland) or running "
-                "koru inside the IDE's integrated terminal. "
-                "Alternatively: 1) Install ydotool + wtype for keyboard injection; "
-                "2) Manually reload the IDE (Ctrl+Shift+P → 'Developer: Reload Window'); "
-                "3) Run 'koru: Connect autopilot daemon' after reload. "
-                "Or set KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to enable CLI reload fallback."
+            help_text = "\n".join(
+                f"- {hint}"
+                for hint in recovery_hints_for_ide_reload(wayland=True, focus_failed=True)
             )
         else:
             help_text = (
@@ -450,6 +454,12 @@ def _reload_explain_reuse_window_disabled(palette: IdeReloadOutcome) -> IdeReloa
     )
 
 
+def _running_from_integrated_ide_terminal() -> bool:
+    from koruide.ide import detect_terminal_host_ide_id
+
+    return detect_terminal_host_ide_id() is not None
+
+
 def detect_reload_command(
     ide: str,
     *,
@@ -466,6 +476,13 @@ def detect_reload_command(
         return "jetbrains_shortcut", None
     if config_home_for_ide(ide) is None:
         return None, "unknown config home"
+    if _running_from_integrated_ide_terminal():
+        return (
+            None,
+            "auto reload disabled from integrated IDE terminal; run "
+            "`Developer: Reload Window` manually or Command Palette → "
+            "`koru: Connect autopilot daemon`",
+        )
     if not command_palette_reload_enabled():
         if reuse_window_reload_enabled():
             return "reuse_window", None

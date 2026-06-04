@@ -56,7 +56,7 @@ def test_keyboard_fallback_when_plugin_missing_disabled(
 
 def test_reload_via_command_palette_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """OS strategy gets the focus + each key sequence; reload reports success."""
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     strategy = _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -109,7 +109,8 @@ def test_try_reload_does_not_call_reuse_window_by_default(
     """
     monkeypatch.delenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
-    from koruos.strategies.base import FocusOutcome
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -146,7 +147,8 @@ def test_try_reload_calls_reuse_window_when_opted_in(
 ) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", raising=False)
     monkeypatch.setenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
-    from koruos.strategies.base import FocusOutcome
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -177,6 +179,7 @@ def test_try_reload_calls_reuse_window_when_opted_in(
 def test_try_open_new_window_when_opted_in(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
     monkeypatch.setenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
     monkeypatch.setattr(ide_reload, "_resolve_editor_cli", lambda _ide: "/bin/echo")
     calls: list[list[str]] = []
@@ -202,6 +205,22 @@ def test_detect_reload_command_reports_disabled(monkeypatch: pytest.MonkeyPatch)
     assert reason == "auto reload disabled"
 
 
+def test_detect_reload_command_blocks_reuse_window_from_integrated_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
+    monkeypatch.setenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: True)
+    monkeypatch.setattr(
+        ide_reload,
+        "config_home_for_ide",
+        lambda _ide: Path("/tmp/cursor-config"),
+    )
+    method, reason = ide_reload.detect_reload_command("cursor", dry_run=False)
+    assert method is None
+    assert "integrated IDE terminal" in (reason or "")
+
+
 def test_await_plugin_handshake_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_RELOAD_VERIFY_PLUGIN", raising=False)
     ok, reason = ide_reload.await_plugin_handshake("vscode")
@@ -220,11 +239,11 @@ def _fake_os_strategy(
     """Patch the active OS strategy with a stub for ``ide_reload`` tests.
 
     The IDE-reload module delegates focus + keyboard injection entirely to
-    :func:`koruos.resolve_active_os_strategy`. Tests should patch *that*
+    :func:`gillm.focus.resolve_active_os_strategy`. Tests should patch *that*
     resolver — they must not poke ``shutil.which`` on the module any more
     because the OS-axis is the source of truth for environment probing.
     """
-    from koruos.strategies.base import OsCapabilities
+    from gillm.focus.strategy import OsCapabilities
 
     strategy = mock.Mock()
     strategy.id = "fake-os"
@@ -250,7 +269,7 @@ def test_focus_ide_window_delegates_to_os_strategy(
 ) -> None:
     """``_focus_ide_window`` must not branch on the environment itself; it
     asks the OS strategy and surfaces the strategy's chosen method."""
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -268,7 +287,7 @@ def test_focus_ide_window_rejects_integrated_terminal_for_non_vscode_family(
     """The integrated-terminal heuristic must only apply to IDEs that actually
     export ``TERM_PROGRAM=vscode``. JetBrains gets focused by xdotool/wmctrl
     only — never by the integrated-terminal alibi."""
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -283,7 +302,7 @@ def test_focus_ide_window_rejects_integrated_terminal_for_non_vscode_family(
 def test_focus_ide_window_accepts_integrated_terminal_for_cursor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -300,7 +319,7 @@ def test_reload_via_command_palette_uses_os_strategy_inject_keys(
 ) -> None:
     """All three keyboard steps (palette, type, confirm) must route through
     ``strategy.inject_keys`` — never through tool-specific subprocess calls."""
-    from koruos.strategies.base import FocusOutcome, KeySequence
+    from gillm.focus.strategy import FocusOutcome, KeySequence
 
     strategy = _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -332,7 +351,7 @@ def test_reload_via_command_palette_refuses_integrated_terminal_focus(
     """The TERM_PROGRAM=vscode alibi means the shell is inside the IDE, not
     that the command palette will receive literal text. Do not type reload
     commands into the user's terminal."""
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     strategy = _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -357,7 +376,7 @@ def test_reload_via_command_palette_explains_wayland_failure(
     """When the OS strategy cannot focus, the error message must mention the
     strategy id + which session type was detected so the operator knows the
     next action."""
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,
@@ -376,7 +395,7 @@ def test_reload_via_command_palette_aborts_when_no_keyboard_tool(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """If the OS strategy can't inject keys at all, reload must not attempt."""
-    from koruos.strategies.base import FocusOutcome
+    from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
         ide_reload_module=ide_reload,

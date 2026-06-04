@@ -250,19 +250,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-7212e0d5
-    name: Fix string-concat issues
-    description: Resolve 4 string-concat issues in src/koru/doctor.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - src/koru/doctor.py
-    rule_id: string-concat
-    count: 4
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-b9312e6e
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/dotenv_loader.py

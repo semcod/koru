@@ -74,7 +74,8 @@ from koru.autopilot.lane_context import (
     resolve_client_socket_path,
     resolve_lane_context,
 )
-from koru.autopilot.injector import Injector
+from gillm.injection.errors import InjectorError
+from gillm.injection.injector import Injector
 from koru.control_commands import shell_command
 
 

@@ -4,6 +4,7 @@ import { debugLog } from "./bridge-config";
 import {
   buildPasteDirectCommands,
   captureEditorSnapshot,
+  decideSubmitCleared,
   filterRegistered,
   pasteLandedInEditor,
   type ProbeCacheEntry,
@@ -35,6 +36,153 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     }
     const lower = command.toLowerCase();
     return lower.includes("startcomposerprompt");
+  }
+
+  protected cursorPreSubmitProbeEmptyBlocksSubmit(
+    observed: string,
+    pastedText: string,
+    refocusOk: boolean
+  ): boolean {
+    if (!refocusOk || !pastedText) {
+      return false;
+    }
+    const trimmedObs = observed.trim();
+    const trimmedPast = pastedText.trim();
+    return trimmedPast.length >= 4 && trimmedObs.length === 0;
+  }
+
+  protected cursorPreSubmitProbeMismatchBlocksSubmit(
+    observed: string,
+    pastedText: string,
+    refocusOk: boolean
+  ): boolean {
+    if (!refocusOk || !pastedText) {
+      return false;
+    }
+    const trimmedObs = observed.trim();
+    const trimmedPast = pastedText.trim();
+    if (this.cursorPreSubmitProbeEmptyBlocksSubmit(observed, pastedText, refocusOk)) {
+      return true;
+    }
+    if (trimmedPast.length < 32) {
+      return false;
+    }
+    const decision = decideSubmitCleared(observed, pastedText);
+    if (decision.tailMatched) {
+      return false;
+    }
+    const threshold = Math.min(64, Math.floor(trimmedPast.length * 0.2));
+    return trimmedObs.length < threshold;
+  }
+
+  protected async confirmCursorChatInputBeforeSubmit(
+    pastedText: string | undefined,
+    route: string
+  ): Promise<CommandOutcome> {
+    const refocus = await this.focusChatInput();
+    this.traceOperation({
+      op: "submit",
+      route,
+      ok: refocus.ok,
+      command: refocus.command,
+      reason: refocus.ok
+        ? undefined
+        : "Cursor submit commands no-op unless the chat textarea is focused",
+    });
+    await this.sleep(this.probeFocusDelayMs());
+    const shouldProbeInput = Boolean(pastedText) && (this.probeLadderEnabled() || !refocus.ok);
+    if (pastedText && shouldProbeInput) {
+      let observed = await this.probeChatInputContents();
+      if (
+        observed !== null &&
+        this.cursorPreSubmitProbeEmptyBlocksSubmit(observed, pastedText, refocus.ok)
+      ) {
+        await this.sleep(Math.max(this.probeFocusDelayMs(), 120));
+        const retry = await this.probeChatInputContents();
+        if (retry !== null) {
+          observed = retry;
+        }
+      }
+      const decision = observed === null ? null : decideSubmitCleared(observed, pastedText);
+      if (observed !== null && decision?.tailMatched) {
+        this.traceOperation({
+          op: "submit",
+          route: `${route}:input-probe`,
+          ok: true,
+          reason: refocus.ok
+            ? "chat input contains the pasted prompt; proceeding to submit"
+            : "chat input still contains the pasted prompt; proceeding despite failed focus command",
+          detail: {
+            focusCommandOk: refocus.ok,
+            observedLength: observed.trim().length,
+            probeRequired: this.probeLadderEnabled(),
+          },
+        });
+        return {
+          ok: true,
+          command: refocus.command || "cursor-input-probe",
+          reason: "input probe matched pasted prompt",
+        };
+      }
+      if (observed === null) {
+        this.traceOperation({
+          op: "submit",
+          route: `${route}:input-probe-unreadable`,
+          ok: refocus.ok,
+          reason: refocus.ok
+            ? "chat input probe unreadable; trusting focus command before submit"
+            : "chat input probe unreadable and focus command failed",
+          detail: { focusCommandOk: refocus.ok },
+        });
+      } else if (
+        pastedText &&
+        this.cursorPreSubmitProbeMismatchBlocksSubmit(observed, pastedText, refocus.ok)
+      ) {
+        this.traceOperation({
+          op: "submit",
+          route: `${route}:input-probe-mismatch`,
+          ok: false,
+          reason: this.cursorPreSubmitProbeEmptyBlocksSubmit(observed, pastedText, refocus.ok)
+            ? "chat input probe read empty after paste; refusing submit until Glass/chat input is focused"
+            : "chat input probe is far shorter than the pasted prompt; refusing submit until chat input is focused",
+          detail: {
+            focusCommandOk: refocus.ok,
+            observedLength: observed.trim().length,
+            pastedLength: pastedText.trim().length,
+            probeRequired: this.probeLadderEnabled(),
+          },
+        });
+        return {
+          ok: false,
+          command: refocus.command,
+          reason: this.cursorPreSubmitProbeEmptyBlocksSubmit(observed, pastedText, refocus.ok)
+            ? "Cursor chat input probe was empty (focus likely on editor/terminal, not chat)"
+            : "Cursor chat input probe did not reflect the pasted prompt (likely wrong surface focused)",
+        };
+      } else {
+        this.traceOperation({
+          op: "submit",
+          route: `${route}:input-probe-mismatch`,
+          ok: refocus.ok,
+          reason: refocus.ok
+            ? "chat input probe did not match pasted prompt; trusting focus command before submit"
+            : "Cursor chat input focus could not be confirmed before submit",
+          detail: {
+            focusCommandOk: refocus.ok,
+            observedLength: observed.trim().length,
+            probeRequired: this.probeLadderEnabled(),
+          },
+        });
+      }
+    }
+    if (refocus.ok) {
+      return refocus;
+    }
+    return {
+      ok: false,
+      command: refocus.command,
+      reason: "Cursor chat input focus could not be confirmed before submit",
+    };
   }
 
   protected async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {

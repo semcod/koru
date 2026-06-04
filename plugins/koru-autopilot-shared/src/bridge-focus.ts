@@ -48,7 +48,10 @@ export abstract class SharedAutopilotBridgeFocus extends SharedAutopilotBridgeFo
   }
 
   private async performOpenChatPanel(reason: string): Promise<FocusOutcome> {
-    this.resetOperationTrace();
+    // Inject/drive traces must survive chat open; only reset for explicit UI commands.
+    if (reason === "command" || reason === "probe") {
+      this.resetOperationTrace();
+    }
     this.traceOperation({
       op: "focus_open",
       route: "plugin",

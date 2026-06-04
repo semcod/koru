@@ -10,18 +10,12 @@
 import type { ProbeCacheEntry } from "../probe-ladder";
 import type { IdeStrategy } from "./ide-strategy";
 import { registerStrategy } from "./registry";
+import { isVscodiumHost } from "./vscodium-host";
 
 const ID = "vscodium";
 
 function detect(appName: string): string | undefined {
-  const lowered = appName.toLowerCase();
-  return lowered === ""
-    || lowered.includes("vscodium")
-    || lowered.includes("codium")
-    || lowered.includes("code - oss")
-    || lowered.includes("code-oss")
-    ? ID
-    : undefined;
+  return isVscodiumHost(appName) ? ID : undefined;
 }
 
 function pasteDirectCommandsPrefix(): string[] {

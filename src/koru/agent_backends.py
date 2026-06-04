@@ -61,13 +61,22 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
         primary_code="src/koru/mcp_server.py",
     ),
     AgentBackendProfile(
+        id="gillm_gui_driver",
+        transport="gillm GuiDriver (in-process keyboard/profile)",
+        can_push_chat=True,
+        can_pull_chat_text=False,
+        needs_gui_session=True,
+        mcp_tools_only=False,
+        primary_code="gillm/src/gillm/drivers/composite.py",
+    ),
+    AgentBackendProfile(
         id="os_keyboard_injector",
         transport="xdotool / wtype / ydotool / clipboard",
         can_push_chat=True,
         can_pull_chat_text=False,
         needs_gui_session=True,
         mcp_tools_only=False,
-        primary_code="src/koru/autopilot/injector.py",
+        primary_code="gillm/src/gillm/injection/injector.py",
     ),
 )
 
@@ -76,6 +85,7 @@ _BACKEND_ALIASES: Final[dict[str, str]] = {
     "plugin_socket": "vscode_family_plugin_socket",
     "mcp_tool": "mcp_stdio_server",
     "os_injector": "os_keyboard_injector",
+    "gillm_gui": "gillm_gui_driver",
 }
 
 

@@ -251,7 +251,7 @@ def test_drive_dry_run_direct(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi
+    import gillm.injection.os_injector as oi
 
     monkeypatch.setattr(oi, "try_drive_with_profile", lambda **_k: None)
 
@@ -266,7 +266,7 @@ def test_drive_dry_run_direct(
             return "xdotool"
 
         def type_text(self, text, *, ide="default", submit=True, dry_run=False):
-            from koru.autopilot.injector import InjectionResult
+            from gillm.injection import InjectionResult
 
             return InjectionResult(
                 backend="xdotool",
@@ -288,7 +288,7 @@ def test_drive_direct_prefers_os_injector_profile(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     class _Inj:
         session = "x11"
@@ -318,7 +318,7 @@ def test_drive_direct_honors_os_profile_override(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
 
@@ -349,8 +349,8 @@ def test_drive_direct_os_profile_requires_os_injector_when_not_available(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
-    from koru.autopilot.injector import InjectionResult
+    import gillm.injection.os_injector as oi_mod
+    from gillm.injection import InjectionResult
 
     class _Inj:
         session = "wayland"
@@ -377,8 +377,8 @@ def test_drive_direct_os_profile_os_injector_error_no_fallback(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
-    from koru.autopilot.os_injector import OsInjectorError
+    import gillm.injection.os_injector as oi_mod
+    from gillm.injection import OsInjectorError
 
     class _Inj:
         session = "wayland"
@@ -404,9 +404,9 @@ def test_drive_direct_falls_back_when_os_injector_fails(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
-    from koru.autopilot.injector import InjectionResult
-    from koru.autopilot.os_injector import OsInjectorError
+    import gillm.injection.os_injector as oi_mod
+    from gillm.injection import InjectionResult
+    from gillm.injection import OsInjectorError
 
     class _Inj:
         session = "wayland"
@@ -437,7 +437,7 @@ def test_calibrate_auto_ide_resolves_from_running_processes(
     tmp_path: Path,
 ) -> None:
     from koru.autopilot import ide as ide_mod
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
     from koru.autopilot.ide import RunningIDE
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
@@ -469,7 +469,7 @@ def test_calibrate_writes_profile_from_mouse(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: (123, 456))
@@ -498,7 +498,7 @@ def test_session_start_explicit_ides(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
     coords = iter([(10, 20), (30, 40)])
@@ -526,8 +526,8 @@ def test_session_start_keeps_profile_when_smoke_fails(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
-    from koru.autopilot.os_injector import OsInjectorError
+    import gillm.injection.os_injector as oi_mod
+    from gillm.injection import OsInjectorError
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: (10, 20))
@@ -561,7 +561,7 @@ def test_session_start_warns_on_duplicate_coordinates(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
     coords = iter([(11, 22), (11, 22)])
@@ -626,7 +626,7 @@ def test_doctor_json_output(
         session = "x11"
 
         def probe(self):
-            from koru.autopilot.injector import BackendStatus
+            from gillm.injection import BackendStatus
 
             return [BackendStatus(name="xdotool", available=True, reason="/usr/bin/xdotool")]
 
@@ -653,7 +653,7 @@ def test_doctor_fix_text_output(
         session = "wayland"
 
         def probe(self):
-            from koru.autopilot.injector import BackendStatus
+            from gillm.injection import BackendStatus
 
             return [BackendStatus(name="ydotool", available=True, reason="/usr/bin/ydotool")]
 
@@ -690,7 +690,7 @@ def test_doctor_fix_json_output(
         session = "wayland"
 
         def probe(self):
-            from koru.autopilot.injector import BackendStatus
+            from gillm.injection import BackendStatus
 
             return [BackendStatus(name="ydotool", available=True, reason="/usr/bin/ydotool")]
 

@@ -130,6 +130,8 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
     const isInputOnlyFocus =
       focusToken.includes("focuscomposer") ||
       focusToken.includes("focuscascade") ||
+      (this.detectIde() === "cursor" &&
+        (focusToken.includes("panel.chat.view") || focusToken.includes("panel.aichat.view"))) ||
       (this.detectIde() === "vscodium" && focusToken.includes("openquickchat")) ||
       (this.detectIde() === "vscodium" && focusToken.includes("quickchat.openinchatview")) ||
       focusToken.startsWith("input-only");

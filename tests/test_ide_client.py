@@ -30,7 +30,13 @@ def test_legacy_adapter_forwards_all_operations() -> None:
     assert adapter.shutdown() == {"ok": True, "stopping": True}
 
     client.is_running.assert_called_once_with()
-    client.drive.assert_called_once_with("hello", submit=False, ide="vscode", require_plugin=False)
+    client.drive.assert_called_once_with(
+        "hello",
+        submit=False,
+        ide="vscode",
+        require_plugin=False,
+        strategy_hint=None,
+    )
     client.status.assert_called_once_with()
     client.shutdown.assert_called_once_with()
 

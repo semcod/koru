@@ -8,7 +8,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from koru.ide_client import IDEControlClient
-from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import canonical_autopilot_ide_id
 
 

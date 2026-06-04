@@ -2,7 +2,7 @@
   "name": "koru-autopilot-windsurf",
   "displayName": "koru autopilot (Windsurf)",
   "description": "Bridge between Windsurf and the koru autopilot daemon. Standalone VSIX for Windsurf only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -189,6 +189,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "2dc352cc9362246a"
+    "sha": "1727c5b52c77dbcc"
   }
 }

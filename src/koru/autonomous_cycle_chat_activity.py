@@ -429,6 +429,13 @@ def _check_recent_self_drive_skip(
         and not _chat_reflection_enabled()
     ):
         self_drive_age_label = f"{self_drive_age:.0f}s"
+        if _last_drive_verdict_no_change(state):
+            cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+            report_progress(
+                "- autopilot redrive allowed (recent_self_drive had no_change verdict "
+                f"and no message.received age={self_drive_age_label} ticket={waiting_ticket})",
+            )
+            return False
         cycle_telemetry["autopilot_skipped_chat_activity"] = True
         cycle_telemetry["autopilot_chat_activity_last_event"] = "message.sent"
         report_progress(
@@ -590,6 +597,14 @@ def _skip_due_to_recent_chat_activity(
         reflection_events=reflection_events,
     )
     if not has_activity:
+        return False
+
+    if _last_drive_verdict_no_change(state) and not _recent_events_have_response(recent_events):
+        cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+        report_progress(
+            "- autopilot redrive allowed (no_change after drive; "
+            f"no message.received age={age_label} ticket={waiting_ticket})",
+        )
         return False
 
     if recent_events and _recent_message_sent_allows_redrive(

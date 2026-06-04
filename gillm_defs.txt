@@ -1,0 +1,195 @@
+def __init__(
+def __init__(
+def __init__(
+def __init__(self, *, session
+def __post_init__(self) -> None
+def __repr__(self) -> str
+def _activity(category
+def _all_type_backends_failed(self, errors
+def _available_backend_candidates(self, names
+def _cached_config() -> AutopilotConfig
+def _call(self, cmd
+def _candidate_backends(self) -> list[str]
+def _dedupe(items
+def _default_runner(cmd
+def _dry_run_type_text_result(
+def _focus_profile_chat(
+def _focus_via_wmctrl(hints
+def _focus_via_wmctrl(hints
+def _focus_via_xdotool(hints
+def _focus_with_xdotool(
+def _focus_with_ydotool(
+def _forced_backend_candidates(self, forced
+def _gnome_compositor() -> bool
+def _hints_for_kind(kind
+def _inject_profile_text(
+def _inject_via_wtype(sequence
+def _inject_via_xdotool(sequence
+def _inject_via_ydotool(sequence
+def _injection_result(
+def _log(log
+def _log_type_text_request(self, text
+def _merge_submit_keys(raw
+def _on_response(response, results)
+def _os_injector_skip_reason(tool_id
+def _parse_png_to_rgb(png_bytes
+def _portal_python() -> str
+def _prefer_ydotool() -> bool
+def _read_json(path
+def _resolve_input_method() -> tuple[str, bool]
+def _run(argv
+def _run(argv
+def _run(argv
+def _scan_for_key(key
+def _session_type() -> str
+def _steps_from_prefer(
+def _submit_key_for(ide
+def _term_program_is_vscode_family() -> bool
+def _try_type_text_backends(
+def _type_text_backends(self) -> list[str]
+def _type_with_backend(
+def _warn(message
+def _which(name
+def _ydotool_submit_command(
+def apply_keyboard_injection(
+def cached_config() -> AutopilotConfig
+def candidate_backends(self) -> list[str]
+def capabilities(self) -> OsCapabilities
+def capabilities(self) -> OsCapabilities
+def capabilities(self) -> OsCapabilities
+def capabilities(self) -> OsCapabilities
+def capabilities(self) -> OsCapabilities
+def capture_from_xdotool() -> tuple[int, int, int]
+def capture_mouse_xy() -> tuple[int, int]
+def capture_portal_png(*, timeout_seconds
+def capture_primary_rgb(*, scale
+def capture_primary_rgb_wayland_fallback(*, scale
+def capture_screenshot(self, scale
+def chat_inject_and_submit(
+def classify_failure(
+def clear_config_cache() -> None
+def click(self, x
+def click(self, x
+def click(self, x
+def clipboard_backend() -> str | None
+def cmd_timeout_seconds() -> float
+def decorator(func
+def default_config_path() -> Path
+def default_config_path() -> Path
+def diagnose_drive_reply(reply
+def downscale_rgb_nearest(
+def drive_natural_language(self, command
+def drive_payload_to_action_plan(payload
+def dry_run_from_env() -> bool
+def emit_activity(category
+def emit_activity_warn(message
+def execute(self, plan
+def execute(self, plan
+def execute(self, plan
+def execute_step(self, step
+def execute_workflow(self, steps
+def extra_enter_count() -> int
+def focus(self, target
+def focus(self, target
+def focus(self, target
+def focus_mode_from_env() -> str
+def focus_target_window(self, window_name_hints
+def focus_window(self, window_name_hints
+def focus_window(self, window_name_hints
+def focus_window(self, window_name_hints
+def focus_window(self, window_name_hints
+def focus_window(self, window_name_hints
+def focus_with_profile(
+def forced_injector_backend() -> str | None
+def format_os_injector_ack(
+def get_os_strategy(strategy_id
+def gui_contract(
+def hotkey(self, *keys
+def hotkey(self, *keys
+def hotkey(self, *keys
+def id(self) -> str
+def id(self) -> str
+def inject_keys(self, sequence
+def inject_keys(self, sequence
+def inject_keys(self, sequence
+def inject_keys(self, sequence
+def inject_keys(self, sequence
+def inject_text(
+def inject_with_profile(
+def input_mode_from_env() -> str
+def is_wayland_session() -> bool
+def iter_config_paths(*, project
+def koru_drive_to_payload(
+def label(self) -> str
+def label(self) -> str
+def list_os_strategy_ids() -> tuple[str, ...]
+def load_config(path
+def load_profile(tool_id
+def log(self) -> list[str]
+def log(self, message
+def main() -> int
+def matches_current_environment(self) -> bool
+def matches_current_environment(self) -> bool
+def matches_current_environment(self) -> bool
+def matches_current_environment(self) -> bool
+def matches_current_environment(self) -> bool
+def noop_activity_sink(_category
+def os_injector_env_disabled() -> bool
+def os_injector_env_forced() -> bool
+def post_focus_delay_seconds() -> float
+def press_wtype(call
+def probe(self) -> DriverStatus
+def probe(self) -> DriverStatus
+def probe(self) -> DriverStatus
+def probe(self) -> list[BackendStatus]
+def probe(self) -> list[tuple[str, bool, str]]
+def probe_environment() -> EnvironmentDiagnostics
+def profile_from_mouse(tool_id
+def recovery_hints_for_context(ctx
+def recovery_hints_for_reload(*, wayland
+def register_os_strategy(strategy
+def resolve_active_os_strategy() -> OsStrategy
+def resolve_input_method() -> tuple[str, bool]
+def resolve_scale(override
+def resolve_xdg_path(relative_path
+def rgb_mostly_black(rgb
+def run_cmd(
+def run_cmd_checked(cmd
+def save_profile(profile
+def screenshot(self) -> CapturedImage
+def screenshot(self) -> CapturedImage
+def screenshot(self) -> CapturedImage
+def select_backend(self) -> str | None
+def select_backend(self) -> str | None
+def session_backend_order(session
+def session_type() -> str
+def set_activity_sink(
+def set_clipboard(text
+def submit_key_for(self, ide
+def submit_only(
+def to_dict(self) -> dict[str, Any]
+def to_dict(self) -> dict[str, Any]
+def to_dict(self) -> dict[str, Any]
+def to_dict(self) -> dict[str, Any]
+def to_dict(self) -> dict[str, Any]
+def to_dict(self) -> dict[str, object]
+def to_dict(self) -> dict[str, object]
+def try_bootstrap_koru_activity_sink() -> None
+def try_drive_with_profile(
+def try_load_profile(tool_id
+def try_os_injector_drive(
+def type_text(
+def type_text(self, text
+def type_text(self, text
+def type_text(self, text
+def type_with_backend(
+def type_with_wtype(
+def type_with_xdotool(
+def type_with_ydotool(
+def unique_backend_names(names
+def validate_contract_runtime(func
+def xdotool(argv_tail
+def ydotool(argv_tail
+def ydotool_ctrl_keycode() -> str
+def ydotool_enter_keycode() -> str
+def ydotool_submit_mode() -> str

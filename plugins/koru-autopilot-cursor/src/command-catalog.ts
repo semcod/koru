@@ -50,6 +50,10 @@ const RULES: Rule[] = [
   },
   {
     capability: "submit",
+    pattern: /(?:stopListeningAndSubmit|koruAutopilot\.sendChat)/i,
+  },
+  {
+    capability: "submit",
     pattern:
       /(?:sendToAgent|acceptComposerStep|\.submit$|\.send$|acceptInput|sendMessage|interactive\.accept)/i,
   },

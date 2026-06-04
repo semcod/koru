@@ -80,49 +80,69 @@ def dedupe_problems(problems: Sequence[RepairProblem]) -> list[RepairProblem]:
     return _dedupe_problems(problems)
 
 
-def collect_problems_from_manage_report(report: Mapping[str, Any]) -> list[RepairProblem]:
+def _problem_from_manage_issue(raw: Any) -> RepairProblem | None:
+    if not isinstance(raw, Mapping):
+        return None
+    code = str(raw.get("code") or "").strip()
+    if not code:
+        return None
+    return RepairProblem(
+        code=code,
+        severity=str(raw.get("severity") or "error"),  # type: ignore[arg-type]
+        message=str(raw.get("message") or code),
+        fix_hint=str(raw.get("fix") or "") or None,
+        context={"source": "manage_report"},
+    )
+
+
+def _collect_manage_issue_problems(report: Mapping[str, Any]) -> list[RepairProblem]:
     problems: list[RepairProblem] = []
-    for raw in report.get("issues") or []:
-        if not isinstance(raw, dict):
-            continue
-        code = str(raw.get("code") or "").strip()
-        if not code:
-            continue
-        problems.append(
-            RepairProblem(
-                code=code,
-                severity=str(raw.get("severity") or "error"),  # type: ignore[arg-type]
-                message=str(raw.get("message") or code),
-                fix_hint=str(raw.get("fix") or "") or None,
-                context={"source": "manage_report"},
-            )
-        )
+    for raw in report.get("issues") or ():
+        if problem := _problem_from_manage_issue(raw):
+            problems.append(problem)
+    return problems
+
+
+def _install_plugin_failure_code(message: str) -> str:
+    lower = message.lower()
+    if "sandbox" in lower or "zygote" in lower:
+        return "install_plugin_cli_sandbox"
+    return "install_plugin_failed"
+
+
+def _problem_from_manage_action(action: Any) -> RepairProblem | None:
+    if not isinstance(action, Mapping):
+        return None
+    name = str(action.get("action") or action.get("name") or "").strip()
+    result = action.get("result") if isinstance(action.get("result"), Mapping) else {}
+    status = str(result.get("status") or action.get("install_plugin") or "").strip().lower()
+    if name != "install_plugin" or status not in {"failed", "error"}:
+        return None
+
+    message = str(result.get("message") or "").strip()
+    return RepairProblem(
+        code=_install_plugin_failure_code(message),
+        severity="error",
+        message=message or "koru autopilot plugin install failed",
+        fix_hint="Install VSIX manually or use coru repair manual_vsix_unpack",
+        context={"source": "manage_report.actions", "installer_message": message},
+    )
+
+
+def _collect_manage_action_problems(report: Mapping[str, Any]) -> list[RepairProblem]:
+    problems: list[RepairProblem] = []
+    for action in report.get("actions") or ():
+        if problem := _problem_from_manage_action(action):
+            problems.append(problem)
+    return problems
+
+
+def collect_problems_from_manage_report(report: Mapping[str, Any]) -> list[RepairProblem]:
+    problems = _collect_manage_issue_problems(report)
 
     plugin = report.get("plugin") if isinstance(report.get("plugin"), dict) else {}
     problems.extend(_collect_plugin_alignment_problems(plugin, source="manage_report.plugin"))
-
-    for action in report.get("actions") or []:
-        if not isinstance(action, dict):
-            continue
-        name = str(action.get("action") or action.get("name") or "").strip()
-        result = action.get("result") if isinstance(action.get("result"), dict) else {}
-        status = str(result.get("status") or action.get("install_plugin") or "").strip().lower()
-        message = str(result.get("message") or "").strip()
-        if name == "install_plugin" and status in {"failed", "error"}:
-            code = (
-                "install_plugin_cli_sandbox"
-                if "sandbox" in message.lower() or "zygote" in message.lower()
-                else "install_plugin_failed"
-            )
-            problems.append(
-                RepairProblem(
-                    code=code,
-                    severity="error",
-                    message=message or "koru autopilot plugin install failed",
-                    fix_hint="Install VSIX manually or use coru repair manual_vsix_unpack",
-                    context={"source": "manage_report.actions", "installer_message": message},
-                )
-            )
+    problems.extend(_collect_manage_action_problems(report))
     return _dedupe_problems(problems)
 
 

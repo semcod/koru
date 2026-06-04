@@ -50,6 +50,15 @@ class ReadinessResult:
         return [i.message for i in self.issues if i.severity == "warn"]
 
 
+@dataclass(frozen=True)
+class _TerminalLaneContext:
+    wanted: str
+    lane: str
+    terminal: str | None
+    terminal_integrated: bool | None
+    terminal_kind: str | None
+
+
 def _project_venv_python(project: Path) -> Path | None:
     candidate = project / ".venv" / "bin" / "python3"
     if candidate.is_file():
@@ -70,6 +79,120 @@ def _resolve_path(path: str | Path) -> str:
         return str(path)
 
 
+def _runtime_issue_severity(strict: bool) -> Severity:
+    return "fail" if strict else "warn"
+
+
+def _first_fix_command(issues: list[ReadinessIssue]) -> str | None:
+    return next((issue.fix_command for issue in issues if issue.fix_command), None)
+
+
+def _python_executable_mismatch_issue(
+    project: Path,
+    launcher: str | Path,
+    venv_python: Path | None,
+    *,
+    strict: bool,
+) -> ReadinessIssue | None:
+    if venv_python is None:
+        return None
+    launcher_path = _resolve_path(launcher)
+    venv_path = _resolve_path(venv_python)
+    if launcher_path == venv_path:
+        return None
+    return ReadinessIssue(
+        code="python_executable_mismatch",
+        severity=_runtime_issue_severity(strict),
+        message=f"active Python {launcher_path} != repo .venv {venv_path}",
+        fix_command=(
+            f"PATH=\"{project / '.venv' / 'bin'}:$PATH\" "
+            f"{project / '.venv' / 'bin' / 'koru'} auto"
+        ),
+    )
+
+
+def _venv_alignment_fix(project: Path) -> str | None:
+    if not (project / ".venv").exists():
+        return None
+    return f"source {project / '.venv' / 'bin' / 'activate'} && hash -r"
+
+
+def _venv_alignment_issue(project: Path, *, strict: bool) -> ReadinessIssue | None:
+    status, detail = _check_python_venv_alignment(project)
+    if status == "pass":
+        return None
+    return ReadinessIssue(
+        code="venv_alignment",
+        severity=_runtime_issue_severity(strict),
+        message=detail,
+        fix_command=_venv_alignment_fix(project),
+    )
+
+
+def _koru_runtime_identity_issue(
+    project_koru: Path | None,
+    path_koru: str | None,
+    package_version: str | None,
+    source_version: str | None,
+    *,
+    strict: bool,
+) -> ReadinessIssue | None:
+    if project_koru is None:
+        return None
+    status, bits = _koru_path_version_issues(
+        project_koru,
+        path_koru,
+        package_version,
+        source_version,
+    )
+    if status == "pass":
+        return None
+    fix = next((bit.removeprefix("fix=") for bit in bits if bit.startswith("fix=")), None)
+    return ReadinessIssue(
+        code="koru_runtime_identity",
+        severity=_runtime_issue_severity(strict),
+        message="; ".join(
+            [
+                f"package={package_version or '-'}",
+                f"pyproject={source_version or '-'}",
+                f"path_koru={path_koru or '-'}",
+                *bits,
+            ]
+        ),
+        fix_command=fix,
+    )
+
+
+def _editable_install_fix(project: Path) -> str:
+    pip = project / ".venv" / "bin" / "pip"
+    return f"{pip} install -e {project}" if pip.is_file() else f"pip install -e {project}"
+
+
+def _package_version_drift_issue(
+    project: Path,
+    package_version: str | None,
+    source_version: str | None,
+    *,
+    strict: bool,
+) -> ReadinessIssue | None:
+    if not (package_version and source_version and package_version != source_version):
+        return None
+    return ReadinessIssue(
+        code="koru_package_version_drift",
+        severity=_runtime_issue_severity(strict),
+        message=f"imported koru {package_version} != pyproject {source_version}",
+        fix_command=_editable_install_fix(project),
+    )
+
+
+def _append_issue(
+    issues: list[ReadinessIssue],
+    issue: ReadinessIssue | None,
+) -> None:
+    if issue is not None:
+        issues.append(issue)
+
+
 def check_runtime_consistency(
     project: Path,
     *,
@@ -79,101 +202,46 @@ def check_runtime_consistency(
     """Compare Python/koru executables and package version to repo ``.venv``."""
     project = project.resolve()
     issues: list[ReadinessIssue] = []
-    primary_fix: str | None = None
 
     venv_python = _project_venv_python(project)
     project_koru = _project_venv_koru(project)
     launcher = Path(launcher_executable or sys.executable)
     package_version = _installed_koru_version()
     source_version = _read_project_version(project / "pyproject.toml")
-
-    if venv_python is not None:
-        try:
-            if _resolve_path(launcher) != _resolve_path(venv_python):
-                issues.append(
-                    ReadinessIssue(
-                        code="python_executable_mismatch",
-                        severity="fail" if strict else "warn",
-                        message=(
-                            f"active Python {_resolve_path(launcher)} != "
-                            f"repo .venv {_resolve_path(venv_python)}"
-                        ),
-                        fix_command=(
-                            f"PATH=\"{project / '.venv' / 'bin'}:$PATH\" "
-                            f"{project / '.venv' / 'bin' / 'koru'} auto"
-                        ),
-                    )
-                )
-                primary_fix = primary_fix or issues[-1].fix_command
-        except OSError:
-            pass
-
-    venv_status, venv_detail = _check_python_venv_alignment(project)
-    if venv_status != "pass":
-        issues.append(
-            ReadinessIssue(
-                code="venv_alignment",
-                severity="fail" if strict else "warn",
-                message=venv_detail,
-                fix_command=(
-                    f"source {project / '.venv' / 'bin' / 'activate'} "
-                    "&& hash -r"
-                    if (project / ".venv").exists()
-                    else None
-                ),
-            )
-        )
-        primary_fix = primary_fix or issues[-1].fix_command
-
     path_koru = shutil.which("koru")
-    if project_koru is None:
-        koru_status, koru_bits = "pass", []
-    else:
-        koru_status, koru_bits = _koru_path_version_issues(
+
+    _append_issue(
+        issues,
+        _python_executable_mismatch_issue(
+            project,
+            launcher,
+            venv_python,
+            strict=strict,
+        ),
+    )
+    _append_issue(issues, _venv_alignment_issue(project, strict=strict))
+    _append_issue(
+        issues,
+        _koru_runtime_identity_issue(
             project_koru,
             path_koru,
             package_version,
             source_version,
-        )
-    if koru_status != "pass":
-        fix = next((b.removeprefix("fix=") for b in koru_bits if b.startswith("fix=")), None)
-        issues.append(
-            ReadinessIssue(
-                code="koru_runtime_identity",
-                severity="fail" if strict else "warn",
-                message="; ".join(
-                    [
-                        f"package={package_version or '-'}",
-                        f"pyproject={source_version or '-'}",
-                        f"path_koru={path_koru or '-'}",
-                        *koru_bits,
-                    ]
-                ),
-                fix_command=fix,
-            )
-        )
-        primary_fix = primary_fix or fix
-
-    if package_version and source_version and package_version != source_version:
-        fix = (
-            f"{project / '.venv' / 'bin' / 'pip'} install -e {project}"
-            if (project / ".venv" / "bin" / "pip").is_file()
-            else f"pip install -e {project}"
-        )
-        issues.append(
-            ReadinessIssue(
-                code="koru_package_version_drift",
-                severity="fail" if strict else "warn",
-                message=(
-                    f"imported koru {package_version} != "
-                    f"pyproject {source_version}"
-                ),
-                fix_command=fix,
-            )
-        )
-        primary_fix = primary_fix or fix
+            strict=strict,
+        ),
+    )
+    _append_issue(
+        issues,
+        _package_version_drift_issue(
+            project,
+            package_version,
+            source_version,
+            strict=strict,
+        ),
+    )
 
     ok = not any(i.severity == "fail" for i in issues)
+    primary_fix = _first_fix_command(issues)
     return ReadinessResult(ok=ok, issues=tuple(issues), primary_fix=primary_fix)
 
 
@@ -346,7 +414,19 @@ def check_workspace_socket_ownership(
     issues: list[ReadinessIssue] = []
     socket_health = probe_socket_health(socket_path)
 
-    if socket_health.stale:
+    status_available = isinstance(status, Mapping)
+    if socket_health.stale and status_available:
+        issues.append(
+            ReadinessIssue(
+                code="socket_probe_stale_with_status",
+                severity="warn",
+                message=(
+                    f"socket probe reports no listener at {socket_path}, "
+                    "but daemon status is available; keeping socket in place"
+                ),
+            )
+        )
+    elif socket_health.stale:
         issues.append(
             ReadinessIssue(
                 code="socket_stale",
@@ -466,32 +546,19 @@ def attempt_plugin_gate_recovery(
     return False, reason
 
 
-def check_lane_terminal_socket_alignment(
-    *,
-    autopilot_ide: str,
-    lane_instance: str | None,
-    socket_path: Path | None,
-    terminal_ide: str | None = None,
-    terminal_integrated: bool | None = None,
-    terminal_kind: str | None = None,
-) -> ReadinessResult:
-    """Warn when terminal host, lane instance, and socket target diverge."""
-    from koru.autonomy.env import allow_cross_ide_autopilot
-    from koru.autonomy.ide_operator_guidance import (
-        ide_label,
-        lane_mismatch_operator_steps,
-        terminal_kind_label,
-    )
+def _canonical_target_ide(autopilot_ide: str) -> str:
+    return canonical_autopilot_ide_id(normalize_ide_id(autopilot_ide) or autopilot_ide)
 
-    if allow_cross_ide_autopilot():
-        return ReadinessResult(ok=True, issues=())
 
-    issues: list[ReadinessIssue] = []
-    primary_fix: str | None = None
-    wanted = canonical_autopilot_ide_id(
-        normalize_ide_id(autopilot_ide) or autopilot_ide
-    )
-    lane = (lane_instance or os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+def _lane_instance_value(lane_instance: str | None) -> str:
+    return (lane_instance or os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+
+
+def _terminal_context(
+    terminal_ide: str | None,
+    terminal_integrated: bool | None,
+    terminal_kind: str | None,
+) -> tuple[str | None, bool | None, str | None]:
     if terminal_ide is None:
         terminal_ide = detect_terminal_host_ide_id()
     terminal = normalize_ide_id(terminal_ide)
@@ -504,82 +571,147 @@ def check_lane_terminal_socket_alignment(
             terminal_integrated = ctx.integrated
         if ctx_kind is None:
             ctx_kind = ctx.kind
+    return terminal, terminal_integrated, ctx_kind
 
-    if wanted and terminal and terminal != wanted:
-        severity: Severity = "warn"
-        if terminal_integrated:
-            severity = "fail"
-        kind_label = terminal_kind_label(ctx_kind) if ctx_kind else "unknown shell"
-        operator_steps = lane_mismatch_operator_steps(
-            terminal_ide=terminal,
-            target_ide=wanted,
-            terminal_kind=ctx_kind or "system",
-            lane=lane or None,
-        )
-        message = (
-            f"terminal host is {terminal} ({kind_label}), "
-            f"but autopilot target is {ide_label(wanted)}"
-            + (f" (lane={lane})" if lane else "")
-        )
-        fix_command = (
-            f"run `coru {wanted} auto` from {ide_label(wanted)}'s integrated terminal, "
-            f"or export KORU_AUTOPILOT_INSTANCE={wanted}, "
-            f"or set KORU_AUTOPILOT_ALLOW_CROSS_IDE=1"
-        )
-        issues.append(
-            ReadinessIssue(
-                code="terminal_lane_mismatch",
-                severity=severity,
-                message=message,
-                fix_command=fix_command,
-            )
-        )
-        primary_fix = primary_fix or fix_command
-        for step in operator_steps[:3]:
-            issues.append(
-                ReadinessIssue(
-                    code="terminal_lane_operator_hint",
-                    severity="warn",
-                    message=step,
-                )
-            )
 
-    if wanted and lane:
-        lane_ide = canonical_autopilot_ide_id(lane)
-        if lane_ide and lane_ide != wanted:
-            issues.append(
-                ReadinessIssue(
-                    code="lane_ide_mismatch",
-                    severity="fail",
-                    message=(
-                        f"lane instance {lane!r} resolves to ide={lane_ide}, "
-                        f"but autopilot target is {wanted}"
-                    ),
-                    fix_command=(
-                        f"export KORU_AUTOPILOT_INSTANCE={wanted}-main "
-                        f"and restart koru auto / coru"
-                    ),
-                )
-            )
+def _terminal_lane_context(
+    *,
+    autopilot_ide: str,
+    lane_instance: str | None,
+    terminal_ide: str | None,
+    terminal_integrated: bool | None,
+    terminal_kind: str | None,
+) -> _TerminalLaneContext:
+    terminal, integrated, kind = _terminal_context(
+        terminal_ide,
+        terminal_integrated,
+        terminal_kind,
+    )
+    return _TerminalLaneContext(
+        wanted=_canonical_target_ide(autopilot_ide),
+        lane=_lane_instance_value(lane_instance),
+        terminal=terminal,
+        terminal_integrated=integrated,
+        terminal_kind=kind,
+    )
 
-    if socket_path is not None and lane:
-        socket_instance = instance_from_socket_path(socket_path) or ""
-        if socket_instance and socket_instance != lane.strip().lower():
-            issues.append(
-                ReadinessIssue(
-                    code="socket_lane_mismatch",
-                    severity="fail",
-                    message=(
-                        f"socket {socket_path.name} is lane {socket_instance!r}, "
-                        f"but configured instance is {lane!r}"
-                    ),
-                    fix_command="koru autopilot shutdown && koru auto",
-                )
-            )
+
+def _terminal_lane_mismatch_issues(
+    ctx: _TerminalLaneContext,
+) -> tuple[list[ReadinessIssue], str | None]:
+    if not (ctx.wanted and ctx.terminal and ctx.terminal != ctx.wanted):
+        return [], None
+
+    from koru.autonomy.ide_operator_guidance import (
+        ide_label,
+        lane_mismatch_operator_steps,
+        terminal_kind_label,
+    )
+
+    severity: Severity = "fail" if ctx.terminal_integrated else "warn"
+    kind_label = terminal_kind_label(ctx.terminal_kind) if ctx.terminal_kind else "unknown shell"
+    operator_steps = lane_mismatch_operator_steps(
+        terminal_ide=ctx.terminal,
+        target_ide=ctx.wanted,
+        terminal_kind=ctx.terminal_kind or "system",
+        lane=ctx.lane or None,
+    )
+    message = (
+        f"terminal host is {ctx.terminal} ({kind_label}), "
+        f"but autopilot target is {ide_label(ctx.wanted)}"
+        + (f" (lane={ctx.lane})" if ctx.lane else "")
+    )
+    fix_command = (
+        f"run `coru {ctx.wanted} auto` from {ide_label(ctx.wanted)}'s integrated terminal, "
+        f"or export KORU_AUTOPILOT_INSTANCE={ctx.wanted}, "
+        f"or set KORU_AUTOPILOT_ALLOW_CROSS_IDE=1"
+    )
+    issues = [
+        ReadinessIssue(
+            code="terminal_lane_mismatch",
+            severity=severity,
+            message=message,
+            fix_command=fix_command,
+        )
+    ]
+    issues.extend(
+        ReadinessIssue(
+            code="terminal_lane_operator_hint",
+            severity="warn",
+            message=step,
+        )
+        for step in operator_steps[:3]
+    )
+    return issues, fix_command
+
+
+def _lane_ide_mismatch_issue(ctx: _TerminalLaneContext) -> ReadinessIssue | None:
+    if not (ctx.wanted and ctx.lane):
+        return None
+    lane_ide = canonical_autopilot_ide_id(ctx.lane)
+    if not lane_ide or lane_ide == ctx.wanted:
+        return None
+    return ReadinessIssue(
+        code="lane_ide_mismatch",
+        severity="fail",
+        message=(
+            f"lane instance {ctx.lane!r} resolves to ide={lane_ide}, "
+            f"but autopilot target is {ctx.wanted}"
+        ),
+        fix_command=(
+            f"export KORU_AUTOPILOT_INSTANCE={ctx.wanted}-main "
+            f"and restart koru auto / coru"
+        ),
+    )
+
+
+def _socket_lane_mismatch_issue(
+    socket_path: Path | None,
+    ctx: _TerminalLaneContext,
+) -> ReadinessIssue | None:
+    if socket_path is None or not ctx.lane:
+        return None
+    socket_instance = instance_from_socket_path(socket_path) or ""
+    if not socket_instance or socket_instance == ctx.lane.strip().lower():
+        return None
+    return ReadinessIssue(
+        code="socket_lane_mismatch",
+        severity="fail",
+        message=(
+            f"socket {socket_path.name} is lane {socket_instance!r}, "
+            f"but configured instance is {ctx.lane!r}"
+        ),
+        fix_command="koru autopilot shutdown && koru auto",
+    )
+def check_lane_terminal_socket_alignment(
+    *,
+    autopilot_ide: str,
+    lane_instance: str | None,
+    socket_path: Path | None,
+    terminal_ide: str | None = None,
+    terminal_integrated: bool | None = None,
+    terminal_kind: str | None = None,
+) -> ReadinessResult:
+    """Warn when terminal host, lane instance, and socket target diverge."""
+    from koru.autonomy.env import allow_cross_ide_autopilot
+
+    if allow_cross_ide_autopilot():
+        return ReadinessResult(ok=True, issues=())
+
+    ctx = _terminal_lane_context(
+        autopilot_ide=autopilot_ide,
+        lane_instance=lane_instance,
+        terminal_ide=terminal_ide,
+        terminal_integrated=terminal_integrated,
+        terminal_kind=terminal_kind,
+    )
+    issues, primary_fix = _terminal_lane_mismatch_issues(ctx)
+    _append_issue(issues, _lane_ide_mismatch_issue(ctx))
+    _append_issue(issues, _socket_lane_mismatch_issue(socket_path, ctx))
 
     ok = not any(i.severity == "fail" for i in issues)
     fix = next((i.fix_command for i in issues if i.fix_command), None)
-    return ReadinessResult(ok=ok, issues=tuple(issues), primary_fix=fix)
+    return ReadinessResult(ok=ok, issues=tuple(issues), primary_fix=primary_fix or fix)
 
 
 def check_queue_runner_contention(project: Path) -> ReadinessResult:

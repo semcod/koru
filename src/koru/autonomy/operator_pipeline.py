@@ -354,7 +354,7 @@ def _try_start_planfile_api(
 
 
 def _os_profile_ok(ide: str, project: Path) -> tuple[bool, str]:
-    from koruide import os_injector as oi
+    import gillm.injection.os_injector as oi
 
     if oi.os_injector_env_disabled():
         return True, "OS injector wyłączony (KORU_OS_INJECTOR=0)"

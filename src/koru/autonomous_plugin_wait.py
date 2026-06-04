@@ -18,6 +18,12 @@ from koru.observability_events import (
 from koru.observability_writer import emit_terminal_observability_path
 
 
+def _running_from_integrated_ide_terminal() -> bool:
+    from koruide.ide import detect_terminal_host_ide_id
+
+    return detect_terminal_host_ide_id() is not None
+
+
 def prepare_plugin_wait(
     args: Any,
     autopilot_ide: str,
@@ -42,6 +48,26 @@ def prepare_plugin_wait(
     extension_is_active = extension_active(autopilot_ide)
     if extension_is_active is not False:
         return skip_plugin_wait, reload_after_install
+
+    if _running_from_integrated_ide_terminal():
+        stdio_info(
+            "koru autonomous: wtyczka nieaktywna w extension host — "
+            "pomijam automatyczny reload IDE z terminala zintegrowanego; "
+            "uruchom ręcznie: Developer: Reload Window, potem "
+            "`koru: Connect autopilot daemon`",
+            fmt=args.emit_events,
+        )
+        emit_reload_lines(
+            autopilot_ide,
+            emit_fmt=args.emit_events,
+            stdio_info=stdio_info,
+        )
+        stdio_info(
+            "koru autonomous: pomijam oczekiwanie na plugin "
+            "(wtyczka nie załadowana w extension host)",
+            fmt=args.emit_events,
+        )
+        return True, reload_after_install
 
     from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
 
@@ -201,7 +227,14 @@ def _wait_after_successful_reload(
 ) -> bool:
     retry_wait = reload_retry_wait(wait_seconds)
     _report_reload_retry_wait(args, autopilot_ide, reload, retry_wait, stdio_info)
-    if _plugin_reconnected_after_wait(args, autopilot_ide, retry_wait, client, wait_for_plugin, stdio_info):
+    if _plugin_reconnected_after_wait(
+        args,
+        autopilot_ide,
+        retry_wait,
+        client,
+        wait_for_plugin,
+        stdio_info,
+    ):
         return True
     if reload.method != "reuse_window":
         return False
@@ -224,7 +257,11 @@ def _report_reload_retry_wait(
     retry_wait: float,
     stdio_info: Any,
 ) -> None:
-    reload_label = "reuse-window workspace reopen" if reload.method == "reuse_window" else f"Reload Window ({reload.method})"
+    reload_label = (
+        "reuse-window workspace reopen"
+        if reload.method == "reuse_window"
+        else f"Reload Window ({reload.method})"
+    )
     stdio_info(
         "koru autonomous: plugin wymaga przeładowania IDE; "
         f"automatyczny {reload_label} — "
@@ -456,13 +493,27 @@ def _try_plugin_reconnect_pipeline(
     wait_for_plugin: Any,
     stdio_info: Any,
 ) -> bool:
-    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+    from koru.ide_adapters.ide_reload import (
+        connect_via_command_palette,
+        try_reload_vscode_family_ide,
+    )
 
     project = Path(getattr(args, "project", ".")).expanduser().resolve()
+    integrated = _running_from_integrated_ide_terminal()
 
     def _reload() -> bool:
-        reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
-        return bool(reload.attempted and reload.ok)
+        if not integrated:
+            connect = connect_via_command_palette(autopilot_ide)
+            if connect.ok:
+                return True
+            reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
+            return bool(reload.attempted and reload.ok)
+        stdio_info(
+            "koru autonomous: pomijam reload/connect z terminala zintegrowanego — "
+            "użyj Command Palette → koru: Connect autopilot daemon",
+            fmt=args.emit_events,
+        )
+        return False
 
     def _wait(timeout: float) -> bool:
         return bool(

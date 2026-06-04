@@ -15,9 +15,36 @@ else
 fi
 
 pytest_args=(tests/)
+critical_tests=(
+  tests/test_cli.py::test_cli_shim_reloads_partial_legacy_module
+  tests/test_cli.py::TestSubcommandDispatch::test_table_contains_all_documented_subcommands
+  tests/test_cli.py::TestSubcommandDispatch::test_table_values_are_callables
+  tests/test_agent_backend_runtime.py
+  tests/test_autonomous_startup.py
+  tests/test_autonomous_plugin_runtime.py
+  tests/test_autonomous_readiness.py
+  tests/test_autopilot_cli_direct_drive.py
+  tests/test_autopilot_plugin_installer.py::test_resolve_target_ide_uses_integrated_terminal_hint
+  tests/test_autopilot_plugin_installer.py::test_install_plugin_targets_vscodium_from_integrated_terminal
+  tests/test_autopilot_plugin_installer.py::test_install_plugin_explicit_vscode_does_not_use_codium_hint
+  tests/test_command_picker.py
+  tests/test_doctor_facade.py
+  tests/test_gillm_ide_client.py
+  tests/test_gillm_recovery.py
+  tests/test_autonomous_gillm_fallback.py
+  tests/test_ide_client.py
+  tests/test_ide_reload.py
+  tests/test_package_deduplication.py::test_autopilot_config_is_gillm_canonical
+  tests/test_package_deduplication.py::test_koru_injection_shims_point_at_gillm
+  tests/test_package_deduplication.py::test_no_duplicate_injector_implementation_in_koru_src
+  tests/ides/test_all_ide_strategies.py
+)
 use_xdist=true
 changed_only=false
 explicit_selection=false
+critical_only=false
+critical_selection=false
+include_all=false
 
 _is_truthy() {
   case "${1:-}" in
@@ -49,22 +76,74 @@ _ensure_xdist() {
   return 1
 }
 
+_select_critical_tests() {
+  local selected=()
+  local test_file
+  local test_path
+
+  for test_file in "${critical_tests[@]}"; do
+    test_path="${test_file%%::*}"
+    if [ -f "$test_path" ]; then
+      selected+=("$test_file")
+    fi
+  done
+
+  if [ "${#selected[@]}" -eq 0 ]; then
+    echo "No critical pytest files found; falling back to the default test selection." >&2
+    return 1
+  fi
+
+  pytest_args=("${selected[@]}" "${pytest_args[@]:1}")
+  critical_selection=true
+  echo "koru-pytest: critical selection (${#selected[@]} targets); use --all for the full suite." >&2
+}
+
+_selection_includes_daemon() {
+  local arg
+  for arg in "${pytest_args[@]}"; do
+    case "$arg" in
+      tests|tests/|tests/test_autopilot_daemon.py|tests/test_autopilot_daemon.py::*)
+        return 0
+        ;;
+    esac
+  done
+  return 1
+}
+
+_has_pytest_selection() {
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      tests|tests/|tests/*|*.py|*::*)
+        return 0
+        ;;
+    esac
+  done
+  return 1
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --all)
+      include_all=true
       pytest_args+=(-m "")
       ;;
     --changed)
       changed_only=true
       ;;
+    --critical)
+      critical_only=true
+      ;;
     --fast)
       pytest_args+=(-q)
+      critical_only=true
       ;;
     --profile)
       pytest_args+=("--durations=${KORU_PYTEST_DURATIONS:-25}" "--durations-min=${KORU_PYTEST_DURATIONS_MIN:-0.25}")
       ;;
     --quick)
       pytest_args+=(-q --maxfail=1 --no-header --ff)
+      critical_only=true
       ;;
     --serial)
       use_xdist=false
@@ -103,8 +182,22 @@ if [ "$changed_only" = true ]; then
   fi
 fi
 
+if [ "$critical_only" = true ] \
+  && [ "$include_all" = false ] \
+  && [ "$explicit_selection" = false ] \
+  && [ "${pytest_args[0]}" = "tests/" ]; then
+  _select_critical_tests || true
+fi
+
 workers="${KORU_PYTEST_WORKERS:-${PYTEST_WORKERS:-${TEST_JOBS:-auto}}}"
 dist="${KORU_PYTEST_DIST:-${PYTEST_DIST:-loadfile}}"
+if [ "$critical_selection" = true ] && [ "$workers" = "auto" ]; then
+  if _is_truthy "${KORU_PYTEST_CRITICAL_XDIST:-0}"; then
+    workers="${KORU_PYTEST_CRITICAL_WORKERS:-4}"
+  else
+    use_xdist=false
+  fi
+fi
 case "$workers" in
   0|1|false|False|FALSE|off|Off|OFF|no|No|NO)
     use_xdist=false
@@ -118,26 +211,33 @@ if [ "$use_xdist" = true ] && _ensure_xdist; then
     exec "$PYTHON" -m pytest "${pytest_args[@]}"
   fi
 
-  # Run everything except daemon tests in parallel, then daemon tests serially.
-  # This avoids fork/spawn issues with background threads and unix sockets.
-  daemon_excluded_args=("${pytest_args[@]}")
+  # Run daemon tests serially when they are part of the selected suite. This
+  # avoids fork/spawn issues with background threads and unix sockets.
+  run_daemon_serial=false
+  if _selection_includes_daemon; then
+    run_daemon_serial=true
+  fi
+
+  daemon_excluded_args=()
+  for arg in "${pytest_args[@]}"; do
+    if [ "$arg" = "tests/test_autopilot_daemon.py" ]; then
+      continue
+    fi
+    daemon_excluded_args+=("$arg")
+  done
+
   for i in "${!daemon_excluded_args[@]}"; do
-    if [ "${daemon_excluded_args[$i]}" = "tests/" ]; then
-      daemon_excluded_args[$i]="tests/"
-      # Insert exclusion after the directory argument
+    if [ "${daemon_excluded_args[$i]}" = "tests/" ] || [ "${daemon_excluded_args[$i]}" = "tests" ]; then
       daemon_excluded_args=("${daemon_excluded_args[@]:0:$((i+1))}" "--ignore=tests/test_autopilot_daemon.py" "${daemon_excluded_args[@]:$((i+1))}")
       break
     fi
   done
 
-  "$PYTHON" -m pytest -n "$workers" --dist "$dist" "${daemon_excluded_args[@]}"
-  rc1=$?
-
-  "$PYTHON" -m pytest -q tests/test_autopilot_daemon.py
-  rc2=$?
-
-  if [ $rc1 -ne 0 ] || [ $rc2 -ne 0 ]; then
-    exit 1
+  if _has_pytest_selection "${daemon_excluded_args[@]}"; then
+    "$PYTHON" -m pytest -n "$workers" --dist "$dist" "${daemon_excluded_args[@]}"
+  fi
+  if [ "$run_daemon_serial" = true ]; then
+    "$PYTHON" -m pytest -q tests/test_autopilot_daemon.py
   fi
   exit 0
 elif [ "$use_xdist" = true ]; then

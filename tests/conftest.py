@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from koruide.config import cached_config
+from koruide.config import clear_config_cache
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -16,4 +16,4 @@ def pytest_runtest_teardown(item, nextitem):
         "KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS",
     ):
         os.environ.pop(key, None)
-    cached_config.cache_clear()
+    clear_config_cache()

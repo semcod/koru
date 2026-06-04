@@ -61,16 +61,14 @@ function submitCommandsOverride(): string[] {
 }
 
 function focusInputCommandsPrefix(): string[] {
-  // Cursor 1.x: ``workbench.action.chat.focusInput`` and ``chat.action.focus``
-  // are the registered focus commands. ``composer.focusComposer`` no longer
-  // exists in 1.x but stays at the tail for legacy 0.x builds.
+  // Glass / Cursor 1.x: ``glass.focusInput`` is the registered textarea focus
+  // on Agent builds; ``workbench.action.chat.focusInput`` when present.
+  // ``composer.focusComposer`` / ``panel.chat.view.*`` only focus panel chrome.
   return [
+    "glass.focusInput",
     "workbench.action.chat.focusInput",
     "chat.action.focus",
     "workbench.chat.action.focusLastFocused",
-    "workbench.panel.chat.view.copilot.focus",
-    "workbench.panel.aichat.view.copilot.focus",
-    "composer.focusComposer",
     "cursor.composer.focus",
   ];
 }
@@ -81,7 +79,32 @@ function focusInputCommandsBlocklist(): string[] {
     "workbench.action.focusAuxiliaryBar",
     "workbench.action.focusPanel",
     "workbench.action.focusSideBar",
+    "composer.focusComposer",
+    "workbench.panel.chat.view.copilot.focus",
+    "workbench.panel.aichat.view.copilot.focus",
   ];
+}
+
+function acceptFocusInputCommand(command: string): boolean {
+  const normalized = command.toLowerCase();
+  if (
+    normalized.includes("panel.chat.view")
+    || normalized.includes("panel.aichat.view")
+    || normalized === "composer.focuscomposer"
+    || normalized.startsWith("notebook.cell.")
+  ) {
+    return false;
+  }
+  return (
+    normalized.includes("glass.focusinput")
+    || normalized.includes("focusinput")
+    || normalized.includes("chat.action.focus")
+    || normalized.includes("focuslastfocused")
+  );
+}
+
+function acceptFocusOpenCommand(command: string): boolean {
+  return trustFocusOpenCommand(command);
 }
 
 function isToxicCursorPasteCache(paste: string): boolean {
@@ -151,7 +174,9 @@ function sanitizeProbeCache(
     if (
       focusOpen === "aichat.newchataction" ||
       focusOpen === "composer.openAsPane" ||
-      focusOpen === "workbench.panel.chat"
+      focusOpen === "workbench.panel.chat" ||
+      focusOpen.includes("panel.chat.view") ||
+      focusOpen.includes("panel.aichat.view")
     ) {
       entry.focusOpen = undefined;
     }
@@ -163,7 +188,13 @@ function sanitizeProbeCache(
   if (typeof entry.focusInput === "string") {
     const blocked = new Set(focusInputCommandsBlocklist().map((c) => c.toLowerCase()));
     const cmd = entry.focusInput.toLowerCase();
-    if (blocked.has(cmd) || (!cmd.includes("chat") && !cmd.includes("composer") && !cmd.includes("cascade"))) {
+    if (
+      blocked.has(cmd)
+      || cmd === "composer.focuscomposer"
+      || cmd.includes("panel.chat.view")
+      || cmd.includes("panel.aichat.view")
+      || (!cmd.includes("chat") && !cmd.includes("glass") && !cmd.includes("composer") && !cmd.includes("cascade"))
+    ) {
       entry.focusInput = undefined;
     }
   }
@@ -178,6 +209,14 @@ function sanitizeProbeCache(
   }
   if (typeof entry.submit !== "string") return;
   const cmd = entry.submit;
+  // Legacy ``composer.*`` submit commands report ``ok`` on many Cursor 1.x /
+  // Glass builds but do not create a user bubble. Cached winners skip
+  // ``workbench.action.chat.stopListeningAndSubmit`` and trap drives on
+  // host-key false positives (especially on Wayland).
+  if (/^composer\.(sendToAgent|acceptComposerStep|submit)$/i.test(cmd) || cmd === "aichat.submit") {
+    entry.submit = undefined;
+    return;
+  }
   // On Wayland, xdotool cannot reach native Cursor windows at all — every
   // xdotool host-key probe is a false positive (exit 0, no effect).
   // Discard the cached winner so the ladder re-probes
@@ -219,10 +258,7 @@ function focusOpenCommandsDefaults(): string[] {
     "workbench.action.chat.open",
     "workbench.action.chat.openagent",
     "workbench.action.openChat",
-    "workbench.panel.chat.view.copilot.focus",
-    "workbench.panel.aichat.view.copilot.focus",
     "composer.openComposer",
-    "composer.focusComposer",
     "cursor.composer.open",
     "cursor.composer.focus",
   ];
@@ -236,15 +272,20 @@ function focusOpenCommandsDefaults(): string[] {
  */
 function trustFocusOpenCommand(command: string): boolean {
   const n = command.toLowerCase();
-  if (n === "aichat.newchataction" || n === "workbench.panel.chat") {
+  if (
+    n === "aichat.newchataction"
+    || n === "workbench.panel.chat"
+    || n.includes("panel.chat.view")
+    || n.includes("panel.aichat.view")
+    || n === "composer.focuscomposer"
+  ) {
     return false;
   }
   return (
-    n.startsWith("composer.")
-    || n.includes("panel.chat.view")
-    || n.includes("panel.aichat")
-    || n.includes("cursor.composer")
+    n.startsWith("composer.open")
+    || n.includes("cursor.composer.open")
     || n.startsWith("workbench.action.chat.open")
+    || n === "workbench.action.openchat"
   );
 }
 
@@ -265,6 +306,8 @@ export const cursorStrategy: IdeStrategy = {
   trustFocusOpenWithoutEditorSnapshot,
   trustFocusOpenCommand,
   focusInputCommandsBlocklist,
+  acceptFocusInputCommand,
+  acceptFocusOpenCommand,
   submitFallback: {
     // When the host-key submit produced no effect we must NOT fall back to
     // typing newlines into the chat textarea — those just accumulate

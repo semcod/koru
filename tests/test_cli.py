@@ -417,6 +417,7 @@ class TestAutoMain(unittest.TestCase):
                 "koru._legacy_cli_impl.autonomous_main",
                 side_effect=fake_autonomous,
             ),
+            mock.patch("koruide.ide.detect_terminal_host_ide_id", return_value=None),
             mock.patch.dict(os.environ, {"KORU_AUTO_SKIP_WIZARD": "1"}, clear=False),
         ):
             os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
@@ -437,7 +438,29 @@ class TestAutoMain(unittest.TestCase):
         self.assertNotIn("--max-iterations", calls[0][0])
         self.assertTrue(calls[0][1])
         self.assertEqual(reuse_reload, "1")
-        self.assertEqual(new_window_reload, "1")
+        self.assertIsNone(new_window_reload)
+
+    def test_auto_main_skips_reuse_window_from_integrated_terminal(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                return_value=None,
+            ),
+            mock.patch(
+                "koru._legacy_cli_impl.autonomous_main",
+                return_value=0,
+            ),
+            mock.patch("koruide.ide.detect_terminal_host_ide_id", return_value="cursor"),
+            mock.patch.dict(os.environ, {"KORU_AUTO_SKIP_WIZARD": "1"}, clear=False),
+        ):
+            os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
+            code = _auto_main(["--project", "/tmp/proj"])
+            reuse_reload = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+
+        self.assertEqual(code, 0)
+        self.assertIsNone(reuse_reload)
 
     def test_auto_main_preserves_explicit_reuse_window_reload_setting(self) -> None:
         from koru.cli_auto import _auto_main
@@ -641,8 +664,14 @@ class TestDoctorReexecToProjectVenv(unittest.TestCase):
 
             execvpe.assert_called_once()
             called_argv = execvpe.call_args.args[1]
+            called_env = execvpe.call_args.args[2]
             self.assertEqual(Path(called_argv[0]).resolve(), local_koru)
             self.assertEqual(called_argv[1:], ["doctor", "--project", str(project)])
+            self.assertEqual(called_env["VIRTUAL_ENV"], str((project / ".venv").resolve()))
+            self.assertEqual(
+                called_env["PATH"].split(os.pathsep)[0],
+                str((project / ".venv" / "bin").resolve()),
+            )
         finally:
             shutil.rmtree(project, ignore_errors=True)
 
@@ -662,8 +691,14 @@ class TestDoctorReexecToProjectVenv(unittest.TestCase):
 
             execvpe.assert_called_once()
             called_argv = execvpe.call_args.args[1]
+            called_env = execvpe.call_args.args[2]
             self.assertEqual(Path(called_argv[0]).resolve(), local_koru)
             self.assertEqual(called_argv[1:], ["--doctor", "--project", str(project)])
+            self.assertEqual(called_env["VIRTUAL_ENV"], str((project / ".venv").resolve()))
+            self.assertEqual(
+                called_env["PATH"].split(os.pathsep)[0],
+                str((project / ".venv" / "bin").resolve()),
+            )
         finally:
             shutil.rmtree(project, ignore_errors=True)
 

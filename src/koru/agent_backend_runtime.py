@@ -26,6 +26,8 @@ from typing import Any, Protocol
 from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 from koru.agent_backends import normalize_agent_backend_id
+from koru.ide_adapters.gillm_client import GillmIDEControlClient, build_gillm_ide_client
+from koru.ide_adapters.gillm_recovery import enrich_drive_reply_with_recovery
 from koru.ide_client import IDEControlClient
 from koru.sllm_bridge import drive_shell_chat
 
@@ -177,6 +179,28 @@ class OsInjectorBackend:
             return {"ok": False, "backend": "os_injector", "message": str(exc), "type": "error"}
 
 
+@dataclass
+class GillmGuiBackend:
+    """Gillm GuiDriver backend — profile/keyboard fallback without plugin socket."""
+
+    client: GillmIDEControlClient
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, ticket_id
+        reply = self.client.drive(prompt, submit=submit, ide=ide)
+        if not reply.get("ok"):
+            enrich_drive_reply_with_recovery(reply)
+        return reply
+
+
 def build_agent_backend(
     *,
     backend_id: str,
@@ -204,6 +228,8 @@ def build_agent_backend(
             execute=os.environ.get("KORU_SLLM_DRY_RUN", "").strip().lower()
             not in {"1", "true", "yes", "on"},
         )
+    if bid == "gillm_gui" or normalized == "gillm_gui_driver":
+        return GillmGuiBackend(client=build_gillm_ide_client())
     if bid == "os_injector" or normalized == "os_keyboard_injector":
         profile = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
         if not profile:
@@ -221,6 +247,7 @@ __all__ = [
     "PluginSocketBackend",
     "McpToolBackend",
     "SllmShellBackend",
+    "GillmGuiBackend",
     "OsInjectorBackend",
     "NoopBackend",
     "build_agent_backend",

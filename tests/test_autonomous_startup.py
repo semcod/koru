@@ -11,6 +11,11 @@ from koru.autonomous import _apply_agent_lane_environ
 from koru.autopilot.ide import RunningIDE
 
 
+@pytest.fixture(autouse=True)
+def _isolate_desktop_focus(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(startup, "_focused_agent_lane_from_desktop", lambda: None)
+
+
 def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

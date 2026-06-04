@@ -336,7 +336,7 @@ def launch_agent(agent: AgentOption, project: Path, prompt: str) -> int:
                 command=agent.command,
             )
         except ImportError as exc:
-            print("koru agent: missing SLLM plugin; install /home/tom/github/semcod/sllm.")
+            print("koru agent: missing shell LLM plugin; install with `pip install fullm`.")
             print(f"koru agent: import error: {exc}")
             print(f"Prompt saved: {prompt_path}")
             return 2

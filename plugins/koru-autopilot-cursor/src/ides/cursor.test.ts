@@ -131,7 +131,9 @@ function testProbeLadderUsesCursorStrategy(): void {
   );
   // buildFocusInputCommands: Cursor 1.x prefers workbench.action.chat.focusInput
   const focus = buildFocusInputCommands("cursor");
-  eq(focus[0], "workbench.action.chat.focusInput", "Cursor focus list starts with workbench.action.chat.focusInput (Cursor 1.x)");
+  eq(focus[0], "glass.focusInput", "Cursor focus list starts with glass.focusInput (Glass/Agents)");
+  assert(focus.includes("workbench.action.chat.focusInput"), "workbench.action.chat.focusInput must remain in focus list");
+  assert(!focus.includes("composer.focusComposer"), "composer.focusComposer must not be in focus list (panel chrome only)");
   assert(
     !focus.includes("workbench.action.focusAuxiliaryBar"),
     "Cursor must not try focusAuxiliaryBar (false-positive chat focus)",
@@ -166,12 +168,17 @@ function testCursorSubmitCacheSanitization(): void {
     "ydotool ctrl+Return win must be preserved for Cursor",
   );
 
-  // Cursor strategy must not touch unrelated submit commands.
   assertSanitizedCacheField(
     { submit: "composer.sendToAgent" },
     "submit",
-    "composer.sendToAgent",
-    "registered composer.sendToAgent must be preserved",
+    undefined,
+    "legacy composer.sendToAgent cache must be cleared so modern submit is re-probed",
+  );
+  assertSanitizedCacheField(
+    { submit: "composer.acceptComposerStep" },
+    "submit",
+    undefined,
+    "legacy composer.acceptComposerStep cache must be cleared",
   );
 }
 
@@ -209,6 +216,13 @@ function testCursorPasteAndFocusInputCacheSanitization(): void {
     "focusInput",
     undefined,
     "focusAuxiliaryBar focusInput cache must be cleared for Cursor",
+  );
+
+  assertSanitizedCacheField(
+    { focusInput: "composer.focusComposer" },
+    "focusInput",
+    undefined,
+    "composer.focusComposer focusInput cache must be cleared for Cursor 1.x",
   );
 }
 
@@ -253,6 +267,13 @@ function testCursorFocusOpenCacheSanitization(): void {
     "focusOpen",
     undefined,
     "combined workbench.panel.chat focus_open cache must be cleared for Cursor",
+  );
+
+  assertSanitizedCacheField(
+    { focusOpen: "workbench.panel.chat.view.copilot.focus" },
+    "focusOpen",
+    undefined,
+    "panel.chat.view.copilot.focus focus_open cache must be cleared (panel chrome, not Glass input)",
   );
 
   assertSanitizedCacheField(

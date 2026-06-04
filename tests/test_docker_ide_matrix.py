@@ -159,12 +159,18 @@ def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> 
     assert "submit_verify" in source
 
 
-def test_vscodium_submit_tries_registered_commands_before_host_fallbacks() -> None:
+def test_vscodium_submit_preserves_post_paste_focus_before_registered_fallbacks() -> None:
     source = _read_vscodium_shared_file("bridge-submit.ts")
 
-    registered = source.index("const registered = await this._tryRegisteredCommands")
-    host_click = source.index("const hostClick = await this._tryHostClickSubmit")
-    assert registered < host_click
+    post_paste = source.index('route: "post-paste-preserve-focus"')
+    preserved_host = source.index("const preservedFocusHostKey = await this._tryVerifiedHostKeySubmit")
+    registered = source.index(
+        "const registered = await this._tryRegisteredCommands",
+        preserved_host,
+    )
+    assert post_paste < preserved_host < registered
+    assert "post-paste submit verification kept the composer focus" in source
+    assert "preserveFocus: true" in source
     assert 'buildSubmitCommands("vscodium")' in source
     assert 'this.orderWithServerOverride(\n      "submit",' in source
 

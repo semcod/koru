@@ -40,6 +40,11 @@ type HostClickSubmitOptions = {
   allowActiveWindowFallback?: boolean;
 };
 
+type SubmitVerifyOptions = {
+  requireEmptyAfterSubmit?: boolean;
+  preserveFocus?: boolean;
+};
+
 export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeCommands {
   protected async submitAfterPaste(
     env: Envelope,
@@ -57,7 +62,30 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       return undefined;
     }
     await this.sleep(150);
-    await this.focusChatInput();
+    if (this.detectIde() === "cursor") {
+      const refocus = await this.confirmCursorChatInputBeforeSubmit(
+        pastedText,
+        "post-paste-refocus-input"
+      );
+      if (!refocus.ok) {
+        const failure: SubmitOutcome = {
+          ok: false,
+          command: "cursor-submit-focus-unavailable",
+          reason: refocus.reason,
+          attempts: refocus.command ? [`focus: ${refocus.command}`] : undefined,
+          unverified: true,
+        };
+        this.sendSubmitFailureAck(env, focus, pasted, failure.command, failure);
+        return null;
+      }
+    } else {
+      this.traceOperation({
+        op: "submit",
+        route: "post-paste-preserve-focus",
+        ok: true,
+        reason: "using the composer focus left by paste instead of refocusing chat input",
+      });
+    }
     await this.captureCursorBubbleAnchor();
     const submitResult = await this.submitChat(pastedText, pasted.command);
     if (submitResult.unverified) {
@@ -153,15 +181,21 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
 
   private async verifySubmitStep(
     originalText: string,
-    requireEmptyAfterSubmit = false
+    options: SubmitVerifyOptions = {}
   ): Promise<{ cleared: boolean; observedLength: number }> {
+    const requireEmptyAfterSubmit = Boolean(options.requireEmptyAfterSubmit);
     const ide = this.detectIde();
     const config = this.koruStepConfig();
     this.traceOperation({
       op: "submit_verify",
       route: "start",
       ok: true,
-      detail: { ide, verifySubmitEnabled: config.verifySubmit, requireEmptyAfterSubmit },
+      detail: {
+        ide,
+        verifySubmitEnabled: config.verifySubmit,
+        requireEmptyAfterSubmit,
+        preserveFocus: Boolean(options.preserveFocus),
+      },
     });
     if (ide === "cursor") {
       const bubble = await this._verifySubmitViaCursorBubble(originalText);
@@ -183,7 +217,16 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     const maxAttempts = postSubmitProbeMaxAttempts(ide, { requireEmpty: requireEmptyAfterSubmit });
     for (let attempt = 2; observed === null && attempt <= maxAttempts; attempt += 1) {
       await this.sleep(80 * attempt);
-      await this.focusChatInput();
+      if (!options.preserveFocus) {
+        await this.focusChatInput();
+      } else {
+        this.traceOperation({
+          op: "focus_input",
+          route: "skipped-preserve-focus",
+          ok: true,
+          reason: "post-paste submit verification kept the composer focus",
+        });
+      }
       observed = await this.probeChatInputContents();
       const retryObservedLength = observed === null ? -1 : observed.trim().length;
       this.traceOperation({
@@ -218,7 +261,7 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     extra?: Partial<SubmitOutcome>
   ): Promise<SubmitOutcome | null> {
     if (verifyEnabled && verifyText) {
-      const verify = await this.verifySubmitStep(verifyText, requireEmptyAfterSubmit);
+      const verify = await this.verifySubmitStep(verifyText, { requireEmptyAfterSubmit });
       if (!verify.cleared) {
         debugLog("SUBMIT_VERIFY_DISCARD", { cmd, observedLength: verify.observedLength });
         await this.discardCachedSubmitWinner(cmd);
@@ -305,6 +348,25 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
         registeredCandidates: candidates,
       },
     });
+    if (
+      hostVerifyEnabled
+      && verifyText
+      && this.allowVSCodiumHostInputFallback()
+    ) {
+      const preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
+        preserveFocus: true,
+        ctrlOnly: true,
+      });
+      if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
+      this.traceOperation({
+        op: "submit",
+        route: "vscodium-preserve-focus-host-key-rejected",
+        ok: false,
+        command: preservedFocusHostKey.command,
+        reason: preservedFocusHostKey.reason,
+      });
+    }
+
     const registered = await this._tryRegisteredCommands(
       candidates,
       verifyText,
@@ -319,27 +381,6 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
 
     const typeFallback = await this._tryTypeSubmitFallbacks(verifyText, hostVerifyEnabled);
     if (typeFallback?.ok) return typeFallback;
-
-    let preservedFocusHostKey: SubmitOutcome | undefined;
-    if (
-      hostVerifyEnabled
-      && verifyText
-      && preserveWebviewFocus
-      && this.allowVSCodiumHostInputFallback()
-    ) {
-      preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
-        preserveFocus: true,
-        ctrlOnly: true,
-      });
-      if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
-      this.traceOperation({
-        op: "submit",
-        route: "vscodium-preserve-focus-host-key-rejected",
-        ok: false,
-        command: preservedFocusHostKey.command,
-        reason: preservedFocusHostKey.reason,
-      });
-    }
 
     if (!this.allowVSCodiumHostInputFallback()) {
       this.traceOperation({
@@ -402,7 +443,7 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       shouldRequireVerifiedHostSubmit(ide, verifyText, this.koruStepConfig());
 
     if (ide === "cursor") {
-      const hostClick = await this._tryHostClickSubmit({ allowActiveWindowFallback: true });
+      const hostClick = await this._tryHostClickSubmit();
       if (hostClick.ok && hostClick.command) {
         const accepted = await this.finalizeSubmitCandidate(
           hostClick.command,
@@ -492,6 +533,19 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     for (const cmd of candidates) {
       if (this.detectIde() === "cursor") {
         await this.captureCursorBubbleAnchor();
+        const inputFocus = await this.confirmCursorChatInputBeforeSubmit(
+          verifyText,
+          `registered-command-focus:${cmd}`
+        );
+        if (!inputFocus.ok) {
+          return {
+            ok: false,
+            command: "cursor-submit-focus-unavailable",
+            reason: inputFocus.reason,
+            attempts: inputFocus.command ? [`focus: ${inputFocus.command}`] : undefined,
+            unverified: true,
+          };
+        }
       }
       if (!(await this.runSubmitCommand(cmd, verifyText))) {
         console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
@@ -652,7 +706,10 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
         await this.sleep(80);
         continue;
       }
-      const verify = await this.verifySubmitStep(verifyText, true);
+      const verify = await this.verifySubmitStep(verifyText, {
+        requireEmptyAfterSubmit: true,
+        preserveFocus: Boolean(options.preserveFocus),
+      });
       if (verify.cleared) {
         if (this.probeLadderEnabled()) {
           await this.saveProbeCache({ submit: rendered });
@@ -666,7 +723,11 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
         });
         return { ok: true, command: rendered, attempts };
       }
-      if (ide === "vscodium" && verify.observedLength < 0 && this.trustUnverifiedHostSubmit()) {
+      if (
+        ide === "vscodium"
+        && verify.observedLength < 0
+        && (options.preserveFocus || this.trustUnverifiedHostSubmit())
+      ) {
         if (this.probeLadderEnabled()) {
           await this.saveProbeCache({ submit: rendered });
         }
@@ -675,8 +736,15 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
           route: "accepted-unverified-host-key",
           ok: true,
           command: rendered,
-          reason: "post-submit probe unavailable; trusting successful VSCodium host key",
-          detail: { verifyEnabled: true, requireEmptyAfterSubmit: true, observedLength: verify.observedLength },
+          reason: options.preserveFocus
+            ? "post-submit probe unavailable; trusting immediate post-paste VSCodium host key"
+            : "post-submit probe unavailable; trusting successful VSCodium host key",
+          detail: {
+            verifyEnabled: true,
+            requireEmptyAfterSubmit: true,
+            observedLength: verify.observedLength,
+            preserveFocus: Boolean(options.preserveFocus),
+          },
         });
         return { ok: true, command: rendered, attempts };
       }

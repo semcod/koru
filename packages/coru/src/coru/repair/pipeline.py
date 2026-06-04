@@ -7,12 +7,13 @@ import shutil
 import time
 import zipfile
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from coru.repair.domain import RepairAttempt, RepairPlan, RepairProblem, RepairStepDef
 from coru.repair.diagnostics import _plugin_row_for_ide, _read_package_build_sha
-from coru.repair.registry import REPAIR_REGISTRY, registry_step, registry_steps_for_code
+from coru.repair.domain import RepairAttempt, RepairPlan, RepairProblem, RepairStepDef
+from coru.repair.registry import registry_step, registry_steps_for_code
 
 RunKoru = Callable[[Sequence[str]], int]
 ReplayFn = Callable[[str, str, Sequence[str]], int]
@@ -52,7 +53,11 @@ def _installed_extension_dir(ide: str) -> Path | None:
     ext_root = Path.home() / rel_root
     if not ext_root.is_dir():
         return None
-    matches = sorted(ext_root.glob(f"{ext_prefix}-*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    matches = sorted(
+        ext_root.glob(f"{ext_prefix}-*"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
     return matches[0] if matches else None
 
 
@@ -90,7 +95,10 @@ def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
         pkg = installed_dir / "package.json"
         if pkg.is_file():
             try:
-                version = str(json.loads(pkg.read_text(encoding="utf-8")).get("version") or "").strip() or None
+                version = (
+                    str(json.loads(pkg.read_text(encoding="utf-8")).get("version") or "").strip()
+                    or None
+                )
             except (OSError, json.JSONDecodeError):
                 version = None
     vsix = _resolve_repo_vsix(repo_root, ide, version)
@@ -141,11 +149,19 @@ def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
         action_id="manual_vsix_unpack",
         mode="auto",
         ok=True,
-        message=f"installed {target.name} build={build_sha or '-'} from {vsix.name}; reload IDE window required",
+        message=(
+            f"installed {target.name} build={build_sha or '-'} "
+            f"from {vsix.name}; reload IDE window required"
+        ),
     )
 
 
-def plugin_build_aligned(status: Mapping[str, Any] | None, *, ide: str, expected_build: str | None) -> bool:
+def plugin_build_aligned(
+    status: Mapping[str, Any] | None,
+    *,
+    ide: str,
+    expected_build: str | None,
+) -> bool:
     if not expected_build:
         return _plugin_row_for_ide(status, ide) is not None
     row = _plugin_row_for_ide(status, ide)
@@ -263,7 +279,12 @@ def _execute_step(
 ) -> list[RepairAttempt]:
     if step.action_id == "ensure_daemon":
         return [
-            RepairAttempt(action_id=step.action_id, mode=step.mode, ok=False, message="skipped in step loop")
+            RepairAttempt(
+                action_id=step.action_id,
+                mode=step.mode,
+                ok=False,
+                message="skipped in step loop",
+            )
         ]
     if step.action_id == "manage_fix":
         rc = run_koru(["autopilot", "manage", "--ide", ide, "--fix"])
@@ -461,6 +482,272 @@ def _apply_round_resolution(
     return remaining, resolved
 
 
+@dataclass
+class _PipelineState:
+    attempts: list[RepairAttempt]
+    remaining: list[RepairProblem]
+    resolved: bool
+    expected_build: str | None
+
+
+@dataclass(frozen=True)
+class _PipelineContext:
+    session_id: str
+    ide: str
+    instance: str
+    repo_root: Path | None
+    run_koru: RunKoru
+    fetch_status: StatusPayloadFn
+    ensure_daemon: Callable[[], int] | None
+    ide_reload: IdeReloadFn | None
+    ide_connect: IdeConnectFn | None
+    strict_handshake: StrictHandshakeFn | None
+    on_event: EventCallback | None
+
+
+def _emit_session_started(
+    ctx: _PipelineContext,
+    *,
+    trigger: str,
+    problem_count: int,
+) -> None:
+    _emit(
+        ctx.on_event,
+        "repair.session.started",
+        {
+            "session_id": ctx.session_id,
+            "ide": ctx.ide,
+            "instance": ctx.instance,
+            "trigger": trigger,
+            "problem_count": problem_count,
+        },
+    )
+
+
+def _emit_problems_detected(
+    ctx: _PipelineContext,
+    problems: Sequence[RepairProblem],
+) -> None:
+    _emit(
+        ctx.on_event,
+        "repair.problems.detected",
+        {
+            "session_id": ctx.session_id,
+            "problems": [
+                {
+                    "code": p.code,
+                    "severity": p.severity,
+                    "message": p.message,
+                    "fix_hint": p.fix_hint,
+                    "context": dict(p.context),
+                }
+                for p in problems
+            ],
+        },
+    )
+
+
+def _emit_session_finished(ctx: _PipelineContext, state: _PipelineState) -> None:
+    _emit(
+        ctx.on_event,
+        "repair.session.finished",
+        {
+            "session_id": ctx.session_id,
+            "resolved": state.resolved,
+            "attempt_count": len(state.attempts),
+            "remaining_codes": sorted({p.code for p in state.remaining}),
+        },
+    )
+
+
+def _record_attempt(ctx: _PipelineContext, state: _PipelineState, attempt: RepairAttempt) -> None:
+    state.attempts.append(attempt)
+    _emit(
+        ctx.on_event,
+        "repair.attempt.finished",
+        {"session_id": ctx.session_id, **attempt.__dict__},
+    )
+
+
+def _attempt_ensure_daemon(
+    ctx: _PipelineContext,
+    state: _PipelineState,
+    *,
+    round_index: int,
+    codes: set[str],
+) -> bool:
+    if "daemon_not_running" not in codes or ctx.ensure_daemon is None:
+        return False
+
+    _emit(
+        ctx.on_event,
+        "repair.command.dispatched",
+        {"session_id": ctx.session_id, "action_id": "ensure_daemon", "round": round_index},
+    )
+    started = time.monotonic()
+    rc = ctx.ensure_daemon()
+    _record_attempt(
+        ctx,
+        state,
+        RepairAttempt(
+            action_id="ensure_daemon",
+            mode="auto",
+            ok=rc == 0,
+            message="daemon ensure ok" if rc == 0 else f"daemon ensure failed rc={rc}",
+            duration_ms=(time.monotonic() - started) * 1000,
+        ),
+    )
+    if rc != 0:
+        return True
+
+    state.remaining = [p for p in state.remaining if p.code != "daemon_not_running"]
+    state.resolved = not state.remaining
+    return state.resolved
+
+
+def _steps_for_codes(codes: set[str]) -> tuple[list[RepairStepDef], list[str]]:
+    steps: list[RepairStepDef] = []
+    for code in codes:
+        steps.extend(registry_steps_for_code(code))
+
+    unique_steps = {step.action_id: step for step in steps}
+    ordered_steps = sorted(unique_steps.values(), key=lambda s: s.priority)
+    mapped_codes = {code for step in ordered_steps for code in step.issue_codes}
+    unmapped_codes = sorted(code for code in codes if code not in mapped_codes)
+    return ordered_steps, unmapped_codes
+
+
+def _set_step_duration(step_attempts: Sequence[RepairAttempt], elapsed_ms: float) -> None:
+    if len(step_attempts) == 1:
+        step_attempts[0].duration_ms = elapsed_ms
+
+
+def _run_repair_step(
+    ctx: _PipelineContext,
+    state: _PipelineState,
+    step: RepairStepDef,
+    *,
+    round_index: int,
+    codes: set[str],
+) -> None:
+    _emit(
+        ctx.on_event,
+        "repair.command.dispatched",
+        {
+            "session_id": ctx.session_id,
+            "action_id": step.action_id,
+            "mode": step.mode,
+            "round": round_index,
+            "targets": sorted(step.issue_codes & codes),
+        },
+    )
+    started = time.monotonic()
+    step_attempts = _execute_step(
+        step,
+        ide=ctx.ide,
+        instance=ctx.instance,
+        repo_root=ctx.repo_root,
+        expected_build=state.expected_build,
+        run_koru=ctx.run_koru,
+        fetch_status=ctx.fetch_status,
+        strict_handshake=ctx.strict_handshake,
+        ide_reload=ctx.ide_reload,
+        ide_connect=ctx.ide_connect,
+    )
+    _set_step_duration(step_attempts, (time.monotonic() - started) * 1000)
+    for attempt in step_attempts:
+        _record_attempt(ctx, state, attempt)
+
+
+def _run_repair_steps(
+    ctx: _PipelineContext,
+    state: _PipelineState,
+    *,
+    round_index: int,
+    codes: set[str],
+    steps: Sequence[RepairStepDef],
+) -> None:
+    for step in steps:
+        if step.action_id != "ensure_daemon":
+            _run_repair_step(ctx, state, step, round_index=round_index, codes=codes)
+
+
+def _record_unmapped_guidance(
+    ctx: _PipelineContext,
+    state: _PipelineState,
+    unmapped_codes: Sequence[str],
+) -> None:
+    for code in unmapped_codes:
+        _record_attempt(
+            ctx,
+            state,
+            RepairAttempt(
+                action_id=f"manual_guidance:{code}",
+                mode="manual",
+                ok=True,
+                automated=False,
+                message=(
+                    f"no automatic repair registered for issue code {code}; "
+                    "add a RepairStepDef to coru.repair.registry.REPAIR_REGISTRY"
+                ),
+            ),
+        )
+
+
+def _clear_plugin_not_connected_if_ready(
+    ctx: _PipelineContext,
+    state: _PipelineState,
+    status: Mapping[str, Any] | None,
+) -> bool:
+    if state.expected_build or _plugin_row_for_ide(status, ctx.ide) is None:
+        return False
+    state.remaining = [p for p in state.remaining if p.code not in {"plugin_not_connected"}]
+    state.resolved = not state.remaining
+    return state.resolved
+
+
+def _refresh_status_resolution(ctx: _PipelineContext, state: _PipelineState) -> bool:
+    status = ctx.fetch_status(ctx.ide, ctx.instance)
+    if state.expected_build is None:
+        state.expected_build = _expected_build_from_problems(state.remaining)
+    if plugin_build_aligned(status, ide=ctx.ide, expected_build=state.expected_build):
+        state.remaining = []
+        state.resolved = True
+        return True
+    return _clear_plugin_not_connected_if_ready(ctx, state, status)
+
+
+def _apply_round_actions(state: _PipelineState, *, round_start: int) -> bool:
+    round_actions = state.attempts[round_start:]
+    state.remaining, state.resolved = _apply_round_resolution(state.remaining, round_actions)
+    return state.resolved
+
+
+def _run_repair_round(
+    ctx: _PipelineContext,
+    state: _PipelineState,
+    *,
+    round_index: int,
+) -> bool:
+    if not state.remaining:
+        state.resolved = True
+        return True
+
+    codes = {problem.code for problem in state.remaining}
+    if _attempt_ensure_daemon(ctx, state, round_index=round_index, codes=codes):
+        return True
+
+    codes = {problem.code for problem in state.remaining}
+    steps, unmapped_codes = _steps_for_codes(codes)
+    round_start = len(state.attempts)
+    _run_repair_steps(ctx, state, round_index=round_index, codes=codes, steps=steps)
+    _record_unmapped_guidance(ctx, state, unmapped_codes)
+
+    if _refresh_status_resolution(ctx, state):
+        return True
+    return _apply_round_actions(state, round_start=round_start)
+
+
 def run_repair_pipeline(
     *,
     session_id: str,
@@ -481,162 +768,40 @@ def run_repair_pipeline(
 ) -> RepairPlan:
     """Execute registry repairs until problems clear or rounds exhaust."""
 
-    attempts: list[RepairAttempt] = []
-    remaining = list(problems)
-    resolved = not remaining
-    expected_build = _expected_build_from_problems(problems)
-
-    _emit(
-        on_event,
-        "repair.session.started",
-        {
-            "session_id": session_id,
-            "ide": ide,
-            "instance": instance,
-            "trigger": trigger,
-            "problem_count": len(problems),
-        },
+    state = _PipelineState(
+        attempts=[],
+        remaining=list(problems),
+        resolved=not problems,
+        expected_build=_expected_build_from_problems(problems),
     )
-    _emit(
-        on_event,
-        "repair.problems.detected",
-        {
-            "session_id": session_id,
-            "problems": [
-                {
-                    "code": p.code,
-                    "severity": p.severity,
-                    "message": p.message,
-                    "fix_hint": p.fix_hint,
-                    "context": dict(p.context),
-                }
-                for p in problems
-            ],
-        },
+    ctx = _PipelineContext(
+        session_id=session_id,
+        ide=ide,
+        instance=instance,
+        repo_root=repo_root,
+        run_koru=run_koru,
+        fetch_status=fetch_status,
+        ensure_daemon=ensure_daemon,
+        ide_reload=ide_reload,
+        ide_connect=ide_connect,
+        strict_handshake=strict_handshake,
+        on_event=on_event,
     )
 
-    for _round in range(max(1, max_rounds)):
-        if not remaining:
-            resolved = True
+    _emit_session_started(ctx, trigger=trigger, problem_count=len(problems))
+    _emit_problems_detected(ctx, problems)
+
+    for round_index in range(max(1, max_rounds)):
+        if _run_repair_round(ctx, state, round_index=round_index):
             break
 
-        codes = {problem.code for problem in remaining}
-        if "daemon_not_running" in codes and ensure_daemon is not None:
-            _emit(
-                on_event,
-                "repair.command.dispatched",
-                {"session_id": session_id, "action_id": "ensure_daemon", "round": _round},
-            )
-            started = time.monotonic()
-            rc = ensure_daemon()
-            attempt = RepairAttempt(
-                action_id="ensure_daemon",
-                mode="auto",
-                ok=rc == 0,
-                message="daemon ensure ok" if rc == 0 else f"daemon ensure failed rc={rc}",
-                duration_ms=(time.monotonic() - started) * 1000,
-            )
-            attempts.append(attempt)
-            _emit(on_event, "repair.attempt.finished", {"session_id": session_id, **attempt.__dict__})
-            if rc != 0:
-                break
-            remaining = [p for p in remaining if p.code != "daemon_not_running"]
-            if not remaining:
-                resolved = True
-                break
-            codes = {problem.code for problem in remaining}
-
-        steps: list[RepairStepDef] = []
-        for code in codes:
-            steps.extend(registry_steps_for_code(code))
-        steps = sorted({step.action_id: step for step in steps}.values(), key=lambda s: s.priority)
-        mapped_codes = {code for step in steps for code in step.issue_codes}
-        unmapped_codes = sorted(code for code in codes if code not in mapped_codes)
-        round_start = len(attempts)
-
-        for step in steps:
-            if step.action_id == "ensure_daemon":
-                continue
-            _emit(
-                on_event,
-                "repair.command.dispatched",
-                {
-                    "session_id": session_id,
-                    "action_id": step.action_id,
-                    "mode": step.mode,
-                    "round": _round,
-                    "targets": sorted(step.issue_codes & codes),
-                },
-            )
-            started = time.monotonic()
-            step_attempts = _execute_step(
-                step,
-                ide=ide,
-                instance=instance,
-                repo_root=repo_root,
-                expected_build=expected_build,
-                run_koru=run_koru,
-                fetch_status=fetch_status,
-                strict_handshake=strict_handshake,
-                ide_reload=ide_reload,
-                ide_connect=ide_connect,
-            )
-            elapsed_ms = (time.monotonic() - started) * 1000
-            if len(step_attempts) == 1:
-                step_attempts[0].duration_ms = elapsed_ms
-            for attempt in step_attempts:
-                attempts.append(attempt)
-                _emit(on_event, "repair.attempt.finished", {"session_id": session_id, **attempt.__dict__})
-
-        for code in unmapped_codes:
-            attempt = RepairAttempt(
-                action_id=f"manual_guidance:{code}",
-                mode="manual",
-                ok=True,
-                automated=False,
-                message=(
-                    f"no automatic repair registered for issue code {code}; "
-                    "add a RepairStepDef to coru.repair.registry.REPAIR_REGISTRY"
-                ),
-            )
-            attempts.append(attempt)
-            _emit(on_event, "repair.attempt.finished", {"session_id": session_id, **attempt.__dict__})
-
-        status = fetch_status(ide, instance)
-        if expected_build is None:
-            expected_build = _expected_build_from_problems(remaining)
-        if plugin_build_aligned(status, ide=ide, expected_build=expected_build):
-            remaining = []
-            resolved = True
-            break
-        if _plugin_row_for_ide(status, ide) is not None and not expected_build:
-            remaining = [p for p in remaining if p.code not in {"plugin_not_connected"}]
-            if not remaining:
-                resolved = True
-                break
-
-        round_actions = attempts[round_start:]
-        remaining, round_resolved = _apply_round_resolution(remaining, round_actions)
-        if round_resolved:
-            resolved = True
-            break
-
-    _emit(
-        on_event,
-        "repair.session.finished",
-        {
-            "session_id": session_id,
-            "resolved": resolved,
-            "attempt_count": len(attempts),
-            "remaining_codes": sorted({p.code for p in remaining}),
-        },
-    )
+    _emit_session_finished(ctx, state)
 
     return RepairPlan(
         session_id=session_id,
         problems=tuple(problems),
-        attempts=tuple(attempts),
-        resolved=resolved,
+        attempts=tuple(state.attempts),
+        resolved=state.resolved,
         trigger=trigger,
     )
 
@@ -654,7 +819,9 @@ def format_repair_lines(plan: RepairPlan, *, prefix: str = "[coru] repair") -> l
     if plan.resolved:
         lines.append(f"{prefix}: bridge repair complete (session={plan.session_id})")
     elif plan.problems:
-        lines.append(f"{prefix}: bridge still blocked after repair attempts (session={plan.session_id})")
+        lines.append(
+            f"{prefix}: bridge still blocked after repair attempts (session={plan.session_id})"
+        )
     return lines
 
 

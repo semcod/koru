@@ -14,13 +14,13 @@ test:
 	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --verbose $(PYTEST_ARGS)
 
 test-fast:
-	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --quick $(PYTEST_ARGS)
+	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --critical --quick $(PYTEST_ARGS)
 
 test-parallel:
-	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --fast --maxfail=1 $(PYTEST_ARGS)
+	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --critical --fast --maxfail=1 $(PYTEST_ARGS)
 
 test-parallel-fast:
-	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --quick $(PYTEST_ARGS)
+	$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --critical --quick $(PYTEST_ARGS)
 
 test-python-parallel: test-parallel
 

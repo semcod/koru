@@ -113,6 +113,20 @@ function testDecideBusyInputAction(): void {
     "natural-language user text must not be replaced",
   );
   assert(decideBusyInputAction("please answer this", "next prompt") === "block", "user draft blocks drive");
+  assert(
+    decideBusyInputAction(
+      "Ticket STARTER-468 waiting_input Continue the actual implementation for this ticket.",
+      "next prompt",
+    ) === "replace_known_koru_draft",
+    "stale autonomous drive draft may be replaced",
+  );
+  assert(
+    decideBusyInputAction(
+      "Ticket STARTER-468 same autonomous prompt with extra trailing whitespace",
+      "Ticket STARTER-468 same autonomous prompt with extra trailing whitespace ",
+    ) === "submit_existing",
+    "near-duplicate autonomous prompt should submit existing input",
+  );
 }
 
 function testInterpretPostSubmitProbeRetry(): void {

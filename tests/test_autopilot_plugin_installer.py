@@ -27,6 +27,11 @@ def _cp(
 @pytest.fixture(autouse=True)
 def _hide_live_editor_bins(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
+    # Mock to True only if it doesn't look like a blocked snap/mount path
+    monkeypatch.setattr(
+        "koru.autopilot.install_plugin_cli._editor_bin_usable_for_cli_install",
+        lambda exe: "/.mount_" not in exe and not (exe.startswith("/snap/") and not exe.startswith("/snap/bin/")),
+    )
 
 
 def test_resolve_target_ide_prefers_autopilot_env(monkeypatch) -> None:
@@ -428,7 +433,7 @@ def test_install_plugin_builds_stale_local_vsix_before_reassert(
 
     assert result.status == "already_installed"
     assert ["npm", "run", "package"] in calls
-    assert ["/usr/bin/codium", "--install-extension", str(vsix.resolve()), "--force"] in calls
+    assert ["/usr/bin/vscodium", "--install-extension", str(vsix.resolve()), "--force"] in calls
 
 
 def test_install_plugin_removes_conflicting_family_extension(monkeypatch) -> None:
@@ -454,7 +459,7 @@ def test_install_plugin_removes_conflicting_family_extension(monkeypatch) -> Non
 
     assert result.status == "already_installed"
     assert result.conflicts_removed == (conflict_ext_id,)
-    assert ["/usr/bin/codium", "--uninstall-extension", conflict_ext_id] in calls
+    assert ["/usr/bin/vscodium", "--uninstall-extension", conflict_ext_id] in calls
 
 
 @pytest.mark.parametrize(

@@ -130,13 +130,15 @@ def test_default_config_path_falls_back_to_home(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_cached_config_is_memoised(monkeypatch: pytest.MonkeyPatch) -> None:
+    import gillm.config as gillm_config_mod
+
     calls = []
 
     def fake_load() -> AutopilotConfig:
         calls.append(None)
         return AutopilotConfig()
 
-    monkeypatch.setattr(config_mod, "load_config", lambda *_a, **_k: fake_load())
+    monkeypatch.setattr(gillm_config_mod, "load_config", lambda *_a, **_k: fake_load())
     clear_config_cache()
     cached_config()
     cached_config()

@@ -30,7 +30,7 @@ from koruide.daemon.storage import (
     get_console_logs,
     start_new_log_session,
 )
-from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
 from gillm.injection.errors import InjectorError

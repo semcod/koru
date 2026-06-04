@@ -88,7 +88,10 @@ class LegacyAutopilotClientAdapter:
                 summary_bits.append(f"{key}={value}")
         activity(
             "CHAT",
-            f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')} {' '.join(summary_bits)}",
+            (
+                f"drive wynik: ok={ok} backend={backend} "
+                f"tool_id={reply.get('tool_id', '-')} {' '.join(summary_bits)}"
+            ),
             data={
                 "ide": ide,
                 "ok": ok,
@@ -188,6 +191,10 @@ def build_ide_client(
     """
 
     choice = (backend or os.environ.get("KORU_IDE_BACKEND", "legacy")).strip().lower()
+    if choice == "gillm":
+        from koru.ide_adapters.gillm_client import build_gillm_ide_client
+
+        return build_gillm_ide_client()
     if choice == "koruide":
         return build_koruide_client(socket_path=socket_path, timeout=timeout)
     return build_legacy_ide_client(socket_path=socket_path, timeout=timeout)

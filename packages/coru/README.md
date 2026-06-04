@@ -25,7 +25,8 @@ coru ensure
 coru ensure --install
 coru sync
 coru sync --all-ides
-coru sync windsurf windsurf-main --skip-repair
+coru sync --repair
+coru sync windsurf windsurf-main --repair
 
 coru lane
 coru lane windsurf windsurf-main --print-env
@@ -66,7 +67,8 @@ previously had to remember manually:
 - `auto`
 
 `coru sync` is the explicit one-shot for the full ecosystem (editable `koruenv`/`koru`/`coru`,
-repo VSIX plugins via `koru autopilot install-plugin`, then `manage --fix` + `koru self repair`).
+repo VSIX plugins via `koru autopilot install-plugin`). By default it does **not** run
+`manage --fix` (use `--repair` to opt in — that path can open extra IDE windows).
 After plugin upgrades, reload each IDE window manually — autopilot cannot do that safely from an
 integrated terminal.
 

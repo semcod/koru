@@ -1249,7 +1249,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-06-03T09:42:44.713304Z'
+        finished_at: '2026-06-03T18:37:28.957222Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1345,6 +1345,16 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-03T09:42:44.860809+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T15:31:43.967564+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T18:37:29.129312+00:00'
       id: STARTER-266
       inputs:
         api_headers: {}
@@ -1399,7 +1409,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-03T09:42:44.860775+00:00'
+      updated_at: '2026-06-03T18:37:29.129267+00:00'
     STARTER-267:
       blocked_by: []
       blocks: []
@@ -2118,7 +2128,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-06-03T10:20:40.045633Z'
+        finished_at: '2026-06-03T15:01:38.431721Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2226,6 +2236,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-03T10:20:40.195876+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T15:01:38.605025+00:00'
       id: STARTER-274
       inputs:
         api_headers: {}
@@ -2281,7 +2296,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-03T10:20:40.195839+00:00'
+      updated_at: '2026-06-03T15:01:38.604980+00:00'
     STARTER-275:
       blocked_by: []
       blocks: []
@@ -2299,7 +2314,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-06-03T09:27:19.336232Z'
+        finished_at: '2026-06-03T18:37:24.841611Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2457,6 +2472,16 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-03T09:27:19.472009+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T15:31:39.824877+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T18:37:25.062182+00:00'
       id: STARTER-275
       inputs:
         api_headers: {}
@@ -2509,7 +2534,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-03T09:27:19.471944+00:00'
+      updated_at: '2026-06-03T18:37:25.062118+00:00'
     STARTER-276:
       blocked_by: []
       blocks: []
@@ -22421,9 +22446,10 @@ sprint:
         Re-run code2llm after the change and keep tests green.'
       execution:
         attempt: 0
+        finished_at: '2026-06-03T15:36:24.419116Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -22440,6 +22466,16 @@ sprint:
           Re-run code2llm after the change and keep tests green.'
         source: koru task
         timestamp: '2026-06-02T21:34:17.573931+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-03T15:36:24.570820+00:00'
       id: STARTER-464
       inputs:
         api_headers: {}
@@ -22504,9 +22540,9 @@ sprint:
         timestamp: '2026-06-02T21:34:17.573931+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T21:34:17.573931+00:00'
+      updated_at: '2026-06-03T15:36:24.570786+00:00'
     STARTER-465:
       blocked_by: []
       blocks: []
@@ -22520,9 +22556,10 @@ sprint:
         Re-run code2llm after the change and keep tests green.'
       execution:
         attempt: 0
+        finished_at: '2026-06-03T16:22:01.342879Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -22539,6 +22576,16 @@ sprint:
           Re-run code2llm after the change and keep tests green.'
         source: koru task
         timestamp: '2026-06-02T21:34:19.207801+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-03T16:22:01.493107+00:00'
       id: STARTER-465
       inputs:
         api_headers: {}
@@ -22603,9 +22650,9 @@ sprint:
         timestamp: '2026-06-02T21:34:19.207801+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T21:34:19.207801+00:00'
+      updated_at: '2026-06-03T16:22:01.493074+00:00'
     STARTER-466:
       blocked_by: []
       blocks: []
@@ -22619,9 +22666,10 @@ sprint:
         Re-run code2llm after the change and keep tests green.'
       execution:
         attempt: 0
+        finished_at: '2026-06-03T16:34:05.080357Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -22638,6 +22686,16 @@ sprint:
           Re-run code2llm after the change and keep tests green.'
         source: koru task
         timestamp: '2026-06-02T21:34:20.865643+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-03T16:34:05.227813+00:00'
       id: STARTER-466
       inputs:
         api_headers: {}
@@ -22702,9 +22760,9 @@ sprint:
         timestamp: '2026-06-02T21:34:20.865643+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T21:34:20.865643+00:00'
+      updated_at: '2026-06-03T16:34:05.227778+00:00'
     STARTER-467:
       blocked_by: []
       blocks: []
@@ -22718,9 +22776,10 @@ sprint:
         Re-run code2llm after the change and keep tests green.'
       execution:
         attempt: 0
+        finished_at: '2026-06-03T16:53:31.102827Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -22737,6 +22796,16 @@ sprint:
           Re-run code2llm after the change and keep tests green.'
         source: koru task
         timestamp: '2026-06-02T21:34:22.526506+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-03T16:53:31.249907+00:00'
       id: STARTER-467
       inputs:
         api_headers: {}
@@ -22801,9 +22870,9 @@ sprint:
         timestamp: '2026-06-02T21:34:22.526506+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T21:34:22.526506+00:00'
+      updated_at: '2026-06-03T16:53:31.249872+00:00'
     STARTER-468:
       blocked_by: []
       blocks: []
@@ -22817,9 +22886,10 @@ sprint:
         Re-run code2llm after the change and keep tests green.'
       execution:
         attempt: 0
+        finished_at: '2026-06-03T19:22:16.039149Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -22836,6 +22906,21 @@ sprint:
           Re-run code2llm after the change and keep tests green.'
         source: koru task
         timestamp: '2026-06-02T21:34:24.197811+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-03T17:14:25.272672+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T19:22:16.249806+00:00'
       id: STARTER-468
       inputs:
         api_headers: {}
@@ -22900,9 +22985,9 @@ sprint:
         timestamp: '2026-06-02T21:34:24.197811+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T21:34:24.197811+00:00'
+      updated_at: '2026-06-03T19:22:16.249767+00:00'
     STARTER-469:
       blocked_by: []
       blocks: []
@@ -22915,9 +23000,10 @@ sprint:
         around the moved behavior.'
       execution:
         attempt: 0
+        finished_at: '2026-06-03T19:22:17.993674Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -22933,6 +23019,21 @@ sprint:
           tests around the moved behavior.'
         source: koru task
         timestamp: '2026-06-02T21:34:25.904596+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-03T17:47:29.313995+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-03T19:22:18.147300+00:00'
       id: STARTER-469
       inputs:
         api_headers: {}
@@ -22994,9 +23095,9 @@ sprint:
         timestamp: '2026-06-02T21:34:25.904596+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-02T21:34:25.904596+00:00'
+      updated_at: '2026-06-03T19:22:18.147261+00:00'
     STARTER-470:
       blocked_by: []
       blocks: []
@@ -23029,19 +23130,39 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-06-02T21:34:27.578709+00:00'
+      - action: update
+        changes:
+        - execution
+        - inputs
+        - outputs
+        execution_state: waiting_input
+        previous_execution_state: ready
+        source: planfile.store
+        timestamp: '2026-06-03T19:10:15.929435+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-06-03T19:12:17.041351+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-06-03T19:26:51.814820+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: waiting_input
+        source: planfile.store
+        timestamp: '2026-06-03T19:28:13.631119+00:00'
       id: STARTER-470
       inputs:
         api_headers: {}
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: 'code2llm reports `God Function: _drive_autopilot_once` in `src/koru/autonomous_cycle_orchestrator.py:321`.
-
-
-          Function ''_drive_autopilot_once'' is oversized: CC=8, fan-out=14, mutations=23.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
+        prompt: <input needed>
       labels:
       - koru
       - nl-task
@@ -23052,7 +23173,10 @@ sprint:
       name: 'Address code smell: God Function: _drive_autopilot_once'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - <what was verified>
+        - <what was verified>
+        - <what was verified>
       priority: high
       source:
         context:
@@ -23095,7 +23219,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-06-02T21:34:27.578709+00:00'
+      updated_at: '2026-06-03T19:30:37.009813+00:00'
     STARTER-471:
       blocked_by: []
       blocks: []

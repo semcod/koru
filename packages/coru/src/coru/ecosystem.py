@@ -12,6 +12,7 @@ from typing import Any
 
 PYTHON_PACKAGES = ("koruenv", "koru", "coru")
 VSIX_PLUGIN_IDES = frozenset({"antigravity", "windsurf", "vscode", "vscodium", "cursor"})
+AUTO_SYNC_PLUGIN_IDES = VSIX_PLUGIN_IDES - {"antigravity"}
 RunFn = Callable[[Sequence[str]], int]
 KoruRunFn = Callable[[str, Sequence[str]], int]
 
@@ -88,7 +89,7 @@ def _detect_running_plugin_ides() -> list[str]:
         {
             row.id
             for row in detect_running_ides()
-            if row.id in VSIX_PLUGIN_IDES
+            if row.id in AUTO_SYNC_PLUGIN_IDES
         }
     )
 
@@ -121,7 +122,7 @@ def sync_manage_fix(
     *,
     koru_runner: KoruRunFn,
 ) -> SyncStep:
-    rc = koru_runner(ide, ["autopilot", "manage", "--ide", ide, "--fix"])
+    rc = koru_runner(ide, ["autopilot", "manage", "--ide", ide, "--fix", "--allow-unconnected"])
     return SyncStep(
         f"manage_fix:{ide}",
         rc == 0,
@@ -169,7 +170,7 @@ def sync_ecosystem(
 
     target_ides: list[str] = []
     if all_running_ides:
-        target_ides = _detect_running_plugin_ides()
+        target_ides = [ide for ide in _detect_running_plugin_ides() if ide in AUTO_SYNC_PLUGIN_IDES]
     elif ide:
         target_ides = [ide]
 

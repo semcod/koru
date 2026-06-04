@@ -1,8 +1,6 @@
 export const ANTIGRAVITY_SEND_PROMPT_COMMAND = "antigravity.sendPromptToAgentPanel";
 
 export const ANTIGRAVITY_OPEN_COMMANDS = [
-  "antigravity.openAgent",
-  "antigravity.agentSidePanel.open",
   "antigravity.agentSidePanel.focus",
 ];
 

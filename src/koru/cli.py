@@ -8,11 +8,11 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
+import koru.autonomous as _autonomous
 import koru.cli_parser as _cli_parser
 from koru.agents import detect_agent_options  # noqa: F401 - legacy CLI monkeypatch hook
 from koru.autoloop_cli import autoloop_main
-from koru.autonomous import autonomous_main
-from koru.autonomous_runtime import project_venv_reexec_argv
+from koru.autonomous_runtime import project_venv_reexec_argv, project_venv_reexec_env
 from koru.autopilot.cli_command import autopilot_main
 from koru.cli_loop import command_loop_main as _command_loop_main
 from koru.cli_scan import scan_main as _scan_main
@@ -22,6 +22,8 @@ from koru.git_cli import git_main
 
 _build_parser = _cli_parser._build_parser
 _command_value = _cli_parser._command_value
+autonomous_main = _autonomous.autonomous_main
+stop_prior_autonomous_for_auto_start = _autonomous.stop_prior_autonomous_for_auto_start
 
 
 def _is_bare_invocation(args: argparse.Namespace) -> bool:
@@ -67,8 +69,8 @@ def _sllm_main(argv: list[str]) -> int:
         return sllm_cli_main(argv)
     except ImportError as exc:
         print(
-            "koru sllm: missing SLLM plugin. Install it with "
-            "`pip install -e /home/tom/github/semcod/sllm`.",
+            "koru sllm: missing shell LLM plugin. Install it with "
+            "`pip install fullm` or `pip install koru[sllm]`.",
             file=sys.stderr,
         )
         print(f"koru sllm: import error: {exc}", file=sys.stderr)
@@ -168,7 +170,6 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "agent-backends": _agent_backends_main,
     "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
     "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
-    "sllm": _sllm_main,
     "local-serve": lambda argv: _lazy_module_main(
         "koru.cli_local_serve",
         "_local_serve_main",
@@ -228,7 +229,7 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
 
     if subcommand in {"auto", "autonomous"}:
         if reexec_argv := project_venv_reexec_argv(project):
-            env = dict(os.environ)
+            env = project_venv_reexec_env(project)
             env["KORU_AUTONOMOUS_REEXECED"] = "1"
             env["KORU_CLI_REEXECED"] = "1"
             print(f"koru: switching to project venv: {' '.join(reexec_argv)}", file=sys.stderr)
@@ -237,7 +238,7 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
 
     if subcommand == "doctor" or "--doctor" in raw_args:
         if reexec_argv := _project_cli_reexec_argv(project):
-            env = dict(os.environ)
+            env = project_venv_reexec_env(project)
             env["KORU_CLI_REEXECED"] = "1"
             print(f"koru: switching to project venv CLI: {' '.join(reexec_argv)}", file=sys.stderr)
             os.execvpe(reexec_argv[0], reexec_argv, env)

@@ -9,7 +9,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from koru.autopilot import os_injector as oi
+import gillm.injection.os_injector as oi
 from koru.autopilot.ide import detect_running_ides, resolve_drive_target
 
 

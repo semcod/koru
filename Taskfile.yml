@@ -82,24 +82,24 @@ tasks:
       IDES: '{{.IDES | default ""}}'
 
   test:fast:
-    desc: Run default tests quietly in parallel when pytest-xdist is installed
+    desc: Run critical tests quietly in parallel when pytest-xdist is installed
     cmds:
-      - scripts/koru-pytest.sh --fast {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --critical --fast {{.CLI_ARGS}}
 
   test:quick:
     desc: Fastest feedback loop (parallel, fail fast, failed tests first)
     cmds:
-      - scripts/koru-pytest.sh --quick {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --critical --quick {{.CLI_ARGS}}
 
   test:parallel:
-    desc: Run tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)
+    desc: Run critical tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)
     cmds:
-      - scripts/koru-pytest.sh --fast --maxfail=1 {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --critical --fast --maxfail=1 {{.CLI_ARGS}}
 
   test:changed:
     desc: Run changed pytest files under tests/; falls back to default tests when none changed
     cmds:
-      - scripts/koru-pytest.sh --changed --quick {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --changed --critical --quick {{.CLI_ARGS}}
 
   test:profile:
     desc: Run default tests and show the slowest test durations

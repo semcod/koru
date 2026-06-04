@@ -13,7 +13,7 @@ function detect(appName: string): string | undefined {
 }
 
 function pasteDirectCommandsPrefix(): string[] {
-  return [];
+  return ["antigravity.sendPromptToAgentPanel"];
 }
 
 function submitCommandsOverride(): string[] | null {
@@ -21,19 +21,28 @@ function submitCommandsOverride(): string[] | null {
 }
 
 function focusInputCommandsPrefix(): string[] {
-  return [];
+  return [
+    "antigravity.agentSidePanel.focus",
+  ];
 }
 
 function preferCtrlSubmit(): boolean {
   return false;
 }
 
-function sanitizeProbeCache(_entry: ProbeCacheEntry, _opts: { isWayland: boolean }): void {
-  // no-op
+function sanitizeProbeCache(entry: ProbeCacheEntry, _opts: { isWayland: boolean }): void {
+  if (entry.focusOpen && entry.focusOpen.toLowerCase().includes("openagent")) {
+    entry.focusOpen = undefined;
+  }
+  if (entry.focusInput && entry.focusInput.toLowerCase().includes("openagent")) {
+    entry.focusInput = undefined;
+  }
 }
 
 function focusOpenCommandsDefaults(): string[] {
-  return [];
+  return [
+    "antigravity.agentSidePanel.focus",
+  ];
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {

@@ -27,8 +27,13 @@ IDE_CONFIG: dict[str, dict[str, object]] = {
         "keywords": ["koru", "autopilot", "vscodium", "codium", "automation"],
         "strategy": "vscodium",
         "tests": ["vscodium.test.ts"],
-        "guard": 'appName.toLowerCase().includes("vscodium") || appName.toLowerCase().includes("code - oss") || appName.toLowerCase().includes("code-oss")',
-        "guard_label": "VSCodium / Code - OSS",
+        "guard": (
+            'appName.toLowerCase().includes("vscodium") || '
+            'appName.toLowerCase().includes("codium") || '
+            'appName.toLowerCase().includes("code - oss") || '
+            'appName.toLowerCase().includes("code-oss")'
+        ),
+        "guard_label": "VSCodium / Codium / Code - OSS",
     },
     "windsurf": {
         "dir": "koru-autopilot-windsurf",
@@ -62,7 +67,10 @@ import type {{ IdeStrategy }} from "./ide-strategy";
 
 const REGISTRY = new Map<string, IdeStrategy>();
 
-export function registerStrategy(strategy: IdeStrategy, opts: {{ override?: boolean }} = {{}}): void {{
+export function registerStrategy(
+  strategy: IdeStrategy,
+  opts: {{ override?: boolean }} = {{}},
+): void {{
   const id = strategy.id;
   if (!id) throw new Error("IdeStrategy.id must be a non-empty string");
   if (!opts.override && REGISTRY.has(id)) {{
@@ -101,11 +109,6 @@ bootstrapStrategies();
 
 
 def _write_chat_history_adapters(dest: Path, ide: str) -> None:
-    class_name = {
-        "vscodium": "VSCodeChatSessionAdapter",
-        "windsurf": "UnsupportedAdapter",
-        "antigravity": "UnsupportedAdapter",
-    }[ide]
     import_line = {
         "vscodium": 'import { VSCodeChatSessionAdapter } from "./vscode-chat-session-adapter";',
         "windsurf": 'import { UnsupportedAdapter } from "./unsupported-chat-adapter";',
@@ -195,7 +198,6 @@ def _patch_extension_activate(dest: Path, cfg: dict[str, object]) -> None:
 
 
 def _write_package_json(dest: Path, cfg: dict[str, object], version: str) -> None:
-    ide = cfg["strategy"]
     dir_name = cfg["dir"]
     pkg = json.loads((SRC_PLUGIN / "package.json").read_text(encoding="utf-8"))
     pkg["name"] = dir_name
@@ -264,7 +266,13 @@ def scaffold(ide: str) -> None:
     shutil.copytree(
         SRC_PLUGIN,
         dest,
-        ignore=shutil.ignore_patterns("node_modules", "out", "*.vsix", "package-lock.json", "src/_shared"),
+        ignore=shutil.ignore_patterns(
+            "node_modules",
+            "out",
+            "*.vsix",
+            "package-lock.json",
+            "src/_shared",
+        ),
     )
 
     # Drop unrelated IDE strategies

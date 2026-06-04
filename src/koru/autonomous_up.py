@@ -157,7 +157,10 @@ def run_autonomous_up_loop(
         from koru.autonomy.env import plugin_required_for_ide
 
         if plugin_required_for_ide(context.autopilot_ide):
-            context.loop_state.autopilot_plugin_ready = bool(plugin_connected)
+            try:
+                context.loop_state.autopilot_plugin_ready = bool(plugin_connected)
+            except AttributeError:
+                pass
 
         cycle = context.restored_cycle or 0
         while True:

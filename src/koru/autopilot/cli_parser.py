@@ -417,6 +417,11 @@ def _add_manage_parser(sub: argparse._SubParsersAction) -> None:
         action="store_true",
         help="With --fix, show the planned plugin install without executing it.",
     )
+    manage.add_argument(
+        "--allow-unconnected",
+        action="store_true",
+        help="Exit 0 even if the plugin remains unconnected (useful during automated syncs where manual reload is expected).",
+    )
 
 
 def _add_install_plugin_parser(sub: argparse._SubParsersAction) -> None:

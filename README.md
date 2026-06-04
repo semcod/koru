@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.05-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-136.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.310-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$33.00-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-138.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $32.0492 (414 commits)
-- 👤 **Human dev:** ~$13643 (136.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $32.9953 (415 commits)
+- 👤 **Human dev:** ~$13850 (138.5h @ $100/h, 30min dedup)
 
-Generated on 2026-06-03 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-06-04 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -175,6 +175,8 @@ pip install "koru[observe]"  # full local observation stack (vision + mesh)
 pip install "koru[dev]"      # tests, lint, typing, local quality tooling
 pip install "koru[api]"      # FastAPI healing webhook service
 pip install "koru[agent]"    # LLM / structured-output integrations
+pip install "koru[fullm]"    # fullm-backed local LLM helpers
+pip install "koru[sllm]"     # compatibility extra for fullm-backed SLLM flows
 pip install "koru[obs]"      # tracing, Sentry, structured logging
 pip install "koru[queue]"    # optional Redis/scheduler queue adapters
 pip install "koru[quality]"  # deeper refactor quality gates

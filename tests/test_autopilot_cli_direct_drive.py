@@ -158,7 +158,7 @@ def test_run_direct_drive_emits_desktop_gui_control_command(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from koru.autopilot import cli_command
-    from koru.autopilot import os_injector as oi
+    import gillm.injection.os_injector as oi
 
     class _DummyInjector:
         session = "wayland"

@@ -83,8 +83,10 @@ function testBuildFocusInputUsesChatCommands(): void {
   // ``composer.focusComposer`` stays as a tail fallback for older
   // builds that still register it.
   const cmds = buildFocusInputCommands("cursor");
-  assert(cmds[0] === "workbench.action.chat.focusInput", "Cursor: workbench.action.chat.focusInput must be first focus-input candidate (Cursor 1.x)");
-  assert(cmds.includes("composer.focusComposer"), "Cursor: legacy composer.focusComposer stays as tail fallback");
+  assert(cmds[0] === "glass.focusInput", "Cursor: glass.focusInput must be first focus-input candidate (Glass/Agents)");
+  assert(cmds.includes("workbench.action.chat.focusInput"), "Cursor: workbench.action.chat.focusInput must remain in focus list");
+  assert(!cmds.includes("composer.focusComposer"), "Cursor: composer.focusComposer must be blocklisted (panel chrome, not textarea)");
+  assert(!cmds.includes("workbench.panel.chat.view.copilot.focus"), "Cursor: panel.chat.view focus must be blocklisted");
   assert(cmds.includes("chat.action.focus"), "chat action focus should be available as a fallback");
   // The blocklist must drop the side-bar/panel focus commands that
   // would otherwise steal focus to the explorer or terminal pane.

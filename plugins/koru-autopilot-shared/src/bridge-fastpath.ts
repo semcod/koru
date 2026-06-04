@@ -12,6 +12,7 @@ import {
 } from "../probe-ladder";
 import {
   decideBusyInputAction,
+  interpretPostSubmitProbe,
   shouldVerifyPrePasteBusy,
   type BusyInputAction,
   type KoruAutopilotStepConfig,
@@ -185,11 +186,28 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       return false;
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    if (
+      existing.has("workbench.action.chat.stopListeningAndSubmit") &&
+      existing.has("workbench.action.chat.typeText")
+    ) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_SKIP_MODERN_CHAT");
+      this.traceOperation({
+        op: "paste",
+        route: "cursor-composer-fastpath",
+        ok: false,
+        reason:
+          "modern chat typeText/stopListeningAndSubmit registered; using probe ladder instead",
+      });
+      return false;
+    }
     const promptPastes = CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
     const safePastes = CURSOR_COMPOSER_SAFE_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
+    // Prefer typeText/insertText over startComposerPrompt*: the prompt commands
+    // open a fresh Composer surface and submit verification often fails on
+    // Wayland when the visible chat is elsewhere.
     const pasteQueue = [
-      ...promptPastes,
-      ...safePastes.filter((cmd) => !promptPastes.includes(cmd as typeof promptPastes[number])),
+      ...safePastes,
+      ...promptPastes.filter((cmd) => !safePastes.includes(cmd as typeof safePastes[number])),
     ];
     if (pasteQueue.length === 0) {
       safeLog("CURSOR_COMPOSER_FASTPATH_ABORT_NO_PASTE_COMMANDS");
@@ -304,6 +322,20 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
         ok: true,
         command: submitCmd,
       });
+      const inputFocus = await this.confirmCursorChatInputBeforeSubmit(
+        text,
+        `cursor-composer-fastpath:${submitCmd}:focus`
+      );
+      if (!inputFocus.ok) {
+        this.traceOperation({
+          op: "submit",
+          route: `cursor-composer-fastpath:${submitCmd}`,
+          ok: false,
+          command: submitCmd,
+          reason: inputFocus.reason,
+        });
+        return false;
+      }
       if (!(await this.runCommand(submitCmd))) {
         this.traceOperation({
           op: "submit",
@@ -315,16 +347,27 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       }
       const verifyResult = await this._verifySubmitViaCursorBubble(text);
       if (verifyResult === null) {
+        const observed = await this.probeChatInputContents();
+        const fallbackVerify = interpretPostSubmitProbe(observed, text, { requireEmpty: true });
         this.traceOperation({
           op: "submit_verify",
-          route: "cursor-bubble-db",
-          ok: true,
-          reason: "bubble db unavailable; trusting registered submit command",
+          route: "sentinel-clipboard",
+          ok: fallbackVerify.action === "accept",
+          reason: fallbackVerify.action === "accept"
+            ? "bubble db unavailable; chat input probe confirms prompt was cleared"
+            : "bubble db unavailable and chat input probe did not confirm submit",
+          detail: {
+            observedLength: fallbackVerify.observedLength,
+            requireEmptyAfterSubmit: true,
+          },
         });
-        this.traceOperation({ op: "submit", route: "success", ok: true, command: submitCmd });
-        this.sendSuccessAck(env, focus, pasted, submitCmd);
-        this.sendMessageSent(text);
-        return true;
+        if (fallbackVerify.action === "accept") {
+          this.traceOperation({ op: "submit", route: "success", ok: true, command: submitCmd });
+          this.sendSuccessAck(env, focus, pasted, submitCmd);
+          this.sendMessageSent(text);
+          return true;
+        }
+        continue;
       }
       if (verifyResult.matched) {
         this.traceOperation({

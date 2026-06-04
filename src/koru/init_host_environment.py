@@ -112,7 +112,7 @@ def _build_backend_steps(
     groups: list[str],
 ) -> list[str]:
     """Return backend-related next steps based on the active OS strategy."""
-    from koruos import resolve_active_os_strategy
+    from gillm.focus import resolve_active_os_strategy
 
     steps: list[str] = []
     if not selected:

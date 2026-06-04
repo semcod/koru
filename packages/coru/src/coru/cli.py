@@ -588,6 +588,8 @@ def _ide_from_vscode_pid() -> str | None:
         target = str(exe_path.resolve()).lower()
     except Exception:
         return None
+    if "antigravity" in target:
+        return "antigravity"
     if "cursor" in target:
         return "cursor"
     if "windsurf" in target:
@@ -610,6 +612,8 @@ def _vscode_family_env_hint() -> str | None:
     ).lower()
     if "vscodium" in haystack or "codium" in haystack:
         return "vscodium"
+    if "antigravity" in haystack:
+        return "antigravity"
     if "cursor" in haystack:
         return "cursor"
     if "windsurf" in haystack:
@@ -674,6 +678,8 @@ def _terminal_shell_context_fallback() -> tuple[str | None, str, bool]:
     """Fallback shell context detection used when ``koruide`` cannot be imported."""
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower():
+        return "antigravity", "env:GIO_LAUNCHED_DESKTOP_FILE", True
     if term_program in {"vscode", "code"} and os.environ.get("VSCODE_PID"):
         via_pid = _ide_from_vscode_pid()
         if via_pid:
@@ -1066,10 +1072,13 @@ def _koru_autopilot_env_payload(ide: str, instance: str) -> dict[str, Any] | Non
     try:
         proc = subprocess.run(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
             text=True,
             check=False,
             env=_lane_subprocess_env(ide, instance),
+            timeout=5.0,
+            close_fds=True,
         )
     except Exception:
         return None
@@ -1181,7 +1190,7 @@ def _lane_status_payload(
     if resolved.get("socket"):
         env["KORU_AUTOPILOT_SOCKET"] = str(resolved["socket"])
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=5.0, close_fds=True)
     except Exception:
         return None
     if proc.returncode != 0:
@@ -1200,7 +1209,7 @@ def _fetch_manage_report(ide: str, instance: str) -> dict[str, Any] | None:
     cmd = [*koru_exec, "autopilot", "manage", "--ide", ide, "--format", "json"]
     env = _lane_subprocess_env(ide, instance)
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=5.0, close_fds=True)
     except Exception:
         return None
     if proc.returncode != 0 and not proc.stdout.strip():
@@ -1923,8 +1932,8 @@ def _fetch_drive_payload(
         cmd.append("--require-plugin")
     env = _lane_subprocess_env(ide, instance)
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
-    except OSError:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=5.0, close_fds=True)
+    except Exception:
         return None
     raw = (proc.stdout or "").strip()
     if not raw:
@@ -2886,7 +2895,10 @@ def _register_sync_command(sub: Any) -> None:
     p_sync.add_argument(
         "--all-ides",
         action="store_true",
-        help="sync plugins/repair for every running VS Code-family IDE",
+        help=(
+            "sync plugins/repair for running VS Code-family IDEs "
+            "(skips Antigravity unless selected with --ide antigravity)"
+        ),
     )
     p_sync.add_argument("--skip-python", action="store_true", help="skip pip install -U")
     p_sync.add_argument("--skip-plugins", action="store_true", help="skip VSIX install-plugin")

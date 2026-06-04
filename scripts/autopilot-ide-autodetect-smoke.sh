@@ -17,7 +17,7 @@ from pathlib import Path
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
 from koru.autopilot.ide import detect_focused_ide_id, detect_running_ides, pick_target
-from koru.autopilot.injector import InjectionResult
+from gillm.injection import InjectionResult
 
 
 class StubInjector:

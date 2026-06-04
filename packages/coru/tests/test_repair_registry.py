@@ -54,6 +54,51 @@ def test_collect_problems_stale_in_memory(tmp_path: Path, monkeypatch) -> None:
     assert any(p.code == "plugin_extension_stale_in_memory" for p in problems)
 
 
+def test_collect_problems_from_manage_report_keeps_issue_plugin_and_action_codes() -> None:
+    report = {
+        "issues": [
+            {
+                "code": "daemon_not_running",
+                "severity": "warning",
+                "message": "daemon stopped",
+                "fix": "start daemon",
+            },
+            {"code": ""},
+            "ignored",
+        ],
+        "plugin": {
+            "ide": "cursor",
+            "connected": False,
+            "supported": True,
+        },
+        "actions": [
+            {
+                "action": "install_plugin",
+                "result": {
+                    "status": "failed",
+                    "message": "zygote sandbox refused launch",
+                },
+            },
+            {"name": "install_plugin", "result": {"status": "ok"}},
+            "ignored",
+        ],
+    }
+
+    problems = rr.collect_problems_from_manage_report(report)
+
+    by_code = {problem.code: problem for problem in problems}
+    assert set(by_code) == {
+        "daemon_not_running",
+        "install_plugin_cli_sandbox",
+        "plugin_not_connected",
+    }
+    assert by_code["daemon_not_running"].fix_hint == "start daemon"
+    assert by_code["install_plugin_cli_sandbox"].context == {
+        "source": "manage_report.actions",
+        "installer_message": "zygote sandbox refused launch",
+    }
+
+
 def test_manual_vsix_unpack_installs_expected_build(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     plugin_dir = repo / "plugins" / "koru-autopilot-cursor"
@@ -72,7 +117,13 @@ def test_manual_vsix_unpack_installs_expected_build(tmp_path: Path, monkeypatch)
 
     attempt = rr.manual_vsix_unpack(ide="cursor", repo_root=repo)
     assert attempt.ok is True
-    installed = home / ".cursor" / "extensions" / "semcod.koru-autopilot-cursor-0.2.2" / "package.json"
+    installed = (
+        home
+        / ".cursor"
+        / "extensions"
+        / "semcod.koru-autopilot-cursor-0.2.2"
+        / "package.json"
+    )
     assert installed.is_file()
     installed_pkg = json.loads(installed.read_text(encoding="utf-8"))
     assert installed_pkg["koruAutopilotBuild"]["sha"] == "e3caf7acdab415c4"
@@ -101,7 +152,11 @@ def test_run_repair_pipeline_manual_unpack_then_resolved(tmp_path: Path, monkeyp
     ]
 
     def fetch_status(_ide: str, _instance: str) -> dict:
-        return status_queue.pop(0) if status_queue else {"plugins": [{"ide": "cursor", "buildSha": "e3caf7acdab415c4"}]}
+        return (
+            status_queue.pop(0)
+            if status_queue
+            else {"plugins": [{"ide": "cursor", "buildSha": "e3caf7acdab415c4"}]}
+        )
 
     plan = rr.run_repair_pipeline(
         ide="cursor",
@@ -165,7 +220,12 @@ def test_run_repair_pipeline_ensure_daemon_before_reload() -> None:
         },
         ensure_daemon=ensure_daemon,
         ide_reload=ide_reload,
-        ide_connect=lambda _ide: rr.RepairAttempt(action_id="connect_plugin", mode="auto", ok=True, message="ok"),
+        ide_connect=lambda _ide: rr.RepairAttempt(
+            action_id="connect_plugin",
+            mode="auto",
+            ok=True,
+            message="ok",
+        ),
     )
     assert daemon_calls == 1
     assert reload_calls == ["cursor"]

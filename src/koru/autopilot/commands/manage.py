@@ -56,6 +56,17 @@ def action_manage(
     else:
         print(format_report_fn(report))
     rc = 0 if report.ok else 1
+    if rc != 0 and getattr(args, "allow_unconnected", False):
+        ignored_codes = {
+            "plugin_not_connected",
+            "plugin_build_mismatch",
+            "plugin_version_mismatch",
+            "plugin_socket_candidate_mismatch",
+            "plugin_live_host_stale",
+        }
+        if not any(issue.severity == "error" and issue.code not in ignored_codes for issue in report.issues):
+            rc = 0
+
     emit_log(
         args,
         component="autopilot.manage",

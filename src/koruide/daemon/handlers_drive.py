@@ -22,7 +22,7 @@ from koru.observability_events import (
 from koruide.daemon.protocol import _Client
 from koruide.command_catalog_store import command_picker_enabled
 from koruide.command_picker import pick_command_order
-from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
 from gillm.injection.errors import InjectorError

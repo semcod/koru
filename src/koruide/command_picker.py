@@ -64,6 +64,21 @@ _CURSOR_FAST_PATH_ONLY = (
     "composer.startComposerPrompt",
     "composer.startComposerPrompt2",
 )
+_CURSOR_PASTE_REJECT = {
+    "editor.action.clipboardPasteAction",
+    "editor.action.pasteAs",
+    "execPaste",
+    "paste",
+    "workbench.action.terminal.paste",
+}
+_CURSOR_FOCUS_OPEN_REJECT = {
+    "workbench.panel.chat",
+    "composer.openaspane",
+    "aichat.newchataction",
+    "workbench.action.toggleauxiliarybar",
+    "workbench.view.chat.toggle",
+}
+_TRUE_ENV_VALUES = {"1", "true", "yes", "on"}
 
 
 def _llm_picker_mode() -> str:
@@ -75,62 +90,105 @@ def _seed_order(capability: str) -> dict[str, int]:
     return {command: index for index, command in enumerate(seed)}
 
 
+def _env_enabled(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in _TRUE_ENV_VALUES
+
+
+def _sanitize_antigravity_focus_open(commands: list[str]) -> list[str]:
+    return [cmd for cmd in commands if cmd != "aichat.newchataction"]
+
+
+def _is_vscodium_focus_open_candidate(command: str) -> bool:
+    lowered = command.lower()
+    return not any(marker in lowered for marker in _VSCODIUM_FOCUS_OPEN_AVOID)
+
+
+def _prefer_commands(commands: list[str], preferred: tuple[str, ...]) -> list[str]:
+    ordered = [command for command in preferred if command in commands]
+    ordered.extend(command for command in commands if command not in ordered)
+    return ordered
+
+
+def _sanitize_vscodium_focus_open(commands: list[str]) -> list[str]:
+    if not _env_enabled("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN"):
+        return []
+    filtered = [command for command in commands if _is_vscodium_focus_open_candidate(command)]
+    return _prefer_commands(filtered, _VSCODIUM_FOCUS_OPEN_PREFERRED)
+
+
+def _is_cursor_submit_candidate(command: str) -> bool:
+    if command in _CURSOR_FAST_PATH_ONLY:
+        return False
+    return command in _CURSOR_SUBMIT_EXACT_ALLOW or command.startswith(
+        _CURSOR_SUBMIT_PREFIX_ALLOW,
+    )
+
+
+def _sanitize_cursor_submit(commands: list[str]) -> list[str]:
+    filtered = [command for command in commands if _is_cursor_submit_candidate(command)]
+    if filtered:
+        return filtered
+    return ["composer.sendToAgent", "workbench.action.chat.submit"]
+
+
+def _is_cursor_paste_candidate(command: str) -> bool:
+    if command in _CURSOR_FAST_PATH_ONLY:
+        return False
+    return command not in _CURSOR_PASTE_REJECT
+
+
+def _sanitize_cursor_paste(commands: list[str]) -> list[str]:
+    filtered = [command for command in commands if _is_cursor_paste_candidate(command)]
+    if filtered:
+        return filtered
+    return [
+        "workbench.action.chat.typeText",
+        "workbench.action.chat.insertText",
+        "cursor.action.chat.typeText",
+        "composer.typeText",
+    ]
+
+
+def _is_cursor_focus_open_candidate(command: str) -> bool:
+    return command.strip().lower() not in _CURSOR_FOCUS_OPEN_REJECT
+
+
+def _sanitize_cursor_focus_open(commands: list[str]) -> list[str]:
+    filtered = [command for command in commands if _is_cursor_focus_open_candidate(command)]
+    if filtered:
+        return filtered
+    return [
+        "workbench.action.chat.open",
+        "workbench.action.chat.openagent",
+        "workbench.action.openChat",
+        "workbench.panel.chat.view.copilot.focus",
+    ]
+
+
+def _sanitize_focus_open_candidates(ide_id: str, commands: list[str]) -> list[str]:
+    if ide_id == "antigravity":
+        return _sanitize_antigravity_focus_open(commands)
+    if ide_id == "vscodium":
+        return _sanitize_vscodium_focus_open(commands)
+    if ide_id == "cursor":
+        return _sanitize_cursor_focus_open(commands)
+    return commands
+
+
+def _sanitize_cursor_candidates(capability: str, commands: list[str]) -> list[str]:
+    if capability == "submit":
+        return _sanitize_cursor_submit(commands)
+    if capability == "paste":
+        return _sanitize_cursor_paste(commands)
+    return commands
+
+
 def _sanitize_candidates(ide: str, capability: str, commands: list[str]) -> list[str]:
     ide_id = ide.strip().lower()
-
-    if ide_id == "vscodium" and capability == "focus_open":
-        if os.environ.get("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN", "").strip().lower() not in {
-            "1",
-            "true",
-            "yes",
-            "on",
-        }:
-            return []
-        filtered = [
-            command
-            for command in commands
-            if not any(marker in command.lower() for marker in _VSCODIUM_FOCUS_OPEN_AVOID)
-        ]
-        ordered = [command for command in _VSCODIUM_FOCUS_OPEN_PREFERRED if command in filtered]
-        ordered.extend(command for command in filtered if command not in ordered)
-        return ordered
-
-    if ide_id == "cursor" and capability == "submit":
-        filtered = [
-            command
-            for command in commands
-            if command not in _CURSOR_FAST_PATH_ONLY
-            and (
-                command in _CURSOR_SUBMIT_EXACT_ALLOW
-                or command.startswith(_CURSOR_SUBMIT_PREFIX_ALLOW)
-            )
-        ]
-        if not filtered:
-            filtered = ["composer.sendToAgent", "workbench.action.chat.submit"]
-        return filtered
-
-    if ide_id == "cursor" and capability == "paste":
-        filtered = [
-            command
-            for command in commands
-            if command not in _CURSOR_FAST_PATH_ONLY
-            and command
-            not in {
-                "editor.action.clipboardPasteAction",
-                "editor.action.pasteAs",
-                "execPaste",
-                "paste",
-                "workbench.action.terminal.paste",
-            }
-        ]
-        if filtered:
-            return filtered
-        return [
-            "workbench.action.chat.typeText",
-            "workbench.action.chat.insertText",
-            "cursor.action.chat.typeText",
-            "composer.typeText",
-        ]
+    if capability == "focus_open":
+        return _sanitize_focus_open_candidates(ide_id, commands)
+    if ide_id == "cursor":
+        return _sanitize_cursor_candidates(capability, commands)
 
     return commands
 

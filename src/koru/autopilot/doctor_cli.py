@@ -9,7 +9,7 @@ from typing import Any
 
 from koru.autopilot import host_setup
 from koru.autopilot.ide import detect_focused_ide_id, detect_running_ides
-from koru.autopilot.injector import Injector
+from gillm.injection.injector import Injector
 
 
 def doctor_fix_payload() -> dict[str, object]:

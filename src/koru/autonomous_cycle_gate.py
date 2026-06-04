@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.agents import agent_lane_environment
+from koru.autonomy.env import allow_gillm_autopilot_fallback
 from koru.autonomous_startup import resolve_agent_lane_id
 from koru.ide_router import resolve_ide_route
 from koru.init import resolve_project_agent_lane
@@ -28,6 +29,48 @@ def try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | N
         return inject_with_profile(profile=profile, text=prompt, submit=submit, dry_run=False)
     except OsInjectorError as exc:
         return {"ok": False, "backend": "os_injector", "message": str(exc), "type": "error"}
+
+
+def try_gillm_gui_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+    build_client_fn: Any = None,
+) -> dict[str, Any] | None:
+    """Best-effort Gillm GuiDriver fallback after plugin drive failure.
+
+    Enabled when ``KORU_AUTOPILOT_GILLM_FALLBACK=1``.
+    """
+    if not allow_gillm_autopilot_fallback():
+        return None
+    from koru.ide_adapters.gillm_client import build_gillm_ide_client
+    from koru.ide_adapters.gillm_recovery import enrich_drive_reply_with_recovery
+
+    build_fn = build_client_fn or build_gillm_ide_client
+    dry_run = os.environ.get("KORU_OS_INJECTOR_DRY_RUN", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    try:
+        client = build_fn(project=project, dry_run=dry_run)
+        reply = client.drive(prompt, submit=submit, ide=ide)
+        reply.setdefault("backend", "gillm")
+        reply["fallback_from"] = "plugin"
+        if not reply.get("ok"):
+            enrich_drive_reply_with_recovery(reply)
+        return reply
+    except Exception as exc:
+        return {
+            "ok": False,
+            "backend": "gillm",
+            "message": str(exc),
+            "type": "error",
+            "fallback_from": "plugin",
+        }
 
 
 def try_os_injector_fallback_with_deps(
@@ -142,6 +185,7 @@ __all__ = [
     "effective_cycle_scan_enabled",
     "resolve_autopilot_ide",
     "scan_while_waiting_input_enabled",
+    "try_gillm_gui_fallback",
     "try_os_injector_fallback",
     "try_os_injector_fallback_with_deps",
 ]

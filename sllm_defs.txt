@@ -1,0 +1,45 @@
+def _build_parser() -> argparse.ArgumentParser
+def _client_from_text(text
+def _drive(args
+def _intent_from_nlp2dsl(text
+def _nlp(args
+def _print(payload
+def _prompt_root(project
+def _read_prompt(args
+def _resolve_command(spec
+def _resolve_spec(client_id
+def _strip_drive_prefix(text
+def _timeout_value(timeout_seconds
+def _validate_raw_dsl(raw_dsl
+def agent_backend_aliases() -> dict[str, str]
+def agent_backend_profiles() -> tuple[dict[str, object], ...]
+def autopilot_backend_for_client(agent_id
+def build_drive_plan(request
+def command_path(self, which
+def detect_clients(
+def detect_koru_agent_rows(
+def drive_koru_chat(
+def drive_shell_llm(request
+def ecosystem_status() -> dict[str, object]
+def get_client_spec(client_id
+def intent_contracts() -> tuple[str, ...]
+def intent_from_text(text
+def is_client_available(client_id
+def is_shell_llm_client(agent_id
+def iter_client_specs() -> tuple[ShellClientSpec, ...]
+def launch_koru_agent(
+def main(argv
+def normalize_client_id(raw
+def result_from_error(client_id
+def save_prompt(prompt
+def shell_client_ids() -> tuple[str, ...]
+def shell_preview(self) -> str
+def shell_process_patterns() -> tuple[tuple[str, str, tuple[str, ...]], ...]
+def to_dict(self) -> dict[str, object]
+def to_dict(self) -> dict[str, object]
+def to_dict(self) -> dict[str, object]
+def to_dict(self, *, which
+def to_dsl(self) -> dict[str, Any]
+def tool_registry_entries() -> tuple[dict[str, object], ...]
+def validate_intent(intent
+def validate_intent_contracts() -> dict[str, object]

@@ -91,6 +91,37 @@ function isKnownStaleKoruCommandDraft(text: string): boolean {
   return /^(?:\.\/)?(?:\.venv\/bin\/)?koru\s+auto(?:\s+--[A-Za-z0-9][A-Za-z0-9_.-]*(?:=\S+)?)?$/i.test(withoutEnv);
 }
 
+/** Leftover from a failed autonomous drive (paste OK, submit no-op). */
+function isStaleKoruAutonomousDriveDraft(text: string): boolean {
+  if (text.length < 80) {
+    return false;
+  }
+  return (
+    /Ticket\s+[A-Z]+-\d+/.test(text)
+    || (/waiting_input/i.test(text) && /Continue the actual implementation/i.test(text))
+    || (/stuck in status/i.test(text) && /Ticket\s+[A-Z]+-\d+/.test(text))
+    || (/redrive/i.test(text) && /Ticket\s+[A-Z]+-\d+/.test(text))
+  );
+}
+
+function promptsLikelySameDraft(observed: string, requested: string): boolean {
+  if (!requested || observed.length < 80 || requested.length < 80) {
+    return false;
+  }
+  const prefixLen = Math.min(120, requested.length, observed.length);
+  if (prefixLen < 40) {
+    return false;
+  }
+  const observedPrefix = observed.slice(0, prefixLen);
+  const requestedPrefix = requested.slice(0, prefixLen);
+  return (
+    observed.startsWith(requestedPrefix)
+    || requested.startsWith(observedPrefix)
+    || observed.includes(requestedPrefix)
+    || requested.includes(observedPrefix)
+  );
+}
+
 export function decideBusyInputAction(
   observedInput: string | null,
   requestedText: string
@@ -103,7 +134,13 @@ export function decideBusyInputAction(
   if (requested && observed === requested) {
     return "submit_existing";
   }
+  if (requested && promptsLikelySameDraft(observed, requested)) {
+    return "submit_existing";
+  }
   if (isKnownStaleKoruCommandDraft(observed)) {
+    return "replace_known_koru_draft";
+  }
+  if (isStaleKoruAutonomousDriveDraft(observed)) {
     return "replace_known_koru_draft";
   }
   return "block";

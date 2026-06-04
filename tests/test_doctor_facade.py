@@ -59,6 +59,53 @@ def test_doctor_constants_vs_doctor_consistency():
     assert doctor.ProblemCatalogEntry is doctor_constants.ProblemCatalogEntry
 
 
+def test_doctor_report_models_are_reexported():
+    """Verify extracted report models remain available from koru.doctor."""
+    from koru import doctor, doctor_models
+
+    assert doctor.Check is doctor_models.Check
+    assert doctor.DoctorReport is doctor_models.DoctorReport
+
+
+def test_doctor_runner_uses_facade_symbols(monkeypatch, tmp_path):
+    """Moved runner must still honor monkeypatches on the doctor facade."""
+    from koru import doctor, doctor_runner
+
+    monkeypatch.setattr(
+        doctor_runner,
+        "probe_specs",
+        lambda _project: [("git_repo", "_check_git_repo")],
+    )
+    monkeypatch.setattr(
+        doctor,
+        "_check_git_repo",
+        lambda _project: ("warn", "patched facade check"),
+    )
+
+    report = doctor.run_diagnostics(tmp_path)
+
+    assert report.checks[0].name == "git_repo"
+    assert report.checks[0].status == "warn"
+    assert report.checks[0].detail == "patched facade check"
+
+
+def test_doctor_runner_probe_specs_keep_conditionals(tmp_path):
+    """Verify moved probe registry preserves git and pytest conditional checks."""
+    from koru import doctor_runner
+
+    names = [name for name, _attr in doctor_runner.probe_specs(tmp_path)]
+    assert "gitignore" not in names
+    assert "pytest_collect" not in names
+    assert names[-1] == "ci_command"
+
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+
+    names = [name for name, _attr in doctor_runner.probe_specs(tmp_path)]
+    assert "gitignore" in names
+    assert names[-2:] == ["ci_command", "pytest_collect"]
+
+
 def test_doctor_project_checks_are_reexported():
     """Verify extracted project checks remain available from koru.doctor."""
     from koru import doctor, doctor_project_checks
@@ -144,3 +191,23 @@ def test_doctor_runtime_checks_are_reexported():
     )
     assert doctor._koru_path_version_issues is doctor_runtime_checks._koru_path_version_issues
     assert doctor._is_relative_to is doctor_runtime_checks._is_relative_to
+
+
+def test_doctor_autopilot_debug_checks_are_reexported():
+    """Verify extracted autopilot debug helpers remain available from koru.doctor."""
+    from koru import doctor, doctor_autopilot_debug
+
+    assert doctor._autopilot_debug_log_path is doctor_autopilot_debug.autopilot_debug_log_path
+    assert (
+        doctor._read_recent_autopilot_activity_lines
+        is doctor_autopilot_debug.read_recent_autopilot_activity_lines
+    )
+    assert doctor._autopilot_debug_event_name is doctor_autopilot_debug.autopilot_debug_event_name
+    assert (
+        doctor._daemon_console_logs_for_doctor
+        is doctor_autopilot_debug.daemon_console_logs_for_doctor
+    )
+    assert (
+        doctor._plugin_console_entry_matches_selected
+        is doctor_autopilot_debug.plugin_console_entry_matches_selected
+    )

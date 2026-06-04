@@ -75,7 +75,7 @@ class EnvironmentProfile:
 
 
 def _session_name() -> str:
-    from koruos import resolve_active_os_strategy
+    from gillm.focus import resolve_active_os_strategy
 
     strategy = resolve_active_os_strategy()
     if strategy.id == "linux-wayland":
@@ -94,7 +94,7 @@ def _session_name() -> str:
 
 
 def _preferred_keyboard_interface(session: str) -> str:
-    from koruos import resolve_active_os_strategy
+    from gillm.focus import resolve_active_os_strategy
 
     caps = resolve_active_os_strategy().capabilities()
     tool = caps.keyboard_tool

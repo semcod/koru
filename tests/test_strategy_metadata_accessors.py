@@ -12,10 +12,10 @@ from korullm.strategies.codex import CodexStrategy
 from korullm.strategies.gpt import GptStrategy
 from korullm.strategies.ide_chat import IdeChatStrategy
 from korullm.strategies.ollama import OllamaStrategy
-from koruos.strategies.darwin import DarwinStrategy
-from koruos.strategies.wayland_linux import WaylandLinuxStrategy
-from koruos.strategies.windows import WindowsStrategy
-from koruos.strategies.x11_linux import X11LinuxStrategy
+from gillm.focus.darwin import DarwinStrategy
+from gillm.focus.wayland import WaylandLinuxStrategy
+from gillm.focus.windows import WindowsStrategy
+from gillm.focus.x11 import X11LinuxStrategy
 
 
 def test_ide_metadata_accessors_stable() -> None:

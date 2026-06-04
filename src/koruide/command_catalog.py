@@ -263,10 +263,13 @@ CURSOR_SPECIFIC: tuple[IdeCommand, ...] = (
         (
             "aichat.newchataction",
             "composer.openAsPane",
+            "workbench.panel.chat",
+            "workbench.action.toggleAuxiliaryBar",
+            "workbench.view.chat.toggle",
         ),
         confidence="private_or_vendor_specific",
         risk="high",
-        notes="Can create a new chat or toggle an existing pane; do not cache as default.",
+        notes="Can create a new chat or toggle/hide an existing pane; do not cache as default.",
     ),
 )
 
@@ -356,9 +359,17 @@ ANTIGRAVITY_SPECIFIC: tuple[IdeCommand, ...] = (
         ),
     ),
     *_rows(
-        "focus_open",
+        "focus_open_avoid",
         (
             "antigravity.openAgent",
+        ),
+        confidence="private_or_vendor_specific",
+        risk="high",
+        notes="Opens a new agent window instead of side panel.",
+    ),
+    *_rows(
+        "focus_open",
+        (
             "antigravity.agentSidePanel.open",
             "antigravity.agentSidePanel.focus",
         ),

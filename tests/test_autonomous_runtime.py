@@ -89,6 +89,27 @@ def test_project_venv_reexec_argv_when_running_from_other_venv(
     ]
 
 
+def test_project_venv_reexec_env_aligns_virtual_env_and_path(
+    tmp_path: Path,
+) -> None:
+    local_bin = tmp_path / ".venv" / "bin"
+    local_bin.mkdir(parents=True)
+    other_bin = tmp_path / "venv" / "bin"
+    other_bin.mkdir(parents=True)
+
+    env = autonomous_runtime.project_venv_reexec_env(
+        tmp_path,
+        base_env={
+            "PATH": f"/usr/bin{os.pathsep}{other_bin}",
+            "VIRTUAL_ENV": str(tmp_path / "venv"),
+        },
+    )
+
+    assert env["VIRTUAL_ENV"] == str((tmp_path / ".venv").resolve())
+    assert env["PATH"].split(os.pathsep)[0] == str(local_bin.resolve())
+    assert str(other_bin) in env["PATH"].split(os.pathsep)
+
+
 def test_project_venv_reexec_argv_uses_current_project_when_no_project_arg(
     tmp_path: Path,
     monkeypatch,

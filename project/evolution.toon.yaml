@@ -1,46 +1,46 @@
-# code2llm/evolution | 5226 func | 510f | 2026-06-03
+# code2llm/evolution | 5283 func | 514f | 2026-06-03
 # generated in 0.02s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 3207L, 3 classes, max CC=23
-      EFFORT: ~4h  IMPACT: 73761
+      WHY: 3210L, 3 classes, max CC=23
+      EFFORT: ~4h  IMPACT: 73830
 
   [2] !! SPLIT           src/koru/scan.py
       WHY: 1621L, 0 classes, max CC=13
       EFFORT: ~4h  IMPACT: 21073
 
-  [3] !! SPLIT-FUNC      run_repair_pipeline  CC=33  fan=22
-      WHY: CC=33 exceeds 15
-      EFFORT: ~1h  IMPACT: 726
-
-  [4] !! SPLIT-FUNC      check_lane_terminal_socket_alignment  CC=32  fan=19
-      WHY: CC=32 exceeds 15
-      EFFORT: ~1h  IMPACT: 608
-
-  [5] !! SPLIT-FUNC      check_runtime_consistency  CC=27  fan=21
-      WHY: CC=27 exceeds 15
-      EFFORT: ~1h  IMPACT: 567
-
-  [6] !  SPLIT-FUNC      _auto_ownership_gate  CC=22  fan=20
+  [3] !  SPLIT-FUNC      _auto_ownership_gate  CC=22  fan=20
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 440
 
-  [7] !  SPLIT-FUNC      _live_daemon_instance  CC=20  fan=18
+  [4] !  SPLIT-FUNC      _live_daemon_instance  CC=20  fan=18
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 360
 
-  [8] !  SPLIT-FUNC      _auto_readiness_gate  CC=22  fan=16
+  [5] !  SPLIT-FUNC      _auto_readiness_gate  CC=22  fan=16
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 352
 
-  [9] !  SPLIT-FUNC      _installed_extension_build_sha  CC=22  fan=16
+  [6] !  SPLIT-FUNC      _installed_extension_build_sha  CC=22  fan=16
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 352
 
-  [10] !! SPLIT-FUNC      collect_problems_from_manage_report  CC=25  fan=14
-      WHY: CC=25 exceeds 15
-      EFFORT: ~1h  IMPACT: 350
+  [7] !  SPLIT-FUNC      cmd_start  CC=15  fan=22
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 330
+
+  [8] !  SPLIT-FUNC      load_tool_registry  CC=19  fan=16
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 304
+
+  [9] !  SPLIT-FUNC      resolve_autopilot_instance  CC=24  fan=12
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 288
+
+  [10] !  SPLIT-FUNC      SharedAutopilotBridgePaste.directCommands  CC=18  fan=16
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 288
 
 
 RISKS[3]:
@@ -50,9 +50,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          3.7 → ≤2.6
-  max-CC:      33 → ≤16
+  max-CC:      24 → ≤12
   god-modules: 37 → 0
-  high-CC(≥15): 35 → ≤17
+  high-CC(≥15): 30 → ≤15
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

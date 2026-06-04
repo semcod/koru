@@ -139,6 +139,23 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
     rejected: Array<Record<string, unknown>>,
   ): Promise<FocusOutcome | null> {
     debugLog("FOCUS_OPEN_ATTEMPT", { cmd: command, isToggle: command.includes("toggle") });
+    if (isTogglingFocusOpenCommand(command)) {
+      rejected.push({
+        cmd: command,
+        reason: "toggle command skipped (would hide an already-open chat panel)",
+      });
+      debugLog("FOCUS_OPEN_TOGGLE_SKIPPED", { cmd: command, ide: context.ide });
+      return null;
+    }
+    const openStrategy = getStrategy(context.ide);
+    if (openStrategy?.acceptFocusOpenCommand && !openStrategy.acceptFocusOpenCommand(command)) {
+      rejected.push({
+        cmd: command,
+        reason: "IDE strategy rejected focus-open command (panel chrome / false positive)",
+      });
+      debugLog("FOCUS_OPEN_STRATEGY_REJECTED", { cmd: command, ide: context.ide });
+      return null;
+    }
     if (!(await this.runCommand(command))) {
       console.warn(`koru autopilot: focusChat command not available: ${command}`);
       rejected.push({ cmd: command, reason: "executeCommand returned false" });
@@ -170,7 +187,7 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
   ): Promise<FocusOutcome> {
     const combined = `${command}+${inputFocusCommand}`;
     debugLog("FOCUS_OPEN_SUCCESS_INPUT", { cmd: command, inputFocus: inputFocusCommand });
-    if (useProbe) {
+    if (useProbe && !isTogglingFocusOpenCommand(command)) {
       await this.saveProbeCache({ focusOpen: command });
     }
     this.traceOperation({ op: "focus_open", route: "command+input", ok: true, command: combined });
@@ -179,7 +196,7 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
 
   private async _trustedFocusOpenCommand(command: string, context: FocusChatContext): Promise<FocusOutcome> {
     debugLog("FOCUS_OPEN_SUCCESS_TRUSTED", { cmd: command, ide: context.ide });
-    if (context.useProbe) {
+    if (context.useProbe && !isTogglingFocusOpenCommand(command)) {
       await this.saveProbeCache({ focusOpen: command });
     }
     this.traceOperation({ op: "focus_open", route: "trusted-command", ok: true, command });
@@ -188,7 +205,7 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
 
   private async _snapshotVerifiedFocusOpenCommand(command: string, useProbe: boolean): Promise<FocusOutcome> {
     debugLog("FOCUS_OPEN_SUCCESS", { cmd: command });
-    if (useProbe) {
+    if (useProbe && !isTogglingFocusOpenCommand(command)) {
       await this.saveProbeCache({ focusOpen: command });
     }
     this.traceOperation({ op: "focus_open", route: "command", ok: true, command });
@@ -224,12 +241,47 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
     };
   }
 
+  protected cursorEssentialFocusInputCommands(): string[] {
+    return [
+      "glass.focusInput",
+      "workbench.action.chat.focusInput",
+      "chat.action.focus",
+      "workbench.chat.action.focusLastFocused",
+    ];
+  }
+
+  protected sanitizeFocusInputCacheWinner(
+    ide: string,
+    cacheWinner: string | undefined
+  ): string | undefined {
+    if (!cacheWinner) {
+      return undefined;
+    }
+    const strategy = getStrategy(ide);
+    if (strategy?.acceptFocusInputCommand && !strategy.acceptFocusInputCommand(cacheWinner)) {
+      return undefined;
+    }
+    return cacheWinner;
+  }
+
   protected async focusChatInput(): Promise<{ ok: boolean; command?: string }> {
     const ide = this.detectIde();
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
+    if (ide === "cursor") {
+      for (const cmd of this.cursorEssentialFocusInputCommands()) {
+        const result = await this._tryFocusInputCommand(cmd);
+        if (result.ok) {
+          return result;
+        }
+      }
+    }
     const candidates = filterRegistered(
-      this.orderWithServerOverride("focus_input", buildFocusInputCommands(ide), cache?.focusInput),
+      this.orderWithServerOverride(
+        "focus_input",
+        buildFocusInputCommands(ide),
+        this.sanitizeFocusInputCacheWinner(ide, cache?.focusInput),
+      ),
       existing
     );
     debugLog("FOCUS_INPUT_START", { ide, candidatesCount: candidates.length, cacheFocusInput: cache?.focusInput });
@@ -265,6 +317,18 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
         ok: false,
         command: cmd,
         reason: "command succeeded but is not a chat/composer focus command",
+      });
+      return { ok: false };
+    }
+    const strategy = getStrategy(this.detectIde());
+    if (strategy?.acceptFocusInputCommand && !strategy.acceptFocusInputCommand(cmd)) {
+      debugLog("FOCUS_INPUT_REJECTED_BY_STRATEGY", { cmd });
+      this.traceOperation({
+        op: "focus_input",
+        route: "strategy-rejected",
+        ok: false,
+        command: cmd,
+        reason: "command exited ok but IDE strategy does not trust it for chat textarea focus",
       });
       return { ok: false };
     }

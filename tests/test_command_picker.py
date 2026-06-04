@@ -205,6 +205,39 @@ def test_cursor_picker_rejects_start_composer_prompt_from_paste_and_submit(tmp_p
     assert order["submit"] == ["composer.sendToAgent"]
 
 
+def test_cursor_focus_open_rejects_panel_chat_toggle(tmp_path) -> None:
+    order = pick_command_order(
+        ide="cursor",
+        plugin_version="0.2.12",
+        catalog={
+            "focus_open": [
+                "workbench.panel.chat",
+                "composer.openAsPane",
+                "workbench.action.chat.open",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+
+    assert order["focus_open"] == ["workbench.action.chat.open"]
+
+
+def test_antigravity_focus_open_rejects_new_chat_action(tmp_path) -> None:
+    order = pick_command_order(
+        ide="antigravity",
+        plugin_version="0.2.10",
+        catalog={
+            "focus_open": [
+                "aichat.newchataction",
+                "workbench.action.chat.focusInput",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+
+    assert order["focus_open"] == ["workbench.action.chat.focusInput"]
+
+
 def test_vscodium_focus_open_avoids_quick_chat(tmp_path) -> None:
     order = pick_command_order(
         ide="vscodium",

@@ -33,8 +33,7 @@ from koru.autopilot import ide as ide_mod
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
 from koru.autopilot.ide import RunningIDE
-from koru.autopilot.injector import InjectionResult, InjectorError
-from koru.autopilot.os_injector import OsInjectorProfile
+from gillm.injection import InjectionResult, InjectorError, OsInjectorProfile
 from koru.autopilot.protocol import Message, decode, hello
 from koru.observability_writer import observability_event_store_path
 from koruide import daemon as koruide_daemon_mod
@@ -48,7 +47,7 @@ from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 def _patch_no_running_ides(monkeypatch: pytest.MonkeyPatch) -> None:
     """Isolate daemon tests from the host IDE / OS-injector profile."""
-    from koruide import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [])
     monkeypatch.setattr(ide_mod, "detect_running_ides_cached", lambda **_: [])
@@ -425,7 +424,7 @@ def test_drive_os_injector_skipped_when_env_disabled(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setenv("KORU_OS_INJECTOR", "0")
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
@@ -453,7 +452,7 @@ def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.setenv("KORU_OS_INJECTOR", "1")
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
@@ -474,7 +473,7 @@ def test_drive_os_injector_failure_falls_back_to_keyboard(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    import gillm.injection.os_injector as oi_mod
 
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)

@@ -14,8 +14,8 @@ from koruide.ide import (
     RunningIDE,
     canonical_autopilot_ide_id,
     detect_focused_ide_id,
-    detect_terminal_host_context,
     detect_running_ides,
+    detect_terminal_host_context,
     detect_terminal_host_ide_id,
     normalize_ide_id,
     pick_target,
@@ -44,7 +44,7 @@ def koru_distribution_version() -> str:
 
 
 def _session_label() -> str:
-    from koruos import resolve_active_os_strategy
+    from gillm.focus import resolve_active_os_strategy
 
     strategy = resolve_active_os_strategy()
     if strategy.id == "linux-wayland":
@@ -219,8 +219,20 @@ def _resolve_lane_from_runtime_hints(
 ) -> tuple[str | None, str] | None:
     # In external-terminal workflows the user can pick target IDE by focusing
     # its window before running `koru auto`; treat desktop focus as the strongest
-    # runtime signal for auto lane routing.
-    if focused and focused in _PLUGIN_IDE_LANES:
+    # runtime signal for auto lane routing only when that IDE is also observed
+    # in the running-IDE list. This prevents stale host desktop focus from
+    # overriding isolated tests or project markers when no matching IDE process
+    # was detected.
+    focused_is_running = bool(focused and any(ide.id == focused for ide in running))
+    if (
+        focused
+        and focused in _PLUGIN_IDE_LANES
+        and focused_is_running
+        and (
+            not explicit
+            or (not terminal and not _explicit_lane_matches_terminal(explicit, focused))
+        )
+    ):
         return _project_lane(project, focused, resolve_project_lane), "focused"
 
     for result in (
@@ -256,7 +268,11 @@ def resolve_agent_lane_id(
     """Resolve ``--agent-lane``; return ``(lane_id, source_label)``."""
     raw = normalize_ide_id(agent_lane_cli) or "auto"
 
-    cli_result = _resolve_project_lane_result(project, _resolve_lane_from_cli(raw), resolve_project_lane)
+    cli_result = _resolve_project_lane_result(
+        project,
+        _resolve_lane_from_cli(raw),
+        resolve_project_lane,
+    )
     if cli_result:
         return cli_result
 
@@ -293,20 +309,28 @@ def resolve_agent_lane(
     if cli_result:
         return cli_result
 
-    focused = _focused_agent_lane_from_desktop()
     terminal = normalize_ide_id(terminal_hint) if terminal_hint is not None else None
     if terminal is None:
         terminal = _terminal_agent_lane_from_env()
+    running = list(running_ides) if running_ides is not None else detect_running_ides()
+    focused = _focused_agent_lane_from_desktop()
+    explicit, explicit_source = _explicit_agent_lane_from_env()
 
-    if focused and focused in _PLUGIN_IDE_LANES:
+    if (
+        focused
+        and focused in _PLUGIN_IDE_LANES
+        and any(ide.id == focused for ide in running)
+        and (
+            not explicit
+            or (not terminal and not _explicit_lane_matches_terminal(explicit, focused))
+        )
+    ):
         return focused, "focused"
 
-    explicit, explicit_source = _explicit_agent_lane_from_env()
     explicit_result = _resolve_lane_from_explicit(explicit, explicit_source, terminal)
     if explicit_result:
         return explicit_result
 
-    running = list(running_ides) if running_ides is not None else detect_running_ides()
     for result in (
         _resolve_lane_from_vscode_terminal(running, terminal),
         _resolve_lane_from_terminal(terminal, running),
@@ -682,11 +706,14 @@ def _format_plugin_setup_steps(
         "koru autonomous: 5) Ten sam socket w shellu: export "
         f"KORU_AUTOPILOT_INSTANCE={instance}",
         f"koru autonomous: 6) Diagnostyka mostu: koru ide doctor --ide {ide} --fix",
-        f"koru autonomous: 7) Test: koru autopilot status --ide {ide} --explain → plugins niepuste; "
+        f"koru autonomous: 7) Test: koru autopilot status --ide {ide} --explain "
+        "→ plugins niepuste; "
         f"potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
-        f"koru autonomous: 7a) Przed drive: kliknij w pole czatu {ide} (mrugający kursor w input, nie w edytorze pliku)",
+        f"koru autonomous: 7a) Przed drive: kliknij w pole czatu {ide} "
+        "(mrugający kursor w input, nie w edytorze pliku)",
         "koru autonomous: 8) (opcjonalnie) Command Palette → "
-        "„koru: Calibrate chat probe ladder” (po ustawieniu fokusu w polu czatu; submit na Wayland)",
+        "„koru: Calibrate chat probe ladder” "
+        "(po ustawieniu fokusu w polu czatu; submit na Wayland)",
         "koru autonomous: 9) Dashboard: task koru:server → http://localhost:8765/",
         "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
         "(sekcja „Po starcie”) ---",

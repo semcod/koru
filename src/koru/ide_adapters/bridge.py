@@ -9,7 +9,7 @@ from koru.autopilot.client import AutopilotClient
 from koru.ide_adapters import shared
 from koru.ide_adapters.base import BridgeStatus, Hypothesis
 from koru.ide_adapters.registry import get_adapter
-from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import detect_running_ides, normalize_ide_id
 
 

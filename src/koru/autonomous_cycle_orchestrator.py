@@ -4,12 +4,11 @@ from pathlib import Path
 from typing import Any
 
 from koru.autonomous_cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
+from koru.autonomous_cycle_drive_outcome import apply_autopilot_drive_outcome
 from koru.autonomous_cycle_drive_retry import (
     _client_has_usable_plugin,
     _execute_autopilot_drive,
-    _log_autopilot_result,
     _reply_requires_manual_chat_focus,
-    _update_autopilot_state,
 )
 from koru.autonomous_cycle_skip_conditions import _check_autopilot_skip_conditions
 from koru.autonomous_plugin import plugin_skip_code
@@ -342,7 +341,6 @@ def _drive_autopilot_once(
         autopilot_action,
         _hp,
     )
-    autopilot_drive_kind = idle_prompt_kind or decision_kind
     autopilot_status = _drive_result_autopilot_status(
         queue_result=queue_result,
         reply=reply,
@@ -350,53 +348,19 @@ def _drive_autopilot_once(
         decision_kind=decision_kind,
         cycle_telemetry=cycle_telemetry,
     )
-    autopilot_backend = str(reply.get("backend")) if reply.get("backend") is not None else None
-    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-    from koru.autonomous_cycle_drive_retry import _drive_failure_signature
-    from koru.autonomous_submit_strategy import record_submit_drive_outcome
-
-    if ok:
-        state.last_message_sent_ts = time.time()
-        state.last_message_sent_ide = autopilot_ide
-        state.last_driven_ticket_id = waiting_ticket
-        state.last_submit_unverified_ts = 0.0
-        state.last_submit_unverified_ticket_id = ""
-        if autopilot_backend:
-            state.last_driven_backend = autopilot_backend
-    elif autopilot_status.startswith("failed(submit_") and reply.get("delivered") is True:
-        state.last_driven_ticket_id = waiting_ticket
-        state.last_submit_unverified_ts = time.time()
-        state.last_submit_unverified_ticket_id = waiting_ticket
-    from koru.autonomous_submit_strategy import record_submit_drive_outcome, risky_paste_winner
-
-    record_submit_drive_outcome(
-        state,
-        queue_result=queue_result,
-        reply=reply,
-        ok=ok,
-        autopilot_status=autopilot_status,
-        failure_signature=_drive_failure_signature(reply),
-    )
-    if risky := risky_paste_winner(reply):
-        cycle_telemetry["autopilot_risky_paste_winner"] = risky
-        _hp(
-            "  → risky paste winner detected "
-            f"({risky}); next drive will prefer alternate submit strategy"
-        )
-    state.last_autopilot_status = autopilot_status
-    _update_autopilot_state(
-        state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
-    )
-    _log_autopilot_result(ok, queue_result, autopilot_ide, decision_kind, reply, _hp)
-    _emit_autopilot_observability_outcome(
+    autopilot_backend, autopilot_drive_kind = apply_autopilot_drive_outcome(
         project=project,
-        cycle=cycle,
+        state=state,
         queue_result=queue_result,
         reply=reply,
         ok=ok,
-        autopilot_status=autopilot_status,
         decision_kind=decision_kind,
+        idle_prompt_kind=idle_prompt_kind,
+        autopilot_status=autopilot_status,
         autopilot_ide=autopilot_ide,
+        cycle=cycle,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
     )
     return autopilot_status, autopilot_backend, autopilot_drive_kind
 

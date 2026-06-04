@@ -727,7 +727,7 @@ def clear_detect_cache() -> None:
 
 
 def _has_os_injector_profile(tool_id: str, project: Path | None) -> bool:
-    from koruide import os_injector as oi
+    import gillm.injection.os_injector as oi
 
     if oi.os_injector_env_disabled():
         return False

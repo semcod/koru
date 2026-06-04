@@ -17,7 +17,7 @@ Do it incrementally, module-by-module, with compatibility shims and CI gates.
 - `korullm`
 - `korumesh`
 - `koruobserve`
-- `koruos`
+- `koruos` *(deprecated shim → `gillm.focus`; remove after two releases)*
 - `koruvision`
 
 ## Extraction order (recommended)
@@ -37,8 +37,15 @@ Reason: CLI-facing APIs can become stable standalone tools with independent rele
 5. `korullm`
 Reason: model/provider integration tends to churn; package boundary reduces blast radius.
 
-6. `korumesh`, `koruos`
-Reason: lower priority unless they are reused by multiple modules or need separate release lifecycle.
+6. `korumesh`
+Reason: lower priority unless reused by multiple modules or need separate release lifecycle.
+
+**Done:** `koruos` OS strategies moved to **`gillm.focus`** (external package). Legacy
+``import koruos`` emits ``DeprecationWarning`` and redirects to gillm.
+
+**Done:** GUI injection (`Injector`, `os_injector`, profiles) canonical in **`gillm.injection`**.
+Legacy paths ``koru.autopilot.injector``, ``koru.autopilot.os_injector``, ``koruide.injector``,
+``koruide.os_injector`` emit ``DeprecationWarning`` and redirect to gillm.
 
 ## Migration pattern per module
 
