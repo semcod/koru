@@ -640,6 +640,35 @@ class TestEventsSubcommand(unittest.TestCase):
         self.assertIn("planfile_queue.task_completed", output)
 
 
+class TestAutopilotReexecToProjectVenv(unittest.TestCase):
+    def test_autopilot_subcommand_reexecs_when_interpreter_is_outside_project_venv(self) -> None:
+        project = _tmp_git_project("koru-cli-autopilot-reexec-")
+        try:
+            local_koru = TestDoctorReexecToProjectVenv()._prepare_local_koru(project)
+            with mock.patch(
+                "sys.argv",
+                ["koru", "autopilot", "drive", "--ide", "cursor", "--project", str(project)],
+            ):
+                with mock.patch("koru._legacy_cli_impl.sys.executable", "/usr/bin/python3"):
+                    with mock.patch("koru._legacy_cli_impl.sys.prefix", "/usr"):
+                        with mock.patch(
+                            "koru._legacy_cli_impl.os.execvpe",
+                            side_effect=RuntimeError("reexec"),
+                        ) as execvpe:
+                            with self.assertRaises(RuntimeError):
+                                main()
+
+            execvpe.assert_called_once()
+            called_argv = execvpe.call_args.args[1]
+            self.assertEqual(Path(called_argv[0]).resolve(), local_koru)
+            self.assertEqual(
+                called_argv[1:],
+                ["autopilot", "drive", "--ide", "cursor", "--project", str(project)],
+            )
+        finally:
+            shutil.rmtree(project, ignore_errors=True)
+
+
 class TestDoctorReexecToProjectVenv(unittest.TestCase):
     def _prepare_local_koru(self, project: Path) -> Path:
         local_koru = project / ".venv" / "bin" / "koru"

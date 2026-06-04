@@ -12,7 +12,13 @@ import koru.autonomous as _autonomous
 import koru.cli_parser as _cli_parser
 from koru.agents import detect_agent_options  # noqa: F401 - legacy CLI monkeypatch hook
 from koru.autoloop_cli import autoloop_main
-from koru.autonomous_runtime import project_venv_reexec_argv, project_venv_reexec_env
+from koru.autonomous_runtime import (
+    cli_should_reexec,
+    maybe_sync_project_koru_package,
+    project_venv_reexec_argv,
+    project_venv_reexec_env,
+    resolve_cli_project,
+)
 from koru.autopilot.cli_command import autopilot_main
 from koru.cli_loop import command_loop_main as _command_loop_main
 from koru.cli_scan import scan_main as _scan_main
@@ -90,31 +96,6 @@ def _peek_project_from_argv(argv: list[str]) -> Path:
         if part.startswith("--project="):
             return Path(part.split("=", 1)[1]).expanduser().resolve()
     return Path.cwd().resolve()
-
-
-def _path_is_relative_to(path: Path, parent: Path) -> bool:
-    try:
-        path.relative_to(parent)
-    except ValueError:
-        return False
-    return True
-
-
-def _project_cli_reexec_argv(project: Path) -> list[str] | None:
-    """Return argv for re-execing generic CLI commands inside repo-local .venv."""
-    if os.environ.get("KORU_CLI_REEXECED") or _env_truthy("KORU_CLI_NO_REEXEC"):
-        return None
-    local_venv = (project / ".venv").resolve()
-    local_koru = local_venv / "bin" / "koru"
-    if not (local_koru.is_file() and os.access(local_koru, os.X_OK)):
-        return None
-
-    executable = Path(sys.executable).expanduser()
-    prefix = Path(sys.prefix).expanduser()
-    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(prefix, local_venv):
-        return None
-
-    return [str(local_koru), *sys.argv[1:]]
 
 
 def _maybe_print_project_venv_hint(raw_args: list[str]) -> None:
@@ -222,26 +203,20 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
 
 
 def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
-    subcommand = raw_args[0] if raw_args else ""
-    if not raw_args:
+    if not cli_should_reexec(raw_args):
         return
-    project = _peek_project_from_argv(raw_args)
-
-    if subcommand in {"auto", "autonomous"}:
-        if reexec_argv := project_venv_reexec_argv(project):
-            env = project_venv_reexec_env(project)
+    project = resolve_cli_project(raw_args)
+    if reexec_argv := project_venv_reexec_argv(project):
+        env = project_venv_reexec_env(project)
+        env["KORU_CLI_REEXECED"] = "1"
+        subcommand = raw_args[0] if raw_args and not raw_args[0].startswith("-") else ""
+        if subcommand in {"auto", "autonomous"}:
             env["KORU_AUTONOMOUS_REEXECED"] = "1"
-            env["KORU_CLI_REEXECED"] = "1"
-            print(f"koru: switching to project venv: {' '.join(reexec_argv)}", file=sys.stderr)
-            os.execvpe(reexec_argv[0], reexec_argv, env)
+        print(f"koru: switching to project venv: {' '.join(reexec_argv)}", file=sys.stderr)
+        os.execvpe(reexec_argv[0], reexec_argv, env)
         return
-
-    if subcommand == "doctor" or "--doctor" in raw_args:
-        if reexec_argv := _project_cli_reexec_argv(project):
-            env = project_venv_reexec_env(project)
-            env["KORU_CLI_REEXECED"] = "1"
-            print(f"koru: switching to project venv CLI: {' '.join(reexec_argv)}", file=sys.stderr)
-            os.execvpe(reexec_argv[0], reexec_argv, env)
+    if sync_msg := maybe_sync_project_koru_package(project):
+        print(sync_msg, file=sys.stderr)
 
 
 def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int | None:

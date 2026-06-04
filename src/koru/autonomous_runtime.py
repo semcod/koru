@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import os
 import signal
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from koru.activity_log import activity, configure_nfo_activity_log
-from koru.env_flags import env_disabled as _env_disabled
+from koru.doctor_runtime_checks import _installed_koru_version, _read_project_version
+from koru.env_flags import env_disabled as _env_disabled, env_truthy as _env_truthy
 
 
 def setup_autonomous_session(
@@ -86,23 +88,91 @@ def _path_is_relative_to(path: Path, parent: Path) -> bool:
     return True
 
 
-def project_venv_reexec_argv(project: Path) -> list[str] | None:
-    """Return argv for re-execing autonomous mode inside the repo-local venv."""
-    if os.environ.get("KORU_AUTONOMOUS_REEXECED") or _env_disabled("KORU_AUTO_REEXEC"):
-        return None
+def resolve_cli_project(raw_args: list[str], *, cwd: Path | None = None) -> Path:
+    """Resolve ``--project`` from argv or fall back to cwd."""
+    for idx, part in enumerate(raw_args):
+        if part == "--project" and idx + 1 < len(raw_args):
+            return Path(raw_args[idx + 1]).expanduser().resolve()
+        if part.startswith("--project="):
+            return Path(part.split("=", 1)[1]).expanduser().resolve()
+    return (cwd or Path.cwd()).resolve()
+
+
+def _local_project_koru(project: Path) -> Path | None:
+    local_koru = (project / ".venv" / "bin" / "koru").resolve()
+    if local_koru.is_file() and os.access(local_koru, os.X_OK):
+        return local_koru
+    return None
+
+
+def running_outside_project_venv(project: Path) -> bool:
+    """True when this Python was not launched from ``project/.venv``."""
     local_venv = (project / ".venv").resolve()
-    local_koru = local_venv / "bin" / "koru"
-    if not local_koru.exists():
-        return None
-
+    if not (local_venv / "bin").is_dir():
+        return False
     executable = Path(sys.executable).expanduser()
-    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(
-        Path(sys.prefix).expanduser(),
-        local_venv,
-    ):
-        return None
+    prefix = Path(sys.prefix).expanduser()
+    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(prefix, local_venv):
+        return False
+    return _local_project_koru(project) is not None
 
+
+def cli_should_reexec(raw_args: list[str]) -> bool:
+    """Whether the CLI should prefer the repo-local ``.venv/bin/koru`` entrypoint."""
+    if _env_disabled("KORU_CLI_NO_REEXEC") or _env_disabled("KORU_AUTO_REEXEC"):
+        return False
+    if not raw_args:
+        return True
+    if raw_args[0].startswith("-"):
+        return "--doctor" in raw_args
+    return True
+
+
+def project_venv_reexec_argv(project: Path) -> list[str] | None:
+    """Return argv for re-execing inside the repo-local venv when outside it."""
+    if os.environ.get("KORU_CLI_REEXECED") or os.environ.get("KORU_AUTONOMOUS_REEXECED"):
+        return None
+    if _env_disabled("KORU_CLI_NO_REEXEC") or _env_disabled("KORU_AUTO_REEXEC"):
+        return None
+    local_koru = _local_project_koru(project)
+    if local_koru is None or not running_outside_project_venv(project):
+        return None
     return [str(local_koru), *sys.argv[1:]]
+
+
+def maybe_sync_project_koru_package(project: Path) -> str | None:
+    """Editable-install koru when import version lags ``pyproject.toml`` (once per process)."""
+    if os.environ.get("KORU_CLI_SYNC_DONE") or _env_truthy("KORU_CLI_NO_SYNC"):
+        return None
+    if running_outside_project_venv(project):
+        return None
+    pyproject = project / "pyproject.toml"
+    if not pyproject.is_file():
+        return None
+    source_version = _read_project_version(pyproject)
+    installed_version = _installed_koru_version()
+    if not source_version or not installed_version or source_version == installed_version:
+        return None
+    pip = project / ".venv" / "bin" / "pip"
+    if not pip.is_file():
+        return None
+    os.environ["KORU_CLI_SYNC_DONE"] = "1"
+    proc = subprocess.run(
+        [str(pip), "install", "-e", str(project.resolve())],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip().splitlines()
+        tail = detail[-1] if detail else f"exit {proc.returncode}"
+        return (
+            f"koru: package sync failed ({installed_version} != {source_version} in pyproject): {tail}"
+        )
+    new_version = _installed_koru_version() or source_version
+    return (
+        f"koru: synced editable package {installed_version} -> {new_version} "
+        f"(pyproject {source_version})"
+    )
 
 
 def project_venv_reexec_env(
@@ -490,7 +560,12 @@ def handle_autonomous_interrupt(
 __all__ = [
     "StopSignalState",
     "build_and_log_startup_probe",
+    "cli_should_reexec",
+    "maybe_sync_project_koru_package",
+    "project_venv_reexec_argv",
     "project_venv_reexec_env",
+    "resolve_cli_project",
+    "running_outside_project_venv",
     "project_venv_warning_lines",
     "setup_autonomous_session",
     "setup_autopilot_daemon",
