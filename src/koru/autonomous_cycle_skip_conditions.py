@@ -11,11 +11,31 @@ from koru.autonomous_cycle_common import (
     _queue_loop_waiting_ticket_label,
     _status_in_skip_list,
 )
+from koru.autonomous_submit_strategy import (
+    should_block_manual_send,
+    submit_alt_attempt_limit,
+)
+from koru.autonomy.ide_operator_guidance import (
+    emit_operator_guidance,
+    ide_label,
+    manual_send_operator_steps,
+)
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.topology import is_component_enabled, is_pipeline_enabled
+from koruide.ide import normalize_ide_id
+
+
+_MANUAL_SEND_REQUIRED_TELEMETRY_REASON = (
+    "previous drive pasted text but submit was not verified; "
+    "manual send or submit strategy fix required before redrive"
+)
+_MANUAL_SEND_REQUIRED_DECISION_REASON = (
+    "previous drive pasted text but submit was not verified; "
+    "manual send or submit-strategy fix required before redrive"
+)
 
 
 def _auto_llm_ready_enabled() -> bool:
@@ -514,45 +534,88 @@ def _manual_send_required_skip_result(
         return None
     waiting_ticket = _waiting_ticket_id(queue_result)
     previous_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
-    if not waiting_ticket or waiting_ticket != previous_ticket:
-        cycle_telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] = True
-        cycle_telemetry["autopilot_submit_unverified_previous_ticket"] = previous_ticket
-        cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
-        _clear_submit_unverified_state(state)
+    if _clear_manual_send_for_new_ticket(
+        state=state,
+        waiting_ticket=waiting_ticket,
+        previous_ticket=previous_ticket,
+        cycle_telemetry=cycle_telemetry,
+    ):
         return None
-    if _manual_send_can_be_cleared_by_message_sent(state=state, waiting_ticket=waiting_ticket):
-        cycle_telemetry["autopilot_submit_unverified_cleared_by_message_sent"] = True
-        cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
-        _clear_submit_unverified_state(state)
+    if _clear_manual_send_for_message_sent(
+        state=state,
+        waiting_ticket=waiting_ticket,
+        cycle_telemetry=cycle_telemetry,
+    ):
         return None
-    from koru.autonomous_submit_strategy import (
-        should_block_manual_send,
-        submit_alt_attempt_limit,
+    if _allow_manual_send_alt_retry(state=state, cycle_telemetry=cycle_telemetry, _hp=_hp):
+        return None
+    return _manual_send_required_decision(
+        waiting_ticket=waiting_ticket,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
     )
 
-    if not should_block_manual_send(state):
-        limit = submit_alt_attempt_limit()
-        streak = int(getattr(state, "submit_unverified_streak", 0) or 0)
-        hint = str(getattr(state, "pending_submit_strategy_hint", "") or "")
-        _hp(
-            "- autopilot: retrying drive with alternate submit strategy "
-            f"(streak={streak}/{limit}, hint={hint or 'pending'})",
-        )
-        cycle_telemetry["autopilot_submit_alt_retry_allowed"] = True
-        cycle_telemetry["autopilot_submit_unverified_streak"] = streak
-        return None
+
+def _clear_manual_send_for_new_ticket(
+    *,
+    state: AutoloopState,
+    waiting_ticket: str,
+    previous_ticket: str,
+    cycle_telemetry: dict[str, Any],
+) -> bool:
+    if waiting_ticket and waiting_ticket == previous_ticket:
+        return False
+    cycle_telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] = True
+    cycle_telemetry["autopilot_submit_unverified_previous_ticket"] = previous_ticket
+    cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
+    _clear_submit_unverified_state(state)
+    return True
+
+
+def _clear_manual_send_for_message_sent(
+    *,
+    state: AutoloopState,
+    waiting_ticket: str,
+    cycle_telemetry: dict[str, Any],
+) -> bool:
+    if not _manual_send_can_be_cleared_by_message_sent(
+        state=state,
+        waiting_ticket=waiting_ticket,
+    ):
+        return False
+    cycle_telemetry["autopilot_submit_unverified_cleared_by_message_sent"] = True
+    cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
+    _clear_submit_unverified_state(state)
+    return True
+
+
+def _allow_manual_send_alt_retry(
+    *,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> bool:
+    if should_block_manual_send(state):
+        return False
+    streak = int(getattr(state, "submit_unverified_streak", 0) or 0)
+    hint = str(getattr(state, "pending_submit_strategy_hint", "") or "")
+    _hp(
+        "- autopilot: retrying drive with alternate submit strategy "
+        f"(streak={streak}/{submit_alt_attempt_limit()}, hint={hint or 'pending'})",
+    )
+    cycle_telemetry["autopilot_submit_alt_retry_allowed"] = True
+    cycle_telemetry["autopilot_submit_unverified_streak"] = streak
+    return True
+
+
+def _manual_send_required_decision(
+    *,
+    waiting_ticket: str,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> AutopilotPolicyDecision:
     _hp("- autopilot skipped (manual_send_required after submit_unverified)")
-    from koru.autonomy.ide_operator_guidance import (
-        emit_operator_guidance,
-        ide_label,
-        manual_send_operator_steps,
-    )
-    from koruide.ide import normalize_ide_id
-
-    lane_raw = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-    autopilot_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE")) or normalize_ide_id(
-        lane_raw.split("-", 1)[0] if lane_raw else None
-    )
+    autopilot_ide = _manual_send_target_ide()
     emit_operator_guidance(
         manual_send_operator_steps(autopilot_ide, ticket_id=waiting_ticket),
         title=f"Operator — manual send in {ide_label(autopilot_ide)}",
@@ -560,17 +623,19 @@ def _manual_send_required_skip_result(
     cycle_telemetry["autopilot_submit_unverified"] = True
     cycle_telemetry["autopilot_skipped_manual_send_required"] = True
     cycle_telemetry["autopilot_submit_unverified_reason"] = (
-        "previous drive pasted text but submit was not verified; "
-        "manual send or submit strategy fix required before redrive"
+        _MANUAL_SEND_REQUIRED_TELEMETRY_REASON
     )
     return AutopilotPolicyDecision.skip(
         "manual_send_required",
-        because=(
-            "previous drive pasted text but submit was not verified; "
-            "manual send or submit-strategy fix required before redrive"
-        ),
+        because=_MANUAL_SEND_REQUIRED_DECISION_REASON,
         action_hint="manual send in IDE or fix submit strategy",
     )
+
+
+def _manual_send_target_ide() -> str | None:
+    lane_raw = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    lane_ide = lane_raw.split("-", 1)[0] if lane_raw else None
+    return normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE")) or normalize_ide_id(lane_ide)
 
 
 def _handle_stuck_status_skip_candidate(

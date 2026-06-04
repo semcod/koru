@@ -1,6 +1,6 @@
 {
   "name": "koru-autopilot-plugins-workspace",
-  "version": "0.1.311",
+  "version": "0.1.312",
   "private": true,
   "description": "Monorepo root for all koru autopilot IDE plugins. Each IDE has its own VSIX so a regression in one cannot leak into another. Shared code (protocol, socket, host-click-submit) lives in plugins/koru-autopilot-shared and is copied into per-IDE plugins at prebuild time.",
   "workspaces": [
@@ -14,6 +14,7 @@
   "scripts": {
     "sync-shared": "python3 scripts/sync-plugin-shared.py",
     "compile:all": "npm run sync-shared && npm run compile --workspaces --if-present",
+    "test": "npm run test:all",
     "test:all": "npm run sync-shared && npm run test --workspaces --if-present",
     "package:all": "npm run sync-shared && npm run package --workspaces --if-present"
   },

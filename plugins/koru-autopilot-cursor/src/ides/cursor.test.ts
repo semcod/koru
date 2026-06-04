@@ -19,6 +19,7 @@ import {
   PROBE_CACHE_VERSION,
   sanitizeProbeCacheForIde,
 } from "../probe-ladder";
+import { filterUnsafeFocusOpenForIde } from "../_shared/bridge-helpers";
 
 function assert(condition: unknown, message: string): void {
   if (!condition) {
@@ -277,6 +278,13 @@ function testCursorFocusOpenCacheSanitization(): void {
   );
 
   assertSanitizedCacheField(
+    { focusOpen: "composer.openAddContextMenu" },
+    "focusOpen",
+    undefined,
+    "composer.openAddContextMenu focus_open cache must be cleared (opens menu chrome, not chat input)",
+  );
+
+  assertSanitizedCacheField(
     { paste: "workbench.action.terminal.paste" },
     "paste",
     undefined,
@@ -316,6 +324,12 @@ function testFocusOpenDefaultsExcludeNewChatTab(): void {
         "(toggle: hides an already-open chat panel)",
     );
   }
+  if (defaults.includes("composer.openAddContextMenu")) {
+    throw new Error(
+      "Cursor focus_open defaults must NOT include composer.openAddContextMenu " +
+        "(opens Composer menu chrome, not the chat input)",
+    );
+  }
   // Cursor 1.x: the modern primary focus_open command is
   // ``workbench.action.chat.open``. Legacy ``composer.openComposer``
   // stays as a tail fallback for older builds.
@@ -325,6 +339,18 @@ function testFocusOpenDefaultsExcludeNewChatTab(): void {
         "(Cursor 1.x removed the composer.* namespace)",
     );
   }
+}
+
+function testRejectsComposerContextMenuAsFocusOpen(): void {
+  assert(
+    cursorStrategy.acceptFocusOpenCommand?.("composer.openAddContextMenu") === false,
+    "composer.openAddContextMenu must not be accepted as Cursor focus_open",
+  );
+  const filtered = filterUnsafeFocusOpenForIde(
+    ["composer.openAddContextMenu", "workbench.action.chat.open"],
+    "cursor",
+  );
+  eq(filtered.join(","), "workbench.action.chat.open", "unsafe context menu focus_open must be filtered");
 }
 
 function run(): void {
@@ -338,6 +364,7 @@ function run(): void {
   testProbeLadderUsesCursorStrategy();
   testProbeCacheSanitizationForCursor();
   testFocusOpenDefaultsExcludeNewChatTab();
+  testRejectsComposerContextMenuAsFocusOpen();
   console.log("cursor-strategy tests: ok");
 }
 

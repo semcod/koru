@@ -103,6 +103,15 @@ export interface IdeStrategy {
    */
   focusInputCommandsBlocklist?(): string[];
 
+  /**
+   * When set, the focus-input ladder only caches a winner if this returns
+   * true (after the command exits successfully).
+   */
+  acceptFocusInputCommand?(command: string): boolean;
+
+  /** When set, focus-open ladder only accepts winners that return true. */
+  acceptFocusOpenCommand?(command: string): boolean;
+
   /** Submit fallback policy used by `_submitChat*Fallback` in extension.ts. */
   readonly submitFallback: SubmitFallbackPolicy;
 }

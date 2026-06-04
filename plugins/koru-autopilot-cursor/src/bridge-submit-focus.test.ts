@@ -119,6 +119,10 @@ async function testSubmitAfterPasteFailsBeforeSubmitWhenCursorFocusUnconfirmed()
     ok: false,
     command: "workbench.action.chat.focusInput",
   });
+  bridge.cursorRecoverGlassChatFocus = async () => ({
+    ok: false,
+    reason: "mock recovery exhausted",
+  });
   bridge.probeChatInputContents = async () => null;
   bridge.submitChat = async () => {
     submitCalls += 1;
@@ -128,13 +132,13 @@ async function testSubmitAfterPasteFailsBeforeSubmitWhenCursorFocusUnconfirmed()
   const result = await bridge.submitAfterPaste(
     { type: "chat.send", id: "drive-1" },
     { ok: true, command: "composer.openComposer" },
-    { ok: true, command: "workbench.action.chat.typeText" },
+    { ok: true, command: "composer.startComposerPrompt" },
     true,
     "Ticket STARTER-999\nimplement the requested change",
   );
 
   assert.strictEqual(result, null);
-  assert.strictEqual(submitCalls, 0, "submitChat must not run without confirmed Cursor input focus");
+  assert.strictEqual(submitCalls, 0, "submitChat must not run without confirmed Cursor input focus (non-typed paste)");
   assert.strictEqual(sent.length, 1);
   assert.strictEqual(sent[0].verification, "submit_unverified");
   assert.strictEqual(sent[0].attempted_submit, "cursor-submit-focus-unavailable");
@@ -145,6 +149,10 @@ async function testRegisteredSubmitFailsClosedWhenCursorFocusUnconfirmed(): Prom
   bridge.focusChatInput = async () => ({
     ok: false,
     command: "workbench.action.chat.focusInput",
+  });
+  bridge.cursorRecoverGlassChatFocus = async () => ({
+    ok: false,
+    reason: "mock recovery exhausted",
   });
   bridge.probeChatInputContents = async () => null;
 
@@ -159,7 +167,7 @@ async function testRegisteredSubmitFailsClosedWhenCursorFocusUnconfirmed(): Prom
   assert.deepStrictEqual(runCommands, [], "registered submit command must not run when focus is unconfirmed");
 }
 
-async function testRegisteredSubmitBlocksWhenProbeReadsEmptyAfterShortPaste(): Promise<void> {
+async function testRegisteredSubmitTrustsGlassFocusWhenProbeEmptyOnShortPaste(): Promise<void> {
   const { bridge, runCommands } = makeBridge();
   bridge.probeLadderEnabled = () => true;
   bridge.focusChatInput = async () => ({
@@ -167,6 +175,10 @@ async function testRegisteredSubmitBlocksWhenProbeReadsEmptyAfterShortPaste(): P
     command: "glass.focusInput",
   });
   bridge.probeChatInputContents = async () => "";
+  bridge.submitChat = async () => ({
+    ok: true,
+    command: "workbench.action.chat.stopListeningAndSubmit",
+  });
 
   const result = await bridge._tryRegisteredCommands(
     ["workbench.action.chat.stopListeningAndSubmit"],
@@ -174,9 +186,13 @@ async function testRegisteredSubmitBlocksWhenProbeReadsEmptyAfterShortPaste(): P
     true,
   );
 
-  assert.strictEqual(result?.unverified, true);
-  assert.strictEqual(result?.command, "cursor-submit-focus-unavailable");
-  assert.deepStrictEqual(runCommands, [], "empty pre-submit probe must block submit on Cursor");
+  assert.strictEqual(result?.ok, true);
+  assert.strictEqual(result?.command, "workbench.action.chat.stopListeningAndSubmit");
+  assert.deepStrictEqual(
+    runCommands,
+    ["workbench.action.chat.stopListeningAndSubmit"],
+    "Glass focus + unreadable probe should still allow registered submit",
+  );
 }
 
 async function testRegisteredSubmitBlocksWhenProbeShowsTinySnippetForLongPrompt(): Promise<void> {
@@ -248,6 +264,79 @@ async function testRegisteredSubmitTrustsFocusWhenWebviewProbeUnreadable(): Prom
   );
 }
 
+async function testSubmitAfterPasteAllowsTypedPasteWhenProbeNullAfterGlassRecover(): Promise<void> {
+  const { bridge, sent } = makeBridge();
+  let submitCalls = 0;
+  bridge.focusChatInput = async () => ({ ok: false });
+  bridge.cursorRecoverGlassChatFocus = async () => ({
+    ok: true,
+    command: "glass.focusInput",
+  });
+  bridge.probeChatInputContents = async () => null;
+  bridge.submitChat = async () => {
+    submitCalls += 1;
+    return { ok: true, command: "workbench.action.chat.stopListeningAndSubmit" };
+  };
+
+  const result = await bridge.submitAfterPaste(
+    { type: "chat.send", id: "drive-typed-null" },
+    { ok: true, command: "workbench.action.chat.open" },
+    { ok: true, command: "type" },
+    true,
+    "probe test",
+  );
+
+  assert.strictEqual(result, "workbench.action.chat.stopListeningAndSubmit");
+  assert.strictEqual(submitCalls, 1);
+  assert.strictEqual(sent.length, 0);
+}
+
+async function testSubmitAfterPasteBlocksTypedPasteWhenGlassRecoverFails(): Promise<void> {
+  const { bridge, sent } = makeBridge();
+  bridge.focusChatInput = async () => ({ ok: false });
+  bridge.cursorRecoverGlassChatFocus = async () => ({ ok: false, reason: "mock exhausted" });
+  bridge.probeChatInputContents = async () => null;
+
+  const result = await bridge.submitAfterPaste(
+    { type: "chat.send", id: "drive-typed-blocked" },
+    { ok: true, command: "workbench.action.chat.open" },
+    { ok: true, command: "type" },
+    true,
+    "probe test",
+  );
+
+  assert.strictEqual(result, null);
+  assert.strictEqual(sent.length, 1);
+  assert.strictEqual(sent[0].verification, "submit_unverified");
+}
+
+async function testSubmitAfterPasteAllowsTypedPasteWhenProbeUnreadable(): Promise<void> {
+  const { bridge, sent, runCommands } = makeBridge();
+  let submitCalls = 0;
+  bridge.focusChatInput = async () => ({ ok: false });
+  bridge.cursorRecoverGlassChatFocus = async () => ({
+    ok: true,
+    command: "glass.focusInput",
+  });
+  bridge.probeChatInputContents = async () => "";
+  bridge.submitChat = async () => {
+    submitCalls += 1;
+    return { ok: true, command: "workbench.action.chat.stopListeningAndSubmit" };
+  };
+
+  const result = await bridge.submitAfterPaste(
+    { type: "chat.send", id: "drive-typed" },
+    { ok: true, command: "workbench.action.chat.open" },
+    { ok: true, command: "type" },
+    true,
+    "probe test",
+  );
+
+  assert.strictEqual(result, "workbench.action.chat.stopListeningAndSubmit");
+  assert.strictEqual(submitCalls, 1);
+  assert.strictEqual(sent.length, 0, "typed paste with empty probe should not emit submit_unverified");
+}
+
 async function testRegisteredSubmitAllowsProbeConfirmedCursorInput(): Promise<void> {
   const prompt = "Ticket STARTER-999\nsubmit this exact prompt";
   const { bridge, runCommands } = makeBridge();
@@ -265,7 +354,11 @@ async function testRegisteredSubmitAllowsProbeConfirmedCursorInput(): Promise<vo
 
   assert.strictEqual(result?.ok, true);
   assert.strictEqual(result?.command, "workbench.action.chat.submit");
-  assert.deepStrictEqual(runCommands, ["workbench.action.chat.submit"]);
+  assert.deepStrictEqual(runCommands, [
+    "workbench.action.chat.open",
+    "glass.focusInput",
+    "workbench.action.chat.submit",
+  ]);
 }
 
 async function testCursorFastPathDoesNotTrustMissingBubbleDbWithInconclusiveProbe(): Promise<void> {
@@ -318,10 +411,13 @@ async function testCursorHostClickFallbackRequiresCalibratedPoint(): Promise<voi
 async function run(): Promise<void> {
   await testSubmitAfterPasteFailsBeforeSubmitWhenCursorFocusUnconfirmed();
   await testRegisteredSubmitFailsClosedWhenCursorFocusUnconfirmed();
-  await testRegisteredSubmitBlocksWhenProbeReadsEmptyAfterShortPaste();
+  await testRegisteredSubmitTrustsGlassFocusWhenProbeEmptyOnShortPaste();
   await testRegisteredSubmitBlocksWhenProbeShowsTinySnippetForLongPrompt();
   await testRegisteredSubmitTrustsFocusWhenProbeMismatch();
   await testRegisteredSubmitTrustsFocusWhenWebviewProbeUnreadable();
+  await testSubmitAfterPasteAllowsTypedPasteWhenProbeNullAfterGlassRecover();
+  await testSubmitAfterPasteBlocksTypedPasteWhenGlassRecoverFails();
+  await testSubmitAfterPasteAllowsTypedPasteWhenProbeUnreadable();
   await testRegisteredSubmitAllowsProbeConfirmedCursorInput();
   await testCursorFastPathDoesNotTrustMissingBubbleDbWithInconclusiveProbe();
   await testCursorHostClickFallbackRequiresCalibratedPoint();

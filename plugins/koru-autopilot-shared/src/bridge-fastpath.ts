@@ -186,22 +186,30 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       return false;
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    if (
-      existing.has("workbench.action.chat.stopListeningAndSubmit") &&
-      existing.has("workbench.action.chat.typeText")
-    ) {
-      safeLog("CURSOR_COMPOSER_FASTPATH_SKIP_MODERN_CHAT");
+    const promptPastes = CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
+    const safePastes = CURSOR_COMPOSER_SAFE_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
+    const skipFastPath =
+      existing.has("glass.focusInput") ||
+      safePastes.length === 0 ||
+      (
+        existing.has("workbench.action.chat.stopListeningAndSubmit") &&
+        existing.has("workbench.action.chat.typeText")
+      );
+    if (skipFastPath) {
+      const reason = existing.has("glass.focusInput")
+        ? "Glass Agent UI detected; using probe ladder instead of composer fast-path"
+        : safePastes.length === 0
+          ? "only startComposerPrompt paste is registered; using probe ladder"
+          : "modern chat typeText/stopListeningAndSubmit registered; using probe ladder instead";
+      safeLog("CURSOR_COMPOSER_FASTPATH_SKIP", { reason });
       this.traceOperation({
         op: "paste",
         route: "cursor-composer-fastpath",
         ok: false,
-        reason:
-          "modern chat typeText/stopListeningAndSubmit registered; using probe ladder instead",
+        reason,
       });
       return false;
     }
-    const promptPastes = CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
-    const safePastes = CURSOR_COMPOSER_SAFE_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
     // Prefer typeText/insertText over startComposerPrompt*: the prompt commands
     // open a fresh Composer surface and submit verification often fails on
     // Wayland when the visible chat is elsewhere.
@@ -324,7 +332,8 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       });
       const inputFocus = await this.confirmCursorChatInputBeforeSubmit(
         text,
-        `cursor-composer-fastpath:${submitCmd}:focus`
+        `cursor-composer-fastpath:${submitCmd}:focus`,
+        pasteCmd
       );
       if (!inputFocus.ok) {
         this.traceOperation({

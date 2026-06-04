@@ -973,15 +973,23 @@ def test_repair_fix_reload_uses_reuse_window_for_same_workspace(
 ) -> None:
     import koru.ide_adapters.ide_reload as ide_reload
 
-    reload_env: list[str | None] = []
+    reload_env: list[dict[str, str | None]] = []
 
     def _fake_reload(ide: str, *, project: Path):
         assert ide == "vscodium"
         assert project == tmp_path
-        reload_env.append(os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"))
+        reload_env.append(
+            {
+                "reuse": os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"),
+                "palette": os.environ.get("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD"),
+            }
+        )
         return SimpleNamespace(attempted=True, ok=True, method="reuse-window", detail=None)
 
     monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_on_wayland", lambda: False)
     monkeypatch.setattr(ide_reload, "try_reload_vscode_family_ide", _fake_reload)
 
     result = install_manager._reload_ide_after_plugin_fix(
@@ -999,8 +1007,49 @@ def test_repair_fix_reload_uses_reuse_window_for_same_workspace(
     )
 
     assert result["status"] == "automatic"
-    assert reload_env == ["1"]
+    assert reload_env == [{"reuse": "1", "palette": None}]
     assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
+    assert os.environ.get("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD") is None
+
+
+def test_repair_fix_reload_skips_automation_from_integrated_terminal(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    import koru.ide_adapters.ide_reload as ide_reload
+
+    reload_env: list[dict[str, str | None]] = []
+
+    def _fake_reload(ide: str, *, project: Path):
+        reload_env.append(
+            {
+                "reuse": os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"),
+                "palette": os.environ.get("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD"),
+            }
+        )
+        return SimpleNamespace(attempted=False, ok=False, detail="blocked")
+
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: True)
+    monkeypatch.setattr(ide_reload, "try_reload_vscode_family_ide", _fake_reload)
+
+    result = install_manager._reload_ide_after_plugin_fix(
+        "vscodium",
+        source_root=tmp_path,
+        daemon={
+            "plugins": [
+                {
+                    "ide": "vscodium",
+                    "workspaceFolders": [str(tmp_path)],
+                }
+            ]
+        },
+        dry_run=False,
+    )
+
+    assert result["status"] == "manual"
+    assert reload_env == [{"reuse": None, "palette": None}]
 
 
 def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_path: Path) -> None:

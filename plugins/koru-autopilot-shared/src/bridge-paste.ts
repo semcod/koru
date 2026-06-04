@@ -75,11 +75,24 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     return trimmedObs.length < threshold;
   }
 
+  protected cursorTypedPasteCommand(pasteCommand: string | undefined): boolean {
+    const cmd = (pasteCommand || "").toLowerCase();
+    return (
+      cmd === "type" ||
+      cmd.includes("typetext") ||
+      cmd.includes("inserttext")
+    );
+  }
+
   protected async confirmCursorChatInputBeforeSubmit(
     pastedText: string | undefined,
-    route: string
+    route: string,
+    pasteCommand?: string
   ): Promise<CommandOutcome> {
-    const refocus = await this.focusChatInput();
+    let refocus = await this.focusChatInput();
+    if (!refocus.ok) {
+      refocus = await this.cursorRecoverGlassChatFocus(route);
+    }
     this.traceOperation({
       op: "submit",
       route,
@@ -124,14 +137,55 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
           reason: "input probe matched pasted prompt",
         };
       }
-      if (observed === null) {
+      if (observed === null || observed.trim().length === 0) {
+        if (pastedText && this.cursorTypedPasteCommand(pasteCommand)) {
+          let focusForSubmit = refocus;
+          if (!focusForSubmit.ok) {
+            focusForSubmit = await this.cursorRecoverGlassChatFocus(route);
+          }
+          if (focusForSubmit.ok) {
+            this.traceOperation({
+              op: "submit",
+              route: `${route}:typed-paste-bubble-verify`,
+              ok: true,
+              reason:
+                "typed paste into chat; Glass focus recovered — proceeding with bubble-db submit verification",
+              detail: { focusCommand: focusForSubmit.command, pasteCommand },
+            });
+            return {
+              ok: true,
+              command: focusForSubmit.command || "cursor-typed-paste-bubble-verify",
+              reason: "typed paste with Glass focus; bubble-db will verify submit",
+            };
+          }
+          this.traceOperation({
+            op: "submit",
+            route: `${route}:typed-paste-no-glass-focus`,
+            ok: false,
+            reason:
+              "typed paste succeeded but Glass/chat input focus could not be recovered before submit",
+            detail: { pasteCommand },
+          });
+        }
+        if (refocus.ok) {
+          this.traceOperation({
+            op: "submit",
+            route: `${route}:input-probe-unreadable`,
+            ok: true,
+            reason: "chat input probe unreadable; trusting focus command before submit",
+            detail: { focusCommandOk: refocus.ok },
+          });
+          return {
+            ok: true,
+            command: refocus.command || "cursor-input-probe-unreadable",
+            reason: "input probe unreadable; trusting focus command",
+          };
+        }
         this.traceOperation({
           op: "submit",
           route: `${route}:input-probe-unreadable`,
-          ok: refocus.ok,
-          reason: refocus.ok
-            ? "chat input probe unreadable; trusting focus command before submit"
-            : "chat input probe unreadable and focus command failed",
+          ok: false,
+          reason: "chat input probe unreadable and focus command failed",
           detail: { focusCommandOk: refocus.ok },
         });
       } else if (

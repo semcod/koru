@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscodium",
   "displayName": "koru autopilot (VSCodium)",
   "description": "Bridge between VSCodium / Code - OSS and the koru autopilot daemon. Standalone VSIX for VSCodium / Code - OSS only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.21",
+  "version": "0.2.27",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -191,7 +191,7 @@
     "precompile": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscodium",
     "compile": "tsc -p ./",
     "pretest": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscodium",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/ides/vscodium.test.js && node out/extension.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/version-reconnect.test.js && node out/ides/vscodium.test.js && node out/extension.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "prepackage": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-build.py --plugin koru-autopilot-vscodium && python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-vscodium",
@@ -208,6 +208,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "fbc21774bf9c6adf"
+    "sha": "b8c93b1499b7b477"
   }
 }

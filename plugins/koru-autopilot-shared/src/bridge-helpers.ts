@@ -38,6 +38,7 @@ const UNSAFE_CURSOR_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.panel.chat.view.copilot.focus",
   "workbench.panel.aichat.view.copilot.focus",
   "composer.focuscomposer",
+  "composer.openaddcontextmenu",
 ]);
 
 export function isAllowedFocusOpenCommand(command: unknown): command is string {
@@ -96,7 +97,13 @@ export function isSpecificChatInputFocusCommand(command: string | undefined): bo
   if (normalized.includes("openagent") || normalized.includes("openask") || normalized.includes("agentsidepanel.open")) {
     return false;
   }
-  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade") || normalized.includes("agent");
+  return (
+    normalized.includes("glass")
+    || normalized.includes("chat")
+    || normalized.includes("composer")
+    || normalized.includes("cascade")
+    || normalized.includes("agent")
+  );
 }
 
 const TOGGLING_FOCUS_OPEN_COMMANDS: ReadonlySet<string> = new Set([

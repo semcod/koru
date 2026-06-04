@@ -19,6 +19,11 @@ import { planDispatch } from "./dispatch-plan";
 import { ChatHistoryWatcher, SupportedIde } from "../chat-history-watcher";
 import { detectIdeViaStrategies } from "../ides/registry";
 import { Envelope, OperationTraceStep, FocusOutcome } from "./types";
+import {
+  VERSION_MISMATCH_RECONNECT_RETRY_MS,
+  extractExpectedReloadTarget,
+  isReloadablePluginMismatch,
+} from "./version-reconnect";
 
 export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridgeBase {
   protected chatHistoryWatcher: ChatHistoryWatcher | null = null;
@@ -125,6 +130,7 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
       if (this.reconnectBlockedReason) {
         this.status.text = "$(warning) koru: reload";
         this.status.tooltip = `koru autopilot: ${this.reconnectBlockedReason}`;
+        this.scheduleBlockedReconnectRetry(this.reconnectBlockedReason);
         return;
       }
       this.scheduleRetry();
@@ -200,6 +206,18 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
       const cfg = vscode.workspace.getConfiguration("koruAutopilot");
       if (cfg.get<boolean>("autoConnect", true)) this.connect();
     }, delay);
+  }
+
+  private scheduleBlockedReconnectRetry(reason: string): void {
+    if (this.retryTimer) return;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+      if (!cfg.get<boolean>("autoConnect", true)) return;
+      if (this.reconnectBlockedReason !== reason) return;
+      debugLog("PLUGIN_VERSION_MISMATCH_BLOCKED_RETRY", { reason });
+      this.connect();
+    }, VERSION_MISMATCH_RECONNECT_RETRY_MS);
   }
 
   private maybeOpenChatOnConnect(): void {
@@ -304,7 +322,7 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
   private async dispatch(env: Envelope): Promise<void> {
     if (env.type === "error") {
       const message = typeof env.message === "string" ? env.message : "daemon rejected plugin";
-      if (this.isReloadablePluginMismatch(message)) {
+      if (isReloadablePluginMismatch(message)) {
         this.reconnectBlockedReason = message;
         this.status.text = "$(warning) koru: reload";
         this.status.tooltip = message;
@@ -348,7 +366,7 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
       "koruAutopilot.lastVersionMismatchReloadTarget",
       "",
     );
-    const target = this.extractExpectedReloadTarget(message);
+    const target = extractExpectedReloadTarget(message);
     const COOLDOWN_MS = 60_000;
     // The cooldown prevents reload loops, but it must not strand the IDE on a
     // stale extension host when a *newer* VSIX has been installed since the last
@@ -387,28 +405,6 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
         .map((f) => `${f.id}=${f.detail}`)
         .join(", ")}). Run \`Developer: Reload Window\` manually.`,
     );
-  }
-
-  private isReloadablePluginMismatch(message: string): boolean {
-    const lowered = message.toLowerCase();
-    return lowered.includes("plugin version mismatch") || lowered.includes("plugin build mismatch");
-  }
-
-  /**
-   * Pull the daemon's expected build/version token out of a rejection
-   * message so the reload cooldown can be keyed to the target the daemon
-   * actually wants loaded. The daemon emits both
-   * `expected=<build sha> version=<x>` (build mismatch) and
-   * `expected=<version>` (version mismatch); the build sha is the most
-   * specific identity, so prefer it and fall back to the version.
-   */
-  private extractExpectedReloadTarget(message: string): string {
-    const build = /expected=([^\s;]+)/i.exec(message);
-    const version = /version=([^\s;]+)/i.exec(message);
-    const parts: string[] = [];
-    if (build?.[1] && build[1] !== "-") parts.push(build[1]);
-    if (version?.[1] && version[1] !== "-") parts.push(version[1]);
-    return parts.join("@");
   }
 
   protected abstract runCommand(command: string, ...args: unknown[]): Promise<boolean>;

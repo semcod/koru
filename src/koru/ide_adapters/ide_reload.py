@@ -135,7 +135,25 @@ def _run(argv: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProce
         text=True,
         check=False,
         timeout=timeout,
+        env=_editor_cli_env(),
     )
+
+
+def _editor_cli_env() -> dict[str, str]:
+    """Run editor CLIs outside the current extension-host shim environment.
+
+    Koru often runs from an IDE-integrated extension host. In that context
+    variables such as ``ELECTRON_RUN_AS_NODE`` and ``VSCODE_*`` can make a
+    nested ``codium``/``code`` invocation behave like a transient extension
+    host instead of talking to the user's editor window.
+    """
+    env = os.environ.copy()
+    for key in list(env):
+        if key.startswith("VSCODE_"):
+            env.pop(key, None)
+    env.pop("ELECTRON_RUN_AS_NODE", None)
+    env.pop("ELECTRON_NO_ATTACH_CONSOLE", None)
+    return env
 
 
 def _resolve_editor_cli(ide: str) -> str | None:
@@ -578,6 +596,52 @@ def explain_reload_failure(
     return detail
 
 
+_REPAIR_RELOAD_ENV_KEYS = (
+    "KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD",
+    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD",
+)
+
+
+def snapshot_reload_env() -> dict[str, str | None]:
+    return {key: os.environ.get(key) for key in _REPAIR_RELOAD_ENV_KEYS}
+
+
+def restore_reload_env(snapshot: dict[str, str | None] | None) -> None:
+    if snapshot is None:
+        return
+    for key, previous in snapshot.items():
+        if previous is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = previous
+
+
+def apply_temporary_repair_reload_env(*, same_workspace: bool) -> dict[str, str | None] | None:
+    """Temporarily opt in to safe IDE reload during VSIX repair / mismatch recovery.
+
+    Never applies when Koru runs inside the target IDE integrated terminal —
+    ``cursor -r`` and command-palette injection would hit the shell or spawn
+    duplicate windows. On Wayland, enables command-palette reload (wtype) when not
+    already opted in. When the connected plugin already has the project open,
+    enables the reuse-window CLI fallback after palette failure.
+    """
+    if _running_from_integrated_ide_terminal():
+        return None
+
+    overrides: dict[str, str] = {}
+    if _on_wayland() and not command_palette_reload_enabled():
+        overrides["KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD"] = "1"
+    if same_workspace and not reuse_window_reload_enabled():
+        overrides["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = "1"
+    if not overrides:
+        return None
+
+    snapshot = snapshot_reload_env()
+    for key, value in overrides.items():
+        os.environ[key] = value
+    return snapshot
+
+
 def enable_reuse_window_reload_for_session() -> tuple[str | None, bool]:
     """Opt in to ``cursor -r`` reload for this process; return previous env value."""
     previous = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
@@ -666,6 +730,7 @@ def try_open_vscode_family_ide_new_window(
 
 __all__ = [
     "IdeReloadOutcome",
+    "apply_temporary_repair_reload_env",
     "await_plugin_handshake",
     "auto_reload_enabled",
     "command_palette_reload_enabled",
@@ -678,8 +743,10 @@ __all__ = [
     "reload_via_new_window",
     "reload_via_reopen_workspace",
     "new_window_reload_enabled",
+    "restore_reload_env",
     "restore_reuse_window_reload",
     "reuse_window_reload_enabled",
+    "snapshot_reload_env",
     "try_open_vscode_family_ide_new_window",
     "try_reload_vscode_family_ide",
     "_focus_ide_window",

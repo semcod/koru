@@ -212,6 +212,13 @@ def test_evaluate_bridge_no_daemon(tmp_path: Path) -> None:
     assert "daemon" in text
 
 
+def test_evaluate_bridge_maps_lane_slug_to_canonical_ide(tmp_path: Path) -> None:
+    sock = tmp_path / "missing.sock"
+    status = evaluate_bridge(ide="cursor-main", socket_path=sock, project=tmp_path)
+    assert status.ide == "cursor"
+    assert all(h.id != "ide.unsupported" for h in status.hypotheses)
+
+
 def test_get_adapter_cursor() -> None:
     adapter = get_adapter("cursor")
     assert adapter is not None

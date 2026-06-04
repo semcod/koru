@@ -65,7 +65,8 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     if (this.detectIde() === "cursor") {
       const refocus = await this.confirmCursorChatInputBeforeSubmit(
         pastedText,
-        "post-paste-refocus-input"
+        "post-paste-refocus-input",
+        pasted.command
       );
       if (!refocus.ok) {
         const failure: SubmitOutcome = {
@@ -281,7 +282,11 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     return { ok: true, command: cmd, ...extra };
   }
 
-  private async submitChat(verifyText?: string, pasteCommand?: string): Promise<SubmitOutcome> {
+  private async submitChat(
+    verifyText?: string,
+    pasteCommand?: string,
+    options?: { skipCursorPreSubmitFocus?: boolean },
+  ): Promise<SubmitOutcome> {
     const ide = this.detectIde();
     const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
     this.traceOperation({
@@ -300,7 +305,26 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
       existing
     );
     debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
-    const registered = await this._tryRegisteredCommands(candidates, verifyText, verifyEnabled);
+    if (ide === "cursor") {
+      const glassFocus = await this.cursorRecoverGlassChatFocus("submit-preflight");
+      this.traceOperation({
+        op: "focus_input",
+        route: "submit-preflight",
+        ok: glassFocus.ok,
+        command: glassFocus.command,
+        reason: glassFocus.ok
+          ? undefined
+          : "Glass/chat focus recovery failed before registered submit commands",
+      });
+    }
+    const registered = await this._tryRegisteredCommands(
+      candidates,
+      verifyText,
+      verifyEnabled,
+      false,
+      pasteCommand,
+      Boolean(options?.skipCursorPreSubmitFocus),
+    );
     if (registered) return registered;
     if (ide === "windsurf") {
       return { ok: false };
@@ -528,14 +552,17 @@ export abstract class SharedAutopilotBridgeSubmit extends SharedAutopilotBridgeC
     candidates: string[],
     verifyText: string | undefined,
     verifyEnabled: boolean,
-    requireEmptyAfterSubmit = false
+    requireEmptyAfterSubmit = false,
+    pasteCommand?: string,
+    skipCursorPreSubmitFocus = false,
   ): Promise<SubmitOutcome | null> {
     for (const cmd of candidates) {
-      if (this.detectIde() === "cursor") {
+      if (this.detectIde() === "cursor" && !skipCursorPreSubmitFocus) {
         await this.captureCursorBubbleAnchor();
         const inputFocus = await this.confirmCursorChatInputBeforeSubmit(
           verifyText,
-          `registered-command-focus:${cmd}`
+          `registered-command-focus:${cmd}`,
+          pasteCommand,
         );
         if (!inputFocus.ok) {
           return {

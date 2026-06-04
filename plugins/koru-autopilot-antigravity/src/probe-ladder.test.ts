@@ -47,8 +47,14 @@ function firstKey(cands: ReadonlyArray<[string, string[]]>): string {
 
 const WAYLAND_ENV = { XDG_SESSION_TYPE: "wayland", WAYLAND_DISPLAY: "wayland-0" };
 
-function testBuildFocusOpenAntigravityEmpty(): void {
-  assert(buildFocusOpenCommands("antigravity", []).length === 0, "no auto-open ladder");
+function testBuildFocusOpenAntigravityUsesNativeOnly(): void {
+  const commands = buildFocusOpenCommands("antigravity", []);
+  assert(commands.length === 1, "only native Antigravity focus command");
+  assert(
+    commands[0] === "antigravity.agentSidePanel.focus",
+    "native Antigravity focus command first",
+  );
+  assert(!commands.includes("workbench.panel.chat"), "no generic auto-open ladder");
 }
 
 function testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance(): void {
@@ -59,5 +65,5 @@ testOrderWithCache();
 testChatFocusHeuristic();
 testPasteLandedInEditor();
 testMergeUnique();
-testBuildFocusOpenAntigravityEmpty();
+testBuildFocusOpenAntigravityUsesNativeOnly();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();

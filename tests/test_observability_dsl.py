@@ -547,6 +547,9 @@ def test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace(
 
     orchestrator._PLUGIN_GATE_RECOVERY_LAST_TS.clear()
     monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_on_wayland", lambda: False)
     monkeypatch.setattr(
         orchestrator,
         "_client_has_usable_plugin",
@@ -674,6 +677,12 @@ def test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace(
         retry_env.append(os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"))
         return True
 
+    import koru.ide_adapters.ide_reload as ide_reload
+
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_on_wayland", lambda: False)
     monkeypatch.setattr(
         plugin_wait_mod,
         "_try_plugin_reconnect_pipeline",

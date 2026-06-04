@@ -1007,17 +1007,19 @@ def _reload_ide_after_plugin_fix(
             ),
         }
     try:
-        from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+        from koru.ide_adapters.ide_reload import (
+            apply_temporary_repair_reload_env,
+            restore_reload_env,
+            try_reload_vscode_family_ide,
+        )
 
-        snapshot = _temporary_reuse_window_reload_if_same_workspace(
-            daemon,
-            ide,
-            source_root,
+        snapshot = apply_temporary_repair_reload_env(
+            same_workspace=_daemon_has_plugin_workspace(daemon, ide, source_root),
         )
         try:
             reload = try_reload_vscode_family_ide(ide, project=source_root)
         finally:
-            _restore_reuse_window_reload(snapshot)
+            restore_reload_env(snapshot)
     except Exception as exc:  # pragma: no cover - defensive around GUI adapters
         return {
             "status": "manual",
@@ -1049,30 +1051,6 @@ def _reload_ide_after_plugin_fix(
             "the installed VSIX."
         ),
     }
-
-
-def _temporary_reuse_window_reload_if_same_workspace(
-    daemon: dict[str, Any] | None,
-    ide: str,
-    source_root: Path,
-) -> tuple[bool, str | None] | None:
-    if os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"):
-        return None
-    if not _daemon_has_plugin_workspace(daemon, ide, source_root):
-        return None
-    previous = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
-    os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = "1"
-    return True, previous
-
-
-def _restore_reuse_window_reload(snapshot: tuple[bool, str | None] | None) -> None:
-    if snapshot is None:
-        return
-    _changed, previous = snapshot
-    if previous is None:
-        os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
-    else:
-        os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = previous
 
 
 def _daemon_has_plugin_workspace(

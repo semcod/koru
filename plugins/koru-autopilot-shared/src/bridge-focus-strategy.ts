@@ -173,6 +173,13 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
     const after = this.editorSnapshot();
     debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd: command, after });
     if (!context.useProbe || verifyFocusAfterOpen(context.before, after, context.ide)) {
+      if (openStrategy?.acceptFocusOpenCommand && !openStrategy.acceptFocusOpenCommand(command)) {
+        rejected.push({
+          cmd: command,
+          reason: "IDE strategy rejected focus-open command after snapshot verify",
+        });
+        return null;
+      }
       return this._snapshotVerifiedFocusOpenCommand(command, context.useProbe);
     }
     debugLog("PROBE_FOCUS_REJECT", { cmd: command, before: context.before, after });
@@ -250,6 +257,34 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
     ];
   }
 
+  protected async cursorRecoverGlassChatFocus(route: string): Promise<{ ok: boolean; command?: string; reason?: string }> {
+    for (const opener of ["workbench.action.chat.open", "workbench.action.chat.openagent"]) {
+      if (await this.runCommand(opener)) {
+        await this.sleep(this.probeFocusDelayMs());
+        this.traceOperation({
+          op: "focus_open",
+          route: `${route}:glass-recover`,
+          ok: true,
+          command: opener,
+        });
+        break;
+      }
+    }
+    for (const cmd of this.cursorEssentialFocusInputCommands()) {
+      const result = await this._tryFocusInputCommand(cmd);
+      if (result.ok) {
+        this.traceOperation({
+          op: "focus_input",
+          route: `${route}:glass-recover`,
+          ok: true,
+          command: result.command,
+        });
+        return result;
+      }
+    }
+    return { ok: false, reason: "glass/chat focus recovery exhausted" };
+  }
+
   protected sanitizeFocusInputCacheWinner(
     ide: string,
     cacheWinner: string | undefined
@@ -307,6 +342,13 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
     debugLog("FOCUS_INPUT_ATTEMPT", { cmd });
     if (!(await this.runCommand(cmd))) {
       debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
+      this.traceOperation({
+        op: "focus_input",
+        route: "command-failed",
+        ok: false,
+        command: cmd,
+        reason: "executeCommand returned false or threw",
+      });
       return { ok: false };
     }
     if (!isSpecificChatInputFocusCommand(cmd)) {

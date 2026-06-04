@@ -72,6 +72,7 @@ def test_project_venv_reexec_argv_when_running_from_other_venv(
     local_bin.mkdir(parents=True)
     local_koru = local_bin / "koru"
     local_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    local_koru.chmod(0o755)
 
     other_python = tmp_path / "other" / ".venv" / "bin" / "python"
     other_python.parent.mkdir(parents=True)
@@ -118,6 +119,7 @@ def test_project_venv_reexec_argv_uses_current_project_when_no_project_arg(
     local_bin.mkdir(parents=True)
     local_koru = local_bin / "koru"
     local_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    local_koru.chmod(0o755)
     other_python = tmp_path / "other" / ".venv" / "bin" / "python"
     other_python.parent.mkdir(parents=True)
     other_python.write_text("", encoding="utf-8")

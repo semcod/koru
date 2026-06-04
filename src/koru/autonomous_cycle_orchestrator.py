@@ -1,5 +1,6 @@
 import time
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,30 @@ from koru.queue import QueueLoopResult
 
 _PLUGIN_GATE_RECOVERY_COOLDOWN_SECONDS = 60.0
 _PLUGIN_GATE_RECOVERY_LAST_TS: dict[tuple[str, str, str], float] = {}
+
+
+@dataclass(frozen=True)
+class _AutopilotDriveContext:
+    project: Path
+    state: AutoloopState
+    queue_result: QueueLoopResult
+    client: Any
+    autopilot_ide: str
+    drive_prompt: str
+    submit: bool
+    autopilot_action: str
+    cycle: int
+    cycle_telemetry: dict[str, Any]
+    human_log: Callable[..., Any]
+
+
+@dataclass(frozen=True)
+class _AutopilotDriveAttempt:
+    reply: dict[str, Any]
+    ok: bool
+    decision_kind: str | None
+    idle_prompt_kind: str | None
+    status: str
 
 
 def _drive_result_autopilot_status(
@@ -133,17 +158,19 @@ def _handle_autopilot_phase(
     if should_skip:
         return skip_reason, None, None
     return _drive_autopilot_once(
-        project,
-        state,
-        queue_result,
-        client,
-        autopilot_ide,
-        drive_prompt,
-        submit,
-        autopilot_action,
-        cycle,
-        cycle_telemetry,
-        _hp,
+        _AutopilotDriveContext(
+            project=project,
+            state=state,
+            queue_result=queue_result,
+            client=client,
+            autopilot_ide=autopilot_ide,
+            drive_prompt=drive_prompt,
+            submit=submit,
+            autopilot_action=autopilot_action,
+            cycle=cycle,
+            cycle_telemetry=cycle_telemetry,
+            human_log=_hp,
+        )
     )
 
 
@@ -317,52 +344,58 @@ def _terminal_conflict_status(
     return decision.status
 
 
-def _drive_autopilot_once(
-    project: Path,
-    state: AutoloopState,
-    queue_result: QueueLoopResult,
-    client: Any,
-    autopilot_ide: str,
-    drive_prompt: str,
-    submit: bool,
-    autopilot_action: str,
-    cycle: int,
-    cycle_telemetry: dict[str, Any],
-    _hp: Callable[..., Any],
-) -> tuple[str, str | None, str | None]:
+def _drive_autopilot_once(ctx: _AutopilotDriveContext) -> tuple[str, str | None, str | None]:
+    attempt = _run_autopilot_drive_attempt(ctx)
+    autopilot_backend, autopilot_drive_kind = _apply_autopilot_drive_attempt(ctx, attempt)
+    return attempt.status, autopilot_backend, autopilot_drive_kind
+
+
+def _run_autopilot_drive_attempt(ctx: _AutopilotDriveContext) -> _AutopilotDriveAttempt:
     reply, ok, decision_kind, idle_prompt_kind = _execute_autopilot_drive(
-        project,
-        state,
-        queue_result,
-        client,
-        autopilot_ide,
-        drive_prompt,
-        submit,
-        autopilot_action,
-        _hp,
+        ctx.project,
+        ctx.state,
+        ctx.queue_result,
+        ctx.client,
+        ctx.autopilot_ide,
+        ctx.drive_prompt,
+        ctx.submit,
+        ctx.autopilot_action,
+        ctx.human_log,
     )
-    autopilot_status = _drive_result_autopilot_status(
-        queue_result=queue_result,
+    status = _drive_result_autopilot_status(
+        queue_result=ctx.queue_result,
         reply=reply,
         ok=ok,
         decision_kind=decision_kind,
-        cycle_telemetry=cycle_telemetry,
+        cycle_telemetry=ctx.cycle_telemetry,
     )
-    autopilot_backend, autopilot_drive_kind = apply_autopilot_drive_outcome(
-        project=project,
-        state=state,
-        queue_result=queue_result,
+    return _AutopilotDriveAttempt(
         reply=reply,
         ok=ok,
         decision_kind=decision_kind,
         idle_prompt_kind=idle_prompt_kind,
-        autopilot_status=autopilot_status,
-        autopilot_ide=autopilot_ide,
-        cycle=cycle,
-        cycle_telemetry=cycle_telemetry,
-        _hp=_hp,
+        status=status,
     )
-    return autopilot_status, autopilot_backend, autopilot_drive_kind
+
+
+def _apply_autopilot_drive_attempt(
+    ctx: _AutopilotDriveContext,
+    attempt: _AutopilotDriveAttempt,
+) -> tuple[str | None, str | None]:
+    return apply_autopilot_drive_outcome(
+        project=ctx.project,
+        state=ctx.state,
+        queue_result=ctx.queue_result,
+        reply=attempt.reply,
+        ok=attempt.ok,
+        decision_kind=attempt.decision_kind,
+        idle_prompt_kind=attempt.idle_prompt_kind,
+        autopilot_status=attempt.status,
+        autopilot_ide=ctx.autopilot_ide,
+        cycle=ctx.cycle,
+        cycle_telemetry=ctx.cycle_telemetry,
+        _hp=ctx.human_log,
+    )
 
 
 def _emit_autopilot_preflight_skip(

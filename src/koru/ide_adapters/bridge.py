@@ -10,7 +10,7 @@ from koru.ide_adapters import shared
 from koru.ide_adapters.base import BridgeStatus, Hypothesis
 from koru.ide_adapters.registry import get_adapter
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
-from koruide.ide import detect_running_ides, normalize_ide_id
+from koruide.ide import canonical_autopilot_ide_id, detect_running_ides, normalize_ide_id
 
 
 def _ide_is_running(ide: str) -> bool:
@@ -74,8 +74,10 @@ def _daemon_status_and_plugins(
 
 
 def _plugins_connected(plugin_list: list, ide: str) -> bool:
+    wanted = canonical_autopilot_ide_id(ide)
     return any(
-        isinstance(p, dict) and normalize_ide_id(str(p.get("ide", ""))) == ide
+        isinstance(p, dict)
+        and canonical_autopilot_ide_id(str(p.get("ide") or "")) == wanted
         for p in plugin_list
     )
 
@@ -287,7 +289,7 @@ def evaluate_bridge(
     plugins: list | None = None,
 ) -> BridgeStatus:
     """Build a full bridge status for the given IDE lane."""
-    ide = normalize_ide_id(ide) or ide
+    ide = canonical_autopilot_ide_id(ide)
     sock = str(Path(socket_path).resolve())
     client = AutopilotClient(socket_path=Path(sock), timeout=1.0)
     daemon_running = client.is_running()

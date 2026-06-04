@@ -162,10 +162,13 @@ def _maybe_print_empty_plugin_bridge_explain(
 
 
 def _status_explain_target_ide(args: argparse.Namespace, normalize_ide_fn: callable) -> str:
+    from koruide.ide import canonical_autopilot_ide_id
     from koruide.plugin_installer import resolve_target_ide
 
     requested = normalize_ide_fn(getattr(args, "ide", "auto"))
     instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
     if requested and requested != "auto":
-        return requested
-    return (normalize_ide_fn(instance) if instance else resolve_target_ide("auto")) or "cursor"
+        return canonical_autopilot_ide_id(requested)
+    if instance:
+        return canonical_autopilot_ide_id(instance)
+    return canonical_autopilot_ide_id(resolve_target_ide("auto") or "cursor")

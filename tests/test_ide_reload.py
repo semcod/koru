@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest import mock
 
@@ -95,6 +96,26 @@ def test_new_window_reload_opt_in(monkeypatch: pytest.MonkeyPatch) -> None:
     assert ide_reload.new_window_reload_enabled() is False
     monkeypatch.setenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
     assert ide_reload.new_window_reload_enabled() is True
+
+
+def test_editor_cli_env_drops_extension_host_shims(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("VSCODE_IPC_HOOK", "/run/user/1000/vscode.sock")
+    monkeypatch.setenv("VSCODE_CWD", "/home/tom")
+    monkeypatch.setenv("ELECTRON_RUN_AS_NODE", "1")
+    monkeypatch.setenv("ELECTRON_NO_ATTACH_CONSOLE", "1")
+    monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-0")
+
+    env = ide_reload._editor_cli_env()
+
+    assert "VSCODE_PID" not in env
+    assert "VSCODE_IPC_HOOK" not in env
+    assert "VSCODE_CWD" not in env
+    assert "ELECTRON_RUN_AS_NODE" not in env
+    assert "ELECTRON_NO_ATTACH_CONSOLE" not in env
+    assert env["WAYLAND_DISPLAY"] == "wayland-0"
 
 
 def test_try_reload_does_not_call_reuse_window_by_default(
@@ -203,6 +224,52 @@ def test_detect_reload_command_reports_disabled(monkeypatch: pytest.MonkeyPatch)
     method, reason = ide_reload.detect_reload_command("vscode", dry_run=False)
     assert method is None
     assert reason == "auto reload disabled"
+
+
+def test_apply_temporary_repair_reload_env_enables_palette_on_wayland(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_on_wayland", lambda: True)
+
+    snapshot = ide_reload.apply_temporary_repair_reload_env(same_workspace=False)
+    try:
+        assert os.environ.get("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD") == "1"
+        assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
+    finally:
+        ide_reload.restore_reload_env(snapshot)
+
+    assert os.environ.get("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD") is None
+
+
+def test_apply_temporary_repair_reload_env_same_workspace_enables_reuse(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_on_wayland", lambda: False)
+
+    snapshot = ide_reload.apply_temporary_repair_reload_env(same_workspace=True)
+    try:
+        assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") == "1"
+    finally:
+        ide_reload.restore_reload_env(snapshot)
+
+
+def test_apply_temporary_repair_reload_env_skips_integrated_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
+    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: True)
+    monkeypatch.setattr(ide_reload, "_on_wayland", lambda: True)
+
+    assert ide_reload.apply_temporary_repair_reload_env(same_workspace=True) is None
+    assert os.environ.get("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD") is None
+    assert os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD") is None
 
 
 def test_detect_reload_command_blocks_reuse_window_from_integrated_terminal(

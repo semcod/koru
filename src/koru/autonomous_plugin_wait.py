@@ -556,10 +556,8 @@ def _temporary_reuse_window_reload_if_same_workspace(
     autopilot_ide: str,
     project: Path | None,
     reason: str,
-) -> tuple[bool, str | None] | None:
+) -> dict[str, str | None] | None:
     if project is None or not _reason_is_connected_plugin_mismatch(reason):
-        return None
-    if os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"):
         return None
     try:
         status = client.status()
@@ -567,19 +565,15 @@ def _temporary_reuse_window_reload_if_same_workspace(
         return None
     if not _status_has_plugin_workspace(status, autopilot_ide, project):
         return None
-    previous = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
-    os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = "1"
-    return True, previous
+    from koru.ide_adapters.ide_reload import apply_temporary_repair_reload_env
+
+    return apply_temporary_repair_reload_env(same_workspace=True)
 
 
-def _restore_reuse_window_reload(snapshot: tuple[bool, str | None] | None) -> None:
-    if snapshot is None:
-        return
-    _changed, previous = snapshot
-    if previous is None:
-        os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
-    else:
-        os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = previous
+def _restore_reuse_window_reload(snapshot: dict[str, str | None] | None) -> None:
+    from koru.ide_adapters.ide_reload import restore_reload_env
+
+    restore_reload_env(snapshot)
 
 
 def _reason_is_connected_plugin_mismatch(reason: str) -> bool:
