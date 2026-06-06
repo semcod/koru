@@ -429,6 +429,36 @@ working implementation.
 - optional OpenRouter-backed `llm` executor
 - richer multi-actor coordination
 
+## External queue adapters (Mullm and others)
+
+Multiple products can **emit** tickets into the same planfile without owning
+execution runtime:
+
+| Source | `source` field | `execution.queue` | `executor.kind` | Replaces local queue? |
+| --- | --- | --- | --- | --- |
+| Koru scan / code2llm | `koru.scan` | `default` | `human` | — |
+| Mullm routing feedback | `mullm.routing` | `mullm-routing` | `human` | Mullm `improvements.jsonl` (optional) |
+| Mullm shell (future) | `mullm.execution` | `mullm-shell` | `shell` | Mullm orchestrator only with NATS adapter |
+| Mullm nlp2dsl workflow | `mullm.nlp2dsl` | `mullm-workflow` | `human` | partial (DSL engine stays in nlp2dsl) |
+
+Recommended ticket fields for cross-system dedupe:
+
+```yaml
+labels:
+  - mullm
+  - routing-improvement
+  - "dedupe:mullm-routing-<turn_id>"
+metadata:
+  external_ref: "mullm://routing-improvement/<uuid>"
+  mullm_session_id: "<session>"
+```
+
+Mullm implements optional sync via `MULLM_PLANFILE_PROJECT` +
+`planfile ticket create` (see `mullm/docs/ticket-queues-and-planfile.md`).
+**Planfile becomes the human-facing backlog**; Mullm EventStore remains the
+shell **execution bus** until `koru --queue` or a projector adapter unifies
+completion events.
+
 ## Bottom line
 
 If you want `koru` to:

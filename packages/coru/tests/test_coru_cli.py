@@ -89,9 +89,9 @@ def test_fetch_manage_report_uses_supported_manage_json_args(monkeypatch) -> Non
 
     monkeypatch.setattr(coru_cli, "_koru_exec_argv", lambda: ["koru"])
 
-    def fake_run(cmd, *, capture_output, text, check, env):
+    def fake_run(cmd, **kwargs):
         captured["cmd"] = cmd
-        captured["env"] = env
+        captured["env"] = kwargs["env"]
         return subprocess.CompletedProcess(cmd, 0, stdout='{"ok": true, "issues": []}', stderr="")
 
     monkeypatch.setattr(coru_cli.subprocess, "run", fake_run)
@@ -249,6 +249,16 @@ def test_distribution_version_not_installed(monkeypatch) -> None:
 
     monkeypatch.setattr(coru_cli.metadata, "version", fake_version)
     assert coru_cli._distribution_version("missing-pkg") == "not-installed"
+
+
+def test_distribution_version_for_bundled_coru_falls_back_to_koru(monkeypatch) -> None:
+    def fake_version(name: str) -> str:
+        if name == "koru":
+            return "0.1.312"
+        raise metadata.PackageNotFoundError
+
+    monkeypatch.setattr(coru_cli.metadata, "version", fake_version)
+    assert coru_cli._distribution_version("coru") == "0.1.312"
 
 
 def test_print_runtime_versions(monkeypatch, capsys) -> None:
@@ -1322,7 +1332,8 @@ def test_run_with_lane_environment_sets_and_restores(monkeypatch) -> None:
 def test_koru_autopilot_env_payload_uses_explicit_lane_env(monkeypatch) -> None:
     captured: dict[str, str | None] = {}
 
-    def fake_run(cmd, *, capture_output, text, check, env):
+    def fake_run(cmd, **kwargs):
+        env = kwargs["env"]
         captured["instance"] = env.get("KORU_AUTOPILOT_INSTANCE")
         captured["ide"] = env.get("KORU_AUTOPILOT_IDE")
         captured["socket"] = env.get("KORU_AUTOPILOT_SOCKET")

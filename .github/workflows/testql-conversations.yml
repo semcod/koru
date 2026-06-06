@@ -1,0 +1,52 @@
+# Conversation TestQL scenarios (dry-run IR validation on every PR).
+name: TestQL Conversations
+
+on:
+  pull_request:
+    paths:
+      - "testql-scenarios/**"
+      - "packages/nlpshim/**"
+      - "scripts/validate_testql_conversations.py"
+      - ".github/workflows/testql-conversations.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conversation-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install testql || true
+          python -m pip install -e packages/nlpshim
+
+      - name: Validate conversation scenarios
+        run: python scripts/validate_testql_conversations.py
+
+      - name: nlpshim conversation API smoke
+        run: |
+          python - <<'PY'
+          from nlpshim import ConversationTestClient, export_trace, parse_conversation_step, ConversationContext
+
+          c = ConversationTestClient()
+          c.start(userId="ci-user")
+          parse_conversation_step({"text": "hello"}, ConversationContext(conversation_id=c.state.conversation_id))
+          trace = export_trace(c.state.conversation_id, client=c)
+          assert "turns" in trace
+          print("nlpshim conversation API: ok")
+          PY

@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import zipfile
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -144,9 +145,14 @@ def _valid_ide(raw: str | None) -> str | None:
     return ide if ide in supported_autopilot_ide_ids() else None
 
 
+def _plugin_installer_module():
+    """Return this module so tests can monkeypatch injected IDE detectors."""
+    return sys.modules[__name__]
+
+
 def _ide_from_terminal_env() -> str | None:
     """Best-effort IDE hint from an integrated terminal environment."""
-    return detect_terminal_host_ide_id()
+    return _plugin_installer_module().detect_terminal_host_ide_id()
 
 
 def _terminal_vscode_flavor() -> str | None:
@@ -287,7 +293,7 @@ def _fallback_vsix_candidates(
 
 def _running_vscode_flavor() -> str | None:
     """Return VS Code-family flavor from the actually running editor process."""
-    for ide in detect_running_ides():
+    for ide in _plugin_installer_module().detect_running_ides():
         if getattr(ide, "id", None) == "antigravity":
             return "antigravity"
         if getattr(ide, "id", None) != "vscode":
@@ -321,11 +327,12 @@ def resolve_target_ide(requested: str = "auto") -> str | None:
     if terminal_ide in SUPPORTED_IDES:
         return terminal_ide
 
-    focused = normalize_ide_id(detect_focused_ide_id())
+    mod = _plugin_installer_module()
+    focused = normalize_ide_id(mod.detect_focused_ide_id())
     if focused:
         return focused
 
-    detected = detect_running_ides()
+    detected = mod.detect_running_ides()
     for ide in detected:
         if ide.id in SUPPORTED_IDES:
             return ide.id

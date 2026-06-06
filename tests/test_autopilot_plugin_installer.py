@@ -12,6 +12,30 @@ from types import SimpleNamespace
 import pytest
 
 from koru.autopilot import plugin_installer
+from koruide.ide import detect_terminal_host_ide_id as _real_detect_terminal_host_ide_id
+
+
+def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Drop IDE terminal env leaked from the host (Cursor sets VSCODE_* + CURSOR_*)."""
+    for key in (
+        "KORU_AUTOPILOT_INSTANCE",
+        "KORU_AUTOPILOT_IDE",
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "WINDSURF_CSRF_TOKEN",
+        "WINDSURF_VERSION",
+        "TERM_PROGRAM",
+        "VSCODE_PID",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_CWD",
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+    ):
+        monkeypatch.delenv(key, raising=False)
 
 
 def _cp(
@@ -60,16 +84,15 @@ def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
 
 
 def test_resolve_target_ide_uses_integrated_terminal_hint(monkeypatch) -> None:
-    for key in (
-        "TERM_PROGRAM_VERSION",
-        "WINDSURF_CASCADE_TERMINAL",
-        "GIO_LAUNCHED_DESKTOP_FILE",
-        "CHROME_DESKTOP",
-    ):
-        monkeypatch.delenv(key, raising=False)
-    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    _isolate_integrated_terminal_env(monkeypatch)
     monkeypatch.setenv("TERM_PROGRAM", "cursor")
-    monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: "windsurf")
+    # Rebind the real detector in case a prior test left a stub on this module.
+    monkeypatch.setattr(
+        plugin_installer,
+        "detect_terminal_host_ide_id",
+        _real_detect_terminal_host_ide_id,
+    )
+    monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda **_k: "windsurf")
 
     assert plugin_installer.resolve_target_ide("auto") == "cursor"
 

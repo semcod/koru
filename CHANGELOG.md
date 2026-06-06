@@ -113,6 +113,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.313] - 2026-06-06
+
+### Docs
+- Update README.md
+- Update docs/planfile-execution-gateway.md
+- Update packages/coru/README.md
+- Update packages/nlpshim/README.md
+
+### Test
+- Update testql-scenarios/artifacts/mock-inbox/.gitkeep
+- Update testql-scenarios/artifacts/mock-llm-replies.yaml
+- Update testql-scenarios/conversations/send-invoice.testql.toon.yaml
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_pyproject_metadata.py
+
+### Other
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/tests/test_coru_cli.py
+- Update packages/nlpshim/src/nlpshim/__init__.py
+- Update packages/nlpshim/src/nlpshim/conversation_client.py
+- Update packages/nlpshim/src/nlpshim/conversation_test_api.py
+- Update scripts/run_testql_conversations.py
+- Update scripts/validate_testql_conversations.py
+
 ## [0.1.312] - 2026-06-04
 
 ### Docs

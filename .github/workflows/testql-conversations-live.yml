@@ -1,0 +1,81 @@
+# Optional live-LLM conversation E2E (manual / scheduled — does not block PR merges).
+name: TestQL Conversations (Live LLM)
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Scenario file relative to repo root (empty = all)
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testql-live-llm-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  live-llm-e2e:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout koru
+        uses: actions/checkout@v4
+
+      - name: Checkout testql (editable)
+        uses: actions/checkout@v4
+        with:
+          repository: oqlos/testql
+          path: vendor/testql
+          ref: main
+        continue-on-error: true
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -d vendor/testql ]; then pip install -e vendor/testql; else pip install testql; fi
+          pip install -e packages/nlpshim
+          pip install httpx pyyaml
+
+      - name: Live LLM conversation run
+        env:
+          TESTQL_LIVE_LLM: "1"
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          NLP2DSL_URL: ${{ secrets.NLP2DSL_URL }}
+          TESTQL_MOCK_LLM_FILE: testql-scenarios/artifacts/mock-llm-replies.yaml
+        run: |
+          if [ -z "${OPENROUTER_API_KEY}${LLM_API_KEY}" ]; then
+            echo "Skipping: no LLM API key configured in repository secrets"
+            exit 0
+          fi
+          args=(scripts/run_testql_conversations.py --live-llm)
+          if [ -n "${{ github.event.inputs.scenario }}" ]; then
+            args+=("${{ github.event.inputs.scenario }}")
+          fi
+          python "${args[@]}"
+
+      - name: Live LLM pytest (when testql source present)
+        env:
+          TESTQL_LIVE_LLM: "1"
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "${OPENROUTER_API_KEY}${LLM_API_KEY}" ]; then
+            echo "Skipping pytest: no LLM API key"
+            exit 0
+          fi
+          if [ -d vendor/testql ]; then
+            cd vendor/testql && python -m pytest tests/test_conversation_live_llm.py -q -m live_llm
+          else
+            echo "testql source not available; skipping pytest live_llm"
+          fi

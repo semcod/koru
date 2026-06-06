@@ -25,6 +25,13 @@ def test_base_runtime_dependencies_stay_small() -> None:
     ]
 
 
+def test_root_install_exposes_coru_console_script() -> None:
+    pyproject = _pyproject()
+
+    assert pyproject["project"]["scripts"]["coru"] == "coru.cli:main"
+    assert "packages/coru/src" in pyproject["tool"]["setuptools"]["packages"]["find"]["where"]
+
+
 def test_all_extra_matches_union_of_other_extras() -> None:
     optional = _pyproject()["project"]["optional-dependencies"]
     expected = {

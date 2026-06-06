@@ -108,6 +108,13 @@ def _distribution_version(distribution: str) -> str:
     try:
         return metadata.version(distribution)
     except metadata.PackageNotFoundError:
+        if distribution == "coru":
+            try:
+                return metadata.version("koru")
+            except metadata.PackageNotFoundError:
+                pass
+            except Exception:
+                return "unknown"
         return "not-installed"
     except Exception:
         return "unknown"

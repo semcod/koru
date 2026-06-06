@@ -1,0 +1,39 @@
+# SCENARIO: send-invoice-with-attachment
+# TYPE: conversation
+# WUP: testql run testql-scenarios/conversations/send-invoice.testql.toon.yaml --dry-run
+
+CONFIG[4]{key, value}:
+  nlp2dsl_base_url, ${NLP2DSL_URL:-http://localhost:8080}
+  mock_smtp_dir, testql-scenarios/artifacts/mock-inbox
+  user_files_dir, testql-scenarios/artifacts/user-files
+  timeout_ms, 60000
+
+CONTEXT[2]{key, value}:
+  invoice_path, ${user_files_dir}/faktura-2024.pdf
+  recipient, klient@example.com
+
+NLP_DSL[1]{endpoint, payload}:
+  chatstart, {"userId": "test-user"}
+
+CAPTURE[1]{step, var, from}:
+  1, conversationId, conversationId
+
+NLP_DSL[1]{endpoint, payload, use_mock_llm}:
+  chatmessage, {"conversationId": "${conversationId}", "text": "Wyślij fakturę do ${recipient}"}, true
+
+ASSERT_JSON[1]{step, path, op, expected}:
+  3, status, ==, incomplete
+
+CONVERSATION[1]{role, message, expect_status, expect_missing}:
+  user, Wyślij fakturę do klient@example.com, incomplete, attachment
+
+NLP_DSL[1]{endpoint, payload, use_mock_llm}:
+  chatmessage, {"conversationId": "${conversationId}", "llmContext": {"attachmentPath": "${invoice_path}"}}, true
+
+NLP_DSL[1]{endpoint, payload}:
+  runworkflow, {"conversationId": "${conversationId}"}
+
+VALIDATE[3]{type, target, criteria}:
+  email, ${mock_smtp_dir}, count>=1
+  email, ${mock_smtp_dir}/latest.json, to=${recipient}
+  file, ${invoice_path}, exists=true

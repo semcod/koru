@@ -8,6 +8,14 @@ Goal:
 
 ## Install
 
+From the monorepo root, the normal editable install exposes both `koru` and `coru`:
+
+```bash
+pip install -e .
+```
+
+For standalone `coru` development:
+
 ```bash
 pip install -e ./packages/coru
 ```
