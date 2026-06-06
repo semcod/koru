@@ -238,6 +238,39 @@ def test_ensure_koru_mcp_not_disabled_includes_global_windsurf(
     assert "disabled" not in payload["mcpServers"]["koru"]
 
 
+def test_koru_mcp_configured_detects_cursor_entry(tmp_path: Path) -> None:
+    cfg = tmp_path / ".cursor" / "mcp.json"
+    cfg.parent.mkdir(parents=True)
+    cfg.write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    ok, detail = mcp_provision.koru_mcp_configured(tmp_path, "cursor")
+    assert ok is True
+    assert "koru" in detail
+
+
+def test_auto_provision_koru_mcp_writes_cursor_config(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    fake_koru = tmp_path / "bin-koru"
+    fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
+    fake_koru.chmod(0o755)
+    monkeypatch.setattr(
+        mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None
+    )
+
+    rows = mcp_provision.auto_provision_koru_mcp(tmp_path, "cursor")
+    assert len(rows) == 1
+    assert rows[0]["action"] == "added"
+    ok, _ = mcp_provision.koru_mcp_configured(tmp_path, "cursor")
+    assert ok is True
+
+    second = mcp_provision.auto_provision_koru_mcp(tmp_path, "cursor")
+    assert second == []
+
+
 def test_ensure_koru_mcp_not_disabled_handles_zed_context_servers(
     tmp_path: Path,
     monkeypatch,

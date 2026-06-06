@@ -1,0 +1,180 @@
+// DOQL system map — nlp2uri-testql-browser
+// role: LLM-generated schema (SystemMapIR → DOQL)
+// format: nlp2dsl.system_map.v1
+// generated: 2026-06-06T20:38:41.057547+00:00
+
+environment[name="nlp2uri-testql-browser"] {
+  generated_at: "2026-06-06T20:38:41.054285+00:00";
+}
+
+data {
+  testql.playwright: true;
+  testql.scenario_count: 2;
+  testql.scenario_paths: ['browser-dom.testql.toon.yaml', 'browser-dom.oql'];
+}
+
+runtimes[0] {
+  id: "llm:provider";
+  kind: "llm";
+  model: "openrouter/openai/gpt-5-mini";
+  roles: "intent,entities,system_map,clarification";
+  status: "unknown";
+}
+
+runtimes[1] {
+  id: "delegate:mullm";
+  kind: "external";
+  roles: "filesystem,rag,shell_delegated";
+  status: "unavailable";
+}
+
+runtimes[2] {
+  id: "probe:testql";
+  kind: "external";
+  uri: "testql://session";
+  roles: "gui_dom,playwright,scenario_runner,browser_inspect";
+  status: "available";
+}
+
+commands[0] {
+  name: "testql_gui_start";
+  description: "Start Playwright/Selenium session (GUI_START)";
+  required: "url";
+  optional: "app_path";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[1] {
+  name: "testql_gui_navigate";
+  description: "Navigate browser path (NAVIGATE)";
+  required: "path";
+  optional: "wait_ms";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[2] {
+  name: "testql_gui_click";
+  description: "Click DOM selector (CLICK)";
+  required: "selector";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[3] {
+  name: "testql_gui_input";
+  description: "Type into selector (INPUT)";
+  required: "selector,text";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[4] {
+  name: "testql_gui_assert_visible";
+  description: "Assert element visible (ASSERT_VISIBLE)";
+  required: "selector";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[5] {
+  name: "testql_gui_assert_text";
+  description: "Assert element text (ASSERT_TEXT)";
+  required: "selector,expected";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[6] {
+  name: "testql_gui_capture";
+  description: "Screenshot selector or page (GUI_CAPTURE)";
+  required: "file";
+  optional: "selector";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[7] {
+  name: "testql_run_scenario";
+  description: "Run .testql.toon.yaml scenario file";
+  required: "file_spec";
+  optional: "dry_run,url";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[8] {
+  name: "testql_inspect_url";
+  description: "Browser inspect URL (Playwright DOM/network/console)";
+  required: "url";
+  optional: "out_dir";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+commands[9] {
+  name: "testql_generate_ir";
+  description: "Generate scenario IR from source artifact";
+  required: "source,artifact";
+  optional: "target";
+  runtime: "probe:testql";
+  transport: "dsl";
+  endpoint: "testql://run";
+  protocol: "testql";
+}
+
+resources[0] {
+  id: "testql:scenarios";
+  title: "TestQL scenario files";
+  connector: "testql";
+  uri_patterns: "testql://**,file://**/*.testql.toon.yaml,file://**/*.oql";
+}
+
+access[0] {
+  agent: "testql-agent";
+  resource_area: "testql:scenarios";
+  actions: "testql_gui_start,testql_gui_navigate,testql_gui_click,testql_gui_input,testql_gui_assert_visible,testql_gui_assert_text,testql_gui_capture,testql_run_scenario,testql_inspect_url,testql_generate_ir";
+  effect: "allow";
+}
+
+capabilities {
+  actions: "testql_automation";
+}
+
+conversation {
+  autofill: true;
+  sync_auto_execute: true;
+  generate_invoice_if_missing: true;
+}
+
+process {
+  mode: "balanced";
+  nlp_parser: "auto";
+  nlp_confidence_min: 0.5;
+  nlp_enrich_missing: false;
+  llm_reasoning: "shallow";
+  autonomous: true;
+  autonomous_max_rounds: "8";
+  ask_user: "when_exhausted";
+  intract_gate: false;
+  intract_enforce_clarification: false;
+}

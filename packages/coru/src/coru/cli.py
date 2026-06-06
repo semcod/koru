@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import os
 import re
@@ -50,6 +51,24 @@ class AutoReadiness:
 _VALID_LOG_FORMATS = frozenset({"human", "jsonl"})
 _VALID_STARTUP_MODES = frozenset({"auto", "chat"})
 _FALSE_ENV_VALUES = frozenset({"0", "false", "no", "off"})
+
+
+def _trace_enabled() -> bool:
+    return os.environ.get("CORU_TRACE", "").strip().lower() in {"1", "true", "yes", "oql"}
+
+
+def _trace(step: str, **kv: Any) -> None:
+    """Emit an OQL-style RESOLVE trace line to stderr.
+
+    Format:  RESOLVE step  key=value key=value ...
+    Enabled by CORU_TRACE=1 (or CORU_TRACE=oql).
+    """
+    if not _trace_enabled():
+        return
+    parts = [f"RESOLVE {step}"]
+    for k, v in kv.items():
+        parts.append(f"{k}={v}")
+    print(" ".join(parts), file=sys.stderr)
 
 
 def _normalize_log_format(raw: str | None) -> str:
@@ -248,7 +267,43 @@ def _supervisor_project_choices() -> list[str]:
     return choices
 
 
+def _alive_daemon_instance(ide: str) -> str | None:
+    """Check .planfile/.koru/koru-autopilot-*.daemon.json for a live daemon matching the given IDE."""
+    root = _repo_root()
+    if root is None:
+        return None
+    rt = root / ".planfile" / ".koru"
+    if not rt.is_dir():
+        return None
+    for path in sorted(rt.glob("koru-autopilot-*.daemon.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        pid = payload.get("pid")
+        if not isinstance(pid, int) or pid <= 0:
+            continue
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            continue
+        instance = _instance_from_socket_path(str(payload.get("socket", "")))
+        if not instance:
+            instance = (payload.get("env") or {}).get("KORU_AUTOPILOT_INSTANCE", "")
+        if not instance:
+            continue
+        cand_ide = _ide_from_instance(instance)
+        if cand_ide == ide:
+            return instance
+    return None
+
+
 def _instance_for_ide_choice(ide: str) -> str:
+    alive_inst = _alive_daemon_instance(ide)
+    if alive_inst:
+        return alive_inst
     env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
     if env_instance and _instance_matches_ide(env_instance, ide):
         return env_instance
@@ -301,7 +356,12 @@ def _interactive_default_auto_args() -> list[str]:
     if len(running) > 1:
         terminal_ide, _terminal_source, terminal_integrated = _terminal_shell_context()
         if terminal_integrated and terminal_ide in running:
-            selected_ide = terminal_ide
+            # Check if there is a connected daemon for a different IDE, and this terminal IDE has no connected daemon
+            alive_ide = _alive_daemon_ide()
+            if alive_ide and alive_ide != terminal_ide and not _connected_daemon_instance(terminal_ide):
+                selected_ide = alive_ide
+            else:
+                selected_ide = terminal_ide
         else:
             default_ide = _infer_default_ide()
             selected_ide = _choose_option(
@@ -879,34 +939,123 @@ def _supervisor_lane_project(instance: str | None = None) -> str | None:
         return None
 
 
+@functools.lru_cache(maxsize=None)
+def _is_lane_plugin_connected(ide: str, instance: str) -> bool:
+    status = _lane_status_payload(ide, instance)
+    if not status or not isinstance(status, dict):
+        connected = False
+    else:
+        plugins = status.get("plugins")
+        rejected = status.get("rejected_plugins")
+        has_plugins = bool(plugins) and isinstance(plugins, list) and len(plugins) > 0
+        has_rejected = bool(rejected) and isinstance(rejected, list) and len(rejected) > 0
+        connected = has_plugins or has_rejected
+    _trace("is_lane_plugin_connected", ide=ide, instance=instance, connected=connected)
+    return connected
+
+
+def _connected_daemon_instance(ide: str) -> str | None:
+    instance = _alive_daemon_instance(ide)
+    if not instance:
+        return None
+    if _is_lane_plugin_connected(ide, instance):
+        return instance
+    return None
+
+
+def _alive_daemon_ide() -> str | None:
+    """Check .planfile/.koru/koru-autopilot-*.daemon.json for a live daemon."""
+    root = _repo_root()
+    if root is None:
+        return None
+    rt = root / ".planfile" / ".koru"
+    if not rt.is_dir():
+        return None
+    best_connected: tuple[str, str, float] | None = None  # (ide, instance, mtime)
+    for path in sorted(rt.glob("koru-autopilot-*.daemon.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        pid = payload.get("pid")
+        if not isinstance(pid, int) or pid <= 0:
+            continue
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            continue
+        instance = _instance_from_socket_path(str(payload.get("socket", "")))
+        if not instance:
+            instance = (payload.get("env") or {}).get("KORU_AUTOPILOT_INSTANCE", "")
+        if not instance:
+            continue
+        ide = _ide_from_instance(instance)
+        if not ide:
+            continue
+        mtime = path.stat().st_mtime
+        if _is_lane_plugin_connected(ide, instance):
+            if best_connected is None or mtime > best_connected[2]:
+                best_connected = (ide, instance, mtime)
+    if best_connected is None:
+        return None
+    _trace("alive_daemon", ide=best_connected[0], instance=best_connected[1])
+    return best_connected[0]
+
+
 def _infer_default_ide() -> str:
     hint = _terminal_ide_hint()
     _term_ide, _term_source, integrated = _terminal_shell_context()
+    _trace("infer_ide.start", terminal_hint=hint, integrated=integrated, source=_term_source)
     if integrated and hint and hint != "auto":
+        # Check: is there a connected daemon for a different IDE?
+        # If so, and this terminal IDE has no connected daemon, prefer the connected one
+        alive_ide = _alive_daemon_ide()
+        if alive_ide and alive_ide != hint and not _connected_daemon_instance(hint):
+            _trace("infer_ide.daemon_override", terminal=hint, alive_daemon=alive_ide,
+                   reason="terminal IDE has no connected daemon; using IDE with connected daemon")
+            print(
+                f"[coru] terminal IDE={hint} has no connected daemon; "
+                f"using connected daemon IDE={alive_ide}",
+                file=sys.stderr,
+            )
+            return alive_ide
+        _trace("infer_ide.result", ide=hint, reason="integrated_terminal")
         return hint
     if hint and _project_ide_settings_lane(hint) is not None:
+        _trace("infer_ide.result", ide=hint, reason="project_settings")
         return hint
     supervisor = _supervisor_lane_defaults()
     if supervisor is not None:
         if hint and hint != supervisor[0] and hint != "vscode":
+            _trace("infer_ide.result", ide=hint, reason="terminal_over_supervisor")
             return hint
+        _trace("infer_ide.result", ide=supervisor[0], reason="supervisor")
         return supervisor[0]
     env_ide = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
     workspace_ide, _workspace_instance = _workspace_lane_hint(hint)
     if env_ide and env_ide != "auto":
         if hint and hint != env_ide and hint != "vscode":
+            _trace("infer_ide.result", ide=hint, reason="terminal_over_env")
             return hint
+        _trace("infer_ide.result", ide=env_ide, reason="env:KORU_AUTOPILOT_IDE")
         return env_ide
     env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip().lower()
     from_instance = _ide_from_instance(env_instance)
     if from_instance:
         if hint and hint != from_instance and hint != "vscode":
+            _trace("infer_ide.result", ide=hint, reason="terminal_over_instance")
             return hint
+        _trace("infer_ide.result", ide=from_instance, reason="env:KORU_AUTOPILOT_INSTANCE")
         return from_instance
     if hint:
+        _trace("infer_ide.result", ide=hint, reason="terminal_fallback")
         return hint
     if workspace_ide:
+        _trace("infer_ide.result", ide=workspace_ide, reason="workspace_settings")
         return workspace_ide
+    _trace("infer_ide.result", ide="auto", reason="no_signal")
     return "auto"
 
 
@@ -970,23 +1119,31 @@ def _workspace_default_instance(ide: str) -> str | None:
 
 
 def _infer_default_instance(*, ide: str) -> str:
-    for candidate in (
-        _project_ide_settings_instance(ide),
-        _supervisor_default_instance(ide),
-        _environment_default_instance(ide),
-    ):
+    _trace("infer_instance.start", ide=ide)
+    sources = [
+        ("project_settings", _project_ide_settings_instance(ide)),
+        ("supervisor", _supervisor_default_instance(ide)),
+        ("environment", _environment_default_instance(ide)),
+    ]
+    for source_name, candidate in sources:
         if candidate is not None:
+            _trace("infer_instance.result", instance=candidate, reason=source_name)
             return candidate
 
     if ide == "auto":
-        return _auto_default_instance()
+        result = _auto_default_instance()
+        _trace("infer_instance.result", instance=result, reason="auto_default")
+        return result
 
     workspace_instance = _workspace_default_instance(ide)
     if workspace_instance is not None:
+        _trace("infer_instance.result", instance=workspace_instance, reason="workspace")
         return workspace_instance
 
     if ide and ide != "auto":
+        _trace("infer_instance.result", instance=ide, reason="ide_as_instance")
         return ide
+    _trace("infer_instance.result", instance="main", reason="fallback")
     return "main"
 
 
@@ -2457,9 +2614,14 @@ def _llm_plan(text: str) -> Plan | None:
 
 
 def _resolve_defaults(plan: Plan, *, context: SessionContext | None = None) -> Plan:
+    _trace("resolve_defaults.start", action=plan.action, plan_ide=plan.ide or "(none)",
+           plan_instance=plan.instance or "(none)")
     ide = plan.ide or (context.ide if context else None) or _infer_default_ide()
     instance = plan.instance or (context.instance if context else None) or _infer_default_instance(ide=ide)
+    pre_normalize = f"{ide}/{instance}"
     ide, instance = _normalize_lane_pair(ide, instance)
+    _trace("resolve_defaults.result", ide=ide, instance=instance,
+           pre_normalize=pre_normalize, action=plan.action)
     _maybe_warn_lane_override(ide, instance, context=context)
     if context is not None:
         context.ide = ide

@@ -8,6 +8,7 @@ refactor automation system for multi-repo workspaces.
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
+- **[`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md)** (PL) — MCP bridge do nlp2uri: desktop, getv://, SystemMap URI, orchestracja z planfile.
 
 ## Reading order
 

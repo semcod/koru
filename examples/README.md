@@ -30,6 +30,7 @@ and the manual discovery commands documented there.
 | `examples/planfile/queue-cli-dryrun` | `koru --queue --dry-run` + `planfile --version` (no HTTP server) |
 | `examples/planfile/http-api-curl` | `uvicorn planfile.api.server:app` + `curl /health` (skips if API layout missing) |
 | `examples/runtime/koru-serve-health` | `koru serve --no-open` + `curl /health` |
+| `examples/nlp2uri-testql-browser` | nlp2uri NL→URI (native browser) + TestQL Playwright DOM on `TARGET_URL` |
 
 ## Run all (from repo root)
 

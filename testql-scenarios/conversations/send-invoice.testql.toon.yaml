@@ -3,7 +3,7 @@
 # WUP: testql run testql-scenarios/conversations/send-invoice.testql.toon.yaml --dry-run
 
 CONFIG[4]{key, value}:
-  nlp2dsl_base_url, ${NLP2DSL_URL:-http://localhost:8080}
+  nlp2dsl_base_url, ${NLP2DSL_URL:-http://localhost:8010}
   mock_smtp_dir, testql-scenarios/artifacts/mock-inbox
   user_files_dir, testql-scenarios/artifacts/user-files
   timeout_ms, 60000

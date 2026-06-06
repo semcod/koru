@@ -353,6 +353,44 @@ function testRejectsComposerContextMenuAsFocusOpen(): void {
   eq(filtered.join(","), "workbench.action.chat.open", "unsafe context menu focus_open must be filtered");
 }
 
+function testRejectsOpenBrowserTabAsFocusOpen(): void {
+  assert(
+    cursorStrategy.trustFocusOpenCommand?.("composer.openBrowserTab") === false,
+    "composer.openBrowserTab must not be trusted (browser tab, not Glass input)",
+  );
+  const filtered = filterUnsafeFocusOpenForIde(
+    ["composer.openBrowserTab", "workbench.action.chat.open"],
+    "cursor",
+  );
+  eq(
+    filtered.join(","),
+    "workbench.action.chat.open",
+    "openBrowserTab must be filtered from Cursor focus_open ladder",
+  );
+  const entry = { focusOpen: "composer.openBrowserTab" } as import("../probe-ladder").ProbeCacheEntry;
+  cursorStrategy.sanitizeProbeCache?.(entry, { isWayland: true });
+  eq(entry.focusOpen, undefined, "cached openBrowserTab focus_open must be cleared");
+}
+
+function testRejectsOpenChatAsEditorAsFocusOpen(): void {
+  assert(
+    cursorStrategy.trustFocusOpenCommand?.("composer.openChatAsEditor") === false,
+    "composer.openChatAsEditor must not be trusted (editor tab, not Glass input)",
+  );
+  const filtered = filterUnsafeFocusOpenForIde(
+    ["composer.openChatAsEditor", "workbench.action.chat.open"],
+    "cursor",
+  );
+  eq(
+    filtered.join(","),
+    "workbench.action.chat.open",
+    "openChatAsEditor must be filtered from Cursor focus_open ladder",
+  );
+  const entry = { focusOpen: "composer.openChatAsEditor" } as import("../probe-ladder").ProbeCacheEntry;
+  cursorStrategy.sanitizeProbeCache?.(entry, { isWayland: true });
+  eq(entry.focusOpen, undefined, "cached openChatAsEditor focus_open must be cleared");
+}
+
 function run(): void {
   testRegistry();
   testIdentity();
@@ -365,6 +403,8 @@ function run(): void {
   testProbeCacheSanitizationForCursor();
   testFocusOpenDefaultsExcludeNewChatTab();
   testRejectsComposerContextMenuAsFocusOpen();
+  testRejectsOpenBrowserTabAsFocusOpen();
+  testRejectsOpenChatAsEditorAsFocusOpen();
   console.log("cursor-strategy tests: ok");
 }
 

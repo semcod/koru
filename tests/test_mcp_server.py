@@ -43,6 +43,20 @@ def test_tools_list_includes_required_koru_tools() -> None:
         "koru_ide_drive",
         "koru_ide_dsl_recent",
         "koru_strategy_prompt",
+        "koru_desktop_uri_plan",
+        "koru_desktop_uri_handle",
+        "koru_desktop_uri_list_getv_uris",
+        "koru_desktop_uri_resolve_getv",
+        "koru_desktop_uri_get_getv_var",
+        "koru_desktop_uri_resolve_system_map",
+        "koru_desktop_uri_list_system_uris",
+        "koru_env2llm_get_registry",
+        "koru_env2llm_render_registry",
+        "koru_env2llm_refresh_registry",
+        "koru_env2llm_get_desktop",
+        "koru_env2llm_list_commands",
+        "koru_env2llm_list_uris",
+        "koru_env2llm_mqtt_status",
     }.issubset(names)
 
 
@@ -108,7 +122,9 @@ def test_run_ticket_invokes_queue_mode_without_ticket_flag(monkeypatch, tmp_path
 
         return MockPopen()
 
-    monkeypatch.setattr(mcp_server.subprocess, "Popen", _fake_popen)
+    import koruapi.mcp_server_planfile as mcp_planfile
+
+    monkeypatch.setattr(mcp_planfile.subprocess, "Popen", _fake_popen)
 
     result = mcp_server.tool_run_ticket(
         {
@@ -148,7 +164,9 @@ def test_run_ticket_timeout_updates_job_status(monkeypatch, tmp_path: Path) -> N
 
         return MockPopen()
 
-    monkeypatch.setattr(mcp_server.subprocess, "Popen", _fake_popen)
+    import koruapi.mcp_server_planfile as mcp_planfile
+
+    monkeypatch.setattr(mcp_planfile.subprocess, "Popen", _fake_popen)
 
     result = mcp_server.tool_run_ticket(
         {
@@ -180,7 +198,9 @@ def test_run_ticket_error_updates_job_status(monkeypatch, tmp_path: Path) -> Non
 
         return MockPopen()
 
-    monkeypatch.setattr(mcp_server.subprocess, "Popen", _fake_popen)
+    import koruapi.mcp_server_planfile as mcp_planfile
+
+    monkeypatch.setattr(mcp_planfile.subprocess, "Popen", _fake_popen)
 
     result = mcp_server.tool_run_ticket(
         {

@@ -2,7 +2,7 @@
   "name": "koru-autopilot-antigravity",
   "displayName": "koru autopilot (Antigravity)",
   "description": "Bridge between Antigravity and the koru autopilot daemon. Standalone VSIX for Antigravity only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.11",
+  "version": "0.2.13",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -188,6 +188,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "737d77f433ffdaeb"
+    "sha": "74e202d778059b23"
   }
 }

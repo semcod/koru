@@ -221,31 +221,9 @@ def _close_resolved_step_ticket(
 
 
 def _mcp_koru_configured(project: Path, ide: str) -> tuple[bool, str]:
-    ide_norm = str(ide or "").strip().lower()
-    if ide_norm == "cursor":
-        candidates = (".cursor/mcp.json",)
-    elif ide_norm in {"vscode", "vscodium", "windsurf", "antigravity"}:
-        candidates = (".vscode/mcp.json",)
-    else:
-        candidates = (".cursor/mcp.json", ".vscode/mcp.json")
+    from koru.mcp_provision import koru_mcp_configured
 
-    for rel in candidates:
-        path = project / rel
-        if not path.is_file():
-            continue
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            return False, f"nie można odczytać {rel}: {exc}"
-        servers = data.get("mcpServers") or {}
-        if isinstance(servers, dict) and "koru" in servers:
-            return True, f"serwer „koru” w {rel}"
-    expected = " / ".join(candidates)
-    return (
-        False,
-        f"brak „koru” w {expected} — "
-        "task koru:mcp:bootstrap, potem Reload Window",
-    )
+    return koru_mcp_configured(project, ide)
 
 
 def _candidate_planfile_health_urls(project: Path) -> list[str]:

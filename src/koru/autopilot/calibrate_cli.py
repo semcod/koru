@@ -7,10 +7,71 @@ import json
 import sys
 import time
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import gillm.injection.os_injector as oi
 from koru.autopilot.ide import detect_running_ides, resolve_drive_target
+
+
+def _resolve_calibration_project_dir(args: argparse.Namespace) -> Path:
+    raw = getattr(args, "project", None)
+    return Path(raw).resolve() if raw else Path.cwd().resolve()
+
+
+def _sync_calibration_registry(
+    args: argparse.Namespace,
+    *,
+    ide: str,
+    chat_x: int,
+    chat_y: int,
+    config_path: Path,
+) -> dict[str, object] | None:
+    try:
+        from koruapi.env2llm_registry import env2llm_sync_after_calibration
+    except ImportError:
+        return None
+
+    project_dir = _resolve_calibration_project_dir(args)
+    result = env2llm_sync_after_calibration(project_dir=str(project_dir))
+    if not result.get("ok"):
+        return {
+            "ok": False,
+            "error": result.get("error", "env2llm registry sync failed"),
+        }
+
+    calibrations = result.get("ide_calibrations") or []
+    matched = next((row for row in calibrations if row.get("ide") == ide), None)
+    sync_result: dict[str, object] = {
+        "ok": True,
+        "registry_path": result.get("registry_path"),
+        "ide_calibration_count": result.get("ide_calibration_count"),
+        "ide": ide,
+        "chat_x": chat_x,
+        "chat_y": chat_y,
+        "config_path": str(config_path),
+        "display_id": (matched or {}).get("display_id"),
+        "display_x": (matched or {}).get("display_x"),
+        "display_y": (matched or {}).get("display_y"),
+    }
+
+    # Propagate calibration validation from registry sync
+    validation = result.get("validation")
+    if validation:
+        sync_result["validation"] = validation
+        issues = validation.get("issues") or []
+        errors = [i for i in issues if i.get("severity") == "error" and i.get("ide") == ide]
+        warnings = [i for i in issues if i.get("severity") == "warning" and i.get("ide") == ide]
+        if errors:
+            import sys
+            for e in errors:
+                print(f"⚠ CALIBRATION ERROR [{ide}]: {e.get('message', '')}", file=sys.stderr)
+        elif warnings:
+            import sys
+            for w in warnings:
+                print(f"⚠ CALIBRATION WARNING [{ide}]: {w.get('message', '')}", file=sys.stderr)
+
+    return sync_result
 
 
 def resolve_session_ides(
@@ -76,6 +137,15 @@ def action_calibrate(
                 submit=True,
                 dry_run=False,
             )
+        registry_sync = _sync_calibration_registry(
+            args,
+            ide=ide,
+            chat_x=x,
+            chat_y=y,
+            config_path=config_path,
+        )
+        if registry_sync is not None:
+            payload["env2llm"] = registry_sync
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
     except oi.OsInjectorError as exc:
@@ -120,6 +190,15 @@ def capture_ide_profile(
             except oi.OsInjectorError as smoke_exc:
                 row["smoke"] = {"ok": False, "error": str(smoke_exc)}
                 row["warning"] = "profile_saved_but_smoke_failed"
+        registry_sync = _sync_calibration_registry(
+            args,
+            ide=ide,
+            chat_x=x,
+            chat_y=y,
+            config_path=config_path,
+        )
+        if registry_sync is not None:
+            row["env2llm"] = registry_sync
         return row
     except oi.OsInjectorError as exc:
         return {"ok": False, "ide": ide, "error": str(exc)}

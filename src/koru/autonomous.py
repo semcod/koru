@@ -536,11 +536,12 @@ def _enable_autonomous_strict_plugin_policy(args: argparse.Namespace) -> None:
     )
 
 
-def _run_mcp_provision(project: Path, stdio_format: str) -> bool:
+def _run_mcp_provision(project: Path, stdio_format: str, autopilot_ide: str) -> bool:
     """Run MCP workspace provision and return True if it ran."""
     return _autonomous_operator.run_mcp_provision(
         project,
         stdio_format,
+        autopilot_ide=autopilot_ide,
         stdio_info=_stdio_info,
     )
 
@@ -836,7 +837,7 @@ def _run_autonomous_pre_checks(
     correlation_id: str,
 ) -> tuple[bool, bool]:
     """Run pre-checks before autonomous loop: MCP provision and plugin setup."""
-    mcp_provision_ran = _run_mcp_provision(project, args.emit_events)
+    mcp_provision_ran = _run_mcp_provision(project, args.emit_events, autopilot_ide)
     plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
     _run_operator_pipeline(
         args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id

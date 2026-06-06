@@ -113,6 +113,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.314] - 2026-06-07
+
+### Docs
+- Update README.md
+- Update docs/README.md
+- Update docs/desktop-uri-orchestration.md
+- Update examples/README.md
+- Update examples/nlp2uri-testql-browser/README.md
+- Update logs/run-20260606-230938.md
+- Update packages/nlpshim/README.md
+
+### Test
+- Update testql-scenarios/conversations/send-invoice.testql.toon.yaml
+- Update tests/test_calibration_validator.py
+- Update tests/test_desktop_uri.py
+- Update tests/test_env2llm_registry.py
+- Update tests/test_koru_browser_stack.py
+- Update tests/test_mcp_provision.py
+- Update tests/test_mcp_server.py
+- Update tests/test_mcp_server_split.py
+- Update tests/test_nlp2oql_bridge.py
+- Update tests/test_testql_bridge.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update examples/desktop/e2e-smoke.png
+- Update examples/nlp2uri-testql-browser/.nlp2dsl/environment.doql.less
+- Update examples/nlp2uri-testql-browser/.nlp2dsl/registry/environment.doql.less
+- Update examples/nlp2uri-testql-browser/browser-dom.oql
+- Update examples/nlp2uri-testql-browser/browser-dom.testql.toon.yaml
+- ... and 22 more files
+
 ## [0.1.313] - 2026-06-06
 
 ### Docs

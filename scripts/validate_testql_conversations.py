@@ -20,7 +20,7 @@ def _format_validation_errors(path: Path, summary: str, issues: list[str]) -> li
 
 def _sdk_structural_checks(path: Path) -> list[str]:
     try:
-        from nlp2dsl_sdk.conversation_testql import validate_conversation_scenario
+        from testql_conversations.validate import validate_conversation_scenario
     except ImportError:
         return _fallback_basic_checks(path)
 
@@ -57,7 +57,7 @@ def _testql_adapter_checks(path: Path) -> list[str]:
     )
     result = ConversationRunner(
         dry_run=True,
-        api_url=str(plan.config.get("nlp2dsl_base_url", "http://localhost:8080")),
+        api_url=str(plan.config.get("nlp2dsl_base_url", "http://localhost:8010")),
     ).run(plan)
     if not result.passed:
         errors.append(f"{path}: conversation dry-run failed: {', '.join(result.findings)}")

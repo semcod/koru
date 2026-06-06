@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.313"
+version = "0.1.314"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -41,6 +41,32 @@ mesh = [
 observe = [
     "mss>=9.0,<11.0",
     "websockets>=12.0,<17.0",
+]
+desktop = [
+    "nlp2uri[envmap]>=0.4.7",
+    "env2llm[mqtt]>=0.1.10",
+    "testql>=1.2.55",
+]
+envmap = [
+    "nlp2uri[envmap]>=0.4.7",
+    "env2llm[mqtt]>=0.1.10",
+]
+testql = [
+    "testql>=1.2.55",
+]
+nlp2oql = [
+    "nlp2oql[browser]>=0.2.0",
+]
+curllm = [
+    "curllm[mcp]>=1.0.0",
+]
+browser = [
+    "nlp2uri[envmap]>=0.4.7",
+    "env2llm[mqtt]>=0.1.10",
+    "testql>=1.2.55",
+    "nlp2oql[browser]>=0.2.0",
+    "curllm[mcp]>=1.0.0",
+    "playwright>=1.40,<2.0",
 ]
 dev = [
     "gillm>=0.1.9",

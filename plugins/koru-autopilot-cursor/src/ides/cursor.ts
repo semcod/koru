@@ -175,6 +175,8 @@ function sanitizeProbeCache(
     if (
       focusOpen === "aichat.newchataction" ||
       focusOpen === "composer.openAsPane" ||
+      focusOpen === "composer.openChatAsEditor" ||
+      focusOpen === "composer.openBrowserTab" ||
       focusOpen === "composer.openAddContextMenu" ||
       focusOpen === "workbench.panel.chat" ||
       focusOpen.includes("panel.chat.view") ||
@@ -281,6 +283,8 @@ function trustFocusOpenCommand(command: string): boolean {
     || n.includes("panel.aichat.view")
     || n === "composer.focuscomposer"
     || n === "composer.openaddcontextmenu"
+    || n === "composer.openchataseditor"
+    || n === "composer.openbrowsertab"
   ) {
     return false;
   }

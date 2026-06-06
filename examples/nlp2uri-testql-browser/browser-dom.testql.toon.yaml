@@ -1,0 +1,30 @@
+# SCENARIO: nlp2uri-open-browser + testql-dom
+# TYPE: gui
+# WUP: ./run.sh
+# TARGET: https://example.com
+
+CONFIG[2]{key, value}:
+  target_url, https://example.com
+  nlp2uri_prompt, open https://example.com
+
+# Phase 1 — verify nlp2uri resolves NL → canonical URI (no Playwright)
+SHELL[2]{command, exit_code}:
+  nlp2uri plan "${nlp2uri_prompt}" --json | grep -q example.com, 0
+  nlp2uri resolve "otwórz przeglądarkę na ${target_url}" --json | grep -q https, 0
+
+# Phase 2 — Playwright DOM automation on the same URL
+NAVIGATE[1]{path, wait_ms}:
+  ${target_url}, 500
+
+ASSERT[2]{selector, expected}:
+  h1, Example Domain
+  p, visible
+
+FLOW[1]{command, target, meta}:
+  click, a, -
+
+WAIT[1]{ms}:
+  800
+
+ASSERT[1]{selector, expected}:
+  body, visible

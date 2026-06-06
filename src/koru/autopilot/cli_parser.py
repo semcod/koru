@@ -54,6 +54,7 @@ def build_autopilot_parser() -> argparse.ArgumentParser:
     _add_session_start_parser(sub)
     _add_status_parser(sub)
     _add_env_parser(sub)
+    _add_snapshot_parser(sub)
     sub.add_parser("shutdown", help="Ask a running daemon to stop.")
     _add_trace_parser(sub)
     sub.add_parser("ide-list", help="List currently running IDEs (process scan).")
@@ -219,6 +220,13 @@ def _add_calibrate_parser(sub: argparse._SubParsersAction) -> None:
         help="Optional ide-os-injector.json path (default: ~/.koru/ide-os-injector.json).",
     )
     calibrate.add_argument(
+        "--project",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="Project root whose env2llm registry is refreshed after calibration (default: cwd).",
+    )
+    calibrate.add_argument(
         "--prompt",
         default=None,
         metavar="TEXT",
@@ -250,6 +258,13 @@ def _add_session_start_parser(sub: argparse._SubParsersAction) -> None:
         default=None,
         metavar="FILE",
         help="Optional ide-os-injector.json path (default: ~/.koru/ide-os-injector.json).",
+    )
+    session_start.add_argument(
+        "--project",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="Project root whose env2llm registry is refreshed after calibration (default: cwd).",
     )
     session_start.add_argument(
         "--prompt",
@@ -311,6 +326,42 @@ def _add_env_parser(sub: argparse._SubParsersAction) -> None:
         "--explain",
         action="store_true",
         help="With --format shell, print resolution source on stderr.",
+    )
+
+
+def _add_snapshot_parser(sub: argparse._SubParsersAction) -> None:
+    snapshot = sub.add_parser(
+        "snapshot",
+        help="Print copy-pasteable shell OQL/DSL for current daemon/autonomy/runtime state.",
+    )
+    snapshot.add_argument(
+        "--ide",
+        default="auto",
+        choices=IDE_CHOICES,
+        help="IDE lane to inspect (default: auto).",
+    )
+    snapshot.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root for telemetry, DSL, and env2llm slices.",
+    )
+    snapshot.add_argument(
+        "--ticket",
+        default=None,
+        metavar="ID",
+        help="Optional ticket id to filter observability path lines.",
+    )
+    snapshot.add_argument(
+        "--limit",
+        type=int,
+        default=12,
+        help="How many recent drive/obs lines to include (default: 12).",
+    )
+    snapshot.add_argument(
+        "--include-env2llm",
+        action="store_true",
+        help="Append env2llm desktop registry lines (#007).",
     )
 
 

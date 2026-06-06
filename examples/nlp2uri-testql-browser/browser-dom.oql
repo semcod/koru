@@ -1,0 +1,20 @@
+# SCENARIO: nlp2uri browser URI + TestQL DOM interaction
+# TYPE: gui
+# TARGET: https://example.com (override via TARGET_URL in run.sh)
+
+SET target_url "https://example.com"
+
+# Playwright session — separate from native xdg-open in phase 1
+GUI_START "${target_url}"
+WAIT 500
+
+# DOM: heading + link click (keyboard/mouse via Playwright)
+GUI_ASSERT_TEXT "h1" "Example Domain"
+GUI_ASSERT_VISIBLE "p"
+GUI_CLICK "a"
+WAIT 800
+
+# After click, IANA page or navigation occurred
+GUI_ASSERT_VISIBLE "body"
+
+GUI_STOP

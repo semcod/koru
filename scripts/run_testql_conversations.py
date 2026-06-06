@@ -20,7 +20,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Parse IR only")
     parser.add_argument("--mock-replies", type=Path, default=DEFAULT_MOCK_REPLIES)
     parser.add_argument("--live-llm", action="store_true", help="Use live LLM (TESTQL_LIVE_LLM=1)")
-    parser.add_argument("--api-url", default=os.environ.get("NLP2DSL_URL", "http://localhost:8080"))
+    parser.add_argument("--api-url", default=os.environ.get("NLP2DSL_URL", "http://localhost:8010"))
     parser.add_argument("--json", action="store_true", dest="json_output")
     return parser.parse_args(argv)
 

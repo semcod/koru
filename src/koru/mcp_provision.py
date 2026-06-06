@@ -23,6 +23,7 @@ Usage::
 
 import argparse
 import json
+import os
 import shutil
 from pathlib import Path
 from typing import Any
@@ -77,24 +78,72 @@ def _resolved_koru_command() -> str:
     return found if found else "koru"
 
 
-def _koru_mcp_entry() -> dict[str, Any]:
+def _koru_mcp_entry(project: Path | None = None) -> dict[str, Any]:
     """Build the MCP server entry for koru (stdio transport)."""
+    env = {"KORU_PROJECT_ROOT": "${workspaceFolder}"}
+    if project is not None:
+        env.update(_registry_env_for_project(project))
     return {
         "command": _resolved_koru_command(),
         "args": ["mcp-serve"],
-        "env": {
-            "KORU_PROJECT_ROOT": "${workspaceFolder}",
-        },
+        "env": env,
     }
 
 
-def _koru_mcp_entry_cursor() -> dict[str, Any]:
-    """Build the MCP server entry for koru in Cursor format."""
+def _registry_env_for_project(project: Path) -> dict[str, str]:
+    """Env vars so MCP tools see the live env2llm registry when present."""
+    registry = project / ".nlp2dsl" / "registry" / "environment.doql.less"
+    if not registry.is_file():
+        return {}
+    path = str(registry.resolve())
     return {
+        "ENV2LLM_CONTEXT": path,
+        "NLP2DSL_DOQL_CONTEXT": path,
+        "KORU_PROJECT_ROOT": str(project.resolve()),
+    }
+
+
+def _koru_mcp_entry_cursor(project: Path | None = None) -> dict[str, Any]:
+    """Build the MCP server entry for koru in Cursor format."""
+    entry: dict[str, Any] = {
         "command": _resolved_koru_command(),
         "args": ["mcp-serve"],
         "transport": "stdio",
     }
+    if project is not None:
+        env = _registry_env_for_project(project)
+        if env:
+            entry["env"] = env
+    return entry
+
+
+def koru_mcp_configured(project: Path, ide: str) -> tuple[bool, str]:
+    """Return whether koru MCP server is registered for *ide*."""
+    ide_norm = str(ide or "").strip().lower()
+    if ide_norm == "cursor":
+        candidates = (".cursor/mcp.json",)
+    elif ide_norm in {"vscode", "vscodium", "windsurf", "antigravity"}:
+        candidates = (".vscode/mcp.json",)
+    else:
+        candidates = (".cursor/mcp.json", ".vscode/mcp.json")
+
+    for rel in candidates:
+        path = project / rel
+        if not path.is_file():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return False, f"nie można odczytać {rel}: {exc}"
+        servers = data.get("mcpServers") or {}
+        if isinstance(servers, dict) and "koru" in servers:
+            return True, f"serwer „koru” w {rel}"
+    expected = " / ".join(candidates)
+    return (
+        False,
+        f"brak „koru” w {expected} — "
+        "task koru:mcp:bootstrap, potem Reload Window",
+    )
 
 
 def _maybe_upgrade_koru_command(servers: dict[str, Any]) -> bool:
@@ -197,7 +246,7 @@ def provision_windsurf(project: Path, *, dry_run: bool = False) -> dict[str, Any
             return {"ide": "windsurf", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "windsurf", "action": "already_configured", "path": str(config_path)}
 
-    servers["koru"] = _koru_mcp_entry()
+    servers["koru"] = _koru_mcp_entry(project)
     written = _write_json(config_path, config, dry_run=dry_run)
     return {"ide": "windsurf", "action": "added", "path": written, "dry_run": dry_run}
 
@@ -214,7 +263,7 @@ def provision_cursor(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
             return {"ide": "cursor", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "cursor", "action": "already_configured", "path": str(config_path)}
 
-    servers["koru"] = _koru_mcp_entry_cursor()
+    servers["koru"] = _koru_mcp_entry_cursor(project)
     written = _write_json(config_path, config, dry_run=dry_run)
     return {"ide": "cursor", "action": "added", "path": written, "dry_run": dry_run}
 
@@ -231,7 +280,7 @@ def provision_vscode(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
             return {"ide": "vscode", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "vscode", "action": "already_configured", "path": str(config_path)}
 
-    servers["koru"] = _koru_mcp_entry()
+    servers["koru"] = _koru_mcp_entry(project)
     written = _write_json(config_path, config, dry_run=dry_run)
     return {"ide": "vscode", "action": "added", "path": written, "dry_run": dry_run}
 
@@ -255,7 +304,7 @@ def provision_zed(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
             return {"ide": "zed", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "zed", "action": "already_configured", "path": str(config_path)}
 
-    servers["koru"] = _koru_mcp_entry()
+    servers["koru"] = _koru_mcp_entry(project)
     written = _write_json(config_path, config, dry_run=dry_run)
     return {"ide": "zed", "action": "added", "path": written, "dry_run": dry_run}
 
@@ -275,6 +324,41 @@ def remove_from_config(
     if not dry_run:
         _write_json(config_path, config)
     return {"action": "removed", "path": str(config_path), "dry_run": dry_run}
+
+
+def _operator_autostart_mcp_enabled() -> bool:
+    raw = os.environ.get("KORU_OPERATOR_AUTOSTART_MCP", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def auto_provision_koru_mcp(
+    project: Path,
+    ide: str,
+    *,
+    dry_run: bool = False,
+) -> list[dict[str, Any]]:
+    """Write koru MCP config for *ide* when missing (idempotent)."""
+    if not _operator_autostart_mcp_enabled():
+        return []
+    configured, _detail = koru_mcp_configured(project, ide)
+    if configured:
+        return []
+    ide_norm = str(ide or "").strip().lower()
+    if ide_norm == "cursor":
+        return [provision_cursor(project, dry_run=dry_run)]
+    if ide_norm in {"vscode", "vscodium", "antigravity"}:
+        return [provision_vscodium(project, dry_run=dry_run)]
+    if ide_norm == "windsurf":
+        return [provision_windsurf(project, dry_run=dry_run)]
+    if ide_norm == "zed":
+        return [provision_zed(project, dry_run=dry_run)]
+    results: list[dict[str, Any]] = []
+    for provisioner in (provision_cursor, provision_vscode):
+        row = provisioner(project, dry_run=dry_run)
+        if row.get("action") in {"added", "updated"}:
+            results.append(row)
+            break
+    return results
 
 
 def ensure_koru_mcp_not_disabled(project: Path) -> list[dict[str, Any]]:

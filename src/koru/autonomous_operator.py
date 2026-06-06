@@ -16,17 +16,81 @@ from koru import autonomous_plugin_wait as _plugin_wait
 _VSCODE_FAMILY_PLUGIN_IDES = _plugin_runtime.VSCODE_FAMILY_PLUGIN_IDES
 
 
-def run_mcp_provision(
+def _operator_autostart_envmap_enabled() -> bool:
+    raw = os.environ.get("KORU_OPERATOR_AUTOSTART_ENVMAP", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def refresh_environment_registry(
     project: Path,
     stdio_format: str,
     *,
     stdio_info: Any,
 ) -> bool:
-    """Run MCP workspace provision and return True if it ran."""
-    mcp_provision_ran = False
+    """Refresh env2llm registry when optional deps are installed."""
+    if not _operator_autostart_envmap_enabled():
+        return False
     try:
-        from koru.mcp_provision import ensure_koru_mcp_not_disabled
+        from koruapi.env2llm_registry import env2llm_available, env2llm_refresh_registry
+    except ImportError:
+        return False
+    if not env2llm_available():
+        return False
+    try:
+        result = env2llm_refresh_registry(
+            project_root=str(project),
+            probe_desktop=True,
+            publish_mqtt=False,
+        )
+    except (OSError, TypeError, ValueError, RuntimeError) as exc:
+        stdio_info(
+            f"koru autonomous: env2llm registry refresh skipped ({exc})",
+            fmt=stdio_format,
+        )
+        return False
+    if not result.get("ok"):
+        stdio_info(
+            f"koru autonomous: env2llm registry refresh skipped "
+            f"({result.get('error', 'unknown error')})",
+            fmt=stdio_format,
+        )
+        return False
+    path = result.get("path") or "?"
+    count = result.get("command_count", "?")
+    stdio_info(
+        f"koru autonomous: env2llm registry refreshed ({count} commands) -> {path}",
+        fmt=stdio_format,
+    )
+    registry_path = result.get("path")
+    if registry_path:
+        os.environ["ENV2LLM_CONTEXT"] = str(registry_path)
+        os.environ["NLP2DSL_DOQL_CONTEXT"] = str(registry_path)
+    return True
 
+
+def run_mcp_provision(
+    project: Path,
+    stdio_format: str,
+    *,
+    autopilot_ide: str = "cursor",
+    stdio_info: Any,
+) -> bool:
+    """Run MCP workspace provision and return True if it ran."""
+    mcp_provision_ran = refresh_environment_registry(
+        project,
+        stdio_format,
+        stdio_info=stdio_info,
+    )
+    try:
+        from koru.mcp_provision import auto_provision_koru_mcp, ensure_koru_mcp_not_disabled
+
+        for row in auto_provision_koru_mcp(project, autopilot_ide):
+            mcp_provision_ran = True
+            stdio_info(
+                f"koru autonomous: mcp bootstrap {row.get('action')} "
+                f"ide={row.get('ide')} -> {row.get('path')}",
+                fmt=stdio_format,
+            )
         for row in ensure_koru_mcp_not_disabled(project):
             mcp_provision_ran = True
             stdio_info(

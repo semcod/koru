@@ -59,6 +59,7 @@ from koru.autopilot.commands.handoff import action_handoff as _handoff_action_im
 from koru.autopilot.commands.manage import action_manage as _manage_action_impl
 from koru.autopilot.commands.shutdown import action_shutdown as _shutdown_action_impl
 from koru.autopilot.commands.status import action_status as _status_action_impl
+from koru.autopilot.cli_snapshot import action_snapshot as _action_snapshot_impl
 from koru.autopilot.cli_trace import action_trace as _action_trace
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
@@ -208,6 +209,10 @@ def _action_drive(args: argparse.Namespace) -> int:
     )
 
 
+def _action_snapshot(args: argparse.Namespace) -> int:
+    return _action_snapshot_impl(args, client_fn=_client)
+
+
 def _action_status(args: argparse.Namespace) -> int:
     """Wrapper for status command with dependency injection."""
     return _status_action_impl(
@@ -322,6 +327,7 @@ _ACTIONS = {
     "tail": _action_tail,
     "install-unit": _action_install_unit,
     "trace": _action_trace,
+    "snapshot": _action_snapshot,
 }
 
 
