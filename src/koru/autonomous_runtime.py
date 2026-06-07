@@ -423,9 +423,7 @@ def _apply_autopilot_readiness_after_daemon(
         issues=tuple(readiness_issues),
         primary_fix=daemon.primary_fix or socket.primary_fix,
     )
-    repairs = apply_socket_ownership_repairs(project, socket_path, readiness)
-    for action in repairs:
-        stdio_info(f"koru autonomous: readiness repair: {action}", fmt=args.emit_events)
+    readiness = apply_socket_ownership_repairs(project, socket_path, readiness)
 
     for line in format_readiness_lines(readiness, prefix="koru autonomous"):
         stdio_info(line, fmt=args.emit_events)

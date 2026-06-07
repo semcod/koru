@@ -120,14 +120,21 @@ class VSCodeFamilyAdapter:
             return []
         applied: list[str] = []
         settings = self.analyze_settings(project=project, expected_socket=expected_socket)
-        if settings.mismatch and project is not None:
-            path = shared.fix_workspace_socket(
-                project=project,
+        if settings.mismatch:
+            if project is not None:
+                path = shared.fix_workspace_socket(
+                    project=project,
+                    ide=self.ide_id,
+                    expected_socket=expected_socket,
+                )
+                if path is not None:
+                    applied.append(f"workspace socketPath → {expected_socket} ({path})")
+            user_path = shared.fix_user_socket(
                 ide=self.ide_id,
                 expected_socket=expected_socket,
             )
-            if path is not None:
-                applied.append(f"workspace socketPath → {expected_socket} ({path})")
+            if user_path is not None:
+                applied.append(f"user socketPath → {expected_socket} ({user_path})")
         if self.requires_trusted_publisher and shared.publisher_trusted(self.ide_id) is False:
             if shared.add_trusted_publisher(self.ide_id):
                 applied.append(

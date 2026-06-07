@@ -26509,7 +26509,7 @@ sprint:
       id: STARTER-541
       name: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
         Check: WUP service=koru-shell stage=...'
-      status: open
+      status: done
       priority: high
       sprint: current
       source:
@@ -26537,9 +26537,12 @@ sprint:
         mode: interactive
       execution:
         queue: default
-        state: ready
+        state: done
         attempt: 0
         max_attempts: 1
+        finished_at: '2026-06-07T09:48:43.873402+00:00'
+        last_error: null
+        lease_expires_at: null
       inputs:
         prompt: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
           Check: WUP service=koru-shell stage=quick message=TestQL command failed
@@ -26552,7 +26555,8 @@ sprint:
         api_timeout_seconds: 30.0
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
       sync: {}
       history:
       - timestamp: '2026-06-07T09:37:57.214100+00:00'
@@ -26563,5 +26567,9 @@ sprint:
           track=/home/tom/github/semcod/koru/.wup/tracks/1780825063_koru-shell_quick.json.
           Investigate and fix regression, stale quality artifact, or broken diagnostic
           gate.'
+      - timestamp: '2026-06-07T09:48:43.873402+00:00'
+        action: auto_resolved
+        source: koru wup
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
       created_at: '2026-06-07T09:37:57.214100+00:00'
-      updated_at: '2026-06-07T09:37:57.214100+00:00'
+      updated_at: '2026-06-07T09:48:43.873402+00:00'

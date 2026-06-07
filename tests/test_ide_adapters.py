@@ -128,6 +128,30 @@ def test_workspace_socket_mismatch(tmp_path: Path) -> None:
     assert updated["koruAutopilot.socketPath"].endswith("koru-autopilot-cursor.sock")
 
 
+def test_user_socket_mismatch_detected_without_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = tmp_path / "Cursor" / "User"
+    config.mkdir(parents=True)
+    settings = config / "settings.json"
+    settings.write_text(
+        json.dumps({"koruAutopilot.socketPath": "/run/user/1000/koru-autopilot-cursor.sock"}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(shared, "user_settings_path", lambda _ide: settings)
+    report = shared.analyze_socket_settings(
+        ide="cursor",
+        project=None,
+        expected_socket="/run/user/1000/koru-autopilot-cursor-main.sock",
+    )
+    assert report.mismatch is True
+    fixed = shared.fix_user_socket(
+        ide="cursor",
+        expected_socket="/run/user/1000/koru-autopilot-cursor-main.sock",
+    )
+    assert fixed == settings
+    updated = json.loads(settings.read_text(encoding="utf-8"))
+    assert updated["koruAutopilot.socketPath"].endswith("koru-autopilot-cursor-main.sock")
+
+
 def test_extension_activated_in_exthost(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     config = tmp_path / "Cursor"
     log_dir = config / "logs" / "20260524T120000" / "window1" / "exthost"

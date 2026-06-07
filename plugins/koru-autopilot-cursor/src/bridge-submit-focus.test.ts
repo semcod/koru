@@ -461,6 +461,46 @@ async function testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistere
   assert.strictEqual(ack.ok, true);
 }
 
+async function testGlassUiFastPathUsesOptimisticComposerPromptWhenHiddenFromGetCommands(): Promise<void> {
+  registeredCommands.clear();
+  for (const cmd of [
+    "glass.focusInput",
+    "workbench.action.chat.stopListeningAndSubmit",
+    "workbench.action.chat.typeText",
+  ]) {
+    registeredCommands.add(cmd);
+  }
+  executedCommands.length = 0;
+
+  const { bridge, sent } = makeBridge();
+  bridge._verifySubmitViaCursorBubble = async () => ({
+    matched: true,
+    newUserBubbles: 1,
+  });
+  const handled = await bridge.tryCursorComposerPromptFastPath(
+    { type: "chat.send", id: "drive-glass-hidden" },
+    "probe test",
+    true,
+  );
+
+  assert.strictEqual(
+    handled,
+    true,
+    "Glass UI must try composer.startComposerPrompt* even when hidden from getCommands(false)",
+  );
+  assert.ok(
+    executedCommands.some((cmd) => /startcomposerprompt/i.test(cmd)),
+    `expected optimistic startComposerPrompt paste, got: ${executedCommands.join(", ")}`,
+  );
+  assert.ok(
+    !executedCommands.includes("workbench.action.chat.typeText"),
+    "Glass fast path must not fall back to typeText paste",
+  );
+  const ack = sent.find((env) => env.type === "ack");
+  assert.ok(ack, "fast path should emit drive ack");
+  assert.strictEqual(ack.ok, true);
+}
+
 async function testComposerPromptPasteBypassesGlassFocusBeforeSubmit(): Promise<void> {
   const { bridge } = makeBridge();
   let focusCalls = 0;
@@ -517,6 +557,7 @@ async function run(): Promise<void> {
   await testCursorFastPathDoesNotTrustMissingBubbleDbWithInconclusiveProbe();
   await testGlassUiFastPathUsesStartComposerPromptWhenTypeTextMissing();
   await testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistered();
+  await testGlassUiFastPathUsesOptimisticComposerPromptWhenHiddenFromGetCommands();
   await testComposerPromptPasteBypassesGlassFocusBeforeSubmit();
   await testCursorHostClickFallbackRequiresCalibratedPoint();
   console.log("bridge-submit-focus tests: ok");

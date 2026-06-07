@@ -1344,6 +1344,46 @@ def test_stale_instance_not_reused_for_different_ide(monkeypatch) -> None:
     assert coru_cli._infer_default_instance(ide="cursor") == "cursor"
 
 
+def test_run_subprocess_times_out(monkeypatch) -> None:
+    def slow_run(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(cmd=["koru"], timeout=1)
+
+    monkeypatch.setattr(coru_cli.subprocess, "run", slow_run)
+    assert coru_cli._run(["koru", "autopilot", "status"], timeout=1.0) == 124
+
+
+def test_koru_subprocess_timeout_skips_long_running_commands() -> None:
+    assert coru_cli._koru_subprocess_timeout(["auto"]) is None
+    assert coru_cli._koru_subprocess_timeout(["autopilot", "daemon"]) is None
+    assert coru_cli._koru_subprocess_timeout(["autopilot", "status"]) == coru_cli._KORU_SUBPROCESS_TIMEOUT_S
+
+
+def test_run_koru_lane_auto_has_no_subprocess_timeout(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_resolved(command, *, ide: str, instance: str, timeout=None) -> int:
+        captured["command"] = list(command)
+        captured["timeout"] = timeout
+        return 0
+
+    monkeypatch.setattr(coru_cli, "_koru_exec_argv", lambda: ["koru"])
+    monkeypatch.setattr(coru_cli, "_run_with_resolved_lane_env", fake_resolved)
+    rc = coru_cli._run_koru_lane("cursor", "cursor-main", ["auto", "--max-cycles", "1"])
+    assert rc == 0
+    assert captured["timeout"] is None
+    assert captured["command"] == ["koru", "auto", "--max-cycles", "1"]
+
+
+def test_koru_autopilot_env_payload_times_out(monkeypatch) -> None:
+    def slow_run(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(cmd=["koru"], timeout=1)
+
+    monkeypatch.setattr(coru_cli, "_koru_exec_argv", lambda: ["koru"])
+    monkeypatch.setattr(coru_cli, "_project_for_lane", lambda *_a: "/tmp/koru")
+    monkeypatch.setattr(coru_cli.subprocess, "run", slow_run)
+    assert coru_cli._koru_autopilot_env_payload("cursor", "cursor-main") is None
+
+
 def test_infer_default_ide_keeps_integrated_terminal_over_alive_daemon(monkeypatch) -> None:
     monkeypatch.setattr(coru_cli, "_terminal_ide_hint", lambda: "cursor")
     monkeypatch.setattr(

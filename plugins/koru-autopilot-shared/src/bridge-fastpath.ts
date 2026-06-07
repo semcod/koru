@@ -18,17 +18,12 @@ import {
   type KoruAutopilotStepConfig,
 } from "../step-decisions";
 import { CommandOutcome, Envelope } from "./types";
-
-const CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS = [
-  "composer.startComposerPrompt2",
-  "composer.startComposerPrompt",
-] as const;
-
-const CURSOR_COMPOSER_SAFE_PASTE_COMMANDS = [
-  "workbench.action.chat.typeText",
-  "workbench.action.chat.insertText",
-  "cursor.action.chat.typeText",
-] as const;
+import {
+  CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS,
+  CURSOR_COMPOSER_SAFE_PASTE_COMMANDS,
+  isGlassTypedPasteCommand,
+  resolveCursorComposerPasteCandidates,
+} from "./cursor-composer-paste";
 
 export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridgeAck {
   protected abstract koruStepConfig(): KoruAutopilotStepConfig;
@@ -177,6 +172,50 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
     }
   }
 
+  protected resolveCursorComposerPasteCandidates(existing: Set<string>) {
+    return resolveCursorComposerPasteCandidates(existing);
+  }
+
+  protected async tryGlassComposerPromptPaste(text: string): Promise<CommandOutcome | undefined> {
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const { glassUi, promptPastes } = this.resolveCursorComposerPasteCandidates(existing);
+    if (!glassUi || promptPastes.length === 0) {
+      return undefined;
+    }
+    for (const pasteCmd of promptPastes) {
+      this.traceOperation({
+        op: "paste",
+        route: `glass-composer-prompt:${pasteCmd}`,
+        ok: true,
+        command: pasteCmd,
+        detail: { textLength: text.length },
+      });
+      try {
+        const result = await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
+        if (result === false) {
+          this.traceOperation({
+            op: "paste",
+            route: `glass-composer-prompt:${pasteCmd}`,
+            ok: false,
+            reason: "command returned false",
+          });
+          continue;
+        }
+      } catch (err) {
+        this.traceOperation({
+          op: "paste",
+          route: `glass-composer-prompt:${pasteCmd}`,
+          ok: false,
+          reason: String(err),
+        });
+        continue;
+      }
+      await this.sleep(this.probePasteDelayMs());
+      return { ok: true, command: pasteCmd };
+    }
+    return undefined;
+  }
+
   protected async tryCursorComposerPromptFastPath(
     env: Envelope,
     text: string,
@@ -186,9 +225,16 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       return false;
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const promptPastes = CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
-    const safePastes = CURSOR_COMPOSER_SAFE_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
-    const glassUi = existing.has("glass.focusInput");
+    const { glassUi, promptPastes, safePastes } = this.resolveCursorComposerPasteCandidates(existing);
+    if (
+      glassUi &&
+      !CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.some((cmd) => existing.has(cmd)) &&
+      promptPastes.length > 0
+    ) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_GLASS_OPTIMISTIC_PROMPT", {
+        reason: "composer.startComposerPrompt* not listed in getCommands(false); trying anyway",
+      });
+    }
     const modernChatRoute =
       !glassUi &&
       existing.has("workbench.action.chat.stopListeningAndSubmit") &&

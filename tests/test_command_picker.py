@@ -235,7 +235,45 @@ def test_antigravity_focus_open_rejects_new_chat_action(tmp_path) -> None:
         telemetry=CommandTelemetry(tmp_path),
     )
 
-    assert order["focus_open"] == ["workbench.action.chat.focusInput"]
+    assert "aichat.newchataction" not in order["focus_open"]
+    assert order["focus_open"][0] == "antigravity.agentSidePanel.open"
+
+
+def test_antigravity_focus_open_rejects_open_agent(tmp_path) -> None:
+    order = pick_command_order(
+        ide="antigravity",
+        plugin_version="0.2.6",
+        catalog={
+            "focus_open": [
+                "antigravity.openAgent",
+                "workbench.action.chat.focusInput",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+
+    focus_open = order["focus_open"]
+    assert "antigravity.openAgent" not in focus_open
+    assert focus_open[0] == "antigravity.agentSidePanel.open"
+    assert "antigravity.agentSidePanel.focus" in focus_open
+
+
+def test_antigravity_focus_open_prefers_side_panel_when_miscategorised(tmp_path) -> None:
+    # Plugin 0.2.6 puts agentSidePanel.focus in unknown_chat instead of focus_open.
+    order = pick_command_order(
+        ide="antigravity",
+        plugin_version="0.2.6",
+        catalog={
+            "focus_open": [
+                "workbench.action.chat.focusInput",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+
+    focus_open = order["focus_open"]
+    assert focus_open[0] == "antigravity.agentSidePanel.open"
+    assert "antigravity.agentSidePanel.focus" in focus_open
 
 
 def test_vscodium_focus_open_avoids_quick_chat(tmp_path) -> None:

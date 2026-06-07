@@ -40,6 +40,7 @@ class ReadinessResult:
     ok: bool
     issues: tuple[ReadinessIssue, ...]
     primary_fix: str | None = None
+    repair_actions: tuple[str, ...] = ()
 
     @property
     def fail_messages(self) -> list[str]:
@@ -502,23 +503,27 @@ def apply_socket_ownership_repairs(
     readiness: ReadinessResult,
     *,
     dry_run: bool = False,
-) -> list[str]:
+) -> ReadinessResult:
     """Apply safe repairs for socket ownership issues (unlink stale socket)."""
     actions: list[str] = []
     codes = {i.code for i in readiness.issues}
-    if not codes.intersection({"socket_stale", "socket_inode_drift", "daemon_pid_dead"}):
-        return actions
-    health = probe_socket_health(socket_path)
-    if health.stale or "socket_inode_drift" in codes or "daemon_pid_dead" in codes:
-        result = remove_stale_socket(health, dry_run=dry_run)
-        actions.append(f"{result.action}:{result.status}:{result.detail}")
-        meta_path = daemon_metadata_path(project, socket_path)
-        if not dry_run and meta_path.is_file():
-            try:
-                meta_path.unlink()
-            except OSError as exc:
-                actions.append(f"remove_metadata:failed:{exc}")
-    return actions
+    if codes.intersection({"socket_stale", "socket_inode_drift", "daemon_pid_dead"}):
+        health = probe_socket_health(socket_path)
+        if health.stale or "socket_inode_drift" in codes or "daemon_pid_dead" in codes:
+            result = remove_stale_socket(health, dry_run=dry_run)
+            actions.append(f"{result.action}:{result.status}:{result.detail}")
+            meta_path = daemon_metadata_path(project, socket_path)
+            if not dry_run and meta_path.is_file():
+                try:
+                    meta_path.unlink()
+                except OSError as exc:
+                    actions.append(f"remove_metadata:failed:{exc}")
+    return ReadinessResult(
+        ok=readiness.ok,
+        issues=readiness.issues,
+        primary_fix=readiness.primary_fix,
+        repair_actions=tuple(actions),
+    )
 
 
 def attempt_plugin_gate_recovery(
@@ -867,6 +872,8 @@ def format_readiness_lines(result: ReadinessResult, *, prefix: str = "") -> list
             lines.append(f"{head}: fix → {issue.fix_command}")
     if result.primary_fix and result.ok is False:
         lines.append(f"{head}: primary fix → {result.primary_fix}")
+    for action in result.repair_actions:
+        lines.append(f"{head}: [REPAIR] {action}")
     return lines
 
 

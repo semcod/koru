@@ -66,6 +66,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.317] - 2026-06-07
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_command_picker.py
+- Update tests/test_environment_profile.py
+- Update tests/test_ide_adapters.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/src/coru/repair/pipeline.py
+- Update packages/coru/tests/test_coru_cli.py
+- Update plugins/koru-autopilot-antigravity/src/extension.ts
+- Update plugins/koru-autopilot-cursor/package.json
+- Update plugins/koru-autopilot-cursor/src/bridge-submit-focus.test.ts
+- ... and 6 more files
+
 ## [0.1.316] - 2026-06-07
 
 ### Docs

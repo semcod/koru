@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import platform
+import shutil
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -101,6 +102,11 @@ def _preferred_keyboard_interface(session: str) -> str:
     if tool == "xdotool":
         return "os_injector_xdotool"
     if tool == "wtype":
+        # GNOME Wayland lacks virtual-keyboard-v1; wtype silently no-ops.
+        # Prefer ydotool when the daemon is available.
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        if "gnome" in desktop and shutil.which("ydotool") is not None:
+            return "os_injector_ydotool"
         return "os_injector_wtype"
     if tool == "ydotool":
         return "os_injector_ydotool"

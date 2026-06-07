@@ -11,6 +11,7 @@ def test_environment_profile_separates_vscodium_wayland_plugin_control(
     monkeypatch,
 ) -> None:
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.delenv("XDG_CURRENT_DESKTOP", raising=False)
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.delenv("OPENAI_MODEL", raising=False)
@@ -18,6 +19,7 @@ def test_environment_profile_separates_vscodium_wayland_plugin_control(
     monkeypatch.setattr(env_profile, "detect_running_ides", lambda: [])
     monkeypatch.setattr(env_profile, "normalize_ide_id", lambda x: x if x else None)
     monkeypatch.setattr(env_profile, "detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr(env_profile.shutil, "which", lambda _name: None)
 
     profile = env_profile.resolve_environment_profile(tmp_path, ide="auto")
 
@@ -28,6 +30,22 @@ def test_environment_profile_separates_vscodium_wayland_plugin_control(
     assert profile.control.interface_id == "plugin_socket_vscode_family"
     assert profile.control.verification_mode == "strict_ack"
     assert "ide=vscodium" in profile.decision_key
+
+
+def test_gnome_wayland_prefers_ydotool_over_wtype(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.setenv("XDG_CURRENT_DESKTOP", "ubuntu:GNOME")
+    monkeypatch.setattr(env_profile, "detect_terminal_host_ide_id", lambda: None)
+    monkeypatch.setattr(env_profile, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(env_profile, "detect_focused_ide_id", lambda: None)
+
+    profile = env_profile.resolve_environment_profile(tmp_path, ide="auto")
+
+    assert profile.os.display_server == "wayland"
+    assert profile.os.preferred_keyboard_interface == "os_injector_ydotool"
 
 
 def test_environment_profile_treats_jetbrains_as_distinct_control_surface(

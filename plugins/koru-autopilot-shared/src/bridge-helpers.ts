@@ -27,6 +27,7 @@ const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
 
 const UNSAFE_ANTIGRAVITY_FOCUS_OPEN_COMMANDS = new Set([
   "antigravity.openagent",
+  "antigravity.agentsidepanel.open",
 ]);
 
 const UNSAFE_CURSOR_FOCUS_OPEN_COMMANDS = new Set([

@@ -13,6 +13,7 @@ import {
   CommandOutcome,
   PasteAttempt,
 } from "./types";
+import { resolveCursorComposerPasteCandidates } from "./cursor-composer-paste";
 
 export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFocus {
   private isSubmitRequestedForCurrentDrive(): boolean {
@@ -331,6 +332,49 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
           attempts: hostPaste.result.attempts,
         });
         return hostPaste.result;
+      }
+    }
+
+    if (ide === "cursor") {
+      const { glassUi, promptPastes } = resolveCursorComposerPasteCandidates(existing);
+      if (glassUi) {
+        for (const pasteCmd of promptPastes) {
+          this.traceOperation({
+            op: "paste",
+            route: `glass-composer-prompt:${pasteCmd}`,
+            ok: true,
+            command: pasteCmd,
+            detail: { textLength: text.length },
+          });
+          try {
+            const result = await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
+            if (result === false) {
+              this.traceOperation({
+                op: "paste",
+                route: `glass-composer-prompt:${pasteCmd}`,
+                ok: false,
+                reason: "command returned false",
+              });
+              continue;
+            }
+          } catch (err) {
+            this.traceOperation({
+              op: "paste",
+              route: `glass-composer-prompt:${pasteCmd}`,
+              ok: false,
+              reason: String(err),
+            });
+            continue;
+          }
+          await this.sleep(this.probePasteDelayMs());
+          this.traceOperation({
+            op: "paste",
+            route: "glass-composer-prompt",
+            ok: true,
+            command: pasteCmd,
+          });
+          return { ok: true, command: pasteCmd };
+        }
       }
     }
 

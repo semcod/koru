@@ -22,6 +22,20 @@ from coru.repair import RecordDiagnosisCommand, RepairHistoryQuery, RepairServic
 
 _LANE_ENV_KEYS = ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET")
 _ORIGINAL_SUBPROCESS_RUN = subprocess.run
+_LANE_ENV_PAYLOAD_TIMEOUT_S = float(os.environ.get("CORU_LANE_ENV_PAYLOAD_TIMEOUT_S", "5"))
+_KORU_SUBPROCESS_TIMEOUT_S = float(os.environ.get("CORU_KORU_SUBPROCESS_TIMEOUT_S", "20"))
+
+
+def _koru_subprocess_timeout(koru_args: Sequence[str]) -> float | None:
+    """Return timeout for koru subprocess calls; ``None`` for long-running commands."""
+    if not koru_args:
+        return _KORU_SUBPROCESS_TIMEOUT_S
+    head = str(koru_args[0]).lower()
+    if head in {"auto", "autonomous", "serve"}:
+        return None
+    if head == "autopilot" and len(koru_args) > 1 and str(koru_args[1]).lower() == "daemon":
+        return None
+    return _KORU_SUBPROCESS_TIMEOUT_S
 
 
 
@@ -414,9 +428,25 @@ def _extract_global_flags(argv: Sequence[str]) -> tuple[list[str], bool, bool, s
     return rest, verbose, show_version, log_format, require_plugin
 
 
-def _run(command: Sequence[str], *, passthrough: bool = True) -> int:
+def _run(
+    command: Sequence[str],
+    *,
+    passthrough: bool = True,
+    timeout: float | None = None,
+) -> int:
     try:
-        proc = subprocess.run(list(command), check=False)
+        kwargs: dict[str, Any] = {"check": False}
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        proc = subprocess.run(list(command), **kwargs)
+    except subprocess.TimeoutExpired:
+        preview = " ".join(str(part) for part in command[:4])
+        limit = timeout if timeout is not None else 0.0
+        print(
+            f"[coru] command timed out after {limit:.0f}s: {preview}",
+            file=sys.stderr,
+        )
+        return 124
     except KeyboardInterrupt:
         return 130
     if passthrough:
@@ -1224,13 +1254,19 @@ def _bind_lane_session(ide: str, instance: str):
                 os.environ.pop(key, None)
 
 
-def _run_with_lane_environment(command: Sequence[str], *, ide: str, instance: str) -> int:
+def _run_with_lane_environment(
+    command: Sequence[str],
+    *,
+    ide: str,
+    instance: str,
+    timeout: float | None = _KORU_SUBPROCESS_TIMEOUT_S,
+) -> int:
     previous = {key: os.environ[key] for key in _LANE_ENV_KEYS if key in os.environ}
     try:
         os.environ["KORU_AUTOPILOT_IDE"] = ide
         os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
         os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
-        return _run(command)
+        return _run(command, timeout=timeout)
     finally:
         for key in _LANE_ENV_KEYS:
             if key in previous:
@@ -1268,9 +1304,16 @@ def _koru_autopilot_env_payload(ide: str, instance: str) -> dict[str, Any] | Non
             text=True,
             check=False,
             env=_lane_subprocess_env(ide, instance),
-            timeout=5.0,
+            timeout=_LANE_ENV_PAYLOAD_TIMEOUT_S,
             close_fds=True,
         )
+    except subprocess.TimeoutExpired:
+        print(
+            f"[coru] koru autopilot env timed out after {_LANE_ENV_PAYLOAD_TIMEOUT_S:.0f}s "
+            f"(ide={ide} instance={instance})",
+            file=sys.stderr,
+        )
+        return None
     except Exception:
         return None
     if proc.returncode != 0:
@@ -1284,10 +1327,18 @@ def _koru_autopilot_env_payload(ide: str, instance: str) -> dict[str, Any] | Non
     return payload
 
 
-def _run_with_resolved_lane_env(command: Sequence[str], *, ide: str, instance: str) -> int:
+def _run_with_resolved_lane_env(
+    command: Sequence[str],
+    *,
+    ide: str,
+    instance: str,
+    timeout: float | None = _KORU_SUBPROCESS_TIMEOUT_S,
+) -> int:
     payload = _koru_autopilot_env_payload(ide, instance)
     if not payload:
-        return _run_with_lane_environment(command, ide=ide, instance=instance)
+        if timeout is None:
+            return _run(list(command))
+        return _run_with_lane_environment(command, ide=ide, instance=instance, timeout=timeout)
 
     lane_keys = ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET")
     previous = {key: os.environ[key] for key in lane_keys if key in os.environ}
@@ -1299,7 +1350,7 @@ def _run_with_resolved_lane_env(command: Sequence[str], *, ide: str, instance: s
             os.environ["KORU_AUTOPILOT_INSTANCE"] = str(payload["instance"])
         if payload.get("ide"):
             os.environ["KORU_AUTOPILOT_IDE"] = str(payload["ide"])
-        return _run(command)
+        return _run(command, timeout=timeout)
     finally:
         for key in lane_keys:
             if key in previous:
@@ -1313,7 +1364,12 @@ def _run_koru_lane(ide: str, instance: str, koru_args: Sequence[str]) -> int:
     if koru_exec is None:
         print("error: koru is not available; run 'coru ensure --install'", file=sys.stderr)
         return 127
-    return _run_with_resolved_lane_env([*koru_exec, *koru_args], ide=ide, instance=instance)
+    return _run_with_resolved_lane_env(
+        [*koru_exec, *koru_args],
+        ide=ide,
+        instance=instance,
+        timeout=_koru_subprocess_timeout(koru_args),
+    )
 
 
 def _koruenv_run_fallback(ide: str, instance: str, run_payload: Sequence[str]) -> int:
@@ -1384,7 +1440,9 @@ def _lane_status_payload(
     if resolved.get("socket"):
         env["KORU_AUTOPILOT_SOCKET"] = str(resolved["socket"])
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=5.0, close_fds=True)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=_LANE_ENV_PAYLOAD_TIMEOUT_S, close_fds=True)
+    except subprocess.TimeoutExpired:
+        return None
     except Exception:
         return None
     if proc.returncode != 0:
@@ -1406,7 +1464,9 @@ def _fetch_manage_report(ide: str, instance: str) -> dict[str, Any] | None:
     cmd = [*koru_exec, "autopilot", "manage", "--ide", ide, "--format", "json"]
     env = _lane_subprocess_env(ide, instance)
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=5.0, close_fds=True)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=_LANE_ENV_PAYLOAD_TIMEOUT_S, close_fds=True)
+    except subprocess.TimeoutExpired:
+        return None
     except Exception:
         return None
     if proc.returncode != 0 and not proc.stdout.strip():
@@ -2660,7 +2720,14 @@ def _lane_manage_fix(ide: str, instance: str) -> int:
     if koru_exec is None:
         print("error: koru is not available; run 'coru ensure --install'", file=sys.stderr)
         return 127
-    return _run_koru_lane(ide, instance, ["autopilot", "manage", "--ide", ide, "--fix"])
+    rc = _run_koru_lane(ide, instance, ["autopilot", "manage", "--ide", ide, "--fix"])
+    if rc != 0:
+        _run_koru_lane(
+            ide,
+            instance,
+            ["ide", "doctor", "--ide", ide, "--fix", "--gc-sockets"],
+        )
+    return rc
 
 
 def _lane_daemon_foreground(ide: str, instance: str) -> int:

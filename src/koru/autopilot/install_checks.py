@@ -398,6 +398,20 @@ def check_plugin_version_mismatch_issue(
     and expected_version
     and connected_version != expected_version
   ):
+    if os.environ.get("KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH", "").strip().lower() in (
+      "1", "true", "yes",
+    ):
+      return [
+        ManagerIssue(
+          "plugin_version_mismatch",
+          "warning",
+          (
+            f"Connected {ide} plugin is {connected_version}, "
+            f"but the source VSIX/package is {expected_version}."
+          ),
+          "Mismatch allowed by KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH=1.",
+        ),
+      ]
     return [
       ManagerIssue(
         "plugin_version_mismatch",
@@ -427,6 +441,20 @@ def check_plugin_build_mismatch_issue(
     and expected_build
     and connected_build != expected_build
   ):
+    if os.environ.get("KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH", "").strip().lower() in (
+      "1", "true", "yes",
+    ):
+      return [
+        ManagerIssue(
+          "plugin_build_mismatch",
+          "warning",
+          (
+            f"Connected {ide} plugin build is {connected_build}, "
+            f"but the source VSIX/package build is {expected_build}."
+          ),
+          "Mismatch allowed by KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH=1.",
+        ),
+      ]
     return [
       ManagerIssue(
         "plugin_build_mismatch",

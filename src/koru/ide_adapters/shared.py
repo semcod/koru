@@ -103,8 +103,7 @@ def analyze_socket_settings(
     if workspace_sock and Path(workspace_sock).resolve() != Path(expected).resolve():
         mismatch = True
     if user_sock and Path(user_sock).resolve() != Path(expected).resolve():
-        if workspace_sock is None:
-            mismatch = True
+        mismatch = True
     return SettingsReport(
         expected_socket=expected,
         user_socket=user_sock,
@@ -124,6 +123,23 @@ def fix_workspace_socket(*, project: Path, ide: str, expected_socket: str) -> Pa
     elif ide in _LEGACY_VSCODE_WORKSPACE_IDES:
         path = project / ".vscode" / "settings.json"
     else:
+        return None
+    data = _read_json_object(path) or {}
+    wanted = str(Path(expected_socket).resolve())
+    current = data.get(SOCKET_SETTING_KEY)
+    if current == wanted:
+        return path if path.is_file() else None
+    data[SOCKET_SETTING_KEY] = wanted
+    if "koruAutopilot.autoConnect" not in data:
+        data["koruAutopilot.autoConnect"] = True
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return path
+
+
+def fix_user_socket(*, ide: str, expected_socket: str) -> Path | None:
+    path = user_settings_path(ide)
+    if path is None:
         return None
     data = _read_json_object(path) or {}
     wanted = str(Path(expected_socket).resolve())

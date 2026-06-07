@@ -95,7 +95,14 @@ def _env_enabled(name: str) -> bool:
 
 
 def _sanitize_antigravity_focus_open(commands: list[str]) -> list[str]:
-    return [cmd for cmd in commands if cmd != "aichat.newchataction"]
+    rejected = {"antigravity.openAgent", "aichat.newchataction"}
+    filtered = [cmd for cmd in commands if cmd not in rejected]
+    # Prefer side-panel focus over new-window open even if the plugin miscategorised them.
+    preferred = ["antigravity.agentSidePanel.focus", "antigravity.agentSidePanel.open"]
+    for cmd in preferred:
+        if cmd not in filtered:
+            filtered.append(cmd)
+    return filtered
 
 
 def _is_vscodium_focus_open_candidate(command: str) -> bool:

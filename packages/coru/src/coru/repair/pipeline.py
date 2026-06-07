@@ -122,7 +122,7 @@ def _unpack_vsix_archive(vsix: Path, target: Path, tmp: Path) -> str | None:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
+def _vsix_unpack_layout(ide: str) -> tuple[Path, str, str] | RepairAttempt:
     layout = _EXTENSION_LAYOUT.get(ide)
     if layout is None:
         return RepairAttempt(
@@ -134,7 +134,10 @@ def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
     rel_root, ext_prefix = layout
     ext_root = Path.home() / rel_root
     ext_root.mkdir(parents=True, exist_ok=True)
+    return ext_root, ext_prefix, ide
 
+
+def _vsix_source(ide: str, repo_root: Path) -> Path | RepairAttempt:
     version = _get_installed_version(ide)
     vsix = _resolve_repo_vsix(repo_root, ide, version)
     if vsix is None:
@@ -144,7 +147,14 @@ def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
             ok=False,
             message=f"no VSIX found under {repo_root}/plugins for ide={ide}",
         )
+    return vsix
 
+
+def _vsix_unpack_result(
+    ext_root: Path,
+    ext_prefix: str,
+    vsix: Path,
+) -> RepairAttempt:
     vsix_version = _read_vsix_version(vsix)
     if vsix_version is None:
         return RepairAttempt(
@@ -176,6 +186,19 @@ def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
             f"from {vsix.name}; reload IDE window required"
         ),
     )
+
+
+def manual_vsix_unpack(*, ide: str, repo_root: Path) -> RepairAttempt:
+    layout = _vsix_unpack_layout(ide)
+    if isinstance(layout, RepairAttempt):
+        return layout
+    ext_root, ext_prefix, _ = layout
+
+    vsix = _vsix_source(ide, repo_root)
+    if isinstance(vsix, RepairAttempt):
+        return vsix
+
+    return _vsix_unpack_result(ext_root, ext_prefix, vsix)
 
 
 

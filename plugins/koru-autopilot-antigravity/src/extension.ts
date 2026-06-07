@@ -10,11 +10,11 @@ import {
 
 const ANTIGRAVITY_BRIDGE_OPTIONS: BridgeOptions = {
   extensionPackageId: "semcod.koru-autopilot-antigravity",
-  openChatOnConnect: true,
+  openChatOnConnect: false,
   openChatOnConnectDelayMs: 500,
   preflightFocusOnlyPolicy: "any-toggle",
   enableCursorComposerFastPath: false,
-  enableDiscardToxicFocusOpenCache: false,
+  enableDiscardToxicFocusOpenCache: true,
   reloadCommandStrategies: ["workbench.action.reloadWindow"],
 };
 
