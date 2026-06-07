@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import socket
 import struct
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -187,6 +188,7 @@ class KoruIDEClient:
                 strategy_hint=strategy_hint,
             )
         try:
+            corr = f"cli-drive-{os.getpid()}-{time.monotonic_ns():x}"
             reply = self.request(
                 drive_msg(
                     text,
@@ -194,7 +196,7 @@ class KoruIDEClient:
                     ide=ide,
                     require_plugin=require_plugin,
                     strategy_hint=strategy_hint,
-                    id="cli-drive",
+                    id=corr,
                 ),
                 timeout=self._drive_timeout(),
             )

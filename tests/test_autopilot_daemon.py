@@ -1301,6 +1301,76 @@ def test_newer_plugin_connection_replaces_stale_same_ide_client(
         cli.close()
 
 
+def test_overlapping_plugin_drive_is_rejected_without_overwriting_pending(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="cursor", pid=42)
+        plugin.settimeout(6.0)
+
+        cli1 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli1.settimeout(6.0)
+        cli1.connect(str(h.sock_path))
+        cli1_reader = _LineReader(cli1)
+        cli1.sendall(
+            Message(
+                type="drive",
+                id="d-pending",
+                data={"text": "first", "ide": "cursor", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        assert forwarded.id == "d-pending"
+
+        cli2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli2.settimeout(6.0)
+        cli2.connect(str(h.sock_path))
+        cli2_reader = _LineReader(cli2)
+        cli2.sendall(
+            Message(
+                type="drive",
+                id="d-overlap",
+                data={"text": "second", "ide": "cursor", "submit": False},
+            ).encode(),
+        )
+
+        overlap_reply = cli2_reader.read_message()
+        assert overlap_reply.type == "ack"
+        assert overlap_reply.id == "d-overlap"
+        assert overlap_reply.data.get("ok") is False
+        assert overlap_reply.data.get("verification") == "drive_in_progress"
+        assert overlap_reply.data.get("pending_corr") == "d-pending"
+        _assert_no_more_data(plugin)
+
+        plugin.sendall(
+            Message(
+                type="ack",
+                id="d-pending",
+                data={
+                    "ok": True,
+                    "delivered": True,
+                    "opened": True,
+                    "submitted": True,
+                    "winning_focus_open": "workbench.action.chat.open",
+                    "winning_paste": "workbench.action.chat.typeText",
+                    "winning_submit": "workbench.action.chat.stopListeningAndSubmit",
+                },
+            ).encode(),
+        )
+
+        cli1_reply = cli1_reader.read_message()
+        assert cli1_reply.type == "ack"
+        assert cli1_reply.id == "d-pending"
+        assert cli1_reply.data.get("ok") is True
+
+        plugin.close()
+        cli1.close()
+        cli2.close()
+
+
 def test_visible_typing_prefers_keyboard_even_when_plugin_connected(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

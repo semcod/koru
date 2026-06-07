@@ -593,6 +593,13 @@ def _install_plugin_repair_result(
     resolved_ide: str,
     dry_run: bool,
 ) -> dict[str, Any]:
+    if _plugin_already_aligned(report.plugin):
+        return {
+            "status": "already_installed",
+            "ok": True,
+            "skipped": True,
+            "message": "live plugin already matches expected version/build",
+        }
     force_reassert = _plugin_connected_build_stale(report.plugin)
     with _force_reassert_install_when(force_reassert):
         result = install_plugin_for_ide(
@@ -607,11 +614,17 @@ def _install_plugin_repair_result(
 
 
 def _plugin_already_aligned(plugin: dict[str, Any]) -> bool:
+    if not plugin.get("connected"):
+        return False
     live_version = str(plugin.get("connected_version") or "").strip()
     installed_version = str(plugin.get("installed_version") or "").strip()
+    expected_version = str(plugin.get("expected_version") or "").strip()
     live_build = str(plugin.get("connected_build_sha") or "").strip()
     expected_build = str(plugin.get("expected_build_sha") or "").strip()
     build_aligned = not expected_build or (live_build and live_build == expected_build)
+    if live_version and expected_version and live_version == expected_version and build_aligned:
+        if not installed_version or installed_version == live_version:
+            return True
     return bool(
         live_version
         and installed_version
@@ -739,7 +752,9 @@ def _reload_ide_reconnect_action(
     resolved_ide: str,
     *,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
+    if _plugin_already_aligned(report.plugin):
+        return None
     return {
         "action": "reload_ide_and_reconnect",
         "result": _reload_ide_after_plugin_fix(
@@ -1233,7 +1248,10 @@ def _install_manager_action_lines(report: InstallManagerReport) -> list[str]:
     lines = ["  actions:"]
     for action in report.actions:
         result = action.get("result", {})
-        status = result.get("status") or result.get("ok")
+        if result.get("skipped"):
+            status = "skipped"
+        else:
+            status = result.get("status") or result.get("ok")
         lines.append(f"    - {action.get('action')}: {status}")
     return lines
 

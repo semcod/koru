@@ -66,6 +66,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.318] - 2026-06-07
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/README.md
+- Update docs/agent-backends-architecture.md
+- Update docs/desktop-uri-orchestration.md
+- Update docs/ide-control-architecture.md
+- Update docs/plans/nlp2uri-koruide-integration-refactor-plan.md
+- Update docs/refactoring/REFACTORING_PLAN.md
+- ... and 2 more files
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_nlp2uri_drive.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_cli.py
+- Update tests/test_desktop_uri.py
+- Update tests/test_ide_status_systemmap.py
+- Update tests/test_install_manager.py
+- Update tests/test_koruide_client.py
+- Update tests/test_koruide_daemon_handlers_drive.py
+- ... and 2 more files
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update app.doql.less
+- Update lucy/go.mod
+- Update lucy/go.sum
+- Update lucy/main.go
+- Update lucy/placeholder_test.go
+- Update lucy/src/main.rs
+- Update packages/coru/src/coru/cli.py
+- ... and 26 more files
+
 ## [0.1.317] - 2026-06-07
 
 ### Docs

@@ -1067,7 +1067,7 @@ def _prepare_cycle_run(
         auto_pipeline_state,
         enable_scan=enable_scan,
     )
-    effective_enable_scan, _effective_enable_autopilot = resolve_effective_cycle_flags(
+    effective_enable_scan, effective_enable_autopilot = resolve_effective_cycle_flags(
         args,
         profile,
         enable_scan=enable_scan,
@@ -1082,6 +1082,7 @@ def _prepare_cycle_run(
         project=project,
         queue_name=queue_name,
         enable_scan=effective_enable_scan,
+        enable_autopilot=effective_enable_autopilot,
         autopilot_ide=autopilot_ide,
         client=client,
         loop_state=loop_state,

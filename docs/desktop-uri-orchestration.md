@@ -2,6 +2,11 @@
 
 Koru udostępnia **bridge MCP** do `nlp2uri` — ten sam model URI co w całym ekosystemie Semcod/wronai.
 
+> **Uwaga:** `nlp2uri` obsługuje dziś głównie **desktop** (`app://`, `desktop-window://`, getv, SystemMap).
+> Sterowanie czatem IDE (drive, plugin, ack) idzie przez **`koruide`**, nie przez nlp2uri.
+> Pełna analiza: [`ide-control-architecture.md`](ide-control-architecture.md).
+> Plan rozbudowy nlp2uri pod IDE: [`plans/nlp2uri-koruide-integration-refactor-plan.md`](plans/nlp2uri-koruide-integration-refactor-plan.md).
+
 ## Instalacja
 
 ```bash
@@ -38,8 +43,18 @@ Alternatywa: użyj **todomat-mcp** jako jednego routera (zawiera child `nlp2uri-
 
 | Tool | Opis |
 |------|------|
-| `koru_desktop_uri_plan` | NL → URI + plan OSAction |
+| `koru_desktop_uri_plan` | NL → URI + plan OSAction (+ `control_plan` dla intencji IDE) |
 | `koru_desktop_uri_handle` | Plan + execute (domyślnie `dry_run: true`) |
+| `koru_ide_drive` | Wykonanie drive przez koruide (MCP, osobne narzędzie) |
+| `koru_ide_control_plan` | NL → `koru.control.v1` plan (IDE intencje) |
+| `koru_ide_control_execute` | Plan + execute przez nlp2uri/koruide (dry-run domyślnie) |
+| `koru_ide_list_uris` | Live autopilot status → indeks `ide://` / `ide-chat://` |
+
+CLI:
+
+```bash
+koru autopilot status --format systemmap
+```
 | `koru_desktop_uri_list_getv_uris` | Indeks `~/.getv` → `getv://` |
 | `koru_desktop_uri_resolve_getv` | NL → `getv://` URI |
 | `koru_desktop_uri_get_getv_var` | Metadane zmiennej (masked) |
@@ -63,6 +78,20 @@ Alternatywa: użyj **todomat-mcp** jako jednego routera (zawiera child `nlp2uri-
   "arguments": { "prompt": "open firefox", "platform": "linux" }
 }
 ```
+
+### IDE chat (control plan)
+
+```json
+{
+  "name": "koru_desktop_uri_plan",
+  "arguments": { "prompt": "wyślij prompt do Cursor w tym projekcie", "platform": "linux" }
+}
+```
+
+Odpowiedź zawiera `control_plan` (`koru.control.v1`) z `transport=koruide_socket` i `replay.mcp=koru_ide_drive`.
+Tekst promptu jest w `plan.spec.metadata.text` / `control_plan.actions[0].text_ref`, **nie** w URI.
+
+Wykonanie: `koru_ide_drive` z `text` z planu, lub CLI z `control_plan.actions[0].replay.cli`.
 
 ### Zmienna getv
 

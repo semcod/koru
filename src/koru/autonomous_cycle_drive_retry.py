@@ -140,6 +140,26 @@ def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | 
     return _autonomous_mod._try_os_injector_fallback(prompt, submit=submit)
 
 
+def _try_nlp2uri_ide_control(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    client: Any,
+    project: Path | None = None,
+) -> dict[str, Any] | None:
+    """Delegate to :func:`koru.autonomous._try_nlp2uri_ide_control` (monkeypatch-friendly)."""
+    from koru import autonomous as _autonomous_mod
+
+    return _autonomous_mod._try_nlp2uri_ide_control(
+        prompt,
+        submit=submit,
+        ide=ide,
+        client=client,
+        project=project,
+    )
+
+
 def _skip_closed_waiting_ticket_enabled() -> bool:
     """Guard stale ``waiting_input`` redrives when the ticket is already closed."""
     return env_truthy("KORU_AUTOPILOT_SKIP_CLOSED_WAITING_TICKET", True)
@@ -252,6 +272,22 @@ def _invoke_client_autopilot_drive(
     }
     if strategy_hint:
         drive_kwargs["strategy_hint"] = strategy_hint
+    from koru.autonomous_cycle_gate import effective_ide_control_submit
+
+    drive_submit = effective_ide_control_submit(submit=submit, ide=autopilot_ide)
+    drive_kwargs["submit"] = drive_submit
+    nlp2uri = _try_nlp2uri_ide_control(
+        prompt,
+        submit=drive_submit,
+        ide=autopilot_ide,
+        client=client,
+        project=project,
+    )
+    if nlp2uri is not None:
+        if nlp2uri.get("ok"):
+            return nlp2uri, True
+        if require_plugin:
+            return nlp2uri, False
     reply = client.drive(prompt, **drive_kwargs)
     ok = bool(reply.get("ok", True))
     if ok or require_plugin:

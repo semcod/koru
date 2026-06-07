@@ -226,22 +226,28 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const { glassUi, promptPastes, safePastes } = this.resolveCursorComposerPasteCandidates(existing);
-    if (
-      glassUi &&
-      !CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.some((cmd) => existing.has(cmd)) &&
-      promptPastes.length > 0
-    ) {
-      safeLog("CURSOR_COMPOSER_FASTPATH_GLASS_OPTIMISTIC_PROMPT", {
-        reason: "composer.startComposerPrompt* not listed in getCommands(false); trying anyway",
+    if (glassUi) {
+      const reason = submit
+        ? "submit on Glass UI; probe ladder for verified submit"
+        : "paste-only on Glass UI; probe ladder avoids opening new Composer windows";
+      safeLog("CURSOR_COMPOSER_FASTPATH_SKIP", {
+        reason,
       });
+      this.traceOperation({
+        op: "paste",
+        route: "cursor-composer-fastpath",
+        ok: false,
+        reason,
+      });
+      return false;
     }
     const modernChatRoute =
       !glassUi &&
       existing.has("workbench.action.chat.stopListeningAndSubmit") &&
       existing.has("workbench.action.chat.typeText");
-    // Prefer probe ladder only when registered typeText+stopListening exist on
-    // classic chat UI. Glass builds register typeText but it no-ops; keep the
-    // startComposerPrompt* fast-path (glass.focusInput alone is unreliable).
+    // Prefer probe ladder when registered typeText+stopListening exist on
+    // classic chat UI; Glass is skipped above because startComposerPrompt*
+    // opens fresh Composer windows instead of targeting the visible chat.
     const skipFastPath = modernChatRoute || (promptPastes.length === 0 && safePastes.length === 0);
     if (skipFastPath) {
       const reason = modernChatRoute
@@ -258,8 +264,7 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       });
       return false;
     }
-    // Glass: prefer native composer prompt API even when typeText is registered
-    // (registered but no-op on Glass). Classic chat keeps typeText first.
+    // Classic chat keeps typeText first. Glass exits before this point.
     const pasteQueue = glassUi
       ? [
           ...promptPastes,

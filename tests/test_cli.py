@@ -770,6 +770,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "auto",
             "wizard",
             "dsl",
+            "sllm",
             "api",
             "topology",
             "strategy",

@@ -23,12 +23,12 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.309`
-- **python_requires**: `>=3.12`
+- **version**: `0.1.317`
+- **python_requires**: `>=3.12,<3.14`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
 - **ecosystem**: SUMD + DOQL + testql + taskfile
-- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(8), app.doql.less, goal.yaml, .env.example, Dockerfile, docker-compose.yml, package.json, project/(3 analysis files)
+- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(9), app.doql.less, goal.yaml, .env.example, Dockerfile, docker-compose.yml, package.json, project/(3 analysis files)
 
 ## Architecture
 
@@ -43,12 +43,12 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.309;
+  version: 0.1.317;
 }
 
 dependencies {
-  runtime: "pyyaml>=6.0,<7.0, rich>=14.3.4, gillm>=0.1.5";
-  dev: "pytest>=8.0,<10.0, pytest-cov>=5.0,<8.0, pytest-rerunfailures>=14.0,<17.0, pytest-timeout>=2.3,<3.0, pytest-xdist>=3.0,<4.0, ruff>=0.11,<0.16, mypy>=1.11,<3.0, pyright>=1.1.390,<2.0, hypothesis>=6.112,<7.0, pre-commit>=3.8,<5.0, types-PyYAML>=6.0,<7.0, goal>=2.1.0, costs>=0.1.20, pfix>=0.1.60, tagi>=0.49.0";
+  runtime: "gillm>=0.1.9, pyyaml>=6.0,<7.0, rich>=14.3.4";
+  dev: "gillm>=0.1.9, pytest>=8.0,<10.0, pytest-cov>=5.0,<8.0, pytest-rerunfailures>=14.0,<17.0, pytest-timeout>=2.3,<3.0, pytest-xdist>=3.0,<4.0, ruff>=0.11,<0.16, mypy>=1.11,<3.0, pyright>=1.1.390,<2.0, hypothesis>=6.112,<7.0, pre-commit>=3.8,<5.0, types-PyYAML>=6.0,<7.0, goal>=2.1.0, costs>=0.1.20, pfix>=0.1.60, tagi>=0.49.0";
 }
 
 interface[type="api"] {
@@ -59,7 +59,7 @@ interface[type="api"] {
 interface[type="cli"] {
   framework: argparse;
 }
-interface[type="cli"] page[name="koru"] {
+interface[type="cli"] page[name="coru"] {
 
 }
 
@@ -70,17 +70,17 @@ workflow[name="test"] {
 
 workflow[name="test-fast"] {
   trigger: manual;
-  step-1: run cmd=$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --quick $(PYTEST_ARGS);
+  step-1: run cmd=$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --critical --quick $(PYTEST_ARGS);
 }
 
 workflow[name="test-parallel"] {
   trigger: manual;
-  step-1: run cmd=$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --fast --maxfail=1 $(PYTEST_ARGS);
+  step-1: run cmd=$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --critical --fast --maxfail=1 $(PYTEST_ARGS);
 }
 
 workflow[name="test-parallel-fast"] {
   trigger: manual;
-  step-1: run cmd=$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --quick $(PYTEST_ARGS);
+  step-1: run cmd=$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --critical --quick $(PYTEST_ARGS);
 }
 
 workflow[name="test-python-parallel"] {
@@ -310,22 +310,22 @@ workflow[name="test:docker:ide-matrix"] {
 
 workflow[name="test:fast"] {
   trigger: manual;
-  step-1: run cmd=scripts/koru-pytest.sh --fast {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --critical --fast {{.CLI_ARGS}};
 }
 
 workflow[name="test:quick"] {
   trigger: manual;
-  step-1: run cmd=scripts/koru-pytest.sh --quick {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --critical --quick {{.CLI_ARGS}};
 }
 
 workflow[name="test:parallel"] {
   trigger: manual;
-  step-1: run cmd=scripts/koru-pytest.sh --fast --maxfail=1 {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --critical --fast --maxfail=1 {{.CLI_ARGS}};
 }
 
 workflow[name="test:changed"] {
   trigger: manual;
-  step-1: run cmd=scripts/koru-pytest.sh --changed --quick {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --changed --critical --quick {{.CLI_ARGS}};
 }
 
 workflow[name="test:profile"] {
@@ -926,7 +926,7 @@ deploy {
 environment[name="local"] {
   runtime: docker-compose;
   env_file: .env;
-  python_version: >=3.12;
+  python_version: >=3.12,<3.14;
 }
 ```
 
@@ -934,12 +934,27 @@ environment[name="local"] {
 
 ### CLI Entry Points
 
+- `coru`
 - `koru`
 - `koru-wup-testql`
 - `koru-dsl`
 - `koru-api`
 
 ### testql Scenarios
+
+#### `testql-scenarios/cli-coru_calibration.testql.toon.yaml`
+
+```toon markpact:testql path=testql-scenarios/cli-coru_calibration.testql.toon.yaml
+# SCENARIO: coru calibration command (WUP quick / dry-run safe)
+# TYPE: cli
+
+CONFIG[2]{key, value}:
+  cli_command, coru
+  timeout_ms, 5000
+
+SHELL "coru calibration --help" ${timeout_ms}
+ASSERT_EXIT_CODE 0
+```
 
 #### `testql-scenarios/cli-koru-live.testql.toon.yaml`
 
@@ -1210,24 +1225,24 @@ tasks:
       IDES: '{{.IDES | default ""}}'
 
   test:fast:
-    desc: Run default tests quietly in parallel when pytest-xdist is installed
+    desc: Run critical tests quietly in parallel when pytest-xdist is installed
     cmds:
-      - scripts/koru-pytest.sh --fast {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --critical --fast {{.CLI_ARGS}}
 
   test:quick:
     desc: Fastest feedback loop (parallel, fail fast, failed tests first)
     cmds:
-      - scripts/koru-pytest.sh --quick {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --critical --quick {{.CLI_ARGS}}
 
   test:parallel:
-    desc: Run tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)
+    desc: Run critical tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)
     cmds:
-      - scripts/koru-pytest.sh --fast --maxfail=1 {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --critical --fast --maxfail=1 {{.CLI_ARGS}}
 
   test:changed:
     desc: Run changed pytest files under tests/; falls back to default tests when none changed
     cmds:
-      - scripts/koru-pytest.sh --changed --quick {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --changed --critical --quick {{.CLI_ARGS}}
 
   test:profile:
     desc: Run default tests and show the slowest test durations
@@ -2055,7 +2070,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.309
+  version: 0.1.317
   env: local
 ```
 
@@ -2064,14 +2079,15 @@ project:
 ### Runtime
 
 ```text markpact:deps python
+gillm>=0.1.9
 pyyaml>=6.0,<7.0
 rich>=14.3.4
-gillm>=0.1.5
 ```
 
 ### Development
 
 ```text markpact:deps python scope=dev
+gillm>=0.1.9
 pytest>=8.0,<10.0
 pytest-cov>=5.0,<8.0
 pytest-rerunfailures>=14.0,<17.0
@@ -2179,6 +2195,7 @@ Monorepo root for all koru autopilot IDE plugins. Each IDE has its own VSIX so a
 
 - `npm run sync-shared` — `python3 scripts/sync-plugin-shared.py`
 - `npm run compile:all` — `npm run sync-shared && npm run compile --workspaces --if-present`
+- `npm run test` — `npm run test:all`
 - `npm run test:all` — `npm run sync-shared && npm run test --workspaces --if-present`
 - `npm run package:all` — `npm run sync-shared && npm run package --workspaces --if-present`
 
@@ -2187,14 +2204,17 @@ Monorepo root for all koru autopilot IDE plugins. Each IDE has its own VSIX so a
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 1324f 215463L | python:768,javascript:316,typescript:179,shell:59,less:1,css:1 | 2026-06-03
-# stats: 5695 func | 564 cls | 1324 mod | CC̄=4.0 | critical:332 | cycles:0
-# alerts[5]: CC resolve_autopilot_instance=24; CC format_repair_history_for_llm=24; CC _infer_default_ide=23; CC test_structured_cycle_report_emits_diagnostics_and_plans=23; CC _auto_readiness_gate=22
-# hotspots[5]: make_handler fan=28; topology_main fan=23; cmd_start fan=22; _diagnose_bridge_after_drive_failure fan=22; _attempt_plugin_self_heal fan=21
+# koru | 1389f 232123L | python:810,javascript:328,typescript:183,shell:62,less:5,css:1 | 2026-06-07
+# stats: 6022 func | 581 cls | 1389 mod | CC̄=4.0 | critical:379 | cycles:0
+# alerts[5]: CC _infer_default_ide=26; CC resolve_autopilot_instance=24; CC format_repair_history_for_llm=24; CC test_structured_cycle_report_emits_diagnostics_and_plans=23; CC _auto_readiness_gate=22
+# hotspots[5]: action_snapshot fan=29; cmd_start fan=22; _diagnose_bridge_after_drive_failure fan=22; _attempt_plugin_self_heal fan=21; setup_autonomous_session fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1324]:
+M[1389]:
+  .nlp2dsl/environment.doql.less,1044
+  .nlp2dsl/registry/environment.doql.less,1044
   app.doql.less,890
+  check_dups.py,28
   docker/capture/entrypoint-x11.sh,36
   docker/capture/run.sh,59
   docker/capture/smoke.py,142
@@ -2221,6 +2241,10 @@ M[1324]:
   docs/llm-tools/vallm/install.sh,56
   examples/ci/headless-autonomous-jsonl/e2e.sh,27
   examples/ci/headless-autonomous-jsonl/run-docker.sh,8
+  examples/nlp2uri-testql-browser/.nlp2dsl/environment.doql.less,181
+  examples/nlp2uri-testql-browser/.nlp2dsl/registry/environment.doql.less,181
+  examples/nlp2uri-testql-browser/e2e.sh,20
+  examples/nlp2uri-testql-browser/run.sh,122
   examples/planfile/http-api-curl/e2e.sh,20
   examples/planfile/http-api-curl/run-docker.sh,8
   examples/planfile/queue-cli-dryrun/e2e.sh,16
@@ -2232,14 +2256,15 @@ M[1324]:
   examples/runtime/koru-serve-health/e2e.sh,22
   examples/runtime/koru-serve-health/run-docker.sh,8
   packages/coru/src/coru/__init__.py,4
-  packages/coru/src/coru/cli.py,3211
+  packages/coru/src/coru/cli.py,4054
   packages/coru/src/coru/ecosystem.py,226
+  packages/coru/src/coru/ide_detection.py,150
   packages/coru/src/coru/repair/__init__.py,53
   packages/coru/src/coru/repair/commands.py,39
   packages/coru/src/coru/repair/diagnostics.py,459
   packages/coru/src/coru/repair/domain.py,65
   packages/coru/src/coru/repair/events.py,55
-  packages/coru/src/coru/repair/pipeline.py,834
+  packages/coru/src/coru/repair/pipeline.py,880
   packages/coru/src/coru/repair/projector.py,100
   packages/coru/src/coru/repair/query.py,81
   packages/coru/src/coru/repair/registry.py,178
@@ -2250,7 +2275,9 @@ M[1324]:
   packages/coru/src/coru/supervisor/cli.py,328
   packages/coru/src/coru/supervisor/daemon_ctl.py,74
   packages/coru/src/coru/supervisor/editor_cli.py,36
-  packages/coru/src/coru/supervisor/http_server.py,211
+  packages/coru/src/coru/supervisor/http_handlers.py,200
+  packages/coru/src/coru/supervisor/http_server.py,84
+  packages/coru/src/coru/supervisor/http_util.py,37
   packages/coru/src/coru/supervisor/models.py,109
   packages/coru/src/coru/supervisor/paths.py,44
   packages/coru/src/coru/supervisor/probe.py,137
@@ -2258,8 +2285,9 @@ M[1324]:
   packages/coru/src/coru/supervisor/service.py,187
   packages/coru/src/coru/supervisor/socket_path.py,48
   packages/coru/src/coru/supervisor/systemd_unit.py,105
-  packages/coru/tests/test_coru_cli.py,2192
+  packages/coru/tests/test_coru_cli.py,2565
   packages/coru/tests/test_ecosystem.py,142
+  packages/coru/tests/test_ide_detection.py,102
   packages/coru/tests/test_repair_es.py,100
   packages/coru/tests/test_repair_registry.py,275
   packages/coru/tests/test_supervisor.py,209
@@ -2269,29 +2297,33 @@ M[1324]:
   packages/koruenv/src/koruenv/lane.py,94
   packages/koruenv/tests/conftest.py,8
   packages/koruenv/tests/test_koruenv_package.py,40
-  patch_gillm_client.py,21
+  packages/nlpshim/src/nlpshim/__init__.py,25
+  packages/nlpshim/src/nlpshim/client.py,121
+  packages/nlpshim/src/nlpshim/conversation_client.py,83
+  packages/nlpshim/src/nlpshim/conversation_test_api.py,76
   plugins/koru-autopilot-antigravity/out/_shared/ack-payload.js,233
   plugins/koru-autopilot-antigravity/out/_shared/autopilot-bridge.js,171
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-ack.js,184
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-ack.js,186
   plugins/koru-autopilot-antigravity/out/_shared/bridge-base-class.js,90
   plugins/koru-autopilot-antigravity/out/_shared/bridge-base.js,78
   plugins/koru-autopilot-antigravity/out/_shared/bridge-commands.js,95
   plugins/koru-autopilot-antigravity/out/_shared/bridge-config.js,93
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-fastpath.js,372
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-fastpath.js,457
   plugins/koru-autopilot-antigravity/out/_shared/bridge-focus-core.js,233
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-focus-strategy.js,278
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-focus.js,73
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-focus-strategy.js,374
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-focus.js,76
   plugins/koru-autopilot-antigravity/out/_shared/bridge-handle.js,3
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-helpers.js,96
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-network.js,436
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-paste.js,502
-  plugins/koru-autopilot-antigravity/out/_shared/bridge-submit.js,835
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-helpers.js,139
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-network.js,430
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-paste.js,743
+  plugins/koru-autopilot-antigravity/out/_shared/bridge-submit.js,858
   plugins/koru-autopilot-antigravity/out/_shared/bridge-watcher.js,124
   plugins/koru-autopilot-antigravity/out/_shared/chat-history-adapters.js,24
   plugins/koru-autopilot-antigravity/out/_shared/chat-history-paths.js,63
   plugins/koru-autopilot-antigravity/out/_shared/chat-history-types.js,3
   plugins/koru-autopilot-antigravity/out/_shared/chat-history-watcher.js,175
   plugins/koru-autopilot-antigravity/out/_shared/cursor-bubble-adapter.js,179
+  plugins/koru-autopilot-antigravity/out/_shared/cursor-composer-paste.js,30
   plugins/koru-autopilot-antigravity/out/_shared/dispatch-plan.js,19
   plugins/koru-autopilot-antigravity/out/_shared/extension-wrapper.js,66
   plugins/koru-autopilot-antigravity/out/_shared/host-click-submit.js,32
@@ -2301,6 +2333,7 @@ M[1324]:
   plugins/koru-autopilot-antigravity/out/_shared/submit-match.js,30
   plugins/koru-autopilot-antigravity/out/_shared/types.js,3
   plugins/koru-autopilot-antigravity/out/_shared/unsupported-chat-adapter.js,19
+  plugins/koru-autopilot-antigravity/out/_shared/version-reconnect.js,28
   plugins/koru-autopilot-antigravity/out/_shared/vscode-chat-session-adapter.js,167
   plugins/koru-autopilot-antigravity/out/ack-payload.js,233
   plugins/koru-autopilot-antigravity/out/ack-payload.test.js,48
@@ -2320,12 +2353,12 @@ M[1324]:
   plugins/koru-autopilot-antigravity/out/host-click-submit.js,32
   plugins/koru-autopilot-antigravity/out/host-click-submit.test.js,32
   plugins/koru-autopilot-antigravity/out/ide-control-strategy.js,52
-  plugins/koru-autopilot-antigravity/out/ides/antigravity.js,53
+  plugins/koru-autopilot-antigravity/out/ides/antigravity.js,58
   plugins/koru-autopilot-antigravity/out/ides/ide-strategy.js,18
   plugins/koru-autopilot-antigravity/out/ides/index.js,10
   plugins/koru-autopilot-antigravity/out/ides/registry.js,44
   plugins/koru-autopilot-antigravity/out/probe-ladder.js,364
-  plugins/koru-autopilot-antigravity/out/probe-ladder.test.js,43
+  plugins/koru-autopilot-antigravity/out/probe-ladder.test.js,46
   plugins/koru-autopilot-antigravity/out/socketPath.js,109
   plugins/koru-autopilot-antigravity/out/step-decisions.js,151
   plugins/koru-autopilot-antigravity/out/step-decisions.test.js,73
@@ -2349,11 +2382,11 @@ M[1324]:
   plugins/koru-autopilot-antigravity/src/host-click-submit.test.ts,40
   plugins/koru-autopilot-antigravity/src/host-click-submit.ts,36
   plugins/koru-autopilot-antigravity/src/ide-control-strategy.ts,65
-  plugins/koru-autopilot-antigravity/src/ides/antigravity.ts,64
-  plugins/koru-autopilot-antigravity/src/ides/ide-strategy.ts,109
+  plugins/koru-autopilot-antigravity/src/ides/antigravity.ts,69
+  plugins/koru-autopilot-antigravity/src/ides/ide-strategy.ts,118
   plugins/koru-autopilot-antigravity/src/ides/index.ts,9
   plugins/koru-autopilot-antigravity/src/ides/registry.ts,43
-  plugins/koru-autopilot-antigravity/src/probe-ladder.test.ts,64
+  plugins/koru-autopilot-antigravity/src/probe-ladder.test.ts,70
   plugins/koru-autopilot-antigravity/src/probe-ladder.ts,433
   plugins/koru-autopilot-antigravity/src/socketPath.ts,76
   plugins/koru-autopilot-antigravity/src/step-decisions.test.ts,149
@@ -2362,26 +2395,27 @@ M[1324]:
   plugins/koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts,2
   plugins/koru-autopilot-cursor/out/_shared/ack-payload.js,233
   plugins/koru-autopilot-cursor/out/_shared/autopilot-bridge.js,171
-  plugins/koru-autopilot-cursor/out/_shared/bridge-ack.js,184
+  plugins/koru-autopilot-cursor/out/_shared/bridge-ack.js,186
   plugins/koru-autopilot-cursor/out/_shared/bridge-base-class.js,90
   plugins/koru-autopilot-cursor/out/_shared/bridge-base.js,78
   plugins/koru-autopilot-cursor/out/_shared/bridge-commands.js,95
   plugins/koru-autopilot-cursor/out/_shared/bridge-config.js,93
-  plugins/koru-autopilot-cursor/out/_shared/bridge-fastpath.js,372
+  plugins/koru-autopilot-cursor/out/_shared/bridge-fastpath.js,469
   plugins/koru-autopilot-cursor/out/_shared/bridge-focus-core.js,233
-  plugins/koru-autopilot-cursor/out/_shared/bridge-focus-strategy.js,278
-  plugins/koru-autopilot-cursor/out/_shared/bridge-focus.js,73
+  plugins/koru-autopilot-cursor/out/_shared/bridge-focus-strategy.js,374
+  plugins/koru-autopilot-cursor/out/_shared/bridge-focus.js,76
   plugins/koru-autopilot-cursor/out/_shared/bridge-handle.js,3
-  plugins/koru-autopilot-cursor/out/_shared/bridge-helpers.js,96
-  plugins/koru-autopilot-cursor/out/_shared/bridge-network.js,436
-  plugins/koru-autopilot-cursor/out/_shared/bridge-paste.js,502
-  plugins/koru-autopilot-cursor/out/_shared/bridge-submit.js,835
+  plugins/koru-autopilot-cursor/out/_shared/bridge-helpers.js,139
+  plugins/koru-autopilot-cursor/out/_shared/bridge-network.js,430
+  plugins/koru-autopilot-cursor/out/_shared/bridge-paste.js,743
+  plugins/koru-autopilot-cursor/out/_shared/bridge-submit.js,858
   plugins/koru-autopilot-cursor/out/_shared/bridge-watcher.js,124
   plugins/koru-autopilot-cursor/out/_shared/chat-history-adapters.js,24
   plugins/koru-autopilot-cursor/out/_shared/chat-history-paths.js,63
   plugins/koru-autopilot-cursor/out/_shared/chat-history-types.js,3
   plugins/koru-autopilot-cursor/out/_shared/chat-history-watcher.js,175
   plugins/koru-autopilot-cursor/out/_shared/cursor-bubble-adapter.js,179
+  plugins/koru-autopilot-cursor/out/_shared/cursor-composer-paste.js,30
   plugins/koru-autopilot-cursor/out/_shared/dispatch-plan.js,19
   plugins/koru-autopilot-cursor/out/_shared/extension-wrapper.js,66
   plugins/koru-autopilot-cursor/out/_shared/host-click-submit.js,32
@@ -2391,17 +2425,19 @@ M[1324]:
   plugins/koru-autopilot-cursor/out/_shared/submit-match.js,30
   plugins/koru-autopilot-cursor/out/_shared/types.js,3
   plugins/koru-autopilot-cursor/out/_shared/unsupported-chat-adapter.js,19
+  plugins/koru-autopilot-cursor/out/_shared/version-reconnect.js,28
   plugins/koru-autopilot-cursor/out/_shared/vscode-chat-session-adapter.js,167
   plugins/koru-autopilot-cursor/out/ack-payload.js,233
   plugins/koru-autopilot-cursor/out/ack-payload.test.js,48
   plugins/koru-autopilot-cursor/out/antigravity-fastpath.js,21
+  plugins/koru-autopilot-cursor/out/bridge-submit-focus.test.js,444
   plugins/koru-autopilot-cursor/out/chat-history-adapters.js,31
   plugins/koru-autopilot-cursor/out/chat-history-paths.js,63
   plugins/koru-autopilot-cursor/out/chat-history-types.js,3
   plugins/koru-autopilot-cursor/out/chat-history-watcher.js,18
   plugins/koru-autopilot-cursor/out/chat-history-watcher.test.js,386
-  plugins/koru-autopilot-cursor/out/command-catalog.js,103
-  plugins/koru-autopilot-cursor/out/command-catalog.test.js,41
+  plugins/koru-autopilot-cursor/out/command-catalog.js,107
+  plugins/koru-autopilot-cursor/out/command-catalog.test.js,43
   plugins/koru-autopilot-cursor/out/cursor-bubble-adapter.js,18
   plugins/koru-autopilot-cursor/out/dispatch-plan.js,19
   plugins/koru-autopilot-cursor/out/dispatch-plan.test.js,116
@@ -2409,13 +2445,13 @@ M[1324]:
   plugins/koru-autopilot-cursor/out/host-click-submit.js,32
   plugins/koru-autopilot-cursor/out/host-click-submit.test.js,32
   plugins/koru-autopilot-cursor/out/ide-control-strategy.js,52
-  plugins/koru-autopilot-cursor/out/ides/cursor.js,250
-  plugins/koru-autopilot-cursor/out/ides/cursor.test.js,191
+  plugins/koru-autopilot-cursor/out/ides/cursor.js,290
+  plugins/koru-autopilot-cursor/out/ides/cursor.test.js,225
   plugins/koru-autopilot-cursor/out/ides/ide-strategy.js,18
   plugins/koru-autopilot-cursor/out/ides/index.js,10
   plugins/koru-autopilot-cursor/out/ides/registry.js,64
   plugins/koru-autopilot-cursor/out/probe-ladder.js,364
-  plugins/koru-autopilot-cursor/out/probe-ladder.test.js,232
+  plugins/koru-autopilot-cursor/out/probe-ladder.test.js,234
   plugins/koru-autopilot-cursor/out/socketPath.js,109
   plugins/koru-autopilot-cursor/out/step-decisions.js,151
   plugins/koru-autopilot-cursor/out/step-decisions.test.js,75
@@ -2424,13 +2460,14 @@ M[1324]:
   plugins/koru-autopilot-cursor/src/ack-payload.test.ts,53
   plugins/koru-autopilot-cursor/src/ack-payload.ts,261
   plugins/koru-autopilot-cursor/src/antigravity-fastpath.ts,19
+  plugins/koru-autopilot-cursor/src/bridge-submit-focus.test.ts,582
   plugins/koru-autopilot-cursor/src/chat-history-adapters.ts,32
   plugins/koru-autopilot-cursor/src/chat-history-paths.ts,29
   plugins/koru-autopilot-cursor/src/chat-history-types.ts,32
   plugins/koru-autopilot-cursor/src/chat-history-watcher.test.ts,417
   plugins/koru-autopilot-cursor/src/chat-history-watcher.ts,2
-  plugins/koru-autopilot-cursor/src/command-catalog.test.ts,61
-  plugins/koru-autopilot-cursor/src/command-catalog.ts,133
+  plugins/koru-autopilot-cursor/src/command-catalog.test.ts,66
+  plugins/koru-autopilot-cursor/src/command-catalog.ts,137
   plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts,2
   plugins/koru-autopilot-cursor/src/dispatch-plan.test.ts,119
   plugins/koru-autopilot-cursor/src/dispatch-plan.ts,27
@@ -2438,12 +2475,12 @@ M[1324]:
   plugins/koru-autopilot-cursor/src/host-click-submit.test.ts,40
   plugins/koru-autopilot-cursor/src/host-click-submit.ts,36
   plugins/koru-autopilot-cursor/src/ide-control-strategy.ts,65
-  plugins/koru-autopilot-cursor/src/ides/cursor.test.ts,324
-  plugins/koru-autopilot-cursor/src/ides/cursor.ts,279
-  plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts,109
+  plugins/koru-autopilot-cursor/src/ides/cursor.test.ts,412
+  plugins/koru-autopilot-cursor/src/ides/cursor.ts,329
+  plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts,118
   plugins/koru-autopilot-cursor/src/ides/index.ts,9
   plugins/koru-autopilot-cursor/src/ides/registry.ts,64
-  plugins/koru-autopilot-cursor/src/probe-ladder.test.ts,314
+  plugins/koru-autopilot-cursor/src/probe-ladder.test.ts,316
   plugins/koru-autopilot-cursor/src/probe-ladder.ts,433
   plugins/koru-autopilot-cursor/src/socketPath.ts,76
   plugins/koru-autopilot-cursor/src/step-decisions.test.ts,163
@@ -2452,25 +2489,26 @@ M[1324]:
   plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts,2
   plugins/koru-autopilot-shared/src/ack-payload.ts,261
   plugins/koru-autopilot-shared/src/autopilot-bridge.ts,201
-  plugins/koru-autopilot-shared/src/bridge-ack.ts,185
+  plugins/koru-autopilot-shared/src/bridge-ack.ts,187
   plugins/koru-autopilot-shared/src/bridge-base-class.ts,70
   plugins/koru-autopilot-shared/src/bridge-base.ts,65
   plugins/koru-autopilot-shared/src/bridge-commands.ts,78
   plugins/koru-autopilot-shared/src/bridge-config.ts,81
-  plugins/koru-autopilot-shared/src/bridge-fastpath.ts,401
+  plugins/koru-autopilot-shared/src/bridge-fastpath.ts,512
   plugins/koru-autopilot-shared/src/bridge-focus-core.ts,240
-  plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts,305
-  plugins/koru-autopilot-shared/src/bridge-focus.ts,80
+  plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts,411
+  plugins/koru-autopilot-shared/src/bridge-focus.ts,83
   plugins/koru-autopilot-shared/src/bridge-handle.ts,9
-  plugins/koru-autopilot-shared/src/bridge-helpers.ts,102
-  plugins/koru-autopilot-shared/src/bridge-network.ts,416
-  plugins/koru-autopilot-shared/src/bridge-paste.ts,516
-  plugins/koru-autopilot-shared/src/bridge-submit.ts,949
+  plugins/koru-autopilot-shared/src/bridge-helpers.ts,151
+  plugins/koru-autopilot-shared/src/bridge-network.ts,412
+  plugins/koru-autopilot-shared/src/bridge-paste.ts,782
+  plugins/koru-autopilot-shared/src/bridge-submit.ts,993
   plugins/koru-autopilot-shared/src/bridge-watcher.ts,92
   plugins/koru-autopilot-shared/src/chat-history-paths.ts,29
   plugins/koru-autopilot-shared/src/chat-history-types.ts,32
   plugins/koru-autopilot-shared/src/chat-history-watcher.ts,198
   plugins/koru-autopilot-shared/src/cursor-bubble-adapter.ts,159
+  plugins/koru-autopilot-shared/src/cursor-composer-paste.ts,32
   plugins/koru-autopilot-shared/src/dispatch-plan.ts,27
   plugins/koru-autopilot-shared/src/extension-wrapper.ts,58
   plugins/koru-autopilot-shared/src/host-click-submit.ts,36
@@ -2480,29 +2518,31 @@ M[1324]:
   plugins/koru-autopilot-shared/src/submit-match.ts,36
   plugins/koru-autopilot-shared/src/types.ts,34
   plugins/koru-autopilot-shared/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-shared/src/version-reconnect.ts,23
   plugins/koru-autopilot-shared/src/vscode-chat-session-adapter.ts,146
   plugins/koru-autopilot-vscode/out/_shared/ack-payload.js,233
   plugins/koru-autopilot-vscode/out/_shared/autopilot-bridge.js,171
-  plugins/koru-autopilot-vscode/out/_shared/bridge-ack.js,184
+  plugins/koru-autopilot-vscode/out/_shared/bridge-ack.js,186
   plugins/koru-autopilot-vscode/out/_shared/bridge-base-class.js,90
   plugins/koru-autopilot-vscode/out/_shared/bridge-base.js,78
   plugins/koru-autopilot-vscode/out/_shared/bridge-commands.js,95
   plugins/koru-autopilot-vscode/out/_shared/bridge-config.js,93
-  plugins/koru-autopilot-vscode/out/_shared/bridge-fastpath.js,372
+  plugins/koru-autopilot-vscode/out/_shared/bridge-fastpath.js,457
   plugins/koru-autopilot-vscode/out/_shared/bridge-focus-core.js,233
-  plugins/koru-autopilot-vscode/out/_shared/bridge-focus-strategy.js,278
-  plugins/koru-autopilot-vscode/out/_shared/bridge-focus.js,73
+  plugins/koru-autopilot-vscode/out/_shared/bridge-focus-strategy.js,374
+  plugins/koru-autopilot-vscode/out/_shared/bridge-focus.js,76
   plugins/koru-autopilot-vscode/out/_shared/bridge-handle.js,3
-  plugins/koru-autopilot-vscode/out/_shared/bridge-helpers.js,96
-  plugins/koru-autopilot-vscode/out/_shared/bridge-network.js,436
-  plugins/koru-autopilot-vscode/out/_shared/bridge-paste.js,502
-  plugins/koru-autopilot-vscode/out/_shared/bridge-submit.js,835
+  plugins/koru-autopilot-vscode/out/_shared/bridge-helpers.js,139
+  plugins/koru-autopilot-vscode/out/_shared/bridge-network.js,430
+  plugins/koru-autopilot-vscode/out/_shared/bridge-paste.js,743
+  plugins/koru-autopilot-vscode/out/_shared/bridge-submit.js,858
   plugins/koru-autopilot-vscode/out/_shared/bridge-watcher.js,124
   plugins/koru-autopilot-vscode/out/_shared/chat-history-adapters.js,24
   plugins/koru-autopilot-vscode/out/_shared/chat-history-paths.js,63
   plugins/koru-autopilot-vscode/out/_shared/chat-history-types.js,3
   plugins/koru-autopilot-vscode/out/_shared/chat-history-watcher.js,175
   plugins/koru-autopilot-vscode/out/_shared/cursor-bubble-adapter.js,179
+  plugins/koru-autopilot-vscode/out/_shared/cursor-composer-paste.js,30
   plugins/koru-autopilot-vscode/out/_shared/dispatch-plan.js,19
   plugins/koru-autopilot-vscode/out/_shared/extension-wrapper.js,66
   plugins/koru-autopilot-vscode/out/_shared/host-click-submit.js,32
@@ -2512,6 +2552,7 @@ M[1324]:
   plugins/koru-autopilot-vscode/out/_shared/submit-match.js,30
   plugins/koru-autopilot-vscode/out/_shared/types.js,3
   plugins/koru-autopilot-vscode/out/_shared/unsupported-chat-adapter.js,19
+  plugins/koru-autopilot-vscode/out/_shared/version-reconnect.js,28
   plugins/koru-autopilot-vscode/out/_shared/vscode-chat-session-adapter.js,167
   plugins/koru-autopilot-vscode/out/ack-payload.js,233
   plugins/koru-autopilot-vscode/out/ack-payload.test.js,48
@@ -2550,7 +2591,7 @@ M[1324]:
   plugins/koru-autopilot-vscode/out/vscode-chat-session-adapter.js,18
   plugins/koru-autopilot-vscode/src/ack-payload.test.ts,53
   plugins/koru-autopilot-vscode/src/ack-payload.ts,261
-  plugins/koru-autopilot-vscode/src/antigravity-fastpath.test.ts,40
+  plugins/koru-autopilot-vscode/src/antigravity-fastpath.test.ts,41
   plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts,19
   plugins/koru-autopilot-vscode/src/chat-history-adapters.ts,22
   plugins/koru-autopilot-vscode/src/chat-history-paths.ts,29
@@ -2566,7 +2607,7 @@ M[1324]:
   plugins/koru-autopilot-vscode/src/host-click-submit.test.ts,40
   plugins/koru-autopilot-vscode/src/host-click-submit.ts,36
   plugins/koru-autopilot-vscode/src/ide-control-strategy.ts,65
-  plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts,109
+  plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts,118
   plugins/koru-autopilot-vscode/src/ides/index.ts,9
   plugins/koru-autopilot-vscode/src/ides/registry.ts,46
   plugins/koru-autopilot-vscode/src/ides/vscode.ts,82
@@ -2579,26 +2620,27 @@ M[1324]:
   plugins/koru-autopilot-vscode/src/vscode-chat-session-adapter.ts,2
   plugins/koru-autopilot-vscodium/out/_shared/ack-payload.js,233
   plugins/koru-autopilot-vscodium/out/_shared/autopilot-bridge.js,171
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-ack.js,184
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-ack.js,186
   plugins/koru-autopilot-vscodium/out/_shared/bridge-base-class.js,90
   plugins/koru-autopilot-vscodium/out/_shared/bridge-base.js,78
   plugins/koru-autopilot-vscodium/out/_shared/bridge-commands.js,95
   plugins/koru-autopilot-vscodium/out/_shared/bridge-config.js,93
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-fastpath.js,372
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-fastpath.js,457
   plugins/koru-autopilot-vscodium/out/_shared/bridge-focus-core.js,233
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-focus-strategy.js,278
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-focus.js,73
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-focus-strategy.js,374
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-focus.js,76
   plugins/koru-autopilot-vscodium/out/_shared/bridge-handle.js,3
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-helpers.js,96
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-network.js,436
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-paste.js,502
-  plugins/koru-autopilot-vscodium/out/_shared/bridge-submit.js,835
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-helpers.js,139
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-network.js,430
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-paste.js,743
+  plugins/koru-autopilot-vscodium/out/_shared/bridge-submit.js,858
   plugins/koru-autopilot-vscodium/out/_shared/bridge-watcher.js,124
   plugins/koru-autopilot-vscodium/out/_shared/chat-history-adapters.js,24
   plugins/koru-autopilot-vscodium/out/_shared/chat-history-paths.js,63
   plugins/koru-autopilot-vscodium/out/_shared/chat-history-types.js,3
   plugins/koru-autopilot-vscodium/out/_shared/chat-history-watcher.js,175
   plugins/koru-autopilot-vscodium/out/_shared/cursor-bubble-adapter.js,179
+  plugins/koru-autopilot-vscodium/out/_shared/cursor-composer-paste.js,30
   plugins/koru-autopilot-vscodium/out/_shared/dispatch-plan.js,19
   plugins/koru-autopilot-vscodium/out/_shared/extension-wrapper.js,66
   plugins/koru-autopilot-vscodium/out/_shared/host-click-submit.js,32
@@ -2608,6 +2650,7 @@ M[1324]:
   plugins/koru-autopilot-vscodium/out/_shared/submit-match.js,30
   plugins/koru-autopilot-vscodium/out/_shared/types.js,3
   plugins/koru-autopilot-vscodium/out/_shared/unsupported-chat-adapter.js,19
+  plugins/koru-autopilot-vscodium/out/_shared/version-reconnect.js,28
   plugins/koru-autopilot-vscodium/out/_shared/vscode-chat-session-adapter.js,167
   plugins/koru-autopilot-vscodium/out/ack-payload.js,233
   plugins/koru-autopilot-vscodium/out/ack-payload.test.js,48
@@ -2640,10 +2683,11 @@ M[1324]:
   plugins/koru-autopilot-vscodium/out/step-decisions.js,151
   plugins/koru-autopilot-vscodium/out/step-decisions.test.js,85
   plugins/koru-autopilot-vscodium/out/unsupported-chat-adapter.js,19
+  plugins/koru-autopilot-vscodium/out/version-reconnect.test.js,24
   plugins/koru-autopilot-vscodium/out/vscode-chat-session-adapter.js,18
   plugins/koru-autopilot-vscodium/src/ack-payload.test.ts,53
   plugins/koru-autopilot-vscodium/src/ack-payload.ts,261
-  plugins/koru-autopilot-vscodium/src/antigravity-fastpath.test.ts,40
+  plugins/koru-autopilot-vscodium/src/antigravity-fastpath.test.ts,41
   plugins/koru-autopilot-vscodium/src/antigravity-fastpath.ts,19
   plugins/koru-autopilot-vscodium/src/chat-history-adapters.ts,22
   plugins/koru-autopilot-vscodium/src/chat-history-paths.ts,29
@@ -2660,7 +2704,7 @@ M[1324]:
   plugins/koru-autopilot-vscodium/src/host-click-submit.test.ts,40
   plugins/koru-autopilot-vscodium/src/host-click-submit.ts,36
   plugins/koru-autopilot-vscodium/src/ide-control-strategy.ts,65
-  plugins/koru-autopilot-vscodium/src/ides/ide-strategy.ts,109
+  plugins/koru-autopilot-vscodium/src/ides/ide-strategy.ts,118
   plugins/koru-autopilot-vscodium/src/ides/index.ts,9
   plugins/koru-autopilot-vscodium/src/ides/registry.ts,43
   plugins/koru-autopilot-vscodium/src/ides/vscodium-host.ts,11
@@ -2672,29 +2716,31 @@ M[1324]:
   plugins/koru-autopilot-vscodium/src/step-decisions.test.ts,177
   plugins/koru-autopilot-vscodium/src/step-decisions.ts,193
   plugins/koru-autopilot-vscodium/src/unsupported-chat-adapter.ts,19
+  plugins/koru-autopilot-vscodium/src/version-reconnect.test.ts,53
   plugins/koru-autopilot-vscodium/src/vscode-chat-session-adapter.ts,2
   plugins/koru-autopilot-windsurf/out/_shared/ack-payload.js,233
   plugins/koru-autopilot-windsurf/out/_shared/autopilot-bridge.js,171
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-ack.js,184
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-ack.js,186
   plugins/koru-autopilot-windsurf/out/_shared/bridge-base-class.js,90
   plugins/koru-autopilot-windsurf/out/_shared/bridge-base.js,78
   plugins/koru-autopilot-windsurf/out/_shared/bridge-commands.js,95
   plugins/koru-autopilot-windsurf/out/_shared/bridge-config.js,93
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-fastpath.js,372
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-fastpath.js,457
   plugins/koru-autopilot-windsurf/out/_shared/bridge-focus-core.js,233
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-focus-strategy.js,278
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-focus.js,73
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-focus-strategy.js,374
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-focus.js,76
   plugins/koru-autopilot-windsurf/out/_shared/bridge-handle.js,3
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-helpers.js,96
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-network.js,436
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-paste.js,502
-  plugins/koru-autopilot-windsurf/out/_shared/bridge-submit.js,835
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-helpers.js,139
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-network.js,430
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-paste.js,743
+  plugins/koru-autopilot-windsurf/out/_shared/bridge-submit.js,858
   plugins/koru-autopilot-windsurf/out/_shared/bridge-watcher.js,124
   plugins/koru-autopilot-windsurf/out/_shared/chat-history-adapters.js,24
   plugins/koru-autopilot-windsurf/out/_shared/chat-history-paths.js,63
   plugins/koru-autopilot-windsurf/out/_shared/chat-history-types.js,3
   plugins/koru-autopilot-windsurf/out/_shared/chat-history-watcher.js,175
   plugins/koru-autopilot-windsurf/out/_shared/cursor-bubble-adapter.js,179
+  plugins/koru-autopilot-windsurf/out/_shared/cursor-composer-paste.js,30
   plugins/koru-autopilot-windsurf/out/_shared/dispatch-plan.js,19
   plugins/koru-autopilot-windsurf/out/_shared/extension-wrapper.js,66
   plugins/koru-autopilot-windsurf/out/_shared/host-click-submit.js,32
@@ -2704,6 +2750,7 @@ M[1324]:
   plugins/koru-autopilot-windsurf/out/_shared/submit-match.js,30
   plugins/koru-autopilot-windsurf/out/_shared/types.js,3
   plugins/koru-autopilot-windsurf/out/_shared/unsupported-chat-adapter.js,19
+  plugins/koru-autopilot-windsurf/out/_shared/version-reconnect.js,28
   plugins/koru-autopilot-windsurf/out/_shared/vscode-chat-session-adapter.js,167
   plugins/koru-autopilot-windsurf/out/ack-payload.js,233
   plugins/koru-autopilot-windsurf/out/ack-payload.test.js,48
@@ -2736,7 +2783,7 @@ M[1324]:
   plugins/koru-autopilot-windsurf/out/vscode-chat-session-adapter.js,18
   plugins/koru-autopilot-windsurf/src/ack-payload.test.ts,53
   plugins/koru-autopilot-windsurf/src/ack-payload.ts,261
-  plugins/koru-autopilot-windsurf/src/antigravity-fastpath.test.ts,40
+  plugins/koru-autopilot-windsurf/src/antigravity-fastpath.test.ts,41
   plugins/koru-autopilot-windsurf/src/antigravity-fastpath.ts,19
   plugins/koru-autopilot-windsurf/src/chat-history-adapters.ts,25
   plugins/koru-autopilot-windsurf/src/chat-history-paths.ts,29
@@ -2752,7 +2799,7 @@ M[1324]:
   plugins/koru-autopilot-windsurf/src/host-click-submit.test.ts,40
   plugins/koru-autopilot-windsurf/src/host-click-submit.ts,36
   plugins/koru-autopilot-windsurf/src/ide-control-strategy.ts,65
-  plugins/koru-autopilot-windsurf/src/ides/ide-strategy.ts,109
+  plugins/koru-autopilot-windsurf/src/ides/ide-strategy.ts,118
   plugins/koru-autopilot-windsurf/src/ides/index.ts,9
   plugins/koru-autopilot-windsurf/src/ides/registry.ts,43
   plugins/koru-autopilot-windsurf/src/ides/windsurf.ts,109
@@ -2763,20 +2810,21 @@ M[1324]:
   plugins/koru-autopilot-windsurf/src/step-decisions.ts,193
   plugins/koru-autopilot-windsurf/src/unsupported-chat-adapter.ts,19
   plugins/koru-autopilot-windsurf/src/vscode-chat-session-adapter.ts,2
-  project.sh,59
+  project.sh,140
   scripts/_koru_autodiag_filter_tickets.py,56
   scripts/activate-koru-dev.sh,19
   scripts/autopilot-ide-autodetect-smoke.sh,183
   scripts/bump_version.py,95
   scripts/docker-ide-matrix-entrypoint.sh,76
   scripts/docker-ide-matrix.sh,93
+  scripts/e2e_envmap_koru.py,129
   scripts/koru-autoloop-reset-diag-markers.sh,97
   scripts/koru-autoloop.sh,677
   scripts/koru-autopilot-lane.sh,11
   scripts/koru-autopilot-lanes.sh,126
   scripts/koru-from-repo.sh,11
   scripts/koru-gate-capture.py,315
-  scripts/koru-pytest.sh,148
+  scripts/koru-pytest.sh,248
   scripts/koru-queue-diagnose.sh,125
   scripts/koru-semcod-gates.sh,136
   scripts/koru-soak-monitor.sh,129
@@ -2785,12 +2833,15 @@ M[1324]:
   scripts/koru-soak-stop.sh,124
   scripts/planfile-export-prompt.sh,82
   scripts/planfile-sync-todo.py,252
+  scripts/run_testql_conversations.py,69
   scripts/scaffold-ide-plugin.py,311
   scripts/simulate-multi-lane-docker.sh,32
   scripts/sync-plugin-build.py,137
   scripts/sync-plugin-shared.py,109
   scripts/sync-plugin-version.py,150
   scripts/sync-vscode-plugin-version.py,126
+  scripts/test-browser-stack.sh,49
+  scripts/validate_testql_conversations.py,110
   scripts/write-ide-plugin-tests.py,262
   services/healing-webhook/app.py,695
   services/healing-webhook/app_bootstrap.py,35
@@ -2799,51 +2850,52 @@ M[1324]:
   src/koru/__init__.py,98
   src/koru/__main__.py,13
   src/koru/activity_log.py,330
-  src/koru/agent_backend_runtime.py,255
+  src/koru/agent_backend_runtime.py,374
   src/koru/agent_backends.py,260
   src/koru/agent_cli_helpers.py,88
   src/koru/agents.py,355
   src/koru/api/__init__.py,8
   src/koru/autoloop_cli.py,89
-  src/koru/autonomous.py,1012
+  src/koru/autonomous.py,1033
   src/koru/autonomous_auto_pipeline.py,256
   src/koru/autonomous_checkpoint.py,218
   src/koru/autonomous_cli_config.py,169
   src/koru/autonomous_cycle.py,1444
   src/koru/autonomous_cycle_bridge.py,21
-  src/koru/autonomous_cycle_chat_activity.py,620
+  src/koru/autonomous_cycle_chat_activity.py,635
   src/koru/autonomous_cycle_chat_activity_analyzer.py,308
   src/koru/autonomous_cycle_chat_activity_config.py,126
   src/koru/autonomous_cycle_chat_activity_text.py,139
   src/koru/autonomous_cycle_chat_activity_tickets.py,410
   src/koru/autonomous_cycle_common.py,21
-  src/koru/autonomous_cycle_config.py,214
-  src/koru/autonomous_cycle_drive_retry.py,604
-  src/koru/autonomous_cycle_gate.py,192
-  src/koru/autonomous_cycle_orchestrator.py,529
+  src/koru/autonomous_cycle_config.py,220
+  src/koru/autonomous_cycle_drive_outcome.py,86
+  src/koru/autonomous_cycle_drive_retry.py,640
+  src/koru/autonomous_cycle_gate.py,329
+  src/koru/autonomous_cycle_orchestrator.py,542
   src/koru/autonomous_cycle_post_drive.py,384
-  src/koru/autonomous_cycle_skip_conditions.py,617
+  src/koru/autonomous_cycle_skip_conditions.py,682
   src/koru/autonomous_daemon.py,288
   src/koru/autonomous_diag_markers.py,17
   src/koru/autonomous_diagnostics.py,306
   src/koru/autonomous_drive_retry_policy.py,282
   src/koru/autonomous_env.py,26
-  src/koru/autonomous_loop_runner.py,1256
+  src/koru/autonomous_loop_runner.py,1257
   src/koru/autonomous_onboarding.py,228
-  src/koru/autonomous_operator.py,305
+  src/koru/autonomous_operator.py,369
   src/koru/autonomous_parser.py,503
   src/koru/autonomous_plugin.py,288
   src/koru/autonomous_plugin_lifecycle.py,77
-  src/koru/autonomous_plugin_runtime.py,191
-  src/koru/autonomous_plugin_wait.py,658
+  src/koru/autonomous_plugin_runtime.py,204
+  src/koru/autonomous_plugin_wait.py,736
   src/koru/autonomous_process_guard.py,272
   src/koru/autonomous_processes.py,356
-  src/koru/autonomous_readiness.py,877
+  src/koru/autonomous_readiness.py,896
   src/koru/autonomous_resources.py,90
-  src/koru/autonomous_runtime.py,503
-  src/koru/autonomous_startup.py,786
+  src/koru/autonomous_runtime.py,576
+  src/koru/autonomous_startup.py,813
   src/koru/autonomous_submit_strategy.py,124
-  src/koru/autonomous_up.py,232
+  src/koru/autonomous_up.py,235
   src/koru/autonomous_wup.py,809
   src/koru/autonomy/__init__.py,25
   src/koru/autonomy/code2llm_discovery.py,753
@@ -2858,7 +2910,7 @@ M[1324]:
   src/koru/autonomy/heal.py,117
   src/koru/autonomy/ide_operator_guidance.py,185
   src/koru/autonomy/ide_work.py,466
-  src/koru/autonomy/operator_pipeline.py,1017
+  src/koru/autonomy/operator_pipeline.py,1010
   src/koru/autonomy/phases/__init__.py,4
   src/koru/autonomy/phases/contexts.py,108
   src/koru/autonomy/phases/drive_phase.py,98
@@ -2896,12 +2948,13 @@ M[1324]:
   src/koru/autonomy_strategy/heuristics.py,68
   src/koru/autonomy_strategy/openrouter.py,90
   src/koru/autonomy_strategy/prompts.py,53
-  src/koru/autopilot/__init__.py,19
+  src/koru/autopilot/__init__.py,20
   src/koru/autopilot/audit.py,10
-  src/koru/autopilot/calibrate_cli.py,226
-  src/koru/autopilot/cli_command.py,334
-  src/koru/autopilot/cli_direct_drive.py,278
-  src/koru/autopilot/cli_parser.py,606
+  src/koru/autopilot/calibrate_cli.py,305
+  src/koru/autopilot/cli_command.py,341
+  src/koru/autopilot/cli_direct_drive.py,279
+  src/koru/autopilot/cli_parser.py,663
+  src/koru/autopilot/cli_snapshot.py,408
   src/koru/autopilot/cli_trace.py,106
   src/koru/autopilot/client.py,11
   src/koru/autopilot/commands/__init__.py,8
@@ -2909,7 +2962,7 @@ M[1324]:
   src/koru/autopilot/commands/handoff.py,167
   src/koru/autopilot/commands/manage.py,79
   src/koru/autopilot/commands/shutdown.py,51
-  src/koru/autopilot/commands/status.py,172
+  src/koru/autopilot/commands/status.py,212
   src/koru/autopilot/config.py,10
   src/koru/autopilot/daemon.py,17
   src/koru/autopilot/daemon_cli.py,152
@@ -2917,14 +2970,14 @@ M[1324]:
   src/koru/autopilot/drive_repair_policy.py,85
   src/koru/autopilot/host_setup.py,10
   src/koru/autopilot/ide.py,10
-  src/koru/autopilot/injector.py,10
-  src/koru/autopilot/install_checks.py,485
-  src/koru/autopilot/install_manager.py,1263
+  src/koru/autopilot/injector.py,20
+  src/koru/autopilot/install_checks.py,513
+  src/koru/autopilot/install_manager.py,1266
   src/koru/autopilot/install_plugin_cli.py,576
   src/koru/autopilot/lane_context.py,286
   src/koru/autopilot/local_manager.py,67
   src/koru/autopilot/log_contract.py,52
-  src/koru/autopilot/os_injector.py,10
+  src/koru/autopilot/os_injector.py,20
   src/koru/autopilot/plugin_installer.py,10
   src/koru/autopilot/protocol.py,49
   src/koru/autopilot/systemd_cli.py,104
@@ -2985,10 +3038,10 @@ M[1324]:
   src/koru/cli/__main__.py,13
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
-  src/koru/cli.py,368
+  src/koru/cli.py,343
   src/koru/cli_agent.py,86
   src/koru/cli_agent_backends.py,62
-  src/koru/cli_auto.py,101
+  src/koru/cli_auto.py,106
   src/koru/cli_bootstrap.py,66
   src/koru/cli_cleaned.py,390
   src/koru/cli_context.py,32
@@ -3014,7 +3067,7 @@ M[1324]:
   src/koru/cli_tagi.py,279
   src/koru/cli_task.py,184
   src/koru/cli_tools.py,65
-  src/koru/cli_topology.py,149
+  src/koru/cli_topology.py,197
   src/koru/cli_watch.py,42
   src/koru/configurator.py,553
   src/koru/context.py,823
@@ -3044,7 +3097,7 @@ M[1324]:
   src/koru/doctor_plugin_bundle.py,123
   src/koru/doctor_plugin_console.py,252
   src/koru/doctor_project_checks.py,108
-  src/koru/doctor_project_health.py,364
+  src/koru/doctor_project_health.py,367
   src/koru/doctor_registry_checks.py,29
   src/koru/doctor_render.py,63
   src/koru/doctor_reporting_checks.py,652
@@ -3054,7 +3107,7 @@ M[1324]:
   src/koru/dsl/__init__.py,10
   src/koru/env_config.py,66
   src/koru/env_flags.py,82
-  src/koru/environment_profile.py,266
+  src/koru/environment_profile.py,272
   src/koru/events.py,91
   src/koru/gate.py,203
   src/koru/gc.py,365
@@ -3063,17 +3116,19 @@ M[1324]:
   src/koru/git_cli.py,275
   src/koru/ide_adapters/__init__.py,23
   src/koru/ide_adapters/base.py,79
-  src/koru/ide_adapters/bridge.py,392
-  src/koru/ide_adapters/gillm_client.py,73
-  src/koru/ide_adapters/gillm_recovery.py,30
-  src/koru/ide_adapters/ide_reload.py,676
+  src/koru/ide_adapters/bridge.py,394
+  src/koru/ide_adapters/gillm_client.py,317
+  src/koru/ide_adapters/gillm_recovery.py,228
+  src/koru/ide_adapters/ide_reload.py,899
   src/koru/ide_adapters/registry.py,55
-  src/koru/ide_adapters/shared.py,465
-  src/koru/ide_adapters/vscode_family.py,138
-  src/koru/ide_client.py,208
-  src/koru/ide_doctor_cli.py,567
+  src/koru/ide_adapters/shared.py,481
+  src/koru/ide_adapters/vscode_family.py,145
+  src/koru/ide_client.py,211
+  src/koru/ide_control_cli.py,280
+  src/koru/ide_doctor_cli.py,596
   src/koru/ide_router.py,106
   src/koru/ide_runtime.py,45
+  src/koru/ide_status_systemmap.py,32
   src/koru/init.py,660
   src/koru/init_host_environment.py,338
   src/koru/integration_ledger.py,136
@@ -3081,9 +3136,9 @@ M[1324]:
   src/koru/llm_reflect.py,174
   src/koru/local_manager_client.py,252
   src/koru/local_manager_state.py,292
-  src/koru/local_service.py,379
+  src/koru/local_service.py,377
   src/koru/loop.py,132
-  src/koru/mcp_provision.py,450
+  src/koru/mcp_provision.py,534
   src/koru/mcp_server.py,10
   src/koru/observability_dsl.py,425
   src/koru/observability_events.py,123
@@ -3156,6 +3211,7 @@ M[1324]:
   src/koru/wizard/tree.py,343
   src/koru/wup_testql_compat.py,65
   src/koruapi/__init__.py,26
+  src/koruapi/calibration_validator.py,305
   src/koruapi/cli.py,160
   src/koruapi/dashboard.py,191
   src/koruapi/dashboard_config.py,165
@@ -3172,37 +3228,49 @@ M[1324]:
   src/koruapi/dashboard_state.py,106
   src/koruapi/dashboard_tickets.py,323
   src/koruapi/dashboard_topology.py,22
+  src/koruapi/desktop_uri.py,473
+  src/koruapi/env2llm_registry.py,348
   src/koruapi/integrations.py,265
   src/koruapi/invoke.py,32
   src/koruapi/invoke_handlers.py,387
   src/koruapi/local.py,37
   src/koruapi/mcp.py,16
-  src/koruapi/mcp_server.py,1002
+  src/koruapi/mcp_server.py,95
+  src/koruapi/mcp_server_cli.py,38
+  src/koruapi/mcp_server_desktop_uri.py,221
   src/koruapi/mcp_server_dispatch.py,120
-  src/koruapi/mcp_server_schema.py,352
+  src/koruapi/mcp_server_env2llm.py,232
+  src/koruapi/mcp_server_ide.py,414
+  src/koruapi/mcp_server_nlp2oql.py,85
+  src/koruapi/mcp_server_planfile.py,840
+  src/koruapi/mcp_server_runtime.py,84
+  src/koruapi/mcp_server_schema.py,30
+  src/koruapi/mcp_server_testql.py,76
   src/koruapi/mcp_server_transport.py,53
+  src/koruapi/nlp2oql_bridge.py,108
   src/koruapi/openapi.py,184
   src/koruapi/runtime_insights.py,193
   src/koruapi/server.py,191
+  src/koruapi/testql_bridge.py,102
   src/koruapi/topology_post.py,69
   src/korudsl/__init__.py,26
   src/korudsl/cli.py,91
   src/korudsl/library.py,208
   src/korudsl/transform.py,71
-  src/koruide/__init__.py,103
+  src/koruide/__init__.py,105
   src/koruide/audit.py,155
   src/koruide/chat_history.py,167
-  src/koruide/client.py,256
-  src/koruide/command_catalog.py,573
+  src/koruide/client.py,258
+  src/koruide/command_catalog.py,576
   src/koruide/command_catalog_store.py,166
-  src/koruide/command_picker.py,438
+  src/koruide/command_picker.py,470
   src/koruide/command_scenario.py,391
   src/koruide/command_telemetry.py,211
-  src/koruide/config.py,124
+  src/koruide/config.py,24
   src/koruide/daemon/__init__.py,51
   src/koruide/daemon/handlers.py,336
   src/koruide/daemon/handlers_ack.py,678
-  src/koruide/daemon/handlers_drive.py,544
+  src/koruide/daemon/handlers_drive.py,676
   src/koruide/daemon/handlers_hello.py,393
   src/koruide/daemon/handlers_plugin_event.py,192
   src/koruide/daemon/metadata.py,122
@@ -3213,7 +3281,7 @@ M[1324]:
   src/koruide/drive_orchestrator.py,966
   src/koruide/drive_policy.py,12
   src/koruide/host_setup.py,310
-  src/koruide/ide.py,885
+  src/koruide/ide.py,940
   src/koruide/ide_control.py,96
   src/koruide/ides/__init__.py,41
   src/koruide/ides/antigravity.py,69
@@ -3224,9 +3292,13 @@ M[1324]:
   src/koruide/ides/registry.py,83
   src/koruide/ides/vscode.py,66
   src/koruide/ides/vscodium.py,52
-  src/koruide/ides/windsurf.py,66
+  src/koruide/ides/windsurf.py,68
   src/koruide/ides/zed.py,60
-  src/koruide/plugin_installer.py,1171
+  src/koruide/injector.py,17
+  src/koruide/injector_backends.py,17
+  src/koruide/injector_errors.py,17
+  src/koruide/os_injector.py,17
+  src/koruide/plugin_installer.py,1195
   src/koruide/plugin_router.py,279
   src/koruide/plugin_version.py,47
   src/koruide/ports.py,119
@@ -3264,7 +3336,7 @@ M[1324]:
   src/koruobserve/lifecycle.py,329
   src/koruobserve/paths.py,22
   src/koruobserve/providers_cli.py,149
-  src/koruos/__init__.py,23
+  src/koruos/__init__.py,40
   src/koruvision/__init__.py,13
   src/koruvision/agent.py,77
   src/koruvision/capture.py,70
@@ -3303,7 +3375,7 @@ M[1324]:
   tests/test_agent_cli.py,108
   tests/test_agents.py,222
   tests/test_autoloop_cli.py,52
-  tests/test_autonomous.py,5346
+  tests/test_autonomous.py,5379
   tests/test_autonomous_cycle_bridge.py,26
   tests/test_autonomous_cycle_chat_activity_analyzer.py,392
   tests/test_autonomous_cycle_chat_activity_config.py,179
@@ -3318,6 +3390,7 @@ M[1324]:
   tests/test_autonomous_diagnostics.py,97
   tests/test_autonomous_gillm_fallback.py,139
   tests/test_autonomous_loop_runner.py,441
+  tests/test_autonomous_nlp2uri_drive.py,94
   tests/test_autonomous_onboarding.py,200
   tests/test_autonomous_operator.py,73
   tests/test_autonomous_operator_reload.py,273
@@ -3327,11 +3400,11 @@ M[1324]:
   tests/test_autonomous_plugin_runtime.py,70
   tests/test_autonomous_process_detection.py,70
   tests/test_autonomous_process_guard.py,17
-  tests/test_autonomous_readiness.py,257
+  tests/test_autonomous_readiness.py,259
   tests/test_autonomous_redrive_cooldown.py,399
-  tests/test_autonomous_runtime.py,293
+  tests/test_autonomous_runtime.py,295
   tests/test_autonomous_scenarios.py,390
-  tests/test_autonomous_startup.py,873
+  tests/test_autonomous_startup.py,878
   tests/test_autonomous_submit_strategy.py,114
   tests/test_autonomous_up.py,76
   tests/test_autonomy_config.py,141
@@ -3350,23 +3423,24 @@ M[1324]:
   tests/test_autopilot_commands_manage.py,173
   tests/test_autopilot_commands_shutdown.py,86
   tests/test_autopilot_commands_status.py,254
-  tests/test_autopilot_config.py,148
-  tests/test_autopilot_daemon.py,1761
+  tests/test_autopilot_config.py,150
+  tests/test_autopilot_daemon.py,1830
   tests/test_autopilot_host_setup.py,183
-  tests/test_autopilot_ide.py,628
+  tests/test_autopilot_ide.py,699
   tests/test_autopilot_jetbrains_scaffold.py,75
   tests/test_autopilot_lane_context.py,86
-  tests/test_autopilot_plugin_installer.py,593
+  tests/test_autopilot_plugin_installer.py,616
   tests/test_autopilot_protocol.py,169
   tests/test_autopilot_socket_path.py,36
   tests/test_bootstrap.py,298
+  tests/test_calibration_validator.py,360
   tests/test_capture_host_template.py,20
   tests/test_chat_history.py,119
-  tests/test_cli.py,842
+  tests/test_cli.py,894
   tests/test_cli_shim_builders.py,33
   tests/test_code2llm_discovery.py,480
   tests/test_command_catalog_store.py,51
-  tests/test_command_picker.py,273
+  tests/test_command_picker.py,328
   tests/test_command_telemetry.py,49
   tests/test_configurator.py,175
   tests/test_configurator_toggle.py,53
@@ -3389,6 +3463,7 @@ M[1324]:
   tests/test_decision_engine.py,162
   tests/test_decision_trace.py,430
   tests/test_deployment_events.py,539
+  tests/test_desktop_uri.py,157
   tests/test_dev_sync.py,109
   tests/test_docker_capture.py,132
   tests/test_docker_e2e.py,582
@@ -3403,9 +3478,10 @@ M[1324]:
   tests/test_drive_orchestrator.py,559
   tests/test_drive_repair_policy.py,51
   tests/test_e2e.py,1181
+  tests/test_env2llm_registry.py,49
   tests/test_env_config.py,62
   tests/test_env_flags.py,97
-  tests/test_environment_profile.py,93
+  tests/test_environment_profile.py,111
   tests/test_events.py,67
   tests/test_gate.py,167
   tests/test_gc.py,336
@@ -3415,32 +3491,34 @@ M[1324]:
   tests/test_git_attribution.py,61
   tests/test_git_cli.py,151
   tests/test_healing_webhook_split.py,213
-  tests/test_ide_adapters.py,219
-  tests/test_ide_client.py,115
+  tests/test_ide_adapters.py,250
+  tests/test_ide_client.py,121
   tests/test_ide_client_contract.py,129
   tests/test_ide_command_catalog.py,163
   tests/test_ide_doctor_cli.py,369
   tests/test_ide_operator_guidance.py,44
-  tests/test_ide_reload.py,409
+  tests/test_ide_reload.py,690
   tests/test_ide_router.py,289
   tests/test_ide_runtime.py,39
+  tests/test_ide_status_systemmap.py,28
   tests/test_ide_work.py,179
   tests/test_init.py,354
   tests/test_injection_moved_to_gillm.py,14
   tests/test_install_checks.py,252
-  tests/test_install_manager.py,1148
+  tests/test_install_manager.py,1249
   tests/test_integration_ledger.py,35
   tests/test_interface_registry.py,88
+  tests/test_koru_browser_stack.py,70
   tests/test_koru_gate_capture.py,34
   tests/test_koru_queue_argv.py,24
   tests/test_koruapi.py,167
   tests/test_koruapi_transports.py,21
   tests/test_korudsl.py,41
   tests/test_koruide_bridges.py,78
-  tests/test_koruide_client.py,197
+  tests/test_koruide_client.py,217
   tests/test_koruide_daemon_handlers_ack.py,489
   tests/test_koruide_daemon_handlers_console_log.py,97
-  tests/test_koruide_daemon_handlers_drive.py,183
+  tests/test_koruide_daemon_handlers_drive.py,216
   tests/test_koruide_daemon_handlers_hello.py,210
   tests/test_koruide_daemon_handlers_plugin_event.py,275
   tests/test_koruide_ports.py,100
@@ -3457,13 +3535,16 @@ M[1324]:
   tests/test_llm_strategies.py,111
   tests/test_local_service.py,265
   tests/test_loop.py,95
-  tests/test_mcp_provision.py,277
-  tests/test_mcp_server.py,291
-  tests/test_mcp_server_split.py,87
-  tests/test_observability_dsl.py,760
+  tests/test_mcp_provision.py,310
+  tests/test_mcp_server.py,314
+  tests/test_mcp_server_split.py,105
+  tests/test_nlp2oql_bridge.py,17
+  tests/test_nlp2uri_ide_control_gate.py,77
+  tests/test_observability_dsl.py,769
   tests/test_observation_mesh_e2e.py,230
   tests/test_observe_providers_cli.py,83
-  tests/test_operator_pipeline.py,892
+  tests/test_operator_pipeline.py,895
+  tests/test_package_deduplication.py,134
   tests/test_planfile_queue.py,1380
   tests/test_planning_llm.py,633
   tests/test_plugin_router.py,202
@@ -3472,7 +3553,7 @@ M[1324]:
   tests/test_provider_browser_upload.py,190
   tests/test_provider_obs.py,145
   tests/test_provider_portal_screencast.py,91
-  tests/test_pyproject_metadata.py,51
+  tests/test_pyproject_metadata.py,62
   tests/test_queue_clean.py,341
   tests/test_queue_cli_helpers.py,120
   tests/test_redup_integration.py,97
@@ -3498,6 +3579,7 @@ M[1324]:
   tests/test_structured_report.py,60
   tests/test_sync_plugin_build.py,109
   tests/test_tasks.py,119
+  tests/test_testql_bridge.py,37
   tests/test_ticket_evidence.py,145
   tests/test_tools.py,138
   tests/test_topology.py,55
@@ -3519,6 +3601,9 @@ M[1324]:
   tests/test_wup_taskfile.py,40
   tree.sh,2
 D:
+  check_dups.py:
+    e: get_files
+    get_files(path)
   docker/capture/smoke.py:
     e: _png_size,_scan_providers,_diagnostics_payload,_capture_one,_capture_all,_run_headless,_run_x11,main
     _png_size(payload)
@@ -3534,10 +3619,13 @@ D:
     run_multi_node_orchestration()
   packages/coru/src/coru/__init__.py:
   packages/coru/src/coru/cli.py:
-    e: _normalize_log_format,_current_log_format,_emit_log,_distribution_version,_print_runtime_versions,_startup_mode,_autonomous_startup_chain,_agent_lane_from_auto_args,_run_default_autonomous,_running_ide_choices,_supervisor_project_choices,_instance_for_ide_choice,_choose_option,_interactive_default_auto_args,_extract_global_flags,_run,_cmd_exists,_binary_path,_python_module_exists,_tool_argv,_project_venv_python,_maybe_reexec_into_project_python,_local_module_source_dir,_tool_available,_ensure_commands,_setup_environment,_repo_root,_local_install_target,_ide_from_vscode_pid,_vscode_family_env_hint,_terminal_ide_hint,_terminal_shell_context,_terminal_host_kind,_print_terminal_context,_terminal_shell_context_fallback,_instance_matches_ide,_ide_from_instance,_workspace_settings_path_for_ide,_workspace_socket_path_for_ide,_instance_from_socket_path,_workspace_lane_hint,_project_ide_settings_path,_load_project_ide_settings,_project_ide_settings_lane,_remember_project_ide_settings,_supervisor_lane_defaults,_supervisor_lane_project,_infer_default_ide,_project_ide_settings_instance,_supervisor_default_instance,_environment_default_instance,_auto_default_instance,_workspace_default_instance,_infer_default_instance,_maybe_warn_lane_override,_normalize_lane_pair,_lane_subprocess_env,_bind_lane_session,_run_with_lane_environment,_project_for_lane,_koru_autopilot_env_payload,_run_with_resolved_lane_env,_run_koru_lane,_koruenv_run_fallback,_lane_env,_lane_status_raw,_lane_status,_lane_status_payload,_fetch_manage_report,_manage_repair_context,_drive_result_from_payload,_problem_from_readiness_issue,_runtime_readiness_problems,_lane_alignment_problems,_collect_lane_repair_problems,_repair_reload_ide,_repair_connect_plugin,_repair_strict_handshake_cycle,_run_lane_repair,_status_has_target_plugin,_running_ide_summary,_target_plugin_rows,_plugin_workspace_summary,_print_ide_control_context,_lane_doctor,_refactor_intent,_lane_auto,_env_enabled,_gc_stale_lane_socket,_auto_readiness_gate,_auto_ownership_gate,_readiness_issue_codes,_restart_stale_lane_daemon,_status_has_plugin_for_ide,_status_has_keyboard_backend,_auto_readiness_can_continue_with_keyboard_fallback,_run_auto_with_readiness,_lane_manage_fix,_lane_daemon_foreground,_koru_exec_argv,_fetch_drive_payload,_lane_chat_prompt,_start_autopilot_daemon_for_lane,_ensure_daemon_running,_import_koru_readiness_module,_coru_readiness_strict,_diagnose_readiness_alignment,_warn_python_env_mismatch,_warn_koru_exec_outside_repo,_warn_lane_project_mismatch,_diagnose_runtime_consistency,_attempt_plugin_self_heal,_diagnose_lane,_print_troubleshooting_log_locations,_chat_llm_enabled,_llm_rewrite_chat_prompt,_heuristic_plan,_llm_plan,_resolve_defaults,_default_lane,_execute_plan,_build_plan_chain,_status_failure_ok_to_continue,_preflight_failure_ok_to_continue,_execute_plans,_chat_print_header,_chat_ensure_daemon,_chat_drive_with_retry,_chat_handle_drive,_chat_handle_command,_chat_loop,_add_lane_identifiers,_add_shell_argument,_register_lane_commands,_register_operational_commands,_register_interaction_commands,_register_repair_command,_cmd_repair_history,_cmd_repair_run,_cmd_sync,_register_sync_command,_register_doctor_command,_build_parser,_restore_log_format,_maybe_run_default_mode,_is_text_shorthand,_rewrite_text_shorthand_argv,_doctor_or_daemon_requires_system_shell,_dispatch_lane_command,_dispatch_auto_command,_dispatch_text_command,_dispatch_chat_command,_dispatch_supervisor_command,_dispatch_doctor_command,_dispatch_repair_command,_dispatch_daemon_command,_dispatch_optional_command,_dispatch_command,main,Plan,SessionContext,AutoReadiness
+    e: _koru_subprocess_timeout,_trace_enabled,_trace,_normalize_log_format,_current_log_format,_emit_log,_distribution_version,_print_runtime_versions,_startup_mode,_autonomous_startup_chain,_agent_lane_from_auto_args,_run_default_autonomous,_running_ide_choices,_supervisor_project_choices,_alive_daemon_instance,_instance_for_ide_choice,_choose_option,_interactive_default_auto_args,_extract_global_flags,_run,_cmd_exists,_binary_path,_python_module_exists,_tool_argv,_project_venv_python,_maybe_reexec_into_project_python,_local_module_source_dir,_tool_available,_ensure_commands,_setup_environment,_repo_root,_local_install_target,_ide_from_vscode_pid,_vscode_family_env_hint,_windsurf_terminal_marker,_terminal_ide_hint,_terminal_shell_context,_terminal_host_kind,_print_terminal_context,_terminal_shell_context_fallback,_instance_matches_ide,_ide_from_instance,_workspace_settings_path_for_ide,_workspace_socket_path_for_ide,_instance_from_socket_path,_workspace_lane_hint,_project_ide_settings_path,_load_project_ide_settings,_project_ide_settings_lane,_remember_project_ide_settings,_supervisor_lane_defaults,_supervisor_lane_project,_is_lane_plugin_connected,_connected_daemon_instance,_alive_daemon_ide,_infer_default_ide,_project_ide_settings_instance,_supervisor_default_instance,_environment_default_instance,_auto_default_instance,_workspace_default_instance,_infer_default_instance,_maybe_warn_lane_override,_normalize_lane_pair,_lane_subprocess_env,_bind_lane_session,_run_with_lane_environment,_project_for_lane,_koru_autopilot_env_payload,_run_with_resolved_lane_env,_run_koru_lane,_koruenv_run_fallback,_lane_env,_lane_status_raw,_lane_status,_lane_status_payload,_fetch_manage_report,_manage_repair_context,_drive_result_from_payload,_problem_from_readiness_issue,_runtime_readiness_problems,_lane_alignment_problems,_collect_lane_repair_problems,_repair_reload_ide,_repair_connect_plugin,_repair_strict_handshake_cycle,_run_lane_repair,_status_has_target_plugin,_running_ide_summary,_target_plugin_rows,_plugin_workspace_summary,_print_ide_control_context,_lane_doctor,_calibration_desktop_focus_titles,_desktop_capture_enabled,_calibration_desktop_template_path,_append_desktop_focus_lines,_materialize_calibration_desktop_oql,_write_calibration_desktop_oql,_write_calibration_bridge_testql,_testql_run_scenario,_testql_run_oql,_testql_run_oql,_format_calibration_desktop_report,_format_calibration_bridge_report,_run_calibration_desktop_preflight,_run_calibration_bridge_preflight,_parse_drive_json_from_stdout,_lane_drive_capture,_format_calibration_probe_report,_resolve_calibration_lane,_lane_calibration,_refactor_intent,_lane_auto,_env_enabled,_gc_stale_lane_socket,_auto_readiness_gate,_auto_ownership_gate,_readiness_issue_codes,_restart_stale_lane_daemon,_status_has_plugin_for_ide,_status_has_keyboard_backend,_auto_readiness_can_continue_with_keyboard_fallback,_run_auto_with_readiness,_lane_manage_fix,_lane_daemon_foreground,_koru_exec_argv,_fetch_drive_payload,_lane_chat_prompt,_start_autopilot_daemon_for_lane,_ensure_daemon_running,_import_koru_readiness_module,_coru_readiness_strict,_diagnose_readiness_alignment,_warn_python_env_mismatch,_warn_koru_exec_outside_repo,_warn_lane_project_mismatch,_diagnose_runtime_consistency,_attempt_plugin_self_heal,_diagnose_lane,_print_troubleshooting_log_locations,_chat_llm_enabled,_llm_rewrite_chat_prompt,_heuristic_plan,_llm_plan,_resolve_defaults,_default_lane,_execute_plan,_build_plan_chain,_status_failure_ok_to_continue,_preflight_failure_ok_to_continue,_execute_plans,_chat_print_header,_chat_ensure_daemon,_chat_drive_with_retry,_chat_handle_drive,_chat_handle_command,_chat_loop,_add_lane_identifiers,_add_shell_argument,_register_lane_commands,_register_operational_commands,_register_interaction_commands,_register_repair_command,_cmd_repair_history,_cmd_repair_run,_cmd_sync,_register_sync_command,_register_calibration_command,_register_doctor_command,_build_parser,_restore_log_format,_maybe_run_default_mode,_is_text_shorthand,_rewrite_text_shorthand_argv,_doctor_or_daemon_requires_system_shell,_dispatch_lane_command,_dispatch_auto_command,_dispatch_text_command,_dispatch_chat_command,_dispatch_supervisor_command,_dispatch_calibration_command,_dispatch_doctor_command,_dispatch_repair_command,_dispatch_daemon_command,_dispatch_optional_command,_dispatch_command,main,Plan,SessionContext,AutoReadiness
     Plan:
     SessionContext:
     AutoReadiness:
+    _koru_subprocess_timeout(koru_args)
+    _trace_enabled()
+    _trace(step)
     _normalize_log_format(raw)
     _current_log_format()
     _emit_log()
@@ -3549,6 +3637,7 @@ D:
     _run_default_autonomous(auto_args)
     _running_ide_choices()
     _supervisor_project_choices()
+    _alive_daemon_instance(ide)
     _instance_for_ide_choice(ide)
     _choose_option(label;options)
     _interactive_default_auto_args()
@@ -3568,6 +3657,7 @@ D:
     _local_install_target(package)
     _ide_from_vscode_pid()
     _vscode_family_env_hint()
+    _windsurf_terminal_marker()
     _terminal_ide_hint()
     _terminal_shell_context()
     _terminal_host_kind()
@@ -3585,6 +3675,9 @@ D:
     _remember_project_ide_settings(ide;instance)
     _supervisor_lane_defaults()
     _supervisor_lane_project(instance)
+    _is_lane_plugin_connected(ide;instance)
+    _connected_daemon_instance(ide)
+    _alive_daemon_ide()
     _infer_default_ide()
     _project_ide_settings_instance(ide)
     _supervisor_default_instance(ide)
@@ -3623,6 +3716,25 @@ D:
     _plugin_workspace_summary(plugin)
     _print_ide_control_context(ide;instance)
     _lane_doctor(ide;instance)
+    _calibration_desktop_focus_titles(ide)
+    _desktop_capture_enabled()
+    _calibration_desktop_template_path(ide;root)
+    _append_desktop_focus_lines(lines;focus_titles)
+    _materialize_calibration_desktop_oql()
+    _write_calibration_desktop_oql()
+    _write_calibration_bridge_testql()
+    _testql_run_scenario(scenario_path)
+    _testql_run_oql(oql_path)
+    _testql_run_oql(oql_path)
+    _format_calibration_desktop_report(result)
+    _format_calibration_bridge_report(result)
+    _run_calibration_desktop_preflight(ide)
+    _run_calibration_bridge_preflight(ide;instance)
+    _parse_drive_json_from_stdout(raw)
+    _lane_drive_capture(ide;instance;prompt)
+    _format_calibration_probe_report(drive)
+    _resolve_calibration_lane(ide;instance)
+    _lane_calibration(ide;instance)
     _refactor_intent(text)
     _lane_auto(ide;instance;extra_args)
     _env_enabled(name)
@@ -3679,6 +3791,7 @@ D:
     _cmd_repair_run(args)
     _cmd_sync(args)
     _register_sync_command(sub)
+    _register_calibration_command(sub)
     _register_doctor_command(sub)
     _build_parser()
     _restore_log_format(previous_log_format)
@@ -3691,6 +3804,7 @@ D:
     _dispatch_text_command(args)
     _dispatch_chat_command(args)
     _dispatch_supervisor_command(args)
+    _dispatch_calibration_command(args)
     _dispatch_doctor_command(args)
     _dispatch_repair_command(args)
     _dispatch_daemon_command(args)
@@ -3711,6 +3825,15 @@ D:
     sync_ecosystem(repo_root)
     format_sync_report(report)
     format_sync_report_json(report)
+  packages/coru/src/coru/ide_detection.py:
+    e: _ide_from_vscode_pid,_vscode_family_env_hint,_windsurf_terminal_marker,_terminal_shell_context_fallback,terminal_shell_context,terminal_ide_hint,terminal_host_kind
+    _ide_from_vscode_pid()
+    _vscode_family_env_hint()
+    _windsurf_terminal_marker()
+    _terminal_shell_context_fallback(ide_from_vscode_pid;vscode_family_env_hint;windsurf_terminal_marker)
+    terminal_shell_context()
+    terminal_ide_hint()
+    terminal_host_kind()
   packages/coru/src/coru/repair/__init__.py:
   packages/coru/src/coru/repair/commands.py:
     e: RunRepairSessionCommand,RecordDiagnosisCommand,ExecuteRepairActionCommand
@@ -3751,12 +3874,18 @@ D:
     RepairEvent: to_dict(0),from_dict(2)
     aggregate_id_for(ide;instance)
   packages/coru/src/coru/repair/pipeline.py:
-    e: _emit,_installed_extension_dir,_resolve_repo_vsix,manual_vsix_unpack,plugin_build_aligned,_expected_build_from_problems,_poll_plugin_ready,_run_reload_and_connect,_execute_step,_apply_round_resolution,_emit_session_started,_emit_problems_detected,_emit_session_finished,_record_attempt,_attempt_ensure_daemon,_steps_for_codes,_set_step_duration,_run_repair_step,_run_repair_steps,_record_unmapped_guidance,_clear_plugin_not_connected_if_ready,_refresh_status_resolution,_apply_round_actions,_run_repair_round,run_repair_pipeline,format_repair_lines,_PipelineState,_PipelineContext
+    e: _emit,_installed_extension_dir,_resolve_repo_vsix,_get_installed_version,_read_vsix_version,_unpack_vsix_archive,_vsix_unpack_layout,_vsix_source,_vsix_unpack_result,manual_vsix_unpack,plugin_build_aligned,_expected_build_from_problems,_poll_plugin_ready,_run_reload_and_connect,_execute_step,_apply_round_resolution,_emit_session_started,_emit_problems_detected,_emit_session_finished,_record_attempt,_attempt_ensure_daemon,_steps_for_codes,_set_step_duration,_run_repair_step,_run_repair_steps,_record_unmapped_guidance,_clear_plugin_not_connected_if_ready,_refresh_status_resolution,_apply_round_actions,_run_repair_round,run_repair_pipeline,format_repair_lines,_PipelineState,_PipelineContext
     _PipelineState:
     _PipelineContext:
     _emit(on_event;event_type;payload)
     _installed_extension_dir(ide)
     _resolve_repo_vsix(repo_root;ide;version)
+    _get_installed_version(ide)
+    _read_vsix_version(vsix)
+    _unpack_vsix_archive(vsix;target;tmp)
+    _vsix_unpack_layout(ide)
+    _vsix_source(ide;repo_root)
+    _vsix_unpack_result(ext_root;ext_prefix;vsix)
     manual_vsix_unpack()
     plugin_build_aligned(status)
     _expected_build_from_problems(problems)
@@ -3835,13 +3964,33 @@ D:
     e: _is_appimage_mount,resolve_editor_cli
     _is_appimage_mount(path)
     resolve_editor_cli(ide)
+  packages/coru/src/coru/supervisor/http_handlers.py:
+    e: _normalize_path,_lane_instance_from_suffix,handle_get_health,handle_get_lanes,handle_get_active_lane,handle_get_lane_health,handle_put_active_lane,handle_post_register_lane,handle_post_lane_daemon,handle_post_lane_reconnect,handle_post_refresh,handle_delete_lane,dispatch_get,dispatch_put,dispatch_post,dispatch_delete
+    _normalize_path(path)
+    _lane_instance_from_suffix(path;suffix)
+    handle_get_health(handler;service)
+    handle_get_lanes(handler;service)
+    handle_get_active_lane(handler;service)
+    handle_get_lane_health(handler;service)
+    handle_put_active_lane(handler;service)
+    handle_post_register_lane(handler;service)
+    handle_post_lane_daemon(handler;service)
+    handle_post_lane_reconnect(handler;service)
+    handle_post_refresh(handler;service)
+    handle_delete_lane(handler;service)
+    dispatch_get(handler;service;path)
+    dispatch_put(handler;service;path)
+    dispatch_post(handler;service;path)
+    dispatch_delete(handler;service;path)
   packages/coru/src/coru/supervisor/http_server.py:
-    e: _json_response,_read_json_body,_lanes_payload,make_handler,SupervisorHTTPServer
+    e: make_handler,SupervisorHTTPServer
     SupervisorHTTPServer: __init__(1),url(0),serve_forever(0),start_background(0),shutdown(0)
-    _json_response(handler;status;payload)
-    _read_json_body(handler)
-    _lanes_payload(registry)
     make_handler(service)
+  packages/coru/src/coru/supervisor/http_util.py:
+    e: json_response,read_json_body,lanes_payload
+    json_response(handler;status;payload)
+    read_json_body(handler)
+    lanes_payload(registry)
   packages/coru/src/coru/supervisor/models.py:
     e: LaneHealth,LaneRecord,SupervisorRegistry
     LaneHealth: to_dict(0)
@@ -3894,10 +4043,22 @@ D:
     render_unit(coru_bin)
     action_install_unit(args)
   packages/coru/tests/test_coru_cli.py:
-    e: _isolated_supervisor_registry,test_heuristic_plan_auto,test_heuristic_plan_diag_routes_to_doctor,test_execute_text_uses_heuristic,test_doctor_requires_system_shell_by_default,test_doctor_allow_integrated_shell_executes_lane_doctor,test_fetch_manage_report_uses_supported_manage_json_args,test_collect_lane_repair_problems_merges_all_sources,test_lane_doctor_fix_uses_registry_before_fallback,test_ensure_without_install_missing,test_ensure_with_install_calls_pip,test_ensure_with_install_prefers_project_venv_python,test_setup_runs_environment_prepare,test_distribution_version_not_installed,test_print_runtime_versions,test_version_flag_prints_and_exits,test_verbose_no_args_runs_autonomy_chain,test_local_install_target_koruenv,test_tool_argv_falls_back_to_local_koruenv_source,test_ensure_accepts_local_source_fallback,test_binary_path_prefers_repo_venv_over_global_path,test_maybe_reexec_into_project_python_skips_when_same_interpreter,test_maybe_reexec_into_project_python_executes,test_maybe_reexec_into_project_python_uses_venv_symlink_path,test_build_plan_chain_for_auto_intent,test_build_plan_chain_for_polish_refactor_intent,test_text_executes_chain,test_main_shorthand_routes_to_text,test_auto_without_lane_uses_defaults,test_lane_auto_injects_agent_lane,test_lane_auto_injects_project_from_supervisor_registry,test_run_auto_with_readiness_aborts_before_cycle,test_run_auto_with_readiness_continues_for_keyboard_fallback,test_run_auto_with_readiness_still_blocks_plugin_failure_without_fallback,test_run_auto_with_readiness_uses_resolved_lane,test_auto_readiness_gate_repairs_socket_daemon_and_plugin,test_auto_readiness_gate_blocks_workspace_mismatch,test_auto_readiness_gate_restarts_stale_daemon,test_auto_ownership_allows_cross_terminal_when_target_plugin_connected,test_diagnose_runtime_consistency_passes_coru_terminal_context,test_auto_without_lane_uses_terminal_hint,test_auto_explicit_cursor_lane_overrides_stale_env,test_project_ide_settings_scope_default_instance,test_auto_explicit_lane_writes_project_ide_settings,test_polish_refactor_defaults_without_windsurf,test_lane_status_defaults_can_use_env,test_lane_status_passes_resolved_koru_binary,test_lane_status_uses_koruenv_run_for_module_koru,test_terminal_hint_overrides_stale_env_ide,test_stale_instance_not_reused_for_different_ide,test_terminal_hint_overrides_stale_supervisor_lane,test_generic_main_not_reused_when_ide_auto,test_workspace_socket_path_drives_default_instance,test_workspace_socket_path_drives_default_ide,test_terminal_ide_hint_jetbrains_from_emulator,test_terminal_ide_hint_detects_codium_when_pid_probe_fails,test_terminal_ide_hint_detects_codium_from_nls_config,test_terminal_ide_hint_detects_codium_from_nls_config_without_pid,test_terminal_ide_hint_vscode_pid_beats_stale_cursor_env,test_terminal_shell_context_system_when_no_ide_markers,test_warns_when_stale_main_lane_overridden,test_warns_only_once_per_chat_context,test_normalize_lane_pair_prefers_instance_ide,test_default_lane_normalizes_mismatched_explicit_pair,test_run_with_lane_environment_sets_and_restores,test_koru_autopilot_env_payload_uses_explicit_lane_env,test_execute_plans_binds_lane_session_over_stale_env,test_no_args_starts_autonomous_work,test_no_args_starts_chat_when_coru_mode_chat,test_bare_coru_forwards_args_after_double_dash,test_bare_coru_interactive_prompts_for_ide_and_project,test_bare_coru_uses_integrated_terminal_ide_without_prompt,test_default_autonomous_uses_interactive_agent_lane_for_startup_chain,test_bare_coru_no_prompt_when_single_ide_and_project,test_status_alias_routes_to_lane_status,test_diagnose_attempts_plugin_self_heal_on_system_shell,test_diagnose_runs_plugin_self_heal_in_integrated_shell,test_diagnose_runtime_consistency_warns_on_python_mismatch,test_attempt_plugin_self_heal_retries_until_status_ok,test_status_failure_continues_to_auto_for_refactor,test_chat_refaktoryzuj_continues_past_status_when_daemon_down,test_chat_uses_llm_rewrite_when_configured,test_chat_slash_command_executes_coru_actions,test_status_failure_stops_without_auto_chain,test_build_plan_chain_refaktoryzuj,test_heuristic_plan_refakotryzuj_typo,test_build_plan_chain_refakotryzuj_typo,test_status_failure_continues_to_auto_for_refakotryzuj_typo,test_chat_refakotryzuj_typo_continues_past_status,test_env_alias_routes_to_lane,test_lane_chat_prompt_uses_ide_not_instance,test_chat_autostarts_daemon_and_retries_on_rc2,test_start_autopilot_daemon_uses_lane_instance,test_chat_reports_failure_when_daemon_autostart_fails,test_extract_global_flags_accepts_log_format,test_extract_global_flags_accepts_require_plugin,test_chat_emits_jsonl_contract,test_chat_forwards_require_plugin,test_chat_allows_explicit_keyboard_fallback,test_chat_preflights_lane_status_and_autostarts_missing_plugin,test_print_troubleshooting_log_locations,test_repair_command_is_not_text_shorthand,test_repair_command_is_not_text_shorthand
+    e: _isolated_supervisor_registry,test_heuristic_plan_auto,test_heuristic_plan_diag_routes_to_doctor,test_heuristic_plan_calibration,test_format_calibration_probe_report_pass,test_format_calibration_probe_report_submit_unverified,test_parse_drive_json_from_stdout_extracts_trailing_object,test_calibration_desktop_focus_titles_include_workspace,test_write_calibration_desktop_oql,test_materialize_calibration_desktop_oql_from_template,test_write_calibration_bridge_testql,test_format_calibration_desktop_report_error,test_lane_calibration_runs_desktop_preflight_and_single_drive,test_calibration_command_runs_lane_calibration,test_calibration_is_known_command_not_text_shorthand,test_execute_text_uses_heuristic,test_doctor_requires_system_shell_by_default,test_doctor_allow_integrated_shell_executes_lane_doctor,test_fetch_manage_report_uses_supported_manage_json_args,test_collect_lane_repair_problems_merges_all_sources,test_lane_doctor_fix_uses_registry_before_fallback,test_ensure_without_install_missing,test_ensure_with_install_calls_pip,test_ensure_with_install_prefers_project_venv_python,test_setup_runs_environment_prepare,test_distribution_version_not_installed,test_distribution_version_for_bundled_coru_falls_back_to_koru,test_print_runtime_versions,test_version_flag_prints_and_exits,test_verbose_no_args_runs_autonomy_chain,test_local_install_target_koruenv,test_tool_argv_falls_back_to_local_koruenv_source,test_ensure_accepts_local_source_fallback,test_binary_path_prefers_repo_venv_over_global_path,test_maybe_reexec_into_project_python_skips_when_same_interpreter,test_maybe_reexec_into_project_python_executes,test_maybe_reexec_into_project_python_uses_venv_symlink_path,test_build_plan_chain_for_auto_intent,test_build_plan_chain_for_polish_refactor_intent,test_text_executes_chain,test_main_shorthand_routes_to_text,test_auto_without_lane_uses_defaults,test_lane_auto_injects_agent_lane,test_lane_auto_injects_project_from_supervisor_registry,test_run_auto_with_readiness_aborts_before_cycle,test_run_auto_with_readiness_continues_for_keyboard_fallback,test_run_auto_with_readiness_still_blocks_plugin_failure_without_fallback,test_run_auto_with_readiness_uses_resolved_lane,test_auto_readiness_gate_repairs_socket_daemon_and_plugin,test_auto_readiness_gate_blocks_workspace_mismatch,test_auto_readiness_gate_restarts_stale_daemon,test_auto_ownership_allows_cross_terminal_when_target_plugin_connected,test_diagnose_runtime_consistency_passes_coru_terminal_context,test_auto_without_lane_uses_terminal_hint,test_auto_explicit_cursor_lane_overrides_stale_env,test_project_ide_settings_scope_default_instance,test_auto_explicit_lane_writes_project_ide_settings,test_polish_refactor_defaults_without_windsurf,test_lane_status_defaults_can_use_env,test_lane_status_passes_resolved_koru_binary,test_lane_status_uses_koruenv_run_for_module_koru,test_terminal_hint_overrides_stale_env_ide,test_stale_instance_not_reused_for_different_ide,test_run_subprocess_times_out,test_koru_subprocess_timeout_skips_long_running_commands,test_run_koru_lane_auto_has_no_subprocess_timeout,test_koru_autopilot_env_payload_times_out,test_infer_default_ide_keeps_integrated_terminal_over_alive_daemon,test_resolve_calibration_lane_prefers_integrated_terminal,test_resolve_calibration_lane_honors_explicit_ide,test_terminal_hint_overrides_stale_supervisor_lane,test_generic_main_not_reused_when_ide_auto,test_workspace_socket_path_drives_default_instance,test_workspace_socket_path_drives_default_ide,_clear_fork_env,test_terminal_ide_hint_jetbrains_from_emulator,test_terminal_shell_context_windsurf_from_devin_desktop,test_terminal_shell_context_windsurf_from_cascade_marker_only,test_terminal_shell_context_plain_vscode_is_last_resort,test_terminal_ide_hint_detects_codium_when_pid_probe_fails,test_terminal_ide_hint_detects_codium_from_nls_config,test_terminal_ide_hint_detects_codium_from_nls_config_without_pid,test_terminal_ide_hint_vscode_pid_beats_stale_cursor_env,test_terminal_shell_context_system_when_no_ide_markers,test_warns_when_stale_main_lane_overridden,test_warns_only_once_per_chat_context,test_normalize_lane_pair_prefers_instance_ide,test_default_lane_normalizes_mismatched_explicit_pair,test_run_with_lane_environment_sets_and_restores,test_koru_autopilot_env_payload_uses_explicit_lane_env,test_execute_plans_binds_lane_session_over_stale_env,test_no_args_starts_autonomous_work,test_no_args_starts_chat_when_coru_mode_chat,test_bare_coru_forwards_args_after_double_dash,test_bare_coru_interactive_prompts_for_ide_and_project,test_bare_coru_uses_integrated_terminal_ide_without_prompt,test_default_autonomous_uses_interactive_agent_lane_for_startup_chain,test_bare_coru_no_prompt_when_single_ide_and_project,test_status_alias_routes_to_lane_status,test_diagnose_attempts_plugin_self_heal_on_system_shell,test_diagnose_runs_plugin_self_heal_in_integrated_shell,test_diagnose_runtime_consistency_warns_on_python_mismatch,test_attempt_plugin_self_heal_retries_until_status_ok,test_status_failure_continues_to_auto_for_refactor,test_chat_refaktoryzuj_continues_past_status_when_daemon_down,test_chat_uses_llm_rewrite_when_configured,test_chat_slash_command_executes_coru_actions,test_status_failure_stops_without_auto_chain,test_build_plan_chain_refaktoryzuj,test_heuristic_plan_refakotryzuj_typo,test_build_plan_chain_refakotryzuj_typo,test_status_failure_continues_to_auto_for_refakotryzuj_typo,test_chat_refakotryzuj_typo_continues_past_status,test_env_alias_routes_to_lane,test_lane_chat_prompt_uses_ide_not_instance,test_chat_autostarts_daemon_and_retries_on_rc2,test_start_autopilot_daemon_uses_lane_instance,test_chat_reports_failure_when_daemon_autostart_fails,test_extract_global_flags_accepts_log_format,test_extract_global_flags_accepts_require_plugin,test_chat_emits_jsonl_contract,test_chat_forwards_require_plugin,test_chat_allows_explicit_keyboard_fallback,test_chat_preflights_lane_status_and_autostarts_missing_plugin,test_print_troubleshooting_log_locations,test_repair_command_is_not_text_shorthand,test_repair_command_is_not_text_shorthand
     _isolated_supervisor_registry(tmp_path;monkeypatch)
     test_heuristic_plan_auto()
     test_heuristic_plan_diag_routes_to_doctor()
+    test_heuristic_plan_calibration()
+    test_format_calibration_probe_report_pass()
+    test_format_calibration_probe_report_submit_unverified()
+    test_parse_drive_json_from_stdout_extracts_trailing_object()
+    test_calibration_desktop_focus_titles_include_workspace()
+    test_write_calibration_desktop_oql(tmp_path)
+    test_materialize_calibration_desktop_oql_from_template(tmp_path;monkeypatch)
+    test_write_calibration_bridge_testql(tmp_path)
+    test_format_calibration_desktop_report_error()
+    test_lane_calibration_runs_desktop_preflight_and_single_drive(monkeypatch)
+    test_calibration_command_runs_lane_calibration(monkeypatch)
+    test_calibration_is_known_command_not_text_shorthand(monkeypatch)
     test_execute_text_uses_heuristic(monkeypatch)
     test_doctor_requires_system_shell_by_default(monkeypatch;capsys)
     test_doctor_allow_integrated_shell_executes_lane_doctor(monkeypatch)
@@ -3909,6 +4070,7 @@ D:
     test_ensure_with_install_prefers_project_venv_python(monkeypatch)
     test_setup_runs_environment_prepare(monkeypatch)
     test_distribution_version_not_installed(monkeypatch)
+    test_distribution_version_for_bundled_coru_falls_back_to_koru(monkeypatch)
     test_print_runtime_versions(monkeypatch;capsys)
     test_version_flag_prints_and_exits(monkeypatch;capsys)
     test_verbose_no_args_runs_autonomy_chain(monkeypatch)
@@ -3945,11 +4107,22 @@ D:
     test_lane_status_uses_koruenv_run_for_module_koru(monkeypatch)
     test_terminal_hint_overrides_stale_env_ide(monkeypatch)
     test_stale_instance_not_reused_for_different_ide(monkeypatch)
+    test_run_subprocess_times_out(monkeypatch)
+    test_koru_subprocess_timeout_skips_long_running_commands()
+    test_run_koru_lane_auto_has_no_subprocess_timeout(monkeypatch)
+    test_koru_autopilot_env_payload_times_out(monkeypatch)
+    test_infer_default_ide_keeps_integrated_terminal_over_alive_daemon(monkeypatch)
+    test_resolve_calibration_lane_prefers_integrated_terminal(monkeypatch)
+    test_resolve_calibration_lane_honors_explicit_ide(monkeypatch)
     test_terminal_hint_overrides_stale_supervisor_lane(monkeypatch;tmp_path)
     test_generic_main_not_reused_when_ide_auto(monkeypatch)
     test_workspace_socket_path_drives_default_instance(monkeypatch;tmp_path)
     test_workspace_socket_path_drives_default_ide(monkeypatch;tmp_path)
+    _clear_fork_env(monkeypatch)
     test_terminal_ide_hint_jetbrains_from_emulator(monkeypatch)
+    test_terminal_shell_context_windsurf_from_devin_desktop(monkeypatch)
+    test_terminal_shell_context_windsurf_from_cascade_marker_only(monkeypatch)
+    test_terminal_shell_context_plain_vscode_is_last_resort(monkeypatch)
     test_terminal_ide_hint_detects_codium_when_pid_probe_fails(monkeypatch)
     test_terminal_ide_hint_detects_codium_from_nls_config(monkeypatch)
     test_terminal_ide_hint_detects_codium_from_nls_config_without_pid(monkeypatch)
@@ -4006,6 +4179,12 @@ D:
     test_sync_all_ides_skips_antigravity_to_avoid_gui_window_spam(monkeypatch;tmp_path)
     test_detect_running_plugin_ides_excludes_antigravity_for_all_ides_sync(monkeypatch)
     test_sync_plugins_for_ide_does_not_pass_project_flag()
+  packages/coru/tests/test_ide_detection.py:
+    e: TestIdeFromVscodePid,TestVscodeFamilyEnvHint,TestWindsurfTerminalMarker,TestTerminalShellContextFallback
+    TestIdeFromVscodePid: test_none_when_no_vscode_pid(1),test_none_when_invalid_pid(1)
+    TestVscodeFamilyEnvHint: test_none_when_no_env(1),test_detects_cursor(1),test_detects_windsurf(1)
+    TestWindsurfTerminalMarker: test_false_when_no_env(1),test_true_from_cascade_terminal(1),test_true_from_term_version(1)
+    TestTerminalShellContextFallback: test_vscode_when_term_program_is_vscode(1),test_cursor_from_chrome_desktop(1),test_jetbrains_from_terminal_emulator(1),test_none_when_no_ide(1),test_monkeypatch_ide_from_vscode_pid(1),test_monkeypatch_vscode_family_env_hint(1)
   packages/coru/tests/test_repair_es.py:
     e: test_event_store_appends_jsonl,test_drive_diagnostics_detect_submit_unverified,test_repair_session_writes_history,test_run_repair_with_events_persists_to_project_store
     test_event_store_appends_jsonl(tmp_path)
@@ -4061,9 +4240,27 @@ D:
     test_lane_env_xdg_runtime()
     test_cli_env_bash(capsys)
     test_cli_env_jsonl_log_contract(capsys)
-  patch_gillm_client.py:
-    e: patch
-    patch()
+  packages/nlpshim/src/nlpshim/__init__.py:
+  packages/nlpshim/src/nlpshim/client.py:
+    e: get_nlp2dsl_client,_use_intent_ir,analyze_text_structure,FallbackNLP2DSLClient,NLPBridgeClient
+    FallbackNLP2DSLClient: __init__(0),__enter__(0),__exit__(3),from_env(1),workflow_from_text(3)  # Mock / local translation for test stability when nlp2dsl ser
+    NLPBridgeClient: __init__(1),parse_intent(1),workflow_plan(1)  # Bridge to nlp2dsl backend for resolving natural language com
+    get_nlp2dsl_client()
+    _use_intent_ir()
+    analyze_text_structure(text)
+  packages/nlpshim/src/nlpshim/conversation_client.py:
+    e: ConversationState,ConversationTestClient
+    ConversationState:
+    ConversationTestClient: __init__(1),state(0),start(0),message(1),run_dsl(1),export_trace(0),_record(2)  # Thin wrapper for TestQL-style multi-turn tests against nlp2d
+  packages/nlpshim/src/nlpshim/conversation_test_api.py:
+    e: parse_conversation_step,complete_missing_fields,execute_conversation_plan,export_trace,LLMProvider,ConversationContext,DialogResponse
+    LLMProvider: reply_for(1)
+    ConversationContext:
+    DialogResponse:
+    parse_conversation_step(input;context)
+    complete_missing_fields(state;llm_or_mock)
+    execute_conversation_plan(plan;sandbox)
+    export_trace(conversation_id)
   scripts/_koru_autodiag_filter_tickets.py:
     e: main
     main()
@@ -4073,6 +4270,10 @@ D:
     bump(version;part)
     update_pyproject(new_version;dry_run)
     update_package_json(new_version;dry_run)
+    main()
+  scripts/e2e_envmap_koru.py:
+    e: _section,main
+    _section(title)
     main()
   scripts/koru-gate-capture.py:
     e: _normalize_line,_first_nonempty_line,_is_noise_line,_first_meaningful_line,_run_planfile,_parse_args,_run_gate_command,_matched_failure_line,_extract_finding_keys_from_item,_existing_finding_tickets,_append_existing_note,_create_ticket,_handle_existing_finding,main
@@ -4104,6 +4305,10 @@ D:
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
+  scripts/run_testql_conversations.py:
+    e: _parse_args,main
+    _parse_args(argv)
+    main(argv)
   scripts/scaffold-ide-plugin.py:
     e: _write_registry,_write_chat_history_adapters,_patch_extension_activate,_write_package_json,_test_script,scaffold,main
     _write_registry(dest;strategy)
@@ -4139,6 +4344,13 @@ D:
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
+  scripts/validate_testql_conversations.py:
+    e: _format_validation_errors,_sdk_structural_checks,_fallback_basic_checks,_testql_adapter_checks,main
+    _format_validation_errors(path;summary;issues)
+    _sdk_structural_checks(path)
+    _fallback_basic_checks(path)
+    _testql_adapter_checks(path)
+    main(argv)
   scripts/write-ide-plugin-tests.py:
     e: write_probe_tests,patch_watcher_test,main
     write_probe_tests(ide)
@@ -4213,7 +4425,7 @@ D:
     activity_warn(message)
     activity_info(msg)
   src/koru/agent_backend_runtime.py:
-    e: build_agent_backend,AgentBackend,PluginSocketBackend,McpToolBackend,NoopBackend,SllmShellBackend,OsInjectorBackend,GillmGuiBackend
+    e: build_agent_backend,_nlp2uri_desktop_send,AgentBackend,PluginSocketBackend,McpToolBackend,NoopBackend,SllmShellBackend,OsInjectorBackend,GillmGuiBackend,Nlp2UriDesktopBackend
     AgentBackend: send_chat(2)  # Push a prompt toward the agent UI (chat / drive session) for
     PluginSocketBackend: send_chat(2)  # Plugin + unix socket — maps ``send_chat`` to autopilot ``dri
     McpToolBackend: send_chat(2)  # MCP-only backend (e.g. Cursor with koru_run_ticket).
@@ -4221,7 +4433,9 @@ D:
     SllmShellBackend: send_chat(2)  # Shell LLM client backend delegated to the external ``sllm`` 
     OsInjectorBackend: send_chat(2)  # Coordinate-based fallback backend (X11 + xdotool).
     GillmGuiBackend: send_chat(2)  # Gillm GuiDriver backend — profile/keyboard fallback without 
+    Nlp2UriDesktopBackend: send_chat(2)  # Window-management backend via nlp2uri desktop-window://focus
     build_agent_backend()
+    _nlp2uri_desktop_send(prompt)
   src/koru/agent_backends.py:
     e: _normalize_key,_agent_backend_profile_from_mapping,_external_backend_profiles,_backend_aliases,normalize_agent_backend_id,list_agent_backend_ids,iter_agent_backend_profiles,get_agent_backend_profile,_parse_lane,load_agent_integration_config,validate_agent_integration_config,AgentBackendProfile,LaneConfig,AgentIntegrationConfig
     AgentBackendProfile:  # Static description of one way koru can reach an IDE-side age
@@ -4270,8 +4484,9 @@ D:
     _env_from_assignments(assignments)
     autoloop_main(argv)
   src/koru/autonomous.py:
-    e: _try_gillm_gui_fallback,_try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_daemon_status_log_summary,_stop_reused_daemon,_start_or_reuse_daemon,_plugin_rows_log_summary,_plugin_status_decision,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_is_topology_enabled,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_select_and_log_cycle_profile,_resolve_effective_cycle_flags,_build_cycle_run_kwargs,_compute_cycle_sleep,_sleep,_run_autonomous_cycle,_setup_autonomous_env_vars,_restore_autonomous_env_vars,_run_autonomous_pre_checks,_maybe_run_interactive_onboarding,_build_and_log_startup_probe,_install_sigterm_interrupt_handler,_handle_autonomous_interrupt,_prepare_autonomous_startup_probe,_autonomous_context_resource_kwargs,_prepare_autonomous_up_context,_run_autonomous_up_loop,_action_up,_normalize_autonomous_argv,_configure_auto_mode_args,_apply_auto_pipeline_flags,_apply_replace_existing_flags,_parse_autonomous_args,autonomous_main
+    e: _try_gillm_gui_fallback,_try_nlp2uri_ide_control,_try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_daemon_status_log_summary,_stop_reused_daemon,_start_or_reuse_daemon,_plugin_rows_log_summary,_plugin_status_decision,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_is_topology_enabled,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_select_and_log_cycle_profile,_resolve_effective_cycle_flags,_build_cycle_run_kwargs,_compute_cycle_sleep,_sleep,_run_autonomous_cycle,_setup_autonomous_env_vars,_restore_autonomous_env_vars,_run_autonomous_pre_checks,_maybe_run_interactive_onboarding,_build_and_log_startup_probe,_install_sigterm_interrupt_handler,_handle_autonomous_interrupt,_prepare_autonomous_startup_probe,_autonomous_context_resource_kwargs,_prepare_autonomous_up_context,_run_autonomous_up_loop,_action_up,_normalize_autonomous_argv,_configure_auto_mode_args,_apply_auto_pipeline_flags,_apply_replace_existing_flags,_parse_autonomous_args,autonomous_main
     _try_gillm_gui_fallback(prompt)
+    _try_nlp2uri_ide_control(prompt)
     _try_os_injector_fallback(prompt)
     _stdio_info(msg)
     _daemon_activity_log(msg)
@@ -4303,7 +4518,7 @@ D:
     _setup_autonomous_session(args)
     _setup_autopilot_daemon(args;project)
     _enable_autonomous_strict_plugin_policy(args)
-    _run_mcp_provision(project;stdio_format)
+    _run_mcp_provision(project;stdio_format;autopilot_ide)
     _setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
     _run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
     _unblock_queue_if_needed(project;stdio_format)
@@ -4514,8 +4729,11 @@ D:
     build_cycle_run_kwargs(args;profile)
     compute_cycle_sleep(args;loop_state;queue_result)
     _autopilot_needs_plugin_reconnect(autopilot_status)
+  src/koru/autonomous_cycle_drive_outcome.py:
+    e: apply_autopilot_drive_outcome
+    apply_autopilot_drive_outcome()
   src/koru/autonomous_cycle_drive_retry.py:
-    e: _max_drive_retries,_drive_failure_signature,_active_decision_engine,_cycle_attr,_ide_supports_vscode_plugin,_operator_forces_keyboard,_client_has_usable_plugin,_try_gillm_gui_fallback,_try_os_injector_fallback,_skip_closed_waiting_ticket_enabled,_resolve_waiting_ticket_id,_planfile_ticket_status,_waiting_ticket_is_closed,_resolve_autopilot_drive_decision,_drive_autopilot_once,_waiting_ticket_closed_skip_result,_idle_no_ticket_skip_result,_resolve_drive_plugin_requirement,_reply_missing_autopilot_plugin,_reply_chat_input_busy,_reply_needs_focus_retry,_reply_needs_plugin_retry,_reply_needs_submit_retry,_reply_requires_manual_chat_focus,_run_drive_retry_loop,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result
+    e: _max_drive_retries,_drive_failure_signature,_active_decision_engine,_cycle_attr,_ide_supports_vscode_plugin,_operator_forces_keyboard,_client_has_usable_plugin,_try_gillm_gui_fallback,_try_os_injector_fallback,_try_nlp2uri_ide_control,_skip_closed_waiting_ticket_enabled,_resolve_waiting_ticket_id,_planfile_ticket_status,_waiting_ticket_is_closed,_resolve_autopilot_drive_decision,_invoke_client_autopilot_drive,_waiting_ticket_closed_skip_result,_idle_no_ticket_skip_result,_resolve_drive_plugin_requirement,_reply_missing_autopilot_plugin,_reply_chat_input_busy,_reply_needs_focus_retry,_reply_needs_plugin_retry,_reply_needs_submit_retry,_reply_requires_manual_chat_focus,_run_drive_retry_loop,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result
     _max_drive_retries()
     _drive_failure_signature(reply)
     _active_decision_engine(project;autopilot_ide)
@@ -4525,12 +4743,13 @@ D:
     _client_has_usable_plugin(client;autopilot_ide)
     _try_gillm_gui_fallback(prompt)
     _try_os_injector_fallback(prompt)
+    _try_nlp2uri_ide_control(prompt)
     _skip_closed_waiting_ticket_enabled()
     _resolve_waiting_ticket_id(queue_result)
     _planfile_ticket_status(project;ticket_id)
     _waiting_ticket_is_closed(project;ticket_id)
     _resolve_autopilot_drive_decision(project;state;queue_result)
-    _drive_autopilot_once(client)
+    _invoke_client_autopilot_drive(client)
     _waiting_ticket_closed_skip_result(queue_result;idle_prompt_kind;skip_reason;_hp)
     _idle_no_ticket_skip_result(project;idle_prompt_kind;_hp)
     _resolve_drive_plugin_requirement(client;autopilot_ide)
@@ -4545,8 +4764,13 @@ D:
     _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
     _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
   src/koru/autonomous_cycle_gate.py:
-    e: try_os_injector_fallback,try_gillm_gui_fallback,try_os_injector_fallback_with_deps,allow_keyboard_autopilot_fallback,effective_cycle_autopilot_enabled,scan_while_waiting_input_enabled,effective_cycle_scan_enabled,resolve_autopilot_ide,apply_agent_lane_environ
+    e: nlp2uri_ide_control_enabled,effective_ide_control_submit,_resolve_ide_chat_workspace,try_os_injector_fallback,try_nlp2uri_ide_control,try_nlp2uri_focus_fallback,try_gillm_gui_fallback,try_os_injector_fallback_with_deps,allow_keyboard_autopilot_fallback,effective_cycle_autopilot_enabled,scan_while_waiting_input_enabled,effective_cycle_scan_enabled,resolve_autopilot_ide,apply_agent_lane_environ
+    nlp2uri_ide_control_enabled()
+    effective_ide_control_submit()
+    _resolve_ide_chat_workspace(client)
     try_os_injector_fallback(prompt)
+    try_nlp2uri_ide_control(prompt)
+    try_nlp2uri_focus_fallback(prompt)
     try_gillm_gui_fallback(prompt)
     try_os_injector_fallback_with_deps(prompt)
     allow_keyboard_autopilot_fallback()
@@ -4556,14 +4780,18 @@ D:
     resolve_autopilot_ide(cli_value)
     apply_agent_lane_environ(project;agent_lane)
   src/koru/autonomous_cycle_orchestrator.py:
-    e: _drive_result_autopilot_status,_handle_autopilot_phase,_plugin_gate_status,_attempt_plugin_gate_recovery,_plugin_gate_recovery_key,_terminal_conflict_status,_drive_autopilot_once,_emit_autopilot_preflight_skip,_emit_autopilot_observability_outcome
+    e: _drive_result_autopilot_status,_handle_autopilot_phase,_plugin_gate_status,_attempt_plugin_gate_recovery,_plugin_gate_recovery_key,_terminal_conflict_status,_drive_autopilot_once,_run_autopilot_drive_attempt,_apply_autopilot_drive_attempt,_emit_autopilot_preflight_skip,_emit_autopilot_observability_outcome,_AutopilotDriveContext,_AutopilotDriveAttempt
+    _AutopilotDriveContext:
+    _AutopilotDriveAttempt:
     _drive_result_autopilot_status()
     _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
     _plugin_gate_status(project;cycle;queue_result;client;autopilot_ide;drive_prompt;submit;cycle_telemetry;_hp)
     _attempt_plugin_gate_recovery(project;client;autopilot_ide;plugin_reason;_hp)
     _plugin_gate_recovery_key(project;autopilot_ide;plugin_reason)
     _terminal_conflict_status(autopilot_ide;cycle_telemetry;_hp)
-    _drive_autopilot_once(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;cycle;cycle_telemetry;_hp)
+    _drive_autopilot_once(ctx)
+    _run_autopilot_drive_attempt(ctx)
+    _apply_autopilot_drive_attempt(ctx;attempt)
     _emit_autopilot_preflight_skip()
     _emit_autopilot_observability_outcome()
   src/koru/autonomous_cycle_post_drive.py:
@@ -4583,7 +4811,7 @@ D:
     _emit_post_drive_action_plan()
     _handle_post_drive_verification(project;state;cycle;queue_result;drive_status;wup_health;_hp;_emit)
   src/koru/autonomous_cycle_skip_conditions.py:
-    e: _auto_llm_ready_enabled,_is_topology_enabled,_waiting_ticket_has_label,_waiting_ticket_path_and_ticket,_add_waiting_ticket_label,_add_label_to_ticket_yaml_text,_ticket_yaml_block_bounds,_find_label_line_index,_insert_missing_label_block,_append_inline_label,_parse_inline_label_line,_append_block_label,_block_label_insert_at,_waiting_ticket_id,_autopromote_waiting_ticket_llm_ready,_diagnostics_fail_skip_result,_check_autopilot_skip_conditions,_should_skip_for_idle_streak,_is_stuck_status_skip_candidate,_is_waiting_llm_ready_ticket,_clear_submit_unverified_state,_previous_drive_needs_manual_send,_manual_send_can_be_cleared_by_message_sent,_manual_send_required_skip_result,_handle_stuck_status_skip_candidate
+    e: _auto_llm_ready_enabled,_is_topology_enabled,_waiting_ticket_has_label,_waiting_ticket_path_and_ticket,_add_waiting_ticket_label,_add_label_to_ticket_yaml_text,_ticket_yaml_block_bounds,_find_label_line_index,_insert_missing_label_block,_append_inline_label,_parse_inline_label_line,_append_block_label,_block_label_insert_at,_waiting_ticket_id,_autopromote_waiting_ticket_llm_ready,_diagnostics_fail_skip_result,_check_autopilot_skip_conditions,_should_skip_for_idle_streak,_is_stuck_status_skip_candidate,_is_waiting_llm_ready_ticket,_clear_submit_unverified_state,_previous_drive_needs_manual_send,_manual_send_can_be_cleared_by_message_sent,_manual_send_required_skip_result,_clear_manual_send_for_new_ticket,_clear_manual_send_for_message_sent,_allow_manual_send_alt_retry,_manual_send_required_decision,_manual_send_target_ide,_handle_stuck_status_skip_candidate
     _auto_llm_ready_enabled()
     _is_topology_enabled(project;key)
     _waiting_ticket_has_label(project;queue_result;label)
@@ -4608,6 +4836,11 @@ D:
     _previous_drive_needs_manual_send(state)
     _manual_send_can_be_cleared_by_message_sent()
     _manual_send_required_skip_result()
+    _clear_manual_send_for_new_ticket()
+    _clear_manual_send_for_message_sent()
+    _allow_manual_send_alt_retry()
+    _manual_send_required_decision()
+    _manual_send_target_ide()
     _handle_stuck_status_skip_candidate()
   src/koru/autonomous_daemon.py:
     e: _stdio_info,_current_koru_version,_daemon_status_version,daemon_status_compatible,daemon_status_log_summary,_stop_reused_daemon,start_or_reuse_daemon,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
@@ -4720,7 +4953,9 @@ D:
     load_strategy_tree(project)
     run_interactive_onboarding(args)
   src/koru/autonomous_operator.py:
-    e: run_mcp_provision,_ensure_trusted_publisher_for_plugin,_extension_active_in_latest_session,_live_plugin_version,_detect_stale_extension_host,_plugin_status_reason,_plugin_reason_requires_reload,_plugin_blocker_line,_reload_retry_wait_seconds,_report_unsupported_plugin_result,_emit_reload_required_lines,_prepare_plugin_wait,_force_reload_if_extension_host_stale,_retry_plugin_wait_after_reload,_wait_for_plugin_connection,setup_autopilot_plugin,run_operator_pipeline,unblock_queue_if_needed
+    e: _operator_autostart_envmap_enabled,refresh_environment_registry,run_mcp_provision,_ensure_trusted_publisher_for_plugin,_extension_active_in_latest_session,_live_plugin_version,_detect_stale_extension_host,_plugin_status_reason,_plugin_reason_requires_reload,_plugin_blocker_line,_reload_retry_wait_seconds,_report_unsupported_plugin_result,_emit_reload_required_lines,_prepare_plugin_wait,_force_reload_if_extension_host_stale,_retry_plugin_wait_after_reload,_wait_for_plugin_connection,setup_autopilot_plugin,run_operator_pipeline,unblock_queue_if_needed
+    _operator_autostart_envmap_enabled()
+    refresh_environment_registry(project;stdio_format)
     run_mcp_provision(project;stdio_format)
     _ensure_trusted_publisher_for_plugin(autopilot_ide)
     _extension_active_in_latest_session(autopilot_ide)
@@ -4792,7 +5027,9 @@ D:
     report_unsupported_plugin_result(autopilot_ide)
     emit_reload_required_lines(autopilot_ide)
   src/koru/autonomous_plugin_wait.py:
-    e: prepare_plugin_wait,force_reload_if_extension_host_stale,retry_plugin_wait_after_reload,_wait_after_successful_reload,_report_reload_retry_wait,_plugin_reconnected_after_wait,_try_fresh_window_after_reuse_reload,_plugin_connected_after_fresh_window,_report_fresh_window_failure,_report_reload_failure,wait_for_plugin_connection,_try_plugin_reconnect_pipeline,_temporary_reuse_window_reload_if_same_workspace,_restore_reuse_window_reload,_reason_is_connected_plugin_mismatch,_status_has_plugin_workspace,_emit_plugin_bootstrap_blocker_trace
+    e: _running_from_integrated_ide_terminal,_terminal_host_ide_id,prepare_plugin_wait,force_reload_if_extension_host_stale,retry_plugin_wait_after_reload,_wait_after_successful_reload,_report_reload_retry_wait,_plugin_reconnected_after_wait,_try_fresh_window_after_reuse_reload,_plugin_connected_after_fresh_window,_report_fresh_window_failure,_report_reload_failure,wait_for_plugin_connection,_try_plugin_reconnect_pipeline,_temporary_reuse_window_reload_if_same_workspace,_restore_reuse_window_reload,_reason_is_connected_plugin_mismatch,_status_has_plugin_workspace,_emit_plugin_bootstrap_blocker_trace
+    _running_from_integrated_ide_terminal()
+    _terminal_host_ide_id()
     prepare_plugin_wait(args;autopilot_ide;plugin_install_status)
     force_reload_if_extension_host_stale(args;autopilot_ide;wait_seconds)
     retry_plugin_wait_after_reload(args;autopilot_ide;wait_seconds)
@@ -4897,12 +5134,17 @@ D:
     e: setup_autonomous_resources
     setup_autonomous_resources(args;project)
   src/koru/autonomous_runtime.py:
-    e: setup_autonomous_session,_path_is_relative_to,project_venv_reexec_argv,project_venv_reexec_env,project_venv_warning_lines,_resolve_autopilot_lane,_autopilot_socket_source,_decide_autopilot_socket,_log_autopilot_socket_decision,setup_autopilot_daemon,_log_runtime_readiness_gate,_apply_autopilot_readiness_after_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt,AutopilotSocketDecision,StopSignalState
+    e: setup_autonomous_session,_path_is_relative_to,resolve_cli_project,_local_project_koru,running_outside_project_venv,cli_should_reexec,project_venv_reexec_argv,maybe_sync_project_koru_package,project_venv_reexec_env,project_venv_warning_lines,_resolve_autopilot_lane,_autopilot_socket_source,_decide_autopilot_socket,_log_autopilot_socket_decision,setup_autopilot_daemon,_log_runtime_readiness_gate,_apply_autopilot_readiness_after_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt,AutopilotSocketDecision,StopSignalState
     AutopilotSocketDecision:
     StopSignalState:
     setup_autonomous_session(args)
     _path_is_relative_to(path;parent)
+    resolve_cli_project(raw_args)
+    _local_project_koru(project)
+    running_outside_project_venv(project)
+    cli_should_reexec(raw_args)
     project_venv_reexec_argv(project)
+    maybe_sync_project_koru_package(project)
     project_venv_reexec_env(project)
     project_venv_warning_lines(project)
     _resolve_autopilot_lane(args)
@@ -5495,7 +5737,9 @@ D:
   src/koru/autopilot/__init__.py:
   src/koru/autopilot/audit.py:
   src/koru/autopilot/calibrate_cli.py:
-    e: resolve_session_ides,action_calibrate,capture_ide_profile,detect_duplicate_coordinates,_default_session_capture_profile,_annotate_shared_coordinate_warnings,action_session_start
+    e: _resolve_calibration_project_dir,_sync_calibration_registry,resolve_session_ides,action_calibrate,capture_ide_profile,detect_duplicate_coordinates,_default_session_capture_profile,_annotate_shared_coordinate_warnings,action_session_start
+    _resolve_calibration_project_dir(args)
+    _sync_calibration_registry(args)
     resolve_session_ides(raw)
     action_calibrate(args)
     capture_ide_profile(ide;delay;args;captured)
@@ -5504,7 +5748,7 @@ D:
     _annotate_shared_coordinate_warnings(targets;captured)
     action_session_start(args)
   src/koru/autopilot/cli_command.py:
-    e: _action_calibrate,_action_session_start,_temporary_autopilot_instance,_resolve_cli_ide_lane,_client,_action_env,_daemon_start_hint,_action_drive,_action_status,_action_shutdown,_action_doctor,_action_setup_host,_action_manage,_action_install_plugin,_action_install_plugin_jetbrains,_action_handoff,_action_tail,_action_install_unit,autopilot_main
+    e: _action_calibrate,_action_session_start,_temporary_autopilot_instance,_resolve_cli_ide_lane,_client,_action_env,_daemon_start_hint,_action_drive,_action_snapshot,_action_status,_action_shutdown,_action_doctor,_action_setup_host,_action_manage,_action_install_plugin,_action_install_plugin_jetbrains,_action_handoff,_action_tail,_action_install_unit,autopilot_main
     _action_calibrate(args)
     _action_session_start(args)
     _temporary_autopilot_instance(instance)
@@ -5513,6 +5757,7 @@ D:
     _action_env(args)
     _daemon_start_hint(args)
     _action_drive(args)
+    _action_snapshot(args)
     _action_status(args)
     _action_shutdown(args)
     _action_doctor(args)
@@ -5540,7 +5785,7 @@ D:
     _handle_os_profile_direct_error(args;profile_id;exc)
     _run_direct_drive(args;text)
   src/koru/autopilot/cli_parser.py:
-    e: build_autopilot_parser,_add_daemon_parser,_add_drive_parser,_add_calibrate_parser,_add_session_start_parser,_add_status_parser,_add_env_parser,_add_trace_parser,_add_doctor_parser,_add_setup_host_parser,_add_manage_parser,_add_install_plugin_parser,_add_install_plugin_jetbrains_parser,_add_handoff_parser,_add_install_unit_parser,_add_tail_parser
+    e: build_autopilot_parser,_add_daemon_parser,_add_drive_parser,_add_calibrate_parser,_add_session_start_parser,_add_status_parser,_add_env_parser,_add_snapshot_parser,_add_trace_parser,_add_doctor_parser,_add_setup_host_parser,_add_manage_parser,_add_install_plugin_parser,_add_install_plugin_jetbrains_parser,_add_handoff_parser,_add_install_unit_parser,_add_tail_parser
     build_autopilot_parser()
     _add_daemon_parser(sub)
     _add_drive_parser(sub)
@@ -5548,6 +5793,7 @@ D:
     _add_session_start_parser(sub)
     _add_status_parser(sub)
     _add_env_parser(sub)
+    _add_snapshot_parser(sub)
     _add_trace_parser(sub)
     _add_doctor_parser(sub)
     _add_setup_host_parser(sub)
@@ -5557,6 +5803,18 @@ D:
     _add_handoff_parser(sub)
     _add_install_unit_parser(sub)
     _add_tail_parser(sub)
+  src/koru/autopilot/cli_snapshot.py:
+    e: _dsl_quote,_runtime_lines,_decision_lines,_observe_path_line,_drive_dsl_lines,_live_desktop_probe,_env2llm_lines,_lane_shell_env,_operator_lines,action_snapshot
+    _dsl_quote(value)
+    _runtime_lines()
+    _decision_lines(project)
+    _observe_path_line(project)
+    _drive_dsl_lines(project)
+    _live_desktop_probe(project)
+    _env2llm_lines(project)
+    _lane_shell_env()
+    _operator_lines()
+    action_snapshot(args)
   src/koru/autopilot/cli_trace.py:
     e: action_trace,_print_observability_dsl_trace,_print_drive_dsl_trace
     action_trace(args)
@@ -5653,7 +5911,7 @@ D:
     check_plugin_build_mismatch_issue(daemon;plugin;ide)
     check_plugin_not_connected_issue(daemon;plugin;ide)
   src/koru/autopilot/install_manager.py:
-    e: _supports_color,_yellow,_source_root,_source_version,_package_version,_repo_koru_bin,_path_koru_bin,_installed_editable_source_root,_expected_plugin_version,_expected_plugin_build_sha,_resolve_ide,_manager_socket_path,_daemon_status,_plugin_for_ide,_issue_list,_build_plugin_info_dict,_resolve_install_environment,collect_install_manager_report,repair_installation,_build_repair_steps,_build_plugin_build_mismatch_escalation_steps,_latest_action_result,_restart_ide_on_build_mismatch_enabled,_unsupported_plugin_repair_step,_force_reassert_install_when,_plugin_connected_build_stale,_install_plugin_repair_result,_plugin_already_aligned,_shutdown_daemon_for_plugin_repair_action,_skipped_shutdown_daemon_action,_shutdown_autopilot_daemon,_start_daemon_for_plugin_repair_action,_start_autopilot_daemon_for_plugin_repair,_reload_ide_reconnect_action,_wait_for_plugin_reconnect_action,_open_new_ide_window_for_plugin_build_action,_open_new_ide_window_for_plugin_build,_restart_ide_for_plugin_build_action,_restart_ide_for_plugin_build,_terminate_process,_process_exists,_wait_for_plugin_reconnect,_apply_repair_steps,_reload_ide_after_plugin_fix,_temporary_reuse_window_reload_if_same_workspace,_restore_reuse_window_reload,_daemon_has_plugin_workspace,_resolved_folder_key,_plugin_workspace_folders,_daemon_other_workspace_plugin_folders,_plugin_workspace_mismatch_repair_step,format_install_manager_report,_install_manager_base_lines,_install_manager_issue_lines,_install_manager_action_lines,InstallManagerReport
+    e: _supports_color,_yellow,_source_root,_source_version,_package_version,_repo_koru_bin,_path_koru_bin,_installed_editable_source_root,_expected_plugin_version,_expected_plugin_build_sha,_resolve_ide,_manager_socket_path,_daemon_status,_plugin_for_ide,_issue_list,_build_plugin_info_dict,_resolve_install_environment,collect_install_manager_report,repair_installation,_build_repair_steps,_build_plugin_build_mismatch_escalation_steps,_latest_action_result,_restart_ide_on_build_mismatch_enabled,_unsupported_plugin_repair_step,_force_reassert_install_when,_plugin_connected_build_stale,_install_plugin_repair_result,_plugin_already_aligned,_shutdown_daemon_for_plugin_repair_action,_skipped_shutdown_daemon_action,_shutdown_autopilot_daemon,_start_daemon_for_plugin_repair_action,_start_autopilot_daemon_for_plugin_repair,_reload_ide_reconnect_action,_wait_for_plugin_reconnect_action,_open_new_ide_window_for_plugin_build_action,_open_new_ide_window_for_plugin_build,_restart_ide_for_plugin_build_action,_restart_ide_for_plugin_build,_terminate_process,_process_exists,_wait_for_plugin_reconnect,_apply_repair_steps,_reload_ide_after_plugin_fix,_daemon_has_plugin_workspace,_resolved_folder_key,_plugin_workspace_folders,_daemon_other_workspace_plugin_folders,_plugin_workspace_mismatch_repair_step,format_install_manager_report,_install_manager_base_lines,_install_manager_issue_lines,_install_manager_action_lines,InstallManagerReport
     InstallManagerReport: to_dict(0)
     _supports_color()
     _yellow(text)
@@ -5699,8 +5957,6 @@ D:
     _wait_for_plugin_reconnect(socket;resolved_ide)
     _apply_repair_steps(report;repair_steps)
     _reload_ide_after_plugin_fix(ide)
-    _temporary_reuse_window_reload_if_same_workspace(daemon;ide;source_root)
-    _restore_reuse_window_reload(snapshot)
     _daemon_has_plugin_workspace(daemon;ide;source_root)
     _resolved_folder_key(folder)
     _plugin_workspace_folders(plugin;ide)
@@ -5982,15 +6238,13 @@ D:
   src/koru/cli/commands.py:
   src/koru/cli/parsers.py:
   src/koru/cli.py:
-    e: _is_bare_invocation,_dsl_main,_api_main,_sllm_main,_agent_backends_main,_peek_project_from_argv,_path_is_relative_to,_project_cli_reexec_argv,_maybe_print_project_venv_hint,_should_suggest_wizard,_lazy_module_main,_maybe_reexec_for_project_venv,_dispatch_flag_action,_suggest_subcommand,_dispatch_auto_alias,_print_unknown_subcommand_hint,_handle_parser_exit,main
+    e: _is_bare_invocation,_dsl_main,_api_main,_sllm_main,_agent_backends_main,_peek_project_from_argv,_maybe_print_project_venv_hint,_should_suggest_wizard,_lazy_module_main,_maybe_reexec_for_project_venv,_dispatch_flag_action,_suggest_subcommand,_dispatch_auto_alias,_print_unknown_subcommand_hint,_handle_parser_exit,main
     _is_bare_invocation(args)
     _dsl_main(argv)
     _api_main(argv)
     _sllm_main(argv)
     _agent_backends_main(argv)
     _peek_project_from_argv(argv)
-    _path_is_relative_to(path;parent)
-    _project_cli_reexec_argv(project)
     _maybe_print_project_venv_hint(raw_args)
     _should_suggest_wizard(argv;project)
     _lazy_module_main(module_name;attr_name;argv)
@@ -6174,9 +6428,15 @@ D:
     _build_tools_parser()
     _tools_main(argv)
   src/koru/cli_topology.py:
-    e: build_topology_parser,render_topology_text,topology_main
+    e: build_topology_parser,render_topology_text,_run_topology_is_enabled,_run_topology_enabled_components,_topology_component_toggler,_topology_pipeline_toggler,_apply_topology_cli_mutations,_print_topology,topology_main
     build_topology_parser()
     render_topology_text(topology)
+    _run_topology_is_enabled(args;project;query_service)
+    _run_topology_enabled_components(args;project;query_service)
+    _topology_component_toggler(command_service;project)
+    _topology_pipeline_toggler(command_service;project)
+    _apply_topology_cli_mutations(args;project;topo;command_service)
+    _print_topology(topo;output_format)
     topology_main(argv)
   src/koru/cli_watch.py:
     e: watch_main
@@ -6679,7 +6939,7 @@ D:
     recovery_hints_for_ide_reload()
     enrich_drive_reply_with_recovery(reply)
   src/koru/ide_adapters/ide_reload.py:
-    e: _on_wayland,_ide_accepts_integrated_terminal,_os_strategy,_window_name_hints,_editor_cli_candidates,auto_reload_enabled,reuse_window_reload_enabled,command_palette_reload_enabled,new_window_reload_enabled,_run,_resolve_editor_cli,_focus_ide_window,reload_jetbrains_via_shortcut,_run_command_palette_sequence,reload_via_command_palette,connect_via_command_palette,reload_via_reopen_workspace,reload_via_new_window,_reload_fallback_reopen,_reload_explain_reuse_window_disabled,detect_reload_command,execute_reload,await_plugin_handshake,explain_reload_failure,enable_reuse_window_reload_for_session,restore_reuse_window_reload,try_reload_vscode_family_ide,try_open_vscode_family_ide_new_window,IdeReloadOutcome
+    e: _on_wayland,_ide_accepts_integrated_terminal,_os_strategy,_window_name_hints,_editor_cli_candidates,auto_reload_enabled,reuse_window_reload_enabled,command_palette_reload_enabled,new_window_reload_enabled,detached_reload_enabled,running_as_detached_reload_runner,_run,_editor_cli_env,_resolve_editor_cli,_focus_ide_window,reload_jetbrains_via_shortcut,_run_command_palette_sequence,reload_via_command_palette,connect_via_command_palette,reload_via_reopen_workspace,reload_via_new_window,_reload_fallback_reopen,_reload_explain_reuse_window_disabled,_terminal_host_ide_id,_running_from_integrated_ide_terminal,detect_reload_command,execute_reload,await_plugin_handshake,explain_reload_failure,snapshot_reload_env,restore_reload_env,apply_temporary_repair_reload_env,enable_reuse_window_reload_for_session,restore_reuse_window_reload,_resolve_koru_cli_argv,_detached_reload_log_path,spawn_detached_ide_reload,try_reload_vscode_family_ide,try_open_vscode_family_ide_new_window,IdeReloadOutcome
     IdeReloadOutcome:
     _on_wayland()
     _ide_accepts_integrated_terminal(ide)
@@ -6690,7 +6950,10 @@ D:
     reuse_window_reload_enabled()
     command_palette_reload_enabled()
     new_window_reload_enabled()
+    detached_reload_enabled()
+    running_as_detached_reload_runner()
     _run(argv)
+    _editor_cli_env()
     _resolve_editor_cli(ide)
     _focus_ide_window(ide)
     reload_jetbrains_via_shortcut()
@@ -6701,12 +6964,20 @@ D:
     reload_via_new_window(ide;project)
     _reload_fallback_reopen(ide;project;palette)
     _reload_explain_reuse_window_disabled(palette)
+    _terminal_host_ide_id()
+    _running_from_integrated_ide_terminal()
     detect_reload_command(ide)
     execute_reload(ide)
     await_plugin_handshake(ide)
     explain_reload_failure()
+    snapshot_reload_env()
+    restore_reload_env(snapshot)
+    apply_temporary_repair_reload_env()
     enable_reuse_window_reload_for_session()
     restore_reuse_window_reload(previous;changed)
+    _resolve_koru_cli_argv()
+    _detached_reload_log_path(project)
+    spawn_detached_ide_reload(ide)
     try_reload_vscode_family_ide(ide)
     try_open_vscode_family_ide_new_window(ide)
   src/koru/ide_adapters/registry.py:
@@ -6716,7 +6987,7 @@ D:
     get_adapter(ide)
     supported_adapter_ids()
   src/koru/ide_adapters/shared.py:
-    e: _yellow,config_home_for_ide,user_settings_path,workspace_settings_path,_read_json_object,read_socket_from_settings,analyze_socket_settings,fix_workspace_socket,state_vscdb_path,read_vscdb_json,extension_disabled,publisher_trusted,vscode_core_version,latest_ide_exthost_session,extension_activated_in_exthost,extension_reload_required_lines,extension_metadata_path,extension_listed_in_extensions_json,add_trusted_publisher,socket_reachable,gc_stale_autopilot_sockets,settings_mismatch_hypothesis,untrusted_publisher_hypothesis,inactive_extension_hypothesis
+    e: _yellow,config_home_for_ide,user_settings_path,workspace_settings_path,_read_json_object,read_socket_from_settings,analyze_socket_settings,fix_workspace_socket,fix_user_socket,state_vscdb_path,read_vscdb_json,extension_disabled,publisher_trusted,vscode_core_version,latest_ide_exthost_session,extension_activated_in_exthost,extension_reload_required_lines,extension_metadata_path,extension_listed_in_extensions_json,add_trusted_publisher,socket_reachable,gc_stale_autopilot_sockets,settings_mismatch_hypothesis,untrusted_publisher_hypothesis,inactive_extension_hypothesis
     _yellow(text)
     config_home_for_ide(ide)
     user_settings_path(ide)
@@ -6725,6 +6996,7 @@ D:
     read_socket_from_settings(path)
     analyze_socket_settings()
     fix_workspace_socket()
+    fix_user_socket()
     state_vscdb_path(ide)
     read_vscdb_json(key)
     extension_disabled(ide)
@@ -6752,6 +7024,22 @@ D:
     build_legacy_ide_client()
     build_koruide_client()
     build_ide_client()
+  src/koru/ide_control_cli.py:
+    e: _add_common_lane_args,_add_control_plan_parser,_add_control_execute_parser,_add_control_list_uris_parser,add_control_parser,_print_json,_resolve_control_ide,_resolve_workspace_from_status,_client_factory_for_args,action_ide_control_plan,action_ide_control_execute,_fetch_autopilot_status,action_ide_control_list_uris,dispatch_control_action
+    _add_common_lane_args(parser)
+    _add_control_plan_parser(sub)
+    _add_control_execute_parser(sub)
+    _add_control_list_uris_parser(sub)
+    add_control_parser(sub)
+    _print_json(payload)
+    _resolve_control_ide(args)
+    _resolve_workspace_from_status(status;ide;project)
+    _client_factory_for_args(args;ide)
+    action_ide_control_plan(args)
+    action_ide_control_execute(args)
+    _fetch_autopilot_status(socket_path)
+    action_ide_control_list_uris(args)
+    dispatch_control_action(args)
   src/koru/ide_doctor_cli.py:
     e: _resolve_ide,_instance_from_socket_path,_infer_instance_from_settings,_resolve_socket,_bridge_subject,_bridge_hypotheses_payload,_bridge_status_payload,_record_bridge_repair_history,_add_discover_parser,_add_doctor_parser,_add_history_parser,_add_reload_parser,_add_command_catalog_parser,_add_scenario_parsers,build_parser,action_ide_doctor,action_ide_history,action_ide_reload,action_ide_discover,action_ide_commands,action_ide_scenario_schema,action_ide_scenario_prompt,action_ide_scenario_validate,ide_main
     _resolve_ide(raw)
@@ -6787,6 +7075,9 @@ D:
     e: build_host_setup_report,detect_running_ides
     build_host_setup_report()
     detect_running_ides()
+  src/koru/ide_status_systemmap.py:
+    e: format_autopilot_status_systemmap
+    format_autopilot_status_systemmap(status)
   src/koru/init.py:
     e: init_project,refresh_init_agent_lane,_import_init_pipeline,_write_init_artifacts,_write_agent_lane_for_init,_init_auto_agent_lane,_read_persisted_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry,InitReport,_InitPipelineImport,_InitArtifacts
     InitReport: _env_bit(0),_lane_summary(0),_init_summary(0),summary(0)  # Summary of what ``init_project`` actually changed on disk.
@@ -6907,15 +7198,17 @@ D:
     _default_runner(command;repository)
     run_closed_loop()
   src/koru/mcp_provision.py:
-    e: _windsurf_global_config,_cursor_project_config,_vscode_project_config,_windsurf_project_config,_zed_project_settings,_resolved_koru_command,_koru_mcp_entry,_koru_mcp_entry_cursor,_maybe_upgrade_koru_command,detect_ides,_read_json,_write_json,provision_windsurf,provision_cursor,provision_vscode,provision_vscodium,provision_zed,remove_from_config,ensure_koru_mcp_not_disabled,_resolve_targets,_removal_paths_for_ide,_apply_target,_render_results,init_ide_main
+    e: _windsurf_global_config,_cursor_project_config,_vscode_project_config,_windsurf_project_config,_zed_project_settings,_resolved_koru_command,_koru_mcp_entry,_registry_env_for_project,_koru_mcp_entry_cursor,koru_mcp_configured,_maybe_upgrade_koru_command,detect_ides,_read_json,_write_json,provision_windsurf,provision_cursor,provision_vscode,provision_vscodium,provision_zed,remove_from_config,_operator_autostart_mcp_enabled,auto_provision_koru_mcp,ensure_koru_mcp_not_disabled,_resolve_targets,_removal_paths_for_ide,_apply_target,_render_results,init_ide_main
     _windsurf_global_config()
     _cursor_project_config(project)
     _vscode_project_config(project)
     _windsurf_project_config(project)
     _zed_project_settings(project)
     _resolved_koru_command()
-    _koru_mcp_entry()
-    _koru_mcp_entry_cursor()
+    _koru_mcp_entry(project)
+    _registry_env_for_project(project)
+    _koru_mcp_entry_cursor(project)
+    koru_mcp_configured(project;ide)
     _maybe_upgrade_koru_command(servers)
     detect_ides()
     _read_json(path)
@@ -6926,6 +7219,8 @@ D:
     provision_vscodium(project)
     provision_zed(project)
     remove_from_config(config_path)
+    _operator_autostart_mcp_enabled()
+    auto_provision_koru_mcp(project;ide)
     ensure_koru_mcp_not_disabled(project)
     _resolve_targets(ide)
     _removal_paths_for_ide(ide;project)
@@ -7584,6 +7879,12 @@ D:
     _real_testql()
     main(argv)
   src/koruapi/__init__.py:
+  src/koruapi/calibration_validator.py:
+    e: _find_display,_pct,validate_single_calibration,validate_calibrations
+    _find_display(displays;display_id)
+    _pct(value;total)
+    validate_single_calibration(cal;displays;pointer)
+    validate_calibrations(desktop)
   src/koruapi/cli.py:
     e: _build_parser,_cli_version,_parse_body,_action_list,_action_invoke,_action_serve,_action_dashboard,_action_mcp,_action_local,main
     _build_parser()
@@ -7773,6 +8074,45 @@ D:
     e: dashboard_topology_payload,apply_dashboard_topology_update
     dashboard_topology_payload(project)
     apply_dashboard_topology_update(project;body)
+  src/koruapi/desktop_uri.py:
+    e: nlp2uri_available,nlp2uri_missing_message,_resolve_platform,_intent_ir_metadata,desktop_uri_plan,_control_surface_hint,_portal_capture_enabled,_is_screen_capture_uri,_capture_via_portal,desktop_uri_control_plan,desktop_uri_list_koru_ide_uris,desktop_uri_direct_ide_chat_execute,_control_uri_with_runtime_overrides,desktop_uri_control_execute,desktop_uri_handle,_service,desktop_uri_list_getv,desktop_uri_resolve_getv,desktop_uri_get_getv_var,desktop_uri_resolve_system_map,desktop_uri_list_system_uris
+    nlp2uri_available()
+    nlp2uri_missing_message()
+    _resolve_platform(name)
+    _intent_ir_metadata(prompt)
+    desktop_uri_plan(prompt)
+    _control_surface_hint(uri)
+    _portal_capture_enabled(explicit)
+    _is_screen_capture_uri(uri)
+    _capture_via_portal(uri)
+    desktop_uri_control_plan(prompt)
+    desktop_uri_list_koru_ide_uris(status)
+    desktop_uri_direct_ide_chat_execute(message)
+    _control_uri_with_runtime_overrides(uri)
+    desktop_uri_control_execute(prompt)
+    desktop_uri_handle(prompt)
+    _service()
+    desktop_uri_list_getv()
+    desktop_uri_resolve_getv(prompt)
+    desktop_uri_get_getv_var(uri)
+    desktop_uri_resolve_system_map(prompt)
+    desktop_uri_list_system_uris()
+  src/koruapi/env2llm_registry.py:
+    e: env2llm_available,env2llm_missing_message,_resolve_project_dir,_desktop_probe_default,_get_service,env2llm_get_registry,env2llm_render_registry,env2llm_refresh_registry,env2llm_sync_after_calibration,env2llm_get_desktop,env2llm_validate_calibration,env2llm_list_commands,env2llm_list_uris,env2llm_mqtt_status
+    env2llm_available()
+    env2llm_missing_message()
+    _resolve_project_dir()
+    _desktop_probe_default(explicit)
+    _get_service()
+    env2llm_get_registry()
+    env2llm_render_registry()
+    env2llm_refresh_registry()
+    env2llm_sync_after_calibration()
+    env2llm_get_desktop()
+    env2llm_validate_calibration()
+    env2llm_list_commands()
+    env2llm_list_uris()
+    env2llm_mqtt_status()
   src/koruapi/integrations.py:
     e: list_integrations,get_integration,IntegrationSpec
     IntegrationSpec:  # One invokable integration exposed via :mod:`koruapi`.
@@ -7814,25 +8154,69 @@ D:
     e: mcp_main
     mcp_main(argv)
   src/koruapi/mcp_server.py:
-    e: _get_job_store_path,_load_jobs,_save_jobs,_get_process_memory_mb,_monitor_subprocess_oom,_get_python_cmd,_run_planfile_cli,_parse_tickets_json,_tickets_for_status_filter,_serialize_mcp_ticket,tool_list_tickets,tool_ide_command_catalog,tool_ide_command_scenario_schema,tool_strategy_prompt,tool_ide_commands,tool_ide_drive,tool_ide_dsl_recent,tool_validate_ide_command_scenario,_create_job,_update_job,_collect_process_logs,_launch_oom_monitor,_run_ticket_queue_args,_run_ticket_timeout_response,_run_ticket_oom_response,_run_ticket_completed_response,_run_ticket_error_response,tool_run_ticket,tool_job_status,_gate_commands,_detect_enabled_gates,_resolve_gates,_run_single_gate,tool_run_quality_gates,_find_ticket,_build_edit_context,tool_propose_edits,_jsonrpc_response,_jsonrpc_error,_handle_initialize,_handle_tools_list,_handle_tools_call,handle_message,run_stdio,_write,_log,mcp_serve_main
+  src/koruapi/mcp_server_cli.py:
+    e: mcp_serve_main
+    mcp_serve_main(argv)
+  src/koruapi/mcp_server_desktop_uri.py:
+    e: build_tool_schemas,tool_desktop_uri_plan,tool_desktop_uri_handle,tool_desktop_uri_list_getv_uris,tool_desktop_uri_resolve_getv,tool_desktop_uri_get_getv_var,tool_desktop_uri_resolve_system_map,tool_desktop_uri_list_system_uris
+    build_tool_schemas()
+    tool_desktop_uri_plan(arguments)
+    tool_desktop_uri_handle(arguments)
+    tool_desktop_uri_list_getv_uris(arguments)
+    tool_desktop_uri_resolve_getv(arguments)
+    tool_desktop_uri_get_getv_var(arguments)
+    tool_desktop_uri_resolve_system_map(arguments)
+    tool_desktop_uri_list_system_uris(arguments)
+  src/koruapi/mcp_server_dispatch.py:
+    e: jsonrpc_response,jsonrpc_error,handle_initialize,handle_tools_list,handle_tools_call,build_method_handlers,handle_message
+    jsonrpc_response(req_id;result)
+    jsonrpc_error(req_id;code;message;data)
+    handle_initialize(_params)
+    handle_tools_list(_params)
+    handle_tools_call(params)
+    build_method_handlers()
+    handle_message(msg)
+  src/koruapi/mcp_server_env2llm.py:
+    e: build_tool_schemas,_project_kwargs,tool_env2llm_get_registry,tool_env2llm_render_registry,tool_env2llm_refresh_registry,tool_env2llm_get_desktop,tool_env2llm_list_commands,tool_env2llm_list_uris,tool_env2llm_mqtt_status,tool_env2llm_validate_calibration
+    build_tool_schemas()
+    _project_kwargs(arguments)
+    tool_env2llm_get_registry(arguments)
+    tool_env2llm_render_registry(arguments)
+    tool_env2llm_refresh_registry(arguments)
+    tool_env2llm_get_desktop(arguments)
+    tool_env2llm_list_commands(arguments)
+    tool_env2llm_list_uris(arguments)
+    tool_env2llm_mqtt_status(arguments)
+    tool_env2llm_validate_calibration(arguments)
+  src/koruapi/mcp_server_ide.py:
+    e: build_tool_schemas,tool_ide_command_catalog,tool_ide_command_scenario_schema,tool_strategy_prompt,tool_ide_commands,tool_ide_list_uris,tool_ide_control_plan,tool_ide_control_execute,tool_ide_drive,tool_ide_dsl_recent,tool_validate_ide_command_scenario
+    build_tool_schemas()
+    tool_ide_command_catalog(arguments)
+    tool_ide_command_scenario_schema(_arguments)
+    tool_strategy_prompt(arguments)
+    tool_ide_commands(arguments)
+    tool_ide_list_uris(arguments)
+    tool_ide_control_plan(arguments)
+    tool_ide_control_execute(arguments)
+    tool_ide_drive(arguments)
+    tool_ide_dsl_recent(arguments)
+    tool_validate_ide_command_scenario(arguments)
+  src/koruapi/mcp_server_nlp2oql.py:
+    e: build_tool_schemas,tool_nlp2oql_generate,tool_nlp2oql_run
+    build_tool_schemas()
+    tool_nlp2oql_generate(arguments)
+    tool_nlp2oql_run(arguments)
+  src/koruapi/mcp_server_planfile.py:
+    e: build_tool_schemas,_get_job_store_path,_load_jobs,_save_jobs,_get_process_memory_mb,_monitor_subprocess_oom,_tickets_for_status_filter,_serialize_mcp_ticket,tool_list_tickets,_create_job,_update_job,_collect_process_logs,_launch_oom_monitor,_run_ticket_queue_args,_run_ticket_timeout_response,_run_ticket_oom_response,_run_ticket_completed_response,_run_ticket_error_response,tool_run_ticket,tool_job_status,_gate_commands,_detect_enabled_gates,_resolve_gates,_run_single_gate,tool_run_quality_gates,_find_ticket,_build_edit_context,tool_propose_edits
+    build_tool_schemas()
     _get_job_store_path(project)
     _load_jobs(project)
     _save_jobs(jobs;project)
     _get_process_memory_mb(pid)
     _monitor_subprocess_oom(proc;threshold_mb;interval_seconds;action)
-    _get_python_cmd()
-    _run_planfile_cli(project)
-    _parse_tickets_json(stdout)
     _tickets_for_status_filter(ctx;status_filter)
     _serialize_mcp_ticket(ticket)
     tool_list_tickets(arguments)
-    tool_ide_command_catalog(arguments)
-    tool_ide_command_scenario_schema(_arguments)
-    tool_strategy_prompt(arguments)
-    tool_ide_commands(arguments)
-    tool_ide_drive(arguments)
-    tool_ide_dsl_recent(arguments)
-    tool_validate_ide_command_scenario(arguments)
     _create_job(ticket_id;mode;project)
     _update_job(job_id;project)
     _collect_process_logs(result)
@@ -7852,33 +8236,34 @@ D:
     _find_ticket(all_tickets;ticket_id)
     _build_edit_context(project;file_path)
     tool_propose_edits(arguments)
-    _jsonrpc_response(req_id;result)
-    _jsonrpc_error(req_id;code;message;data)
-    _handle_initialize(params)
-    _handle_tools_list(params)
-    _handle_tools_call(params)
+  src/koruapi/mcp_server_runtime.py:
+    e: handle_message,run_stdio,jsonrpc_response,jsonrpc_error,write_json,log_stderr
     handle_message(msg)
     run_stdio()
-    _write(payload)
-    _log(msg)
-    mcp_serve_main(argv)
-  src/koruapi/mcp_server_dispatch.py:
-    e: jsonrpc_response,jsonrpc_error,handle_initialize,handle_tools_list,handle_tools_call,build_method_handlers,handle_message
     jsonrpc_response(req_id;result)
     jsonrpc_error(req_id;code;message;data)
-    handle_initialize(_params)
-    handle_tools_list(_params)
-    handle_tools_call(params)
-    build_method_handlers()
-    handle_message(msg)
+    write_json(payload)
+    log_stderr(msg)
   src/koruapi/mcp_server_schema.py:
     e: build_tools
     build_tools(project_root_description)
+  src/koruapi/mcp_server_testql.py:
+    e: build_tool_schemas,tool_testql_list_scenarios,tool_testql_run_scenario
+    build_tool_schemas()
+    tool_testql_list_scenarios(arguments)
+    tool_testql_run_scenario(arguments)
   src/koruapi/mcp_server_transport.py:
     e: write_json,log_stderr,run_stdio_loop
     write_json(payload)
     log_stderr(message)
     run_stdio_loop()
+  src/koruapi/nlp2oql_bridge.py:
+    e: nlp2oql_available,nlp2oql_missing_message,_resolve_root,nlp2oql_generate,nlp2oql_run
+    nlp2oql_available()
+    nlp2oql_missing_message()
+    _resolve_root(project_dir;project_root)
+    nlp2oql_generate(prompt)
+    nlp2oql_run(prompt)
   src/koruapi/openapi.py:
     e: build_openapi_document
     build_openapi_document()
@@ -7899,6 +8284,13 @@ D:
     _parse_invoke_request(body;default_project)
     _handle_invoke_post(handler)
     serve()
+  src/koruapi/testql_bridge.py:
+    e: testql_available,testql_missing_message,_resolve_root,testql_list_scenarios,testql_run_scenario
+    testql_available()
+    testql_missing_message()
+    _resolve_root(project_dir;project_root)
+    testql_list_scenarios()
+    testql_run_scenario(file_spec)
   src/koruapi/topology_post.py:
     e: apply_topology_post_update
     apply_topology_post_update(project;body)
@@ -7937,6 +8329,8 @@ D:
     dsl_roundtrip_report(dsl_text)
     load_path(path)
   src/koruide/__init__.py:
+    e: _koru_activity_warn_bridge
+    _koru_activity_warn_bridge(message)
   src/koruide/audit.py:
     e: default_log_path,_isoformat_utc,_JSONFormatter,AuditLog
     _JSONFormatter: format(1)  # Emit ``record.msg`` verbatim — we hand it in pre-serialised.
@@ -7975,7 +8369,7 @@ D:
     _normalize_catalog(raw)
     parse_hello_command_catalog(msg_data)
   src/koruide/command_picker.py:
-    e: _seed_append,_llm_picker_mode,_seed_order,_env_enabled,_sanitize_antigravity_focus_open,_is_vscodium_focus_open_candidate,_prefer_commands,_sanitize_vscodium_focus_open,_is_cursor_submit_candidate,_sanitize_cursor_submit,_is_cursor_paste_candidate,_sanitize_cursor_paste,_sanitize_focus_open_candidates,_sanitize_cursor_candidates,_sanitize_candidates,_reorder_cursor_submit_default,_reorder_submit_for_hint,build_command_picker,pick_command_order,HeuristicPicker,OpenRouterPicker
+    e: _seed_append,_llm_picker_mode,_seed_order,_env_enabled,_sanitize_antigravity_focus_open,_is_vscodium_focus_open_candidate,_prefer_commands,_sanitize_vscodium_focus_open,_is_cursor_submit_candidate,_sanitize_cursor_submit,_is_cursor_paste_candidate,_sanitize_cursor_paste,_is_cursor_focus_open_candidate,_sanitize_cursor_focus_open,_sanitize_focus_open_candidates,_sanitize_cursor_candidates,_sanitize_candidates,_reorder_cursor_submit_default,_reorder_submit_for_hint,build_command_picker,pick_command_order,HeuristicPicker,OpenRouterPicker
     HeuristicPicker: pick(2)
     OpenRouterPicker: pick(2),_should_call_llm(3),_call_llm(2)
     _seed_append(category;command_id)
@@ -7990,6 +8384,8 @@ D:
     _sanitize_cursor_submit(commands)
     _is_cursor_paste_candidate(command)
     _sanitize_cursor_paste(commands)
+    _is_cursor_focus_open_candidate(command)
+    _sanitize_cursor_focus_open(commands)
     _sanitize_focus_open_candidates(ide_id;commands)
     _sanitize_cursor_candidates(capability;commands)
     _sanitize_candidates(ide;capability;commands)
@@ -8025,13 +8421,6 @@ D:
     _telemetry_path(project)
     _make_key(ide;plugin_version;capability;command)
   src/koruide/config.py:
-    e: default_config_path,_merge_submit_keys,load_config,cached_config,clear_config_cache,AutopilotConfig
-    AutopilotConfig: submit_key_for(1)  # In-memory view of ``autopilot.toml`` (or defaults).
-    default_config_path()
-    _merge_submit_keys(raw)
-    load_config(path)
-    cached_config()
-    clear_config_cache()
   src/koruide/daemon/__init__.py:
   src/koruide/daemon/handlers.py:
     e: _cap_ack_info_for_cli,_plugin_rejection_log_interval_seconds,_ide_reload_label,_load_context_module,_default_handoff,handle_status,_cli_client_still_connected,handle_shutdown,handle_ping,_console_log_payload,_console_log_meta,_record_console_log,_live_dsl_log_line,_log_live_dsl_console_line,handle_console_log
@@ -8077,11 +8466,15 @@ D:
     _record_plugin_ack_integration(daemon)
     handle_ack(daemon;client;msg)
   src/koruide/daemon/handlers_drive.py:
-    e: _prefer_keyboard_drive,handle_drive,_check_and_block_plugin_version,_record_plugin_route_telemetry,_deliver_chat_via_plugin_socket,_drive_via_plugin,_try_os_injector_drive,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend
+    e: _prefer_keyboard_drive,handle_drive,_check_and_block_plugin_version,_record_plugin_route_telemetry,_pending_corr_owner_alive,_clear_stale_pending_plugin_drive,_active_pending_plugin_drive,_reject_overlapping_plugin_drive,_deliver_chat_via_plugin_socket,_drive_via_plugin,_try_os_injector_drive,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend
     _prefer_keyboard_drive()
     handle_drive(daemon;client;msg)
     _check_and_block_plugin_version(daemon;client;msg;plugin;text;submit)
     _record_plugin_route_telemetry(daemon;client;msg;plugin;text;submit;require_plugin;corr)
+    _pending_corr_owner_alive(pending_corr)
+    _clear_stale_pending_plugin_drive(plugin)
+    _active_pending_plugin_drive(daemon;plugin)
+    _reject_overlapping_plugin_drive(daemon;client;msg;plugin;text;submit;corr;pending)
     _deliver_chat_via_plugin_socket(daemon;plugin;text;submit;corr;strategy_hint)
     _drive_via_plugin(daemon;client;msg;plugin;text;submit;require_plugin)
     _try_os_injector_drive(daemon;target_id;text;submit)
@@ -8166,7 +8559,7 @@ D:
     _print_setup_host_install_details(report)
     _print_text_report(report)
   src/koruide/ide.py:
-    e: normalize_ide_id,supported_autopilot_ide_ids,autopilot_ide_choices,vscode_extension_plugin_ide_ids,supports_vscode_extension_plugin,canonical_autopilot_ide_id,_iter_proc_pids,_read_comm,_read_cmdline,_read_exe,_matches,_score_comm_name,_score_windsurf_exe_path,_score_primary_exe_path,_score_exe_path,_score_cmdline_flags,_candidate_score,detect_running_ides,_active_window_pid_x11,_ide_id_from_process,detect_focused_ide_id,_vscode_family_env_present,_vscode_family_flavor_from_env,_cursor_terminal_env_hint,_windsurf_primary_terminal_env_hint,_vscode_family_terminal_hint,_jetbrains_terminal_env_hint,_ide_from_vscode_pid,_known_terminal_ide_hint,_legacy_windsurf_terminal_env_hint,_terminal_ide_env_candidates,_terminal_ide_from_env_with_source,_terminal_ide_from_env,_terminal_ide_from_parent_chain,detect_terminal_host_ide_id,detect_terminal_host_context,focused_ide,_find_ide_by_id,_env_preferred_ide_id,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,_has_os_injector_profile,_auto_profile_candidate_ids,_resolve_explicit_drive_target,_resolve_auto_drive_target,_log_drive_target_result,_resolve_profile_override,resolve_drive_target,RunningIDE,TerminalHostContext
+    e: normalize_ide_id,supported_autopilot_ide_ids,autopilot_ide_choices,vscode_extension_plugin_ide_ids,supports_vscode_extension_plugin,canonical_autopilot_ide_id,_iter_proc_pids,_read_comm,_read_cmdline,_read_exe,_matches,_score_comm_name,_score_windsurf_exe_path,_score_primary_exe_path,_score_exe_path,_score_cmdline_flags,_candidate_score,detect_running_ides,_active_window_pid_x11,_ide_id_from_process,detect_focused_ide_id,_vscode_fork_brand_from_text,_vscode_family_env_present,_vscode_family_flavor_from_env,_cursor_terminal_env_hint,_windsurf_primary_terminal_env_hint,_vscode_family_terminal_hint,_jetbrains_terminal_env_hint,_ide_from_vscode_pid,_known_terminal_ide_hint,_legacy_windsurf_terminal_env_hint,_terminal_ide_env_candidates,_vscode_family_terminal_ide,_terminal_ide_from_env_with_source,_terminal_ide_from_env,_terminal_ide_from_parent_chain,detect_terminal_host_ide_id,detect_terminal_host_context,focused_ide,_find_ide_by_id,_env_preferred_ide_id,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,_has_os_injector_profile,_auto_profile_candidate_ids,_resolve_explicit_drive_target,_resolve_auto_drive_target,_log_drive_target_result,_resolve_profile_override,resolve_drive_target,RunningIDE,TerminalHostContext
     RunningIDE: to_dict(0)  # A single IDE process discovered on the system.
     TerminalHostContext: integrated(0)  # Resolved host context for the terminal running Koru/Coru.
     normalize_ide_id(raw)
@@ -8190,6 +8583,7 @@ D:
     _active_window_pid_x11()
     _ide_id_from_process(pid)
     detect_focused_ide_id()
+    _vscode_fork_brand_from_text()
     _vscode_family_env_present()
     _vscode_family_flavor_from_env()
     _cursor_terminal_env_hint(chrome_ide)
@@ -8200,6 +8594,7 @@ D:
     _known_terminal_ide_hint(term_ide;chrome_ide)
     _legacy_windsurf_terminal_env_hint(chrome)
     _terminal_ide_env_candidates(chrome;chrome_ide;term_program;term_ide)
+    _vscode_family_terminal_ide(chrome_ide)
     _terminal_ide_from_env_with_source()
     _terminal_ide_from_env()
     _terminal_ide_from_parent_chain(start_pid)
@@ -8268,14 +8663,19 @@ D:
   src/koruide/ides/zed.py:
     e: ZedStrategy
     ZedStrategy: detection(0),aliases(0),plugin(0),keyboard(0)
+  src/koruide/injector.py:
+  src/koruide/injector_backends.py:
+  src/koruide/injector_errors.py:
+  src/koruide/os_injector.py:
   src/koruide/plugin_installer.py:
-    e: extension_id_for_ide,plugin_dir_names_for_ide,_valid_ide,_ide_from_terminal_env,_terminal_vscode_flavor,_repo_root,_plugin_package_version,_plugin_package_name,_versioned_vsix_candidates,_bundled_vsix_candidates,_fallback_vsix_candidates,_running_vscode_flavor,_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_first_local_extension_vsix,_newest_plugin_dir_vsix,_newest_existing_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_env_force_reassert_extension_install,_env_build_local_vsix,_local_plugin_dir,_package_build_sha,_vsix_build_sha,_latest_plugin_source_mtime,_local_vsix_needs_build,_ensure_local_extension_vsix,_extension_is_installed,_installed_extension_ids,_conflicting_extension_ids,_remove_conflicting_extensions,_extensions_metadata_path_for_ide,_metadata_adapter_for_ide,_active_extension_location_from_item,_active_extension_locations,_installed_extension_build_sha,_move_path_aside,_prune_stale_koru_extension_dirs,_parse_extension_version,installed_extension_version_for_ide,_reassert_extension_extra,_decide_reassert_policy,_run_reassert_command,_maybe_retry_missing_vsix,_should_retry_missing_vsix,_reassert_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result,PluginInstallResult,ExtensionMetadataAdapter,ReassertDecision
+    e: extension_id_for_ide,plugin_dir_names_for_ide,_valid_ide,_plugin_installer_module,_ide_from_terminal_env,_terminal_vscode_flavor,_repo_root,_plugin_package_version,_plugin_package_name,_versioned_vsix_candidates,_bundled_vsix_candidates,_fallback_vsix_candidates,_running_vscode_flavor,_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_first_local_extension_vsix,_newest_plugin_dir_vsix,_newest_existing_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_env_force_reassert_extension_install,_env_build_local_vsix,_local_plugin_dir,_package_build_sha,_vsix_build_sha,_latest_plugin_source_mtime,_local_vsix_needs_build,_ensure_local_extension_vsix,_extension_is_installed,_installed_extension_ids,_conflicting_extension_ids,_remove_conflicting_extensions,_extensions_metadata_path_for_ide,_metadata_adapter_for_ide,_active_extension_location_from_item,_active_extension_locations,_installed_extension_build_sha,_move_path_aside,_prune_stale_koru_extension_dirs,_parse_extension_version,installed_extension_version_for_ide,_reassert_extension_extra,_decide_reassert_policy,_run_reassert_command,_maybe_retry_missing_vsix,_should_retry_missing_vsix,_reassert_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result,PluginInstallResult,ExtensionMetadataAdapter,ReassertDecision
     PluginInstallResult: to_dict(0)
     ExtensionMetadataAdapter:  # IDE-specific adapter for extension metadata location.
     ReassertDecision:  # Pure reassert policy output used by install/reassert orchest
     extension_id_for_ide(ide_id)
     plugin_dir_names_for_ide(ide_id)
     _valid_ide(raw)
+    _plugin_installer_module()
     _ide_from_terminal_env()
     _terminal_vscode_flavor()
     _repo_root()
@@ -8794,7 +9194,7 @@ D:
     test_autoloop_print_script(capsys)
     test_autoloop_runs_packaged_script_with_env_assignments(tmp_path)
   tests/test_autonomous.py:
-    e: _isolate_terminal_ide,_force_idle_drive_prompt,test_effective_flags_matrix,test_scan_after_idle_queue_runs_scan_when_queue_idle,test_run_cycle_records_environment_profile_in_telemetry,test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty,test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery,test_cycle_code2llm_discovery_ensures_standardized_follow_up_ticket,test_scan_after_idle_min_interval_skips_second_scan,test_idle_streak_skip_increments_telemetry,test_ticket_sources_env_overrides_cli_queue_to_scan,test_ticket_sources_env_invalid_keeps_cli_queue,test_autonomous_environ_doctor_probe_invalid_ticket_sources,test_autonomous_environ_doctor_probe_pass_summary,test_looks_like_autonomous_matches_koru_cli_auto,test_looks_like_autonomous_matches_koru_autonomous_regex,test_auto_main_argv_injects_replace_existing,test_auto_invocation_uses_full_autonomous_defaults,test_auto_invocation_can_disable_after_idle_intake,test_auto_invocation_applies_koru_yaml_strategy_defaults,test_auto_invocation_cli_flags_override_koru_yaml_strategy_defaults,test_auto_invocation_can_enable_adaptive_pipeline,test_auto_onboarding_flow_uses_simulated_stdin,test_auto_pipeline_profiles_escalate_when_queue_stays_idle,test_effective_cycle_autopilot_skips_required_plugin_when_missing,test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive,test_autopilot_terminal_conflict_can_be_explicitly_allowed,test_autopilot_terminal_conflict_allows_connected_target_plugin,test_effective_cycle_autopilot_allows_non_plugin_required_ide,test_effective_cycle_scan_skips_after_waiting_input,test_effective_cycle_scan_waiting_override,test_build_queue_command_omits_unsupported_all_queues_flag,test_stop_prior_autonomous_for_auto_start_terminates,test_guard_existing_autonomous_noninteractive_blocks_duplicate,test_guard_existing_autonomous_replace_existing_terminates,test_guard_existing_autonomous_replace_existing_terminates_stale_wup,test_guard_existing_autonomous_interactive_decline_blocks_duplicate,test_autonomous_jsonl_keyboard_interrupt_emits_reason,test_queue_loop_result_summary_includes_waiting_ticket,test_queue_loop_waiting_ticket_label_helper,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_resolve_autopilot_ide_headless_forces_auto,test_resolve_autopilot_ide_headless_allow_autopilot_honors_env,test_resolve_autopilot_ide_koru_ide_mode_headless,test_resolve_autopilot_ide_ssh_without_display_headless,test_resolve_autopilot_ide_ssh_with_display_uses_cli,test_resolve_autopilot_ide_os_environ_autopilot_ide,test_resolve_autopilot_ide_os_environ_autopilot_instance,test_resolve_autopilot_ide_headless_allow_yes,_isolate_integrated_terminal_env,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_auto_prefers_vscode_terminal,test_apply_agent_lane_environ_auto_prefers_vscodium_terminal,test_apply_agent_lane_environ_auto_preserves_explicit_vscodium_over_vscode_terminal,test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_safe_up_uses_queue_diagnostics_without_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_setup_autopilot_plugin_unsupported_skips_wait,test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload,test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again,test_setup_autopilot_plugin_empty_plugin_list_attempts_reload,test_status_has_autopilot_plugin_matches_specific_ide,test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict,test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol,test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy,test_autonomous_defaults_to_strict_plugin_policy,test_autonomous_respects_explicit_plugin_version_policy,test_wait_for_autopilot_plugin_polls_until_connected,test_start_or_reuse_daemon_reuses_current_version,test_start_or_reuse_daemon_restarts_daemon_without_version,test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message,test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list,test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping,test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip,test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip,test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity,test_skip_due_to_recent_chat_activity_passes_events_to_llx_reflection,test_extract_needs_input_question_prefers_recent_received_question,test_skip_due_to_recent_chat_activity_creates_operator_ticket_on_needs_input,test_skip_due_to_recent_chat_activity_dedupes_needs_input_ticket_upsert,test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx,test_skip_due_to_recent_chat_activity_uses_openrouter_reflection_fallback,test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled,test_phase4_advisory_prioritize_tickets_emits_event,test_phase4_advisory_strategy_tuning_emits_event,test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket,test_skip_chat_activity_allows_llm_ready_redrive_after_no_change_verdict,test_skip_chat_activity_allows_redrive_when_sent_without_received,test_skip_chat_activity_upserts_external_chat_intake_ticket,test_skip_chat_activity_treats_short_explicit_sent_text_as_intake,test_skip_chat_activity_does_not_reupsert_current_chat_intake_ticket,test_skip_chat_activity_prefers_external_intake_over_self_drive_cooldown,test_skip_chat_activity_blocks_self_drive_even_without_ticket_ack,test_skip_chat_activity_does_not_ticket_self_driven_message,test_autopilot_escalation_cooldown_applies_after_escalation_prompt,test_reply_chat_input_busy_recognizes_plugin_ack_shape,test_submit_unverified_drive_failure_is_not_retryable,test_submit_unverified_drive_status_is_specific,test_submit_unverified_previous_drive_skips_redrive,test_submit_unverified_previous_drive_allows_alt_strategy_before_limit,test_submit_unverified_previous_drive_does_not_block_next_ticket,test_submit_unverified_previous_drive_clears_after_message_sent_same_ticket,test_submit_unverified_previous_drive_not_cleared_by_stale_message_sent,test_resolve_autopilot_drive_decision_includes_recent_llx_summary,test_resolve_autopilot_drive_decision_skips_closed_waiting_ticket,test_resolve_autopilot_drive_decision_does_not_skip_closed_waiting_ticket_when_disabled,test_autopilot_idle_without_open_ticket_does_not_drive,test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telemetry,test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure,test_run_cycle_plugin_required_failure_skips_os_injector_fallback,test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns,test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure,test_run_cycle_does_not_retry_missing_plugin_as_focus_error,test_run_cycle_does_not_retry_when_plugin_requires_manual_focus,test_log_autopilot_result_reports_manual_focus_as_skipped,test_run_cycle_skips_drive_when_required_plugin_missing,test_run_cycle_visible_typing_does_not_require_plugin,test_run_cycle_jetbrains_does_not_require_plugin_by_default,_fast_autonomous_up,test_up_keeps_running_on_waiting_input_by_default,test_up_stops_on_waiting_input_when_flag_set,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_compute_backoff_sleep_caps_stagnation,test_env_apply_autoloop_defaults_enables_full_diagnostics,test_run_idle_diagnostics_profile_off_message,test_run_idle_diagnostics_creates_deduped_ticket,test_wup_watch_command_uses_testql_mode,test_wup_watch_command_prefers_project_venv_wrapper,test_wup_watch_command_keeps_explicit_testql_bin,test_wup_watch_command_normalizes_percent_cpu_throttle,test_wup_subprocess_env_loads_project_wup_env,test_start_wup_watch_passes_playwright_env,test_wup_profiled_compose_services_start_before_watch,test_wup_compose_ps_accepts_json_lines,test_wup_compose_service_ready_rejects_unhealthy_or_stopped,test_wup_compose_service_ready_accepts_status_when_state_missing,test_wup_topology_gate_uses_pipeline_for_gate_wup,test_read_wup_health_creates_high_priority_planfile_ticket,test_read_wup_health_sanitizes_slash_in_service_marker_path,test_read_wup_health_ignores_stale_services_not_in_wup_yaml,test_read_wup_health_ignores_degraded_fleet_and_clears_marker,test_read_wup_health_treats_aborted_as_interrupted_not_failure
+    e: _isolate_terminal_ide,_force_idle_drive_prompt,test_effective_flags_matrix,test_scan_after_idle_queue_runs_scan_when_queue_idle,test_run_cycle_records_environment_profile_in_telemetry,test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty,test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery,test_cycle_code2llm_discovery_ensures_standardized_follow_up_ticket,test_scan_after_idle_min_interval_skips_second_scan,test_idle_streak_skip_increments_telemetry,test_ticket_sources_env_overrides_cli_queue_to_scan,test_ticket_sources_env_invalid_keeps_cli_queue,test_autonomous_environ_doctor_probe_invalid_ticket_sources,test_autonomous_environ_doctor_probe_pass_summary,test_looks_like_autonomous_matches_koru_cli_auto,test_looks_like_autonomous_matches_koru_autonomous_regex,test_auto_main_argv_injects_replace_existing,test_auto_invocation_uses_full_autonomous_defaults,test_auto_invocation_can_disable_after_idle_intake,test_auto_invocation_applies_koru_yaml_strategy_defaults,test_auto_invocation_cli_flags_override_koru_yaml_strategy_defaults,test_auto_invocation_can_enable_adaptive_pipeline,test_auto_onboarding_flow_uses_simulated_stdin,test_auto_pipeline_profiles_escalate_when_queue_stays_idle,test_effective_cycle_autopilot_skips_required_plugin_when_missing,test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive,test_autopilot_terminal_conflict_can_be_explicitly_allowed,test_autopilot_terminal_conflict_allows_connected_target_plugin,test_effective_cycle_autopilot_allows_non_plugin_required_ide,test_effective_cycle_scan_skips_after_waiting_input,test_effective_cycle_scan_waiting_override,test_build_queue_command_omits_unsupported_all_queues_flag,test_stop_prior_autonomous_for_auto_start_terminates,test_guard_existing_autonomous_noninteractive_blocks_duplicate,test_guard_existing_autonomous_replace_existing_terminates,test_guard_existing_autonomous_replace_existing_terminates_stale_wup,test_guard_existing_autonomous_interactive_decline_blocks_duplicate,test_autonomous_jsonl_keyboard_interrupt_emits_reason,test_queue_loop_result_summary_includes_waiting_ticket,test_queue_loop_waiting_ticket_label_helper,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_resolve_autopilot_ide_headless_forces_auto,test_resolve_autopilot_ide_headless_allow_autopilot_honors_env,test_resolve_autopilot_ide_koru_ide_mode_headless,test_resolve_autopilot_ide_ssh_without_display_headless,test_resolve_autopilot_ide_ssh_with_display_uses_cli,test_resolve_autopilot_ide_os_environ_autopilot_ide,test_resolve_autopilot_ide_os_environ_autopilot_instance,test_resolve_autopilot_ide_headless_allow_yes,_isolate_integrated_terminal_env,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_auto_prefers_vscode_terminal,test_apply_agent_lane_environ_auto_prefers_vscodium_terminal,test_apply_agent_lane_environ_auto_preserves_explicit_vscodium_over_vscode_terminal,test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_safe_up_uses_queue_diagnostics_without_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_setup_autopilot_plugin_unsupported_skips_wait,test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload,test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again,test_setup_autopilot_plugin_empty_plugin_list_attempts_reload,test_status_has_autopilot_plugin_matches_specific_ide,test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict,test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol,test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy,test_autonomous_defaults_to_strict_plugin_policy,test_autonomous_respects_explicit_plugin_version_policy,test_build_cycle_run_kwargs_forwards_effective_autopilot,test_wait_for_autopilot_plugin_polls_until_connected,test_start_or_reuse_daemon_reuses_current_version,test_start_or_reuse_daemon_restarts_daemon_without_version,test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message,test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list,test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping,test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip,test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip,test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity,test_skip_due_to_recent_chat_activity_passes_events_to_llx_reflection,test_extract_needs_input_question_prefers_recent_received_question,test_skip_due_to_recent_chat_activity_creates_operator_ticket_on_needs_input,test_skip_due_to_recent_chat_activity_dedupes_needs_input_ticket_upsert,test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx,test_skip_due_to_recent_chat_activity_uses_openrouter_reflection_fallback,test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled,test_phase4_advisory_prioritize_tickets_emits_event,test_phase4_advisory_strategy_tuning_emits_event,test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket,test_skip_chat_activity_allows_llm_ready_redrive_after_no_change_verdict,test_skip_chat_activity_allows_redrive_when_sent_without_received,test_skip_chat_activity_upserts_external_chat_intake_ticket,test_skip_chat_activity_treats_short_explicit_sent_text_as_intake,test_skip_chat_activity_does_not_reupsert_current_chat_intake_ticket,test_skip_chat_activity_prefers_external_intake_over_self_drive_cooldown,test_skip_chat_activity_blocks_self_drive_even_without_ticket_ack,test_skip_chat_activity_does_not_ticket_self_driven_message,test_autopilot_escalation_cooldown_applies_after_escalation_prompt,test_reply_chat_input_busy_recognizes_plugin_ack_shape,test_submit_unverified_drive_failure_is_not_retryable,test_submit_unverified_drive_status_is_specific,test_submit_unverified_previous_drive_skips_redrive,test_submit_unverified_previous_drive_allows_alt_strategy_before_limit,test_submit_unverified_previous_drive_does_not_block_next_ticket,test_submit_unverified_previous_drive_clears_after_message_sent_same_ticket,test_submit_unverified_previous_drive_not_cleared_by_stale_message_sent,test_resolve_autopilot_drive_decision_includes_recent_llx_summary,test_resolve_autopilot_drive_decision_skips_closed_waiting_ticket,test_resolve_autopilot_drive_decision_does_not_skip_closed_waiting_ticket_when_disabled,test_autopilot_idle_without_open_ticket_does_not_drive,test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telemetry,test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure,test_run_cycle_plugin_required_failure_skips_os_injector_fallback,test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns,test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure,test_run_cycle_does_not_retry_missing_plugin_as_focus_error,test_run_cycle_does_not_retry_when_plugin_requires_manual_focus,test_log_autopilot_result_reports_manual_focus_as_skipped,test_run_cycle_skips_drive_when_required_plugin_missing,test_run_cycle_visible_typing_does_not_require_plugin,test_run_cycle_jetbrains_does_not_require_plugin_by_default,_fast_autonomous_up,test_up_keeps_running_on_waiting_input_by_default,test_up_stops_on_waiting_input_when_flag_set,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_compute_backoff_sleep_caps_stagnation,test_env_apply_autoloop_defaults_enables_full_diagnostics,test_run_idle_diagnostics_profile_off_message,test_run_idle_diagnostics_creates_deduped_ticket,test_wup_watch_command_uses_testql_mode,test_wup_watch_command_prefers_project_venv_wrapper,test_wup_watch_command_keeps_explicit_testql_bin,test_wup_watch_command_normalizes_percent_cpu_throttle,test_wup_subprocess_env_loads_project_wup_env,test_start_wup_watch_passes_playwright_env,test_wup_profiled_compose_services_start_before_watch,test_wup_compose_ps_accepts_json_lines,test_wup_compose_service_ready_rejects_unhealthy_or_stopped,test_wup_compose_service_ready_accepts_status_when_state_missing,test_wup_topology_gate_uses_pipeline_for_gate_wup,test_read_wup_health_creates_high_priority_planfile_ticket,test_read_wup_health_sanitizes_slash_in_service_marker_path,test_read_wup_health_ignores_stale_services_not_in_wup_yaml,test_read_wup_health_ignores_degraded_fleet_and_clears_marker,test_read_wup_health_treats_aborted_as_interrupted_not_failure
     _isolate_terminal_ide(monkeypatch)
     _force_idle_drive_prompt(monkeypatch)
     test_effective_flags_matrix()
@@ -8868,6 +9268,7 @@ D:
     test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy(monkeypatch)
     test_autonomous_defaults_to_strict_plugin_policy(monkeypatch)
     test_autonomous_respects_explicit_plugin_version_policy(monkeypatch)
+    test_build_cycle_run_kwargs_forwards_effective_autopilot(monkeypatch)
     test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch)
     test_start_or_reuse_daemon_reuses_current_version(tmp_path;monkeypatch)
     test_start_or_reuse_daemon_restarts_daemon_without_version(tmp_path;monkeypatch)
@@ -9115,6 +9516,10 @@ D:
     test_blocked_interface_action_lines_filter_to_jetbrains_lane()
     test_current_mission_lines_treat_plugin_version_mismatch_as_plugin_blocker()
     test_operator_quick_actions_emit_replayable_control_commands(tmp_path)
+  tests/test_autonomous_nlp2uri_drive.py:
+    e: test_invoke_drive_uses_nlp2uri_when_enabled,test_invoke_drive_falls_back_to_client_when_nlp2uri_fails
+    test_invoke_drive_uses_nlp2uri_when_enabled(monkeypatch)
+    test_invoke_drive_falls_back_to_client_when_nlp2uri_fails(monkeypatch)
   tests/test_autonomous_onboarding.py:
     e: test_should_run_interactive_onboarding_for_auto_tty,test_should_not_run_interactive_onboarding_when_not_auto,test_should_not_run_interactive_onboarding_when_project_has_koru_dir,test_should_not_run_interactive_onboarding_when_project_has_legacy_runtime_dir,test_explicit_onboarding_ignores_existing_project_koru_dir,test_ensure_project_state_writes_project_metadata,test_discover_ide_candidates_delegates_to_wizard,test_load_strategy_tree_prefers_project_override,test_run_interactive_onboarding_updates_args_from_wizard
     test_should_run_interactive_onboarding_for_auto_tty(monkeypatch)
@@ -9227,7 +9632,8 @@ D:
     test_run_cycle_auto_heals_stale_socket()
     test_autonomous_cycle_skips_idle_drive_when_no_ticket_then_hits_idle_streak()
   tests/test_autonomous_startup.py:
-    e: test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker,test_resolve_agent_lane_prefers_focused_ide_over_terminal_hint,test_resolve_agent_lane_focus_beats_conflicting_explicit_instance,test_resolve_agent_lane_focus_maps_to_project_lane_suffix,test_resolve_autopilot_ide_for_autonomous_returns_string_lane,test_canonical_autopilot_ide_id_maps_instance_slug,test_resolve_autopilot_ide_for_autonomous_maps_windsurf_main_instance,test_build_startup_probe_keeps_instance_socket_for_windsurf_main,test_resolve_agent_lane_prefers_cursor_over_jetbrains_terminal_when_both_running,test_resolve_agent_lane_stale_jetbrains_env_overridden_by_running_cursor,test_resolve_agent_lane_terminal_hint_overrides_conflicting_env_instance,test_resolve_agent_lane_preserves_suffixed_explicit_instance,test_resolve_agent_lane_prefers_vscodium_target_over_generic_vscode_terminal,test_resolve_agent_lane_prefers_antigravity_target_over_generic_vscode_terminal,test_resolve_agent_lane_env_instance_used_without_terminal_hint,test_resolve_agent_lane_explicit_vscodium_beats_generic_vscode_terminal,test_resolve_agent_lane_explicit_zed_beats_generic_vscode_terminal,test_resolve_agent_lane_terminal_zed_does_not_override_explicit_plugin_instance,test_resolve_agent_lane_prefers_antigravity_when_terminal_unknown,test_resolve_autopilot_ide_keeps_jetbrains_lane_when_plugin_ide_running,test_resolve_autopilot_ide_keeps_jetbrains_when_no_plugin_ide_running,test_format_post_startup_operator_hints_mentions_socket,test_format_post_startup_operator_hints_compact_for_disconnected_plugin,test_format_post_startup_operator_hints_can_name_plugin_version_mismatch,test_format_post_startup_operator_hints_warns_when_vscode_selected_with_vscodium_running,test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps,test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_windsurf_selected,test_format_post_startup_operator_hints_for_zed_uses_keyboard_path,test_format_post_startup_operator_hints_for_antigravity_uses_plugin_path,test_format_startup_banner_includes_version,test_format_startup_banner_includes_terminal_hint_and_lane_details,test_build_startup_probe_reports_per_ide_socket_for_explicit_ide,test_build_startup_probe_ignores_stale_koruenv_socket_for_explicit_ide,test_build_startup_probe_ignores_stale_instance_and_socket_for_explicit_ide,test_build_startup_probe_reports_per_ide_socket_for_antigravity,test_apply_agent_lane_environ_uses_running_ide,test_apply_agent_lane_environ_nonplugin_terminal_does_not_override_explicit_instance
+    e: _isolate_desktop_focus,test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker,test_resolve_agent_lane_prefers_focused_ide_over_terminal_hint,test_resolve_agent_lane_focus_beats_conflicting_explicit_instance,test_resolve_agent_lane_focus_maps_to_project_lane_suffix,test_resolve_autopilot_ide_for_autonomous_returns_string_lane,test_canonical_autopilot_ide_id_maps_instance_slug,test_resolve_autopilot_ide_for_autonomous_maps_windsurf_main_instance,test_build_startup_probe_keeps_instance_socket_for_windsurf_main,test_resolve_agent_lane_prefers_cursor_over_jetbrains_terminal_when_both_running,test_resolve_agent_lane_stale_jetbrains_env_overridden_by_running_cursor,test_resolve_agent_lane_terminal_hint_overrides_conflicting_env_instance,test_resolve_agent_lane_preserves_suffixed_explicit_instance,test_resolve_agent_lane_prefers_vscodium_target_over_generic_vscode_terminal,test_resolve_agent_lane_prefers_antigravity_target_over_generic_vscode_terminal,test_resolve_agent_lane_env_instance_used_without_terminal_hint,test_resolve_agent_lane_explicit_vscodium_beats_generic_vscode_terminal,test_resolve_agent_lane_explicit_zed_beats_generic_vscode_terminal,test_resolve_agent_lane_terminal_zed_does_not_override_explicit_plugin_instance,test_resolve_agent_lane_prefers_antigravity_when_terminal_unknown,test_resolve_autopilot_ide_keeps_jetbrains_lane_when_plugin_ide_running,test_resolve_autopilot_ide_keeps_jetbrains_when_no_plugin_ide_running,test_format_post_startup_operator_hints_mentions_socket,test_format_post_startup_operator_hints_compact_for_disconnected_plugin,test_format_post_startup_operator_hints_can_name_plugin_version_mismatch,test_format_post_startup_operator_hints_warns_when_vscode_selected_with_vscodium_running,test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps,test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_windsurf_selected,test_format_post_startup_operator_hints_for_zed_uses_keyboard_path,test_format_post_startup_operator_hints_for_antigravity_uses_plugin_path,test_format_startup_banner_includes_version,test_format_startup_banner_includes_terminal_hint_and_lane_details,test_build_startup_probe_reports_per_ide_socket_for_explicit_ide,test_build_startup_probe_ignores_stale_koruenv_socket_for_explicit_ide,test_build_startup_probe_ignores_stale_instance_and_socket_for_explicit_ide,test_build_startup_probe_reports_per_ide_socket_for_antigravity,test_apply_agent_lane_environ_uses_running_ide,test_apply_agent_lane_environ_nonplugin_terminal_does_not_override_explicit_instance
+    _isolate_desktop_focus(monkeypatch)
     test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(tmp_path;monkeypatch)
     test_resolve_agent_lane_prefers_focused_ide_over_terminal_hint(tmp_path;monkeypatch)
     test_resolve_agent_lane_focus_beats_conflicting_explicit_instance(tmp_path;monkeypatch)
@@ -9521,7 +9927,7 @@ D:
     test_default_config_path_falls_back_to_home(monkeypatch)
     test_cached_config_is_memoised(monkeypatch)
   tests/test_autopilot_daemon.py:
-    e: _patch_no_running_ides,_daemon,_connect_plugin,_assert_no_more_data,running_daemon,test_ping_round_trip,test_ping_unknown_role_does_not_log_noise,test_is_running_true_when_daemon_alive,test_drive_falls_back_to_injector_when_no_plugin,test_drive_require_plugin_blocks_keyboard_fallback,test_drive_reports_injector_failure,test_drive_uses_os_injector_when_profile_available,test_drive_os_injector_skipped_when_env_disabled,test_drive_os_injector_forced_without_profile_falls_back_to_keyboard,test_drive_os_injector_failure_falls_back_to_keyboard,test_drive_empty_text_returns_error,test_drive_unknown_type_returns_error,test_status_reports_socket_and_plugins,test_daemon_writes_project_metadata_sidecar,test_status_reports_plugin_console_logs,test_console_log_surfaces_live_dsl_lines,test_accept_rejects_foreign_peer_uid,test_plugin_hello_then_drive_forwards,test_plugin_drive_routes_alias_to_canonical_plugin,test_plugin_hello_rejects_missing_protocol,test_strict_plugin_version_blocks_stale_plugin_with_compatible_protocol,test_protocol_policy_allows_stale_plugin_with_compatible_protocol,test_strict_plugin_hello_rejects_stale_without_evicting_current,test_repeated_stale_plugin_hello_rejections_are_log_throttled,test_rejected_plugin_log_default_interval_is_quiet,test_rejected_plugin_log_names_actual_ide_for_reload_action,test_status_reports_rejected_plugin_versions,test_message_sent_event_completes_pending_drive_without_plugin_ack,test_message_sent_event_does_not_complete_strict_ack_drive,test_vscodium_message_sent_event_completes_after_submit_unverified_ack_grace,test_message_sent_from_other_plugin_does_not_complete_pending_drive,test_cli_client_still_connected_detects_peer_eof,test_newer_plugin_connection_replaces_stale_same_ide_client,test_visible_typing_prefers_keyboard_even_when_plugin_connected,test_plugin_ack_with_shutdown_info_is_relayed,test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide,test_plugin_ack_failure_skips_os_fallback_if_require_plugin,test_default_handoff_builds_brief_for_uninitialised_project,test_session_ended_triggers_handoff_chat_send,test_session_ended_no_handoff_when_disabled,test_session_ended_no_project_handoff_when_disabled,test_session_ended_skipped_during_cooldown,test_session_started_event_just_acks,test_shutdown_stops_daemon,test_verbose_io_defaults_to_false,test_verbose_io_opt_in,test_verbose_io_opt_out,test_connect_disconnect_silent_by_default,test_connect_disconnect_logged_when_verbose,test_cap_ack_info_for_cli_strips_oversized_fields,_StubInjector,_LineReader,_DaemonHarness
+    e: _patch_no_running_ides,_daemon,_connect_plugin,_assert_no_more_data,running_daemon,test_ping_round_trip,test_ping_unknown_role_does_not_log_noise,test_is_running_true_when_daemon_alive,test_drive_falls_back_to_injector_when_no_plugin,test_drive_require_plugin_blocks_keyboard_fallback,test_drive_reports_injector_failure,test_drive_uses_os_injector_when_profile_available,test_drive_os_injector_skipped_when_env_disabled,test_drive_os_injector_forced_without_profile_falls_back_to_keyboard,test_drive_os_injector_failure_falls_back_to_keyboard,test_drive_empty_text_returns_error,test_drive_unknown_type_returns_error,test_status_reports_socket_and_plugins,test_daemon_writes_project_metadata_sidecar,test_status_reports_plugin_console_logs,test_console_log_surfaces_live_dsl_lines,test_accept_rejects_foreign_peer_uid,test_plugin_hello_then_drive_forwards,test_plugin_drive_routes_alias_to_canonical_plugin,test_plugin_hello_rejects_missing_protocol,test_strict_plugin_version_blocks_stale_plugin_with_compatible_protocol,test_protocol_policy_allows_stale_plugin_with_compatible_protocol,test_strict_plugin_hello_rejects_stale_without_evicting_current,test_repeated_stale_plugin_hello_rejections_are_log_throttled,test_rejected_plugin_log_default_interval_is_quiet,test_rejected_plugin_log_names_actual_ide_for_reload_action,test_status_reports_rejected_plugin_versions,test_message_sent_event_completes_pending_drive_without_plugin_ack,test_message_sent_event_does_not_complete_strict_ack_drive,test_vscodium_message_sent_event_completes_after_submit_unverified_ack_grace,test_message_sent_from_other_plugin_does_not_complete_pending_drive,test_cli_client_still_connected_detects_peer_eof,test_newer_plugin_connection_replaces_stale_same_ide_client,test_overlapping_plugin_drive_is_rejected_without_overwriting_pending,test_visible_typing_prefers_keyboard_even_when_plugin_connected,test_plugin_ack_with_shutdown_info_is_relayed,test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide,test_plugin_ack_failure_skips_os_fallback_if_require_plugin,test_default_handoff_builds_brief_for_uninitialised_project,test_session_ended_triggers_handoff_chat_send,test_session_ended_no_handoff_when_disabled,test_session_ended_no_project_handoff_when_disabled,test_session_ended_skipped_during_cooldown,test_session_started_event_just_acks,test_shutdown_stops_daemon,test_verbose_io_defaults_to_false,test_verbose_io_opt_in,test_verbose_io_opt_out,test_connect_disconnect_silent_by_default,test_connect_disconnect_logged_when_verbose,test_cap_ack_info_for_cli_strips_oversized_fields,_StubInjector,_LineReader,_DaemonHarness
     _StubInjector: __init__(0),type_text(1),probe(0),select_backend(0)  # Replaces :class:`gillm.injection.injector.Injector` for test
     _LineReader: __init__(1),_decode_frame(1),read_line(0),read_message(0)  # Stateful NDJSON line reader over a blocking socket.
     _DaemonHarness: __init__(1),__enter__(0),__exit__(0),start(0),stop(0),client(1)  # Spin up :class:`AutopilotDaemon` on a thread and tear it dow
@@ -9563,6 +9969,7 @@ D:
     test_message_sent_from_other_plugin_does_not_complete_pending_drive(tmp_path;monkeypatch)
     test_cli_client_still_connected_detects_peer_eof()
     test_newer_plugin_connection_replaces_stale_same_ide_client(tmp_path;monkeypatch)
+    test_overlapping_plugin_drive_is_rejected_without_overwriting_pending(tmp_path;monkeypatch)
     test_visible_typing_prefers_keyboard_even_when_plugin_connected(tmp_path;monkeypatch)
     test_plugin_ack_with_shutdown_info_is_relayed(tmp_path;monkeypatch)
     test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide(tmp_path;monkeypatch)
@@ -9591,7 +9998,7 @@ D:
     test_install_ydotoold_user_service_dry_run_writes_no_files(monkeypatch;tmp_path)
     test_install_ydotoold_user_service_writes_unit_and_runs_systemctl(monkeypatch;tmp_path)
   tests/test_autopilot_ide.py:
-    e: _clear_antigravity_env,fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_prefers_primary_windsurf_over_devin_helper,test_detect_running_ides_skips_unknown_processes,test_detect_running_ides_separates_vscode_and_vscodium,test_detect_running_ides_finds_antigravity_as_separate_ide,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_prefers_koru_autopilot_ide_env,test_pick_target_ignores_koru_autopilot_ide_env_when_not_running,test_pick_target_empty_list_returns_none,test_detect_focused_ide_id_from_active_pid,test_detect_focused_ide_id_returns_none_for_unknown_pid,test_focused_ide_returns_matching_instance,test_pick_target_prefers_focused_when_no_explicit_prefer,test_pick_target_explicit_prefer_beats_focus,test_resolve_drive_target_auto_picks_first_ide_with_profile,test_detect_terminal_host_ide_id_cursor_env,test_detect_terminal_host_ide_id_cursor_beats_windsurf_token,test_detect_terminal_host_ide_id_vscode_nls_without_pid,test_detect_terminal_host_ide_id_vscodium_from_vscode_family_env,test_detect_terminal_host_ide_id_antigravity_from_vscode_family_env,test_detect_terminal_host_ide_id_zed_term_program,test_detect_terminal_host_context_vscode_pid_beats_cursor_env,test_detect_terminal_host_context_system_shell_when_no_markers,test_normalize_ide_id_aliases,test_detect_terminal_host_context_parent_chain_is_ide_adjacent,test_terminal_host_prefers_vscodium_flavor_over_generic_vscode,test_pick_target_prefers_terminal_host_over_signature_order,test_resolve_drive_target_terminal_without_profile_skips_other_profiles,test_resolve_drive_target_auto_prefers_focused_when_it_has_profile,test_resolve_drive_target_explicit_zed_without_running_process,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
+    e: _clear_antigravity_env,fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_prefers_primary_windsurf_over_devin_helper,test_detect_running_ides_skips_unknown_processes,test_detect_running_ides_separates_vscode_and_vscodium,test_detect_running_ides_finds_antigravity_as_separate_ide,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_prefers_koru_autopilot_ide_env,test_pick_target_ignores_koru_autopilot_ide_env_when_not_running,test_pick_target_empty_list_returns_none,test_detect_focused_ide_id_from_active_pid,test_detect_focused_ide_id_returns_none_for_unknown_pid,test_focused_ide_returns_matching_instance,test_pick_target_prefers_focused_when_no_explicit_prefer,test_pick_target_explicit_prefer_beats_focus,test_resolve_drive_target_auto_picks_first_ide_with_profile,test_detect_terminal_host_ide_id_cursor_env,test_detect_terminal_host_ide_id_cursor_beats_windsurf_token,test_detect_terminal_host_ide_id_term_program_cursor_beats_windsurf_cascade,test_detect_terminal_host_ide_id_vscode_nls_without_pid,test_detect_terminal_host_ide_id_vscodium_from_vscode_family_env,test_detect_terminal_host_ide_id_antigravity_from_vscode_family_env,test_detect_terminal_host_ide_id_zed_term_program,test_detect_terminal_host_ide_id_windsurf_from_devin_desktop_env,test_detect_terminal_host_ide_id_windsurf_cascade_beats_generic_vscode,test_detect_terminal_host_context_vscode_pid_beats_cursor_env,test_detect_terminal_host_context_system_shell_when_no_markers,test_normalize_ide_id_aliases,test_detect_terminal_host_context_parent_chain_is_ide_adjacent,test_terminal_host_prefers_vscodium_flavor_over_generic_vscode,test_pick_target_prefers_terminal_host_over_signature_order,test_resolve_drive_target_terminal_without_profile_skips_other_profiles,test_resolve_drive_target_auto_prefers_focused_when_it_has_profile,test_resolve_drive_target_explicit_zed_without_running_process,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
     _clear_antigravity_env(monkeypatch)
     fake_proc(tmp_path;monkeypatch)
     test_detect_running_ides_finds_windsurf_and_jetbrains(fake_proc)
@@ -9614,10 +10021,13 @@ D:
     test_resolve_drive_target_auto_picks_first_ide_with_profile(fake_proc;monkeypatch)
     test_detect_terminal_host_ide_id_cursor_env(monkeypatch)
     test_detect_terminal_host_ide_id_cursor_beats_windsurf_token(monkeypatch)
+    test_detect_terminal_host_ide_id_term_program_cursor_beats_windsurf_cascade(monkeypatch)
     test_detect_terminal_host_ide_id_vscode_nls_without_pid(monkeypatch)
     test_detect_terminal_host_ide_id_vscodium_from_vscode_family_env(monkeypatch)
     test_detect_terminal_host_ide_id_antigravity_from_vscode_family_env(monkeypatch)
     test_detect_terminal_host_ide_id_zed_term_program(monkeypatch)
+    test_detect_terminal_host_ide_id_windsurf_from_devin_desktop_env(monkeypatch)
+    test_detect_terminal_host_ide_id_windsurf_cascade_beats_generic_vscode(monkeypatch)
     test_detect_terminal_host_context_vscode_pid_beats_cursor_env(monkeypatch)
     test_detect_terminal_host_context_system_shell_when_no_markers(monkeypatch)
     test_normalize_ide_id_aliases(raw;expected)
@@ -9644,7 +10054,8 @@ D:
     test_resolve_client_socket_path_uses_cursor_main_not_cursor(monkeypatch;tmp_path)
     test_autopilot_env_command_prints_exports(monkeypatch;tmp_path;capsys)
   tests/test_autopilot_plugin_installer.py:
-    e: _cp,_hide_live_editor_bins,test_resolve_target_ide_prefers_autopilot_env,test_resolve_target_ide_uses_running_supported_ide,test_resolve_target_ide_uses_integrated_terminal_hint,test_install_plugin_dry_run_builds_editor_command,test_resolve_extension_vsix_finds_repo_plugin_package,test_resolve_extension_vsix_prefers_package_version,test_install_plugin_configures_socket_path,test_install_plugin_reassert_falls_back_when_resolved_vsix_is_missing,test_install_plugin_targets_vscodium_from_integrated_terminal,test_install_plugin_explicit_vscode_does_not_use_codium_hint,test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint,test_install_plugin_skips_when_extension_already_installed,test_install_plugin_builds_stale_local_vsix_before_reassert,test_install_plugin_removes_conflicting_family_extension,test_reassert_policy_matrix,test_reassert_policy_force_overrides_matching_build_sha,test_should_retry_missing_vsix_only_for_missing_file_errors,test_install_plugin_moves_stale_family_extension_dirs,test_installed_extension_version_for_ide_reads_editor_cli
+    e: _isolate_integrated_terminal_env,_cp,_hide_live_editor_bins,test_resolve_target_ide_prefers_autopilot_env,test_resolve_target_ide_uses_running_supported_ide,test_resolve_target_ide_uses_integrated_terminal_hint,test_install_plugin_dry_run_builds_editor_command,test_resolve_extension_vsix_finds_repo_plugin_package,test_resolve_extension_vsix_prefers_package_version,test_install_plugin_configures_socket_path,test_install_plugin_reassert_falls_back_when_resolved_vsix_is_missing,test_install_plugin_targets_vscodium_from_integrated_terminal,test_install_plugin_explicit_vscode_does_not_use_codium_hint,test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint,test_install_plugin_skips_when_extension_already_installed,test_install_plugin_builds_stale_local_vsix_before_reassert,test_install_plugin_removes_conflicting_family_extension,test_reassert_policy_matrix,test_reassert_policy_force_overrides_matching_build_sha,test_should_retry_missing_vsix_only_for_missing_file_errors,test_install_plugin_moves_stale_family_extension_dirs,test_installed_extension_version_for_ide_reads_editor_cli
+    _isolate_integrated_terminal_env(monkeypatch)
     _cp(cmd)
     _hide_live_editor_bins(monkeypatch)
     test_resolve_target_ide_prefers_autopilot_env(monkeypatch)
@@ -9701,6 +10112,13 @@ D:
     TestImportReport: test_summary_includes_key_facts(0)
     TestValidationError: test_str_format(0)
     _write_yaml(path;content)
+  tests/test_calibration_validator.py:
+    e: _make_calibration,_make_desktop,TestValidateSingleCalibration,TestValidateCalibrations,TestRealWorldCursorBug
+    TestValidateSingleCalibration: test_valid_calibration_returns_no_issues(0),test_extreme_top_returns_error(0),test_top_edge_returns_warning(0),test_5pct_boundary_is_safe(0),test_bottom_edge_returns_warning(0),test_pointer_display_mismatch(0),test_no_mismatch_when_same_display(0),test_stale_calibration(0),test_missing_display_coords(0),test_display_not_found(0),test_display_zero_height(0),test_no_pointer_skips_mismatch_check(0)
+    TestValidateCalibrations: test_no_desktop_data(0),test_empty_desktop(0),test_desktop_with_no_calibrations(0),test_all_good(0),test_mixed_good_and_bad(0),test_ide_filter_limits_scope(0),test_ide_filter_cursor_finds_error(0),test_pointer_mismatch_detected_in_batch(0),test_summary_format(0),test_summary_with_errors(0)
+    TestRealWorldCursorBug: test_exact_cursor_scenario(0)  # Reproduce the exact scenario from the test report.
+    _make_calibration(ide;display_id;display_x;display_y;chat_x;chat_y;calibrated_at)
+    _make_desktop(calibrations;displays;pointer)
   tests/test_capture_host_template.py:
     e: test_capture_host_template_detects_cursor_webview,test_render_capture_host_substitutes_interval_and_peer
     test_capture_host_template_detects_cursor_webview()
@@ -9717,7 +10135,7 @@ D:
     test_has_recent_activity_false_when_event_too_old(tmp_path)
     test_chat_event_age_seconds_is_non_negative()
   tests/test_cli.py:
-    e: _tmp_git_project,_run_main,test_cli_shim_reloads_partial_legacy_module,TestBareInvocation,TestDoctorDispatch,TestInitDispatch,TestInitAgentLaneDispatch,TestContextDispatch,TestBareEmitsMarkdown,TestTopologySubcommand,TestInitCiSubcommand,TestAutoMain,TestEventsSubcommand,TestDoctorReexecToProjectVenv,TestSubcommandDispatch,TestAutoAliasBackwardCompat,TestUnknownSubcommandHint
+    e: _tmp_git_project,_run_main,test_cli_shim_reloads_partial_legacy_module,TestBareInvocation,TestDoctorDispatch,TestInitDispatch,TestInitAgentLaneDispatch,TestContextDispatch,TestBareEmitsMarkdown,TestTopologySubcommand,TestInitCiSubcommand,TestAutoMain,TestEventsSubcommand,TestAutopilotReexecToProjectVenv,TestDoctorReexecToProjectVenv,TestSubcommandDispatch,TestAutoAliasBackwardCompat,TestUnknownSubcommandHint
     TestBareInvocation: _parse(0),test_no_args_is_bare(0),test_project_only_is_bare(0),test_init_is_not_bare(0),test_init_skip_host_environment_flag(0),test_init_agent_lane_is_not_bare(0),test_doctor_is_not_bare(0),test_context_is_not_bare(0),test_queue_is_not_bare(0),test_watch_is_not_bare(0),test_bootstrap_is_not_bare(0),test_command_is_not_bare(0)  # ``koru`` with no action flag should route to markdown brief.
     TestDoctorDispatch: setUp(0),tearDown(0),test_doctor_default_is_text(0),test_doctor_json(0),test_doctor_subcommand_text(0),test_doctor_subcommand_catalog_json(0),test_doctor_fix_text_is_guidance_only(0),test_doctor_fix_json(0),test_doctor_repair_text_applies_safe_actions(0),test_doctor_exit_0_on_no_failures(0)  # --doctor uses text by default, json when --format json.
     TestInitDispatch: setUp(0),tearDown(0),test_init_creates_planfile(0),test_init_duplicate_rejected(0),test_init_agent_lane_none_skips_helpers(0)  # --init creates project scaffold.
@@ -9726,8 +10144,9 @@ D:
     TestBareEmitsMarkdown: setUp(0),tearDown(0),test_bare_produces_markdown(0)  # Bare ``koru`` should produce a markdown brief.
     TestTopologySubcommand: setUp(0),tearDown(0),test_topology_json_lists_components_and_pipelines(0),test_topology_disable_then_is_enabled_false(0),test_topology_enabled_components_for_pipeline(0)
     TestInitCiSubcommand: test_init_ci_exits_zero_with_paths(0)
-    TestAutoMain: tearDown(0),test_auto_main_stops_prior_and_injects_replace_existing(0),test_auto_main_preserves_explicit_reuse_window_reload_setting(0),test_auto_main_allow_duplicate_skips_stop_and_replace_flag(0),test_subcommand_auto_routes_to_auto_main(0),test_auto_main_help_does_not_stop_existing_loop(0),test_auto_main_strips_redundant_up_subcommand(0)  # ``koru auto`` stops prior loops and forwards ``--replace-exi
+    TestAutoMain: tearDown(0),test_auto_main_stops_prior_and_injects_replace_existing(0),test_auto_main_skips_reuse_window_from_integrated_terminal(0),test_auto_main_preserves_explicit_reuse_window_reload_setting(0),test_auto_main_allow_duplicate_skips_stop_and_replace_flag(0),test_subcommand_auto_routes_to_auto_main(0),test_auto_main_help_does_not_stop_existing_loop(0),test_auto_main_strips_redundant_up_subcommand(0)  # ``koru auto`` stops prior loops and forwards ``--replace-exi
     TestEventsSubcommand: setUp(0),tearDown(0),test_events_json_reports_context_history(0),test_events_filters_by_aggregate_id(0),test_events_text_format(0)
+    TestAutopilotReexecToProjectVenv: test_autopilot_subcommand_reexecs_when_interpreter_is_outside_project_venv(0)
     TestDoctorReexecToProjectVenv: _prepare_local_koru(1),test_doctor_subcommand_reexecs_when_interpreter_is_outside_project_venv(0),test_doctor_flag_reexecs_when_interpreter_is_outside_project_venv(0)
     TestSubcommandDispatch: test_table_contains_all_documented_subcommands(0),test_table_values_are_callables(0),test_each_subcommand_routes_to_its_handler(0),test_unknown_first_arg_falls_through_to_argparse(0),test_empty_argv_does_not_call_any_handler(0)  # R6: routing through ``_SUBCOMMANDS`` dispatch table.
     TestAutoAliasBackwardCompat: test_dispatch_auto_alias_routes_to_autonomous_when_auto_missing(0),test_dispatch_auto_alias_returns_none_when_auto_registered(0),test_suggest_auto_maps_to_autonomous_on_legacy_table(0)  # Legacy installs expose ``autonomous`` but not ``auto`` (pyen
@@ -9762,7 +10181,7 @@ D:
     test_parse_hello_command_catalog()
     test_command_catalog_store_persists(tmp_path)
   tests/test_command_picker.py:
-    e: test_heuristic_picker_orders_by_success_rate,test_openrouter_picker_falls_back_on_failure,test_openrouter_picker_parses_json,test_pick_command_order_returns_capabilities,test_cursor_submit_sanitizer_rejects_non_chat_commands,test_cursor_paste_sanitizer_rejects_clipboard_paste,test_cursor_paste_sanitizer_rejects_terminal_paste,test_cursor_submit_default_prefers_workbench_over_composer,test_cursor_picker_rejects_start_composer_prompt_from_paste_and_submit,test_antigravity_focus_open_rejects_new_chat_action,test_vscodium_focus_open_avoids_quick_chat,test_vscodium_focus_open_override_can_be_enabled,test_vscodium_focus_open_override_rejects_settings
+    e: test_heuristic_picker_orders_by_success_rate,test_openrouter_picker_falls_back_on_failure,test_openrouter_picker_parses_json,test_pick_command_order_returns_capabilities,test_cursor_submit_sanitizer_rejects_non_chat_commands,test_cursor_paste_sanitizer_rejects_clipboard_paste,test_cursor_paste_sanitizer_rejects_terminal_paste,test_cursor_submit_default_prefers_workbench_over_composer,test_cursor_picker_rejects_start_composer_prompt_from_paste_and_submit,test_cursor_focus_open_rejects_panel_chat_toggle,test_antigravity_focus_open_rejects_new_chat_action,test_antigravity_focus_open_rejects_open_agent,test_antigravity_focus_open_prefers_side_panel_when_miscategorised,test_vscodium_focus_open_avoids_quick_chat,test_vscodium_focus_open_override_can_be_enabled,test_vscodium_focus_open_override_rejects_settings
     test_heuristic_picker_orders_by_success_rate(tmp_path)
     test_openrouter_picker_falls_back_on_failure(monkeypatch;tmp_path)
     test_openrouter_picker_parses_json(monkeypatch;tmp_path)
@@ -9772,7 +10191,10 @@ D:
     test_cursor_paste_sanitizer_rejects_terminal_paste(tmp_path)
     test_cursor_submit_default_prefers_workbench_over_composer(tmp_path)
     test_cursor_picker_rejects_start_composer_prompt_from_paste_and_submit(tmp_path)
+    test_cursor_focus_open_rejects_panel_chat_toggle(tmp_path)
     test_antigravity_focus_open_rejects_new_chat_action(tmp_path)
+    test_antigravity_focus_open_rejects_open_agent(tmp_path)
+    test_antigravity_focus_open_prefers_side_panel_when_miscategorised(tmp_path)
     test_vscodium_focus_open_avoids_quick_chat(tmp_path)
     test_vscodium_focus_open_override_can_be_enabled(monkeypatch;tmp_path)
     test_vscodium_focus_open_override_rejects_settings(monkeypatch;tmp_path)
@@ -9941,6 +10363,21 @@ D:
     test_component_creation()
     test_event_enums()
     test_event_with_all_fields()
+  tests/test_desktop_uri.py:
+    e: test_desktop_uri_plan_open_firefox,test_desktop_uri_handle_dry_run,test_mcp_tool_desktop_uri_plan,test_mcp_tool_desktop_uri_handle_defaults_dry_run,test_nlp2uri_missing_message_when_unavailable,test_desktop_uri_list_getv_uris,test_desktop_uri_resolve_getv_prompt,test_desktop_uri_plan_ide_chat_control_plan,test_desktop_uri_control_plan,test_desktop_uri_control_execute_dry_run,test_desktop_uri_control_execute_no_submit_overrides_nlp_plan,test_desktop_uri_control_execute_direct_fallback,test_desktop_uri_list_system_uris_requires_context
+    test_desktop_uri_plan_open_firefox()
+    test_desktop_uri_handle_dry_run()
+    test_mcp_tool_desktop_uri_plan()
+    test_mcp_tool_desktop_uri_handle_defaults_dry_run()
+    test_nlp2uri_missing_message_when_unavailable(monkeypatch)
+    test_desktop_uri_list_getv_uris()
+    test_desktop_uri_resolve_getv_prompt()
+    test_desktop_uri_plan_ide_chat_control_plan()
+    test_desktop_uri_control_plan()
+    test_desktop_uri_control_execute_dry_run()
+    test_desktop_uri_control_execute_no_submit_overrides_nlp_plan()
+    test_desktop_uri_control_execute_direct_fallback()
+    test_desktop_uri_list_system_uris_requires_context()
   tests/test_dev_sync.py:
     e: test_sync_developer_packages_installs_existing_repos,test_sync_developer_packages_can_target_repo_venv_and_upgrade,test_sync_developer_packages_fails_when_target_venv_missing,test_sync_developer_packages_skips_dirty_pull
     test_sync_developer_packages_installs_existing_repos(tmp_path)
@@ -10114,6 +10551,12 @@ D:
     _done_ticket(name;days_ago)
     _init_project(project)
     _extract_json(text)
+  tests/test_env2llm_registry.py:
+    e: test_env2llm_get_registry_without_dependency,test_mcp_tool_env2llm_get_registry,test_mcp_tool_env2llm_list_commands,test_mcp_tool_env2llm_mqtt_status
+    test_env2llm_get_registry_without_dependency(monkeypatch)
+    test_mcp_tool_env2llm_get_registry(monkeypatch;tmp_path)
+    test_mcp_tool_env2llm_list_commands(monkeypatch;tmp_path)
+    test_mcp_tool_env2llm_mqtt_status(monkeypatch;tmp_path)
   tests/test_env_config.py:
     e: test_known_keys_include_vision_interval,test_env_config_payload_reads_dotenv,test_write_env_config_preserves_unrelated_lines,test_write_env_config_creates_file_when_missing
     test_known_keys_include_vision_interval()
@@ -10126,8 +10569,9 @@ D:
     TestEnvDisabled: test_unset_returns_false(1),test_disabled_values(2),test_non_disabled_values_return_false(2),test_strips_whitespace(1)
     TestEnvInt: test_unset_returns_default(1),test_empty_string_returns_default(1),test_valid_integer(1),test_invalid_value_returns_default(1),test_strips_whitespace(1),test_negative_integer(1)
   tests/test_environment_profile.py:
-    e: test_environment_profile_separates_vscodium_wayland_plugin_control,test_environment_profile_treats_jetbrains_as_distinct_control_surface,test_environment_profile_treats_windsurf_as_distinct_native_surface,test_environment_profile_uses_explicit_running_ide_when_no_env,test_llm_environment_is_an_independent_axis
+    e: test_environment_profile_separates_vscodium_wayland_plugin_control,test_gnome_wayland_prefers_ydotool_over_wtype,test_environment_profile_treats_jetbrains_as_distinct_control_surface,test_environment_profile_treats_windsurf_as_distinct_native_surface,test_environment_profile_uses_explicit_running_ide_when_no_env,test_llm_environment_is_an_independent_axis
     test_environment_profile_separates_vscodium_wayland_plugin_control(tmp_path;monkeypatch)
+    test_gnome_wayland_prefers_ydotool_over_wtype(tmp_path;monkeypatch)
     test_environment_profile_treats_jetbrains_as_distinct_control_surface(tmp_path;monkeypatch)
     test_environment_profile_treats_windsurf_as_distinct_native_surface(tmp_path;monkeypatch)
     test_environment_profile_uses_explicit_running_ide_when_no_env(tmp_path;monkeypatch)
@@ -10197,12 +10641,13 @@ D:
     test_bootstrap_wires_expected_routes()
     test_run_docker_uses_expected_command(monkeypatch)
   tests/test_ide_adapters.py:
-    e: test_publisher_trusted_reads_vscdb,test_untrusted_publisher_hypothesis,test_apply_safe_fixes_adds_trusted_publisher_while_ide_runs,test_inactive_extension_hypothesis_uses_real_config_home,test_workspace_socket_mismatch,test_extension_activated_in_exthost,test_extension_reload_required_lines_use_actual_ide_label,test_extension_activated_uses_latest_session_only,test_latest_ide_exthost_session_skips_cli_only_logs,test_gc_stale_socket_removes_dead_file,test_gc_stale_sockets_for_lane_removes_dead_target,test_evaluate_bridge_no_daemon,test_get_adapter_cursor
+    e: test_publisher_trusted_reads_vscdb,test_untrusted_publisher_hypothesis,test_apply_safe_fixes_adds_trusted_publisher_while_ide_runs,test_inactive_extension_hypothesis_uses_real_config_home,test_workspace_socket_mismatch,test_user_socket_mismatch_detected_without_workspace,test_extension_activated_in_exthost,test_extension_reload_required_lines_use_actual_ide_label,test_extension_activated_uses_latest_session_only,test_latest_ide_exthost_session_skips_cli_only_logs,test_gc_stale_socket_removes_dead_file,test_gc_stale_sockets_for_lane_removes_dead_target,test_evaluate_bridge_no_daemon,test_evaluate_bridge_maps_lane_slug_to_canonical_ide,test_get_adapter_cursor
     test_publisher_trusted_reads_vscdb(tmp_path;monkeypatch)
     test_untrusted_publisher_hypothesis(monkeypatch)
     test_apply_safe_fixes_adds_trusted_publisher_while_ide_runs(tmp_path;monkeypatch)
     test_inactive_extension_hypothesis_uses_real_config_home(tmp_path;monkeypatch)
     test_workspace_socket_mismatch(tmp_path)
+    test_user_socket_mismatch_detected_without_workspace(tmp_path;monkeypatch)
     test_extension_activated_in_exthost(tmp_path;monkeypatch)
     test_extension_reload_required_lines_use_actual_ide_label()
     test_extension_activated_uses_latest_session_only(tmp_path;monkeypatch)
@@ -10210,6 +10655,7 @@ D:
     test_gc_stale_socket_removes_dead_file(tmp_path)
     test_gc_stale_sockets_for_lane_removes_dead_target(tmp_path)
     test_evaluate_bridge_no_daemon(tmp_path)
+    test_evaluate_bridge_maps_lane_slug_to_canonical_ide(tmp_path)
     test_get_adapter_cursor()
   tests/test_ide_client.py:
     e: test_legacy_adapter_forwards_all_operations,test_build_legacy_ide_client_uses_autopilot_client,test_build_koruide_client_uses_koruide_package,test_build_ide_client_defaults_to_legacy,test_build_ide_client_can_select_koruide,test_build_ide_client_uses_env_when_backend_not_passed
@@ -10261,7 +10707,7 @@ D:
     test_lane_mismatch_integrated_steps()
     test_terminal_kind_label()
   tests/test_ide_reload.py:
-    e: test_keyboard_fallback_when_plugin_missing_default_off,test_keyboard_fallback_when_plugin_missing_opt_in,test_keyboard_fallback_when_plugin_missing_disabled,test_reload_via_command_palette_success,test_try_reload_skipped_when_disabled,test_reuse_window_reload_disabled_by_default,test_reuse_window_reload_opt_in,test_new_window_reload_opt_in,test_try_reload_does_not_call_reuse_window_by_default,test_try_reload_calls_reuse_window_when_opted_in,test_try_open_new_window_when_opted_in,test_detect_reload_command_reports_disabled,test_await_plugin_handshake_disabled_by_default,_fake_os_strategy,test_focus_ide_window_delegates_to_os_strategy,test_focus_ide_window_rejects_integrated_terminal_for_non_vscode_family,test_focus_ide_window_accepts_integrated_terminal_for_cursor,test_reload_via_command_palette_uses_os_strategy_inject_keys,test_reload_via_command_palette_refuses_integrated_terminal_focus,test_reload_via_command_palette_explains_wayland_failure,test_reload_via_command_palette_aborts_when_no_keyboard_tool,test_explain_reload_failure_includes_handshake_reason
+    e: test_keyboard_fallback_when_plugin_missing_default_off,test_keyboard_fallback_when_plugin_missing_opt_in,test_keyboard_fallback_when_plugin_missing_disabled,test_reload_via_command_palette_success,test_try_reload_skipped_when_disabled,test_reuse_window_reload_disabled_by_default,test_reuse_window_reload_opt_in,test_new_window_reload_opt_in,test_editor_cli_env_drops_extension_host_shims,test_try_reload_does_not_call_reuse_window_by_default,test_try_reload_calls_reuse_window_when_opted_in,test_try_open_new_window_when_opted_in,test_detect_reload_command_reports_disabled,test_apply_temporary_repair_reload_env_enables_palette_on_wayland,test_apply_temporary_repair_reload_env_same_workspace_enables_reuse,test_apply_temporary_repair_reload_env_skips_integrated_terminal,test_detect_reload_command_blocks_reuse_window_from_integrated_terminal,test_detect_reload_command_allows_cross_ide_reload_from_integrated_terminal,test_await_plugin_handshake_disabled_by_default,_fake_os_strategy,test_focus_ide_window_delegates_to_os_strategy,test_focus_ide_window_rejects_integrated_terminal_for_non_vscode_family,test_focus_ide_window_accepts_integrated_terminal_for_cursor,test_reload_via_command_palette_uses_os_strategy_inject_keys,test_reload_via_command_palette_refuses_integrated_terminal_focus,test_reload_via_command_palette_allows_cross_ide_integrated_terminal,test_reload_via_command_palette_explains_wayland_failure,test_reload_via_command_palette_aborts_when_no_keyboard_tool,test_explain_reload_failure_includes_handshake_reason,test_try_reload_connect_only_calls_connect_palette,test_try_reload_connect_only_disabled_when_auto_reload_off,test_reload_via_command_palette_allows_integrated_terminal_when_detached,test_run_command_palette_sequence_allows_integrated_terminal_when_detached,test_detect_reload_command_bypasses_integrated_terminal_when_detached,test_spawn_detached_ide_reload_spawns_koru_cli,test_spawn_detached_ide_reload_with_connect_only
     test_keyboard_fallback_when_plugin_missing_default_off(monkeypatch)
     test_keyboard_fallback_when_plugin_missing_opt_in(monkeypatch)
     test_keyboard_fallback_when_plugin_missing_disabled(monkeypatch)
@@ -10270,10 +10716,16 @@ D:
     test_reuse_window_reload_disabled_by_default(monkeypatch)
     test_reuse_window_reload_opt_in(monkeypatch)
     test_new_window_reload_opt_in(monkeypatch)
+    test_editor_cli_env_drops_extension_host_shims(monkeypatch)
     test_try_reload_does_not_call_reuse_window_by_default(monkeypatch;tmp_path)
     test_try_reload_calls_reuse_window_when_opted_in(monkeypatch;tmp_path)
     test_try_open_new_window_when_opted_in(monkeypatch;tmp_path)
     test_detect_reload_command_reports_disabled(monkeypatch)
+    test_apply_temporary_repair_reload_env_enables_palette_on_wayland(monkeypatch)
+    test_apply_temporary_repair_reload_env_same_workspace_enables_reuse(monkeypatch)
+    test_apply_temporary_repair_reload_env_skips_integrated_terminal(monkeypatch)
+    test_detect_reload_command_blocks_reuse_window_from_integrated_terminal(monkeypatch)
+    test_detect_reload_command_allows_cross_ide_reload_from_integrated_terminal(monkeypatch)
     test_await_plugin_handshake_disabled_by_default(monkeypatch)
     _fake_os_strategy()
     test_focus_ide_window_delegates_to_os_strategy(monkeypatch)
@@ -10281,9 +10733,17 @@ D:
     test_focus_ide_window_accepts_integrated_terminal_for_cursor(monkeypatch)
     test_reload_via_command_palette_uses_os_strategy_inject_keys(monkeypatch)
     test_reload_via_command_palette_refuses_integrated_terminal_focus(monkeypatch)
+    test_reload_via_command_palette_allows_cross_ide_integrated_terminal(monkeypatch)
     test_reload_via_command_palette_explains_wayland_failure(monkeypatch)
     test_reload_via_command_palette_aborts_when_no_keyboard_tool(monkeypatch)
     test_explain_reload_failure_includes_handshake_reason()
+    test_try_reload_connect_only_calls_connect_palette(monkeypatch)
+    test_try_reload_connect_only_disabled_when_auto_reload_off(monkeypatch)
+    test_reload_via_command_palette_allows_integrated_terminal_when_detached(monkeypatch)
+    test_run_command_palette_sequence_allows_integrated_terminal_when_detached(monkeypatch)
+    test_detect_reload_command_bypasses_integrated_terminal_when_detached(monkeypatch)
+    test_spawn_detached_ide_reload_spawns_koru_cli(monkeypatch;tmp_path)
+    test_spawn_detached_ide_reload_with_connect_only(monkeypatch;tmp_path)
   tests/test_ide_router.py:
     e: test_is_headless_false_minimal_env,test_is_headless_koru_headless_yes,test_is_headless_koru_headless_on,test_is_headless_koru_headless_false_explicit,test_is_headless_ide_mode_whitespace_case_insensitive,test_is_headless_ssh_empty_display_still_headless,test_resolve_ide_route_env_ide_case_insensitive,test_resolve_ide_route_normalizes_vscode_family_alias,test_resolve_ide_route_normalizes_zed_alias,test_resolve_ide_route_headless_sets_primary_surface,test_resolve_ide_route_ide_shell_surface,test_ide_router_main_help_exits_zero,test_ide_router_main_unknown_flag_exits_nonzero,test_ide_router_main_bad_format_exits_nonzero,test_is_headless_ssh_without_display,test_is_headless_ssh_with_display_not_headless,test_is_headless_windows_ignores_ssh_without_display,test_resolve_ide_route_bad_env_uses_cli,test_resolve_ide_route_whitespace_env_treated_as_missing,test_resolve_ide_route_cli_invalid_env_empty_uses_auto,test_resolve_ide_route_cli_auto_env_empty,test_resolve_ide_route_headless_notes_mention_escape_hatch,test_resolve_ide_route_ide_shell_notes_mention_mcp,test_ide_router_main_json,test_ide_router_main_text,test_resolve_ide_route_env_overrides_cli,test_resolve_ide_route_auto_env_does_not_override_cli,test_resolve_ide_route_headless_forces_auto,test_resolve_ide_route_headless_allow_autopilot_honors_env,test_is_headless_via_ide_mode,test_resolve_ide_route_cli_ide_whitespace_normalized,test_resolve_ide_route_headless_allow_autopilot_yes_string,test_resolve_ide_route_environ_none_uses_os_environ,test_resolve_ide_route_headless_all_recommend_flags_false,test_ide_router_main_json_when_headless,test_resolve_ide_route_vscode_explicit_env,test_resolve_ide_route_env_instance_used_when_cli_auto_and_env_ide_missing,test_resolve_ide_route_env_instance_ignored_when_cli_explicit,test_resolve_ide_route_env_ide_wins_over_env_instance
     test_is_headless_false_minimal_env()
@@ -10329,6 +10789,9 @@ D:
     e: test_build_host_setup_report_delegates_to_legacy_backend,test_detect_running_ides_normalizes_rows
     test_build_host_setup_report_delegates_to_legacy_backend(monkeypatch)
     test_detect_running_ides_normalizes_rows(monkeypatch)
+  tests/test_ide_status_systemmap.py:
+    e: test_format_autopilot_status_systemmap
+    test_format_autopilot_status_systemmap()
   tests/test_ide_work.py:
     e: _ok,TestIdeWork
     TestIdeWork: test_fetch_next_open_ticket_sorts_by_priority(0),test_resolve_idle_drive_prompt_uses_ticket_when_open(0),test_resolve_idle_drive_prompt_skips_drive_when_no_open_ticket(0),test_release_stale_in_progress_reopens_old_ticket(0),test_extract_ticket_id_from_text(0),test_build_ide_work_prompt_includes_description(0),test_build_ide_work_prompt_includes_planfile_commands_without_mcp(0),test_sprint_ticket_status_summary_counts_by_status(0)
@@ -10375,7 +10838,7 @@ D:
     test_check_plugin_not_connected_issue_mentions_reload_after_stale_rejection()
     test_check_plugin_not_connected_issue_silent_when_daemon_down()
   tests/test_install_manager.py:
-    e: test_collect_report_flags_path_mismatch_and_plugin_version_missing,test_collect_report_accepts_nonlocal_koru_when_editable_source_matches,test_expected_plugin_version_falls_back_to_bundled_metadata,test_collect_report_uses_explicit_ide_socket_when_env_is_unset,test_collect_report_auto_prefers_autopilot_instance_over_terminal_hint,test_collect_report_flags_connected_plugin_version_mismatch,test_collect_report_flags_installed_plugin_version_mismatch,test_collect_report_marks_installed_ok_but_not_connected_as_info,test_collect_report_flags_stale_live_extension_host,test_collect_report_flags_plugin_socket_candidate_mismatch,test_collect_report_warns_for_pyenv_shim,test_collect_report_warns_when_daemon_not_running,test_repair_installation_records_plugin_action,test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned,test_repair_installation_shutdowns_daemon_when_build_is_stale,test_repair_installation_returns_refreshed_report_after_plugin_fix,test_wait_for_plugin_reconnect_requires_expected_build,test_repair_skips_new_window_escalation_without_opt_in,test_repair_opens_new_window_after_build_mismatch_with_opt_in,test_repair_restarts_ide_when_new_window_still_has_old_build,test_repair_fix_reload_uses_reuse_window_for_same_workspace,test_collect_report_for_zed_does_not_require_vsix_plugin,test_collect_report_auto_still_checks_plugin_connection,_mismatch_report,test_repair_refuses_window_ops_on_workspace_mismatch,test_repair_proceeds_when_a_matching_workspace_plugin_exists,test_repair_proceeds_when_plugin_workspace_unknown
+    e: test_collect_report_flags_path_mismatch_and_plugin_version_missing,test_collect_report_accepts_nonlocal_koru_when_editable_source_matches,test_expected_plugin_version_falls_back_to_bundled_metadata,test_collect_report_uses_explicit_ide_socket_when_env_is_unset,test_collect_report_auto_prefers_autopilot_instance_over_terminal_hint,test_collect_report_flags_connected_plugin_version_mismatch,test_collect_report_flags_installed_plugin_version_mismatch,test_collect_report_marks_installed_ok_but_not_connected_as_info,test_collect_report_flags_stale_live_extension_host,test_collect_report_flags_plugin_socket_candidate_mismatch,test_collect_report_warns_for_pyenv_shim,test_collect_report_warns_when_daemon_not_running,test_repair_installation_records_plugin_action,test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned,test_repair_installation_skips_daemon_shutdown_when_connected_matches_expected,test_repair_installation_shutdowns_daemon_when_build_is_stale,test_repair_installation_returns_refreshed_report_after_plugin_fix,test_wait_for_plugin_reconnect_requires_expected_build,test_repair_skips_new_window_escalation_without_opt_in,test_repair_opens_new_window_after_build_mismatch_with_opt_in,test_repair_restarts_ide_when_new_window_still_has_old_build,test_repair_fix_reload_uses_reuse_window_for_same_workspace,test_repair_fix_reload_skips_automation_from_integrated_terminal,test_collect_report_for_zed_does_not_require_vsix_plugin,test_collect_report_auto_still_checks_plugin_connection,_mismatch_report,test_repair_refuses_window_ops_on_workspace_mismatch,test_repair_proceeds_when_a_matching_workspace_plugin_exists,test_repair_proceeds_when_plugin_workspace_unknown
     test_collect_report_flags_path_mismatch_and_plugin_version_missing(monkeypatch;tmp_path)
     test_collect_report_accepts_nonlocal_koru_when_editable_source_matches(monkeypatch;tmp_path)
     test_expected_plugin_version_falls_back_to_bundled_metadata(tmp_path)
@@ -10390,6 +10853,7 @@ D:
     test_collect_report_warns_when_daemon_not_running(monkeypatch;tmp_path)
     test_repair_installation_records_plugin_action(monkeypatch;tmp_path)
     test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned(monkeypatch;tmp_path)
+    test_repair_installation_skips_daemon_shutdown_when_connected_matches_expected(monkeypatch;tmp_path)
     test_repair_installation_shutdowns_daemon_when_build_is_stale(monkeypatch;tmp_path)
     test_repair_installation_returns_refreshed_report_after_plugin_fix(monkeypatch;tmp_path)
     test_wait_for_plugin_reconnect_requires_expected_build(monkeypatch;tmp_path)
@@ -10397,6 +10861,7 @@ D:
     test_repair_opens_new_window_after_build_mismatch_with_opt_in(monkeypatch;tmp_path)
     test_repair_restarts_ide_when_new_window_still_has_old_build(monkeypatch;tmp_path)
     test_repair_fix_reload_uses_reuse_window_for_same_workspace(monkeypatch;tmp_path)
+    test_repair_fix_reload_skips_automation_from_integrated_terminal(monkeypatch;tmp_path)
     test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch;tmp_path)
     test_collect_report_auto_still_checks_plugin_connection(monkeypatch;tmp_path)
     _mismatch_report(tmp_path)
@@ -10417,6 +10882,13 @@ D:
     test_interface_registry_family_summary_has_multiple_families()
     test_blocker_interface_payload_returns_recovery_for_plugin_mismatch()
     test_interface_registry_payload_contains_blocker_index()
+  tests/test_koru_browser_stack.py:
+    e: koru_root,test_env2llm_refresh_includes_browser_stack,test_nlp2oql_router_from_koru,test_mcp_tools_include_nlp2oql,test_testql_environment_scenario_dry_run
+    koru_root()
+    test_env2llm_refresh_includes_browser_stack(koru_root)
+    test_nlp2oql_router_from_koru(koru_root)
+    test_mcp_tools_include_nlp2oql()
+    test_testql_environment_scenario_dry_run(koru_root)
   tests/test_koru_gate_capture.py:
     e: test_first_meaningful_line_skips_cloud_init_noise,test_first_meaningful_line_falls_back_to_nonempty_when_only_noise
     test_first_meaningful_line_skips_cloud_init_noise()
@@ -10460,13 +10932,14 @@ D:
     test_autopilot_plugin_installer_shim_points_to_koruide_implementation()
     test_autopilot_config_shim_points_to_koruide_implementation()
   tests/test_koruide_client.py:
-    e: test_koruide_client_forwards_all_operations,test_build_client_sets_socket_path_and_timeout,test_injected_client_without_request_raises_on_request_path,test_drive_missing_socket_returns_ok_false,test_request_returns_structured_error_on_truncated_response,test_drive_uses_extended_timeout,test_request_decodes_length_prefixed_large_ack
+    e: test_koruide_client_forwards_all_operations,test_build_client_sets_socket_path_and_timeout,test_injected_client_without_request_raises_on_request_path,test_drive_missing_socket_returns_ok_false,test_request_returns_structured_error_on_truncated_response,test_drive_uses_extended_timeout,test_drive_generates_unique_correlation_ids,test_request_decodes_length_prefixed_large_ack
     test_koruide_client_forwards_all_operations()
     test_build_client_sets_socket_path_and_timeout()
     test_injected_client_without_request_raises_on_request_path()
     test_drive_missing_socket_returns_ok_false(tmp_path)
     test_request_returns_structured_error_on_truncated_response(tmp_path)
     test_drive_uses_extended_timeout(monkeypatch)
+    test_drive_generates_unique_correlation_ids()
     test_request_decodes_length_prefixed_large_ack(tmp_path)
   tests/test_koruide_daemon_handlers_ack.py:
     e: test_plugin_ack_needs_os_fallback_check,test_strict_plugin_ack_ok_when_not_strict,test_strict_plugin_ack_ok_when_strict_fails,test_annotated_plugin_ack_info_builds_metadata,test_relay_message_sent_ack_no_pending,test_relay_message_sent_ack_strict_waits,test_relay_message_sent_ack_strict_accepts_deferred_vscodium,test_relay_message_sent_ack_rejects_poisoned_deferred_vscodium,test_relay_message_sent_ack_strict_accepts_deferred_cursor,test_handle_ack_no_pending,test_handle_ack_mismatched_id,test_record_plugin_ack_integration_success,test_record_plugin_ack_integration_failure,test_send_plugin_ack_reply_persists_operator_replay_dsl,test_backward_compat_reexports_from_handlers
@@ -10494,7 +10967,7 @@ D:
     test_handle_console_log_ignores_invalid_payload()
     test_handle_console_log_surfaces_live_dsl_line()
   tests/test_koruide_daemon_handlers_drive.py:
-    e: test_prefer_keyboard_drive_with_env_var,test_prefer_keyboard_drive_without_env_var,test_prefer_keyboard_drive_with_visible_typing,test_handle_drive_rejects_missing_text,test_handle_drive_routes_via_plugin_when_available,test_handle_drive_blocks_when_plugin_required_but_not_found,test_resolve_keyboard_drive_selection,test_deliver_chat_via_plugin_socket_audits_request_not_success,test_backward_compat_reexports_from_handlers
+    e: test_prefer_keyboard_drive_with_env_var,test_prefer_keyboard_drive_without_env_var,test_prefer_keyboard_drive_with_visible_typing,test_handle_drive_rejects_missing_text,test_handle_drive_routes_via_plugin_when_available,test_handle_drive_blocks_when_plugin_required_but_not_found,test_resolve_keyboard_drive_selection,test_deliver_chat_via_plugin_socket_audits_request_not_success,test_backward_compat_reexports_from_handlers,test_pending_corr_owner_alive_for_current_pid,test_pending_corr_owner_alive_for_missing_pid,test_active_pending_cleared_when_corr_owner_exited
     test_prefer_keyboard_drive_with_env_var(monkeypatch)
     test_prefer_keyboard_drive_without_env_var(monkeypatch)
     test_prefer_keyboard_drive_with_visible_typing(monkeypatch)
@@ -10504,6 +10977,9 @@ D:
     test_resolve_keyboard_drive_selection(monkeypatch)
     test_deliver_chat_via_plugin_socket_audits_request_not_success(monkeypatch)
     test_backward_compat_reexports_from_handlers()
+    test_pending_corr_owner_alive_for_current_pid()
+    test_pending_corr_owner_alive_for_missing_pid()
+    test_active_pending_cleared_when_corr_owner_exited()
   tests/test_koruide_daemon_handlers_hello.py:
     e: test_extract_hello_metadata_complete,test_extract_hello_metadata_minimal,test_extract_hello_metadata_no_ide,test_configure_plugin_client,test_log_plugin_hello_accepted,test_log_rejected_plugin_connection_rate_limiting,test_handle_hello_rejects_missing_ide,test_handle_hello_accepts_valid_plugin,test_backward_compat_reexports_from_handlers
     test_extract_hello_metadata_complete()
@@ -10651,7 +11127,7 @@ D:
     e: TestKoruLoop
     TestKoruLoop: test_search_root_for_include_uses_literal_prefix(0),test_discover_repositories_with_pattern(0),test_run_closed_loop_retries_failed_repositories(0),test_run_closed_loop_single_round_when_all_succeed(0),test_command_value_rejects_blank_value(0)
   tests/test_mcp_provision.py:
-    e: test_detect_ides_uses_runtime_bridge,test_provision_cursor_dry_run_does_not_write,test_provision_cursor_writes_file_and_then_is_idempotent,test_provision_zed_writes_context_servers,test_provision_vscodium_uses_vscode_workspace_mcp_file,test_provision_upgrades_bare_koru_command_to_absolute,test_remove_from_config_removes_koru_entry,test_remove_from_config_removes_zed_context_server,test_init_ide_main_json_output_for_cursor_dry_run,test_init_ide_main_json_output_for_zed_dry_run,test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command,test_ensure_koru_mcp_not_disabled_includes_global_windsurf,test_ensure_koru_mcp_not_disabled_handles_zed_context_servers
+    e: test_detect_ides_uses_runtime_bridge,test_provision_cursor_dry_run_does_not_write,test_provision_cursor_writes_file_and_then_is_idempotent,test_provision_zed_writes_context_servers,test_provision_vscodium_uses_vscode_workspace_mcp_file,test_provision_upgrades_bare_koru_command_to_absolute,test_remove_from_config_removes_koru_entry,test_remove_from_config_removes_zed_context_server,test_init_ide_main_json_output_for_cursor_dry_run,test_init_ide_main_json_output_for_zed_dry_run,test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command,test_ensure_koru_mcp_not_disabled_includes_global_windsurf,test_koru_mcp_configured_detects_cursor_entry,test_auto_provision_koru_mcp_writes_cursor_config,test_ensure_koru_mcp_not_disabled_handles_zed_context_servers
     test_detect_ides_uses_runtime_bridge(monkeypatch)
     test_provision_cursor_dry_run_does_not_write(tmp_path)
     test_provision_cursor_writes_file_and_then_is_idempotent(tmp_path)
@@ -10664,6 +11140,8 @@ D:
     test_init_ide_main_json_output_for_zed_dry_run(capsys;tmp_path)
     test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command(tmp_path;monkeypatch)
     test_ensure_koru_mcp_not_disabled_includes_global_windsurf(tmp_path;monkeypatch)
+    test_koru_mcp_configured_detects_cursor_entry(tmp_path)
+    test_auto_provision_koru_mcp_writes_cursor_config(tmp_path;monkeypatch)
     test_ensure_koru_mcp_not_disabled_handles_zed_context_servers(tmp_path;monkeypatch)
   tests/test_mcp_server.py:
     e: test_initialize_message_returns_server_info,test_tools_list_includes_required_koru_tools,test_tools_call_unknown_tool_returns_error_payload,test_tool_job_status_unknown_job,test_tool_ide_command_catalog_for_llm,test_tool_validate_ide_command_scenario,test_run_ticket_invokes_queue_mode_without_ticket_flag,test_run_ticket_timeout_updates_job_status,test_run_ticket_error_updates_job_status,test_regix_gate_command_uses_workdir_not_project,test_redup_gate_command_uses_supported_cli_shape,test_job_store_is_ephemeral_across_imports,test_tool_ide_dsl_recent_reads_persisted_file,test_job_store_persists_to_disk_and_reloads
@@ -10687,6 +11165,14 @@ D:
     test_dispatch_handle_message_returns_method_not_found()
     test_dispatch_tools_call_formats_handler_error()
     test_transport_run_stdio_loop_handles_parse_error_and_message_flow()
+  tests/test_nlp2oql_bridge.py:
+    e: test_nlp2oql_run_plan_only_when_installed
+    test_nlp2oql_run_plan_only_when_installed(tmp_path)
+  tests/test_nlp2uri_ide_control_gate.py:
+    e: test_try_nlp2uri_ide_control_disabled,test_effective_ide_control_submit_cursor_paste_only,test_try_nlp2uri_ide_control_uses_fake_client
+    test_try_nlp2uri_ide_control_disabled(monkeypatch)
+    test_effective_ide_control_submit_cursor_paste_only(monkeypatch)
+    test_try_nlp2uri_ide_control_uses_fake_client(monkeypatch)
   tests/test_observability_dsl.py:
     e: test_observability_dsl_roundtrips_event,test_observability_writer_persists_jsonl_dsl_log_and_terminal_compact,test_observability_writer_terminal_compact_can_be_disabled,test_stored_event_to_dsl_uses_store_timestamp,test_compact_observability_line_is_semantic_and_short,test_observability_path_summarizes_trace_axis,test_control_command_dsl_roundtrips_to_replay_plan,test_queue_shell_and_api_runners_emit_control_commands,test_autopilot_trace_can_render_observability_dsl,test_observe_trace_renders_compact_timeline_with_filters,test_observe_trace_renders_path_view,test_autonomy_failed_drive_emits_blocker_and_next,test_plugin_gate_skip_emits_semantic_observability_trace,test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace,test_plugin_bootstrap_blocker_emits_control_command_dsl,test_plugin_wait_trace_replaces_legacy_reload_lines,test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace,test_control_commands_cover_api_shell_plugin_and_desktop_surfaces,test_control_command_dsl_preserves_structured_args_with_spaces
     test_observability_dsl_roundtrips_event()
@@ -10752,6 +11238,19 @@ D:
     test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket(tmp_path;probe;monkeypatch)
     test_run_startup_operator_pipeline_keeps_marker_when_close_times_out(tmp_path;probe;monkeypatch)
     test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped(tmp_path;probe;monkeypatch)
+  tests/test_package_deduplication.py:
+    e: test_autopilot_config_is_gillm_canonical,test_koru_injection_shims_point_at_gillm,test_no_duplicate_injector_implementation_in_koru_src,test_gillm_recovery_bridge_delegates_to_gillm,test_autopilot_injector_shims_emit_deprecation_warning,test_koru_autopilot_cli_imports_gillm_injection_directly,test_koru_src_does_not_import_koruos,test_koruide_injection_shims_emit_deprecation_warning,test_koruos_shim_redirects_to_gillm_focus,test_koruos_import_emits_deprecation_warning,test_sllm_bridge_delegates_shell_drive_to_sillm
+    test_autopilot_config_is_gillm_canonical()
+    test_koru_injection_shims_point_at_gillm()
+    test_no_duplicate_injector_implementation_in_koru_src()
+    test_gillm_recovery_bridge_delegates_to_gillm()
+    test_autopilot_injector_shims_emit_deprecation_warning()
+    test_koru_autopilot_cli_imports_gillm_injection_directly()
+    test_koru_src_does_not_import_koruos()
+    test_koruide_injection_shims_emit_deprecation_warning()
+    test_koruos_shim_redirects_to_gillm_focus()
+    test_koruos_import_emits_deprecation_warning()
+    test_sllm_bridge_delegates_shell_drive_to_sillm()
   tests/test_planfile_queue.py:
     e: _ok,_ticket_args,test_run_next_planfile_task_persists_queue_event,TestPlanfileCommand,TestPlanfileQueue,TestPlanfileQueueLlm,TestPlanfileQueueLoop,TestAppendShellEvidenceNote
     TestPlanfileCommand: test_prefers_local_planfile_before_importable_module_from_active_env(0),test_prefers_local_planfile_before_path_cli_when_module_missing(0),test_falls_back_to_path_cli_when_module_cli_missing(0),test_module_cli_probe_treats_missing_parent_as_missing(0)
@@ -10832,10 +11331,11 @@ D:
     test_screencast_frames_retries_after_cache_clear(monkeypatch;tmp_path)
     test_rank_providers_forces_screencast(monkeypatch)
   tests/test_pyproject_metadata.py:
-    e: _pyproject,_uv_lock_koru_package,test_base_runtime_dependencies_stay_small,test_all_extra_matches_union_of_other_extras,test_readme_documents_each_installation_extra,test_uv_lock_koru_metadata_matches_pyproject
+    e: _pyproject,_uv_lock_koru_package,test_base_runtime_dependencies_stay_small,test_root_install_exposes_coru_console_script,test_all_extra_matches_union_of_other_extras,test_readme_documents_each_installation_extra,test_uv_lock_koru_metadata_matches_pyproject
     _pyproject()
     _uv_lock_koru_package()
     test_base_runtime_dependencies_stay_small()
+    test_root_install_exposes_coru_console_script()
     test_all_extra_matches_union_of_other_extras()
     test_readme_documents_each_installation_extra()
     test_uv_lock_koru_metadata_matches_pyproject()
@@ -11025,6 +11525,10 @@ D:
     e: test_create_nl_task_persists_domain_event,TestNaturalLanguageTask
     TestNaturalLanguageTask: test_creates_planfile_ticket_from_sentence(0),test_increments_next_id(0),test_rejects_empty_text(0),test_scaffold_overrides_ticket_shape(0),test_reuses_existing_ticket_with_same_dedupe_key(0)
     test_create_nl_task_persists_domain_event(tmp_path)
+  tests/test_testql_bridge.py:
+    e: test_testql_list_without_package,test_testql_mcp_tools
+    test_testql_list_without_package(monkeypatch)
+    test_testql_mcp_tools(tmp_path)
   tests/test_ticket_evidence.py:
     e: _ok,_ticket,test_validate_ticket_evidence_reports_current_snapshot,test_validate_ticket_evidence_reports_stale_snapshot_and_regenerate_command,test_validate_ticket_evidence_loads_full_ticket_details_from_list,test_missing_evidence_is_reported_as_validation_problem,test_queue_validate_evidence_cli_exits_nonzero_for_missing_evidence
     _ok(stdout)
@@ -11258,10 +11762,13 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.309', 'python').
+project_metadata('koru', '0.1.317', 'python').
 
 % ── Project Files ────────────────────────────────────────
+project_file('.nlp2dsl/environment.doql.less', 1044, 'less').
+project_file('.nlp2dsl/registry/environment.doql.less', 1044, 'less').
 project_file('app.doql.less', 890, 'less').
+project_file('check_dups.py', 28, 'python').
 project_file('docker/capture/entrypoint-x11.sh', 36, 'shell').
 project_file('docker/capture/run.sh', 59, 'shell').
 project_file('docker/capture/smoke.py', 142, 'python').
@@ -11288,6 +11795,10 @@ project_file('docs/llm-tools/toonic/install.sh', 50, 'shell').
 project_file('docs/llm-tools/vallm/install.sh', 56, 'shell').
 project_file('examples/ci/headless-autonomous-jsonl/e2e.sh', 27, 'shell').
 project_file('examples/ci/headless-autonomous-jsonl/run-docker.sh', 8, 'shell').
+project_file('examples/nlp2uri-testql-browser/.nlp2dsl/environment.doql.less', 181, 'less').
+project_file('examples/nlp2uri-testql-browser/.nlp2dsl/registry/environment.doql.less', 181, 'less').
+project_file('examples/nlp2uri-testql-browser/e2e.sh', 20, 'shell').
+project_file('examples/nlp2uri-testql-browser/run.sh', 122, 'shell').
 project_file('examples/planfile/http-api-curl/e2e.sh', 20, 'shell').
 project_file('examples/planfile/http-api-curl/run-docker.sh', 8, 'shell').
 project_file('examples/planfile/queue-cli-dryrun/e2e.sh', 16, 'shell').
@@ -11299,14 +11810,15 @@ project_file('examples/run-e2e.sh', 44, 'shell').
 project_file('examples/runtime/koru-serve-health/e2e.sh', 22, 'shell').
 project_file('examples/runtime/koru-serve-health/run-docker.sh', 8, 'shell').
 project_file('packages/coru/src/coru/__init__.py', 4, 'python').
-project_file('packages/coru/src/coru/cli.py', 3211, 'python').
+project_file('packages/coru/src/coru/cli.py', 4054, 'python').
 project_file('packages/coru/src/coru/ecosystem.py', 226, 'python').
+project_file('packages/coru/src/coru/ide_detection.py', 150, 'python').
 project_file('packages/coru/src/coru/repair/__init__.py', 53, 'python').
 project_file('packages/coru/src/coru/repair/commands.py', 39, 'python').
 project_file('packages/coru/src/coru/repair/diagnostics.py', 459, 'python').
 project_file('packages/coru/src/coru/repair/domain.py', 65, 'python').
 project_file('packages/coru/src/coru/repair/events.py', 55, 'python').
-project_file('packages/coru/src/coru/repair/pipeline.py', 834, 'python').
+project_file('packages/coru/src/coru/repair/pipeline.py', 880, 'python').
 project_file('packages/coru/src/coru/repair/projector.py', 100, 'python').
 project_file('packages/coru/src/coru/repair/query.py', 81, 'python').
 project_file('packages/coru/src/coru/repair/registry.py', 178, 'python').
@@ -11317,7 +11829,9 @@ project_file('packages/coru/src/coru/supervisor/__init__.py', 10, 'python').
 project_file('packages/coru/src/coru/supervisor/cli.py', 328, 'python').
 project_file('packages/coru/src/coru/supervisor/daemon_ctl.py', 74, 'python').
 project_file('packages/coru/src/coru/supervisor/editor_cli.py', 36, 'python').
-project_file('packages/coru/src/coru/supervisor/http_server.py', 211, 'python').
+project_file('packages/coru/src/coru/supervisor/http_handlers.py', 200, 'python').
+project_file('packages/coru/src/coru/supervisor/http_server.py', 84, 'python').
+project_file('packages/coru/src/coru/supervisor/http_util.py', 37, 'python').
 project_file('packages/coru/src/coru/supervisor/models.py', 109, 'python').
 project_file('packages/coru/src/coru/supervisor/paths.py', 44, 'python').
 project_file('packages/coru/src/coru/supervisor/probe.py', 137, 'python').
@@ -11325,8 +11839,9 @@ project_file('packages/coru/src/coru/supervisor/registry.py', 147, 'python').
 project_file('packages/coru/src/coru/supervisor/service.py', 187, 'python').
 project_file('packages/coru/src/coru/supervisor/socket_path.py', 48, 'python').
 project_file('packages/coru/src/coru/supervisor/systemd_unit.py', 105, 'python').
-project_file('packages/coru/tests/test_coru_cli.py', 2192, 'python').
+project_file('packages/coru/tests/test_coru_cli.py', 2565, 'python').
 project_file('packages/coru/tests/test_ecosystem.py', 142, 'python').
+project_file('packages/coru/tests/test_ide_detection.py', 102, 'python').
 project_file('packages/coru/tests/test_repair_es.py', 100, 'python').
 project_file('packages/coru/tests/test_repair_registry.py', 275, 'python').
 project_file('packages/coru/tests/test_supervisor.py', 209, 'python').
@@ -11336,29 +11851,33 @@ project_file('packages/koruenv/src/koruenv/cli.py', 198, 'python').
 project_file('packages/koruenv/src/koruenv/lane.py', 94, 'python').
 project_file('packages/koruenv/tests/conftest.py', 8, 'python').
 project_file('packages/koruenv/tests/test_koruenv_package.py', 40, 'python').
-project_file('patch_gillm_client.py', 21, 'python').
+project_file('packages/nlpshim/src/nlpshim/__init__.py', 25, 'python').
+project_file('packages/nlpshim/src/nlpshim/client.py', 121, 'python').
+project_file('packages/nlpshim/src/nlpshim/conversation_client.py', 83, 'python').
+project_file('packages/nlpshim/src/nlpshim/conversation_test_api.py', 76, 'python').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/autopilot-bridge.js', 171, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-ack.js', 184, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-ack.js', 186, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-base-class.js', 90, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-base.js', 78, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-commands.js', 95, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-config.js', 93, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-fastpath.js', 372, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-fastpath.js', 457, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-focus-core.js', 233, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-focus-strategy.js', 278, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-focus.js', 73, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-focus-strategy.js', 374, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-focus.js', 76, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-handle.js', 3, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-helpers.js', 96, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-network.js', 436, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-paste.js', 502, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-submit.js', 835, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-helpers.js', 139, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-network.js', 430, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-paste.js', 743, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-submit.js', 858, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/bridge-watcher.js', 124, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/chat-history-adapters.js', 24, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/chat-history-paths.js', 63, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/chat-history-types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/chat-history-watcher.js', 175, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/cursor-bubble-adapter.js', 179, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/cursor-composer-paste.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/extension-wrapper.js', 66, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/host-click-submit.js', 32, 'javascript').
@@ -11368,6 +11887,7 @@ project_file('plugins/koru-autopilot-antigravity/out/_shared/socketPath.js', 109
 project_file('plugins/koru-autopilot-antigravity/out/_shared/submit-match.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/unsupported-chat-adapter.js', 19, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/_shared/version-reconnect.js', 28, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/_shared/vscode-chat-session-adapter.js', 167, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/ack-payload.test.js', 48, 'javascript').
@@ -11387,12 +11907,12 @@ project_file('plugins/koru-autopilot-antigravity/out/extension.js', 31, 'javascr
 project_file('plugins/koru-autopilot-antigravity/out/host-click-submit.js', 32, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/host-click-submit.test.js', 32, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/ide-control-strategy.js', 52, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/ides/antigravity.js', 53, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/ides/antigravity.js', 58, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/ides/ide-strategy.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/ides/index.js', 10, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/ides/registry.js', 44, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/probe-ladder.js', 364, 'javascript').
-project_file('plugins/koru-autopilot-antigravity/out/probe-ladder.test.js', 43, 'javascript').
+project_file('plugins/koru-autopilot-antigravity/out/probe-ladder.test.js', 46, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/socketPath.js', 109, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/step-decisions.js', 151, 'javascript').
 project_file('plugins/koru-autopilot-antigravity/out/step-decisions.test.js', 73, 'javascript').
@@ -11416,11 +11936,11 @@ project_file('plugins/koru-autopilot-antigravity/src/extension.ts', 41, 'typescr
 project_file('plugins/koru-autopilot-antigravity/src/host-click-submit.test.ts', 40, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/host-click-submit.ts', 36, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/ide-control-strategy.ts', 65, 'typescript').
-project_file('plugins/koru-autopilot-antigravity/src/ides/antigravity.ts', 64, 'typescript').
-project_file('plugins/koru-autopilot-antigravity/src/ides/ide-strategy.ts', 109, 'typescript').
+project_file('plugins/koru-autopilot-antigravity/src/ides/antigravity.ts', 69, 'typescript').
+project_file('plugins/koru-autopilot-antigravity/src/ides/ide-strategy.ts', 118, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/ides/index.ts', 9, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/ides/registry.ts', 43, 'typescript').
-project_file('plugins/koru-autopilot-antigravity/src/probe-ladder.test.ts', 64, 'typescript').
+project_file('plugins/koru-autopilot-antigravity/src/probe-ladder.test.ts', 70, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/probe-ladder.ts', 433, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/socketPath.ts', 76, 'typescript').
 project_file('plugins/koru-autopilot-antigravity/src/step-decisions.test.ts', 149, 'typescript').
@@ -11429,26 +11949,27 @@ project_file('plugins/koru-autopilot-antigravity/src/unsupported-chat-adapter.ts
 project_file('plugins/koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts', 2, 'typescript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/autopilot-bridge.js', 171, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-ack.js', 184, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-ack.js', 186, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-base-class.js', 90, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-base.js', 78, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-commands.js', 95, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-config.js', 93, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-fastpath.js', 372, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-fastpath.js', 469, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-focus-core.js', 233, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-focus-strategy.js', 278, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-focus.js', 73, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-focus-strategy.js', 374, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-focus.js', 76, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-handle.js', 3, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-helpers.js', 96, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-network.js', 436, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-paste.js', 502, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-submit.js', 835, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-helpers.js', 139, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-network.js', 430, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-paste.js', 743, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-submit.js', 858, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/bridge-watcher.js', 124, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/chat-history-adapters.js', 24, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/chat-history-paths.js', 63, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/chat-history-types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/chat-history-watcher.js', 175, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/cursor-bubble-adapter.js', 179, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/cursor-composer-paste.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/extension-wrapper.js', 66, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/host-click-submit.js', 32, 'javascript').
@@ -11458,17 +11979,19 @@ project_file('plugins/koru-autopilot-cursor/out/_shared/socketPath.js', 109, 'ja
 project_file('plugins/koru-autopilot-cursor/out/_shared/submit-match.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/unsupported-chat-adapter.js', 19, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/_shared/version-reconnect.js', 28, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/_shared/vscode-chat-session-adapter.js', 167, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/ack-payload.test.js', 48, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/antigravity-fastpath.js', 21, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/bridge-submit-focus.test.js', 444, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/chat-history-adapters.js', 31, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/chat-history-paths.js', 63, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/chat-history-types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/chat-history-watcher.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/chat-history-watcher.test.js', 386, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/command-catalog.js', 103, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/command-catalog.test.js', 41, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/command-catalog.js', 107, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/command-catalog.test.js', 43, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/cursor-bubble-adapter.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/dispatch-plan.test.js', 116, 'javascript').
@@ -11476,13 +11999,13 @@ project_file('plugins/koru-autopilot-cursor/out/extension.js', 35, 'javascript')
 project_file('plugins/koru-autopilot-cursor/out/host-click-submit.js', 32, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/host-click-submit.test.js', 32, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/ide-control-strategy.js', 52, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/ides/cursor.js', 250, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/ides/cursor.test.js', 191, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/ides/cursor.js', 290, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/ides/cursor.test.js', 225, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/ides/ide-strategy.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/ides/index.js', 10, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/ides/registry.js', 64, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/probe-ladder.js', 364, 'javascript').
-project_file('plugins/koru-autopilot-cursor/out/probe-ladder.test.js', 232, 'javascript').
+project_file('plugins/koru-autopilot-cursor/out/probe-ladder.test.js', 234, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/socketPath.js', 109, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/step-decisions.js', 151, 'javascript').
 project_file('plugins/koru-autopilot-cursor/out/step-decisions.test.js', 75, 'javascript').
@@ -11491,13 +12014,14 @@ project_file('plugins/koru-autopilot-cursor/out/vscode-chat-session-adapter.js',
 project_file('plugins/koru-autopilot-cursor/src/ack-payload.test.ts', 53, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/ack-payload.ts', 261, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/antigravity-fastpath.ts', 19, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/bridge-submit-focus.test.ts', 582, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/chat-history-adapters.ts', 32, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/chat-history-paths.ts', 29, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/chat-history-types.ts', 32, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/chat-history-watcher.test.ts', 417, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/chat-history-watcher.ts', 2, 'typescript').
-project_file('plugins/koru-autopilot-cursor/src/command-catalog.test.ts', 61, 'typescript').
-project_file('plugins/koru-autopilot-cursor/src/command-catalog.ts', 133, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/command-catalog.test.ts', 66, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/command-catalog.ts', 137, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/cursor-bubble-adapter.ts', 2, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/dispatch-plan.test.ts', 119, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/dispatch-plan.ts', 27, 'typescript').
@@ -11505,12 +12029,12 @@ project_file('plugins/koru-autopilot-cursor/src/extension.ts', 43, 'typescript')
 project_file('plugins/koru-autopilot-cursor/src/host-click-submit.test.ts', 40, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/host-click-submit.ts', 36, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/ide-control-strategy.ts', 65, 'typescript').
-project_file('plugins/koru-autopilot-cursor/src/ides/cursor.test.ts', 324, 'typescript').
-project_file('plugins/koru-autopilot-cursor/src/ides/cursor.ts', 279, 'typescript').
-project_file('plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts', 109, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/ides/cursor.test.ts', 412, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/ides/cursor.ts', 329, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/ides/ide-strategy.ts', 118, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/ides/index.ts', 9, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/ides/registry.ts', 64, 'typescript').
-project_file('plugins/koru-autopilot-cursor/src/probe-ladder.test.ts', 314, 'typescript').
+project_file('plugins/koru-autopilot-cursor/src/probe-ladder.test.ts', 316, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/probe-ladder.ts', 433, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/socketPath.ts', 76, 'typescript').
 project_file('plugins/koru-autopilot-cursor/src/step-decisions.test.ts', 163, 'typescript').
@@ -11519,25 +12043,26 @@ project_file('plugins/koru-autopilot-cursor/src/unsupported-chat-adapter.ts', 19
 project_file('plugins/koru-autopilot-cursor/src/vscode-chat-session-adapter.ts', 2, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/ack-payload.ts', 261, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/autopilot-bridge.ts', 201, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-ack.ts', 185, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-ack.ts', 187, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-base-class.ts', 70, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-base.ts', 65, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-commands.ts', 78, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-config.ts', 81, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-fastpath.ts', 401, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-fastpath.ts', 512, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-focus-core.ts', 240, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts', 305, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-focus.ts', 80, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts', 411, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-focus.ts', 83, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-handle.ts', 9, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-helpers.ts', 102, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-network.ts', 416, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-paste.ts', 516, 'typescript').
-project_file('plugins/koru-autopilot-shared/src/bridge-submit.ts', 949, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-helpers.ts', 151, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-network.ts', 412, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-paste.ts', 782, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/bridge-submit.ts', 993, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/bridge-watcher.ts', 92, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/chat-history-paths.ts', 29, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/chat-history-types.ts', 32, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/chat-history-watcher.ts', 198, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/cursor-bubble-adapter.ts', 159, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/cursor-composer-paste.ts', 32, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/dispatch-plan.ts', 27, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/extension-wrapper.ts', 58, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/host-click-submit.ts', 36, 'typescript').
@@ -11547,29 +12072,31 @@ project_file('plugins/koru-autopilot-shared/src/socketPath.ts', 76, 'typescript'
 project_file('plugins/koru-autopilot-shared/src/submit-match.ts', 36, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/types.ts', 34, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/unsupported-chat-adapter.ts', 19, 'typescript').
+project_file('plugins/koru-autopilot-shared/src/version-reconnect.ts', 23, 'typescript').
 project_file('plugins/koru-autopilot-shared/src/vscode-chat-session-adapter.ts', 146, 'typescript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/autopilot-bridge.js', 171, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-ack.js', 184, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-ack.js', 186, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-base-class.js', 90, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-base.js', 78, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-commands.js', 95, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-config.js', 93, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-fastpath.js', 372, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-fastpath.js', 457, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-focus-core.js', 233, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-focus-strategy.js', 278, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-focus.js', 73, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-focus-strategy.js', 374, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-focus.js', 76, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-handle.js', 3, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-helpers.js', 96, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-network.js', 436, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-paste.js', 502, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-submit.js', 835, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-helpers.js', 139, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-network.js', 430, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-paste.js', 743, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-submit.js', 858, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/bridge-watcher.js', 124, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/chat-history-adapters.js', 24, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/chat-history-paths.js', 63, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/chat-history-types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/chat-history-watcher.js', 175, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/cursor-bubble-adapter.js', 179, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/cursor-composer-paste.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/extension-wrapper.js', 66, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/host-click-submit.js', 32, 'javascript').
@@ -11579,6 +12106,7 @@ project_file('plugins/koru-autopilot-vscode/out/_shared/socketPath.js', 109, 'ja
 project_file('plugins/koru-autopilot-vscode/out/_shared/submit-match.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/unsupported-chat-adapter.js', 19, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/_shared/version-reconnect.js', 28, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/_shared/vscode-chat-session-adapter.js', 167, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/ack-payload.test.js', 48, 'javascript').
@@ -11617,7 +12145,7 @@ project_file('plugins/koru-autopilot-vscode/out/unsupported-chat-adapter.js', 19
 project_file('plugins/koru-autopilot-vscode/out/vscode-chat-session-adapter.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-vscode/src/ack-payload.test.ts', 53, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/ack-payload.ts', 261, 'typescript').
-project_file('plugins/koru-autopilot-vscode/src/antigravity-fastpath.test.ts', 40, 'typescript').
+project_file('plugins/koru-autopilot-vscode/src/antigravity-fastpath.test.ts', 41, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts', 19, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/chat-history-adapters.ts', 22, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/chat-history-paths.ts', 29, 'typescript').
@@ -11633,7 +12161,7 @@ project_file('plugins/koru-autopilot-vscode/src/extension.ts', 54, 'typescript')
 project_file('plugins/koru-autopilot-vscode/src/host-click-submit.test.ts', 40, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/host-click-submit.ts', 36, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/ide-control-strategy.ts', 65, 'typescript').
-project_file('plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts', 109, 'typescript').
+project_file('plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts', 118, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/ides/index.ts', 9, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/ides/registry.ts', 46, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/ides/vscode.ts', 82, 'typescript').
@@ -11646,26 +12174,27 @@ project_file('plugins/koru-autopilot-vscode/src/unsupported-chat-adapter.ts', 19
 project_file('plugins/koru-autopilot-vscode/src/vscode-chat-session-adapter.ts', 2, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/autopilot-bridge.js', 171, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-ack.js', 184, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-ack.js', 186, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-base-class.js', 90, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-base.js', 78, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-commands.js', 95, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-config.js', 93, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-fastpath.js', 372, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-fastpath.js', 457, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-focus-core.js', 233, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-focus-strategy.js', 278, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-focus.js', 73, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-focus-strategy.js', 374, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-focus.js', 76, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-handle.js', 3, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-helpers.js', 96, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-network.js', 436, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-paste.js', 502, 'javascript').
-project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-submit.js', 835, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-helpers.js', 139, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-network.js', 430, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-paste.js', 743, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-submit.js', 858, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/bridge-watcher.js', 124, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/chat-history-adapters.js', 24, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/chat-history-paths.js', 63, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/chat-history-types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/chat-history-watcher.js', 175, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/cursor-bubble-adapter.js', 179, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/cursor-composer-paste.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/extension-wrapper.js', 66, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/host-click-submit.js', 32, 'javascript').
@@ -11675,6 +12204,7 @@ project_file('plugins/koru-autopilot-vscodium/out/_shared/socketPath.js', 109, '
 project_file('plugins/koru-autopilot-vscodium/out/_shared/submit-match.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/unsupported-chat-adapter.js', 19, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/_shared/version-reconnect.js', 28, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/_shared/vscode-chat-session-adapter.js', 167, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/ack-payload.test.js', 48, 'javascript').
@@ -11707,10 +12237,11 @@ project_file('plugins/koru-autopilot-vscodium/out/socketPath.js', 109, 'javascri
 project_file('plugins/koru-autopilot-vscodium/out/step-decisions.js', 151, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/step-decisions.test.js', 85, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/unsupported-chat-adapter.js', 19, 'javascript').
+project_file('plugins/koru-autopilot-vscodium/out/version-reconnect.test.js', 24, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/out/vscode-chat-session-adapter.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-vscodium/src/ack-payload.test.ts', 53, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/ack-payload.ts', 261, 'typescript').
-project_file('plugins/koru-autopilot-vscodium/src/antigravity-fastpath.test.ts', 40, 'typescript').
+project_file('plugins/koru-autopilot-vscodium/src/antigravity-fastpath.test.ts', 41, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/antigravity-fastpath.ts', 19, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/chat-history-adapters.ts', 22, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/chat-history-paths.ts', 29, 'typescript').
@@ -11727,7 +12258,7 @@ project_file('plugins/koru-autopilot-vscodium/src/extension.ts', 48, 'typescript
 project_file('plugins/koru-autopilot-vscodium/src/host-click-submit.test.ts', 40, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/host-click-submit.ts', 36, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/ide-control-strategy.ts', 65, 'typescript').
-project_file('plugins/koru-autopilot-vscodium/src/ides/ide-strategy.ts', 109, 'typescript').
+project_file('plugins/koru-autopilot-vscodium/src/ides/ide-strategy.ts', 118, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/ides/index.ts', 9, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/ides/registry.ts', 43, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/ides/vscodium-host.ts', 11, 'typescript').
@@ -11739,29 +12270,31 @@ project_file('plugins/koru-autopilot-vscodium/src/socketPath.ts', 76, 'typescrip
 project_file('plugins/koru-autopilot-vscodium/src/step-decisions.test.ts', 177, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/step-decisions.ts', 193, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/unsupported-chat-adapter.ts', 19, 'typescript').
+project_file('plugins/koru-autopilot-vscodium/src/version-reconnect.test.ts', 53, 'typescript').
 project_file('plugins/koru-autopilot-vscodium/src/vscode-chat-session-adapter.ts', 2, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/autopilot-bridge.js', 171, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-ack.js', 184, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-ack.js', 186, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-base-class.js', 90, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-base.js', 78, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-commands.js', 95, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-config.js', 93, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-fastpath.js', 372, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-fastpath.js', 457, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-focus-core.js', 233, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-focus-strategy.js', 278, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-focus.js', 73, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-focus-strategy.js', 374, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-focus.js', 76, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-handle.js', 3, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-helpers.js', 96, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-network.js', 436, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-paste.js', 502, 'javascript').
-project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-submit.js', 835, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-helpers.js', 139, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-network.js', 430, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-paste.js', 743, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-submit.js', 858, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/bridge-watcher.js', 124, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/chat-history-adapters.js', 24, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/chat-history-paths.js', 63, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/chat-history-types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/chat-history-watcher.js', 175, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/cursor-bubble-adapter.js', 179, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/cursor-composer-paste.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/extension-wrapper.js', 66, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/host-click-submit.js', 32, 'javascript').
@@ -11771,6 +12304,7 @@ project_file('plugins/koru-autopilot-windsurf/out/_shared/socketPath.js', 109, '
 project_file('plugins/koru-autopilot-windsurf/out/_shared/submit-match.js', 30, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/types.js', 3, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/unsupported-chat-adapter.js', 19, 'javascript').
+project_file('plugins/koru-autopilot-windsurf/out/_shared/version-reconnect.js', 28, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/_shared/vscode-chat-session-adapter.js', 167, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/ack-payload.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/out/ack-payload.test.js', 48, 'javascript').
@@ -11803,7 +12337,7 @@ project_file('plugins/koru-autopilot-windsurf/out/unsupported-chat-adapter.js', 
 project_file('plugins/koru-autopilot-windsurf/out/vscode-chat-session-adapter.js', 18, 'javascript').
 project_file('plugins/koru-autopilot-windsurf/src/ack-payload.test.ts', 53, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/ack-payload.ts', 261, 'typescript').
-project_file('plugins/koru-autopilot-windsurf/src/antigravity-fastpath.test.ts', 40, 'typescript').
+project_file('plugins/koru-autopilot-windsurf/src/antigravity-fastpath.test.ts', 41, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/antigravity-fastpath.ts', 19, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/chat-history-adapters.ts', 25, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/chat-history-paths.ts', 29, 'typescript').
@@ -11819,7 +12353,7 @@ project_file('plugins/koru-autopilot-windsurf/src/extension.ts', 35, 'typescript
 project_file('plugins/koru-autopilot-windsurf/src/host-click-submit.test.ts', 40, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/host-click-submit.ts', 36, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/ide-control-strategy.ts', 65, 'typescript').
-project_file('plugins/koru-autopilot-windsurf/src/ides/ide-strategy.ts', 109, 'typescript').
+project_file('plugins/koru-autopilot-windsurf/src/ides/ide-strategy.ts', 118, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/ides/index.ts', 9, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/ides/registry.ts', 43, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/ides/windsurf.ts', 109, 'typescript').
@@ -11830,20 +12364,21 @@ project_file('plugins/koru-autopilot-windsurf/src/step-decisions.test.ts', 149, 
 project_file('plugins/koru-autopilot-windsurf/src/step-decisions.ts', 193, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/unsupported-chat-adapter.ts', 19, 'typescript').
 project_file('plugins/koru-autopilot-windsurf/src/vscode-chat-session-adapter.ts', 2, 'typescript').
-project_file('project.sh', 59, 'shell').
+project_file('project.sh', 140, 'shell').
 project_file('scripts/_koru_autodiag_filter_tickets.py', 56, 'python').
 project_file('scripts/activate-koru-dev.sh', 19, 'shell').
 project_file('scripts/autopilot-ide-autodetect-smoke.sh', 183, 'shell').
 project_file('scripts/bump_version.py', 95, 'python').
 project_file('scripts/docker-ide-matrix-entrypoint.sh', 76, 'shell').
 project_file('scripts/docker-ide-matrix.sh', 93, 'shell').
+project_file('scripts/e2e_envmap_koru.py', 129, 'python').
 project_file('scripts/koru-autoloop-reset-diag-markers.sh', 97, 'shell').
 project_file('scripts/koru-autoloop.sh', 677, 'shell').
 project_file('scripts/koru-autopilot-lane.sh', 11, 'shell').
 project_file('scripts/koru-autopilot-lanes.sh', 126, 'shell').
 project_file('scripts/koru-from-repo.sh', 11, 'shell').
 project_file('scripts/koru-gate-capture.py', 315, 'python').
-project_file('scripts/koru-pytest.sh', 148, 'shell').
+project_file('scripts/koru-pytest.sh', 248, 'shell').
 project_file('scripts/koru-queue-diagnose.sh', 125, 'shell').
 project_file('scripts/koru-semcod-gates.sh', 136, 'shell').
 project_file('scripts/koru-soak-monitor.sh', 129, 'shell').
@@ -11852,12 +12387,15 @@ project_file('scripts/koru-soak-status.sh', 100, 'shell').
 project_file('scripts/koru-soak-stop.sh', 124, 'shell').
 project_file('scripts/planfile-export-prompt.sh', 82, 'shell').
 project_file('scripts/planfile-sync-todo.py', 252, 'python').
+project_file('scripts/run_testql_conversations.py', 69, 'python').
 project_file('scripts/scaffold-ide-plugin.py', 311, 'python').
 project_file('scripts/simulate-multi-lane-docker.sh', 32, 'shell').
 project_file('scripts/sync-plugin-build.py', 137, 'python').
 project_file('scripts/sync-plugin-shared.py', 109, 'python').
 project_file('scripts/sync-plugin-version.py', 150, 'python').
 project_file('scripts/sync-vscode-plugin-version.py', 126, 'python').
+project_file('scripts/test-browser-stack.sh', 49, 'shell').
+project_file('scripts/validate_testql_conversations.py', 110, 'python').
 project_file('scripts/write-ide-plugin-tests.py', 262, 'python').
 project_file('services/healing-webhook/app.py', 695, 'python').
 project_file('services/healing-webhook/app_bootstrap.py', 35, 'python').
@@ -11866,51 +12404,52 @@ project_file('services/healing-webhook/ticket_builder.py', 224, 'python').
 project_file('src/koru/__init__.py', 98, 'python').
 project_file('src/koru/__main__.py', 13, 'python').
 project_file('src/koru/activity_log.py', 330, 'python').
-project_file('src/koru/agent_backend_runtime.py', 255, 'python').
+project_file('src/koru/agent_backend_runtime.py', 374, 'python').
 project_file('src/koru/agent_backends.py', 260, 'python').
 project_file('src/koru/agent_cli_helpers.py', 88, 'python').
 project_file('src/koru/agents.py', 355, 'python').
 project_file('src/koru/api/__init__.py', 8, 'python').
 project_file('src/koru/autoloop_cli.py', 89, 'python').
-project_file('src/koru/autonomous.py', 1012, 'python').
+project_file('src/koru/autonomous.py', 1033, 'python').
 project_file('src/koru/autonomous_auto_pipeline.py', 256, 'python').
 project_file('src/koru/autonomous_checkpoint.py', 218, 'python').
 project_file('src/koru/autonomous_cli_config.py', 169, 'python').
 project_file('src/koru/autonomous_cycle.py', 1444, 'python').
 project_file('src/koru/autonomous_cycle_bridge.py', 21, 'python').
-project_file('src/koru/autonomous_cycle_chat_activity.py', 620, 'python').
+project_file('src/koru/autonomous_cycle_chat_activity.py', 635, 'python').
 project_file('src/koru/autonomous_cycle_chat_activity_analyzer.py', 308, 'python').
 project_file('src/koru/autonomous_cycle_chat_activity_config.py', 126, 'python').
 project_file('src/koru/autonomous_cycle_chat_activity_text.py', 139, 'python').
 project_file('src/koru/autonomous_cycle_chat_activity_tickets.py', 410, 'python').
 project_file('src/koru/autonomous_cycle_common.py', 21, 'python').
-project_file('src/koru/autonomous_cycle_config.py', 214, 'python').
-project_file('src/koru/autonomous_cycle_drive_retry.py', 604, 'python').
-project_file('src/koru/autonomous_cycle_gate.py', 192, 'python').
-project_file('src/koru/autonomous_cycle_orchestrator.py', 529, 'python').
+project_file('src/koru/autonomous_cycle_config.py', 220, 'python').
+project_file('src/koru/autonomous_cycle_drive_outcome.py', 86, 'python').
+project_file('src/koru/autonomous_cycle_drive_retry.py', 640, 'python').
+project_file('src/koru/autonomous_cycle_gate.py', 329, 'python').
+project_file('src/koru/autonomous_cycle_orchestrator.py', 542, 'python').
 project_file('src/koru/autonomous_cycle_post_drive.py', 384, 'python').
-project_file('src/koru/autonomous_cycle_skip_conditions.py', 617, 'python').
+project_file('src/koru/autonomous_cycle_skip_conditions.py', 682, 'python').
 project_file('src/koru/autonomous_daemon.py', 288, 'python').
 project_file('src/koru/autonomous_diag_markers.py', 17, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 306, 'python').
 project_file('src/koru/autonomous_drive_retry_policy.py', 282, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
-project_file('src/koru/autonomous_loop_runner.py', 1256, 'python').
+project_file('src/koru/autonomous_loop_runner.py', 1257, 'python').
 project_file('src/koru/autonomous_onboarding.py', 228, 'python').
-project_file('src/koru/autonomous_operator.py', 305, 'python').
+project_file('src/koru/autonomous_operator.py', 369, 'python').
 project_file('src/koru/autonomous_parser.py', 503, 'python').
 project_file('src/koru/autonomous_plugin.py', 288, 'python').
 project_file('src/koru/autonomous_plugin_lifecycle.py', 77, 'python').
-project_file('src/koru/autonomous_plugin_runtime.py', 191, 'python').
-project_file('src/koru/autonomous_plugin_wait.py', 658, 'python').
+project_file('src/koru/autonomous_plugin_runtime.py', 204, 'python').
+project_file('src/koru/autonomous_plugin_wait.py', 736, 'python').
 project_file('src/koru/autonomous_process_guard.py', 272, 'python').
 project_file('src/koru/autonomous_processes.py', 356, 'python').
-project_file('src/koru/autonomous_readiness.py', 877, 'python').
+project_file('src/koru/autonomous_readiness.py', 896, 'python').
 project_file('src/koru/autonomous_resources.py', 90, 'python').
-project_file('src/koru/autonomous_runtime.py', 503, 'python').
-project_file('src/koru/autonomous_startup.py', 786, 'python').
+project_file('src/koru/autonomous_runtime.py', 576, 'python').
+project_file('src/koru/autonomous_startup.py', 813, 'python').
 project_file('src/koru/autonomous_submit_strategy.py', 124, 'python').
-project_file('src/koru/autonomous_up.py', 232, 'python').
+project_file('src/koru/autonomous_up.py', 235, 'python').
 project_file('src/koru/autonomous_wup.py', 809, 'python').
 project_file('src/koru/autonomy/__init__.py', 25, 'python').
 project_file('src/koru/autonomy/code2llm_discovery.py', 753, 'python').
@@ -11925,7 +12464,7 @@ project_file('src/koru/autonomy/events.py', 175, 'python').
 project_file('src/koru/autonomy/heal.py', 117, 'python').
 project_file('src/koru/autonomy/ide_operator_guidance.py', 185, 'python').
 project_file('src/koru/autonomy/ide_work.py', 466, 'python').
-project_file('src/koru/autonomy/operator_pipeline.py', 1017, 'python').
+project_file('src/koru/autonomy/operator_pipeline.py', 1010, 'python').
 project_file('src/koru/autonomy/phases/__init__.py', 4, 'python').
 project_file('src/koru/autonomy/phases/contexts.py', 108, 'python').
 project_file('src/koru/autonomy/phases/drive_phase.py', 98, 'python').
@@ -11963,12 +12502,13 @@ project_file('src/koru/autonomy_strategy/defaults.py', 110, 'python').
 project_file('src/koru/autonomy_strategy/heuristics.py', 68, 'python').
 project_file('src/koru/autonomy_strategy/openrouter.py', 90, 'python').
 project_file('src/koru/autonomy_strategy/prompts.py', 53, 'python').
-project_file('src/koru/autopilot/__init__.py', 19, 'python').
+project_file('src/koru/autopilot/__init__.py', 20, 'python').
 project_file('src/koru/autopilot/audit.py', 10, 'python').
-project_file('src/koru/autopilot/calibrate_cli.py', 226, 'python').
-project_file('src/koru/autopilot/cli_command.py', 334, 'python').
-project_file('src/koru/autopilot/cli_direct_drive.py', 278, 'python').
-project_file('src/koru/autopilot/cli_parser.py', 606, 'python').
+project_file('src/koru/autopilot/calibrate_cli.py', 305, 'python').
+project_file('src/koru/autopilot/cli_command.py', 341, 'python').
+project_file('src/koru/autopilot/cli_direct_drive.py', 279, 'python').
+project_file('src/koru/autopilot/cli_parser.py', 663, 'python').
+project_file('src/koru/autopilot/cli_snapshot.py', 408, 'python').
 project_file('src/koru/autopilot/cli_trace.py', 106, 'python').
 project_file('src/koru/autopilot/client.py', 11, 'python').
 project_file('src/koru/autopilot/commands/__init__.py', 8, 'python').
@@ -11976,7 +12516,7 @@ project_file('src/koru/autopilot/commands/drive.py', 432, 'python').
 project_file('src/koru/autopilot/commands/handoff.py', 167, 'python').
 project_file('src/koru/autopilot/commands/manage.py', 79, 'python').
 project_file('src/koru/autopilot/commands/shutdown.py', 51, 'python').
-project_file('src/koru/autopilot/commands/status.py', 172, 'python').
+project_file('src/koru/autopilot/commands/status.py', 212, 'python').
 project_file('src/koru/autopilot/config.py', 10, 'python').
 project_file('src/koru/autopilot/daemon.py', 17, 'python').
 project_file('src/koru/autopilot/daemon_cli.py', 152, 'python').
@@ -11984,14 +12524,14 @@ project_file('src/koru/autopilot/doctor_cli.py', 153, 'python').
 project_file('src/koru/autopilot/drive_repair_policy.py', 85, 'python').
 project_file('src/koru/autopilot/host_setup.py', 10, 'python').
 project_file('src/koru/autopilot/ide.py', 10, 'python').
-project_file('src/koru/autopilot/injector.py', 10, 'python').
-project_file('src/koru/autopilot/install_checks.py', 485, 'python').
-project_file('src/koru/autopilot/install_manager.py', 1263, 'python').
+project_file('src/koru/autopilot/injector.py', 20, 'python').
+project_file('src/koru/autopilot/install_checks.py', 513, 'python').
+project_file('src/koru/autopilot/install_manager.py', 1266, 'python').
 project_file('src/koru/autopilot/install_plugin_cli.py', 576, 'python').
 project_file('src/koru/autopilot/lane_context.py', 286, 'python').
 project_file('src/koru/autopilot/local_manager.py', 67, 'python').
 project_file('src/koru/autopilot/log_contract.py', 52, 'python').
-project_file('src/koru/autopilot/os_injector.py', 10, 'python').
+project_file('src/koru/autopilot/os_injector.py', 20, 'python').
 project_file('src/koru/autopilot/plugin_installer.py', 10, 'python').
 project_file('src/koru/autopilot/protocol.py', 49, 'python').
 project_file('src/koru/autopilot/systemd_cli.py', 104, 'python').
@@ -12052,10 +12592,10 @@ project_file('src/koru/cli/__init__.py', 98, 'python').
 project_file('src/koru/cli/__main__.py', 13, 'python').
 project_file('src/koru/cli/commands.py', 1, 'python').
 project_file('src/koru/cli/parsers.py', 1, 'python').
-project_file('src/koru/cli.py', 368, 'python').
+project_file('src/koru/cli.py', 343, 'python').
 project_file('src/koru/cli_agent.py', 86, 'python').
 project_file('src/koru/cli_agent_backends.py', 62, 'python').
-project_file('src/koru/cli_auto.py', 101, 'python').
+project_file('src/koru/cli_auto.py', 106, 'python').
 project_file('src/koru/cli_bootstrap.py', 66, 'python').
 project_file('src/koru/cli_cleaned.py', 390, 'python').
 project_file('src/koru/cli_context.py', 32, 'python').
@@ -12081,7 +12621,7 @@ project_file('src/koru/cli_strategy.py', 74, 'python').
 project_file('src/koru/cli_tagi.py', 279, 'python').
 project_file('src/koru/cli_task.py', 184, 'python').
 project_file('src/koru/cli_tools.py', 65, 'python').
-project_file('src/koru/cli_topology.py', 149, 'python').
+project_file('src/koru/cli_topology.py', 197, 'python').
 project_file('src/koru/cli_watch.py', 42, 'python').
 project_file('src/koru/configurator.py', 553, 'python').
 project_file('src/koru/context.py', 823, 'python').
@@ -12111,7 +12651,7 @@ project_file('src/koru/doctor_models.py', 52, 'python').
 project_file('src/koru/doctor_plugin_bundle.py', 123, 'python').
 project_file('src/koru/doctor_plugin_console.py', 252, 'python').
 project_file('src/koru/doctor_project_checks.py', 108, 'python').
-project_file('src/koru/doctor_project_health.py', 364, 'python').
+project_file('src/koru/doctor_project_health.py', 367, 'python').
 project_file('src/koru/doctor_registry_checks.py', 29, 'python').
 project_file('src/koru/doctor_render.py', 63, 'python').
 project_file('src/koru/doctor_reporting_checks.py', 652, 'python').
@@ -12121,7 +12661,7 @@ project_file('src/koru/dotenv_loader.py', 105, 'python').
 project_file('src/koru/dsl/__init__.py', 10, 'python').
 project_file('src/koru/env_config.py', 66, 'python').
 project_file('src/koru/env_flags.py', 82, 'python').
-project_file('src/koru/environment_profile.py', 266, 'python').
+project_file('src/koru/environment_profile.py', 272, 'python').
 project_file('src/koru/events.py', 91, 'python').
 project_file('src/koru/gate.py', 203, 'python').
 project_file('src/koru/gc.py', 365, 'python').
@@ -12130,17 +12670,19 @@ project_file('src/koru/git_attribution.py', 147, 'python').
 project_file('src/koru/git_cli.py', 275, 'python').
 project_file('src/koru/ide_adapters/__init__.py', 23, 'python').
 project_file('src/koru/ide_adapters/base.py', 79, 'python').
-project_file('src/koru/ide_adapters/bridge.py', 392, 'python').
-project_file('src/koru/ide_adapters/gillm_client.py', 73, 'python').
-project_file('src/koru/ide_adapters/gillm_recovery.py', 30, 'python').
-project_file('src/koru/ide_adapters/ide_reload.py', 676, 'python').
+project_file('src/koru/ide_adapters/bridge.py', 394, 'python').
+project_file('src/koru/ide_adapters/gillm_client.py', 317, 'python').
+project_file('src/koru/ide_adapters/gillm_recovery.py', 228, 'python').
+project_file('src/koru/ide_adapters/ide_reload.py', 899, 'python').
 project_file('src/koru/ide_adapters/registry.py', 55, 'python').
-project_file('src/koru/ide_adapters/shared.py', 465, 'python').
-project_file('src/koru/ide_adapters/vscode_family.py', 138, 'python').
-project_file('src/koru/ide_client.py', 208, 'python').
-project_file('src/koru/ide_doctor_cli.py', 567, 'python').
+project_file('src/koru/ide_adapters/shared.py', 481, 'python').
+project_file('src/koru/ide_adapters/vscode_family.py', 145, 'python').
+project_file('src/koru/ide_client.py', 211, 'python').
+project_file('src/koru/ide_control_cli.py', 280, 'python').
+project_file('src/koru/ide_doctor_cli.py', 596, 'python').
 project_file('src/koru/ide_router.py', 106, 'python').
 project_file('src/koru/ide_runtime.py', 45, 'python').
+project_file('src/koru/ide_status_systemmap.py', 32, 'python').
 project_file('src/koru/init.py', 660, 'python').
 project_file('src/koru/init_host_environment.py', 338, 'python').
 project_file('src/koru/integration_ledger.py', 136, 'python').
@@ -12148,9 +12690,9 @@ project_file('src/koru/interface_registry.py', 231, 'python').
 project_file('src/koru/llm_reflect.py', 174, 'python').
 project_file('src/koru/local_manager_client.py', 252, 'python').
 project_file('src/koru/local_manager_state.py', 292, 'python').
-project_file('src/koru/local_service.py', 379, 'python').
+project_file('src/koru/local_service.py', 377, 'python').
 project_file('src/koru/loop.py', 132, 'python').
-project_file('src/koru/mcp_provision.py', 450, 'python').
+project_file('src/koru/mcp_provision.py', 534, 'python').
 project_file('src/koru/mcp_server.py', 10, 'python').
 project_file('src/koru/observability_dsl.py', 425, 'python').
 project_file('src/koru/observability_events.py', 123, 'python').
@@ -12223,6 +12765,7 @@ project_file('src/koru/wizard/templates.py', 195, 'python').
 project_file('src/koru/wizard/tree.py', 343, 'python').
 project_file('src/koru/wup_testql_compat.py', 65, 'python').
 project_file('src/koruapi/__init__.py', 26, 'python').
+project_file('src/koruapi/calibration_validator.py', 305, 'python').
 project_file('src/koruapi/cli.py', 160, 'python').
 project_file('src/koruapi/dashboard.py', 191, 'python').
 project_file('src/koruapi/dashboard_config.py', 165, 'python').
@@ -12239,37 +12782,49 @@ project_file('src/koruapi/dashboard_serve_utils.py', 252, 'python').
 project_file('src/koruapi/dashboard_state.py', 106, 'python').
 project_file('src/koruapi/dashboard_tickets.py', 323, 'python').
 project_file('src/koruapi/dashboard_topology.py', 22, 'python').
+project_file('src/koruapi/desktop_uri.py', 473, 'python').
+project_file('src/koruapi/env2llm_registry.py', 348, 'python').
 project_file('src/koruapi/integrations.py', 265, 'python').
 project_file('src/koruapi/invoke.py', 32, 'python').
 project_file('src/koruapi/invoke_handlers.py', 387, 'python').
 project_file('src/koruapi/local.py', 37, 'python').
 project_file('src/koruapi/mcp.py', 16, 'python').
-project_file('src/koruapi/mcp_server.py', 1002, 'python').
+project_file('src/koruapi/mcp_server.py', 95, 'python').
+project_file('src/koruapi/mcp_server_cli.py', 38, 'python').
+project_file('src/koruapi/mcp_server_desktop_uri.py', 221, 'python').
 project_file('src/koruapi/mcp_server_dispatch.py', 120, 'python').
-project_file('src/koruapi/mcp_server_schema.py', 352, 'python').
+project_file('src/koruapi/mcp_server_env2llm.py', 232, 'python').
+project_file('src/koruapi/mcp_server_ide.py', 414, 'python').
+project_file('src/koruapi/mcp_server_nlp2oql.py', 85, 'python').
+project_file('src/koruapi/mcp_server_planfile.py', 840, 'python').
+project_file('src/koruapi/mcp_server_runtime.py', 84, 'python').
+project_file('src/koruapi/mcp_server_schema.py', 30, 'python').
+project_file('src/koruapi/mcp_server_testql.py', 76, 'python').
 project_file('src/koruapi/mcp_server_transport.py', 53, 'python').
+project_file('src/koruapi/nlp2oql_bridge.py', 108, 'python').
 project_file('src/koruapi/openapi.py', 184, 'python').
 project_file('src/koruapi/runtime_insights.py', 193, 'python').
 project_file('src/koruapi/server.py', 191, 'python').
+project_file('src/koruapi/testql_bridge.py', 102, 'python').
 project_file('src/koruapi/topology_post.py', 69, 'python').
 project_file('src/korudsl/__init__.py', 26, 'python').
 project_file('src/korudsl/cli.py', 91, 'python').
 project_file('src/korudsl/library.py', 208, 'python').
 project_file('src/korudsl/transform.py', 71, 'python').
-project_file('src/koruide/__init__.py', 103, 'python').
+project_file('src/koruide/__init__.py', 105, 'python').
 project_file('src/koruide/audit.py', 155, 'python').
 project_file('src/koruide/chat_history.py', 167, 'python').
-project_file('src/koruide/client.py', 256, 'python').
-project_file('src/koruide/command_catalog.py', 573, 'python').
+project_file('src/koruide/client.py', 258, 'python').
+project_file('src/koruide/command_catalog.py', 576, 'python').
 project_file('src/koruide/command_catalog_store.py', 166, 'python').
-project_file('src/koruide/command_picker.py', 438, 'python').
+project_file('src/koruide/command_picker.py', 470, 'python').
 project_file('src/koruide/command_scenario.py', 391, 'python').
 project_file('src/koruide/command_telemetry.py', 211, 'python').
-project_file('src/koruide/config.py', 124, 'python').
+project_file('src/koruide/config.py', 24, 'python').
 project_file('src/koruide/daemon/__init__.py', 51, 'python').
 project_file('src/koruide/daemon/handlers.py', 336, 'python').
 project_file('src/koruide/daemon/handlers_ack.py', 678, 'python').
-project_file('src/koruide/daemon/handlers_drive.py', 544, 'python').
+project_file('src/koruide/daemon/handlers_drive.py', 676, 'python').
 project_file('src/koruide/daemon/handlers_hello.py', 393, 'python').
 project_file('src/koruide/daemon/handlers_plugin_event.py', 192, 'python').
 project_file('src/koruide/daemon/metadata.py', 122, 'python').
@@ -12280,7 +12835,7 @@ project_file('src/koruide/daemon_storage.py', 25, 'python').
 project_file('src/koruide/drive_orchestrator.py', 966, 'python').
 project_file('src/koruide/drive_policy.py', 12, 'python').
 project_file('src/koruide/host_setup.py', 310, 'python').
-project_file('src/koruide/ide.py', 885, 'python').
+project_file('src/koruide/ide.py', 940, 'python').
 project_file('src/koruide/ide_control.py', 96, 'python').
 project_file('src/koruide/ides/__init__.py', 41, 'python').
 project_file('src/koruide/ides/antigravity.py', 69, 'python').
@@ -12291,9 +12846,13 @@ project_file('src/koruide/ides/jetbrains.py', 79, 'python').
 project_file('src/koruide/ides/registry.py', 83, 'python').
 project_file('src/koruide/ides/vscode.py', 66, 'python').
 project_file('src/koruide/ides/vscodium.py', 52, 'python').
-project_file('src/koruide/ides/windsurf.py', 66, 'python').
+project_file('src/koruide/ides/windsurf.py', 68, 'python').
 project_file('src/koruide/ides/zed.py', 60, 'python').
-project_file('src/koruide/plugin_installer.py', 1171, 'python').
+project_file('src/koruide/injector.py', 17, 'python').
+project_file('src/koruide/injector_backends.py', 17, 'python').
+project_file('src/koruide/injector_errors.py', 17, 'python').
+project_file('src/koruide/os_injector.py', 17, 'python').
+project_file('src/koruide/plugin_installer.py', 1195, 'python').
 project_file('src/koruide/plugin_router.py', 279, 'python').
 project_file('src/koruide/plugin_version.py', 47, 'python').
 project_file('src/koruide/ports.py', 119, 'python').
@@ -12331,7 +12890,7 @@ project_file('src/koruobserve/diagnostics.py', 176, 'python').
 project_file('src/koruobserve/lifecycle.py', 329, 'python').
 project_file('src/koruobserve/paths.py', 22, 'python').
 project_file('src/koruobserve/providers_cli.py', 149, 'python').
-project_file('src/koruos/__init__.py', 23, 'python').
+project_file('src/koruos/__init__.py', 40, 'python').
 project_file('src/koruvision/__init__.py', 13, 'python').
 project_file('src/koruvision/agent.py', 77, 'python').
 project_file('src/koruvision/capture.py', 70, 'python').
@@ -12370,7 +12929,7 @@ project_file('tests/test_agent_backends_cli.py', 34, 'python').
 project_file('tests/test_agent_cli.py', 108, 'python').
 project_file('tests/test_agents.py', 222, 'python').
 project_file('tests/test_autoloop_cli.py', 52, 'python').
-project_file('tests/test_autonomous.py', 5346, 'python').
+project_file('tests/test_autonomous.py', 5379, 'python').
 project_file('tests/test_autonomous_cycle_bridge.py', 26, 'python').
 project_file('tests/test_autonomous_cycle_chat_activity_analyzer.py', 392, 'python').
 project_file('tests/test_autonomous_cycle_chat_activity_config.py', 179, 'python').
@@ -12385,6 +12944,7 @@ project_file('tests/test_autonomous_diag_markers.py', 16, 'python').
 project_file('tests/test_autonomous_diagnostics.py', 97, 'python').
 project_file('tests/test_autonomous_gillm_fallback.py', 139, 'python').
 project_file('tests/test_autonomous_loop_runner.py', 441, 'python').
+project_file('tests/test_autonomous_nlp2uri_drive.py', 94, 'python').
 project_file('tests/test_autonomous_onboarding.py', 200, 'python').
 project_file('tests/test_autonomous_operator.py', 73, 'python').
 project_file('tests/test_autonomous_operator_reload.py', 273, 'python').
@@ -12394,11 +12954,11 @@ project_file('tests/test_autonomous_plugin_lifecycle.py', 56, 'python').
 project_file('tests/test_autonomous_plugin_runtime.py', 70, 'python').
 project_file('tests/test_autonomous_process_detection.py', 70, 'python').
 project_file('tests/test_autonomous_process_guard.py', 17, 'python').
-project_file('tests/test_autonomous_readiness.py', 257, 'python').
+project_file('tests/test_autonomous_readiness.py', 259, 'python').
 project_file('tests/test_autonomous_redrive_cooldown.py', 399, 'python').
-project_file('tests/test_autonomous_runtime.py', 293, 'python').
+project_file('tests/test_autonomous_runtime.py', 295, 'python').
 project_file('tests/test_autonomous_scenarios.py', 390, 'python').
-project_file('tests/test_autonomous_startup.py', 873, 'python').
+project_file('tests/test_autonomous_startup.py', 878, 'python').
 project_file('tests/test_autonomous_submit_strategy.py', 114, 'python').
 project_file('tests/test_autonomous_up.py', 76, 'python').
 project_file('tests/test_autonomy_config.py', 141, 'python').
@@ -12417,23 +12977,24 @@ project_file('tests/test_autopilot_commands_handoff.py', 299, 'python').
 project_file('tests/test_autopilot_commands_manage.py', 173, 'python').
 project_file('tests/test_autopilot_commands_shutdown.py', 86, 'python').
 project_file('tests/test_autopilot_commands_status.py', 254, 'python').
-project_file('tests/test_autopilot_config.py', 148, 'python').
-project_file('tests/test_autopilot_daemon.py', 1761, 'python').
+project_file('tests/test_autopilot_config.py', 150, 'python').
+project_file('tests/test_autopilot_daemon.py', 1830, 'python').
 project_file('tests/test_autopilot_host_setup.py', 183, 'python').
-project_file('tests/test_autopilot_ide.py', 628, 'python').
+project_file('tests/test_autopilot_ide.py', 699, 'python').
 project_file('tests/test_autopilot_jetbrains_scaffold.py', 75, 'python').
 project_file('tests/test_autopilot_lane_context.py', 86, 'python').
-project_file('tests/test_autopilot_plugin_installer.py', 593, 'python').
+project_file('tests/test_autopilot_plugin_installer.py', 616, 'python').
 project_file('tests/test_autopilot_protocol.py', 169, 'python').
 project_file('tests/test_autopilot_socket_path.py', 36, 'python').
 project_file('tests/test_bootstrap.py', 298, 'python').
+project_file('tests/test_calibration_validator.py', 360, 'python').
 project_file('tests/test_capture_host_template.py', 20, 'python').
 project_file('tests/test_chat_history.py', 119, 'python').
-project_file('tests/test_cli.py', 842, 'python').
+project_file('tests/test_cli.py', 894, 'python').
 project_file('tests/test_cli_shim_builders.py', 33, 'python').
 project_file('tests/test_code2llm_discovery.py', 480, 'python').
 project_file('tests/test_command_catalog_store.py', 51, 'python').
-project_file('tests/test_command_picker.py', 273, 'python').
+project_file('tests/test_command_picker.py', 328, 'python').
 project_file('tests/test_command_telemetry.py', 49, 'python').
 project_file('tests/test_configurator.py', 175, 'python').
 project_file('tests/test_configurator_toggle.py', 53, 'python').
@@ -12456,6 +13017,7 @@ project_file('tests/test_decision_arbiter.py', 234, 'python').
 project_file('tests/test_decision_engine.py', 162, 'python').
 project_file('tests/test_decision_trace.py', 430, 'python').
 project_file('tests/test_deployment_events.py', 539, 'python').
+project_file('tests/test_desktop_uri.py', 157, 'python').
 project_file('tests/test_dev_sync.py', 109, 'python').
 project_file('tests/test_docker_capture.py', 132, 'python').
 project_file('tests/test_docker_e2e.py', 582, 'python').
@@ -12470,9 +13032,10 @@ project_file('tests/test_dotenv_loader.py', 117, 'python').
 project_file('tests/test_drive_orchestrator.py', 559, 'python').
 project_file('tests/test_drive_repair_policy.py', 51, 'python').
 project_file('tests/test_e2e.py', 1181, 'python').
+project_file('tests/test_env2llm_registry.py', 49, 'python').
 project_file('tests/test_env_config.py', 62, 'python').
 project_file('tests/test_env_flags.py', 97, 'python').
-project_file('tests/test_environment_profile.py', 93, 'python').
+project_file('tests/test_environment_profile.py', 111, 'python').
 project_file('tests/test_events.py', 67, 'python').
 project_file('tests/test_gate.py', 167, 'python').
 project_file('tests/test_gc.py', 336, 'python').
@@ -12482,32 +13045,34 @@ project_file('tests/test_gillm_recovery.py', 29, 'python').
 project_file('tests/test_git_attribution.py', 61, 'python').
 project_file('tests/test_git_cli.py', 151, 'python').
 project_file('tests/test_healing_webhook_split.py', 213, 'python').
-project_file('tests/test_ide_adapters.py', 219, 'python').
-project_file('tests/test_ide_client.py', 115, 'python').
+project_file('tests/test_ide_adapters.py', 250, 'python').
+project_file('tests/test_ide_client.py', 121, 'python').
 project_file('tests/test_ide_client_contract.py', 129, 'python').
 project_file('tests/test_ide_command_catalog.py', 163, 'python').
 project_file('tests/test_ide_doctor_cli.py', 369, 'python').
 project_file('tests/test_ide_operator_guidance.py', 44, 'python').
-project_file('tests/test_ide_reload.py', 409, 'python').
+project_file('tests/test_ide_reload.py', 690, 'python').
 project_file('tests/test_ide_router.py', 289, 'python').
 project_file('tests/test_ide_runtime.py', 39, 'python').
+project_file('tests/test_ide_status_systemmap.py', 28, 'python').
 project_file('tests/test_ide_work.py', 179, 'python').
 project_file('tests/test_init.py', 354, 'python').
 project_file('tests/test_injection_moved_to_gillm.py', 14, 'python').
 project_file('tests/test_install_checks.py', 252, 'python').
-project_file('tests/test_install_manager.py', 1148, 'python').
+project_file('tests/test_install_manager.py', 1249, 'python').
 project_file('tests/test_integration_ledger.py', 35, 'python').
 project_file('tests/test_interface_registry.py', 88, 'python').
+project_file('tests/test_koru_browser_stack.py', 70, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
 project_file('tests/test_koruapi.py', 167, 'python').
 project_file('tests/test_koruapi_transports.py', 21, 'python').
 project_file('tests/test_korudsl.py', 41, 'python').
 project_file('tests/test_koruide_bridges.py', 78, 'python').
-project_file('tests/test_koruide_client.py', 197, 'python').
+project_file('tests/test_koruide_client.py', 217, 'python').
 project_file('tests/test_koruide_daemon_handlers_ack.py', 489, 'python').
 project_file('tests/test_koruide_daemon_handlers_console_log.py', 97, 'python').
-project_file('tests/test_koruide_daemon_handlers_drive.py', 183, 'python').
+project_file('tests/test_koruide_daemon_handlers_drive.py', 216, 'python').
 project_file('tests/test_koruide_daemon_handlers_hello.py', 210, 'python').
 project_file('tests/test_koruide_daemon_handlers_plugin_event.py', 275, 'python').
 project_file('tests/test_koruide_ports.py', 100, 'python').
@@ -12524,13 +13089,16 @@ project_file('tests/test_llm_reflect.py', 166, 'python').
 project_file('tests/test_llm_strategies.py', 111, 'python').
 project_file('tests/test_local_service.py', 265, 'python').
 project_file('tests/test_loop.py', 95, 'python').
-project_file('tests/test_mcp_provision.py', 277, 'python').
-project_file('tests/test_mcp_server.py', 291, 'python').
-project_file('tests/test_mcp_server_split.py', 87, 'python').
-project_file('tests/test_observability_dsl.py', 760, 'python').
+project_file('tests/test_mcp_provision.py', 310, 'python').
+project_file('tests/test_mcp_server.py', 314, 'python').
+project_file('tests/test_mcp_server_split.py', 105, 'python').
+project_file('tests/test_nlp2oql_bridge.py', 17, 'python').
+project_file('tests/test_nlp2uri_ide_control_gate.py', 77, 'python').
+project_file('tests/test_observability_dsl.py', 769, 'python').
 project_file('tests/test_observation_mesh_e2e.py', 230, 'python').
 project_file('tests/test_observe_providers_cli.py', 83, 'python').
-project_file('tests/test_operator_pipeline.py', 892, 'python').
+project_file('tests/test_operator_pipeline.py', 895, 'python').
+project_file('tests/test_package_deduplication.py', 134, 'python').
 project_file('tests/test_planfile_queue.py', 1380, 'python').
 project_file('tests/test_planning_llm.py', 633, 'python').
 project_file('tests/test_plugin_router.py', 202, 'python').
@@ -12539,7 +13107,7 @@ project_file('tests/test_post_run_verify.py', 156, 'python').
 project_file('tests/test_provider_browser_upload.py', 190, 'python').
 project_file('tests/test_provider_obs.py', 145, 'python').
 project_file('tests/test_provider_portal_screencast.py', 91, 'python').
-project_file('tests/test_pyproject_metadata.py', 51, 'python').
+project_file('tests/test_pyproject_metadata.py', 62, 'python').
 project_file('tests/test_queue_clean.py', 341, 'python').
 project_file('tests/test_queue_cli_helpers.py', 120, 'python').
 project_file('tests/test_redup_integration.py', 97, 'python').
@@ -12565,6 +13133,7 @@ project_file('tests/test_strategy_prompt.py', 105, 'python').
 project_file('tests/test_structured_report.py', 60, 'python').
 project_file('tests/test_sync_plugin_build.py', 109, 'python').
 project_file('tests/test_tasks.py', 119, 'python').
+project_file('tests/test_testql_bridge.py', 37, 'python').
 project_file('tests/test_ticket_evidence.py', 145, 'python').
 project_file('tests/test_tools.py', 138, 'python').
 project_file('tests/test_topology.py', 55, 'python').
@@ -12587,6 +13156,7 @@ project_file('tests/test_wup_taskfile.py', 40, 'python').
 project_file('tree.sh', 2, 'shell').
 
 % ── Python Functions ─────────────────────────────────────
+python_function('check_dups.py', 'get_files', 1, 4, 4).
 python_function('docker/capture/smoke.py', '_png_size', 1, 3, 4).
 python_function('docker/capture/smoke.py', '_scan_providers', 0, 2, 2).
 python_function('docker/capture/smoke.py', '_diagnostics_payload', 0, 1, 3).
@@ -12596,10 +13166,13 @@ python_function('docker/capture/smoke.py', '_run_headless', 0, 2, 4).
 python_function('docker/capture/smoke.py', '_run_x11', 0, 3, 6).
 python_function('docker/capture/smoke.py', 'main', 1, 4, 9).
 python_function('examples/remote_orchestration_demo.py', 'run_multi_node_orchestration', 0, 9, 8).
+python_function('packages/coru/src/coru/cli.py', '_koru_subprocess_timeout', 1, 6, 3).
+python_function('packages/coru/src/coru/cli.py', '_trace_enabled', 0, 1, 3).
+python_function('packages/coru/src/coru/cli.py', '_trace', 1, 3, 5).
 python_function('packages/coru/src/coru/cli.py', '_normalize_log_format', 1, 5, 3).
 python_function('packages/coru/src/coru/cli.py', '_current_log_format', 0, 1, 2).
 python_function('packages/coru/src/coru/cli.py', '_emit_log', 0, 8, 8).
-python_function('packages/coru/src/coru/cli.py', '_distribution_version', 1, 3, 1).
+python_function('packages/coru/src/coru/cli.py', '_distribution_version', 1, 6, 1).
 python_function('packages/coru/src/coru/cli.py', '_print_runtime_versions', 0, 1, 2).
 python_function('packages/coru/src/coru/cli.py', '_startup_mode', 0, 3, 4).
 python_function('packages/coru/src/coru/cli.py', '_autonomous_startup_chain', 1, 2, 3).
@@ -12607,11 +13180,12 @@ python_function('packages/coru/src/coru/cli.py', '_agent_lane_from_auto_args', 1
 python_function('packages/coru/src/coru/cli.py', '_run_default_autonomous', 1, 10, 18).
 python_function('packages/coru/src/coru/cli.py', '_running_ide_choices', 0, 7, 8).
 python_function('packages/coru/src/coru/cli.py', '_supervisor_project_choices', 0, 7, 10).
-python_function('packages/coru/src/coru/cli.py', '_instance_for_ide_choice', 1, 11, 9).
+python_function('packages/coru/src/coru/cli.py', '_alive_daemon_instance', 1, 13, 12).
+python_function('packages/coru/src/coru/cli.py', '_instance_for_ide_choice', 1, 12, 10).
 python_function('packages/coru/src/coru/cli.py', '_choose_option', 2, 9, 7).
-python_function('packages/coru/src/coru/cli.py', '_interactive_default_auto_args', 0, 11, 12).
+python_function('packages/coru/src/coru/cli.py', '_interactive_default_auto_args', 0, 14, 14).
 python_function('packages/coru/src/coru/cli.py', '_extract_global_flags', 1, 10, 7).
-python_function('packages/coru/src/coru/cli.py', '_run', 1, 3, 3).
+python_function('packages/coru/src/coru/cli.py', '_run', 1, 7, 6).
 python_function('packages/coru/src/coru/cli.py', '_cmd_exists', 1, 1, 1).
 python_function('packages/coru/src/coru/cli.py', '_binary_path', 1, 6, 8).
 python_function('packages/coru/src/coru/cli.py', '_python_module_exists', 1, 2, 1).
@@ -12624,13 +13198,14 @@ python_function('packages/coru/src/coru/cli.py', '_ensure_commands', 1, 11, 8).
 python_function('packages/coru/src/coru/cli.py', '_setup_environment', 0, 3, 3).
 python_function('packages/coru/src/coru/cli.py', '_repo_root', 0, 4, 3).
 python_function('packages/coru/src/coru/cli.py', '_local_install_target', 1, 8, 4).
-python_function('packages/coru/src/coru/cli.py', '_ide_from_vscode_pid', 0, 10, 7).
-python_function('packages/coru/src/coru/cli.py', '_vscode_family_env_hint', 0, 7, 3).
+python_function('packages/coru/src/coru/cli.py', '_ide_from_vscode_pid', 0, 1, 1).
+python_function('packages/coru/src/coru/cli.py', '_vscode_family_env_hint', 0, 1, 1).
+python_function('packages/coru/src/coru/cli.py', '_windsurf_terminal_marker', 0, 1, 1).
 python_function('packages/coru/src/coru/cli.py', '_terminal_ide_hint', 0, 1, 1).
 python_function('packages/coru/src/coru/cli.py', '_terminal_shell_context', 0, 3, 2).
-python_function('packages/coru/src/coru/cli.py', '_terminal_host_kind', 0, 2, 1).
+python_function('packages/coru/src/coru/cli.py', '_terminal_host_kind', 0, 1, 1).
 python_function('packages/coru/src/coru/cli.py', '_print_terminal_context', 0, 4, 4).
-python_function('packages/coru/src/coru/cli.py', '_terminal_shell_context_fallback', 0, 21, 5).
+python_function('packages/coru/src/coru/cli.py', '_terminal_shell_context_fallback', 0, 1, 1).
 python_function('packages/coru/src/coru/cli.py', '_instance_matches_ide', 2, 1, 1).
 python_function('packages/coru/src/coru/cli.py', '_ide_from_instance', 1, 5, 3).
 python_function('packages/coru/src/coru/cli.py', '_workspace_settings_path_for_ide', 1, 4, 4).
@@ -12643,28 +13218,31 @@ python_function('packages/coru/src/coru/cli.py', '_project_ide_settings_lane', 1
 python_function('packages/coru/src/coru/cli.py', '_remember_project_ide_settings', 2, 8, 10).
 python_function('packages/coru/src/coru/cli.py', '_supervisor_lane_defaults', 0, 3, 3).
 python_function('packages/coru/src/coru/cli.py', '_supervisor_lane_project', 1, 8, 9).
-python_function('packages/coru/src/coru/cli.py', '_infer_default_ide', 0, 23, 9).
+python_function('packages/coru/src/coru/cli.py', '_is_lane_plugin_connected', 2, 12, 7).
+python_function('packages/coru/src/coru/cli.py', '_connected_daemon_instance', 1, 3, 2).
+python_function('packages/coru/src/coru/cli.py', '_alive_daemon_ide', 0, 17, 15).
+python_function('packages/coru/src/coru/cli.py', '_infer_default_ide', 0, 26, 13).
 python_function('packages/coru/src/coru/cli.py', '_project_ide_settings_instance', 1, 2, 1).
 python_function('packages/coru/src/coru/cli.py', '_supervisor_default_instance', 1, 10, 3).
 python_function('packages/coru/src/coru/cli.py', '_environment_default_instance', 1, 7, 5).
 python_function('packages/coru/src/coru/cli.py', '_auto_default_instance', 0, 4, 3).
 python_function('packages/coru/src/coru/cli.py', '_workspace_default_instance', 1, 3, 1).
-python_function('packages/coru/src/coru/cli.py', '_infer_default_instance', 0, 7, 5).
+python_function('packages/coru/src/coru/cli.py', '_infer_default_instance', 0, 7, 6).
 python_function('packages/coru/src/coru/cli.py', '_maybe_warn_lane_override', 2, 10, 5).
 python_function('packages/coru/src/coru/cli.py', '_normalize_lane_pair', 2, 7, 2).
 python_function('packages/coru/src/coru/cli.py', '_lane_subprocess_env', 2, 2, 2).
 python_function('packages/coru/src/coru/cli.py', '_bind_lane_session', 2, 5, 1).
 python_function('packages/coru/src/coru/cli.py', '_run_with_lane_environment', 1, 5, 2).
 python_function('packages/coru/src/coru/cli.py', '_project_for_lane', 2, 3, 3).
-python_function('packages/coru/src/coru/cli.py', '_koru_autopilot_env_payload', 2, 8, 8).
-python_function('packages/coru/src/coru/cli.py', '_run_with_resolved_lane_env', 1, 10, 7).
-python_function('packages/coru/src/coru/cli.py', '_run_koru_lane', 3, 2, 3).
+python_function('packages/coru/src/coru/cli.py', '_koru_autopilot_env_payload', 2, 13, 9).
+python_function('packages/coru/src/coru/cli.py', '_run_with_resolved_lane_env', 1, 11, 8).
+python_function('packages/coru/src/coru/cli.py', '_run_koru_lane', 3, 2, 4).
 python_function('packages/coru/src/coru/cli.py', '_koruenv_run_fallback', 3, 2, 3).
 python_function('packages/coru/src/coru/cli.py', '_lane_env', 3, 4, 7).
 python_function('packages/coru/src/coru/cli.py', '_lane_status_raw', 2, 2, 3).
 python_function('packages/coru/src/coru/cli.py', '_lane_status', 2, 1, 1).
-python_function('packages/coru/src/coru/cli.py', '_lane_status_payload', 2, 14, 11).
-python_function('packages/coru/src/coru/cli.py', '_fetch_manage_report', 2, 7, 6).
+python_function('packages/coru/src/coru/cli.py', '_lane_status_payload', 2, 19, 11).
+python_function('packages/coru/src/coru/cli.py', '_fetch_manage_report', 2, 12, 7).
 python_function('packages/coru/src/coru/cli.py', '_manage_repair_context', 2, 6, 7).
 python_function('packages/coru/src/coru/cli.py', '_drive_result_from_payload', 1, 5, 2).
 python_function('packages/coru/src/coru/cli.py', '_problem_from_readiness_issue', 1, 3, 2).
@@ -12681,6 +13259,25 @@ python_function('packages/coru/src/coru/cli.py', '_target_plugin_rows', 1, 7, 6)
 python_function('packages/coru/src/coru/cli.py', '_plugin_workspace_summary', 1, 5, 5).
 python_function('packages/coru/src/coru/cli.py', '_print_ide_control_context', 2, 12, 7).
 python_function('packages/coru/src/coru/cli.py', '_lane_doctor', 2, 10, 8).
+python_function('packages/coru/src/coru/cli.py', '_calibration_desktop_focus_titles', 1, 4, 7).
+python_function('packages/coru/src/coru/cli.py', '_desktop_capture_enabled', 0, 1, 3).
+python_function('packages/coru/src/coru/cli.py', '_calibration_desktop_template_path', 2, 3, 1).
+python_function('packages/coru/src/coru/cli.py', '_append_desktop_focus_lines', 2, 2, 1).
+python_function('packages/coru/src/coru/cli.py', '_materialize_calibration_desktop_oql', 0, 7, 15).
+python_function('packages/coru/src/coru/cli.py', '_write_calibration_desktop_oql', 0, 1, 1).
+python_function('packages/coru/src/coru/cli.py', '_write_calibration_bridge_testql', 0, 1, 3).
+python_function('packages/coru/src/coru/cli.py', '_testql_run_scenario', 1, 12, 7).
+python_function('packages/coru/src/coru/cli.py', '_testql_run_oql', 1, 12, 1).
+python_function('packages/coru/src/coru/cli.py', '_testql_run_oql', 1, 12, 7).
+python_function('packages/coru/src/coru/cli.py', '_format_calibration_desktop_report', 1, 6, 4).
+python_function('packages/coru/src/coru/cli.py', '_format_calibration_bridge_report', 1, 7, 3).
+python_function('packages/coru/src/coru/cli.py', '_run_calibration_desktop_preflight', 1, 5, 9).
+python_function('packages/coru/src/coru/cli.py', '_run_calibration_bridge_preflight', 2, 5, 8).
+python_function('packages/coru/src/coru/cli.py', '_parse_drive_json_from_stdout', 1, 8, 5).
+python_function('packages/coru/src/coru/cli.py', '_lane_drive_capture', 3, 8, 10).
+python_function('packages/coru/src/coru/cli.py', '_format_calibration_probe_report', 1, 17, 4).
+python_function('packages/coru/src/coru/cli.py', '_resolve_calibration_lane', 2, 13, 4).
+python_function('packages/coru/src/coru/cli.py', '_lane_calibration', 2, 14, 13).
 python_function('packages/coru/src/coru/cli.py', '_refactor_intent', 1, 3, 4).
 python_function('packages/coru/src/coru/cli.py', '_lane_auto', 3, 9, 7).
 python_function('packages/coru/src/coru/cli.py', '_env_enabled', 1, 2, 3).
@@ -12693,10 +13290,10 @@ python_function('packages/coru/src/coru/cli.py', '_status_has_plugin_for_ide', 2
 python_function('packages/coru/src/coru/cli.py', '_status_has_keyboard_backend', 1, 6, 6).
 python_function('packages/coru/src/coru/cli.py', '_auto_readiness_can_continue_with_keyboard_fallback', 1, 7, 6).
 python_function('packages/coru/src/coru/cli.py', '_run_auto_with_readiness', 3, 3, 5).
-python_function('packages/coru/src/coru/cli.py', '_lane_manage_fix', 2, 2, 3).
+python_function('packages/coru/src/coru/cli.py', '_lane_manage_fix', 2, 4, 3).
 python_function('packages/coru/src/coru/cli.py', '_lane_daemon_foreground', 2, 3, 5).
 python_function('packages/coru/src/coru/cli.py', '_koru_exec_argv', 0, 4, 4).
-python_function('packages/coru/src/coru/cli.py', '_fetch_drive_payload', 3, 8, 7).
+python_function('packages/coru/src/coru/cli.py', '_fetch_drive_payload', 3, 5, 6).
 python_function('packages/coru/src/coru/cli.py', '_lane_chat_prompt', 3, 3, 4).
 python_function('packages/coru/src/coru/cli.py', '_start_autopilot_daemon_for_lane', 2, 13, 16).
 python_function('packages/coru/src/coru/cli.py', '_ensure_daemon_running', 2, 5, 6).
@@ -12712,11 +13309,11 @@ python_function('packages/coru/src/coru/cli.py', '_diagnose_lane', 2, 15, 17).
 python_function('packages/coru/src/coru/cli.py', '_print_troubleshooting_log_locations', 2, 4, 7).
 python_function('packages/coru/src/coru/cli.py', '_chat_llm_enabled', 1, 3, 3).
 python_function('packages/coru/src/coru/cli.py', '_llm_rewrite_chat_prompt', 1, 5, 3).
-python_function('packages/coru/src/coru/cli.py', '_heuristic_plan', 1, 14, 7).
+python_function('packages/coru/src/coru/cli.py', '_heuristic_plan', 1, 16, 7).
 python_function('packages/coru/src/coru/cli.py', '_llm_plan', 1, 10, 9).
-python_function('packages/coru/src/coru/cli.py', '_resolve_defaults', 1, 8, 5).
+python_function('packages/coru/src/coru/cli.py', '_resolve_defaults', 1, 10, 6).
 python_function('packages/coru/src/coru/cli.py', '_default_lane', 2, 3, 3).
-python_function('packages/coru/src/coru/cli.py', '_execute_plan', 1, 7, 9).
+python_function('packages/coru/src/coru/cli.py', '_execute_plan', 1, 8, 10).
 python_function('packages/coru/src/coru/cli.py', '_build_plan_chain', 1, 11, 8).
 python_function('packages/coru/src/coru/cli.py', '_status_failure_ok_to_continue', 2, 2, 1).
 python_function('packages/coru/src/coru/cli.py', '_preflight_failure_ok_to_continue', 2, 3, 1).
@@ -12737,8 +13334,9 @@ python_function('packages/coru/src/coru/cli.py', '_cmd_repair_history', 1, 3, 6)
 python_function('packages/coru/src/coru/cli.py', '_cmd_repair_run', 1, 2, 3).
 python_function('packages/coru/src/coru/cli.py', '_cmd_sync', 1, 8, 12).
 python_function('packages/coru/src/coru/cli.py', '_register_sync_command', 1, 1, 3).
+python_function('packages/coru/src/coru/cli.py', '_register_calibration_command', 1, 1, 3).
 python_function('packages/coru/src/coru/cli.py', '_register_doctor_command', 1, 1, 3).
-python_function('packages/coru/src/coru/cli.py', '_build_parser', 0, 1, 10).
+python_function('packages/coru/src/coru/cli.py', '_build_parser', 0, 1, 11).
 python_function('packages/coru/src/coru/cli.py', '_restore_log_format', 1, 2, 1).
 python_function('packages/coru/src/coru/cli.py', '_maybe_run_default_mode', 1, 9, 6).
 python_function('packages/coru/src/coru/cli.py', '_is_text_shorthand', 2, 3, 1).
@@ -12749,10 +13347,11 @@ python_function('packages/coru/src/coru/cli.py', '_dispatch_auto_command', 1, 6,
 python_function('packages/coru/src/coru/cli.py', '_dispatch_text_command', 1, 2, 2).
 python_function('packages/coru/src/coru/cli.py', '_dispatch_chat_command', 1, 3, 2).
 python_function('packages/coru/src/coru/cli.py', '_dispatch_supervisor_command', 1, 4, 3).
+python_function('packages/coru/src/coru/cli.py', '_dispatch_calibration_command', 1, 2, 3).
 python_function('packages/coru/src/coru/cli.py', '_dispatch_doctor_command', 1, 3, 3).
 python_function('packages/coru/src/coru/cli.py', '_dispatch_repair_command', 1, 4, 2).
 python_function('packages/coru/src/coru/cli.py', '_dispatch_daemon_command', 1, 3, 7).
-python_function('packages/coru/src/coru/cli.py', '_dispatch_optional_command', 1, 3, 9).
+python_function('packages/coru/src/coru/cli.py', '_dispatch_optional_command', 1, 3, 10).
 python_function('packages/coru/src/coru/cli.py', '_dispatch_command', 1, 5, 4).
 python_function('packages/coru/src/coru/cli.py', 'main', 1, 6, 13).
 python_function('packages/coru/src/coru/ecosystem.py', '_local_package_paths', 1, 5, 4).
@@ -12765,6 +13364,13 @@ python_function('packages/coru/src/coru/ecosystem.py', 'sync_self_repair', 1, 2,
 python_function('packages/coru/src/coru/ecosystem.py', 'sync_ecosystem', 1, 14, 9).
 python_function('packages/coru/src/coru/ecosystem.py', 'format_sync_report', 1, 7, 3).
 python_function('packages/coru/src/coru/ecosystem.py', 'format_sync_report_json', 1, 1, 2).
+python_function('packages/coru/src/coru/ide_detection.py', '_ide_from_vscode_pid', 0, 12, 7).
+python_function('packages/coru/src/coru/ide_detection.py', '_vscode_family_env_hint', 0, 9, 3).
+python_function('packages/coru/src/coru/ide_detection.py', '_windsurf_terminal_marker', 0, 5, 5).
+python_function('packages/coru/src/coru/ide_detection.py', '_terminal_shell_context_fallback', 3, 22, 6).
+python_function('packages/coru/src/coru/ide_detection.py', 'terminal_shell_context', 0, 3, 2).
+python_function('packages/coru/src/coru/ide_detection.py', 'terminal_ide_hint', 0, 1, 1).
+python_function('packages/coru/src/coru/ide_detection.py', 'terminal_host_kind', 0, 2, 1).
 python_function('packages/coru/src/coru/repair/diagnostics.py', '_read_package_build_sha', 1, 6, 4).
 python_function('packages/coru/src/coru/repair/diagnostics.py', '_installed_extension_dir', 1, 4, 6).
 python_function('packages/coru/src/coru/repair/diagnostics.py', '_plugin_row_for_ide', 2, 7, 5).
@@ -12789,7 +13395,13 @@ python_function('packages/coru/src/coru/repair/events.py', 'aggregate_id_for', 2
 python_function('packages/coru/src/coru/repair/pipeline.py', '_emit', 3, 2, 1).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_installed_extension_dir', 1, 4, 6).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_resolve_repo_vsix', 3, 6, 6).
-python_function('packages/coru/src/coru/repair/pipeline.py', 'manual_vsix_unpack', 0, 14, 19).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_get_installed_version', 1, 6, 7).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_read_vsix_version', 1, 3, 5).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_unpack_vsix_archive', 3, 4, 8).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_vsix_unpack_layout', 1, 2, 4).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_vsix_source', 2, 2, 3).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_vsix_unpack_result', 3, 4, 4).
+python_function('packages/coru/src/coru/repair/pipeline.py', 'manual_vsix_unpack', 0, 3, 4).
 python_function('packages/coru/src/coru/repair/pipeline.py', 'plugin_build_aligned', 1, 4, 4).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_expected_build_from_problems', 1, 9, 4).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_poll_plugin_ready', 0, 6, 7).
@@ -12845,10 +13457,26 @@ python_function('packages/coru/src/coru/supervisor/daemon_ctl.py', 'start_daemon
 python_function('packages/coru/src/coru/supervisor/daemon_ctl.py', 'stop_daemon', 1, 8, 5).
 python_function('packages/coru/src/coru/supervisor/editor_cli.py', '_is_appimage_mount', 1, 2, 2).
 python_function('packages/coru/src/coru/supervisor/editor_cli.py', 'resolve_editor_cli', 1, 9, 6).
-python_function('packages/coru/src/coru/supervisor/http_server.py', '_json_response', 3, 1, 8).
-python_function('packages/coru/src/coru/supervisor/http_server.py', '_read_json_body', 1, 5, 6).
-python_function('packages/coru/src/coru/supervisor/http_server.py', '_lanes_payload', 1, 2, 2).
-python_function('packages/coru/src/coru/supervisor/http_server.py', 'make_handler', 1, 1, 28).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', '_normalize_path', 1, 2, 1).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', '_lane_instance_from_suffix', 2, 1, 3).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_get_health', 2, 1, 2).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_get_lanes', 2, 1, 3).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_get_active_lane', 2, 2, 4).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_get_lane_health', 2, 2, 5).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_put_active_lane', 2, 4, 7).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_post_register_lane', 2, 9, 9).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_post_lane_daemon', 2, 3, 3).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_post_lane_reconnect', 2, 2, 2).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_post_refresh', 2, 1, 4).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'handle_delete_lane', 2, 4, 2).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'dispatch_get', 3, 6, 8).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'dispatch_put', 3, 2, 2).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'dispatch_post', 3, 9, 8).
+python_function('packages/coru/src/coru/supervisor/http_handlers.py', 'dispatch_delete', 3, 2, 5).
+python_function('packages/coru/src/coru/supervisor/http_server.py', 'make_handler', 1, 1, 8).
+python_function('packages/coru/src/coru/supervisor/http_util.py', 'json_response', 3, 1, 8).
+python_function('packages/coru/src/coru/supervisor/http_util.py', 'read_json_body', 1, 5, 6).
+python_function('packages/coru/src/coru/supervisor/http_util.py', 'lanes_payload', 1, 2, 2).
 python_function('packages/coru/src/coru/supervisor/paths.py', 'state_dir', 0, 5, 6).
 python_function('packages/coru/src/coru/supervisor/paths.py', 'registry_path', 0, 1, 1).
 python_function('packages/coru/src/coru/supervisor/paths.py', 'pid_path', 0, 1, 1).
@@ -12885,6 +13513,18 @@ python_function('packages/coru/src/coru/supervisor/systemd_unit.py', 'action_ins
 python_function('packages/coru/tests/test_coru_cli.py', '_isolated_supervisor_registry', 2, 1, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_heuristic_plan_auto', 0, 3, 1).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_heuristic_plan_diag_routes_to_doctor', 0, 2, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_heuristic_plan_calibration', 0, 3, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_format_calibration_probe_report_pass', 0, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_format_calibration_probe_report_submit_unverified', 0, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_parse_drive_json_from_stdout_extracts_trailing_object', 0, 3, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_calibration_desktop_focus_titles_include_workspace', 0, 3, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_write_calibration_desktop_oql', 1, 6, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_materialize_calibration_desktop_oql_from_template', 2, 4, 7).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_write_calibration_bridge_testql', 1, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_format_calibration_desktop_report_error', 0, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_lane_calibration_runs_desktop_preflight_and_single_drive', 1, 3, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_calibration_command_runs_lane_calibration', 1, 3, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_calibration_is_known_command_not_text_shorthand', 1, 3, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_execute_text_uses_heuristic', 1, 3, 2).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_doctor_requires_system_shell_by_default', 2, 3, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_doctor_allow_integrated_shell_executes_lane_doctor', 1, 3, 2).
@@ -12896,6 +13536,7 @@ python_function('packages/coru/tests/test_coru_cli.py', 'test_ensure_with_instal
 python_function('packages/coru/tests/test_coru_cli.py', 'test_ensure_with_install_prefers_project_venv_python', 1, 3, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_setup_runs_environment_prepare', 1, 2, 2).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_distribution_version_not_installed', 1, 2, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_distribution_version_for_bundled_coru_falls_back_to_koru', 1, 2, 2).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_print_runtime_versions', 2, 3, 4).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_version_flag_prints_and_exits', 2, 4, 4).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_verbose_no_args_runs_autonomy_chain', 1, 3, 2).
@@ -12932,15 +13573,26 @@ python_function('packages/coru/tests/test_coru_cli.py', 'test_lane_status_passes
 python_function('packages/coru/tests/test_coru_cli.py', 'test_lane_status_uses_koruenv_run_for_module_koru', 1, 3, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_hint_overrides_stale_env_ide', 1, 3, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_stale_instance_not_reused_for_different_ide', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_run_subprocess_times_out', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_koru_subprocess_timeout_skips_long_running_commands', 0, 4, 1).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_run_koru_lane_auto_has_no_subprocess_timeout', 1, 4, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_koru_autopilot_env_payload_times_out', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_infer_default_ide_keeps_integrated_terminal_over_alive_daemon', 1, 2, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_resolve_calibration_lane_prefers_integrated_terminal', 1, 3, 2).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_resolve_calibration_lane_honors_explicit_ide', 1, 3, 2).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_hint_overrides_stale_supervisor_lane', 2, 3, 6).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_generic_main_not_reused_when_ide_auto', 1, 2, 3).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_workspace_socket_path_drives_default_instance', 2, 2, 5).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_workspace_socket_path_drives_default_ide', 2, 2, 5).
+python_function('packages/coru/tests/test_coru_cli.py', '_clear_fork_env', 1, 2, 1).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_jetbrains_from_emulator', 1, 2, 3).
-python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_detects_codium_when_pid_probe_fails', 1, 2, 3).
-python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_detects_codium_from_nls_config', 1, 2, 4).
-python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_detects_codium_from_nls_config_without_pid', 1, 2, 3).
-python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_vscode_pid_beats_stale_cursor_env', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_shell_context_windsurf_from_devin_desktop', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_shell_context_windsurf_from_cascade_marker_only', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_shell_context_plain_vscode_is_last_resort', 1, 2, 3).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_detects_codium_when_pid_probe_fails', 1, 2, 4).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_detects_codium_from_nls_config', 1, 2, 5).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_detects_codium_from_nls_config_without_pid', 1, 2, 4).
+python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_ide_hint_vscode_pid_beats_stale_cursor_env', 1, 2, 4).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_terminal_shell_context_system_when_no_ide_markers', 1, 5, 2).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_warns_when_stale_main_lane_overridden', 2, 2, 5).
 python_function('packages/coru/tests/test_coru_cli.py', 'test_warns_only_once_per_chat_context', 2, 4, 8).
@@ -13032,13 +13684,21 @@ python_function('packages/koruenv/src/koruenv/lane.py', 'build_lane_environ', 0,
 python_function('packages/koruenv/tests/test_koruenv_package.py', 'test_lane_env_xdg_runtime', 0, 4, 1).
 python_function('packages/koruenv/tests/test_koruenv_package.py', 'test_cli_env_bash', 1, 4, 2).
 python_function('packages/koruenv/tests/test_koruenv_package.py', 'test_cli_env_jsonl_log_contract', 1, 8, 8).
-python_function('patch_gillm_client.py', 'patch', 0, 1, 4).
+python_function('packages/nlpshim/src/nlpshim/client.py', 'get_nlp2dsl_client', 0, 2, 0).
+python_function('packages/nlpshim/src/nlpshim/client.py', '_use_intent_ir', 0, 2, 1).
+python_function('packages/nlpshim/src/nlpshim/client.py', 'analyze_text_structure', 1, 2, 2).
+python_function('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'parse_conversation_step', 2, 10, 8).
+python_function('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'complete_missing_fields', 2, 1, 2).
+python_function('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'execute_conversation_plan', 2, 2, 4).
+python_function('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'export_trace', 1, 3, 3).
 python_function('scripts/_koru_autodiag_filter_tickets.py', 'main', 0, 12, 11).
 python_function('scripts/bump_version.py', 'read_version', 0, 2, 4).
 python_function('scripts/bump_version.py', 'bump', 2, 5, 3).
 python_function('scripts/bump_version.py', 'update_pyproject', 2, 3, 4).
 python_function('scripts/bump_version.py', 'update_package_json', 2, 4, 5).
 python_function('scripts/bump_version.py', 'main', 0, 4, 9).
+python_function('scripts/e2e_envmap_koru.py', '_section', 1, 1, 1).
+python_function('scripts/e2e_envmap_koru.py', 'main', 0, 22, 15).
 python_function('scripts/koru-gate-capture.py', '_normalize_line', 1, 1, 3).
 python_function('scripts/koru-gate-capture.py', '_first_nonempty_line', 1, 3, 2).
 python_function('scripts/koru-gate-capture.py', '_is_noise_line', 1, 4, 4).
@@ -13065,6 +13725,8 @@ python_function('scripts/planfile-sync-todo.py', '_create_ticket', 6, 7, 6).
 python_function('scripts/planfile-sync-todo.py', 'do_from_todo', 2, 10, 10).
 python_function('scripts/planfile-sync-todo.py', '_llm_stub', 3, 1, 0).
 python_function('scripts/planfile-sync-todo.py', 'main', 0, 2, 7).
+python_function('scripts/run_testql_conversations.py', '_parse_args', 1, 1, 4).
+python_function('scripts/run_testql_conversations.py', 'main', 1, 16, 14).
 python_function('scripts/scaffold-ide-plugin.py', '_write_registry', 2, 1, 1).
 python_function('scripts/scaffold-ide-plugin.py', '_write_chat_history_adapters', 2, 3, 2).
 python_function('scripts/scaffold-ide-plugin.py', '_patch_extension_activate', 2, 1, 4).
@@ -13090,6 +13752,11 @@ python_function('scripts/sync-vscode-plugin-version.py', 'update_plugin_version_
 python_function('scripts/sync-vscode-plugin-version.py', 'update_package_json', 2, 2, 4).
 python_function('scripts/sync-vscode-plugin-version.py', 'update_github_workflow', 2, 2, 4).
 python_function('scripts/sync-vscode-plugin-version.py', 'main', 0, 2, 11).
+python_function('scripts/validate_testql_conversations.py', '_format_validation_errors', 3, 3, 0).
+python_function('scripts/validate_testql_conversations.py', '_sdk_structural_checks', 1, 3, 3).
+python_function('scripts/validate_testql_conversations.py', '_fallback_basic_checks', 1, 3, 2).
+python_function('scripts/validate_testql_conversations.py', '_testql_adapter_checks', 1, 5, 10).
+python_function('scripts/validate_testql_conversations.py', 'main', 1, 12, 15).
 python_function('scripts/write-ide-plugin-tests.py', 'write_probe_tests', 1, 1, 2).
 python_function('scripts/write-ide-plugin-tests.py', 'patch_watcher_test', 1, 1, 4).
 python_function('scripts/write-ide-plugin-tests.py', 'main', 0, 3, 3).
@@ -13148,7 +13815,8 @@ python_function('src/koru/activity_log.py', '_out_stream', 1, 2, 0).
 python_function('src/koru/activity_log.py', 'activity', 2, 6, 12).
 python_function('src/koru/activity_log.py', 'activity_warn', 1, 8, 8).
 python_function('src/koru/activity_log.py', 'activity_info', 1, 5, 10).
-python_function('src/koru/agent_backend_runtime.py', 'build_agent_backend', 0, 17, 16).
+python_function('src/koru/agent_backend_runtime.py', 'build_agent_backend', 0, 19, 17).
+python_function('src/koru/agent_backend_runtime.py', '_nlp2uri_desktop_send', 1, 5, 7).
 python_function('src/koru/agent_backends.py', '_normalize_key', 1, 1, 3).
 python_function('src/koru/agent_backends.py', '_agent_backend_profile_from_mapping', 1, 4, 4).
 python_function('src/koru/agent_backends.py', '_external_backend_profiles', 0, 3, 4).
@@ -13184,6 +13852,7 @@ python_function('src/koru/autoloop_cli.py', '_build_parser', 0, 1, 2).
 python_function('src/koru/autoloop_cli.py', '_env_from_assignments', 1, 3, 4).
 python_function('src/koru/autoloop_cli.py', 'autoloop_main', 1, 8, 11).
 python_function('src/koru/autonomous.py', '_try_gillm_gui_fallback', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_try_nlp2uri_ide_control', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_try_os_injector_fallback', 1, 3, 1).
 python_function('src/koru/autonomous.py', '_stdio_info', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_daemon_activity_log', 1, 2, 2).
@@ -13215,7 +13884,7 @@ python_function('src/koru/autonomous.py', '_run_cycle', 0, 1, 1).
 python_function('src/koru/autonomous.py', '_setup_autonomous_session', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_setup_autopilot_daemon', 2, 1, 1).
 python_function('src/koru/autonomous.py', '_enable_autonomous_strict_plugin_policy', 1, 1, 1).
-python_function('src/koru/autonomous.py', '_run_mcp_provision', 2, 1, 1).
+python_function('src/koru/autonomous.py', '_run_mcp_provision', 3, 1, 1).
 python_function('src/koru/autonomous.py', '_setup_autopilot_plugin', 4, 1, 5).
 python_function('src/koru/autonomous.py', '_run_operator_pipeline', 6, 1, 2).
 python_function('src/koru/autonomous.py', '_unblock_queue_if_needed', 2, 1, 1).
@@ -13341,9 +14010,9 @@ python_function('src/koru/autonomous_cycle_chat_activity.py', '_record_llx_chat_
 python_function('src/koru/autonomous_cycle_chat_activity.py', '_apply_needs_input_heuristic', 0, 5, 5).
 python_function('src/koru/autonomous_cycle_chat_activity.py', '_check_recent_drive_ack_skip', 7, 5, 4).
 python_function('src/koru/autonomous_cycle_chat_activity.py', '_check_chat_intake_skip', 6, 2, 2).
-python_function('src/koru/autonomous_cycle_chat_activity.py', '_check_recent_self_drive_skip', 6, 7, 6).
+python_function('src/koru/autonomous_cycle_chat_activity.py', '_check_recent_self_drive_skip', 6, 8, 7).
 python_function('src/koru/autonomous_cycle_chat_activity.py', '_apply_chat_activity_skip_decision', 0, 5, 10).
-python_function('src/koru/autonomous_cycle_chat_activity.py', '_skip_due_to_recent_chat_activity', 0, 9, 15).
+python_function('src/koru/autonomous_cycle_chat_activity.py', '_skip_due_to_recent_chat_activity', 0, 11, 18).
 python_function('src/koru/autonomous_cycle_chat_activity_analyzer.py', '_event_timestamp', 1, 3, 2).
 python_function('src/koru/autonomous_cycle_chat_activity_analyzer.py', '_recent_chat_activity_events', 1, 11, 7).
 python_function('src/koru/autonomous_cycle_chat_activity_analyzer.py', '_state_events_to_chat_events', 1, 10, 7).
@@ -13396,9 +14065,10 @@ python_function('src/koru/autonomous_cycle_common.py', '_status_in_skip_list', 2
 python_function('src/koru/autonomous_cycle_config.py', 'configure_loop_state', 2, 3, 7).
 python_function('src/koru/autonomous_cycle_config.py', 'select_and_log_cycle_profile', 2, 5, 2).
 python_function('src/koru/autonomous_cycle_config.py', 'resolve_effective_cycle_flags', 2, 3, 2).
-python_function('src/koru/autonomous_cycle_config.py', 'build_cycle_run_kwargs', 2, 9, 0).
+python_function('src/koru/autonomous_cycle_config.py', 'build_cycle_run_kwargs', 2, 10, 0).
 python_function('src/koru/autonomous_cycle_config.py', 'compute_cycle_sleep', 3, 5, 4).
 python_function('src/koru/autonomous_cycle_config.py', '_autopilot_needs_plugin_reconnect', 1, 1, 0).
+python_function('src/koru/autonomous_cycle_drive_outcome.py', 'apply_autopilot_drive_outcome', 0, 9, 12).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_max_drive_retries', 0, 3, 5).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_drive_failure_signature', 1, 4, 4).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_active_decision_engine', 2, 1, 1).
@@ -13408,12 +14078,13 @@ python_function('src/koru/autonomous_cycle_drive_retry.py', '_operator_forces_ke
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_client_has_usable_plugin', 2, 4, 5).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_try_gillm_gui_fallback', 1, 1, 1).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_try_os_injector_fallback', 1, 1, 1).
+python_function('src/koru/autonomous_cycle_drive_retry.py', '_try_nlp2uri_ide_control', 1, 1, 1).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_skip_closed_waiting_ticket_enabled', 0, 1, 1).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_resolve_waiting_ticket_id', 1, 4, 4).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_planfile_ticket_status', 2, 10, 7).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_waiting_ticket_is_closed', 2, 2, 2).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_resolve_autopilot_drive_decision', 3, 8, 9).
-python_function('src/koru/autonomous_cycle_drive_retry.py', '_drive_autopilot_once', 1, 8, 5).
+python_function('src/koru/autonomous_cycle_drive_retry.py', '_invoke_client_autopilot_drive', 1, 11, 7).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_waiting_ticket_closed_skip_result', 4, 3, 3).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_idle_no_ticket_skip_result', 3, 1, 4).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_resolve_drive_plugin_requirement', 2, 5, 4).
@@ -13427,22 +14098,29 @@ python_function('src/koru/autonomous_cycle_drive_retry.py', '_run_drive_retry_lo
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_execute_autopilot_drive', 9, 4, 9).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_update_autopilot_state', 5, 6, 1).
 python_function('src/koru/autonomous_cycle_drive_retry.py', '_log_autopilot_result', 6, 11, 4).
+python_function('src/koru/autonomous_cycle_gate.py', 'nlp2uri_ide_control_enabled', 0, 1, 1).
+python_function('src/koru/autonomous_cycle_gate.py', 'effective_ide_control_submit', 0, 4, 2).
+python_function('src/koru/autonomous_cycle_gate.py', '_resolve_ide_chat_workspace', 1, 14, 11).
 python_function('src/koru/autonomous_cycle_gate.py', 'try_os_injector_fallback', 1, 4, 8).
+python_function('src/koru/autonomous_cycle_gate.py', 'try_nlp2uri_ide_control', 1, 12, 8).
+python_function('src/koru/autonomous_cycle_gate.py', 'try_nlp2uri_focus_fallback', 1, 2, 4).
 python_function('src/koru/autonomous_cycle_gate.py', 'try_gillm_gui_fallback', 1, 5, 9).
 python_function('src/koru/autonomous_cycle_gate.py', 'try_os_injector_fallback_with_deps', 1, 4, 8).
 python_function('src/koru/autonomous_cycle_gate.py', 'allow_keyboard_autopilot_fallback', 0, 1, 3).
-python_function('src/koru/autonomous_cycle_gate.py', 'effective_cycle_autopilot_enabled', 1, 7, 6).
+python_function('src/koru/autonomous_cycle_gate.py', 'effective_cycle_autopilot_enabled', 1, 10, 8).
 python_function('src/koru/autonomous_cycle_gate.py', 'scan_while_waiting_input_enabled', 0, 1, 3).
 python_function('src/koru/autonomous_cycle_gate.py', 'effective_cycle_scan_enabled', 1, 6, 6).
 python_function('src/koru/autonomous_cycle_gate.py', 'resolve_autopilot_ide', 1, 1, 1).
 python_function('src/koru/autonomous_cycle_gate.py', 'apply_agent_lane_environ', 2, 3, 3).
 python_function('src/koru/autonomous_cycle_orchestrator.py', '_drive_result_autopilot_status', 0, 13, 6).
-python_function('src/koru/autonomous_cycle_orchestrator.py', '_handle_autopilot_phase', 19, 6, 4).
+python_function('src/koru/autonomous_cycle_orchestrator.py', '_handle_autopilot_phase', 19, 6, 5).
 python_function('src/koru/autonomous_cycle_orchestrator.py', '_plugin_gate_status', 9, 5, 7).
-python_function('src/koru/autonomous_cycle_orchestrator.py', '_attempt_plugin_gate_recovery', 5, 6, 10).
+python_function('src/koru/autonomous_cycle_orchestrator.py', '_attempt_plugin_gate_recovery', 5, 7, 13).
 python_function('src/koru/autonomous_cycle_orchestrator.py', '_plugin_gate_recovery_key', 3, 2, 4).
 python_function('src/koru/autonomous_cycle_orchestrator.py', '_terminal_conflict_status', 3, 2, 4).
-python_function('src/koru/autonomous_cycle_orchestrator.py', '_drive_autopilot_once', 11, 8, 14).
+python_function('src/koru/autonomous_cycle_orchestrator.py', '_drive_autopilot_once', 1, 1, 2).
+python_function('src/koru/autonomous_cycle_orchestrator.py', '_run_autopilot_drive_attempt', 1, 1, 3).
+python_function('src/koru/autonomous_cycle_orchestrator.py', '_apply_autopilot_drive_attempt', 2, 1, 1).
 python_function('src/koru/autonomous_cycle_orchestrator.py', '_emit_autopilot_preflight_skip', 0, 3, 9).
 python_function('src/koru/autonomous_cycle_orchestrator.py', '_emit_autopilot_observability_outcome', 0, 14, 9).
 python_function('src/koru/autonomous_cycle_post_drive.py', '_take_pre_drive_snapshot', 3, 2, 4).
@@ -13482,7 +14160,12 @@ python_function('src/koru/autonomous_cycle_skip_conditions.py', '_is_waiting_llm
 python_function('src/koru/autonomous_cycle_skip_conditions.py', '_clear_submit_unverified_state', 1, 1, 0).
 python_function('src/koru/autonomous_cycle_skip_conditions.py', '_previous_drive_needs_manual_send', 1, 2, 3).
 python_function('src/koru/autonomous_cycle_skip_conditions.py', '_manual_send_can_be_cleared_by_message_sent', 0, 10, 3).
-python_function('src/koru/autonomous_cycle_skip_conditions.py', '_manual_send_required_skip_result', 0, 13, 18).
+python_function('src/koru/autonomous_cycle_skip_conditions.py', '_manual_send_required_skip_result', 0, 6, 8).
+python_function('src/koru/autonomous_cycle_skip_conditions.py', '_clear_manual_send_for_new_ticket', 0, 3, 1).
+python_function('src/koru/autonomous_cycle_skip_conditions.py', '_clear_manual_send_for_message_sent', 0, 2, 2).
+python_function('src/koru/autonomous_cycle_skip_conditions.py', '_allow_manual_send_alt_retry', 0, 5, 6).
+python_function('src/koru/autonomous_cycle_skip_conditions.py', '_manual_send_required_decision', 0, 1, 6).
+python_function('src/koru/autonomous_cycle_skip_conditions.py', '_manual_send_target_ide', 0, 4, 4).
 python_function('src/koru/autonomous_cycle_skip_conditions.py', '_handle_stuck_status_skip_candidate', 0, 6, 9).
 python_function('src/koru/autonomous_daemon.py', '_stdio_info', 1, 1, 1).
 python_function('src/koru/autonomous_daemon.py', '_current_koru_version', 0, 2, 1).
@@ -13578,7 +14261,9 @@ python_function('src/koru/autonomous_onboarding.py', 'should_run_interactive_onb
 python_function('src/koru/autonomous_onboarding.py', 'discover_ide_candidates', 0, 1, 1).
 python_function('src/koru/autonomous_onboarding.py', 'load_strategy_tree', 1, 1, 3).
 python_function('src/koru/autonomous_onboarding.py', 'run_interactive_onboarding', 1, 10, 12).
-python_function('src/koru/autonomous_operator.py', 'run_mcp_provision', 2, 3, 2).
+python_function('src/koru/autonomous_operator.py', '_operator_autostart_envmap_enabled', 0, 1, 3).
+python_function('src/koru/autonomous_operator.py', 'refresh_environment_registry', 2, 8, 6).
+python_function('src/koru/autonomous_operator.py', 'run_mcp_provision', 2, 4, 5).
 python_function('src/koru/autonomous_operator.py', '_ensure_trusted_publisher_for_plugin', 1, 1, 1).
 python_function('src/koru/autonomous_operator.py', '_extension_active_in_latest_session', 1, 1, 1).
 python_function('src/koru/autonomous_operator.py', '_live_plugin_version', 2, 1, 1).
@@ -13634,12 +14319,14 @@ python_function('src/koru/autonomous_plugin_runtime.py', 'extension_active_in_la
 python_function('src/koru/autonomous_plugin_runtime.py', 'live_plugin_version', 2, 11, 7).
 python_function('src/koru/autonomous_plugin_runtime.py', 'detect_stale_extension_host', 2, 6, 2).
 python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_status_reason', 2, 2, 2).
-python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_reason_requires_reload', 1, 4, 1).
+python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_reason_requires_reload', 1, 5, 1).
 python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_blocker_line', 2, 2, 2).
 python_function('src/koru/autonomous_plugin_runtime.py', 'reload_retry_wait_seconds', 1, 3, 5).
 python_function('src/koru/autonomous_plugin_runtime.py', 'report_unsupported_plugin_result', 1, 3, 5).
 python_function('src/koru/autonomous_plugin_runtime.py', 'emit_reload_required_lines', 1, 2, 2).
-python_function('src/koru/autonomous_plugin_wait.py', 'prepare_plugin_wait', 3, 9, 6).
+python_function('src/koru/autonomous_plugin_wait.py', '_running_from_integrated_ide_terminal', 0, 1, 1).
+python_function('src/koru/autonomous_plugin_wait.py', '_terminal_host_ide_id', 0, 1, 1).
+python_function('src/koru/autonomous_plugin_wait.py', 'prepare_plugin_wait', 3, 14, 9).
 python_function('src/koru/autonomous_plugin_wait.py', 'force_reload_if_extension_host_stale', 3, 8, 6).
 python_function('src/koru/autonomous_plugin_wait.py', 'retry_plugin_wait_after_reload', 3, 4, 3).
 python_function('src/koru/autonomous_plugin_wait.py', '_wait_after_successful_reload', 3, 3, 4).
@@ -13650,9 +14337,9 @@ python_function('src/koru/autonomous_plugin_wait.py', '_plugin_connected_after_f
 python_function('src/koru/autonomous_plugin_wait.py', '_report_fresh_window_failure', 3, 4, 1).
 python_function('src/koru/autonomous_plugin_wait.py', '_report_reload_failure', 3, 3, 1).
 python_function('src/koru/autonomous_plugin_wait.py', 'wait_for_plugin_connection', 4, 12, 13).
-python_function('src/koru/autonomous_plugin_wait.py', '_try_plugin_reconnect_pipeline', 3, 2, 11).
-python_function('src/koru/autonomous_plugin_wait.py', '_temporary_reuse_window_reload_if_same_workspace', 4, 6, 4).
-python_function('src/koru/autonomous_plugin_wait.py', '_restore_reuse_window_reload', 1, 3, 1).
+python_function('src/koru/autonomous_plugin_wait.py', '_try_plugin_reconnect_pipeline', 3, 3, 15).
+python_function('src/koru/autonomous_plugin_wait.py', '_temporary_reuse_window_reload_if_same_workspace', 4, 5, 4).
+python_function('src/koru/autonomous_plugin_wait.py', '_restore_reuse_window_reload', 1, 1, 1).
 python_function('src/koru/autonomous_plugin_wait.py', '_reason_is_connected_plugin_mismatch', 1, 3, 1).
 python_function('src/koru/autonomous_plugin_wait.py', '_status_has_plugin_workspace', 3, 13, 7).
 python_function('src/koru/autonomous_plugin_wait.py', '_emit_plugin_bootstrap_blocker_trace', 1, 2, 8).
@@ -13708,14 +14395,14 @@ python_function('src/koru/autonomous_readiness.py', '_metadata_socket_matches', 
 python_function('src/koru/autonomous_readiness.py', '_status_daemon_metadata', 2, 4, 3).
 python_function('src/koru/autonomous_readiness.py', '_effective_daemon_metadata', 3, 4, 4).
 python_function('src/koru/autonomous_readiness.py', 'plugin_workspace_covers_project', 3, 15, 8).
-python_function('src/koru/autonomous_readiness.py', 'check_workspace_socket_ownership', 3, 17, 15).
-python_function('src/koru/autonomous_readiness.py', 'apply_socket_ownership_repairs', 3, 9, 7).
+python_function('src/koru/autonomous_readiness.py', 'check_workspace_socket_ownership', 3, 19, 15).
+python_function('src/koru/autonomous_readiness.py', 'apply_socket_ownership_repairs', 3, 9, 9).
 python_function('src/koru/autonomous_readiness.py', 'attempt_plugin_gate_recovery', 3, 3, 2).
 python_function('src/koru/autonomous_readiness.py', '_canonical_target_ide', 1, 2, 2).
 python_function('src/koru/autonomous_readiness.py', '_lane_instance_value', 1, 3, 2).
 python_function('src/koru/autonomous_readiness.py', '_terminal_context', 3, 6, 3).
 python_function('src/koru/autonomous_readiness.py', '_terminal_lane_context', 0, 1, 4).
-python_function('src/koru/autonomous_readiness.py', '_terminal_lane_mismatch_issues', 1, 10, 5).
+python_function('src/koru/autonomous_readiness.py', '_terminal_lane_mismatch_issues', 1, 9, 5).
 python_function('src/koru/autonomous_readiness.py', '_lane_ide_mismatch_issue', 1, 5, 2).
 python_function('src/koru/autonomous_readiness.py', '_socket_lane_mismatch_issue', 2, 6, 4).
 python_function('src/koru/autonomous_readiness.py', 'check_lane_terminal_socket_alignment', 0, 6, 10).
@@ -13723,11 +14410,16 @@ python_function('src/koru/autonomous_readiness.py', 'check_queue_runner_contenti
 python_function('src/koru/autonomous_readiness.py', 'warn_pre_drive_queue_without_plugin', 1, 5, 2).
 python_function('src/koru/autonomous_readiness.py', 'run_plugin_reconnect_pipeline', 0, 5, 7).
 python_function('src/koru/autonomous_readiness.py', 'evaluate_autonomous_readiness', 3, 11, 9).
-python_function('src/koru/autonomous_readiness.py', 'format_readiness_lines', 1, 7, 1).
+python_function('src/koru/autonomous_readiness.py', 'format_readiness_lines', 1, 8, 1).
 python_function('src/koru/autonomous_resources.py', 'setup_autonomous_resources', 2, 4, 10).
 python_function('src/koru/autonomous_runtime.py', 'setup_autonomous_session', 1, 6, 21).
 python_function('src/koru/autonomous_runtime.py', '_path_is_relative_to', 2, 2, 1).
-python_function('src/koru/autonomous_runtime.py', 'project_venv_reexec_argv', 1, 6, 8).
+python_function('src/koru/autonomous_runtime.py', 'resolve_cli_project', 1, 6, 8).
+python_function('src/koru/autonomous_runtime.py', '_local_project_koru', 1, 3, 3).
+python_function('src/koru/autonomous_runtime.py', 'running_outside_project_venv', 1, 4, 6).
+python_function('src/koru/autonomous_runtime.py', 'cli_should_reexec', 1, 5, 2).
+python_function('src/koru/autonomous_runtime.py', 'project_venv_reexec_argv', 1, 7, 5).
+python_function('src/koru/autonomous_runtime.py', 'maybe_sync_project_koru_package', 1, 14, 11).
 python_function('src/koru/autonomous_runtime.py', 'project_venv_reexec_env', 1, 5, 6).
 python_function('src/koru/autonomous_runtime.py', 'project_venv_warning_lines', 1, 4, 5).
 python_function('src/koru/autonomous_runtime.py', '_resolve_autopilot_lane', 1, 9, 4).
@@ -13736,7 +14428,7 @@ python_function('src/koru/autonomous_runtime.py', '_decide_autopilot_socket', 1,
 python_function('src/koru/autonomous_runtime.py', '_log_autopilot_socket_decision', 2, 1, 3).
 python_function('src/koru/autonomous_runtime.py', 'setup_autopilot_daemon', 2, 2, 4).
 python_function('src/koru/autonomous_runtime.py', '_log_runtime_readiness_gate', 2, 2, 6).
-python_function('src/koru/autonomous_runtime.py', '_apply_autopilot_readiness_after_daemon', 5, 7, 9).
+python_function('src/koru/autonomous_runtime.py', '_apply_autopilot_readiness_after_daemon', 5, 6, 9).
 python_function('src/koru/autonomous_runtime.py', 'cleanup_autonomous_session', 6, 4, 5).
 python_function('src/koru/autonomous_runtime.py', 'setup_autonomous_env_vars', 0, 2, 1).
 python_function('src/koru/autonomous_runtime.py', 'restore_autonomous_env_vars', 1, 4, 2).
@@ -13759,10 +14451,10 @@ python_function('src/koru/autonomous_startup.py', '_resolve_lane_from_running', 
 python_function('src/koru/autonomous_startup.py', '_project_lane', 3, 2, 1).
 python_function('src/koru/autonomous_startup.py', '_resolve_project_lane_result', 3, 2, 1).
 python_function('src/koru/autonomous_startup.py', '_runtime_lane_hints', 0, 1, 4).
-python_function('src/koru/autonomous_startup.py', '_resolve_lane_from_runtime_hints', 1, 5, 5).
+python_function('src/koru/autonomous_startup.py', '_resolve_lane_from_runtime_hints', 1, 11, 8).
 python_function('src/koru/autonomous_startup.py', '_resolve_lane_from_running_or_project', 2, 2, 2).
 python_function('src/koru/autonomous_startup.py', 'resolve_agent_lane_id', 2, 4, 6).
-python_function('src/koru/autonomous_startup.py', 'resolve_agent_lane', 0, 11, 11).
+python_function('src/koru/autonomous_startup.py', 'resolve_agent_lane', 0, 16, 13).
 python_function('src/koru/autonomous_startup.py', 'resolve_autopilot_ide_for_autonomous', 2, 5, 3).
 python_function('src/koru/autonomous_startup.py', '_normalized_cli_value', 1, 2, 2).
 python_function('src/koru/autonomous_startup.py', '_autopilot_socket_path_for_probe', 1, 5, 4).
@@ -13790,7 +14482,7 @@ python_function('src/koru/autonomous_submit_strategy.py', '_waiting_ticket_id', 
 python_function('src/koru/autonomous_up.py', 'autonomous_context_resource_kwargs', 1, 1, 0).
 python_function('src/koru/autonomous_up.py', 'prepare_autonomous_startup_probe', 2, 1, 2).
 python_function('src/koru/autonomous_up.py', 'prepare_autonomous_up_context', 1, 2, 6).
-python_function('src/koru/autonomous_up.py', 'run_autonomous_up_loop', 1, 6, 9).
+python_function('src/koru/autonomous_up.py', 'run_autonomous_up_loop', 1, 7, 9).
 python_function('src/koru/autonomous_up.py', 'action_up', 1, 3, 4).
 python_function('src/koru/autonomous_wup.py', '_wup_stdio_info', 1, 2, 1).
 python_function('src/koru/autonomous_wup.py', '_wup_topology_gate', 2, 4, 2).
@@ -13910,7 +14602,7 @@ python_function('src/koru/autonomy/env.py', 'autonomous_environ_doctor_probe', 1
 python_function('src/koru/autonomy/env.py', 'allow_keyboard_autopilot_fallback', 0, 1, 3).
 python_function('src/koru/autonomy/env.py', 'allow_gillm_autopilot_fallback', 0, 1, 3).
 python_function('src/koru/autonomy/env.py', 'prefer_keyboard_autopilot', 0, 3, 3).
-python_function('src/koru/autonomy/env.py', 'keyboard_fallback_when_plugin_missing', 1, 3, 6).
+python_function('src/koru/autonomy/env.py', 'keyboard_fallback_when_plugin_missing', 1, 4, 6).
 python_function('src/koru/autonomy/env.py', 'plugin_required_for_ide', 1, 8, 7).
 python_function('src/koru/autonomy/env.py', 'allow_cross_ide_autopilot', 0, 1, 3).
 python_function('src/koru/autonomy/env.py', 'autopilot_terminal_conflict_reason', 1, 10, 5).
@@ -13970,19 +14662,19 @@ python_function('src/koru/autonomy/operator_pipeline.py', '_ticket_matches_curre
 python_function('src/koru/autonomy/operator_pipeline.py', '_find_ticket_by_id', 2, 8, 7).
 python_function('src/koru/autonomy/operator_pipeline.py', '_find_existing_step_ticket', 1, 11, 10).
 python_function('src/koru/autonomy/operator_pipeline.py', '_close_resolved_step_ticket', 1, 5, 6).
-python_function('src/koru/autonomy/operator_pipeline.py', '_mcp_koru_configured', 2, 10, 9).
+python_function('src/koru/autonomy/operator_pipeline.py', '_mcp_koru_configured', 2, 1, 1).
 python_function('src/koru/autonomy/operator_pipeline.py', '_candidate_planfile_health_urls', 1, 7, 10).
-python_function('src/koru/autonomy/operator_pipeline.py', '_planfile_api_ok', 1, 5, 3).
+python_function('src/koru/autonomy/operator_pipeline.py', '_planfile_api_ok', 1, 8, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_operator_autostart_server_enabled', 0, 1, 3).
-python_function('src/koru/autonomy/operator_pipeline.py', '_try_start_planfile_api', 1, 7, 7).
-python_function('src/koru/autonomy/operator_pipeline.py', '_os_profile_ok', 2, 3, 2).
+python_function('src/koru/autonomy/operator_pipeline.py', '_try_start_planfile_api', 1, 10, 7).
+python_function('src/koru/autonomy/operator_pipeline.py', '_os_profile_ok', 2, 6, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_autopilot_plugin_operator_hints', 0, 3, 3).
-python_function('src/koru/autonomy/operator_pipeline.py', '_host_injectors_ok', 0, 8, 5).
+python_function('src/koru/autonomy/operator_pipeline.py', '_host_injectors_ok', 0, 11, 5).
 python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_autorepair_enabled', 0, 1, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_first_self_control_problem', 1, 3, 1).
 python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_problem_detail', 1, 2, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_summarize_self_control_actions', 1, 6, 6).
-python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_ok', 3, 8, 9).
+python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_ok', 3, 12, 10).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_os_calibration_step', 2, 4, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_planfile_api_step', 1, 3, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_mcp_step', 2, 5, 2).
@@ -14154,9 +14846,11 @@ python_function('src/koru/autonomy_strategy/heuristics.py', '_recommendations', 
 python_function('src/koru/autonomy_strategy/openrouter.py', 'call_openrouter_json', 1, 5, 11).
 python_function('src/koru/autonomy_strategy/openrouter.py', 'ask_openrouter_for_strategy_patch', 1, 1, 1).
 python_function('src/koru/autonomy_strategy/prompts.py', 'build_strategy_update_prompt', 1, 2, 5).
+python_function('src/koru/autopilot/calibrate_cli.py', '_resolve_calibration_project_dir', 1, 2, 4).
+python_function('src/koru/autopilot/calibrate_cli.py', '_sync_calibration_registry', 1, 21, 6).
 python_function('src/koru/autopilot/calibrate_cli.py', 'resolve_session_ides', 1, 9, 6).
-python_function('src/koru/autopilot/calibrate_cli.py', 'action_calibrate', 1, 5, 13).
-python_function('src/koru/autopilot/calibrate_cli.py', 'capture_ide_profile', 4, 4, 9).
+python_function('src/koru/autopilot/calibrate_cli.py', 'action_calibrate', 1, 6, 14).
+python_function('src/koru/autopilot/calibrate_cli.py', 'capture_ide_profile', 4, 5, 10).
 python_function('src/koru/autopilot/calibrate_cli.py', 'detect_duplicate_coordinates', 1, 3, 4).
 python_function('src/koru/autopilot/calibrate_cli.py', '_default_session_capture_profile', 1, 1, 1).
 python_function('src/koru/autopilot/calibrate_cli.py', '_annotate_shared_coordinate_warnings', 2, 6, 3).
@@ -14169,6 +14863,7 @@ python_function('src/koru/autopilot/cli_command.py', '_client', 1, 2, 5).
 python_function('src/koru/autopilot/cli_command.py', '_action_env', 1, 6, 10).
 python_function('src/koru/autopilot/cli_command.py', '_daemon_start_hint', 1, 2, 1).
 python_function('src/koru/autopilot/cli_command.py', '_action_drive', 1, 1, 1).
+python_function('src/koru/autopilot/cli_command.py', '_action_snapshot', 1, 1, 1).
 python_function('src/koru/autopilot/cli_command.py', '_action_status', 1, 1, 1).
 python_function('src/koru/autopilot/cli_command.py', '_action_shutdown', 1, 1, 1).
 python_function('src/koru/autopilot/cli_command.py', '_action_doctor', 1, 1, 1).
@@ -14193,13 +14888,14 @@ python_function('src/koru/autopilot/cli_direct_drive.py', '_selected_keyboard_ba
 python_function('src/koru/autopilot/cli_direct_drive.py', '_type_text_direct_drive', 2, 1, 5).
 python_function('src/koru/autopilot/cli_direct_drive.py', '_handle_os_profile_direct_error', 3, 2, 1).
 python_function('src/koru/autopilot/cli_direct_drive.py', '_run_direct_drive', 2, 7, 9).
-python_function('src/koru/autopilot/cli_parser.py', 'build_autopilot_parser', 0, 1, 19).
+python_function('src/koru/autopilot/cli_parser.py', 'build_autopilot_parser', 0, 1, 20).
 python_function('src/koru/autopilot/cli_parser.py', '_add_daemon_parser', 1, 1, 4).
 python_function('src/koru/autopilot/cli_parser.py', '_add_drive_parser', 1, 1, 2).
 python_function('src/koru/autopilot/cli_parser.py', '_add_calibrate_parser', 1, 1, 2).
 python_function('src/koru/autopilot/cli_parser.py', '_add_session_start_parser', 1, 1, 2).
 python_function('src/koru/autopilot/cli_parser.py', '_add_status_parser', 1, 1, 3).
 python_function('src/koru/autopilot/cli_parser.py', '_add_env_parser', 1, 1, 3).
+python_function('src/koru/autopilot/cli_parser.py', '_add_snapshot_parser', 1, 1, 3).
 python_function('src/koru/autopilot/cli_parser.py', '_add_trace_parser', 1, 1, 3).
 python_function('src/koru/autopilot/cli_parser.py', '_add_doctor_parser', 1, 1, 2).
 python_function('src/koru/autopilot/cli_parser.py', '_add_setup_host_parser', 1, 1, 2).
@@ -14209,6 +14905,16 @@ python_function('src/koru/autopilot/cli_parser.py', '_add_install_plugin_jetbrai
 python_function('src/koru/autopilot/cli_parser.py', '_add_handoff_parser', 1, 1, 3).
 python_function('src/koru/autopilot/cli_parser.py', '_add_install_unit_parser', 1, 1, 2).
 python_function('src/koru/autopilot/cli_parser.py', '_add_tail_parser', 1, 1, 3).
+python_function('src/koru/autopilot/cli_snapshot.py', '_dsl_quote', 1, 3, 4).
+python_function('src/koru/autopilot/cli_snapshot.py', '_runtime_lines', 0, 15, 9).
+python_function('src/koru/autopilot/cli_snapshot.py', '_decision_lines', 1, 6, 8).
+python_function('src/koru/autopilot/cli_snapshot.py', '_observe_path_line', 1, 9, 8).
+python_function('src/koru/autopilot/cli_snapshot.py', '_drive_dsl_lines', 1, 11, 10).
+python_function('src/koru/autopilot/cli_snapshot.py', '_live_desktop_probe', 1, 5, 4).
+python_function('src/koru/autopilot/cli_snapshot.py', '_env2llm_lines', 1, 16, 10).
+python_function('src/koru/autopilot/cli_snapshot.py', '_lane_shell_env', 0, 2, 4).
+python_function('src/koru/autopilot/cli_snapshot.py', '_operator_lines', 0, 9, 11).
+python_function('src/koru/autopilot/cli_snapshot.py', 'action_snapshot', 1, 14, 29).
 python_function('src/koru/autopilot/cli_trace.py', 'action_trace', 1, 11, 13).
 python_function('src/koru/autopilot/cli_trace.py', '_print_observability_dsl_trace', 2, 5, 7).
 python_function('src/koru/autopilot/cli_trace.py', '_print_drive_dsl_trace', 2, 10, 9).
@@ -14232,9 +14938,9 @@ python_function('src/koru/autopilot/commands/status.py', '_print_status_json', 1
 python_function('src/koru/autopilot/commands/status.py', '_print_status_explain_summary', 2, 10, 7).
 python_function('src/koru/autopilot/commands/status.py', '_status_plugin_rows', 1, 4, 2).
 python_function('src/koru/autopilot/commands/status.py', '_status_plugin_labels', 1, 4, 3).
-python_function('src/koru/autopilot/commands/status.py', 'action_status', 1, 7, 14).
+python_function('src/koru/autopilot/commands/status.py', 'action_status', 1, 20, 18).
 python_function('src/koru/autopilot/commands/status.py', '_maybe_print_empty_plugin_bridge_explain', 4, 6, 8).
-python_function('src/koru/autopilot/commands/status.py', '_status_explain_target_ide', 2, 5, 5).
+python_function('src/koru/autopilot/commands/status.py', '_status_explain_target_ide', 2, 5, 6).
 python_function('src/koru/autopilot/daemon_cli.py', '_daemon_already_running', 2, 3, 3).
 python_function('src/koru/autopilot/daemon_cli.py', '_start_local_manager', 0, 4, 6).
 python_function('src/koru/autopilot/daemon_cli.py', '_record_daemon_start_failure', 1, 2, 2).
@@ -14272,8 +14978,8 @@ python_function('src/koru/autopilot/install_checks.py', '_plugin_live_host_stale
 python_function('src/koru/autopilot/install_checks.py', 'plugin_debug_log_path', 0, 1, 2).
 python_function('src/koru/autopilot/install_checks.py', 'recent_socket_candidate_mismatch', 2, 10, 10).
 python_function('src/koru/autopilot/install_checks.py', 'check_plugin_socket_candidate_mismatch_issue', 4, 8, 4).
-python_function('src/koru/autopilot/install_checks.py', 'check_plugin_version_mismatch_issue', 3, 6, 2).
-python_function('src/koru/autopilot/install_checks.py', 'check_plugin_build_mismatch_issue', 3, 6, 2).
+python_function('src/koru/autopilot/install_checks.py', 'check_plugin_version_mismatch_issue', 3, 7, 4).
+python_function('src/koru/autopilot/install_checks.py', 'check_plugin_build_mismatch_issue', 3, 7, 4).
 python_function('src/koru/autopilot/install_checks.py', 'check_plugin_not_connected_issue', 3, 3, 2).
 python_function('src/koru/autopilot/install_manager.py', '_supports_color', 0, 3, 3).
 python_function('src/koru/autopilot/install_manager.py', '_yellow', 1, 2, 0).
@@ -14301,14 +15007,14 @@ python_function('src/koru/autopilot/install_manager.py', '_restart_ide_on_build_
 python_function('src/koru/autopilot/install_manager.py', '_unsupported_plugin_repair_step', 2, 2, 1).
 python_function('src/koru/autopilot/install_manager.py', '_force_reassert_install_when', 1, 3, 2).
 python_function('src/koru/autopilot/install_manager.py', '_plugin_connected_build_stale', 1, 5, 4).
-python_function('src/koru/autopilot/install_manager.py', '_install_plugin_repair_result', 1, 2, 5).
-python_function('src/koru/autopilot/install_manager.py', '_plugin_already_aligned', 1, 10, 4).
+python_function('src/koru/autopilot/install_manager.py', '_install_plugin_repair_result', 1, 3, 6).
+python_function('src/koru/autopilot/install_manager.py', '_plugin_already_aligned', 1, 18, 4).
 python_function('src/koru/autopilot/install_manager.py', '_shutdown_daemon_for_plugin_repair_action', 1, 4, 4).
 python_function('src/koru/autopilot/install_manager.py', '_skipped_shutdown_daemon_action', 0, 1, 0).
 python_function('src/koru/autopilot/install_manager.py', '_shutdown_autopilot_daemon', 1, 2, 4).
 python_function('src/koru/autopilot/install_manager.py', '_start_daemon_for_plugin_repair_action', 2, 2, 2).
 python_function('src/koru/autopilot/install_manager.py', '_start_autopilot_daemon_for_plugin_repair', 2, 9, 10).
-python_function('src/koru/autopilot/install_manager.py', '_reload_ide_reconnect_action', 2, 1, 2).
+python_function('src/koru/autopilot/install_manager.py', '_reload_ide_reconnect_action', 2, 2, 3).
 python_function('src/koru/autopilot/install_manager.py', '_wait_for_plugin_reconnect_action', 2, 4, 4).
 python_function('src/koru/autopilot/install_manager.py', '_open_new_ide_window_for_plugin_build_action', 1, 1, 2).
 python_function('src/koru/autopilot/install_manager.py', '_open_new_ide_window_for_plugin_build', 1, 5, 3).
@@ -14318,9 +15024,7 @@ python_function('src/koru/autopilot/install_manager.py', '_terminate_process', 1
 python_function('src/koru/autopilot/install_manager.py', '_process_exists', 1, 3, 1).
 python_function('src/koru/autopilot/install_manager.py', '_wait_for_plugin_reconnect', 2, 16, 10).
 python_function('src/koru/autopilot/install_manager.py', '_apply_repair_steps', 2, 2, 2).
-python_function('src/koru/autopilot/install_manager.py', '_reload_ide_after_plugin_fix', 1, 5, 5).
-python_function('src/koru/autopilot/install_manager.py', '_temporary_reuse_window_reload_if_same_workspace', 3, 3, 2).
-python_function('src/koru/autopilot/install_manager.py', '_restore_reuse_window_reload', 1, 3, 1).
+python_function('src/koru/autopilot/install_manager.py', '_reload_ide_after_plugin_fix', 1, 8, 9).
 python_function('src/koru/autopilot/install_manager.py', '_daemon_has_plugin_workspace', 3, 14, 7).
 python_function('src/koru/autopilot/install_manager.py', '_resolved_folder_key', 1, 2, 3).
 python_function('src/koru/autopilot/install_manager.py', '_plugin_workspace_folders', 2, 8, 5).
@@ -14329,7 +15033,7 @@ python_function('src/koru/autopilot/install_manager.py', '_plugin_workspace_mism
 python_function('src/koru/autopilot/install_manager.py', 'format_install_manager_report', 1, 1, 7).
 python_function('src/koru/autopilot/install_manager.py', '_install_manager_base_lines', 1, 9, 3).
 python_function('src/koru/autopilot/install_manager.py', '_install_manager_issue_lines', 1, 4, 2).
-python_function('src/koru/autopilot/install_manager.py', '_install_manager_action_lines', 1, 4, 2).
+python_function('src/koru/autopilot/install_manager.py', '_install_manager_action_lines', 1, 5, 2).
 python_function('src/koru/autopilot/install_plugin_cli.py', 'plugin_repo_dir', 1, 3, 4).
 python_function('src/koru/autopilot/install_plugin_cli.py', '_plugin_package_version', 1, 4, 5).
 python_function('src/koru/autopilot/install_plugin_cli.py', '_plugin_package_name', 1, 4, 5).
@@ -14409,12 +15113,10 @@ python_function('src/koru/cli.py', '_api_main', 1, 1, 1).
 python_function('src/koru/cli.py', '_sllm_main', 1, 2, 2).
 python_function('src/koru/cli.py', '_agent_backends_main', 1, 1, 1).
 python_function('src/koru/cli.py', '_peek_project_from_argv', 1, 5, 8).
-python_function('src/koru/cli.py', '_path_is_relative_to', 2, 2, 1).
-python_function('src/koru/cli.py', '_project_cli_reexec_argv', 1, 7, 9).
 python_function('src/koru/cli.py', '_maybe_print_project_venv_hint', 1, 5, 9).
 python_function('src/koru/cli.py', '_should_suggest_wizard', 2, 6, 5).
 python_function('src/koru/cli.py', '_lazy_module_main', 3, 1, 2).
-python_function('src/koru/cli.py', '_maybe_reexec_for_project_venv', 1, 8, 7).
+python_function('src/koru/cli.py', '_maybe_reexec_for_project_venv', 1, 7, 9).
 python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 8, 8).
 python_function('src/koru/cli.py', '_suggest_subcommand', 1, 7, 3).
 python_function('src/koru/cli.py', '_dispatch_auto_alias', 1, 7, 2).
@@ -14428,7 +15130,7 @@ python_function('src/koru/cli_agent_backends.py', 'agent_backends_main', 1, 8, 9
 python_function('src/koru/cli_auto.py', '_legacy_attr', 2, 2, 2).
 python_function('src/koru/cli_auto.py', '_peek_project_from_argv', 1, 5, 8).
 python_function('src/koru/cli_auto.py', '_should_suggest_wizard', 2, 6, 5).
-python_function('src/koru/cli_auto.py', '_enable_auto_reload_reuse_window_for_auto', 0, 1, 1).
+python_function('src/koru/cli_auto.py', '_enable_auto_reload_reuse_window_for_auto', 0, 2, 2).
 python_function('src/koru/cli_auto.py', '_auto_main', 1, 14, 11).
 python_function('src/koru/cli_bootstrap.py', '_build_parser', 0, 1, 1).
 python_function('src/koru/cli_bootstrap.py', '_bootstrap_main', 1, 5, 7).
@@ -14539,7 +15241,13 @@ python_function('src/koru/cli_tools.py', '_build_tools_parser', 0, 1, 5).
 python_function('src/koru/cli_tools.py', '_tools_main', 1, 7, 13).
 python_function('src/koru/cli_topology.py', 'build_topology_parser', 0, 1, 3).
 python_function('src/koru/cli_topology.py', 'render_topology_text', 1, 1, 1).
-python_function('src/koru/cli_topology.py', 'topology_main', 1, 9, 23).
+python_function('src/koru/cli_topology.py', '_run_topology_is_enabled', 3, 5, 3).
+python_function('src/koru/cli_topology.py', '_run_topology_enabled_components', 3, 2, 4).
+python_function('src/koru/cli_topology.py', '_topology_component_toggler', 2, 1, 2).
+python_function('src/koru/cli_topology.py', '_topology_pipeline_toggler', 2, 1, 2).
+python_function('src/koru/cli_topology.py', '_apply_topology_cli_mutations', 4, 1, 4).
+python_function('src/koru/cli_topology.py', '_print_topology', 2, 2, 3).
+python_function('src/koru/cli_topology.py', 'topology_main', 1, 5, 14).
 python_function('src/koru/cli_watch.py', 'watch_main', 1, 2, 5).
 python_function('src/koru/configurator.py', '_config_path', 1, 1, 1).
 python_function('src/koru/configurator.py', 'load_project_config', 1, 4, 5).
@@ -14757,7 +15465,7 @@ python_function('src/koru/doctor_project_health.py', 'check_policy_yaml', 1, 11,
 python_function('src/koru/doctor_project_health.py', 'check_gitignore', 1, 4, 5).
 python_function('src/koru/doctor_project_health.py', 'resolve_pytest_collect_timeout', 0, 4, 3).
 python_function('src/koru/doctor_project_health.py', 'compact_pytest_collect_failure', 2, 11, 5).
-python_function('src/koru/doctor_project_health.py', 'check_pytest_collect', 1, 11, 6).
+python_function('src/koru/doctor_project_health.py', 'check_pytest_collect', 1, 14, 7).
 python_function('src/koru/doctor_project_health.py', 'check_inotify_watches', 1, 5, 5).
 python_function('src/koru/doctor_project_health.py', 'check_wup_binary', 1, 2, 1).
 python_function('src/koru/doctor_project_health.py', 'check_ci_command', 1, 5, 6).
@@ -14814,7 +15522,7 @@ python_function('src/koru/env_flags.py', 'env_truthy', 1, 2, 2).
 python_function('src/koru/env_flags.py', 'env_disabled', 1, 2, 4).
 python_function('src/koru/env_flags.py', 'env_int', 2, 4, 4).
 python_function('src/koru/environment_profile.py', '_session_name', 0, 7, 3).
-python_function('src/koru/environment_profile.py', '_preferred_keyboard_interface', 1, 6, 4).
+python_function('src/koru/environment_profile.py', '_preferred_keyboard_interface', 1, 8, 6).
 python_function('src/koru/environment_profile.py', 'resolve_os_environment', 0, 2, 4).
 python_function('src/koru/environment_profile.py', '_resolve_ide_id', 1, 9, 5).
 python_function('src/koru/environment_profile.py', 'resolve_ide_environment', 1, 4, 6).
@@ -14874,7 +15582,7 @@ python_function('src/koru/git_cli.py', 'git_main', 1, 1, 4).
 python_function('src/koru/ide_adapters/bridge.py', '_ide_is_running', 1, 2, 3).
 python_function('src/koru/ide_adapters/bridge.py', '_stale_rejected_plugin_hypothesis', 0, 10, 8).
 python_function('src/koru/ide_adapters/bridge.py', '_daemon_status_and_plugins', 1, 7, 3).
-python_function('src/koru/ide_adapters/bridge.py', '_plugins_connected', 2, 3, 5).
+python_function('src/koru/ide_adapters/bridge.py', '_plugins_connected', 2, 4, 5).
 python_function('src/koru/ide_adapters/bridge.py', '_plugin_covers_project', 2, 7, 5).
 python_function('src/koru/ide_adapters/bridge.py', '_plugin_version_compatible', 2, 7, 6).
 python_function('src/koru/ide_adapters/bridge.py', '_plugins_compatible', 3, 6, 6).
@@ -14884,18 +15592,14 @@ python_function('src/koru/ide_adapters/bridge.py', '_add_unsupported_ide_hypothe
 python_function('src/koru/ide_adapters/bridge.py', '_populate_adapter_diagnostics', 1, 2, 5).
 python_function('src/koru/ide_adapters/bridge.py', '_append_stale_plugin_hypothesis', 1, 3, 3).
 python_function('src/koru/ide_adapters/bridge.py', '_append_incompatible_plugin_hypothesis', 1, 3, 3).
-python_function('src/koru/ide_adapters/bridge.py', 'evaluate_bridge', 0, 2, 13).
+python_function('src/koru/ide_adapters/bridge.py', 'evaluate_bridge', 0, 1, 13).
 python_function('src/koru/ide_adapters/bridge.py', 'apply_bridge_fixes', 1, 3, 4).
 python_function('src/koru/ide_adapters/bridge.py', 'gc_stale_sockets_for_lane', 1, 4, 7).
 python_function('src/koru/ide_adapters/bridge.py', 'format_bridge_text', 1, 15, 3).
-python_function('src/koru/ide_adapters/gillm_client.py', 'build_gillm_ide_client', 0, 2, 3).
-python_function('src/koru/ide_adapters/gillm_recovery.py', '_load_gillm_recovery', 0, 4, 0).
-python_function('src/koru/ide_adapters/gillm_recovery.py', '_on_wayland', 0, 2, 3).
-python_function('src/koru/ide_adapters/gillm_recovery.py', '_fallback_diagnose_drive_reply', 1, 7, 4).
-python_function('src/koru/ide_adapters/gillm_recovery.py', '_fallback_recovery_hints_for_reload', 0, 4, 0).
-python_function('src/koru/ide_adapters/gillm_recovery.py', 'recovery_hints_from_drive_reply', 1, 2, 3).
-python_function('src/koru/ide_adapters/gillm_recovery.py', 'recovery_hints_for_ide_reload', 0, 5, 5).
-python_function('src/koru/ide_adapters/gillm_recovery.py', 'enrich_drive_reply_with_recovery', 1, 3, 5).
+python_function('src/koru/ide_adapters/gillm_client.py', 'build_gillm_ide_client', 0, 3, 6).
+python_function('src/koru/ide_adapters/gillm_recovery.py', 'recovery_hints_from_drive_reply', 1, 1, 1).
+python_function('src/koru/ide_adapters/gillm_recovery.py', 'recovery_hints_for_ide_reload', 0, 2, 2).
+python_function('src/koru/ide_adapters/gillm_recovery.py', 'enrich_drive_reply_with_recovery', 1, 2, 3).
 python_function('src/koru/ide_adapters/ide_reload.py', '_on_wayland', 0, 2, 3).
 python_function('src/koru/ide_adapters/ide_reload.py', '_ide_accepts_integrated_terminal', 1, 1, 0).
 python_function('src/koru/ide_adapters/ide_reload.py', '_os_strategy', 0, 1, 1).
@@ -14905,24 +15609,35 @@ python_function('src/koru/ide_adapters/ide_reload.py', 'auto_reload_enabled', 0,
 python_function('src/koru/ide_adapters/ide_reload.py', 'reuse_window_reload_enabled', 0, 1, 3).
 python_function('src/koru/ide_adapters/ide_reload.py', 'command_palette_reload_enabled', 0, 1, 3).
 python_function('src/koru/ide_adapters/ide_reload.py', 'new_window_reload_enabled', 0, 1, 3).
-python_function('src/koru/ide_adapters/ide_reload.py', '_run', 1, 1, 1).
+python_function('src/koru/ide_adapters/ide_reload.py', 'detached_reload_enabled', 0, 1, 3).
+python_function('src/koru/ide_adapters/ide_reload.py', 'running_as_detached_reload_runner', 0, 1, 2).
+python_function('src/koru/ide_adapters/ide_reload.py', '_run', 1, 1, 2).
+python_function('src/koru/ide_adapters/ide_reload.py', '_editor_cli_env', 0, 3, 3).
 python_function('src/koru/ide_adapters/ide_reload.py', '_resolve_editor_cli', 1, 5, 3).
 python_function('src/koru/ide_adapters/ide_reload.py', '_focus_ide_window', 1, 4, 4).
 python_function('src/koru/ide_adapters/ide_reload.py', 'reload_jetbrains_via_shortcut', 0, 6, 8).
-python_function('src/koru/ide_adapters/ide_reload.py', '_run_command_palette_sequence', 1, 8, 8).
-python_function('src/koru/ide_adapters/ide_reload.py', 'reload_via_command_palette', 1, 7, 8).
+python_function('src/koru/ide_adapters/ide_reload.py', '_run_command_palette_sequence', 1, 11, 10).
+python_function('src/koru/ide_adapters/ide_reload.py', 'reload_via_command_palette', 1, 10, 10).
 python_function('src/koru/ide_adapters/ide_reload.py', 'connect_via_command_palette', 1, 1, 1).
 python_function('src/koru/ide_adapters/ide_reload.py', 'reload_via_reopen_workspace', 2, 6, 6).
 python_function('src/koru/ide_adapters/ide_reload.py', 'reload_via_new_window', 2, 6, 6).
 python_function('src/koru/ide_adapters/ide_reload.py', '_reload_fallback_reopen', 3, 3, 2).
 python_function('src/koru/ide_adapters/ide_reload.py', '_reload_explain_reuse_window_disabled', 1, 3, 1).
-python_function('src/koru/ide_adapters/ide_reload.py', 'detect_reload_command', 1, 9, 4).
+python_function('src/koru/ide_adapters/ide_reload.py', '_terminal_host_ide_id', 0, 1, 1).
+python_function('src/koru/ide_adapters/ide_reload.py', '_running_from_integrated_ide_terminal', 0, 1, 1).
+python_function('src/koru/ide_adapters/ide_reload.py', 'detect_reload_command', 1, 12, 6).
 python_function('src/koru/ide_adapters/ide_reload.py', 'execute_reload', 1, 11, 8).
 python_function('src/koru/ide_adapters/ide_reload.py', 'await_plugin_handshake', 1, 5, 7).
 python_function('src/koru/ide_adapters/ide_reload.py', 'explain_reload_failure', 0, 5, 0).
+python_function('src/koru/ide_adapters/ide_reload.py', 'snapshot_reload_env', 0, 2, 1).
+python_function('src/koru/ide_adapters/ide_reload.py', 'restore_reload_env', 1, 4, 2).
+python_function('src/koru/ide_adapters/ide_reload.py', 'apply_temporary_repair_reload_env', 0, 8, 6).
 python_function('src/koru/ide_adapters/ide_reload.py', 'enable_reuse_window_reload_for_session', 0, 1, 1).
 python_function('src/koru/ide_adapters/ide_reload.py', 'restore_reuse_window_reload', 2, 3, 1).
-python_function('src/koru/ide_adapters/ide_reload.py', 'try_reload_vscode_family_ide', 1, 9, 8).
+python_function('src/koru/ide_adapters/ide_reload.py', '_resolve_koru_cli_argv', 0, 2, 1).
+python_function('src/koru/ide_adapters/ide_reload.py', '_detached_reload_log_path', 1, 3, 5).
+python_function('src/koru/ide_adapters/ide_reload.py', 'spawn_detached_ide_reload', 1, 9, 13).
+python_function('src/koru/ide_adapters/ide_reload.py', 'try_reload_vscode_family_ide', 1, 12, 10).
 python_function('src/koru/ide_adapters/ide_reload.py', 'try_open_vscode_family_ide_new_window', 1, 6, 5).
 python_function('src/koru/ide_adapters/registry.py', '_adapter_from_strategy', 1, 3, 2).
 python_function('src/koru/ide_adapters/registry.py', '_build_adapters', 0, 3, 1).
@@ -14934,8 +15649,9 @@ python_function('src/koru/ide_adapters/shared.py', 'user_settings_path', 1, 3, 3
 python_function('src/koru/ide_adapters/shared.py', 'workspace_settings_path', 2, 6, 3).
 python_function('src/koru/ide_adapters/shared.py', '_read_json_object', 1, 4, 4).
 python_function('src/koru/ide_adapters/shared.py', 'read_socket_from_settings', 1, 6, 6).
-python_function('src/koru/ide_adapters/shared.py', 'analyze_socket_settings', 0, 9, 7).
+python_function('src/koru/ide_adapters/shared.py', 'analyze_socket_settings', 0, 8, 7).
 python_function('src/koru/ide_adapters/shared.py', 'fix_workspace_socket', 0, 8, 11).
+python_function('src/koru/ide_adapters/shared.py', 'fix_user_socket', 0, 6, 10).
 python_function('src/koru/ide_adapters/shared.py', 'state_vscdb_path', 1, 2, 1).
 python_function('src/koru/ide_adapters/shared.py', 'read_vscdb_json', 1, 8, 9).
 python_function('src/koru/ide_adapters/shared.py', 'extension_disabled', 1, 3, 4).
@@ -14956,6 +15672,20 @@ python_function('src/koru/ide_client.py', 'adapt_legacy_autopilot_client', 1, 1,
 python_function('src/koru/ide_client.py', 'build_legacy_ide_client', 0, 1, 2).
 python_function('src/koru/ide_client.py', 'build_koruide_client', 0, 1, 1).
 python_function('src/koru/ide_client.py', 'build_ide_client', 0, 4, 6).
+python_function('src/koru/ide_control_cli.py', '_add_common_lane_args', 1, 1, 2).
+python_function('src/koru/ide_control_cli.py', '_add_control_plan_parser', 1, 1, 3).
+python_function('src/koru/ide_control_cli.py', '_add_control_execute_parser', 1, 1, 3).
+python_function('src/koru/ide_control_cli.py', '_add_control_list_uris_parser', 1, 1, 3).
+python_function('src/koru/ide_control_cli.py', 'add_control_parser', 1, 1, 5).
+python_function('src/koru/ide_control_cli.py', '_print_json', 1, 1, 2).
+python_function('src/koru/ide_control_cli.py', '_resolve_control_ide', 1, 8, 6).
+python_function('src/koru/ide_control_cli.py', '_resolve_workspace_from_status', 3, 10, 7).
+python_function('src/koru/ide_control_cli.py', '_client_factory_for_args', 2, 1, 5).
+python_function('src/koru/ide_control_cli.py', 'action_ide_control_plan', 1, 7, 7).
+python_function('src/koru/ide_control_cli.py', 'action_ide_control_execute', 1, 19, 9).
+python_function('src/koru/ide_control_cli.py', '_fetch_autopilot_status', 1, 4, 7).
+python_function('src/koru/ide_control_cli.py', 'action_ide_control_list_uris', 1, 11, 12).
+python_function('src/koru/ide_control_cli.py', 'dispatch_control_action', 1, 4, 4).
 python_function('src/koru/ide_doctor_cli.py', '_resolve_ide', 1, 2, 2).
 python_function('src/koru/ide_doctor_cli.py', '_instance_from_socket_path', 2, 5, 6).
 python_function('src/koru/ide_doctor_cli.py', '_infer_instance_from_settings', 2, 5, 4).
@@ -14970,20 +15700,21 @@ python_function('src/koru/ide_doctor_cli.py', '_add_history_parser', 1, 1, 3).
 python_function('src/koru/ide_doctor_cli.py', '_add_reload_parser', 1, 1, 3).
 python_function('src/koru/ide_doctor_cli.py', '_add_command_catalog_parser', 1, 1, 2).
 python_function('src/koru/ide_doctor_cli.py', '_add_scenario_parsers', 1, 1, 2).
-python_function('src/koru/ide_doctor_cli.py', 'build_parser', 0, 1, 8).
+python_function('src/koru/ide_doctor_cli.py', 'build_parser', 0, 1, 9).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_doctor', 1, 11, 12).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_history', 1, 7, 11).
-python_function('src/koru/ide_doctor_cli.py', 'action_ide_reload', 1, 6, 6).
+python_function('src/koru/ide_doctor_cli.py', 'action_ide_reload', 1, 7, 7).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_discover', 1, 9, 8).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_commands', 1, 6, 6).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_scenario_schema', 1, 2, 4).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_scenario_prompt', 1, 3, 2).
 python_function('src/koru/ide_doctor_cli.py', 'action_ide_scenario_validate', 1, 9, 9).
-python_function('src/koru/ide_doctor_cli.py', 'ide_main', 1, 9, 11).
+python_function('src/koru/ide_doctor_cli.py', 'ide_main', 1, 10, 12).
 python_function('src/koru/ide_router.py', 'is_headless_environment', 1, 8, 4).
 python_function('src/koru/ide_router.py', 'resolve_ide_route', 0, 10, 5).
 python_function('src/koru/ide_runtime.py', 'build_host_setup_report', 0, 1, 1).
 python_function('src/koru/ide_runtime.py', 'detect_running_ides', 0, 5, 8).
+python_function('src/koru/ide_status_systemmap.py', 'format_autopilot_status_systemmap', 1, 3, 3).
 python_function('src/koru/init.py', 'init_project', 1, 3, 8).
 python_function('src/koru/init.py', 'refresh_init_agent_lane', 1, 4, 11).
 python_function('src/koru/init.py', '_import_init_pipeline', 3, 3, 9).
@@ -15074,8 +15805,10 @@ python_function('src/koru/mcp_provision.py', '_vscode_project_config', 1, 1, 0).
 python_function('src/koru/mcp_provision.py', '_windsurf_project_config', 1, 1, 0).
 python_function('src/koru/mcp_provision.py', '_zed_project_settings', 1, 1, 0).
 python_function('src/koru/mcp_provision.py', '_resolved_koru_command', 0, 2, 1).
-python_function('src/koru/mcp_provision.py', '_koru_mcp_entry', 0, 1, 1).
-python_function('src/koru/mcp_provision.py', '_koru_mcp_entry_cursor', 0, 1, 1).
+python_function('src/koru/mcp_provision.py', '_koru_mcp_entry', 1, 2, 3).
+python_function('src/koru/mcp_provision.py', '_registry_env_for_project', 1, 2, 3).
+python_function('src/koru/mcp_provision.py', '_koru_mcp_entry_cursor', 1, 3, 2).
+python_function('src/koru/mcp_provision.py', 'koru_mcp_configured', 2, 10, 9).
 python_function('src/koru/mcp_provision.py', '_maybe_upgrade_koru_command', 1, 5, 3).
 python_function('src/koru/mcp_provision.py', 'detect_ides', 0, 10, 8).
 python_function('src/koru/mcp_provision.py', '_read_json', 1, 3, 3).
@@ -15086,6 +15819,8 @@ python_function('src/koru/mcp_provision.py', 'provision_vscode', 1, 3, 7).
 python_function('src/koru/mcp_provision.py', 'provision_vscodium', 1, 1, 1).
 python_function('src/koru/mcp_provision.py', 'provision_zed', 1, 3, 7).
 python_function('src/koru/mcp_provision.py', 'remove_from_config', 1, 3, 4).
+python_function('src/koru/mcp_provision.py', '_operator_autostart_mcp_enabled', 0, 1, 3).
+python_function('src/koru/mcp_provision.py', 'auto_provision_koru_mcp', 2, 10, 12).
 python_function('src/koru/mcp_provision.py', 'ensure_koru_mcp_not_disabled', 1, 10, 15).
 python_function('src/koru/mcp_provision.py', '_resolve_targets', 1, 5, 5).
 python_function('src/koru/mcp_provision.py', '_removal_paths_for_ide', 2, 6, 5).
@@ -15570,6 +16305,10 @@ python_function('src/koru/wup_testql_compat.py', '_normalize_timeout', 1, 4, 6).
 python_function('src/koru/wup_testql_compat.py', '_normalize_args', 1, 5, 8).
 python_function('src/koru/wup_testql_compat.py', '_real_testql', 0, 5, 7).
 python_function('src/koru/wup_testql_compat.py', 'main', 1, 2, 4).
+python_function('src/koruapi/calibration_validator.py', '_find_display', 2, 4, 1).
+python_function('src/koruapi/calibration_validator.py', '_pct', 2, 2, 1).
+python_function('src/koruapi/calibration_validator.py', 'validate_single_calibration', 3, 20, 10).
+python_function('src/koruapi/calibration_validator.py', 'validate_calibrations', 1, 16, 6).
 python_function('src/koruapi/cli.py', '_build_parser', 0, 2, 6).
 python_function('src/koruapi/cli.py', '_cli_version', 0, 2, 1).
 python_function('src/koruapi/cli.py', '_parse_body', 1, 3, 4).
@@ -15721,6 +16460,41 @@ python_function('src/koruapi/dashboard_tickets.py', 'update_ticket_from_dashboar
 python_function('src/koruapi/dashboard_tickets.py', 'reorder_ticket_from_dashboard', 1, 1, 14).
 python_function('src/koruapi/dashboard_topology.py', 'dashboard_topology_payload', 1, 1, 2).
 python_function('src/koruapi/dashboard_topology.py', 'apply_dashboard_topology_update', 2, 1, 1).
+python_function('src/koruapi/desktop_uri.py', 'nlp2uri_available', 0, 1, 0).
+python_function('src/koruapi/desktop_uri.py', 'nlp2uri_missing_message', 0, 2, 0).
+python_function('src/koruapi/desktop_uri.py', '_resolve_platform', 1, 2, 1).
+python_function('src/koruapi/desktop_uri.py', '_intent_ir_metadata', 1, 4, 3).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_plan', 1, 5, 10).
+python_function('src/koruapi/desktop_uri.py', '_control_surface_hint', 1, 5, 1).
+python_function('src/koruapi/desktop_uri.py', '_portal_capture_enabled', 1, 2, 3).
+python_function('src/koruapi/desktop_uri.py', '_is_screen_capture_uri', 1, 1, 1).
+python_function('src/koruapi/desktop_uri.py', '_capture_via_portal', 1, 4, 8).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_control_plan', 1, 4, 2).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_list_koru_ide_uris', 1, 4, 5).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_direct_ide_chat_execute', 1, 7, 7).
+python_function('src/koruapi/desktop_uri.py', '_control_uri_with_runtime_overrides', 1, 13, 8).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_control_execute', 1, 15, 9).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_handle', 1, 9, 12).
+python_function('src/koruapi/desktop_uri.py', '_service', 0, 2, 3).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_list_getv', 0, 3, 4).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_resolve_getv', 1, 3, 5).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_get_getv_var', 1, 3, 6).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_resolve_system_map', 1, 4, 8).
+python_function('src/koruapi/desktop_uri.py', 'desktop_uri_list_system_uris', 0, 3, 5).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_available', 0, 1, 0).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_missing_message', 0, 2, 0).
+python_function('src/koruapi/env2llm_registry.py', '_resolve_project_dir', 0, 5, 3).
+python_function('src/koruapi/env2llm_registry.py', '_desktop_probe_default', 1, 4, 3).
+python_function('src/koruapi/env2llm_registry.py', '_get_service', 0, 5, 6).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_get_registry', 0, 3, 4).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_render_registry', 0, 3, 4).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_refresh_registry', 0, 4, 6).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_sync_after_calibration', 0, 7, 9).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_get_desktop', 0, 3, 4).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_validate_calibration', 0, 3, 5).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_list_commands', 0, 3, 4).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_list_uris', 0, 3, 5).
+python_function('src/koruapi/env2llm_registry.py', 'env2llm_mqtt_status', 0, 3, 4).
 python_function('src/koruapi/integrations.py', 'list_integrations', 0, 4, 2).
 python_function('src/koruapi/integrations.py', 'get_integration', 1, 1, 1).
 python_function('src/koruapi/invoke.py', 'invoke_integration', 1, 4, 5).
@@ -15749,53 +16523,15 @@ python_function('src/koruapi/invoke_handlers.py', '_handle_tagi_auto', 3, 4, 6).
 python_function('src/koruapi/local.py', 'build_local_parser', 0, 1, 2).
 python_function('src/koruapi/local.py', 'local_main', 1, 6, 9).
 python_function('src/koruapi/mcp.py', 'mcp_main', 1, 2, 2).
-python_function('src/koruapi/mcp_server.py', '_get_job_store_path', 1, 2, 1).
-python_function('src/koruapi/mcp_server.py', '_load_jobs', 1, 3, 4).
-python_function('src/koruapi/mcp_server.py', '_save_jobs', 2, 2, 4).
-python_function('src/koruapi/mcp_server.py', '_get_process_memory_mb', 1, 3, 2).
-python_function('src/koruapi/mcp_server.py', '_monitor_subprocess_oom', 4, 8, 5).
-python_function('src/koruapi/mcp_server.py', '_get_python_cmd', 0, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_run_planfile_cli', 1, 1, 4).
-python_function('src/koruapi/mcp_server.py', '_parse_tickets_json', 1, 8, 3).
-python_function('src/koruapi/mcp_server.py', '_tickets_for_status_filter', 2, 11, 1).
-python_function('src/koruapi/mcp_server.py', '_serialize_mcp_ticket', 1, 3, 1).
-python_function('src/koruapi/mcp_server.py', 'tool_list_tickets', 1, 3, 7).
-python_function('src/koruapi/mcp_server.py', 'tool_ide_command_catalog', 1, 3, 5).
-python_function('src/koruapi/mcp_server.py', 'tool_ide_command_scenario_schema', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', 'tool_strategy_prompt', 1, 3, 4).
-python_function('src/koruapi/mcp_server.py', 'tool_ide_commands', 1, 6, 9).
-python_function('src/koruapi/mcp_server.py', 'tool_ide_drive', 1, 4, 9).
-python_function('src/koruapi/mcp_server.py', 'tool_ide_dsl_recent', 1, 7, 10).
-python_function('src/koruapi/mcp_server.py', 'tool_validate_ide_command_scenario', 1, 2, 4).
-python_function('src/koruapi/mcp_server.py', '_create_job', 3, 1, 4).
-python_function('src/koruapi/mcp_server.py', '_update_job', 2, 1, 2).
-python_function('src/koruapi/mcp_server.py', '_collect_process_logs', 1, 3, 3).
-python_function('src/koruapi/mcp_server.py', '_launch_oom_monitor', 4, 3, 3).
-python_function('src/koruapi/mcp_server.py', '_run_ticket_queue_args', 2, 5, 4).
-python_function('src/koruapi/mcp_server.py', '_run_ticket_timeout_response', 4, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_run_ticket_oom_response', 0, 1, 3).
-python_function('src/koruapi/mcp_server.py', '_run_ticket_completed_response', 0, 5, 3).
-python_function('src/koruapi/mcp_server.py', '_run_ticket_error_response', 4, 1, 2).
-python_function('src/koruapi/mcp_server.py', 'tool_run_ticket', 1, 4, 15).
-python_function('src/koruapi/mcp_server.py', 'tool_job_status', 1, 3, 1).
-python_function('src/koruapi/mcp_server.py', '_gate_commands', 1, 1, 2).
-python_function('src/koruapi/mcp_server.py', '_detect_enabled_gates', 2, 5, 3).
-python_function('src/koruapi/mcp_server.py', '_resolve_gates', 3, 4, 3).
-python_function('src/koruapi/mcp_server.py', '_run_single_gate', 6, 10, 7).
-python_function('src/koruapi/mcp_server.py', 'tool_run_quality_gates', 1, 6, 7).
-python_function('src/koruapi/mcp_server.py', '_find_ticket', 2, 3, 1).
-python_function('src/koruapi/mcp_server.py', '_build_edit_context', 2, 3, 4).
-python_function('src/koruapi/mcp_server.py', 'tool_propose_edits', 1, 14, 8).
-python_function('src/koruapi/mcp_server.py', '_jsonrpc_response', 2, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_jsonrpc_error', 4, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_handle_initialize', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_handle_tools_list', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_handle_tools_call', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', 'handle_message', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', 'run_stdio', 0, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_write', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', '_log', 1, 1, 1).
-python_function('src/koruapi/mcp_server.py', 'mcp_serve_main', 1, 2, 9).
+python_function('src/koruapi/mcp_server_cli.py', 'mcp_serve_main', 1, 2, 9).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'build_tool_schemas', 0, 1, 0).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_plan', 1, 1, 2).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_handle', 1, 1, 2).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_list_getv_uris', 1, 1, 2).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_resolve_getv', 1, 1, 2).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_get_getv_var', 1, 1, 1).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_resolve_system_map', 1, 1, 2).
+python_function('src/koruapi/mcp_server_desktop_uri.py', 'tool_desktop_uri_list_system_uris', 1, 1, 2).
 python_function('src/koruapi/mcp_server_dispatch.py', 'jsonrpc_response', 2, 1, 0).
 python_function('src/koruapi/mcp_server_dispatch.py', 'jsonrpc_error', 4, 2, 0).
 python_function('src/koruapi/mcp_server_dispatch.py', 'handle_initialize', 1, 1, 0).
@@ -15803,10 +16539,76 @@ python_function('src/koruapi/mcp_server_dispatch.py', 'handle_tools_list', 1, 1,
 python_function('src/koruapi/mcp_server_dispatch.py', 'handle_tools_call', 1, 4, 4).
 python_function('src/koruapi/mcp_server_dispatch.py', 'build_method_handlers', 0, 1, 3).
 python_function('src/koruapi/mcp_server_dispatch.py', 'handle_message', 1, 6, 5).
-python_function('src/koruapi/mcp_server_schema.py', 'build_tools', 1, 1, 0).
+python_function('src/koruapi/mcp_server_env2llm.py', 'build_tool_schemas', 0, 1, 1).
+python_function('src/koruapi/mcp_server_env2llm.py', '_project_kwargs', 1, 1, 1).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_get_registry', 1, 1, 4).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_render_registry', 1, 2, 5).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_refresh_registry', 1, 3, 5).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_get_desktop', 1, 1, 4).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_list_commands', 1, 1, 4).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_list_uris', 1, 1, 4).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_mqtt_status', 1, 1, 2).
+python_function('src/koruapi/mcp_server_env2llm.py', 'tool_env2llm_validate_calibration', 1, 1, 4).
+python_function('src/koruapi/mcp_server_ide.py', 'build_tool_schemas', 0, 1, 0).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_command_catalog', 1, 3, 5).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_command_scenario_schema', 1, 1, 1).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_strategy_prompt', 1, 3, 4).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_commands', 1, 6, 9).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_list_uris', 1, 4, 10).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_control_plan', 1, 2, 5).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_control_execute', 1, 2, 6).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_drive', 1, 4, 9).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_ide_dsl_recent', 1, 7, 10).
+python_function('src/koruapi/mcp_server_ide.py', 'tool_validate_ide_command_scenario', 1, 2, 4).
+python_function('src/koruapi/mcp_server_nlp2oql.py', 'build_tool_schemas', 0, 1, 0).
+python_function('src/koruapi/mcp_server_nlp2oql.py', 'tool_nlp2oql_generate', 1, 1, 3).
+python_function('src/koruapi/mcp_server_nlp2oql.py', 'tool_nlp2oql_run', 1, 1, 3).
+python_function('src/koruapi/mcp_server_planfile.py', 'build_tool_schemas', 0, 1, 0).
+python_function('src/koruapi/mcp_server_planfile.py', '_get_job_store_path', 1, 2, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_load_jobs', 1, 3, 4).
+python_function('src/koruapi/mcp_server_planfile.py', '_save_jobs', 2, 2, 4).
+python_function('src/koruapi/mcp_server_planfile.py', '_get_process_memory_mb', 1, 3, 2).
+python_function('src/koruapi/mcp_server_planfile.py', '_monitor_subprocess_oom', 4, 8, 5).
+python_function('src/koruapi/mcp_server_planfile.py', '_tickets_for_status_filter', 2, 11, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_serialize_mcp_ticket', 1, 3, 1).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_list_tickets', 1, 3, 7).
+python_function('src/koruapi/mcp_server_planfile.py', '_create_job', 3, 1, 4).
+python_function('src/koruapi/mcp_server_planfile.py', '_update_job', 2, 1, 2).
+python_function('src/koruapi/mcp_server_planfile.py', '_collect_process_logs', 1, 3, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_launch_oom_monitor', 4, 3, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_queue_args', 2, 5, 4).
+python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_timeout_response', 4, 1, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_oom_response', 0, 1, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_completed_response', 0, 5, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_error_response', 4, 1, 2).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_run_ticket', 1, 4, 15).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_job_status', 1, 3, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_gate_commands', 1, 1, 2).
+python_function('src/koruapi/mcp_server_planfile.py', '_detect_enabled_gates', 2, 5, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_resolve_gates', 3, 4, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_run_single_gate', 6, 10, 7).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_run_quality_gates', 1, 6, 7).
+python_function('src/koruapi/mcp_server_planfile.py', '_find_ticket', 2, 3, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_build_edit_context', 2, 3, 4).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_propose_edits', 1, 14, 8).
+python_function('src/koruapi/mcp_server_runtime.py', 'handle_message', 1, 1, 1).
+python_function('src/koruapi/mcp_server_runtime.py', 'run_stdio', 0, 1, 1).
+python_function('src/koruapi/mcp_server_runtime.py', 'jsonrpc_response', 2, 1, 1).
+python_function('src/koruapi/mcp_server_runtime.py', 'jsonrpc_error', 4, 1, 1).
+python_function('src/koruapi/mcp_server_runtime.py', 'write_json', 1, 1, 1).
+python_function('src/koruapi/mcp_server_runtime.py', 'log_stderr', 1, 1, 1).
+python_function('src/koruapi/mcp_server_schema.py', 'build_tools', 1, 1, 6).
+python_function('src/koruapi/mcp_server_testql.py', 'build_tool_schemas', 0, 1, 0).
+python_function('src/koruapi/mcp_server_testql.py', 'tool_testql_list_scenarios', 1, 1, 2).
+python_function('src/koruapi/mcp_server_testql.py', 'tool_testql_run_scenario', 1, 2, 4).
 python_function('src/koruapi/mcp_server_transport.py', 'write_json', 1, 1, 3).
 python_function('src/koruapi/mcp_server_transport.py', 'log_stderr', 1, 1, 1).
 python_function('src/koruapi/mcp_server_transport.py', 'run_stdio_loop', 0, 7, 8).
+python_function('src/koruapi/nlp2oql_bridge.py', 'nlp2oql_available', 0, 1, 0).
+python_function('src/koruapi/nlp2oql_bridge.py', 'nlp2oql_missing_message', 0, 2, 0).
+python_function('src/koruapi/nlp2oql_bridge.py', '_resolve_root', 2, 4, 3).
+python_function('src/koruapi/nlp2oql_bridge.py', 'nlp2oql_generate', 1, 3, 4).
+python_function('src/koruapi/nlp2oql_bridge.py', 'nlp2oql_run', 1, 3, 4).
 python_function('src/koruapi/openapi.py', 'build_openapi_document', 0, 2, 1).
 python_function('src/koruapi/runtime_insights.py', '_tool_patterns', 0, 1, 1).
 python_function('src/koruapi/runtime_insights.py', '_run_ps', 0, 9, 9).
@@ -15820,6 +16622,11 @@ python_function('src/koruapi/server.py', '_read_json_body', 1, 5, 7).
 python_function('src/koruapi/server.py', '_parse_invoke_request', 2, 9, 6).
 python_function('src/koruapi/server.py', '_handle_invoke_post', 1, 5, 6).
 python_function('src/koruapi/server.py', 'serve', 0, 2, 4).
+python_function('src/koruapi/testql_bridge.py', 'testql_available', 0, 1, 0).
+python_function('src/koruapi/testql_bridge.py', 'testql_missing_message', 0, 2, 0).
+python_function('src/koruapi/testql_bridge.py', '_resolve_root', 2, 4, 3).
+python_function('src/koruapi/testql_bridge.py', 'testql_list_scenarios', 0, 3, 4).
+python_function('src/koruapi/testql_bridge.py', 'testql_run_scenario', 1, 7, 12).
 python_function('src/koruapi/topology_post.py', 'apply_topology_post_update', 2, 14, 9).
 python_function('src/korudsl/cli.py', '_build_parser', 0, 1, 5).
 python_function('src/korudsl/cli.py', '_cli_version', 0, 2, 1).
@@ -15848,6 +16655,7 @@ python_function('src/korudsl/transform.py', 'library_from_any', 1, 12, 9).
 python_function('src/korudsl/transform.py', 'library_to_any', 1, 2, 3).
 python_function('src/korudsl/transform.py', 'dsl_roundtrip_report', 1, 1, 4).
 python_function('src/korudsl/transform.py', 'load_path', 1, 3, 2).
+python_function('src/koruide/__init__.py', '_koru_activity_warn_bridge', 1, 1, 1).
 python_function('src/koruide/audit.py', 'default_log_path', 0, 2, 3).
 python_function('src/koruide/audit.py', '_isoformat_utc', 1, 2, 4).
 python_function('src/koruide/chat_history.py', 'default_events_path', 0, 1, 2).
@@ -15873,7 +16681,7 @@ python_function('src/koruide/command_picker.py', '_seed_append', 2, 2, 2).
 python_function('src/koruide/command_picker.py', '_llm_picker_mode', 0, 1, 3).
 python_function('src/koruide/command_picker.py', '_seed_order', 1, 2, 2).
 python_function('src/koruide/command_picker.py', '_env_enabled', 1, 1, 3).
-python_function('src/koruide/command_picker.py', '_sanitize_antigravity_focus_open', 1, 3, 0).
+python_function('src/koruide/command_picker.py', '_sanitize_antigravity_focus_open', 1, 5, 1).
 python_function('src/koruide/command_picker.py', '_is_vscodium_focus_open_candidate', 1, 2, 2).
 python_function('src/koruide/command_picker.py', '_prefer_commands', 2, 5, 1).
 python_function('src/koruide/command_picker.py', '_sanitize_vscodium_focus_open', 1, 4, 3).
@@ -15881,7 +16689,9 @@ python_function('src/koruide/command_picker.py', '_is_cursor_submit_candidate', 
 python_function('src/koruide/command_picker.py', '_sanitize_cursor_submit', 1, 4, 1).
 python_function('src/koruide/command_picker.py', '_is_cursor_paste_candidate', 1, 2, 0).
 python_function('src/koruide/command_picker.py', '_sanitize_cursor_paste', 1, 4, 1).
-python_function('src/koruide/command_picker.py', '_sanitize_focus_open_candidates', 2, 3, 2).
+python_function('src/koruide/command_picker.py', '_is_cursor_focus_open_candidate', 1, 1, 2).
+python_function('src/koruide/command_picker.py', '_sanitize_cursor_focus_open', 1, 4, 1).
+python_function('src/koruide/command_picker.py', '_sanitize_focus_open_candidates', 2, 4, 3).
 python_function('src/koruide/command_picker.py', '_sanitize_cursor_candidates', 2, 3, 2).
 python_function('src/koruide/command_picker.py', '_sanitize_candidates', 3, 3, 4).
 python_function('src/koruide/command_picker.py', '_reorder_cursor_submit_default', 1, 1, 2).
@@ -15908,11 +16718,6 @@ python_function('src/koruide/command_scenario.py', '_risk_rank', 1, 1, 1).
 python_function('src/koruide/command_scenario.py', '_allowed_actions', 0, 1, 1).
 python_function('src/koruide/command_telemetry.py', '_telemetry_path', 1, 2, 0).
 python_function('src/koruide/command_telemetry.py', '_make_key', 4, 1, 0).
-python_function('src/koruide/config.py', 'default_config_path', 0, 1, 1).
-python_function('src/koruide/config.py', '_merge_submit_keys', 1, 7, 3).
-python_function('src/koruide/config.py', 'load_config', 1, 4, 8).
-python_function('src/koruide/config.py', 'cached_config', 0, 1, 2).
-python_function('src/koruide/config.py', 'clear_config_cache', 0, 1, 1).
 python_function('src/koruide/daemon/handlers.py', '_cap_ack_info_for_cli', 1, 7, 5).
 python_function('src/koruide/daemon/handlers.py', '_plugin_rejection_log_interval_seconds', 0, 3, 4).
 python_function('src/koruide/daemon/handlers.py', '_ide_reload_label', 1, 3, 2).
@@ -15956,8 +16761,12 @@ python_function('src/koruide/daemon/handlers_drive.py', '_prefer_keyboard_drive'
 python_function('src/koruide/daemon/handlers_drive.py', 'handle_drive', 3, 14, 15).
 python_function('src/koruide/daemon/handlers_drive.py', '_check_and_block_plugin_version', 6, 4, 11).
 python_function('src/koruide/daemon/handlers_drive.py', '_record_plugin_route_telemetry', 8, 1, 8).
+python_function('src/koruide/daemon/handlers_drive.py', '_pending_corr_owner_alive', 1, 5, 6).
+python_function('src/koruide/daemon/handlers_drive.py', '_clear_stale_pending_plugin_drive', 1, 3, 2).
+python_function('src/koruide/daemon/handlers_drive.py', '_active_pending_plugin_drive', 2, 6, 4).
+python_function('src/koruide/daemon/handlers_drive.py', '_reject_overlapping_plugin_drive', 8, 4, 6).
 python_function('src/koruide/daemon/handlers_drive.py', '_deliver_chat_via_plugin_socket', 6, 9, 16).
-python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_plugin', 7, 4, 6).
+python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_plugin', 7, 5, 8).
 python_function('src/koruide/daemon/handlers_drive.py', '_try_os_injector_drive', 4, 3, 4).
 python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_keyboard', 6, 3, 5).
 python_function('src/koruide/daemon/handlers_drive.py', '_resolve_keyboard_drive_selection', 0, 2, 5).
@@ -16033,24 +16842,26 @@ python_function('src/koruide/ide.py', '_score_primary_exe_path', 2, 2, 2).
 python_function('src/koruide/ide.py', '_score_exe_path', 2, 3, 3).
 python_function('src/koruide/ide.py', '_score_cmdline_flags', 1, 4, 1).
 python_function('src/koruide/ide.py', '_candidate_score', 5, 1, 3).
-python_function('src/koruide/ide.py', 'detect_running_ides', 0, 13, 10).
+python_function('src/koruide/ide.py', 'detect_running_ides', 0, 17, 10).
 python_function('src/koruide/ide.py', '_active_window_pid_x11', 0, 7, 6).
 python_function('src/koruide/ide.py', '_ide_id_from_process', 1, 5, 4).
-python_function('src/koruide/ide.py', 'detect_focused_ide_id', 0, 6, 3).
+python_function('src/koruide/ide.py', 'detect_focused_ide_id', 0, 10, 4).
+python_function('src/koruide/ide.py', '_vscode_fork_brand_from_text', 0, 7, 3).
 python_function('src/koruide/ide.py', '_vscode_family_env_present', 0, 3, 3).
-python_function('src/koruide/ide.py', '_vscode_family_flavor_from_env', 0, 10, 4).
+python_function('src/koruide/ide.py', '_vscode_family_flavor_from_env', 0, 5, 4).
 python_function('src/koruide/ide.py', '_cursor_terminal_env_hint', 1, 3, 2).
 python_function('src/koruide/ide.py', '_windsurf_primary_terminal_env_hint', 1, 4, 4).
 python_function('src/koruide/ide.py', '_vscode_family_terminal_hint', 1, 3, 2).
 python_function('src/koruide/ide.py', '_jetbrains_terminal_env_hint', 0, 5, 4).
-python_function('src/koruide/ide.py', '_ide_from_vscode_pid', 0, 12, 7).
+python_function('src/koruide/ide.py', '_ide_from_vscode_pid', 0, 7, 8).
 python_function('src/koruide/ide.py', '_known_terminal_ide_hint', 2, 3, 0).
 python_function('src/koruide/ide.py', '_legacy_windsurf_terminal_env_hint', 1, 3, 2).
 python_function('src/koruide/ide.py', '_terminal_ide_env_candidates', 4, 6, 9).
-python_function('src/koruide/ide.py', '_terminal_ide_from_env_with_source', 0, 18, 12).
+python_function('src/koruide/ide.py', '_vscode_family_terminal_ide', 1, 9, 7).
+python_function('src/koruide/ide.py', '_terminal_ide_from_env_with_source', 0, 11, 12).
 python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 1, 1).
 python_function('src/koruide/ide.py', '_terminal_ide_from_parent_chain', 1, 11, 9).
-python_function('src/koruide/ide.py', 'detect_terminal_host_ide_id', 0, 7, 4).
+python_function('src/koruide/ide.py', 'detect_terminal_host_ide_id', 0, 10, 5).
 python_function('src/koruide/ide.py', 'detect_terminal_host_context', 0, 9, 5).
 python_function('src/koruide/ide.py', 'focused_ide', 1, 6, 1).
 python_function('src/koruide/ide.py', '_find_ide_by_id', 2, 4, 0).
@@ -16077,7 +16888,8 @@ python_function('src/koruide/ides/registry.py', '_bootstrap_default_strategies',
 python_function('src/koruide/plugin_installer.py', 'extension_id_for_ide', 1, 2, 2).
 python_function('src/koruide/plugin_installer.py', 'plugin_dir_names_for_ide', 1, 2, 2).
 python_function('src/koruide/plugin_installer.py', '_valid_ide', 1, 2, 2).
-python_function('src/koruide/plugin_installer.py', '_ide_from_terminal_env', 0, 1, 1).
+python_function('src/koruide/plugin_installer.py', '_plugin_installer_module', 0, 1, 0).
+python_function('src/koruide/plugin_installer.py', '_ide_from_terminal_env', 0, 3, 6).
 python_function('src/koruide/plugin_installer.py', '_terminal_vscode_flavor', 0, 6, 3).
 python_function('src/koruide/plugin_installer.py', '_repo_root', 0, 4, 4).
 python_function('src/koruide/plugin_installer.py', '_plugin_package_version', 1, 4, 5).
@@ -16085,9 +16897,9 @@ python_function('src/koruide/plugin_installer.py', '_plugin_package_name', 1, 4,
 python_function('src/koruide/plugin_installer.py', '_versioned_vsix_candidates', 1, 3, 2).
 python_function('src/koruide/plugin_installer.py', '_bundled_vsix_candidates', 1, 7, 9).
 python_function('src/koruide/plugin_installer.py', '_fallback_vsix_candidates', 1, 11, 11).
-python_function('src/koruide/plugin_installer.py', '_running_vscode_flavor', 0, 9, 4).
+python_function('src/koruide/plugin_installer.py', '_running_vscode_flavor', 0, 9, 5).
 python_function('src/koruide/plugin_installer.py', '_vscode_flavor', 0, 2, 2).
-python_function('src/koruide/plugin_installer.py', 'resolve_target_ide', 1, 10, 6).
+python_function('src/koruide/plugin_installer.py', 'resolve_target_ide', 1, 10, 7).
 python_function('src/koruide/plugin_installer.py', 'resolve_extension_vsix', 1, 4, 10).
 python_function('src/koruide/plugin_installer.py', '_first_local_extension_vsix', 1, 6, 3).
 python_function('src/koruide/plugin_installer.py', '_newest_plugin_dir_vsix', 1, 3, 5).
@@ -16126,7 +16938,7 @@ python_function('src/koruide/plugin_installer.py', '_should_retry_missing_vsix',
 python_function('src/koruide/plugin_installer.py', '_reassert_extra', 1, 6, 1).
 python_function('src/koruide/plugin_installer.py', '_result_already_installed', 2, 4, 5).
 python_function('src/koruide/plugin_installer.py', '_install_extension_vsix', 3, 12, 6).
-python_function('src/koruide/plugin_installer.py', 'install_plugin_for_ide', 0, 9, 14).
+python_function('src/koruide/plugin_installer.py', 'install_plugin_for_ide', 0, 10, 14).
 python_function('src/koruide/plugin_installer.py', 'format_plugin_install_result', 1, 2, 1).
 python_function('src/koruide/plugin_router.py', '_workspace_matches_project', 2, 8, 5).
 python_function('src/koruide/plugin_router.py', '_workspace_sets_overlap', 2, 5, 1).
@@ -16490,6 +17302,7 @@ python_function('tests/test_autonomous.py', 'test_status_has_autopilot_plugin_bl
 python_function('tests/test_autonomous.py', 'test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy', 1, 2, 3).
 python_function('tests/test_autonomous.py', 'test_autonomous_defaults_to_strict_plugin_policy', 1, 4, 7).
 python_function('tests/test_autonomous.py', 'test_autonomous_respects_explicit_plugin_version_policy', 1, 4, 6).
+python_function('tests/test_autonomous.py', 'test_build_cycle_run_kwargs_forwards_effective_autopilot', 1, 3, 6).
 python_function('tests/test_autonomous.py', 'test_wait_for_autopilot_plugin_polls_until_connected', 1, 3, 7).
 python_function('tests/test_autonomous.py', 'test_start_or_reuse_daemon_reuses_current_version', 2, 6, 8).
 python_function('tests/test_autonomous.py', 'test_start_or_reuse_daemon_restarts_daemon_without_version', 2, 9, 7).
@@ -16706,6 +17519,8 @@ python_function('tests/test_autonomous_loop_runner.py', 'test_quick_action_open_
 python_function('tests/test_autonomous_loop_runner.py', 'test_blocked_interface_action_lines_filter_to_jetbrains_lane', 0, 3, 2).
 python_function('tests/test_autonomous_loop_runner.py', 'test_current_mission_lines_treat_plugin_version_mismatch_as_plugin_blocker', 0, 2, 2).
 python_function('tests/test_autonomous_loop_runner.py', 'test_operator_quick_actions_emit_replayable_control_commands', 1, 15, 9).
+python_function('tests/test_autonomous_nlp2uri_drive.py', 'test_invoke_drive_uses_nlp2uri_when_enabled', 1, 6, 7).
+python_function('tests/test_autonomous_nlp2uri_drive.py', 'test_invoke_drive_falls_back_to_client_when_nlp2uri_fails', 1, 4, 6).
 python_function('tests/test_autonomous_onboarding.py', 'test_should_run_interactive_onboarding_for_auto_tty', 1, 2, 4).
 python_function('tests/test_autonomous_onboarding.py', 'test_should_not_run_interactive_onboarding_when_not_auto', 1, 2, 4).
 python_function('tests/test_autonomous_onboarding.py', 'test_should_not_run_interactive_onboarding_when_project_has_koru_dir', 2, 2, 5).
@@ -16745,7 +17560,7 @@ python_function('tests/test_autonomous_readiness.py', 'test_plugin_workspace_cov
 python_function('tests/test_autonomous_readiness.py', 'test_socket_stale_detected', 2, 3, 5).
 python_function('tests/test_autonomous_readiness.py', 'test_live_status_metadata_wins_over_stale_project_sidecar', 2, 3, 9).
 python_function('tests/test_autonomous_readiness.py', 'test_plugin_reconnect_pipeline_succeeds_on_second_attempt', 0, 3, 1).
-python_function('tests/test_autonomous_readiness.py', 'test_lane_terminal_mismatch_when_integrated_terminal_differs', 1, 3, 4).
+python_function('tests/test_autonomous_readiness.py', 'test_lane_terminal_mismatch_when_integrated_terminal_differs', 1, 6, 4).
 python_function('tests/test_autonomous_readiness.py', 'test_socket_lane_mismatch_detected', 1, 2, 2).
 python_function('tests/test_autonomous_readiness.py', 'test_queue_runner_contention_warns_when_lock_held', 2, 2, 6).
 python_function('tests/test_autonomous_redrive_cooldown.py', '_events_path', 1, 1, 0).
@@ -16770,9 +17585,9 @@ python_function('tests/test_autonomous_redrive_cooldown.py', 'test_decide_redriv
 python_function('tests/test_autonomous_runtime.py', 'test_project_venv_warning_when_running_from_other_venv', 2, 4, 6).
 python_function('tests/test_autonomous_runtime.py', 'test_project_venv_warning_skips_local_venv', 2, 2, 5).
 python_function('tests/test_autonomous_runtime.py', 'test_project_venv_warning_skips_symlinked_local_venv_python', 2, 2, 6).
-python_function('tests/test_autonomous_runtime.py', 'test_project_venv_reexec_argv_when_running_from_other_venv', 2, 2, 6).
+python_function('tests/test_autonomous_runtime.py', 'test_project_venv_reexec_argv_when_running_from_other_venv', 2, 2, 7).
 python_function('tests/test_autonomous_runtime.py', 'test_project_venv_reexec_env_aligns_virtual_env_and_path', 1, 4, 5).
-python_function('tests/test_autonomous_runtime.py', 'test_project_venv_reexec_argv_uses_current_project_when_no_project_arg', 2, 2, 7).
+python_function('tests/test_autonomous_runtime.py', 'test_project_venv_reexec_argv_uses_current_project_when_no_project_arg', 2, 2, 8).
 python_function('tests/test_autonomous_runtime.py', 'test_project_venv_reexec_argv_skips_when_disabled', 2, 2, 6).
 python_function('tests/test_autonomous_runtime.py', 'test_setup_autopilot_daemon_keeps_lane_and_socket_in_sync', 2, 6, 10).
 python_function('tests/test_autonomous_runtime.py', 'test_build_and_log_startup_probe_reconciles_stale_koruenv_socket', 2, 5, 4).
@@ -16783,6 +17598,7 @@ python_function('tests/test_autonomous_scenarios.py', 'test_autonomous_cycle_run
 python_function('tests/test_autonomous_scenarios.py', 'test_autonomous_cycle_autopilot_skipped_when_no_client', 0, 1, 7).
 python_function('tests/test_autonomous_scenarios.py', 'test_run_cycle_auto_heals_stale_socket', 0, 3, 9).
 python_function('tests/test_autonomous_scenarios.py', 'test_autonomous_cycle_skips_idle_drive_when_no_ticket_then_hits_idle_streak', 0, 4, 10).
+python_function('tests/test_autonomous_startup.py', '_isolate_desktop_focus', 1, 1, 2).
 python_function('tests/test_autonomous_startup.py', 'test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker', 2, 3, 6).
 python_function('tests/test_autonomous_startup.py', 'test_resolve_agent_lane_prefers_focused_ide_over_terminal_hint', 2, 3, 4).
 python_function('tests/test_autonomous_startup.py', 'test_resolve_agent_lane_focus_beats_conflicting_explicit_instance', 2, 3, 4).
@@ -17075,6 +17891,7 @@ python_function('tests/test_autopilot_daemon.py', 'test_vscodium_message_sent_ev
 python_function('tests/test_autopilot_daemon.py', 'test_message_sent_from_other_plugin_does_not_complete_pending_drive', 2, 6, 15).
 python_function('tests/test_autopilot_daemon.py', 'test_cli_client_still_connected_detects_peer_eof', 0, 3, 7).
 python_function('tests/test_autopilot_daemon.py', 'test_newer_plugin_connection_replaces_stale_same_ide_client', 2, 7, 14).
+python_function('tests/test_autopilot_daemon.py', 'test_overlapping_plugin_drive_is_rejected_without_overwriting_pending', 2, 11, 14).
 python_function('tests/test_autopilot_daemon.py', 'test_visible_typing_prefers_keyboard_even_when_plugin_connected', 2, 5, 15).
 python_function('tests/test_autopilot_daemon.py', 'test_plugin_ack_with_shutdown_info_is_relayed', 2, 16, 17).
 python_function('tests/test_autopilot_daemon.py', 'test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide', 2, 7, 14).
@@ -17122,10 +17939,13 @@ python_function('tests/test_autopilot_ide.py', 'test_pick_target_explicit_prefer
 python_function('tests/test_autopilot_ide.py', 'test_resolve_drive_target_auto_picks_first_ide_with_profile', 2, 4, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_cursor_env', 1, 2, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_cursor_beats_windsurf_token', 1, 2, 2).
+python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_term_program_cursor_beats_windsurf_cascade', 1, 3, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_vscode_nls_without_pid', 1, 3, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_vscodium_from_vscode_family_env', 1, 3, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_antigravity_from_vscode_family_env', 1, 3, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_zed_term_program', 1, 3, 3).
+python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_windsurf_from_devin_desktop_env', 1, 4, 4).
+python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_ide_id_windsurf_cascade_beats_generic_vscode', 1, 3, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_context_vscode_pid_beats_cursor_env', 1, 5, 3).
 python_function('tests/test_autopilot_ide.py', 'test_detect_terminal_host_context_system_shell_when_no_markers', 1, 6, 3).
 python_function('tests/test_autopilot_ide.py', 'test_normalize_ide_id_aliases', 2, 2, 2).
@@ -17147,11 +17967,12 @@ python_function('tests/test_autopilot_lane_context.py', 'test_instance_from_sock
 python_function('tests/test_autopilot_lane_context.py', 'test_resolve_instance_from_ide_user_settings', 2, 3, 5).
 python_function('tests/test_autopilot_lane_context.py', 'test_resolve_client_socket_path_uses_cursor_main_not_cursor', 2, 2, 6).
 python_function('tests/test_autopilot_lane_context.py', 'test_autopilot_env_command_prints_exports', 3, 5, 7).
+python_function('tests/test_autopilot_plugin_installer.py', '_isolate_integrated_terminal_env', 1, 2, 1).
 python_function('tests/test_autopilot_plugin_installer.py', '_cp', 1, 1, 1).
 python_function('tests/test_autopilot_plugin_installer.py', '_hide_live_editor_bins', 1, 3, 3).
 python_function('tests/test_autopilot_plugin_installer.py', 'test_resolve_target_ide_prefers_autopilot_env', 1, 2, 3).
 python_function('tests/test_autopilot_plugin_installer.py', 'test_resolve_target_ide_uses_running_supported_ide', 1, 2, 4).
-python_function('tests/test_autopilot_plugin_installer.py', 'test_resolve_target_ide_uses_integrated_terminal_hint', 1, 3, 4).
+python_function('tests/test_autopilot_plugin_installer.py', 'test_resolve_target_ide_uses_integrated_terminal_hint', 1, 2, 4).
 python_function('tests/test_autopilot_plugin_installer.py', 'test_install_plugin_dry_run_builds_editor_command', 2, 3, 6).
 python_function('tests/test_autopilot_plugin_installer.py', 'test_resolve_extension_vsix_finds_repo_plugin_package', 2, 2, 7).
 python_function('tests/test_autopilot_plugin_installer.py', 'test_resolve_extension_vsix_prefers_package_version', 2, 2, 7).
@@ -17191,6 +18012,8 @@ python_function('tests/test_autopilot_socket_path.py', 'test_instance_env_change
 python_function('tests/test_autopilot_socket_path.py', 'test_default_basename_legacy_when_no_instance', 1, 2, 2).
 python_function('tests/test_autopilot_socket_path.py', 'test_auto_instance_uses_default_basename', 1, 2, 3).
 python_function('tests/test_bootstrap.py', '_write_yaml', 2, 1, 2).
+python_function('tests/test_calibration_validator.py', '_make_calibration', 7, 1, 0).
+python_function('tests/test_calibration_validator.py', '_make_desktop', 3, 3, 0).
 python_function('tests/test_capture_host_template.py', 'test_capture_host_template_detects_cursor_webview', 0, 5, 2).
 python_function('tests/test_capture_host_template.py', 'test_render_capture_host_substitutes_interval_and_peer', 0, 4, 2).
 python_function('tests/test_chat_history.py', '_write_events', 2, 2, 3).
@@ -17234,7 +18057,10 @@ python_function('tests/test_command_picker.py', 'test_cursor_paste_sanitizer_rej
 python_function('tests/test_command_picker.py', 'test_cursor_paste_sanitizer_rejects_terminal_paste', 1, 3, 2).
 python_function('tests/test_command_picker.py', 'test_cursor_submit_default_prefers_workbench_over_composer', 1, 2, 2).
 python_function('tests/test_command_picker.py', 'test_cursor_picker_rejects_start_composer_prompt_from_paste_and_submit', 1, 4, 2).
-python_function('tests/test_command_picker.py', 'test_antigravity_focus_open_rejects_new_chat_action', 1, 2, 2).
+python_function('tests/test_command_picker.py', 'test_cursor_focus_open_rejects_panel_chat_toggle', 1, 2, 2).
+python_function('tests/test_command_picker.py', 'test_antigravity_focus_open_rejects_new_chat_action', 1, 3, 2).
+python_function('tests/test_command_picker.py', 'test_antigravity_focus_open_rejects_open_agent', 1, 4, 2).
+python_function('tests/test_command_picker.py', 'test_antigravity_focus_open_prefers_side_panel_when_miscategorised', 1, 3, 2).
 python_function('tests/test_command_picker.py', 'test_vscodium_focus_open_avoids_quick_chat', 1, 2, 2).
 python_function('tests/test_command_picker.py', 'test_vscodium_focus_open_override_can_be_enabled', 2, 2, 3).
 python_function('tests/test_command_picker.py', 'test_vscodium_focus_open_override_rejects_settings', 2, 2, 4).
@@ -17347,6 +18173,19 @@ python_function('tests/test_deployment_events.py', 'test_deployment_event_analyz
 python_function('tests/test_deployment_events.py', 'test_component_creation', 0, 5, 1).
 python_function('tests/test_deployment_events.py', 'test_event_enums', 0, 7, 0).
 python_function('tests/test_deployment_events.py', 'test_event_with_all_fields', 0, 10, 3).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_plan_open_firefox', 0, 5, 4).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_handle_dry_run', 0, 5, 4).
+python_function('tests/test_desktop_uri.py', 'test_mcp_tool_desktop_uri_plan', 0, 6, 2).
+python_function('tests/test_desktop_uri.py', 'test_mcp_tool_desktop_uri_handle_defaults_dry_run', 0, 4, 2).
+python_function('tests/test_desktop_uri.py', 'test_nlp2uri_missing_message_when_unavailable', 1, 3, 2).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_list_getv_uris', 0, 4, 4).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_resolve_getv_prompt', 0, 3, 4).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_plan_ide_chat_control_plan', 0, 11, 5).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_control_plan', 0, 4, 3).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_control_execute_dry_run', 0, 4, 3).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_control_execute_no_submit_overrides_nlp_plan', 0, 9, 3).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_control_execute_direct_fallback', 0, 5, 5).
+python_function('tests/test_desktop_uri.py', 'test_desktop_uri_list_system_uris_requires_context', 0, 3, 4).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_installs_existing_repos', 1, 3, 7).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_can_target_repo_venv_and_upgrade', 1, 3, 7).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_fails_when_target_venv_missing', 1, 4, 6).
@@ -17459,11 +18298,16 @@ python_function('tests/test_e2e.py', '_ts', 1, 1, 3).
 python_function('tests/test_e2e.py', '_done_ticket', 2, 1, 1).
 python_function('tests/test_e2e.py', '_init_project', 1, 1, 2).
 python_function('tests/test_e2e.py', '_extract_json', 1, 3, 3).
+python_function('tests/test_env2llm_registry.py', 'test_env2llm_get_registry_without_dependency', 1, 3, 2).
+python_function('tests/test_env2llm_registry.py', 'test_mcp_tool_env2llm_get_registry', 2, 5, 3).
+python_function('tests/test_env2llm_registry.py', 'test_mcp_tool_env2llm_list_commands', 2, 5, 3).
+python_function('tests/test_env2llm_registry.py', 'test_mcp_tool_env2llm_mqtt_status', 2, 5, 3).
 python_function('tests/test_env_config.py', 'test_known_keys_include_vision_interval', 0, 5, 0).
 python_function('tests/test_env_config.py', 'test_env_config_payload_reads_dotenv', 2, 8, 4).
 python_function('tests/test_env_config.py', 'test_write_env_config_preserves_unrelated_lines', 1, 6, 3).
 python_function('tests/test_env_config.py', 'test_write_env_config_creates_file_when_missing', 1, 2, 2).
 python_function('tests/test_environment_profile.py', 'test_environment_profile_separates_vscodium_wayland_plugin_control', 2, 9, 4).
+python_function('tests/test_environment_profile.py', 'test_gnome_wayland_prefers_ydotool_over_wtype', 2, 3, 3).
 python_function('tests/test_environment_profile.py', 'test_environment_profile_treats_jetbrains_as_distinct_control_surface', 2, 7, 2).
 python_function('tests/test_environment_profile.py', 'test_environment_profile_treats_windsurf_as_distinct_native_surface', 2, 6, 2).
 python_function('tests/test_environment_profile.py', 'test_environment_profile_uses_explicit_running_ide_when_no_env', 2, 3, 4).
@@ -17511,6 +18355,7 @@ python_function('tests/test_ide_adapters.py', 'test_untrusted_publisher_hypothes
 python_function('tests/test_ide_adapters.py', 'test_apply_safe_fixes_adds_trusted_publisher_while_ide_runs', 2, 4, 5).
 python_function('tests/test_ide_adapters.py', 'test_inactive_extension_hypothesis_uses_real_config_home', 2, 6, 5).
 python_function('tests/test_ide_adapters.py', 'test_workspace_socket_mismatch', 1, 8, 9).
+python_function('tests/test_ide_adapters.py', 'test_user_socket_mismatch_detected_without_workspace', 2, 4, 9).
 python_function('tests/test_ide_adapters.py', 'test_extension_activated_in_exthost', 2, 2, 4).
 python_function('tests/test_ide_adapters.py', 'test_extension_reload_required_lines_use_actual_ide_label', 0, 3, 2).
 python_function('tests/test_ide_adapters.py', 'test_extension_activated_uses_latest_session_only', 2, 2, 4).
@@ -17518,6 +18363,7 @@ python_function('tests/test_ide_adapters.py', 'test_latest_ide_exthost_session_s
 python_function('tests/test_ide_adapters.py', 'test_gc_stale_socket_removes_dead_file', 1, 3, 4).
 python_function('tests/test_ide_adapters.py', 'test_gc_stale_sockets_for_lane_removes_dead_target', 1, 3, 4).
 python_function('tests/test_ide_adapters.py', 'test_evaluate_bridge_no_daemon', 1, 4, 2).
+python_function('tests/test_ide_adapters.py', 'test_evaluate_bridge_maps_lane_slug_to_canonical_ide', 1, 3, 2).
 python_function('tests/test_ide_adapters.py', 'test_get_adapter_cursor', 0, 3, 1).
 python_function('tests/test_ide_client.py', 'test_legacy_adapter_forwards_all_operations', 0, 5, 7).
 python_function('tests/test_ide_client.py', 'test_build_legacy_ide_client_uses_autopilot_client', 1, 4, 5).
@@ -17565,20 +18411,34 @@ python_function('tests/test_ide_reload.py', 'test_try_reload_skipped_when_disabl
 python_function('tests/test_ide_reload.py', 'test_reuse_window_reload_disabled_by_default', 1, 2, 2).
 python_function('tests/test_ide_reload.py', 'test_reuse_window_reload_opt_in', 1, 2, 2).
 python_function('tests/test_ide_reload.py', 'test_new_window_reload_opt_in', 1, 3, 3).
+python_function('tests/test_ide_reload.py', 'test_editor_cli_env_drops_extension_host_shims', 1, 7, 2).
 python_function('tests/test_ide_reload.py', 'test_try_reload_does_not_call_reuse_window_by_default', 2, 5, 8).
 python_function('tests/test_ide_reload.py', 'test_try_reload_calls_reuse_window_when_opted_in', 2, 4, 9).
 python_function('tests/test_ide_reload.py', 'test_try_open_new_window_when_opted_in', 2, 4, 7).
 python_function('tests/test_ide_reload.py', 'test_detect_reload_command_reports_disabled', 1, 3, 2).
+python_function('tests/test_ide_reload.py', 'test_apply_temporary_repair_reload_env_enables_palette_on_wayland', 1, 4, 5).
+python_function('tests/test_ide_reload.py', 'test_apply_temporary_repair_reload_env_same_workspace_enables_reuse', 1, 2, 5).
+python_function('tests/test_ide_reload.py', 'test_apply_temporary_repair_reload_env_skips_integrated_terminal', 1, 4, 4).
+python_function('tests/test_ide_reload.py', 'test_detect_reload_command_blocks_reuse_window_from_integrated_terminal', 1, 3, 4).
+python_function('tests/test_ide_reload.py', 'test_detect_reload_command_allows_cross_ide_reload_from_integrated_terminal', 1, 3, 4).
 python_function('tests/test_ide_reload.py', 'test_await_plugin_handshake_disabled_by_default', 1, 3, 2).
 python_function('tests/test_ide_reload.py', '_fake_os_strategy', 0, 1, 4).
 python_function('tests/test_ide_reload.py', 'test_focus_ide_window_delegates_to_os_strategy', 1, 3, 3).
 python_function('tests/test_ide_reload.py', 'test_focus_ide_window_rejects_integrated_terminal_for_non_vscode_family', 1, 3, 3).
 python_function('tests/test_ide_reload.py', 'test_focus_ide_window_accepts_integrated_terminal_for_cursor', 1, 3, 3).
 python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_uses_os_strategy_inject_keys', 1, 7, 6).
-python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_refuses_integrated_terminal_focus', 1, 4, 4).
+python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_refuses_integrated_terminal_focus', 1, 4, 5).
+python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_allows_cross_ide_integrated_terminal', 1, 3, 4).
 python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_explains_wayland_failure', 1, 4, 4).
 python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_aborts_when_no_keyboard_tool', 1, 4, 3).
 python_function('tests/test_ide_reload.py', 'test_explain_reload_failure_includes_handshake_reason', 0, 3, 2).
+python_function('tests/test_ide_reload.py', 'test_try_reload_connect_only_calls_connect_palette', 1, 4, 6).
+python_function('tests/test_ide_reload.py', 'test_try_reload_connect_only_disabled_when_auto_reload_off', 1, 3, 3).
+python_function('tests/test_ide_reload.py', 'test_reload_via_command_palette_allows_integrated_terminal_when_detached', 1, 3, 5).
+python_function('tests/test_ide_reload.py', 'test_run_command_palette_sequence_allows_integrated_terminal_when_detached', 1, 3, 5).
+python_function('tests/test_ide_reload.py', 'test_detect_reload_command_bypasses_integrated_terminal_when_detached', 1, 3, 4).
+python_function('tests/test_ide_reload.py', 'test_spawn_detached_ide_reload_spawns_koru_cli', 2, 9, 7).
+python_function('tests/test_ide_reload.py', 'test_spawn_detached_ide_reload_with_connect_only', 2, 3, 4).
 python_function('tests/test_ide_router.py', 'test_is_headless_false_minimal_env', 0, 2, 1).
 python_function('tests/test_ide_router.py', 'test_is_headless_koru_headless_yes', 0, 2, 1).
 python_function('tests/test_ide_router.py', 'test_is_headless_koru_headless_on', 0, 2, 1).
@@ -17620,6 +18480,7 @@ python_function('tests/test_ide_router.py', 'test_resolve_ide_route_env_instance
 python_function('tests/test_ide_router.py', 'test_resolve_ide_route_env_ide_wins_over_env_instance', 0, 2, 1).
 python_function('tests/test_ide_runtime.py', 'test_build_host_setup_report_delegates_to_legacy_backend', 1, 2, 3).
 python_function('tests/test_ide_runtime.py', 'test_detect_running_ides_normalizes_rows', 1, 4, 3).
+python_function('tests/test_ide_status_systemmap.py', 'test_format_autopilot_status_systemmap', 0, 4, 4).
 python_function('tests/test_ide_work.py', '_ok', 1, 1, 1).
 python_function('tests/test_init.py', '_detach_ci_env', 0, 3, 0).
 python_function('tests/test_init.py', '_reattach_ci_env', 1, 1, 1).
@@ -17662,14 +18523,16 @@ python_function('tests/test_install_manager.py', 'test_collect_report_flags_plug
 python_function('tests/test_install_manager.py', 'test_collect_report_warns_for_pyenv_shim', 2, 3, 3).
 python_function('tests/test_install_manager.py', 'test_collect_report_warns_when_daemon_not_running', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_repair_installation_records_plugin_action', 2, 3, 5).
-python_function('tests/test_install_manager.py', 'test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned', 2, 5, 6).
+python_function('tests/test_install_manager.py', 'test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned', 2, 6, 7).
+python_function('tests/test_install_manager.py', 'test_repair_installation_skips_daemon_shutdown_when_connected_matches_expected', 2, 3, 6).
 python_function('tests/test_install_manager.py', 'test_repair_installation_shutdowns_daemon_when_build_is_stale', 2, 5, 9).
 python_function('tests/test_install_manager.py', 'test_repair_installation_returns_refreshed_report_after_plugin_fix', 2, 4, 8).
 python_function('tests/test_install_manager.py', 'test_wait_for_plugin_reconnect_requires_expected_build', 2, 5, 3).
 python_function('tests/test_install_manager.py', 'test_repair_skips_new_window_escalation_without_opt_in', 2, 3, 6).
 python_function('tests/test_install_manager.py', 'test_repair_opens_new_window_after_build_mismatch_with_opt_in', 2, 4, 8).
 python_function('tests/test_install_manager.py', 'test_repair_restarts_ide_when_new_window_still_has_old_build', 2, 4, 8).
-python_function('tests/test_install_manager.py', 'test_repair_fix_reload_uses_reuse_window_for_same_workspace', 2, 4, 7).
+python_function('tests/test_install_manager.py', 'test_repair_fix_reload_uses_reuse_window_for_same_workspace', 2, 5, 7).
+python_function('tests/test_install_manager.py', 'test_repair_fix_reload_skips_automation_from_integrated_terminal', 2, 3, 7).
 python_function('tests/test_install_manager.py', 'test_collect_report_for_zed_does_not_require_vsix_plugin', 2, 5, 4).
 python_function('tests/test_install_manager.py', 'test_collect_report_auto_still_checks_plugin_connection', 2, 4, 4).
 python_function('tests/test_install_manager.py', '_mismatch_report', 1, 1, 3).
@@ -17686,6 +18549,11 @@ python_function('tests/test_interface_registry.py', 'test_get_interface_descript
 python_function('tests/test_interface_registry.py', 'test_interface_registry_family_summary_has_multiple_families', 0, 4, 1).
 python_function('tests/test_interface_registry.py', 'test_blocker_interface_payload_returns_recovery_for_plugin_mismatch', 0, 4, 1).
 python_function('tests/test_interface_registry.py', 'test_interface_registry_payload_contains_blocker_index', 0, 6, 1).
+python_function('tests/test_koru_browser_stack.py', 'koru_root', 0, 1, 1).
+python_function('tests/test_koru_browser_stack.py', 'test_env2llm_refresh_includes_browser_stack', 1, 4, 3).
+python_function('tests/test_koru_browser_stack.py', 'test_nlp2oql_router_from_koru', 1, 7, 7).
+python_function('tests/test_koru_browser_stack.py', 'test_mcp_tools_include_nlp2oql', 0, 4, 0).
+python_function('tests/test_koru_browser_stack.py', 'test_testql_environment_scenario_dry_run', 1, 4, 10).
 python_function('tests/test_koru_gate_capture.py', 'test_first_meaningful_line_skips_cloud_init_noise', 0, 2, 2).
 python_function('tests/test_koru_gate_capture.py', 'test_first_meaningful_line_falls_back_to_nonempty_when_only_noise', 0, 2, 2).
 python_function('tests/test_koru_queue_argv.py', 'test_build_queue_argv_apply_minimal', 1, 6, 3).
@@ -17722,6 +18590,7 @@ python_function('tests/test_koruide_client.py', 'test_injected_client_without_re
 python_function('tests/test_koruide_client.py', 'test_drive_missing_socket_returns_ok_false', 1, 3, 4).
 python_function('tests/test_koruide_client.py', 'test_request_returns_structured_error_on_truncated_response', 1, 6, 18).
 python_function('tests/test_koruide_client.py', 'test_drive_uses_extended_timeout', 1, 3, 5).
+python_function('tests/test_koruide_client.py', 'test_drive_generates_unique_correlation_ids', 0, 4, 9).
 python_function('tests/test_koruide_client.py', 'test_request_decodes_length_prefixed_large_ack', 1, 6, 20).
 python_function('tests/test_koruide_daemon_handlers_ack.py', 'test_plugin_ack_needs_os_fallback_check', 1, 2, 4).
 python_function('tests/test_koruide_daemon_handlers_ack.py', 'test_strict_plugin_ack_ok_when_not_strict', 1, 3, 3).
@@ -17753,6 +18622,9 @@ python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_handle_driv
 python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_resolve_keyboard_drive_selection', 1, 4, 3).
 python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_deliver_chat_via_plugin_socket_audits_request_not_success', 1, 1, 4).
 python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_backward_compat_reexports_from_handlers', 0, 5, 0).
+python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_pending_corr_owner_alive_for_current_pid', 0, 2, 2).
+python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_pending_corr_owner_alive_for_missing_pid', 0, 2, 1).
+python_function('tests/test_koruide_daemon_handlers_drive.py', 'test_active_pending_cleared_when_corr_owner_exited', 0, 3, 3).
 python_function('tests/test_koruide_daemon_handlers_hello.py', 'test_extract_hello_metadata_complete', 0, 8, 2).
 python_function('tests/test_koruide_daemon_handlers_hello.py', 'test_extract_hello_metadata_minimal', 0, 8, 2).
 python_function('tests/test_koruide_daemon_handlers_hello.py', 'test_extract_hello_metadata_no_ide', 0, 2, 2).
@@ -17873,6 +18745,8 @@ python_function('tests/test_mcp_provision.py', 'test_init_ide_main_json_output_f
 python_function('tests/test_mcp_provision.py', 'test_init_ide_main_json_output_for_zed_dry_run', 2, 4, 4).
 python_function('tests/test_mcp_provision.py', 'test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command', 2, 6, 10).
 python_function('tests/test_mcp_provision.py', 'test_ensure_koru_mcp_not_disabled_includes_global_windsurf', 2, 4, 9).
+python_function('tests/test_mcp_provision.py', 'test_koru_mcp_configured_detects_cursor_entry', 1, 3, 4).
+python_function('tests/test_mcp_provision.py', 'test_auto_provision_koru_mcp_writes_cursor_config', 2, 6, 7).
 python_function('tests/test_mcp_provision.py', 'test_ensure_koru_mcp_not_disabled_handles_zed_context_servers', 2, 5, 10).
 python_function('tests/test_mcp_server.py', 'test_initialize_message_returns_server_info', 0, 5, 1).
 python_function('tests/test_mcp_server.py', 'test_tools_list_includes_required_koru_tools', 0, 4, 2).
@@ -17892,6 +18766,10 @@ python_function('tests/test_mcp_server_split.py', 'test_schema_tools_regression_
 python_function('tests/test_mcp_server_split.py', 'test_dispatch_handle_message_returns_method_not_found', 0, 4, 3).
 python_function('tests/test_mcp_server_split.py', 'test_dispatch_tools_call_formats_handler_error', 0, 3, 2).
 python_function('tests/test_mcp_server_split.py', 'test_transport_run_stdio_loop_handles_parse_error_and_message_flow', 0, 7, 8).
+python_function('tests/test_nlp2oql_bridge.py', 'test_nlp2oql_run_plan_only_when_installed', 1, 4, 4).
+python_function('tests/test_nlp2uri_ide_control_gate.py', 'test_try_nlp2uri_ide_control_disabled', 1, 2, 2).
+python_function('tests/test_nlp2uri_ide_control_gate.py', 'test_effective_ide_control_submit_cursor_paste_only', 1, 4, 3).
+python_function('tests/test_nlp2uri_ide_control_gate.py', 'test_try_nlp2uri_ide_control_uses_fake_client', 1, 8, 9).
 python_function('tests/test_observability_dsl.py', 'test_observability_dsl_roundtrips_event', 0, 4, 3).
 python_function('tests/test_observability_dsl.py', 'test_observability_writer_persists_jsonl_dsl_log_and_terminal_compact', 2, 11, 8).
 python_function('tests/test_observability_dsl.py', 'test_observability_writer_terminal_compact_can_be_disabled', 3, 3, 4).
@@ -17908,7 +18786,7 @@ python_function('tests/test_observability_dsl.py', 'test_plugin_gate_skip_emits_
 python_function('tests/test_observability_dsl.py', 'test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace', 2, 6, 11).
 python_function('tests/test_observability_dsl.py', 'test_plugin_bootstrap_blocker_emits_control_command_dsl', 2, 14, 6).
 python_function('tests/test_observability_dsl.py', 'test_plugin_wait_trace_replaces_legacy_reload_lines', 1, 7, 9).
-python_function('tests/test_observability_dsl.py', 'test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace', 2, 6, 7).
+python_function('tests/test_observability_dsl.py', 'test_plugin_wait_build_mismatch_enables_reuse_window_for_same_workspace', 2, 6, 8).
 python_function('tests/test_observability_dsl.py', 'test_control_commands_cover_api_shell_plugin_and_desktop_surfaces', 1, 8, 9).
 python_function('tests/test_observability_dsl.py', 'test_control_command_dsl_preserves_structured_args_with_spaces', 0, 2, 3).
 python_function('tests/test_observation_mesh_e2e.py', '_run_main', 0, 3, 5).
@@ -17933,8 +18811,8 @@ python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_sk
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance', 3, 7, 5).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_adds_self_control_step', 3, 6, 3).
 python_function('tests/test_operator_pipeline.py', '_self_report', 1, 3, 2).
-python_function('tests/test_operator_pipeline.py', 'test_self_control_ok_auto_repairs_when_fix_clears_problem', 2, 4, 5).
-python_function('tests/test_operator_pipeline.py', 'test_self_control_ok_keeps_task_when_auto_repair_still_needs_reload', 2, 4, 5).
+python_function('tests/test_operator_pipeline.py', 'test_self_control_ok_auto_repairs_when_fix_clears_problem', 2, 4, 6).
+python_function('tests/test_operator_pipeline.py', 'test_self_control_ok_keeps_task_when_auto_repair_still_needs_reload', 2, 4, 6).
 python_function('tests/test_operator_pipeline.py', 'test_self_control_ok_respects_autorepair_opt_out', 2, 4, 4).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_creates_tickets', 3, 3, 5).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing', 3, 5, 5).
@@ -17948,6 +18826,17 @@ python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pi
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket', 3, 7, 9).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_keeps_marker_when_close_times_out', 3, 6, 9).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped', 3, 7, 11).
+python_function('tests/test_package_deduplication.py', 'test_autopilot_config_is_gillm_canonical', 0, 4, 1).
+python_function('tests/test_package_deduplication.py', 'test_koru_injection_shims_point_at_gillm', 0, 3, 1).
+python_function('tests/test_package_deduplication.py', 'test_no_duplicate_injector_implementation_in_koru_src', 0, 5, 3).
+python_function('tests/test_package_deduplication.py', 'test_gillm_recovery_bridge_delegates_to_gillm', 0, 3, 2).
+python_function('tests/test_package_deduplication.py', 'test_autopilot_injector_shims_emit_deprecation_warning', 0, 2, 3).
+python_function('tests/test_package_deduplication.py', 'test_koru_autopilot_cli_imports_gillm_injection_directly', 0, 4, 1).
+python_function('tests/test_package_deduplication.py', 'test_koru_src_does_not_import_koruos', 0, 5, 7).
+python_function('tests/test_package_deduplication.py', 'test_koruide_injection_shims_emit_deprecation_warning', 0, 2, 3).
+python_function('tests/test_package_deduplication.py', 'test_koruos_shim_redirects_to_gillm_focus', 0, 7, 4).
+python_function('tests/test_package_deduplication.py', 'test_koruos_import_emits_deprecation_warning', 0, 4, 4).
+python_function('tests/test_package_deduplication.py', 'test_sllm_bridge_delegates_shell_drive_to_sillm', 0, 3, 2).
 python_function('tests/test_planfile_queue.py', '_ok', 1, 1, 1).
 python_function('tests/test_planfile_queue.py', '_ticket_args', 1, 1, 1).
 python_function('tests/test_planfile_queue.py', 'test_run_next_planfile_task_persists_queue_event', 1, 4, 17).
@@ -17992,6 +18881,7 @@ python_function('tests/test_provider_portal_screencast.py', 'test_rank_providers
 python_function('tests/test_pyproject_metadata.py', '_pyproject', 0, 1, 2).
 python_function('tests/test_pyproject_metadata.py', '_uv_lock_koru_package', 0, 3, 3).
 python_function('tests/test_pyproject_metadata.py', 'test_base_runtime_dependencies_stay_small', 0, 2, 1).
+python_function('tests/test_pyproject_metadata.py', 'test_root_install_exposes_coru_console_script', 0, 3, 1).
 python_function('tests/test_pyproject_metadata.py', 'test_all_extra_matches_union_of_other_extras', 0, 5, 3).
 python_function('tests/test_pyproject_metadata.py', 'test_readme_documents_each_installation_extra', 0, 3, 2).
 python_function('tests/test_pyproject_metadata.py', 'test_uv_lock_koru_metadata_matches_pyproject', 0, 4, 3).
@@ -18112,6 +19002,8 @@ python_function('tests/test_sync_plugin_build.py', '_read', 1, 1, 2).
 python_function('tests/test_sync_plugin_build.py', 'test_update_package_bumps_version_when_source_changes', 2, 8, 5).
 python_function('tests/test_sync_plugin_build.py', 'test_content_sha_is_independent_of_version', 2, 2, 6).
 python_function('tests/test_tasks.py', 'test_create_nl_task_persists_domain_event', 1, 4, 3).
+python_function('tests/test_testql_bridge.py', 'test_testql_list_without_package', 1, 2, 2).
+python_function('tests/test_testql_bridge.py', 'test_testql_mcp_tools', 1, 7, 6).
 python_function('tests/test_ticket_evidence.py', '_ok', 1, 1, 1).
 python_function('tests/test_ticket_evidence.py', '_ticket', 1, 1, 0).
 python_function('tests/test_ticket_evidence.py', 'test_validate_ticket_evidence_reports_current_snapshot', 1, 7, 11).
@@ -18359,20 +19251,63 @@ python_method('SupervisorService', 'ensure_http', 0, 4, 5).
 python_method('SupervisorService', 'write_pid_file', 0, 1, 4).
 python_method('SupervisorService', 'remove_pid_file', 0, 1, 4).
 python_method('SupervisorService', 'run', 0, 5, 9).
+python_class('packages/coru/tests/test_ide_detection.py', 'TestIdeFromVscodePid').
+python_method('TestIdeFromVscodePid', 'test_none_when_no_vscode_pid', 1, 2, 2).
+python_method('TestIdeFromVscodePid', 'test_none_when_invalid_pid', 1, 2, 2).
+python_class('packages/coru/tests/test_ide_detection.py', 'TestVscodeFamilyEnvHint').
+python_method('TestVscodeFamilyEnvHint', 'test_none_when_no_env', 1, 3, 2).
+python_method('TestVscodeFamilyEnvHint', 'test_detects_cursor', 1, 2, 2).
+python_method('TestVscodeFamilyEnvHint', 'test_detects_windsurf', 1, 2, 2).
+python_class('packages/coru/tests/test_ide_detection.py', 'TestWindsurfTerminalMarker').
+python_method('TestWindsurfTerminalMarker', 'test_false_when_no_env', 1, 3, 2).
+python_method('TestWindsurfTerminalMarker', 'test_true_from_cascade_terminal', 1, 2, 2).
+python_method('TestWindsurfTerminalMarker', 'test_true_from_term_version', 1, 2, 2).
+python_class('packages/coru/tests/test_ide_detection.py', 'TestTerminalShellContextFallback').
+python_method('TestTerminalShellContextFallback', 'test_vscode_when_term_program_is_vscode', 1, 3, 3).
+python_method('TestTerminalShellContextFallback', 'test_cursor_from_chrome_desktop', 1, 2, 3).
+python_method('TestTerminalShellContextFallback', 'test_jetbrains_from_terminal_emulator', 1, 2, 3).
+python_method('TestTerminalShellContextFallback', 'test_none_when_no_ide', 1, 3, 2).
+python_method('TestTerminalShellContextFallback', 'test_monkeypatch_ide_from_vscode_pid', 1, 2, 2).
+python_method('TestTerminalShellContextFallback', 'test_monkeypatch_vscode_family_env_hint', 1, 2, 3).
+python_class('packages/nlpshim/src/nlpshim/client.py', 'FallbackNLP2DSLClient').
+python_method('FallbackNLP2DSLClient', '__init__', 0, 2, 0).
+python_method('FallbackNLP2DSLClient', '__enter__', 0, 1, 0).
+python_method('FallbackNLP2DSLClient', '__exit__', 3, 1, 0).
+python_method('FallbackNLP2DSLClient', 'from_env', 1, 1, 1).
+python_method('FallbackNLP2DSLClient', 'workflow_from_text', 3, 11, 6).
+python_class('packages/nlpshim/src/nlpshim/client.py', 'NLPBridgeClient').
+python_method('NLPBridgeClient', '__init__', 1, 2, 2).
+python_method('NLPBridgeClient', 'parse_intent', 1, 15, 10).
+python_method('NLPBridgeClient', 'workflow_plan', 1, 2, 4).
+python_class('packages/nlpshim/src/nlpshim/conversation_client.py', 'ConversationState').
+python_class('packages/nlpshim/src/nlpshim/conversation_client.py', 'ConversationTestClient').
+python_method('ConversationTestClient', '__init__', 1, 2, 2).
+python_method('ConversationTestClient', 'state', 0, 1, 0).
+python_method('ConversationTestClient', 'start', 0, 3, 7).
+python_method('ConversationTestClient', 'message', 1, 9, 12).
+python_method('ConversationTestClient', 'run_dsl', 1, 4, 5).
+python_method('ConversationTestClient', 'export_trace', 0, 1, 1).
+python_method('ConversationTestClient', '_record', 2, 1, 2).
+python_class('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'LLMProvider').
+python_method('LLMProvider', 'reply_for', 1, 1, 0).
+python_class('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'ConversationContext').
+python_class('packages/nlpshim/src/nlpshim/conversation_test_api.py', 'DialogResponse').
 python_class('src/koru/agent_backend_runtime.py', 'AgentBackend').
-python_method('AgentBackend', 'send_chat', 2, 2, 0).
+python_method('AgentBackend', 'send_chat', 2, 1, 0).
 python_class('src/koru/agent_backend_runtime.py', 'PluginSocketBackend').
-python_method('PluginSocketBackend', 'send_chat', 2, 2, 1).
+python_method('PluginSocketBackend', 'send_chat', 2, 1, 1).
 python_class('src/koru/agent_backend_runtime.py', 'McpToolBackend').
-python_method('McpToolBackend', 'send_chat', 2, 2, 0).
+python_method('McpToolBackend', 'send_chat', 2, 1, 0).
 python_class('src/koru/agent_backend_runtime.py', 'NoopBackend').
-python_method('NoopBackend', 'send_chat', 2, 2, 0).
+python_method('NoopBackend', 'send_chat', 2, 1, 0).
 python_class('src/koru/agent_backend_runtime.py', 'SllmShellBackend').
-python_method('SllmShellBackend', 'send_chat', 2, 2, 2).
+python_method('SllmShellBackend', 'send_chat', 2, 1, 2).
 python_class('src/koru/agent_backend_runtime.py', 'OsInjectorBackend').
-python_method('OsInjectorBackend', 'send_chat', 2, 2, 3).
+python_method('OsInjectorBackend', 'send_chat', 2, 1, 3).
 python_class('src/koru/agent_backend_runtime.py', 'GillmGuiBackend').
-python_method('GillmGuiBackend', 'send_chat', 2, 2, 3).
+python_method('GillmGuiBackend', 'send_chat', 2, 1, 3).
+python_class('src/koru/agent_backend_runtime.py', 'Nlp2UriDesktopBackend').
+python_method('Nlp2UriDesktopBackend', 'send_chat', 2, 1, 1).
 python_class('src/koru/agent_backends.py', 'AgentBackendProfile').
 python_class('src/koru/agent_backends.py', 'LaneConfig').
 python_class('src/koru/agent_backends.py', 'AgentIntegrationConfig').
@@ -18381,6 +19316,8 @@ python_method('AgentOption', 'to_dict', 0, 1, 0).
 python_class('src/koru/autonomous_auto_pipeline.py', 'AutoPipelineState').
 python_class('src/koru/autonomous_auto_pipeline.py', 'AutoPipelineProfile').
 python_class('src/koru/autonomous_cycle_common.py', 'DiagnosticResult').
+python_class('src/koru/autonomous_cycle_orchestrator.py', '_AutopilotDriveContext').
+python_class('src/koru/autonomous_cycle_orchestrator.py', '_AutopilotDriveAttempt').
 python_class('src/koru/autonomous_loop_runner.py', 'AutonomyNextStepNarrator').
 python_method('AutonomyNextStepNarrator', '__init__', 0, 3, 0).
 python_method('AutonomyNextStepNarrator', 'narrate', 0, 7, 8).
@@ -18763,14 +19700,13 @@ python_method('GillmIDEControlClient', 'is_running', 0, 1, 0).
 python_method('GillmIDEControlClient', 'drive', 1, 5, 4).
 python_method('GillmIDEControlClient', 'status', 0, 1, 2).
 python_method('GillmIDEControlClient', 'shutdown', 0, 1, 0).
-python_class('src/koru/ide_adapters/gillm_recovery.py', '_FallbackContext').
 python_class('src/koru/ide_adapters/ide_reload.py', 'IdeReloadOutcome').
 python_class('src/koru/ide_adapters/vscode_family.py', 'VSCodeFamilyAdapter').
 python_method('VSCodeFamilyAdapter', 'extension_id', 0, 1, 1).
 python_method('VSCodeFamilyAdapter', 'diagnose_activation', 0, 8, 11).
 python_method('VSCodeFamilyAdapter', 'analyze_settings', 0, 1, 1).
 python_method('VSCodeFamilyAdapter', 'collect_hypotheses', 0, 4, 8).
-python_method('VSCodeFamilyAdapter', 'apply_safe_fixes', 0, 8, 5).
+python_method('VSCodeFamilyAdapter', 'apply_safe_fixes', 0, 9, 6).
 python_class('src/koru/ide_client.py', 'IDEControlClient').
 python_method('IDEControlClient', 'is_running', 0, 1, 0).
 python_method('IDEControlClient', 'drive', 1, 12, 0).
@@ -18987,7 +19923,7 @@ python_method('KoruIDEClient', '_connect', 0, 2, 4).
 python_method('KoruIDEClient', 'request', 1, 10, 16).
 python_method('KoruIDEClient', '_extract_reply', 1, 8, 7).
 python_method('KoruIDEClient', 'is_running', 0, 7, 7).
-python_method('KoruIDEClient', 'drive', 1, 8, 8).
+python_method('KoruIDEClient', 'drive', 1, 8, 10).
 python_method('KoruIDEClient', 'status', 0, 4, 7).
 python_method('KoruIDEClient', 'shutdown', 0, 4, 6).
 python_class('src/koruide/command_catalog.py', 'IdeCommand').
@@ -19020,8 +19956,6 @@ python_method('CommandTelemetry', 'record_from_ack', 0, 13, 5).
 python_method('CommandTelemetry', '_trim', 0, 5, 5).
 python_method('CommandTelemetry', '_persist', 0, 3, 6).
 python_method('CommandTelemetry', '_load', 0, 10, 8).
-python_class('src/koruide/config.py', 'AutopilotConfig').
-python_method('AutopilotConfig', 'submit_key_for', 1, 2, 1).
 python_class('src/koruide/daemon/handlers_plugin_event.py', '_PluginEventHandoff').
 python_class('src/koruide/daemon/protocol.py', '_Client').
 python_class('src/koruide/daemon/protocol.py', '_PluginEventHandoff').
@@ -19427,6 +20361,32 @@ python_class('tests/test_bootstrap.py', 'TestImportReport').
 python_method('TestImportReport', 'test_summary_includes_key_facts', 0, 1, 4).
 python_class('tests/test_bootstrap.py', 'TestValidationError').
 python_method('TestValidationError', 'test_str_format', 0, 1, 3).
+python_class('tests/test_calibration_validator.py', 'TestValidateSingleCalibration').
+python_method('TestValidateSingleCalibration', 'test_valid_calibration_returns_no_issues', 0, 2, 2).
+python_method('TestValidateSingleCalibration', 'test_extreme_top_returns_error', 0, 6, 4).
+python_method('TestValidateSingleCalibration', 'test_top_edge_returns_warning', 0, 5, 2).
+python_method('TestValidateSingleCalibration', 'test_5pct_boundary_is_safe', 0, 4, 2).
+python_method('TestValidateSingleCalibration', 'test_bottom_edge_returns_warning', 0, 4, 3).
+python_method('TestValidateSingleCalibration', 'test_pointer_display_mismatch', 0, 6, 3).
+python_method('TestValidateSingleCalibration', 'test_no_mismatch_when_same_display', 0, 4, 2).
+python_method('TestValidateSingleCalibration', 'test_stale_calibration', 0, 5, 3).
+python_method('TestValidateSingleCalibration', 'test_missing_display_coords', 0, 3, 2).
+python_method('TestValidateSingleCalibration', 'test_display_not_found', 0, 2, 3).
+python_method('TestValidateSingleCalibration', 'test_display_zero_height', 0, 2, 3).
+python_method('TestValidateSingleCalibration', 'test_no_pointer_skips_mismatch_check', 0, 2, 3).
+python_class('tests/test_calibration_validator.py', 'TestValidateCalibrations').
+python_method('TestValidateCalibrations', 'test_no_desktop_data', 0, 4, 1).
+python_method('TestValidateCalibrations', 'test_empty_desktop', 0, 3, 1).
+python_method('TestValidateCalibrations', 'test_desktop_with_no_calibrations', 0, 3, 1).
+python_method('TestValidateCalibrations', 'test_all_good', 0, 5, 3).
+python_method('TestValidateCalibrations', 'test_mixed_good_and_bad', 0, 4, 3).
+python_method('TestValidateCalibrations', 'test_ide_filter_limits_scope', 0, 3, 3).
+python_method('TestValidateCalibrations', 'test_ide_filter_cursor_finds_error', 0, 4, 3).
+python_method('TestValidateCalibrations', 'test_pointer_mismatch_detected_in_batch', 0, 4, 4).
+python_method('TestValidateCalibrations', 'test_summary_format', 0, 2, 3).
+python_method('TestValidateCalibrations', 'test_summary_with_errors', 0, 2, 4).
+python_class('tests/test_calibration_validator.py', 'TestRealWorldCursorBug').
+python_method('TestRealWorldCursorBug', 'test_exact_cursor_scenario', 0, 14, 2).
 python_class('tests/test_cli.py', 'TestBareInvocation').
 python_method('TestBareInvocation', '_parse', 0, 1, 3).
 python_method('TestBareInvocation', 'test_no_args_is_bare', 0, 1, 3).
@@ -19482,6 +20442,7 @@ python_method('TestInitCiSubcommand', 'test_init_ci_exits_zero_with_paths', 0, 1
 python_class('tests/test_cli.py', 'TestAutoMain').
 python_method('TestAutoMain', 'tearDown', 0, 1, 1).
 python_method('TestAutoMain', 'test_auto_main_stops_prior_and_injects_replace_existing', 0, 1, 15).
+python_method('TestAutoMain', 'test_auto_main_skips_reuse_window_from_integrated_terminal', 0, 1, 7).
 python_method('TestAutoMain', 'test_auto_main_preserves_explicit_reuse_window_reload_setting', 0, 2, 8).
 python_method('TestAutoMain', 'test_auto_main_allow_duplicate_skips_stop_and_replace_flag', 0, 2, 8).
 python_method('TestAutoMain', 'test_subcommand_auto_routes_to_auto_main', 0, 1, 4).
@@ -19493,6 +20454,8 @@ python_method('TestEventsSubcommand', 'tearDown', 0, 1, 1).
 python_method('TestEventsSubcommand', 'test_events_json_reports_context_history', 0, 1, 6).
 python_method('TestEventsSubcommand', 'test_events_filters_by_aggregate_id', 0, 1, 6).
 python_method('TestEventsSubcommand', 'test_events_text_format', 0, 1, 6).
+python_class('tests/test_cli.py', 'TestAutopilotReexecToProjectVenv').
+python_method('TestAutopilotReexecToProjectVenv', 'test_autopilot_subcommand_reexecs_when_interpreter_is_outside_project_venv', 0, 1, 13).
 python_class('tests/test_cli.py', 'TestDoctorReexecToProjectVenv').
 python_method('TestDoctorReexecToProjectVenv', '_prepare_local_koru', 1, 1, 4).
 python_method('TestDoctorReexecToProjectVenv', 'test_doctor_subcommand_reexecs_when_interpreter_is_outside_project_venv', 0, 1, 13).
@@ -20270,9 +21233,9 @@ taskfile_task('', 'Run default koru tests in parallel when pytest-xdist is insta
 taskfile_task('', 'Run every koru test, including slow Docker/integration tests, serially').
 taskfile_task('', 'Run Docker E2E tests only (slow; deselected by default addopts)').
 taskfile_task('', 'Run Docker OS x IDE smoke matrix. Vars: SYSTEMS, IDES (defaults cover Debian/Ubuntu/Fedora/Alpine and VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed)').
-taskfile_task('', 'Run default tests quietly in parallel when pytest-xdist is installed').
+taskfile_task('', 'Run critical tests quietly in parallel when pytest-xdist is installed').
 taskfile_task('', 'Fastest feedback loop (parallel, fail fast, failed tests first)').
-taskfile_task('', 'Run tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)').
+taskfile_task('', 'Run critical tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)').
 taskfile_task('', 'Run changed pytest files under tests/; falls back to default tests when none changed').
 taskfile_task('', 'Run default tests and show the slowest test durations').
 taskfile_task('', 'Run ruff on koru sources and tests').
@@ -20385,6 +21348,7 @@ env_variable('KORU_AGENT_LANE', '*(not set)*', 'Override the agent lane identifi
 env_variable('KORU_PLANFILE_CMD', '*(not set)*', 'Override the planfile CLI executable (empty = PATH lookup).').
 
 % ── TestQL Scenarios ─────────────────────────────────────
+testql_scenario('cli-coru_calibration.testql.toon.yaml', 'cli').
 testql_scenario('cli-koru-live.testql.toon.yaml', 'cli').
 testql_scenario('cli-koru.testql.toon.yaml', 'cli').
 testql_scenario('cli-koru_api.testql.toon.yaml', 'cli').
@@ -20396,6 +21360,7 @@ testql_scenario('generated-from-pytests.testql.toon.yaml', 'integration').
 
 % ── Semantic Facts from SUMD.md ──────────────────────────
 sumd_declared_file('app.doql.less', 'doql').
+sumd_declared_file('testql-scenarios/cli-coru_calibration.testql.toon.yaml', 'testql').
 sumd_declared_file('testql-scenarios/cli-koru-live.testql.toon.yaml', 'testql').
 sumd_declared_file('testql-scenarios/cli-koru.testql.toon.yaml', 'testql').
 sumd_declared_file('testql-scenarios/cli-koru_api.testql.toon.yaml', 'testql').
@@ -20414,11 +21379,11 @@ sumd_interface('cli', '').
 sumd_workflow('test', 'manual').
 sumd_workflow_step('test', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --verbose $(PYTEST_ARGS)').
 sumd_workflow('test-fast', 'manual').
-sumd_workflow_step('test-fast', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --quick $(PYTEST_ARGS)').
+sumd_workflow_step('test-fast', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --critical --quick $(PYTEST_ARGS)').
 sumd_workflow('test-parallel', 'manual').
-sumd_workflow_step('test-parallel', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --fast --maxfail=1 $(PYTEST_ARGS)').
+sumd_workflow_step('test-parallel', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --critical --fast --maxfail=1 $(PYTEST_ARGS)').
 sumd_workflow('test-parallel-fast', 'manual').
-sumd_workflow_step('test-parallel-fast', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --quick $(PYTEST_ARGS)').
+sumd_workflow_step('test-parallel-fast', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --changed --critical --quick $(PYTEST_ARGS)').
 sumd_workflow('test-python-parallel', 'manual').
 sumd_workflow('test-api-parallel', 'manual').
 sumd_workflow_step('test-api-parallel', 1, '$(KORU_PYTEST_ENV) scripts/koru-pytest.sh --fast --maxfail=1 \').
@@ -20702,87 +21667,92 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*261 nodes · 500 edges · 25 modules · CC̄=3.6*
+*263 nodes · 500 edges · 26 modules · CC̄=3.7*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in scripts.koru-soak-monitor)* | 0 | 772 | 0 | **772** |
-| `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 180 | 9 | **189** |
-| `detect_running_ides` *(in src.koruide.ide)* | 13 ⚠ | 29 | 10 | **39** |
+| `print` *(in project)* | 0 | 835 | 0 | **835** |
+| `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 188 | 9 | **197** |
 | `_attempt_plugin_self_heal` *(in packages.coru.src.coru.cli)* | 12 ⚠ | 2 | 36 | **38** |
-| `cmd_start` *(in packages.coru.src.coru.supervisor.cli)* | 15 ⚠ | 1 | 35 | **36** |
-| `manual_vsix_unpack` *(in packages.coru.src.coru.repair.pipeline)* | 14 ⚠ | 2 | 34 | **36** |
+| `detect_running_ides` *(in src.koruide.ide)* | 17 ⚠ | 27 | 11 | **38** |
+| `_diagnose_lane` *(in packages.coru.src.coru.cli)* | 15 ⚠ | 4 | 31 | **35** |
 | `_auto_readiness_gate` *(in packages.coru.src.coru.cli)* | 22 ⚠ | 1 | 33 | **34** |
-| `_diagnose_lane` *(in packages.coru.src.coru.cli)* | 15 ⚠ | 3 | 31 | **34** |
+| `_lane_status_payload` *(in packages.coru.src.coru.cli)* | 19 ⚠ | 12 | 21 | **33** |
+| `load_registry` *(in packages.coru.src.coru.supervisor.registry)* | 5 | 21 | 11 | **32** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 261 | edges: 500 | modules: 25
-# CC̄=3.6
+# generated in 0.46s
+# nodes: 263 | edges: 500 | modules: 26
+# CC̄=3.7
 
 HUBS[20]:
-  scripts.koru-soak-monitor.print
-    CC=0  in:772  out:0  total:772
+  project.print
+    CC=0  in:835  out:0  total:835
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:180  out:9  total:189
-  src.koruide.ide.detect_running_ides
-    CC=13  in:29  out:10  total:39
+    CC=5  in:188  out:9  total:197
   packages.coru.src.coru.cli._attempt_plugin_self_heal
     CC=12  in:2  out:36  total:38
-  packages.coru.src.coru.supervisor.cli.cmd_start
-    CC=15  in:1  out:35  total:36
-  packages.coru.src.coru.repair.pipeline.manual_vsix_unpack
-    CC=14  in:2  out:34  total:36
+  src.koruide.ide.detect_running_ides
+    CC=17  in:27  out:11  total:38
+  packages.coru.src.coru.cli._diagnose_lane
+    CC=15  in:4  out:31  total:35
   packages.coru.src.coru.cli._auto_readiness_gate
     CC=22  in:1  out:33  total:34
-  packages.coru.src.coru.cli._diagnose_lane
-    CC=15  in:3  out:31  total:34
+  packages.coru.src.coru.cli._lane_status_payload
+    CC=19  in:12  out:21  total:33
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
-  packages.coru.src.coru.cli._lane_status_payload
-    CC=14  in:10  out:20  total:30
+  packages.coru.src.coru.cli._infer_default_ide
+    CC=26  in:3  out:28  total:31
   packages.coru.src.coru.cli._run_lane_repair
-    CC=7  in:5  out:24  total:29
-  packages.coru.src.coru.repair.pipeline._emit
+    CC=7  in:6  out:24  total:30
+  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
     CC=2  in:27  out:1  total:28
+  packages.coru.src.coru.cli._repo_root
+    CC=4  in:24  out:4  total:28
   packages.coru.src.coru.repair.diagnostics.collect_problems_from_status
     CC=19  in:0  out:28  total:28
-  packages.coru.src.coru.cli._auto_ownership_gate
-    CC=22  in:2  out:25  total:27
+  packages.coru.src.coru.cli._trace
+    CC=3  in:23  out:5  total:28
   packages.coru.src.coru.repair.diagnostics._collect_plugin_alignment_problems
     CC=19  in:1  out:26  total:27
-  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
-    CC=2  in:26  out:1  total:27
-  packages.coru.src.coru.repair.projector._project_one_session
-    CC=19  in:1  out:25  total:26
+  packages.coru.src.coru.cli._auto_ownership_gate
+    CC=22  in:2  out:25  total:27
+  packages.coru.src.coru.cli._lane_calibration
+    CC=14  in:2  out:25  total:27
   packages.coru.src.coru.cli._run_default_autonomous
     CC=10  in:2  out:24  total:26
   packages.coru.src.coru.cli._maybe_reexec_into_project_python
     CC=12  in:1  out:25  total:26
-  packages.coru.src.coru.cli._terminal_shell_context_fallback
-    CC=21  in:1  out:24  total:25
+  packages.coru.src.coru.repair.projector._project_one_session
+    CC=19  in:1  out:25  total:26
 
 MODULES:
-  packages.coru.src.coru.cli  [154 funcs]
+  packages.coru.src.coru.cli  [179 funcs]
     _add_lane_identifiers  CC=1  out:2
     _add_shell_argument  CC=1  out:1
     _agent_lane_from_auto_args  CC=7  out:7
+    _alive_daemon_ide  CC=17  out:19
+    _alive_daemon_instance  CC=13  out:16
+    _append_desktop_focus_lines  CC=2  out:2
     _attempt_plugin_self_heal  CC=12  out:36
     _auto_default_instance  CC=4  out:3
     _auto_ownership_gate  CC=22  out:25
     _auto_readiness_can_continue_with_keyboard_fallback  CC=7  out:6
-    _auto_readiness_gate  CC=22  out:33
-    _autonomous_startup_chain  CC=2  out:8
-    _binary_path  CC=6  out:8
   packages.coru.src.coru.ecosystem  [5 funcs]
     _default_runner  CC=1  out:2
     _detect_running_plugin_ides  CC=4  out:2
     _local_package_paths  CC=5  out:7
     sync_ecosystem  CC=14  out:13
     sync_python_packages  CC=6  out:5
+  packages.coru.src.coru.ide_detection  [4 funcs]
+    _terminal_shell_context_fallback  CC=22  out:21
+    terminal_host_kind  CC=2  out:1
+    terminal_ide_hint  CC=1  out:1
+    terminal_shell_context  CC=3  out:2
   packages.coru.src.coru.repair.diagnostics  [19 funcs]
     _collect_manage_action_problems  CC=4  out:3
     _collect_manage_issue_problems  CC=4  out:3
@@ -20796,17 +21766,16 @@ MODULES:
     _plugin_row_for_ide  CC=7  out:7
   packages.coru.src.coru.repair.events  [1 funcs]
     aggregate_id_for  CC=1  out:3
-  packages.coru.src.coru.repair.pipeline  [25 funcs]
-    _apply_round_actions  CC=1  out:1
-    _apply_round_resolution  CC=22  out:4
-    _attempt_ensure_daemon  CC=7  out:6
-    _clear_plugin_not_connected_if_ready  CC=5  out:1
-    _emit  CC=2  out:1
-    _emit_problems_detected  CC=2  out:2
-    _emit_session_finished  CC=2  out:3
-    _emit_session_started  CC=1  out:1
-    _execute_step  CC=19  out:20
-    _expected_build_from_problems  CC=9  out:7
+  packages.coru.src.coru.repair.pipeline  [9 funcs]
+    _get_installed_version  CC=6  out:7
+    _installed_extension_dir  CC=4  out:6
+    _read_vsix_version  CC=3  out:5
+    _resolve_repo_vsix  CC=6  out:6
+    _unpack_vsix_archive  CC=4  out:12
+    _vsix_source  CC=2  out:3
+    _vsix_unpack_layout  CC=2  out:4
+    _vsix_unpack_result  CC=4  out:6
+    manual_vsix_unpack  CC=3  out:5
   packages.coru.src.coru.repair.projector  [4 funcs]
     _project_one_session  CC=19  out:25
     format_case_llm  CC=5  out:5
@@ -20816,40 +21785,18 @@ MODULES:
     cases  CC=2  out:2
     cases_for_lane  CC=5  out:4
     format_llm  CC=2  out:3
-  packages.coru.src.coru.repair.registry  [3 funcs]
+  packages.coru.src.coru.repair.registry  [2 funcs]
     playbook_for_codes  CC=5  out:6
-    registry_step  CC=3  out:0
     registry_steps_for_code  CC=3  out:1
-  packages.coru.src.coru.repair.service  [3 funcs]
-    record_diagnosis  CC=2  out:5
-    run_session  CC=1  out:6
+  packages.coru.src.coru.repair.service  [1 funcs]
     run_repair_with_events  CC=3  out:7
   packages.coru.src.coru.repair_registry  [1 funcs]
     run_repair_pipeline  CC=1  out:1
-  packages.coru.src.coru.supervisor.cli  [10 funcs]
-    _print_lanes_human  CC=6  out:6
-    _resolve_koru_argv  CC=3  out:3
-    cmd_active  CC=6  out:14
-    cmd_lanes  CC=2  out:5
-    cmd_refresh  CC=4  out:16
-    cmd_register  CC=4  out:11
-    cmd_remove  CC=2  out:4
-    cmd_start  CC=15  out:35
-    cmd_status  CC=4  out:10
-    cmd_stop  CC=3  out:4
-  packages.coru.src.coru.supervisor.paths  [2 funcs]
+  packages.coru.src.coru.supervisor.paths  [1 funcs]
     registry_path  CC=1  out:1
-    supervisor_url  CC=3  out:5
-  packages.coru.src.coru.supervisor.registry  [5 funcs]
+  packages.coru.src.coru.supervisor.registry  [2 funcs]
     active_lane_pair  CC=2  out:2
     load_registry  CC=5  out:11
-    register_lane  CC=14  out:15
-    remove_lane  CC=3  out:5
-    set_active_lane  CC=2  out:5
-  packages.coru.src.coru.supervisor.service  [3 funcs]
-    read_supervisor_pid  CC=3  out:6
-    stop_supervisor_process  CC=5  out:11
-    supervisor_running  CC=3  out:2
   packages.koruenv.src.koruenv.cli  [6 funcs]
     _emit_log  CC=5  out:7
     _iso_ts  CC=1  out:4
@@ -20864,25 +21811,36 @@ MODULES:
     resolve_lane_socket_for_os  CC=5  out:10
     validate_ide  CC=3  out:6
     validate_instance  CC=3  out:4
+  packages.nlpshim.src.nlpshim.client  [5 funcs]
+    __init__  CC=2  out:2
+    parse_intent  CC=15  out:20
+    _use_intent_ir  CC=2  out:1
+    analyze_text_structure  CC=2  out:2
+    get_nlp2dsl_client  CC=2  out:0
+  packages.nlpshim.src.nlpshim.conversation_client  [3 funcs]
+    __init__  CC=2  out:2
+    export_trace  CC=1  out:2
+    message  CC=9  out:22
+  packages.nlpshim.src.nlpshim.conversation_test_api  [2 funcs]
+    complete_missing_fields  CC=1  out:2
+    parse_conversation_step  CC=10  out:16
   plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
     next  CC=2  out:1
   plugins.koru-autopilot-shared.src.bridge-network  [1 funcs]
     dispatch  CC=10  out:6
-  scripts.koru-soak-monitor  [1 funcs]
+  project  [1 funcs]
     print  CC=0  out:0
   src.koru.autonomy.env  [1 funcs]
-    plugin_required_for_ide  CC=7  out:6
+    plugin_required_for_ide  CC=8  out:7
   src.koru.autonomy.ide_operator_guidance  [1 funcs]
     terminal_kind_label  CC=3  out:0
   src.koru.ide_adapters.ide_reload  [2 funcs]
     connect_via_command_palette  CC=1  out:1
-    try_reload_vscode_family_ide  CC=9  out:11
-  src.koru.scripts.koru-autoloop  [1 funcs]
-    run_koru  CC=0  out:0
+    try_reload_vscode_family_ide  CC=12  out:15
   src.koru.wizard.gui.static.wizard  [1 funcs]
     list  CC=5  out:9
   src.koruide.ide  [2 funcs]
-    detect_running_ides  CC=13  out:10
+    detect_running_ides  CC=17  out:11
     detect_terminal_host_context  CC=9  out:9
 
 EDGES:
@@ -20895,29 +21853,40 @@ EDGES:
   packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.cli._run_with_overlay
   packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.lane.build_lane_environ
   packages.koruenv.src.koruenv.cli.main → packages.koruenv.src.koruenv.cli._emit_log
-  packages.koruenv.src.koruenv.cli.main → scripts.koru-soak-monitor.print
+  packages.koruenv.src.koruenv.cli.main → project.print
   packages.koruenv.src.koruenv.lane.resolve_lane_socket → packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os
   packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os → packages.koruenv.src.koruenv.lane.validate_instance
   packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os → packages.koruenv.src.koruenv.lane._fallback_temp_dir
   packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.validate_ide
   packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.validate_instance
   packages.koruenv.src.koruenv.lane.build_lane_environ → packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.__init__ → packages.nlpshim.src.nlpshim.client.get_nlp2dsl_client
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message → src.koru.wizard.gui.static.wizard.list
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.export_trace → src.koru.wizard.gui.static.wizard.list
+  packages.nlpshim.src.nlpshim.client.analyze_text_structure → packages.nlpshim.src.nlpshim.client._use_intent_ir
+  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.__init__ → packages.nlpshim.src.nlpshim.client.get_nlp2dsl_client
+  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.parse_intent → packages.nlpshim.src.nlpshim.client.analyze_text_structure
+  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.parse_intent → src.koru.wizard.gui.static.wizard.list
+  packages.nlpshim.src.nlpshim.conversation_test_api.parse_conversation_step → src.koru.wizard.gui.static.wizard.list
+  packages.nlpshim.src.nlpshim.conversation_test_api.complete_missing_fields → src.koru.wizard.gui.static.wizard.list
   packages.coru.src.coru.ecosystem.sync_python_packages → packages.coru.src.coru.ecosystem._local_package_paths
   packages.coru.src.coru.ecosystem._default_runner → src.koru.wizard.gui.static.wizard.list
   packages.coru.src.coru.ecosystem._detect_running_plugin_ides → src.koruide.ide.detect_running_ides
   packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem.sync_python_packages
   packages.coru.src.coru.ecosystem.sync_ecosystem → packages.coru.src.coru.ecosystem._detect_running_plugin_ides
+  packages.coru.src.coru.cli._trace → project.print
+  packages.coru.src.coru.cli._trace → packages.coru.src.coru.cli._trace_enabled
   packages.coru.src.coru.cli._current_log_format → packages.coru.src.coru.cli._normalize_log_format
   packages.coru.src.coru.cli._emit_log → packages.coru.src.coru.cli._current_log_format
-  packages.coru.src.coru.cli._emit_log → scripts.koru-soak-monitor.print
-  packages.coru.src.coru.cli._print_runtime_versions → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._emit_log → project.print
+  packages.coru.src.coru.cli._print_runtime_versions → project.print
   packages.coru.src.coru.cli._print_runtime_versions → packages.coru.src.coru.cli._distribution_version
-  packages.coru.src.coru.cli._startup_mode → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._startup_mode → project.print
   packages.coru.src.coru.cli._autonomous_startup_chain → packages.coru.src.coru.cli._resolve_defaults
   packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._agent_lane_from_auto_args
   packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._resolve_defaults
   packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._terminal_shell_context
-  packages.coru.src.coru.cli._run_default_autonomous → scripts.koru-soak-monitor.print
+  packages.coru.src.coru.cli._run_default_autonomous → project.print
   packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._print_runtime_versions
   packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._print_troubleshooting_log_locations
   packages.coru.src.coru.cli._run_default_autonomous → packages.coru.src.coru.cli._repo_root
@@ -20925,24 +21894,15 @@ EDGES:
   packages.coru.src.coru.cli._running_ide_choices → src.koruide.ide.detect_running_ides
   packages.coru.src.coru.cli._supervisor_project_choices → packages.coru.src.coru.supervisor.registry.load_registry
   packages.coru.src.coru.cli._supervisor_project_choices → packages.coru.src.coru.supervisor.paths.registry_path
-  packages.coru.src.coru.cli._instance_for_ide_choice → packages.coru.src.coru.cli._instance_matches_ide
-  packages.coru.src.coru.cli._instance_for_ide_choice → packages.coru.src.coru.supervisor.registry.load_registry
-  packages.coru.src.coru.cli._instance_for_ide_choice → packages.coru.src.coru.supervisor.paths.registry_path
-  packages.coru.src.coru.cli._choose_option → scripts.koru-soak-monitor.print
-  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._running_ide_choices
-  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._supervisor_project_choices
-  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._repo_root
-  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._terminal_shell_context
-  packages.coru.src.coru.cli._interactive_default_auto_args → packages.coru.src.coru.cli._choose_option
-  packages.coru.src.coru.cli._extract_global_flags → src.koru.wizard.gui.static.wizard.list
-  packages.coru.src.coru.cli._extract_global_flags → packages.coru.src.coru.cli._normalize_log_format
 ```
 
 ## Test Contracts
 
 *Scenarios as contract signatures — what the system guarantees.*
 
-### Cli (7)
+### Cli (8)
+
+**`coru calibration command (WUP quick / dry-run safe)`**
 
 **`koru Command Tests (live — not for WUP --dry-run quick probes)`**
 

@@ -1,223 +1,215 @@
 flowchart LR
-%% generated in 0.56s
+%% generated in 1.52s
     subgraph packages__coru
-        packages__coru__src__coru__cli___chat_ensure_daemon["_chat_ensure_daemon"]
-        packages__coru__src__coru__cli__main["main"]
-        packages__coru__src__coru__cli___execute_plans["_execute_plans"]
-        packages__coru__src__coru__cli___interactive_default_auto_args["_interactive_default_auto_args"]
-        packages__coru__src__coru__cli___auto_default_instance["_auto_default_instance"]
-        packages__coru__src__coru__cli___lane_status_raw["_lane_status_raw"]
-        packages__coru__src__coru__cli___current_log_format["_current_log_format"]
-        packages__coru__src__coru__cli___dispatch_daemon_command["_dispatch_daemon_command"]
-        packages__coru__src__coru__cli___remember_project_ide_settings["_remember_project_ide_settings"]
-        packages__coru__src__coru__cli___lane_env["_lane_env"]
-        packages__coru__src__coru__cli___build_plan_chain["_build_plan_chain"]
-        packages__coru__src__coru__cli___choose_option["_choose_option"]
-        packages__coru__src__coru__repair_registry__run_repair_pipeline["run_repair_pipeline"]
-        packages__coru__src__coru__cli___run_auto_with_readiness["_run_auto_with_readiness"]
-        packages__coru__src__coru__repair__query__RepairHistoryQuery__format_llm["format_llm"]
-        packages__coru__src__coru__cli___tool_available["_tool_available"]
-        packages__coru__src__coru__cli___dispatch_repair_command["_dispatch_repair_command"]
-        packages__coru__src__coru__cli___project_for_lane["_project_for_lane"]
-        packages__coru__src__coru__cli___lane_manage_fix["_lane_manage_fix"]
-        packages__coru__src__coru__cli___normalize_log_format["_normalize_log_format"]
-        packages__coru__src__coru__cli___drive_result_from_payload["_drive_result_from_payload"]
-        packages__coru__src__coru__cli___ensure_daemon_running["_ensure_daemon_running"]
-        packages__coru__src__coru__cli___chat_handle_drive["_chat_handle_drive"]
-        packages__coru__src__coru__cli___dispatch_auto_command["_dispatch_auto_command"]
-        packages__coru__src__coru__cli___add_shell_argument["_add_shell_argument"]
-        packages__coru__src__coru__repair__registry__registry_steps_for_code["registry_steps_for_code"]
-        packages__coru__src__coru__repair__projector__project_repair_cases["project_repair_cases"]
-        packages__coru__src__coru__repair__diagnostics___collect_manage_action_problems["_collect_manage_action_problem"]
-        packages__coru__src__coru__repair__diagnostics___problem_from_manage_action["_problem_from_manage_action"]
-        packages__coru__src__coru__cli___dispatch_doctor_command["_dispatch_doctor_command"]
-        packages__coru__src__coru__cli___warn_python_env_mismatch["_warn_python_env_mismatch"]
-        packages__coru__src__coru__cli___project_ide_settings_path["_project_ide_settings_path"]
-        packages__coru__src__coru__ecosystem___default_runner["_default_runner"]
-        packages__coru__src__coru__cli___workspace_default_instance["_workspace_default_instance"]
-        packages__coru__src__coru__cli___chat_drive_with_retry["_chat_drive_with_retry"]
-        packages__coru__src__coru__cli___resolve_defaults["_resolve_defaults"]
-        packages__coru__src__coru__cli___cmd_sync["_cmd_sync"]
-        packages__coru__src__coru__cli___register_interaction_commands["_register_interaction_commands"]
-        packages__coru__src__coru__repair__events__aggregate_id_for["aggregate_id_for"]
-        packages__coru__src__coru__cli___print_runtime_versions["_print_runtime_versions"]
-        packages__coru__src__coru__cli___warn_koru_exec_outside_repo["_warn_koru_exec_outside_repo"]
-        packages__coru__src__coru__repair__projector___project_one_session["_project_one_session"]
-        packages__coru__src__coru__cli___supervisor_lane_project["_supervisor_lane_project"]
-        packages__coru__src__coru__cli___auto_ownership_gate["_auto_ownership_gate"]
-        packages__coru__src__coru__cli___lane_chat_prompt["_lane_chat_prompt"]
-        packages__coru__src__coru__cli___workspace_settings_path_for_ide["_workspace_settings_path_for_i"]
-        packages__coru__src__coru__cli___lane_status_payload["_lane_status_payload"]
-        packages__coru__src__coru__cli___lane_auto["_lane_auto"]
-        packages__coru__src__coru__cli___repair_strict_handshake_cycle["_repair_strict_handshake_cycle"]
-        packages__coru__src__coru__cli___register_operational_commands["_register_operational_commands"]
-        packages__coru__src__coru__repair__diagnostics___paste_risk_problem["_paste_risk_problem"]
-        packages__coru__src__coru__cli___dispatch_lane_command["_dispatch_lane_command"]
-        packages__coru__src__coru__ecosystem__sync_python_packages["sync_python_packages"]
-        packages__coru__src__coru__repair__diagnostics___submit_unverified_problem["_submit_unverified_problem"]
-        packages__coru__src__coru__cli___workspace_lane_hint["_workspace_lane_hint"]
-        packages__coru__src__coru__cli___register_repair_command["_register_repair_command"]
-        packages__coru__src__coru__cli___distribution_version["_distribution_version"]
-        packages__coru__src__coru__cli___local_module_source_dir["_local_module_source_dir"]
-        packages__coru__src__coru__cli___infer_default_instance["_infer_default_instance"]
-        packages__coru__src__coru__cli___attempt_plugin_self_heal["_attempt_plugin_self_heal"]
-        packages__coru__src__coru__cli___target_plugin_rows["_target_plugin_rows"]
-        packages__coru__src__coru__cli___run_default_autonomous["_run_default_autonomous"]
-        packages__coru__src__coru__cli___binary_path["_binary_path"]
-        packages__coru__src__coru__cli___import_koru_readiness_module["_import_koru_readiness_module"]
-        packages__coru__src__coru__cli___terminal_shell_context["_terminal_shell_context"]
-        packages__coru__src__coru__cli___maybe_reexec_into_project_python["_maybe_reexec_into_project_pyt"]
-        packages__coru__src__coru__cli___fetch_drive_payload["_fetch_drive_payload"]
-        packages__coru__src__coru__cli___repo_root["_repo_root"]
-        packages__coru__src__coru__cli___instance_for_ide_choice["_instance_for_ide_choice"]
-        packages__coru__src__coru__cli___environment_default_instance["_environment_default_instance"]
-        packages__coru__src__coru__cli___tool_argv["_tool_argv"]
-        packages__coru__src__coru__cli___print_terminal_context["_print_terminal_context"]
-        packages__coru__src__coru__cli___dispatch_text_command["_dispatch_text_command"]
-        packages__coru__src__coru__repair__query__RepairHistoryQuery__cases_for_lane["cases_for_lane"]
-        packages__coru__src__coru__cli___chat_loop["_chat_loop"]
-        packages__coru__src__coru__cli___python_module_exists["_python_module_exists"]
-        packages__coru__src__coru__cli___preflight_failure_ok_to_continue["_preflight_failure_ok_to_conti"]
-        packages__coru__src__coru__cli___repair_connect_plugin["_repair_connect_plugin"]
-        packages__coru__src__coru__cli___lane_status["_lane_status"]
-        packages__coru__src__coru__cli___instance_from_socket_path["_instance_from_socket_path"]
-        packages__coru__src__coru__cli___print_troubleshooting_log_locations["_print_troubleshooting_log_loc"]
-        packages__coru__src__coru__cli___setup_environment["_setup_environment"]
-        packages__coru__src__coru__supervisor__registry__active_lane_pair["active_lane_pair"]
-        packages__coru__src__coru__cli___chat_print_header["_chat_print_header"]
-        packages__coru__src__coru__ecosystem___local_package_paths["_local_package_paths"]
-        packages__coru__src__coru__cli___diagnose_runtime_consistency["_diagnose_runtime_consistency"]
-        packages__coru__src__coru__repair__diagnostics___installed_extension_dir["_installed_extension_dir"]
-        packages__coru__src__coru__cli___load_project_ide_settings["_load_project_ide_settings"]
-        packages__coru__src__coru__cli___koru_exec_argv["_koru_exec_argv"]
-        packages__coru__src__coru__cli___extract_global_flags["_extract_global_flags"]
-        packages__coru__src__coru__ecosystem___detect_running_plugin_ides["_detect_running_plugin_ides"]
-        packages__coru__src__coru__cli___project_ide_settings_lane["_project_ide_settings_lane"]
-        packages__coru__src__coru__cli___ensure_commands["_ensure_commands"]
-        packages__coru__src__coru__cli___heuristic_plan["_heuristic_plan"]
-        packages__coru__src__coru__repair__diagnostics__collect_problems_from_manage_report["collect_problems_from_manage_r"]
-        packages__coru__src__coru__cli___chat_handle_command["_chat_handle_command"]
-        packages__coru__src__coru__cli___maybe_run_default_mode["_maybe_run_default_mode"]
-        packages__coru__src__coru__cli___dispatch_optional_command["_dispatch_optional_command"]
-        packages__coru__src__coru__cli___execute_plan["_execute_plan"]
-        packages__coru__src__coru__cli___refactor_intent["_refactor_intent"]
-        packages__coru__src__coru__repair__diagnostics___collect_plugin_alignment_problems["_collect_plugin_alignment_prob"]
-        packages__coru__src__coru__cli___register_sync_command["_register_sync_command"]
-        packages__coru__src__coru__cli___run["_run"]
-        packages__coru__src__coru__cli___env_enabled["_env_enabled"]
-        packages__coru__src__coru__cli___add_lane_identifiers["_add_lane_identifiers"]
-        packages__coru__src__coru__cli___workspace_socket_path_for_ide["_workspace_socket_path_for_ide"]
-        packages__coru__src__coru__repair__service__run_repair_with_events["run_repair_with_events"]
-        packages__coru__src__coru__repair__diagnostics___plugin_row_for_ide["_plugin_row_for_ide"]
-        packages__coru__src__coru__cli___default_lane["_default_lane"]
-        packages__coru__src__coru__repair__query__RepairHistoryQuery__cases["cases"]
-        packages__coru__src__coru__repair__projector__format_case_llm["format_case_llm"]
-        packages__coru__src__coru__repair__diagnostics___focus_risk_problem["_focus_risk_problem"]
-        packages__coru__src__coru__cli___koru_autopilot_env_payload["_koru_autopilot_env_payload"]
-        packages__coru__src__coru__cli___run_koru_lane["_run_koru_lane"]
         packages__coru__src__coru__cli___start_autopilot_daemon_for_lane["_start_autopilot_daemon_for_la"]
-        packages__coru__src__coru__cli___coru_readiness_strict["_coru_readiness_strict"]
-        packages__coru__src__coru__cli___startup_mode["_startup_mode"]
-        packages__coru__src__coru__cli___collect_lane_repair_problems["_collect_lane_repair_problems"]
-        packages__coru__src__coru__cli___dispatch_command["_dispatch_command"]
-        packages__coru__src__coru__cli___print_ide_control_context["_print_ide_control_context"]
-        packages__coru__src__coru__cli___run_lane_repair["_run_lane_repair"]
-        packages__coru__src__coru__cli___manage_repair_context["_manage_repair_context"]
-        packages__coru__src__coru__cli___lane_alignment_problems["_lane_alignment_problems"]
-        packages__coru__src__coru__cli___repair_reload_ide["_repair_reload_ide"]
-        packages__coru__src__coru__cli___project_ide_settings_instance["_project_ide_settings_instance"]
-        packages__coru__src__coru__repair__diagnostics__collect_problems_from_drive_result["collect_problems_from_drive_re"]
-        packages__coru__src__coru__cli___emit_log["_emit_log"]
-        packages__coru__src__coru__cli___register_doctor_command["_register_doctor_command"]
-        packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell["_doctor_or_daemon_requires_sys"]
-        packages__coru__src__coru__cli___bind_lane_session["_bind_lane_session"]
-        packages__coru__src__coru__cli___fetch_manage_report["_fetch_manage_report"]
-        packages__coru__src__coru__repair__registry__playbook_for_codes["playbook_for_codes"]
-        packages__coru__src__coru__cli___build_parser["_build_parser"]
-        packages__coru__src__coru__repair__diagnostics__collect_problems_from_status["collect_problems_from_status"]
-        packages__coru__src__coru__cli___cmd_repair_history["_cmd_repair_history"]
-        packages__coru__src__coru__cli___autonomous_startup_chain["_autonomous_startup_chain"]
-        packages__coru__src__coru__cli___supervisor_lane_defaults["_supervisor_lane_defaults"]
-        packages__coru__src__coru__cli___status_has_keyboard_backend["_status_has_keyboard_backend"]
-        packages__coru__src__coru__cli___auto_readiness_gate["_auto_readiness_gate"]
-        packages__coru__src__coru__cli___instance_matches_ide["_instance_matches_ide"]
-        packages__coru__src__coru__cli___supervisor_default_instance["_supervisor_default_instance"]
-        packages__coru__src__coru__cli___dispatch_chat_command["_dispatch_chat_command"]
-        packages__coru__src__coru__supervisor__registry__load_registry["load_registry"]
-        packages__coru__src__coru__cli___lane_subprocess_env["_lane_subprocess_env"]
-        packages__coru__src__coru__cli___diagnose_lane["_diagnose_lane"]
-        packages__coru__src__coru__cli___gc_stale_lane_socket["_gc_stale_lane_socket"]
-        packages__coru__src__coru__ecosystem__sync_ecosystem["sync_ecosystem"]
-        packages__coru__src__coru__cli___auto_readiness_can_continue_with_keyboard_fallback["_auto_readiness_can_continue_w"]
-        packages__coru__src__coru__cli___local_install_target["_local_install_target"]
-        packages__coru__src__coru__cli___normalize_lane_pair["_normalize_lane_pair"]
-        packages__coru__src__coru__cli___register_lane_commands["_register_lane_commands"]
-        packages__coru__src__coru__cli___infer_default_ide["_infer_default_ide"]
-        packages__coru__src__coru__cli___dispatch_supervisor_command["_dispatch_supervisor_command"]
-        packages__coru__src__coru__cli___terminal_host_kind["_terminal_host_kind"]
-        packages__coru__src__coru__cli___vscode_family_env_hint["_vscode_family_env_hint"]
-        packages__coru__src__coru__supervisor__paths__registry_path["registry_path"]
-        packages__coru__src__coru__cli___cmd_exists["_cmd_exists"]
-        packages__coru__src__coru__cli___diagnose_readiness_alignment["_diagnose_readiness_alignment"]
-        packages__coru__src__coru__cli___is_text_shorthand["_is_text_shorthand"]
-        packages__coru__src__coru__cli___agent_lane_from_auto_args["_agent_lane_from_auto_args"]
-        packages__coru__src__coru__cli___running_ide_choices["_running_ide_choices"]
-        packages__coru__src__coru__cli___status_has_plugin_for_ide["_status_has_plugin_for_ide"]
-        packages__coru__src__coru__repair__diagnostics___dedupe_problems["_dedupe_problems"]
-        packages__coru__src__coru__repair__diagnostics___drive_intent_unverified_problem["_drive_intent_unverified_probl"]
-        packages__coru__src__coru__cli___run_with_lane_environment["_run_with_lane_environment"]
-        packages__coru__src__coru__cli___supervisor_project_choices["_supervisor_project_choices"]
-        packages__coru__src__coru__cli___terminal_ide_hint["_terminal_ide_hint"]
-        packages__coru__src__coru__cli___runtime_readiness_problems["_runtime_readiness_problems"]
-        packages__coru__src__coru__cli___run_with_resolved_lane_env["_run_with_resolved_lane_env"]
-        packages__coru__src__coru__cli___lane_doctor["_lane_doctor"]
-        packages__coru__src__coru__cli___ide_from_instance["_ide_from_instance"]
-        packages__coru__src__coru__cli___maybe_warn_lane_override["_maybe_warn_lane_override"]
-        packages__coru__src__coru__repair__diagnostics__dedupe_problems["dedupe_problems"]
-        packages__coru__src__coru__cli___cmd_repair_run["_cmd_repair_run"]
-        packages__coru__src__coru__cli___ide_from_vscode_pid["_ide_from_vscode_pid"]
-        packages__coru__src__coru__cli___llm_plan["_llm_plan"]
-        packages__coru__src__coru__repair__diagnostics___collect_manage_issue_problems["_collect_manage_issue_problems"]
-        packages__coru__src__coru__cli___restore_log_format["_restore_log_format"]
+        packages__coru__src__coru__cli___lane_status["_lane_status"]
         packages__coru__src__coru__cli___restart_stale_lane_daemon["_restart_stale_lane_daemon"]
-        packages__coru__src__coru__cli___chat_llm_enabled["_chat_llm_enabled"]
-        packages__coru__src__coru__cli___project_venv_python["_project_venv_python"]
-        packages__coru__src__coru__cli___llm_rewrite_chat_prompt["_llm_rewrite_chat_prompt"]
-        packages__coru__src__coru__cli___warn_lane_project_mismatch["_warn_lane_project_mismatch"]
-        packages__coru__src__coru__cli___problem_from_readiness_issue["_problem_from_readiness_issue"]
-        packages__coru__src__coru__cli___terminal_shell_context_fallback["_terminal_shell_context_fallba"]
-        packages__coru__src__coru__cli___lane_daemon_foreground["_lane_daemon_foreground"]
-        packages__coru__src__coru__repair__projector__format_history_llm["format_history_llm"]
+        packages__coru__src__coru__cli___lane_manage_fix["_lane_manage_fix"]
+        packages__coru__src__coru__ecosystem___detect_running_plugin_ides["_detect_running_plugin_ides"]
+        packages__coru__src__coru__cli___format_calibration_desktop_report["_format_calibration_desktop_re"]
+        packages__coru__src__coru__cli___agent_lane_from_auto_args["_agent_lane_from_auto_args"]
+        packages__coru__src__coru__cli___koru_subprocess_timeout["_koru_subprocess_timeout"]
+        packages__coru__src__coru__cli___register_operational_commands["_register_operational_commands"]
+        packages__coru__src__coru__cli___env_enabled["_env_enabled"]
+        packages__coru__src__coru__cli___supervisor_project_choices["_supervisor_project_choices"]
+        packages__coru__src__coru__cli___run_with_resolved_lane_env["_run_with_resolved_lane_env"]
+        packages__coru__src__coru__cli___testql_run_oql["_testql_run_oql"]
+        packages__coru__src__coru__cli___auto_readiness_can_continue_with_keyboard_fallback["_auto_readiness_can_continue_w"]
+        packages__coru__src__coru__cli___chat_loop["_chat_loop"]
+        packages__coru__src__coru__cli___startup_mode["_startup_mode"]
+        packages__coru__src__coru__cli___run_default_autonomous["_run_default_autonomous"]
+        packages__coru__src__coru__cli___workspace_settings_path_for_ide["_workspace_settings_path_for_i"]
+        packages__coru__src__coru__cli___project_ide_settings_instance["_project_ide_settings_instance"]
+        packages__coru__src__coru__cli___add_lane_identifiers["_add_lane_identifiers"]
+        packages__coru__src__coru__cli___target_plugin_rows["_target_plugin_rows"]
         packages__coru__src__coru__cli___running_ide_summary["_running_ide_summary"]
-        packages__coru__src__coru__repair__diagnostics___problem_from_manage_issue["_problem_from_manage_issue"]
+        packages__coru__src__coru__cli___is_lane_plugin_connected["_is_lane_plugin_connected"]
+        packages__coru__src__coru__cli___fetch_manage_report["_fetch_manage_report"]
+        packages__coru__src__coru__cli___infer_default_instance["_infer_default_instance"]
+        packages__coru__src__coru__cli___workspace_lane_hint["_workspace_lane_hint"]
+        packages__coru__src__coru__cli___chat_drive_with_retry["_chat_drive_with_retry"]
+        packages__coru__src__coru__cli___choose_option["_choose_option"]
+        packages__coru__src__coru__cli___run_lane_repair["_run_lane_repair"]
+        packages__coru__src__coru__ecosystem__sync_python_packages["sync_python_packages"]
+        packages__coru__src__coru__cli___register_interaction_commands["_register_interaction_commands"]
+        packages__coru__src__coru__cli___print_troubleshooting_log_locations["_print_troubleshooting_log_loc"]
+        packages__coru__src__coru__cli___ensure_daemon_running["_ensure_daemon_running"]
+        packages__coru__src__coru__cli___terminal_shell_context_fallback["_terminal_shell_context_fallba"]
+        packages__coru__src__coru__cli___heuristic_plan["_heuristic_plan"]
+        packages__coru__src__coru__cli___workspace_default_instance["_workspace_default_instance"]
+        packages__coru__src__coru__cli___instance_from_socket_path["_instance_from_socket_path"]
+        packages__coru__src__coru__cli___run_calibration_desktop_preflight["_run_calibration_desktop_prefl"]
+        packages__coru__src__coru__cli___diagnose_runtime_consistency["_diagnose_runtime_consistency"]
+        packages__coru__src__coru__cli___project_venv_python["_project_venv_python"]
+        packages__coru__src__coru__cli___print_terminal_context["_print_terminal_context"]
+        packages__coru__src__coru__cli___format_calibration_bridge_report["_format_calibration_bridge_rep"]
+        packages__coru__src__coru__cli___lane_auto["_lane_auto"]
+        packages__coru__src__coru__cli___maybe_reexec_into_project_python["_maybe_reexec_into_project_pyt"]
+        packages__coru__src__coru__cli___cmd_exists["_cmd_exists"]
+        packages__coru__src__coru__cli___maybe_run_default_mode["_maybe_run_default_mode"]
+        packages__coru__src__coru__cli___repair_strict_handshake_cycle["_repair_strict_handshake_cycle"]
+        packages__coru__src__coru__supervisor__paths__registry_path["registry_path"]
+        packages__coru__src__coru__cli___alive_daemon_ide["_alive_daemon_ide"]
+        packages__coru__src__coru__cli___runtime_readiness_problems["_runtime_readiness_problems"]
+        packages__coru__src__coru__cli___instance_matches_ide["_instance_matches_ide"]
+        packages__coru__src__coru__cli___repair_connect_plugin["_repair_connect_plugin"]
+        packages__coru__src__coru__cli___calibration_desktop_focus_titles["_calibration_desktop_focus_tit"]
+        packages__coru__src__coru__cli___auto_readiness_gate["_auto_readiness_gate"]
+        packages__coru__src__coru__cli___refactor_intent["_refactor_intent"]
+        packages__coru__src__coru__cli___problem_from_readiness_issue["_problem_from_readiness_issue"]
+        packages__coru__src__coru__cli___trace_enabled["_trace_enabled"]
+        packages__coru__src__coru__cli___bind_lane_session["_bind_lane_session"]
+        packages__coru__src__coru__cli___emit_log["_emit_log"]
+        packages__coru__src__coru__cli___supervisor_lane_project["_supervisor_lane_project"]
+        packages__coru__src__coru__cli___lane_status_raw["_lane_status_raw"]
+        packages__coru__src__coru__cli___register_sync_command["_register_sync_command"]
+        packages__coru__src__coru__cli___import_koru_readiness_module["_import_koru_readiness_module"]
+        packages__coru__src__coru__cli___interactive_default_auto_args["_interactive_default_auto_args"]
+        packages__coru__src__coru__cli___llm_plan["_llm_plan"]
+        packages__coru__src__coru__cli___lane_daemon_foreground["_lane_daemon_foreground"]
+        packages__coru__src__coru__cli___gc_stale_lane_socket["_gc_stale_lane_socket"]
+        packages__coru__src__coru__cli___ide_from_instance["_ide_from_instance"]
+        packages__coru__src__coru__cli___distribution_version["_distribution_version"]
+        packages__coru__src__coru__cli___ensure_commands["_ensure_commands"]
+        packages__coru__src__coru__cli___dispatch_lane_command["_dispatch_lane_command"]
+        packages__coru__src__coru__cli___project_for_lane["_project_for_lane"]
+        packages__coru__src__coru__cli___warn_python_env_mismatch["_warn_python_env_mismatch"]
+        packages__coru__src__coru__ecosystem__sync_ecosystem["sync_ecosystem"]
+        packages__coru__src__coru__cli___lane_chat_prompt["_lane_chat_prompt"]
+        packages__coru__src__coru__cli___run_auto_with_readiness["_run_auto_with_readiness"]
+        packages__coru__src__coru__cli___print_runtime_versions["_print_runtime_versions"]
+        packages__coru__src__coru__cli___diagnose_readiness_alignment["_diagnose_readiness_alignment"]
+        packages__coru__src__coru__cli___manage_repair_context["_manage_repair_context"]
+        packages__coru__src__coru__cli___koru_exec_argv["_koru_exec_argv"]
+        packages__coru__src__coru__cli___fetch_drive_payload["_fetch_drive_payload"]
+        packages__coru__src__coru__cli___print_ide_control_context["_print_ide_control_context"]
+        packages__coru__src__coru__cli___attempt_plugin_self_heal["_attempt_plugin_self_heal"]
+        packages__coru__src__coru__cli___infer_default_ide["_infer_default_ide"]
+        packages__coru__src__coru__cli___koru_autopilot_env_payload["_koru_autopilot_env_payload"]
+        packages__coru__src__coru__cli___remember_project_ide_settings["_remember_project_ide_settings"]
+        packages__coru__src__coru__cli___environment_default_instance["_environment_default_instance"]
+        packages__coru__src__coru__cli___materialize_calibration_desktop_oql["_materialize_calibration_deskt"]
+        packages__coru__src__coru__cli___cmd_repair_history["_cmd_repair_history"]
+        packages__coru__src__coru__cli___chat_handle_command["_chat_handle_command"]
+        packages__coru__src__coru__cli___lane_subprocess_env["_lane_subprocess_env"]
+        packages__coru__src__coru__cli___llm_rewrite_chat_prompt["_llm_rewrite_chat_prompt"]
+        packages__coru__src__coru__cli___testql_run_scenario["_testql_run_scenario"]
+        packages__coru__src__coru__cli___run_with_lane_environment["_run_with_lane_environment"]
+        packages__coru__src__coru__cli___repo_root["_repo_root"]
+        packages__coru__src__coru__cli___tool_available["_tool_available"]
+        packages__coru__src__coru__cli___status_has_plugin_for_ide["_status_has_plugin_for_ide"]
+        packages__coru__src__coru__cli___maybe_warn_lane_override["_maybe_warn_lane_override"]
+        packages__coru__src__coru__cli___binary_path["_binary_path"]
+        packages__coru__src__coru__cli___build_parser["_build_parser"]
+        packages__coru__src__coru__cli___instance_for_ide_choice["_instance_for_ide_choice"]
+        packages__coru__src__coru__supervisor__registry__load_registry["load_registry"]
+        packages__coru__src__coru__cli___supervisor_lane_defaults["_supervisor_lane_defaults"]
+        packages__coru__src__coru__cli___lane_drive_capture["_lane_drive_capture"]
+        packages__coru__src__coru__cli___auto_ownership_gate["_auto_ownership_gate"]
+        packages__coru__src__coru__supervisor__registry__active_lane_pair["active_lane_pair"]
+        packages__coru__src__coru__cli___tool_argv["_tool_argv"]
+        packages__coru__src__coru__cli___terminal_ide_hint["_terminal_ide_hint"]
+        packages__coru__src__coru__cli___desktop_capture_enabled["_desktop_capture_enabled"]
+        packages__coru__src__coru__cli___lane_env["_lane_env"]
+        packages__coru__src__coru__cli___supervisor_default_instance["_supervisor_default_instance"]
+        packages__coru__src__coru__cli___auto_default_instance["_auto_default_instance"]
+        packages__coru__src__coru__cli___write_calibration_bridge_testql["_write_calibration_bridge_test"]
+        packages__coru__src__coru__cli___run_calibration_bridge_preflight["_run_calibration_bridge_prefli"]
+        packages__coru__src__coru__cli___lane_calibration["_lane_calibration"]
+        packages__coru__src__coru__cli___lane_status_payload["_lane_status_payload"]
+        packages__coru__src__coru__cli___normalize_lane_pair["_normalize_lane_pair"]
+        packages__coru__src__coru__cli___default_lane["_default_lane"]
+        packages__coru__src__coru__cli___register_calibration_command["_register_calibration_command"]
+        packages__coru__src__coru__cli___execute_plans["_execute_plans"]
         packages__coru__src__coru__cli___koruenv_run_fallback["_koruenv_run_fallback"]
+        packages__coru__src__coru__cli___current_log_format["_current_log_format"]
+        packages__coru__src__coru__cli___setup_environment["_setup_environment"]
+        packages__coru__src__coru__cli___local_install_target["_local_install_target"]
+        packages__coru__src__coru__cli___parse_drive_json_from_stdout["_parse_drive_json_from_stdout"]
+        packages__coru__src__coru__cli___diagnose_lane["_diagnose_lane"]
+        packages__coru__src__coru__cli___register_doctor_command["_register_doctor_command"]
+        packages__coru__src__coru__cli___project_ide_settings_path["_project_ide_settings_path"]
+        packages__coru__src__coru__cli___calibration_desktop_template_path["_calibration_desktop_template_"]
+        packages__coru__src__coru__cli___python_module_exists["_python_module_exists"]
+        packages__coru__src__coru__cli___autonomous_startup_chain["_autonomous_startup_chain"]
+        packages__coru__src__coru__cli___chat_llm_enabled["_chat_llm_enabled"]
+        packages__coru__src__coru__cli___terminal_shell_context["_terminal_shell_context"]
+        packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell["_doctor_or_daemon_requires_sys"]
+        packages__coru__src__coru__cli___preflight_failure_ok_to_continue["_preflight_failure_ok_to_conti"]
+        packages__coru__src__coru__cli___lane_alignment_problems["_lane_alignment_problems"]
+        packages__coru__src__coru__cli___warn_koru_exec_outside_repo["_warn_koru_exec_outside_repo"]
+        packages__coru__src__coru__cli___append_desktop_focus_lines["_append_desktop_focus_lines"]
+        packages__coru__src__coru__cli___cmd_sync["_cmd_sync"]
+        packages__coru__src__coru__cli___cmd_repair_run["_cmd_repair_run"]
+        packages__coru__src__coru__cli___add_shell_argument["_add_shell_argument"]
+        packages__coru__src__coru__cli___resolve_calibration_lane["_resolve_calibration_lane"]
+        packages__coru__src__coru__cli___chat_print_header["_chat_print_header"]
+        packages__coru__src__coru__ecosystem___default_runner["_default_runner"]
+        packages__coru__src__coru__cli___workspace_socket_path_for_ide["_workspace_socket_path_for_ide"]
+        packages__coru__src__coru__cli___load_project_ide_settings["_load_project_ide_settings"]
+        packages__coru__src__coru__cli___normalize_log_format["_normalize_log_format"]
+        packages__coru__src__coru__cli___connected_daemon_instance["_connected_daemon_instance"]
+        packages__coru__src__coru__cli___collect_lane_repair_problems["_collect_lane_repair_problems"]
+        packages__coru__src__coru__cli___chat_ensure_daemon["_chat_ensure_daemon"]
+        packages__coru__src__coru__cli___format_calibration_probe_report["_format_calibration_probe_repo"]
+        packages__coru__src__coru__cli___chat_handle_drive["_chat_handle_drive"]
+        packages__coru__src__coru__cli___register_repair_command["_register_repair_command"]
+        packages__coru__src__coru__cli___project_ide_settings_lane["_project_ide_settings_lane"]
+        packages__coru__src__coru__cli___local_module_source_dir["_local_module_source_dir"]
+        packages__coru__src__coru__cli___execute_plan["_execute_plan"]
+        packages__coru__src__coru__cli___extract_global_flags["_extract_global_flags"]
+        packages__coru__src__coru__cli___running_ide_choices["_running_ide_choices"]
+        packages__coru__src__coru__cli___resolve_defaults["_resolve_defaults"]
+        packages__coru__src__coru__cli___alive_daemon_instance["_alive_daemon_instance"]
+        packages__coru__src__coru__cli___warn_lane_project_mismatch["_warn_lane_project_mismatch"]
+        packages__coru__src__coru__cli___repair_reload_ide["_repair_reload_ide"]
+        packages__coru__src__coru__cli___register_lane_commands["_register_lane_commands"]
+        packages__coru__src__coru__cli___drive_result_from_payload["_drive_result_from_payload"]
+        packages__coru__src__coru__cli___coru_readiness_strict["_coru_readiness_strict"]
+        packages__coru__src__coru__cli___trace["_trace"]
+        packages__coru__src__coru__ecosystem___local_package_paths["_local_package_paths"]
+        packages__coru__src__coru__cli___run_koru_lane["_run_koru_lane"]
+        packages__coru__src__coru__cli___status_has_keyboard_backend["_status_has_keyboard_backend"]
+        packages__coru__src__coru__cli___lane_doctor["_lane_doctor"]
+        packages__coru__src__coru__cli___run["_run"]
+        packages__coru__src__coru__cli___write_calibration_desktop_oql["_write_calibration_desktop_oql"]
+        packages__coru__src__coru__cli___build_plan_chain["_build_plan_chain"]
+        packages__coru__src__coru__cli___terminal_host_kind["_terminal_host_kind"]
     end
     subgraph packages__koruenv
-        packages__koruenv__src__koruenv__cli___run_with_overlay["_run_with_overlay"]
-        packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os["resolve_lane_socket_for_os"]
-        packages__koruenv__src__koruenv__cli___emit_log["_emit_log"]
         packages__koruenv__src__koruenv__lane__resolve_lane_socket["resolve_lane_socket"]
-        packages__koruenv__src__koruenv__cli__main["main"]
+        packages__koruenv__src__koruenv__cli___normalize_log_format["_normalize_log_format"]
+        packages__koruenv__src__koruenv__cli___run_with_overlay["_run_with_overlay"]
         packages__koruenv__src__koruenv__lane__validate_ide["validate_ide"]
         packages__koruenv__src__koruenv__lane___fallback_temp_dir["_fallback_temp_dir"]
-        packages__koruenv__src__koruenv__cli___strip_double_dash["_strip_double_dash"]
+        packages__koruenv__src__koruenv__cli__main["main"]
+        packages__koruenv__src__koruenv__cli___emit_log["_emit_log"]
+        packages__koruenv__src__koruenv__lane__build_lane_environ["build_lane_environ"]
         packages__koruenv__src__koruenv__lane__validate_instance["validate_instance"]
         packages__koruenv__src__koruenv__cli___iso_ts["_iso_ts"]
-        packages__koruenv__src__koruenv__lane__build_lane_environ["build_lane_environ"]
-        packages__koruenv__src__koruenv__cli___normalize_log_format["_normalize_log_format"]
+        packages__koruenv__src__koruenv__cli___strip_double_dash["_strip_double_dash"]
+        packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os["resolve_lane_socket_for_os"]
     end
-    subgraph plugins__koru_autopilot_shared
-        plugins__koru_autopilot_shared__src__bridge_network__SharedAutopilotBridgeNetwork__dispatch["dispatch"]
-        plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next["next"]
+    subgraph packages__nlpshim
+        packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent["parse_intent"]
+        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__export_trace["export_trace"]
+        packages__nlpshim__src__nlpshim__client__analyze_text_structure["analyze_text_structure"]
+        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient____init__["__init__"]
+        packages__nlpshim__src__nlpshim__client__get_nlp2dsl_client["get_nlp2dsl_client"]
+        packages__nlpshim__src__nlpshim__client___use_intent_ir["_use_intent_ir"]
+        packages__nlpshim__src__nlpshim__client__NLPBridgeClient____init__["__init__"]
+        packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step["parse_conversation_step"]
+        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message["message"]
+        packages__nlpshim__src__nlpshim__conversation_test_api__complete_missing_fields["complete_missing_fields"]
     end
-    subgraph scripts__koru_soak_monitor
-        scripts__koru_soak_monitor__print["print"]
+    subgraph project
+        project__print["print"]
     end
     subgraph src__koru
-        src__koru__autonomy__env__plugin_required_for_ide["plugin_required_for_ide"]
-        src__koru__ide_adapters__ide_reload__try_reload_vscode_family_ide["try_reload_vscode_family_ide"]
         src__koru__ide_adapters__ide_reload__connect_via_command_palette["connect_via_command_palette"]
         src__koru__autonomy__ide_operator_guidance__terminal_kind_label["terminal_kind_label"]
+        src__koru__ide_adapters__ide_reload__try_reload_vscode_family_ide["try_reload_vscode_family_ide"]
+        src__koru__autonomy__env__plugin_required_for_ide["plugin_required_for_ide"]
         src__koru__wizard__gui__static__wizard__list["list"]
     end
     subgraph src__koruide
@@ -233,29 +225,40 @@ flowchart LR
     packages__koruenv__src__koruenv__cli__main --> packages__koruenv__src__koruenv__cli___run_with_overlay
     packages__koruenv__src__koruenv__cli__main --> packages__koruenv__src__koruenv__lane__build_lane_environ
     packages__koruenv__src__koruenv__cli__main --> packages__koruenv__src__koruenv__cli___emit_log
-    packages__koruenv__src__koruenv__cli__main --> scripts__koru_soak_monitor__print
+    packages__koruenv__src__koruenv__cli__main --> project__print
     packages__koruenv__src__koruenv__lane__resolve_lane_socket --> packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os
     packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os --> packages__koruenv__src__koruenv__lane__validate_instance
     packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os --> packages__koruenv__src__koruenv__lane___fallback_temp_dir
     packages__koruenv__src__koruenv__lane__build_lane_environ --> packages__koruenv__src__koruenv__lane__validate_ide
     packages__koruenv__src__koruenv__lane__build_lane_environ --> packages__koruenv__src__koruenv__lane__validate_instance
     packages__koruenv__src__koruenv__lane__build_lane_environ --> packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os
+    packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient____init__ --> packages__nlpshim__src__nlpshim__client__get_nlp2dsl_client
+    packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message --> src__koru__wizard__gui__static__wizard__list
+    packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__export_trace --> src__koru__wizard__gui__static__wizard__list
+    packages__nlpshim__src__nlpshim__client__analyze_text_structure --> packages__nlpshim__src__nlpshim__client___use_intent_ir
+    packages__nlpshim__src__nlpshim__client__NLPBridgeClient____init__ --> packages__nlpshim__src__nlpshim__client__get_nlp2dsl_client
+    packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent --> packages__nlpshim__src__nlpshim__client__analyze_text_structure
+    packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent --> src__koru__wizard__gui__static__wizard__list
+    packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step --> src__koru__wizard__gui__static__wizard__list
+    packages__nlpshim__src__nlpshim__conversation_test_api__complete_missing_fields --> src__koru__wizard__gui__static__wizard__list
     packages__coru__src__coru__ecosystem__sync_python_packages --> packages__coru__src__coru__ecosystem___local_package_paths
     packages__coru__src__coru__ecosystem___default_runner --> src__koru__wizard__gui__static__wizard__list
     packages__coru__src__coru__ecosystem___detect_running_plugin_ides --> src__koruide__ide__detect_running_ides
     packages__coru__src__coru__ecosystem__sync_ecosystem --> packages__coru__src__coru__ecosystem__sync_python_packages
     packages__coru__src__coru__ecosystem__sync_ecosystem --> packages__coru__src__coru__ecosystem___detect_running_plugin_ides
+    packages__coru__src__coru__cli___trace --> project__print
+    packages__coru__src__coru__cli___trace --> packages__coru__src__coru__cli___trace_enabled
     packages__coru__src__coru__cli___current_log_format --> packages__coru__src__coru__cli___normalize_log_format
     packages__coru__src__coru__cli___emit_log --> packages__coru__src__coru__cli___current_log_format
-    packages__coru__src__coru__cli___emit_log --> scripts__koru_soak_monitor__print
-    packages__coru__src__coru__cli___print_runtime_versions --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___emit_log --> project__print
+    packages__coru__src__coru__cli___print_runtime_versions --> project__print
     packages__coru__src__coru__cli___print_runtime_versions --> packages__coru__src__coru__cli___distribution_version
-    packages__coru__src__coru__cli___startup_mode --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___startup_mode --> project__print
     packages__coru__src__coru__cli___autonomous_startup_chain --> packages__coru__src__coru__cli___resolve_defaults
     packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___agent_lane_from_auto_args
     packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___resolve_defaults
     packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___run_default_autonomous --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___run_default_autonomous --> project__print
     packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___print_runtime_versions
     packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___print_troubleshooting_log_locations
     packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___repo_root
@@ -263,10 +266,14 @@ flowchart LR
     packages__coru__src__coru__cli___running_ide_choices --> src__koruide__ide__detect_running_ides
     packages__coru__src__coru__cli___supervisor_project_choices --> packages__coru__src__coru__supervisor__registry__load_registry
     packages__coru__src__coru__cli___supervisor_project_choices --> packages__coru__src__coru__supervisor__paths__registry_path
+    packages__coru__src__coru__cli___alive_daemon_instance --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli___alive_daemon_instance --> packages__coru__src__coru__cli___instance_from_socket_path
+    packages__coru__src__coru__cli___alive_daemon_instance --> packages__coru__src__coru__cli___ide_from_instance
+    packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__cli___alive_daemon_instance
     packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__cli___instance_matches_ide
     packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__supervisor__registry__load_registry
     packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__supervisor__paths__registry_path
-    packages__coru__src__coru__cli___choose_option --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___choose_option --> project__print
     packages__coru__src__coru__cli___interactive_default_auto_args --> packages__coru__src__coru__cli___running_ide_choices
     packages__coru__src__coru__cli___interactive_default_auto_args --> packages__coru__src__coru__cli___supervisor_project_choices
     packages__coru__src__coru__cli___interactive_default_auto_args --> packages__coru__src__coru__cli___repo_root
@@ -275,6 +282,7 @@ flowchart LR
     packages__coru__src__coru__cli___extract_global_flags --> src__koru__wizard__gui__static__wizard__list
     packages__coru__src__coru__cli___extract_global_flags --> packages__coru__src__coru__cli___normalize_log_format
     packages__coru__src__coru__cli___run --> src__koru__wizard__gui__static__wizard__list
+    packages__coru__src__coru__cli___run --> project__print
     packages__coru__src__coru__cli___cmd_exists --> packages__coru__src__coru__cli___binary_path
     packages__coru__src__coru__cli___binary_path --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___tool_argv --> packages__coru__src__coru__cli___binary_path
@@ -283,30 +291,25 @@ flowchart LR
     packages__coru__src__coru__cli___project_venv_python --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___maybe_reexec_into_project_python --> packages__coru__src__coru__cli___project_venv_python
     packages__coru__src__coru__cli___maybe_reexec_into_project_python --> packages__coru__src__coru__cli___local_module_source_dir
-    packages__coru__src__coru__cli___maybe_reexec_into_project_python --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___maybe_reexec_into_project_python --> project__print
     packages__coru__src__coru__cli___local_module_source_dir --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___tool_available --> packages__coru__src__coru__cli___python_module_exists
     packages__coru__src__coru__cli___tool_available --> packages__coru__src__coru__cli___binary_path
     packages__coru__src__coru__cli___tool_available --> packages__coru__src__coru__cli___local_module_source_dir
     packages__coru__src__coru__cli___ensure_commands --> packages__coru__src__coru__cli___run
-    packages__coru__src__coru__cli___ensure_commands --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___ensure_commands --> project__print
     packages__coru__src__coru__cli___ensure_commands --> packages__coru__src__coru__cli___local_install_target
     packages__coru__src__coru__cli___ensure_commands --> packages__coru__src__coru__cli___project_venv_python
     packages__coru__src__coru__cli___ensure_commands --> packages__coru__src__coru__cli___tool_available
     packages__coru__src__coru__cli___setup_environment --> packages__coru__src__coru__cli___ensure_commands
     packages__coru__src__coru__cli___setup_environment --> packages__coru__src__coru__cli___project_venv_python
-    packages__coru__src__coru__cli___setup_environment --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___setup_environment --> project__print
     packages__coru__src__coru__cli___local_install_target --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___terminal_ide_hint --> packages__coru__src__coru__cli___terminal_shell_context
     packages__coru__src__coru__cli___terminal_shell_context --> packages__coru__src__coru__cli___terminal_shell_context_fallback
     packages__coru__src__coru__cli___terminal_shell_context --> src__koruide__ide__detect_terminal_host_context
-    packages__coru__src__coru__cli___terminal_host_kind --> src__koruide__ide__detect_terminal_host_context
-    packages__coru__src__coru__cli___print_terminal_context --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___print_terminal_context --> packages__coru__src__coru__cli___terminal_host_kind
-    packages__coru__src__coru__cli___print_terminal_context --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___print_terminal_context --> project__print
     packages__coru__src__coru__cli___print_terminal_context --> src__koru__autonomy__ide_operator_guidance__terminal_kind_label
-    packages__coru__src__coru__cli___terminal_shell_context_fallback --> packages__coru__src__coru__cli___ide_from_vscode_pid
-    packages__coru__src__coru__cli___terminal_shell_context_fallback --> packages__coru__src__coru__cli___vscode_family_env_hint
     packages__coru__src__coru__cli___instance_matches_ide --> packages__coru__src__coru__cli___ide_from_instance
     packages__coru__src__coru__cli___workspace_settings_path_for_ide --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___workspace_socket_path_for_ide --> packages__coru__src__coru__cli___workspace_settings_path_for_ide
@@ -324,12 +327,21 @@ flowchart LR
     packages__coru__src__coru__cli___supervisor_lane_defaults --> packages__coru__src__coru__supervisor__paths__registry_path
     packages__coru__src__coru__cli___supervisor_lane_project --> packages__coru__src__coru__supervisor__registry__load_registry
     packages__coru__src__coru__cli___supervisor_lane_project --> packages__coru__src__coru__supervisor__paths__registry_path
+    packages__coru__src__coru__cli___is_lane_plugin_connected --> packages__coru__src__coru__cli___lane_status_payload
+    packages__coru__src__coru__cli___is_lane_plugin_connected --> packages__coru__src__coru__cli___trace
+    packages__coru__src__coru__cli___connected_daemon_instance --> packages__coru__src__coru__cli___alive_daemon_instance
+    packages__coru__src__coru__cli___connected_daemon_instance --> packages__coru__src__coru__cli___is_lane_plugin_connected
+    packages__coru__src__coru__cli___alive_daemon_ide --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli___alive_daemon_ide --> packages__coru__src__coru__cli___trace
+    packages__coru__src__coru__cli___alive_daemon_ide --> packages__coru__src__coru__cli___instance_from_socket_path
+    packages__coru__src__coru__cli___alive_daemon_ide --> packages__coru__src__coru__cli___ide_from_instance
+    packages__coru__src__coru__cli___alive_daemon_ide --> packages__coru__src__coru__cli___is_lane_plugin_connected
     packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___terminal_ide_hint
     packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___terminal_shell_context
+    packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___trace
     packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___supervisor_lane_defaults
     packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___workspace_lane_hint
     packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___ide_from_instance
-    packages__coru__src__coru__cli___infer_default_ide --> packages__coru__src__coru__cli___project_ide_settings_lane
     packages__coru__src__coru__cli___project_ide_settings_instance --> packages__coru__src__coru__cli___project_ide_settings_lane
     packages__coru__src__coru__cli___supervisor_default_instance --> packages__coru__src__coru__cli___supervisor_lane_defaults
     packages__coru__src__coru__cli___supervisor_default_instance --> packages__coru__src__coru__cli___terminal_ide_hint
@@ -340,39 +352,42 @@ flowchart LR
     packages__coru__src__coru__cli___auto_default_instance --> packages__coru__src__coru__cli___workspace_lane_hint
     packages__coru__src__coru__cli___auto_default_instance --> packages__coru__src__coru__cli___project_ide_settings_instance
     packages__coru__src__coru__cli___workspace_default_instance --> packages__coru__src__coru__cli___workspace_lane_hint
+    packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___trace
     packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___workspace_default_instance
+    packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___auto_default_instance
     packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___project_ide_settings_instance
     packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___supervisor_default_instance
     packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___environment_default_instance
-    packages__coru__src__coru__cli___infer_default_instance --> packages__coru__src__coru__cli___auto_default_instance
     packages__coru__src__coru__cli___maybe_warn_lane_override --> packages__coru__src__coru__cli___ide_from_instance
-    packages__coru__src__coru__cli___maybe_warn_lane_override --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___maybe_warn_lane_override --> project__print
     packages__coru__src__coru__cli___normalize_lane_pair --> packages__coru__src__coru__cli___ide_from_instance
-    packages__coru__src__coru__cli___normalize_lane_pair --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___normalize_lane_pair --> project__print
     packages__coru__src__coru__cli___run_with_lane_environment --> packages__coru__src__coru__cli___run
     packages__coru__src__coru__cli___project_for_lane --> packages__coru__src__coru__cli___supervisor_lane_project
     packages__coru__src__coru__cli___project_for_lane --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___koru_autopilot_env_payload --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___koru_autopilot_env_payload --> packages__coru__src__coru__cli___project_for_lane
+    packages__coru__src__coru__cli___koru_autopilot_env_payload --> project__print
     packages__coru__src__coru__cli___koru_autopilot_env_payload --> packages__coru__src__coru__cli___lane_subprocess_env
     packages__coru__src__coru__cli___run_with_resolved_lane_env --> packages__coru__src__coru__cli___koru_autopilot_env_payload
     packages__coru__src__coru__cli___run_with_resolved_lane_env --> packages__coru__src__coru__cli___run_with_lane_environment
     packages__coru__src__coru__cli___run_with_resolved_lane_env --> packages__coru__src__coru__cli___run
     packages__coru__src__coru__cli___run_koru_lane --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___run_koru_lane --> packages__coru__src__coru__cli___run_with_resolved_lane_env
-    packages__coru__src__coru__cli___run_koru_lane --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___run_koru_lane --> project__print
+    packages__coru__src__coru__cli___run_koru_lane --> packages__coru__src__coru__cli___koru_subprocess_timeout
     packages__coru__src__coru__cli___koruenv_run_fallback --> packages__coru__src__coru__cli___run_with_lane_environment
     packages__coru__src__coru__cli___koruenv_run_fallback --> packages__coru__src__coru__cli___tool_argv
-    packages__coru__src__coru__cli___koruenv_run_fallback --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___koruenv_run_fallback --> project__print
     packages__coru__src__coru__cli___lane_env --> packages__coru__src__coru__cli___run_with_lane_environment
     packages__coru__src__coru__cli___lane_env --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_env --> packages__coru__src__coru__cli___project_for_lane
     packages__coru__src__coru__cli___lane_env --> packages__coru__src__coru__cli___run_koru_lane
     packages__coru__src__coru__cli___lane_env --> packages__coru__src__coru__cli___tool_argv
-    packages__coru__src__coru__cli___lane_env --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_env --> project__print
     packages__coru__src__coru__cli___lane_status_raw --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_status_raw --> packages__coru__src__coru__cli___run_koru_lane
-    packages__coru__src__coru__cli___lane_status_raw --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_status_raw --> project__print
     packages__coru__src__coru__cli___lane_status --> packages__coru__src__coru__cli___lane_status_raw
     packages__coru__src__coru__cli___lane_status_payload --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_status_payload --> packages__coru__src__coru__cli___project_for_lane
@@ -397,27 +412,57 @@ flowchart LR
     packages__coru__src__coru__cli___repair_strict_handshake_cycle --> packages__coru__src__coru__cli___start_autopilot_daemon_for_lane
     packages__coru__src__coru__cli___run_lane_repair --> packages__coru__src__coru__cli___collect_lane_repair_problems
     packages__coru__src__coru__cli___run_lane_repair --> packages__coru__src__coru__cli___repo_root
-    packages__coru__src__coru__cli___run_lane_repair --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___run_lane_repair --> project__print
     packages__coru__src__coru__cli___running_ide_summary --> src__koruide__ide__detect_running_ides
     packages__coru__src__coru__cli___print_ide_control_context --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___print_ide_control_context --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___print_ide_control_context --> project__print
     packages__coru__src__coru__cli___print_ide_control_context --> packages__coru__src__coru__cli___target_plugin_rows
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___diagnose_lane
-    packages__coru__src__coru__cli___lane_doctor --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_doctor --> project__print
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___koru_autopilot_env_payload
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___run_lane_repair
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___lane_status_raw
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___lane_chat_prompt
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___run_koru_lane
     packages__coru__src__coru__cli___lane_doctor --> packages__coru__src__coru__cli___fetch_drive_payload
+    packages__coru__src__coru__cli___calibration_desktop_focus_titles --> src__koru__wizard__gui__static__wizard__list
+    packages__coru__src__coru__cli___materialize_calibration_desktop_oql --> packages__coru__src__coru__cli___calibration_desktop_template_path
+    packages__coru__src__coru__cli___materialize_calibration_desktop_oql --> packages__coru__src__coru__cli___append_desktop_focus_lines
+    packages__coru__src__coru__cli___materialize_calibration_desktop_oql --> packages__coru__src__coru__cli___desktop_capture_enabled
+    packages__coru__src__coru__cli___write_calibration_desktop_oql --> packages__coru__src__coru__cli___materialize_calibration_desktop_oql
+    packages__coru__src__coru__cli___run_calibration_desktop_preflight --> packages__coru__src__coru__cli___calibration_desktop_focus_titles
+    packages__coru__src__coru__cli___run_calibration_desktop_preflight --> packages__coru__src__coru__cli___materialize_calibration_desktop_oql
+    packages__coru__src__coru__cli___run_calibration_desktop_preflight --> packages__coru__src__coru__cli___testql_run_oql
+    packages__coru__src__coru__cli___run_calibration_desktop_preflight --> packages__coru__src__coru__cli___format_calibration_desktop_report
+    packages__coru__src__coru__cli___run_calibration_desktop_preflight --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli___run_calibration_bridge_preflight --> packages__coru__src__coru__cli___write_calibration_bridge_testql
+    packages__coru__src__coru__cli___run_calibration_bridge_preflight --> packages__coru__src__coru__cli___testql_run_scenario
+    packages__coru__src__coru__cli___run_calibration_bridge_preflight --> packages__coru__src__coru__cli___format_calibration_bridge_report
+    packages__coru__src__coru__cli___run_calibration_bridge_preflight --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli___lane_drive_capture --> packages__coru__src__coru__cli___koru_exec_argv
+    packages__coru__src__coru__cli___lane_drive_capture --> packages__coru__src__coru__cli___lane_subprocess_env
+    packages__coru__src__coru__cli___lane_drive_capture --> project__print
+    packages__coru__src__coru__cli___lane_drive_capture --> packages__coru__src__coru__cli___parse_drive_json_from_stdout
+    packages__coru__src__coru__cli___resolve_calibration_lane --> packages__coru__src__coru__cli___print_terminal_context
+    packages__coru__src__coru__cli___resolve_calibration_lane --> packages__coru__src__coru__cli___terminal_shell_context
+    packages__coru__src__coru__cli___resolve_calibration_lane --> packages__coru__src__coru__cli___infer_default_instance
+    packages__coru__src__coru__cli___resolve_calibration_lane --> project__print
+    packages__coru__src__coru__cli___lane_calibration --> project__print
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___print_troubleshooting_log_locations
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___diagnose_lane
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___target_plugin_rows
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___run_calibration_desktop_preflight
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___run_calibration_bridge_preflight
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___lane_drive_capture
+    packages__coru__src__coru__cli___lane_calibration --> packages__coru__src__coru__cli___format_calibration_probe_report
     packages__coru__src__coru__cli___lane_auto --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_auto --> src__koru__wizard__gui__static__wizard__list
     packages__coru__src__coru__cli___lane_auto --> packages__coru__src__coru__cli___project_for_lane
     packages__coru__src__coru__cli___lane_auto --> packages__coru__src__coru__cli___run_koru_lane
-    packages__coru__src__coru__cli___lane_auto --> scripts__koru_soak_monitor__print
-    packages__coru__src__coru__cli___gc_stale_lane_socket --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_auto --> project__print
+    packages__coru__src__coru__cli___gc_stale_lane_socket --> project__print
     packages__coru__src__coru__cli___gc_stale_lane_socket --> packages__coru__src__coru__cli___run_koru_lane
-    packages__coru__src__coru__cli___auto_readiness_gate --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___auto_readiness_gate --> project__print
     packages__coru__src__coru__cli___auto_readiness_gate --> packages__coru__src__coru__cli___print_terminal_context
     packages__coru__src__coru__cli___auto_readiness_gate --> packages__coru__src__coru__cli___koru_autopilot_env_payload
     packages__coru__src__coru__cli___auto_readiness_gate --> packages__coru__src__coru__cli___diagnose_runtime_consistency
@@ -430,7 +475,7 @@ flowchart LR
     packages__coru__src__coru__cli___auto_ownership_gate --> packages__coru__src__coru__cli___print_ide_control_context
     packages__coru__src__coru__cli___auto_ownership_gate --> packages__coru__src__coru__cli___terminal_shell_context
     packages__coru__src__coru__cli___auto_ownership_gate --> packages__coru__src__coru__cli___terminal_host_kind
-    packages__coru__src__coru__cli___restart_stale_lane_daemon --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___restart_stale_lane_daemon --> project__print
     packages__coru__src__coru__cli___restart_stale_lane_daemon --> packages__coru__src__coru__cli___run_koru_lane
     packages__coru__src__coru__cli___restart_stale_lane_daemon --> packages__coru__src__coru__cli___lane_status_payload
     packages__coru__src__coru__cli___restart_stale_lane_daemon --> packages__coru__src__coru__cli___env_enabled
@@ -443,50 +488,51 @@ flowchart LR
     packages__coru__src__coru__cli___run_auto_with_readiness --> packages__coru__src__coru__cli___auto_readiness_gate
     packages__coru__src__coru__cli___run_auto_with_readiness --> packages__coru__src__coru__cli___lane_auto
     packages__coru__src__coru__cli___run_auto_with_readiness --> packages__coru__src__coru__cli___auto_readiness_can_continue_with_keyboard_fallback
-    packages__coru__src__coru__cli___run_auto_with_readiness --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___run_auto_with_readiness --> project__print
     packages__coru__src__coru__cli___lane_manage_fix --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_manage_fix --> packages__coru__src__coru__cli___run_koru_lane
-    packages__coru__src__coru__cli___lane_manage_fix --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_manage_fix --> project__print
     packages__coru__src__coru__cli___lane_daemon_foreground --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_daemon_foreground --> packages__coru__src__coru__cli___project_for_lane
     packages__coru__src__coru__cli___lane_daemon_foreground --> packages__coru__src__coru__cli___run_koru_lane
-    packages__coru__src__coru__cli___lane_daemon_foreground --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_daemon_foreground --> project__print
     packages__coru__src__coru__cli___koru_exec_argv --> packages__coru__src__coru__cli___binary_path
     packages__coru__src__coru__cli___koru_exec_argv --> packages__coru__src__coru__cli___python_module_exists
     packages__coru__src__coru__cli___koru_exec_argv --> packages__coru__src__coru__cli___local_module_source_dir
     packages__coru__src__coru__cli___fetch_drive_payload --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___fetch_drive_payload --> packages__coru__src__coru__cli___lane_subprocess_env
+    packages__coru__src__coru__cli___fetch_drive_payload --> packages__coru__src__coru__cli___parse_drive_json_from_stdout
     packages__coru__src__coru__cli___lane_chat_prompt --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___lane_chat_prompt --> packages__coru__src__coru__cli___run_koru_lane
-    packages__coru__src__coru__cli___lane_chat_prompt --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___lane_chat_prompt --> project__print
     packages__coru__src__coru__cli___start_autopilot_daemon_for_lane --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli___start_autopilot_daemon_for_lane --> packages__coru__src__coru__cli___koru_autopilot_env_payload
     packages__coru__src__coru__cli___start_autopilot_daemon_for_lane --> packages__coru__src__coru__cli___project_for_lane
-    packages__coru__src__coru__cli___start_autopilot_daemon_for_lane --> scripts__koru_soak_monitor__print
-    packages__coru__src__coru__cli___ensure_daemon_running --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___start_autopilot_daemon_for_lane --> project__print
+    packages__coru__src__coru__cli___ensure_daemon_running --> project__print
     packages__coru__src__coru__cli___ensure_daemon_running --> packages__coru__src__coru__cli___start_autopilot_daemon_for_lane
     packages__coru__src__coru__cli___ensure_daemon_running --> packages__coru__src__coru__cli___lane_status_raw
     packages__coru__src__coru__cli___import_koru_readiness_module --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___diagnose_readiness_alignment --> packages__coru__src__coru__cli___import_koru_readiness_module
     packages__coru__src__coru__cli___diagnose_readiness_alignment --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___diagnose_readiness_alignment --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___diagnose_readiness_alignment --> project__print
     packages__coru__src__coru__cli___warn_python_env_mismatch --> packages__coru__src__coru__cli___project_venv_python
-    packages__coru__src__coru__cli___warn_python_env_mismatch --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___warn_python_env_mismatch --> project__print
     packages__coru__src__coru__cli___warn_koru_exec_outside_repo --> packages__coru__src__coru__cli___koru_exec_argv
-    packages__coru__src__coru__cli___warn_koru_exec_outside_repo --> scripts__koru_soak_monitor__print
-    packages__coru__src__coru__cli___warn_lane_project_mismatch --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___warn_koru_exec_outside_repo --> project__print
+    packages__coru__src__coru__cli___warn_lane_project_mismatch --> project__print
     packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___repo_root
     packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___diagnose_readiness_alignment
     packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___warn_python_env_mismatch
     packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___warn_koru_exec_outside_repo
     packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___warn_lane_project_mismatch
     packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___coru_readiness_strict
-    packages__coru__src__coru__cli___attempt_plugin_self_heal --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___attempt_plugin_self_heal --> project__print
     packages__coru__src__coru__cli___attempt_plugin_self_heal --> packages__coru__src__coru__cli___import_koru_readiness_module
     packages__coru__src__coru__cli___attempt_plugin_self_heal --> packages__coru__src__coru__cli___repair_connect_plugin
     packages__coru__src__coru__cli___attempt_plugin_self_heal --> packages__coru__src__coru__cli___run_koru_lane
     packages__coru__src__coru__cli___attempt_plugin_self_heal --> packages__coru__src__coru__cli___repair_reload_ide
-    packages__coru__src__coru__cli___diagnose_lane --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___diagnose_lane --> project__print
     packages__coru__src__coru__cli___diagnose_lane --> packages__coru__src__coru__cli___print_troubleshooting_log_locations
     packages__coru__src__coru__cli___diagnose_lane --> packages__coru__src__coru__cli___terminal_shell_context
     packages__coru__src__coru__cli___diagnose_lane --> packages__coru__src__coru__cli___koru_autopilot_env_payload
@@ -496,8 +542,9 @@ flowchart LR
     packages__coru__src__coru__cli___diagnose_lane --> packages__coru__src__coru__cli___lane_status_raw
     packages__coru__src__coru__cli___diagnose_lane --> packages__coru__src__coru__cli___print_ide_control_context
     packages__coru__src__coru__cli___diagnose_lane --> packages__coru__src__coru__cli___ensure_commands
-    packages__coru__src__coru__cli___print_troubleshooting_log_locations --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___print_troubleshooting_log_locations --> project__print
     packages__coru__src__coru__cli___print_troubleshooting_log_locations --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli___resolve_defaults --> packages__coru__src__coru__cli___trace
     packages__coru__src__coru__cli___resolve_defaults --> packages__coru__src__coru__cli___normalize_lane_pair
     packages__coru__src__coru__cli___resolve_defaults --> packages__coru__src__coru__cli___maybe_warn_lane_override
     packages__coru__src__coru__cli___resolve_defaults --> packages__coru__src__coru__cli___infer_default_ide
@@ -506,12 +553,13 @@ flowchart LR
     packages__coru__src__coru__cli___default_lane --> packages__coru__src__coru__cli___infer_default_ide
     packages__coru__src__coru__cli___default_lane --> packages__coru__src__coru__cli___infer_default_instance
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___resolve_defaults
-    packages__coru__src__coru__cli___execute_plan --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___execute_plan --> project__print
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___ensure_commands
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___lane_env
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___lane_manage_fix
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___diagnose_lane
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___lane_doctor
+    packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___lane_calibration
     packages__coru__src__coru__cli___execute_plan --> packages__coru__src__coru__cli___run_auto_with_readiness
     packages__coru__src__coru__cli___execute_plan --> src__koru__wizard__gui__static__wizard__list
     packages__coru__src__coru__cli___build_plan_chain --> packages__coru__src__coru__cli___llm_plan
@@ -522,14 +570,14 @@ flowchart LR
     packages__coru__src__coru__cli___execute_plans --> packages__coru__src__coru__cli___bind_lane_session
     packages__coru__src__coru__cli___execute_plans --> packages__coru__src__coru__cli___emit_log
     packages__coru__src__coru__cli___execute_plans --> packages__coru__src__coru__cli___execute_plan
-    packages__coru__src__coru__cli___execute_plans --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___execute_plans --> project__print
     packages__coru__src__coru__cli___execute_plans --> packages__coru__src__coru__cli___preflight_failure_ok_to_continue
-    packages__coru__src__coru__cli___chat_print_header --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___chat_print_header --> project__print
     packages__coru__src__coru__cli___chat_print_header --> packages__coru__src__coru__cli___print_runtime_versions
     packages__coru__src__coru__cli___chat_print_header --> packages__coru__src__coru__cli___print_troubleshooting_log_locations
     packages__coru__src__coru__cli___chat_ensure_daemon --> packages__coru__src__coru__cli___start_autopilot_daemon_for_lane
     packages__coru__src__coru__cli___chat_ensure_daemon --> packages__coru__src__coru__cli___emit_log
-    packages__coru__src__coru__cli___chat_ensure_daemon --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___chat_ensure_daemon --> project__print
     packages__coru__src__coru__cli___chat_drive_with_retry --> packages__coru__src__coru__cli___lane_chat_prompt
     packages__coru__src__coru__cli___chat_drive_with_retry --> packages__coru__src__coru__cli___emit_log
     packages__coru__src__coru__cli___chat_drive_with_retry --> packages__coru__src__coru__cli___chat_ensure_daemon
@@ -537,17 +585,17 @@ flowchart LR
     packages__coru__src__coru__cli___chat_handle_drive --> packages__coru__src__coru__cli___chat_llm_enabled
     packages__coru__src__coru__cli___chat_handle_drive --> packages__coru__src__coru__cli___chat_drive_with_retry
     packages__coru__src__coru__cli___chat_handle_drive --> packages__coru__src__coru__cli___llm_rewrite_chat_prompt
-    packages__coru__src__coru__cli___chat_handle_drive --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___chat_handle_drive --> project__print
     packages__coru__src__coru__cli___chat_handle_drive --> packages__coru__src__coru__cli___lane_status
     packages__coru__src__coru__cli___chat_handle_drive --> packages__coru__src__coru__cli___chat_ensure_daemon
     packages__coru__src__coru__cli___chat_handle_command --> packages__coru__src__coru__cli___build_plan_chain
     packages__coru__src__coru__cli___chat_handle_command --> packages__coru__src__coru__cli___execute_plans
-    packages__coru__src__coru__cli___chat_handle_command --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___chat_handle_command --> project__print
     packages__coru__src__coru__cli___chat_loop --> packages__coru__src__coru__cli___resolve_defaults
     packages__coru__src__coru__cli___chat_loop --> packages__coru__src__coru__cli___chat_print_header
     packages__coru__src__coru__cli___chat_loop --> packages__coru__src__coru__cli___chat_handle_command
     packages__coru__src__coru__cli___chat_loop --> packages__coru__src__coru__cli___chat_handle_drive
-    packages__coru__src__coru__cli___chat_loop --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___chat_loop --> project__print
     packages__coru__src__coru__cli___register_lane_commands --> packages__coru__src__coru__cli___add_lane_identifiers
     packages__coru__src__coru__cli___register_lane_commands --> packages__coru__src__coru__cli___add_shell_argument
     packages__coru__src__coru__cli___register_operational_commands --> packages__coru__src__coru__cli___add_lane_identifiers
@@ -555,7 +603,7 @@ flowchart LR
     packages__coru__src__coru__cli___register_repair_command --> packages__coru__src__coru__cli___add_lane_identifiers
     packages__coru__src__coru__cli___cmd_repair_history --> packages__coru__src__coru__cli___default_lane
     packages__coru__src__coru__cli___cmd_repair_history --> packages__coru__src__coru__cli___repo_root
-    packages__coru__src__coru__cli___cmd_repair_history --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___cmd_repair_history --> project__print
     packages__coru__src__coru__cli___cmd_repair_run --> packages__coru__src__coru__cli___default_lane
     packages__coru__src__coru__cli___cmd_repair_run --> packages__coru__src__coru__cli___koru_autopilot_env_payload
     packages__coru__src__coru__cli___cmd_repair_run --> packages__coru__src__coru__cli___run_lane_repair
@@ -563,89 +611,22 @@ flowchart LR
     packages__coru__src__coru__cli___cmd_sync --> packages__coru__src__coru__cli___default_lane
     packages__coru__src__coru__cli___cmd_sync --> packages__coru__src__coru__cli___resolve_defaults
     packages__coru__src__coru__cli___cmd_sync --> packages__coru__src__coru__ecosystem__sync_ecosystem
-    packages__coru__src__coru__cli___cmd_sync --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___cmd_sync --> project__print
     packages__coru__src__coru__cli___cmd_sync --> packages__coru__src__coru__cli___instance_for_ide_choice
     packages__coru__src__coru__cli___cmd_sync --> packages__coru__src__coru__cli___run_koru_lane
     packages__coru__src__coru__cli___register_sync_command --> packages__coru__src__coru__cli___add_lane_identifiers
+    packages__coru__src__coru__cli___register_calibration_command --> packages__coru__src__coru__cli___add_lane_identifiers
     packages__coru__src__coru__cli___register_doctor_command --> packages__coru__src__coru__cli___add_lane_identifiers
     packages__coru__src__coru__cli___build_parser --> packages__coru__src__coru__cli___register_sync_command
     packages__coru__src__coru__cli___build_parser --> packages__coru__src__coru__cli___register_lane_commands
     packages__coru__src__coru__cli___build_parser --> packages__coru__src__coru__cli___register_operational_commands
     packages__coru__src__coru__cli___build_parser --> packages__coru__src__coru__cli___register_interaction_commands
-    packages__coru__src__coru__cli___build_parser --> packages__coru__src__coru__cli___register_doctor_command
+    packages__coru__src__coru__cli___build_parser --> packages__coru__src__coru__cli___register_calibration_command
     packages__coru__src__coru__cli___maybe_run_default_mode --> packages__coru__src__coru__cli___run_default_autonomous
     packages__coru__src__coru__cli___maybe_run_default_mode --> packages__coru__src__coru__cli___startup_mode
     packages__coru__src__coru__cli___maybe_run_default_mode --> packages__coru__src__coru__cli___chat_loop
     packages__coru__src__coru__cli___maybe_run_default_mode --> src__koru__wizard__gui__static__wizard__list
     packages__coru__src__coru__cli___maybe_run_default_mode --> packages__coru__src__coru__cli___interactive_default_auto_args
     packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell --> scripts__koru_soak_monitor__print
+    packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell --> project__print
     packages__coru__src__coru__cli___dispatch_lane_command --> packages__coru__src__coru__cli___default_lane
-    packages__coru__src__coru__cli___dispatch_lane_command --> packages__coru__src__coru__cli___lane_env
-    packages__coru__src__coru__cli___dispatch_lane_command --> packages__coru__src__coru__cli___lane_status
-    packages__coru__src__coru__cli___dispatch_lane_command --> packages__coru__src__coru__cli___diagnose_lane
-    packages__coru__src__coru__cli___dispatch_auto_command --> packages__coru__src__coru__cli___default_lane
-    packages__coru__src__coru__cli___dispatch_auto_command --> src__koru__wizard__gui__static__wizard__list
-    packages__coru__src__coru__cli___dispatch_auto_command --> packages__coru__src__coru__cli___run_auto_with_readiness
-    packages__coru__src__coru__cli___dispatch_auto_command --> packages__coru__src__coru__cli___remember_project_ide_settings
-    packages__coru__src__coru__cli___dispatch_text_command --> packages__coru__src__coru__cli___build_plan_chain
-    packages__coru__src__coru__cli___dispatch_text_command --> packages__coru__src__coru__cli___execute_plans
-    packages__coru__src__coru__cli___dispatch_chat_command --> packages__coru__src__coru__cli___chat_loop
-    packages__coru__src__coru__cli___dispatch_supervisor_command --> src__koru__wizard__gui__static__wizard__list
-    packages__coru__src__coru__cli___dispatch_supervisor_command --> packages__coru__src__coru__cli___koru_exec_argv
-    packages__coru__src__coru__cli___dispatch_doctor_command --> packages__coru__src__coru__cli___default_lane
-    packages__coru__src__coru__cli___dispatch_doctor_command --> packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell
-    packages__coru__src__coru__cli___dispatch_doctor_command --> packages__coru__src__coru__cli___lane_doctor
-    packages__coru__src__coru__cli___dispatch_repair_command --> packages__coru__src__coru__cli___cmd_repair_history
-    packages__coru__src__coru__cli___dispatch_repair_command --> packages__coru__src__coru__cli___cmd_repair_run
-    packages__coru__src__coru__cli___dispatch_daemon_command --> packages__coru__src__coru__cli___default_lane
-    packages__coru__src__coru__cli___dispatch_daemon_command --> packages__coru__src__coru__cli___doctor_or_daemon_requires_system_shell
-    packages__coru__src__coru__cli___dispatch_daemon_command --> packages__coru__src__coru__cli___resolve_defaults
-    packages__coru__src__coru__cli___dispatch_daemon_command --> scripts__koru_soak_monitor__print
-    packages__coru__src__coru__cli___dispatch_daemon_command --> packages__coru__src__coru__cli___print_troubleshooting_log_locations
-    packages__coru__src__coru__cli___dispatch_daemon_command --> packages__coru__src__coru__cli___lane_daemon_foreground
-    packages__coru__src__coru__cli___dispatch_optional_command --> plugins__koru_autopilot_shared__src__bridge_network__SharedAutopilotBridgeNetwork__dispatch
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_lane_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_auto_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_text_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_chat_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_supervisor_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_doctor_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_repair_command
-    packages__coru__src__coru__cli___dispatch_optional_command --> packages__coru__src__coru__cli___dispatch_daemon_command
-    packages__coru__src__coru__cli___dispatch_command --> packages__coru__src__coru__cli___dispatch_optional_command
-    packages__coru__src__coru__cli___dispatch_command --> packages__coru__src__coru__cli___ensure_commands
-    packages__coru__src__coru__cli___dispatch_command --> packages__coru__src__coru__cli___cmd_sync
-    packages__coru__src__coru__cli___dispatch_command --> packages__coru__src__coru__cli___setup_environment
-    packages__coru__src__coru__cli__main --> packages__coru__src__coru__cli___maybe_reexec_into_project_python
-    packages__coru__src__coru__cli__main --> packages__coru__src__coru__cli___extract_global_flags
-    packages__coru__src__coru__cli__main --> src__koru__wizard__gui__static__wizard__list
-    packages__coru__src__coru__cli__main --> packages__coru__src__coru__cli___print_runtime_versions
-    packages__coru__src__coru__cli__main --> packages__coru__src__coru__cli___restore_log_format
-    packages__coru__src__coru__cli__main --> packages__coru__src__coru__cli___maybe_run_default_mode
-    packages__coru__src__coru__cli__main --> packages__coru__src__coru__cli___is_text_shorthand
-    packages__coru__src__coru__repair_registry__run_repair_pipeline --> packages__coru__src__coru__repair__service__run_repair_with_events
-    packages__coru__src__coru__repair__query__RepairHistoryQuery__cases --> packages__coru__src__coru__repair__projector__project_repair_cases
-    packages__coru__src__coru__repair__query__RepairHistoryQuery__cases_for_lane --> packages__coru__src__coru__repair__events__aggregate_id_for
-    packages__coru__src__coru__repair__query__RepairHistoryQuery__cases_for_lane --> packages__coru__src__coru__repair__projector__project_repair_cases
-    packages__coru__src__coru__repair__query__RepairHistoryQuery__format_llm --> packages__coru__src__coru__repair__projector__format_history_llm
-    packages__coru__src__coru__repair__projector__project_repair_cases --> packages__coru__src__coru__repair__projector___project_one_session
-    packages__coru__src__coru__repair__projector___project_one_session --> plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
-    packages__coru__src__coru__repair__projector___project_one_session --> packages__coru__src__coru__repair__registry__playbook_for_codes
-    packages__coru__src__coru__repair__projector__format_history_llm --> packages__coru__src__coru__repair__projector__format_case_llm
-    packages__coru__src__coru__repair__registry__playbook_for_codes --> packages__coru__src__coru__repair__registry__registry_steps_for_code
-    packages__coru__src__coru__repair__diagnostics__dedupe_problems --> packages__coru__src__coru__repair__diagnostics___dedupe_problems
-    packages__coru__src__coru__repair__diagnostics___collect_manage_issue_problems --> packages__coru__src__coru__repair__diagnostics___problem_from_manage_issue
-    packages__coru__src__coru__repair__diagnostics___collect_manage_action_problems --> packages__coru__src__coru__repair__diagnostics___problem_from_manage_action
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_manage_report --> packages__coru__src__coru__repair__diagnostics___collect_manage_issue_problems
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_manage_report --> packages__coru__src__coru__repair__diagnostics___dedupe_problems
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_manage_report --> packages__coru__src__coru__repair__diagnostics___collect_plugin_alignment_problems
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_manage_report --> packages__coru__src__coru__repair__diagnostics___collect_manage_action_problems
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_status --> packages__coru__src__coru__repair__diagnostics___plugin_row_for_ide
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_status --> packages__coru__src__coru__repair__diagnostics___dedupe_problems
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_status --> packages__coru__src__coru__repair__diagnostics___installed_extension_dir
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_drive_result --> packages__coru__src__coru__repair__diagnostics___dedupe_problems
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_drive_result --> packages__coru__src__coru__repair__diagnostics___submit_unverified_problem
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_drive_result --> packages__coru__src__coru__repair__diagnostics___drive_intent_unverified_problem
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_drive_result --> packages__coru__src__coru__repair__diagnostics___focus_risk_problem
-    packages__coru__src__coru__repair__diagnostics__collect_problems_from_drive_result --> packages__coru__src__coru__repair__diagnostics___paste_risk_problem

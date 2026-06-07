@@ -1985,6 +1985,39 @@ def test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) -> None
     os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
 
 
+def test_build_cycle_run_kwargs_forwards_effective_autopilot(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_build_cycle_run_kwargs(_args, _profile, **kwargs):
+        captured.update(kwargs)
+        return {"ok": True}
+
+    monkeypatch.setattr(
+        autonomous_mod._autonomous_cycle_config,
+        "build_cycle_run_kwargs",
+        fake_build_cycle_run_kwargs,
+    )
+
+    result = autonomous_mod._build_cycle_run_kwargs(
+        SimpleNamespace(),
+        None,
+        cycle=1,
+        project=Path("/tmp/project"),
+        queue_name="default",
+        enable_scan=True,
+        enable_autopilot=False,
+        autopilot_ide="cursor",
+        client=object(),
+        loop_state=object(),
+        diagnostic_state_dir=Path("/tmp/project/.planfile/.koru"),
+        wup_process=None,
+        correlation_id="corr-test",
+    )
+
+    assert result == {"ok": True}
+    assert captured["enable_autopilot"] is False
+
+
 def test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch) -> None:
     sleeps: list[float] = []
     monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)

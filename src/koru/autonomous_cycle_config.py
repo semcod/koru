@@ -106,6 +106,7 @@ def build_cycle_run_kwargs(
     project: Path,
     queue_name: str | None,
     enable_scan: bool,
+    enable_autopilot: bool | None = None,
     autopilot_ide: str,
     client: Any,
     loop_state: Any,
@@ -114,6 +115,9 @@ def build_cycle_run_kwargs(
     correlation_id: str,
 ) -> dict[str, Any]:
     """Build kwargs for the core cycle runner."""
+    requested_enable_autopilot = (
+        profile.enable_autopilot if profile is not None else args.enable_autopilot
+    )
     return {
         "cycle": cycle,
         "project": project,
@@ -122,7 +126,9 @@ def build_cycle_run_kwargs(
         "enable_scan": enable_scan,
         "max_iterations": profile.max_iterations if profile is not None else args.max_iterations,
         "enable_autopilot": (
-            profile.enable_autopilot if profile is not None else args.enable_autopilot
+            requested_enable_autopilot
+            if enable_autopilot is None
+            else enable_autopilot
         ),
         "autopilot_ide": autopilot_ide,
         "drive_prompt": args.drive_prompt,

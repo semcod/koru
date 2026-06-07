@@ -11,6 +11,8 @@ refactor automation system for multi-repo workspaces.
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
 - **[`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md)** (PL) — MCP bridge do nlp2uri: desktop, getv://, SystemMap URI, orchestracja z planfile.
+- **[`ide-control-architecture.md`](./ide-control-architecture.md)** (PL) — jak działa sterowanie IDE: koruide, pluginy, fallbacki i rola nlp2uri.
+- **[`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md)** (PL) — plan refaktoryzacji integracji nlp2uri ↔ kontrola IDE Koru.
 
 ## Reading order
 
@@ -173,6 +175,7 @@ Complete index of documentation in this directory. Start with
 | [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md) | Formal plugin↔daemon protocol |
 | [`ide-router.md`](./ide-router.md) | Lane selection (Cursor/VS Code/…) |
 | [`ide-isolation.md`](./ide-isolation.md) | Lane/socket isolation (PL) |
+| [`ide-control-architecture.md`](./ide-control-architecture.md) | IDE control stack: koruide, plugins, nlp2uri (PL) |
 | [`ide-control-surfaces.md`](./ide-control-surfaces.md) | IDE command surfaces |
 | [`ide-command-api-map.md`](./ide-command-api-map.md) | Command API map (+ [`ide-command-api-map.yaml`](./ide-command-api-map.yaml)) |
 | [`ide-strategy-contract.md`](./ide-strategy-contract.md) | Strategy contract per IDE |
@@ -196,6 +199,7 @@ Complete index of documentation in this directory. Start with
 | [`hexagonal-poc.md`](./hexagonal-poc.md) | Hexagonal architecture POC |
 | [`local-service.md`](./local-service.md) | Local service deployment notes |
 | [`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md) | nlp2uri MCP bridge (PL) |
+| [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri ↔ koruide refactor plan (PL) |
 | [`package-extraction-plan.md`](./package-extraction-plan.md) | `packages/*` extraction plan |
 
 ### Tooling & pipeline
@@ -227,3 +231,4 @@ Complete index of documentation in this directory. Start with
 | [`refactor/autonomy-refactor-continuation-plan-2026-05.md`](./refactor/autonomy-refactor-continuation-plan-2026-05.md) | Autonomy refactor continuation |
 | [`plans/capture-providers-refactor.md`](./plans/capture-providers-refactor.md) | Capture provider refactor |
 | [`plans/observation-mesh-plan.md`](./plans/observation-mesh-plan.md) | Observation mesh plan |
+| [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri IDE control integration (PL) |

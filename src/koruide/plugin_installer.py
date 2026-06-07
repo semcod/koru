@@ -154,14 +154,17 @@ def _ide_from_terminal_env() -> str | None:
     """Best-effort IDE hint from an integrated terminal environment."""
     mod = _plugin_installer_module()
     detected = normalize_ide_id(mod.detect_terminal_host_ide_id())
-    if detected:
+    if detected in SUPPORTED_IDES:
         return detected
-    # Fallback when host detection is unavailable (e.g. pytest parent-chain guard)
-    # but the integrated terminal still exports TERM_PROGRAM.
-    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
-    normalized = normalize_ide_id(term_program)
-    if normalized in SUPPORTED_IDES:
-        return normalized
+
+    # Fallback when host detection is unavailable (e.g. pytest parent-chain guard,
+    # or a prior test left ``detect_terminal_host_ide_id`` stubbed on this module)
+    # but the integrated terminal still exports TERM_PROGRAM / CHROME_DESKTOP.
+    for key in ("TERM_PROGRAM", "CHROME_DESKTOP"):
+        val = os.environ.get(key, "")
+        normalized = normalize_ide_id(val)
+        if normalized in SUPPORTED_IDES:
+            return normalized
     return None
 
 
@@ -487,6 +490,7 @@ def _run(
         text=True,
         timeout=timeout,
         cwd=cwd,
+        close_fds=True,
     )
 
 

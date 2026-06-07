@@ -6,6 +6,10 @@ document names the layers, maps popular IDEs to them, and points to code.
 For the LLM/heuristic-facing command facade, see
 [ide-command-api-map.md](ide-command-api-map.md).
 
+For the full control stack (koruide vs nlp2uri vs plugins), see
+[ide-control-architecture.md](ide-control-architecture.md) and the refactor plan
+[plans/nlp2uri-koruide-integration-refactor-plan.md](plans/nlp2uri-koruide-integration-refactor-plan.md).
+
 ## Design rule
 
 > `koru autonomous` / queue runners should eventually call a **small
@@ -44,7 +48,8 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 
 | Piece | Path |
 | --- | --- |
-| Autopilot daemon + protocol | `src/koru/autopilot/daemon.py`, `protocol.py` |
+| Autopilot daemon + protocol (canonical) | `src/koruide/daemon/`, `src/koruide/protocol.py` |
+| Autopilot shims (legacy imports) | `src/koru/autopilot/daemon.py`, `protocol.py` |
 | CLI `drive` / `daemon` | `src/koru/autopilot/cli_command.py` |
 | VS Code / VSCodium / Windsurf / Cursor extension | `plugins/koru-autopilot-vscode/` |
 | JetBrains scaffold | `plugins/koru-autopilot-jetbrains/` |

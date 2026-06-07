@@ -7,8 +7,10 @@ from unittest import mock
 import pytest
 
 from koruide.daemon.handlers_drive import (
+    _active_pending_plugin_drive,
     _deliver_chat_via_plugin_socket,
     _drive_via_plugin,
+    _pending_corr_owner_alive,
     _prefer_keyboard_drive,
     _resolve_keyboard_drive_selection,
     handle_drive,
@@ -180,3 +182,34 @@ def test_backward_compat_reexports_from_handlers() -> None:
     assert handlers._drive_via_plugin is _drive_via_plugin
     assert handlers._drive_via_keyboard is _drive_via_keyboard
     assert handlers._prefer_keyboard_drive is _prefer_keyboard_drive
+
+
+def test_pending_corr_owner_alive_for_current_pid() -> None:
+    import os
+
+    corr = f"cli-drive-{os.getpid()}-deadbeef"
+    assert _pending_corr_owner_alive(corr) is True
+
+
+def test_pending_corr_owner_alive_for_missing_pid() -> None:
+    corr = "cli-drive-999999999-deadbeef"
+    assert _pending_corr_owner_alive(corr) is False
+
+
+def test_active_pending_cleared_when_corr_owner_exited() -> None:
+    plugin = mock.Mock()
+    plugin.awaiting_plugin = (
+        mock.Mock(),
+        "cli-drive-999999999-deadbeef",
+        True,
+        "cursor",
+        "text",
+        False,
+    )
+    daemon = mock.Mock()
+
+    pending = _active_pending_plugin_drive(daemon, plugin)
+
+    assert pending is None
+    assert plugin.awaiting_plugin is None
+    daemon.log.assert_called_once()

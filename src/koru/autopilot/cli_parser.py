@@ -297,6 +297,12 @@ def _add_status_parser(sub: argparse._SubParsersAction) -> None:
         default=Path.cwd(),
         help="Project root for workspace settings checks with --explain.",
     )
+    status.add_argument(
+        "--format",
+        choices=("json", "systemmap"),
+        default="json",
+        help="Output format: raw daemon status (json) or nlp2uri URI index (systemmap).",
+    )
 
 
 def _add_env_parser(sub: argparse._SubParsersAction) -> None:

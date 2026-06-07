@@ -4,6 +4,10 @@
 **Data:** 2026-05-25
 **Źródło danych:** `SUMD.md` (Call Graph: 404 węzłów, 500 krawędzi, 92 moduły, CC̄=3.8) + statystyki LOC
 
+> **Osobny plan (2026-06-07):** integracja `nlp2uri` z kontrolą IDE — nie mylić z hotspotami poniżej.
+> Zobacz [`plans/nlp2uri-koruide-integration-refactor-plan.md`](../plans/nlp2uri-koruide-integration-refactor-plan.md)
+> i [`ide-control-architecture.md`](../ide-control-architecture.md).
+
 ## 1. Krytyczne hotspoty (priorytet ⚠️ HIGH)
 
 | Moduł / funkcja | LOC | CC | in | out | Problem |

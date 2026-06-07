@@ -17,10 +17,16 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any
 
-from coru import repair_registry
+from coru import ide_detection, repair_registry
 from coru.repair import RecordDiagnosisCommand, RepairHistoryQuery, RepairService
 
 _LANE_ENV_KEYS = ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET")
+_STRICT_PLUGIN_ENV_KEYS = (
+    "KORU_STRICT_PLUGIN_VERSION",
+    "KORU_STRICT_PLUGIN_ACK",
+    "KORU_PLUGIN_VERSION_POLICY",
+)
+_LANE_SESSION_ENV_KEYS = (*_LANE_ENV_KEYS, *_STRICT_PLUGIN_ENV_KEYS)
 _ORIGINAL_SUBPROCESS_RUN = subprocess.run
 _LANE_ENV_PAYLOAD_TIMEOUT_S = float(os.environ.get("CORU_LANE_ENV_PAYLOAD_TIMEOUT_S", "5"))
 _KORU_SUBPROCESS_TIMEOUT_S = float(os.environ.get("CORU_KORU_SUBPROCESS_TIMEOUT_S", "20"))
@@ -67,6 +73,16 @@ class AutoReadiness:
 _VALID_LOG_FORMATS = frozenset({"human", "jsonl"})
 _VALID_STARTUP_MODES = frozenset({"auto", "chat"})
 _FALSE_ENV_VALUES = frozenset({"0", "false", "no", "off"})
+_BLOCKING_PLUGIN_MANAGE_CODES = frozenset(
+    {
+        "plugin_build_missing",
+        "plugin_build_mismatch",
+        "plugin_installed_version_mismatch",
+        "plugin_live_host_stale",
+        "plugin_version_missing",
+        "plugin_version_mismatch",
+    }
+)
 
 
 def _trace_enabled() -> bool:
@@ -679,47 +695,18 @@ _PROJECT_IDE_SETTINGS_NAME = "settings.json"
 
 
 def _ide_from_vscode_pid() -> str | None:
-    pid = (os.environ.get("VSCODE_PID") or "").strip()
-    if not pid.isdigit():
-        return None
-    exe_path = Path(f"/proc/{pid}/exe")
-    try:
-        target = str(exe_path.resolve()).lower()
-    except Exception:
-        return None
-    if "antigravity" in target:
-        return "antigravity"
-    if "cursor" in target:
-        return "cursor"
-    if "windsurf" in target or "devin" in target:
-        return "windsurf"
-    if "codium" in target or "vscodium" in target:
-        return "vscodium"
-    if "code" in target or "vscode" in target:
-        return "vscode"
-    return None
+    """Backward-compatible shim; moved to ``coru.ide_detection``."""
+    return ide_detection._ide_from_vscode_pid()
 
 
 def _vscode_family_env_hint() -> str | None:
-    haystack = " ".join(
-        (
-            os.environ.get("CHROME_DESKTOP", ""),
-            os.environ.get("VSCODE_CODE_CACHE_PATH", ""),
-            os.environ.get("VSCODE_NLS_CONFIG", ""),
-            os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", ""),
-        )
-    ).lower()
-    if "vscodium" in haystack or "codium" in haystack:
-        return "vscodium"
-    if "antigravity" in haystack:
-        return "antigravity"
-    if "cursor" in haystack:
-        return "cursor"
-    if "windsurf" in haystack or "devin" in haystack:
-        return "windsurf"
-    if "code" in haystack or "vscode" in haystack:
-        return "vscode"
-    return None
+    """Backward-compatible shim; moved to ``coru.ide_detection``."""
+    return ide_detection._vscode_family_env_hint()
+
+
+def _windsurf_terminal_marker() -> bool:
+    """Backward-compatible shim; moved to ``coru.ide_detection``."""
+    return ide_detection._windsurf_terminal_marker()
 
 
 def _terminal_ide_hint() -> str | None:
@@ -733,10 +720,8 @@ def _terminal_shell_context() -> tuple[str | None, str, bool]:
     fallback = _terminal_shell_context_fallback()
     if fallback[2]:
         return fallback
-
     try:
         from koruide.ide import detect_terminal_host_context
-
         ctx = detect_terminal_host_context()
         return ctx.ide, ctx.source, ctx.integrated
     except Exception:
@@ -744,19 +729,14 @@ def _terminal_shell_context() -> tuple[str | None, str, bool]:
 
 
 def _terminal_host_kind() -> str:
-    try:
-        from koruide.ide import detect_terminal_host_context
-
-        return detect_terminal_host_context().kind
-    except Exception:
-        return "system"
+    return ide_detection.terminal_host_kind()
 
 
 def _print_terminal_context(*, prefix: str = "[coru]") -> None:
     from koru.autonomy.ide_operator_guidance import terminal_kind_label
 
-    ide, source, integrated = _terminal_shell_context()
-    kind = _terminal_host_kind()
+    ide, source, integrated = ide_detection.terminal_shell_context()
+    kind = ide_detection.terminal_host_kind()
     if ide:
         print(
             f"{prefix} terminal: ide={ide} kind={kind} "
@@ -773,62 +753,13 @@ def _print_terminal_context(*, prefix: str = "[coru]") -> None:
         )
 
 
-def _windsurf_terminal_marker() -> bool:
-    """True when env carries a Windsurf/Devin marker (the current provider name)."""
-    tpv = os.environ.get("TERM_PROGRAM_VERSION", "").strip().lower()
-    chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
-    gio = os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").strip().lower()
-    return bool(
-        os.environ.get("WINDSURF_CASCADE_TERMINAL")
-        or os.environ.get("WINDSURF_VERSION")
-        or any("windsurf" in v or "devin" in v for v in (tpv, chrome, gio))
-    )
-
-
 def _terminal_shell_context_fallback() -> tuple[str | None, str, bool]:
-    """Provider-first shell context detection (brand name before generic vscode).
-
-    Used when ``koruide`` cannot be imported. Many editors are VS Code forks
-    that export ``TERM_PROGRAM=vscode``; we resolve them by their provider name
-    (Cursor, Windsurf/Devin, Antigravity, VSCodium) and only treat ``vscode`` as
-    the last-resort fallback.
-    """
-    chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
-    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
-    if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower():
-        return "antigravity", "env:GIO_LAUNCHED_DESKTOP_FILE", True
-    if term_program in {"vscode", "code"}:
-        # Prefer the actual running editor binary (most authoritative).
-        if os.environ.get("VSCODE_PID"):
-            via_pid = _ide_from_vscode_pid()
-            if via_pid:
-                return via_pid, "env:VSCODE_PID.exe", True
-        # Then a provider/brand env value (a *specific* fork), then strong
-        # Windsurf/Devin markers, and only finally the generic vscode fallback.
-        flavor = _vscode_family_env_hint()
-        if flavor and flavor != "vscode":
-            return flavor, "env:VSCODE_*", True
-        if _windsurf_terminal_marker():
-            return "windsurf", "env:WINDSURF_*", True
-        return "vscode", "env:TERM_PROGRAM", True
-    # JetBrains JediTerm is a definitive current-shell marker; check it before
-    # the Windsurf/Devin env fallback so inherited fork env vars don't win.
-    terminal_emulator = os.environ.get("TERMINAL_EMULATOR", "").strip().lower()
-    if (
-        "jetbrains" in terminal_emulator
-        or "jediterm" in terminal_emulator
-        or os.environ.get("IDEA_INITIAL_DIRECTORY")
-        or os.environ.get("PYCHARM_HOSTED")
-        or os.environ.get("JETBRAINS_IDE")
-    ):
-        return "jetbrains", "env:TERMINAL_EMULATOR", True
-    if "cursor" in chrome or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
-        return "cursor", "env:CURSOR_*", True
-    if term_program in _VALID_AUTOPILOT_IDES and term_program != "auto":
-        return term_program, "env:TERM_PROGRAM", True
-    if _windsurf_terminal_marker():
-        return "windsurf", "env:WINDSURF_*", True
-    return None, "none", False
+    """Provider-first shell context detection (brand name before generic vscode)."""
+    return ide_detection._terminal_shell_context_fallback(
+        ide_from_vscode_pid=_ide_from_vscode_pid,
+        vscode_family_env_hint=_vscode_family_env_hint,
+        windsurf_terminal_marker=_windsurf_terminal_marker,
+    )
 
 
 def _instance_matches_ide(instance: str, ide: str) -> bool:
@@ -1235,19 +1166,31 @@ def _lane_subprocess_env(ide: str, instance: str, *, base: Mapping[str, str] | N
     env["KORU_AUTOPILOT_IDE"] = ide
     env["KORU_AUTOPILOT_INSTANCE"] = instance
     env.pop("KORU_AUTOPILOT_SOCKET", None)
+    _apply_strict_plugin_policy_defaults(env)
     return env
+
+
+def _apply_strict_plugin_policy_defaults(env: dict[str, str], *, force: bool = False) -> None:
+    if force or (
+        env.get("KORU_STRICT_PLUGIN_VERSION") is None
+        and env.get("KORU_PLUGIN_VERSION_POLICY") is None
+    ):
+        env["KORU_STRICT_PLUGIN_VERSION"] = "1"
+    if force or env.get("KORU_STRICT_PLUGIN_ACK") is None:
+        env["KORU_STRICT_PLUGIN_ACK"] = "1"
 
 
 @contextmanager
 def _bind_lane_session(ide: str, instance: str):
-    previous = {key: os.environ[key] for key in _LANE_ENV_KEYS if key in os.environ}
+    previous = {key: os.environ[key] for key in _LANE_SESSION_ENV_KEYS if key in os.environ}
     os.environ["KORU_AUTOPILOT_IDE"] = ide
     os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
     os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
+    _apply_strict_plugin_policy_defaults(os.environ)
     try:
         yield
     finally:
-        for key in _LANE_ENV_KEYS:
+        for key in _LANE_SESSION_ENV_KEYS:
             if key in previous:
                 os.environ[key] = previous[key]
             else:
@@ -1261,14 +1204,15 @@ def _run_with_lane_environment(
     instance: str,
     timeout: float | None = _KORU_SUBPROCESS_TIMEOUT_S,
 ) -> int:
-    previous = {key: os.environ[key] for key in _LANE_ENV_KEYS if key in os.environ}
+    previous = {key: os.environ[key] for key in _LANE_SESSION_ENV_KEYS if key in os.environ}
     try:
         os.environ["KORU_AUTOPILOT_IDE"] = ide
         os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
         os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
+        _apply_strict_plugin_policy_defaults(os.environ)
         return _run(command, timeout=timeout)
     finally:
-        for key in _LANE_ENV_KEYS:
+        for key in _LANE_SESSION_ENV_KEYS:
             if key in previous:
                 os.environ[key] = previous[key]
             else:
@@ -1340,8 +1284,7 @@ def _run_with_resolved_lane_env(
             return _run(list(command))
         return _run_with_lane_environment(command, ide=ide, instance=instance, timeout=timeout)
 
-    lane_keys = ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET")
-    previous = {key: os.environ[key] for key in lane_keys if key in os.environ}
+    previous = {key: os.environ[key] for key in _LANE_SESSION_ENV_KEYS if key in os.environ}
     resolved_env = payload.get("env") or {}
     try:
         for key, value in resolved_env.items():
@@ -1350,9 +1293,10 @@ def _run_with_resolved_lane_env(
             os.environ["KORU_AUTOPILOT_INSTANCE"] = str(payload["instance"])
         if payload.get("ide"):
             os.environ["KORU_AUTOPILOT_IDE"] = str(payload["ide"])
+        _apply_strict_plugin_policy_defaults(os.environ)
         return _run(command, timeout=timeout)
     finally:
-        for key in lane_keys:
+        for key in _LANE_SESSION_ENV_KEYS:
             if key in previous:
                 os.environ[key] = previous[key]
             else:
@@ -2546,6 +2490,21 @@ def _auto_readiness_gate(ide: str, instance: str) -> AutoReadiness:
                 guidance=True,
             )
 
+    plugin_blocker = _manage_report_plugin_blocker(_fetch_manage_report(ide, instance))
+    if plugin_blocker is not None:
+        code, message, fix = plugin_blocker
+        print(f"[coru] readiness: [FAIL] {code}: {message}", file=sys.stderr)
+        if fix:
+            print(f"[coru] readiness: fix → {fix}", file=sys.stderr)
+        _print_ide_control_context(
+            ide,
+            instance,
+            status=_lane_status_payload(ide, instance, payload=payload),
+            reason="plugin-version",
+            guidance=True,
+        )
+        return AutoReadiness(1, ide, instance, reason="plugin")
+
     status_rc = _lane_status_raw(ide, instance)
     if status_rc == 0:
         ownership_rc = _auto_ownership_gate(ide, instance, payload=payload)
@@ -2667,6 +2626,27 @@ def _status_has_plugin_for_ide(status: Mapping[str, Any], ide: str) -> bool:
     return False
 
 
+def _manage_report_plugin_blocker(
+    report: Mapping[str, Any] | None,
+) -> tuple[str, str, str | None] | None:
+    if not isinstance(report, Mapping):
+        return None
+    issues = report.get("issues")
+    if not isinstance(issues, list):
+        return None
+    for issue in issues:
+        if not isinstance(issue, Mapping):
+            continue
+        code = str(issue.get("code") or "").strip()
+        severity = str(issue.get("severity") or "").strip().lower()
+        if code not in _BLOCKING_PLUGIN_MANAGE_CODES or severity != "error":
+            continue
+        message = str(issue.get("message") or code)
+        fix = issue.get("fix")
+        return code, message, str(fix) if fix else None
+    return None
+
+
 def _status_has_keyboard_backend(status: Mapping[str, Any]) -> bool:
     if str(status.get("selected_backend") or "").strip():
         return True
@@ -2720,9 +2700,15 @@ def _lane_manage_fix(ide: str, instance: str) -> int:
     if koru_exec is None:
         print("error: koru is not available; run 'coru ensure --install'", file=sys.stderr)
         return 127
+    # Check first without --fix to avoid unnecessary repairs when the lane is
+    # already healthy (e.g. plugin already installed and socket responsive).
+    rc = _run_koru_lane(ide, instance, ["autopilot", "manage", "--ide", ide])
+    if rc == 0:
+        return 0
+    # Need repair.
     rc = _run_koru_lane(ide, instance, ["autopilot", "manage", "--ide", ide, "--fix"])
     if rc != 0:
-        _run_koru_lane(
+        rc = _run_koru_lane(
             ide,
             instance,
             ["ide", "doctor", "--ide", ide, "--fix", "--gc-sockets"],
@@ -2833,8 +2819,7 @@ def _start_autopilot_daemon_for_lane(
         env["KORU_AUTOPILOT_INSTANCE"] = instance
         env.pop("KORU_AUTOPILOT_SOCKET", None)
     if strict_plugin:
-        env["KORU_STRICT_PLUGIN_VERSION"] = "1"
-        env["KORU_STRICT_PLUGIN_ACK"] = "1"
+        _apply_strict_plugin_policy_defaults(env, force=True)
 
     cmd = [*koru_exec, "autopilot", "daemon", "--idempotent"]
     project = _project_for_lane(ide, instance)

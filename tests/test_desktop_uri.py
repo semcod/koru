@@ -66,6 +66,89 @@ def test_desktop_uri_resolve_getv_prompt() -> None:
     assert "uri" in payload or payload.get("ok") is False
 
 
+def test_desktop_uri_plan_ide_chat_control_plan() -> None:
+    if not desktop_uri.nlp2uri_available():
+        pytest.skip("nlp2uri not installed")
+
+    payload = desktop_uri.desktop_uri_plan(
+        "wyślij prompt do Cursor w tym projekcie",
+        platform="linux",
+    )
+    assert payload["ok"] is True
+    assert payload["plan"]["uri"].startswith("ide-chat://cursor/send")
+    assert payload.get("control_surface") == "ide_chat"
+    control_plan = payload.get("control_plan") or payload["plan"].get("control_plan")
+    assert control_plan is not None
+    action = control_plan["actions"][0]
+    assert action["command_version"] == "koru.control.v1"
+    assert action["transport"] == "koruide_socket"
+    assert action["replay"]["mcp"] == "koru_ide_drive"
+    assert "text=" not in payload["plan"]["uri"]
+
+
+def test_desktop_uri_control_plan() -> None:
+    if not desktop_uri.nlp2uri_available():
+        pytest.skip("nlp2uri not installed")
+
+    payload = desktop_uri.desktop_uri_control_plan(
+        "wyślij test do cursor",
+        platform="linux",
+    )
+    assert payload["ok"] is True
+    assert payload["control_plan"]["actions"][0]["transport"] == "koruide_socket"
+
+
+def test_desktop_uri_control_execute_dry_run() -> None:
+    if not desktop_uri.nlp2uri_available():
+        pytest.skip("nlp2uri not installed")
+
+    payload = desktop_uri.desktop_uri_control_execute(
+        "send hello to cursor",
+        platform="linux",
+        dry_run=True,
+    )
+    assert payload["ok"] is True
+    assert payload["execution"]["results"][0]["dry_run"] is True
+
+
+def test_desktop_uri_control_execute_no_submit_overrides_nlp_plan() -> None:
+    if not desktop_uri.nlp2uri_available():
+        pytest.skip("nlp2uri not installed")
+
+    payload = desktop_uri.desktop_uri_control_execute(
+        "wyślij test do cursor",
+        platform="linux",
+        ide="cursor",
+        submit=False,
+        workspace="/tmp/koru",
+        dry_run=True,
+    )
+
+    assert payload["ok"] is True
+    assert "submit=false" in payload["uri"]
+    assert "workspace=%2Ftmp%2Fkoru" in payload["uri"]
+    action = payload["control_plan"]["actions"][0]
+    assert action["submit"] is False
+    assert action["workspace"] == "/tmp/koru"
+    assert action["verification"]["expect_message_sent"] is False
+    assert "--no-submit" in action["replay"]["cli"]
+
+
+def test_desktop_uri_control_execute_direct_fallback() -> None:
+    if not desktop_uri.nlp2uri_available():
+        pytest.skip("nlp2uri not installed")
+
+    payload = desktop_uri.desktop_uri_control_execute(
+        "probe test",
+        platform="linux",
+        ide="cursor",
+        dry_run=True,
+    )
+    assert payload["ok"] is True
+    assert payload.get("drive_mode") == "direct"
+    assert payload["uri"].startswith("ide-chat://cursor/send")
+
+
 def test_desktop_uri_list_system_uris_requires_context() -> None:
     if not desktop_uri.nlp2uri_available():
         pytest.skip("nlp2uri not installed")

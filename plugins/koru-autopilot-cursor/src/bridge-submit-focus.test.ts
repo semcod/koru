@@ -410,18 +410,13 @@ async function testGlassUiFastPathUsesStartComposerPromptWhenTypeTextMissing(): 
     true,
   );
 
-  assert.strictEqual(handled, true, "Glass UI without typeText must use composer prompt fast-path");
-  assert.ok(
-    executedCommands.some((cmd) => /startcomposerprompt/i.test(cmd)),
-    `expected startComposerPrompt paste, got: ${executedCommands.join(", ")}`,
+  assert.strictEqual(
+    handled,
+    false,
+    "Glass UI with submit must defer to probe ladder for verified submit",
   );
-  assert.ok(
-    runCommands.includes("workbench.action.chat.stopListeningAndSubmit"),
-    "fast path should attempt registered submit after composer prompt paste",
-  );
-  const ack = sent.find((env) => env.type === "ack");
-  assert.ok(ack, "fast path should emit drive ack");
-  assert.strictEqual(ack.ok, true);
+  assert.strictEqual(executedCommands.length, 0);
+  assert.strictEqual(sent.length, 0);
 }
 
 async function testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistered(): Promise<void> {
@@ -449,16 +444,10 @@ async function testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistere
 
   assert.strictEqual(
     handled,
-    true,
-    "Glass with registered typeText must still use composer prompt fast-path",
+    false,
+    "Glass with submit must defer to probe ladder even when typeText is registered",
   );
-  assert.ok(
-    executedCommands.some((cmd) => /startcomposerprompt/i.test(cmd)),
-    `expected startComposerPrompt paste, got: ${executedCommands.join(", ")}`,
-  );
-  const ack = sent.find((env) => env.type === "ack");
-  assert.ok(ack, "fast path should emit drive ack");
-  assert.strictEqual(ack.ok, true);
+  assert.strictEqual(executedCommands.length, 0);
 }
 
 async function testGlassUiFastPathUsesOptimisticComposerPromptWhenHiddenFromGetCommands(): Promise<void> {
@@ -485,20 +474,37 @@ async function testGlassUiFastPathUsesOptimisticComposerPromptWhenHiddenFromGetC
 
   assert.strictEqual(
     handled,
-    true,
-    "Glass UI must try composer.startComposerPrompt* even when hidden from getCommands(false)",
+    false,
+    "Glass UI with submit must defer to probe ladder even when composer prompt is hidden",
   );
-  assert.ok(
-    executedCommands.some((cmd) => /startcomposerprompt/i.test(cmd)),
-    `expected optimistic startComposerPrompt paste, got: ${executedCommands.join(", ")}`,
+  assert.strictEqual(executedCommands.length, 0);
+}
+
+async function testGlassUiFastPathPasteOnlyDefersToProbeLadder(): Promise<void> {
+  registeredCommands.clear();
+  for (const cmd of [
+    "glass.focusInput",
+    "workbench.action.chat.stopListeningAndSubmit",
+    "composer.startComposerPrompt2",
+  ]) {
+    registeredCommands.add(cmd);
+  }
+  executedCommands.length = 0;
+
+  const { bridge, sent } = makeBridge();
+  const handled = await bridge.tryCursorComposerPromptFastPath(
+    { type: "chat.send", id: "drive-glass-paste" },
+    "probe test",
+    false,
   );
-  assert.ok(
-    !executedCommands.includes("workbench.action.chat.typeText"),
-    "Glass fast path must not fall back to typeText paste",
+
+  assert.strictEqual(
+    handled,
+    false,
+    "Glass UI paste-only must defer to probe ladder to avoid opening new Composer windows",
   );
-  const ack = sent.find((env) => env.type === "ack");
-  assert.ok(ack, "fast path should emit drive ack");
-  assert.strictEqual(ack.ok, true);
+  assert.strictEqual(executedCommands.length, 0);
+  assert.strictEqual(sent.length, 0);
 }
 
 async function testComposerPromptPasteBypassesGlassFocusBeforeSubmit(): Promise<void> {
@@ -558,6 +564,7 @@ async function run(): Promise<void> {
   await testGlassUiFastPathUsesStartComposerPromptWhenTypeTextMissing();
   await testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistered();
   await testGlassUiFastPathUsesOptimisticComposerPromptWhenHiddenFromGetCommands();
+  await testGlassUiFastPathPasteOnlyDefersToProbeLadder();
   await testComposerPromptPasteBypassesGlassFocusBeforeSubmit();
   await testCursorHostClickFallbackRequiresCalibratedPoint();
   console.log("bridge-submit-focus tests: ok");

@@ -516,9 +516,61 @@ def test_repair_installation_skips_daemon_shutdown_when_plugin_already_aligned(
     )
 
     assert report.actions[0]["action"] == "install_plugin"
+    assert report.actions[0]["result"]["skipped"] is True
     assert report.actions[1]["action"] == "shutdown_daemon_for_reload"
     assert report.actions[1]["result"]["skipped"] is True
-    assert report.actions[2]["action"] == "reload_ide_and_reconnect"
+    assert not any(action["action"] == "reload_ide_and_reconnect" for action in report.actions)
+
+
+def test_repair_installation_skips_daemon_shutdown_when_connected_matches_expected(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """Connected live plugin can be aligned even when ``--list-extensions`` is unknown."""
+    monkeypatch.setattr(
+        install_manager,
+        "collect_install_manager_report",
+        lambda ide, socket_path: install_manager.InstallManagerReport(
+            ok=True,
+            source_root=str(tmp_path),
+            package_version="1.0",
+            source_version="1.0",
+            python="/python",
+            path_koru="/bin/koru",
+            repo_koru="/repo/.venv/bin/koru",
+            socket=str(tmp_path / "koru.sock"),
+            daemon={"running": True},
+            plugin={
+                "ide": "cursor",
+                "connected": True,
+                "connected_version": "0.2.34",
+                "connected_build_sha": "build-a",
+                "installed_version": None,
+                "expected_version": "0.2.34",
+                "expected_build_sha": "build-a",
+            },
+            ides=[],
+        ),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "already_installed"}),
+    )
+
+    def _forbidden_shutdown(*_args, **_kwargs):  # noqa: ANN001
+        raise AssertionError("shutdown should not be called when live plugin matches expected")
+
+    monkeypatch.setattr(install_manager, "AutopilotClient", _forbidden_shutdown)
+
+    report = install_manager.repair_installation(
+        ide="cursor",
+        socket_path=tmp_path / "koru.sock",
+        dry_run=False,
+    )
+
+    assert report.actions[1]["action"] == "shutdown_daemon_for_reload"
+    assert report.actions[1]["result"]["skipped"] is True
 
 
 def test_repair_installation_shutdowns_daemon_when_build_is_stale(

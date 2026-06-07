@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from importlib import metadata
 from pathlib import Path
@@ -723,7 +724,7 @@ def test_lane_auto_injects_project_from_supervisor_registry(
 
     captured: dict[str, object] = {}
 
-    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str) -> int:
+    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str, timeout=None) -> int:
         captured["command"] = list(command)
         captured["ide"] = ide
         captured["instance"] = instance
@@ -736,6 +737,56 @@ def test_lane_auto_injects_project_from_supervisor_registry(
     command = captured["command"]
     assert "--project" in command
     assert command[command.index("--project") + 1] == str(project.resolve())
+
+
+def test_run_with_resolved_lane_env_sets_strict_plugin_defaults(monkeypatch) -> None:
+    captured: dict[str, str | None] = {}
+    for key in (
+        "KORU_AUTOPILOT_IDE",
+        "KORU_AUTOPILOT_INSTANCE",
+        "KORU_AUTOPILOT_SOCKET",
+        "KORU_STRICT_PLUGIN_VERSION",
+        "KORU_STRICT_PLUGIN_ACK",
+        "KORU_PLUGIN_VERSION_POLICY",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    monkeypatch.setattr(
+        coru_cli,
+        "_koru_autopilot_env_payload",
+        lambda _ide, _instance: {
+            "ide": "cursor",
+            "instance": "cursor-main",
+            "env": {"KORU_AUTOPILOT_SOCKET": "/tmp/koru-autopilot-cursor-main.sock"},
+        },
+    )
+
+    def fake_run(_command, *, timeout=None):
+        captured["ide"] = os.environ.get("KORU_AUTOPILOT_IDE")
+        captured["instance"] = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        captured["socket"] = os.environ.get("KORU_AUTOPILOT_SOCKET")
+        captured["strict_version"] = os.environ.get("KORU_STRICT_PLUGIN_VERSION")
+        captured["strict_ack"] = os.environ.get("KORU_STRICT_PLUGIN_ACK")
+        return 0
+
+    monkeypatch.setattr(coru_cli, "_run", fake_run)
+
+    rc = coru_cli._run_with_resolved_lane_env(
+        ["koru", "autopilot", "status", "--explain"],
+        ide="cursor",
+        instance="cursor-main",
+    )
+
+    assert rc == 0
+    assert captured == {
+        "ide": "cursor",
+        "instance": "cursor-main",
+        "socket": "/tmp/koru-autopilot-cursor-main.sock",
+        "strict_version": "1",
+        "strict_ack": "1",
+    }
+    assert os.environ.get("KORU_STRICT_PLUGIN_VERSION") is None
+    assert os.environ.get("KORU_STRICT_PLUGIN_ACK") is None
 
 
 def test_run_auto_with_readiness_aborts_before_cycle(monkeypatch) -> None:
@@ -887,6 +938,47 @@ def test_auto_readiness_gate_repairs_socket_daemon_and_plugin(monkeypatch) -> No
 
     assert readiness == coru_cli.AutoReadiness(0, "cursor", "cursor-main")
     assert calls == ["consistency", "status", "gc", "daemon", "status", "heal", "status"]
+
+
+def test_auto_readiness_gate_blocks_stale_connected_plugin(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        coru_cli,
+        "_koru_autopilot_env_payload",
+        lambda _ide, _instance: {"ide": "cursor", "instance": "cursor-main", "source": "test"},
+    )
+    monkeypatch.setattr(coru_cli, "_diagnose_runtime_consistency", lambda _ide, _instance, _payload: 0)
+    monkeypatch.setattr(coru_cli, "_lane_status_raw", lambda _ide, _instance: 0)
+    monkeypatch.setattr(coru_cli, "_ensure_daemon_running", lambda _ide, _instance: 0)
+    monkeypatch.setattr(
+        coru_cli,
+        "_fetch_manage_report",
+        lambda _ide, _instance: {
+            "issues": [
+                {
+                    "code": "plugin_version_mismatch",
+                    "severity": "error",
+                    "message": "connected cursor plugin is stale",
+                    "fix": "reload Cursor and reconnect",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        coru_cli,
+        "_lane_status_payload",
+        lambda _ide, _instance, *, payload=None: {
+            "plugins": [{"ide": "cursor", "version": "0.2.34"}]
+        },
+    )
+    monkeypatch.setattr(coru_cli, "_print_ide_control_context", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(coru_cli, "_terminal_shell_context", lambda: (None, "none", False))
+
+    readiness = coru_cli._auto_readiness_gate("auto", "main")
+
+    assert readiness == coru_cli.AutoReadiness(1, "cursor", "cursor-main", reason="plugin")
+    err = capsys.readouterr().err
+    assert "plugin_version_mismatch" in err
+    assert "reload Cursor and reconnect" in err
 
 
 def test_auto_readiness_gate_blocks_workspace_mismatch(monkeypatch, tmp_path: Path) -> None:
@@ -1271,7 +1363,7 @@ def test_lane_status_passes_resolved_koru_binary(monkeypatch) -> None:
     monkeypatch.setattr(coru_cli, "_koru_exec_argv", lambda: ["/tmp/repo/.venv/bin/koru"])
     monkeypatch.setattr(coru_cli, "_koru_autopilot_env_payload", lambda _ide, _instance: None)
 
-    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str) -> int:
+    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str, timeout=None) -> int:
         captured["command"] = list(command)
         captured["ide"] = ide
         captured["instance"] = instance
@@ -1298,7 +1390,7 @@ def test_lane_status_uses_koruenv_run_for_module_koru(monkeypatch) -> None:
     monkeypatch.setattr(coru_cli, "_koru_exec_argv", lambda: ["/tmp/python", "-m", "koru.cli"])
     monkeypatch.setattr(coru_cli, "_koru_autopilot_env_payload", lambda _ide, _instance: None)
 
-    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str) -> int:
+    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str, timeout=None) -> int:
         captured["command"] = list(command)
         return 0
 
@@ -1671,7 +1763,7 @@ def test_default_lane_normalizes_mismatched_explicit_pair(capsys) -> None:
 def test_run_with_lane_environment_sets_and_restores(monkeypatch) -> None:
     observed: dict[str, str | None] = {}
 
-    def fake_run(_cmd, *, passthrough=True):
+    def fake_run(_cmd, *, passthrough=True, timeout=None):
         observed["ide"] = coru_cli.os.environ.get("KORU_AUTOPILOT_IDE")
         observed["instance"] = coru_cli.os.environ.get("KORU_AUTOPILOT_INSTANCE")
         observed["socket"] = coru_cli.os.environ.get("KORU_AUTOPILOT_SOCKET")
@@ -2284,7 +2376,7 @@ def test_lane_chat_prompt_uses_ide_not_instance(monkeypatch) -> None:
     monkeypatch.setattr(coru_cli, "_koru_exec_argv", lambda: ["koru"])
     monkeypatch.setattr(coru_cli, "_koru_autopilot_env_payload", lambda _ide, _instance: None)
 
-    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str) -> int:
+    def fake_run_with_resolved_lane_env(command, *, ide: str, instance: str, timeout=None) -> int:
         captured["command"] = list(command)
         captured["ide"] = ide
         captured["instance"] = instance

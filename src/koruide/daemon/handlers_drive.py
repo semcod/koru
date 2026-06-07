@@ -8,8 +8,11 @@ compatibility.
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any
+
+from gillm.injection.errors import InjectorError
 
 from koru.control_commands import plugin_socket_command
 from koru.integration_ledger import record_integration_action
@@ -19,13 +22,12 @@ from koru.observability_events import (
     emit_intent,
     emit_phase,
 )
-from koruide.daemon.protocol import _Client
 from koruide.command_catalog_store import command_picker_enabled
 from koruide.command_picker import pick_command_order
+from koruide.daemon.protocol import _Client
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
-from gillm.injection.errors import InjectorError
 from koruide.protocol import Message, ack, chat_send, error
 
 
@@ -234,6 +236,119 @@ def _record_plugin_route_telemetry(
     )
 
 
+def _pending_corr_owner_alive(pending_corr: str) -> bool:
+    """Return False when a ``cli-drive-<pid>-…`` owner process is gone."""
+    prefix = "cli-drive-"
+    if not pending_corr.startswith(prefix):
+        return True
+    tail = pending_corr[len(prefix) :]
+    pid_text, _, _hex = tail.partition("-")
+    if not pid_text.isdigit():
+        return True
+    pid = int(pid_text)
+    if pid <= 0:
+        return True
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def _clear_stale_pending_plugin_drive(plugin: _Client) -> None:
+    timer = getattr(plugin, "awaiting_plugin_timer", None)
+    if timer is not None:
+        try:
+            timer.cancel()
+        except Exception:
+            pass
+    plugin.awaiting_plugin_timer = None
+    plugin.awaiting_plugin_info = None
+    plugin.awaiting_plugin = None
+
+
+def _active_pending_plugin_drive(
+    daemon: Any,
+    plugin: _Client,
+) -> tuple[Any, str, bool, str | None, str, bool] | None:
+    pending = plugin.awaiting_plugin
+    if pending is None:
+        return None
+    pending_cli, pending_corr, _submit, _plugin_ide, _text, _require_plugin = pending
+    try:
+        from koruide.daemon.handlers import _cli_client_still_connected
+
+        connected = _cli_client_still_connected(daemon, pending_cli)
+    except Exception:
+        connected = True
+    owner_alive = _pending_corr_owner_alive(pending_corr)
+    if connected and owner_alive:
+        return pending
+    _clear_stale_pending_plugin_drive(plugin)
+    if not owner_alive:
+        daemon.log(
+            "drive_via_plugin: cleared pending drive after CLI owner process exited "
+            f"(corr={pending_corr})"
+        )
+    else:
+        daemon.log(
+            "drive_via_plugin: cleared stale pending drive before routing a new request"
+        )
+    return None
+
+
+def _reject_overlapping_plugin_drive(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    plugin: _Client,
+    text: str,
+    submit: bool,
+    corr: str,
+    pending: tuple[Any, str, bool, str | None, str, bool],
+) -> None:
+    (
+        _pending_cli,
+        pending_corr,
+        pending_submit,
+        pending_ide,
+        pending_text,
+        _pending_require,
+    ) = pending
+    pending_label = pending_ide or plugin.ide or "auto"
+    message = (
+        "plugin drive already in progress "
+        f"(ide={pending_label}, corr={pending_corr}, submit={pending_submit}); "
+        "wait for the current ACK or cancel that CLI before retrying"
+    )
+    info = {
+        "backend": "plugin",
+        "ok": False,
+        "delivered": False,
+        "opened": False,
+        "submitted": False,
+        "verification": "drive_in_progress",
+        "message": message,
+        "pending_corr": pending_corr,
+        "pending_ide": pending_label,
+        "pending_submit": pending_submit,
+        "pending_chars": len(pending_text or ""),
+    }
+    daemon._send(client, ack(corr, ok=False, info=info).encode())
+    daemon.log(f"drive_via_plugin: blocked overlapping drive: {message}")
+    daemon.audit.record(
+        "drive",
+        ide=plugin.ide,
+        backend="plugin",
+        chars=len(text),
+        submit=submit,
+        ok=False,
+        verification="drive_in_progress",
+        corr=corr,
+        pending_corr=pending_corr,
+    )
+
+
 def _deliver_chat_via_plugin_socket(
     daemon: Any,
     plugin: _Client,
@@ -247,7 +362,10 @@ def _deliver_chat_via_plugin_socket(
     if command_picker_enabled():
         catalog = (
             plugin.command_catalog
-            or DriveOrchestrator.command_catalog_for(daemon._command_catalog_store, plugin.ide or "")
+            or DriveOrchestrator.command_catalog_for(
+                daemon._command_catalog_store,
+                plugin.ide or "",
+            )
         )
         command_order = pick_command_order(
             ide=plugin.ide or "",
@@ -331,10 +449,24 @@ def _drive_via_plugin(
     """Forward a drive request to a connected plugin for that IDE."""
     daemon.log(
         "drive_via_plugin: "
-        f"ide={plugin.ide}, version={plugin.version}, build={getattr(plugin, 'build_sha', None) or '-'}, "
+        f"ide={plugin.ide}, version={plugin.version}, "
+        f"build={getattr(plugin, 'build_sha', None) or '-'}, "
         f"protocol={plugin.protocol_version}, capabilities={plugin.capabilities}"
     )
     corr = msg.id or f"drive-{time.monotonic_ns():x}"
+    pending = _active_pending_plugin_drive(daemon, plugin)
+    if pending is not None:
+        _reject_overlapping_plugin_drive(
+            daemon,
+            client,
+            msg,
+            plugin,
+            text,
+            submit,
+            corr,
+            pending,
+        )
+        return
 
     if _check_and_block_plugin_version(daemon, client, msg, plugin, text, submit):
         return

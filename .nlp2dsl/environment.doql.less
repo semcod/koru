@@ -1,10 +1,10 @@
 // DOQL system map — koru
 // role: LLM-generated schema (SystemMapIR → DOQL)
 // format: nlp2dsl.system_map.v1
-// generated: 2026-06-07T10:25:47.474255+00:00
+// generated: 2026-06-07T19:11:02.730190+00:00
 
 environment[name="koru"] {
-  generated_at: "2026-06-07T10:25:45.322998+00:00";
+  generated_at: "2026-06-07T19:11:00.336840+00:00";
 }
 
 data {
@@ -21,12 +21,12 @@ data {
   desktop.ide_calibration_count: 5;
   desktop.ide_calibrations: [{'ide': 'cursor', 'chat_x': 8151, 'chat_y': 68, 'config_path': '/home/tom/.koru/ide-os-injector.json', 'source': 'global', 'display_id': 'DP-2', 'display_output': 'DP-2', 'display_x': 4055, 'display_y': 68, 'window_id': None, 'calibrated_at': '2026-06-06T21:59:05.862203+00:00'}, {'ide': 'jetbrains', 'chat_x': 2058, 'chat_y': 2137, 'config_path': '/home/tom/.koru/ide-os-injector.json', 'source': 'global', 'display_id': 'DP-1', 'display_output': 'DP-1', 'display_x': 2058, 'display_y': 833, 'window_id': None, 'calibrated_at': '2026-06-06T21:59:05.862203+00:00'}, {'ide': 'main', 'chat_x': 4020, 'chat_y': 3547, 'config_path': '/home/tom/.koru/ide-os-injector.json', 'source': 'global', 'display_id': 'DP-1', 'display_output': 'DP-1', 'display_x': 4020, 'display_y': 2243, 'window_id': None, 'calibrated_at': '2026-06-06T21:59:05.862203+00:00'}, {'ide': 'vscode', 'chat_x': 1498, 'chat_y': 3629, 'config_path': '/home/tom/.koru/ide-os-injector.json', 'source': 'global', 'display_id': 'DP-1', 'display_output': 'DP-1', 'display_x': 1498, 'display_y': 2325, 'window_id': None, 'calibrated_at': '2026-06-06T21:59:05.862203+00:00'}, {'ide': 'windsurf', 'chat_x': 2548, 'chat_y': 3293, 'config_path': '/home/tom/.koru/ide-os-injector.json', 'source': 'global', 'display_id': 'DP-1', 'display_output': 'DP-1', 'display_x': 2548, 'display_y': 1989, 'window_id': None, 'calibrated_at': '2026-06-06T21:59:05.862203+00:00'}];
   desktop.platform: "linux";
-  desktop.pointer: {'x': 7635, 'y': 105, 'screen': 0, 'window_id': '913', 'display_id': 'DP-2', 'display_output': 'DP-2', 'display_x': 3539, 'display_y': 105};
-  desktop.pointer_display: "DP-2";
-  desktop.pointer_display_x: 3539;
-  desktop.pointer_display_y: 105;
-  desktop.pointer_x: 7635;
-  desktop.pointer_y: 105;
+  desktop.pointer: {'x': 3175, 'y': 3851, 'screen': 0, 'window_id': '913', 'display_id': 'DP-1', 'display_output': 'DP-1', 'display_x': 3175, 'display_y': 2547};
+  desktop.pointer_display: "DP-1";
+  desktop.pointer_display_x: 3175;
+  desktop.pointer_display_y: 2547;
+  desktop.pointer_x: 3175;
+  desktop.pointer_y: 3851;
   desktop.session: "ubuntu:GNOME";
   desktop.window_count: 0;
   mcp.commands[koru_desktop_uri_get_getv_var].alias.desktop_uri_get_getv_var: "desktop uri get getv var";
@@ -83,12 +83,21 @@ data {
   mcp.commands[koru_ide_commands].alias.ide_commands: "ide commands";
   mcp.commands[koru_ide_commands].alias.koru_ide_commands: "koru ide commands";
   mcp.commands[koru_ide_commands].aliases: ['koru ide commands', 'ide commands'];
+  mcp.commands[koru_ide_control_execute].alias.ide_control_execute: "ide control execute";
+  mcp.commands[koru_ide_control_execute].alias.koru_ide_control_execute: "koru ide control execute";
+  mcp.commands[koru_ide_control_execute].aliases: ['koru ide control execute', 'ide control execute'];
+  mcp.commands[koru_ide_control_plan].alias.ide_control_plan: "ide control plan";
+  mcp.commands[koru_ide_control_plan].alias.koru_ide_control_plan: "koru ide control plan";
+  mcp.commands[koru_ide_control_plan].aliases: ['koru ide control plan', 'ide control plan'];
   mcp.commands[koru_ide_drive].alias.ide_drive: "ide drive";
   mcp.commands[koru_ide_drive].alias.koru_ide_drive: "koru ide drive";
   mcp.commands[koru_ide_drive].aliases: ['koru ide drive', 'ide drive'];
   mcp.commands[koru_ide_dsl_recent].alias.ide_dsl_recent: "ide dsl recent";
   mcp.commands[koru_ide_dsl_recent].alias.koru_ide_dsl_recent: "koru ide dsl recent";
   mcp.commands[koru_ide_dsl_recent].aliases: ['koru ide dsl recent', 'ide dsl recent'];
+  mcp.commands[koru_ide_list_uris].alias.ide_list_uris: "ide list uris";
+  mcp.commands[koru_ide_list_uris].alias.koru_ide_list_uris: "koru ide list uris";
+  mcp.commands[koru_ide_list_uris].aliases: ['koru ide list uris', 'ide list uris'];
   mcp.commands[koru_job_status].alias.job_status: "job status";
   mcp.commands[koru_job_status].alias.koru_job_status: "koru job status";
   mcp.commands[koru_job_status].aliases: ['koru job status', 'job status'];
@@ -123,7 +132,7 @@ data {
   mcp.commands[koru_validate_ide_command_scenario].alias.validate_ide_command_scenario: "validate ide command scenario";
   mcp.commands[koru_validate_ide_command_scenario].aliases: ['koru validate ide command scenario', 'validate ide command scenario'];
   mcp.server: "koru";
-  mcp.tool_count: 31;
+  mcp.tool_count: 34;
   testql.desktop_tools: ['xdotool', 'wtype', 'ydotool', 'grim', 'scrot'];
   testql.playwright: true;
   testql.scenario_count: 17;
@@ -199,21 +208,21 @@ desktop {
   status: "available";
   compositor: "wayland";
   display_server: "wayland";
-  probed_at: "2026-06-07T10:25:45.333099+00:00";
+  probed_at: "2026-06-07T19:11:00.347446+00:00";
   tools_used: ide-os-injector,xdotool,xrandr;
   canvas_width: 8416;
   canvas_height: 7680;
 }
 
 desktop_pointer {
-  x: 7635;
-  y: 105;
+  x: 3175;
+  y: 3851;
   screen: 0;
   window_id: "913";
-  display_id: "DP-2";
-  display_output: "DP-2";
-  display_x: 3539;
-  display_y: 105;
+  display_id: "DP-1";
+  display_output: "DP-1";
+  display_x: 3175;
+  display_y: 2547;
 }
 
 desktop_displays[0] {
@@ -467,6 +476,38 @@ commands[14] {
 }
 
 commands[15] {
+  name: "koru_ide_list_uris";
+  description: "Export ide:// / ide-chat:// URI index from live autopilot status (koru autopilot status + nlp2uri systemmap).";
+  optional: "project_root,ide";
+  runtime: "mcp:koru";
+  transport: "stdio";
+  endpoint: "mcp://koru";
+  protocol: "mcp";
+}
+
+commands[16] {
+  name: "koru_ide_control_plan";
+  description: "Resolve natural language to a Koru IDE control plan (ide-chat://, koru-control://) with koru.control.v1 replay metadata.";
+  required: "prompt";
+  optional: "platform,locale";
+  runtime: "mcp:koru";
+  transport: "stdio";
+  endpoint: "mcp://koru";
+  protocol: "mcp";
+}
+
+commands[17] {
+  name: "koru_ide_control_execute";
+  description: "Plan and optionally execute IDE control via nlp2uri koruide driver. Defaults to dry_run=true.";
+  required: "prompt";
+  optional: "text,platform,locale,dry_run";
+  runtime: "mcp:koru";
+  transport: "stdio";
+  endpoint: "mcp://koru";
+  protocol: "mcp";
+}
+
+commands[18] {
   name: "koru_ide_drive";
   description: "Send a prompt to the IDE chat via the koruide daemon drive/chat.send path.";
   required: "project_root,text";
@@ -477,7 +518,7 @@ commands[15] {
   protocol: "mcp";
 }
 
-commands[16] {
+commands[19] {
   name: "koru_ide_dsl_recent";
   description: "Return recent Koru Drive DSL trace lines from the autopilot daemon.";
   required: "project_root";
@@ -488,7 +529,7 @@ commands[16] {
   protocol: "mcp";
 }
 
-commands[17] {
+commands[20] {
   name: "koru_desktop_uri_plan";
   description: "Resolve a natural-language desktop command to an abstract URI and OS action plan via nlp2uri (open app, screenshot, focus window, terminal, settings). Requires optional dependency: pip install 'koru[desktop]'.";
   required: "prompt";
@@ -499,7 +540,7 @@ commands[17] {
   protocol: "mcp";
 }
 
-commands[18] {
+commands[21] {
   name: "koru_desktop_uri_handle";
   description: "Plan and optionally execute a desktop command via nlp2uri. Dry-run is the default; set dry_run=false to run OS commands. On Wayland, screen capture can use XDG Portal (koruvision) when available.";
   required: "prompt";
@@ -510,7 +551,7 @@ commands[18] {
   protocol: "mcp";
 }
 
-commands[19] {
+commands[22] {
   name: "koru_desktop_uri_list_getv_uris";
   description: "List getv:// URIs for ~/.getv profiles (nlp2uri envmap layer).";
   optional: "getv_home";
@@ -520,7 +561,7 @@ commands[19] {
   protocol: "mcp";
 }
 
-commands[20] {
+commands[23] {
   name: "koru_desktop_uri_resolve_getv";
   description: "Resolve NL prompt to getv:// env var URI (e.g. GROQ_API_KEY).";
   required: "prompt";
@@ -531,7 +572,7 @@ commands[20] {
   protocol: "mcp";
 }
 
-commands[21] {
+commands[24] {
   name: "koru_desktop_uri_get_getv_var";
   description: "Read masked metadata for getv://category/profile/VAR.";
   required: "uri";
@@ -541,7 +582,7 @@ commands[21] {
   protocol: "mcp";
 }
 
-commands[22] {
+commands[25] {
   name: "koru_desktop_uri_resolve_system_map";
   description: "Resolve NL against env2llm SystemMap URIs (command://, runtime://). Requires doql_path, example_dir, or inline system_map.";
   required: "prompt";
@@ -552,7 +593,7 @@ commands[22] {
   protocol: "mcp";
 }
 
-commands[23] {
+commands[26] {
   name: "koru_desktop_uri_list_system_uris";
   description: "List command:// and runtime:// URIs from env2llm SystemMapIR.";
   optional: "doql_path,example_dir,example_id,system_map";
@@ -562,7 +603,7 @@ commands[23] {
   protocol: "mcp";
 }
 
-commands[24] {
+commands[27] {
   name: "koru_env2llm_get_registry";
   description: "Get live env2llm SystemMapIR registry (JSON) for a project. Requires: pip install 'koru[desktop]' (env2llm>=0.1.5).";
   optional: "project_dir,project_root,project_id,refresh";
@@ -572,7 +613,7 @@ commands[24] {
   protocol: "mcp";
 }
 
-commands[25] {
+commands[28] {
   name: "koru_env2llm_render_registry";
   description: "Render env2llm registry as doql.less, yaml, json, or markdown.";
   optional: "project_dir,project_root,project_id,format,refresh";
@@ -582,7 +623,7 @@ commands[25] {
   protocol: "mcp";
 }
 
-commands[26] {
+commands[29] {
   name: "koru_env2llm_refresh_registry";
   description: "Regenerate and write .nlp2dsl/registry/environment.*; optional MQTT publish (ENV2LLM_MQTT_ENABLED=1).";
   optional: "project_dir,project_root,project_id,format,probe_desktop,publish_mqtt";
@@ -592,7 +633,7 @@ commands[26] {
   protocol: "mcp";
 }
 
-commands[27] {
+commands[30] {
   name: "koru_env2llm_get_desktop";
   description: "Live desktop probe slice (GNOME windows, session, displays).";
   optional: "project_dir,project_root,project_id,refresh";
@@ -602,7 +643,7 @@ commands[27] {
   protocol: "mcp";
 }
 
-commands[28] {
+commands[31] {
   name: "koru_env2llm_list_commands";
   description: "List command schemas from env2llm registry.";
   optional: "project_dir,project_root,project_id,refresh";
@@ -612,7 +653,7 @@ commands[28] {
   protocol: "mcp";
 }
 
-commands[29] {
+commands[32] {
   name: "koru_env2llm_list_uris";
   description: "nlp2uri URI index over env2llm registry (command://, desktop-window://, runtime://, …).";
   optional: "project_dir,project_root,project_id,refresh";
@@ -622,7 +663,7 @@ commands[29] {
   protocol: "mcp";
 }
 
-commands[30] {
+commands[33] {
   name: "koru_env2llm_mqtt_status";
   description: "MQTT bridge status for env2llm registry fan-out.";
   optional: "project_dir,project_root,project_id";
@@ -632,7 +673,7 @@ commands[30] {
   protocol: "mcp";
 }
 
-commands[31] {
+commands[34] {
   name: "koru_env2llm_validate_calibration";
   description: "Validate IDE calibrations against desktop display geometry. Detects: top-edge clicks (title bar, not chat), pointer-display mismatch, stale calibrations.";
   optional: "project_dir,project_root,project_id,ide,refresh";
@@ -642,7 +683,7 @@ commands[31] {
   protocol: "mcp";
 }
 
-commands[32] {
+commands[35] {
   name: "koru_testql_list_scenarios";
   description: "List TestQL scenario files (*.testql.toon.yaml, *.oql) and command catalog (GUI/DOM via Playwright + native DESKTOP_* via wmctrl/xdotool/wtype/ydotool).";
   optional: "project_dir,project_root";
@@ -652,7 +693,7 @@ commands[32] {
   protocol: "mcp";
 }
 
-commands[33] {
+commands[36] {
   name: "koru_testql_run_scenario";
   description: "Run TestQL scenario(s) — GUI_* (Playwright DOM) or DESKTOP_* (native OS). Default dry_run=true (syntax check only).";
   required: "file_spec";
@@ -663,7 +704,7 @@ commands[33] {
   protocol: "mcp";
 }
 
-commands[34] {
+commands[37] {
   name: "koru_nlp2oql_generate";
   description: "Generate TestQL OQL from NL using env2llm context. Use for CI/regression scenarios (testql backend).";
   required: "prompt";
@@ -674,7 +715,7 @@ commands[34] {
   protocol: "mcp";
 }
 
-commands[35] {
+commands[38] {
   name: "koru_nlp2oql_run";
   description: "Route NL browser task to testql, nlp2cmd, or curllm. Login/form/captcha → curllm; multi-step/canvas → nlp2cmd; tests/API/desktop → testql. Default plan-only unless execute=true.";
   required: "prompt";
@@ -685,7 +726,7 @@ commands[35] {
   protocol: "mcp";
 }
 
-commands[36] {
+commands[39] {
   name: "testql_gui_start";
   description: "Start Playwright/Selenium session (GUI_START)";
   required: "url";
@@ -696,7 +737,7 @@ commands[36] {
   protocol: "testql";
 }
 
-commands[37] {
+commands[40] {
   name: "testql_gui_navigate";
   description: "Navigate browser path (NAVIGATE)";
   required: "path";
@@ -707,7 +748,7 @@ commands[37] {
   protocol: "testql";
 }
 
-commands[38] {
+commands[41] {
   name: "testql_gui_click";
   description: "Click DOM selector (CLICK)";
   required: "selector";
@@ -717,7 +758,7 @@ commands[38] {
   protocol: "testql";
 }
 
-commands[39] {
+commands[42] {
   name: "testql_gui_input";
   description: "Type into selector (INPUT)";
   required: "selector,text";
@@ -727,7 +768,7 @@ commands[39] {
   protocol: "testql";
 }
 
-commands[40] {
+commands[43] {
   name: "testql_gui_assert_visible";
   description: "Assert element visible (ASSERT_VISIBLE)";
   required: "selector";
@@ -737,7 +778,7 @@ commands[40] {
   protocol: "testql";
 }
 
-commands[41] {
+commands[44] {
   name: "testql_gui_assert_text";
   description: "Assert element text (ASSERT_TEXT)";
   required: "selector,expected";
@@ -747,7 +788,7 @@ commands[41] {
   protocol: "testql";
 }
 
-commands[42] {
+commands[45] {
   name: "testql_gui_capture";
   description: "Screenshot selector or page (GUI_CAPTURE)";
   required: "file";
@@ -758,7 +799,7 @@ commands[42] {
   protocol: "testql";
 }
 
-commands[43] {
+commands[46] {
   name: "testql_run_scenario";
   description: "Run .testql.toon.yaml scenario file";
   required: "file_spec";
@@ -769,7 +810,7 @@ commands[43] {
   protocol: "testql";
 }
 
-commands[44] {
+commands[47] {
   name: "testql_inspect_url";
   description: "Browser inspect URL (Playwright DOM/network/console)";
   required: "url";
@@ -780,7 +821,7 @@ commands[44] {
   protocol: "testql";
 }
 
-commands[45] {
+commands[48] {
   name: "testql_generate_ir";
   description: "Generate scenario IR from source artifact";
   required: "source,artifact";
@@ -791,7 +832,7 @@ commands[45] {
   protocol: "testql";
 }
 
-commands[46] {
+commands[49] {
   name: "testql_desktop_list";
   description: "List open desktop windows (wmctrl or xdotool)";
   runtime: "probe:testql";
@@ -800,7 +841,7 @@ commands[46] {
   protocol: "testql";
 }
 
-commands[47] {
+commands[50] {
   name: "testql_desktop_focus";
   description: "Focus desktop window by title substring or hex window id";
   required: "target";
@@ -810,7 +851,7 @@ commands[47] {
   protocol: "testql";
 }
 
-commands[48] {
+commands[51] {
   name: "testql_desktop_launch";
   description: "Launch native application executable";
   required: "executable";
@@ -821,7 +862,7 @@ commands[48] {
   protocol: "testql";
 }
 
-commands[49] {
+commands[52] {
   name: "testql_desktop_click";
   description: "Click screen coordinates (ydotool Wayland / xdotool X11)";
   required: "x,y";
@@ -832,7 +873,7 @@ commands[49] {
   protocol: "testql";
 }
 
-commands[50] {
+commands[53] {
   name: "testql_desktop_type";
   description: "Type text into focused window (wtype / xdotool)";
   required: "text";
@@ -842,7 +883,7 @@ commands[50] {
   protocol: "testql";
 }
 
-commands[51] {
+commands[54] {
   name: "testql_desktop_key";
   description: "Send key combo to focused window (Return, ctrl+s, …)";
   required: "combo";
@@ -852,7 +893,7 @@ commands[51] {
   protocol: "testql";
 }
 
-commands[52] {
+commands[55] {
   name: "testql_desktop_capture";
   description: "Full-screen screenshot (grim / scrot / import)";
   required: "file";
@@ -862,7 +903,7 @@ commands[52] {
   protocol: "testql";
 }
 
-commands[53] {
+commands[56] {
   name: "testql_desktop_assert_window";
   description: "Assert a desktop window title exists";
   required: "title";
@@ -872,7 +913,7 @@ commands[53] {
   protocol: "testql";
 }
 
-commands[54] {
+commands[57] {
   name: "testql_desktop_stop";
   description: "Terminate apps launched in this TestQL desktop session";
   runtime: "probe:testql";
@@ -881,7 +922,7 @@ commands[54] {
   protocol: "testql";
 }
 
-commands[55] {
+commands[58] {
   name: "nlp2oql_generate";
   description: "NL + env context → TestQL OQL scenario (rules or litellm)";
   required: "prompt";
@@ -892,7 +933,7 @@ commands[55] {
   protocol: "nlp2oql";
 }
 
-commands[56] {
+commands[59] {
   name: "nlp2oql_run";
   description: "Route NL task to testql / nlp2cmd / curllm backend and execute";
   required: "prompt";
@@ -903,7 +944,7 @@ commands[56] {
   protocol: "nlp2oql";
 }
 
-commands[57] {
+commands[60] {
   name: "nlp2cmd_run";
   description: "Multi-step browser/desktop automation (Playwright, credentials, recordings)";
   required: "prompt";
@@ -914,7 +955,7 @@ commands[57] {
   protocol: "nlp2cmd";
 }
 
-commands[58] {
+commands[61] {
   name: "curllm_execute";
   description: "LLM-driven browser workflow (forms, extraction, optional captcha_solver)";
   required: "instruction";
@@ -925,7 +966,7 @@ commands[58] {
   protocol: "curllm";
 }
 
-commands[59] {
+commands[62] {
   name: "curllm_fill_form";
   description: "Fill and submit web form via local LLM + Playwright";
   required: "url,instruction";
@@ -967,7 +1008,7 @@ access[0] {
 access[1] {
   agent: "mcp-agent";
   resource_area: "mcp:koru";
-  actions: "koru_list_tickets,koru_run_ticket,koru_job_status,koru_run_quality_gates,koru_propose_edits,koru_ide_command_catalog,koru_ide_command_scenario_schema,koru_strategy_prompt,koru_validate_ide_command_scenario,koru_ide_commands,koru_ide_drive,koru_ide_dsl_recent,koru_desktop_uri_plan,koru_desktop_uri_handle,koru_desktop_uri_list_getv_uris,koru_desktop_uri_resolve_getv,koru_desktop_uri_get_getv_var,koru_desktop_uri_resolve_system_map,koru_desktop_uri_list_system_uris,koru_env2llm_get_registry,koru_env2llm_render_registry,koru_env2llm_refresh_registry,koru_env2llm_get_desktop,koru_env2llm_list_commands,koru_env2llm_list_uris,koru_env2llm_mqtt_status,koru_env2llm_validate_calibration,koru_testql_list_scenarios,koru_testql_run_scenario,koru_nlp2oql_generate,koru_nlp2oql_run";
+  actions: "koru_list_tickets,koru_run_ticket,koru_job_status,koru_run_quality_gates,koru_propose_edits,koru_ide_command_catalog,koru_ide_command_scenario_schema,koru_strategy_prompt,koru_validate_ide_command_scenario,koru_ide_commands,koru_ide_list_uris,koru_ide_control_plan,koru_ide_control_execute,koru_ide_drive,koru_ide_dsl_recent,koru_desktop_uri_plan,koru_desktop_uri_handle,koru_desktop_uri_list_getv_uris,koru_desktop_uri_resolve_getv,koru_desktop_uri_get_getv_var,koru_desktop_uri_resolve_system_map,koru_desktop_uri_list_system_uris,koru_env2llm_get_registry,koru_env2llm_render_registry,koru_env2llm_refresh_registry,koru_env2llm_get_desktop,koru_env2llm_list_commands,koru_env2llm_list_uris,koru_env2llm_mqtt_status,koru_env2llm_validate_calibration,koru_testql_list_scenarios,koru_testql_run_scenario,koru_nlp2oql_generate,koru_nlp2oql_run";
   effect: "allow";
 }
 

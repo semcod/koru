@@ -183,6 +183,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "auto": lambda argv: _lazy_module_main("koru.cli_auto", "_auto_main", argv),
     "wizard": lambda argv: _lazy_module_main("koru.wizard.cli", "wizard_main", argv),
     "dsl": _dsl_main,
+    "sllm": _sllm_main,
     "api": _api_main,
     "topology": lambda argv: _lazy_module_main("koru.cli_topology", "topology_main", argv),
     "strategy": lambda argv: _lazy_module_main("koru.cli_strategy", "strategy_main", argv),

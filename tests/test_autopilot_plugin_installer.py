@@ -12,7 +12,6 @@ from types import SimpleNamespace
 import pytest
 
 from koru.autopilot import plugin_installer
-from koruide.ide import detect_terminal_host_ide_id as _real_detect_terminal_host_ide_id
 
 
 def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -72,6 +71,7 @@ def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
     monkeypatch.delenv("VSCODE_NLS_CONFIG", raising=False)
     monkeypatch.delenv("VSCODE_IPC_HOOK", raising=False)
     monkeypatch.delenv("CURSOR_AGENT", raising=False)
+    monkeypatch.delenv("CHROME_DESKTOP", raising=False)
     monkeypatch.setattr(plugin_installer, "detect_terminal_host_ide_id", lambda **_k: None)
     monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: None)
     monkeypatch.setattr(
@@ -86,12 +86,8 @@ def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
 def test_resolve_target_ide_uses_integrated_terminal_hint(monkeypatch) -> None:
     _isolate_integrated_terminal_env(monkeypatch)
     monkeypatch.setenv("TERM_PROGRAM", "cursor")
-    # Rebind the real detector in case a prior test left a stub on this module.
-    monkeypatch.setattr(
-        plugin_installer,
-        "detect_terminal_host_ide_id",
-        _real_detect_terminal_host_ide_id,
-    )
+    # Terminal hint must beat focused IDE even when host detection is stubbed.
+    monkeypatch.setattr(plugin_installer, "detect_terminal_host_ide_id", lambda **_k: None)
     monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda **_k: "windsurf")
 
     assert plugin_installer.resolve_target_ide("auto") == "cursor"

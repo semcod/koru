@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 _NLP2URI_IMPORT_ERROR: str | None = None
 
@@ -66,16 +67,33 @@ def desktop_uri_plan(
     host = _resolve_platform(platform)
     service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
     plan = service.from_prompt(prompt, locale=locale)
+    plan_dict = plan.to_dict()
     payload: dict[str, Any] = {
         "ok": True,
         "prompt": prompt,
         "platform": service._host().value,
-        "plan": plan.to_dict(),
+        "plan": plan_dict,
     }
+    control_plan = plan_dict.get("control_plan")
+    if control_plan:
+        payload["control_plan"] = control_plan
+        payload["control_surface"] = _control_surface_hint(plan.uri)
     intent_ir = _intent_ir_metadata(prompt)
     if intent_ir:
         payload["nlp_bridge"] = intent_ir
     return payload
+
+
+def _control_surface_hint(uri: str) -> str | None:
+    if uri.startswith("ide-chat://"):
+        return "ide_chat"
+    if uri.startswith("ide-command://"):
+        return "ide_command"
+    if uri.startswith("koru-control://"):
+        return "koru_control"
+    if uri.startswith("ide://"):
+        return "ide"
+    return None
 
 
 def _portal_capture_enabled(explicit: bool | None) -> bool:
@@ -115,6 +133,197 @@ def _capture_via_portal(uri: str) -> dict[str, Any] | None:
         "method": "xdg-portal",
         "capture_path": str(outfile),
         "bytes": len(png),
+    }
+
+
+def desktop_uri_control_plan(
+    prompt: str,
+    *,
+    platform: str | None = None,
+    locale: str | None = None,
+) -> dict[str, Any]:
+    """Resolve NL prompt to a Koru IDE control plan (koru.control.v1)."""
+    payload = desktop_uri_plan(prompt, platform=platform, locale=locale)
+    if not payload.get("ok"):
+        return payload
+    control_plan = payload.get("control_plan") or payload.get("plan", {}).get("control_plan")
+    if not control_plan:
+        payload["control_plan"] = None
+        payload["control_error"] = "prompt did not resolve to an IDE control URI"
+        return payload
+    payload["control_plan"] = control_plan
+    return payload
+
+
+def desktop_uri_list_koru_ide_uris(
+    status: dict[str, Any],
+    *,
+    socket_path: str | None = None,
+) -> dict[str, Any]:
+    """Build URI index from Koru autopilot status payload."""
+    if not _NLP2URI_AVAILABLE:
+        return {"ok": False, "error": nlp2uri_missing_message()}
+
+    host = _resolve_platform(None)
+    service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
+    payload = service.list_koru_ide_uris(status, socket_path=socket_path or "")
+    payload["ok"] = True
+    return payload
+
+
+def desktop_uri_direct_ide_chat_execute(
+    message: str,
+    *,
+    ide: str,
+    submit: bool = True,
+    require_plugin: bool = False,
+    workspace: str = "",
+    dry_run: bool = True,
+    client_factory: Any = None,
+) -> dict[str, Any]:
+    """Drive IDE chat without NL parsing (prompt is the message body)."""
+    if not _NLP2URI_AVAILABLE:
+        return {"ok": False, "error": nlp2uri_missing_message()}
+
+    from nlp2uri.control_execute import compile_and_execute_control_uri
+    from nlp2uri.schemes.util import abstract_url
+
+    params: dict[str, str] = {
+        "submit": "true" if submit else "false",
+        "require_plugin": "true" if require_plugin else "false",
+    }
+    if workspace:
+        params["workspace"] = workspace
+    if submit and ide.strip().lower() == "cursor":
+        params["strategy_hint"] = "submit_alt_glass_first"
+    uri = abstract_url("ide-chat", ide, "/send", params=params)
+    result = compile_and_execute_control_uri(
+        uri,
+        text=message,
+        dry_run=dry_run,
+        client_factory=client_factory,
+    )
+    return {
+        "ok": bool(result.get("ok")),
+        "prompt": message,
+        "uri": uri,
+        "control_plan": result.get("plan"),
+        "execution": result,
+        "drive_mode": "direct",
+    }
+
+
+def _control_uri_with_runtime_overrides(
+    uri: str,
+    *,
+    ide: str | None = None,
+    submit: bool = True,
+    workspace: str = "",
+    strategy_hint: str = "",
+) -> str:
+    """Apply explicit runtime lane overrides to an nlp2uri control URI."""
+    parsed = urlsplit(uri)
+    scheme = parsed.scheme.lower()
+    if scheme not in {"ide-chat", "koru-control"}:
+        return uri
+
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    netloc = parsed.netloc
+    if ide:
+        if scheme == "ide-chat":
+            netloc = ide
+        else:
+            query["ide"] = ide
+    if workspace:
+        query["workspace"] = workspace
+    if submit is False:
+        query["submit"] = "false"
+    lane = (ide or netloc or query.get("ide") or "").strip().lower()
+    hint = strategy_hint or (
+        "submit_alt_glass_first" if submit and lane == "cursor" else ""
+    )
+    if hint:
+        query["strategy_hint"] = hint
+
+    return urlunsplit((parsed.scheme, netloc, parsed.path, urlencode(query), parsed.fragment))
+
+
+def desktop_uri_control_execute(
+    prompt: str,
+    *,
+    platform: str | None = None,
+    locale: str | None = None,
+    dry_run: bool = True,
+    text: str | None = None,
+    ide: str | None = None,
+    submit: bool = True,
+    workspace: str = "",
+    client_factory: Any = None,
+) -> dict[str, Any]:
+    """Plan + execute IDE control via nlp2uri koruide driver."""
+    if not _NLP2URI_AVAILABLE:
+        return {"ok": False, "error": nlp2uri_missing_message()}
+
+    from nlp2uri.control_execute import compile_and_execute_control_uri
+
+    plan_payload = desktop_uri_control_plan(prompt, platform=platform, locale=locale)
+    if not plan_payload.get("ok"):
+        if ide:
+            message = (text or prompt).strip()
+            if message:
+                return desktop_uri_direct_ide_chat_execute(
+                    message,
+                    ide=ide,
+                    submit=submit,
+                    workspace=workspace,
+                    dry_run=dry_run,
+                    client_factory=client_factory,
+                )
+        return plan_payload
+    control_plan = plan_payload.get("control_plan")
+    if not control_plan:
+        if ide:
+            message = (text or prompt).strip()
+            if message:
+                return desktop_uri_direct_ide_chat_execute(
+                    message,
+                    ide=ide,
+                    submit=submit,
+                    workspace=workspace,
+                    dry_run=dry_run,
+                    client_factory=client_factory,
+                )
+        return {
+            "ok": False,
+            "error": plan_payload.get("control_error", "no control plan"),
+            "plan": plan_payload.get("plan"),
+        }
+    uri = _control_uri_with_runtime_overrides(
+        plan_payload["plan"]["uri"],
+        ide=ide,
+        submit=submit,
+        workspace=workspace,
+    )
+    text_ref = text
+    if not text_ref:
+        meta = plan_payload.get("plan", {}).get("spec", {}).get("metadata", {})
+        if isinstance(meta, dict):
+            text_ref = meta.get("text")
+        if not text_ref and control_plan.get("actions"):
+            text_ref = control_plan["actions"][0].get("text_ref")
+    result = compile_and_execute_control_uri(
+        uri,
+        text=text_ref,
+        dry_run=dry_run,
+        client_factory=client_factory,
+    )
+    return {
+        "ok": bool(result.get("ok")),
+        "prompt": prompt,
+        "uri": uri,
+        "control_plan": result.get("plan") or control_plan,
+        "execution": result,
+        "drive_mode": "nlp",
     }
 
 

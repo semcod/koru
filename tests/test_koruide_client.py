@@ -152,6 +152,26 @@ def test_drive_uses_extended_timeout(monkeypatch) -> None:
     assert captured == {"msg_type": "drive", "timeout": 9.0}
 
 
+def test_drive_generates_unique_correlation_ids() -> None:
+    captured: list[str | None] = []
+    client = KoruIDEClient(socket_path=Path("/tmp/koruide.sock"), timeout=0.25)
+
+    def fake_request(msg, *, timeout=None):
+        captured.append(msg.id)
+        reply = MagicMock()
+        reply.to_dict.return_value = {"ok": True, "backend": "plugin"}
+        return reply
+
+    client.request = fake_request  # type: ignore[method-assign]
+
+    client.drive("hello", ide="vscode")
+    client.drive("hello again", ide="vscode")
+
+    assert len(captured) == 2
+    assert captured[0] != captured[1]
+    assert all(str(corr).startswith("cli-drive-") for corr in captured)
+
+
 def test_request_decodes_length_prefixed_large_ack(tmp_path: Path) -> None:
     """Client must decode framed ACK payloads larger than NDJSON line budget."""
     sock_path = tmp_path / "framed-large.sock"

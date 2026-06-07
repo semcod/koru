@@ -309,8 +309,11 @@ def _add_scenario_parsers(sub: argparse._SubParsersAction[argparse.ArgumentParse
 
 
 def build_parser() -> argparse.ArgumentParser:
+    from koru.ide_control_cli import add_control_parser
+
     parser = argparse.ArgumentParser(prog="koru ide")
     sub = parser.add_subparsers(dest="action", required=True)
+    add_control_parser(sub)
     _add_discover_parser(sub)
     _add_doctor_parser(sub)
     _add_history_parser(sub)
@@ -568,6 +571,10 @@ def action_ide_scenario_validate(args: argparse.Namespace) -> int:
 def ide_main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.action == "control":
+        from koru.ide_control_cli import dispatch_control_action
+
+        return dispatch_control_action(args)
     if args.action == "doctor":
         return action_ide_doctor(args)
     if args.action == "history":
