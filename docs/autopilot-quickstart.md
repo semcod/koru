@@ -358,6 +358,25 @@ plugin successfully connects to the daemon.
 > JetBrains plugin: stub only — see [`autopilot-roadmap.md`](./autopilot-roadmap.md).
 > JetBrains users get keyboard-sim through `ydotool`.
 
+### 3b. `coru calibration` (works from IDE integrated terminal)
+
+[`coru calibration`](../packages/coru/README.md) runs the same end-to-end
+plugin probe as step 4 below, but chains socket alignment, optional testql
+preflights, and a strict `drive --require-plugin` in one command. Use it
+after reloading the IDE window or upgrading a VSIX.
+
+```bash
+export KORU_AUTOPILOT_INSTANCE=antigravity   # or cursor, vscode, windsurf, …
+coru calibration --skip-desktop --skip-bridge   # plugin-only probe (recommended on Wayland)
+coru calibration                                # full preflight (desktop is advisory)
+```
+
+Success ends with `calibration: PASS — focus/paste/submit path verified`.
+Desktop `DESKTOP_*` steps may fail on GNOME/Wayland (wmctrl cannot see Electron
+titles) — that does **not** block the plugin probe. Templates live in
+`testql-scenarios/{ide}-desktop-calibration.oql` and are materialized under
+`.planfile/.koru/`. See also [`docs/README.md`](./README.md).
+
 ### 4. Verify end-to-end
 
 ```bash

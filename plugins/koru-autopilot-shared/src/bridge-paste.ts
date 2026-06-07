@@ -38,6 +38,10 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     return lower.includes("startcomposerprompt");
   }
 
+  protected cursorComposerPromptPasteCommand(pasteCommand: string | undefined): boolean {
+    return Boolean(pasteCommand && /startcomposerprompt/i.test(pasteCommand));
+  }
+
   protected cursorPreSubmitProbeEmptyBlocksSubmit(
     observed: string,
     pastedText: string,
@@ -89,6 +93,22 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     route: string,
     pasteCommand?: string
   ): Promise<CommandOutcome> {
+    if (pastedText && this.cursorComposerPromptPasteCommand(pasteCommand)) {
+      this.traceOperation({
+        op: "submit",
+        route: `${route}:composer-prompt-bubble-verify`,
+        ok: true,
+        command: pasteCommand,
+        reason:
+          "startComposerPrompt paste targets Glass composer; proceeding with bubble-db submit verification",
+        detail: { pasteCommand },
+      });
+      return {
+        ok: true,
+        command: pasteCommand || "cursor-composer-prompt-paste",
+        reason: "composer prompt paste; bubble-db will verify submit",
+      };
+    }
     let refocus = await this.focusChatInput();
     if (!refocus.ok) {
       refocus = await this.cursorRecoverGlassChatFocus(route);

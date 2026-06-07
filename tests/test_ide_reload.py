@@ -131,6 +131,7 @@ def test_try_reload_does_not_call_reuse_window_by_default(
     monkeypatch.delenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", raising=False)
     monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: None)
     from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
@@ -169,6 +170,7 @@ def test_try_reload_calls_reuse_window_when_opted_in(
     monkeypatch.delenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", raising=False)
     monkeypatch.setenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
     monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: False)
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: None)
     from gillm.focus.strategy import FocusOutcome
 
     _fake_os_strategy(
@@ -277,7 +279,7 @@ def test_detect_reload_command_blocks_reuse_window_from_integrated_terminal(
 ) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
     monkeypatch.setenv("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
-    monkeypatch.setattr(ide_reload, "_running_from_integrated_ide_terminal", lambda: True)
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "cursor")
     monkeypatch.setattr(
         ide_reload,
         "config_home_for_ide",
@@ -286,6 +288,22 @@ def test_detect_reload_command_blocks_reuse_window_from_integrated_terminal(
     method, reason = ide_reload.detect_reload_command("cursor", dry_run=False)
     assert method is None
     assert "integrated IDE terminal" in (reason or "")
+
+
+def test_detect_reload_command_allows_cross_ide_reload_from_integrated_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
+    monkeypatch.setenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", "1")
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "windsurf")
+    monkeypatch.setattr(
+        ide_reload,
+        "config_home_for_ide",
+        lambda _ide: Path("/tmp/cursor-config"),
+    )
+    method, reason = ide_reload.detect_reload_command("cursor", dry_run=False)
+    assert method == "command_palette"
+    assert reason is None
 
 
 def test_await_plugin_handshake_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -420,6 +438,7 @@ def test_reload_via_command_palette_refuses_integrated_terminal_focus(
     commands into the user's terminal."""
     from gillm.focus.strategy import FocusOutcome
 
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "vscodium")
     strategy = _fake_os_strategy(
         ide_reload_module=ide_reload,
         monkeypatch=monkeypatch,
@@ -435,6 +454,24 @@ def test_reload_via_command_palette_refuses_integrated_terminal_focus(
         outcome.detail or ""
     )
     strategy.inject_keys.assert_not_called()
+
+
+def test_reload_via_command_palette_allows_cross_ide_integrated_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from gillm.focus.strategy import FocusOutcome
+
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "windsurf")
+    strategy = _fake_os_strategy(
+        ide_reload_module=ide_reload,
+        monkeypatch=monkeypatch,
+        focus_outcome=FocusOutcome(ok=True, method="integrated_terminal"),
+        focus_methods=("integrated_terminal",),
+    )
+    monkeypatch.setattr(ide_reload.time, "sleep", lambda *_a: None)
+    outcome = ide_reload.reload_via_command_palette("cursor")
+    assert outcome.ok is True
+    assert strategy.inject_keys.call_count == 3
 
 
 def test_reload_via_command_palette_explains_wayland_failure(
@@ -485,10 +522,168 @@ def test_explain_reload_failure_includes_handshake_reason() -> None:
     )
     text = ide_reload.explain_reload_failure(
         ide="vscode",
-        method="command_palette",
         reason="reload execution failed",
         outcome=outcome,
         handshake_reason="plugin_handshake_timeout",
     )
     assert "failed to open command palette" in text
     assert "plugin_handshake_timeout" in text
+
+
+def test_try_reload_connect_only_calls_connect_palette(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
+    connect_calls: list[str] = []
+
+    def fake_connect(ide: str) -> ide_reload.IdeReloadOutcome:
+        connect_calls.append(ide)
+        return ide_reload.IdeReloadOutcome(
+            attempted=True, ok=True, method="connect_palette"
+        )
+
+    monkeypatch.setattr(ide_reload, "connect_via_command_palette", fake_connect)
+    outcome = ide_reload.try_reload_vscode_family_ide(
+        "cursor",
+        project=Path("/tmp/p"),
+        connect_only=True,
+    )
+    assert connect_calls == ["cursor"]
+    assert outcome.ok is True
+    assert outcome.method == "connect_palette"
+
+
+def test_try_reload_connect_only_disabled_when_auto_reload_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "0")
+    outcome = ide_reload.try_reload_vscode_family_ide(
+        "cursor",
+        project=Path("/tmp/p"),
+        connect_only=True,
+    )
+    assert outcome.attempted is False
+    assert "auto reload disabled" in (outcome.detail or "")
+
+
+def test_reload_via_command_palette_allows_integrated_terminal_when_detached(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from gillm.focus.strategy import FocusOutcome
+
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "cursor")
+    strategy = _fake_os_strategy(
+        ide_reload_module=ide_reload,
+        monkeypatch=monkeypatch,
+        focus_outcome=FocusOutcome(ok=True, method="integrated_terminal"),
+        focus_methods=("integrated_terminal",),
+    )
+    monkeypatch.setattr(ide_reload.time, "sleep", lambda *_a: None)
+    monkeypatch.setenv(ide_reload._DETACHED_RUNNER_MARKER, "1")
+    outcome = ide_reload.reload_via_command_palette("cursor")
+    assert outcome.ok is True
+    assert strategy.inject_keys.call_count == 3
+
+
+def test_run_command_palette_sequence_allows_integrated_terminal_when_detached(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from gillm.focus.strategy import FocusOutcome
+
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "cursor")
+    strategy = _fake_os_strategy(
+        ide_reload_module=ide_reload,
+        monkeypatch=monkeypatch,
+        focus_outcome=FocusOutcome(ok=True, method="integrated_terminal"),
+        focus_methods=("integrated_terminal",),
+    )
+    monkeypatch.setattr(ide_reload.time, "sleep", lambda *_a: None)
+    monkeypatch.setenv(ide_reload._DETACHED_RUNNER_MARKER, "1")
+    outcome = ide_reload._run_command_palette_sequence(
+        "cursor",
+        command_text="koru: Connect autopilot daemon",
+        method="connect_palette",
+    )
+    assert outcome.ok is True
+    assert strategy.inject_keys.call_count == 3
+
+
+def test_detect_reload_command_bypasses_integrated_terminal_when_detached(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
+    monkeypatch.setenv("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", "1")
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "cursor")
+    monkeypatch.setattr(
+        ide_reload,
+        "config_home_for_ide",
+        lambda _ide: Path("/tmp/cursor-config"),
+    )
+    monkeypatch.setenv(ide_reload._DETACHED_RUNNER_MARKER, "1")
+    method, reason = ide_reload.detect_reload_command("cursor", dry_run=False)
+    assert method == "command_palette"
+    assert reason is None
+
+
+def test_spawn_detached_ide_reload_spawns_koru_cli(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    popen_calls: list[dict[str, Any]] = []
+
+    def fake_popen(
+        argv: list[str],
+        **kwargs: Any,
+    ) -> mock.Mock:
+        popen_calls.append({"argv": argv, "kwargs": kwargs})
+        return mock.Mock(pid=12345)
+
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
+    outcome = ide_reload.spawn_detached_ide_reload(
+        "cursor",
+        project=tmp_path,
+        koru_argv=["/bin/koru"],
+        popen=fake_popen,
+    )
+    assert outcome.attempted is True
+    assert outcome.ok is True
+    assert outcome.method == "detached_runner"
+    assert len(popen_calls) == 1
+    call = popen_calls[0]
+    assert call["argv"] == [
+        "/bin/koru",
+        "ide",
+        "reload",
+        "--ide",
+        "cursor",
+        "--project",
+        str(tmp_path.resolve()),
+        "--format",
+        "json",
+    ]
+    assert call["kwargs"]["start_new_session"] is True
+    assert call["kwargs"]["close_fds"] is True
+    assert call["kwargs"]["env"][ide_reload._DETACHED_RUNNER_MARKER] == "1"
+
+
+def test_spawn_detached_ide_reload_with_connect_only(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    popen_calls: list[dict[str, Any]] = []
+
+    def fake_popen(
+        argv: list[str],
+        **kwargs: Any,
+    ) -> mock.Mock:
+        popen_calls.append({"argv": argv, "kwargs": kwargs})
+        return mock.Mock(pid=12345)
+
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "1")
+    outcome = ide_reload.spawn_detached_ide_reload(
+        "cursor",
+        project=tmp_path,
+        connect_only=True,
+        koru_argv=["/bin/koru"],
+        popen=fake_popen,
+    )
+    assert outcome.ok is True
+    assert "--connect-only" in popen_calls[0]["argv"]

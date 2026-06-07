@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`coru calibration`** — end-to-end plugin probe for a lane: optional
+  testql desktop/bridge prefight, socket alignment via `koru ide doctor
+  --fix --gc-sockets`, then `koru autopilot drive --require-plugin` with
+  strict focus/paste/submit verification. Works from an integrated IDE
+  terminal. Flags: `--skip-desktop`, `--skip-bridge`, `--skip-fix`,
+  `--probe-prompt`. Templates: `testql-scenarios/{ide}-desktop-calibration.oql`,
+  `testql-scenarios/cli-coru_calibration.testql.toon.yaml`. Docs:
+  [`packages/coru/README.md`](./packages/coru/README.md),
+  [`docs/autopilot-quickstart.md`](./docs/autopilot-quickstart.md).
 - **Koru Drive DSL — transparent per-step integration trace.** Every
   autopilot drive now emits one human-readable `[DSL]` line per
   integration step plus a final `[DSL] #999 act=drive` outcome line.
@@ -16,102 +25,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plugin already sends with every ack, and is logged both by the
   daemon and by the CLI (via `koru.activity_log.activity("DSL", ...)`).
   Format: `#NNN act=<op> intent="..." route=<route>[:cmd] ok=<true|false|ambiguous> [reason="..."]`.
-  Each line carries the operation kind, a stable human-readable intent
-  drawn from a lookup table (`focus_open` → "make the chat panel the
-  foreground surface", `submit` → "send the prompt as a user message",
-  ...), the concrete VS Code/Cursor route, the verification verdict,
-  and a quoted failure reason. The relayed ack envelope now carries
-  `drive_dsl: string[]` and `drive_dsl_outcome: string` so dashboard
-  consumers can read the same trace without re-parsing
-  `operation_trace`. Docs: `docs/koru-drive-dsl.md`.
-
-### Fixed
-- **CLI drive timeout extended from 8 s → 45 s.** Cursor's worst-case
-  ladder (focus_open + input_busy_probe + paste + N submit candidates
-  + 2.5 s `cursorDiskKV` bubble verification) routinely needs 15-25
-  seconds; the legacy 8 s cap caused `autopilot: failed (autopilot
-  daemon unreachable: timed out, kind=ticket_prompt)` while the
-  plugin was *still working* and would have produced a real ack with
-  useful diagnostics seconds later. The new default is 45 s, tunable
-  via `KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS`. Late acks that arrive
-  after the CLI has already disconnected are still rendered into
-  `[DSL]` lines on the daemon side, so even a timed-out drive leaves
-  a transparent postmortem record.
-- **STARTER-276 — code2llm no longer flags the per-IDE plugin folders as
-  duplicates.** The architectural split into five dedicated VSIX packages
-  (`koru-autopilot-{cursor,vscode,vscodium,windsurf,antigravity}`)
-  intentionally duplicates `AutopilotBridge` and helper classes across
-  every plugin so a regression in one IDE pipeline cannot leak into
-  another's runtime. Before this fix the autonomous discovery pass
-  (`run_code2llm_discovery`) created a fresh "Remove 10 duplicated
-  classes" planfile ticket on every cycle, suggesting a refactor that
-  would re-collapse the plugins. `DEFAULT_EXCLUDES` now includes
-  `plugins` so code2llm skips the entire IDE-plugin tree (the shared
-  TypeScript that *is* safe to deduplicate already lives in
-  `plugins/koru-autopilot-shared/` and is copied into each plugin's
-  `src/_shared/` at build time). New regression tests in
-  `tests/test_code2llm_discovery.py` lock the invariant.
-
-### Added
+  The relayed ack envelope carries `drive_dsl: string[]` and
+  `drive_dsl_outcome: string`. Docs: [`docs/koru-drive-dsl.md`](./docs/koru-drive-dsl.md).
 - **Capture providers (Phase 0+1):** `koruvision/providers/` plugin layout with
   ranked auto-detection (`detector.py`), MSS / portal screenshot / grim /
   CLI tools, and **`portal_screencast`** (xdg-desktop-portal ScreenCast +
   `gst-launch-1.0 pipewiresrc`). `capture.py` delegates to the detector;
   `/api/mesh/diagnostics` lists provider availability.
-- **`koru observe providers` CLI (Phase 2):** `list` shows provider availability
-  and auto-rank order; `test [NAME]` probes capture per provider; `reset`
-  clears `.koru/keys/screencast.session`. Grid `/api/mesh/diagnostics` adds
-  `ranked_providers` and renders a provider table when capture is blocked.
-- **Cross-OS capture smoke (Docker):** `docker/capture/{Dockerfile,smoke.py,
-  run.sh,entrypoint-x11.sh}` plus `tests/test_docker_capture.py` (gated by
-  `KORU_DOCKER_TESTS=1`). Builds two targets — `capture-headless` (no
-  display server) and `capture-x11` (Xvfb + scrot + mss) — and asserts the
-  provider chain reports the expected available/blocked status and produces
-  a non-trivial PNG.
+- **`koru observe providers` CLI (Phase 2):** `list`, `test [NAME]`, `reset`;
+  grid `/api/mesh/diagnostics` adds `ranked_providers`.
+- **Cross-OS capture smoke (Docker):** `docker/capture/` plus
+  `tests/test_docker_capture.py` (gated by `KORU_DOCKER_TESTS=1`).
+- **`.env` auto-load:** `python -m koru` / the `koru` console script load
+  `<cwd>/.env` (and `.env.local`) on startup via `koru.dotenv_loader.load_dotenv`
+  — existing env vars always win.
+- **System-config dashboard tab:** `/api/env-config` GET/POST + **Environment
+  (.env)** panel under System config (inline edit of well-known `KORU_*` knobs).
 
 ### Fixed
-- **`scrot` 1.x refuses to overwrite** an existing file. `command_candidates`
-  now passes `--overwrite`, and `run_png_command` unlinks the
-  `NamedTemporaryFile` placeholder before invoking gnome-screenshot /
-  spectacle / scrot / maim. Adds an explicit "did not write" error so a
-  silent empty PNG fails loudly instead of cascading through the chain.
+- **CLI drive timeout extended from 8 s → 45 s** (`KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS`).
+  Late daemon-side `[DSL]` lines still render after a CLI timeout.
+- **STARTER-276 — code2llm no longer flags per-IDE plugin folders as
+  duplicates.** `DEFAULT_EXCLUDES` now includes `plugins`; regression tests in
+  `tests/test_code2llm_discovery.py`.
+- **`scrot` 1.x refuses to overwrite** an existing file — `command_candidates`
+  passes `--overwrite`; `run_png_command` unlinks the placeholder first.
 
 ### Removed
-- **Dead capture orchestrators** in `koruvision/capture_mss.py`
-  (`capture_backend`, `auto_backend_order`, `auto_failure_message`,
-  `_fallback_after_mss`, `grab_single_mss`, `grab_all_mss`) replaced by
-  `koruvision.providers.detector`. Module `koruvision/capture_fallback.py`
-  deleted (no remaining importers).
-- **30 s capture floor:** `koruvision.agent.normalize_capture_interval`
-  clamps any user-configured interval below 30 s up to the
-  `MIN_CAPTURE_INTERVAL_SECONDS = 30` safety floor; `KORU_VISION_INTERVAL`
-  (env) and `vision.interval_seconds` (project config) honour the floor.
-- **`.env` auto-load:** `python -m koru` / the `koru` console script now
-  load `<cwd>/.env` (and `.env.local`) on startup via
-  `koru.dotenv_loader.load_dotenv` — existing env vars always win.
-- **System-config dashboard tab:** new `/api/env-config` GET/POST endpoint
-  + `Environment (.env)` panel under the **System config** nav item shows
-  every well-known `KORU_*` knob (capture interval, provider, scale,
-  portal interpreter, mesh frame store, …) with inline editing that writes
-  back to `.env` while preserving comments and unrelated lines.
+- **Dead capture orchestrators** in `koruvision/capture_mss.py` and module
+  `koruvision/capture_fallback.py` (replaced by `koruvision.providers.detector`).
 
 ### Changed
-- **Dashboard refactor:** `src/koruapi/dashboard_serve.py` shrank from
-  ~1850 lines to ~240. Per-route HTTP handlers moved to
-  `src/koruapi/dashboard_routes.py` (`build_dashboard_handler`), port/bind
-  helpers moved to `src/koruapi/dashboard_serve_utils.py`, and the inline
-  HTML page is now `src/koruapi/dashboard_template.html` (loaded once via
-  `@lru_cache`). Public API and CLI behaviour are unchanged; `koru serve`,
-  `koru api dashboard`, `read_serve_endpoint`, `start_serve_background`,
-  `build_server(config)`, `bind_serve_server(config)`,
-  `write_serve_endpoint_file(config)` and all underscore-prefixed test
-  hooks (`_cmdline_suggests_koru_serve_from_bytes`,
-  `_try_stop_prior_koru_serve_listener`, …) are still importable from
-  `koru.serve` / `koruapi.dashboard_serve`.
-- Module-level documentation in `koruapi/dashboard_serve.py` now points
-  at the new neighbouring modules; `docs/korudsl-koruapi.md` and
-  `docs/plans/observation-mesh-plan.md` describe where to add new
-  dashboard routes.
+- **Dashboard refactor:** handlers → `dashboard_routes.py`, bind helpers →
+  `dashboard_serve_utils.py`, HTML → `dashboard_template.html`. See
+  [`docs/korudsl-koruapi.md`](./docs/korudsl-koruapi.md),
+  [`docs/plans/observation-mesh-plan.md`](./docs/plans/observation-mesh-plan.md).
+- **30 s capture floor:** `normalize_capture_interval` clamps below
+  `MIN_CAPTURE_INTERVAL_SECONDS = 30` (`KORU_VISION_INTERVAL`, project config).
+- **Documentation index:** [`docs/README.md`](./docs/README.md) lists all
+  guides; top-level [`README.md`](./README.md) Documentation section links into
+  `docs/*` by topic.
+
+## [0.1.315] - 2026-06-07
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/README.md
+- Update docs/autopilot-quickstart.md
+- Update docs/koru-drive-dsl.md
+- Update docs/llm-tools/testql/README.md
+- Update docs/quickstart-10min.md
+- Update packages/coru/README.md
+
+### Test
+- Update testql-scenarios/README.md
+- Update testql-scenarios/antigravity-desktop-calibration.oql
+- Update testql-scenarios/cli-coru_calibration.testql.toon.yaml
+- Update testql-scenarios/cursor-desktop-calibration.oql
+- Update testql-scenarios/vscode-desktop-calibration.oql
+- Update testql-scenarios/windsurf-desktop-calibration.oql
+- Update tests/test_autopilot_ide.py
+- Update tests/test_ide_reload.py
+- Update tests/test_operator_pipeline.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/src/coru/repair/pipeline.py
+- Update packages/coru/tests/test_coru_cli.py
+- Update plugins/koru-autopilot-antigravity/package.json
+- Update plugins/koru-autopilot-cursor/package.json
+- ... and 6 more files
 
 ## [0.1.314] - 2026-06-07
 

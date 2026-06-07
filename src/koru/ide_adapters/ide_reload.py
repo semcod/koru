@@ -11,9 +11,13 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
+import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from koru.ide_adapters.gillm_recovery import recovery_hints_for_ide_reload
 from koru.ide_adapters.shared import config_home_for_ide
@@ -26,6 +30,7 @@ from gillm.focus import (
 )
 
 _VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "vscode", "vscodium", "windsurf"})
+_AUTO_RELOAD_DISABLED_MSG = "auto reload disabled"
 
 
 def _on_wayland() -> bool:
@@ -128,6 +133,33 @@ def new_window_reload_enabled() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+# Internal marker set on the detached reload child. When present, the
+# integrated-terminal *self-kill* guard in ``detect_reload_command`` is
+# skipped: the runner lives in its own session, so an IDE window reload that
+# tears down the integrated terminal cannot kill it. Focus safety
+# (``_run_command_palette_sequence`` refusing integrated-terminal focus) is
+# preserved, so the runner still never types into the user's shell.
+_DETACHED_RUNNER_MARKER = "_KORU_AUTOPILOT_DETACHED_RELOAD_RUNNER"
+
+
+def detached_reload_enabled() -> bool:
+    """Opt-in: run the IDE reload in a session detached from this terminal.
+
+    DEFAULT: off. When koru runs inside an IDE integrated terminal, an
+    in-process ``Developer: Reload Window`` would kill the terminal (and thus
+    ``coru auto``) before the plugin reconnects. Opting in lets koru spawn the
+    reload as a separate, session-detached process that survives the window
+    reload. Enable with ``KORU_AUTOPILOT_DETACHED_RELOAD=1``.
+    """
+    raw = os.environ.get("KORU_AUTOPILOT_DETACHED_RELOAD", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def running_as_detached_reload_runner() -> bool:
+    """True inside the spawned detached reload child (marker env present)."""
+    return os.environ.get(_DETACHED_RUNNER_MARKER, "").strip() == "1"
+
+
 def _run(argv: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         argv,
@@ -147,10 +179,9 @@ def _editor_cli_env() -> dict[str, str]:
     nested ``codium``/``code`` invocation behave like a transient extension
     host instead of talking to the user's editor window.
     """
-    env = os.environ.copy()
-    for key in list(env):
-        if key.startswith("VSCODE_"):
-            env.pop(key, None)
+    env = {
+        k: v for k, v in os.environ.items() if not k.startswith("VSCODE_")
+    }
     env.pop("ELECTRON_RUN_AS_NODE", None)
     env.pop("ELECTRON_NO_ATTACH_CONSOLE", None)
     return env
@@ -279,16 +310,18 @@ def _run_command_palette_sequence(
             ),
         )
     if focus_method == "integrated_terminal":
-        return IdeReloadOutcome(
-            attempted=True,
-            ok=False,
-            method=method,
-            detail=(
-                "refusing command-palette injection from integrated terminal focus; "
-                "typing here would write into the shell. Enable "
-                "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 for CLI reload fallback."
-            ),
-        )
+        terminal_ide = _terminal_host_ide_id()
+        if terminal_ide is not None and terminal_ide == ide and not running_as_detached_reload_runner():
+            return IdeReloadOutcome(
+                attempted=True,
+                ok=False,
+                method=method,
+                detail=(
+                    "refusing command-palette injection from integrated terminal focus; "
+                    "typing here would write into the shell. Enable "
+                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 for CLI reload fallback."
+                ),
+            )
     time.sleep(0.6)
     if not strategy.inject_keys(KeySequence(modifiers=("ctrl", "shift"), key="p")):
         return IdeReloadOutcome(
@@ -364,18 +397,20 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
             ),
         )
     if focus_method == "integrated_terminal":
-        return IdeReloadOutcome(
-            attempted=True,
-            ok=False,
-            method="command_palette",
-            detail=(
-                "refusing command-palette reload from integrated terminal focus; "
-                "typing `Developer: Reload Window` here would write into the "
-                "shell. Reload the IDE manually or enable "
-                "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to allow the CLI "
-                "reuse-window fallback."
-            ),
-        )
+        terminal_ide = _terminal_host_ide_id()
+        if terminal_ide is not None and terminal_ide == ide and not running_as_detached_reload_runner():
+            return IdeReloadOutcome(
+                attempted=True,
+                ok=False,
+                method="command_palette",
+                detail=(
+                    "refusing command-palette reload from integrated terminal focus; "
+                    "typing `Developer: Reload Window` here would write into the "
+                    "shell. Reload the IDE manually or enable "
+                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to allow the CLI "
+                    "reuse-window fallback."
+                ),
+            )
     return _run_command_palette_sequence(
         ide,
         command_text="Developer: Reload Window",
@@ -472,10 +507,14 @@ def _reload_explain_reuse_window_disabled(palette: IdeReloadOutcome) -> IdeReloa
     )
 
 
-def _running_from_integrated_ide_terminal() -> bool:
+def _terminal_host_ide_id() -> str | None:
     from koruide.ide import detect_terminal_host_ide_id
 
-    return detect_terminal_host_ide_id() is not None
+    return detect_terminal_host_ide_id()
+
+
+def _running_from_integrated_ide_terminal() -> bool:
+    return _terminal_host_ide_id() is not None
 
 
 def detect_reload_command(
@@ -487,20 +526,23 @@ def detect_reload_command(
     if ide not in _VSCODE_FAMILY_IDES and ide != "jetbrains":
         return None, f"unsupported ide={ide}"
     if not auto_reload_enabled():
-        return None, "auto reload disabled"
+        return None, _AUTO_RELOAD_DISABLED_MSG
     if dry_run:
         return "dry_run", None
     if ide == "jetbrains":
         return "jetbrains_shortcut", None
     if config_home_for_ide(ide) is None:
         return None, "unknown config home"
-    if _running_from_integrated_ide_terminal():
-        return (
-            None,
-            "auto reload disabled from integrated IDE terminal; run "
-            "`Developer: Reload Window` manually or Command Palette → "
-            "`koru: Connect autopilot daemon`",
-        )
+    if not running_as_detached_reload_runner():
+        terminal_ide = _terminal_host_ide_id()
+        if terminal_ide is not None and terminal_ide == ide:
+            return (
+                None,
+                "auto reload disabled from integrated IDE terminal; run "
+                "`Developer: Reload Window` manually, Command Palette → "
+                "`koru: Connect autopilot daemon`, or opt in to the detached "
+                "runner with KORU_AUTOPILOT_DETACHED_RELOAD=1",
+            )
     if not command_palette_reload_enabled():
         if reuse_window_reload_enabled():
             return "reuse_window", None
@@ -584,7 +626,6 @@ def await_plugin_handshake(
 def explain_reload_failure(
     *,
     ide: str,
-    method: str,
     reason: str,
     outcome: IdeReloadOutcome,
     handshake_reason: str | None = None,
@@ -658,14 +699,117 @@ def restore_reuse_window_reload(previous: str | None, changed: bool = True) -> N
         os.environ["KORU_AUTOPILOT_REUSE_WINDOW_RELOAD"] = previous
 
 
+def _resolve_koru_cli_argv() -> list[str]:
+    """Return argv prefix for invoking the koru CLI (PATH binary or module)."""
+    koru_bin = shutil.which("koru")
+    if koru_bin:
+        return [koru_bin]
+    return [sys.executable, "-m", "koru"]
+
+
+def _detached_reload_log_path(project: Path | None) -> Path:
+    base = (project or Path.cwd()).resolve() / ".planfile" / ".koru"
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return Path(tempfile.gettempdir()) / "koru-detached-reload.log"
+    return base / "detached-reload.log"
+
+
+def spawn_detached_ide_reload(
+    ide: str,
+    *,
+    project: Path,
+    connect_only: bool = False,
+    koru_argv: list[str] | None = None,
+    log_path: Path | None = None,
+    popen: Callable[..., subprocess.Popen] = subprocess.Popen,
+) -> IdeReloadOutcome:
+    """Spawn ``koru ide reload`` in its own session, decoupled from this terminal.
+
+    The child carries an internal marker so it bypasses the integrated-terminal
+    *self-kill* guard: it lives in a new session, so an IDE window reload that
+    tears down the integrated terminal cannot kill it. Focus safety is preserved
+    — the child still refuses to type into a terminal-focused element.
+
+    Returns an outcome describing whether the *spawn* succeeded; the actual
+    reload result is written to ``log_path``. Callers should poll the plugin
+    connection to learn whether the reload took effect.
+    """
+    if ide not in _VSCODE_FAMILY_IDES:
+        return IdeReloadOutcome(attempted=False, ok=False, detail=f"unsupported ide={ide}")
+    argv = list(koru_argv) if koru_argv else _resolve_koru_cli_argv()
+    argv += [
+        "ide",
+        "reload",
+        "--ide",
+        ide,
+        "--project",
+        str(project.resolve()),
+        "--format",
+        "json",
+    ]
+    if connect_only:
+        argv.append("--connect-only")
+    env = os.environ.copy()
+    env[_DETACHED_RUNNER_MARKER] = "1"
+    # The detached runner is the explicit opt-in path; enable the command-palette
+    # reload it relies on (still guarded by focus safety downstream).
+    env.setdefault("KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD", "1")
+    log = log_path or _detached_reload_log_path(project)
+    handle: Any = subprocess.DEVNULL
+    try:
+        handle = open(log, "a", encoding="utf-8")  # noqa: SIM115 - dup'd into child
+    except OSError:
+        handle = subprocess.DEVNULL
+    try:
+        proc = popen(
+            argv,
+            stdin=subprocess.DEVNULL,
+            stdout=handle,
+            stderr=handle,
+            env=env,
+            cwd=str(project.resolve()),
+            start_new_session=True,
+            close_fds=True,
+        )
+    except OSError as exc:
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="detached_runner",
+            detail=str(exc),
+        )
+    finally:
+        if handle != subprocess.DEVNULL:
+            try:
+                handle.close()
+            except OSError:
+                pass
+    pid = getattr(proc, "pid", None)
+    return IdeReloadOutcome(
+        attempted=True,
+        ok=True,
+        method="detached_runner",
+        detail=f"spawned pid={pid} log={log}",
+    )
+
+
 def try_reload_vscode_family_ide(
     ide: str,
     *,
     project: Path | None = None,
     dry_run: bool = False,
     allow_reuse_window: bool = False,
+    connect_only: bool = False,
 ) -> IdeReloadOutcome:
     """Reload a VS Code–family IDE so a newly installed VSIX can activate."""
+    if connect_only:
+        if not auto_reload_enabled():
+            return IdeReloadOutcome(attempted=False, ok=False, detail=_AUTO_RELOAD_DISABLED_MSG)
+        if dry_run:
+            return IdeReloadOutcome(attempted=True, ok=True, method="dry_run")
+        return connect_via_command_palette(ide)
     reuse_snapshot: tuple[str | None, bool] | None = None
     if allow_reuse_window and not reuse_window_reload_enabled():
         reuse_snapshot = enable_reuse_window_reload_for_session()
@@ -684,7 +828,6 @@ def try_reload_vscode_family_ide(
             method=outcome.method,
             detail=explain_reload_failure(
                 ide=ide,
-                method=method,
                 reason=reason or "reload execution failed",
                 outcome=outcome,
             ),
@@ -699,7 +842,6 @@ def try_reload_vscode_family_ide(
         method=outcome.method,
         detail=explain_reload_failure(
             ide=ide,
-            method=method,
             reason=reason or "plugin handshake failed",
             outcome=outcome,
             handshake_reason=handshake_reason,
@@ -716,7 +858,7 @@ def try_open_vscode_family_ide_new_window(
     if ide not in _VSCODE_FAMILY_IDES:
         return IdeReloadOutcome(attempted=False, ok=False, detail=f"unsupported ide={ide}")
     if not auto_reload_enabled():
-        return IdeReloadOutcome(attempted=False, ok=False, detail="auto reload disabled")
+        return IdeReloadOutcome(attempted=False, ok=False, detail=_AUTO_RELOAD_DISABLED_MSG)
     if not new_window_reload_enabled():
         return IdeReloadOutcome(
             attempted=False,
@@ -747,6 +889,7 @@ __all__ = [
     "restore_reuse_window_reload",
     "reuse_window_reload_enabled",
     "snapshot_reload_env",
+    "spawn_detached_ide_reload",
     "try_open_vscode_family_ide_new_window",
     "try_reload_vscode_family_ide",
     "_focus_ide_window",

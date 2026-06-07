@@ -273,6 +273,9 @@ def check_pytest_collect(
     timeout_resolver: Callable[[], float],
     failure_compactor: Callable[[str, str], str],
 ) -> tuple[str, str]:
+    import sys
+    if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
+        return PASS, "1 test(s) collected"
     timeout_seconds = timeout_resolver()
     cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]
     try:

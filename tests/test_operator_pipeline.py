@@ -239,6 +239,7 @@ def test_self_control_ok_auto_repairs_when_fix_clears_problem(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("KORU_TEST_REAL_SELF_CONTROL", "1")
     from koru import self_control
 
     reports = iter(
@@ -270,6 +271,7 @@ def test_self_control_ok_keeps_task_when_auto_repair_still_needs_reload(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("KORU_TEST_REAL_SELF_CONTROL", "1")
     from koru import self_control
 
     reports = iter(
@@ -301,6 +303,7 @@ def test_self_control_ok_respects_autorepair_opt_out(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("KORU_TEST_REAL_SELF_CONTROL", "1")
     from koru import self_control
 
     monkeypatch.setenv("KORU_SELF_CONTROL_AUTOREPAIR", "0")

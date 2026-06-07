@@ -1,0 +1,9 @@
+# SCENARIO: coru calibration command (WUP quick / dry-run safe)
+# TYPE: cli
+
+CONFIG[2]{key, value}:
+  cli_command, coru
+  timeout_ms, 5000
+
+SHELL "coru calibration --help" ${timeout_ms}
+ASSERT_EXIT_CODE 0

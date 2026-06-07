@@ -243,7 +243,7 @@ def _run_direct_drive(
         )
         if handled:
             return rc, payload
-        fallback_rc, _ = _handle_os_injector_fallback(args, profile_id, injector)
+        fallback_rc, _unused_payload = _handle_os_injector_fallback(args, profile_id, injector)
         if fallback_rc is not None:
             return fallback_rc, None
         return _type_text_direct_drive(

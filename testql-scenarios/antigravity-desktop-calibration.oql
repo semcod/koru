@@ -1,0 +1,11 @@
+# SCENARIO: Antigravity desktop preflight for coru calibration
+# TYPE: desktop
+# WUP: manual-only (DESKTOP_* needs live wmctrl; advisory on Wayland)
+# Used by: coru calibration — materialized copy lands in .planfile/.koru/
+
+SET window_title "Antigravity"
+SET capture_path ".planfile/.koru/calibration-antigravity-desktop.png"
+
+DESKTOP_LIST
+DESKTOP_FOCUS "${window_title}"
+DESKTOP_ASSERT_WINDOW "${window_title}"

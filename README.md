@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.314-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$34.56-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-141.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.315-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$34.97-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-142.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $34.5601 (419 commits)
-- 👤 **Human dev:** ~$14100 (141.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $34.9702 (420 commits)
+- 👤 **Human dev:** ~$14200 (142.0h @ $100/h, 30min dedup)
 
 Generated on 2026-06-07 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -1282,44 +1282,54 @@ sprint YAML remains the source of truth.
 
 ## Documentation
 
-The full documentation lives in [`docs/`](./docs/):
+**Index:** [`docs/README.md`](./docs/README.md) — complete catalog of every guide,
+reading order for agents, and pipeline phase map. **Release notes:**
+[`CHANGELOG.md`](./CHANGELOG.md).
 
-- **[`docs/autopilot-quickstart.md`](./docs/autopilot-quickstart.md)** —
-  production setup for `koru autopilot` (doctor, daemon, plugin, systemd user unit,
-  handoff, audit log, troubleshooting).
-- **[`docs/agent-guide.md`](./docs/agent-guide.md)** — full LLM agent
-  workflow guide (originally written for `maskservice/c2004` Windsurf
-  agent, generalized for any koru-driven repo). Covers ticket workflow,
-  validation gates, anti-patterns, troubleshooting.
-- **[`docs/planfile-llm-guide.md`](./docs/planfile-llm-guide.md)** —
-  ticket-driven development with `planfile` CLI.
-- **[`docs/planfile-execution-gateway.md`](./docs/planfile-execution-gateway.md)** —
-  design for turning `planfile.yaml` into the execution gateway for shell,
-  MCP, API, human, and LLM tasks.
-- **[`docs/llm-tools/`](./docs/llm-tools/)** — per-tool docs and install
-  scripts:
-  - [`planfile/`](./docs/llm-tools/planfile/) — ticket backlog
-  - [`regix/`](./docs/llm-tools/regix/) — Python regression metrics
-  - [`redup/`](./docs/llm-tools/redup/) — duplicate detection
-  - [`redsl/`](./docs/llm-tools/redsl/) — OpenRouter auto-refactor (opt-in)
-  - [`vallm/`](./docs/llm-tools/vallm/) — multi-tier patch validator
-  - [`prefact/`](./docs/llm-tools/prefact/) — proactive LLM-aware linter
-  - [`pfix/`](./docs/llm-tools/pfix/) — auto-fix imports
-  - [`llx/`](./docs/llm-tools/llx/) — LLM CLI wrapper
-  - [`sumd/`](./docs/llm-tools/sumd/) — LLM refactor snapshots (SUMR.md)
-  - [`redeploy/`](./docs/llm-tools/redeploy/) — multi-target deployment (markpact specs)
-  - [`goal/`](./docs/llm-tools/goal/) — automated git push + smart commits + release workflow
-  - [`doql/`](./docs/llm-tools/doql/) — declarative infrastructure-as-code (.doql files)
-  - [`costs/`](./docs/llm-tools/costs/) — zero-config AI cost tracker per commit
-  - [`op3/`](./docs/llm-tools/op3/) — layered infrastructure observation (multi-layer scan)
-  - [`toonic/`](./docs/llm-tools/toonic/) — universal TOON format platform (LLM-friendly compact files)
-  - [`protogate/`](./docs/llm-tools/protogate/) — migration tool dla legacy systems (bounded slices)
-  - [`rebuild/`](./docs/llm-tools/rebuild/) — code evolution intelligence (git history walker)
-  - [`mdflow/`](./docs/llm-tools/mdflow/) — markdown dependency analyzer
-  - [`metrun/`](./docs/llm-tools/metrun/) — execution intelligence + bottleneck detection
-  - [`sllm`](../sllm/) — shell LLM clients (`aider`, `claude-code`, Codex, Gemini, Qwen, OpenCode, Devin)
-  - [`cursor/`](./docs/llm-tools/cursor/) — Cursor IDE setup
-  - [`testql/`](./docs/llm-tools/testql/) — declarative HTTP tests
+### Start here
+
+| Audience | Doc |
+|----------|-----|
+| LLM agent in a koru repo | [`docs/agent-guide.md`](./docs/agent-guide.md) |
+| Human operator (10 min) | [`docs/quickstart-10min.md`](./docs/quickstart-10min.md) |
+| Autopilot / IDE injection | [`docs/autopilot-quickstart.md`](./docs/autopilot-quickstart.md) |
+| Thin CLI (`coru calibration`, `doctor`, `auto`) | [`packages/coru/README.md`](./packages/coru/README.md) |
+| Ticket workflow | [`docs/planfile-llm-guide.md`](./docs/planfile-llm-guide.md) |
+
+### Autopilot & IDE
+
+- [`docs/autopilot-design.md`](./docs/autopilot-design.md) — control-plane design
+- [`docs/IDE_PROTOCOL.md`](./docs/IDE_PROTOCOL.md) — plugin↔daemon protocol
+- [`docs/koru-drive-dsl.md`](./docs/koru-drive-dsl.md) — per-step `[DSL]` drive trace
+- [`docs/ide-router.md`](./docs/ide-router.md) · [`docs/ide-isolation.md`](./docs/ide-isolation.md) — lane isolation
+- [`docs/autodiagnostics-auto-repair.md`](./docs/autodiagnostics-auto-repair.md) — doctor & repair
+- [`docs/desktop-uri-orchestration.md`](./docs/desktop-uri-orchestration.md) — nlp2uri MCP bridge (PL)
+- [`docs/mcp-ide-flow.md`](./docs/mcp-ide-flow.md) — MCP ↔ IDE flow
+
+### Architecture & DSL
+
+- [`docs/planfile-execution-gateway.md`](./docs/planfile-execution-gateway.md) — execution gateway design
+- [`docs/koru-control-command-dsl.md`](./docs/koru-control-command-dsl.md) — control-command DSL
+- [`docs/korudsl-koruapi.md`](./docs/korudsl-koruapi.md) — dashboard / koruapi map
+- [`docs/cqrs-event-sourcing.md`](./docs/cqrs-event-sourcing.md) · [`docs/deployment-events.md`](./docs/deployment-events.md)
+- [`docs/package-extraction-plan.md`](./docs/package-extraction-plan.md) — `packages/*` plan
+- ADRs: [`docs/adr/`](./docs/adr/) · specs: [`docs/specs/`](./docs/specs/)
+
+### Pipeline tools (`docs/llm-tools/`)
+
+Per-tool install docs and when-to-use guides — full list in
+[`docs/llm-tools/README.md`](./docs/llm-tools/README.md):
+
+[`planfile/`](./docs/llm-tools/planfile/) · [`regix/`](./docs/llm-tools/regix/) ·
+[`redup/`](./docs/llm-tools/redup/) · [`redsl/`](./docs/llm-tools/redsl/) ·
+[`vallm/`](./docs/llm-tools/vallm/) · [`prefact/`](./docs/llm-tools/prefact/) ·
+[`pfix/`](./docs/llm-tools/pfix/) · [`llx/`](./docs/llm-tools/llx/) ·
+[`sumd/`](./docs/llm-tools/sumd/) · [`goal/`](./docs/llm-tools/goal/) ·
+[`costs/`](./docs/llm-tools/costs/) · [`doql/`](./docs/llm-tools/doql/) ·
+[`testql/`](./docs/llm-tools/testql/) · [`cursor/`](./docs/llm-tools/cursor/) ·
+[`wup/`](./docs/llm-tools/wup/) · … (+ [`sllm`](../sllm/) shell LLM clients)
+
+Scenariusze w repo: [`testql-scenarios/README.md`](./testql-scenarios/README.md).
 
 ## Templates (config snippets)
 

@@ -6,6 +6,22 @@
 
 ---
 
+## ✅ Documentation maintenance (2026-06-07)
+
+- [x] Uporządkować [`CHANGELOG.md`](./CHANGELOG.md) `[Unreleased]` — scalone sekcje Added/Fixed/Removed/Changed; wpis `coru calibration`
+- [x] Rozbudować [`docs/README.md`](./docs/README.md) — pełny katalog `docs/*` (onboarding, autopilot, DSL, ADR, plany)
+- [x] Uporządkować [`README.md`](./README.md) sekcja Documentation — linki tematyczne do `docs/*`
+- [x] Dodać `coru calibration` do [`packages/coru/README.md`](./packages/coru/README.md) i [`docs/autopilot-quickstart.md`](./docs/autopilot-quickstart.md)
+- [x] Scenariusze testql: `testql-scenarios/cursor-desktop-calibration.oql`, `cli-coru_calibration.testql.toon.yaml`
+- [x] Szablony desktop calibration: antigravity, vscode, windsurf + [`testql-scenarios/README.md`](./testql-scenarios/README.md)
+- [x] Linki z `docs/llm-tools/testql/README.md`, `docs/quickstart-10min.md`, `docs/koru-drive-dsl.md`
+
+> **Uwaga:** poniższa lista „Current Issues” to automatyczne ostrzeżenia `prefact`
+> (unused imports, f-stringi, …). Nie są to zadania produktowe. Uruchom
+> `prefact -a --execute-todos` tylko gdy chcesz masową naprawę stylu kodu.
+
+---
+
 ## 📋 Current Issues (showing 200 of 515)
 
 - [ ] src/koru/__main__.py:11 - module execution block

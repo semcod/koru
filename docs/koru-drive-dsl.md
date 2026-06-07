@@ -148,3 +148,11 @@ koru auto
 A late ack that arrives after the CLI has already given up is still
 logged on the daemon side (with full `[DSL]` lines), so even a
 timed-out drive leaves a transparent record of what was tried.
+
+## See also
+
+- [`autopilot-quickstart.md`](./autopilot-quickstart.md) — setup, `coru calibration`, pitfalls
+- [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md) — plugin ack / `operation_trace` fields
+- [`koru-control-command-dsl.md`](./koru-control-command-dsl.md) — control-plane DSL
+- [`README.md`](./README.md) — full documentation index
+- [`../CHANGELOG.md`](../CHANGELOG.md) — release notes

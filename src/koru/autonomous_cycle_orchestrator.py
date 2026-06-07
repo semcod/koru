@@ -254,9 +254,14 @@ def _attempt_plugin_gate_recovery(
     from koru.autonomous_plugin_wait import (
         _restore_reuse_window_reload,
         _temporary_reuse_window_reload_if_same_workspace,
+        _terminal_host_ide_id,
     )
     from koru.autonomous_readiness import attempt_plugin_gate_recovery
-    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+    from koru.ide_adapters.ide_reload import (
+        detached_reload_enabled,
+        spawn_detached_ide_reload,
+        try_reload_vscode_family_ide,
+    )
 
     snapshot = _temporary_reuse_window_reload_if_same_workspace(
         client,
@@ -264,10 +269,21 @@ def _attempt_plugin_gate_recovery(
         project,
         plugin_reason,
     )
+    terminal_ide = _terminal_host_ide_id()
+    same_ide = terminal_ide is not None and terminal_ide == autopilot_ide
 
     def _reload() -> bool:
         try:
-            outcome = try_reload_vscode_family_ide(autopilot_ide, project=project)
+            if same_ide and detached_reload_enabled():
+                outcome = spawn_detached_ide_reload(
+                    autopilot_ide,
+                    project=project,
+                )
+            else:
+                outcome = try_reload_vscode_family_ide(
+                    autopilot_ide,
+                    project=project,
+                )
         finally:
             _restore_reuse_window_reload(snapshot)
         if outcome.attempted and outcome.ok:

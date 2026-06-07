@@ -24,6 +24,12 @@ def _running_from_integrated_ide_terminal() -> bool:
     return detect_terminal_host_ide_id() is not None
 
 
+def _terminal_host_ide_id() -> str | None:
+    from koruide.ide import detect_terminal_host_ide_id
+
+    return detect_terminal_host_ide_id()
+
+
 def prepare_plugin_wait(
     args: Any,
     autopilot_ide: str,
@@ -49,7 +55,25 @@ def prepare_plugin_wait(
     if extension_is_active is not False:
         return skip_plugin_wait, reload_after_install
 
-    if _running_from_integrated_ide_terminal():
+    terminal_ide = _terminal_host_ide_id()
+    if terminal_ide is not None and terminal_ide == autopilot_ide:
+        from koru.ide_adapters.ide_reload import (
+            detached_reload_enabled,
+            spawn_detached_ide_reload,
+        )
+
+        if detached_reload_enabled():
+            reload_after_install = spawn_detached_ide_reload(
+                autopilot_ide,
+                project=project,
+            )
+            if reload_after_install.attempted and reload_after_install.ok:
+                stdio_info(
+                    "koru autonomous: wtyczka nieaktywna w extension host — "
+                    f"uruchamiam detached reload ({reload_after_install.detail})",
+                    fmt=args.emit_events,
+                )
+                return False, reload_after_install
         stdio_info(
             "koru autonomous: wtyczka nieaktywna w extension host — "
             "pomijam automatyczny reload IDE z terminala zintegrowanego; "
@@ -495,25 +519,34 @@ def _try_plugin_reconnect_pipeline(
 ) -> bool:
     from koru.ide_adapters.ide_reload import (
         connect_via_command_palette,
+        detached_reload_enabled,
+        spawn_detached_ide_reload,
         try_reload_vscode_family_ide,
     )
 
     project = Path(getattr(args, "project", ".")).expanduser().resolve()
-    integrated = _running_from_integrated_ide_terminal()
+    terminal_ide = _terminal_host_ide_id()
+    same_ide = terminal_ide is not None and terminal_ide == autopilot_ide
 
     def _reload() -> bool:
-        if not integrated:
-            connect = connect_via_command_palette(autopilot_ide)
-            if connect.ok:
-                return True
-            reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
-            return bool(reload.attempted and reload.ok)
-        stdio_info(
-            "koru autonomous: pomijam reload/connect z terminala zintegrowanego — "
-            "użyj Command Palette → koru: Connect autopilot daemon",
-            fmt=args.emit_events,
-        )
-        return False
+        if same_ide:
+            if detached_reload_enabled():
+                outcome = spawn_detached_ide_reload(
+                    autopilot_ide,
+                    project=project,
+                )
+                return bool(outcome.attempted and outcome.ok)
+            stdio_info(
+                "koru autonomous: pomijam reload/connect z terminala zintegrowanego — "
+                "użyj Command Palette → koru: Connect autopilot daemon",
+                fmt=args.emit_events,
+            )
+            return False
+        connect = connect_via_command_palette(autopilot_ide)
+        if connect.ok:
+            return True
+        reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
+        return bool(reload.attempted and reload.ok)
 
     def _wait(timeout: float) -> bool:
         return bool(

@@ -26,21 +26,23 @@ class WindsurfStrategy(StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFa
 
     @property
     def detection(self) -> DetectionSignature:
+        # Windsurf now ships as "devin-desktop" (Cognition/Devin rebrand), so
+        # match both the historical and current provider names.
         return DetectionSignature(
-            comm_patterns=("windsurf",),
+            comm_patterns=("windsurf", "devin-desktop"),
             label=self.label,
         )
 
     @property
     def terminal(self) -> TerminalSignature:
         return TerminalSignature(
-            env_value_substrings=("windsurf",),
-            parent_comm_substrings=("windsurf",),
+            env_value_substrings=("windsurf", "devin"),
+            parent_comm_substrings=("windsurf", "devin-desktop"),
         )
 
     @property
     def aliases(self) -> IdeAliases:
-        return IdeAliases(canonical=self.id, aliases=("windsurf",))
+        return IdeAliases(canonical=self.id, aliases=("windsurf", "devin", "devin-desktop"))
 
     def extensions_metadata_path(self) -> Path | None:
         return Path.home() / ".windsurf" / "extensions" / "extensions.json"

@@ -351,7 +351,7 @@ def keyboard_fallback_when_plugin_missing(autopilot_ide: str) -> bool:
     raw = os.environ.get("KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN", "0").strip().lower()
     if raw in {"1", "true", "yes", "on"}:
         ide = canonical_autopilot_ide_id(normalize_ide_id(autopilot_ide) or autopilot_ide)
-        return supports_vscode_extension_plugin(ide)
+        return supports_vscode_extension_plugin(ide) or ide == "jetbrains"
     return False
 
 

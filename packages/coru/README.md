@@ -115,6 +115,19 @@ In interactive chat mode (`coru chat`):
 By default it requires a system shell (outside integrated IDE terminal). Use
 `--allow-integrated-shell` only when necessary.
 
+`coru calibration` is the end-to-end plugin probe (safe in integrated terminals):
+
+```bash
+export KORU_AUTOPILOT_INSTANCE=cursor   # or antigravity, vscode, windsurf, …
+coru calibration --skip-desktop --skip-bridge   # plugin path only (Wayland-friendly)
+coru calibration --probe-prompt "probe test"
+```
+
+Pipeline: optional testql desktop/bridge preflight → `koru ide doctor --fix
+--gc-sockets` → `koru autopilot drive --require-plugin` with strict
+focus/paste/submit verification. Flags: `--skip-fix`, `--skip-desktop`,
+`--skip-bridge`. Docs: [`docs/autopilot-quickstart.md`](../../docs/autopilot-quickstart.md#3b-coru-calibration-works-from-ide-integrated-terminal).
+
 ### Bridge repair (CQRS + event sourcing)
 
 Autodiagnostics produce `RepairProblem` rows; the registry maps each code to a

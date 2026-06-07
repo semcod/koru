@@ -188,19 +188,21 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const promptPastes = CURSOR_COMPOSER_PROMPT_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
     const safePastes = CURSOR_COMPOSER_SAFE_PASTE_COMMANDS.filter((cmd) => existing.has(cmd));
-    const skipFastPath =
-      existing.has("glass.focusInput") ||
-      safePastes.length === 0 ||
-      (
-        existing.has("workbench.action.chat.stopListeningAndSubmit") &&
-        existing.has("workbench.action.chat.typeText")
-      );
+    const glassUi = existing.has("glass.focusInput");
+    const modernChatRoute =
+      !glassUi &&
+      existing.has("workbench.action.chat.stopListeningAndSubmit") &&
+      existing.has("workbench.action.chat.typeText");
+    // Prefer probe ladder only when registered typeText+stopListening exist on
+    // classic chat UI. Glass builds register typeText but it no-ops; keep the
+    // startComposerPrompt* fast-path (glass.focusInput alone is unreliable).
+    const skipFastPath = modernChatRoute || (promptPastes.length === 0 && safePastes.length === 0);
     if (skipFastPath) {
-      const reason = existing.has("glass.focusInput")
-        ? "Glass Agent UI detected; using probe ladder instead of composer fast-path"
-        : safePastes.length === 0
-          ? "only startComposerPrompt paste is registered; using probe ladder"
-          : "modern chat typeText/stopListeningAndSubmit registered; using probe ladder instead";
+      const reason = modernChatRoute
+        ? glassUi
+          ? "Glass Agent UI with registered typeText/stopListening; using probe ladder"
+          : "modern chat typeText/stopListeningAndSubmit registered; using probe ladder instead"
+        : "no registered composer paste commands";
       safeLog("CURSOR_COMPOSER_FASTPATH_SKIP", { reason });
       this.traceOperation({
         op: "paste",
@@ -210,13 +212,19 @@ export abstract class SharedAutopilotBridgeFastPath extends SharedAutopilotBridg
       });
       return false;
     }
-    // Prefer typeText/insertText over startComposerPrompt*: the prompt commands
-    // open a fresh Composer surface and submit verification often fails on
-    // Wayland when the visible chat is elsewhere.
-    const pasteQueue = [
-      ...safePastes,
-      ...promptPastes.filter((cmd) => !safePastes.includes(cmd as typeof safePastes[number])),
-    ];
+    // Glass: prefer native composer prompt API even when typeText is registered
+    // (registered but no-op on Glass). Classic chat keeps typeText first.
+    const pasteQueue = glassUi
+      ? [
+          ...promptPastes,
+          ...safePastes.filter(
+            (cmd) => !promptPastes.includes(cmd as (typeof promptPastes)[number]),
+          ),
+        ]
+      : [
+          ...safePastes,
+          ...promptPastes.filter((cmd) => !safePastes.includes(cmd as typeof safePastes[number])),
+        ];
     if (pasteQueue.length === 0) {
       safeLog("CURSOR_COMPOSER_FASTPATH_ABORT_NO_PASTE_COMMANDS");
       this.traceOperation({

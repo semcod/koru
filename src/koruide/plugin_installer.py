@@ -152,7 +152,17 @@ def _plugin_installer_module():
 
 def _ide_from_terminal_env() -> str | None:
     """Best-effort IDE hint from an integrated terminal environment."""
-    return _plugin_installer_module().detect_terminal_host_ide_id()
+    mod = _plugin_installer_module()
+    detected = normalize_ide_id(mod.detect_terminal_host_ide_id())
+    if detected:
+        return detected
+    # Fallback when host detection is unavailable (e.g. pytest parent-chain guard)
+    # but the integrated terminal still exports TERM_PROGRAM.
+    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    normalized = normalize_ide_id(term_program)
+    if normalized in SUPPORTED_IDES:
+        return normalized
+    return None
 
 
 def _terminal_vscode_flavor() -> str | None:
@@ -1084,6 +1094,12 @@ def install_plugin_for_ide(
 ) -> PluginInstallResult:
     """Install the koru plugin for ``ide`` or the currently detected IDE."""
     target = resolve_target_ide(ide) or "auto"
+    if target == "jetbrains":
+        return PluginInstallResult(
+            ide=target,
+            status="skipped",
+            message="jetbrains plugin must be built and loaded manually via gradle/IntelliJ settings",
+        )
     if target not in SUPPORTED_IDES:
         return PluginInstallResult(
             ide=target,

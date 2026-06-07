@@ -1,0 +1,16 @@
+# SCENARIO: Cursor desktop preflight for coru calibration
+# TYPE: desktop
+# WUP: manual-only (DESKTOP_* needs live wmctrl; advisory on Wayland)
+# Used by: coru calibration — materialized copy lands in .planfile/.koru/
+#
+# Verifies the IDE window is listable/focusable before autopilot plugin drive.
+# On Wayland/GNOME, wmctrl may not see native Electron titles — treat as advisory.
+# coru appends extra DESKTOP_FOCUS/ASSERT lines for workspace titles (e.g. koru).
+# DESKTOP_CAPTURE is omitted by default (slow); set CORU_CALIBRATION_DESKTOP_CAPTURE=1.
+
+SET window_title "Cursor"
+SET capture_path ".planfile/.koru/calibration-cursor-desktop.png"
+
+DESKTOP_LIST
+DESKTOP_FOCUS "${window_title}"
+DESKTOP_ASSERT_WINDOW "${window_title}"

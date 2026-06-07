@@ -324,6 +324,23 @@ def test_detect_terminal_host_ide_id_cursor_beats_windsurf_token(
     assert ide_mod.detect_terminal_host_ide_id() == "cursor"
 
 
+def test_detect_terminal_host_ide_id_term_program_cursor_beats_windsurf_cascade(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "VSCODE_PID",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "cursor")
+    monkeypatch.setenv("WINDSURF_CASCADE_TERMINAL", "1")
+    assert ide_mod.detect_terminal_host_ide_id() == "cursor"
+
+
 def test_detect_terminal_host_ide_id_vscode_nls_without_pid(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -407,6 +424,60 @@ def test_detect_terminal_host_ide_id_zed_term_program(
     monkeypatch.setenv("TERM_PROGRAM", "zed")
 
     assert ide_mod.detect_terminal_host_ide_id() == "zed"
+
+
+def test_detect_terminal_host_ide_id_windsurf_from_devin_desktop_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Windsurf shipped as devin-desktop must resolve to windsurf, not vscode."""
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "VSCODE_PID",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_CWD",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("TERM_PROGRAM_VERSION", "1.110.1-devin-desktop")
+    monkeypatch.setenv("CHROME_DESKTOP", "devin-desktop.desktop")
+    monkeypatch.setenv(
+        "GIO_LAUNCHED_DESKTOP_FILE", "/usr/share/applications/devin-desktop.desktop"
+    )
+    monkeypatch.setenv("WINDSURF_CASCADE_TERMINAL", "1")
+
+    assert ide_mod.detect_terminal_host_ide_id() == "windsurf"
+    assert ide_mod.normalize_ide_id("devin-desktop") == "windsurf"
+
+
+def test_detect_terminal_host_ide_id_windsurf_cascade_beats_generic_vscode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A Windsurf cascade marker must win over the generic vscode fallback."""
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "VSCODE_PID",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_CWD",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+        "TERM_PROGRAM_VERSION",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    # Generic VS Code env value (no fork brand token) + a Windsurf marker.
+    monkeypatch.setenv("VSCODE_CODE_CACHE_PATH", "/home/x/.config/Code/CachedData/sha")
+    monkeypatch.setenv("WINDSURF_CASCADE_TERMINAL", "1")
+
+    assert ide_mod.detect_terminal_host_ide_id() == "windsurf"
 
 
 def test_detect_terminal_host_context_vscode_pid_beats_cursor_env(

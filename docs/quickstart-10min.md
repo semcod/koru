@@ -62,7 +62,9 @@ Szczegóły cyklu życia ticketów: [`agent-guide.md`](./agent-guide.md), [`plan
 ## Dalej
 
 - Autopilot IDE: [`autopilot-quickstart.md`](./autopilot-quickstart.md)
-- Pełna lista dokumentacji: [`README.md`](./README.md)
+- Plugin probe: [`packages/coru/README.md`](../packages/coru/README.md) (`coru calibration`)
+- Pełna lista dokumentacji: [`README.md`](./README.md) (ten katalog) · [`../README.md`](../README.md) (projekt)
+- Scenariusze TestQL: [`../testql-scenarios/README.md`](../testql-scenarios/README.md)
 - Szkice przyszłych przepisów koru (YAML, tylko dokumentacja): [`recipes/README.md`](./recipes/README.md)
 
 ## Szablony przepisów (opcjonalnie)

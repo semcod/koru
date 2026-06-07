@@ -1,0 +1,10 @@
+# SCENARIO: Windsurf desktop preflight for coru calibration
+# TYPE: desktop
+# WUP: manual-only (DESKTOP_* needs live wmctrl; advisory on Wayland)
+
+SET window_title "Windsurf"
+SET capture_path ".planfile/.koru/calibration-windsurf-desktop.png"
+
+DESKTOP_LIST
+DESKTOP_FOCUS "${window_title}"
+DESKTOP_ASSERT_WINDOW "${window_title}"

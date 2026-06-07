@@ -132,13 +132,13 @@ async function testSubmitAfterPasteFailsBeforeSubmitWhenCursorFocusUnconfirmed()
   const result = await bridge.submitAfterPaste(
     { type: "chat.send", id: "drive-1" },
     { ok: true, command: "composer.openComposer" },
-    { ok: true, command: "composer.startComposerPrompt" },
+    { ok: true, command: "workbench.action.chat.insertText" },
     true,
     "Ticket STARTER-999\nimplement the requested change",
   );
 
   assert.strictEqual(result, null);
-  assert.strictEqual(submitCalls, 0, "submitChat must not run without confirmed Cursor input focus (non-typed paste)");
+  assert.strictEqual(submitCalls, 0, "submitChat must not run without confirmed Cursor input focus (non-composer direct paste)");
   assert.strictEqual(sent.length, 1);
   assert.strictEqual(sent[0].verification, "submit_unverified");
   assert.strictEqual(sent[0].attempted_submit, "cursor-submit-focus-unavailable");
@@ -385,6 +385,101 @@ async function testCursorFastPathDoesNotTrustMissingBubbleDbWithInconclusiveProb
   assert.strictEqual(sent.length, 0, "fast path must not ack success without submit proof");
 }
 
+async function testGlassUiFastPathUsesStartComposerPromptWhenTypeTextMissing(): Promise<void> {
+  registeredCommands.clear();
+  for (const cmd of [
+    "glass.focusInput",
+    "composer.startComposerPrompt2",
+    "composer.startComposerPrompt",
+    "workbench.action.chat.stopListeningAndSubmit",
+  ]) {
+    registeredCommands.add(cmd);
+  }
+  executedCommands.length = 0;
+
+  const prompt = "probe test";
+  const { bridge, sent, runCommands } = makeBridge();
+  bridge._verifySubmitViaCursorBubble = async () => ({
+    matched: true,
+    newUserBubbles: 1,
+  });
+
+  const handled = await bridge.tryCursorComposerPromptFastPath(
+    { type: "chat.send", id: "drive-glass" },
+    prompt,
+    true,
+  );
+
+  assert.strictEqual(handled, true, "Glass UI without typeText must use composer prompt fast-path");
+  assert.ok(
+    executedCommands.some((cmd) => /startcomposerprompt/i.test(cmd)),
+    `expected startComposerPrompt paste, got: ${executedCommands.join(", ")}`,
+  );
+  assert.ok(
+    runCommands.includes("workbench.action.chat.stopListeningAndSubmit"),
+    "fast path should attempt registered submit after composer prompt paste",
+  );
+  const ack = sent.find((env) => env.type === "ack");
+  assert.ok(ack, "fast path should emit drive ack");
+  assert.strictEqual(ack.ok, true);
+}
+
+async function testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistered(): Promise<void> {
+  registeredCommands.clear();
+  for (const cmd of [
+    "glass.focusInput",
+    "workbench.action.chat.typeText",
+    "workbench.action.chat.stopListeningAndSubmit",
+    "composer.startComposerPrompt2",
+  ]) {
+    registeredCommands.add(cmd);
+  }
+  executedCommands.length = 0;
+
+  const { bridge, sent } = makeBridge();
+  bridge._verifySubmitViaCursorBubble = async () => ({
+    matched: true,
+    newUserBubbles: 1,
+  });
+  const handled = await bridge.tryCursorComposerPromptFastPath(
+    { type: "chat.send", id: "drive-modern" },
+    "probe test",
+    true,
+  );
+
+  assert.strictEqual(
+    handled,
+    true,
+    "Glass with registered typeText must still use composer prompt fast-path",
+  );
+  assert.ok(
+    executedCommands.some((cmd) => /startcomposerprompt/i.test(cmd)),
+    `expected startComposerPrompt paste, got: ${executedCommands.join(", ")}`,
+  );
+  const ack = sent.find((env) => env.type === "ack");
+  assert.ok(ack, "fast path should emit drive ack");
+  assert.strictEqual(ack.ok, true);
+}
+
+async function testComposerPromptPasteBypassesGlassFocusBeforeSubmit(): Promise<void> {
+  const { bridge } = makeBridge();
+  let focusCalls = 0;
+  bridge.focusChatInput = async () => {
+    focusCalls += 1;
+    return { ok: false, command: "glass.focusInput" };
+  };
+
+  const result = await bridge.confirmCursorChatInputBeforeSubmit(
+    "probe test",
+    "cursor-composer-fastpath:submit:test:focus",
+    "composer.startComposerPrompt2",
+  );
+
+  assert.strictEqual(result.ok, true);
+  assert.strictEqual(result.command, "composer.startComposerPrompt2");
+  assert.strictEqual(focusCalls, 0, "composer prompt paste should not require glass.focusInput recovery");
+}
+
 async function testCursorHostClickFallbackRequiresCalibratedPoint(): Promise<void> {
   const { bridge } = makeBridge();
   const optionsSeen: unknown[] = [];
@@ -420,6 +515,9 @@ async function run(): Promise<void> {
   await testSubmitAfterPasteAllowsTypedPasteWhenProbeUnreadable();
   await testRegisteredSubmitAllowsProbeConfirmedCursorInput();
   await testCursorFastPathDoesNotTrustMissingBubbleDbWithInconclusiveProbe();
+  await testGlassUiFastPathUsesStartComposerPromptWhenTypeTextMissing();
+  await testGlassUiFastPathPrefersComposerPromptEvenWhenTypeTextRegistered();
+  await testComposerPromptPasteBypassesGlassFocusBeforeSubmit();
   await testCursorHostClickFallbackRequiresCalibratedPoint();
   console.log("bridge-submit-focus tests: ok");
 }

@@ -1009,15 +1009,22 @@ def _reload_ide_after_plugin_fix(
     try:
         from koru.ide_adapters.ide_reload import (
             apply_temporary_repair_reload_env,
+            detached_reload_enabled,
             restore_reload_env,
+            spawn_detached_ide_reload,
             try_reload_vscode_family_ide,
         )
+        from koruide.ide import detect_terminal_host_ide_id
 
         snapshot = apply_temporary_repair_reload_env(
             same_workspace=_daemon_has_plugin_workspace(daemon, ide, source_root),
         )
         try:
-            reload = try_reload_vscode_family_ide(ide, project=source_root)
+            terminal_ide = detect_terminal_host_ide_id()
+            if terminal_ide is not None and terminal_ide == ide and detached_reload_enabled():
+                reload = spawn_detached_ide_reload(ide, project=source_root)
+            else:
+                reload = try_reload_vscode_family_ide(ide, project=source_root)
         finally:
             restore_reload_env(snapshot)
     except Exception as exc:  # pragma: no cover - defensive around GUI adapters

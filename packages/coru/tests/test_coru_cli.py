@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 from importlib import metadata
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -25,6 +26,205 @@ def test_heuristic_plan_auto() -> None:
 def test_heuristic_plan_diag_routes_to_doctor() -> None:
     plan = coru_cli._heuristic_plan("zrob diagnostyke bridge")
     assert plan.action == "doctor"
+
+
+def test_heuristic_plan_calibration() -> None:
+    plan = coru_cli._heuristic_plan("uruchom calibration dla cursor-main")
+    assert plan.action == "calibration"
+    assert plan.ide == "cursor"
+
+
+def test_format_calibration_probe_report_pass() -> None:
+    ok, lines = coru_cli._format_calibration_probe_report(
+        {
+            "ok": True,
+            "verification": "submit_verified",
+            "winning_focus_open": "workbench.action.chat.open",
+            "winning_paste": "editor.action.clipboardPasteAction",
+            "winning_submit": "workbench.action.chat.submit",
+        }
+    )
+    assert ok is True
+    assert any("winning_focus_open=" in line for line in lines)
+
+
+def test_format_calibration_probe_report_submit_unverified() -> None:
+    ok, lines = coru_cli._format_calibration_probe_report(
+        {
+            "ok": False,
+            "verification": "submit_unverified",
+            "winning_focus_open": "workbench.action.chat.open",
+            "winning_paste": "editor.action.clipboardPasteAction",
+        }
+    )
+    assert ok is False
+    assert any("Calibrate chat probe ladder" in line for line in lines)
+
+
+def test_parse_drive_json_from_stdout_extracts_trailing_object() -> None:
+    raw = 'noise\n{"ok": false, "verification": "submit_unverified"}\n'
+    parsed = coru_cli._parse_drive_json_from_stdout(raw)
+    assert parsed is not None
+    assert parsed["verification"] == "submit_unverified"
+
+
+def test_calibration_desktop_focus_titles_include_workspace() -> None:
+    titles = coru_cli._calibration_desktop_focus_titles("cursor", workspace_name="koru")
+    assert "Cursor" in titles
+    assert "koru" in titles
+
+
+def test_write_calibration_desktop_oql(tmp_path: Path) -> None:
+    path = coru_cli._write_calibration_desktop_oql(
+        ide="cursor",
+        root=tmp_path,
+        focus_titles=("Cursor", "koru"),
+    )
+    text = path.read_text(encoding="utf-8")
+    assert "DESKTOP_LIST" in text
+    assert 'DESKTOP_FOCUS "Cursor"' in text
+    assert 'DESKTOP_FOCUS "koru"' in text
+    assert "calibration-cursor-desktop.png" in text
+    assert "DESKTOP_CAPTURE" not in text
+
+
+def test_materialize_calibration_desktop_oql_from_template(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    scenarios = repo / "testql-scenarios"
+    scenarios.mkdir(parents=True)
+    (scenarios / "cursor-desktop-calibration.oql").write_text(
+        "\n".join(
+            [
+                'SET window_title "Cursor"',
+                'SET capture_path ".planfile/.koru/calibration-cursor-desktop.png"',
+                "DESKTOP_LIST",
+                'DESKTOP_FOCUS "${window_title}"',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(repo)
+    path, source = coru_cli._materialize_calibration_desktop_oql(
+        ide="cursor",
+        root=repo,
+        focus_titles=("Cursor", "koru"),
+    )
+    text = path.read_text(encoding="utf-8")
+    assert source.startswith("template:")
+    assert 'DESKTOP_FOCUS "koru"' in text
+    assert "DESKTOP_CAPTURE" not in text
+
+
+def test_write_calibration_bridge_testql(tmp_path: Path) -> None:
+    path = coru_cli._write_calibration_bridge_testql(
+        ide="cursor",
+        instance="cursor-main",
+        root=tmp_path,
+    )
+    text = path.read_text(encoding="utf-8")
+    assert "koru autopilot status" in text
+    assert "cursor-main" in text
+
+
+def test_format_calibration_desktop_report_error() -> None:
+    lines = coru_cli._format_calibration_desktop_report(
+        {"ok": False, "error": "window not found"},
+        ide="cursor",
+        focus_titles=("Cursor",),
+    )
+    assert any("desktop preflight" in line for line in lines)
+    assert any("window not found" in line for line in lines)
+
+
+def test_lane_calibration_runs_desktop_preflight_and_single_drive(monkeypatch) -> None:
+    calls: list[str] = []
+
+    monkeypatch.setattr(coru_cli, "_diagnose_lane", lambda *_a, **_k: 0)
+    monkeypatch.setattr(coru_cli, "_lane_status_raw", lambda *_a, **_k: 0)
+    monkeypatch.setattr(coru_cli, "_target_plugin_rows", lambda *_a, **_k: [{"ide": "cursor"}])
+    monkeypatch.setattr(
+        coru_cli,
+        "_run_calibration_desktop_preflight",
+        lambda *_a, **_k: (True, ["[coru] calibration: desktop preflight (testql DESKTOP_*)"]),
+    )
+    monkeypatch.setattr(
+        coru_cli,
+        "_run_calibration_bridge_preflight",
+        lambda *_a, **_k: (True, ["[coru] calibration: bridge preflight (testql SHELL)"]),
+    )
+
+    def fake_drive_capture(*_args, **_kwargs):
+        calls.append("drive_capture")
+        return 1, {"ok": False, "verification": "submit_unverified", "winning_focus_open": "x", "winning_paste": "y"}
+
+    monkeypatch.setattr(coru_cli, "_lane_drive_capture", fake_drive_capture)
+    monkeypatch.setattr(coru_cli, "_run_lane_repair", lambda *_a, **_k: None)
+    monkeypatch.setattr(coru_cli, "_print_troubleshooting_log_locations", lambda *_a, **_k: None)
+
+    rc = coru_cli._lane_calibration("cursor", "cursor-main", skip_fix=True)
+
+    assert rc == 1
+    assert calls == ["drive_capture"]
+
+
+def test_calibration_command_runs_lane_calibration(monkeypatch) -> None:
+    called: dict[str, object] = {}
+
+    def fake_lane_calibration(
+        ide: str,
+        instance: str,
+        *,
+        probe_prompt: str = "probe test",
+        skip_fix: bool = False,
+        skip_desktop: bool = False,
+        skip_bridge: bool = False,
+    ) -> int:
+        called.update(
+            {
+                "ide": ide,
+                "instance": instance,
+                "probe_prompt": probe_prompt,
+                "skip_fix": skip_fix,
+                "skip_desktop": skip_desktop,
+                "skip_bridge": skip_bridge,
+            }
+        )
+        return 0
+
+    monkeypatch.setattr(coru_cli, "_default_lane", lambda _ide, _inst: ("cursor", "cursor-main"))
+    monkeypatch.setattr(coru_cli, "_lane_calibration", fake_lane_calibration)
+
+    rc = coru_cli.main(
+        ["calibration", "--probe-prompt", "hello-probe", "--skip-fix", "--skip-bridge"]
+    )
+
+    assert rc == 0
+    assert called == {
+        "ide": "cursor",
+        "instance": "cursor-main",
+        "probe_prompt": "hello-probe",
+        "skip_fix": True,
+        "skip_desktop": False,
+        "skip_bridge": True,
+    }
+
+
+def test_calibration_is_known_command_not_text_shorthand(monkeypatch) -> None:
+    called: dict[str, object] = {"heuristic": False}
+
+    monkeypatch.setattr(coru_cli, "_lane_calibration", lambda *_args, **_kwargs: 0)
+    monkeypatch.setattr(coru_cli, "_default_lane", lambda _ide, _inst: ("cursor", "cursor-main"))
+
+    def fake_heuristic(text: str) -> coru_cli.Plan:
+        called["heuristic"] = text
+        return coru_cli.Plan(action="diagnose")
+
+    monkeypatch.setattr(coru_cli, "_heuristic_plan", fake_heuristic)
+
+    rc = coru_cli.main(["calibration"])
+    assert rc == 0
+    assert called["heuristic"] is False
 
 
 def test_execute_text_uses_heuristic(monkeypatch) -> None:
@@ -1191,26 +1391,83 @@ def test_workspace_socket_path_drives_default_ide(monkeypatch, tmp_path) -> None
     assert coru_cli._infer_default_ide() == "cursor"
 
 
+_FORK_ENV_KEYS = (
+    "TERM_PROGRAM",
+    "TERM_PROGRAM_VERSION",
+    "CHROME_DESKTOP",
+    "GIO_LAUNCHED_DESKTOP_FILE",
+    "VSCODE_PID",
+    "VSCODE_NLS_CONFIG",
+    "VSCODE_IPC_HOOK",
+    "VSCODE_CODE_CACHE_PATH",
+    "VSCODE_CWD",
+    "CURSOR_AGENT",
+    "CURSOR_CLI",
+    "WINDSURF_CASCADE_TERMINAL",
+    "WINDSURF_VERSION",
+    "WINDSURF_CSRF_TOKEN",
+    "TERMINAL_EMULATOR",
+    "IDEA_INITIAL_DIRECTORY",
+    "PYCHARM_HOSTED",
+    "JETBRAINS_IDE",
+)
+
+
+def _clear_fork_env(monkeypatch) -> None:
+    for key in _FORK_ENV_KEYS:
+        monkeypatch.delenv(key, raising=False)
+
+
 def test_terminal_ide_hint_jetbrains_from_emulator(monkeypatch) -> None:
+    _clear_fork_env(monkeypatch)
     monkeypatch.setenv("TERMINAL_EMULATOR", "JetBrains-JediTerm")
-    monkeypatch.delenv("CURSOR_AGENT", raising=False)
-    monkeypatch.delenv("WINDSURF_CASCADE_TERMINAL", raising=False)
-    monkeypatch.delenv("CHROME_DESKTOP", raising=False)
-    monkeypatch.delenv("TERM_PROGRAM", raising=False)
     assert coru_cli._terminal_ide_hint() == "jetbrains"
 
 
+def test_terminal_shell_context_windsurf_from_devin_desktop(monkeypatch) -> None:
+    """Windsurf shipped as devin-desktop is recognised by provider name, not vscode."""
+    _clear_fork_env(monkeypatch)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("TERM_PROGRAM_VERSION", "1.110.1-devin-desktop")
+    monkeypatch.setenv("CHROME_DESKTOP", "devin-desktop.desktop")
+    monkeypatch.setenv(
+        "GIO_LAUNCHED_DESKTOP_FILE", "/usr/share/applications/devin-desktop.desktop"
+    )
+    monkeypatch.setenv("WINDSURF_CASCADE_TERMINAL", "1")
+    assert coru_cli._terminal_shell_context_fallback()[0] == "windsurf"
+
+
+def test_terminal_shell_context_windsurf_from_cascade_marker_only(monkeypatch) -> None:
+    """A Windsurf cascade marker beats the generic vscode fallback."""
+    _clear_fork_env(monkeypatch)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("CHROME_DESKTOP", "code.desktop")
+    monkeypatch.setenv("WINDSURF_CASCADE_TERMINAL", "1")
+    assert coru_cli._terminal_shell_context_fallback()[0] == "windsurf"
+
+
+def test_terminal_shell_context_plain_vscode_is_last_resort(monkeypatch) -> None:
+    """Plain VS Code (no fork markers) still resolves to vscode."""
+    _clear_fork_env(monkeypatch)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "/usr/share/code/resources/app")
+    assert coru_cli._terminal_shell_context_fallback()[0] == "vscode"
+
+
 def test_terminal_ide_hint_detects_codium_when_pid_probe_fails(monkeypatch) -> None:
+    _clear_fork_env(monkeypatch)
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
     monkeypatch.setenv("VSCODE_PID", "12345")
     monkeypatch.setenv("CHROME_DESKTOP", "codium.desktop")
     monkeypatch.setenv("VSCODE_CODE_CACHE_PATH", "/home/tom/.config/VSCodium/CachedData/sha")
     monkeypatch.setattr(coru_cli, "_ide_from_vscode_pid", lambda: None)
 
+
     assert coru_cli._terminal_ide_hint() == "vscodium"
 
 
 def test_terminal_ide_hint_detects_codium_from_nls_config(monkeypatch) -> None:
+    _clear_fork_env(monkeypatch)
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
     monkeypatch.setenv("VSCODE_PID", "12345")
     monkeypatch.delenv("CHROME_DESKTOP", raising=False)
@@ -1221,10 +1478,12 @@ def test_terminal_ide_hint_detects_codium_from_nls_config(monkeypatch) -> None:
     )
     monkeypatch.setattr(coru_cli, "_ide_from_vscode_pid", lambda: None)
 
+
     assert coru_cli._terminal_ide_hint() == "vscodium"
 
 
 def test_terminal_ide_hint_detects_codium_from_nls_config_without_pid(monkeypatch) -> None:
+    _clear_fork_env(monkeypatch)
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
     monkeypatch.delenv("VSCODE_PID", raising=False)
     monkeypatch.delenv("CHROME_DESKTOP", raising=False)
@@ -1234,15 +1493,18 @@ def test_terminal_ide_hint_detects_codium_from_nls_config_without_pid(monkeypatc
         '{"defaultMessagesFile":"/snap/codium/495/usr/share/codium/resources/app/out/nls.messages.json"}',
     )
 
+
     assert coru_cli._terminal_ide_hint() == "vscodium"
 
 
 def test_terminal_ide_hint_vscode_pid_beats_stale_cursor_env(monkeypatch) -> None:
+    _clear_fork_env(monkeypatch)
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
     monkeypatch.setenv("VSCODE_PID", "12345")
     monkeypatch.setenv("CURSOR_AGENT", "1")
     monkeypatch.setenv("CHROME_DESKTOP", "cursor.desktop")
     monkeypatch.setattr(coru_cli, "_ide_from_vscode_pid", lambda: "vscode")
+
 
     assert coru_cli._terminal_ide_hint() == "vscode"
 

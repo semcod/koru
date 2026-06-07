@@ -243,6 +243,16 @@ def _add_reload_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser])
     reload.add_argument("--project", type=Path, default=Path.cwd())
     reload.add_argument("--dry-run", action="store_true")
     reload.add_argument(
+        "--connect-only",
+        action="store_true",
+        help="skip reload; only run `koru: Connect autopilot daemon` via command palette",
+    )
+    reload.add_argument(
+        "--detached",
+        action="store_true",
+        help="spawn reload in a detached session so an IDE window reload cannot kill this process",
+    )
+    reload.add_argument(
         "--format",
         dest="output_format",
         choices=("text", "json"),
@@ -403,14 +413,26 @@ def action_ide_history(args: argparse.Namespace) -> int:
 
 
 def action_ide_reload(args: argparse.Namespace) -> int:
-    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+    from koru.ide_adapters.ide_reload import (
+        spawn_detached_ide_reload,
+        try_reload_vscode_family_ide,
+    )
 
     ide = _resolve_ide(args.ide) or args.ide
-    outcome = try_reload_vscode_family_ide(
-        ide,
-        project=args.project.expanduser().resolve(),
-        dry_run=args.dry_run,
-    )
+    project = args.project.expanduser().resolve()
+    if args.detached:
+        outcome = spawn_detached_ide_reload(
+            ide,
+            project=project,
+            connect_only=args.connect_only,
+        )
+    else:
+        outcome = try_reload_vscode_family_ide(
+            ide,
+            project=project,
+            dry_run=args.dry_run,
+            connect_only=args.connect_only,
+        )
     payload = {
         "ide": ide,
         "attempted": outcome.attempted,

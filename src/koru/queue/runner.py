@@ -318,9 +318,9 @@ def _resolve_action_or_result(
             message=f"Executor kind '{executor_kind}' is not implemented yet",
         )
 
-    action, missing_prompt = action_info
-    if action:
-        return action, None
+    resolved_action, missing_prompt = action_info
+    if resolved_action:
+        return resolved_action, None
     if executor_kind == "shell" and not interactive and not dry_run:
         return "true", None
 
@@ -390,7 +390,7 @@ def _run_next_planfile_task_impl(
                 prompt_runner,
             )
 
-        action, action_result = _resolve_action_or_result(
+        resolved_action, action_result = _resolve_action_or_result(
             ticket=ticket,
             ticket_id=ticket_id,
             executor_kind=executor_kind,
@@ -401,10 +401,10 @@ def _run_next_planfile_task_impl(
         )
         if action_result is not None:
             return action_result
-        assert action is not None
+        assert resolved_action is not None
 
         if dry_run:
-            return _handle_dry_run(ticket_id, executor_kind, action)
+            return _handle_dry_run(ticket_id, executor_kind, resolved_action)
 
         claimed = _claim_and_start(project, ticket_id, actor, planfile_runner)
         if claimed:
@@ -412,7 +412,7 @@ def _run_next_planfile_task_impl(
 
         result, action_label = _execute_action(
             executor_kind,
-            action,
+            resolved_action,
             project,
             ticket_id,
             api_runner,

@@ -116,8 +116,26 @@ vs JSON:
 | Scenario fails ale endpoint OK | Sprawdź `TESTQL_BASE_URL` w docker-compose env |
 | MCP server: warning frozen | Ignorowalne (`runpy` warning) |
 
+## Scenariusze w koru (`testql-scenarios/`)
+
+Indeks: [`../../../testql-scenarios/README.md`](../../../testql-scenarios/README.md)
+
+| Klasa | Przykłady |
+|-------|-----------|
+| WUP quick / dry-run | `cli-smoke`, `cli-koru*`, `cli-coru_calibration` |
+| Live / manual | `cli-koru-live`, `conversations/` |
+| Desktop OQL (`coru calibration`) | `{cursor,antigravity,vscode,windsurf}-desktop-calibration.oql` |
+
+`coru calibration` materializuje szablon desktop do `.planfile/.koru/` i uruchamia
+plugin probe. Na Wayland prefight `DESKTOP_*` jest **advisory** — użyj
+`--skip-desktop` gdy WUP lub wmctrl nie widzi tytułów Electron.
+
+Docs: [`../../autopilot-quickstart.md`](../../autopilot-quickstart.md) ·
+[`../../../packages/coru/README.md`](../../../packages/coru/README.md)
+
 ## Linki
 
 - Repo: https://github.com/oqlos/testql (lokalnie: `/home/tom/github/oqlos/testql`)
 - Wersja: `0.2.0` (editable)
 - W c2004: 10 scenariuszy, 50 assertions, runs co 60s
+- Dokumentacja koru: [`../../README.md`](../../README.md) · [`../../../README.md`](../../../README.md)

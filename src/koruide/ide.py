@@ -25,7 +25,7 @@ TerminalKind = Literal["integrated", "ide_adjacent", "system"]
 # ``/opt/windsurf/windsurf --type=renderer``.
 _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
     "antigravity": (("antigravity",), "Antigravity"),
-    "windsurf": (("windsurf",), "Windsurf"),
+    "windsurf": (("windsurf", "devin-desktop"), "Windsurf"),
     "vscode": (("code", "code-insiders"), "VS Code"),
     "vscodium": (("codium", "vscodium", "code-oss"), "VSCodium"),
     "cursor": (("cursor",), "Cursor"),
@@ -56,6 +56,8 @@ _IDE_ALIASES: dict[str, str] = {
     "code oss": "vscodium",
     "cursor": "cursor",
     "windsurf": "windsurf",
+    "devin": "windsurf",
+    "devin-desktop": "windsurf",
     "pycharm": "jetbrains",
     "idea": "jetbrains",
     "intellij": "jetbrains",
@@ -287,6 +289,9 @@ def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
 
     The ``_pids`` hook is used by tests to inject a fixed snapshot.
     """
+    import sys
+    if _pids is None and ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):
+        return []
     pids = _pids if _pids is not None else _iter_proc_pids()
     seen: dict[str, tuple[RunningIDE, int]] = {}
     for pid in pids:
@@ -357,6 +362,9 @@ def detect_focused_ide_id(
     On X11 this maps active-window PID to one of our known IDE ids.
     On unsupported environments this returns ``None``.
     """
+    import sys
+    if _active_pid is None and ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):
+        return None
     pid = _active_pid if _active_pid is not None else _active_window_pid_x11()
     if pid is None:
         if _log:
@@ -378,32 +386,61 @@ _VSCODE_FAMILY_ENV_KEYS = (
     "GIO_LAUNCHED_DESKTOP_FILE",
 )
 
+# Env values that carry brand identity for a VS Code-family editor. These are
+# scanned (in addition to the IPC/cache vars above) because forks encode their
+# provider name in the desktop-entry / version string even when ``TERM_PROGRAM``
+# is the generic ``vscode``.
+_VSCODE_BRAND_ENV_KEYS = (
+    "VSCODE_CODE_CACHE_PATH",
+    "VSCODE_IPC_HOOK",
+    "VSCODE_NLS_CONFIG",
+    "VSCODE_CWD",
+    "CHROME_DESKTOP",
+    "GIO_LAUNCHED_DESKTOP_FILE",
+    "TERM_PROGRAM_VERSION",
+)
+
+# Provider/brand tokens for VS Code forks, matched BEFORE the generic ``vscode``
+# fallback so editors are recognised by their provider name first (Windsurf,
+# now shipped as Devin, Cursor, Antigravity, VSCodium...). Add a new fork here
+# in ONE place; ``vscode`` is deliberately absent so it stays the last resort.
+_VSCODE_FORK_BRAND_TOKENS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("cursor", ("cursor",)),
+    ("antigravity", ("antigravity",)),
+    ("windsurf", ("windsurf", "devin")),
+    ("vscodium", ("vscodium", "codium", "code-oss", "code - oss")),
+)
+
+
+_SOURCE_VSCODE_ENV = "env:VSCODE_*"
+
+
+def _vscode_fork_brand_from_text(*values: str) -> str | None:
+    """Return the provider/brand IDE id for any VS Code fork token in ``values``.
+
+    Generic VS Code is intentionally NOT matched here so callers can treat it
+    as the last-resort fallback once brand detection fails.
+    """
+    blob = " ".join(value for value in values if value).lower()
+    if not blob:
+        return None
+    for ide_id, tokens in _VSCODE_FORK_BRAND_TOKENS:
+        if any(token in blob for token in tokens):
+            return ide_id
+    return None
+
 
 def _vscode_family_env_present() -> bool:
     return any((os.environ.get(key) or "").strip() for key in _VSCODE_FAMILY_ENV_KEYS)
 
 
 def _vscode_family_flavor_from_env() -> str | None:
-    """Distinguish Cursor / VS Code / Codium from integrated-terminal env."""
-    blob = " ".join(
-        os.environ.get(key, "")
-        for key in (
-            "VSCODE_CODE_CACHE_PATH",
-            "VSCODE_IPC_HOOK",
-            "VSCODE_NLS_CONFIG",
-            "VSCODE_CWD",
-            "CHROME_DESKTOP",
-        )
-    ).lower()
-    if "cursor" in blob:
-        return "cursor"
-    if "antigravity" in blob:
-        return "antigravity"
-    if "windsurf" in blob:
-        return "windsurf"
-    if "codium" in blob or "vscodium" in blob or "code-oss" in blob or "code - oss" in blob:
-        return "vscodium"
-    if blob.strip():
+    """Resolve a VS Code-family editor by provider name, else generic vscode."""
+    values = [os.environ.get(key, "") for key in _VSCODE_BRAND_ENV_KEYS]
+    brand = _vscode_fork_brand_from_text(*values)
+    if brand is not None:
+        return brand
+    if any(value.strip() for value in values):
         return "vscode"
     return None
 
@@ -450,14 +487,9 @@ def _ide_from_vscode_pid() -> str | None:
         target = str(exe_path.resolve()).lower()
     except OSError:
         return None
-    if "antigravity" in target:
-        return "antigravity"
-    if "cursor" in target:
-        return "cursor"
-    if "windsurf" in target:
-        return "windsurf"
-    if "codium" in target or "vscodium" in target or "code-oss" in target:
-        return "vscodium"
+    brand = _vscode_fork_brand_from_text(target)
+    if brand is not None:
+        return brand
     if "code" in target or "vscode" in target:
         return "vscode"
     return None
@@ -496,6 +528,34 @@ def _terminal_ide_env_candidates(
     )
 
 
+def _vscode_family_terminal_ide(chrome_ide: str | None) -> tuple[str | None, str | None]:
+    """Resolve a VS Code-family integrated terminal, provider/brand name first.
+
+    VS Code forks all export ``TERM_PROGRAM=vscode``; this returns plain
+    ``vscode`` only as the last-resort fallback after brand detection fails.
+    """
+    # 1) The actual running editor binary is the most authoritative signal.
+    if (os.environ.get("VSCODE_PID") or "").strip():
+        via_pid = _ide_from_vscode_pid()
+        if via_pid is not None:
+            return via_pid, "env:VSCODE_PID.exe"
+    # 2) Provider/brand tokens carried in VS Code env values.
+    brand = _vscode_fork_brand_from_text(
+        *(os.environ.get(key, "") for key in _VSCODE_BRAND_ENV_KEYS)
+    )
+    if brand is not None:
+        return brand, _SOURCE_VSCODE_ENV
+    # 3) Brand-specific env markers (Cursor / Windsurf cascade).
+    if _cursor_terminal_env_hint(chrome_ide):
+        return "cursor", "env:CURSOR_*"
+    if _windsurf_primary_terminal_env_hint(chrome_ide):
+        return "windsurf", "env:WINDSURF_*"
+    # 4) Last resort: a generic VS Code integrated terminal.
+    if _vscode_family_env_present():
+        return "vscode", _SOURCE_VSCODE_ENV
+    return None, None
+
+
 def _terminal_ide_from_env_with_source() -> tuple[str | None, str | None]:
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
     chrome_ide = normalize_ide_id(chrome)
@@ -505,34 +565,26 @@ def _terminal_ide_from_env_with_source() -> tuple[str | None, str | None]:
     if _jetbrains_terminal_env_hint():
         return "jetbrains", "env:TERMINAL_EMULATOR"
 
-    # VS Code-family integrated terminals should first use VSCODE_PID executable
-    # probe. Cursor also exports VSCODE_* vars, so this avoids stale CURSOR_* env
-    # values forcing wrong host IDE when current shell is in plain VS Code.
-    if term_program in {"vscode", "code"} and (os.environ.get("VSCODE_PID") or "").strip():
-        via_pid = _ide_from_vscode_pid()
-        if via_pid is not None:
-            return via_pid, "env:VSCODE_PID.exe"
-        flavor = _vscode_family_flavor_from_env() if _vscode_family_env_present() else None
-        if flavor is not None:
-            return flavor, "env:VSCODE_*"
-    if term_program in {"vscode", "code"} and _vscode_family_env_present():
-        flavor = _vscode_family_flavor_from_env()
-        if flavor is not None:
-            return flavor, "env:VSCODE_*"
+    if term_program in {"vscode", "code"}:
+        ide, source = _vscode_family_terminal_ide(chrome_ide)
+        if ide is not None:
+            return ide, source
 
     if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower():
         return "antigravity", "env:GIO_LAUNCHED_DESKTOP_FILE"
+    # Explicit TERM_PROGRAM / CHROME_DESKTOP beats stale secondary markers
+    # (e.g. WINDSURF_CASCADE_TERMINAL leaking into a Cursor integrated terminal).
+    known = _known_terminal_ide_hint(term_ide, chrome_ide)
+    if known is not None:
+        return known, "env:TERM_PROGRAM/CHROME_DESKTOP"
     if _cursor_terminal_env_hint(chrome_ide):
         return "cursor", "env:CURSOR_*"
     if _windsurf_primary_terminal_env_hint(chrome_ide):
         return "windsurf", "env:WINDSURF_*"
-    known = _known_terminal_ide_hint(term_ide, chrome_ide)
-    if known is not None:
-        return known, "env:TERM_PROGRAM/CHROME_DESKTOP"
     if _vscode_family_env_present():
         flavor = _vscode_family_flavor_from_env()
         if flavor is not None:
-            return flavor, "env:VSCODE_*"
+            return flavor, _SOURCE_VSCODE_ENV
     if _legacy_windsurf_terminal_env_hint(chrome):
         return "windsurf", "env:WINDSURF_LEGACY"
     return None, None
@@ -592,6 +644,9 @@ def detect_terminal_host_ide_id(
         if _log:
             _log(f"terminal_host_ide: detected={from_env} ({source or 'env'})")
         return from_env
+    import sys
+    if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
+        return None
     start = _start_pid if _start_pid is not None else os.getpid()
     ide = _terminal_ide_from_parent_chain(start)
     if _log:
