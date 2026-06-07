@@ -794,10 +794,10 @@ def _terminal_shell_context_fallback() -> tuple[str | None, str, bool]:
         return "jetbrains", "env:TERMINAL_EMULATOR", True
     if "cursor" in chrome or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
         return "cursor", "env:CURSOR_*", True
-    if _windsurf_terminal_marker():
-        return "windsurf", "env:WINDSURF_*", True
     if term_program in _VALID_AUTOPILOT_IDES and term_program != "auto":
         return term_program, "env:TERM_PROGRAM", True
+    if _windsurf_terminal_marker():
+        return "windsurf", "env:WINDSURF_*", True
     return None, "none", False
 
 
@@ -1029,18 +1029,22 @@ def _infer_default_ide() -> str:
     _term_ide, _term_source, integrated = _terminal_shell_context()
     _trace("infer_ide.start", terminal_hint=hint, integrated=integrated, source=_term_source)
     if integrated and hint and hint != "auto":
-        # Check: is there a connected daemon for a different IDE?
-        # If so, and this terminal IDE has no connected daemon, prefer the connected one
-        alive_ide = _alive_daemon_ide()
-        if alive_ide and alive_ide != hint and not _connected_daemon_instance(hint):
-            _trace("infer_ide.daemon_override", terminal=hint, alive_daemon=alive_ide,
-                   reason="terminal IDE has no connected daemon; using IDE with connected daemon")
-            print(
-                f"[coru] terminal IDE={hint} has no connected daemon; "
-                f"using connected daemon IDE={alive_ide}",
-                file=sys.stderr,
-            )
-            return alive_ide
+        if not _connected_daemon_instance(hint):
+            alive_ide = _alive_daemon_ide()
+            if alive_ide and alive_ide != hint:
+                _trace(
+                    "infer_ide.daemon_mismatch",
+                    terminal=hint,
+                    alive_daemon=alive_ide,
+                    reason="terminal IDE has no connected daemon; keeping terminal IDE",
+                )
+                print(
+                    f"[coru] integrated terminal IDE={hint} has no connected daemon "
+                    f"(alive daemon: {alive_ide}). "
+                    f"Connect the plugin in {hint}, or pass an explicit lane "
+                    f"(e.g. `coru calibration {hint}` / KORU_AUTOPILOT_INSTANCE={hint}).",
+                    file=sys.stderr,
+                )
         _trace("infer_ide.result", ide=hint, reason="integrated_terminal")
         return hint
     if hint and _project_ide_settings_lane(hint) is not None:
@@ -2271,6 +2275,43 @@ def _format_calibration_probe_report(drive: dict[str, Any] | None) -> tuple[bool
             "Command Palette → koru: Calibrate chat probe ladder"
         )
     return False, lines
+
+
+def _resolve_calibration_lane(
+    ide: str,
+    instance: str,
+    *,
+    explicit_ide: str | None,
+) -> tuple[str, str]:
+    """Prefer the integrated terminal IDE for calibration unless explicitly overridden."""
+    _print_terminal_context()
+    term_ide, _term_source, integrated = _terminal_shell_context()
+    if explicit_ide:
+        if integrated and term_ide and term_ide != ide:
+            print(
+                f"[coru] calibration: explicit ide={ide} while integrated terminal "
+                f"is {term_ide} — using explicit lane",
+                file=sys.stderr,
+            )
+        return ide, instance
+    if integrated and term_ide and term_ide in _PLUGIN_CALIBRATION_IDES and ide != term_ide:
+        corrected_instance = _infer_default_instance(ide=term_ide)
+        print(
+            f"[coru] calibration: lane corrected {ide}/{instance} -> "
+            f"{term_ide}/{corrected_instance} (integrated terminal)",
+            file=sys.stderr,
+        )
+        return term_ide, corrected_instance
+    if ide not in _PLUGIN_CALIBRATION_IDES or (
+        term_ide and term_ide != ide and not integrated
+    ):
+        print(
+            f"[coru] calibration: targeting ide={ide}/{instance}. "
+            f"For Cursor use: `coru calibration cursor` or "
+            f"`KORU_AUTOPILOT_INSTANCE=cursor-main coru calibration`",
+            file=sys.stderr,
+        )
+    return ide, instance
 
 
 def _lane_calibration(
@@ -3867,6 +3908,11 @@ def _dispatch_calibration_command(args: argparse.Namespace) -> int | None:
     if args.command != "calibration":
         return None
     ide, instance = _default_lane(args.ide, args.instance)
+    ide, instance = _resolve_calibration_lane(
+        ide,
+        instance,
+        explicit_ide=args.ide,
+    )
     return _lane_calibration(
         ide,
         instance,

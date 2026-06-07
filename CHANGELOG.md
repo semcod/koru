@@ -66,6 +66,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.316] - 2026-06-07
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous_readiness.py
+
+### Other
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/tests/test_coru_cli.py
+
 ## [0.1.315] - 2026-06-07
 
 ### Docs

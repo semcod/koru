@@ -193,6 +193,11 @@ def test_calibration_command_runs_lane_calibration(monkeypatch) -> None:
         return 0
 
     monkeypatch.setattr(coru_cli, "_default_lane", lambda _ide, _inst: ("cursor", "cursor-main"))
+    monkeypatch.setattr(
+        coru_cli,
+        "_resolve_calibration_lane",
+        lambda ide, instance, *, explicit_ide: (ide, instance),
+    )
     monkeypatch.setattr(coru_cli, "_lane_calibration", fake_lane_calibration)
 
     rc = coru_cli.main(
@@ -215,6 +220,11 @@ def test_calibration_is_known_command_not_text_shorthand(monkeypatch) -> None:
 
     monkeypatch.setattr(coru_cli, "_lane_calibration", lambda *_args, **_kwargs: 0)
     monkeypatch.setattr(coru_cli, "_default_lane", lambda _ide, _inst: ("cursor", "cursor-main"))
+    monkeypatch.setattr(
+        coru_cli,
+        "_resolve_calibration_lane",
+        lambda ide, instance, *, explicit_ide: (ide, instance),
+    )
 
     def fake_heuristic(text: str) -> coru_cli.Plan:
         called["heuristic"] = text
@@ -1332,6 +1342,56 @@ def test_stale_instance_not_reused_for_different_ide(monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "windsurf-main")
     monkeypatch.setattr(coru_cli, "_repo_root", lambda: None)
     assert coru_cli._infer_default_instance(ide="cursor") == "cursor"
+
+
+def test_infer_default_ide_keeps_integrated_terminal_over_alive_daemon(monkeypatch) -> None:
+    monkeypatch.setattr(coru_cli, "_terminal_ide_hint", lambda: "cursor")
+    monkeypatch.setattr(
+        coru_cli,
+        "_terminal_shell_context",
+        lambda: ("cursor", "env:CURSOR_*", True),
+    )
+    monkeypatch.setattr(coru_cli, "_connected_daemon_instance", lambda ide: None)
+    monkeypatch.setattr(coru_cli, "_alive_daemon_ide", lambda: "antigravity")
+
+    assert coru_cli._infer_default_ide() == "cursor"
+
+
+def test_resolve_calibration_lane_prefers_integrated_terminal(monkeypatch) -> None:
+    monkeypatch.setattr(coru_cli, "_print_terminal_context", lambda **_k: None)
+    monkeypatch.setattr(
+        coru_cli,
+        "_terminal_shell_context",
+        lambda: ("cursor", "env:CURSOR_*", True),
+    )
+    monkeypatch.setattr(coru_cli, "_infer_default_instance", lambda *, ide: f"{ide}-main")
+
+    ide, instance = coru_cli._resolve_calibration_lane(
+        "antigravity",
+        "antigravity",
+        explicit_ide=None,
+    )
+
+    assert ide == "cursor"
+    assert instance == "cursor-main"
+
+
+def test_resolve_calibration_lane_honors_explicit_ide(monkeypatch) -> None:
+    monkeypatch.setattr(coru_cli, "_print_terminal_context", lambda **_k: None)
+    monkeypatch.setattr(
+        coru_cli,
+        "_terminal_shell_context",
+        lambda: ("cursor", "env:CURSOR_*", True),
+    )
+
+    ide, instance = coru_cli._resolve_calibration_lane(
+        "antigravity",
+        "antigravity",
+        explicit_ide="antigravity",
+    )
+
+    assert ide == "antigravity"
+    assert instance == "antigravity"
 
 
 def test_terminal_hint_overrides_stale_supervisor_lane(monkeypatch, tmp_path: Path) -> None:

@@ -608,7 +608,7 @@ def _terminal_lane_mismatch_issues(
         terminal_kind_label,
     )
 
-    severity: Severity = "fail" if ctx.terminal_integrated else "warn"
+    severity: Severity = "warn"
     kind_label = terminal_kind_label(ctx.terminal_kind) if ctx.terminal_kind else "unknown shell"
     operator_steps = lane_mismatch_operator_steps(
         terminal_ide=ctx.terminal,

@@ -201,6 +201,31 @@ class GillmGuiBackend:
         return reply
 
 
+@dataclass
+class Nlp2UriDesktopBackend:
+    """Window-management backend via nlp2uri desktop-window://focus.
+
+    Uses nlp2uri to focus the IDE window through proper window management
+    (wmctrl -a / xdotool search --name ... windowactivate) instead of
+    coordinate-based mouse clicks.  After focus, delegates text injection
+    to :class:`gillm.injection.injector.Injector`.
+    """
+
+    dry_run: bool = False
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, ticket_id
+        return _nlp2uri_desktop_send(prompt, ide=ide, submit=submit, dry_run=self.dry_run)
+
+
 def build_agent_backend(
     *,
     backend_id: str,
@@ -237,9 +262,102 @@ def build_agent_backend(
         raw_cfg = os.environ.get("KORU_OS_INJECTOR_CONFIG", "").strip()
         cfg = Path(raw_cfg).expanduser().resolve() if raw_cfg else None
         return OsInjectorBackend(profile_id=profile, config_path=cfg)
+    if bid == "nlp2uri_desktop" or normalized == "nlp2uri_desktop_window":
+        dry = os.environ.get("KORU_NLP2URI_DRY_RUN", "").strip().lower() in {
+            "1", "true", "yes", "on",
+        }
+        return Nlp2UriDesktopBackend(dry_run=dry)
     if bid in ("none", "noop", ""):
         return NoopBackend(reason=noop_reason)
     raise ValueError(f"unknown agent backend id: {backend_id!r}")
+
+
+def _nlp2uri_desktop_send(
+    prompt: str,
+    *,
+    ide: str,
+    submit: bool,
+    dry_run: bool,
+) -> dict[str, Any]:
+    """Focus IDE window via nlp2uri, then type text via gillm Injector."""
+    try:
+        from nlp2uri import compile_uri_to_actions, execute_uri
+        from nlp2uri.models import HostPlatform
+    except ImportError:
+        return {
+            "ok": False,
+            "backend": "nlp2uri_desktop",
+            "message": "nlp2uri is not installed. Install with: pip install 'koru[desktop]'",
+            "type": "error",
+        }
+
+    # Map koru IDE ids to window names that wmctrl/xdotool can find.
+    _IDE_WINDOW_NAMES: dict[str, str] = {
+        "antigravity": "antigravity",
+        "vscode": "Visual Studio Code",
+        "vscodium": "VSCodium",
+        "cursor": "Cursor",
+        "windsurf": "Windsurf",
+        "jetbrains": "JetBrains",
+        "zed": "Zed",
+    }
+    window_name = _IDE_WINDOW_NAMES.get(ide, ide)
+    focus_uri = f"desktop-window://focus?name={window_name}"
+
+    if dry_run:
+        return {
+            "ok": True,
+            "backend": "nlp2uri_desktop",
+            "dry_run": True,
+            "focus_uri": focus_uri,
+            "ide": ide,
+            "chars": len(prompt),
+            "submit": submit,
+        }
+
+    # Step 1: Focus the IDE window via nlp2uri.
+    try:
+        focus_result = execute_uri(focus_uri, platform=HostPlatform.LINUX, dry_run=False)
+        focus_ok = focus_result.ok
+    except Exception as exc:
+        focus_ok = False
+        focus_error = str(exc)
+        return {
+            "ok": False,
+            "backend": "nlp2uri_desktop",
+            "message": f"nlp2uri focus failed: {focus_error}",
+            "focus_uri": focus_uri,
+            "type": "error",
+        }
+
+    # Step 2: Small delay for window manager to complete the focus switch.
+    import time
+    time.sleep(0.3)
+
+    # Step 3: Type text via gillm Injector.
+    try:
+        from gillm.injection.injector import Injector
+
+        injector = Injector()
+        result = injector.type_text(prompt, ide=ide, submit=submit)
+        return {
+            "ok": True,
+            "backend": "nlp2uri_desktop",
+            "focus_uri": focus_uri,
+            "focus_ok": focus_ok,
+            "injection_backend": result.backend,
+            "submitted": result.submitted,
+            "ide": ide,
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "backend": "nlp2uri_desktop",
+            "message": f"text injection failed after focus: {exc}",
+            "focus_uri": focus_uri,
+            "focus_ok": focus_ok,
+            "type": "error",
+        }
 
 
 __all__ = [
@@ -249,6 +367,7 @@ __all__ = [
     "SllmShellBackend",
     "GillmGuiBackend",
     "OsInjectorBackend",
+    "Nlp2UriDesktopBackend",
     "NoopBackend",
     "build_agent_backend",
 ]

@@ -31,6 +31,21 @@ def try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | N
         return {"ok": False, "backend": "os_injector", "message": str(exc), "type": "error"}
 
 
+def try_nlp2uri_focus_fallback(prompt: str, *, submit: bool, ide: str) -> dict[str, Any] | None:
+    """Best-effort window-management fallback via nlp2uri desktop-window://focus.
+
+    Enabled when ``KORU_NLP2URI_DESKTOP_FALLBACK=1`` is set.
+    Uses proper window management (wmctrl/xdotool windowactivate) to focus the
+    IDE window, then injects text via gillm Injector.
+    """
+    raw = os.environ.get("KORU_NLP2URI_DESKTOP_FALLBACK", "").strip().lower()
+    if raw not in {"1", "true", "yes", "on"}:
+        return None
+    from koru.agent_backend_runtime import _nlp2uri_desktop_send
+
+    return _nlp2uri_desktop_send(prompt, ide=ide, submit=submit, dry_run=False)
+
+
 def try_gillm_gui_fallback(
     prompt: str,
     *,
@@ -186,6 +201,7 @@ __all__ = [
     "resolve_autopilot_ide",
     "scan_while_waiting_input_enabled",
     "try_gillm_gui_fallback",
+    "try_nlp2uri_focus_fallback",
     "try_os_injector_fallback",
     "try_os_injector_fallback_with_deps",
 ]

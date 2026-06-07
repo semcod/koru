@@ -222,8 +222,10 @@ def test_lane_terminal_mismatch_when_integrated_terminal_differs(
         socket_path=None,
         terminal_integrated=True,
     )
-    assert result.ok is False
-    assert any(i.code == "terminal_lane_mismatch" for i in result.issues)
+    assert result.ok is True  # cross-IDE is now a warning, not a failure
+    mismatch_issues = [i for i in result.issues if i.code == "terminal_lane_mismatch"]
+    assert len(mismatch_issues) == 1
+    assert mismatch_issues[0].severity == "warn"
 
 
 def test_socket_lane_mismatch_detected(tmp_path: Path) -> None:
