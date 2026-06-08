@@ -16,7 +16,7 @@ from typing import Any, Final
 
 import yaml
 
-from koru.sllm_bridge import shell_agent_backend_aliases, shell_agent_backend_profiles
+from koru.tillm_bridge import shell_agent_backend_aliases, shell_agent_backend_profiles
 
 
 @dataclass(frozen=True)

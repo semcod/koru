@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from koru.sllm_bridge import shell_tool_registry_entries
+from koru.tillm_bridge import shell_tool_registry_entries
 
 
 def default_registry_path() -> Path:

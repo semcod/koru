@@ -33,7 +33,7 @@ def test_detect_semcod_tools_covers_core_semcod_extensions(tmp_path: Path) -> No
         "rebuild",
         "mdflow",
         "metrun",
-        "sllm",
+        "tillm",
     }
 
     assert expected <= set(detected)

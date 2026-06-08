@@ -1,7 +1,7 @@
 # Planfile — LLM-Agnostic Ticket Workflow
 
 > **Goal:** every ticket produced in c2004 must be actionable by *any*
-> coding agent — Windsurf, Cursor, Claude Code, SLLM shell clients, GitHub Copilot
+> coding agent — Windsurf, Cursor, Claude Code, TILLM shell clients, GitHub Copilot
 > Workspace, or a raw chat session with GPT-4 / Gemini / Qwen3 — without
 > further priming. This document explains how we achieve that and how
 > to author tickets that any LLM can pick up and close.
@@ -76,11 +76,11 @@ Work ticket PLF-123. Use the ticket's own prompt block, then run
 Cursor's `@filename` syntax pulls the whole planfile.yaml into context;
 the agent jumps to the ticket by ID.
 
-### Shell clients via SLLM
+### Shell clients via TILLM
 ```bash
 planfile ticket show PLF-123 > /tmp/task.md
-koru sllm drive --client claude-code --prompt-file /tmp/task.md --execute
-koru sllm drive --client aider --prompt-file /tmp/task.md --execute
+koru tillm drive --client claude-code --prompt-file /tmp/task.md --execute
+koru tillm drive --client aider --prompt-file /tmp/task.md --execute
 ```
 
 ### Raw chat LLM (GPT / Gemini / DeepSeek)

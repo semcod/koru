@@ -562,11 +562,11 @@ wheels = [
 
 [[package]]
 name = "distlib"
-version = "0.4.1"
+version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/86/b2/d6fc3f2347f43dada79e5ff118493e8109c98400a0e29a1d5264a3aa479b/distlib-0.4.1.tar.gz", hash = "sha256:c3804d0d2d4b5fcd44036eb860cb6660485fcdf5c2aba53dc324d805837ea65b", size = 610526, upload-time = "2026-06-02T11:17:40.691Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/8d/873e9252ea2c0e0c857884e0a2899ec43ade132345df1925ef24cbe64f18/distlib-0.4.2.tar.gz", hash = "sha256:baeb401c90f27acd15c4861ae0847d1e731c27ac3dbf4210643ba61fa1e813db", size = 614914, upload-time = "2026-06-08T16:24:15.439Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/18/3497c4fa83a76dcb154923fd2075522e8dd6995ecee4093c00ae18160046/distlib-0.4.1-py2.py3-none-any.whl", hash = "sha256:9c2c552c68cbadc619f2d0ed3a69e27c351a3f4c9baa9ffb7df9e9cdc3d19a97", size = 469216, upload-time = "2026-06-02T11:17:38.779Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/60/aa891c893821d4d127292ed66c6940d1d715894bd5a0ce048056bc641773/distlib-0.4.2-py2.py3-none-any.whl", hash = "sha256:ca4cb11e5d746b5ec13c199cbf19ae27a241f89702b54e153a74332955446067", size = 470510, upload-time = "2026-06-08T16:24:13.208Z" },
 ]
 
 [[package]]
@@ -595,15 +595,15 @@ wheels = [
 
 [[package]]
 name = "env2llm"
-version = "0.1.11"
+version = "0.1.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a6/1e/49753c3082dfdc26bc35a20ddd739e0c7037cc3b53129764140537f20b7c/env2llm-0.1.11.tar.gz", hash = "sha256:06362c3ed218a2bf9eb3c637e846891282c28be801911fd9967742c362e2f954", size = 74745, upload-time = "2026-06-06T22:53:01.663Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e5/5b/d1cde0e42af53620a9d2f728c24ff2f5e72538008be0f20d12325fbc64a1/env2llm-0.1.12.tar.gz", hash = "sha256:7a660bd16a0f45d5f698d7fa8a64a38d7e5d8f2bb7a93dfa9bd35dbc579fdfb6", size = 75295, upload-time = "2026-06-08T14:23:21.117Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/07/0d721a7254b20d83222400e088a68ea8b58e8b50186617d85f98ad9b73a6/env2llm-0.1.11-py3-none-any.whl", hash = "sha256:830ca9edea9ee87e09cdb0713c7162d0f0ed1fb1e9069be707fb2b2d2af00938", size = 84884, upload-time = "2026-06-06T22:52:59.864Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/c0/e30df1e2ae9663e998f60f2df31497bd354f27220cb6916a428b93550f8c/env2llm-0.1.12-py3-none-any.whl", hash = "sha256:5d076e926d151df49652f5677ce0fcc989f088c50d9e7f3eda943c2335245914", size = 85499, upload-time = "2026-06-08T14:23:19.785Z" },
 ]
 
 [package.optional-dependencies]
@@ -813,7 +813,7 @@ wheels = [
 
 [[package]]
 name = "gillm"
-version = "0.1.10"
+version = "0.1.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mss" },
@@ -821,9 +821,9 @@ dependencies = [
     { name = "requests" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/90/d820892f636fb1335db61df26f797e7970531541351416a7b0868b424bbd/gillm-0.1.10.tar.gz", hash = "sha256:214f13e2b1ee98bb3748969d6be871bd83f47594286009dad28cb91db7f2d310", size = 46800, upload-time = "2026-06-07T20:54:36.415Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/eb/55cfa8e8bb5e39e057c389a71e304aa4e91cd4d3af9dd05805554083780a/gillm-0.1.12.tar.gz", hash = "sha256:5d0dbcb542d7906fff5489ead26c6fa5cbe8ac1cfe6e49a92e7508b152f785e9", size = 54233, upload-time = "2026-06-08T15:34:01.02Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/64/3ba6caaf3286dda3da827a3e572f65e6c7563f35401af8418cbf961538db/gillm-0.1.10-py3-none-any.whl", hash = "sha256:5d97bc4a120086cd0526ecd2514d936c4c4ff37678958864700f8674833dcf0e", size = 51043, upload-time = "2026-06-07T20:54:34.373Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/ff/1819cf1192211dcf86a90e78e32a76dc458939ae7413cbb403cc633d57ce/gillm-0.1.12-py3-none-any.whl", hash = "sha256:79943012d285a822c16c27f6d72a4e8262a3a6a05f9c6dcc793cbd131d859db0", size = 55663, upload-time = "2026-06-08T15:33:59.687Z" },
 ]
 
 [[package]]
@@ -852,7 +852,7 @@ wheels = [
 
 [[package]]
 name = "goal"
-version = "2.1.245"
+version = "2.1.246"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -862,9 +862,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/1d/b7efb154afda0c0dec7ac4e6acac15a6410485b36987c0ecd38f28cbbadb/goal-2.1.245.tar.gz", hash = "sha256:5dd92c51f9cc7ef9c8f3d070fd51030b14942cb9dac49563904690bf51162ef4", size = 275517, upload-time = "2026-06-08T14:14:09.607Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/0e/3850cb39653297f65a69100041ecca6d81782f5ac9e5814a8f93f807b5bb/goal-2.1.246.tar.gz", hash = "sha256:e40ad3d4fa0e2b3321f3af80e8b6cc3c44492be89c45ca23ab504a553a498bc2", size = 275505, upload-time = "2026-06-08T14:17:20.306Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/7b/8d2ed2b1edb4b062052bb0db3e0d6e3aaf92f7038881825a20bced08cd81/goal-2.1.245-py3-none-any.whl", hash = "sha256:0a9132994ca67ef0241c65aae48f8846271c662ae85254c160626bcefb24fcee", size = 271092, upload-time = "2026-06-08T14:14:07.357Z" },
+    { url = "https://files.pythonhosted.org/packages/59/4d/2ede84c77a5bac61084496f1eb5c78c53f178ed05af8d613259b13fcb3e9/goal-2.1.246-py3-none-any.whl", hash = "sha256:29543a9069b27716fa6a2c0f9aff54b5386105f8f2fb1abaeb8e6e824f9de78e", size = 271094, upload-time = "2026-06-08T14:17:18.264Z" },
 ]
 
 [[package]]
@@ -1409,7 +1409,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.319"
+version = "0.1.320"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1429,7 +1429,6 @@ all = [
     { name = "arq" },
     { name = "costs" },
     { name = "fastapi" },
-    { name = "fullm" },
     { name = "gillm" },
     { name = "goal" },
     { name = "httpx" },
@@ -1463,6 +1462,7 @@ all = [
     { name = "structlog" },
     { name = "tagi" },
     { name = "tiktoken" },
+    { name = "tillm" },
     { name = "types-pyyaml" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "websockets" },
@@ -1540,11 +1540,11 @@ queue = [
     { name = "arq" },
     { name = "redis" },
 ]
-sllm = [
-    { name = "fullm" },
-]
 testql = [
     { name = "testql" },
+]
+tillm = [
+    { name = "tillm" },
 ]
 vision = [
     { name = "mss" },
@@ -1599,9 +1599,7 @@ requires-dist = [
     { name = "env2llm", extras = ["mqtt"], marker = "extra == 'envmap'", specifier = ">=0.1.10" },
     { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.115,<1.0" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115,<1.0" },
-    { name = "fullm", marker = "extra == 'all'", specifier = ">=0.1.22" },
     { name = "fullm", marker = "extra == 'fullm'", specifier = ">=0.1.22" },
-    { name = "fullm", marker = "extra == 'sllm'", specifier = ">=0.1.22" },
     { name = "gillm", specifier = ">=0.1.9" },
     { name = "gillm", marker = "extra == 'all'", specifier = ">=0.1.9" },
     { name = "gillm", marker = "extra == 'dev'", specifier = ">=0.1.9" },
@@ -1679,6 +1677,8 @@ requires-dist = [
     { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.55" },
     { name = "tiktoken", marker = "extra == 'agent'", specifier = ">=0.8,<1.0" },
     { name = "tiktoken", marker = "extra == 'all'", specifier = ">=0.8,<1.0" },
+    { name = "tillm", marker = "extra == 'all'", editable = "../tillm" },
+    { name = "tillm", marker = "extra == 'tillm'", editable = "../tillm" },
     { name = "types-pyyaml", marker = "extra == 'all'", specifier = ">=6.0,<7.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30,<1.0" },
@@ -1688,7 +1688,7 @@ requires-dist = [
     { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'watch'", specifier = ">=12.0,<17.0" },
 ]
-provides-extras = ["watch", "vision", "mesh", "observe", "desktop", "envmap", "testql", "curllm", "browser", "dev", "api", "agent", "fullm", "sllm", "obs", "queue", "quality", "all"]
+provides-extras = ["watch", "vision", "mesh", "observe", "desktop", "envmap", "testql", "curllm", "browser", "dev", "api", "agent", "fullm", "tillm", "obs", "queue", "quality", "all"]
 
 [package.metadata.requires-dev]
 control = [
@@ -2210,21 +2210,34 @@ wheels = [
 ]
 
 [[package]]
+name = "nlp2env"
+version = "0.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fc/e7/34b0281335687826446bc28ac373187fb3bf26502ef56dca5e47a26b417a/nlp2env-0.1.5.tar.gz", hash = "sha256:7750fd8f9aa8a0e632b14fa8bc01da8bee5c0f15e425b3dadd5fa8b550bd4373", size = 30041, upload-time = "2026-06-08T15:52:17.386Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/aa/f3/e9560b03371f7a1d9ede719fc7faa5bf9c30654494b64c798f263b2b2216/nlp2env-0.1.5-py3-none-any.whl", hash = "sha256:21cc29998af4ac3da62123e9360d0c9cfe4eb0fda33f074b55bca1202f1119ca", size = 27320, upload-time = "2026-06-08T15:52:16.097Z" },
+]
+
+[[package]]
 name = "nlp2uri"
-version = "0.4.12"
+version = "0.4.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/10/93/840bc02ff9a56a6d67b742005528d17cd0469d9825a09c28e1a94407b264/nlp2uri-0.4.12.tar.gz", hash = "sha256:842e0cd0ba6dce123673fccd6fefeb53d00b2a53ab2c12b6321dd9a317792dc0", size = 91229, upload-time = "2026-06-07T20:04:41.064Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/a8/85379d1908e45c0592dbd2e00d47d68e33f1213832af5f772ef7cae8f4f7/nlp2uri-0.4.13.tar.gz", hash = "sha256:f584f70ec45ffd826fc839b35c84a45f1d0ebbcc5623b05b97c696f82c88fc7a", size = 92082, upload-time = "2026-06-08T14:42:31.848Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a4/24/820d817cbd6d77a2a535dec60680938b587d24d096ed0da7b04543058db3/nlp2uri-0.4.12-py3-none-any.whl", hash = "sha256:d21a7fcd499ce5495e699a92799d369d72bbdd498375daa19efa5ce9c3de2738", size = 101199, upload-time = "2026-06-07T20:04:39.595Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/8c/861d2ea53b2626fa017c18da6ca57be2f30c0fe02ea3cd0967588079910b/nlp2uri-0.4.13-py3-none-any.whl", hash = "sha256:2b87888e2180ad553bcc68a1639af6e6b591a6f9acda49e37d852f3e07ad53f6", size = 102587, upload-time = "2026-06-08T14:42:30.294Z" },
 ]
 
 [package.optional-dependencies]
 envmap = [
     { name = "env2llm" },
     { name = "getv" },
+    { name = "nlp2env" },
 ]
 
 [[package]]
@@ -3742,6 +3755,27 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/db/c6/d393e3185a276505182f7abd93fe714f3c444a2be9180798fa052347504e/tiktoken-0.13.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:165cf1820ea4a354985c2490a5205d4cc74661c934aca79dd0368232fff94e0f", size = 1239489, upload-time = "2026-05-15T04:50:57.918Z" },
     { url = "https://files.pythonhosted.org/packages/b7/4d/bc07d1f1635d4897a202acc0ae11c2886eaa7325c359ba4741b47bf8e225/tiktoken-0.13.0-cp313-cp313t-win_amd64.whl", hash = "sha256:6c43a675ca14f6f2749ba7f12075d37456015a24b859f2517b9beb4ef30807ec", size = 873820, upload-time = "2026-05-15T04:50:59.528Z" },
 ]
+
+[[package]]
+name = "tillm"
+version = "0.1.35"
+source = { editable = "../tillm" }
+
+[package.metadata]
+requires-dist = [
+    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0,<2.0" },
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "env2llm", marker = "extra == 'dev'", specifier = ">=0.1.12" },
+    { name = "env2llm", marker = "extra == 'env'", specifier = ">=0.1.12" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.100" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0,<10.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
+    { name = "testql", marker = "extra == 'dev'", specifier = ">=1.2.0" },
+    { name = "twine", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
+]
+provides-extras = ["env", "planfile", "dev"]
 
 [[package]]
 name = "tinycss2"

@@ -1,4 +1,4 @@
-"""Guardrails: shared code lives in gillm/sllm, not duplicated in koru."""
+"""Guardrails: shared code lives in gillm/tillm, not duplicated in koru."""
 
 from __future__ import annotations
 
@@ -126,8 +126,8 @@ def test_koruos_import_emits_deprecation_warning() -> None:
         importlib.import_module("koruos")
 
 
-def test_sllm_bridge_delegates_shell_drive_to_sillm() -> None:
-    bridge = importlib.import_module("koru.sllm_bridge")
+def test_tillm_bridge_delegates_shell_drive_to_tillm() -> None:
+    bridge = importlib.import_module("koru.tillm_bridge")
     source = inspect.getsource(bridge.drive_shell_chat)
     assert "drive_koru_chat" in source
-    assert "sillm.compat" in source
+    assert "tillm.compat" in source

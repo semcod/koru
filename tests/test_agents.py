@@ -185,7 +185,7 @@ class TestAgentDetection(unittest.TestCase):
             self.assertIsNotNone(selected)
             self.assertEqual(selected.id, "opencode")
 
-    def test_detects_devin_from_sllm_registry_when_available(self) -> None:
+    def test_detects_devin_from_tillm_registry_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
 
             def fake_which(command: str) -> str | None:
@@ -204,13 +204,13 @@ class TestAgentLaneEnv(unittest.TestCase):
     def test_qwen_lane_env_defaults(self) -> None:
         env = agent_lane_environment("qwen-code")
         self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
-        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "sllm_shell")
+        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "tillm_shell")
         self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-qwen-code")
 
     def test_opencode_lane_env_defaults(self) -> None:
         env = agent_lane_environment("opencode")
         self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
-        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "sllm_shell")
+        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "tillm_shell")
         self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-opencode")
 
 
@@ -218,4 +218,4 @@ class TestAutopilotBackendForLane(unittest.TestCase):
     def test_backend_matrix(self) -> None:
         self.assertEqual(autopilot_backend_for_agent_id("windsurf"), "plugin_socket")
         self.assertEqual(autopilot_backend_for_agent_id("openrouter"), "headless")
-        self.assertEqual(autopilot_backend_for_agent_id("codex"), "sllm_shell")
+        self.assertEqual(autopilot_backend_for_agent_id("codex"), "tillm_shell")

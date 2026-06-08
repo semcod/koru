@@ -92,7 +92,7 @@ class CodexStrategyTests(unittest.TestCase):
         )
         self.assertEqual(assessment.kind, "retry_focus")
 
-    def test_matches_environment_uses_sllm_bridge_for_cli_detection(self) -> None:
+    def test_matches_environment_uses_tillm_bridge_for_cli_detection(self) -> None:
         from korullm.strategies.codex import CodexStrategy
 
         with (

@@ -27,7 +27,7 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | --- | --- | --- | --- |
 | **A. Plugin + socket** | Daemon sends `drive` / `chat.send`; extension opens chat, types, submits | `koru autopilot daemon`, `koru autopilot drive` | VS Code, Windsurf, Cursor (VSIX), JetBrains (Kotlin plugin, stub→grow) |
 | **B. MCP server** | LLM in IDE calls `koru_*` tools; no server→client push | `koru mcp-serve`, IDE `mcp.json` | Cursor, Windsurf, VS Code, Claude Code host |
-| **C. SLLM shell client** | External `sllm` plugin controls vendor CLIs | `sllm drive --client aider`, `claude`, `devin`, … | Headless / CI; less UI coupling |
+| **C. TILLM shell client** | External `tillm` plugin controls vendor CLIs | `tillm drive --client aider`, `claude`, `devin`, … | Headless / CI; less UI coupling |
 | **D. OS injector** | Keyboard / clipboard when plugin missing | `koru autopilot drive --direct`, `Injector` | X11 / Wayland with focus caveats |
 | **E. HTTP / SaaS API** | Koru talks to provider directly | OpenRouter, Anthropic, … | No IDE chat; separate from “wake IDE LLM” |
 
@@ -41,7 +41,7 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | **JetBrains** | A — `koru-autopilot-jetbrains` (`ChatInjector`) | B if host adds MCP later | Plugin maturity varies |
 | **Zed** | A (experimental) or D | B when available | `koru autopilot drive --ide zed` hits injector/plugin path |
 | **Neovim** | Custom Lua bridge (same **socket protocol** as VSIX) or D | B via external MCP client | Not shipped; pattern matches A |
-| **Claude Code** | C — SLLM shell lane | B — MCP in supported hosts | No single “chat panel” |
+| **Claude Code** | C — TILLM shell lane | B — MCP in supported hosts | No single “chat panel” |
 | **SaaS (OpenAI, Anthropic, Perplexity web)** | **E** — HTTP from koru | — | Koru cannot drive their DOM from a VS Code extension |
 
 ## Code map (this repo)
@@ -55,9 +55,9 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | JetBrains scaffold | `plugins/koru-autopilot-jetbrains/` |
 | MCP tools | `src/koru/mcp_server.py`, `mcp_provision.py` |
 | OS injector | `src/koru/autopilot/injector.py` |
-| Experimental registry (core profiles + SLLM-exported shell profile) | `src/koru/agent_backends.py`, `koru agent-backends`, `/home/tom/github/semcod/sllm` |
-| Runtime ``AgentBackend`` (socket ``drive`` + SLLM shell backend) | `src/koru/agent_backend_runtime.py` |
-| Shell LLM control plugin | `/home/tom/github/semcod/sllm` |
+| Experimental registry (core profiles + TILLM-exported shell profile) | `src/koru/agent_backends.py`, `koru agent-backends`, `/home/tom/github/semcod/tillm` |
+| Runtime ``AgentBackend`` (socket ``drive`` + TILLM shell backend) | `src/koru/agent_backend_runtime.py` |
+| Shell LLM control plugin | `/home/tom/github/semcod/tillm` |
 | Tool registry YAML | `docs/ai-tool-registry-2026.yaml` |
 
 ## Roadmap (incremental)
@@ -66,8 +66,8 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
    socket client; editor-specific command lists live in each plugin.
 2. **Treat B as default for “agent does work”** — tickets, scan, gates via
    MCP; document that MCP does **not** push text into the chat.
-3. **Add C per vendor in SLLM** — shell client specs and prompt contracts live
-   in `/home/tom/github/semcod/sllm`, not in Koru.
+3. **Add C per vendor in TILLM** — shell client specs and prompt contracts live
+   in `/home/tom/github/semcod/tillm`, not in Koru.
 4. **Optional Python façade** — `koru.agent_backends` exposes **profiles**
    only (CLI: `koru agent-backends`, doctor: `agent_backends_registry`);
    `koru.agent_backend_runtime` exposes **AgentBackend** + `PluginSocketBackend`
@@ -96,7 +96,7 @@ ide_integration:
 
 Backend aliases are normalized by `koru.agent_backends`: `plugin_socket` maps
 to `vscode_family_plugin_socket`, and `mcp_tool` maps to `mcp_stdio_server`.
-The `sllm_shell` and legacy `cursor_cli` aliases are supplied by SLLM and map
+The `tillm_shell` and legacy `cursor_cli` aliases are supplied by TILLM and map
 to `vendor_agent_cli`. `koru --doctor` reports invalid lane/backend
 combinations as `agent_integration_config` failures.
 

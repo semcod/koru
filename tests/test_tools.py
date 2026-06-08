@@ -37,7 +37,7 @@ def test_load_registry_from_explicit_path(tmp_path: Path) -> None:
     assert entries[0]["id"] == "sample"
 
 
-def test_default_registry_includes_sllm_shell_clients(monkeypatch) -> None:
+def test_default_registry_includes_tillm_shell_clients(monkeypatch) -> None:
     monkeypatch.delenv("KORU_TOOL_REGISTRY", raising=False)
 
     entries, used = load_tool_registry()
@@ -48,10 +48,10 @@ def test_default_registry_includes_sllm_shell_clients(monkeypatch) -> None:
     assert gemini is not None
     assert codex is not None
     assert gemini["invoke"] == (
-        "koru sllm drive --client gemini-cli --prompt '<prompt>' --execute"
+        "koru tillm drive --client gemini-cli --prompt '<prompt>' --execute"
     )
     assert codex["invoke"] == (
-        "koru sllm drive --client codex --prompt '<prompt>' --execute"
+        "koru tillm drive --client codex --prompt '<prompt>' --execute"
     )
 
 

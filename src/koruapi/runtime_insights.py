@@ -15,7 +15,7 @@ from koru.autonomous_process_guard import (
     find_existing_autonomous_processes,
     find_existing_wup_processes,
 )
-from koru.sllm_bridge import shell_agent_process_patterns
+from koru.tillm_bridge import shell_agent_process_patterns
 from koruide.ide import detect_running_ides
 
 _PS_COLUMNS = ("pid", "pcpu", "pmem", "rss", "etime", "comm", "args")

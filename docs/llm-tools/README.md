@@ -21,7 +21,7 @@ Wszystkie narzędzia LLM-driven dziedziczą ten model przez:
 WYKRYWANIE (LLM-free):              ROZWIĄZYWANIE (LLM):           WALIDACJA (LLM-free):
   regix     [regression]              llx       [model router]       ruff       [linter]
   redup     [duplicates]              pfix      [error fix]          pytest     [tests]
-  prefact   [LLM-aware lint]          sllm      [shell clients]      regix      [regressions]
+  prefact   [LLM-aware lint]          tillm     [shell clients]      regix      [regressions]
   testql    [declarative scenarios]   redsl     [quality gate +      vallm      [tier-1 syntax]
   planfile  [ticket store]                       improve]
   vallm/1   [syntax check]            windsurf  [primary IDE,
@@ -53,14 +53,14 @@ ON-CHANGE GATES TRIAD (LLM-free, continuous):
 
   ALTERNATIVES:
     cursor       [IDE alternative to Windsurf]
-    claude-code  [CLI agent alternative via semcod/sllm]
+    claude-code  [CLI agent alternative via semcod/tillm]
 ```
 
 Shell LLM clients such as `aider` and `claude-code` are now documented and
-controlled by the external `semcod/sllm` plugin. Koru keeps GUI/IDE and
-pipeline docs here, while SLLM owns shell-client launch details.
+controlled by the external `semcod/tillm` plugin. Koru keeps GUI/IDE and
+pipeline docs here, while TILLM owns shell-client launch details.
 Legacy client-specific workflows, including the old aider Docker autoloop,
-also live in `semcod/sllm`.
+also live in `semcod/tillm`.
 
 ## Ranking wymaganej konfiguracji
 
@@ -89,7 +89,7 @@ also live in `semcod/sllm`.
 | **metrun** | brak | brak (CLI flags) | [`metrun/`](./metrun/) |
 | **windsurf** | (subskrypcja IDE) | ✅ `.windsurf/rules.md` | [`../windsurf-agent-guide.md`](../windsurf-agent-guide.md) |
 | **cursor** | (subskrypcja IDE) | ✅ `.cursorrules` | [`cursor/`](./cursor/) |
-| **shell LLM clients** | client-specific | client-specific | `semcod/sllm` |
+| **shell LLM clients** | client-specific | client-specific | `semcod/tillm` |
 
 ## Quick install (wszystko)
 
@@ -98,7 +98,7 @@ also live in `semcod/sllm`.
 for tool in redsl llx pfix vallm prefact planfile regix redup sumd redeploy goal doql costs op3 toonic protogate rebuild mdflow metrun testql; do
   bash docs/llm-tools/$tool/install.sh
 done
-pip install -e /home/tom/github/semcod/sllm
+pip install -e /home/tom/github/semcod/tillm
 ```
 
 Każdy `install.sh` jest **idempotentny** — bezpiecznie uruchamiać wielokrotnie.
@@ -111,7 +111,7 @@ dwoma trybami:
 - **Default path** — ticket-driven development z agentem IDE
   (Windsurf/Cursor/Claude Code), bez zdalnych wywołań LLM.
 - **Opt-in automation lane** — narzędzia LLM-backed (`redsl improve`,
-  `llx`, shell clients through `sllm`) do smoke-testów, jakościowej infrastruktury i
+  `llx`, shell clients through `tillm`) do smoke-testów, jakościowej infrastruktury i
   headless auto-fixów, tylko gdy user explicite tego chce.
 
 W praktyce wygląda to tak:

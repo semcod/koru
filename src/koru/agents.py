@@ -14,7 +14,7 @@ from typing import Any
 
 from koru.runtime import runtime_dir
 from koru.semcod_tools import detect_semcod_tools
-from koru.sllm_bridge import (
+from koru.tillm_bridge import (
     autopilot_backend_for_shell_agent,
     detect_shell_agent_rows,
     is_shell_agent,
@@ -323,7 +323,7 @@ def format_agent_lane_exports(env: dict[str, str]) -> str:
 def launch_agent(agent: AgentOption, project: Path, prompt: str) -> int:
     """Launch an agent CLI from the project root after saving the prompt."""
     prompt_path = save_agent_prompt(project, prompt)
-    if agent.autopilot_backend == "sllm_shell" and is_shell_agent(agent.id):
+    if agent.autopilot_backend == "tillm_shell" and is_shell_agent(agent.id):
         if not agent.launchable or not agent.command:
             print(f"koru agent: {agent.label} is not launchable from PATH.")
             print(f"Prompt saved: {prompt_path}")

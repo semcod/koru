@@ -12,7 +12,7 @@ from koru.agent_backend_runtime import (
     NoopBackend,
     OsInjectorBackend,
     PluginSocketBackend,
-    SllmShellBackend,
+    TillmShellBackend,
     build_agent_backend,
 )
 
@@ -97,27 +97,27 @@ def test_factory_resolves_mcp_tool_without_server() -> None:
     assert backend.mcp_server is None
 
 
-def test_factory_resolves_sllm_shell() -> None:
-    backend = build_agent_backend(backend_id="sllm_shell", shell_client_id="claude-code")
-    assert isinstance(backend, SllmShellBackend)
+def test_factory_resolves_tillm_shell() -> None:
+    backend = build_agent_backend(backend_id="tillm_shell", shell_client_id="claude-code")
+    assert isinstance(backend, TillmShellBackend)
     assert backend.client_id == "claude-code"
 
 
-def test_factory_uses_sllm_backend_aliases() -> None:
+def test_factory_uses_tillm_backend_aliases() -> None:
     backend = build_agent_backend(backend_id="vendor_cli", shell_client_id="aider")
-    assert isinstance(backend, SllmShellBackend)
+    assert isinstance(backend, TillmShellBackend)
     assert backend.client_id == "aider"
 
 
-def test_sllm_shell_backend_delegates_to_bridge(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_tillm_shell_backend_delegates_to_bridge(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: dict[str, object] = {}
 
     def fake_drive_shell_chat(**kwargs):
         calls.update(kwargs)
-        return {"ok": True, "backend": "sllm_shell", "client_id": kwargs["client_id"]}
+        return {"ok": True, "backend": "tillm_shell", "client_id": kwargs["client_id"]}
 
     monkeypatch.setattr("koru.agent_backend_runtime.drive_shell_chat", fake_drive_shell_chat)
-    backend = SllmShellBackend(client_id="aider", execute=False)
+    backend = TillmShellBackend(client_id="aider", execute=False)
 
     out = backend.send_chat(Path("/tmp/project"), "fix tests", ide="auto", submit=True)
 

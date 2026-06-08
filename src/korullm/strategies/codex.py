@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from koru.sllm_bridge import shell_agent_available
+from koru.tillm_bridge import shell_agent_available
 from korullm.strategies.base import (
     DriveFailureAssessment,
     LlmCapabilities,

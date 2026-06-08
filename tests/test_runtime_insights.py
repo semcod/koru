@@ -69,7 +69,7 @@ def test_collect_runtime_insights_includes_detected_ides(monkeypatch) -> None:
     assert data["running_ides"][0]["id"] == "vscode"
 
 
-def test_collect_runtime_insights_uses_sllm_shell_patterns(monkeypatch) -> None:
+def test_collect_runtime_insights_uses_tillm_shell_patterns(monkeypatch) -> None:
     monkeypatch.setattr(
         "koruapi.runtime_insights._run_ps",
         lambda: [

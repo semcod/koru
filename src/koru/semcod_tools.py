@@ -88,7 +88,7 @@ _TOOLS: tuple[tuple[str, str, str, str | None], ...] = (
     ("rebuild", "git history walker / quality replay", "rebuild walk / rebuild serve", "rebuild"),
     ("mdflow", "markdown dependency analyzer", "mdflow graph / mdflow check", "mdflow"),
     ("metrun", "execution intelligence and bottlenecks", "metrun run / metrun report", "metrun"),
-    ("sllm", "shell LLM client control plane", "sllm drive --client <id>", "sllm"),
+    ("tillm", "shell LLM client control plane", "tillm drive --client <id>", "tillm"),
 )
 
 

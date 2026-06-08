@@ -733,8 +733,8 @@ task quality:vallm:semantic FILE=backend/app/refactored.py
 # Run redsl improve in dry-run on a specific module
 REFACTOR_DRY_RUN=true redsl improve packages/shared/foo --max-actions 1
 
-# Run a shell LLM client through SLLM
-koru sllm drive --client aider --prompt "Refactor backend/app/protocols.py per PLF-051" --execute
+# Run a shell LLM client through TILLM
+koru tillm drive --client aider --prompt "Refactor backend/app/protocols.py per PLF-051" --execute
 ```
 
 ### Scenario 4: Workflow from .windsurf/workflows/

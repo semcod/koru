@@ -66,6 +66,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.320] - 2026-06-08
+
+### Docs
+- Update README.md
+- Update docs/README.md
+- Update docs/agent-backends-architecture.md
+- Update docs/agent-guide.md
+- Update docs/ai-tool-support-roadmap-2026.md
+- Update docs/cli-examples.md
+- Update docs/llm-tools/README.md
+- Update docs/llm-tools/cursor/README.md
+- Update docs/planfile-llm-guide.md
+- Update packages/nlpshim/README.md
+
+### Test
+- Update tests/test_agent_backend_runtime.py
+- Update tests/test_agent_backends.py
+- Update tests/test_agents.py
+- Update tests/test_cli.py
+- Update tests/test_llm_strategies.py
+- Update tests/test_package_deduplication.py
+- Update tests/test_runtime_insights.py
+- Update tests/test_semcod_tools.py
+- Update tests/test_tools.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update .tillm/logs/drive-20260608.jsonl
+- Update .tillm/logs/latest.json
+- Update app.doql.less
+- Update check_dups.py
+- Update package-lock.json
+- Update uv.lock
+- ... and 1 more files
+
 ## [0.1.319] - 2026-06-08
 
 ### Docs

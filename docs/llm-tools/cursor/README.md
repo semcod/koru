@@ -30,7 +30,7 @@ c2004 monorepo używa ticket-driven workflow:
 5. Commit (pre-commit walidacja LLM-free)
 6. `task tickets:done -- PLF-XXX`
 
-Domyślnie nie używaj `redsl improve`, `llx fix`, shell clients via `sllm` — używaj
+Domyślnie nie używaj `redsl improve`, `llx fix`, shell clients via `tillm` — używaj
 swojego LLM. Wyjątek: gdy user explicite testuje OpenRouter automation
 lane lub naprawiasz headless workflow infrastruktury.
 

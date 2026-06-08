@@ -11,12 +11,12 @@ def get_files(path):
     return files
 
 gillm_files = get_files("/home/tom/github/semcod/gillm/src/gillm")
-sllm_files = get_files("/home/tom/github/semcod/sllm/src/sillm")
+tillm_files = get_files("/home/tom/github/semcod/tillm/src/tillm")
 
 for g in gillm_files:
     with open(g, 'r') as gf:
         g_content = gf.read()
-    for s in sllm_files:
+    for s in tillm_files:
         with open(s, 'r') as sf:
             s_content = sf.read()
         

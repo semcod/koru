@@ -38,7 +38,7 @@ Promotion path: `manual -> adapter -> native`.
 ### CLI agents
 
 CLI-agent registry, detection, prompt contracts, and execution live in
-`/home/tom/github/semcod/sllm`. Koru consumes them through `koru.sllm_bridge`.
+`/home/tom/github/semcod/tillm`. Koru consumes them through `koru.tillm_bridge`.
 
 - Claude Code
 - Aider / Aider Chat
@@ -82,13 +82,13 @@ CLI-agent registry, detection, prompt contracts, and execution live in
 
 Deliverables:
 - `docs/ai-tool-registry-2026.yaml` for GUI, plugin, SaaS, and specialist tools.
-- `sllm.compat.tool_registry_entries()` for shell LLM clients, with fields:
+- `tillm.compat.tool_registry_entries()` for shell LLM clients, with fields:
   - `tool_id`, `category`, `lane`, `detect`, `invoke`, `stability`, `notes`.
 - `koru tools detect --format json` (new command) to report detected tools and lane.
 - Handoff markdown uses the combined registry as the source of truth.
 
 Exit criteria:
-- 100% tools from target inventory present in the combined Koru + SLLM registry.
+- 100% tools from target inventory present in the combined Koru + TILLM registry.
 - Detection coverage >= 90% for local CLI/IDE tools.
 
 ## Phase 2 — Adapter lane for all non-native tools
@@ -102,7 +102,7 @@ Exit criteria:
 - Every non-native tool has at least one tested adapter path.
 - Adapter templates documented in `docs/cli-examples.md`.
 
-## Phase 3 — Native lane expansion (highest ROI; shell clients via SLLM)
+## Phase 3 — Native lane expansion (highest ROI; shell clients via TILLM)
 
 Priority candidates:
 1. Gemini CLI

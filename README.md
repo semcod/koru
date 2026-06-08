@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.319-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.22-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-144.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.320-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.70-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-144.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $32.2236 (425 commits)
-- 👤 **Human dev:** ~$14443 (144.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $32.6998 (426 commits)
+- 👤 **Human dev:** ~$14493 (144.9h @ $100/h, 30min dedup)
 
 Generated on 2026-06-08 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
@@ -36,7 +36,7 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
 ├──────────┼──────────┼──────────┼──────────┼─────────┼──────────┤
 │ redup    │ planfile │ Windsurf │ regix    │ healing │ pyqual   │
 │ regix    │ tickets  │ Cursor   │ pytest   │ webhook │ metrics  │
-│ TestQL   │ Promet.  │ SLLM     │ TestQL   │ retry   │dashboards│
+│ TestQL   │ Promet.  │ TILLM    │ TestQL   │ retry   │dashboards│
 │ Probe    │ Alertmgr │ vallm    │ vallm    │         │          │
 └──────────┴──────────┴──────────┴──────────┴─────────┴──────────┘
         ↑                                                  │
@@ -60,7 +60,7 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
 cd /path/to/your/project
 pip install koru
 koru --init                # 1. set up .planfile/ + .koru/ + .gitignore
-koru                       # 2. print the LLM brief (paste into Cascade/Cursor/SLLM)
+koru                       # 2. print the LLM brief (paste into Cascade/Cursor/TILLM)
 koru --queue --loop        # 3. drain the queue (the agent works on each ticket)
 ```
 
@@ -176,7 +176,7 @@ pip install "koru[dev]"      # tests, lint, typing, local quality tooling
 pip install "koru[api]"      # FastAPI healing webhook service
 pip install "koru[agent]"    # LLM / structured-output integrations
 pip install "koru[fullm]"    # fullm-backed local LLM helpers
-pip install "koru[sllm]"     # compatibility extra for fullm-backed SLLM flows
+pip install "koru[tillm]"    # shell LLM client control via tillm
 pip install "koru[obs]"      # tracing, Sentry, structured logging
 pip install "koru[queue]"    # optional Redis/scheduler queue adapters
 pip install "koru[quality]"  # deeper refactor quality gates
@@ -420,7 +420,7 @@ Natural-language intake and housekeeping are built in:
 
 ```bash
 koru task "Dodaj feature importu raportów"
-koru agent --list          # show Windsurf/Cursor/SLLM/OpenRouter lanes
+koru agent --list          # show Windsurf/Cursor/TILLM/OpenRouter lanes
 koru agent                 # print and save the current LLM handoff prompt
 koru agent --launch        # launch the best available CLI agent when possible
 koru scan                  # auto-generate tickets from repo signals (TODOs, pytest errors)
@@ -880,7 +880,7 @@ koru artefacts elsewhere, please open an issue.
 
 ## LLM agent contract — koru as the gate
 
-When an LLM agent (Cascade, Cursor, SLLM shell client, local model, ...)
+When an LLM agent (Cascade, Cursor, TILLM shell client, local model, ...)
 drives a koru-managed project, it must **read its instructions from
 koru, not from the human chat**.
 
@@ -1327,7 +1327,7 @@ Per-tool install docs and when-to-use guides — full list in
 [`sumd/`](./docs/llm-tools/sumd/) · [`goal/`](./docs/llm-tools/goal/) ·
 [`costs/`](./docs/llm-tools/costs/) · [`doql/`](./docs/llm-tools/doql/) ·
 [`testql/`](./docs/llm-tools/testql/) · [`cursor/`](./docs/llm-tools/cursor/) ·
-[`wup/`](./docs/llm-tools/wup/) · … (+ [`sllm`](../sllm/) shell LLM clients)
+[`wup/`](./docs/llm-tools/wup/) · … (+ [`tillm`](../tillm/) shell LLM clients)
 
 Scenariusze w repo: [`testql-scenarios/README.md`](./testql-scenarios/README.md).
 

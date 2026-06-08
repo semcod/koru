@@ -69,17 +69,17 @@ def _api_main(argv: list[str]) -> int:
     return api_main(argv)
 
 
-def _sllm_main(argv: list[str]) -> int:
+def _tillm_main(argv: list[str]) -> int:
     try:
-        from koru.sllm_bridge import sllm_cli_main
-        return sllm_cli_main(argv)
+        from koru.tillm_bridge import tillm_cli_main
+        return tillm_cli_main(argv)
     except ImportError as exc:
         print(
-            "koru sllm: missing shell LLM plugin. Install it with "
-            "`pip install fullm` or `pip install koru[sllm]`.",
+            "koru tillm: missing shell LLM plugin. Install it with "
+            "`pip install tillm` or `pip install koru[tillm]`.",
             file=sys.stderr,
         )
-        print(f"koru sllm: import error: {exc}", file=sys.stderr)
+        print(f"koru tillm: import error: {exc}", file=sys.stderr)
         return 2
 
 
@@ -183,7 +183,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "auto": lambda argv: _lazy_module_main("koru.cli_auto", "_auto_main", argv),
     "wizard": lambda argv: _lazy_module_main("koru.wizard.cli", "wizard_main", argv),
     "dsl": _dsl_main,
-    "sllm": _sllm_main,
+    "tillm": _tillm_main,
     "api": _api_main,
     "topology": lambda argv: _lazy_module_main("koru.cli_topology", "topology_main", argv),
     "strategy": lambda argv: _lazy_module_main("koru.cli_strategy", "strategy_main", argv),

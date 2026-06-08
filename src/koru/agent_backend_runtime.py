@@ -11,7 +11,7 @@ the small :class:`AgentBackend` protocol and concrete implementations:
     loop running when no plugin socket is available.
   * :class:`NoopBackend` — explicit "headless / smoke" backend; useful for CI
     and `--no-autopilot` smoke tests.
-  * :class:`SllmShellBackend` — shell LLM client via the external ``sllm``
+  * :class:`TillmShellBackend` — shell LLM client via the external ``tillm``
     plugin/package (aider, Claude Code, Codex CLI, Devin, ...).
 
 Lane → backend resolution lives in :func:`build_agent_backend`.
@@ -29,7 +29,7 @@ from koru.agent_backends import normalize_agent_backend_id
 from koru.ide_adapters.gillm_client import GillmIDEControlClient, build_gillm_ide_client
 from koru.ide_adapters.gillm_recovery import enrich_drive_reply_with_recovery
 from koru.ide_client import IDEControlClient
-from koru.sllm_bridge import drive_shell_chat
+from koru.tillm_bridge import drive_shell_chat
 
 
 class AgentBackend(Protocol):
@@ -122,8 +122,8 @@ class NoopBackend:
 
 
 @dataclass
-class SllmShellBackend:
-    """Shell LLM client backend delegated to the external ``sllm`` package."""
+class TillmShellBackend:
+    """Shell LLM client backend delegated to the external ``tillm`` package."""
 
     client_id: str = "aider"
     execute: bool = True
@@ -148,7 +148,7 @@ class SllmShellBackend:
         except Exception as exc:
             return {
                 "ok": False,
-                "backend": "sllm_shell",
+                "backend": "tillm_shell",
                 "client_id": self.client_id,
                 "message": str(exc),
                 "type": "error",
@@ -248,9 +248,9 @@ def build_agent_backend(
     if bid == "mcp_tool" or normalized == "mcp_stdio_server":
         return McpToolBackend(mcp_server=mcp_server)
     if normalized == "vendor_agent_cli":
-        return SllmShellBackend(
-            client_id=shell_client_id or os.environ.get("KORU_SLLM_CLIENT", "aider"),
-            execute=os.environ.get("KORU_SLLM_DRY_RUN", "").strip().lower()
+        return TillmShellBackend(
+            client_id=shell_client_id or os.environ.get("KORU_TILLM_CLIENT", "aider"),
+            execute=os.environ.get("KORU_TILLM_DRY_RUN", "").strip().lower()
             not in {"1", "true", "yes", "on"},
         )
     if bid == "gillm_gui" or normalized == "gillm_gui_driver":
@@ -364,7 +364,7 @@ __all__ = [
     "AgentBackend",
     "PluginSocketBackend",
     "McpToolBackend",
-    "SllmShellBackend",
+    "TillmShellBackend",
     "GillmGuiBackend",
     "OsInjectorBackend",
     "Nlp2UriDesktopBackend",
