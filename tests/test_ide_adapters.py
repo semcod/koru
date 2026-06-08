@@ -243,6 +243,14 @@ def test_evaluate_bridge_maps_lane_slug_to_canonical_ide(tmp_path: Path) -> None
     assert all(h.id != "ide.unsupported" for h in status.hypotheses)
 
 
+def test_evaluate_bridge_jetbrains_uses_keyboard_lane_not_unsupported(tmp_path: Path) -> None:
+    sock = tmp_path / "missing.sock"
+    status = evaluate_bridge(ide="jetbrains", socket_path=sock, project=tmp_path)
+    assert status.ide == "jetbrains"
+    assert all(h.id != "ide.unsupported" for h in status.hypotheses)
+    assert any(h.id == "ide.keyboard_lane" for h in status.hypotheses)
+
+
 def test_get_adapter_cursor() -> None:
     adapter = get_adapter("cursor")
     assert adapter is not None

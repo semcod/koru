@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.318"
+version = "0.1.319"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -188,6 +188,18 @@ dev = [
     "costs>=0.1.20",
     "pfix>=0.1.60",
     "tagi>=0.49.0",
+    "jsonschema>=4.0",
+    "protobuf>=5.0",
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "mcp>=1.0",
+]
+control = [
+    "jsonschema>=4.0",
+    "protobuf>=5.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "mcp>=1.0",
 ]
 
 [tool.uv]
@@ -215,7 +227,18 @@ korumesh = ["grid_template.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "packages/coru/src", "packages/koruenv/src"]
+pythonpath = [
+    "src",
+    "packages/coru/src",
+    "packages/koruenv/src",
+    "packages/nlpshim/src",
+    "packages/dsl2koru/src",
+    "packages/uri2koru/src",
+    "packages/nlp2koru/src",
+    "packages/cli2koru/src",
+    "packages/mcp2koru/src",
+    "packages/rest2koru/src",
+]
 addopts = ["-m", "not slow"]
 markers = [
     "slow: marks slow/integration tests (deselect with -m not slow)",
@@ -230,7 +253,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pfix]
 # Self-healing Python configuration
-model = "openrouter/qwen/qwen3-coder-next"
+model = "openrouter/deep/deep-v4-pro"
 auto_apply = true
 auto_install_deps = true
 auto_restart = false
@@ -249,7 +272,7 @@ deduplicate = true
 badge = false
 update_readme = true
 readme_path = "README.md"
-default_model = "openrouter/qwen/qwen3-coder-next"
+default_model = "openrouter/deep/deep-v4-pro"
 analysis_mode = "byok"
 full_history = true
 max_commits = 500

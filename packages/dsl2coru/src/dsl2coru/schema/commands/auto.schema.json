@@ -1,0 +1,17 @@
+{
+  "$id": "dsl2coru/commands/auto",
+  "type": "object",
+  "required": ["verb"],
+  "properties": {
+    "verb": { "const": "AUTO" },
+    "shell": { "type": "string" },
+    "auto_args": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "target": { "type": "string" }
+  },
+  "additionalProperties": false
+}

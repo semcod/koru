@@ -14,7 +14,8 @@ dependencies = []
 
 [project.optional-dependencies]
 llm = [
-  "litellm>=1.51,<2.0",
+  "nlp2coru>=0.1.0",
+  "nlp2coru[llm]",
 ]
 
 [project.scripts]

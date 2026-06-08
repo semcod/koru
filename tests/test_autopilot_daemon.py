@@ -497,6 +497,42 @@ def test_drive_os_injector_failure_falls_back_to_keyboard(
     assert h.injector.calls == [{"text": "z", "ide": "cursor", "submit": True}]
 
 
+def test_calibration_collision_detects_duplicate_chat_coords(tmp_path: Path) -> None:
+    from koruide.daemon.handlers_drive import _calibration_collision
+
+    config = tmp_path / ".koru" / "ide-os-injector.json"
+    config.parent.mkdir(parents=True)
+    config.write_text(
+        json.dumps(
+            {
+                "cursor": {"chat_x": 2485, "chat_y": 3254},
+                "windsurf": {"chat_x": 2485, "chat_y": 3254},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert _calibration_collision("windsurf", tmp_path) == "cursor"
+
+
+def test_calibration_collision_none_when_coords_distinct(tmp_path: Path) -> None:
+    from koruide.daemon.handlers_drive import _calibration_collision
+
+    config = tmp_path / ".koru" / "ide-os-injector.json"
+    config.parent.mkdir(parents=True)
+    config.write_text(
+        json.dumps(
+            {
+                "cursor": {"chat_x": 8151, "chat_y": 68},
+                "windsurf": {"chat_x": 2548, "chat_y": 3293},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert _calibration_collision("windsurf", tmp_path) is None
+
+
 def test_drive_empty_text_returns_error(running_daemon) -> None:
     _, client, _ = running_daemon
     reply = client.request(Message(type="drive", id="d1", data={"text": ""}))

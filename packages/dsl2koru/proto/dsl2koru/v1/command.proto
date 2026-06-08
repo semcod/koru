@@ -1,0 +1,43 @@
+syntax = "proto3";
+package dsl2koru.v1;
+
+message QueryRepairHistoryQuery {
+  string project = 1;
+  int32 limit = 2;
+  string code = 3;
+}
+
+message QueryLaneStatusQuery {
+  string ide = 1;
+  string instance = 2;
+}
+
+message ValidateLaneQuery {
+  string ide = 1;
+  string instance = 2;
+}
+
+message ResolveQuery {
+  string prompt = 1;
+  string project = 2;
+}
+
+message RepairRunCommand {
+  string ide = 1;
+  string instance = 2;
+  string project = 3;
+  string trigger = 4;
+}
+
+message DslEnvelope {
+  string verb = 1;
+  oneof body {
+    QueryRepairHistoryQuery query_repair_history = 10;
+    QueryLaneStatusQuery query_lane_status = 11;
+    ValidateLaneQuery validate_lane = 12;
+    ResolveQuery resolve = 13;
+    RepairRunCommand repair_run = 14;
+  }
+  string default_project = 20;
+  string correlation_id = 21;
+}

@@ -241,16 +241,15 @@ def test_calibration_is_known_command_not_text_shorthand(monkeypatch) -> None:
 def test_execute_text_uses_heuristic(monkeypatch) -> None:
     called: dict[str, object] = {}
 
-    def fake_diagnose(ide: str, instance: str, **kwargs) -> int:
-        called["ide"] = ide
-        called["instance"] = instance
+    def fake_apply_nl(prompt: str, **kwargs) -> int:
+        called["prompt"] = prompt
         return 0
 
-    monkeypatch.setattr(coru_cli, "_diagnose_lane", fake_diagnose)
+    monkeypatch.setattr("coru.control.apply_nl", fake_apply_nl)
     rc = coru_cli.main(["text", "status for cursor-main in cursor"])
 
     assert rc == 0
-    assert called["ide"] == "cursor"
+    assert "status" in str(called["prompt"]).lower()
 
 
 def test_doctor_requires_system_shell_by_default(monkeypatch, capsys) -> None:
@@ -635,27 +634,27 @@ def test_build_plan_chain_for_polish_refactor_intent() -> None:
 def test_text_executes_chain(monkeypatch) -> None:
     called: list[str] = []
 
-    def fake_execute(plans, **_kwargs):
-        called.extend([p.action for p in plans])
+    def fake_apply_nl(prompt: str, **kwargs) -> int:
+        called.append(prompt)
         return 0
 
-    monkeypatch.setattr(coru_cli, "_execute_plans", fake_execute)
+    monkeypatch.setattr("coru.control.apply_nl", fake_apply_nl)
     rc = coru_cli.main(["text", "start auto for windsurf-main in windsurf"])
     assert rc == 0
-    assert called == ["ensure", "lane", "manage", "diagnose", "auto"]
+    assert "auto" in called[0].lower()
 
 
 def test_main_shorthand_routes_to_text(monkeypatch) -> None:
     called: list[str] = []
 
-    def fake_execute(plans, **_kwargs):
-        called.extend([p.action for p in plans])
+    def fake_apply_nl(prompt: str, **kwargs) -> int:
+        called.append(prompt)
         return 0
 
-    monkeypatch.setattr(coru_cli, "_execute_plans", fake_execute)
+    monkeypatch.setattr("coru.control.apply_nl", fake_apply_nl)
     rc = coru_cli.main(["run", "auto", "for", "cursor-main", "in", "cursor"])
     assert rc == 0
-    assert called == ["ensure", "lane", "manage", "diagnose", "auto"]
+    assert "auto" in called[0].lower()
 
 
 def test_auto_without_lane_uses_defaults(monkeypatch) -> None:
@@ -2252,41 +2251,16 @@ def test_chat_slash_command_executes_coru_actions(monkeypatch) -> None:
     called: list[str] = []
     inputs = iter(["/refaktoryzuj", "quit"])
 
-    def fake_ensure(install: bool) -> int:
-        called.append("ensure")
+    def fake_apply_nl(prompt: str, **kwargs) -> int:
+        called.append(prompt.lstrip("/"))
         return 0
 
-    def fake_lane_env(ide: str, instance: str, shell: str) -> int:
-        called.append("lane")
-        return 0
-
-    def fake_lane_manage_fix(ide: str, instance: str) -> int:
-        called.append("manage")
-        return 0
-
-    def fake_diagnose(ide: str, instance: str, **kwargs) -> int:
-        called.append("diagnose")
-        return 1
-
-    def fake_lane_auto(ide: str, instance: str, extra_args) -> int:
-        called.append("auto")
-        return 0
-
-    monkeypatch.setattr(coru_cli, "_ensure_commands", fake_ensure)
-    monkeypatch.setattr(coru_cli, "_lane_env", fake_lane_env)
-    monkeypatch.setattr(coru_cli, "_lane_manage_fix", fake_lane_manage_fix)
-    monkeypatch.setattr(coru_cli, "_diagnose_lane", fake_diagnose)
-    monkeypatch.setattr(
-        coru_cli,
-        "_auto_readiness_gate",
-        lambda ide, instance: coru_cli.AutoReadiness(0, ide, instance),
-    )
-    monkeypatch.setattr(coru_cli, "_lane_auto", fake_lane_auto)
+    monkeypatch.setattr("coru.control.apply_nl", fake_apply_nl)
     monkeypatch.setattr("builtins.input", lambda _prompt: next(inputs))
 
     rc = coru_cli.main(["chat"])
     assert rc == 0
-    assert called == ["ensure", "lane", "manage", "diagnose", "auto"]
+    assert called == ["refaktoryzuj"]
 
 
 def test_status_failure_stops_without_auto_chain(monkeypatch) -> None:

@@ -66,6 +66,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.319] - 2026-06-08
+
+### Docs
+- Update README.md
+- Update packages/CONTROL_LAYER_PROMPT.template.md
+- Update packages/README.md
+- Update packages/cli2coru/README.md
+- Update packages/cli2koru/README.md
+- Update packages/dsl2coru/README.md
+- Update packages/dsl2koru/README.md
+- Update packages/mcp2coru/README.md
+- Update packages/mcp2koru/README.md
+- Update packages/nlp2coru/README.md
+- ... and 5 more files
+
+### Test
+- Update test_openrouter_config.py
+- Update test_openrouter_simple.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_command_picker.py
+- Update tests/test_ide_adapters.py
+
+### Other
+- Update .coru/events/dsl.events.jsonl
+- Update .koru/project.json
+- Update .planfile/sprints/current.yaml
+- Update app.doql.less
+- Update lucy/go.mod
+- Update lucy/go.sum
+- Update package-lock.json
+- Update packages/cli2coru/pyproject.toml
+- Update packages/cli2coru/src/cli2coru/cli.py
+- Update packages/cli2coru/src/cli2coru/shell.py
+- ... and 148 more files
+
 ## [0.1.318] - 2026-06-07
 
 ### Docs

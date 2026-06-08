@@ -1,0 +1,90 @@
+syntax = "proto3";
+package dsl2coru.v1;
+
+message StatusQuery {
+  bool probe = 1;
+}
+
+message RepairHistoryQuery {}
+
+message EnvQuery {
+  string file = 1;
+}
+
+message CoruQuery {
+  string target = 1;
+}
+
+message AutoCommand {
+  string shell = 1;
+  repeated string auto_args = 2;
+  string target = 3;
+}
+
+message LaneCommand {
+  string ide = 1;
+  string instance = 2;
+  string file = 3;
+  bool lane_status = 4;
+}
+
+message EnsureCommand {
+  bool install = 1;
+}
+
+message DoctorCommand {
+  bool fix = 1;
+  bool probe = 2;
+  string probe_prompt = 3;
+}
+
+message CalibrationCommand {
+  bool skip_fix = 1;
+  bool skip_desktop = 2;
+  bool skip_bridge = 3;
+  string probe_prompt = 4;
+}
+
+message ChatCommand {
+  bool llm = 1;
+  string shell = 2;
+  bool single_action = 3;
+}
+
+message TextCommand {
+  string target = 1;
+  bool llm = 2;
+  string shell = 3;
+  bool single_action = 4;
+}
+
+message SyncCommand {
+  bool all_ides = 1;
+}
+
+message RepairRunCommand {
+  bool fix = 1;
+  string ide = 2;
+  string instance = 3;
+}
+
+message DslEnvelope {
+  string verb = 1;
+  oneof body {
+    StatusQuery status = 10;
+    RepairHistoryQuery repair_history = 11;
+    EnvQuery env = 12;
+    CoruQuery query = 13;
+    AutoCommand auto = 14;
+    LaneCommand lane = 15;
+    EnsureCommand ensure = 16;
+    DoctorCommand doctor = 17;
+    CalibrationCommand calibration = 18;
+    ChatCommand chat = 19;
+    TextCommand text = 20;
+    SyncCommand sync = 21;
+    RepairRunCommand repair_run = 22;
+  }
+  string default_file = 30;
+  string correlation_id = 31;
+}

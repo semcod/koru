@@ -18,8 +18,8 @@ from __future__ import annotations
 EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
     "cursor": "0.2.36",
     "vscode": "0.2.5",
-    "vscodium": "0.2.27",
-    "windsurf": "0.2.8",
+    "vscodium": "0.2.28",
+    "windsurf": "0.2.9",
     "antigravity": "0.2.15",
 }
 

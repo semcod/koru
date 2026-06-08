@@ -1,0 +1,13 @@
+{
+  "$id": "dsl2koru/commands/repair_run",
+  "type": "object",
+  "required": ["verb", "ide"],
+  "properties": {
+    "verb": { "const": "REPAIR_RUN" },
+    "ide": { "type": "string" },
+    "instance": { "type": "string", "default": "default" },
+    "project": { "type": "string", "default": "." },
+    "trigger": { "type": "string", "default": "manual" }
+  },
+  "additionalProperties": false
+}

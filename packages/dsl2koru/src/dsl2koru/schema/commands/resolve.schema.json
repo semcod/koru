@@ -1,0 +1,11 @@
+{
+  "$id": "dsl2koru/commands/resolve",
+  "type": "object",
+  "required": ["verb", "prompt"],
+  "properties": {
+    "verb": { "const": "RESOLVE" },
+    "prompt": { "type": "string", "minLength": 1 },
+    "project": { "type": "string" }
+  },
+  "additionalProperties": false
+}

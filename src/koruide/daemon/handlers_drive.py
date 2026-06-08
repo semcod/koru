@@ -8,8 +8,10 @@ compatibility.
 
 from __future__ import annotations
 
+import json
 import os
 import time
+from pathlib import Path
 from typing import Any
 
 from gillm.injection.errors import InjectorError
@@ -475,13 +477,67 @@ def _drive_via_plugin(
     _deliver_chat_via_plugin_socket(daemon, plugin, text, submit, corr, strategy_hint)
 
 
+def _load_injector_config(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _coords_collision(data: dict[str, Any], target_id: str, x: int, y: int) -> str | None:
+    for ide_id, raw in data.items():
+        if ide_id == target_id or not isinstance(raw, dict):
+            continue
+        if raw.get("chat_x") == x and raw.get("chat_y") == y:
+            return ide_id
+    return None
+
+
+def _calibration_collision(target_id: str, project: Path | None) -> str | None:
+    """Return another IDE id whose calibrated chat coords match ``target_id``.
+
+    A stale/cross-contaminated profile (e.g. ``windsurf`` copied from
+    ``cursor``) makes the OS injector click the wrong window, which opens a
+    new chat window instead of typing into the open one. Detect it from the
+    same ``ide-os-injector.json`` that ``try_load_profile`` would use.
+    """
+    from gillm.injection import os_injector as oi
+
+    target = oi.try_load_profile(target_id, project=project)
+    if target is None:
+        return None
+    for path in oi.iter_config_paths(project=project):
+        data = _load_injector_config(path)
+        if data is None or target_id not in data:
+            continue
+        # try_load_profile resolves the first config file containing the
+        # target; only that file is authoritative for this drive.
+        return _coords_collision(data, target_id, target.chat_x, target.chat_y)
+    return None
+
+
 def _try_os_injector_drive(
     daemon: Any, target_id: str, text: str, submit: bool
 ) -> dict[str, Any] | None:
     """Run :mod:`gillm.injection.drive_backend` when configured; ``None`` → keyboard."""
     from gillm.injection.drive_backend import try_os_injector_drive as _try_os
 
+    from koruide.daemon.handlers import _env_truthy
+
     daemon.log(f"try_os_injector_drive: target_id={target_id}, chars={len(text)}, submit={submit}")
+    if not _env_truthy("KORU_OS_INJECTOR_ALLOW_DUP_CALIBRATION"):
+        collision = _calibration_collision(target_id, daemon.project)
+        if collision is not None:
+            msg = (
+                f"OS injector calibration for '{target_id}' duplicates '{collision}' "
+                f"chat coordinates (stale profile); refusing to avoid driving the wrong "
+                f"window. Recalibrate: koru autopilot calibrate --ide {target_id}"
+            )
+            daemon.log(f"try_os_injector_drive: REFUSED — {msg}")
+            raise InjectorError(msg)
     try:
         result = _try_os(
             target_id,

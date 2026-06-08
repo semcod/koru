@@ -341,8 +341,8 @@ def run_local_service(config: LocalServiceConfig) -> int:
             file=sys.stderr,
         )
         return 1
-    config.port = _bound_port(server)
-    url = f"http://{config.host}:{config.port}/"
+    actual_port = _bound_port(server)
+    url = f"http://{config.host}:{actual_port}/"
     print(f"koru local-serve: listening on {url}")
     print(
         "koru local-serve: POST /event, /enqueue, /queue/claim, /queue/complete, "
@@ -366,11 +366,11 @@ def start_local_service_background(
 ) -> tuple[ThreadingHTTPServer, threading.Thread, int]:
     """Run ``serve_forever`` on a daemon thread; caller must ``shutdown()`` + ``server_close()``."""
     server, _buf = build_local_service_server(config)
-    config.port = _bound_port(server)
+    actual_port = _bound_port(server)
     thread = threading.Thread(
         target=server.serve_forever,
         name="koru-local-serve-bg",
         daemon=True,
     )
     thread.start()
-    return server, thread, config.port
+    return server, thread, actual_port

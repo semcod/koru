@@ -222,6 +222,29 @@ def test_cursor_focus_open_rejects_panel_chat_toggle(tmp_path) -> None:
     assert order["focus_open"] == ["workbench.action.chat.open"]
 
 
+def test_windsurf_focus_open_prefers_existing_panel_over_new_window(tmp_path) -> None:
+    order = pick_command_order(
+        ide="windsurf",
+        plugin_version="0.2.9",
+        catalog={
+            "focus_open": [
+                "windsurf.action.openChat",
+                "windsurf.chat.open",
+                "windsurf.cascade.open",
+                "windsurf.cascadePanel.focus",
+                "cascade.focus",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+
+    focus_open = order["focus_open"]
+    # The first attempted command must focus the existing Cascade panel,
+    # never an "open" command that spawns a new chat window/pane.
+    assert focus_open[0] == "windsurf.cascadePanel.focus"
+    assert "open" not in focus_open[0].lower()
+
+
 def test_antigravity_focus_open_rejects_new_chat_action(tmp_path) -> None:
     order = pick_command_order(
         ide="antigravity",

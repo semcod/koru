@@ -1,0 +1,11 @@
+{
+  "$id": "dsl2koru/commands/validate_lane",
+  "type": "object",
+  "required": ["verb", "ide"],
+  "properties": {
+    "verb": { "const": "VALIDATE_LANE" },
+    "ide": { "type": "string" },
+    "instance": { "type": "string", "default": "default" }
+  },
+  "additionalProperties": false
+}

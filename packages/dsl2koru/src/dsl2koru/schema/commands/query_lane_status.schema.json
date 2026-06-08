@@ -1,0 +1,11 @@
+{
+  "$id": "dsl2koru/commands/query_lane_status",
+  "type": "object",
+  "required": ["verb", "ide"],
+  "properties": {
+    "verb": { "const": "QUERY_LANE_STATUS" },
+    "ide": { "type": "string" },
+    "instance": { "type": "string", "default": "default" }
+  },
+  "additionalProperties": false
+}

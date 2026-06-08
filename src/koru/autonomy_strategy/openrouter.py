@@ -4,8 +4,24 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
+
+# Add shared configuration to path
+shared_config_path = Path(__file__).parent.parent.parent.parent.parent / "shared" / "openrouter_config.py"
+if shared_config_path.exists():
+    sys.path.insert(0, str(shared_config_path.parent))
+    from openrouter_config import get_openrouter_headers, should_use_fallback, get_llm_config
+else:
+    # Fallback if shared config is not available
+    def get_openrouter_headers():
+        return {}
+    def should_use_fallback():
+        return False
+    def get_llm_config():
+        return {"primary": {"model": "openrouter/qwen/qwen3-coder-next"}}
 
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -46,6 +62,7 @@ def call_openrouter_json(
         headers={
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
+            **get_openrouter_headers(),
         },
         method="POST",
     )

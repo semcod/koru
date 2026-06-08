@@ -56,6 +56,48 @@ interface[type="cli"] page[name="koru-dsl"] {
 interface[type="cli"] page[name="koru-api"] {
   entry: koruapi.cli:main;
 }
+interface[type="cli"] page[name="dsl2koru"] {
+  entry: dsl2koru.cli:main;
+}
+interface[type="cli"] page[name="cli2koru"] {
+  entry: cli2koru.cli:main;
+}
+interface[type="cli"] page[name="nlp2koru"] {
+  entry: nlp2koru.cli:main;
+}
+interface[type="cli"] page[name="uri2koru"] {
+  entry: uri2koru.cli:main;
+}
+interface[type="mcp"] {
+  name: koru;
+  framework: stdio;
+  page[name="mcp2koru"] {
+    entry: mcp2koru.server:run_server;
+  }
+}
+interface[type="api"] page[name="rest2koru"] {
+  entry: rest2koru.cli:main;
+  port: 8216;
+}
+interface[type="cli"] page[name="dsl2coru"] {
+  entry: dsl2coru.cli:main;
+}
+interface[type="cli"] page[name="cli2coru"] {
+  entry: cli2coru.cli:main;
+}
+interface[type="cli"] page[name="nlp2coru"] {
+  entry: nlp2coru.cli:main;
+}
+interface[type="cli"] page[name="uri2coru"] {
+  entry: uri2coru.cli:main;
+}
+interface[type="mcp"] page[name="mcp2coru"] {
+  entry: mcp2coru.server:run_server;
+}
+interface[type="api"] page[name="rest2coru"] {
+  entry: rest2coru.cli:main;
+  port: 8218;
+}
 
 integration[name="nlp"] {
   type: api;
@@ -286,7 +328,7 @@ workflow[name="install"] {
 
 workflow[name="install:dev"] {
   trigger: manual;
-  step-1: run cmd=pip install -e ".[dev]" || pip install -e .;
+  step-1: run cmd=pip install -e packages/koruenv -e packages/nlpshim -e packages/dsl2koru -e packages/uri2koru -e packages/nlp2koru -e packages/cli2koru -e packages/mcp2koru -e packages/rest2koru -e packages/coru -e packages/dsl2coru -e packages/nlp2coru -e ".[dev]" || pip install -e .;
 }
 
 workflow[name="install:tools"] {

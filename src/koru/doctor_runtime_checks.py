@@ -33,6 +33,9 @@ def _installed_koru_version() -> str | None:
         return None
 
 
+_AUTO_PROBE_CACHE: dict[str, bool | None] = {}
+
+
 def _path_koru_supports_auto_subcommand(path_koru: str | None) -> bool | None:
     """Probe whether ``koru auto`` works on the executable first on PATH."""
     if not path_koru:
@@ -42,7 +45,7 @@ def _path_koru_supports_auto_subcommand(path_koru: str | None) -> bool | None:
             [path_koru, "auto", "--help"],
             capture_output=True,
             text=True,
-            timeout=8,
+            timeout=5,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
@@ -55,6 +58,42 @@ def _path_koru_supports_auto_subcommand(path_koru: str | None) -> bool | None:
     ):
         return True
     return proc.returncode == 0 if proc.returncode == 0 else False
+
+
+def _path_koru_is_current_venv(path_koru: str) -> bool:
+    """True when ``path_koru`` lives inside the running interpreter's venv.
+
+    In that case it is the very code we are already executing, so it
+    inevitably supports ``koru auto`` — no need to spawn a subprocess.
+    """
+    try:
+        return _is_relative_to(Path(path_koru), Path(sys.prefix))
+    except (OSError, ValueError):
+        return False
+
+
+def _probe_auto_subcommand_cached(path_koru: str | None) -> bool | None:
+    """Cache the ``koru auto`` probe per resolved path within this process."""
+    if not path_koru:
+        return None
+    try:
+        key = str(Path(path_koru).resolve())
+    except OSError:
+        key = path_koru
+    if key not in _AUTO_PROBE_CACHE:
+        _AUTO_PROBE_CACHE[key] = _path_koru_supports_auto_subcommand(path_koru)
+    return _AUTO_PROBE_CACHE[key]
+
+
+def _resolve_auto_support(path_koru: str | None) -> bool | None:
+    """Whether the PATH koru supports ``koru auto`` (skip probe for own venv).
+
+    The venv we are running self-evidently supports ``auto``; only a
+    *different* (potentially stale) koru on PATH needs the subprocess probe.
+    """
+    if path_koru and _path_koru_is_current_venv(path_koru):
+        return True
+    return _probe_auto_subcommand_cached(path_koru)
 
 
 def _koru_path_version_issues(
@@ -74,8 +113,7 @@ def _koru_path_version_issues(
         except OSError:
             status = WARN
             detail_bits.append("path_mismatch=unknown")
-    auto_ok = _path_koru_supports_auto_subcommand(path_koru)
-    if auto_ok is False:
+    if _resolve_auto_support(path_koru) is False:
         status = WARN
         detail_bits.append("koru_auto_unsupported=true")
         if project_koru.is_file():

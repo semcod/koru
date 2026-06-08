@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dsl2coru"
+version = "0.1.0"
+description = "CORU control DSL with JSON Schema validation and CQRS bus"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "jsonschema>=4.0",
+    "protobuf>=6.33.5,<7.0",
+    "coru>=0.1.0",
+    "dsl2koru>=0.1.0",
+]
+
+[project.optional-dependencies]
+codegen = ["pydantic>=2.0", "grpcio-tools>=1.60"]
+dev = ["pytest>=8.0,<10.0", "pydantic>=2.0", "grpcio-tools>=1.0"]
+
+[project.scripts]
+dsl2coru = "dsl2coru.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"dsl2coru" = ["schema/commands/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

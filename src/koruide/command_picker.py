@@ -78,6 +78,14 @@ _CURSOR_FOCUS_OPEN_REJECT = {
     "workbench.action.toggleauxiliarybar",
     "workbench.view.chat.toggle",
 }
+# Windsurf/Cascade: focus the existing panel instead of opening a fresh
+# Cascade window/pane. The plugin sometimes miscategorises "open" commands
+# (which spawn a new conversation/window) as focus_open candidates.
+_WINDSURF_FOCUS_OPEN_PREFERRED = (
+    "windsurf.cascadePanel.focus",
+    "cascade.focus",
+    "windsurf.action.focusCascade",
+)
 _TRUE_ENV_VALUES = {"1", "true", "yes", "on"}
 
 
@@ -172,6 +180,12 @@ def _sanitize_cursor_focus_open(commands: list[str]) -> list[str]:
     ]
 
 
+def _sanitize_windsurf_focus_open(commands: list[str]) -> list[str]:
+    # Prefer focusing the existing Cascade panel over commands that open a
+    # new chat window/pane, so a drive lands in the currently open chat.
+    return _prefer_commands(commands, _WINDSURF_FOCUS_OPEN_PREFERRED)
+
+
 def _sanitize_focus_open_candidates(ide_id: str, commands: list[str]) -> list[str]:
     if ide_id == "antigravity":
         return _sanitize_antigravity_focus_open(commands)
@@ -179,6 +193,8 @@ def _sanitize_focus_open_candidates(ide_id: str, commands: list[str]) -> list[st
         return _sanitize_vscodium_focus_open(commands)
     if ide_id == "cursor":
         return _sanitize_cursor_focus_open(commands)
+    if ide_id == "windsurf":
+        return _sanitize_windsurf_focus_open(commands)
     return commands
 
 

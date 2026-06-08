@@ -1,0 +1,12 @@
+{
+  "$id": "dsl2koru/commands/query_repair_history",
+  "type": "object",
+  "required": ["verb"],
+  "properties": {
+    "verb": { "const": "QUERY_REPAIR_HISTORY" },
+    "project": { "type": "string", "default": "." },
+    "limit": { "type": "integer", "minimum": 0, "default": 20 },
+    "code": { "type": "string" }
+  },
+  "additionalProperties": false
+}

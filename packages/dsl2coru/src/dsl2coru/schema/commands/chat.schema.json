@@ -1,0 +1,12 @@
+{
+  "$id": "dsl2coru/commands/chat",
+  "type": "object",
+  "required": ["verb"],
+  "properties": {
+    "verb": { "const": "CHAT" },
+    "llm": { "type": "boolean", "default": false },
+    "shell": { "type": "string" },
+    "single_action": { "type": "boolean", "default": false }
+  },
+  "additionalProperties": false
+}

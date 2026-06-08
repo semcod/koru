@@ -1,0 +1,12 @@
+{
+  "$id": "dsl2coru/commands/doctor",
+  "type": "object",
+  "required": ["verb"],
+  "properties": {
+    "verb": { "const": "DOCTOR" },
+    "fix": { "type": "boolean", "default": false },
+    "probe": { "type": "boolean", "default": false },
+    "probe_prompt": { "type": "string" }
+  },
+  "additionalProperties": false
+}

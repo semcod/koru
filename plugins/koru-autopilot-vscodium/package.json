@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscodium",
   "displayName": "koru autopilot (VSCodium)",
   "description": "Bridge between VSCodium / Code - OSS and the koru autopilot daemon. Standalone VSIX for VSCodium / Code - OSS only \u2014 sibling packages cover other IDEs so regressions cannot leak across runtimes.",
-  "version": "0.2.27",
+  "version": "0.2.28",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -208,6 +208,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "b8c93b1499b7b477"
+    "sha": "94b6062b5df83c55"
   }
 }

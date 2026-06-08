@@ -1,0 +1,22 @@
+syntax = "proto3";
+package dsl2koru.v1;
+
+import "dsl2koru/v1/command.proto";
+
+message DslResult {
+  bool ok = 1;
+  string verb = 2;
+  string output = 3;
+  bytes data_json = 4;
+  string error = 5;
+  string event_id = 6;
+  string command = 7;
+}
+
+message DslEvent {
+  string id = 1;
+  int64 ts_unix = 2;
+  DslEnvelope command = 3;
+  DslResult result = 4;
+  string correlation_id = 5;
+}

@@ -14,6 +14,7 @@ from coru.repair.pipeline import format_repair_lines, manual_vsix_unpack, plugin
 from coru.repair.projector import format_case_llm, format_history_llm, project_repair_cases
 from coru.repair.query import RepairHistoryQuery, problems_to_payload
 from coru.repair.registry import REPAIR_REGISTRY, playbook_for_codes, registry_step, registry_steps_for_code
+from coru.repair.runtime import run_lane_repair
 from coru.repair.service import RepairService, run_repair_with_events
 from coru.repair.store import RepairEventStore
 
@@ -47,6 +48,7 @@ __all__ = [
     "project_repair_cases",
     "registry_step",
     "registry_steps_for_code",
+    "run_lane_repair",
     "run_repair_pipeline",
     "run_repair_with_events",
 ]

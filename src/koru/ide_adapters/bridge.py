@@ -11,6 +11,7 @@ from koru.ide_adapters.base import BridgeStatus, Hypothesis
 from koru.ide_adapters.registry import get_adapter
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import canonical_autopilot_ide_id, detect_running_ides, normalize_ide_id
+from koruide.ides import get_strategy
 
 
 def _ide_is_running(ide: str) -> bool:
@@ -210,6 +211,23 @@ def _bridge_status_base(
 
 def _add_unsupported_ide_hypothesis(status: BridgeStatus) -> None:
     if status.plugins_connected:
+        return
+    strategy = get_strategy(status.ide)
+    if strategy is not None and strategy.keyboard.keyboard_fallback_default:
+        status.hypotheses.append(
+            Hypothesis(
+                id="ide.keyboard_lane",
+                confidence=0.4,
+                evidence=(
+                    f"{strategy.label} nie używa pluginu VS Code — sterowanie przez "
+                    f"OS-injector (keyboard) jest oczekiwaną ścieżką dla ide={status.ide}"
+                ),
+                remediation=shared.Remediation(
+                    kind="manual",
+                    summary="Skalibruj OS injector i steruj przez keyboard fallback",
+                ),
+            ),
+        )
         return
     status.hypotheses.append(
         Hypothesis(

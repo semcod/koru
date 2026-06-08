@@ -3189,104 +3189,57 @@ def _chat_llm_enabled(use_llm: bool) -> bool:
 
 
 def _llm_rewrite_chat_prompt(text: str, *, ide: str, instance: str) -> str:
+    try:
+        from nlp2coru.rewrite import rewrite_chat_prompt
+    except Exception:
+        return text
     model = os.environ.get("CORU_LLM_MODEL", "openrouter/qwen/qwen3-coder-next")
-    try:
-        from litellm import completion
-    except Exception:
-        return text
+    return rewrite_chat_prompt(text, ide=ide, instance=instance, model=model)
 
-    instruction = (
-        "Rewrite the user message into a concise IDE chat prompt for coding assistant. "
-        "Preserve intent and language. Return only plain text, no JSON, no markdown fences."
+
+def _intent_to_plan(intent) -> Plan:
+    return Plan(
+        action=str(intent.action),
+        ide=intent.ide,
+        instance=intent.instance,
+        install=bool(intent.install),
+        auto_args=tuple(intent.auto_args),
     )
-    user = f"ide={ide} instance={instance}\nmessage={text}"
-    try:
-        response = completion(
-            model=model,
-            messages=[
-                {"role": "system", "content": instruction},
-                {"role": "user", "content": user},
-            ],
-            temperature=0.2,
-        )
-        content = (response.choices[0].message.content or "").strip()
-        if content:
-            return content
-    except Exception:
-        return text
-    return text
 
 
 def _heuristic_plan(text: str) -> Plan:
-    t = text.strip().lower()
-    ide_match = re.search(r"\b(vscode|vscodium|cursor|windsurf|jetbrains|zed|antigravity)\b", t)
-    ide = ide_match.group(1) if ide_match else None
+    try:
+        from nlp2coru.heuristic import heuristic_plan
 
-    instance_match = re.search(r"\b([a-z0-9_-]+-(main|a|b|lane|prod|dev))\b", t)
-    instance = instance_match.group(1) if instance_match else None
-
-    if any(k in t for k in ("install", "zainstal", "ensure", "napraw", "sprawdz")):
-        return Plan(action="ensure", install=True)
-    if any(k in t for k in ("calibrat", "kalibrac")):
-        return Plan(action="calibration", ide=ide, instance=instance)
-    if any(k in t for k in ("diagnost", "diag", "doctor", "preflight", "diagnoz")):
-        return Plan(action="doctor", ide=ide, instance=instance)
-    if any(k in t for k in ("status", "stan")):
-        return Plan(action="diagnose", ide=ide, instance=instance)
-    if any(k in t for k in ("auto", "autonomous", "autopilot", "run")) or _refactor_intent(t):
-        return Plan(action="auto", ide=ide, instance=instance)
-    if any(k in t for k in ("lane", "instance", "env", "ustaw")):
-        return Plan(action="lane", ide=ide, instance=instance)
-    return Plan(action="diagnose", ide=ide, instance=instance)
+        coru_plan = heuristic_plan(text)
+        if coru_plan.steps:
+            return _intent_to_plan(coru_plan.steps[0])
+    except Exception:
+        pass
+    return Plan(action="diagnose")
 
 
 def _llm_plan(text: str) -> Plan | None:
+    try:
+        from nlp2coru.llm import llm_plan
+    except Exception:
+        return None
     model = os.environ.get("CORU_LLM_MODEL", "openrouter/qwen/qwen3-coder-next")
     try:
-        from litellm import completion
+        coru_plan = llm_plan(text, model=model)
     except Exception:
         return None
-
-    schema_hint = {
-        "action": "ensure|lane|diagnose|status|auto",
-        "ide": "optional ide",
-        "instance": "optional instance",
-        "install": "optional bool",
-    }
-    prompt = (
-        "Return ONLY JSON for coru command routing. "
-        f"Schema: {json.dumps(schema_hint)}. "
-        f"User text: {text}"
-    )
-
-    try:
-        response = completion(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You route user intents to coru actions."},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0,
-        )
-    except Exception:
+    if not coru_plan.steps:
         return None
-
-    try:
-        content = response.choices[0].message.content
-        payload = json.loads(content)
-    except Exception:
-        return None
-
-    action = str(payload.get("action") or "").strip().lower()
-    ide = str(payload.get("ide") or "").strip().lower() or None
-    instance = str(payload.get("instance") or "").strip() or None
-    if action not in {"ensure", "lane", "diagnose", "status", "auto"}:
-        return None
+    step = coru_plan.steps[0]
+    action = step.action
+    if action not in {"ensure", "lane", "diagnose", "status", "auto", "doctor", "calibration", "repair", "sync"}:
+        action = "diagnose"
     return Plan(
         action=action,
-        ide=ide,
-        instance=instance,
-        install=bool(payload.get("install", False)),
+        ide=step.ide,
+        instance=step.instance,
+        install=step.install,
     )
 
 
@@ -3552,8 +3505,10 @@ def _chat_handle_command(
     command_text = line[1:].strip()
     if not command_text:
         return
-    plans = _build_plan_chain(command_text, use_llm=use_llm, single_action=single_action)
-    rc = _execute_plans(plans, shell=shell, context=ctx, announce=True)
+    del ctx, shell  # lane context preserved in session; DSL dispatch uses runner env
+    from coru.control import apply_nl
+
+    rc = apply_nl(command_text, use_llm=use_llm, single_action=single_action)
     if rc != 0:
         print(f"[coru] failed rc={rc}")
 
@@ -3920,12 +3875,16 @@ def _dispatch_auto_command(args: argparse.Namespace) -> int | None:
 def _dispatch_text_command(args: argparse.Namespace, *, verbose: bool) -> int | None:
     if args.command != "text":
         return None
-    plans = _build_plan_chain(
+    from coru.control import apply_nl
+
+    rc = apply_nl(
         args.prompt,
         use_llm=args.llm,
         single_action=args.single_action,
     )
-    return _execute_plans(plans, shell=args.shell, announce=verbose)
+    if verbose and rc == 0:
+        print("[coru] dispatched via control bus (nlp2coru → dsl2coru)")
+    return rc
 
 
 def _dispatch_chat_command(
