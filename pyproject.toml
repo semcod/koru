@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.320"
+version = "0.1.321"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -46,6 +46,9 @@ desktop = [
     "nlp2uri[envmap]>=0.4.7",
     "env2llm[mqtt]>=0.1.10",
     "testql>=1.2.55",
+]
+imgl = [
+    "httpx>=0.27,<1.0",
 ]
 envmap = [
     "nlp2uri[envmap]>=0.4.7",

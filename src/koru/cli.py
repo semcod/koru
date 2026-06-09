@@ -177,6 +177,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
         argv,
     ),
     "ide": lambda argv: _lazy_module_main("koru.cli_ide", "ide_main", argv),
+    "imgl": lambda argv: _lazy_module_main("koru.cli_imgl", "imgl_main", argv),
     "autopilot": autopilot_main,
     "autoloop": autoloop_main,
     "autonomous": autonomous_main,

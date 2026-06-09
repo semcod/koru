@@ -44,7 +44,8 @@ Alternatywa: użyj **todomat-mcp** jako jednego routera (zawiera child `nlp2uri-
 | Tool | Opis |
 |------|------|
 | `koru_desktop_uri_plan` | NL → URI + plan OSAction (+ `control_plan` dla intencji IDE) |
-| `koru_desktop_uri_handle` | Plan + execute (domyślnie `dry_run: true`) |
+| `koru_desktop_uri_handle` | Plan + execute (domyślnie `dry_run: true`); `transport=imgl` dla UI |
+| `koru_imgl_execute` | Vision-guided UI (kliknij / wpisz / ctrl+enter) przez imgl |
 | `koru_ide_drive` | Wykonanie drive przez koruide (MCP, osobne narzędzie) |
 | `koru_ide_control_plan` | NL → `koru.control.v1` plan (IDE intencje) |
 | `koru_ide_control_execute` | Plan + execute przez nlp2uri/koruide (dry-run domyślnie) |

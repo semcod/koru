@@ -7,6 +7,7 @@ from typing import Any
 from koruapi.desktop_uri import (
     desktop_uri_get_getv_var,
     desktop_uri_handle,
+    desktop_uri_imgl_execute,
     desktop_uri_list_getv,
     desktop_uri_list_system_uris,
     desktop_uri_plan,
@@ -79,6 +80,52 @@ def build_tool_schemas() -> list[dict[str, Any]]:
                             "Use XDG Desktop Portal for screen capture on Wayland "
                             "(default: KORU_PORTAL_CAPTURE env or true)."
                         ),
+                    },
+                    "transport": {
+                        "type": "string",
+                        "enum": ["nlp2uri", "imgl"],
+                        "description": (
+                            "Execution transport. Use 'imgl' for vision-guided UI "
+                            "(click/type/key). Also auto when KORU_IMGL_DESKTOP=1."
+                        ),
+                    },
+                    "image": {
+                        "type": "string",
+                        "description": "Screenshot path for imgl transport (default: KORU_IMGL_IMAGE).",
+                    },
+                    "window": {
+                        "type": "string",
+                        "description": "Window region for imgl (e.g. region-bottom, region-top).",
+                    },
+                },
+                "required": ["prompt"],
+            },
+        },
+        {
+            "name": "koru_imgl_execute",
+            "description": (
+                "Execute a vision-guided UI action via imgl (TYPE / KEY / CLICK on screenshot). "
+                "Requires nlp2imgl or rest2imgl (KORU_IMGL_REST_URL, default :8219)."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "description": "NL command: kliknij X, wpisz Y w Chat input, ctrl+enter.",
+                    },
+                    "image": {
+                        "type": "string",
+                        "description": "Screenshot PNG path (captured when omitted).",
+                    },
+                    "window": {
+                        "type": "string",
+                        "description": "Region scope: region-bottom (IDE) or region-top (browser).",
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "When true, plan without desktop execution.",
                     },
                 },
                 "required": ["prompt"],
@@ -170,6 +217,20 @@ def tool_desktop_uri_handle(arguments: dict[str, Any]) -> dict[str, Any]:
         locale=arguments.get("locale"),
         dry_run=arguments.get("dry_run", True),
         use_portal_capture=arguments.get("use_portal_capture"),
+        transport=arguments.get("transport"),
+        image=arguments.get("image"),
+        window=arguments.get("window"),
+    )
+
+
+def tool_koru_imgl_execute(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Execute vision-guided UI action via imgl."""
+    return desktop_uri_imgl_execute(
+        arguments["prompt"],
+        image=arguments.get("image"),
+        window=arguments.get("window"),
+        dry_run=arguments.get("dry_run", True),
+        execute=not arguments.get("dry_run", True),
     )
 
 
@@ -212,6 +273,7 @@ def tool_desktop_uri_list_system_uris(arguments: dict[str, Any]) -> dict[str, An
 TOOL_DISPATCH: dict[str, Any] = {
     "koru_desktop_uri_plan": tool_desktop_uri_plan,
     "koru_desktop_uri_handle": tool_desktop_uri_handle,
+    "koru_imgl_execute": tool_koru_imgl_execute,
     "koru_desktop_uri_list_getv_uris": tool_desktop_uri_list_getv_uris,
     "koru_desktop_uri_resolve_getv": tool_desktop_uri_resolve_getv,
     "koru_desktop_uri_get_getv_var": tool_desktop_uri_get_getv_var,

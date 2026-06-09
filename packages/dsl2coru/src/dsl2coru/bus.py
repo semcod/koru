@@ -10,7 +10,7 @@ from dsl2coru.events import EventStore
 from dsl2coru.grammar import to_text
 from dsl2coru.handlers.runner import Runner
 from dsl2coru.result import DslResult
-from dsl2coru.schema_registry import COMMAND_VERBS, KORU_DELEGATE_VERBS, QUERY_VERBS
+from dsl2coru.schema_registry import COMMAND_VERBS, KORU_DELEGATE_VERBS, QUERY_VERBS, UI_VERBS
 
 
 def _dispatch_koru(
@@ -74,6 +74,11 @@ def dispatch(
             from dsl2coru.handlers import run_query
 
             return run_query(payload, line=raw_line, runner=runner)
+
+        if verb in UI_VERBS:
+            from dsl2coru.handlers.ui import run_ui_command
+
+            return run_ui_command(payload, line=raw_line)
 
         if verb in COMMAND_VERBS:
             from dsl2coru.handlers import run_command

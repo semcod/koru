@@ -160,6 +160,45 @@ def try_nlp2uri_focus_fallback(prompt: str, *, submit: bool, ide: str) -> dict[s
     return _nlp2uri_desktop_send(prompt, ide=ide, submit=submit, dry_run=False)
 
 
+def imgl_fallback_enabled() -> bool:
+    from koru.integrations.imgl_client import imgl_fallback_enabled as _enabled
+
+    return _enabled()
+
+
+def try_imgl_gui_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+) -> dict[str, Any] | None:
+    """Best-effort vision-guided fallback via imgl (nlp2imgl / rest2imgl).
+
+    Enabled when ``KORU_IMGL_FALLBACK=1``.
+    """
+    del project
+    if not imgl_fallback_enabled():
+        return None
+    from koru.integrations.imgl_client import imgl_available, send_chat
+
+    if not imgl_available():
+        return None
+    try:
+        reply = send_chat(prompt, ide=ide, submit=submit)
+        reply.setdefault("backend", "imgl")
+        reply["fallback_from"] = "plugin"
+        return reply
+    except Exception as exc:
+        return {
+            "ok": False,
+            "backend": "imgl",
+            "message": str(exc),
+            "type": "error",
+            "fallback_from": "plugin",
+        }
+
+
 def try_gillm_gui_fallback(
     prompt: str,
     *,
@@ -320,7 +359,9 @@ __all__ = [
     "effective_cycle_scan_enabled",
     "resolve_autopilot_ide",
     "scan_while_waiting_input_enabled",
+    "imgl_fallback_enabled",
     "try_gillm_gui_fallback",
+    "try_imgl_gui_fallback",
     "try_nlp2uri_ide_control",
     "try_nlp2uri_focus_fallback",
     "try_os_injector_fallback",

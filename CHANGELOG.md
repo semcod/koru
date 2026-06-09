@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **imgl vision integration** — vision-guided UI fallback for Koru:
+  `koru/integrations/imgl_client.py` (nlp2imgl / rest2imgl :8219),
+  `ImglDesktopBackend`, `try_imgl_gui_fallback()` in autonomous drive chain,
+  MCP `koru_imgl_execute` + `transport=imgl` on `koru_desktop_uri_handle`,
+  dsl2coru verbs `UI_CAPTURE` / `UI_TYPE` / `UI_KEY` / `UI_CLICK` / `UI_NL`,
+  `imgl_command()` in `koru.control.v1`. Docs: [`docs/imgl-integration.md`](./docs/imgl-integration.md).
+  Env: `KORU_IMGL_FALLBACK`, `KORU_IMGL_DESKTOP`, `KORU_IMGL_REST_URL`.
 - **`coru calibration`** — end-to-end plugin probe for a lane: optional
   testql desktop/bridge prefight, socket alignment via `koru ide doctor
   --fix --gc-sockets`, then `koru autopilot drive --require-plugin` with
@@ -65,6 +72,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation index:** [`docs/README.md`](./docs/README.md) lists all
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
+
+## [0.1.321] - 2026-06-09
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/desktop-uri-orchestration.md
+- Update docs/imgl-integration.md
+- Update packages/README.md
+
+### Test
+- Update tests/test_cli.py
+- Update tests/test_imgl_integration.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update Makefile
+- Update packages/dsl2coru/src/dsl2coru/bus.py
+- Update packages/dsl2coru/src/dsl2coru/cli.py
+- Update packages/dsl2coru/src/dsl2coru/grammar.py
+- Update packages/dsl2coru/src/dsl2coru/handlers/__init__.py
+- Update packages/dsl2coru/src/dsl2coru/handlers/ui.py
+- ... and 10 more files
 
 ## [0.1.320] - 2026-06-08
 

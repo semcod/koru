@@ -70,6 +70,15 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
         primary_code="gillm/src/gillm/drivers/composite.py",
     ),
     AgentBackendProfile(
+        id="imgl_vision_driver",
+        transport="imgl vision catalog (nlp2imgl / rest2imgl)",
+        can_push_chat=True,
+        can_pull_chat_text=False,
+        needs_gui_session=True,
+        mcp_tools_only=False,
+        primary_code="src/koru/integrations/imgl_client.py",
+    ),
+    AgentBackendProfile(
         id="os_keyboard_injector",
         transport="xdotool / wtype / ydotool / clipboard",
         can_push_chat=True,
@@ -86,6 +95,9 @@ _BACKEND_ALIASES: Final[dict[str, str]] = {
     "mcp_tool": "mcp_stdio_server",
     "os_injector": "os_keyboard_injector",
     "gillm_gui": "gillm_gui_driver",
+    "imgl": "imgl_vision_driver",
+    "imgl_vision": "imgl_vision_driver",
+    "imgl_desktop": "imgl_vision_driver",
 }
 
 

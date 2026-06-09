@@ -146,6 +146,56 @@ def parse_line(line: str, *, default_file: str | None = None) -> dict[str, Any]:
             payload["instance"] = instance
         return payload
 
+    if verb.startswith("UI_"):
+        if image := _flag("image"):
+            payload["image"] = image
+        if window := _flag("window"):
+            payload["window"] = window
+        if _flag("execute") == "0" or _flag("dry_run"):
+            payload["execute"] = False
+        else:
+            payload["execute"] = True
+
+        def _ui_args() -> list[str]:
+            skip = {"WINDOW", "IMAGE", "EXECUTE"}
+            out: list[str] = []
+            i = 0
+            while i < len(rest):
+                tok = rest[i]
+                if tok.startswith("--"):
+                    i += 2 if i + 1 < len(rest) and not rest[i + 1].startswith("--") else 1
+                    continue
+                if tok.upper() in skip:
+                    i += 2 if tok.upper() in {"WINDOW", "IMAGE"} and i + 1 < len(rest) else 1
+                    continue
+                out.append(tok)
+                i += 1
+            return out
+
+        if verb == "UI_TYPE":
+            args = _ui_args()
+            if len(args) >= 2 and args[0].upper() == "IN":
+                payload["value"] = ""
+                payload["field"] = " ".join(args[1:]).strip('"')
+            elif len(args) >= 3 and args[1].upper() == "IN":
+                payload["value"] = args[0].strip('"')
+                payload["field"] = " ".join(args[2:]).strip('"')
+            elif args:
+                payload["value"] = args[0].strip('"')
+        elif verb == "UI_KEY":
+            args = _ui_args()
+            if args:
+                payload["keys"] = args[0]
+        elif verb == "UI_CLICK":
+            args = _ui_args()
+            if args:
+                payload["target"] = " ".join(args).strip('"')
+        elif verb == "UI_NL":
+            args = _ui_args()
+            if args:
+                payload["prompt"] = " ".join(args).strip('"')
+        return payload
+
     raise ValueError(f"unknown DSL verb: {verb}")
 
 
@@ -216,6 +266,22 @@ def to_text(payload: dict[str, Any]) -> str:
         _append_flag("instance")
     elif verb == "REPAIR_HISTORY":
         pass
+    elif verb.startswith("UI_"):
+        _append_flag("image")
+        _append_flag("window")
+        if payload.get("execute") is False:
+            parts.append("EXECUTE 0")
+        if verb == "UI_TYPE":
+            if payload.get("value") is not None:
+                parts.append(f'"{payload["value"]}"')
+            if payload.get("field"):
+                parts.extend(["IN", f'"{payload["field"]}"'])
+        elif verb == "UI_KEY" and payload.get("keys"):
+            parts.append(str(payload["keys"]))
+        elif verb == "UI_CLICK" and payload.get("target"):
+            parts.append(f'"{payload["target"]}"')
+        elif verb == "UI_NL" and payload.get("prompt"):
+            parts.append(f'"{payload["prompt"]}"')
     else:
         raise ValueError(f"cannot serialize verb: {verb}")
     return " ".join(parts)

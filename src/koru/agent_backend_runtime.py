@@ -202,6 +202,40 @@ class GillmGuiBackend:
 
 
 @dataclass
+class ImglDesktopBackend:
+    """Vision-guided UI backend via imgl (nlp2imgl / rest2imgl).
+
+    Captures screen, resolves UI elements from catalog, types into Chat input
+    and submits via KEY — fallback when koruide plugin socket is unavailable.
+    """
+
+    dry_run: bool = False
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, ticket_id
+        from koru.integrations.imgl_client import imgl_available, imgl_missing_message, send_chat
+
+        if self.dry_run:
+            return send_chat(prompt, ide=ide, submit=submit, dry_run=True)
+        if not imgl_available():
+            return {
+                "ok": False,
+                "backend": "imgl",
+                "message": imgl_missing_message(),
+                "type": "error",
+            }
+        return send_chat(prompt, ide=ide, submit=submit, dry_run=False)
+
+
+@dataclass
 class Nlp2UriDesktopBackend:
     """Window-management backend via nlp2uri desktop-window://focus.
 
@@ -267,6 +301,11 @@ def build_agent_backend(
             "1", "true", "yes", "on",
         }
         return Nlp2UriDesktopBackend(dry_run=dry)
+    if bid in ("imgl", "imgl_vision", "imgl_desktop") or normalized == "imgl_vision_driver":
+        dry = os.environ.get("KORU_IMGL_DRY_RUN", "").strip().lower() in {
+            "1", "true", "yes", "on",
+        }
+        return ImglDesktopBackend(dry_run=dry)
     if bid in ("none", "noop", ""):
         return NoopBackend(reason=noop_reason)
     raise ValueError(f"unknown agent backend id: {backend_id!r}")
@@ -366,6 +405,7 @@ __all__ = [
     "McpToolBackend",
     "TillmShellBackend",
     "GillmGuiBackend",
+    "ImglDesktopBackend",
     "OsInjectorBackend",
     "Nlp2UriDesktopBackend",
     "NoopBackend",

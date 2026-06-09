@@ -745,6 +745,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "init-ci",
             "init-ide",
             "ide",
+            "imgl",
             "ide-router",
             "configure",
             "mesh",

@@ -54,19 +54,46 @@ def _intent_ir_metadata(prompt: str) -> dict[str, Any] | None:
     return {"intent_ir": structure.get("intent_ir"), "source": "nlp2cmd-intent"}
 
 
+def _imgl_plan_payload(prompt: str) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "prompt": prompt,
+        "suggested_transport": "imgl",
+        "transport": "imgl",
+        "plan": {
+            "uri": f"imgl://ui/action?prompt={prompt}",
+            "intent": "ui_action",
+            "transport": "imgl",
+        },
+    }
+
+
 def desktop_uri_plan(
     prompt: str,
     *,
     platform: str | None = None,
     locale: str | None = None,
+    transport: str | None = None,
 ) -> dict[str, Any]:
     """Resolve NL prompt to abstract URI + compiled OS actions."""
+    from koru.integrations.imgl_client import is_ui_prompt
+
+    if (transport or "").strip().lower() == "imgl":
+        return _imgl_plan_payload(prompt)
+
     if not _NLP2URI_AVAILABLE:
+        if is_ui_prompt(prompt):
+            return _imgl_plan_payload(prompt)
         return {"ok": False, "error": nlp2uri_missing_message()}
 
     host = _resolve_platform(platform)
     service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
-    plan = service.from_prompt(prompt, locale=locale)
+    try:
+        plan = service.from_prompt(prompt, locale=locale)
+    except (ValueError, RuntimeError) as exc:
+        if is_ui_prompt(prompt):
+            return _imgl_plan_payload(prompt)
+        return {"ok": False, "error": str(exc), "prompt": prompt}
     plan_dict = plan.to_dict()
     payload: dict[str, Any] = {
         "ok": True,
@@ -81,6 +108,8 @@ def desktop_uri_plan(
     intent_ir = _intent_ir_metadata(prompt)
     if intent_ir:
         payload["nlp_bridge"] = intent_ir
+    if is_ui_prompt(prompt):
+        payload["suggested_transport"] = "imgl"
     return payload
 
 
@@ -327,6 +356,57 @@ def desktop_uri_control_execute(
     }
 
 
+def desktop_uri_imgl_execute(
+    prompt: str,
+    *,
+    image: str | None = None,
+    window: str | None = None,
+    dry_run: bool = True,
+    execute: bool = True,
+    with_diagnostics: bool | None = None,
+) -> dict[str, Any]:
+    """Execute a UI action via imgl vision catalog (TYPE / KEY / CLICK)."""
+    from koru.integrations.imgl_client import execute_nl, imgl_available, imgl_missing_message
+
+    if not imgl_available():
+        return {"ok": False, "error": imgl_missing_message(), "transport": "imgl"}
+
+    do_execute = execute and not dry_run
+    result = execute_nl(
+        prompt,
+        image=image,
+        window=window,
+        execute=do_execute,
+        dry_run=dry_run,
+        with_diagnostics=with_diagnostics,
+    )
+    payload: dict[str, Any] = {
+        "ok": bool(result.get("ok")),
+        "prompt": prompt,
+        "transport": "imgl",
+        "result": result,
+        "dry_run": dry_run,
+    }
+    if result.get("diagnostics"):
+        payload["diagnostics"] = result["diagnostics"]
+        payload["verdict"] = result["diagnostics"].get("verdict")
+    return payload
+
+
+def _should_route_to_imgl(
+    prompt: str,
+    *,
+    transport: str | None = None,
+) -> bool:
+    if (transport or "").strip().lower() == "imgl":
+        return True
+    from koru.integrations.imgl_client import imgl_desktop_transport_enabled, is_ui_prompt
+
+    if not imgl_desktop_transport_enabled():
+        return False
+    return is_ui_prompt(prompt)
+
+
 def desktop_uri_handle(
     prompt: str,
     *,
@@ -334,8 +414,20 @@ def desktop_uri_handle(
     locale: str | None = None,
     dry_run: bool = True,
     use_portal_capture: bool | None = None,
+    transport: str | None = None,
+    image: str | None = None,
+    window: str | None = None,
 ) -> dict[str, Any]:
     """Plan + execute desktop actions (dry-run by default)."""
+    if _should_route_to_imgl(prompt, transport=transport):
+        return desktop_uri_imgl_execute(
+            prompt,
+            image=image,
+            window=window,
+            dry_run=dry_run,
+            execute=not dry_run,
+        )
+
     if not _NLP2URI_AVAILABLE:
         return {"ok": False, "error": nlp2uri_missing_message()}
 

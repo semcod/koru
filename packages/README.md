@@ -126,4 +126,11 @@ LANE --ide auto --instance default
 DOCTOR --probe
 CHAT --llm
 TEXT "status ide"
+UI_TYPE "prompt" IN "Chat input" WINDOW region-bottom
+UI_KEY ctrl+Return
+UI_CLICK "Projects" WINDOW region-top
+UI_NL "wpisz test w Chat input"
 ```
+
+Verby `UI_*` delegują do `koru.integrations.imgl_client` → `nlp2imgl` / `rest2imgl` (:8219).
+Zobacz [`docs/imgl-integration.md`](../docs/imgl-integration.md).

@@ -1,0 +1,13 @@
+{
+  "$id": "dsl2coru/commands/ui_nl",
+  "type": "object",
+  "required": ["verb", "prompt"],
+  "properties": {
+    "verb": { "const": "UI_NL" },
+    "prompt": { "type": "string" },
+    "image": { "type": "string" },
+    "window": { "type": "string" },
+    "execute": { "type": "boolean", "default": true }
+  },
+  "additionalProperties": false
+}

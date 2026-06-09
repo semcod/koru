@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.320-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.70-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-144.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.321-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$32.74-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-145.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $32.6998 (426 commits)
-- 👤 **Human dev:** ~$14493 (144.9h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $32.7388 (427 commits)
+- 👤 **Human dev:** ~$14543 (145.4h @ $100/h, 30min dedup)
 
-Generated on 2026-06-08 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
+Generated on 2026-06-09 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 
@@ -689,6 +689,35 @@ Related docs:
 pip install -e .
 ```
 
+### Vision UI — integracja z imgl
+
+Sterowanie pulpitem przez zrzut ekranu (TYPE / KEY / CLICK). **Instaluj w `koru/.venv`**
+— `koru` automatycznie przełącza się na ten venv, nie na `imgl/.venv`.
+
+```bash
+make help                  # lista targetów imgl
+make install-imgl-bridge   # koru + dsl2coru + imgl + nlp2imgl
+make imgl-capture          # zrzut → /tmp/koru-imgl-screen.png (fallback: imgl/screen.png)
+make imgl-capture-interactive  # portal GNOME — wybierz obszar
+make imgl-key              # dsl2coru UI_KEY ctrl+Return (dry-run)
+make imgl-chat             # wpisz w Chat input + ctrl+enter (dry-run)
+make imgl-execute PROMPT='wpisz test w Chat input'       # wpisuje na pulpit (--execute)
+make imgl-execute-dry PROMPT='wpisz test w Chat input'   # tylko plan (dry-run)
+```
+
+Ręcznie (bez Makefile):
+
+```bash
+bash scripts/install-imgl-bridge.sh
+export KORU_IMGL_IMAGE=/tmp/koru-imgl-screen.png
+make imgl-capture          # lub: imgl capture --interactive -o "$KORU_IMGL_IMAGE"
+koru imgl execute "wpisz test w Chat input" --window region-bottom --dry-run
+dsl2coru exec 'UI_KEY ctrl+Return'
+```
+
+`koru_imgl_execute` to **narzędzie MCP** (Cursor), nie komenda shell. REST imgl: port **8219**
+(`make imgl-serve-rest`). Docs: [`docs/imgl-integration.md`](./docs/imgl-integration.md).
+
 ## Multi-repo loop mode
 
 Run one command across matching repositories and retry failures in a closed loop:
@@ -703,6 +732,7 @@ koru \
 ### Or use Taskfile
 
 ```bash
+make help                     # testy + imgl bridge (make install-imgl-bridge)
 task                          # list all tasks (40+)
 task install                  # pip install -e .
 task ci                       # local CI equivalent: lint + tests
@@ -1304,6 +1334,7 @@ reading order for agents, and pipeline phase map. **Release notes:**
 - [`docs/ide-router.md`](./docs/ide-router.md) · [`docs/ide-isolation.md`](./docs/ide-isolation.md) — lane isolation
 - [`docs/autodiagnostics-auto-repair.md`](./docs/autodiagnostics-auto-repair.md) — doctor & repair
 - [`docs/desktop-uri-orchestration.md`](./docs/desktop-uri-orchestration.md) — nlp2uri MCP bridge (PL)
+- [`docs/imgl-integration.md`](./docs/imgl-integration.md) — vision UI (imgl) + `make install-imgl-bridge`
 - [`docs/mcp-ide-flow.md`](./docs/mcp-ide-flow.md) — MCP ↔ IDE flow
 
 ### Architecture & DSL

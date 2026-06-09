@@ -12,7 +12,7 @@ from dsl2coru.codec import envelope_from_bytes, envelope_to_bytes, parse_text, r
 from dsl2coru.events import EventStore
 from dsl2coru.schema_registry import validate_schemas
 
-_SUBCOMMANDS = {"validate-schema", "encode", "decode", "replay", "run", "roundtrip"}
+_SUBCOMMANDS = {"validate-schema", "encode", "decode", "replay", "run", "roundtrip", "exec"}
 
 
 def _run_results(results: list, *, json_out: bool) -> int:
@@ -66,6 +66,11 @@ def _main_subcommand(argv: list[str]) -> int:
     run.add_argument("-c", "--command")
     run.add_argument("--file", default="")
     run.add_argument("--json", action="store_true")
+
+    exe = sub.add_parser("exec", help="Execute one DSL line (alias for run -c)")
+    exe.add_argument("command")
+    exe.add_argument("--file", default="")
+    exe.add_argument("--json", action="store_true")
 
     args = parser.parse_args(argv)
     return _handle_subcommand(args)
@@ -146,9 +151,11 @@ def _handle_subcommand(args: argparse.Namespace) -> int:
             print(json.dumps(event.to_dict(), indent=2, ensure_ascii=False))
         return 0
 
-    if args.cmd == "run":
+    if args.cmd in {"run", "exec"}:
         default_file = args.file or None
-        if args.command:
+        if args.cmd == "exec":
+            results = [dispatch(args.command, default_file=default_file)]
+        elif args.command:
             results = [dispatch(args.command, default_file=default_file)]
         elif args.script:
             text = Path(args.script).read_text(encoding="utf-8")

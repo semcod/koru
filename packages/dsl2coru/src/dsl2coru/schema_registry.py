@@ -9,8 +9,24 @@ from typing import Any
 
 QUERY_VERBS = frozenset({"STATUS", "REPAIR_HISTORY", "ENV", "QUERY"})
 COMMAND_VERBS = frozenset(
-    {"AUTO", "LANE", "ENSURE", "DOCTOR", "CALIBRATION", "CHAT", "TEXT", "SYNC", "REPAIR_RUN"}
+    {
+        "AUTO",
+        "LANE",
+        "ENSURE",
+        "DOCTOR",
+        "CALIBRATION",
+        "CHAT",
+        "TEXT",
+        "SYNC",
+        "REPAIR_RUN",
+        "UI_CAPTURE",
+        "UI_TYPE",
+        "UI_KEY",
+        "UI_CLICK",
+        "UI_NL",
+    }
 )
+UI_VERBS = frozenset({"UI_CAPTURE", "UI_TYPE", "UI_KEY", "UI_CLICK", "UI_NL"})
 KORU_DELEGATE_VERBS = frozenset(
     {"QUERY_REPAIR_HISTORY", "QUERY_LANE_STATUS", "VALIDATE_LANE", "RESOLVE", "REPAIR_RUN"}
 )

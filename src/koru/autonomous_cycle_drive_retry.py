@@ -115,6 +115,24 @@ def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, st
     return plugin_status_decision(status, autopilot_ide)
 
 
+def _try_imgl_gui_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+) -> dict[str, Any] | None:
+    """Delegate to :func:`koru.autonomous._try_imgl_gui_fallback` (monkeypatch-friendly)."""
+    from koru import autonomous as _autonomous_mod
+
+    return _autonomous_mod._try_imgl_gui_fallback(
+        prompt,
+        submit=submit,
+        ide=ide,
+        project=project,
+    )
+
+
 def _try_gillm_gui_fallback(
     prompt: str,
     *,
@@ -292,6 +310,14 @@ def _invoke_client_autopilot_drive(
     ok = bool(reply.get("ok", True))
     if ok or require_plugin:
         return reply, ok
+    imgl = _try_imgl_gui_fallback(
+        prompt,
+        submit=submit,
+        ide=autopilot_ide,
+        project=project,
+    )
+    if imgl is not None and imgl.get("ok"):
+        return imgl, True
     gillm = _try_gillm_gui_fallback(
         prompt,
         submit=submit,

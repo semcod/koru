@@ -146,6 +146,21 @@ _ORIGINAL_LOAD_PROFILE = load_profile
 _ORIGINAL_INJECT_WITH_PROFILE = inject_with_profile
 
 
+def _try_imgl_gui_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+) -> dict[str, Any] | None:
+    return _autonomous_cycle_gate.try_imgl_gui_fallback(
+        prompt,
+        submit=submit,
+        ide=ide,
+        project=project,
+    )
+
+
 def _try_gillm_gui_fallback(
     prompt: str,
     *,

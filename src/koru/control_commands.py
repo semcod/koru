@@ -183,6 +183,8 @@ def desktop_gui_command(
 
 def _desktop_interface_id(backend: str) -> str:
     key = backend.strip().lower()
+    if "imgl" in key:
+        return "imgl_rest_or_nlp2imgl"
     if "command_palette" in key or "command-palette" in key:
         return "ide_command_palette"
     if "xdotool" in key or "x11" in key:
@@ -190,6 +192,42 @@ def _desktop_interface_id(backend: str) -> str:
     if "ydotool" in key or "uinput" in key:
         return "os_injector_ydotool"
     return "os_injector_wtype"
+
+
+def imgl_command(
+    project: Path | None,
+    *,
+    corr: str,
+    operation: str,
+    prompt: str,
+    image: str | None = None,
+    window: str | None = None,
+    execute: bool = True,
+    actor: str | None = "koru",
+    replayable: bool = False,
+) -> KoruObsEvent:
+    """Record a vision-guided imgl control command."""
+    return emit_control_command(
+        project,
+        control_command(
+            corr=corr,
+            surface="desktop_gui",
+            interface_id="imgl_rest_or_nlp2imgl",
+            transport="imgl",
+            operation=operation,
+            args={
+                "prompt": prompt,
+                "image": image,
+                "window": window,
+                "execute": execute,
+            },
+            actor=actor,
+            target=window or "screen",
+            replayable=replayable,
+            authority="low",
+            verification="screen_catalog",
+        ),
+    )
 
 
 def parse_control_command_dsl(text: str) -> KoruObsEvent:
@@ -280,6 +318,7 @@ __all__ = [
     "control_command_replay_plan",
     "desktop_gui_command",
     "emit_control_command",
+    "imgl_command",
     "parse_control_command_dsl",
     "plugin_socket_command",
     "shell_command",
