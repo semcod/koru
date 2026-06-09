@@ -73,6 +73,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.322] - 2026-06-09
+
+### Docs
+- Update README.md
+- Update code2llm_output/README.md
+- Update code2llm_output/context.md
+
+### Other
+- Update .planfile/sprints/current.yaml
+
 ## [0.1.321] - 2026-06-09
 
 ### Docs

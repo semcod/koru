@@ -62,6 +62,9 @@ def run_gui_server(
         access_log=False,
     )
     server = uvicorn.Server(config)
+    runtime = getattr(app.state, "runtime", None)
+    if runtime is not None:
+        runtime.uvicorn_server = server
     app.state.uvicorn_server = server
 
     url = f"http://{_BIND_HOST}:{bind_port}/wizard"

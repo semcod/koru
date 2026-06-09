@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,24 @@ except ImportError:  # pragma: no cover - exercised via _require_fastapi()
     HTMLResponse = None  # type: ignore[misc, assignment]
     JSONResponse = None  # type: ignore[misc, assignment]
     StaticFiles = None  # type: ignore[misc, assignment]
+
+
+@dataclass
+class WizardGuiRuntime:
+    """Mutable wizard server state (config, shutdown) decoupled from route wiring."""
+
+    http: Any
+    gui_config: dict[str, Any]
+    session_store: SessionStore
+    shutdown: bool = False
+    uvicorn_server: Any = field(default=None, repr=False)
+
+    def request_shutdown(self) -> None:
+        self.shutdown = True
+        self.http.state.shutdown = True
+        server = self.uvicorn_server
+        if server is not None:
+            server.should_exit = True
 
 
 def _require_fastapi() -> None:
@@ -138,12 +157,12 @@ def _cookie_response(payload: dict[str, Any], session: WizardGuiSession) -> Any:
     return response
 
 
-def _ensure_session(request: Any, app: Any, session_store: SessionStore) -> WizardGuiSession:
+def _ensure_session(request: Any, runtime: WizardGuiRuntime) -> WizardGuiSession:
     sid = request.cookies.get(SESSION_COOKIE)
-    session = session_store.get(sid)
+    session = runtime.session_store.get(sid)
     if session is not None:
         return session
-    cfg = app.state.gui_config
+    cfg = runtime.gui_config
     session = WizardGuiSession.new(
         strategies_path=cfg["strategies_path"],
         language=cfg["language"],
@@ -154,7 +173,7 @@ def _ensure_session(request: Any, app: Any, session_store: SessionStore) -> Wiza
         fallback_cwd=Path.cwd(),
         project_override=cfg["project_override"],
     )
-    session_store.create(session)
+    runtime.session_store.create(session)
     return session
 
 
@@ -224,11 +243,14 @@ def _confirm_ticket(session: WizardGuiSession, body: dict[str, Any]) -> None:
     session.touch()
 
 
-def _register_routes(app: Any, session_store: SessionStore) -> None:
-    @app.get("/wizard")
+def _register_routes(runtime: WizardGuiRuntime) -> None:
+    http = runtime.http
+    session_store = runtime.session_store
+
+    @http.get("/wizard")
     def wizard_page(request: Request) -> HTMLResponse:
         session_store.purge_expired()
-        session = _ensure_session(request, app, session_store)
+        session = _ensure_session(request, runtime)
         response = HTMLResponse(content=_read_template())
         response.set_cookie(
             SESSION_COOKIE,
@@ -239,43 +261,40 @@ def _register_routes(app: Any, session_store: SessionStore) -> None:
         )
         return response
 
-    @app.get("/wizard/api/state")
+    @http.get("/wizard/api/state")
     def api_state(request: Request) -> JSONResponse:
         session_store.purge_expired()
-        session = _ensure_session(request, app, session_store)
+        session = _ensure_session(request, runtime)
         return _cookie_response(_session_state(session), session)
 
-    @app.post("/wizard/api/ide")
+    @http.post("/wizard/api/ide")
     async def api_select_ide(request: Request) -> JSONResponse:
         session = _get_session(request, session_store)
         _select_ide(session, await request.json())
         return JSONResponse(_session_state(session))
 
-    @app.post("/wizard/api/project")
+    @http.post("/wizard/api/project")
     async def api_select_project(request: Request) -> JSONResponse:
         session = _get_session(request, session_store)
         _select_project(session, await request.json())
         return JSONResponse(_session_state(session))
 
-    @app.post("/wizard/api/strategy")
+    @http.post("/wizard/api/strategy")
     async def api_strategy_choice(request: Request) -> JSONResponse:
         session = _get_session(request, session_store)
         _select_strategy(session, await request.json())
         return JSONResponse(_session_state(session))
 
-    @app.post("/wizard/api/confirm")
+    @http.post("/wizard/api/confirm")
     async def api_confirm(request: Request) -> JSONResponse:
         session = _get_session(request, session_store)
         _confirm_ticket(session, await request.json())
         return JSONResponse(_session_state(session))
 
-    @app.post("/wizard/done")
+    @http.post("/wizard/done")
     async def api_done(request: Request) -> JSONResponse:
         _get_session(request, session_store)
-        app.state.shutdown = True
-        server = getattr(app.state, "uvicorn_server", None)
-        if server is not None:
-            server.should_exit = True
+        runtime.request_shutdown()
         return JSONResponse({"ok": True, "message": "wizard finished; server shutting down"})
 
 
@@ -293,20 +312,25 @@ def create_app(
     session_store = store or SessionStore()
     tree = load_tree(strategies_path, language=language, bilingual_separator=bilingual_separator)
 
-    app = FastAPI(title="koru wizard", docs_url=None, redoc_url=None)
-    app.state.session_store = session_store
-    app.state.shutdown = False
-    app.state.gui_config = {
-        "strategies_path": strategies_path,
-        "language": language,
-        "bilingual_separator": bilingual_separator,
-        "project_override": project_override,
-        "create": create,
-        "tree": tree,
-    }
+    http = FastAPI(title="koru wizard", docs_url=None, redoc_url=None)
+    runtime = WizardGuiRuntime(
+        http=http,
+        session_store=session_store,
+        gui_config={
+            "strategies_path": strategies_path,
+            "language": language,
+            "bilingual_separator": bilingual_separator,
+            "project_override": project_override,
+            "create": create,
+            "tree": tree,
+        },
+    )
+    http.state.runtime = runtime
+    http.state.session_store = session_store
+    http.state.shutdown = False
 
     if _STATIC_DIR.is_dir():
-        app.mount("/wizard/static", StaticFiles(directory=str(_STATIC_DIR)), name="wizard-static")
+        http.mount("/wizard/static", StaticFiles(directory=str(_STATIC_DIR)), name="wizard-static")
 
-    _register_routes(app, session_store)
-    return app
+    _register_routes(runtime)
+    return http
