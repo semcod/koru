@@ -114,9 +114,14 @@ def action_calibrate(
         ide = raw
         auto_detected = False
 
-    delay = max(0.0, float(args.delay_seconds))
-    print(f"Place mouse over IDE chat input; capturing in {delay:.1f}s...")
-    sleep_fn(delay)
+    delay = max(10.0, float(args.delay_seconds))
+    print("Please place your mouse cursor over the chat input field in your IDE.")
+    print("The calibration will start in 10 seconds. Do not move the mouse during the countdown.")
+    for i in range(10, 0, -1):
+        print(f"Capturing in {i}...", end="\r")
+        sleep_fn(1)
+    print("\nCapturing mouse position...")
+
     try:
         x, y = oi.capture_mouse_xy()
         profile = oi.profile_from_mouse(ide, x=x, y=y)

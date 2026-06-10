@@ -73,6 +73,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.326] - 2026-06-10
+
+### Docs
+- Update README.md
+
+### Other
+- Update .koru/project.json
+- Update wup.yaml
+
 ## [0.1.325] - 2026-06-10
 
 ### Docs
