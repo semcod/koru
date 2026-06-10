@@ -1101,7 +1101,7 @@ def test_auto_readiness_gate_blocks_workspace_mismatch(monkeypatch, tmp_path: Pa
 
         @staticmethod
         def apply_socket_ownership_repairs(project, socket_path, readiness):
-            return []
+            return SimpleNamespace(repair_actions=())
 
     monkeypatch.setattr(coru_cli, "_repo_root", lambda: project)
     monkeypatch.setattr(coru_cli, "_import_koru_readiness_module", lambda: FakeReadiness)

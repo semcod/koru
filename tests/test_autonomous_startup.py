@@ -196,10 +196,12 @@ def test_resolve_agent_lane_prefers_cursor_over_jetbrains_terminal_when_both_run
     assert source == "terminal:prefer-cursor-over-jetbrains"
 
 
-def test_resolve_agent_lane_stale_jetbrains_env_overridden_by_running_cursor(
+def test_resolve_agent_lane_explicit_jetbrains_env_preserved_when_terminal_matches(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Explicit KORU_AUTOPILOT_INSTANCE=jetbrains is respected when the user is
+    actively working from the JetBrains integrated terminal."""
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "jetbrains")
     running = [
         RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
@@ -218,8 +220,88 @@ def test_resolve_agent_lane_stale_jetbrains_env_overridden_by_running_cursor(
             "auto",
             resolve_project_lane=lambda _p, lane_id: lane_id,
         )
-    assert lane == "cursor"
-    assert source == "running:over-env:KORU_AUTOPILOT_INSTANCE:jetbrains"
+    assert lane == "jetbrains"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_explicit_jetbrains_env_preserved_when_terminal_not_plugin_ide(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit KORU_AUTOPILOT_INSTANCE=jetbrains is respected when the terminal
+    is detected as a non-plugin IDE (e.g., vscode env vars in JetBrains terminal)."""
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "jetbrains")
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscode"),
+        patch(
+            "koru.autonomous_startup.pick_target",
+            return_value=running[0],
+        ),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "jetbrains"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_explicit_jetbrains_env_preserved_when_terminal_is_plugin_ide(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit KORU_AUTOPILOT_INSTANCE=jetbrains is respected even when the terminal
+    is a plugin IDE (cursor/windsurf), since jetbrains has no plugin support."""
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "jetbrains")
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="cursor"),
+        patch(
+            "koru.autonomous_startup.pick_target",
+            return_value=running[0],
+        ),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "jetbrains"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_explicit_plugin_ide_overridden_by_different_plugin_terminal(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit KORU_AUTOPILOT_INSTANCE=cursor is overridden when the terminal
+    is a different plugin IDE (windsurf)."""
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "cursor")
+    running = [
+        RunningIDE(id="windsurf", label="Windsurf", pid=10, exe="/usr/bin/windsurf"),
+        RunningIDE(id="cursor", label="Cursor", pid=11, exe="/usr/bin/cursor"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="windsurf"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "windsurf"
+    assert source == "terminal:over-env:KORU_AUTOPILOT_INSTANCE"
 
 
 def test_resolve_agent_lane_terminal_hint_overrides_conflicting_env_instance(

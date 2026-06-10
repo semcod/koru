@@ -124,17 +124,24 @@ def _resolve_lane_from_explicit(
         and supports_autopilot_plugin_ide(terminal)
         and not _explicit_lane_matches_terminal(explicit, terminal)
         and terminal != "vscode"
+        and supports_autopilot_plugin_ide(explicit)  # Only override if explicit is also a plugin IDE
     ):
         return terminal, f"terminal:over-{explicit_source}"
     # Stale ``KORU_AUTOPILOT_INSTANCE=jetbrains`` (or zed) is a common foot-gun:
     # the lane has no installable plugin, so koru falls back to raw ydotool/wtype
     # which types into whatever window has focus — usually the file editor when
     # the integrated terminal lives inside JetBrains. If a plugin-capable IDE is
-    # also running (Cursor, Windsurf, …), prefer it over the explicit env.
+    # also running (Cursor, Windsurf, …), prefer it over the explicit env —
+    # unless the user is actively working from that IDE's terminal.
+    # For non-plugin lanes (jetbrains/zed), always respect the explicit choice.
     if running and explicit in _STALE_NONPLUGIN_LANES:
-        picked = _pick_plugin_capable_running(running)
-        if picked is not None:
-            return picked.id, f"running:over-{explicit_source}:{explicit}"
+        if terminal and _explicit_lane_matches_terminal(explicit, terminal):
+            pass
+        # Only override if explicit is a plugin IDE and terminal is a different plugin IDE
+        elif supports_autopilot_plugin_ide(explicit) and terminal and supports_autopilot_plugin_ide(terminal) and terminal != explicit:
+            picked = _pick_plugin_capable_running(running)
+            if picked is not None:
+                return picked.id, f"running:over-{explicit_source}:{explicit}"
     return explicit, explicit_source
 
 

@@ -2178,7 +2178,8 @@ def _auto_ownership_gate(
             failed = True
             primary_fix = primary_fix or result.primary_fix
             if hasattr(readiness, "apply_socket_ownership_repairs"):
-                for action in readiness.apply_socket_ownership_repairs(root, socket_path, result):
+                repair_result = readiness.apply_socket_ownership_repairs(root, socket_path, result)
+                for action in repair_result.repair_actions:
                     print(f"[coru] readiness repair: {action}", file=sys.stderr)
     if failed and primary_fix:
         print(f"[coru] readiness primary fix: {primary_fix}", file=sys.stderr)

@@ -73,6 +73,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.324] - 2026-06-10
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous_startup.py
+
+### Other
+- Update .koru/project.json
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/tests/test_coru_cli.py
+- Update wup.yaml
+
 ## [0.1.323] - 2026-06-10
 
 ### Docs
