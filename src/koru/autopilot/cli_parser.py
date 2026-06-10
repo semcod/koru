@@ -455,6 +455,12 @@ def _add_manage_parser(sub: argparse._SubParsersAction) -> None:
         help="IDE to inspect or repair (default: auto-detect).",
     )
     manage.add_argument(
+        "--project",
+        type=Path,
+        default=None,
+        help="Project root for daemon repair and workspace checks (default: cwd or koru source).",
+    )
+    manage.add_argument(
         "--format",
         dest="output_format",
         choices=("text", "json"),

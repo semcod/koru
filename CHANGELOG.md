@@ -73,6 +73,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.325] - 2026-06-10
+
+### Docs
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/README.md
+- Update README.md
+
+### Test
+- Update tests/test_autonomous_readiness.py
+- Update tests/test_autonomous_runtime.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/index.jsonl
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/index.pb
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/projections/backend_scores.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/projections/control_state.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/projections/map_health.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/session.json
+- ... and 8 more files
+
 ## [0.1.324] - 2026-06-10
 
 ### Docs

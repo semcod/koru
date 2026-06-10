@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-05-25 17:01:38
+# Generated: 2026-06-10 19:43:33
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -24,7 +24,7 @@ versioning:
   - VERSION
   - pyproject.toml:version
   - package.json:version
-  - venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__
+  - .venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__
   bump_rules:
     patch: 10
     minor: 50
@@ -261,22 +261,9 @@ registries:
     token_env: NPM_TOKEN
 hooks:
   pre_commit: ''
-  post_commit: 'tagi auto .'
+  post_commit: tagi auto .
   pre_push: ''
   post_push: ''
-automation:
-  tagi_integration:
-    enabled: true
-    auto_commit: true
-    auto_push: true
-    priority_sorting: true
-    dry_run: false
-    template: "conventional"
-  workflow:
-    enabled: true
-    auto_stage: true
-    auto_tag: true
-    commit_after_goal: true
 advanced:
   auto_update_config: true
   performance:
@@ -529,3 +516,16 @@ code_parsers:
     - <!--
     - -->
     entity_pattern: ^#+\s+(.+)$
+automation:
+  tagi_integration:
+    enabled: true
+    auto_commit: true
+    auto_push: true
+    priority_sorting: true
+    dry_run: false
+    template: conventional
+  workflow:
+    enabled: true
+    auto_stage: true
+    auto_tag: true
+    commit_after_goal: true

@@ -21,6 +21,20 @@ def daemon_metadata_path(project: Path | None, socket_path: Path) -> Path:
     return socket_path.with_name(f"{socket_path.name}.json")
 
 
+def _normalized_project(project: Path | None) -> Path | None:
+    if project is None:
+        return None
+    try:
+        from koru.autonomous_runtime import normalize_project_root
+
+        return normalize_project_root(project)
+    except Exception:
+        try:
+            return project.resolve()
+        except OSError:
+            return project
+
+
 def build_daemon_metadata(
     *,
     socket_path: Path,
@@ -28,17 +42,18 @@ def build_daemon_metadata(
     started_at: float,
 ) -> dict[str, Any]:
     """Build process/runtime metadata for status and stale-daemon diagnosis."""
+    normalized = _normalized_project(project)
     return {
         "schema": "koru.autopilot.daemon.v1",
         "pid": os.getpid(),
         "ppid": os.getppid(),
         "uid": os.getuid() if hasattr(os, "getuid") else None,
         "version": _package_version(),
-        "git_sha": _git_sha(project),
+        "git_sha": _git_sha(normalized),
         "python": sys.version.split()[0],
         "python_executable": sys.executable,
         "cwd": os.getcwd(),
-        "project": str(project.resolve()) if project is not None else None,
+        "project": str(normalized.resolve()) if normalized is not None else None,
         "socket": str(socket_path),
         "socket_inode": _inode(socket_path),
         "started_at": datetime.fromtimestamp(started_at, timezone.utc).isoformat(),

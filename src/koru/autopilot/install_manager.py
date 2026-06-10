@@ -122,8 +122,24 @@ class InstallManagerReport:
         }
 
 
+def _resolve_source_root(project: Path | None = None) -> Path:
+    from koru.autonomous_runtime import normalize_project_root
+
+    if project is not None:
+        normalized = normalize_project_root(project)
+        if normalized is not None:
+            return normalized
+        return project.expanduser().resolve()
+    for candidate in (Path.cwd(), Path(sys.prefix)):
+        normalized = normalize_project_root(candidate)
+        if normalized is not None and (normalized / "pyproject.toml").is_file():
+            return normalized
+    fallback = normalize_project_root(Path(__file__).resolve().parents[3])
+    return fallback if fallback is not None else Path(__file__).resolve().parents[3]
+
+
 def _source_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+    return _resolve_source_root(None)
 
 
 def _source_version(root: Path) -> str | None:
@@ -363,8 +379,9 @@ def collect_install_manager_report(
     *,
     ide: str = "auto",
     socket_path: Path | None = None,
+    project: Path | None = None,
 ) -> InstallManagerReport:
-    root = _source_root()
+    root = _resolve_source_root(project)
     resolved_ide = _resolve_ide(ide)
     sock = _manager_socket_path(resolved_ide, socket_path)
     daemon = _daemon_status(sock)
@@ -402,9 +419,10 @@ def repair_installation(
     *,
     ide: str = "auto",
     socket_path: Path | None = None,
+    project: Path | None = None,
     dry_run: bool = False,
 ) -> InstallManagerReport:
-    report = collect_install_manager_report(ide=ide, socket_path=socket_path)
+    report = collect_install_manager_report(ide=ide, socket_path=socket_path, project=project)
     resolved_ide = str(report.plugin.get("ide") or ide)
     repair_steps = _build_repair_steps(report, resolved_ide=resolved_ide, dry_run=dry_run)
     return _apply_repair_steps(

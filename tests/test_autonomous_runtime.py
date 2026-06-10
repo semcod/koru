@@ -292,3 +292,27 @@ def test_setup_autopilot_daemon_sets_instance_before_default_socket(
     assert captured["socket_path"] == socket_path
     # Explicit --autopilot-ide wins over auto-detect; instance must be set before socket resolution.
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"
+
+
+def test_normalize_project_root_from_venv_prefix(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nname="x"\n', encoding="utf-8")
+    (tmp_path / ".git").mkdir()
+    venv_prefix = tmp_path / ".venv" / "lib" / "python3.13"
+    venv_prefix.mkdir(parents=True)
+
+    assert autonomous_runtime.normalize_project_root(venv_prefix) == tmp_path.resolve()
+    assert autonomous_runtime.projects_equivalent(venv_prefix, tmp_path) is True
+
+
+def test_resolve_cli_project_normalizes_venv_project_arg(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nname="x"\n', encoding="utf-8")
+    (tmp_path / ".git").mkdir()
+    venv_prefix = tmp_path / ".venv" / "lib" / "python3.13"
+    venv_prefix.mkdir(parents=True)
+
+    resolved = autonomous_runtime.resolve_cli_project(
+        ["auto", "--project", str(venv_prefix)],
+        cwd=venv_prefix,
+    )
+
+    assert resolved == tmp_path.resolve()

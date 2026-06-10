@@ -85,6 +85,36 @@ def test_daemon_client_alignment_detects_version_mismatch(
     assert any(i.code == "daemon_version_mismatch" for i in result.issues)
 
 
+def test_daemon_client_alignment_treats_venv_prefix_as_same_project(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname="x"\nversion="0.1.0"\n',
+        encoding="utf-8",
+    )
+    (tmp_path / ".git").mkdir()
+    venv_prefix = tmp_path / ".venv" / "lib" / "python3.13"
+    venv_prefix.mkdir(parents=True)
+    sock = tmp_path / "koru-autopilot-cursor-main.sock"
+    monkeypatch.setattr(
+        "koru.autonomous_readiness.daemon_status_compatible",
+        lambda _s: (True, ""),
+    )
+    status = {
+        "daemon_metadata": {
+            "project": str(venv_prefix),
+            "socket": str(sock),
+            "python_executable": os.sys.executable,
+        }
+    }
+
+    result = check_daemon_client_alignment(status, project=tmp_path, socket_path=sock)
+
+    assert result.ok is True
+    assert not any(i.code == "daemon_project_mismatch" for i in result.issues)
+
+
 def test_plugin_workspace_covers_project() -> None:
     status = {
         "plugins": [

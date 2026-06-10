@@ -1,0 +1,29 @@
+{
+  "latest_by_request_id": {
+    "b79c7dbe-4597-4f26-809d-8f5218d64ec4": {
+      "request_id": "b79c7dbe-4597-4f26-809d-8f5218d64ec4",
+      "events": [
+        {
+          "event_type": "StepRecorded",
+          "occurred_at_ms": 1781101963193,
+          "body": {
+            "step_id": "0001",
+            "route": "local",
+            "verb": "MONITORS",
+            "ok": true,
+            "duration_ms": 76,
+            "request_path": "steps/0001/request.json",
+            "result_path": "steps/0001/result.json",
+            "diagnostics": {}
+          }
+        }
+      ],
+      "last_event_type": "StepRecorded",
+      "last_occurred_at_ms": 1781101963193,
+      "step_id": "0001",
+      "ok": true,
+      "diagnostics": {}
+    }
+  },
+  "updated_at_ms": 1781101963193
+}

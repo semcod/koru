@@ -144,7 +144,30 @@ def _dry_run() -> bool:
 
 def _ide_hints(ide: str) -> dict[str, str]:
     canon = _canonical_ide(ide)
-    return dict(_IDE_HINTS.get(canon, {"app": canon, "window_title_contains": canon}))
+    try:
+        from vdisplay.desktop_apps import ide_hints_for
+
+        return ide_hints_for(canon)
+    except Exception:
+        return dict(_IDE_HINTS.get(canon, {"app": canon, "window_title_contains": canon}))
+
+
+def _chat_selectors_for(ide: str) -> tuple[dict[str, str], ...]:
+    try:
+        from vdisplay.desktop_apps import chat_selectors_for
+
+        return chat_selectors_for(_canonical_ide(ide))
+    except Exception:
+        return _CHAT_INPUT_SELECTORS
+
+
+def _submit_selectors_for(ide: str) -> tuple[dict[str, str], ...]:
+    try:
+        from vdisplay.desktop_apps import submit_selectors_for
+
+        return submit_selectors_for(_canonical_ide(ide))
+    except Exception:
+        return _SUBMIT_BUTTON_SELECTORS
 
 
 def _agent_client():
@@ -271,7 +294,7 @@ def send_chat(
     except Exception as exc:
         focus_error = str(exc)
 
-    selector, found = _find_first_selector(ide=ide, selectors=_CHAT_INPUT_SELECTORS)
+    selector, found = _find_first_selector(ide=ide, selectors=_chat_selectors_for(ide))
     if selector is None:
         return {
             "ok": False,
@@ -325,7 +348,7 @@ def send_chat(
     if submit:
         submit_selector, submit_found = _find_first_selector(
             ide=ide,
-            selectors=_SUBMIT_BUTTON_SELECTORS,
+            selectors=_submit_selectors_for(ide),
         )
         if submit_selector is not None:
             click_kwargs = {

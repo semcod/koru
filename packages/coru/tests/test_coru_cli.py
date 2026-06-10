@@ -919,6 +919,10 @@ def test_run_auto_with_readiness_continues_for_keyboard_fallback(monkeypatch, ca
         },
     )
     monkeypatch.setattr(coru_cli, "_lane_auto", fake_lane_auto)
+    monkeypatch.setattr(
+        "koru.integrations.vdisplay_client.vdisplay_fallback_enabled",
+        lambda **kwargs: False,
+    )
 
     rc = coru_cli._run_auto_with_readiness("vscodium", "vscodium", ["--max-cycles", "1"])
 

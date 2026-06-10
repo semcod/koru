@@ -288,8 +288,10 @@ def check_daemon_client_alignment(
         if meta:
             meta_project = str(meta.get("project") or "").strip()
             if meta_project:
+                from koru.autonomous_runtime import projects_equivalent
+
                 try:
-                    if Path(meta_project).resolve() != project.resolve():
+                    if not projects_equivalent(meta_project, project):
                         issues.append(
                             ReadinessIssue(
                                 code="daemon_project_mismatch",

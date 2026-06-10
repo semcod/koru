@@ -88,14 +88,44 @@ def _path_is_relative_to(path: Path, parent: Path) -> bool:
     return True
 
 
+def normalize_project_root(path: Path | str | None) -> Path | None:
+    """Walk up from ``path`` to the nearest git repo root with ``pyproject.toml``."""
+    if path is None:
+        return None
+    try:
+        current = Path(path).expanduser().resolve()
+    except OSError:
+        return None
+    if not current.exists():
+        current = current.parent
+    for candidate in (current, *current.parents):
+        if (candidate / "pyproject.toml").is_file() and (candidate / ".git").exists():
+            return candidate
+    return current
+
+
+def projects_equivalent(left: Path | str | None, right: Path | str | None) -> bool:
+    """True when two paths refer to the same project root after normalization."""
+    left_norm = normalize_project_root(left)
+    right_norm = normalize_project_root(right)
+    if left_norm is None or right_norm is None:
+        return False
+    return left_norm == right_norm
+
+
 def resolve_cli_project(raw_args: list[str], *, cwd: Path | None = None) -> Path:
     """Resolve ``--project`` from argv or fall back to cwd."""
     for idx, part in enumerate(raw_args):
         if part == "--project" and idx + 1 < len(raw_args):
-            return Path(raw_args[idx + 1]).expanduser().resolve()
+            resolved = normalize_project_root(raw_args[idx + 1])
+            return resolved if resolved is not None else Path(raw_args[idx + 1]).expanduser().resolve()
         if part.startswith("--project="):
-            return Path(part.split("=", 1)[1]).expanduser().resolve()
-    return (cwd or Path.cwd()).resolve()
+            raw = part.split("=", 1)[1]
+            resolved = normalize_project_root(raw)
+            return resolved if resolved is not None else Path(raw).expanduser().resolve()
+    base = (cwd or Path.cwd()).resolve()
+    resolved = normalize_project_root(base)
+    return resolved if resolved is not None else base
 
 
 def _project_venv_roots(project: Path) -> list[Path]:
@@ -571,6 +601,8 @@ __all__ = [
     "build_and_log_startup_probe",
     "cli_should_reexec",
     "maybe_sync_project_koru_package",
+    "normalize_project_root",
+    "projects_equivalent",
     "project_venv_reexec_argv",
     "project_venv_reexec_env",
     "resolve_cli_project",

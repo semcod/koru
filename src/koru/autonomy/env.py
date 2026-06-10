@@ -365,6 +365,13 @@ def plugin_required_for_ide(autopilot_ide: str) -> bool:
         return False
     if keyboard_fallback_when_plugin_missing(autopilot_ide):
         return False
+    try:
+        from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
+
+        if vdisplay_fallback_enabled(ide=autopilot_ide, plugin_connected=False):
+            return False
+    except Exception:
+        pass
     return True
 
 

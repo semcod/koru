@@ -78,7 +78,10 @@ def run_daemon_command(
         print(f"koru autopilot daemon: removed stale socket {path}")
     if _daemon_already_running(args, socket_path):
         return 0
-    project = args.project.resolve() if args.handoff else None
+    from koru.autonomous_runtime import normalize_project_root
+
+    raw_project = args.project.resolve() if args.handoff else None
+    project = normalize_project_root(raw_project) if raw_project is not None else None
     manager, stop_rc = _start_local_manager(
         socket_path=socket_path,
         project=project,

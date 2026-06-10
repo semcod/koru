@@ -59,6 +59,7 @@ class Plan:
 class SessionContext:
     ide: str | None = None
     instance: str | None = None
+    project: str | None = None
     lane_override_warned: bool = False
 
 
@@ -68,6 +69,67 @@ class AutoReadiness:
     ide: str
     instance: str
     reason: str = field(default="", compare=False)
+
+
+_CHAIN_CONTEXT: SessionContext | None = None
+
+
+def _project_from_argv(argv: Sequence[str]) -> str | None:
+    for idx, token in enumerate(argv):
+        if token == "--project" and idx + 1 < len(argv):
+            value = str(argv[idx + 1]).strip()
+            return value or None
+        if token.startswith("--project="):
+            value = token.split("=", 1)[1].strip()
+            return value or None
+    return None
+
+
+def _chain_project_from_plans(plans: Sequence[Plan]) -> str | None:
+    for plan in plans:
+        project = _project_from_argv(plan.auto_args)
+        if project:
+            return project
+    return None
+
+
+def _coru_normalize_project(path: Path | str | None) -> Path | None:
+    if path is None:
+        return None
+    try:
+        from koru.autonomous_runtime import normalize_project_root
+
+        return normalize_project_root(path)
+    except Exception:
+        pass
+    try:
+        current = Path(path).expanduser().resolve()
+    except OSError:
+        return None
+    for candidate in (current, *current.parents):
+        if (candidate / "pyproject.toml").is_file() and (candidate / ".git").exists():
+            return candidate
+    return current
+
+
+def _coru_projects_equivalent(left: Path | str | None, right: Path | str | None) -> bool:
+    try:
+        from koru.autonomous_runtime import projects_equivalent
+
+        return projects_equivalent(left, right)
+    except Exception:
+        left_norm = _coru_normalize_project(left)
+        right_norm = _coru_normalize_project(right)
+        if left_norm is None or right_norm is None:
+            return False
+        return left_norm == right_norm
+
+
+def _active_project_root() -> Path | None:
+    ctx = _CHAIN_CONTEXT
+    if ctx is not None and ctx.project:
+        return _coru_normalize_project(ctx.project)
+    return _coru_normalize_project(_project_repo_root())
 
 
 _VALID_LOG_FORMATS = frozenset({"human", "jsonl"})
@@ -222,6 +284,9 @@ def _run_default_autonomous(
     verbose: bool = False,
 ) -> int:
     ctx = SessionContext()
+    chain_project = _project_from_argv(auto_args)
+    if chain_project:
+        ctx.project = chain_project
     selected_lane = _agent_lane_from_auto_args(auto_args)
     resolved = _resolve_defaults(Plan(action="auto", instance=selected_lane), context=ctx)
     term_ide, term_source, integrated = _terminal_shell_context()
@@ -1351,12 +1416,15 @@ def _run_with_lane_environment(
 
 
 def _project_for_lane(ide: str, instance: str) -> str | None:
-    supervisor = _supervisor_lane_project(instance)
-    if supervisor:
-        return supervisor
+    ctx = _CHAIN_CONTEXT
+    if ctx is not None and ctx.project:
+        return ctx.project
     root = _project_repo_root()
     if root is not None:
         return str(root)
+    supervisor = _supervisor_lane_project(instance)
+    if supervisor:
+        return supervisor
     return None
 
 
@@ -1568,6 +1636,9 @@ def _fetch_manage_report(ide: str, instance: str) -> dict[str, Any] | None:
     if koru_exec is None:
         return None
     cmd = [*koru_exec, "autopilot", "manage", "--ide", ide, "--format", "json"]
+    project = _project_for_lane(ide, instance)
+    if project:
+        cmd.extend(["--project", project])
     env = _lane_subprocess_env(ide, instance)
     try:
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=_LANE_ENV_PAYLOAD_TIMEOUT_S, close_fds=True)
@@ -2134,7 +2205,7 @@ def _auto_ownership_gate(
     payload: dict[str, Any] | None,
 ) -> int:
     readiness = _import_koru_readiness_module()
-    root = _project_repo_root()
+    root = _active_project_root()
     socket_raw = str((payload or {}).get("socket") or "").strip()
     if readiness is None or root is None or not socket_raw:
         return 0
@@ -2147,6 +2218,17 @@ def _auto_ownership_gate(
 
     socket_path = Path(socket_raw)
     daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
+    if not daemon.ok and _readiness_issue_codes(daemon) == {"daemon_project_mismatch"}:
+        meta = status.get("daemon_metadata") if isinstance(status.get("daemon_metadata"), dict) else {}
+        meta_project = str(meta.get("project") or "").strip()
+        if meta_project and _coru_projects_equivalent(meta_project, root):
+            from koru.autonomous_readiness import ReadinessResult
+
+            daemon = ReadinessResult(ok=True, issues=())
+        else:
+            status = _restart_stale_lane_daemon(ide, instance, payload=payload)
+            if status is not None:
+                daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
     if not daemon.ok and _readiness_issue_codes(daemon) == {"daemon_version_mismatch"}:
         status = _restart_stale_lane_daemon(ide, instance, payload=payload)
         if status is not None:
@@ -2251,14 +2333,8 @@ def _status_has_keyboard_backend(status: Mapping[str, Any]) -> bool:
     return any(isinstance(item, Mapping) and bool(item.get("available")) for item in backends)
 
 
-def _auto_readiness_can_continue_with_keyboard_fallback(readiness: AutoReadiness) -> bool:
-    if readiness.reason != "plugin":
-        return False
-    try:
-        from koru.autonomy.env import plugin_required_for_ide
-    except Exception:
-        return False
-    if plugin_required_for_ide(readiness.ide):
+def _auto_readiness_can_continue_without_plugin(readiness: AutoReadiness) -> bool:
+    if readiness.reason not in {"plugin", "ownership"}:
         return False
     status = _lane_status_payload(readiness.ide, readiness.instance)
     if not isinstance(status, Mapping):
@@ -2267,16 +2343,46 @@ def _auto_readiness_can_continue_with_keyboard_fallback(readiness: AutoReadiness
         return False
     if _status_has_plugin_for_ide(status, readiness.ide):
         return False
+    try:
+        from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
+
+        if vdisplay_fallback_enabled(ide=readiness.ide, plugin_connected=False):
+            return True
+    except Exception:
+        pass
+    try:
+        from koru.autonomy.env import plugin_required_for_ide
+    except Exception:
+        return False
+    if plugin_required_for_ide(readiness.ide):
+        return False
     return _status_has_keyboard_backend(status)
+
+
+def _auto_readiness_can_continue_with_keyboard_fallback(readiness: AutoReadiness) -> bool:
+    return _auto_readiness_can_continue_without_plugin(readiness)
 
 
 def _run_auto_with_readiness(ide: str, instance: str, extra_args: Sequence[str]) -> int:
     with _bind_lane_session(ide, instance):
         readiness = _auto_readiness_gate(ide, instance)
         if readiness.rc != 0:
-            if _auto_readiness_can_continue_with_keyboard_fallback(readiness):
+            if _auto_readiness_can_continue_without_plugin(readiness):
+                try:
+                    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
+
+                    fallback = (
+                        "vdisplay semantic control"
+                        if vdisplay_fallback_enabled(
+                            ide=readiness.ide,
+                            plugin_connected=False,
+                        )
+                        else "keyboard fallback"
+                    )
+                except Exception:
+                    fallback = "keyboard fallback"
                 print(
-                    "[coru] readiness: plugin is not connected, but keyboard fallback "
+                    f"[coru] readiness: plugin is not connected, but {fallback} "
                     "is enabled; entering autonomous cycle",
                     file=sys.stderr,
                 )
@@ -2297,11 +2403,18 @@ def _lane_manage_fix(ide: str, instance: str) -> int:
         return 127
     # Check first without --fix to avoid unnecessary repairs when the lane is
     # already healthy (e.g. plugin already installed and socket responsive).
-    rc = _run_koru_lane(ide, instance, ["autopilot", "manage", "--ide", ide])
+    manage_args = ["autopilot", "manage", "--ide", ide]
+    project = _project_for_lane(ide, instance)
+    if project:
+        manage_args.extend(["--project", project])
+    rc = _run_koru_lane(ide, instance, manage_args)
     if rc == 0:
         return 0
     # Need repair.
-    rc = _run_koru_lane(ide, instance, ["autopilot", "manage", "--ide", ide, "--fix"])
+    repair_args = ["autopilot", "manage", "--ide", ide, "--fix"]
+    if project:
+        repair_args.extend(["--project", project])
+    rc = _run_koru_lane(ide, instance, repair_args)
     if rc != 0:
         rc = _run_koru_lane(
             ide,
@@ -2978,47 +3091,56 @@ def _execute_plans(
     context: SessionContext | None = None,
     announce: bool = False,
 ) -> int:
+    global _CHAIN_CONTEXT
     ctx = context or SessionContext()
+    chain_project = _chain_project_from_plans(plans)
+    if chain_project and not ctx.project:
+        ctx.project = chain_project
     verbose_mode = announce
     plans_list = list(plans)
     if not plans_list:
         return 0
     bootstrap = _resolve_defaults(plans_list[0], context=ctx)
     rc = 0
-    with _bind_lane_session(bootstrap.ide, bootstrap.instance):
-        for index, plan in enumerate(plans_list):
-            if announce:
-                print(f"[coru] step={plan.action} ide={plan.ide or ctx.ide or '-'} instance={plan.instance or ctx.instance or '-'}")
-            _emit_log(
-                component="planner",
-                level="info",
-                action=plan.action,
-                result="started",
-                verbose=verbose_mode,
-                ide=plan.ide or ctx.ide or "",
-                instance=plan.instance or ctx.instance or "",
-            )
-            rc = _execute_plan(plan, shell=shell, context=ctx)
-            _emit_log(
-                component="planner",
-                level="info" if rc == 0 else "error",
-                action=plan.action,
-                result="ok" if rc == 0 else "failed",
-                rc=rc,
-                verbose=verbose_mode,
-                ide=plan.ide or ctx.ide or "",
-                instance=plan.instance or ctx.instance or "",
-            )
-            if rc != 0:
-                if plan.action in {"manage", "status", "diagnose"} and _preflight_failure_ok_to_continue(plans_list, index):
-                    print(
-                        "[coru] preflight: autopilot bridge not ready; "
-                        "continuing to auto (koru will retry and/or repair)",
-                        file=sys.stderr,
-                    )
-                    continue
-                return rc
-    return rc
+    previous_chain_context = _CHAIN_CONTEXT
+    _CHAIN_CONTEXT = ctx
+    try:
+        with _bind_lane_session(bootstrap.ide, bootstrap.instance):
+            for index, plan in enumerate(plans_list):
+                if announce:
+                    print(f"[coru] step={plan.action} ide={plan.ide or ctx.ide or '-'} instance={plan.instance or ctx.instance or '-'}")
+                _emit_log(
+                    component="planner",
+                    level="info",
+                    action=plan.action,
+                    result="started",
+                    verbose=verbose_mode,
+                    ide=plan.ide or ctx.ide or "",
+                    instance=plan.instance or ctx.instance or "",
+                )
+                rc = _execute_plan(plan, shell=shell, context=ctx)
+                _emit_log(
+                    component="planner",
+                    level="info" if rc == 0 else "error",
+                    action=plan.action,
+                    result="ok" if rc == 0 else "failed",
+                    rc=rc,
+                    verbose=verbose_mode,
+                    ide=plan.ide or ctx.ide or "",
+                    instance=plan.instance or ctx.instance or "",
+                )
+                if rc != 0:
+                    if plan.action in {"manage", "status", "diagnose"} and _preflight_failure_ok_to_continue(plans_list, index):
+                        print(
+                            "[coru] preflight: autopilot bridge not ready; "
+                            "continuing to auto (koru will retry and/or repair)",
+                            file=sys.stderr,
+                        )
+                        continue
+                    return rc
+        return rc
+    finally:
+        _CHAIN_CONTEXT = previous_chain_context
 
 
 def _chat_print_header(
