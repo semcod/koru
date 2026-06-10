@@ -236,6 +236,27 @@ class ImglDesktopBackend:
 
 
 @dataclass
+class VdisplayControlBackend:
+    """Semantic desktop/browser/terminal control via vdisplay control plane."""
+
+    dry_run: bool = False
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, ticket_id
+        from koru.integrations.vdisplay_client import send_chat
+
+        return send_chat(prompt, ide=ide, submit=submit, dry_run=self.dry_run)
+
+
+@dataclass
 class Nlp2UriDesktopBackend:
     """Window-management backend via nlp2uri desktop-window://focus.
 
@@ -306,6 +327,11 @@ def build_agent_backend(
             "1", "true", "yes", "on",
         }
         return ImglDesktopBackend(dry_run=dry)
+    if bid in ("vdisplay", "vdisplay_control") or normalized == "vdisplay_semantic_control":
+        dry = os.environ.get("KORU_VDISPLAY_DRY_RUN", "").strip().lower() in {
+            "1", "true", "yes", "on",
+        }
+        return VdisplayControlBackend(dry_run=dry)
     if bid in ("none", "noop", ""):
         return NoopBackend(reason=noop_reason)
     raise ValueError(f"unknown agent backend id: {backend_id!r}")

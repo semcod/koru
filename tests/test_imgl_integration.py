@@ -15,7 +15,21 @@ from koruapi import desktop_uri
 
 def test_imgl_fallback_disabled_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("KORU_IMGL_FALLBACK", raising=False)
+    monkeypatch.setattr(imgl_client, "imgl_available", lambda: False)
     assert autonomous_cycle_gate.try_imgl_gui_fallback("hello", submit=True, ide="cursor") is None
+
+
+def test_imgl_fallback_auto_enables_for_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_IMGL_FALLBACK", raising=False)
+    monkeypatch.setattr(imgl_client, "imgl_available", lambda: True)
+    assert imgl_client.imgl_fallback_enabled(ide="jetbrains") is True
+    assert imgl_client.imgl_prefer_before_keyboard("jetbrains") is True
+
+
+def test_imgl_fallback_explicit_off_blocks_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_IMGL_FALLBACK", "0")
+    monkeypatch.setattr(imgl_client, "imgl_available", lambda: True)
+    assert imgl_client.imgl_fallback_enabled(ide="jetbrains") is False
 
 
 def test_imgl_fallback_calls_send_chat(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -124,6 +138,46 @@ def test_desktop_uri_plan_suggests_imgl_for_ui_prompt() -> None:
     assert payload.get("ok") is True
     assert payload.get("suggested_transport") == "imgl"
     assert payload.get("transport") == "imgl"
+
+
+def test_drive_retry_prefers_imgl_before_daemon_for_jetbrains(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autonomous_cycle_drive_retry import _invoke_client_autopilot_drive
+
+    class OkClient:
+        def drive(self, *_args, **_kwargs):
+            return {"ok": True, "backend": "os_injector"}
+
+    order: list[str] = []
+
+    def fake_imgl(*_args, **_kwargs):
+        order.append("imgl")
+        return {"ok": True, "backend": "imgl"}
+
+    monkeypatch.setattr(
+        "koru.integrations.imgl_client.imgl_prefer_before_keyboard",
+        lambda ide: ide == "jetbrains",
+    )
+    monkeypatch.setattr(
+        "koru.autonomous_cycle_drive_retry._try_imgl_gui_fallback",
+        fake_imgl,
+    )
+    monkeypatch.setattr(
+        "koru.autonomous_cycle_drive_retry._try_nlp2uri_ide_control",
+        lambda *_a, **_k: None,
+    )
+
+    reply, ok = _invoke_client_autopilot_drive(
+        OkClient(),
+        prompt="hello",
+        submit=True,
+        autopilot_ide="jetbrains",
+        require_plugin=False,
+    )
+    assert ok is True
+    assert reply["backend"] == "imgl"
+    assert order == ["imgl"]
 
 
 def test_drive_retry_prefers_imgl_before_gillm(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -79,6 +79,15 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
         primary_code="src/koru/integrations/imgl_client.py",
     ),
     AgentBackendProfile(
+        id="vdisplay_semantic_control",
+        transport="vdisplay control plane (AT-SPI / browser / terminal / X11 / vision)",
+        can_push_chat=True,
+        can_pull_chat_text=False,
+        needs_gui_session=True,
+        mcp_tools_only=False,
+        primary_code="src/koru/integrations/vdisplay_client.py",
+    ),
+    AgentBackendProfile(
         id="os_keyboard_injector",
         transport="xdotool / wtype / ydotool / clipboard",
         can_push_chat=True,
@@ -98,6 +107,8 @@ _BACKEND_ALIASES: Final[dict[str, str]] = {
     "imgl": "imgl_vision_driver",
     "imgl_vision": "imgl_vision_driver",
     "imgl_desktop": "imgl_vision_driver",
+    "vdisplay": "vdisplay_semantic_control",
+    "vdisplay_control": "vdisplay_semantic_control",
 }
 
 

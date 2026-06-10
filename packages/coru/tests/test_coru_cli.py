@@ -588,6 +588,69 @@ def test_maybe_reexec_into_project_python_executes(monkeypatch, tmp_path) -> Non
     assert captured["env"]["CORU_REEXEC_DONE"] == "1"
 
 
+def test_project_venv_python_prefers_venv_with_coru_installed(monkeypatch, tmp_path) -> None:
+    repo = tmp_path / "project"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    (repo / "pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")
+
+    dot_venv_python = repo / ".venv" / "bin" / "python"
+    dot_venv_python.parent.mkdir(parents=True)
+    dot_venv_python.write_text("", encoding="utf-8")
+
+    venv_python = repo / "venv" / "bin" / "python"
+    venv_python.parent.mkdir(parents=True)
+    venv_python.write_text("", encoding="utf-8")
+    coru_pkg = repo / "venv" / "lib" / "python3.13" / "site-packages" / "coru"
+    coru_pkg.mkdir(parents=True)
+    (coru_pkg / "__init__.py").write_text("", encoding="utf-8")
+
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(coru_cli, "_repo_root", lambda: None)
+
+    assert coru_cli._project_venv_python() == str(venv_python)
+
+
+def test_maybe_reexec_skips_when_target_venv_lacks_coru(monkeypatch, tmp_path) -> None:
+    target = tmp_path / ".venv" / "bin" / "python"
+    target.parent.mkdir(parents=True)
+    target.write_text("", encoding="utf-8")
+
+    monkeypatch.delenv("CORU_DISABLE_AUTO_REEXEC", raising=False)
+    monkeypatch.delenv("CORU_REEXEC_DONE", raising=False)
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.setattr(coru_cli, "_project_venv_python", lambda: str(target))
+    monkeypatch.setattr(coru_cli.sys, "executable", "/tmp/global/bin/python")
+    monkeypatch.setattr(coru_cli, "_module_runtime_source_dir", lambda _module: None)
+
+    assert coru_cli._maybe_reexec_into_project_python(["status"]) is False
+
+
+def test_maybe_reexec_uses_installed_module_source_dir(monkeypatch, tmp_path) -> None:
+    target = tmp_path / ".venv" / "bin" / "python"
+    target.parent.mkdir(parents=True)
+    target.write_text("", encoding="utf-8")
+    source_dir = tmp_path / "site-packages"
+    captured: dict[str, object] = {}
+
+    def fake_execve(path, argv, env):
+        captured["argv"] = list(argv)
+        raise RuntimeError("exec-called")
+
+    monkeypatch.delenv("CORU_DISABLE_AUTO_REEXEC", raising=False)
+    monkeypatch.delenv("CORU_REEXEC_DONE", raising=False)
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.setattr(coru_cli, "_project_venv_python", lambda: str(target))
+    monkeypatch.setattr(coru_cli.sys, "executable", "/tmp/global/bin/python")
+    monkeypatch.setattr(coru_cli, "_module_runtime_source_dir", lambda _module: source_dir)
+    monkeypatch.setattr(coru_cli.os, "execve", fake_execve)
+
+    with pytest.raises(RuntimeError, match="exec-called"):
+        coru_cli._maybe_reexec_into_project_python(["status"])
+
+    assert str(source_dir) in captured["argv"][2]
+
+
 def test_maybe_reexec_into_project_python_uses_venv_symlink_path(monkeypatch, tmp_path) -> None:
     base_python = tmp_path / "miniconda" / "bin" / "python"
     base_python.parent.mkdir(parents=True)
@@ -683,6 +746,28 @@ def test_auto_without_lane_uses_defaults(monkeypatch) -> None:
     assert called["ide"] == "auto"
     assert called["instance"] == "main"
     assert called["extra_args"] == []
+
+
+def test_ide_auto_shorthand_dispatches_auto_command(monkeypatch) -> None:
+    called: dict[str, object] = {}
+
+    def fake_run_auto_with_readiness(ide: str, instance: str, extra_args) -> int:
+        called["ide"] = ide
+        called["instance"] = instance
+        called["extra_args"] = list(extra_args)
+        return 0
+
+    monkeypatch.setattr(coru_cli, "_terminal_ide_hint", lambda: None)
+    monkeypatch.setattr(coru_cli, "_run_auto_with_readiness", fake_run_auto_with_readiness)
+
+    rc = coru_cli.main(["cursor", "auto"])
+
+    assert rc == 0
+    assert called == {
+        "ide": "cursor",
+        "instance": coru_cli._infer_default_instance(ide="cursor"),
+        "extra_args": [],
+    }
 
 
 def test_lane_auto_injects_agent_lane(monkeypatch) -> None:

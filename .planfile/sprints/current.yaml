@@ -24238,9 +24238,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:packages/coru/src/coru/cli.py:packages.coru.src.coru.cli._infer_default_instance'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T14:08:39.467846Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/cli.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T14:08:39.644763+00:00'
       id: STARTER-479
       labels:
       - llm-ready
@@ -24249,15 +24266,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: packages.coru.src.coru.cli._infer_default_instance
         (CC=26)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:04.819593Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:04.829829Z'
+      updated_at: '2026-06-09T14:08:39.644720+00:00'
     STARTER-480:
       acceptance_criteria: []
       blocked_by: []
@@ -24273,9 +24293,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:packages/coru/src/coru/repair/diagnostics.py:packages.coru.src.coru.repair.diagnostics.collect_problems_from_drive_result'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T14:11:52.339635Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/repair/diagnostics.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T14:11:52.551831+00:00'
       id: STARTER-480
       labels:
       - llm-ready
@@ -24284,15 +24321,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: packages.coru.src.coru.repair.diagnostics.collect_problems_from_drive_result
         (CC=34)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:06.474912Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:06.485800Z'
+      updated_at: '2026-06-09T14:11:52.551791+00:00'
     STARTER-481:
       acceptance_criteria: []
       blocked_by: []
@@ -24308,9 +24348,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:packages/coru/src/coru/repair/diagnostics.py:packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T14:13:50.702608Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/repair/diagnostics.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T14:13:51.000964+00:00'
       id: STARTER-481
       labels:
       - llm-ready
@@ -24319,15 +24376,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report
         (CC=25)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:08.160561Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:08.164456Z'
+      updated_at: '2026-06-09T14:13:51.000919+00:00'
     STARTER-482:
       acceptance_criteria: []
       blocked_by: []
@@ -24343,9 +24403,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:packages/coru/src/coru/repair/pipeline.py:packages.coru.src.coru.repair.pipeline.run_repair_pipeline'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T14:33:16.174283Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/repair/pipeline.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T14:33:16.329178+00:00'
       id: STARTER-482
       labels:
       - llm-ready
@@ -24354,15 +24431,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: packages.coru.src.coru.repair.pipeline.run_repair_pipeline
         (CC=33)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:09.800013Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:09.811390Z'
+      updated_at: '2026-06-09T14:33:16.329143+00:00'
     STARTER-483:
       acceptance_criteria: []
       blocked_by: []
@@ -24378,9 +24458,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_lane_terminal_socket_alignment'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T14:35:51.958804Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomous_readiness.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T14:35:52.106327+00:00'
       id: STARTER-483
       labels:
       - llm-ready
@@ -24389,15 +24486,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_lane_terminal_socket_alignment
         (CC=32)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:11.435253Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:11.446420Z'
+      updated_at: '2026-06-09T14:35:52.106290+00:00'
     STARTER-484:
       acceptance_criteria: []
       blocked_by: []
@@ -24413,9 +24513,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_runtime_consistency'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T15:00:14.991833Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomous_readiness.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T15:00:15.168337+00:00'
       id: STARTER-484
       labels:
       - llm-ready
@@ -24424,15 +24541,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_runtime_consistency
         (CC=27)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:13.069247Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:13.072607Z'
+      updated_at: '2026-06-09T15:00:15.168296+00:00'
     STARTER-485:
       acceptance_criteria: []
       blocked_by: []
@@ -24448,9 +24568,26 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:src/koruide/command_picker.py:src.koruide.command_picker._sanitize_candidates'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T15:00:32.754666Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koruide/command_picker.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T15:00:32.921806+00:00'
       id: STARTER-485
       labels:
       - llm-ready
@@ -24459,15 +24596,18 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: src.koruide.command_picker._sanitize_candidates
         (CC=25)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:14.678214Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:14.689552Z'
+      updated_at: '2026-06-09T15:00:32.921764+00:00'
     STARTER-486:
       acceptance_criteria: []
       blocked_by: []
@@ -24484,9 +24624,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_orchestrator.py:321:God
         Function: _drive_autopilot_once'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T15:11:59.119377Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomous_cycle_orchestrator.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T15:11:59.349118+00:00'
       id: STARTER-486
       labels:
       - llm-ready
@@ -24494,15 +24651,18 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Function: _drive_autopilot_once'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:16.309340Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:16.320698Z'
+      updated_at: '2026-06-09T15:11:59.349066+00:00'
     STARTER-487:
       acceptance_criteria: []
       blocked_by: []
@@ -24521,9 +24681,31 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_skip_conditions.py:506:God
         Function: _manual_send_required_skip_result'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T15:16:11.904452Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomous_cycle_skip_conditions.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T15:12:01.961366+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-09T15:16:12.073089+00:00'
       id: STARTER-487
       labels:
       - llm-ready
@@ -24531,15 +24713,18 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Function: _manual_send_required_skip_result'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:17.925986Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:17.937453Z'
+      updated_at: '2026-06-09T15:16:12.073049+00:00'
     STARTER-488:
       acceptance_criteria: []
       blocked_by: []
@@ -24556,9 +24741,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/repair/pipeline.py:74:God
         Function: manual_vsix_unpack'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T15:12:04.171800Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/repair/pipeline.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T15:12:04.434353+00:00'
       id: STARTER-488
       labels:
       - llm-ready
@@ -24566,15 +24768,18 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Function: manual_vsix_unpack'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:19.557782Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:19.569235Z'
+      updated_at: '2026-06-09T15:12:04.434311+00:00'
     STARTER-489:
       acceptance_criteria: []
       blocked_by: []
@@ -24592,9 +24797,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/cli.py:1:God
         Module: packages.coru.src.coru.cli'
+      execution:
+        attempt: 0
+        finished_at: '2026-06-09T15:16:28.645361Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/cli.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-09T15:16:28.814424+00:00'
       id: STARTER-489
       labels:
       - llm-ready
@@ -24602,15 +24824,18 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Module: packages.coru.src.coru.cli'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:53:21.202153Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:53:21.213450Z'
+      updated_at: '2026-06-09T15:16:28.814392+00:00'
     STARTER-490:
       acceptance_criteria: []
       blocked_by: []
@@ -24630,7 +24855,14 @@ sprint:
         Surgery: _'
       files:
       - src/koru/autonomous_runtime.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - status
+        previous_status: open
+        source: planfile.store
+        status: skipped
+        timestamp: '2026-06-09T15:26:51.483507+00:00'
       id: STARTER-490
       labels:
       - llm-ready
@@ -24644,9 +24876,9 @@ sprint:
         timestamp: '2026-06-03T09:53:22.826497Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
-      updated_at: '2026-06-03T09:53:22.837853Z'
+      updated_at: '2026-06-09T15:26:51.483458+00:00'
     STARTER-491:
       acceptance_criteria: []
       blocked_by: []
@@ -24680,7 +24912,7 @@ sprint:
         timestamp: '2026-06-03T09:53:24.446442Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:24.457862Z'
     STARTER-492:
@@ -24716,7 +24948,7 @@ sprint:
         timestamp: '2026-06-03T09:53:26.092261Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:26.097666Z'
     STARTER-493:
@@ -24752,7 +24984,7 @@ sprint:
         timestamp: '2026-06-03T09:53:27.723000Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:27.726244Z'
     STARTER-494:
@@ -24788,7 +25020,7 @@ sprint:
         timestamp: '2026-06-03T09:53:29.356300Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:29.368048Z'
     STARTER-495:
@@ -24824,7 +25056,7 @@ sprint:
         timestamp: '2026-06-03T09:53:30.992636Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:31.003991Z'
     STARTER-496:
@@ -24860,7 +25092,7 @@ sprint:
         timestamp: '2026-06-03T09:53:32.636659Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:32.647793Z'
     STARTER-497:
@@ -24896,7 +25128,7 @@ sprint:
         timestamp: '2026-06-03T09:53:34.312609Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:34.315009Z'
     STARTER-498:
@@ -24932,7 +25164,7 @@ sprint:
         timestamp: '2026-06-03T09:53:35.965057Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:53:35.971825Z'
     STARTER-499:
@@ -24967,7 +25199,7 @@ sprint:
         timestamp: '2026-06-03T09:55:34.533123Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:55:34.544237Z'
     STARTER-500:
@@ -25002,7 +25234,7 @@ sprint:
         timestamp: '2026-06-03T09:55:36.219231Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: skipped
       sync: {}
       updated_at: '2026-06-03T09:55:36.223057Z'
     STARTER-501:

@@ -13,6 +13,9 @@ from typing import Any
 _IMGL_DIRECT = False
 _IMGL_IMPORT_ERROR: str | None = None
 
+# IDE lanes without a koru plugin socket — vision drive is safer than blind wtype.
+_KEYBOARD_ONLY_IDES = frozenset({"jetbrains", "pycharm", "zed"})
+
 try:
     from nlp2imgl.control import apply_nl_with_diag as _apply_nl_with_diag
     from nlp2imgl.control import default_image_path as _default_image_path
@@ -52,9 +55,28 @@ def imgl_missing_message() -> str:
     return hint
 
 
-def imgl_fallback_enabled() -> bool:
+def imgl_fallback_enabled(*, ide: str | None = None) -> bool:
+    """Whether autonomous/daemon drive may use imgl vision control.
+
+    Explicit ``KORU_IMGL_FALLBACK=1`` always enables; ``=0`` disables.
+    When unset, auto-enables for keyboard-only IDE lanes (jetbrains, zed)
+    if nlp2imgl or REST is available.
+    """
     raw = os.environ.get("KORU_IMGL_FALLBACK", "").strip().lower()
-    return raw in {"1", "true", "yes", "on"}
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if ide:
+        canon = ide.strip().lower()
+        if canon in _KEYBOARD_ONLY_IDES and imgl_available():
+            return True
+    return False
+
+
+def imgl_prefer_before_keyboard(ide: str) -> bool:
+    """Prefer OCR-guided imgl over blind os_injector/wtype for this IDE."""
+    return imgl_fallback_enabled(ide=ide) and imgl_available()
 
 
 def imgl_desktop_transport_enabled() -> bool:
@@ -226,9 +248,12 @@ def _submit_key_for_ide(ide: str, submit: bool) -> str:
 
     if not effective_ide_control_submit(submit=submit, ide=ide):
         return ""
-    if ide.strip().lower() == "cursor":
-        return "ctrl+Return"
-    return "Return"
+    try:
+        from gillm.config import cached_config
+
+        return cached_config().submit_key_for(ide.strip().lower())
+    except Exception:
+        return "ctrl+Return" if ide.strip().lower() in {"cursor", "jetbrains", "pycharm"} else "Return"
 
 
 def send_chat(
@@ -250,8 +275,21 @@ def send_chat(
             "submit": submit,
         }
 
+    try:
+        image = resolve_image(refresh=True)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "backend": "imgl",
+            "message": str(exc),
+            "type": "error",
+            "fallback_from": "plugin",
+            "ide": ide,
+        }
+
     type_result = execute_nl(
         f"wpisz {prompt} w Chat input",
+        image=image,
         execute=True,
         dry_run=False,
     )
@@ -267,7 +305,7 @@ def send_chat(
 
     time.sleep(0.2)
     key_prompt = "naciśnij ctrl+enter" if "ctrl" in key.lower() else "naciśnij enter"
-    key_result = execute_nl(key_prompt, execute=True, dry_run=False)
+    key_result = execute_nl(key_prompt, image=image, execute=True, dry_run=False)
     ok = bool(key_result.get("ok"))
     return {
         "ok": ok,
@@ -291,6 +329,7 @@ __all__ = [
     "imgl_available",
     "imgl_desktop_transport_enabled",
     "imgl_fallback_enabled",
+    "imgl_prefer_before_keyboard",
     "imgl_missing_message",
     "is_ui_prompt",
     "resolve_image",

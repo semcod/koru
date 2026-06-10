@@ -151,6 +151,31 @@ def _try_gillm_gui_fallback(
     )
 
 
+def _try_vdisplay_control_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+    plugin_connected: bool = False,
+) -> dict[str, Any] | None:
+    from koru import autonomous as _autonomous_mod
+
+    return _autonomous_mod._try_vdisplay_control_fallback(
+        prompt,
+        submit=submit,
+        ide=ide,
+        project=project,
+        plugin_connected=plugin_connected,
+    )
+
+
+def _try_nlp2uri_focus_fallback(prompt: str, *, submit: bool, ide: str) -> dict[str, Any] | None:
+    from koru import autonomous as _autonomous_mod
+
+    return _autonomous_mod.try_nlp2uri_focus_fallback(prompt, submit=submit, ide=ide)
+
+
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
     """Delegate to :func:`koru.autonomous._try_os_injector_fallback` (monkeypatch-friendly)."""
     from koru import autonomous as _autonomous_mod
@@ -306,6 +331,18 @@ def _invoke_client_autopilot_drive(
             return nlp2uri, True
         if require_plugin:
             return nlp2uri, False
+    if not require_plugin:
+        from koru.integrations.imgl_client import imgl_prefer_before_keyboard
+
+        if imgl_prefer_before_keyboard(autopilot_ide):
+            imgl_first = _try_imgl_gui_fallback(
+                prompt,
+                submit=submit,
+                ide=autopilot_ide,
+                project=project,
+            )
+            if imgl_first is not None and imgl_first.get("ok"):
+                return imgl_first, True
     reply = client.drive(prompt, **drive_kwargs)
     ok = bool(reply.get("ok", True))
     if ok or require_plugin:
@@ -326,6 +363,18 @@ def _invoke_client_autopilot_drive(
     )
     if gillm is not None and gillm.get("ok"):
         return gillm, True
+    vdisplay = _try_vdisplay_control_fallback(
+        prompt,
+        submit=submit,
+        ide=autopilot_ide,
+        project=project,
+        plugin_connected=bool(reply.get("ok")),
+    )
+    if vdisplay is not None and vdisplay.get("ok"):
+        return vdisplay, True
+    nlp2uri_focus = _try_nlp2uri_focus_fallback(prompt, submit=submit, ide=autopilot_ide)
+    if nlp2uri_focus is not None and nlp2uri_focus.get("ok"):
+        return nlp2uri_focus, True
     fallback = _try_os_injector_fallback(prompt, submit=submit)
     if fallback is not None:
         return fallback, bool(fallback.get("ok", True))

@@ -101,6 +101,15 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
         )
         return
     daemon.log("drive: routing via keyboard/os_injector fallback")
+    if _drive_via_imgl_backend(
+        daemon=daemon,
+        client=client,
+        msg=msg,
+        ide_pref=ide_pref,
+        text=text,
+        submit=submit,
+    ):
+        return
     _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
 
 
@@ -561,6 +570,61 @@ def _try_os_injector_drive(
             f"uruchom: koru autopilot calibrate --ide {target_id}"
         )
     return result
+
+
+def _drive_via_imgl_backend(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide_pref: str | None,
+    text: str,
+    submit: bool,
+) -> bool:
+    """Vision-guided chat drive via imgl (OCR + click/type) before blind keyboard."""
+    from koru.integrations.imgl_client import imgl_prefer_before_keyboard, send_chat
+
+    target_id = (ide_pref or "auto").strip().lower()
+    if not imgl_prefer_before_keyboard(target_id):
+        return False
+    preview = text.replace("\n", " ")[:100]
+    daemon.log(
+        f"drive → imgl/{target_id}: vision-guided chat "
+        f"({len(text)} zn) «{preview}» submit={submit}"
+    )
+    try:
+        result = send_chat(text, ide=target_id, submit=submit)
+    except Exception as exc:
+        daemon.log(f"drive → imgl/{target_id} failed: {exc}; falling back to keyboard")
+        return False
+    if not result.get("ok"):
+        daemon.log(
+            f"drive → imgl/{target_id} declined: "
+            f"{result.get('message') or result.get('error') or 'unknown'}; "
+            "falling back to keyboard"
+        )
+        return False
+    info = {
+        "backend": "imgl",
+        "submitted": bool(result.get("submitted", submit)),
+        "verification": "vision",
+        "tool_id": target_id,
+    }
+    if result.get("type_step"):
+        info["type_step"] = result["type_step"]
+    if result.get("key_step"):
+        info["key_step"] = result["key_step"]
+    daemon._send(client, ack(msg.id or "", info=info).encode())
+    daemon.log(f"drive → {target_id} via imgl ({len(text)} chars, submit={submit})")
+    daemon.audit.record(
+        "drive",
+        ide=target_id,
+        backend="imgl",
+        chars=len(text),
+        submit=submit,
+        ok=True,
+    )
+    return True
 
 
 def _drive_via_keyboard(

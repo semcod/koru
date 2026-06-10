@@ -5,6 +5,7 @@ from koru.integrations.imgl_client import (
     imgl_available,
     imgl_fallback_enabled,
     imgl_missing_message,
+    imgl_prefer_before_keyboard,
     send_chat,
 )
 
@@ -13,5 +14,6 @@ __all__ = [
     "imgl_available",
     "imgl_fallback_enabled",
     "imgl_missing_message",
+    "imgl_prefer_before_keyboard",
     "send_chat",
 ]

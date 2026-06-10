@@ -160,10 +160,10 @@ def try_nlp2uri_focus_fallback(prompt: str, *, submit: bool, ide: str) -> dict[s
     return _nlp2uri_desktop_send(prompt, ide=ide, submit=submit, dry_run=False)
 
 
-def imgl_fallback_enabled() -> bool:
+def imgl_fallback_enabled(*, ide: str | None = None) -> bool:
     from koru.integrations.imgl_client import imgl_fallback_enabled as _enabled
 
-    return _enabled()
+    return _enabled(ide=ide)
 
 
 def try_imgl_gui_fallback(
@@ -175,10 +175,11 @@ def try_imgl_gui_fallback(
 ) -> dict[str, Any] | None:
     """Best-effort vision-guided fallback via imgl (nlp2imgl / rest2imgl).
 
-    Enabled when ``KORU_IMGL_FALLBACK=1``.
+    Enabled when ``KORU_IMGL_FALLBACK=1`` or for keyboard-only IDE lanes
+    (jetbrains/zed) when imgl is installed.
     """
     del project
-    if not imgl_fallback_enabled():
+    if not imgl_fallback_enabled(ide=ide):
         return None
     from koru.integrations.imgl_client import imgl_available, send_chat
 
@@ -235,6 +236,41 @@ def try_gillm_gui_fallback(
         return {
             "ok": False,
             "backend": "gillm",
+            "message": str(exc),
+            "type": "error",
+            "fallback_from": "plugin",
+        }
+
+
+def try_vdisplay_control_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+    plugin_connected: bool = False,
+) -> dict[str, Any] | None:
+    """Full semantic environment control via vdisplay when simplified paths fail.
+
+    Enabled with ``KORU_VDISPLAY_CONTROL_FALLBACK=auto`` (default on Wayland /
+    missing plugin) or ``=1`` to force when vdisplay is installed.
+    """
+    del project
+    from koru.integrations.vdisplay_client import (
+        send_chat,
+        vdisplay_fallback_enabled,
+    )
+
+    if not vdisplay_fallback_enabled(ide=ide, plugin_connected=plugin_connected):
+        return None
+    try:
+        reply = send_chat(prompt, ide=ide, submit=submit)
+        reply.setdefault("fallback_from", "plugin")
+        return reply
+    except Exception as exc:
+        return {
+            "ok": False,
+            "backend": "vdisplay",
             "message": str(exc),
             "type": "error",
             "fallback_from": "plugin",
@@ -366,4 +402,5 @@ __all__ = [
     "try_nlp2uri_focus_fallback",
     "try_os_injector_fallback",
     "try_os_injector_fallback_with_deps",
+    "try_vdisplay_control_fallback",
 ]

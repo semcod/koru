@@ -98,22 +98,33 @@ def resolve_cli_project(raw_args: list[str], *, cwd: Path | None = None) -> Path
     return (cwd or Path.cwd()).resolve()
 
 
+def _project_venv_roots(project: Path) -> list[Path]:
+    roots: list[Path] = []
+    for name in (".venv", "venv"):
+        candidate = project / name
+        if candidate.is_dir():
+            roots.append(candidate)
+    return roots
+
+
 def _local_project_koru(project: Path) -> Path | None:
-    local_koru = (project / ".venv" / "bin" / "koru").resolve()
-    if local_koru.is_file() and os.access(local_koru, os.X_OK):
-        return local_koru
+    for venv_root in _project_venv_roots(project):
+        local_koru = (venv_root / "bin" / "koru").resolve()
+        if local_koru.is_file() and os.access(local_koru, os.X_OK):
+            return local_koru
     return None
 
 
 def running_outside_project_venv(project: Path) -> bool:
-    """True when this Python was not launched from ``project/.venv``."""
-    local_venv = (project / ".venv").resolve()
-    if not (local_venv / "bin").is_dir():
+    """True when this Python was not launched from a repo-local virtualenv."""
+    local_venvs = _project_venv_roots(project)
+    if not local_venvs:
         return False
     executable = Path(sys.executable).expanduser()
     prefix = Path(sys.prefix).expanduser()
-    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(prefix, local_venv):
-        return False
+    for local_venv in local_venvs:
+        if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(prefix, local_venv):
+            return False
     return _local_project_koru(project) is not None
 
 

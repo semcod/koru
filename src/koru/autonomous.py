@@ -176,6 +176,23 @@ def _try_gillm_gui_fallback(
     )
 
 
+def _try_vdisplay_control_fallback(
+    prompt: str,
+    *,
+    submit: bool,
+    ide: str,
+    project: Path | None = None,
+    plugin_connected: bool = False,
+) -> dict[str, Any] | None:
+    return _autonomous_cycle_gate.try_vdisplay_control_fallback(
+        prompt,
+        submit=submit,
+        ide=ide,
+        project=project,
+        plugin_connected=plugin_connected,
+    )
+
+
 def _try_nlp2uri_ide_control(
     prompt: str,
     *,
@@ -523,6 +540,7 @@ def _run_cycle(**kwargs: Any) -> tuple[ScanResult | None, QueueLoopResult, str, 
             "is_pipeline_enabled": is_pipeline_enabled,
             "_run_idle_diagnostics": _run_idle_diagnostics,
             "_try_gillm_gui_fallback": _try_gillm_gui_fallback,
+            "_try_vdisplay_control_fallback": _try_vdisplay_control_fallback,
             "_try_nlp2uri_ide_control": _try_nlp2uri_ide_control,
             "_try_os_injector_fallback": _try_os_injector_fallback,
         },

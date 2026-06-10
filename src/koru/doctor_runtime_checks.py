@@ -135,17 +135,25 @@ def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
     package_version = _installed_koru_version()
     source_version = _read_project_version(project / "pyproject.toml")
     path_koru = shutil.which("koru")
-    project_koru = project / ".venv" / "bin" / "koru"
+    project_koru: Path | None = None
+    for venv_name in (".venv", "venv"):
+        candidate = project / venv_name / "bin" / "koru"
+        if candidate.is_file():
+            project_koru = candidate
+            break
     detail_bits = [
         f"python={sys.executable}",
         f"package={package_version or '-'}",
         f"source_pyproject={source_version or '-'}",
         f"path_koru={path_koru or '-'}",
     ]
-    if project_koru.is_file():
+    if project_koru is not None and project_koru.is_file():
         detail_bits.append(f"project_venv_koru={project_koru}")
     status, extra_bits = _koru_path_version_issues(
-        project_koru, path_koru, package_version, source_version
+        project_koru or project / ".venv" / "bin" / "koru",
+        path_koru,
+        package_version,
+        source_version,
     )
     detail_bits.extend(extra_bits)
     return status, "; ".join(detail_bits)
@@ -166,22 +174,24 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
 
 
 def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
-    project_venv = project / ".venv"
+    project_venvs = [project / ".venv", project / "venv"]
+    existing_venvs = [venv for venv in project_venvs if venv.exists()]
     virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
     executable = Path(sys.executable)
-    python_from_project_venv = _is_relative_to(executable, project_venv)
+    python_from_project_venv = any(_is_relative_to(executable, venv) for venv in existing_venvs)
     detail_bits = [
         f"virtual_env={virtual_env or '-'}",
         f"python={sys.executable}",
-        f"project_venv={project_venv}",
+        f"project_venv={existing_venvs[0] if existing_venvs else project / '.venv'}",
     ]
-    if not project_venv.exists():
+    if not existing_venvs:
         return WARN, "; ".join(detail_bits + ["project_venv_missing=true"])
 
     status = PASS
     if virtual_env:
         try:
-            if Path(virtual_env).expanduser().resolve() != project_venv.resolve():
+            virtual_env_path = Path(virtual_env).expanduser().resolve()
+            if not any(virtual_env_path == venv.resolve() for venv in existing_venvs):
                 status = WARN
                 detail_bits.append("virtual_env_mismatch=true")
         except OSError:
@@ -195,7 +205,7 @@ def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
         detail_bits.append("python_not_from_project_venv=true")
 
     path_koru = shutil.which("koru")
-    if path_koru and not _is_relative_to(Path(path_koru), project_venv):
+    if path_koru and not any(_is_relative_to(Path(path_koru), venv) for venv in existing_venvs):
         status = WARN
         detail_bits.append("path_koru_not_from_project_venv=true")
     return status, "; ".join(detail_bits)

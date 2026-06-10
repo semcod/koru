@@ -8,7 +8,9 @@ owns the current shell.  It is used by the ``coru`` CLI so that commands like
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 _VALID_AUTOPILOT_IDES = frozenset(
     {"auto", "vscode", "vscodium", "cursor", "windsurf", "jetbrains", "zed", "antigravity"}
@@ -79,31 +81,34 @@ def _windsurf_terminal_marker() -> bool:
     )
 
 
-def _terminal_shell_context_fallback(
-    ide_from_vscode_pid: Any = None,
-    vscode_family_env_hint: Any = None,
-    windsurf_terminal_marker: Any = None,
-) -> tuple[str | None, str, bool]:
-    """Provider-first shell context detection (brand name before generic vscode)."""
-    _ide_from_pid = ide_from_vscode_pid if ide_from_vscode_pid is not None else _ide_from_vscode_pid
-    _vscode_hint = vscode_family_env_hint if vscode_family_env_hint is not None else _vscode_family_env_hint
-    _windsurf_marker = windsurf_terminal_marker if windsurf_terminal_marker is not None else _windsurf_terminal_marker
-
-    chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
-    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+def _antigravity_shell_context() -> tuple[str, str, bool] | None:
     if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower():
         return "antigravity", "env:GIO_LAUNCHED_DESKTOP_FILE", True
-    if term_program in {"vscode", "code"}:
-        if os.environ.get("VSCODE_PID"):
-            via_pid = _ide_from_pid()
-            if via_pid:
-                return via_pid, "env:VSCODE_PID.exe", True
-        flavor = _vscode_hint()
-        if flavor and flavor != "vscode":
-            return flavor, "env:VSCODE_*", True
-        if _windsurf_marker():
-            return "windsurf", "env:WINDSURF_*", True
-        return "vscode", "env:TERM_PROGRAM", True
+    return None
+
+
+def _vscode_term_program_context(
+    *,
+    ide_from_pid: Callable[[], str | None],
+    vscode_hint: Callable[[], str | None],
+    windsurf_marker: Callable[[], bool],
+) -> tuple[str, str, bool] | None:
+    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    if term_program not in {"vscode", "code"}:
+        return None
+    if os.environ.get("VSCODE_PID"):
+        via_pid = ide_from_pid()
+        if via_pid:
+            return via_pid, "env:VSCODE_PID.exe", True
+    flavor = vscode_hint()
+    if flavor and flavor != "vscode":
+        return flavor, "env:VSCODE_*", True
+    if windsurf_marker():
+        return "windsurf", "env:WINDSURF_*", True
+    return "vscode", "env:TERM_PROGRAM", True
+
+
+def _jetbrains_shell_context() -> tuple[str, str, bool] | None:
     terminal_emulator = os.environ.get("TERMINAL_EMULATOR", "").strip().lower()
     if (
         "jetbrains" in terminal_emulator
@@ -113,12 +118,46 @@ def _terminal_shell_context_fallback(
         or os.environ.get("JETBRAINS_IDE")
     ):
         return "jetbrains", "env:TERMINAL_EMULATOR", True
+    return None
+
+
+def _cursor_shell_context(chrome: str) -> tuple[str, str, bool] | None:
     if "cursor" in chrome or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
         return "cursor", "env:CURSOR_*", True
+    return None
+
+
+def _generic_term_program_context(term_program: str) -> tuple[str, str, bool] | None:
     if term_program in _VALID_AUTOPILOT_IDES and term_program != "auto":
         return term_program, "env:TERM_PROGRAM", True
-    if _windsurf_marker():
-        return "windsurf", "env:WINDSURF_*", True
+    return None
+
+
+def _terminal_shell_context_fallback(
+    ide_from_vscode_pid: Callable[[], str | None] | None = None,
+    vscode_family_env_hint: Callable[[], str | None] | None = None,
+    windsurf_terminal_marker: Callable[[], bool] | None = None,
+) -> tuple[str | None, str, bool]:
+    """Provider-first shell context detection (brand name before generic vscode)."""
+    ide_from_pid = ide_from_vscode_pid or _ide_from_vscode_pid
+    vscode_hint = vscode_family_env_hint or _vscode_family_env_hint
+    windsurf_marker = windsurf_terminal_marker or _windsurf_terminal_marker
+
+    for detector in (
+        _antigravity_shell_context,
+        lambda: _vscode_term_program_context(
+            ide_from_pid=ide_from_pid,
+            vscode_hint=vscode_hint,
+            windsurf_marker=windsurf_marker,
+        ),
+        _jetbrains_shell_context,
+        lambda: _cursor_shell_context(os.environ.get("CHROME_DESKTOP", "").strip().lower()),
+        lambda: _generic_term_program_context(os.environ.get("TERM_PROGRAM", "").strip().lower()),
+        lambda: ("windsurf", "env:WINDSURF_*", True) if windsurf_marker() else None,
+    ):
+        hit = detector()
+        if hit is not None:
+            return hit
     return None, "none", False
 
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from koruapi.calibration_validator import (
@@ -59,8 +61,10 @@ def _make_calibration(
     display_y: int = 5000,
     chat_x: int = 8000,
     chat_y: int = 5000,
-    calibrated_at: str = "2026-06-06T21:31:35.733991+00:00",
+    calibrated_at: str | None = None,
 ) -> dict:
+    if calibrated_at is None:
+        calibrated_at = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
     return {
         "ide": ide,
         "chat_x": chat_x,

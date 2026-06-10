@@ -1,58 +1,58 @@
-# code2llm/evolution | 5592 func | 542f | 2026-06-07
-# generated in 0.02s
+# code2llm/evolution | 5889 func | 612f | 2026-06-09
+# generated in 0.03s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 4053L, 3 classes, max CC=26
-      EFFORT: ~4h  IMPACT: 105378
+      WHY: 3613L, 3 classes, max CC=24
+      EFFORT: ~4h  IMPACT: 86712
 
-  [2] !! SPLIT           src/koru/scan.py
-      WHY: 1621L, 0 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 21073
+  [2] !! SPLIT-FUNC      parse_line  CC=73  fan=18
+      WHY: CC=73 exceeds 15
+      EFFORT: ~1h  IMPACT: 1314
 
-  [3] !  SPLIT-FUNC      _auto_ownership_gate  CC=22  fan=20
+  [3] !! SPLIT-FUNC      imgl_main  CC=25  fan=24
+      WHY: CC=25 exceeds 15
+      EFFORT: ~1h  IMPACT: 600
+
+  [4] !  SPLIT-FUNC      _handle_subcommand  CC=23  fan=22
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 506
+
+  [5] !! SPLIT-FUNC      to_text  CC=41  fan=11
+      WHY: CC=41 exceeds 15
+      EFFORT: ~1h  IMPACT: 451
+
+  [6] !! SPLIT-FUNC      to_cli_args  CC=50  fan=9
+      WHY: CC=50 exceeds 15
+      EFFORT: ~1h  IMPACT: 450
+
+  [7] !  SPLIT-FUNC      _auto_ownership_gate  CC=22  fan=20
       WHY: CC=22 exceeds 15
       EFFORT: ~1h  IMPACT: 440
 
-  [4] !  SPLIT-FUNC      action_status  CC=20  fan=20
+  [8] !  SPLIT-FUNC      _auto_readiness_gate  CC=24  fan=18
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 432
+
+  [9] !  SPLIT-FUNC      action_status  CC=20  fan=20
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 400
 
-  [5] !! SPLIT-FUNC      SharedAutopilotBridgePaste.shouldProbeInput  CC=26  fan=14
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 364
-
-  [6] !  SPLIT-FUNC      _live_daemon_instance  CC=20  fan=18
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 360
-
-  [7] !  SPLIT-FUNC      _auto_readiness_gate  CC=22  fan=16
-      WHY: CC=22 exceeds 15
-      EFFORT: ~1h  IMPACT: 352
-
-  [8] !  SPLIT-FUNC      _installed_extension_build_sha  CC=22  fan=16
-      WHY: CC=22 exceeds 15
-      EFFORT: ~1h  IMPACT: 352
-
-  [9] !  SPLIT-FUNC      SharedAutopilotBridgePaste.pasteText  CC=17  fan=20
+  [10] !  SPLIT-FUNC      _handle_subcommand  CC=17  fan=23
       WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 340
-
-  [10] !! SPLIT-FUNC      _infer_default_ide  CC=26  fan=13
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 338
+      EFFORT: ~1h  IMPACT: 391
 
 
 RISKS[3]:
+  ⚠ Splitting CHANGELOG.md may break 0 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 187 import paths
   ⚠ Splitting tree.txt may break 0 import paths
-  ⚠ Splitting src/koru/scan.py may break 61 import paths
 
 METRICS-TARGET:
   CC̄:          3.7 → ≤2.6
-  max-CC:      26 → ≤13
-  god-modules: 43 → 0
-  high-CC(≥15): 48 → ≤24
+  max-CC:      73 → ≤20
+  god-modules: 56 → 0
+  high-CC(≥15): 54 → ≤27
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

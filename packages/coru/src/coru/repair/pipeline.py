@@ -467,65 +467,73 @@ def _execute_step(
     ]
 
 
+def _drop_codes_after_action(
+    remaining: list[RepairProblem],
+    round_actions: Sequence[RepairAttempt],
+    *,
+    action_id: str,
+    codes: set[str],
+) -> list[RepairProblem]:
+    if not any(action.action_id == action_id and action.ok for action in round_actions):
+        return remaining
+    return [problem for problem in remaining if problem.code not in codes]
+
+
+_ROUND_RESOLUTION_RULES: tuple[tuple[str, set[str]], ...] = (
+    (
+        "manual_vsix_unpack",
+        {
+            "plugin_extension_stale_on_disk",
+            "install_plugin_failed",
+            "install_plugin_cli_sandbox",
+            "plugin_installed_version_mismatch",
+        },
+    ),
+    (
+        "plugin_upgrade_and_reload",
+        {
+            "probe_cache_toxic",
+            "chat_focus_toggle_risk",
+            "terminal_paste_risk",
+            "plugin_extension_stale_on_disk",
+        },
+    ),
+    (
+        "strict_handshake_cycle",
+        {
+            "plugin_build_mismatch",
+            "plugin_version_mismatch",
+            "plugin_extension_stale_in_memory",
+            "plugin_live_host_stale",
+            "plugin_rejected_by_daemon",
+        },
+    ),
+    (
+        "reload_and_connect",
+        {
+            "plugin_build_mismatch",
+            "plugin_version_mismatch",
+            "plugin_extension_stale_in_memory",
+            "plugin_live_host_stale",
+            "plugin_not_connected",
+            "plugin_installed_ok_but_not_connected",
+        },
+    ),
+)
+
+
 def _apply_round_resolution(
     remaining: list[RepairProblem],
     round_actions: Sequence[RepairAttempt],
 ) -> tuple[list[RepairProblem], bool]:
-    resolved = False
-    if any(a.action_id == "manual_vsix_unpack" and a.ok for a in round_actions):
-        remaining = [
-            p
-            for p in remaining
-            if p.code
-            not in {
-                "plugin_extension_stale_on_disk",
-                "install_plugin_failed",
-                "install_plugin_cli_sandbox",
-                "plugin_installed_version_mismatch",
-            }
-        ]
-    if any(a.action_id == "plugin_upgrade_and_reload" and a.ok for a in round_actions):
-        remaining = [
-            p
-            for p in remaining
-            if p.code
-            not in {
-                "probe_cache_toxic",
-                "chat_focus_toggle_risk",
-                "terminal_paste_risk",
-                "plugin_extension_stale_on_disk",
-            }
-        ]
-    if any(a.action_id == "strict_handshake_cycle" and a.ok for a in round_actions):
-        remaining = [
-            p
-            for p in remaining
-            if p.code
-            not in {
-                "plugin_build_mismatch",
-                "plugin_version_mismatch",
-                "plugin_extension_stale_in_memory",
-                "plugin_live_host_stale",
-                "plugin_rejected_by_daemon",
-            }
-        ]
-    if any(a.action_id == "reload_and_connect" and a.ok for a in round_actions):
-        remaining = [
-            p
-            for p in remaining
-            if p.code
-            not in {
-                "plugin_build_mismatch",
-                "plugin_version_mismatch",
-                "plugin_extension_stale_in_memory",
-                "plugin_live_host_stale",
-                "plugin_not_connected",
-                "plugin_installed_ok_but_not_connected",
-            }
-        ]
-    if not remaining:
-        resolved = True
-    return remaining, resolved
+    for action_id, codes in _ROUND_RESOLUTION_RULES:
+        remaining = _drop_codes_after_action(
+            remaining,
+            round_actions,
+            action_id=action_id,
+            codes=codes,
+        )
+    return remaining, not remaining
 
 
 @dataclass

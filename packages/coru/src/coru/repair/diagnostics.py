@@ -146,6 +146,105 @@ def collect_problems_from_manage_report(report: Mapping[str, Any]) -> list[Repai
     return _dedupe_problems(problems)
 
 
+def _missing_status_payload_problems(
+    ide: str,
+    *,
+    daemon_running: bool,
+) -> list[RepairProblem]:
+    if not daemon_running:
+        return []
+    return [
+        RepairProblem(
+            code="plugin_not_connected",
+            severity="error",
+            message=f"No autopilot status payload for ide={ide}",
+            fix_hint="Start daemon and connect plugin",
+            context={"source": "status"},
+        )
+    ]
+
+
+def _rejected_plugin_problems(status: Mapping[str, Any], ide: str) -> list[RepairProblem]:
+    rejected = status.get("rejected_plugins")
+    if not isinstance(rejected, list):
+        return []
+    problems: list[RepairProblem] = []
+    for row in rejected:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("ide") or "").strip().lower() != ide:
+            continue
+        reason = str(row.get("reason") or row.get("message") or "rejected by daemon").strip()
+        problems.append(
+            RepairProblem(
+                code="plugin_rejected_by_daemon",
+                severity="error",
+                message=f"Plugin rejected: {reason}",
+                fix_hint="Reload Window or strict handshake cycle",
+                context={"source": "status.rejected_plugins", "rejection": row},
+            )
+        )
+    return problems
+
+
+def _plugin_not_connected_problem(*, ide: str, source: str) -> RepairProblem:
+    return RepairProblem(
+        code="plugin_not_connected",
+        severity="error",
+        message=f"No connected plugin for ide={ide}",
+        fix_hint="koru: Connect autopilot daemon",
+        context={"source": source},
+    )
+
+
+def _disk_build_for_ide(ide: str) -> str | None:
+    installed_dir = _installed_extension_dir(ide)
+    if installed_dir is None:
+        return None
+    return _read_package_build_sha(installed_dir / "package.json")
+
+
+def _plugin_build_sha_mismatch_problems(
+    *,
+    ide: str,
+    connected_build: str,
+    expected_build: str,
+    source: str,
+) -> list[RepairProblem]:
+    disk_build = _disk_build_for_ide(ide)
+    context = {
+        "source": source,
+        "connected_build": connected_build,
+        "expected_build": expected_build,
+        "disk_build": disk_build,
+    }
+    if disk_build == expected_build:
+        return [
+            RepairProblem(
+                code="plugin_extension_stale_in_memory",
+                severity="error",
+                message=(
+                    f"Plugin build in IDE memory ({connected_build}) differs from repo "
+                    f"({expected_build}); extension on disk is current"
+                ),
+                fix_hint="Developer: Reload Window, then koru: Connect autopilot daemon",
+                context=context,
+            )
+        ]
+    return [
+        RepairProblem(
+            code="plugin_extension_stale_on_disk",
+            severity="error",
+            message=(
+                f"Plugin build mismatch: connected={connected_build or '-'} "
+                f"disk={disk_build or '-'} expected={expected_build}"
+            ),
+            fix_hint="Install current VSIX into IDE extensions directory",
+            context=context,
+        )
+    ]
+
+
 def collect_problems_from_status(
     status: Mapping[str, Any] | None,
     *,
@@ -154,94 +253,24 @@ def collect_problems_from_status(
     daemon_running: bool = True,
 ) -> list[RepairProblem]:
     if not status:
-        if not daemon_running:
-            return []
-        return [
-            RepairProblem(
-                code="plugin_not_connected",
-                severity="error",
-                message=f"No autopilot status payload for ide={ide}",
-                fix_hint="Start daemon and connect plugin",
-                context={"source": "status"},
-            )
-        ]
-    problems: list[RepairProblem] = []
+        return _missing_status_payload_problems(ide, daemon_running=daemon_running)
 
-    rejected = status.get("rejected_plugins")
-    if isinstance(rejected, list):
-        for row in rejected:
-            if not isinstance(row, dict):
-                continue
-            if str(row.get("ide") or "").strip().lower() != ide:
-                continue
-            reason = str(row.get("reason") or row.get("message") or "rejected by daemon").strip()
-            problems.append(
-                RepairProblem(
-                    code="plugin_rejected_by_daemon",
-                    severity="error",
-                    message=f"Plugin rejected: {reason}",
-                    fix_hint="Reload Window or strict handshake cycle",
-                    context={"source": "status.rejected_plugins", "rejection": row},
-                )
-            )
-
+    problems = _rejected_plugin_problems(status, ide)
     row = _plugin_row_for_ide(status, ide)
     if row is None:
-        problems.append(
-            RepairProblem(
-                code="plugin_not_connected",
-                severity="error",
-                message=f"No connected plugin for ide={ide}",
-                fix_hint="koru: Connect autopilot daemon",
-                context={"source": "status.plugins"},
-            )
-        )
+        problems.append(_plugin_not_connected_problem(ide=ide, source="status.plugins"))
         return _dedupe_problems(problems)
 
     connected_build = str(row.get("buildSha") or "").strip()
     if expected_build and connected_build and connected_build != expected_build:
-        installed_dir = _installed_extension_dir(ide)
-        disk_build = (
-            _read_package_build_sha(installed_dir / "package.json")
-            if installed_dir
-            else None
+        problems.extend(
+            _plugin_build_sha_mismatch_problems(
+                ide=ide,
+                connected_build=connected_build,
+                expected_build=expected_build,
+                source="status.build",
+            )
         )
-        if disk_build == expected_build:
-            problems.append(
-                RepairProblem(
-                    code="plugin_extension_stale_in_memory",
-                    severity="error",
-                    message=(
-                        f"Plugin build in IDE memory ({connected_build}) differs from repo "
-                        f"({expected_build}); extension on disk is current"
-                    ),
-                    fix_hint="Developer: Reload Window, then koru: Connect autopilot daemon",
-                    context={
-                        "source": "status.build",
-                        "connected_build": connected_build,
-                        "expected_build": expected_build,
-                        "disk_build": disk_build,
-                    },
-                )
-            )
-        else:
-            problems.append(
-                RepairProblem(
-                    code="plugin_extension_stale_on_disk",
-                    severity="error",
-                    message=(
-                        f"Plugin build mismatch: connected={connected_build or '-'} "
-                        f"disk={disk_build or '-'} expected={expected_build}"
-                    ),
-                    fix_hint="Install current VSIX into IDE extensions directory",
-                    context={
-                        "source": "status.build",
-                        "connected_build": connected_build,
-                        "expected_build": expected_build,
-                        "disk_build": disk_build,
-                    },
-                )
-            )
     return _dedupe_problems(problems)
 
 
@@ -399,60 +428,77 @@ def collect_problems_from_console_logs(
     return _dedupe_problems(problems)
 
 
+def _plugin_build_alignment_problem(
+    *,
+    ide: str,
+    connected_build: str,
+    expected_build: str,
+    source: str,
+) -> RepairProblem:
+    disk_build = _disk_build_for_ide(ide) if ide else None
+    code = (
+        "plugin_extension_stale_in_memory"
+        if disk_build == expected_build
+        else "plugin_build_mismatch"
+    )
+    return RepairProblem(
+        code=code,
+        severity="error",
+        message=f"Plugin build mismatch for ide={ide or '?'}",
+        context={
+            "source": source,
+            "connected_build": connected_build,
+            "expected_build": expected_build,
+            "disk_build": disk_build,
+        },
+    )
+
+
+def _plugin_version_mismatch_problem(
+    *,
+    ide: str,
+    installed_version: str,
+    expected_version: str,
+    source: str,
+) -> RepairProblem:
+    return RepairProblem(
+        code="plugin_installed_version_mismatch",
+        severity="error",
+        message=f"Installed plugin {installed_version} != expected {expected_version}",
+        context={"source": source, "ide": ide},
+    )
+
+
 def _collect_plugin_alignment_problems(
     plugin: Mapping[str, Any],
     *,
     source: str,
 ) -> list[RepairProblem]:
-    problems: list[RepairProblem] = []
     ide = str(plugin.get("ide") or "").strip().lower()
     expected_build = str(plugin.get("expected_build_sha") or "").strip()
     connected_build = str(plugin.get("connected_build_sha") or "").strip()
     installed_version = str(plugin.get("installed_version") or "").strip()
     expected_version = str(plugin.get("expected_version") or "").strip()
 
+    problems: list[RepairProblem] = []
     if expected_build and connected_build and connected_build != expected_build:
-        disk_build = None
-        if ide:
-            installed_dir = _installed_extension_dir(ide)
-            if installed_dir is not None:
-                disk_build = _read_package_build_sha(installed_dir / "package.json")
-        code = (
-            "plugin_extension_stale_in_memory"
-            if disk_build == expected_build
-            else "plugin_build_mismatch"
-        )
         problems.append(
-            RepairProblem(
-                code=code,
-                severity="error",
-                message=f"Plugin build mismatch for ide={ide or '?'}",
-                context={
-                    "source": source,
-                    "connected_build": connected_build,
-                    "expected_build": expected_build,
-                    "disk_build": disk_build,
-                },
+            _plugin_build_alignment_problem(
+                ide=ide,
+                connected_build=connected_build,
+                expected_build=expected_build,
+                source=source,
             )
         )
-
     if installed_version and expected_version and installed_version != expected_version:
         problems.append(
-            RepairProblem(
-                code="plugin_installed_version_mismatch",
-                severity="error",
-                message=f"Installed plugin {installed_version} != expected {expected_version}",
-                context={"source": source, "ide": ide},
+            _plugin_version_mismatch_problem(
+                ide=ide,
+                installed_version=installed_version,
+                expected_version=expected_version,
+                source=source,
             )
         )
-
     if plugin.get("connected") is False and plugin.get("supported") is not False:
-        problems.append(
-            RepairProblem(
-                code="plugin_not_connected",
-                severity="error",
-                message=f"Plugin not connected for ide={ide or '?'}",
-                context={"source": source},
-            )
-        )
+        problems.append(_plugin_not_connected_problem(ide=ide, source=source))
     return problems

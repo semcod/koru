@@ -73,6 +73,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.323] - 2026-06-10
+
+### Docs
+- Update README.md
+- Update docs/imgl-integration.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_calibration_validator.py
+- Update tests/test_imgl_integration.py
+- Update tests/test_vdisplay_control_fallback.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/sprints/current.yaml
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/src/coru/cli_calibration.py
+- Update packages/coru/src/coru/ide_detection.py
+- Update packages/coru/src/coru/repair/diagnostics.py
+- Update packages/coru/src/coru/repair/pipeline.py
+- Update packages/coru/tests/test_coru_cli.py
+- Update packages/nlp2coru/src/nlp2coru/heuristic.py
+- Update project/analysis.toon.yaml
+- ... and 17 more files
+
 ## [0.1.322] - 2026-06-09
 
 ### Docs

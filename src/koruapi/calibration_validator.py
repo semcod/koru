@@ -48,6 +48,159 @@ def _pct(value: int | float, total: int | float) -> float:
     return 100.0 * float(value) / float(total)
 
 
+def _missing_display_coord_issue(ide: str) -> dict[str, Any]:
+    return {
+        "severity": SEVERITY_WARNING,
+        "code": "missing_display_coords",
+        "message": f"Calibration for {ide!r} has no display-relative coordinates; cannot validate.",
+        "ide": ide,
+    }
+
+
+def _display_lookup_issues(
+    ide: str,
+    display_id: str,
+    displays: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    display = _find_display(displays, display_id)
+    if display is None:
+        return [
+            {
+                "severity": SEVERITY_WARNING,
+                "code": "display_not_found",
+                "message": (
+                    f"Calibration for {ide!r} references display {display_id!r}, "
+                    "but it was not found in the display list."
+                ),
+                "ide": ide,
+                "details": {"display_id": display_id},
+            }
+        ], None
+    dw = display.get("width", 0)
+    dh = display.get("height", 0)
+    if dw <= 0 or dh <= 0:
+        return [
+            {
+                "severity": SEVERITY_WARNING,
+                "code": "display_zero_size",
+                "message": f"Display {display_id!r} has zero or negative dimensions ({dw}×{dh}).",
+                "ide": ide,
+                "details": {"display_id": display_id, "width": dw, "height": dh},
+            }
+        ], None
+    return [], display
+
+
+def _vertical_position_issues(
+    *,
+    ide: str,
+    display_id: str,
+    display_y: int | float,
+    display_height: int | float,
+    y_pct: float,
+) -> list[dict[str, Any]]:
+    details = {
+        "display_id": display_id,
+        "display_y": display_y,
+        "display_height": display_height,
+        "y_pct": round(y_pct, 2),
+    }
+    if y_pct < EXTREME_TOP_THRESHOLD_PCT:
+        return [
+            {
+                "severity": SEVERITY_ERROR,
+                "code": "calibration_at_extreme_top",
+                "message": (
+                    f"Calibration for {ide!r} is at {y_pct:.1f}% height on {display_id} "
+                    f"(display_y={display_y}, display_height={display_height}). "
+                    "This is almost certainly the title bar or menu bar, NOT the chat input. "
+                    "Recalibrate with the mouse directly over the chat text field."
+                ),
+                "ide": ide,
+                "details": details,
+            }
+        ]
+    issues: list[dict[str, Any]] = []
+    if y_pct < TOP_EDGE_THRESHOLD_PCT:
+        issues.append(
+            {
+                "severity": SEVERITY_WARNING,
+                "code": "calibration_at_top_edge",
+                "message": (
+                    f"Calibration for {ide!r} is at {y_pct:.1f}% height on {display_id} "
+                    f"(display_y={display_y}, display_height={display_height}). "
+                    "This is probably the title bar, not the chat input field."
+                ),
+                "ide": ide,
+                "details": details,
+            }
+        )
+    if y_pct > BOTTOM_EDGE_THRESHOLD_PCT:
+        issues.append(
+            {
+                "severity": SEVERITY_WARNING,
+                "code": "calibration_at_bottom_edge",
+                "message": (
+                    f"Calibration for {ide!r} is at {y_pct:.1f}% height on {display_id}. "
+                    "This might be the system panel/dock instead of the chat input."
+                ),
+                "ide": ide,
+                "details": details,
+            }
+        )
+    return issues
+
+
+def _stale_calibration_issue(ide: str, calibrated_at_raw: Any) -> dict[str, Any] | None:
+    try:
+        calibrated_at = datetime.fromisoformat(str(calibrated_at_raw))
+    except (ValueError, TypeError):
+        return None
+    if calibrated_at.tzinfo is None:
+        calibrated_at = calibrated_at.replace(tzinfo=timezone.utc)
+    age_hours = (datetime.now(timezone.utc) - calibrated_at).total_seconds() / 3600
+    if age_hours <= STALE_HOURS:
+        return None
+    return {
+        "severity": SEVERITY_INFO,
+        "code": "calibration_stale",
+        "message": (
+            f"Calibration for {ide!r} is {age_hours:.0f}h old "
+            f"(threshold={STALE_HOURS:.0f}h). Consider recalibrating."
+        ),
+        "ide": ide,
+        "details": {
+            "calibrated_at": str(calibrated_at_raw),
+            "age_hours": round(age_hours, 1),
+            "threshold_hours": STALE_HOURS,
+        },
+    }
+
+
+def _pointer_display_mismatch_issue(
+    ide: str,
+    display_id: str,
+    pointer: dict[str, Any],
+) -> dict[str, Any] | None:
+    pointer_display = pointer.get("display_id") or pointer.get("display_output")
+    if not pointer_display or pointer_display == display_id:
+        return None
+    return {
+        "severity": SEVERITY_WARNING,
+        "code": "pointer_display_mismatch",
+        "message": (
+            f"IDE {ide!r} is calibrated on display {display_id!r} but the "
+            f"mouse pointer is on {pointer_display!r}. The autopilot drive may "
+            "click the wrong screen. Move the IDE window or re-calibrate."
+        ),
+        "ide": ide,
+        "details": {
+            "calibration_display": display_id,
+            "pointer_display": pointer_display,
+        },
+    }
+
+
 def validate_single_calibration(
     cal: dict[str, Any],
     displays: list[dict[str, Any]],
@@ -58,151 +211,39 @@ def validate_single_calibration(
     Returns a list of diagnostic dicts, each with keys:
     ``severity``, ``code``, ``message``, ``ide``, and optional ``details``.
     """
-    issues: list[dict[str, Any]] = []
     ide = cal.get("ide", "?")
     display_id = cal.get("display_id") or cal.get("display_output")
     display_x = cal.get("display_x")
     display_y = cal.get("display_y")
 
     if display_id is None or display_x is None or display_y is None:
-        issues.append({
-            "severity": SEVERITY_WARNING,
-            "code": "missing_display_coords",
-            "message": f"Calibration for {ide!r} has no display-relative coordinates; cannot validate.",
-            "ide": ide,
-        })
-        return issues
+        return [_missing_display_coord_issue(ide)]
 
-    # Resolve display geometry
-    display = _find_display(displays, display_id)
-    if display is None:
-        issues.append({
-            "severity": SEVERITY_WARNING,
-            "code": "display_not_found",
-            "message": (
-                f"Calibration for {ide!r} references display {display_id!r}, "
-                "but it was not found in the display list."
-            ),
-            "ide": ide,
-            "details": {"display_id": display_id},
-        })
-        return issues
+    lookup_issues, display = _display_lookup_issues(ide, display_id, displays)
+    if lookup_issues:
+        return lookup_issues
 
-    dw = display.get("width", 0)
+    assert display is not None
     dh = display.get("height", 0)
-
-    if dw <= 0 or dh <= 0:
-        issues.append({
-            "severity": SEVERITY_WARNING,
-            "code": "display_zero_size",
-            "message": f"Display {display_id!r} has zero or negative dimensions ({dw}×{dh}).",
-            "ide": ide,
-            "details": {"display_id": display_id, "width": dw, "height": dh},
-        })
-        return issues
-
     y_pct = _pct(display_y, dh)
-    x_pct = _pct(display_x, dw)
+    issues = _vertical_position_issues(
+        ide=ide,
+        display_id=display_id,
+        display_y=display_y,
+        display_height=dh,
+        y_pct=y_pct,
+    )
 
-    # ── Top-edge detection (most critical for the reported cursor bug) ──
-    if y_pct < EXTREME_TOP_THRESHOLD_PCT:
-        issues.append({
-            "severity": SEVERITY_ERROR,
-            "code": "calibration_at_extreme_top",
-            "message": (
-                f"Calibration for {ide!r} is at {y_pct:.1f}% height on {display_id} "
-                f"(display_y={display_y}, display_height={dh}). "
-                "This is almost certainly the title bar or menu bar, NOT the chat input. "
-                "Recalibrate with the mouse directly over the chat text field."
-            ),
-            "ide": ide,
-            "details": {
-                "display_id": display_id,
-                "display_y": display_y,
-                "display_height": dh,
-                "y_pct": round(y_pct, 2),
-            },
-        })
-    elif y_pct < TOP_EDGE_THRESHOLD_PCT:
-        issues.append({
-            "severity": SEVERITY_WARNING,
-            "code": "calibration_at_top_edge",
-            "message": (
-                f"Calibration for {ide!r} is at {y_pct:.1f}% height on {display_id} "
-                f"(display_y={display_y}, display_height={dh}). "
-                "This is probably the title bar, not the chat input field."
-            ),
-            "ide": ide,
-            "details": {
-                "display_id": display_id,
-                "display_y": display_y,
-                "display_height": dh,
-                "y_pct": round(y_pct, 2),
-            },
-        })
-
-    # ── Bottom-edge detection (task bar / dock) ──
-    if y_pct > BOTTOM_EDGE_THRESHOLD_PCT:
-        issues.append({
-            "severity": SEVERITY_WARNING,
-            "code": "calibration_at_bottom_edge",
-            "message": (
-                f"Calibration for {ide!r} is at {y_pct:.1f}% height on {display_id}. "
-                "This might be the system panel/dock instead of the chat input."
-            ),
-            "ide": ide,
-            "details": {
-                "display_id": display_id,
-                "display_y": display_y,
-                "display_height": dh,
-                "y_pct": round(y_pct, 2),
-            },
-        })
-
-    # ── Stale calibration ──
     calibrated_at_raw = cal.get("calibrated_at")
     if calibrated_at_raw:
-        try:
-            calibrated_at = datetime.fromisoformat(str(calibrated_at_raw))
-            if calibrated_at.tzinfo is None:
-                calibrated_at = calibrated_at.replace(tzinfo=timezone.utc)
-            age_hours = (datetime.now(timezone.utc) - calibrated_at).total_seconds() / 3600
-            if age_hours > STALE_HOURS:
-                issues.append({
-                    "severity": SEVERITY_INFO,
-                    "code": "calibration_stale",
-                    "message": (
-                        f"Calibration for {ide!r} is {age_hours:.0f}h old "
-                        f"(threshold={STALE_HOURS:.0f}h). Consider recalibrating."
-                    ),
-                    "ide": ide,
-                    "details": {
-                        "calibrated_at": str(calibrated_at_raw),
-                        "age_hours": round(age_hours, 1),
-                        "threshold_hours": STALE_HOURS,
-                    },
-                })
-        except (ValueError, TypeError):
-            pass
+        stale_issue = _stale_calibration_issue(ide, calibrated_at_raw)
+        if stale_issue:
+            issues.append(stale_issue)
 
-    # ── Pointer-display mismatch ──
     if pointer:
-        pointer_display = pointer.get("display_id") or pointer.get("display_output")
-        if pointer_display and display_id and pointer_display != display_id:
-            issues.append({
-                "severity": SEVERITY_WARNING,
-                "code": "pointer_display_mismatch",
-                "message": (
-                    f"IDE {ide!r} is calibrated on display {display_id!r} but the "
-                    f"mouse pointer is on {pointer_display!r}. The autopilot drive may "
-                    "click the wrong screen. Move the IDE window or re-calibrate."
-                ),
-                "ide": ide,
-                "details": {
-                    "calibration_display": display_id,
-                    "pointer_display": pointer_display,
-                },
-            })
+        mismatch = _pointer_display_mismatch_issue(ide, display_id, pointer)
+        if mismatch:
+            issues.append(mismatch)
 
     return issues
 

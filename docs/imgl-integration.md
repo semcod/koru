@@ -33,7 +33,7 @@ export KORU_IMGL_REST_URL=http://127.0.0.1:8219
 
 | Zmienna | Domyślnie | Opis |
 |---------|-----------|------|
-| `KORU_IMGL_FALLBACK` | `0` | Fallback w `koru auto` po fail pluginu |
+| `KORU_IMGL_FALLBACK` | auto | `1`/`0` wymusza; bez ustawienia **auto** dla `jetbrains`/`zed` gdy imgl zainstalowany |
 | `KORU_IMGL_DESKTOP` | `0` | MCP `desktop_uri_handle` → imgl dla promptów UI |
 | `KORU_IMGL_IMAGE` | `/tmp/koru-imgl-screen.png` | Ścieżka zrzutu |
 | `KORU_IMGL_WINDOW` | `region-bottom` | Region okna (IDE) |
@@ -59,7 +59,7 @@ ide_integration:
 ```text
 koruide plugin socket
   → nlp2uri ide-control (KORU_IDE_CONTROL_VIA_NLP2URI=1)
-  → imgl vision (KORU_IMGL_FALLBACK=1)      ← NOWE
+  → imgl vision (auto dla jetbrains/zed; lub KORU_IMGL_FALLBACK=1)  ← przed keyboard
   → gillm GuiDriver (KORU_AUTOPILOT_GILLM_FALLBACK=1)
   → os_injector (KORU_OS_INJECTOR_PROFILE)
 ```

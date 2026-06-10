@@ -36,38 +36,50 @@ def _parse_lane_mentions(text: str) -> tuple[str | None, str | None]:
     return ide, instance
 
 
+def _contains_any(text: str, *needles: str) -> bool:
+    return any(needle in text for needle in needles)
+
+
+def _heuristic_intent(
+    *,
+    action: str,
+    ide: str | None,
+    instance: str | None,
+    install: bool = False,
+) -> CoruPlan:
+    return CoruPlan(
+        [CoruIntent(action=action, ide=ide, instance=instance, install=install)],
+        use_llm=False,
+    )
+
+
+def _resolve_heuristic_action(lower: str, text: str) -> tuple[str, bool]:
+    if _contains_any(lower, "ensure", "zainstal", "install", "napraw", "sprawdz"):
+        return "ensure", True
+    if _contains_any(lower, "calibration") or "kalibrac" in lower:
+        return "calibration", False
+    if _contains_any(lower, "doctor", "diagnost"):
+        return "doctor", False
+    if _contains_any(lower, "lane", "instanc", "ustaw"):
+        return "lane", False
+    if _contains_any(lower, "sync", "synchroniz", "syncuj"):
+        return "sync", False
+    if _refactor_intent(text):
+        return "auto", False
+    if _contains_any(lower, "status", "stan"):
+        return "status", False
+    if _contains_any(lower, "chat", "wyslij", "wyślij"):
+        return "chat", False
+    if _contains_any(lower, "auto", "autonomous", "autopilot", "run", "execute"):
+        return "auto", False
+    return "status", False
+
+
 def heuristic_plan(text: str) -> CoruPlan:
     lower = text.strip().lower()
     ide, instance = _parse_lane_mentions(lower)
-
-    if any(key in lower for key in ("ensure", "zainstal", "install", "napraw", "sprawdz")):
-        return CoruPlan([CoruIntent(action="ensure", ide=ide, instance=instance, install=True)], use_llm=False)
-
-    if "calibration" in lower or "kalibrac" in lower:
-        return CoruPlan([CoruIntent(action="calibration", ide=ide, instance=instance)], use_llm=False)
-
-    if "doctor" in lower or "diagnost" in lower:
-        return CoruPlan([CoruIntent(action="doctor", ide=ide, instance=instance)], use_llm=False)
-
-    if any(key in lower for key in ("lane", "instanc", "ustaw")):
-        return CoruPlan([CoruIntent(action="lane", ide=ide, instance=instance)], use_llm=False)
-
-    if any(key in lower for key in ("sync", "synchroniz", "syncuj")):
-        return CoruPlan([CoruIntent(action="sync", ide=ide, instance=instance)], use_llm=False)
-
-    if _refactor_intent(text):
-        return CoruPlan([CoruIntent(action="auto", ide=ide, instance=instance)], use_llm=False)
-
-    if any(key in lower for key in ("status", "stan")):
-        return CoruPlan([CoruIntent(action="status", ide=ide, instance=instance)], use_llm=False)
-
-    if any(key in lower for key in ("chat", "wyslij", "wyślij")):
-        return CoruPlan([CoruIntent(action="chat", ide=ide, instance=instance)], use_llm=False)
-
-    if any(key in lower for key in ("auto", "autonomous", "autopilot", "run", "execute")):
-        return CoruPlan([CoruIntent(action="auto", ide=ide, instance=instance)], use_llm=False)
-
-    return CoruPlan([CoruIntent(action="status", ide=ide, instance=instance)], use_llm=False)
+    action, install = _resolve_heuristic_action(lower, text)
+    return _heuristic_intent(action=action, ide=ide, instance=instance, install=install)
 
 
 def to_dsl_lines(text: str, *, use_llm: bool = False, llm_model: str = "openrouter/qwen/qwen3-coder-next") -> list[str]:

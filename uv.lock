@@ -1409,7 +1409,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.322"
+version = "0.1.323"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1549,6 +1549,9 @@ testql = [
 tillm = [
     { name = "tillm" },
 ]
+vdisplay = [
+    { name = "vdisplay" },
+]
 vision = [
     { name = "mss" },
 ]
@@ -1687,12 +1690,13 @@ requires-dist = [
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30,<1.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30,<1.0" },
+    { name = "vdisplay", marker = "extra == 'vdisplay'", specifier = ">=0.1.8" },
     { name = "websockets", marker = "extra == 'all'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'mesh'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'watch'", specifier = ">=12.0,<17.0" },
 ]
-provides-extras = ["watch", "vision", "mesh", "observe", "desktop", "imgl", "envmap", "testql", "curllm", "browser", "dev", "api", "agent", "fullm", "tillm", "obs", "queue", "quality", "all"]
+provides-extras = ["watch", "vision", "mesh", "observe", "desktop", "imgl", "envmap", "testql", "curllm", "browser", "vdisplay", "dev", "api", "agent", "fullm", "tillm", "obs", "queue", "quality", "all"]
 
 [package.metadata.requires-dev]
 control = [
@@ -4052,6 +4056,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/15/c0/0be24758891ef825f2065cd5db8741aaddabe3e248ee6acc5e8a80f04005/uvloop-0.22.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0530a5fbad9c9e4ee3f2b33b148c6a64d47bbad8000ea63704fa8260f4cf728e", size = 4366890, upload-time = "2025-10-16T22:16:40.547Z" },
     { url = "https://files.pythonhosted.org/packages/d2/53/8369e5219a5855869bcee5f4d317f6da0e2c669aecf0ef7d371e3d084449/uvloop-0.22.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:bc5ef13bbc10b5335792360623cc378d52d7e62c2de64660616478c32cd0598e", size = 4119472, upload-time = "2025-10-16T22:16:41.694Z" },
     { url = "https://files.pythonhosted.org/packages/f8/ba/d69adbe699b768f6b29a5eec7b47dd610bd17a69de51b251126a801369ea/uvloop-0.22.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:1f38ec5e3f18c8a10ded09742f7fb8de0108796eb673f30ce7762ce1b8550cad", size = 4239051, upload-time = "2025-10-16T22:16:43.224Z" },
+]
+
+[[package]]
+name = "vdisplay"
+version = "0.1.14"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/96/22/43ac5290f578d262fd0c063932c0ad334bb430dea4f8675f3a091a766596/vdisplay-0.1.14.tar.gz", hash = "sha256:aec3417a5944724d7cc5f01718bff0fec2a7b4d212f1e81d7887db06ee733dbd", size = 226402, upload-time = "2026-06-10T08:57:17.187Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/e0/dce611e3fa37e4d609945bf692d16b7c48410ec8c6a457c4878b1f4c233b/vdisplay-0.1.14-py3-none-any.whl", hash = "sha256:6e426b011c452dc978fc256e0f83df5189bc27671095eda32558c3a94f998ce6", size = 222807, upload-time = "2026-06-10T08:57:15.264Z" },
 ]
 
 [[package]]
