@@ -87,7 +87,8 @@ def imgl_desktop_transport_enabled() -> bool:
 
 def default_image_path() -> Path:
     if _IMGL_DIRECT:
-        return _default_image_path()
+        p = _default_image_path()
+        return Path(p) if isinstance(p, (str, bytes, os.PathLike)) else p
     raw = os.environ.get("KORU_IMGL_IMAGE", "/tmp/koru-imgl-screen.png").strip()
     return Path(raw).expanduser()
 

@@ -1,11 +1,11 @@
-# koru | 934f 143774L | txt:5,yaml:30,json:39,yml:10,python:664,shell:56,toml:16,proto:4,md:1,javascript:1,go:2,rust:1,typescript:93,kotlin:6,properties:1,xml:1 | 2026-06-11
-# generated in 0.20s
-# stats: 6316 func | 0 cls | 934 mod | CC̄=3.6 | critical:44 | cycles:0
-# alerts[5]: CC send_chat=32; fan-out action_snapshot=31; fan-out send_chat=29; CC verify_chat_text_visible=28; CC SharedAutopilotBridgePaste.shouldProbeInput=26
-# hotspots[5]: action_snapshot fan=31; send_chat fan=29; create_app fan=26; create_app fan=26; verify_chat_text_visible fan=25
+# koru | 935f 145910L | txt:5,yaml:30,json:40,yml:10,python:664,shell:56,toml:16,proto:4,md:1,javascript:1,go:2,rust:1,typescript:93,kotlin:6,properties:1,xml:1 | 2026-06-11
+# generated in 0.11s
+# stats: 6319 func | 0 cls | 935 mod | CC̄=3.6 | critical:45 | cycles:0
+# alerts[5]: CC send_chat=35; CC load_vql_metadata=34; fan-out action_snapshot=31; fan-out send_chat=31; CC verify_chat_text_visible=28
+# hotspots[5]: action_snapshot fan=31; send_chat fan=31; create_app fan=26; create_app fan=26; main fan=25
 # evolution: CC̄ 3.6→3.6 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[934]:
+M[935]:
   .pretest.yml,17
   Dockerfile,73
   Makefile,273
@@ -243,7 +243,7 @@ M[934]:
   packages/uri2koru/src/uri2koru/run.py,12
   packages/uri2koru/src/uri2koru/uri.py,52
   pipeline.yaml,142
-  planfile.yaml,1331
+  planfile.yaml,1362
   plugins/koru-autopilot-antigravity/koru.yaml,69
   plugins/koru-autopilot-antigravity/package.json,193
   plugins/koru-autopilot-antigravity/src/ack-payload.test.ts,52
@@ -429,8 +429,8 @@ M[934]:
   src/koru/autonomous_cycle_common.py,20
   src/koru/autonomous_cycle_config.py,219
   src/koru/autonomous_cycle_drive_outcome.py,85
-  src/koru/autonomous_cycle_drive_retry.py,714
-  src/koru/autonomous_cycle_gate.py,406
+  src/koru/autonomous_cycle_drive_retry.py,716
+  src/koru/autonomous_cycle_gate.py,429
   src/koru/autonomous_cycle_orchestrator.py,541
   src/koru/autonomous_cycle_post_drive.py,383
   src/koru/autonomous_cycle_skip_conditions.py,681
@@ -690,8 +690,8 @@ M[934]:
   src/koru/integration_ledger.py,135
   src/koru/integrations/__init__.py,19
   src/koru/integrations/imgl_autodiag.py,13
-  src/koru/integrations/imgl_client.py,338
-  src/koru/integrations/vdisplay_client.py,743
+  src/koru/integrations/imgl_client.py,339
+  src/koru/integrations/vdisplay_client.py,909
   src/koru/interface_registry.py,230
   src/koru/llm_reflect.py,173
   src/koru/local_manager_client.py,252
@@ -938,11 +938,12 @@ M[934]:
   testql-testing/scenarios/realtime-health.testql.toon.yaml,11
   todo.txt,3
   tree.txt,2722
+  ui.vql.json,1913
   wup.yaml,113
   wup-shell-only.yaml,110
 D:
   src/koru/integrations/vdisplay_client.py:
-    e: _canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,record_koru_drive_step,_session_type,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_dry_run,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_submit_via_keyboard,_ide_prompt_app_id,_resolve_ide_prompt_map,send_chat_via_ide_prompt,send_chat
+    e: _canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,record_koru_drive_step,_session_type,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_dry_run,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_submit_via_keyboard,_ide_prompt_app_id,_resolve_ide_prompt_map,send_chat_via_ide_prompt,send_chat,load_vql_metadata,get_vql_target,resolve_click_for_frame
     _canonical_ide(ide)
     _agent_url()
     _probe_agent(url)
@@ -970,6 +971,9 @@ D:
     _resolve_ide_prompt_map(app_id)
     send_chat_via_ide_prompt(prompt)
     send_chat(prompt)
+    load_vql_metadata(path)
+    get_vql_target(ide)
+    resolve_click_for_frame(source;vql_path;vision_fallback)
   plugins/koru-autopilot-shared/src/bridge-paste.ts:
     i: ./bridge-config,./bridge-focus,./cursor-composer-paste,vscode
     e: SharedAutopilotBridgePaste
@@ -2156,25 +2160,6 @@ C...
     _manual_send_required_decision()
     _manual_send_target_ide()
     _handle_stuck_status_skip_candidate()
-  src/koru/autonomous_cycle_gate.py:
-    e: nlp2uri_ide_control_enabled,effective_ide_control_submit,_resolve_ide_chat_workspace,try_os_injector_fallback,try_nlp2uri_ide_control,try_nlp2uri_focus_fallback,imgl_fallback_enabled,try_imgl_gui_fallback,try_gillm_gui_fallback,try_vdisplay_control_fallback,try_os_injector_fallback_with_deps,allow_keyboard_autopilot_fallback,effective_cycle_autopilot_enabled,scan_while_waiting_input_enabled,effective_cycle_scan_enabled,resolve_autopilot_ide,apply_agent_lane_environ
-    nlp2uri_ide_control_enabled()
-    effective_ide_control_submit()
-    _resolve_ide_chat_workspace(client)
-    try_os_injector_fallback(prompt)
-    try_nlp2uri_ide_control(prompt)
-    try_nlp2uri_focus_fallback(prompt)
-    imgl_fallback_enabled()
-    try_imgl_gui_fallback(prompt)
-    try_gillm_gui_fallback(prompt)
-    try_vdisplay_control_fallback(prompt)
-    try_os_injector_fallback_with_deps(prompt)
-    allow_keyboard_autopilot_fallback()
-    effective_cycle_autopilot_enabled(enabled)
-    scan_while_waiting_input_enabled()
-    effective_cycle_scan_enabled(enabled)
-    resolve_autopilot_ide(cli_value)
-    apply_agent_lane_environ(project;agent_lane)
   src/koru/autonomy/operator_pipeline.py:
     e: OperatorStep,OperatorPipelineResult,_operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_is_closed,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_autopilot_plugin_operator_hints,_host_injectors_ok,_self_control_autorepair_enabled,_first_self_control_problem,_self_control_problem_detail,_summarize_self_control_actions,_self_control_ok,_build_os_calibration_step,_build_planfile_api_step,_build_mcp_step,_build_plugin_step,_build_host_injectors_step,_build_self_control_step,_build_ready_step,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format
     OperatorStep:
@@ -2288,25 +2273,6 @@ Designed to ...
   src/koru/queue/loop.py:
     e: run_planfile_queue_loop
     run_planfile_queue_loop()
-  src/koru/integrations/imgl_client.py:
-    e: imgl_available,imgl_missing_message,imgl_fallback_enabled,imgl_prefer_before_keyboard,imgl_desktop_transport_enabled,default_image_path,default_window,is_ui_prompt,resolve_image,_rest_url,_dry_run,diagnostics_enabled,doctor_capture,execute_nl,_rest_doctor,_submit_key_for_ide,send_chat
-    imgl_available()
-    imgl_missing_message()
-    imgl_fallback_enabled()
-    imgl_prefer_before_keyboard(ide)
-    imgl_desktop_transport_enabled()
-    default_image_path()
-    default_window()
-    is_ui_prompt(prompt)
-    resolve_image()
-    _rest_url()
-    _dry_run()
-    diagnostics_enabled()
-    doctor_capture(image)
-    execute_nl(prompt)
-    _rest_doctor(image)
-    _submit_key_for_ide(ide;submit)
-    send_chat(prompt)
   src/koru/wizard/cli_main.py:
     e: _build_parser,_resolve_language,_handle_detect_only,_run_gui_mode,_run_cli_mode,wizard_main
     _build_parser()
@@ -2336,6 +2302,44 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
+  src/koru/autonomous_cycle_gate.py:
+    e: nlp2uri_ide_control_enabled,effective_ide_control_submit,_resolve_ide_chat_workspace,try_os_injector_fallback,try_nlp2uri_ide_control,try_nlp2uri_focus_fallback,imgl_fallback_enabled,try_imgl_gui_fallback,try_gillm_gui_fallback,try_vdisplay_control_fallback,try_os_injector_fallback_with_deps,allow_keyboard_autopilot_fallback,effective_cycle_autopilot_enabled,scan_while_waiting_input_enabled,effective_cycle_scan_enabled,resolve_autopilot_ide,apply_agent_lane_environ
+    nlp2uri_ide_control_enabled()
+    effective_ide_control_submit()
+    _resolve_ide_chat_workspace(client)
+    try_os_injector_fallback(prompt)
+    try_nlp2uri_ide_control(prompt)
+    try_nlp2uri_focus_fallback(prompt)
+    imgl_fallback_enabled()
+    try_imgl_gui_fallback(prompt)
+    try_gillm_gui_fallback(prompt)
+    try_vdisplay_control_fallback(prompt)
+    try_os_injector_fallback_with_deps(prompt)
+    allow_keyboard_autopilot_fallback()
+    effective_cycle_autopilot_enabled(enabled)
+    scan_while_waiting_input_enabled()
+    effective_cycle_scan_enabled(enabled)
+    resolve_autopilot_ide(cli_value)
+    apply_agent_lane_environ(project;agent_lane)
+  src/koru/integrations/imgl_client.py:
+    e: imgl_available,imgl_missing_message,imgl_fallback_enabled,imgl_prefer_before_keyboard,imgl_desktop_transport_enabled,default_image_path,default_window,is_ui_prompt,resolve_image,_rest_url,_dry_run,diagnostics_enabled,doctor_capture,execute_nl,_rest_doctor,_submit_key_for_ide,send_chat
+    imgl_available()
+    imgl_missing_message()
+    imgl_fallback_enabled()
+    imgl_prefer_before_keyboard(ide)
+    imgl_desktop_transport_enabled()
+    default_image_path()
+    default_window()
+    is_ui_prompt(prompt)
+    resolve_image()
+    _rest_url()
+    _dry_run()
+    diagnostics_enabled()
+    doctor_capture(image)
+    execute_nl(prompt)
+    _rest_doctor(image)
+    _submit_key_for_ide(ide;submit)
+    send_chat(prompt)
   packages/uri2koru/src/uri2koru/nlp2uri.py:
     e: ResolvedKoruUri,nlp2uri,best_uri
     ResolvedKoruUri: to_dict(0)
@@ -8042,7 +8046,6 @@ Th...
   regix.yaml:
   wup-shell-only.yaml:
   output.txt:
-  planfile.yaml:
   Makefile:
   coverage.json:
   koru.yaml:
@@ -8578,5 +8581,7 @@ Th...
   testql-scenarios/artifacts/mock-llm-replies.yaml:
   testql-scenarios/conversations/send-invoice.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  planfile.yaml:
   pyproject.toml:
   package.json:
+  ui.vql.json:

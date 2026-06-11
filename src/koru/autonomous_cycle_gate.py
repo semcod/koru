@@ -263,12 +263,14 @@ def try_vdisplay_control_fallback(
 
     if not vdisplay_fallback_enabled(ide=ide, plugin_connected=plugin_connected):
         return None
+    # Ensure session for audit/recovery when using vdisplay (addresses gap in auto runner not setting VDISPLAY_SESSION)
+    os.environ.setdefault("VDISPLAY_SESSION", "1")
     try:
         # Load VQL metadata (our analysis or fresh per-screenshot) to provide
         # click_center / data_locations / decision_data for semantic actions.
         # This gives the autonomy loop precise mouse coords and "where the data is"
         # (pngs, client code, .env LLM, planfile) for decisions in JetBrains/Cursor.
-        from koru.integrations.vdisplay_client import load_vql_metadata
+        from koru.integrations.vdisplay_client import load_vql_metadata, record_koru_drive_step
         vql = load_vql_metadata()
         vql_note = ""
         if vql.get("ui_elements"):
@@ -279,6 +281,11 @@ def try_vdisplay_control_fallback(
         reply.setdefault("vql_context", vql.get("_source") or "loaded")
         if vql_note:
             reply["vql_note"] = vql_note
+        # Record to vdisplay session for audit trail (P1)
+        try:
+            record_koru_drive_step(reply, profile_id=ide, text=prompt)
+        except Exception:
+            pass
         # If the drive used vdisplay, autonomy can now use the coords from VQL
         # (e.g. resolve_click_for_frame or the centers from fresh 31-elem captures)
         # instead of blind keyboard.

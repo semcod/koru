@@ -668,17 +668,34 @@ def send_chat(
 
     selector, found = _find_first_selector(ide=ide, selectors=_chat_selectors_for(ide))
     if selector is None:
-        return {
-            "ok": False,
-            "backend": "vdisplay",
-            "message": (
-                f"no chat input matched for ide={ide} "
-                f"(app={hints.get('app')!r}); focus_error={focus_error or '-'}"
-            ),
-            "type": "error",
-            "fallback_from": "plugin",
-            "diagnostics": found,
-        }
+        # Use VQL target as fallback for chat/input when vision/selector misses (closes observe->act gap)
+        vql_target = get_vql_target(ide, role="input", name_contains="Chat") or get_vql_target(ide, role="input") or get_vql_target(ide, label="chat")
+        if vql_target:
+            # Inject synthetic selector with VQL center for downstream set/click
+            selector = {"role": "input", "name_contains": "Chat"}
+            found = {
+                "ok": True,
+                "count": 1,
+                "selected": {
+                    "id": vql_target.get("id", "vql-chat"),
+                    "backend": "vql",
+                    "role": vql_target.get("role"),
+                    "click_point": vql_target.get("click_center"),
+                    "note": f"VQL target from {vql_target.get('source')}"
+                }
+            }
+        else:
+            return {
+                "ok": False,
+                "backend": "vdisplay",
+                "message": (
+                    f"no chat input matched for ide={ide} "
+                    f"(app={hints.get('app')!r}); focus_error={focus_error or '-'}"
+                ),
+                "type": "error",
+                "fallback_from": "plugin",
+                "diagnostics": found,
+            }
 
     write_kwargs = {
         "backend": "auto",
@@ -761,6 +778,7 @@ def load_vql_metadata(path: str | None = None) -> dict:
     Returns ui_elements with click_center, data_locations, decision_data etc for mouse nav + decide.
     Used to augment vision/control with explicit coords and data sources from previous/current analysis.
     Now also falls back to latest fresh capture VQL (e.g. koru-cont-*.vql.json) for up-to-date 30+ element bboxes/centers.
+    Always normalizes to have 'layers' alias for ui_elements for compatibility with VQL consumers expecting layers.
     """
     candidates = []
     if path:
@@ -785,6 +803,8 @@ def load_vql_metadata(path: str | None = None) -> dict:
             # Normalize various VQL structures (analysis, fresh capture from screenshot, imgl, etc.)
             if "ui_elements" in data and data.get("ui_elements"):
                 data["_source"] = cand
+                if "layers" not in data:
+                    data["layers"] = data["ui_elements"]
                 return data
             if "elements" in data and isinstance(data.get("elements"), list) and data["elements"]:
                 # Fresh per-capture .vql.json from screenshot (top-level elements + by_role + element_count)
@@ -805,23 +825,55 @@ def load_vql_metadata(path: str | None = None) -> dict:
                         "label": e.get("label"),
                         "metadata": {k: e.get(k) for k in ("color","confidence","location") if k in e}
                     })
-                res = {"ui_elements": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}
+                res = {"ui_elements": ui_els, "layers": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}
                 return res
             if "vql" in data and isinstance(data.get("vql"), dict):
                 prog = data["vql"].get("program", data["vql"])
                 if isinstance(prog, dict):
                     prog["_source"] = cand
+                    if "layers" not in prog and "ui_elements" in prog:
+                        prog["layers"] = prog["ui_elements"]
                     return prog
             if "screen_context" in data or "metadata" in data:
-                return {"ui_elements": [], "metadata": data.get("metadata", data.get("screen_context", {})), "environment": data.get("environment", {}), "_source": cand}
+                return {"ui_elements": [], "layers": [], "metadata": data.get("metadata", data.get("screen_context", {})), "environment": data.get("environment", {}), "_source": cand}
             if isinstance(data.get("program"), (str, dict)) and "elements" not in data:
                 data["_source"] = cand
+                if "layers" not in data:
+                    data["layers"] = data.get("ui_elements", [])
                 return data
             data["_source"] = cand
+            if "layers" not in data:
+                data["layers"] = data.get("ui_elements", [])
             return data
         except Exception as exc:
             continue
-    return {"error": "no vql found", "tried": candidates}
+    return {"error": "no vql found", "tried": candidates, "layers": [], "ui_elements": []}
+
+
+def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | None = None, label: str | None = None) -> dict | None:
+    """Select target from loaded VQL ui_elements/layers by role or name/label.
+    Returns dict with click_center, bounds, id for use in act (mouse nav).
+    Used to close observe -> decide -> act gap when vision stub or no map.
+    """
+    vql = load_vql_metadata()
+    targets = vql.get("ui_elements") or vql.get("layers") or []
+    for t in targets:
+        if role and t.get("role") != role:
+            continue
+        if name_contains and name_contains.lower() not in str(t.get("label", "")).lower() and name_contains.lower() not in str(t.get("id", "")).lower():
+            continue
+        if label and label.lower() not in str(t.get("label", "")).lower():
+            continue
+        cc = t.get("click_center") or {}
+        if cc:
+            return {
+                "id": t.get("id"),
+                "role": t.get("role"),
+                "click_center": cc,
+                "bounds": t.get("bounds"),
+                "source": vql.get("_source"),
+            }
+    return None
 
 
 def resolve_click_for_frame(source: str = "DP-1", vql_path: str | None = None, vision_fallback: bool = True) -> dict:
@@ -852,4 +904,6 @@ __all__ = [
     "vdisplay_fallback_enabled",
     "vdisplay_missing_message",
     "load_vql_metadata",
+    "get_vql_target",
+    "resolve_click_for_frame",
 ]

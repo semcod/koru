@@ -158,3 +158,18 @@
 - Tested: load fresh gives 31 ui_elements with centers; fallback provides coords for act.
 - Result: in koru autonomous for vdisplay project (as in user log), with proper env + local install, will use semantic vdisplay control + VQL mouse coords (e.g. 1024,493 window or button centers) instead of pure os_injector keyboard. Better observe (rich VQL layers) -> decide (with data_locations, decision_data) -> act (precise click/focus in JetBrains UI).
 - Next user step: in vdisplay dir, `pip install -e .` (local vdisplay), set exports, re-run `coru` (jetbrains). See vdisplay backend + VQL in logs for STARTER-011 drives.
+
+### P0/P1 closure (kontynuuj)
+- get_vql_target() added: selects from VQL ui_elements/layers by role/name_contains/label, returns click_center/bounds/id for use in decide/act (addresses missing layers -> target gap).
+- send_chat for jetbrains now falls back to VQL target for chat input (synthetic selector with click_point from VQL, not stub 0x0).
+- vdisplay now early in fallback chain before os_injector.
+- load normalizes to layers + ui_elements for consumers.
+- With imgl + VDISPLAY_VISION_BACKEND=auto + KORU_VDISPLAY_CONTROL_FALLBACK=1, observe produces rich detection layers, decide uses VQL targets, act uses real centers.
+- Audit: record_koru_drive_step already uses VDISPLAY_SESSION when set; set in env for auto runs.
+- Test: get_vql_target returns centers; integration ready for jetbrains autonomy loop.
+
+### P1 spójność pętli (kontynuuj)
+- VDISPLAY_SESSION=1 now auto-set in vdisplay fallback gate, and record_koru_drive_step called to persist to .vdisplay/ session (addresses "vdisplay auto nie ustawia VDISPLAY_SESSION" and audit bypass).
+- VQL context (layers, click_centers, data_locations) now in drive payload for verify/audit.
+- With this + previous, when re-running koru in vdisplay/jetbrains with the env, full observe (rich VQL from imgl) -> decide (VQL target) -> act (coords) -> verify (with context) -> audit (session events) loop.
+- Next: user to set envs and re-run to see VDISPLAY backend + session recording in logs for STARTER-011.

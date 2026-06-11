@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.03s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 664, typescript: 93, shell: 56, json: 39, yaml: 30
+- **Languages**: python: 664, typescript: 93, shell: 56, json: 40, yaml: 30
 - **Analysis Mode**: static
-- **Total Functions**: 6316
+- **Total Functions**: 6319
 - **Total Classes**: 476
-- **Modules**: 935
-- **Entry Points**: 2609
+- **Modules**: 936
+- **Entry Points**: 2610
 
 ## Architecture by Module
 
@@ -114,6 +114,10 @@ Main execution flows into the system:
 ### scripts.e2e_envmap_koru.main
 - **Calls**: scripts.e2e_envmap_koru._section, project.print, project.print, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section, env2llm_registry.env2llm_available, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section
 
+### src.koru.integrations.vdisplay_client.send_chat
+> Semantic IDE chat drive via vdisplay control plane.
+- **Calls**: src.koru.integrations.vdisplay_client._canonical_ide, src.koru.integrations.vdisplay_client.send_chat_via_ide_prompt, src.koru.integrations.vdisplay_client._ide_hints, src.koru.integrations.vdisplay_client._find_first_selector, src.koru.integrations.vdisplay_client._dry_run, src.koru.integrations.vdisplay_client._ide_prompt_app_id, src.koru.integrations.vdisplay_client._resolve_ide_prompt_map, src.koru.integrations.vdisplay_client._ide_hints
+
 ### src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
 - **Calls**: src.koru.autonomous_auto_pipeline._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomous_auto_pipeline._auto_value
 
@@ -132,10 +136,6 @@ Args:
 ### src.koru.autopilot.cli_snapshot.action_snapshot
 > Print a unified shell OQL/DSL snapshot with replay/validate commands.
 - **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._decision_lines, lines.extend, lines.extend, lines.extend, src.koru.autopilot.cli_snapshot._lane_shell_env
-
-### src.koru.integrations.vdisplay_client.send_chat
-> Semantic IDE chat drive via vdisplay control plane.
-- **Calls**: src.koru.integrations.vdisplay_client._canonical_ide, src.koru.integrations.vdisplay_client.send_chat_via_ide_prompt, src.koru.integrations.vdisplay_client._ide_hints, src.koru.integrations.vdisplay_client._find_first_selector, src.koru.integrations.vdisplay_client._dry_run, src.koru.integrations.vdisplay_client._ide_prompt_app_id, src.koru.integrations.vdisplay_client._resolve_ide_prompt_map, src.koru.integrations.vdisplay_client._ide_hints
 
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
@@ -247,14 +247,26 @@ main [scripts.e2e_envmap_koru]
   └─ →> print
 ```
 
-### Flow 2: _select_auto_pipeline_profile
+### Flow 2: send_chat
+```
+send_chat [src.koru.integrations.vdisplay_client]
+  └─> _canonical_ide
+      └─ →> canonical_autopilot_ide_id
+          └─> normalize_ide_id
+  └─> send_chat_via_ide_prompt
+      └─> _ide_prompt_app_id
+          └─> _canonical_ide
+      └─> _resolve_ide_prompt_map
+```
+
+### Flow 3: _select_auto_pipeline_profile
 ```
 _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
   └─> _auto_pipeline_stage
       └─> _auto_pipeline_has_pressure
 ```
 
-### Flow 3: action_status
+### Flow 4: action_status
 ```
 action_status [src.koru.autopilot.commands.status]
   └─> _print_status_json
@@ -267,12 +279,12 @@ action_status [src.koru.autopilot.commands.status]
       └─> _resolve_log_format
 ```
 
-### Flow 4: imgl_main
+### Flow 5: imgl_main
 ```
 imgl_main [src.koru.cli_imgl]
 ```
 
-### Flow 5: action_snapshot
+### Flow 6: action_snapshot
 ```
 action_snapshot [src.koru.autopilot.cli_snapshot]
   └─> _decision_lines
@@ -280,18 +292,6 @@ action_snapshot [src.koru.autopilot.cli_snapshot]
           └─> decision_trace_path
   └─ →> canonical_autopilot_ide_id
       └─> normalize_ide_id
-```
-
-### Flow 6: send_chat
-```
-send_chat [src.koru.integrations.vdisplay_client]
-  └─> _canonical_ide
-      └─ →> canonical_autopilot_ide_id
-          └─> normalize_ide_id
-  └─> send_chat_via_ide_prompt
-      └─> _ide_prompt_app_id
-          └─> _canonical_ide
-      └─> _resolve_ide_prompt_map
 ```
 
 ### Flow 7: from_env
@@ -576,11 +576,12 @@ Key functions that process and transform data:
 Functions exposed as public API (no underscore prefix):
 
 - `scripts.e2e_envmap_koru.main` - 73 calls
+- `src.koru.integrations.vdisplay_client.send_chat` - 55 calls
 - `src.koru.autopilot.commands.status.action_status` - 53 calls
 - `src.koru.cli_imgl.imgl_main` - 52 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
-- `src.koru.integrations.vdisplay_client.send_chat` - 48 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 46 calls
+- `src.koru.integrations.vdisplay_client.load_vql_metadata` - 46 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
@@ -593,8 +594,8 @@ Functions exposed as public API (no underscore prefix):
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koruide.daemon.handlers_drive.handle_drive` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
-- `src.koru.integrations.vdisplay_client.verify_chat_text_visible` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
+- `src.koru.integrations.vdisplay_client.verify_chat_text_visible` - 33 calls
 - `packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command` - 32 calls
 - `src.koru.bounded_contexts.repairs.read_model.format_repair_history_for_llm` - 32 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
@@ -614,7 +615,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 27 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 - `packages.uri2koru.src.uri2koru.decode.uri_to_dsl` - 26 calls
-- `packages.nlp2coru.src.nlp2coru.cli.main` - 26 calls
 
 ## System Interactions
 
@@ -624,6 +624,11 @@ How components interact:
 graph TD
     main --> _section
     main --> print
+    send_chat --> _canonical_ide
+    send_chat --> send_chat_via_ide_pr
+    send_chat --> _ide_hints
+    send_chat --> _find_first_selector
+    send_chat --> _dry_run
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
@@ -641,11 +646,6 @@ graph TD
     action_snapshot --> max
     action_snapshot --> _decision_lines
     action_snapshot --> extend
-    send_chat --> _canonical_ide
-    send_chat --> send_chat_via_ide_pr
-    send_chat --> _ide_hints
-    send_chat --> _find_first_selector
-    send_chat --> _dry_run
     from_env --> max
     from_env --> cls
     from_env --> env_int

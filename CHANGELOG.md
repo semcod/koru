@@ -73,6 +73,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.332] - 2026-06-11
+
+### Docs
+- Update README.md
+- Update docs/autonomy-ide-cursor.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .vdisplay/2026-06-11-vql-metadata-analysis-previous-current.json
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 6 more files
+
 ## [0.1.331] - 2026-06-11
 
 ### Docs
