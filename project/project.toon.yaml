@@ -17,7 +17,7 @@ ALERTS[20]:
   !!! high_fan_out     main = 25 (limit:10)
 
 MODULES[935] (top by size):
-  M[packages/coru/src/coru/cli.py] 3875L C:3 F:204 CC↑19 D:2 (python)
+  M[packages/coru/src/coru/cli.py] 3875L C:3 F:204 CC↑19 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[src/koru/scan.py] 1621L C:0 F:61 CC↑13 D:7 (python)
   M[src/koru/autonomous_cycle.py] 1443L C:0 F:46 CC↑14 D:1 (python)

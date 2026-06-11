@@ -1,5 +1,5 @@
 # code2llm/evolution | 6185 func | 622f | 2026-06-11
-# generated in 0.05s
+# generated in 0.04s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           packages/coru/src/coru/cli.py
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.7 → now CC̄=3.6
+  prev CC̄=3.6 → now CC̄=3.6

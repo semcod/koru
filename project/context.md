@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.08s -->
+<!-- generated in 0.03s -->
 
 ## Overview
 
@@ -10,7 +10,7 @@
 - **Total Functions**: 6316
 - **Total Classes**: 476
 - **Modules**: 935
-- **Entry Points**: 2608
+- **Entry Points**: 2609
 
 ## Architecture by Module
 
@@ -501,6 +501,11 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: packages.nlpshim.src.nlpshim.control.to_dsl
 
+### recursion_main
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: packages.coru.src.coru.cli.main
+
 ### recursion_create_ticket_from_dashboard
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -540,11 +545,6 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.integrations.vdisplay_client.verify_chat_text_visible
-
-### recursion_main
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine

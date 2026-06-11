@@ -1,9 +1,9 @@
-# koru | 934f 143774L | txt:5,yaml:30,json:39,yml:10,toml:16,python:664,shell:56,proto:4,md:1,javascript:1,go:2,rust:1,typescript:93,kotlin:6,properties:1,xml:1 | 2026-06-11
-# generated in 0.23s
+# koru | 934f 143774L | txt:5,yaml:30,json:39,yml:10,python:664,shell:56,toml:16,proto:4,md:1,javascript:1,go:2,rust:1,typescript:93,kotlin:6,properties:1,xml:1 | 2026-06-11
+# generated in 0.20s
 # stats: 6316 func | 0 cls | 934 mod | CC̄=3.6 | critical:44 | cycles:0
 # alerts[5]: CC send_chat=32; fan-out action_snapshot=31; fan-out send_chat=29; CC verify_chat_text_visible=28; CC SharedAutopilotBridgePaste.shouldProbeInput=26
 # hotspots[5]: action_snapshot fan=31; send_chat fan=29; create_app fan=26; create_app fan=26; verify_chat_text_visible fan=25
-# evolution: CC̄ 3.7→3.6 (improved -0.1)
+# evolution: CC̄ 3.6→3.6 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[934]:
   .pretest.yml,17
@@ -1490,22 +1490,6 @@ C...
     _format_plugin_setup_steps(ide;sock;settings_hint;project)
     _format_keyboard_setup_steps(ide;sock;project)
     format_post_startup_operator_hints(probe)
-  src/koru/autopilot/cli_snapshot.py:
-    e: _dsl_quote,_runtime_lines,_decision_lines,_observe_path_line,_drive_dsl_lines,_live_desktop_probe,_env2llm_lines,_lane_shell_env,_operator_lines,action_snapshot
-    _dsl_quote(value)
-    _runtime_lines()
-    _decision_lines(project)
-    _observe_path_line(project)
-    _drive_dsl_lines(project)
-    _live_desktop_probe(project)
-    _env2llm_lines(project)
-    _lane_shell_env()
-    _operator_lines()
-    action_snapshot(args)
-  scripts/run_testql_conversations.py:
-    e: _parse_args,main
-    _parse_args(argv)
-    main(argv)
   src/koru/ide_control_cli.py:
     e: _add_common_lane_args,_add_control_plan_parser,_add_control_execute_parser,_add_control_list_uris_parser,add_control_parser,_print_json,_resolve_control_ide,_resolve_workspace_from_status,_client_factory_for_args,action_ide_control_plan,_print_execution_json,_print_execution_text,action_ide_control_execute,_fetch_autopilot_status,action_ide_control_list_uris,dispatch_control_action
     _add_common_lane_args(parser)
@@ -1524,6 +1508,22 @@ C...
     _fetch_autopilot_status(socket_path)
     action_ide_control_list_uris(args)
     dispatch_control_action(args)
+  src/koru/autopilot/cli_snapshot.py:
+    e: _dsl_quote,_runtime_lines,_decision_lines,_observe_path_line,_drive_dsl_lines,_live_desktop_probe,_env2llm_lines,_lane_shell_env,_operator_lines,action_snapshot
+    _dsl_quote(value)
+    _runtime_lines()
+    _decision_lines(project)
+    _observe_path_line(project)
+    _drive_dsl_lines(project)
+    _live_desktop_probe(project)
+    _env2llm_lines(project)
+    _lane_shell_env()
+    _operator_lines()
+    action_snapshot(args)
+  scripts/run_testql_conversations.py:
+    e: _parse_args,main
+    _parse_args(argv)
+    main(argv)
   packages/nlpshim/src/nlpshim/client.py:
     e: FallbackNLP2DSLClient,NLPBridgeClient,get_nlp2dsl_client,_use_intent_ir,analyze_text_structure
     FallbackNLP2DSLClient: __init__(0),__enter__(0),__exit__(3),from_env(0),workflow_from_text(3)  # Mock / local translation for test stability when nlp2dsl ser...
@@ -1613,36 +1613,6 @@ C...
     _check_koru_runtime_identity(project)
     _is_relative_to(path;parent)
     _check_python_venv_alignment(project)
-  src/koru/self_control.py:
-    e: SelfCheck,EcosystemComponent,SelfControlReport,_run,_source_version,_installed_version,_installed_editable_source_root,_check_package_identity,_is_relative_to,_check_entrypoint_identity,_install_manager_checks,_install_manager_issue_groups,_install_manager_check_detail,_check_interface_registry,_check_environment_profile,_package_component,_entrypoint_component,_install_manager_component,_interface_registry_component,_environment_profile_component,_ecosystem_components,run_self_control,repair_self_control,format_self_control_report
-    SelfCheck: to_dict(0)
-    EcosystemComponent: to_dict(0)
-    SelfControlReport: summary(0),to_dict(0)
-    _run(command;cwd)
-    _source_version(project)
-    _installed_version()
-    _installed_editable_source_root()
-    _check_package_identity(project)
-    _is_relative_to(path;parent)
-    _check_entrypoint_identity(project)
-    _install_manager_checks(project)
-    _install_manager_issue_groups(report)
-    _install_manager_check_detail(report)
-    _check_interface_registry()
-    _check_environment_profile(project)
-    _package_component(project)
-    _entrypoint_component(project)
-    _install_manager_component()
-    _interface_registry_component()
-    _environment_profile_component(project)
-    _ecosystem_components(project)
-    run_self_control(project)
-    repair_self_control(project)
-    format_self_control_report(report)
-  plugins/koru-autopilot-shared/src/bridge-ack.ts:
-    i: ./bridge-config,./bridge-paste,vscode
-    e: SharedAutopilotBridgeAck
-    SharedAutopilotBridgeAck: sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),ide(-1),debugLog(-1),discardToxicFocusOpenCache(-1),cache(-1),cached(-1),focusToken(-1),debugLog(-1),submitted(-1),sendMessageSent(-1)
   src/koru/autonomous_readiness.py:
     e: ReadinessIssue,ReadinessResult,_TerminalLaneContext,_project_venv_roots,_project_venv_python,_project_venv_koru,_resolve_path,_runtime_issue_severity,_first_fix_command,_python_executable_mismatch_issue,_venv_alignment_fix,_venv_alignment_issue,_koru_runtime_identity_issue,_editable_install_fix,_package_version_drift_issue,_append_issue,check_runtime_consistency,check_daemon_client_alignment,_pid_alive,_socket_inode,_metadata_socket_matches,_status_daemon_metadata,_effective_daemon_metadata,plugin_workspace_covers_project,_check_socket_health_issues,_check_daemon_meta_issues,_check_plugin_workspace_issues,check_workspace_socket_ownership,apply_socket_ownership_repairs,attempt_plugin_gate_recovery,_canonical_target_ide,_lane_instance_value,_terminal_context,_terminal_lane_context,_terminal_lane_mismatch_issues,_lane_ide_mismatch_issue,_socket_lane_mismatch_issue,check_lane_terminal_socket_alignment,check_queue_runner_contention,warn_pre_drive_queue_without_plugin,run_plugin_reconnect_pipeline,evaluate_autonomous_readiness,format_readiness_lines
     ReadinessIssue:
@@ -1688,6 +1658,36 @@ C...
     run_plugin_reconnect_pipeline()
     evaluate_autonomous_readiness(project;socket_path;status)
     format_readiness_lines(result)
+  src/koru/self_control.py:
+    e: SelfCheck,EcosystemComponent,SelfControlReport,_run,_source_version,_installed_version,_installed_editable_source_root,_check_package_identity,_is_relative_to,_check_entrypoint_identity,_install_manager_checks,_install_manager_issue_groups,_install_manager_check_detail,_check_interface_registry,_check_environment_profile,_package_component,_entrypoint_component,_install_manager_component,_interface_registry_component,_environment_profile_component,_ecosystem_components,run_self_control,repair_self_control,format_self_control_report
+    SelfCheck: to_dict(0)
+    EcosystemComponent: to_dict(0)
+    SelfControlReport: summary(0),to_dict(0)
+    _run(command;cwd)
+    _source_version(project)
+    _installed_version()
+    _installed_editable_source_root()
+    _check_package_identity(project)
+    _is_relative_to(path;parent)
+    _check_entrypoint_identity(project)
+    _install_manager_checks(project)
+    _install_manager_issue_groups(report)
+    _install_manager_check_detail(report)
+    _check_interface_registry()
+    _check_environment_profile(project)
+    _package_component(project)
+    _entrypoint_component(project)
+    _install_manager_component()
+    _interface_registry_component()
+    _environment_profile_component(project)
+    _ecosystem_components(project)
+    run_self_control(project)
+    repair_self_control(project)
+    format_self_control_report(report)
+  plugins/koru-autopilot-shared/src/bridge-ack.ts:
+    i: ./bridge-config,./bridge-paste,vscode
+    e: SharedAutopilotBridgeAck
+    SharedAutopilotBridgeAck: sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),ide(-1),debugLog(-1),discardToxicFocusOpenCache(-1),cache(-1),cached(-1),focusToken(-1),debugLog(-1),submitted(-1),sendMessageSent(-1)
   packages/uri2coru/src/uri2coru/nlp2uri.py:
     e: ResolvedCoruUri,nlp2uri,best_uri
     ResolvedCoruUri: to_dict(0)
@@ -2394,6 +2394,68 @@ Designed to ...
     CommandTelemetry: __init__(1),record(0),success_rate(4),attempts(4),rows_for(1),record_from_ack(0),_trim(0),_persist(0),_load(0)  # Tracks attempts/ok per (ide, plugin_version, capability, com...
     _telemetry_path(project)
     _make_key(ide;plugin_version;capability;command)
+  src/koruide/plugin_installer.py:
+    e: PluginInstallResult,ExtensionMetadataAdapter,ReassertDecision,extension_id_for_ide,plugin_dir_names_for_ide,_valid_ide,_plugin_installer_module,_ide_from_terminal_env,_terminal_vscode_flavor,_repo_root,_plugin_package_version,_plugin_package_name,_versioned_vsix_candidates,_bundled_vsix_candidates,_fallback_vsix_candidates,_running_vscode_flavor,_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_first_local_extension_vsix,_newest_plugin_dir_vsix,_newest_existing_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_env_force_reassert_extension_install,_env_build_local_vsix,_local_plugin_dir,_package_build_sha,_vsix_build_sha,_latest_plugin_source_mtime,_local_vsix_needs_build,_ensure_local_extension_vsix,_extension_is_installed,_installed_extension_ids,_conflicting_extension_ids,_remove_conflicting_extensions,_extensions_metadata_path_for_ide,_metadata_adapter_for_ide,_active_extension_location_from_item,_active_extension_locations,_resolve_extension_dir,_extract_build_sha,_installed_extension_build_sha,_move_path_aside,_prune_stale_koru_extension_dirs,_parse_extension_version,installed_extension_version_for_ide,_reassert_extension_extra,_decide_reassert_policy,_run_reassert_command,_maybe_retry_missing_vsix,_should_retry_missing_vsix,_reassert_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result
+    PluginInstallResult: to_dict(0)
+    ExtensionMetadataAdapter:  # IDE-specific adapter for extension metadata location...
+    ReassertDecision:  # Pure reassert policy output used by install/reassert orchest...
+    extension_id_for_ide(ide_id)
+    plugin_dir_names_for_ide(ide_id)
+    _valid_ide(raw)
+    _plugin_installer_module()
+    _ide_from_terminal_env()
+    _terminal_vscode_flavor()
+    _repo_root()
+    _plugin_package_version(plugin_dir)
+    _plugin_package_name(plugin_dir)
+    _versioned_vsix_candidates(plugin_dir)
+    _bundled_vsix_candidates(plugin_dir_name)
+    _fallback_vsix_candidates(anchor)
+    _running_vscode_flavor()
+    _vscode_flavor()
+    resolve_target_ide(requested)
+    resolve_extension_vsix(target_ide)
+    _first_local_extension_vsix(dir_names)
+    _newest_plugin_dir_vsix(plugin_dir)
+    _newest_existing_vsix(candidates)
+    _resolve_ide_command(ide)
+    _settings_path_for_ide(ide)
+    _configure_socket_path(ide;socket_path)
+    _run(cmd)
+    _env_reassert_extension_install()
+    _env_force_reassert_extension_install()
+    _env_build_local_vsix()
+    _local_plugin_dir(target_ide)
+    _package_build_sha(package_json)
+    _vsix_build_sha(vsix)
+    _latest_plugin_source_mtime(plugin_dir)
+    _local_vsix_needs_build(plugin_dir;vsix)
+    _ensure_local_extension_vsix(target_ide)
+    _extension_is_installed(command;runner)
+    _installed_extension_ids(command;runner)
+    _conflicting_extension_ids(target_ide)
+    _remove_conflicting_extensions(command;runner)
+    _extensions_metadata_path_for_ide(ide)
+    _metadata_adapter_for_ide(ide)
+    _active_extension_location_from_item(item)
+    _active_extension_locations(metadata_path)
+    _resolve_extension_dir(item;extensions_root)
+    _extract_build_sha(ext_dir)
+    _installed_extension_build_sha(target_ide)
+    _move_path_aside(path;disabled_root)
+    _prune_stale_koru_extension_dirs()
+    _parse_extension_version(output)
+    installed_extension_version_for_ide(ide)
+    _reassert_extension_extra(command)
+    _decide_reassert_policy()
+    _run_reassert_command(runner;command)
+    _maybe_retry_missing_vsix(command)
+    _should_retry_missing_vsix(vsix;proc)
+    _reassert_extra(proc)
+    _result_already_installed(target;command)
+    _install_extension_vsix(target;command;vsix)
+    install_plugin_for_ide()
+    format_plugin_install_result(result)
   src/koruide/daemon/handlers_ack.py:
     e: _persist_recent_dsl,_safe_replay_name,_attach_drive_replay_commands,_plugin_ack_needs_os_fallback,_relay_os_fallback_ack,_strict_message_sent_completion_allowed,_pending_info_has_poisoned_late_message_sent,_clear_pending_plugin_drive,_message_sent_completion_info,_send_message_sent_completion,_relay_message_sent_ack,_deferred_submit_unverified_grace_seconds,_defer_submit_unverified_reply,_relay_plugin_ack_os_fallback,_ensure_plugin_backend,_log_plugin_ack_trace,_persist_plugin_ack_dsl,_record_plugin_ack_command_telemetry,_relay_plugin_ack_to_cli,_send_plugin_ack_reply,_annotated_plugin_ack_info,_strict_plugin_ack_ok,_record_plugin_ack_integration,handle_ack
     _persist_recent_dsl(daemon)
@@ -2684,68 +2746,6 @@ Designed to ...
     compute_build_sha(plugin_dir)
     update_package(plugin_dir)
     main()
-  src/koruide/plugin_installer.py:
-    e: PluginInstallResult,ExtensionMetadataAdapter,ReassertDecision,extension_id_for_ide,plugin_dir_names_for_ide,_valid_ide,_plugin_installer_module,_ide_from_terminal_env,_terminal_vscode_flavor,_repo_root,_plugin_package_version,_plugin_package_name,_versioned_vsix_candidates,_bundled_vsix_candidates,_fallback_vsix_candidates,_running_vscode_flavor,_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_first_local_extension_vsix,_newest_plugin_dir_vsix,_newest_existing_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_env_force_reassert_extension_install,_env_build_local_vsix,_local_plugin_dir,_package_build_sha,_vsix_build_sha,_latest_plugin_source_mtime,_local_vsix_needs_build,_ensure_local_extension_vsix,_extension_is_installed,_installed_extension_ids,_conflicting_extension_ids,_remove_conflicting_extensions,_extensions_metadata_path_for_ide,_metadata_adapter_for_ide,_active_extension_location_from_item,_active_extension_locations,_resolve_extension_dir,_extract_build_sha,_installed_extension_build_sha,_move_path_aside,_prune_stale_koru_extension_dirs,_parse_extension_version,installed_extension_version_for_ide,_reassert_extension_extra,_decide_reassert_policy,_run_reassert_command,_maybe_retry_missing_vsix,_should_retry_missing_vsix,_reassert_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result
-    PluginInstallResult: to_dict(0)
-    ExtensionMetadataAdapter:  # IDE-specific adapter for extension metadata location...
-    ReassertDecision:  # Pure reassert policy output used by install/reassert orchest...
-    extension_id_for_ide(ide_id)
-    plugin_dir_names_for_ide(ide_id)
-    _valid_ide(raw)
-    _plugin_installer_module()
-    _ide_from_terminal_env()
-    _terminal_vscode_flavor()
-    _repo_root()
-    _plugin_package_version(plugin_dir)
-    _plugin_package_name(plugin_dir)
-    _versioned_vsix_candidates(plugin_dir)
-    _bundled_vsix_candidates(plugin_dir_name)
-    _fallback_vsix_candidates(anchor)
-    _running_vscode_flavor()
-    _vscode_flavor()
-    resolve_target_ide(requested)
-    resolve_extension_vsix(target_ide)
-    _first_local_extension_vsix(dir_names)
-    _newest_plugin_dir_vsix(plugin_dir)
-    _newest_existing_vsix(candidates)
-    _resolve_ide_command(ide)
-    _settings_path_for_ide(ide)
-    _configure_socket_path(ide;socket_path)
-    _run(cmd)
-    _env_reassert_extension_install()
-    _env_force_reassert_extension_install()
-    _env_build_local_vsix()
-    _local_plugin_dir(target_ide)
-    _package_build_sha(package_json)
-    _vsix_build_sha(vsix)
-    _latest_plugin_source_mtime(plugin_dir)
-    _local_vsix_needs_build(plugin_dir;vsix)
-    _ensure_local_extension_vsix(target_ide)
-    _extension_is_installed(command;runner)
-    _installed_extension_ids(command;runner)
-    _conflicting_extension_ids(target_ide)
-    _remove_conflicting_extensions(command;runner)
-    _extensions_metadata_path_for_ide(ide)
-    _metadata_adapter_for_ide(ide)
-    _active_extension_location_from_item(item)
-    _active_extension_locations(metadata_path)
-    _resolve_extension_dir(item;extensions_root)
-    _extract_build_sha(ext_dir)
-    _installed_extension_build_sha(target_ide)
-    _move_path_aside(path;disabled_root)
-    _prune_stale_koru_extension_dirs()
-    _parse_extension_version(output)
-    installed_extension_version_for_ide(ide)
-    _reassert_extension_extra(command)
-    _decide_reassert_policy()
-    _run_reassert_command(runner;command)
-    _maybe_retry_missing_vsix(command)
-    _should_retry_missing_vsix(vsix;proc)
-    _reassert_extra(proc)
-    _result_already_installed(target;command)
-    _install_extension_vsix(target;command;vsix)
-    install_plugin_for_ide()
-    format_plugin_install_result(result)
   packages/dsl2koru/src/dsl2koru/codegen.py:
     e: _python_type,build_model_registry,validate_payload,render_models_module,main
     _python_type(prop)
@@ -3580,6 +3580,30 @@ Designed to ...
     consume_pending_submit_strategy_hint(state)
     should_block_manual_send(state)
     _waiting_ticket_id(queue_result)
+  src/koru/tools.py:
+    e: default_registry_path,resolve_registry_path,_extract_tools_from_payload,_normalize_tool_entries,_merge_shell_tool_entries,load_tool_registry,_first_token,_extract_detect_config,_check_commands_exist,_check_markers_exist,_check_env_vars_exist,_build_detection_result,detect_tools,find_tool_entry,infer_adapter_kind,_extract_tool_metadata,_validate_adapter_kind,_build_scaffold_prompt_lines,_build_scaffold_labels,_build_scaffold_inputs,build_tool_task_scaffold,render_tools_detect_text
+    default_registry_path()
+    resolve_registry_path(path_override)
+    _extract_tools_from_payload(payload)
+    _normalize_tool_entries(tools)
+    _merge_shell_tool_entries(normalized)
+    load_tool_registry(path_override)
+    _first_token(command)
+    _extract_detect_config(item)
+    _check_commands_exist(commands)
+    _check_markers_exist(project;markers)
+    _check_env_vars_exist(env_vars)
+    _build_detection_result(item;available;found_commands;found_markers;found_env)
+    detect_tools(project;registry)
+    find_tool_entry(registry;tool_id)
+    infer_adapter_kind(tool)
+    _extract_tool_metadata(tool)
+    _validate_adapter_kind(tool;adapter_kind)
+    _build_scaffold_prompt_lines(metadata;plugin_bridge;kind)
+    _build_scaffold_labels(metadata;plugin_bridge)
+    _build_scaffold_inputs(metadata;plugin_bridge;kind)
+    build_tool_task_scaffold(tool)
+    render_tools_detect_text(results)
   src/koru/gc.py:
     e: GcCandidate,GcResult,_now_utc,_parse_ts,_planfile_env,_planfile_command_base,_run_planfile,_load_tickets_from_sprint,_archive_tickets,collect_gc_candidates,_apply_keep_last,_archive_tickets_before_delete,_delete_tickets,run_gc
     GcCandidate:  # A ticket eligible for garbage collection...
@@ -3864,30 +3888,6 @@ Designed to ...
     runSqliteCommand()
     result()
     sqliteRunner()
-  src/koru/tools.py:
-    e: default_registry_path,resolve_registry_path,_extract_tools_from_payload,_normalize_tool_entries,_merge_shell_tool_entries,load_tool_registry,_first_token,_extract_detect_config,_check_commands_exist,_check_markers_exist,_check_env_vars_exist,_build_detection_result,detect_tools,find_tool_entry,infer_adapter_kind,_extract_tool_metadata,_validate_adapter_kind,_build_scaffold_prompt_lines,_build_scaffold_labels,_build_scaffold_inputs,build_tool_task_scaffold,render_tools_detect_text
-    default_registry_path()
-    resolve_registry_path(path_override)
-    _extract_tools_from_payload(payload)
-    _normalize_tool_entries(tools)
-    _merge_shell_tool_entries(normalized)
-    load_tool_registry(path_override)
-    _first_token(command)
-    _extract_detect_config(item)
-    _check_commands_exist(commands)
-    _check_markers_exist(project;markers)
-    _check_env_vars_exist(env_vars)
-    _build_detection_result(item;available;found_commands;found_markers;found_env)
-    detect_tools(project;registry)
-    find_tool_entry(registry;tool_id)
-    infer_adapter_kind(tool)
-    _extract_tool_metadata(tool)
-    _validate_adapter_kind(tool;adapter_kind)
-    _build_scaffold_prompt_lines(metadata;plugin_bridge;kind)
-    _build_scaffold_labels(metadata;plugin_bridge)
-    _build_scaffold_inputs(metadata;plugin_bridge;kind)
-    build_tool_task_scaffold(tool)
-    render_tools_detect_text(results)
   packages/nlpshim/src/nlpshim/conversation_test_api.py:
     e: LLMProvider,ConversationContext,DialogResponse,parse_conversation_step,complete_missing_fields,execute_conversation_plan,export_trace
     LLMProvider(Protocol): reply_for(1)
@@ -8049,11 +8049,9 @@ Th...
   wup.yaml:
   docker-compose.yml:
   nlp2uri.yaml:
-  pyproject.toml:
   tree.txt:
   todo.txt:
   pipeline.yaml:
-  package.json:
   prefact.yaml:
   Taskfile.yml:
   Dockerfile:
@@ -8580,3 +8578,5 @@ Th...
   testql-scenarios/artifacts/mock-llm-replies.yaml:
   testql-scenarios/conversations/send-invoice.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  pyproject.toml:
+  package.json:
