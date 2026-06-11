@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 662, typescript: 93, shell: 56, json: 39, yaml: 30
+- **Languages**: python: 664, typescript: 93, shell: 56, json: 39, yaml: 30
 - **Analysis Mode**: static
-- **Total Functions**: 6188
+- **Total Functions**: 6284
 - **Total Classes**: 476
-- **Modules**: 933
-- **Entry Points**: 2502
+- **Modules**: 935
+- **Entry Points**: 2594
 
 ## Architecture by Module
 

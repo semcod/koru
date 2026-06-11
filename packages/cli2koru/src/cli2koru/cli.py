@@ -5,10 +5,49 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from cli2koru.shell import run_shell
 from dsl2koru.bus import dispatch, execute_dsl
+
+
+def _print_result(result: Any, json_out: bool) -> None:
+    if json_out:
+        print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
+    else:
+        if result.error:
+            print(f"error: {result.error}", file=sys.stderr)
+        if result.output:
+            print(result.output.rstrip())
+
+
+def _handle_shell(args: argparse.Namespace) -> int:
+    return run_shell(default_project=args.project, json_out=args.json)
+
+
+def _handle_run(args: argparse.Namespace) -> int:
+    results = execute_dsl(Path(args.script).read_text(encoding="utf-8"), default_project=args.project)
+    code = 0
+    for result in results:
+        _print_result(result, args.json)
+        if not result.ok:
+            code = 1
+    return code
+
+
+def _handle_exec(args: argparse.Namespace) -> int:
+    result = dispatch(args.command, default_project=args.project)
+    _print_result(result, args.json)
+    return 0 if result.ok else 1
+
+
+_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "shell": _handle_shell,
+    "run": _handle_run,
+    "exec": _handle_exec,
+}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,35 +71,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv or sys.argv[1:])
     cmd = args.cmd or "shell"
 
-    if cmd == "shell":
-        return run_shell(default_project=args.project, json_out=args.json)
-
-    if cmd == "run":
-        results = execute_dsl(Path(args.script).read_text(encoding="utf-8"), default_project=args.project)
-        code = 0
-        for result in results:
-            if args.json:
-                print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
-            else:
-                if result.error:
-                    print(f"error: {result.error}", file=sys.stderr)
-                if result.output:
-                    print(result.output.rstrip())
-            if not result.ok:
-                code = 1
-        return code
-
-    if cmd == "exec":
-        result = dispatch(args.command, default_project=args.project)
-        if args.json:
-            print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
-        else:
-            if result.error:
-                print(f"error: {result.error}", file=sys.stderr)
-            if result.output:
-                print(result.output.rstrip())
-        return 0 if result.ok else 1
-
+    handler = _HANDLERS.get(cmd)
+    if handler:
+        return handler(args)
     parser.print_help()
     return 1
 

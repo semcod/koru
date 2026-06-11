@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.06s
+%% generated in 0.05s
     subgraph check_dups
         check_dups__get_files["get_files"]
     end
@@ -225,11 +225,6 @@ flowchart TD
         packages__dsl2coru__src__dsl2coru__bus__execute_dsl_line["execute_dsl_line"]
         packages__dsl2coru__src__dsl2coru__bus__execute_dsl["execute_dsl"]
         packages__dsl2coru__src__dsl2coru__bus__dispatch_text["dispatch_text"]
-        packages__dsl2coru__src__dsl2coru__cli___run_results["_run_results"]
-        packages__dsl2coru__src__dsl2coru__cli__main["main"]
-        packages__dsl2coru__src__dsl2coru__cli___main_subcommand["_main_subcommand"]
-        packages__dsl2coru__src__dsl2coru__cli___main_legacy["_main_legacy"]
-        packages__dsl2coru__src__dsl2coru__cli___handle_subcommand{{_handle_subcommand CC=23}}
         packages__dsl2coru__src__dsl2coru__events__StoredEvent__to_dict["to_dict"]
         packages__dsl2coru__src__dsl2coru__events__EventStore____init__["__init__"]
         packages__dsl2coru__src__dsl2coru__events__EventStore__for_default["for_default"]
@@ -239,16 +234,6 @@ flowchart TD
         packages__dsl2coru__src__dsl2coru__events__EventStore__read_all["read_all"]
         packages__dsl2coru__src__dsl2coru__events__EventStore__replay_pb["replay_pb"]
         packages__dsl2coru__src__dsl2coru__events__EventStore__replay["replay"]
-        packages__dsl2coru__src__dsl2coru__pb_codec___set_body{{_set_body CC=31}}
-        packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope["dict_to_envelope"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__envelope_to_dict{{envelope_to_dict CC=44}}
-        packages__dsl2coru__src__dsl2coru__pb_codec__encode_protobuf["encode_protobuf"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf["decode_protobuf"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__encode_text_to_protobuf["encode_text_to_protobuf"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf_to_text["decode_protobuf_to_text"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__result_to_pb["result_to_pb"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__pb_to_result["pb_to_result"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__encode_result_protobuf["encode_result_protobuf"]
         packages__dsl2coru__src__dsl2coru__schema_registry__normalize_verb["normalize_verb"]
         packages__dsl2coru__src__dsl2coru__schema_registry___load_schemas["_load_schemas"]
         packages__dsl2coru__src__dsl2coru__schema_registry__schema_for_verb["schema_for_verb"]
@@ -259,37 +244,47 @@ flowchart TD
         packages__dsl2coru__src__dsl2coru__codegen__validate_payload["validate_payload"]
         packages__dsl2coru__src__dsl2coru__codegen__render_models_module["render_models_module"]
         packages__dsl2coru__src__dsl2coru__codegen__main("main CC=9")
-        packages__dsl2coru__src__dsl2coru__codec__validate_payload["validate_payload"]
-        packages__dsl2coru__src__dsl2coru__codec__parse_text["parse_text"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_to_bytes["envelope_to_bytes"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_from_bytes["envelope_from_bytes"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_to_json["envelope_to_json"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_from_json["envelope_from_json"]
-        packages__dsl2coru__src__dsl2coru__codec__roundtrip_text["roundtrip_text"]
-        packages__dsl2coru__src__dsl2coru__result__DslResult__to_dict["to_dict"]
-        packages__dsl2coru__src__dsl2coru__handlers__command__run_command["run_command"]
-        packages__dsl2coru__src__dsl2coru__handlers__query__run_query["run_query"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_text_args["_build_text_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_chat_args["_build_chat_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_auto_args["_build_auto_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_ensure_args["_build_ensure_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_lane_args["_build_lane_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_status_args["_build_status_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_doctor_args["_build_doctor_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_calibration_args["_build_calibration_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_repair_run_args["_build_repair_run_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_repair_history_args["_build_repair_history_args"]
-        packages__dsl2coru__src__dsl2coru__handlers__argv___build_sync_args["_build_sync_args"]
+        packages__dsl2coru__src__dsl2coru__grammar___split_command["_split_command"]
+        packages__dsl2coru__src__dsl2coru__grammar___truthy["_truthy"]
+        packages__dsl2coru__src__dsl2coru__grammar___flag["_flag"]
+        packages__dsl2coru__src__dsl2coru__grammar___ui_args("_ui_args CC=9")
+        packages__dsl2coru__src__dsl2coru__grammar___parse_status["_parse_status"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_repair_history["_parse_repair_history"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_env["_parse_env"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_query["_parse_query"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_auto["_parse_auto"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_lane["_parse_lane"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_ensure["_parse_ensure"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_doctor["_parse_doctor"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_calibration["_parse_calibration"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_chat["_parse_chat"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_text("_parse_text CC=8")
+        packages__dsl2coru__src__dsl2coru__grammar___parse_sync["_parse_sync"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_repair_run["_parse_repair_run"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_ui_common["_parse_ui_common"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_ui_type["_parse_ui_type"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_ui_key["_parse_ui_key"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_ui_click["_parse_ui_click"]
+        packages__dsl2coru__src__dsl2coru__grammar___parse_ui_nl["_parse_ui_nl"]
+        packages__dsl2coru__src__dsl2coru__grammar__parse_line["parse_line"]
+        packages__dsl2coru__src__dsl2coru__grammar___append_flag["_append_flag"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_status["_serialize_status"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_env["_serialize_env"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_query["_serialize_query"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_auto["_serialize_auto"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_lane["_serialize_lane"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_ensure["_serialize_ensure"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_doctor["_serialize_doctor"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_calibration["_serialize_calibration"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_chat["_serialize_chat"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_text["_serialize_text"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_sync["_serialize_sync"]
+        packages__dsl2coru__src__dsl2coru__grammar___serialize_repair_run["_serialize_repair_run"]
     end
     subgraph packages__dsl2koru
         packages__dsl2koru__src__dsl2koru__bus__dispatch("dispatch CC=11")
         packages__dsl2koru__src__dsl2koru__bus__execute_dsl_line["execute_dsl_line"]
         packages__dsl2koru__src__dsl2koru__bus__execute_dsl["execute_dsl"]
-        packages__dsl2koru__src__dsl2koru__cli___run_results["_run_results"]
-        packages__dsl2koru__src__dsl2koru__cli__main["main"]
-        packages__dsl2koru__src__dsl2koru__cli___main_subcommand["_main_subcommand"]
-        packages__dsl2koru__src__dsl2koru__cli___main_legacy["_main_legacy"]
-        packages__dsl2koru__src__dsl2koru__cli___handle_subcommand{{_handle_subcommand CC=17}}
         packages__dsl2koru__src__dsl2koru__events__StoredEvent__to_dict["to_dict"]
         packages__dsl2koru__src__dsl2koru__events__EventStore____init__["__init__"]
         packages__dsl2koru__src__dsl2koru__events__EventStore__for_project["for_project"]
@@ -342,6 +337,11 @@ flowchart TD
         packages__dsl2koru__src__dsl2koru__codec__envelope_to_bytes["envelope_to_bytes"]
         packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes["envelope_from_bytes"]
         packages__dsl2koru__src__dsl2koru__codec__envelope_to_json["envelope_to_json"]
+        packages__dsl2koru__src__dsl2koru__codec__envelope_from_json["envelope_from_json"]
+        packages__dsl2koru__src__dsl2koru__codec__roundtrip_text["roundtrip_text"]
+        packages__dsl2koru__src__dsl2koru__result__DslResult__to_dict["to_dict"]
+        packages__dsl2koru__src__dsl2koru__handlers__HandlerResult__to_dict["to_dict"]
+        packages__dsl2koru__src__dsl2koru__handlers__run_query["run_query"]
     end
     subgraph packages__koruenv
         packages__koruenv__src__koruenv__cli___normalize_log_format["_normalize_log_format"]
@@ -464,8 +464,6 @@ flowchart TD
         packages__uri2coru__src__uri2coru__nlp2uri__ResolvedCoruUri__to_dict["to_dict"]
         packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri("nlp2uri CC=14")
         packages__uri2coru__src__uri2coru__nlp2uri__best_uri["best_uri"]
-        packages__uri2coru__src__uri2coru__decode___context["_context"]
-        packages__uri2coru__src__uri2coru__decode__uri_to_dsl{{uri_to_dsl CC=15}}
         packages__uri2coru__src__uri2coru__uri___encode["_encode"]
         packages__uri2coru__src__uri2coru__uri___decode["_decode"]
         packages__uri2coru__src__uri2coru__uri__uri_for_block["uri_for_block"]
@@ -473,6 +471,16 @@ flowchart TD
         packages__uri2coru__src__uri2coru__uri__is_coru_uri["is_coru_uri"]
         packages__uri2coru__src__uri2coru__uri__parse_coru_uri["parse_coru_uri"]
         packages__uri2coru__src__uri2coru__run__run_uri["run_uri"]
+        packages__uri2coru__src__uri2coru__decode___context["_context"]
+        packages__uri2coru__src__uri2coru__decode___cmd_repair_history["_cmd_repair_history"]
+        packages__uri2coru__src__uri2coru__decode___cmd_lane_status["_cmd_lane_status"]
+        packages__uri2coru__src__uri2coru__decode___cmd_validate_lane["_cmd_validate_lane"]
+        packages__uri2coru__src__uri2coru__decode___cmd_repair_run["_cmd_repair_run"]
+        packages__uri2coru__src__uri2coru__decode___cmd_resolve["_cmd_resolve"]
+        packages__uri2coru__src__uri2coru__decode___cmd_status["_cmd_status"]
+        packages__uri2coru__src__uri2coru__decode___block_repair_history["_block_repair_history"]
+        packages__uri2coru__src__uri2coru__decode___block_lane_status["_block_lane_status"]
+        packages__uri2coru__src__uri2coru__decode__uri_to_dsl["uri_to_dsl"]
     end
     subgraph packages__uri2koru
         packages__uri2koru__src__uri2koru__cli__main("main CC=12")
@@ -1543,19 +1551,6 @@ flowchart TD
     packages__dsl2koru__src__dsl2koru__bus__dispatch --> packages__dsl2koru__src__dsl2koru__codec__parse_text
     packages__dsl2koru__src__dsl2koru__bus__execute_dsl_line --> packages__dsl2koru__src__dsl2koru__bus__dispatch
     packages__dsl2koru__src__dsl2koru__bus__execute_dsl --> packages__dsl2koru__src__dsl2koru__bus__execute_dsl_line
-    packages__dsl2koru__src__dsl2koru__cli___run_results --> project__print
-    packages__dsl2koru__src__dsl2koru__cli__main --> packages__dsl2koru__src__dsl2koru__cli___main_legacy
-    packages__dsl2koru__src__dsl2koru__cli__main --> packages__dsl2koru__src__dsl2koru__cli___main_subcommand
-    packages__dsl2koru__src__dsl2koru__cli___main_legacy --> packages__dsl2koru__src__dsl2koru__cli___run_results
-    packages__dsl2koru__src__dsl2koru__cli___main_legacy --> packages__dsl2koru__src__dsl2koru__bus__execute_dsl
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__schema_registry__validate_schemas
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> project__print
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__parse_text
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__cli___run_results
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_to_json
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_to_bytes
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_json
-    packages__dsl2koru__src__dsl2koru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes
     packages__dsl2koru__src__dsl2koru__events__EventStore__append_command --> packages__dsl2koru__src__dsl2koru__pb_codec__encode_protobuf
     packages__dsl2koru__src__dsl2koru__events__EventStore__append_command --> packages__dsl2koru__src__dsl2koru__pb_codec__result_to_pb
     packages__dsl2koru__src__dsl2koru__events__EventStore__replay_pb --> packages__dsl2koru__src__dsl2koru__pb_codec__envelope_to_dict
@@ -1613,14 +1608,11 @@ flowchart TD
     packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri --> packages__uri2coru__src__uri2coru__uri__uri_for_block
     packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri --> packages__uri2coru__src__uri2coru__uri__uri_for_cmd
     packages__uri2coru__src__uri2coru__nlp2uri__best_uri --> packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri
-    packages__uri2coru__src__uri2coru__decode__uri_to_dsl --> packages__uri2coru__src__uri2coru__uri__parse_coru_uri
-    packages__uri2coru__src__uri2coru__decode__uri_to_dsl --> src__koru__wizard__gui__static__wizard__list
-    packages__uri2coru__src__uri2coru__decode__uri_to_dsl --> packages__uri2coru__src__uri2coru__decode___context
     packages__uri2coru__src__uri2coru__uri__uri_for_block --> packages__uri2coru__src__uri2coru__uri___encode
     packages__uri2coru__src__uri2coru__uri__uri_for_cmd --> packages__uri2coru__src__uri2coru__uri___encode
     packages__uri2coru__src__uri2coru__uri__parse_coru_uri --> packages__uri2coru__src__uri2coru__uri___decode
     packages__uri2coru__src__uri2coru__uri__parse_coru_uri --> packages__uri2coru__src__uri2coru__uri__is_coru_uri
-    packages__uri2coru__src__uri2coru__run__run_uri --> packages__uri2coru__src__uri2coru__decode__uri_to_dsl
+    packages__uri2coru__src__uri2coru__run__run_uri --> packages__uri2koru__src__uri2koru__decode__uri_to_dsl
     packages__uri2coru__src__uri2coru__run__run_uri --> packages__dsl2koru__src__dsl2koru__bus__dispatch
     packages__koruenv__src__koruenv__cli___emit_log --> packages__koruenv__src__koruenv__cli___iso_ts
     packages__koruenv__src__koruenv__cli___strip_double_dash --> src__koru__wizard__gui__static__wizard__list
@@ -1661,34 +1653,12 @@ flowchart TD
     packages__dsl2coru__src__dsl2coru__bus__execute_dsl_line --> packages__dsl2coru__src__dsl2coru__bus__dispatch
     packages__dsl2coru__src__dsl2coru__bus__execute_dsl --> packages__dsl2coru__src__dsl2coru__bus__execute_dsl_line
     packages__dsl2coru__src__dsl2coru__bus__dispatch_text --> packages__dsl2coru__src__dsl2coru__bus__execute_dsl
-    packages__dsl2coru__src__dsl2coru__cli___run_results --> project__print
-    packages__dsl2coru__src__dsl2coru__cli__main --> packages__dsl2coru__src__dsl2coru__cli___main_legacy
-    packages__dsl2coru__src__dsl2coru__cli__main --> packages__dsl2coru__src__dsl2coru__cli___main_subcommand
-    packages__dsl2coru__src__dsl2coru__cli___main_legacy --> packages__dsl2coru__src__dsl2coru__cli___run_results
-    packages__dsl2coru__src__dsl2coru__cli___main_legacy --> packages__dsl2koru__src__dsl2koru__bus__execute_dsl
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__schema_registry__validate_schemas
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> project__print
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__parse_text
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2coru__src__dsl2coru__cli___run_results
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_to_json
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_to_bytes
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_json
-    packages__dsl2coru__src__dsl2coru__cli___handle_subcommand --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes
     packages__dsl2coru__src__dsl2coru__events__EventStore___append_pb --> packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope
     packages__dsl2coru__src__dsl2coru__events__EventStore___append_pb --> packages__dsl2koru__src__dsl2koru__pb_codec__result_to_pb
     packages__dsl2coru__src__dsl2coru__events__EventStore___append_jsonl --> packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope
     packages__dsl2coru__src__dsl2coru__events__EventStore___append_jsonl --> packages__dsl2koru__src__dsl2koru__pb_codec__result_to_pb
     packages__dsl2coru__src__dsl2coru__events__EventStore__replay_pb --> packages__dsl2koru__src__dsl2koru__pb_codec__envelope_to_dict
     packages__dsl2coru__src__dsl2coru__events__EventStore__replay_pb --> packages__dsl2coru__src__dsl2coru__pb_codec__pb_to_result
-    packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope --> packages__dsl2coru__src__dsl2coru__pb_codec___set_body
-    packages__dsl2coru__src__dsl2coru__pb_codec__envelope_to_dict --> src__koru__wizard__gui__static__wizard__list
-    packages__dsl2coru__src__dsl2coru__pb_codec__encode_protobuf --> packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope
-    packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf --> packages__dsl2coru__src__dsl2coru__pb_codec__envelope_to_dict
-    packages__dsl2coru__src__dsl2coru__pb_codec__encode_text_to_protobuf --> packages__dsl2koru__src__dsl2koru__grammar__parse_line
-    packages__dsl2coru__src__dsl2coru__pb_codec__encode_text_to_protobuf --> packages__dsl2coru__src__dsl2coru__pb_codec__encode_protobuf
-    packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf_to_text --> packages__dsl2koru__src__dsl2koru__grammar__to_text
-    packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf_to_text --> packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf
-    packages__dsl2coru__src__dsl2coru__pb_codec__encode_result_protobuf --> packages__dsl2coru__src__dsl2coru__pb_codec__result_to_pb
     packages__dsl2coru__src__dsl2coru__schema_registry__schema_for_verb --> packages__dsl2coru__src__dsl2coru__schema_registry__normalize_verb
     packages__dsl2coru__src__dsl2coru__schema_registry__schema_for_verb --> packages__dsl2coru__src__dsl2coru__schema_registry___load_schemas
     packages__dsl2coru__src__dsl2coru__schema_registry__all_verbs --> packages__dsl2coru__src__dsl2coru__schema_registry___load_schemas
@@ -1703,6 +1673,36 @@ flowchart TD
     packages__dsl2coru__src__dsl2coru__codegen__main --> packages__dsl2coru__src__dsl2coru__codegen__build_model_registry
     packages__dsl2coru__src__dsl2coru__codegen__main --> project__print
     packages__dsl2coru__src__dsl2coru__codegen__main --> packages__dsl2koru__src__dsl2koru__schema_registry___load_schemas
+    packages__dsl2coru__src__dsl2coru__grammar___parse_status --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_env --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_auto --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_lane --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ensure --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_doctor --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_calibration --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_chat --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_text --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_sync --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_repair_run --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_common --> packages__dsl2coru__src__dsl2coru__grammar___flag
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_type --> packages__dsl2coru__src__dsl2coru__grammar___parse_ui_common
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_type --> packages__dsl2coru__src__dsl2coru__grammar___ui_args
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_key --> packages__dsl2coru__src__dsl2coru__grammar___parse_ui_common
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_key --> packages__dsl2coru__src__dsl2coru__grammar___ui_args
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_click --> packages__dsl2coru__src__dsl2coru__grammar___parse_ui_common
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_click --> packages__dsl2coru__src__dsl2coru__grammar___ui_args
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_nl --> packages__dsl2coru__src__dsl2coru__grammar___parse_ui_common
+    packages__dsl2coru__src__dsl2coru__grammar___parse_ui_nl --> packages__dsl2coru__src__dsl2coru__grammar___ui_args
+    packages__dsl2coru__src__dsl2coru__grammar__parse_line --> packages__dsl2coru__src__dsl2coru__grammar___split_command
+    packages__dsl2coru__src__dsl2coru__grammar__parse_line --> packages__dsl2coru__src__dsl2coru__schema_registry__normalize_verb
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_auto --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_lane --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_doctor --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_calibration --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_chat --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_text --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar___serialize_repair_run --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
+    packages__dsl2coru__src__dsl2coru__grammar__to_text --> packages__dsl2coru__src__dsl2coru__grammar___append_flag
     packages__dsl2coru__src__dsl2coru__codec__validate_payload --> packages__dsl2koru__src__dsl2koru__schema_registry__schema_for_verb
     packages__dsl2coru__src__dsl2coru__codec__parse_text --> packages__dsl2koru__src__dsl2koru__grammar__parse_line
     packages__dsl2coru__src__dsl2coru__codec__parse_text --> packages__dsl2coru__src__dsl2coru__codec__validate_payload
@@ -1751,7 +1751,7 @@ flowchart TD
     packages__uri2koru__src__uri2koru__uri__uri_for_cmd --> packages__uri2koru__src__uri2koru__uri___encode
     packages__uri2koru__src__uri2koru__uri__parse_koru_uri --> packages__uri2koru__src__uri2koru__uri___decode
     packages__uri2koru__src__uri2koru__uri__parse_koru_uri --> packages__uri2koru__src__uri2koru__uri__is_koru_uri
-    packages__uri2koru__src__uri2koru__run__run_uri --> packages__uri2coru__src__uri2coru__decode__uri_to_dsl
+    packages__uri2koru__src__uri2koru__run__run_uri --> packages__uri2koru__src__uri2koru__decode__uri_to_dsl
     packages__uri2koru__src__uri2koru__run__run_uri --> packages__dsl2koru__src__dsl2koru__bus__dispatch
     packages__nlp2coru__src__nlp2coru__cli___emit --> project__print
     packages__nlp2coru__src__nlp2coru__llm__llm_plan --> packages__nlp2coru__src__nlp2coru__llm___parse_llm_json
@@ -2136,8 +2136,16 @@ flowchart TD
     packages__coru__src__coru__cli___diagnose_readiness_alignment --> packages__coru__src__coru__cli___terminal_shell_context
     packages__coru__src__coru__cli___diagnose_readiness_alignment --> project__print
     packages__coru__src__coru__cli___warn_python_env_mismatch --> packages__coru__src__coru__cli___project_venv_python
+    packages__coru__src__coru__cli___warn_python_env_mismatch --> project__print
+    packages__coru__src__coru__cli___warn_koru_exec_outside_repo --> packages__coru__src__coru__cli___koru_exec_argv
+    packages__coru__src__coru__cli___warn_koru_exec_outside_repo --> project__print
+    packages__coru__src__coru__cli___warn_lane_project_mismatch --> project__print
+    packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___project_repo_root
+    packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___diagnose_readiness_alignment
+    packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___warn_python_env_mismatch
+    packages__coru__src__coru__cli___diagnose_runtime_consistency --> packages__coru__src__coru__cli___warn_koru_exec_outside_repo
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class packages__dsl2koru__src__dsl2koru__cli___handle_subcommand,packages__uri2coru__src__uri2coru__decode__uri_to_dsl,packages__cli2koru__src__cli2koru__cli__main,packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent,packages__dsl2coru__src__dsl2coru__cli___handle_subcommand,packages__dsl2coru__src__dsl2coru__pb_codec___set_body,packages__dsl2coru__src__dsl2coru__pb_codec__envelope_to_dict,packages__dsl2coru__src__dsl2coru__handlers__ui__run_ui_command,packages__cli2coru__src__cli2coru__cli__main,packages__uri2koru__src__uri2koru__decode__uri_to_dsl,packages__coru__src__coru__cli___auto_readiness_gate,packages__coru__src__coru__cli___auto_ownership_gate,packages__coru__src__coru__cli___execute_plans,packages__coru__src__coru__repair__projector___project_one_session,packages__coru__src__coru__repair__pipeline___execute_step,packages__coru__src__coru__supervisor__cli__cmd_start,src__koruapi__calibration_validator__validate_calibrations,src__koruapi__desktop_uri__desktop_uri_control_execute,src__koruide__ide__detect_running_ides,src__koruide__plugin_installer___installed_extension_build_sha,src__koruide__daemon__handlers_drive__handle_drive,src__koru__autonomous_startup___resolve_lane_from_explicit,src__koru__autonomous_startup__resolve_agent_lane,src__koru__doctor_runtime_checks___check_python_venv_alignment,src__koru__tools__load_tool_registry,src__koru__ide_control_cli__action_ide_control_execute,src__koru__autonomous_readiness__check_daemon_client_alignment,src__koru__autonomous_readiness__plugin_workspace_covers_project,src__koru__autonomous_readiness__check_workspace_socket_ownership,src__koru__autonomous_cycle_drive_retry___invoke_client_autopilot_drive highCC
-    class packages__dsl2koru__src__dsl2koru__bus__dispatch,packages__dsl2koru__src__dsl2koru__events__EventStore__read_all,packages__dsl2koru__src__dsl2koru__codegen___python_type,packages__dsl2koru__src__dsl2koru__codegen__render_models_module,packages__uri2coru__src__uri2coru__cli__main,packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri,packages__cli2koru__src__cli2koru__shell__run_shell,packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message,packages__nlpshim__src__nlpshim__client__FallbackNLP2DSLClient__workflow_from_text,packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step,packages__dsl2coru__src__dsl2coru__bus__dispatch,packages__dsl2coru__src__dsl2coru__codegen___python_type,packages__dsl2coru__src__dsl2coru__codegen__main,packages__cli2coru__src__cli2coru__shell__run_shell,packages__uri2koru__src__uri2koru__cli__main,packages__uri2koru__src__uri2koru__nlp2uri__nlp2uri,packages__nlp2coru__src__nlp2coru__llm__llm_plan,packages__nlp2coru__src__nlp2coru__heuristic___resolve_heuristic_action,packages__nlp2coru__src__nlp2coru__heuristic__to_dsl_lines,packages__nlp2coru__src__nlp2coru__to_dsl__to_dsl,packages__nlp2coru__src__nlp2coru__llm_backend__LitellmBackend__complete,packages__coru__src__coru__cli_calibration___testql_run_scenario,packages__coru__src__coru__cli_calibration___parse_drive_json_from_stdout,packages__coru__src__coru__cli_calibration___lane_drive_capture,packages__coru__src__coru__cli_calibration___format_calibration_probe_report,packages__coru__src__coru__cli_calibration___resolve_calibration_lane,packages__coru__src__coru__cli_calibration___lane_calibration,packages__coru__src__coru__ecosystem__sync_ecosystem,packages__coru__src__coru__cli___emit_log,packages__coru__src__coru__cli___run_default_autonomous medCC
+    class packages__cli2koru__src__cli2koru__cli__main,packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent,packages__dsl2coru__src__dsl2coru__handlers__ui__run_ui_command,packages__cli2coru__src__cli2coru__cli__main,packages__uri2koru__src__uri2koru__decode__uri_to_dsl,packages__coru__src__coru__cli___auto_readiness_gate,packages__coru__src__coru__cli___auto_ownership_gate,packages__coru__src__coru__cli___execute_plans,packages__coru__src__coru__repair__projector___project_one_session,packages__coru__src__coru__supervisor__cli__cmd_start,src__koruapi__calibration_validator__validate_calibrations,src__koruapi__desktop_uri__desktop_uri_control_execute,src__koruide__ide__detect_running_ides,src__koruide__plugin_installer___installed_extension_build_sha,src__koruide__daemon__handlers_drive__handle_drive,src__koru__autonomous_startup___resolve_lane_from_explicit,src__koru__autonomous_startup__resolve_agent_lane,src__koru__doctor_runtime_checks___check_python_venv_alignment,src__koru__tools__load_tool_registry,src__koru__ide_control_cli__action_ide_control_execute,src__koru__autonomous_readiness__check_daemon_client_alignment,src__koru__autonomous_readiness__plugin_workspace_covers_project,src__koru__autonomous_readiness__check_workspace_socket_ownership,src__koru__autonomous_cycle_drive_retry___invoke_client_autopilot_drive,src__koru__agent_backend_runtime__build_agent_backend,src__koru__self_control___install_manager_component,src__koru__cli_imgl__imgl_main,src__koru__bounded_contexts__repairs__read_model__format_repair_history_for_llm,src__koru__integrations__vdisplay_client__verify_chat_text_visible,src__koru__integrations__vdisplay_client__send_chat highCC
+    class packages__dsl2koru__src__dsl2koru__bus__dispatch,packages__dsl2koru__src__dsl2koru__events__EventStore__read_all,packages__dsl2koru__src__dsl2koru__codegen___python_type,packages__dsl2koru__src__dsl2koru__codegen__render_models_module,packages__uri2coru__src__uri2coru__cli__main,packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri,packages__cli2koru__src__cli2koru__shell__run_shell,packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message,packages__nlpshim__src__nlpshim__client__FallbackNLP2DSLClient__workflow_from_text,packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step,packages__dsl2coru__src__dsl2coru__bus__dispatch,packages__dsl2coru__src__dsl2coru__codegen___python_type,packages__dsl2coru__src__dsl2coru__codegen__main,packages__dsl2coru__src__dsl2coru__grammar___ui_args,packages__dsl2coru__src__dsl2coru__grammar___parse_text,packages__cli2coru__src__cli2coru__shell__run_shell,packages__uri2koru__src__uri2koru__cli__main,packages__uri2koru__src__uri2koru__nlp2uri__nlp2uri,packages__nlp2coru__src__nlp2coru__llm__llm_plan,packages__nlp2coru__src__nlp2coru__heuristic___resolve_heuristic_action,packages__nlp2coru__src__nlp2coru__heuristic__to_dsl_lines,packages__nlp2coru__src__nlp2coru__to_dsl__to_dsl,packages__nlp2coru__src__nlp2coru__llm_backend__LitellmBackend__complete,packages__coru__src__coru__cli_calibration___testql_run_scenario,packages__coru__src__coru__cli_calibration___parse_drive_json_from_stdout,packages__coru__src__coru__cli_calibration___lane_drive_capture,packages__coru__src__coru__cli_calibration___format_calibration_probe_report,packages__coru__src__coru__cli_calibration___resolve_calibration_lane,packages__coru__src__coru__cli_calibration___lane_calibration,packages__coru__src__coru__ecosystem__sync_ecosystem medCC

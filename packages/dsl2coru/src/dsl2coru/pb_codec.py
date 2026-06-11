@@ -26,71 +26,113 @@ _BODY_MAP = {
 }
 
 
+def _set_status(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.probe = bool(cmd.get("probe"))
+
+
+def _set_env(msg: Any, cmd: dict[str, Any]) -> None:
+    if cmd.get("file"):
+        msg.file = str(cmd["file"])
+
+
+def _set_query(msg: Any, cmd: dict[str, Any]) -> None:
+    if cmd.get("target"):
+        msg.target = str(cmd["target"])
+
+
+def _set_auto(msg: Any, cmd: dict[str, Any]) -> None:
+    if cmd.get("shell"):
+        msg.shell = str(cmd["shell"])
+    if args := cmd.get("auto_args"):
+        if isinstance(args, str):
+            msg.auto_args.extend(args.split())
+        else:
+            msg.auto_args.extend([str(item) for item in args])
+    if cmd.get("target"):
+        msg.target = str(cmd["target"])
+
+
+def _set_lane(msg: Any, cmd: dict[str, Any]) -> None:
+    if cmd.get("ide"):
+        msg.ide = str(cmd["ide"])
+    if cmd.get("instance"):
+        msg.instance = str(cmd["instance"])
+    if cmd.get("file"):
+        msg.file = str(cmd["file"])
+    msg.lane_status = bool(cmd.get("lane_status"))
+
+
+def _set_ensure(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.install = bool(cmd.get("install"))
+
+
+def _set_doctor(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.fix = bool(cmd.get("fix"))
+    msg.probe = bool(cmd.get("probe"))
+    if cmd.get("probe_prompt"):
+        msg.probe_prompt = str(cmd["probe_prompt"])
+
+
+def _set_calibration(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.skip_fix = bool(cmd.get("skip_fix"))
+    msg.skip_desktop = bool(cmd.get("skip_desktop"))
+    msg.skip_bridge = bool(cmd.get("skip_bridge"))
+    if cmd.get("probe_prompt"):
+        msg.probe_prompt = str(cmd["probe_prompt"])
+
+
+def _set_chat(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.llm = bool(cmd.get("llm"))
+    if cmd.get("shell"):
+        msg.shell = str(cmd["shell"])
+    msg.single_action = bool(cmd.get("single_action"))
+
+
+def _set_text(msg: Any, cmd: dict[str, Any]) -> None:
+    if cmd.get("target"):
+        msg.target = str(cmd["target"])
+    msg.llm = bool(cmd.get("llm"))
+    if cmd.get("shell"):
+        msg.shell = str(cmd["shell"])
+    msg.single_action = bool(cmd.get("single_action"))
+
+
+def _set_sync(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.all_ides = bool(cmd.get("all_ides"))
+
+
+def _set_repair_run(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.fix = bool(cmd.get("fix"))
+    if cmd.get("ide"):
+        msg.ide = str(cmd["ide"])
+    if cmd.get("instance"):
+        msg.instance = str(cmd["instance"])
+
+
+_BODY_SETTERS: dict[str, Callable[[Any, dict[str, Any]], None]] = {
+    "STATUS": _set_status,
+    "ENV": _set_env,
+    "QUERY": _set_query,
+    "AUTO": _set_auto,
+    "LANE": _set_lane,
+    "ENSURE": _set_ensure,
+    "DOCTOR": _set_doctor,
+    "CALIBRATION": _set_calibration,
+    "CHAT": _set_chat,
+    "TEXT": _set_text,
+    "SYNC": _set_sync,
+    "REPAIR_RUN": _set_repair_run,
+}
+
+
 def _set_body(envelope: command_pb2.DslEnvelope, cmd: dict[str, Any]) -> None:
     verb = str(cmd.get("verb", "")).upper()
     field = _BODY_MAP.get(verb)
     if not field:
         return
-    msg = getattr(envelope, field)
-    if verb == "STATUS":
-        msg.probe = bool(cmd.get("probe"))
-    elif verb == "ENV":
-        if cmd.get("file"):
-            msg.file = str(cmd["file"])
-    elif verb == "QUERY":
-        if cmd.get("target"):
-            msg.target = str(cmd["target"])
-    elif verb == "AUTO":
-        if cmd.get("shell"):
-            msg.shell = str(cmd["shell"])
-        if args := cmd.get("auto_args"):
-            if isinstance(args, str):
-                msg.auto_args.extend(args.split())
-            else:
-                msg.auto_args.extend([str(item) for item in args])
-        if cmd.get("target"):
-            msg.target = str(cmd["target"])
-    elif verb == "LANE":
-        if cmd.get("ide"):
-            msg.ide = str(cmd["ide"])
-        if cmd.get("instance"):
-            msg.instance = str(cmd["instance"])
-        if cmd.get("file"):
-            msg.file = str(cmd["file"])
-        msg.lane_status = bool(cmd.get("lane_status"))
-    elif verb == "ENSURE":
-        msg.install = bool(cmd.get("install"))
-    elif verb == "DOCTOR":
-        msg.fix = bool(cmd.get("fix"))
-        msg.probe = bool(cmd.get("probe"))
-        if cmd.get("probe_prompt"):
-            msg.probe_prompt = str(cmd["probe_prompt"])
-    elif verb == "CALIBRATION":
-        msg.skip_fix = bool(cmd.get("skip_fix"))
-        msg.skip_desktop = bool(cmd.get("skip_desktop"))
-        msg.skip_bridge = bool(cmd.get("skip_bridge"))
-        if cmd.get("probe_prompt"):
-            msg.probe_prompt = str(cmd["probe_prompt"])
-    elif verb == "CHAT":
-        msg.llm = bool(cmd.get("llm"))
-        if cmd.get("shell"):
-            msg.shell = str(cmd["shell"])
-        msg.single_action = bool(cmd.get("single_action"))
-    elif verb == "TEXT":
-        if cmd.get("target"):
-            msg.target = str(cmd["target"])
-        msg.llm = bool(cmd.get("llm"))
-        if cmd.get("shell"):
-            msg.shell = str(cmd["shell"])
-        msg.single_action = bool(cmd.get("single_action"))
-    elif verb == "SYNC":
-        msg.all_ides = bool(cmd.get("all_ides"))
-    elif verb == "REPAIR_RUN":
-        msg.fix = bool(cmd.get("fix"))
-        if cmd.get("ide"):
-            msg.ide = str(cmd["ide"])
-        if cmd.get("instance"):
-            msg.instance = str(cmd["instance"])
+    setter = _BODY_SETTERS.get(verb)
+    if setter:
+        setter(getattr(envelope, field), cmd)
 
 
 def dict_to_envelope(cmd: dict[str, Any], *, default_file: str = "", correlation_id: str = "") -> command_pb2.DslEnvelope:
@@ -102,85 +144,125 @@ def dict_to_envelope(cmd: dict[str, Any], *, default_file: str = "", correlation
     return envelope
 
 
+def _extract_status(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.probe:
+        cmd["probe"] = True
+
+
+def _extract_env(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.file:
+        cmd["file"] = msg.file
+
+
+def _extract_query(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.target:
+        cmd["target"] = msg.target
+
+
+def _extract_auto(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.shell:
+        cmd["shell"] = msg.shell
+    if msg.auto_args:
+        cmd["auto_args"] = list(msg.auto_args)
+    if msg.target:
+        cmd["target"] = msg.target
+
+
+def _extract_lane(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.ide:
+        cmd["ide"] = msg.ide
+    if msg.instance:
+        cmd["instance"] = msg.instance
+    if msg.file:
+        cmd["file"] = msg.file
+    if msg.lane_status:
+        cmd["lane_status"] = True
+
+
+def _extract_ensure(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.install:
+        cmd["install"] = True
+
+
+def _extract_doctor(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.fix:
+        cmd["fix"] = True
+    if msg.probe:
+        cmd["probe"] = True
+    if msg.probe_prompt:
+        cmd["probe_prompt"] = msg.probe_prompt
+
+
+def _extract_calibration(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.skip_fix:
+        cmd["skip_fix"] = True
+    if msg.skip_desktop:
+        cmd["skip_desktop"] = True
+    if msg.skip_bridge:
+        cmd["skip_bridge"] = True
+    if msg.probe_prompt:
+        cmd["probe_prompt"] = msg.probe_prompt
+
+
+def _extract_chat(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.llm:
+        cmd["llm"] = True
+    if msg.shell:
+        cmd["shell"] = msg.shell
+    if msg.single_action:
+        cmd["single_action"] = True
+
+
+def _extract_text(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.target:
+        cmd["target"] = msg.target
+    if msg.llm:
+        cmd["llm"] = True
+    if msg.shell:
+        cmd["shell"] = msg.shell
+    if msg.single_action:
+        cmd["single_action"] = True
+
+
+def _extract_sync(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.all_ides:
+        cmd["all_ides"] = True
+
+
+def _extract_repair_run(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.fix:
+        cmd["fix"] = True
+    if msg.ide:
+        cmd["ide"] = msg.ide
+    if msg.instance:
+        cmd["instance"] = msg.instance
+
+
+_BODY_EXTRACTORS: dict[str, Callable[[Any, dict[str, Any]], None]] = {
+    "STATUS": _extract_status,
+    "ENV": _extract_env,
+    "QUERY": _extract_query,
+    "AUTO": _extract_auto,
+    "LANE": _extract_lane,
+    "ENSURE": _extract_ensure,
+    "DOCTOR": _extract_doctor,
+    "CALIBRATION": _extract_calibration,
+    "CHAT": _extract_chat,
+    "TEXT": _extract_text,
+    "SYNC": _extract_sync,
+    "REPAIR_RUN": _extract_repair_run,
+}
+
+
 def envelope_to_dict(envelope: command_pb2.DslEnvelope) -> dict[str, Any]:
     verb = envelope.verb.upper()
     cmd: dict[str, Any] = {"verb": verb}
     field = _BODY_MAP.get(verb)
-    if not field:
+    if not field or envelope.WhichOneof("body") != field:
         return cmd
-    if envelope.WhichOneof("body") != field:
-        return cmd
-    msg = getattr(envelope, field)
-    if verb == "STATUS":
-        if msg.probe:
-            cmd["probe"] = True
-    elif verb == "ENV":
-        if msg.file:
-            cmd["file"] = msg.file
-    elif verb == "QUERY":
-        if msg.target:
-            cmd["target"] = msg.target
-    elif verb == "AUTO":
-        if msg.shell:
-            cmd["shell"] = msg.shell
-        if msg.auto_args:
-            cmd["auto_args"] = list(msg.auto_args)
-        if msg.target:
-            cmd["target"] = msg.target
-    elif verb == "LANE":
-        if msg.ide:
-            cmd["ide"] = msg.ide
-        if msg.instance:
-            cmd["instance"] = msg.instance
-        if msg.file:
-            cmd["file"] = msg.file
-        if msg.lane_status:
-            cmd["lane_status"] = True
-    elif verb == "ENSURE":
-        if msg.install:
-            cmd["install"] = True
-    elif verb == "DOCTOR":
-        if msg.fix:
-            cmd["fix"] = True
-        if msg.probe:
-            cmd["probe"] = True
-        if msg.probe_prompt:
-            cmd["probe_prompt"] = msg.probe_prompt
-    elif verb == "CALIBRATION":
-        if msg.skip_fix:
-            cmd["skip_fix"] = True
-        if msg.skip_desktop:
-            cmd["skip_desktop"] = True
-        if msg.skip_bridge:
-            cmd["skip_bridge"] = True
-        if msg.probe_prompt:
-            cmd["probe_prompt"] = msg.probe_prompt
-    elif verb == "CHAT":
-        if msg.llm:
-            cmd["llm"] = True
-        if msg.shell:
-            cmd["shell"] = msg.shell
-        if msg.single_action:
-            cmd["single_action"] = True
-    elif verb == "TEXT":
-        if msg.target:
-            cmd["target"] = msg.target
-        if msg.llm:
-            cmd["llm"] = True
-        if msg.shell:
-            cmd["shell"] = msg.shell
-        if msg.single_action:
-            cmd["single_action"] = True
-    elif verb == "SYNC":
-        if msg.all_ides:
-            cmd["all_ides"] = True
-    elif verb == "REPAIR_RUN":
-        if msg.fix:
-            cmd["fix"] = True
-        if msg.ide:
-            cmd["ide"] = msg.ide
-        if msg.instance:
-            cmd["instance"] = msg.instance
+    extractor = _BODY_EXTRACTORS.get(verb)
+    if extractor:
+        extractor(getattr(envelope, field), cmd)
     return cmd
 
 

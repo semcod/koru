@@ -10,10 +10,11 @@ from dsl2coru.codec import (
     roundtrip_text,
     validate_payload,
 )
-from dsl2coru.grammar import parse_line, to_text
+from dsl2coru.parser import parse_line
 from dsl2coru.pb_codec import decode_protobuf, encode_protobuf, encode_result_protobuf
 from dsl2coru.result import DslResult
 from dsl2coru.schema_registry import all_verbs, validate_schemas
+from dsl2coru.serializer import to_text
 
 __all__ = [
     "DslResult",

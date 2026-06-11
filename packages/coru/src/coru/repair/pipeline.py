@@ -310,6 +310,287 @@ def _run_reload_and_connect(
     return out
 
 
+def _exec_ensure_daemon(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode=step.mode,
+            ok=False,
+            message="skipped in step loop",
+        )
+    ]
+
+
+def _exec_manage_fix(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    rc = run_koru(["autopilot", "manage", "--ide", ide, "--fix"])
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode=step.mode,
+            ok=rc == 0,
+            message="manage --fix completed" if rc == 0 else f"manage --fix rc={rc}",
+        )
+    ]
+
+
+def _exec_manual_vsix_unpack(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    if repo_root is None:
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode=step.mode,
+                ok=False,
+                message="repo root unknown; cannot unpack VSIX",
+            )
+        ]
+    return [manual_vsix_unpack(ide=ide, repo_root=repo_root)]
+
+
+def _exec_plugin_upgrade_and_reload(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    if repo_root is None:
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="auto",
+                ok=False,
+                message="repo root unknown; cannot upgrade plugin",
+            )
+        ]
+    unpack = manual_vsix_unpack(ide=ide, repo_root=repo_root)
+    if not unpack.ok:
+        return [
+            unpack,
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="auto",
+                ok=False,
+                message=f"upgrade failed at unpack: {unpack.message}",
+            ),
+        ]
+    reload_steps = _run_reload_and_connect(
+        ide=ide,
+        instance=instance,
+        repo_root=repo_root,
+        fetch_status=fetch_status,
+        expected_build=expected_build,
+        ide_reload=ide_reload,
+        ide_connect=ide_connect,
+    )
+    ready = reload_steps[-1].ok if reload_steps else False
+    return [
+        unpack,
+        *reload_steps[:-1],
+        RepairAttempt(
+            action_id=step.action_id,
+            mode="auto",
+            ok=ready,
+            message=reload_steps[-1].message if reload_steps else "reload/connect failed",
+        ),
+    ]
+
+
+def _exec_strict_handshake_cycle(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    if strict_handshake is None:
+        return [
+            RepairAttempt(
+                action_id=step.action_id,
+                mode="auto",
+                ok=False,
+                message="no strict handshake handler registered",
+            )
+        ]
+    hs_attempt = strict_handshake()
+    if hs_attempt.ok:
+        time.sleep(3.0)
+    ready, _status = _poll_plugin_ready(
+        ide=ide,
+        instance=instance,
+        fetch_status=fetch_status,
+        expected_build=expected_build,
+        timeout_seconds=40.0 if hs_attempt.ok else 6.0,
+    )
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode="auto",
+            ok=ready,
+            message=f"{hs_attempt.message}; plugin_ready={ready}",
+        )
+    ]
+
+
+def _exec_reload_and_connect(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    return _run_reload_and_connect(
+        ide=ide,
+        instance=instance,
+        repo_root=repo_root,
+        fetch_status=fetch_status,
+        expected_build=expected_build,
+        ide_reload=ide_reload,
+        ide_connect=ide_connect,
+    )
+
+
+def _exec_cross_ide_guidance(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode="manual",
+            ok=True,
+            automated=False,
+            message=(
+                "terminal/lane mismatch: run from target IDE terminal, or "
+                "export KORU_AUTOPILOT_ALLOW_CROSS_IDE=1"
+            ),
+        )
+    ]
+
+
+def _exec_submit_unverified_guidance(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    step_def = registry_step(step.action_id)
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode="manual",
+            ok=True,
+            automated=False,
+            message=step_def.llm_playbook if step_def else "submit manually in IDE chat",
+        )
+    ]
+
+
+def _exec_default(
+    step: RepairStepDef,
+    *,
+    ide: str,
+    instance: str,
+    repo_root: Path | None,
+    expected_build: str | None,
+    run_koru: RunKoru,
+    fetch_status: StatusPayloadFn,
+    strict_handshake: StrictHandshakeFn | None,
+    ide_reload: IdeReloadFn | None,
+    ide_connect: IdeConnectFn | None,
+) -> list[RepairAttempt]:
+    return [
+        RepairAttempt(
+            action_id=step.action_id,
+            mode="manual",
+            ok=True,
+            automated=False,
+            message="see manage report fix hint or coru doctor output",
+        )
+    ]
+
+
+_STEP_EXECUTORS: dict[str, Callable[..., list[RepairAttempt]]] = {
+    "ensure_daemon": _exec_ensure_daemon,
+    "manage_fix": _exec_manage_fix,
+    "manual_vsix_unpack": _exec_manual_vsix_unpack,
+    "plugin_upgrade_and_reload": _exec_plugin_upgrade_and_reload,
+    "strict_handshake_cycle": _exec_strict_handshake_cycle,
+    "reload_and_connect": _exec_reload_and_connect,
+    "cross_ide_guidance": _exec_cross_ide_guidance,
+    "submit_unverified_guidance": _exec_submit_unverified_guidance,
+}
+
+
 def _execute_step(
     step: RepairStepDef,
     *,
@@ -323,148 +604,19 @@ def _execute_step(
     ide_reload: IdeReloadFn | None,
     ide_connect: IdeConnectFn | None,
 ) -> list[RepairAttempt]:
-    if step.action_id == "ensure_daemon":
-        return [
-            RepairAttempt(
-                action_id=step.action_id,
-                mode=step.mode,
-                ok=False,
-                message="skipped in step loop",
-            )
-        ]
-    if step.action_id == "manage_fix":
-        rc = run_koru(["autopilot", "manage", "--ide", ide, "--fix"])
-        return [
-            RepairAttempt(
-                action_id=step.action_id,
-                mode=step.mode,
-                ok=rc == 0,
-                message="manage --fix completed" if rc == 0 else f"manage --fix rc={rc}",
-            )
-        ]
-    if step.action_id == "manual_vsix_unpack":
-        if repo_root is None:
-            return [
-                RepairAttempt(
-                    action_id=step.action_id,
-                    mode=step.mode,
-                    ok=False,
-                    message="repo root unknown; cannot unpack VSIX",
-                )
-            ]
-        return [manual_vsix_unpack(ide=ide, repo_root=repo_root)]
-    if step.action_id == "plugin_upgrade_and_reload":
-        if repo_root is None:
-            return [
-                RepairAttempt(
-                    action_id=step.action_id,
-                    mode="auto",
-                    ok=False,
-                    message="repo root unknown; cannot upgrade plugin",
-                )
-            ]
-        unpack = manual_vsix_unpack(ide=ide, repo_root=repo_root)
-        if not unpack.ok:
-            return [
-                unpack,
-                RepairAttempt(
-                    action_id=step.action_id,
-                    mode="auto",
-                    ok=False,
-                    message=f"upgrade failed at unpack: {unpack.message}",
-                ),
-            ]
-        reload_steps = _run_reload_and_connect(
-            ide=ide,
-            instance=instance,
-            repo_root=repo_root,
-            fetch_status=fetch_status,
-            expected_build=expected_build,
-            ide_reload=ide_reload,
-            ide_connect=ide_connect,
-        )
-        ready = reload_steps[-1].ok if reload_steps else False
-        return [
-            unpack,
-            *reload_steps[:-1],
-            RepairAttempt(
-                action_id=step.action_id,
-                mode="auto",
-                ok=ready,
-                message=reload_steps[-1].message if reload_steps else "reload/connect failed",
-            ),
-        ]
-    if step.action_id == "strict_handshake_cycle":
-        if strict_handshake is None:
-            return [
-                RepairAttempt(
-                    action_id=step.action_id,
-                    mode="auto",
-                    ok=False,
-                    message="no strict handshake handler registered",
-                )
-            ]
-        hs_attempt = strict_handshake()
-        if hs_attempt.ok:
-            time.sleep(3.0)
-        ready, _status = _poll_plugin_ready(
-            ide=ide,
-            instance=instance,
-            fetch_status=fetch_status,
-            expected_build=expected_build,
-            timeout_seconds=40.0 if hs_attempt.ok else 6.0,
-        )
-        return [
-            RepairAttempt(
-                action_id=step.action_id,
-                mode="auto",
-                ok=ready,
-                message=f"{hs_attempt.message}; plugin_ready={ready}",
-            )
-        ]
-    if step.action_id == "reload_and_connect":
-        return _run_reload_and_connect(
-            ide=ide,
-            instance=instance,
-            repo_root=repo_root,
-            fetch_status=fetch_status,
-            expected_build=expected_build,
-            ide_reload=ide_reload,
-            ide_connect=ide_connect,
-        )
-    if step.action_id == "cross_ide_guidance":
-        return [
-            RepairAttempt(
-                action_id=step.action_id,
-                mode="manual",
-                ok=True,
-                automated=False,
-                message=(
-                    "terminal/lane mismatch: run from target IDE terminal, or "
-                    "export KORU_AUTOPILOT_ALLOW_CROSS_IDE=1"
-                ),
-            )
-        ]
-    if step.action_id == "submit_unverified_guidance":
-        step_def = registry_step(step.action_id)
-        return [
-            RepairAttempt(
-                action_id=step.action_id,
-                mode="manual",
-                ok=True,
-                automated=False,
-                message=step_def.llm_playbook if step_def else "submit manually in IDE chat",
-            )
-        ]
-    return [
-        RepairAttempt(
-            action_id=step.action_id,
-            mode="manual",
-            ok=True,
-            automated=False,
-            message="see manage report fix hint or coru doctor output",
-        )
-    ]
+    executor = _STEP_EXECUTORS.get(step.action_id, _exec_default)
+    return executor(
+        step,
+        ide=ide,
+        instance=instance,
+        repo_root=repo_root,
+        expected_build=expected_build,
+        run_koru=run_koru,
+        fetch_status=fetch_status,
+        strict_handshake=strict_handshake,
+        ide_reload=ide_reload,
+        ide_connect=ide_connect,
+    )
 
 
 def _drop_codes_after_action(

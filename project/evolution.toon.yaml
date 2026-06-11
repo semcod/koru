@@ -1,5 +1,5 @@
-# code2llm/evolution | 6057 func | 620f | 2026-06-11
-# generated in 0.04s
+# code2llm/evolution | 6153 func | 622f | 2026-06-11
+# generated in 0.03s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           packages/coru/src/coru/cli.py
@@ -26,21 +26,21 @@ NEXT[10] (ranked by impact):
       WHY: CC=25 exceeds 15
       EFFORT: ~1h  IMPACT: 600
 
-  [7] !  SPLIT-FUNC      _handle_subcommand  CC=23  fan=22
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 506
-
-  [8] !  SPLIT-FUNC      build_agent_backend  CC=23  fan=19
+  [7] !  SPLIT-FUNC      build_agent_backend  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [9] !  SPLIT-FUNC      _auto_readiness_gate  CC=24  fan=18
+  [8] !  SPLIT-FUNC      _auto_readiness_gate  CC=24  fan=18
       WHY: CC=24 exceeds 15
       EFFORT: ~1h  IMPACT: 432
 
-  [10] !  SPLIT-FUNC      action_status  CC=20  fan=20
+  [9] !  SPLIT-FUNC      action_status  CC=20  fan=20
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 400
+
+  [10] !  SPLIT-FUNC      _invoke_client_autopilot_drive  CC=21  fan=18
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 378
 
 
 RISKS[3]:
@@ -50,9 +50,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          3.7 → ≤2.6
-  max-CC:      44 → ≤20
+  max-CC:      32 → ≤16
   god-modules: 48 → 0
-  high-CC(≥15): 54 → ≤27
+  high-CC(≥15): 48 → ≤24
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

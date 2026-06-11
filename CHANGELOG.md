@@ -73,6 +73,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.328] - 2026-06-11
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update packages/cli2coru/src/cli2coru/cli.py
+- Update packages/cli2koru/src/cli2koru/cli.py
+- Update packages/coru/src/coru/repair/pipeline.py
+- Update packages/coru/src/coru/repair/projector.py
+- Update packages/dsl2coru/src/dsl2coru/__init__.py
+- Update packages/dsl2coru/src/dsl2coru/cli.py
+- Update packages/dsl2coru/src/dsl2coru/parser.py
+- Update packages/dsl2coru/src/dsl2coru/pb_codec.py
+- Update packages/dsl2coru/src/dsl2coru/serializer.py
+- Update packages/dsl2koru/src/dsl2koru/cli.py
+- ... and 18 more files
+
 ## [0.1.327] - 2026-06-11
 
 ### Docs

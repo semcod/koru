@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from dsl2coru.bus import dispatch, execute_dsl
@@ -100,71 +101,93 @@ def _main_legacy(argv: list[str]) -> int:
     return 1
 
 
+def _cmd_validate_schema(_args: argparse.Namespace) -> int:
+    errors = validate_schemas()
+    if errors:
+        for err in errors:
+            print(err, file=sys.stderr)
+        return 1
+    print("schema OK")
+    return 0
+
+
+def _cmd_encode(args: argparse.Namespace) -> int:
+    payload = parse_text(args.line, default_file=args.file or None)
+    if args.format == "json":
+        from dsl2coru.codec import envelope_to_json
+
+        data = envelope_to_json(payload)
+    else:
+        data = envelope_to_bytes(payload, default_file=args.file)
+    if args.output:
+        Path(args.output).write_bytes(data)
+    else:
+        sys.stdout.buffer.write(data)
+    return 0
+
+
+def _cmd_decode(args: argparse.Namespace) -> int:
+    raw = Path(args.input).read_bytes()
+    if args.format == "json":
+        from dsl2coru.codec import envelope_from_json
+
+        payload = envelope_from_json(raw)
+    else:
+        payload = envelope_from_bytes(raw)
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0
+
+
+def _cmd_roundtrip(args: argparse.Namespace) -> int:
+    print(roundtrip_text(args.line, default_file=args.file or None))
+    return 0
+
+
+def _cmd_replay(args: argparse.Namespace) -> int:
+    store = EventStore.for_default(args.file or None)
+    if args.format == "protobuf":
+        events = store.replay_pb()
+    elif args.format == "jsonl":
+        events = store.read_all()
+    else:
+        events = store.replay_pb() or store.read_all()
+    for event in events:
+        print(json.dumps(event.to_dict(), indent=2, ensure_ascii=False))
+    return 0
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    default_file = args.file or None
+    if args.command:
+        results = [dispatch(args.command, default_file=default_file)]
+    elif args.script:
+        text = Path(args.script).read_text(encoding="utf-8")
+        results = execute_dsl(text, default_file=default_file)
+    else:
+        text = sys.stdin.read()
+        results = execute_dsl(text, default_file=default_file)
+    return _run_results(results, json_out=args.json)
+
+
+def _cmd_exec(args: argparse.Namespace) -> int:
+    return _run_results([dispatch(args.command, default_file=args.file or None)], json_out=args.json)
+
+
+_SUBCOMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "validate-schema": _cmd_validate_schema,
+    "encode": _cmd_encode,
+    "decode": _cmd_decode,
+    "roundtrip": _cmd_roundtrip,
+    "replay": _cmd_replay,
+    "run": _cmd_run,
+    "exec": _cmd_exec,
+}
+
+
 def _handle_subcommand(args: argparse.Namespace) -> int:
-    if args.cmd == "validate-schema":
-        errors = validate_schemas()
-        if errors:
-            for err in errors:
-                print(err, file=sys.stderr)
-            return 1
-        print("schema OK")
-        return 0
-
-    if args.cmd == "encode":
-        payload = parse_text(args.line, default_file=args.file or None)
-        if args.format == "json":
-            from dsl2coru.codec import envelope_to_json
-
-            data = envelope_to_json(payload)
-        else:
-            data = envelope_to_bytes(payload, default_file=args.file)
-        if args.output:
-            Path(args.output).write_bytes(data)
-        else:
-            sys.stdout.buffer.write(data)
-        return 0
-
-    if args.cmd == "decode":
-        raw = Path(args.input).read_bytes()
-        if args.format == "json":
-            from dsl2coru.codec import envelope_from_json
-
-            payload = envelope_from_json(raw)
-        else:
-            payload = envelope_from_bytes(raw)
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-        return 0
-
-    if args.cmd == "roundtrip":
-        print(roundtrip_text(args.line, default_file=args.file or None))
-        return 0
-
-    if args.cmd == "replay":
-        store = EventStore.for_default(args.file or None)
-        if args.format == "protobuf":
-            events = store.replay_pb()
-        elif args.format == "jsonl":
-            events = store.read_all()
-        else:
-            events = store.replay_pb() or store.read_all()
-        for event in events:
-            print(json.dumps(event.to_dict(), indent=2, ensure_ascii=False))
-        return 0
-
-    if args.cmd in {"run", "exec"}:
-        default_file = args.file or None
-        if args.cmd == "exec":
-            results = [dispatch(args.command, default_file=default_file)]
-        elif args.command:
-            results = [dispatch(args.command, default_file=default_file)]
-        elif args.script:
-            text = Path(args.script).read_text(encoding="utf-8")
-            results = execute_dsl(text, default_file=default_file)
-        else:
-            text = sys.stdin.read()
-            results = execute_dsl(text, default_file=default_file)
-        return _run_results(results, json_out=args.json)
-
+    handler = _SUBCOMMAND_HANDLERS.get(args.cmd)
+    if handler:
+        return handler(args)
     return 1
 
 

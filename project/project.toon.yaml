@@ -1,13 +1,11 @@
-# koru | 6188 func | 648f | 142902L | python | 2026-06-11
-# generated in 0.01s
+# koru | 6284 func | 650f | 143633L | python | 2026-06-11
+# generated in 0.00s
 
 HEALTH:
-  CC̄=3.7  critical=406 (limit:10)  dup=21  cycles=0
+  CC̄=3.6  critical=400 (limit:10)  dup=21  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      envelope_to_dict = 44 (limit:15)
   !!! cc_exceeded      send_chat = 32 (limit:15)
-  !!! cc_exceeded      _set_body = 31 (limit:15)
   !!! high_fan_out     action_snapshot = 31 (limit:10)
   !!! cc_exceeded      _auto_ownership_gate = 29 (limit:15)
   !!! high_fan_out     send_chat = 29 (limit:10)
@@ -15,8 +13,10 @@ ALERTS[20]:
   !!! cc_exceeded      SharedAutopilotBridgePaste.shouldProbeInput = 26 (limit:15)
   !!! high_fan_out     create_app = 26 (limit:10)
   !!! high_fan_out     create_app = 26 (limit:10)
+  !!! cc_exceeded      imgl_main = 25 (limit:15)
+  !!! high_fan_out     _auto_ownership_gate = 25 (limit:10)
 
-MODULES[933] (top by size):
+MODULES[935] (top by size):
   M[packages/coru/src/coru/cli.py] 3822L C:3 F:200 CC↑29 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[src/koru/scan.py] 1621L C:0 F:61 CC↑13 D:7 (python)
@@ -26,13 +26,13 @@ MODULES[933] (top by size):
   M[src/koru/autonomous_loop_runner.py] 1256L C:1 F:56 CC↑12 D:2 (python)
   M[src/koruide/plugin_installer.py] 1197L C:3 F:56 CC↑22 D:9 (python)
   M[src/koru/autonomous.py] 1065L C:0 F:66 CC↑4 D:3 (python)
+  M[packages/coru/src/coru/repair/pipeline.py] 1039L C:2 F:42 CC↑9 D:0 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1009L C:2 F:44 CC↑14 D:0 (python)
   M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 992L C:1 F:72 CC↑13 D:1 (typescript)
   M[src/koruide/drive_orchestrator.py] 965L C:1 F:56 CC↑14 D:0 (python)
   M[src/koruide/ide.py] 939L C:2 F:53 CC↑17 D:44 (python)
   M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/autonomous_readiness.py] 910L C:3 F:37 CC↑19 D:4 (python)
-  LANGS: python:663/typescript:93/shell:56/json:39/yaml:30/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
+  LANGS: python:665/typescript:93/shell:56/json:39/yaml:30/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
 
 HOTSPOTS[10]:
   ★ action_snapshot fan=31  // Print a unified shell OQL/DSL snapshot with replay/validate commands.
@@ -42,11 +42,11 @@ HOTSPOTS[10]:
   ★ _auto_ownership_gate fan=25  // Orchestrates 25 calls
 
 REFACTOR[15]:
-  [1] H/L Split _set_body (CC=31)
-  [2] H/L Split envelope_to_dict (CC=44)
-  [3] H/L Split _auto_ownership_gate (CC=29)
-  [4] H/L Split imgl_main (CC=25)
-  [5] H/L Split verify_chat_text_visible (CC=28)
+  [1] H/L Split _auto_ownership_gate (CC=29)
+  [2] H/L Split imgl_main (CC=25)
+  [3] H/L Split verify_chat_text_visible (CC=28)
+  [4] H/L Split send_chat (CC=32)
+  [5] H/L Split SharedAutopilotBridgePaste.shouldProbeInput (CC=26)
 
 EVOLUTION:
-  2026-06-11 CC̄=3.7 crit=406 142902L // Automated analysis
+  2026-06-11 CC̄=3.6 crit=400 143633L // Automated analysis

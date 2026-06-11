@@ -28,6 +28,37 @@ def project_repair_cases(events: list[RepairEvent]) -> list[RepairCaseSummary]:
     return cases
 
 
+def _extract_problem_codes(events: list[RepairEvent]) -> list[str]:
+    codes: list[str] = []
+    for event in events:
+        if event.event_type != "repair.problems.detected":
+            continue
+        for row in event.payload.get("problems") or []:
+            if isinstance(row, dict):
+                code = str(row.get("code") or "").strip()
+                if code:
+                    codes.append(code)
+    return codes
+
+
+def _extract_action_ids(events: list[RepairEvent]) -> list[str]:
+    ids: list[str] = []
+    for event in events:
+        if event.event_type != "repair.attempt.finished":
+            continue
+        action_id = str(event.payload.get("action_id") or "").strip()
+        if action_id:
+            ids.append(action_id)
+    return ids
+
+
+def _extract_resolved(events: list[RepairEvent]) -> bool:
+    for event in events:
+        if event.event_type == "repair.session.finished":
+            return bool(event.payload.get("resolved"))
+    return False
+
+
 def _project_one_session(session_id: str, events: list[RepairEvent]) -> RepairCaseSummary | None:
     started = next((e for e in events if e.event_type == "repair.session.started"), None)
     if started is None:
@@ -38,26 +69,11 @@ def _project_one_session(session_id: str, events: list[RepairEvent]) -> RepairCa
     trigger = str(started.payload.get("trigger") or "unknown")
     occurred_at = started.occurred_at
 
-    problem_codes: list[str] = []
-    for event in events:
-        if event.event_type == "repair.problems.detected":
-            for row in event.payload.get("problems") or []:
-                if isinstance(row, dict):
-                    code = str(row.get("code") or "").strip()
-                    if code:
-                        problem_codes.append(code)
-
-    action_ids: list[str] = []
-    resolved = False
-    for event in events:
-        if event.event_type == "repair.attempt.finished":
-            action_id = str(event.payload.get("action_id") or "").strip()
-            if action_id:
-                action_ids.append(action_id)
-        if event.event_type == "repair.session.finished":
-            resolved = bool(event.payload.get("resolved"))
-
+    problem_codes = _extract_problem_codes(events)
+    action_ids = _extract_action_ids(events)
+    resolved = _extract_resolved(events)
     playbook = playbook_for_codes(set(problem_codes))
+
     return RepairCaseSummary(
         session_id=session_id,
         occurred_at=occurred_at,
