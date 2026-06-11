@@ -710,6 +710,33 @@ def _active_extension_locations(metadata_path: Path) -> set[str]:
     }
 
 
+def _resolve_extension_dir(item: dict[str, Any], extensions_root: Path) -> Path | None:
+    rel_loc = item.get("relativeLocation")
+    if isinstance(rel_loc, str) and rel_loc:
+        return extensions_root / rel_loc
+    location = item.get("location") if isinstance(item, dict) else None
+    raw_path = None
+    if isinstance(location, dict):
+        raw_path = location.get("path") or location.get("fsPath")
+    if not isinstance(raw_path, str) or not raw_path:
+        return None
+    return Path(raw_path)
+
+
+def _extract_build_sha(ext_dir: Path) -> str | None:
+    pkg = ext_dir / "package.json"
+    if not pkg.is_file():
+        return None
+    try:
+        pkg_data = json.loads(pkg.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    build_info = pkg_data.get("koruAutopilotBuild") if isinstance(pkg_data, dict) else None
+    if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
+        return build_info["sha"] or None
+    return None
+
+
 def _installed_extension_build_sha(target_ide: str) -> str | None:
     """Return the ``koruAutopilotBuild.sha`` of the currently installed extension.
 
@@ -731,32 +758,15 @@ def _installed_extension_build_sha(target_ide: str) -> str | None:
     for item in data:
         if not isinstance(item, dict):
             continue
-        # Match by extension ID recorded in the metadata.
         item_id = str(item.get("identifier", {}).get("id", "") or "").lower()
         if item_id != ext_id:
             continue
-        # Resolve the installation directory.
-        rel_loc = item.get("relativeLocation")
-        if isinstance(rel_loc, str) and rel_loc:
-            ext_dir = extensions_root / rel_loc
-        else:
-            location = item.get("location") if isinstance(item, dict) else None
-            raw_path = None
-            if isinstance(location, dict):
-                raw_path = location.get("path") or location.get("fsPath")
-            if not isinstance(raw_path, str) or not raw_path:
-                continue
-            ext_dir = Path(raw_path)
-        pkg = ext_dir / "package.json"
-        if not pkg.is_file():
+        ext_dir = _resolve_extension_dir(item, extensions_root)
+        if ext_dir is None:
             continue
-        try:
-            pkg_data = json.loads(pkg.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        build_info = pkg_data.get("koruAutopilotBuild") if isinstance(pkg_data, dict) else None
-        if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
-            return build_info["sha"] or None
+        sha = _extract_build_sha(ext_dir)
+        if sha is not None:
+            return sha
     return None
 
 

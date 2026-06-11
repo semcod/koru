@@ -346,21 +346,22 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
             print(f"koru: switching to project venv CLI: {' '.join(reexec_argv)}", file=sys.stderr)
             os.execvpe(reexec_argv[0], reexec_argv, env)
 
+_FLAG_DISPATCHERS: dict[str, Callable[[argparse.Namespace, list[str]], int]] = {
+    "doctor": _doctor_main,
+    "init_agent_lane": lambda args, _raw: _init_agent_lane_main(args),
+    "init": lambda args, _raw: _init_main(args),
+    "context": lambda args, _raw: _context_main(args),
+    "bootstrap": lambda args, _raw: _bootstrap_main(args),
+    "watch": lambda args, _raw: _watch_main(args),
+    "queue": lambda args, _raw: _queue_run_main(args),
+}
+_FLAG_ORDER = list(_FLAG_DISPATCHERS.keys())
+
+
 def _dispatch_flag_action(cli_namespace: argparse.Namespace, raw_args: list[str]) -> int | None:
-    if cli_namespace.doctor:
-        return _doctor_main(cli_namespace, raw_args)
-    if cli_namespace.init_agent_lane:
-        return _init_agent_lane_main(cli_namespace)
-    if cli_namespace.init:
-        return _init_main(cli_namespace)
-    if cli_namespace.context:
-        return _context_main(cli_namespace)
-    if cli_namespace.bootstrap:
-        return _bootstrap_main(cli_namespace)
-    if cli_namespace.watch:
-        return _watch_main(cli_namespace)
-    if cli_namespace.queue:
-        return _queue_run_main(cli_namespace)
+    for flag in _FLAG_ORDER:
+        if getattr(cli_namespace, flag):
+            return _FLAG_DISPATCHERS[flag](cli_namespace, raw_args)
     return None
 
 def main() -> int:

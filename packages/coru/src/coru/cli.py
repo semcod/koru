@@ -2114,6 +2114,37 @@ def _gc_stale_lane_socket(ide: str, instance: str) -> int:
     )
 
 
+def _check_lane_status_and_ownership(
+    ide: str,
+    instance: str,
+    payload: dict[str, Any] | None,
+) -> tuple[int, str]:
+    """Return (rc, reason) after checking lane status, self-heal, and ownership."""
+    status_rc = _lane_status_raw(ide, instance)
+    if status_rc == 0:
+        ownership_rc = _auto_ownership_gate(ide, instance, payload=payload)
+        return ownership_rc, "ownership" if ownership_rc != 0 else ""
+
+    heal_rc = _attempt_plugin_self_heal(ide, instance)
+    if heal_rc == 0:
+        status_rc = _lane_status_raw(ide, instance)
+
+    if status_rc == 0:
+        ownership_rc = _auto_ownership_gate(ide, instance, payload=payload)
+        if ownership_rc != 0:
+            return ownership_rc, "ownership"
+
+    if status_rc != 0:
+        _print_ide_control_context(
+            ide,
+            instance,
+            status=_lane_status_payload(ide, instance, payload=payload),
+            reason="plugin",
+            guidance=True,
+        )
+    return status_rc, "plugin" if status_rc != 0 else ""
+
+
 def _auto_readiness_gate(ide: str, instance: str) -> AutoReadiness:
     if not _env_enabled("CORU_AUTO_READINESS_GATE", default=True):
         return AutoReadiness(0, ide, instance)
@@ -2170,32 +2201,64 @@ def _auto_readiness_gate(ide: str, instance: str) -> AutoReadiness:
         )
         return AutoReadiness(1, ide, instance, reason="plugin")
 
-    status_rc = _lane_status_raw(ide, instance)
-    if status_rc == 0:
-        ownership_rc = _auto_ownership_gate(ide, instance, payload=payload)
-        reason = "ownership" if ownership_rc != 0 else ""
-        return AutoReadiness(ownership_rc, ide, instance, reason=reason)
+    rc, reason = _check_lane_status_and_ownership(ide, instance, payload)
+    return AutoReadiness(rc, ide, instance, reason=reason)
 
-    if status_rc != 0:
-        heal_rc = _attempt_plugin_self_heal(ide, instance)
-        if heal_rc == 0:
-            status_rc = _lane_status_raw(ide, instance)
 
-    if status_rc == 0:
-        status_rc = _auto_ownership_gate(ide, instance, payload=payload)
-        if status_rc != 0:
-            return AutoReadiness(status_rc, ide, instance, reason="ownership")
+def _resolve_daemon_alignment(
+    readiness: Any,
+    daemon: Any,
+    status: dict[str, Any],
+    root: Path,
+    socket_path: Path,
+    ide: str,
+    instance: str,
+    payload: dict[str, Any] | None,
+) -> tuple[Any, dict[str, Any]]:
+    if not daemon.ok and _readiness_issue_codes(daemon) == {"daemon_project_mismatch"}:
+        meta = status.get("daemon_metadata") if isinstance(status.get("daemon_metadata"), dict) else {}
+        meta_project = str(meta.get("project") or "").strip()
+        if meta_project and _coru_projects_equivalent(meta_project, root):
+            from koru.autonomous_readiness import ReadinessResult
 
-    if status_rc != 0:
-        _print_ide_control_context(
-            ide,
-            instance,
-            status=_lane_status_payload(ide, instance, payload=payload),
-            reason="plugin",
-            guidance=True,
-        )
+            daemon = ReadinessResult(ok=True, issues=())
+        else:
+            status = _restart_stale_lane_daemon(ide, instance, payload=payload)
+            if status is not None:
+                daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
+    if not daemon.ok and _readiness_issue_codes(daemon) == {"daemon_version_mismatch"}:
+        status = _restart_stale_lane_daemon(ide, instance, payload=payload)
+        if status is not None:
+            daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
+    return daemon, status
 
-    return AutoReadiness(status_rc, ide, instance, reason="plugin" if status_rc != 0 else "")
+
+def _build_ownership_checks(
+    readiness: Any,
+    daemon: Any,
+    root: Path,
+    socket_path: Path,
+    status: dict[str, Any],
+    ide: str,
+    instance: str,
+) -> list[Any]:
+    terminal_ide, _terminal_source, terminal_integrated = _terminal_shell_context()
+    terminal_kind = _terminal_host_kind()
+    terminal_integrated_for_lane = terminal_integrated
+    if terminal_integrated and terminal_ide != ide and _status_has_target_plugin(status, ide=ide, project=root):
+        terminal_integrated_for_lane = False
+    return [
+        daemon,
+        readiness.check_workspace_socket_ownership(root, socket_path, status, autopilot_ide=ide),
+        readiness.check_lane_terminal_socket_alignment(
+            autopilot_ide=ide,
+            lane_instance=instance,
+            socket_path=socket_path,
+            terminal_ide=terminal_ide,
+            terminal_integrated=terminal_integrated_for_lane,
+            terminal_kind=terminal_kind,
+        ),
+    ]
 
 
 def _auto_ownership_gate(
@@ -2218,39 +2281,9 @@ def _auto_ownership_gate(
 
     socket_path = Path(socket_raw)
     daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
-    if not daemon.ok and _readiness_issue_codes(daemon) == {"daemon_project_mismatch"}:
-        meta = status.get("daemon_metadata") if isinstance(status.get("daemon_metadata"), dict) else {}
-        meta_project = str(meta.get("project") or "").strip()
-        if meta_project and _coru_projects_equivalent(meta_project, root):
-            from koru.autonomous_readiness import ReadinessResult
+    daemon, status = _resolve_daemon_alignment(readiness, daemon, status, root, socket_path, ide, instance, payload)
+    checks = _build_ownership_checks(readiness, daemon, root, socket_path, status, ide, instance)
 
-            daemon = ReadinessResult(ok=True, issues=())
-        else:
-            status = _restart_stale_lane_daemon(ide, instance, payload=payload)
-            if status is not None:
-                daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
-    if not daemon.ok and _readiness_issue_codes(daemon) == {"daemon_version_mismatch"}:
-        status = _restart_stale_lane_daemon(ide, instance, payload=payload)
-        if status is not None:
-            daemon = readiness.check_daemon_client_alignment(status, project=root, socket_path=socket_path)
-
-    terminal_ide, _terminal_source, terminal_integrated = _terminal_shell_context()
-    terminal_kind = _terminal_host_kind()
-    terminal_integrated_for_lane = terminal_integrated
-    if terminal_integrated and terminal_ide != ide and _status_has_target_plugin(status, ide=ide, project=root):
-        terminal_integrated_for_lane = False
-    checks = [
-        daemon,
-        readiness.check_workspace_socket_ownership(root, socket_path, status, autopilot_ide=ide),
-        readiness.check_lane_terminal_socket_alignment(
-            autopilot_ide=ide,
-            lane_instance=instance,
-            socket_path=socket_path,
-            terminal_ide=terminal_ide,
-            terminal_integrated=terminal_integrated_for_lane,
-            terminal_kind=terminal_kind,
-        ),
-    ]
     failed = False
     primary_fix: str | None = None
     for result in checks:
@@ -3084,6 +3117,50 @@ def _preflight_failure_ok_to_continue(plans: Sequence[Plan], index: int) -> bool
     return any(p.action == "auto" for p in plans[index + 1 :])
 
 
+def _run_single_plan_with_logging(
+    plan: Plan,
+    *,
+    index: int,
+    plans_list: list[Plan],
+    ctx: SessionContext,
+    shell: str,
+    announce: bool,
+) -> int | None:
+    """Execute one plan, emit logs, and return rc or None to continue past preflight."""
+    if announce:
+        print(f"[coru] step={plan.action} ide={plan.ide or ctx.ide or '-'} instance={plan.instance or ctx.instance or '-'}")
+    _emit_log(
+        component="planner",
+        level="info",
+        action=plan.action,
+        result="started",
+        verbose=announce,
+        ide=plan.ide or ctx.ide or "",
+        instance=plan.instance or ctx.instance or "",
+    )
+    rc = _execute_plan(plan, shell=shell, context=ctx)
+    _emit_log(
+        component="planner",
+        level="info" if rc == 0 else "error",
+        action=plan.action,
+        result="ok" if rc == 0 else "failed",
+        rc=rc,
+        verbose=announce,
+        ide=plan.ide or ctx.ide or "",
+        instance=plan.instance or ctx.instance or "",
+    )
+    if rc != 0:
+        if plan.action in {"manage", "status", "diagnose"} and _preflight_failure_ok_to_continue(plans_list, index):
+            print(
+                "[coru] preflight: autopilot bridge not ready; "
+                "continuing to auto (koru will retry and/or repair)",
+                file=sys.stderr,
+            )
+            return None
+        return rc
+    return rc
+
+
 def _execute_plans(
     plans: Sequence[Plan],
     *,
@@ -3096,7 +3173,6 @@ def _execute_plans(
     chain_project = _chain_project_from_plans(plans)
     if chain_project and not ctx.project:
         ctx.project = chain_project
-    verbose_mode = announce
     plans_list = list(plans)
     if not plans_list:
         return 0
@@ -3107,37 +3183,14 @@ def _execute_plans(
     try:
         with _bind_lane_session(bootstrap.ide, bootstrap.instance):
             for index, plan in enumerate(plans_list):
-                if announce:
-                    print(f"[coru] step={plan.action} ide={plan.ide or ctx.ide or '-'} instance={plan.instance or ctx.instance or '-'}")
-                _emit_log(
-                    component="planner",
-                    level="info",
-                    action=plan.action,
-                    result="started",
-                    verbose=verbose_mode,
-                    ide=plan.ide or ctx.ide or "",
-                    instance=plan.instance or ctx.instance or "",
+                result = _run_single_plan_with_logging(
+                    plan, index=index, plans_list=plans_list, ctx=ctx, shell=shell, announce=announce
                 )
-                rc = _execute_plan(plan, shell=shell, context=ctx)
-                _emit_log(
-                    component="planner",
-                    level="info" if rc == 0 else "error",
-                    action=plan.action,
-                    result="ok" if rc == 0 else "failed",
-                    rc=rc,
-                    verbose=verbose_mode,
-                    ide=plan.ide or ctx.ide or "",
-                    instance=plan.instance or ctx.instance or "",
-                )
-                if rc != 0:
-                    if plan.action in {"manage", "status", "diagnose"} and _preflight_failure_ok_to_continue(plans_list, index):
-                        print(
-                            "[coru] preflight: autopilot bridge not ready; "
-                            "continuing to auto (koru will retry and/or repair)",
-                            file=sys.stderr,
-                        )
-                        continue
-                    return rc
+                if result is not None and result != 0:
+                    return result
+                if result is None:
+                    continue
+                rc = result
         return rc
     finally:
         _CHAIN_CONTEXT = previous_chain_context

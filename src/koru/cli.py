@@ -221,28 +221,50 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
         print(sync_msg, file=sys.stderr)
 
 
+def _run_doctor(args: argparse.Namespace, raw_args: list[str]) -> int:
+    return __import__("koru.cli_doctor", fromlist=["doctor_main"]).doctor_main(args, raw_args)
+
+
+def _run_init_agent_lane(args: argparse.Namespace, _raw_args: list[str]) -> int:
+    return __import__("koru.cli_init", fromlist=["init_agent_lane_main"]).init_agent_lane_main(args)
+
+
+def _run_init(args: argparse.Namespace, _raw_args: list[str]) -> int:
+    return __import__("koru.cli_init", fromlist=["init_main"]).init_main(args)
+
+
+def _run_context(args: argparse.Namespace, _raw_args: list[str]) -> int:
+    return __import__("koru.cli_context", fromlist=["_context_main"])._context_main(args)
+
+
+def _run_bootstrap(args: argparse.Namespace, _raw_args: list[str]) -> int:
+    return __import__("koru.cli_bootstrap", fromlist=["_bootstrap_main"])._bootstrap_main(args)
+
+
+def _run_watch(args: argparse.Namespace, _raw_args: list[str]) -> int:
+    return __import__("koru.cli_watch", fromlist=["watch_main"]).watch_main(args)
+
+
+def _run_queue(args: argparse.Namespace, _raw_args: list[str]) -> int:
+    return __import__("koru.cli_queue", fromlist=["queue_run_main"]).queue_run_main(args)
+
+
+_FLAG_DISPATCHERS: dict[str, Callable[[argparse.Namespace, list[str]], int]] = {
+    "doctor": _run_doctor,
+    "init_agent_lane": _run_init_agent_lane,
+    "init": _run_init,
+    "context": _run_context,
+    "bootstrap": _run_bootstrap,
+    "watch": _run_watch,
+    "queue": _run_queue,
+}
+_FLAG_ORDER = list(_FLAG_DISPATCHERS.keys())
+
+
 def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int | None:
-    if args.doctor:
-        return __import__("koru.cli_doctor", fromlist=["doctor_main"]).doctor_main(
-            args,
-            raw_args,
-        )
-    if args.init_agent_lane:
-        return __import__("koru.cli_init", fromlist=["init_agent_lane_main"]).init_agent_lane_main(
-            args,
-        )
-    if args.init:
-        return __import__("koru.cli_init", fromlist=["init_main"]).init_main(args)
-    if args.context:
-        return __import__("koru.cli_context", fromlist=["_context_main"])._context_main(
-            args,
-        )
-    if args.bootstrap:
-        return __import__("koru.cli_bootstrap", fromlist=["_bootstrap_main"])._bootstrap_main(args)
-    if args.watch:
-        return __import__("koru.cli_watch", fromlist=["watch_main"]).watch_main(args)
-    if args.queue:
-        return __import__("koru.cli_queue", fromlist=["queue_run_main"]).queue_run_main(args)
+    for flag in _FLAG_ORDER:
+        if getattr(args, flag):
+            return _FLAG_DISPATCHERS[flag](args, raw_args)
     return None
 
 

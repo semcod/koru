@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.03s -->
+<!-- generated in 0.08s -->
 
 ## Overview
 
@@ -7,15 +7,15 @@
 - **Primary Language**: python
 - **Languages**: python: 664, typescript: 93, shell: 56, json: 39, yaml: 30
 - **Analysis Mode**: static
-- **Total Functions**: 6284
+- **Total Functions**: 6316
 - **Total Classes**: 476
 - **Modules**: 935
-- **Entry Points**: 2594
+- **Entry Points**: 2608
 
 ## Architecture by Module
 
 ### packages.coru.src.coru.cli
-- **Functions**: 200
+- **Functions**: 204
 - **Classes**: 3
 - **File**: `cli.py`
 
@@ -47,15 +47,15 @@
 - **Functions**: 61
 - **File**: `scan.py`
 
+### src.koruide.plugin_installer
+- **Functions**: 58
+- **Classes**: 3
+- **File**: `plugin_installer.py`
+
 ### src.koruide.drive_orchestrator
 - **Functions**: 56
 - **Classes**: 1
 - **File**: `drive_orchestrator.py`
-
-### src.koruide.plugin_installer
-- **Functions**: 56
-- **Classes**: 3
-- **File**: `plugin_installer.py`
 
 ### src.koru.autonomous_loop_runner
 - **Functions**: 56
@@ -184,12 +184,6 @@ Args:
     args: Parsed command-line argumen
 - **Calls**: args.project.resolve, src.koru.autopilot.log_contract.emit_log, client_fn, project.print, src.koru.autopilot.log_contract.emit_log, src.koru.autopilot.commands.handoff._build_brief, brief.strip, project.print
 
-### packages.cli2koru.src.cli2koru.cli.main
-- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, shell.add_argument, shell.add_argument, sub.add_parser, run.add_argument, run.add_argument
-
-### packages.cli2coru.src.cli2coru.cli.main
-- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, shell.add_argument, shell.add_argument, sub.add_parser, run.add_argument, run.add_argument
-
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
 
@@ -231,6 +225,13 @@ Args:
 ### src.koru.doctor_render.render_text
 > Human-readable rendering — fixed-width status column.
 - **Calls**: lines.append, lines.append, max, report.summary, sum, counts.get, counts.get, counts.get
+
+### src.koru.cli_tagi.deploy
+> Deploy changes using Tagi's intelligent prioritization.
+- **Calls**: tagi.command, click.argument, click.option, click.option, None.resolve, click.echo, TagiIntegration, tagi.get_deployment_plan
+
+### src.koru.autonomous_runtime.setup_autonomous_session
+- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, src.koru.autonomous_runtime._log_runtime_readiness_gate
 
 ## Process Flows
 
@@ -419,6 +420,15 @@ no
 
 Key functions that process and transform data:
 
+### packages.dsl2koru.src.dsl2koru.cli._cmd_validate_schema
+- **Output to**: packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas, project.print, project.print
+
+### packages.dsl2koru.src.dsl2koru.cli._cmd_encode
+- **Output to**: packages.dsl2koru.src.dsl2koru.codec.parse_text, packages.dsl2koru.src.dsl2koru.codec.envelope_to_json, packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes, None.write_bytes, sys.stdout.buffer.write
+
+### packages.dsl2koru.src.dsl2koru.cli._cmd_decode
+- **Output to**: None.read_bytes, project.print, packages.dsl2koru.src.dsl2koru.codec.envelope_from_json, packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes, json.dumps
+
 ### packages.dsl2koru.src.dsl2koru.pb_codec._set_validate_lane
 - **Output to**: str, str, cmd.get, cmd.get
 
@@ -484,26 +494,12 @@ Key functions that process and transform data:
 ### packages.dsl2koru.src.dsl2koru.codec.parse_text
 - **Output to**: packages.dsl2koru.src.dsl2koru.grammar.parse_line, packages.dsl2koru.src.dsl2koru.codec.validate_payload
 
-### packages.dsl2koru.src.dsl2koru.handlers._validate_lane
-- **Output to**: str, str, packages.koruenv.src.koruenv.lane.validate_ide, packages.koruenv.src.koruenv.lane.validate_instance, HandlerResult
-
-### packages.uri2coru.src.uri2coru.uri._encode
-- **Output to**: quote
-
-### packages.uri2coru.src.uri2coru.uri._decode
-- **Output to**: unquote
-
 ## Behavioral Patterns
 
 ### recursion_to_dsl
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: packages.nlpshim.src.nlpshim.control.to_dsl
-
-### recursion_main
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
 
 ### recursion_create_ticket_from_dashboard
 - **Type**: recursion
@@ -544,6 +540,11 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.integrations.vdisplay_client.verify_chat_text_visible
+
+### recursion_main
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: packages.coru.src.coru.cli.main
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
@@ -594,13 +595,10 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.integrations.vdisplay_client.verify_chat_text_visible` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
-- `packages.cli2koru.src.cli2koru.cli.main` - 32 calls
 - `packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command` - 32 calls
-- `packages.cli2coru.src.cli2coru.cli.main` - 32 calls
 - `src.koru.bounded_contexts.repairs.read_model.format_repair_history_for_llm` - 32 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
-- `src.koru.autonomous_readiness.check_workspace_socket_ownership` - 30 calls
 - `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
 - `src.koru.autopilot.commands.drive.action_drive` - 30 calls
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
@@ -614,6 +612,9 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 27 calls
+- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
+- `packages.uri2koru.src.uri2koru.decode.uri_to_dsl` - 26 calls
+- `packages.nlp2coru.src.nlp2coru.cli.main` - 26 calls
 
 ## System Interactions
 

@@ -1,10 +1,10 @@
-# code2llm/evolution | 6153 func | 622f | 2026-06-11
-# generated in 0.03s
+# code2llm/evolution | 6185 func | 622f | 2026-06-11
+# generated in 0.05s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 3822L, 3 classes, max CC=29
-      EFFORT: ~4h  IMPACT: 110838
+      WHY: 3875L, 3 classes, max CC=19
+      EFFORT: ~4h  IMPACT: 73625
 
   [2] !! SPLIT           src/koru/scan.py
       WHY: 1621L, 0 classes, max CC=13
@@ -14,45 +14,45 @@ NEXT[10] (ranked by impact):
       WHY: CC=32 exceeds 15
       EFFORT: ~1h  IMPACT: 928
 
-  [4] !! SPLIT-FUNC      _auto_ownership_gate  CC=29  fan=25
-      WHY: CC=29 exceeds 15
-      EFFORT: ~1h  IMPACT: 725
-
-  [5] !! SPLIT-FUNC      verify_chat_text_visible  CC=28  fan=25
+  [4] !! SPLIT-FUNC      verify_chat_text_visible  CC=28  fan=25
       WHY: CC=28 exceeds 15
       EFFORT: ~1h  IMPACT: 700
 
-  [6] !! SPLIT-FUNC      imgl_main  CC=25  fan=24
+  [5] !! SPLIT-FUNC      imgl_main  CC=25  fan=24
       WHY: CC=25 exceeds 15
       EFFORT: ~1h  IMPACT: 600
 
-  [7] !  SPLIT-FUNC      build_agent_backend  CC=23  fan=19
+  [6] !  SPLIT-FUNC      build_agent_backend  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [8] !  SPLIT-FUNC      _auto_readiness_gate  CC=24  fan=18
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 432
-
-  [9] !  SPLIT-FUNC      action_status  CC=20  fan=20
+  [7] !  SPLIT-FUNC      action_status  CC=20  fan=20
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 400
 
-  [10] !  SPLIT-FUNC      _invoke_client_autopilot_drive  CC=21  fan=18
+  [8] !  SPLIT-FUNC      _invoke_client_autopilot_drive  CC=21  fan=18
       WHY: CC=21 exceeds 15
       EFFORT: ~1h  IMPACT: 378
 
+  [9] !! SPLIT-FUNC      SharedAutopilotBridgePaste.shouldProbeInput  CC=26  fan=14
+      WHY: CC=26 exceeds 15
+      EFFORT: ~1h  IMPACT: 364
+
+  [10] !  SPLIT-FUNC      _live_daemon_instance  CC=20  fan=18
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 360
+
 
 RISKS[3]:
-  ⚠ Splitting packages/coru/src/coru/cli.py may break 200 import paths
+  ⚠ Splitting packages/coru/src/coru/cli.py may break 204 import paths
   ⚠ Splitting tree.txt may break 0 import paths
   ⚠ Splitting src/koru/scan.py may break 61 import paths
 
 METRICS-TARGET:
-  CC̄:          3.7 → ≤2.6
+  CC̄:          3.6 → ≤2.5
   max-CC:      32 → ≤16
   god-modules: 48 → 0
-  high-CC(≥15): 48 → ≤24
+  high-CC(≥15): 42 → ≤21
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.7 → now CC̄=3.7
+  prev CC̄=3.7 → now CC̄=3.6

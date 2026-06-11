@@ -29,6 +29,37 @@ def resolve_registry_path(path_override: Path | None = None) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
+def _extract_tools_from_payload(payload: Any) -> list[Any]:
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        tools = payload.get("tools")
+        return tools if isinstance(tools, list) else []
+    return []
+
+
+def _normalize_tool_entries(tools: list[Any]) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    for item in tools:
+        if not isinstance(item, dict):
+            continue
+        tool_id = item.get("id")
+        if not isinstance(tool_id, str) or not tool_id.strip():
+            continue
+        normalized.append(item)
+    return normalized
+
+
+def _merge_shell_tool_entries(normalized: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen = {str(item.get("id") or "").strip().lower() for item in normalized}
+    for item in shell_tool_registry_entries():
+        tool_id = str(item.get("id") or "").strip().lower()
+        if tool_id and tool_id not in seen:
+            normalized.append(dict(item))
+            seen.add(tool_id)
+    return normalized
+
+
 def load_tool_registry(
     path_override: Path | None = None,
 ) -> tuple[list[dict[str, Any]], Path | None]:
@@ -46,32 +77,10 @@ def load_tool_registry(
     except (OSError, yaml.YAMLError):
         return [], path
 
-    tools: Any
-    if isinstance(payload, list):
-        tools = payload
-    elif isinstance(payload, dict):
-        tools = payload.get("tools")
-    else:
-        tools = None
-
-    if not isinstance(tools, list):
-        return [], path
-
-    normalized: list[dict[str, Any]] = []
-    for item in tools:
-        if not isinstance(item, dict):
-            continue
-        tool_id = item.get("id")
-        if not isinstance(tool_id, str) or not tool_id.strip():
-            continue
-        normalized.append(item)
+    tools = _extract_tools_from_payload(payload)
+    normalized = _normalize_tool_entries(tools)
     if path_override is None and not os.getenv("KORU_TOOL_REGISTRY"):
-        seen = {str(item.get("id") or "").strip().lower() for item in normalized}
-        for item in shell_tool_registry_entries():
-            tool_id = str(item.get("id") or "").strip().lower()
-            if tool_id and tool_id not in seen:
-                normalized.append(dict(item))
-                seen.add(tool_id)
+        normalized = _merge_shell_tool_entries(normalized)
     return normalized, path
 
 

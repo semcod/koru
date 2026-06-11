@@ -170,6 +170,39 @@ def action_ide_control_plan(args: argparse.Namespace) -> int:
     return 0 if payload.get("ok") else 1
 
 
+def _print_execution_json(payload: dict[str, Any]) -> int:
+    _print_json(payload)
+    return 0 if payload.get("ok") else 1
+
+
+def _print_execution_text(payload: dict[str, Any]) -> int:
+    if not payload.get("ok"):
+        exec_payload = payload.get("execution") or {}
+        results = exec_payload.get("results") or []
+        reply = (results[0] or {}).get("reply") if results else {}
+        if isinstance(reply, dict) and reply.get("delivered"):
+            print(
+                "koru ide control execute: text pasted but submit not verified "
+                "(try --no-submit or press Enter in chat manually)",
+                file=sys.stderr,
+            )
+        err = (
+            payload.get("error")
+            or (results[0] or {}).get("error")
+            or exec_payload.get("error")
+            or "?"
+        )
+        if err != "?":
+            print(f"koru ide control execute: {err}", file=sys.stderr)
+        return 1
+    exec_payload = payload.get("execution") or {}
+    results = exec_payload.get("results") or []
+    top = results[0] if results else {}
+    mode = payload.get("drive_mode", "?")
+    print(f"ok={payload.get('ok')} backend={top.get('backend', '?')} mode={mode}")
+    return 0
+
+
 def action_ide_control_execute(args: argparse.Namespace) -> int:
     from koruapi.desktop_uri import desktop_uri_control_execute
 
@@ -190,33 +223,8 @@ def action_ide_control_execute(args: argparse.Namespace) -> int:
         client_factory=client_factory,
     )
     if args.output_format == "json":
-        _print_json(payload)
-    else:
-        if not payload.get("ok"):
-            exec_payload = payload.get("execution") or {}
-            results = exec_payload.get("results") or []
-            reply = (results[0] or {}).get("reply") if results else {}
-            if isinstance(reply, dict) and reply.get("delivered"):
-                print(
-                    "koru ide control execute: text pasted but submit not verified "
-                    "(try --no-submit or press Enter in chat manually)",
-                    file=sys.stderr,
-                )
-            err = (
-                payload.get("error")
-                or (results[0] or {}).get("error")
-                or exec_payload.get("error")
-                or "?"
-            )
-            if err != "?":
-                print(f"koru ide control execute: {err}", file=sys.stderr)
-            return 1
-        exec_payload = payload.get("execution") or {}
-        results = exec_payload.get("results") or []
-        top = results[0] if results else {}
-        mode = payload.get("drive_mode", "?")
-        print(f"ok={payload.get('ok')} backend={top.get('backend', '?')} mode={mode}")
-    return 0 if payload.get("ok") else 1
+        return _print_execution_json(payload)
+    return _print_execution_text(payload)
 
 
 def _fetch_autopilot_status(socket_path: Path) -> tuple[dict | None, str | None]:

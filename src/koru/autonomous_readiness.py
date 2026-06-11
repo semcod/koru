@@ -418,19 +418,10 @@ def plugin_workspace_covers_project(
     return False, "connected plugin has no workspaceFolders"
 
 
-def check_workspace_socket_ownership(
-    project: Path,
-    socket_path: Path,
-    status: Mapping[str, Any] | None,
-    *,
-    autopilot_ide: str,
-) -> ReadinessResult:
-    """Detect stale sockets, dead daemon PIDs, and workspace mismatches."""
-    project = project.resolve()
+def _check_socket_health_issues(
+    socket_health: Any, socket_path: Path, status_available: bool
+) -> list[ReadinessIssue]:
     issues: list[ReadinessIssue] = []
-    socket_health = probe_socket_health(socket_path)
-
-    status_available = isinstance(status, Mapping)
     if socket_health.stale and status_available:
         issues.append(
             ReadinessIssue(
@@ -460,52 +451,95 @@ def check_workspace_socket_ownership(
                 fix_command=f"rm -f {socket_path}",
             )
         )
+    return issues
 
-    meta_path = daemon_metadata_path(project, socket_path)
-    meta = _effective_daemon_metadata(status, project, socket_path)
-    if meta:
-        meta_pid = meta.get("pid")
-        if isinstance(meta_pid, int) and socket_health.listening and not _pid_alive(meta_pid):
-            issues.append(
-                ReadinessIssue(
-                    code="daemon_pid_dead",
-                    severity="fail",
-                    message=f"daemon metadata pid={meta_pid} is not alive",
-                    fix_command=f"rm -f {socket_path} {meta_path}",
-                )
-            )
-        meta_inode = meta.get("socket_inode")
-        live_inode = _socket_inode(socket_path)
-        if (
-            isinstance(meta_inode, int)
-            and live_inode is not None
-            and meta_inode != live_inode
-        ):
-            issues.append(
-                ReadinessIssue(
-                    code="socket_inode_drift",
-                    severity="fail",
-                    message=(
-                        f"socket inode {live_inode} != metadata inode {meta_inode}"
-                    ),
-                    fix_command=f"rm -f {socket_path}",
-                )
-            )
 
-    if isinstance(status, dict) and status.get("plugins"):
-        ok_ws, ws_reason = plugin_workspace_covers_project(status, autopilot_ide, project)
-        if not ok_ws:
-            issues.append(
-                ReadinessIssue(
-                    code="plugin_workspace_mismatch",
-                    severity="fail",
-                    message=ws_reason,
-                    fix_command=(
-                        f"open {project} in {autopilot_ide}, then "
-                        "'koru: Connect autopilot daemon'"
-                    ),
-                )
+def _check_daemon_meta_issues(
+    meta: dict[str, Any] | None,
+    socket_health: Any,
+    socket_path: Path,
+    meta_path: Path,
+) -> list[ReadinessIssue]:
+    issues: list[ReadinessIssue] = []
+    if not meta:
+        return issues
+    meta_pid = meta.get("pid")
+    if isinstance(meta_pid, int) and socket_health.listening and not _pid_alive(meta_pid):
+        issues.append(
+            ReadinessIssue(
+                code="daemon_pid_dead",
+                severity="fail",
+                message=f"daemon metadata pid={meta_pid} is not alive",
+                fix_command=f"rm -f {socket_path} {meta_path}",
             )
+        )
+    meta_inode = meta.get("socket_inode")
+    live_inode = _socket_inode(socket_path)
+    if (
+        isinstance(meta_inode, int)
+        and live_inode is not None
+        and meta_inode != live_inode
+    ):
+        issues.append(
+            ReadinessIssue(
+                code="socket_inode_drift",
+                severity="fail",
+                message=(
+                    f"socket inode {live_inode} != metadata inode {meta_inode}"
+                ),
+                fix_command=f"rm -f {socket_path}",
+            )
+        )
+    return issues
+
+
+def _check_plugin_workspace_issues(
+    status: Mapping[str, Any] | None,
+    autopilot_ide: str,
+    project: Path,
+) -> list[ReadinessIssue]:
+    issues: list[ReadinessIssue] = []
+    if not isinstance(status, dict) or not status.get("plugins"):
+        return issues
+    ok_ws, ws_reason = plugin_workspace_covers_project(status, autopilot_ide, project)
+    if not ok_ws:
+        issues.append(
+            ReadinessIssue(
+                code="plugin_workspace_mismatch",
+                severity="fail",
+                message=ws_reason,
+                fix_command=(
+                    f"open {project} in {autopilot_ide}, then "
+                    "'koru: Connect autopilot daemon'"
+                ),
+            )
+        )
+    return issues
+
+
+def check_workspace_socket_ownership(
+    project: Path,
+    socket_path: Path,
+    status: Mapping[str, Any] | None,
+    *,
+    autopilot_ide: str,
+) -> ReadinessResult:
+    """Detect stale sockets, dead daemon PIDs, and workspace mismatches."""
+    project = project.resolve()
+    socket_health = probe_socket_health(socket_path)
+    status_available = isinstance(status, Mapping)
+
+    issues: list[ReadinessIssue] = []
+    issues.extend(_check_socket_health_issues(socket_health, socket_path, status_available))
+    issues.extend(
+        _check_daemon_meta_issues(
+            _effective_daemon_metadata(status, project, socket_path),
+            socket_health,
+            socket_path,
+            daemon_metadata_path(project, socket_path),
+        )
+    )
+    issues.extend(_check_plugin_workspace_issues(status, autopilot_ide, project))
 
     ok = not any(i.severity == "fail" for i in issues)
     fix = next((i.fix_command for i in issues if i.fix_command), None)

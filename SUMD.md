@@ -23,7 +23,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.326`
+- **version**: `0.1.328`
 - **python_requires**: `>=3.12,<3.14`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/deep/deep-v4-pro`
@@ -43,7 +43,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.326;
+  version: 0.1.328;
 }
 
 dependencies {
@@ -2199,7 +2199,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.326
+  version: 0.1.328
   env: local
 ```
 
@@ -2351,13 +2351,13 @@ Monorepo root for all koru autopilot IDE plugins. Each IDE has its own VSIX so a
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 1526f 243293L | python:941,javascript:328,typescript:183,shell:65,less:5,go:2,rust:1,css:1 | 2026-06-11
-# stats: 6508 func | 604 cls | 1526 mod | CC̄=4.0 | critical:411 | cycles:0
-# alerts[5]: CC parse_line=73; CC to_cli_args=50; CC envelope_to_dict=44; CC to_text=41; CC send_chat=32
-# hotspots[5]: action_snapshot fan=29; create_app fan=24; create_app fan=24; _auto_ownership_gate fan=23; _handle_subcommand fan=23
+# koru | 1528f 244207L | python:943,javascript:328,typescript:183,shell:65,less:5,go:2,rust:1,css:1 | 2026-06-11
+# stats: 6673 func | 604 cls | 1528 mod | CC̄=4.0 | critical:399 | cycles:0
+# alerts[5]: CC send_chat=32; CC _auto_ownership_gate=29; CC verify_chat_text_visible=28; CC imgl_main=25; CC _auto_readiness_gate=24
+# hotspots[5]: action_snapshot fan=29; create_app fan=24; create_app fan=24; _auto_ownership_gate fan=23; verify_chat_text_visible fan=23
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1526]:
+M[1528]:
   .nlp2dsl/environment.doql.less,1054
   .nlp2dsl/registry/environment.doql.less,1054
   app.doql.less,1019
@@ -2405,10 +2405,10 @@ M[1526]:
   lucy/main.go,84
   lucy/placeholder_test.go,11
   lucy/src/main.rs,48
-  packages/cli2coru/src/cli2coru/cli.py,70
+  packages/cli2coru/src/cli2coru/cli.py,83
   packages/cli2coru/src/cli2coru/shell.py,34
   packages/cli2coru/tests/test_cli2coru_parity.py,13
-  packages/cli2koru/src/cli2koru/cli.py,70
+  packages/cli2koru/src/cli2koru/cli.py,83
   packages/cli2koru/src/cli2koru/shell.py,34
   packages/cli2koru/tests/test_parity.py,17
   packages/coru/src/coru/__init__.py,4
@@ -2422,8 +2422,8 @@ M[1526]:
   packages/coru/src/coru/repair/diagnostics.py,505
   packages/coru/src/coru/repair/domain.py,65
   packages/coru/src/coru/repair/events.py,55
-  packages/coru/src/coru/repair/pipeline.py,888
-  packages/coru/src/coru/repair/projector.py,100
+  packages/coru/src/coru/repair/pipeline.py,1040
+  packages/coru/src/coru/repair/projector.py,116
   packages/coru/src/coru/repair/query.py,81
   packages/coru/src/coru/repair/registry.py,178
   packages/coru/src/coru/repair/runtime.py,24
@@ -2453,21 +2453,23 @@ M[1526]:
   packages/dsl2coru/scripts/generate-proto.sh,7
   packages/dsl2coru/src/dsl2coru/__init__.py,39
   packages/dsl2coru/src/dsl2coru/bus.py,141
-  packages/dsl2coru/src/dsl2coru/cli.py,173
+  packages/dsl2coru/src/dsl2coru/cli.py,196
   packages/dsl2coru/src/dsl2coru/codec.py,56
   packages/dsl2coru/src/dsl2coru/codegen.py,122
   packages/dsl2coru/src/dsl2coru/engine.py,7
   packages/dsl2coru/src/dsl2coru/events.py,172
-  packages/dsl2coru/src/dsl2coru/grammar.py,288
+  packages/dsl2coru/src/dsl2coru/grammar.py,388
   packages/dsl2coru/src/dsl2coru/handlers/__init__.py,8
-  packages/dsl2coru/src/dsl2coru/handlers/argv.py,127
+  packages/dsl2coru/src/dsl2coru/handlers/argv.py,161
   packages/dsl2coru/src/dsl2coru/handlers/command.py,45
   packages/dsl2coru/src/dsl2coru/handlers/query.py,45
   packages/dsl2coru/src/dsl2coru/handlers/runner.py,51
   packages/dsl2coru/src/dsl2coru/handlers/ui.py,67
-  packages/dsl2coru/src/dsl2coru/pb_codec.py,242
+  packages/dsl2coru/src/dsl2coru/parser.py,239
+  packages/dsl2coru/src/dsl2coru/pb_codec.py,324
   packages/dsl2coru/src/dsl2coru/result.py,37
   packages/dsl2coru/src/dsl2coru/schema_registry.py,80
+  packages/dsl2coru/src/dsl2coru/serializer.py,154
   packages/dsl2coru/src/dsl2coru/v1/__init__.py,2
   packages/dsl2coru/src/dsl2coru/v1/command_pb2.py,63
   packages/dsl2coru/src/dsl2coru/v1/result_pb2.py,40
@@ -2482,7 +2484,7 @@ M[1526]:
   packages/dsl2koru/scripts/generate-proto.sh,7
   packages/dsl2koru/src/dsl2koru/__init__.py,35
   packages/dsl2koru/src/dsl2koru/bus.py,85
-  packages/dsl2koru/src/dsl2koru/cli.py,164
+  packages/dsl2koru/src/dsl2koru/cli.py,184
   packages/dsl2koru/src/dsl2koru/codec.py,56
   packages/dsl2koru/src/dsl2koru/codegen.py,124
   packages/dsl2koru/src/dsl2koru/engine.py,7
@@ -2550,7 +2552,7 @@ M[1526]:
   packages/rest2koru/tests/test_rest2koru.py,19
   packages/uri2coru/src/uri2coru/__init__.py,19
   packages/uri2coru/src/uri2coru/cli.py,63
-  packages/uri2coru/src/uri2coru/decode.py,62
+  packages/uri2coru/src/uri2coru/decode.py,107
   packages/uri2coru/src/uri2coru/nlp2uri.py,93
   packages/uri2coru/src/uri2coru/run.py,20
   packages/uri2coru/src/uri2coru/uri.py,54
@@ -3309,12 +3311,12 @@ M[1526]:
   src/koru/cli/__main__.py,13
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
-  src/koru/cli.py,344
+  src/koru/cli.py,366
   src/koru/cli_agent.py,86
   src/koru/cli_agent_backends.py,62
   src/koru/cli_auto.py,106
   src/koru/cli_bootstrap.py,66
-  src/koru/cli_cleaned.py,390
+  src/koru/cli_cleaned.py,391
   src/koru/cli_context.py,32
   src/koru/cli_doctor.py,310
   src/koru/cli_events.py,121
@@ -3902,7 +3904,11 @@ D:
     e: run_multi_node_orchestration
     run_multi_node_orchestration()
   packages/cli2coru/src/cli2coru/cli.py:
-    e: main
+    e: _print_result,_handle_shell,_handle_run,_handle_exec,main
+    _print_result(result;json_out)
+    _handle_shell(args)
+    _handle_run(args)
+    _handle_exec(args)
     main(argv)
   packages/cli2coru/src/cli2coru/shell.py:
     e: run_shell
@@ -3911,7 +3917,11 @@ D:
     e: test_parity_cli_uri_rest_payloads
     test_parity_cli_uri_rest_payloads(tmp_path)
   packages/cli2koru/src/cli2koru/cli.py:
-    e: main
+    e: _print_result,_handle_shell,_handle_run,_handle_exec,main
+    _print_result(result;json_out)
+    _handle_shell(args)
+    _handle_run(args)
+    _handle_exec(args)
     main(argv)
   packages/cli2koru/src/cli2koru/shell.py:
     e: run_shell
@@ -4232,7 +4242,7 @@ D:
     RepairEvent: to_dict(0),from_dict(2)
     aggregate_id_for(ide;instance)
   packages/coru/src/coru/repair/pipeline.py:
-    e: _emit,_installed_extension_dir,_resolve_repo_vsix,_get_installed_version,_read_vsix_version,_unpack_vsix_archive,_vsix_unpack_layout,_vsix_source,_vsix_unpack_result,manual_vsix_unpack,plugin_build_aligned,_expected_build_from_problems,_poll_plugin_ready,_run_reload_and_connect,_execute_step,_drop_codes_after_action,_apply_round_resolution,_emit_session_started,_emit_problems_detected,_emit_session_finished,_record_attempt,_attempt_ensure_daemon,_steps_for_codes,_set_step_duration,_run_repair_step,_run_repair_steps,_record_unmapped_guidance,_clear_plugin_not_connected_if_ready,_refresh_status_resolution,_apply_round_actions,_run_repair_round,run_repair_pipeline,format_repair_lines,_PipelineState,_PipelineContext
+    e: _emit,_installed_extension_dir,_resolve_repo_vsix,_get_installed_version,_read_vsix_version,_unpack_vsix_archive,_vsix_unpack_layout,_vsix_source,_vsix_unpack_result,manual_vsix_unpack,plugin_build_aligned,_expected_build_from_problems,_poll_plugin_ready,_run_reload_and_connect,_exec_ensure_daemon,_exec_manage_fix,_exec_manual_vsix_unpack,_exec_plugin_upgrade_and_reload,_exec_strict_handshake_cycle,_exec_reload_and_connect,_exec_cross_ide_guidance,_exec_submit_unverified_guidance,_exec_default,_execute_step,_drop_codes_after_action,_apply_round_resolution,_emit_session_started,_emit_problems_detected,_emit_session_finished,_record_attempt,_attempt_ensure_daemon,_steps_for_codes,_set_step_duration,_run_repair_step,_run_repair_steps,_record_unmapped_guidance,_clear_plugin_not_connected_if_ready,_refresh_status_resolution,_apply_round_actions,_run_repair_round,run_repair_pipeline,format_repair_lines,_PipelineState,_PipelineContext
     _PipelineState:
     _PipelineContext:
     _emit(on_event;event_type;payload)
@@ -4249,6 +4259,15 @@ D:
     _expected_build_from_problems(problems)
     _poll_plugin_ready()
     _run_reload_and_connect()
+    _exec_ensure_daemon(step)
+    _exec_manage_fix(step)
+    _exec_manual_vsix_unpack(step)
+    _exec_plugin_upgrade_and_reload(step)
+    _exec_strict_handshake_cycle(step)
+    _exec_reload_and_connect(step)
+    _exec_cross_ide_guidance(step)
+    _exec_submit_unverified_guidance(step)
+    _exec_default(step)
     _execute_step(step)
     _drop_codes_after_action(remaining;round_actions)
     _apply_round_resolution(remaining;round_actions)
@@ -4269,8 +4288,11 @@ D:
     run_repair_pipeline()
     format_repair_lines(plan)
   packages/coru/src/coru/repair/projector.py:
-    e: project_repair_cases,_project_one_session,format_case_llm,format_history_llm
+    e: project_repair_cases,_extract_problem_codes,_extract_action_ids,_extract_resolved,_project_one_session,format_case_llm,format_history_llm
     project_repair_cases(events)
+    _extract_problem_codes(events)
+    _extract_action_ids(events)
+    _extract_resolved(events)
     _project_one_session(session_id;events)
     format_case_llm(case)
     format_history_llm(cases)
@@ -4593,11 +4615,18 @@ D:
     execute_dsl(text)
     dispatch_text(script)
   packages/dsl2coru/src/dsl2coru/cli.py:
-    e: _run_results,main,_main_subcommand,_main_legacy,_handle_subcommand
+    e: _run_results,main,_main_subcommand,_main_legacy,_cmd_validate_schema,_cmd_encode,_cmd_decode,_cmd_roundtrip,_cmd_replay,_cmd_run,_cmd_exec,_handle_subcommand
     _run_results(results)
     main(argv)
     _main_subcommand(argv)
     _main_legacy(argv)
+    _cmd_validate_schema(_args)
+    _cmd_encode(args)
+    _cmd_decode(args)
+    _cmd_roundtrip(args)
+    _cmd_replay(args)
+    _cmd_run(args)
+    _cmd_exec(args)
     _handle_subcommand(args)
   packages/dsl2coru/src/dsl2coru/codec.py:
     e: validate_payload,parse_text,envelope_to_bytes,envelope_from_bytes,envelope_to_json,envelope_from_json,roundtrip_text
@@ -4621,14 +4650,65 @@ D:
     StoredEvent: to_dict(0)
     EventStore: __init__(1),for_default(2),append_command(2),_append_pb(1),_append_jsonl(1),read_all(0),replay_pb(0),replay(0)
   packages/dsl2coru/src/dsl2coru/grammar.py:
-    e: _split_command,_truthy,parse_line,to_text
+    e: _split_command,_truthy,_flag,_ui_args,_parse_status,_parse_repair_history,_parse_env,_parse_query,_parse_auto,_parse_lane,_parse_ensure,_parse_doctor,_parse_calibration,_parse_chat,_parse_text,_parse_sync,_parse_repair_run,_parse_ui_common,_parse_ui_type,_parse_ui_key,_parse_ui_click,_parse_ui_nl,parse_line,_append_flag,_serialize_status,_serialize_env,_serialize_query,_serialize_auto,_serialize_lane,_serialize_ensure,_serialize_doctor,_serialize_calibration,_serialize_chat,_serialize_text,_serialize_sync,_serialize_repair_run,_serialize_repair_history,_serialize_ui_type,_serialize_ui_key,_serialize_ui_click,_serialize_ui_nl,to_text
     _split_command(line)
     _truthy(value)
+    _flag(rest;name)
+    _ui_args(rest;skip)
+    _parse_status(rest;payload;_default_file)
+    _parse_repair_history(_rest;_payload;_default_file)
+    _parse_env(rest;payload;default_file)
+    _parse_query(rest;payload;_default_file)
+    _parse_auto(rest;payload;_default_file)
+    _parse_lane(rest;payload;_default_file)
+    _parse_ensure(rest;payload;_default_file)
+    _parse_doctor(rest;payload;_default_file)
+    _parse_calibration(rest;payload;_default_file)
+    _parse_chat(rest;payload;_default_file)
+    _parse_text(rest;payload;_default_file)
+    _parse_sync(rest;payload;_default_file)
+    _parse_repair_run(rest;payload;_default_file)
+    _parse_ui_common(rest;payload)
+    _parse_ui_type(rest;payload;_default_file)
+    _parse_ui_key(rest;payload;_default_file)
+    _parse_ui_click(rest;payload;_default_file)
+    _parse_ui_nl(rest;payload;_default_file)
     parse_line(line)
+    _append_flag(parts;payload;name)
+    _serialize_status(parts;payload)
+    _serialize_env(parts;payload)
+    _serialize_query(parts;payload)
+    _serialize_auto(parts;payload)
+    _serialize_lane(parts;payload)
+    _serialize_ensure(parts;payload)
+    _serialize_doctor(parts;payload)
+    _serialize_calibration(parts;payload)
+    _serialize_chat(parts;payload)
+    _serialize_text(parts;payload)
+    _serialize_sync(parts;payload)
+    _serialize_repair_run(parts;payload)
+    _serialize_repair_history(_parts;_payload)
+    _serialize_ui_type(parts;payload)
+    _serialize_ui_key(parts;payload)
+    _serialize_ui_click(parts;payload)
+    _serialize_ui_nl(parts;payload)
     to_text(payload)
   packages/dsl2coru/src/dsl2coru/handlers/__init__.py:
   packages/dsl2coru/src/dsl2coru/handlers/argv.py:
-    e: to_cli_args
+    e: _build_text_args,_build_chat_args,_build_auto_args,_build_ensure_args,_build_lane_args,_build_status_args,_build_doctor_args,_build_calibration_args,_build_repair_run_args,_build_repair_history_args,_build_sync_args,_build_env_args,_build_query_args,to_cli_args
+    _build_text_args(payload)
+    _build_chat_args(payload)
+    _build_auto_args(payload)
+    _build_ensure_args(payload)
+    _build_lane_args(payload)
+    _build_status_args(payload)
+    _build_doctor_args(payload)
+    _build_calibration_args(payload)
+    _build_repair_run_args(payload)
+    _build_repair_history_args(_payload)
+    _build_sync_args(payload)
+    _build_env_args(payload)
+    _build_query_args(payload)
     to_cli_args(payload)
   packages/dsl2coru/src/dsl2coru/handlers/command.py:
     e: run_command
@@ -4644,10 +4724,59 @@ D:
   packages/dsl2coru/src/dsl2coru/handlers/ui.py:
     e: run_ui_command
     run_ui_command(payload)
+  packages/dsl2coru/src/dsl2coru/parser.py:
+    e: _split_command,_truthy,_flag,_ui_args,_parse_status,_parse_repair_history,_parse_env,_parse_query,_parse_auto,_parse_lane,_parse_ensure,_parse_doctor,_parse_calibration,_parse_chat,_parse_text,_parse_sync,_parse_repair_run,_parse_ui_common,_parse_ui_type,_parse_ui_key,_parse_ui_click,_parse_ui_nl,parse_line
+    _split_command(line)
+    _truthy(value)
+    _flag(rest;name)
+    _ui_args(rest;skip)
+    _parse_status(rest;payload;_default_file)
+    _parse_repair_history(_rest;_payload;_default_file)
+    _parse_env(rest;payload;default_file)
+    _parse_query(rest;payload;_default_file)
+    _parse_auto(rest;payload;_default_file)
+    _parse_lane(rest;payload;_default_file)
+    _parse_ensure(rest;payload;_default_file)
+    _parse_doctor(rest;payload;_default_file)
+    _parse_calibration(rest;payload;_default_file)
+    _parse_chat(rest;payload;_default_file)
+    _parse_text(rest;payload;_default_file)
+    _parse_sync(rest;payload;_default_file)
+    _parse_repair_run(rest;payload;_default_file)
+    _parse_ui_common(rest;payload)
+    _parse_ui_type(rest;payload;_default_file)
+    _parse_ui_key(rest;payload;_default_file)
+    _parse_ui_click(rest;payload;_default_file)
+    _parse_ui_nl(rest;payload;_default_file)
+    parse_line(line)
   packages/dsl2coru/src/dsl2coru/pb_codec.py:
-    e: _set_body,dict_to_envelope,envelope_to_dict,encode_protobuf,decode_protobuf,encode_text_to_protobuf,decode_protobuf_to_text,result_to_pb,pb_to_result,encode_result_protobuf
+    e: _set_status,_set_env,_set_query,_set_auto,_set_lane,_set_ensure,_set_doctor,_set_calibration,_set_chat,_set_text,_set_sync,_set_repair_run,_set_body,dict_to_envelope,_extract_status,_extract_env,_extract_query,_extract_auto,_extract_lane,_extract_ensure,_extract_doctor,_extract_calibration,_extract_chat,_extract_text,_extract_sync,_extract_repair_run,envelope_to_dict,encode_protobuf,decode_protobuf,encode_text_to_protobuf,decode_protobuf_to_text,result_to_pb,pb_to_result,encode_result_protobuf
+    _set_status(msg;cmd)
+    _set_env(msg;cmd)
+    _set_query(msg;cmd)
+    _set_auto(msg;cmd)
+    _set_lane(msg;cmd)
+    _set_ensure(msg;cmd)
+    _set_doctor(msg;cmd)
+    _set_calibration(msg;cmd)
+    _set_chat(msg;cmd)
+    _set_text(msg;cmd)
+    _set_sync(msg;cmd)
+    _set_repair_run(msg;cmd)
     _set_body(envelope;cmd)
     dict_to_envelope(cmd)
+    _extract_status(msg;cmd)
+    _extract_env(msg;cmd)
+    _extract_query(msg;cmd)
+    _extract_auto(msg;cmd)
+    _extract_lane(msg;cmd)
+    _extract_ensure(msg;cmd)
+    _extract_doctor(msg;cmd)
+    _extract_calibration(msg;cmd)
+    _extract_chat(msg;cmd)
+    _extract_text(msg;cmd)
+    _extract_sync(msg;cmd)
+    _extract_repair_run(msg;cmd)
     envelope_to_dict(envelope)
     encode_protobuf(cmd)
     decode_protobuf(data)
@@ -4666,6 +4795,27 @@ D:
     schema_for_verb(verb)
     all_verbs()
     validate_schemas()
+  packages/dsl2coru/src/dsl2coru/serializer.py:
+    e: _append_flag,_serialize_status,_serialize_env,_serialize_query,_serialize_auto,_serialize_lane,_serialize_ensure,_serialize_doctor,_serialize_calibration,_serialize_chat,_serialize_text,_serialize_sync,_serialize_repair_run,_serialize_repair_history,_serialize_ui_type,_serialize_ui_key,_serialize_ui_click,_serialize_ui_nl,to_text
+    _append_flag(parts;payload;name)
+    _serialize_status(parts;payload)
+    _serialize_env(parts;payload)
+    _serialize_query(parts;payload)
+    _serialize_auto(parts;payload)
+    _serialize_lane(parts;payload)
+    _serialize_ensure(parts;payload)
+    _serialize_doctor(parts;payload)
+    _serialize_calibration(parts;payload)
+    _serialize_chat(parts;payload)
+    _serialize_text(parts;payload)
+    _serialize_sync(parts;payload)
+    _serialize_repair_run(parts;payload)
+    _serialize_repair_history(_parts;_payload)
+    _serialize_ui_type(parts;payload)
+    _serialize_ui_key(parts;payload)
+    _serialize_ui_click(parts;payload)
+    _serialize_ui_nl(parts;payload)
+    to_text(payload)
   packages/dsl2coru/src/dsl2coru/v1/__init__.py:
   packages/dsl2coru/src/dsl2coru/v1/command_pb2.py:
   packages/dsl2coru/src/dsl2coru/v1/result_pb2.py:
@@ -4715,11 +4865,17 @@ D:
     execute_dsl_line(line)
     execute_dsl(text)
   packages/dsl2koru/src/dsl2koru/cli.py:
-    e: _run_results,main,_main_subcommand,_main_legacy,_handle_subcommand
+    e: _run_results,main,_main_subcommand,_main_legacy,_cmd_validate_schema,_cmd_encode,_cmd_decode,_cmd_roundtrip,_cmd_replay,_cmd_run,_handle_subcommand
     _run_results(results)
     main(argv)
     _main_subcommand(argv)
     _main_legacy(argv)
+    _cmd_validate_schema(_args)
+    _cmd_encode(args)
+    _cmd_decode(args)
+    _cmd_roundtrip(args)
+    _cmd_replay(args)
+    _cmd_run(args)
     _handle_subcommand(args)
   packages/dsl2koru/src/dsl2koru/codec.py:
     e: validate_payload,parse_text,envelope_to_bytes,envelope_from_bytes,envelope_to_json,envelope_from_json,roundtrip_text
@@ -5031,8 +5187,16 @@ D:
     e: main
     main(argv)
   packages/uri2coru/src/uri2coru/decode.py:
-    e: _context,uri_to_dsl
+    e: _context,_cmd_repair_history,_cmd_lane_status,_cmd_validate_lane,_cmd_repair_run,_cmd_resolve,_cmd_status,_block_repair_history,_block_lane_status,uri_to_dsl
     _context(params)
+    _cmd_repair_history(params;_parts)
+    _cmd_lane_status(params;_parts)
+    _cmd_validate_lane(params;_parts)
+    _cmd_repair_run(params;_parts)
+    _cmd_resolve(params;_parts)
+    _cmd_status(_params;_parts)
+    _block_repair_history(params;_parts)
+    _block_lane_status(params;_parts)
     uri_to_dsl(uri)
   packages/uri2coru/src/uri2coru/nlp2uri.py:
     e: nlp2uri,best_uri,ResolvedCoruUri
@@ -7113,7 +7277,7 @@ D:
   src/koru/cli/commands.py:
   src/koru/cli/parsers.py:
   src/koru/cli.py:
-    e: _is_bare_invocation,_dsl_main,_api_main,_tillm_main,_agent_backends_main,_peek_project_from_argv,_maybe_print_project_venv_hint,_should_suggest_wizard,_lazy_module_main,_maybe_reexec_for_project_venv,_dispatch_flag_action,_suggest_subcommand,_dispatch_auto_alias,_print_unknown_subcommand_hint,_handle_parser_exit,main
+    e: _is_bare_invocation,_dsl_main,_api_main,_tillm_main,_agent_backends_main,_peek_project_from_argv,_maybe_print_project_venv_hint,_should_suggest_wizard,_lazy_module_main,_maybe_reexec_for_project_venv,_run_doctor,_run_init_agent_lane,_run_init,_run_context,_run_bootstrap,_run_watch,_run_queue,_dispatch_flag_action,_suggest_subcommand,_dispatch_auto_alias,_print_unknown_subcommand_hint,_handle_parser_exit,main
     _is_bare_invocation(args)
     _dsl_main(argv)
     _api_main(argv)
@@ -7124,6 +7288,13 @@ D:
     _should_suggest_wizard(argv;project)
     _lazy_module_main(module_name;attr_name;argv)
     _maybe_reexec_for_project_venv(raw_args)
+    _run_doctor(args;raw_args)
+    _run_init_agent_lane(args;_raw_args)
+    _run_init(args;_raw_args)
+    _run_context(args;_raw_args)
+    _run_bootstrap(args;_raw_args)
+    _run_watch(args;_raw_args)
+    _run_queue(args;_raw_args)
     _dispatch_flag_action(args;raw_args)
     _suggest_subcommand(token)
     _dispatch_auto_alias(raw_args)
@@ -12795,7 +12966,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.326', 'python').
+project_metadata('koru', '0.1.328', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('.nlp2dsl/environment.doql.less', 1054, 'less').
@@ -12845,10 +13016,10 @@ project_file('examples/runtime/koru-serve-health/run-docker.sh', 8, 'shell').
 project_file('lucy/main.go', 84, 'go').
 project_file('lucy/placeholder_test.go', 11, 'go').
 project_file('lucy/src/main.rs', 48, 'rust').
-project_file('packages/cli2coru/src/cli2coru/cli.py', 70, 'python').
+project_file('packages/cli2coru/src/cli2coru/cli.py', 83, 'python').
 project_file('packages/cli2coru/src/cli2coru/shell.py', 34, 'python').
 project_file('packages/cli2coru/tests/test_cli2coru_parity.py', 13, 'python').
-project_file('packages/cli2koru/src/cli2koru/cli.py', 70, 'python').
+project_file('packages/cli2koru/src/cli2koru/cli.py', 83, 'python').
 project_file('packages/cli2koru/src/cli2koru/shell.py', 34, 'python').
 project_file('packages/cli2koru/tests/test_parity.py', 17, 'python').
 project_file('packages/coru/src/coru/__init__.py', 4, 'python').
@@ -12862,8 +13033,8 @@ project_file('packages/coru/src/coru/repair/commands.py', 39, 'python').
 project_file('packages/coru/src/coru/repair/diagnostics.py', 505, 'python').
 project_file('packages/coru/src/coru/repair/domain.py', 65, 'python').
 project_file('packages/coru/src/coru/repair/events.py', 55, 'python').
-project_file('packages/coru/src/coru/repair/pipeline.py', 888, 'python').
-project_file('packages/coru/src/coru/repair/projector.py', 100, 'python').
+project_file('packages/coru/src/coru/repair/pipeline.py', 1040, 'python').
+project_file('packages/coru/src/coru/repair/projector.py', 116, 'python').
 project_file('packages/coru/src/coru/repair/query.py', 81, 'python').
 project_file('packages/coru/src/coru/repair/registry.py', 178, 'python').
 project_file('packages/coru/src/coru/repair/runtime.py', 24, 'python').
@@ -12893,21 +13064,23 @@ project_file('packages/coru/tests/test_supervisor.py', 209, 'python').
 project_file('packages/dsl2coru/scripts/generate-proto.sh', 7, 'shell').
 project_file('packages/dsl2coru/src/dsl2coru/__init__.py', 39, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/bus.py', 141, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/cli.py', 173, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/cli.py', 196, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/codec.py', 56, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/codegen.py', 122, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/engine.py', 7, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/events.py', 172, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/grammar.py', 288, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/grammar.py', 388, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/__init__.py', 8, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 127, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 161, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/command.py', 45, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/query.py', 45, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/runner.py', 51, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/ui.py', 67, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/pb_codec.py', 242, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/parser.py', 239, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/pb_codec.py', 324, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/result.py', 37, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/schema_registry.py', 80, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/serializer.py', 154, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/v1/__init__.py', 2, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/v1/command_pb2.py', 63, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/v1/result_pb2.py', 40, 'python').
@@ -12922,7 +13095,7 @@ project_file('packages/dsl2coru/tests/test_dsl2coru_ui.py', 43, 'python').
 project_file('packages/dsl2koru/scripts/generate-proto.sh', 7, 'shell').
 project_file('packages/dsl2koru/src/dsl2koru/__init__.py', 35, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/bus.py', 85, 'python').
-project_file('packages/dsl2koru/src/dsl2koru/cli.py', 164, 'python').
+project_file('packages/dsl2koru/src/dsl2koru/cli.py', 184, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/codec.py', 56, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/codegen.py', 124, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/engine.py', 7, 'python').
@@ -12990,7 +13163,7 @@ project_file('packages/rest2koru/src/rest2koru/cli.py', 25, 'python').
 project_file('packages/rest2koru/tests/test_rest2koru.py', 19, 'python').
 project_file('packages/uri2coru/src/uri2coru/__init__.py', 19, 'python').
 project_file('packages/uri2coru/src/uri2coru/cli.py', 63, 'python').
-project_file('packages/uri2coru/src/uri2coru/decode.py', 62, 'python').
+project_file('packages/uri2coru/src/uri2coru/decode.py', 107, 'python').
 project_file('packages/uri2coru/src/uri2coru/nlp2uri.py', 93, 'python').
 project_file('packages/uri2coru/src/uri2coru/run.py', 20, 'python').
 project_file('packages/uri2coru/src/uri2coru/uri.py', 54, 'python').
@@ -13749,12 +13922,12 @@ project_file('src/koru/cli/__init__.py', 98, 'python').
 project_file('src/koru/cli/__main__.py', 13, 'python').
 project_file('src/koru/cli/commands.py', 1, 'python').
 project_file('src/koru/cli/parsers.py', 1, 'python').
-project_file('src/koru/cli.py', 344, 'python').
+project_file('src/koru/cli.py', 366, 'python').
 project_file('src/koru/cli_agent.py', 86, 'python').
 project_file('src/koru/cli_agent_backends.py', 62, 'python').
 project_file('src/koru/cli_auto.py', 106, 'python').
 project_file('src/koru/cli_bootstrap.py', 66, 'python').
-project_file('src/koru/cli_cleaned.py', 390, 'python').
+project_file('src/koru/cli_cleaned.py', 391, 'python').
 project_file('src/koru/cli_context.py', 32, 'python').
 project_file('src/koru/cli_doctor.py', 310, 'python').
 project_file('src/koru/cli_events.py', 121, 'python').
@@ -14336,10 +14509,18 @@ python_function('docker/capture/smoke.py', '_run_headless', 0, 2, 4).
 python_function('docker/capture/smoke.py', '_run_x11', 0, 3, 6).
 python_function('docker/capture/smoke.py', 'main', 1, 4, 9).
 python_function('examples/remote_orchestration_demo.py', 'run_multi_node_orchestration', 0, 9, 8).
-python_function('packages/cli2coru/src/cli2coru/cli.py', 'main', 1, 15, 15).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_print_result', 2, 4, 4).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_handle_shell', 1, 1, 1).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_handle_run', 1, 3, 4).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_handle_exec', 1, 2, 2).
+python_function('packages/cli2coru/src/cli2coru/cli.py', 'main', 1, 4, 8).
 python_function('packages/cli2coru/src/cli2coru/shell.py', 'run_shell', 0, 9, 8).
 python_function('packages/cli2coru/tests/test_cli2coru_parity.py', 'test_parity_cli_uri_rest_payloads', 1, 3, 2).
-python_function('packages/cli2koru/src/cli2koru/cli.py', 'main', 1, 15, 15).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_print_result', 2, 4, 4).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_handle_shell', 1, 1, 1).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_handle_run', 1, 3, 4).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_handle_exec', 1, 2, 2).
+python_function('packages/cli2koru/src/cli2koru/cli.py', 'main', 1, 4, 8).
 python_function('packages/cli2koru/src/cli2koru/shell.py', 'run_shell', 0, 9, 8).
 python_function('packages/cli2koru/tests/test_parity.py', 'test_parity_cli_uri_rest_payloads', 1, 3, 2).
 python_function('packages/coru/src/coru/cli.py', '_koru_subprocess_timeout', 1, 6, 3).
@@ -14634,7 +14815,16 @@ python_function('packages/coru/src/coru/repair/pipeline.py', 'plugin_build_align
 python_function('packages/coru/src/coru/repair/pipeline.py', '_expected_build_from_problems', 1, 9, 4).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_poll_plugin_ready', 0, 6, 7).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_run_reload_and_connect', 0, 8, 6).
-python_function('packages/coru/src/coru/repair/pipeline.py', '_execute_step', 1, 19, 8).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_ensure_daemon', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_manage_fix', 1, 2, 2).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_manual_vsix_unpack', 1, 2, 2).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_plugin_upgrade_and_reload', 1, 5, 3).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_strict_handshake_cycle', 1, 4, 4).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_reload_and_connect', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_cross_ide_guidance', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_submit_unverified_guidance', 1, 2, 2).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_default', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_execute_step', 1, 1, 2).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_drop_codes_after_action', 2, 6, 1).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_apply_round_resolution', 2, 2, 1).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_emit_session_started', 1, 1, 1).
@@ -14654,7 +14844,10 @@ python_function('packages/coru/src/coru/repair/pipeline.py', '_run_repair_round'
 python_function('packages/coru/src/coru/repair/pipeline.py', 'run_repair_pipeline', 0, 3, 13).
 python_function('packages/coru/src/coru/repair/pipeline.py', 'format_repair_lines', 1, 8, 2).
 python_function('packages/coru/src/coru/repair/projector.py', 'project_repair_cases', 1, 9, 7).
-python_function('packages/coru/src/coru/repair/projector.py', '_project_one_session', 2, 19, 12).
+python_function('packages/coru/src/coru/repair/projector.py', '_extract_problem_codes', 1, 8, 5).
+python_function('packages/coru/src/coru/repair/projector.py', '_extract_action_ids', 1, 5, 4).
+python_function('packages/coru/src/coru/repair/projector.py', '_extract_resolved', 1, 3, 2).
+python_function('packages/coru/src/coru/repair/projector.py', '_project_one_session', 2, 7, 11).
 python_function('packages/coru/src/coru/repair/projector.py', 'format_case_llm', 1, 5, 2).
 python_function('packages/coru/src/coru/repair/projector.py', 'format_history_llm', 1, 3, 2).
 python_function('packages/coru/src/coru/repair/query.py', 'problems_to_payload', 1, 2, 1).
@@ -14913,7 +15106,14 @@ python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_run_results', 1, 6, 4
 python_function('packages/dsl2coru/src/dsl2coru/cli.py', 'main', 1, 4, 2).
 python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_main_subcommand', 1, 1, 6).
 python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_main_legacy', 1, 5, 11).
-python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_handle_subcommand', 1, 23, 22).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_validate_schema', 1, 3, 2).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_encode', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_decode', 1, 2, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_roundtrip', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_replay', 1, 6, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_run', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_exec', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_handle_subcommand', 1, 2, 2).
 python_function('packages/dsl2coru/src/dsl2coru/codec.py', 'validate_payload', 1, 2, 6).
 python_function('packages/dsl2coru/src/dsl2coru/codec.py', 'parse_text', 1, 2, 2).
 python_function('packages/dsl2coru/src/dsl2coru/codec.py', 'envelope_to_bytes', 1, 1, 2).
@@ -14928,18 +15128,116 @@ python_function('packages/dsl2coru/src/dsl2coru/codegen.py', 'render_models_modu
 python_function('packages/dsl2coru/src/dsl2coru/codegen.py', 'main', 1, 9, 12).
 python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_split_command', 1, 3, 3).
 python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_truthy', 1, 2, 2).
-python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'parse_line', 1, 73, 13).
-python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'to_text', 1, 41, 10).
-python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 'to_cli_args', 1, 50, 9).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_flag', 2, 7, 5).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_ui_args', 2, 9, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_status', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_repair_history', 3, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_env', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_query', 3, 4, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_auto', 3, 6, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_lane', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ensure', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_doctor', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_calibration', 3, 6, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_chat', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_text', 3, 8, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_sync', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_repair_run', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_common', 2, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_type', 3, 6, 6).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_key', 3, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_click', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_nl', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'parse_line', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_append_flag', 3, 5, 5).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_status', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_env', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_query', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_auto', 2, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_lane', 2, 1, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ensure', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_doctor', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_calibration', 2, 3, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_chat', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_text', 2, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_sync', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_repair_run', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_repair_history', 2, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_type', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_key', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_click', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_nl', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'to_text', 1, 4, 9).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_text_args', 1, 6, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_chat_args', 1, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_auto_args', 1, 5, 5).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_ensure_args', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_lane_args', 1, 4, 3).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_status_args', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_doctor_args', 1, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_calibration_args', 1, 5, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_repair_run_args', 1, 4, 3).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_repair_history_args', 1, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_sync_args', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_env_args', 1, 4, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_query_args', 1, 6, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 'to_cli_args', 1, 4, 4).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/command.py', 'run_command', 1, 6, 6).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/query.py', 'run_query', 1, 6, 6).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/runner.py', '_capture_output', 0, 1, 1).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/runner.py', '_run_subprocess', 1, 4, 1).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/runner.py', 'default_runner', 1, 5, 5).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/ui.py', 'run_ui_command', 1, 15, 9).
-python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_body', 2, 31, 8).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_split_command', 1, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_truthy', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_flag', 2, 7, 5).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_ui_args', 2, 9, 4).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_status', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_repair_history', 3, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_env', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_query', 3, 4, 2).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_auto', 3, 6, 3).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_lane', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ensure', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_doctor', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_calibration', 3, 6, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_chat', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_text', 3, 8, 3).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_sync', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_repair_run', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_common', 2, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_type', 3, 6, 6).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_key', 3, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_click', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_nl', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', 'parse_line', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_status', 2, 1, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_env', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_query', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_auto', 2, 6, 5).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_lane', 2, 4, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_ensure', 2, 1, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_doctor', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_calibration', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_chat', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_text', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_sync', 2, 1, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_repair_run', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_body', 2, 3, 5).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'dict_to_envelope', 1, 1, 5).
-python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'envelope_to_dict', 1, 44, 5).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_status', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_env', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_query', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_auto', 2, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_lane', 2, 5, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_ensure', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_doctor', 2, 4, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_calibration', 2, 5, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_chat', 2, 4, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_text', 2, 5, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_sync', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_repair_run', 2, 4, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'envelope_to_dict', 1, 4, 5).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'encode_protobuf', 1, 1, 2).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'decode_protobuf', 1, 1, 3).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'encode_text_to_protobuf', 1, 3, 3).
@@ -14952,6 +15250,25 @@ python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', '_load_sche
 python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', 'schema_for_verb', 1, 2, 4).
 python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', 'all_verbs', 0, 1, 3).
 python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', 'validate_schemas', 0, 3, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_append_flag', 3, 5, 5).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_status', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_env', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_query', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_auto', 2, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_lane', 2, 1, 1).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ensure', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_doctor', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_calibration', 2, 3, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_chat', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_text', 2, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_sync', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_repair_run', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_repair_history', 2, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_type', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_key', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_click', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_nl', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', 'to_text', 1, 4, 9).
 python_function('packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py', '_mock_runner', 1, 1, 0).
 python_function('packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py', 'test_status_across_adapters', 1, 8, 8).
 python_function('packages/dsl2coru/tests/test_dsl2coru_bus.py', '_mock_runner', 1, 1, 1).
@@ -14982,7 +15299,13 @@ python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_run_results', 1, 6, 4
 python_function('packages/dsl2koru/src/dsl2koru/cli.py', 'main', 1, 4, 2).
 python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_main_subcommand', 1, 1, 6).
 python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_main_legacy', 1, 4, 11).
-python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_handle_subcommand', 1, 17, 23).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_validate_schema', 1, 3, 2).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_encode', 1, 3, 6).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_decode', 1, 2, 6).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_roundtrip', 1, 1, 2).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_replay', 1, 4, 8).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_run', 1, 3, 6).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_handle_subcommand', 1, 2, 2).
 python_function('packages/dsl2koru/src/dsl2koru/codec.py', 'validate_payload', 1, 2, 6).
 python_function('packages/dsl2koru/src/dsl2koru/codec.py', 'parse_text', 1, 2, 2).
 python_function('packages/dsl2koru/src/dsl2koru/codec.py', 'envelope_to_bytes', 1, 1, 2).
@@ -15150,7 +15473,15 @@ python_function('packages/rest2koru/src/rest2koru/cli.py', 'main', 1, 2, 5).
 python_function('packages/rest2koru/tests/test_rest2koru.py', 'test_health_and_dsl', 0, 5, 5).
 python_function('packages/uri2coru/src/uri2coru/cli.py', 'main', 1, 11, 12).
 python_function('packages/uri2coru/src/uri2coru/decode.py', '_context', 1, 4, 2).
-python_function('packages/uri2coru/src/uri2coru/decode.py', 'uri_to_dsl', 1, 15, 9).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_repair_history', 2, 2, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_lane_status', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_validate_lane', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_repair_run', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_resolve', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_status', 2, 1, 0).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_block_repair_history', 2, 2, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_block_lane_status', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', 'uri_to_dsl', 1, 7, 11).
 python_function('packages/uri2coru/src/uri2coru/nlp2uri.py', 'nlp2uri', 1, 14, 11).
 python_function('packages/uri2coru/src/uri2coru/nlp2uri.py', 'best_uri', 1, 2, 1).
 python_function('packages/uri2coru/src/uri2coru/run.py', 'run_uri', 1, 2, 2).
@@ -16639,7 +16970,14 @@ python_function('src/koru/cli.py', '_maybe_print_project_venv_hint', 1, 5, 9).
 python_function('src/koru/cli.py', '_should_suggest_wizard', 2, 6, 5).
 python_function('src/koru/cli.py', '_lazy_module_main', 3, 1, 2).
 python_function('src/koru/cli.py', '_maybe_reexec_for_project_venv', 1, 7, 9).
-python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 8, 8).
+python_function('src/koru/cli.py', '_run_doctor', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_init_agent_lane', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_init', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_context', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_bootstrap', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_watch', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_queue', 2, 1, 2).
+python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 3, 1).
 python_function('src/koru/cli.py', '_suggest_subcommand', 1, 7, 3).
 python_function('src/koru/cli.py', '_dispatch_auto_alias', 1, 7, 2).
 python_function('src/koru/cli.py', '_print_unknown_subcommand_hint', 1, 2, 4).
@@ -16678,7 +17016,7 @@ python_function('src/koru/cli_cleaned.py', '_context_main', 1, 2, 5).
 python_function('src/koru/cli_cleaned.py', '_bootstrap_main', 1, 5, 7).
 python_function('src/koru/cli_cleaned.py', '_command_loop_main', 1, 7, 7).
 python_function('src/koru/cli_cleaned.py', '_maybe_reexec_for_project_venv', 1, 8, 7).
-python_function('src/koru/cli_cleaned.py', '_dispatch_flag_action', 2, 8, 7).
+python_function('src/koru/cli_cleaned.py', '_dispatch_flag_action', 2, 3, 1).
 python_function('src/koru/cli_cleaned.py', 'main', 0, 11, 9).
 python_function('src/koru/cli_context.py', '_context_main', 1, 2, 5).
 python_function('src/koru/cli_doctor.py', '_doctor_selected_ide', 0, 5, 4).
@@ -23447,75 +23785,75 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*346 nodes · 500 edges · 66 modules · CC̄=3.7*
+*380 nodes · 500 edges · 67 modules · CC̄=3.6*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in project)* | 0 | 928 | 0 | **928** |
+| `print` *(in project)* | 0 | 922 | 0 | **922** |
 | `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 191 | 9 | **200** |
-| `parse_line` *(in packages.dsl2coru.src.dsl2coru.grammar)* | 73 ⚠ | 0 | 78 | **78** |
-| `to_cli_args` *(in packages.dsl2coru.src.dsl2coru.handlers.argv)* | 50 ⚠ | 2 | 70 | **72** |
-| `_set_body` *(in packages.dsl2coru.src.dsl2coru.pb_codec)* | 31 ⚠ | 1 | 67 | **68** |
 | `dispatch` *(in packages.dsl2koru.src.dsl2koru.bus)* | 11 ⚠ | 27 | 25 | **52** |
-| `_auto_readiness_gate` *(in packages.coru.src.coru.cli)* | 24 ⚠ | 1 | 40 | **41** |
+| `_flag` *(in packages.dsl2coru.src.dsl2coru.parser)* | 7 | 33 | 8 | **41** |
+| `_flag` *(in packages.dsl2coru.src.dsl2coru.grammar)* | 7 | 33 | 8 | **41** |
 | `detect_running_ides` *(in src.koruide.ide)* | 17 ⚠ | 27 | 11 | **38** |
+| `append_command` *(in packages.dsl2koru.src.dsl2koru.events.EventStore)* | 3 | 0 | 33 | **33** |
+| `run_ui_command` *(in packages.dsl2coru.src.dsl2coru.handlers.ui)* | 15 ⚠ | 1 | 32 | **33** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.30s
-# nodes: 346 | edges: 500 | modules: 66
-# CC̄=3.7
+# generated in 0.36s
+# nodes: 380 | edges: 500 | modules: 67
+# CC̄=3.6
 
 HUBS[20]:
   project.print
-    CC=0  in:928  out:0  total:928
+    CC=0  in:922  out:0  total:922
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:191  out:9  total:200
-  packages.dsl2coru.src.dsl2coru.grammar.parse_line
-    CC=73  in:0  out:78  total:78
-  packages.dsl2coru.src.dsl2coru.handlers.argv.to_cli_args
-    CC=50  in:2  out:70  total:72
-  packages.dsl2coru.src.dsl2coru.pb_codec._set_body
-    CC=31  in:1  out:67  total:68
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
-  packages.coru.src.coru.cli._auto_readiness_gate
-    CC=24  in:1  out:40  total:41
+  packages.dsl2coru.src.dsl2coru.parser._flag
+    CC=7  in:33  out:8  total:41
+  packages.dsl2coru.src.dsl2coru.grammar._flag
+    CC=7  in:33  out:8  total:41
   src.koruide.ide.detect_running_ides
     CC=17  in:27  out:11  total:38
-  packages.dsl2coru.src.dsl2coru.cli._handle_subcommand
-    CC=23  in:1  out:33  total:34
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand
-    CC=17  in:1  out:32  total:33
-  packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command
-    CC=15  in:1  out:32  total:33
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
     CC=3  in:0  out:33  total:33
+  packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command
+    CC=15  in:1  out:32  total:33
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
-  packages.dsl2koru.src.dsl2koru.pb_codec._set_body
-    CC=9  in:1  out:31  total:32
-  packages.coru.src.coru.cli._run_lane_repair
-    CC=7  in:7  out:24  total:31
-  packages.dsl2koru.src.dsl2koru.grammar.parse_line
-    CC=29  in:4  out:25  total:29
-  src.koru.integrations.imgl_client.execute_nl
-    CC=14  in:4  out:25  total:29
   packages.dsl2coru.src.dsl2coru.cli._main_subcommand
     CC=1  in:1  out:28  total:29
-  packages.uri2coru.src.uri2coru.decode.uri_to_dsl
-    CC=15  in:4  out:24  total:28
+  src.koru.integrations.imgl_client.execute_nl
+    CC=14  in:4  out:25  total:29
   packages.coru.src.coru.cli._maybe_reexec_into_project_python
     CC=13  in:1  out:27  total:28
+  packages.coru.src.coru.cli._trace
+    CC=3  in:23  out:5  total:28
+  packages.coru.src.coru.cli_calibration._lane_calibration
+    CC=14  in:2  out:25  total:27
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
+    CC=14  in:4  out:23  total:27
+  packages.coru.src.coru.cli._run_default_autonomous
+    CC=11  in:2  out:25  total:27
+  packages.uri2koru.src.uri2koru.decode.uri_to_dsl
+    CC=16  in:0  out:26  total:26
+  packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
+    CC=3  in:0  out:26  total:26
+  packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
+    CC=3  in:0  out:26  total:26
+  packages.nlp2coru.src.nlp2coru.cli._emit
+    CC=4  in:22  out:4  total:26
 
 MODULES:
   packages.cli2coru.src.cli2coru.shell  [1 funcs]
     run_shell  CC=9  out:12
   packages.cli2koru.src.cli2koru.shell  [1 funcs]
     run_shell  CC=9  out:12
-  packages.coru.src.coru.cli  [128 funcs]
+  packages.coru.src.coru.cli  [91 funcs]
     _active_project_root  CC=3  out:3
     _add_lane_identifiers  CC=1  out:2
     _agent_lane_from_auto_args  CC=7  out:7
@@ -23523,9 +23861,9 @@ MODULES:
     _alive_daemon_instance  CC=13  out:16
     _apply_strict_plugin_policy_defaults  CC=6  out:3
     _auto_default_instance  CC=4  out:3
-    _auto_readiness_gate  CC=24  out:40
     _autonomous_startup_chain  CC=2  out:8
     _binary_path  CC=8  out:13
+    _bind_lane_session  CC=5  out:3
   packages.coru.src.coru.cli_calibration  [22 funcs]
     _append_desktop_focus_lines  CC=2  out:2
     _calibration_desktop_focus_titles  CC=4  out:7
@@ -23556,12 +23894,17 @@ MODULES:
     dispatch_text  CC=2  out:2
     execute_dsl  CC=5  out:6
     execute_dsl_line  CC=1  out:1
-  packages.dsl2coru.src.dsl2coru.cli  [5 funcs]
-    _handle_subcommand  CC=23  out:33
+  packages.dsl2coru.src.dsl2coru.cli  [11 funcs]
+    _cmd_decode  CC=2  out:6
+    _cmd_encode  CC=4  out:6
+    _cmd_exec  CC=2  out:2
+    _cmd_replay  CC=6  out:8
+    _cmd_roundtrip  CC=2  out:2
+    _cmd_run  CC=4  out:7
+    _cmd_validate_schema  CC=3  out:3
     _main_legacy  CC=5  out:17
     _main_subcommand  CC=1  out:28
     _run_results  CC=6  out:6
-    main  CC=4  out:2
   packages.dsl2coru.src.dsl2coru.codec  [7 funcs]
     envelope_from_bytes  CC=1  out:2
     envelope_from_json  CC=2  out:5
@@ -23579,11 +23922,19 @@ MODULES:
   packages.dsl2coru.src.dsl2coru.events  [2 funcs]
     _append_jsonl  CC=3  out:26
     _append_pb  CC=3  out:26
-  packages.dsl2coru.src.dsl2coru.grammar  [2 funcs]
-    _split_command  CC=3  out:3
-    parse_line  CC=73  out:78
+  packages.dsl2coru.src.dsl2coru.grammar  [29 funcs]
+    _append_flag  CC=5  out:6
+    _flag  CC=7  out:8
+    _parse_auto  CC=6  out:4
+    _parse_calibration  CC=6  out:4
+    _parse_chat  CC=5  out:4
+    _parse_doctor  CC=5  out:4
+    _parse_ensure  CC=2  out:1
+    _parse_env  CC=3  out:1
+    _parse_lane  CC=4  out:3
+    _parse_repair_run  CC=4  out:3
   packages.dsl2coru.src.dsl2coru.handlers.argv  [1 funcs]
-    to_cli_args  CC=50  out:70
+    to_cli_args  CC=4  out:7
   packages.dsl2coru.src.dsl2coru.handlers.command  [1 funcs]
     run_command  CC=6  out:9
   packages.dsl2coru.src.dsl2coru.handlers.query  [1 funcs]
@@ -23593,15 +23944,27 @@ MODULES:
     default_runner  CC=5  out:6
   packages.dsl2coru.src.dsl2coru.handlers.ui  [1 funcs]
     run_ui_command  CC=15  out:32
-  packages.dsl2coru.src.dsl2coru.pb_codec  [9 funcs]
-    _set_body  CC=31  out:67
+  packages.dsl2coru.src.dsl2coru.parser  [20 funcs]
+    _flag  CC=7  out:8
+    _parse_auto  CC=6  out:4
+    _parse_calibration  CC=6  out:4
+    _parse_chat  CC=5  out:4
+    _parse_doctor  CC=5  out:4
+    _parse_ensure  CC=2  out:1
+    _parse_env  CC=3  out:1
+    _parse_lane  CC=4  out:3
+    _parse_repair_run  CC=4  out:3
+    _parse_status  CC=2  out:1
+  packages.dsl2coru.src.dsl2coru.pb_codec  [10 funcs]
+    _extract_auto  CC=4  out:1
+    _set_body  CC=3  out:7
     decode_protobuf  CC=1  out:3
     decode_protobuf_to_text  CC=1  out:2
     dict_to_envelope  CC=1  out:5
     encode_protobuf  CC=1  out:2
     encode_result_protobuf  CC=1  out:2
     encode_text_to_protobuf  CC=3  out:3
-    envelope_to_dict  CC=44  out:5
+    envelope_to_dict  CC=4  out:6
     result_to_pb  CC=3  out:3
   packages.dsl2coru.src.dsl2coru.schema_registry  [5 funcs]
     _load_schemas  CC=4  out:11
@@ -23609,12 +23972,27 @@ MODULES:
     normalize_verb  CC=1  out:6
     schema_for_verb  CC=2  out:4
     validate_schemas  CC=3  out:6
+  packages.dsl2coru.src.dsl2coru.serializer  [9 funcs]
+    _append_flag  CC=5  out:6
+    _serialize_auto  CC=2  out:5
+    _serialize_calibration  CC=3  out:4
+    _serialize_chat  CC=3  out:5
+    _serialize_doctor  CC=3  out:5
+    _serialize_lane  CC=1  out:3
+    _serialize_repair_run  CC=2  out:4
+    _serialize_text  CC=4  out:8
+    to_text  CC=4  out:12
   packages.dsl2koru.src.dsl2koru.bus  [3 funcs]
     dispatch  CC=11  out:25
     execute_dsl  CC=4  out:6
     execute_dsl_line  CC=1  out:1
-  packages.dsl2koru.src.dsl2koru.cli  [5 funcs]
-    _handle_subcommand  CC=17  out:32
+  packages.dsl2koru.src.dsl2koru.cli  [10 funcs]
+    _cmd_decode  CC=2  out:6
+    _cmd_encode  CC=3  out:6
+    _cmd_replay  CC=4  out:8
+    _cmd_roundtrip  CC=1  out:2
+    _cmd_run  CC=3  out:7
+    _cmd_validate_schema  CC=3  out:3
     _main_legacy  CC=4  out:17
     _main_subcommand  CC=1  out:24
     _run_results  CC=6  out:6
@@ -23635,9 +24013,15 @@ MODULES:
     validate_payload  CC=2  out:7
   packages.dsl2koru.src.dsl2koru.events  [1 funcs]
     append_command  CC=3  out:33
-  packages.dsl2koru.src.dsl2koru.grammar  [2 funcs]
-    parse_line  CC=29  out:25
-    to_text  CC=8  out:20
+  packages.dsl2koru.src.dsl2koru.grammar  [8 funcs]
+    _flag  CC=3  out:3
+    _parse_query_lane_status  CC=4  out:2
+    _parse_query_repair_history  CC=5  out:4
+    _parse_repair_run  CC=7  out:4
+    _parse_resolve  CC=5  out:5
+    _parse_validate_lane  CC=4  out:2
+    parse_line  CC=5  out:7
+    to_text  CC=2  out:6
   packages.dsl2koru.src.dsl2koru.handlers  [7 funcs]
     _query_lane_status  CC=1  out:11
     _query_repair_history  CC=2  out:14
@@ -23647,13 +24031,13 @@ MODULES:
     run_command  CC=2  out:4
     run_query  CC=5  out:7
   packages.dsl2koru.src.dsl2koru.pb_codec  [8 funcs]
-    _set_body  CC=9  out:31
+    _set_body  CC=3  out:7
     decode_protobuf  CC=1  out:3
     decode_protobuf_to_text  CC=1  out:2
     encode_protobuf  CC=1  out:6
     encode_result_protobuf  CC=1  out:2
     encode_text_to_protobuf  CC=3  out:3
-    envelope_to_dict  CC=21  out:4
+    envelope_to_dict  CC=4  out:6
     result_to_pb  CC=3  out:3
   packages.dsl2koru.src.dsl2koru.schema_registry  [4 funcs]
     _load_schemas  CC=4  out:11
@@ -23746,9 +24130,8 @@ MODULES:
   packages.nlpshim.src.nlpshim.conversation_test_api  [2 funcs]
     complete_missing_fields  CC=1  out:2
     parse_conversation_step  CC=10  out:16
-  packages.uri2coru.src.uri2coru.decode  [2 funcs]
-    _context  CC=4  out:3
-    uri_to_dsl  CC=15  out:24
+  packages.uri2coru.src.uri2coru.decode  [1 funcs]
+    uri_to_dsl  CC=7  out:18
   packages.uri2coru.src.uri2coru.nlp2uri  [2 funcs]
     best_uri  CC=2  out:1
     nlp2uri  CC=14  out:23
@@ -23782,9 +24165,6 @@ MODULES:
     projects_equivalent  CC=3  out:2
   src.koru.autonomy.ide_operator_guidance  [1 funcs]
     terminal_kind_label  CC=3  out:0
-  src.koru.ide_adapters.ide_reload  [2 funcs]
-    connect_via_command_palette  CC=1  out:1
-    try_reload_vscode_family_ide  CC=12  out:15
   src.koru.integrations.imgl_client  [2 funcs]
     execute_nl  CC=14  out:25
     imgl_available  CC=2  out:3
@@ -23804,12 +24184,20 @@ EDGES:
   packages.dsl2koru.src.dsl2koru.cli.main → packages.dsl2koru.src.dsl2koru.cli._main_legacy
   packages.dsl2koru.src.dsl2koru.cli.main → packages.dsl2koru.src.dsl2koru.cli._main_subcommand
   packages.dsl2koru.src.dsl2koru.cli._main_legacy → packages.dsl2koru.src.dsl2koru.cli._run_results
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand → packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand → project.print
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand → packages.dsl2koru.src.dsl2koru.codec.parse_text
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand → packages.dsl2koru.src.dsl2koru.cli._run_results
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand → packages.dsl2koru.src.dsl2koru.codec.envelope_to_json
-  packages.dsl2koru.src.dsl2koru.cli._handle_subcommand → packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes
+  packages.dsl2koru.src.dsl2koru.cli._cmd_validate_schema → packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas
+  packages.dsl2koru.src.dsl2koru.cli._cmd_validate_schema → project.print
+  packages.dsl2koru.src.dsl2koru.cli._cmd_encode → packages.dsl2koru.src.dsl2koru.codec.parse_text
+  packages.dsl2koru.src.dsl2koru.cli._cmd_encode → packages.dsl2koru.src.dsl2koru.codec.envelope_to_json
+  packages.dsl2koru.src.dsl2koru.cli._cmd_encode → packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes
+  packages.dsl2koru.src.dsl2koru.cli._cmd_decode → project.print
+  packages.dsl2koru.src.dsl2koru.cli._cmd_decode → packages.dsl2koru.src.dsl2koru.codec.envelope_from_json
+  packages.dsl2koru.src.dsl2koru.cli._cmd_decode → packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes
+  packages.dsl2koru.src.dsl2koru.cli._cmd_roundtrip → project.print
+  packages.dsl2koru.src.dsl2koru.cli._cmd_roundtrip → packages.dsl2koru.src.dsl2koru.codec.roundtrip_text
+  packages.dsl2koru.src.dsl2koru.cli._cmd_replay → project.print
+  packages.dsl2koru.src.dsl2koru.cli._cmd_run → packages.dsl2koru.src.dsl2koru.cli._run_results
+  packages.dsl2koru.src.dsl2koru.cli._cmd_run → packages.dsl2koru.src.dsl2koru.bus.dispatch
+  packages.dsl2koru.src.dsl2koru.cli._cmd_run → packages.dsl2koru.src.dsl2koru.bus.execute_dsl
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command → packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf
   packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf → packages.dsl2koru.src.dsl2koru.pb_codec._set_body
   packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf → packages.dsl2koru.src.dsl2koru.pb_codec.envelope_to_dict
@@ -23829,22 +24217,14 @@ EDGES:
   packages.dsl2koru.src.dsl2koru.codegen.main → packages.dsl2koru.src.dsl2koru.codegen.render_models_module
   packages.dsl2koru.src.dsl2koru.codegen.main → packages.dsl2koru.src.dsl2koru.codegen.build_model_registry
   packages.dsl2koru.src.dsl2koru.codegen.main → project.print
+  packages.dsl2koru.src.dsl2koru.grammar._parse_query_repair_history → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_query_lane_status → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_validate_lane → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_resolve → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_repair_run → packages.dsl2koru.src.dsl2koru.grammar._flag
   packages.dsl2koru.src.dsl2koru.codec.validate_payload → packages.dsl2koru.src.dsl2koru.schema_registry.schema_for_verb
   packages.dsl2koru.src.dsl2koru.codec.parse_text → packages.dsl2koru.src.dsl2koru.grammar.parse_line
   packages.dsl2koru.src.dsl2koru.codec.parse_text → packages.dsl2koru.src.dsl2koru.codec.validate_payload
-  packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes → packages.dsl2koru.src.dsl2koru.codec.validate_payload
-  packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes → packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf
-  packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes → packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf
-  packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes → packages.dsl2koru.src.dsl2koru.codec.validate_payload
-  packages.dsl2koru.src.dsl2koru.codec.envelope_to_json → packages.dsl2koru.src.dsl2koru.codec.validate_payload
-  packages.dsl2koru.src.dsl2koru.codec.envelope_from_json → packages.dsl2koru.src.dsl2koru.codec.validate_payload
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.codec.parse_text
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.grammar.to_text
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes
-  packages.dsl2koru.src.dsl2koru.handlers.run_query → packages.dsl2koru.src.dsl2koru.handlers._query_repair_history
-  packages.dsl2koru.src.dsl2koru.handlers.run_query → packages.dsl2koru.src.dsl2koru.handlers._query_lane_status
-  packages.dsl2koru.src.dsl2koru.handlers.run_query → packages.dsl2koru.src.dsl2koru.handlers._validate_lane
 ```
 
 ## Test Contracts

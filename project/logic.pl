@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.326', 'python').
+project_metadata('koru', '0.1.328', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('.nlp2dsl/environment.doql.less', 1054, 'less').
@@ -49,10 +49,10 @@ project_file('examples/runtime/koru-serve-health/run-docker.sh', 8, 'shell').
 project_file('lucy/main.go', 84, 'go').
 project_file('lucy/placeholder_test.go', 11, 'go').
 project_file('lucy/src/main.rs', 48, 'rust').
-project_file('packages/cli2coru/src/cli2coru/cli.py', 70, 'python').
+project_file('packages/cli2coru/src/cli2coru/cli.py', 83, 'python').
 project_file('packages/cli2coru/src/cli2coru/shell.py', 34, 'python').
 project_file('packages/cli2coru/tests/test_cli2coru_parity.py', 13, 'python').
-project_file('packages/cli2koru/src/cli2koru/cli.py', 70, 'python').
+project_file('packages/cli2koru/src/cli2koru/cli.py', 83, 'python').
 project_file('packages/cli2koru/src/cli2koru/shell.py', 34, 'python').
 project_file('packages/cli2koru/tests/test_parity.py', 17, 'python').
 project_file('packages/coru/src/coru/__init__.py', 4, 'python').
@@ -66,8 +66,8 @@ project_file('packages/coru/src/coru/repair/commands.py', 39, 'python').
 project_file('packages/coru/src/coru/repair/diagnostics.py', 505, 'python').
 project_file('packages/coru/src/coru/repair/domain.py', 65, 'python').
 project_file('packages/coru/src/coru/repair/events.py', 55, 'python').
-project_file('packages/coru/src/coru/repair/pipeline.py', 888, 'python').
-project_file('packages/coru/src/coru/repair/projector.py', 100, 'python').
+project_file('packages/coru/src/coru/repair/pipeline.py', 1040, 'python').
+project_file('packages/coru/src/coru/repair/projector.py', 116, 'python').
 project_file('packages/coru/src/coru/repair/query.py', 81, 'python').
 project_file('packages/coru/src/coru/repair/registry.py', 178, 'python').
 project_file('packages/coru/src/coru/repair/runtime.py', 24, 'python').
@@ -97,21 +97,23 @@ project_file('packages/coru/tests/test_supervisor.py', 209, 'python').
 project_file('packages/dsl2coru/scripts/generate-proto.sh', 7, 'shell').
 project_file('packages/dsl2coru/src/dsl2coru/__init__.py', 39, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/bus.py', 141, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/cli.py', 173, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/cli.py', 196, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/codec.py', 56, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/codegen.py', 122, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/engine.py', 7, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/events.py', 172, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/grammar.py', 288, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/grammar.py', 388, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/__init__.py', 8, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 127, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 161, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/command.py', 45, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/query.py', 45, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/runner.py', 51, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/handlers/ui.py', 67, 'python').
-project_file('packages/dsl2coru/src/dsl2coru/pb_codec.py', 242, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/parser.py', 239, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/pb_codec.py', 324, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/result.py', 37, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/schema_registry.py', 80, 'python').
+project_file('packages/dsl2coru/src/dsl2coru/serializer.py', 154, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/v1/__init__.py', 2, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/v1/command_pb2.py', 63, 'python').
 project_file('packages/dsl2coru/src/dsl2coru/v1/result_pb2.py', 40, 'python').
@@ -126,7 +128,7 @@ project_file('packages/dsl2coru/tests/test_dsl2coru_ui.py', 43, 'python').
 project_file('packages/dsl2koru/scripts/generate-proto.sh', 7, 'shell').
 project_file('packages/dsl2koru/src/dsl2koru/__init__.py', 35, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/bus.py', 85, 'python').
-project_file('packages/dsl2koru/src/dsl2koru/cli.py', 164, 'python').
+project_file('packages/dsl2koru/src/dsl2koru/cli.py', 184, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/codec.py', 56, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/codegen.py', 124, 'python').
 project_file('packages/dsl2koru/src/dsl2koru/engine.py', 7, 'python').
@@ -194,7 +196,7 @@ project_file('packages/rest2koru/src/rest2koru/cli.py', 25, 'python').
 project_file('packages/rest2koru/tests/test_rest2koru.py', 19, 'python').
 project_file('packages/uri2coru/src/uri2coru/__init__.py', 19, 'python').
 project_file('packages/uri2coru/src/uri2coru/cli.py', 63, 'python').
-project_file('packages/uri2coru/src/uri2coru/decode.py', 62, 'python').
+project_file('packages/uri2coru/src/uri2coru/decode.py', 107, 'python').
 project_file('packages/uri2coru/src/uri2coru/nlp2uri.py', 93, 'python').
 project_file('packages/uri2coru/src/uri2coru/run.py', 20, 'python').
 project_file('packages/uri2coru/src/uri2coru/uri.py', 54, 'python').
@@ -953,12 +955,12 @@ project_file('src/koru/cli/__init__.py', 98, 'python').
 project_file('src/koru/cli/__main__.py', 13, 'python').
 project_file('src/koru/cli/commands.py', 1, 'python').
 project_file('src/koru/cli/parsers.py', 1, 'python').
-project_file('src/koru/cli.py', 344, 'python').
+project_file('src/koru/cli.py', 366, 'python').
 project_file('src/koru/cli_agent.py', 86, 'python').
 project_file('src/koru/cli_agent_backends.py', 62, 'python').
 project_file('src/koru/cli_auto.py', 106, 'python').
 project_file('src/koru/cli_bootstrap.py', 66, 'python').
-project_file('src/koru/cli_cleaned.py', 390, 'python').
+project_file('src/koru/cli_cleaned.py', 391, 'python').
 project_file('src/koru/cli_context.py', 32, 'python').
 project_file('src/koru/cli_doctor.py', 310, 'python').
 project_file('src/koru/cli_events.py', 121, 'python').
@@ -1540,10 +1542,18 @@ python_function('docker/capture/smoke.py', '_run_headless', 0, 2, 4).
 python_function('docker/capture/smoke.py', '_run_x11', 0, 3, 6).
 python_function('docker/capture/smoke.py', 'main', 1, 4, 9).
 python_function('examples/remote_orchestration_demo.py', 'run_multi_node_orchestration', 0, 9, 8).
-python_function('packages/cli2coru/src/cli2coru/cli.py', 'main', 1, 15, 15).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_print_result', 2, 4, 4).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_handle_shell', 1, 1, 1).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_handle_run', 1, 3, 4).
+python_function('packages/cli2coru/src/cli2coru/cli.py', '_handle_exec', 1, 2, 2).
+python_function('packages/cli2coru/src/cli2coru/cli.py', 'main', 1, 4, 8).
 python_function('packages/cli2coru/src/cli2coru/shell.py', 'run_shell', 0, 9, 8).
 python_function('packages/cli2coru/tests/test_cli2coru_parity.py', 'test_parity_cli_uri_rest_payloads', 1, 3, 2).
-python_function('packages/cli2koru/src/cli2koru/cli.py', 'main', 1, 15, 15).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_print_result', 2, 4, 4).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_handle_shell', 1, 1, 1).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_handle_run', 1, 3, 4).
+python_function('packages/cli2koru/src/cli2koru/cli.py', '_handle_exec', 1, 2, 2).
+python_function('packages/cli2koru/src/cli2koru/cli.py', 'main', 1, 4, 8).
 python_function('packages/cli2koru/src/cli2koru/shell.py', 'run_shell', 0, 9, 8).
 python_function('packages/cli2koru/tests/test_parity.py', 'test_parity_cli_uri_rest_payloads', 1, 3, 2).
 python_function('packages/coru/src/coru/cli.py', '_koru_subprocess_timeout', 1, 6, 3).
@@ -1838,7 +1848,16 @@ python_function('packages/coru/src/coru/repair/pipeline.py', 'plugin_build_align
 python_function('packages/coru/src/coru/repair/pipeline.py', '_expected_build_from_problems', 1, 9, 4).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_poll_plugin_ready', 0, 6, 7).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_run_reload_and_connect', 0, 8, 6).
-python_function('packages/coru/src/coru/repair/pipeline.py', '_execute_step', 1, 19, 8).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_ensure_daemon', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_manage_fix', 1, 2, 2).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_manual_vsix_unpack', 1, 2, 2).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_plugin_upgrade_and_reload', 1, 5, 3).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_strict_handshake_cycle', 1, 4, 4).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_reload_and_connect', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_cross_ide_guidance', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_submit_unverified_guidance', 1, 2, 2).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_exec_default', 1, 1, 1).
+python_function('packages/coru/src/coru/repair/pipeline.py', '_execute_step', 1, 1, 2).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_drop_codes_after_action', 2, 6, 1).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_apply_round_resolution', 2, 2, 1).
 python_function('packages/coru/src/coru/repair/pipeline.py', '_emit_session_started', 1, 1, 1).
@@ -1858,7 +1877,10 @@ python_function('packages/coru/src/coru/repair/pipeline.py', '_run_repair_round'
 python_function('packages/coru/src/coru/repair/pipeline.py', 'run_repair_pipeline', 0, 3, 13).
 python_function('packages/coru/src/coru/repair/pipeline.py', 'format_repair_lines', 1, 8, 2).
 python_function('packages/coru/src/coru/repair/projector.py', 'project_repair_cases', 1, 9, 7).
-python_function('packages/coru/src/coru/repair/projector.py', '_project_one_session', 2, 19, 12).
+python_function('packages/coru/src/coru/repair/projector.py', '_extract_problem_codes', 1, 8, 5).
+python_function('packages/coru/src/coru/repair/projector.py', '_extract_action_ids', 1, 5, 4).
+python_function('packages/coru/src/coru/repair/projector.py', '_extract_resolved', 1, 3, 2).
+python_function('packages/coru/src/coru/repair/projector.py', '_project_one_session', 2, 7, 11).
 python_function('packages/coru/src/coru/repair/projector.py', 'format_case_llm', 1, 5, 2).
 python_function('packages/coru/src/coru/repair/projector.py', 'format_history_llm', 1, 3, 2).
 python_function('packages/coru/src/coru/repair/query.py', 'problems_to_payload', 1, 2, 1).
@@ -2117,7 +2139,14 @@ python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_run_results', 1, 6, 4
 python_function('packages/dsl2coru/src/dsl2coru/cli.py', 'main', 1, 4, 2).
 python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_main_subcommand', 1, 1, 6).
 python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_main_legacy', 1, 5, 11).
-python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_handle_subcommand', 1, 23, 22).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_validate_schema', 1, 3, 2).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_encode', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_decode', 1, 2, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_roundtrip', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_replay', 1, 6, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_run', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_cmd_exec', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/cli.py', '_handle_subcommand', 1, 2, 2).
 python_function('packages/dsl2coru/src/dsl2coru/codec.py', 'validate_payload', 1, 2, 6).
 python_function('packages/dsl2coru/src/dsl2coru/codec.py', 'parse_text', 1, 2, 2).
 python_function('packages/dsl2coru/src/dsl2coru/codec.py', 'envelope_to_bytes', 1, 1, 2).
@@ -2132,18 +2161,116 @@ python_function('packages/dsl2coru/src/dsl2coru/codegen.py', 'render_models_modu
 python_function('packages/dsl2coru/src/dsl2coru/codegen.py', 'main', 1, 9, 12).
 python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_split_command', 1, 3, 3).
 python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_truthy', 1, 2, 2).
-python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'parse_line', 1, 73, 13).
-python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'to_text', 1, 41, 10).
-python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 'to_cli_args', 1, 50, 9).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_flag', 2, 7, 5).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_ui_args', 2, 9, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_status', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_repair_history', 3, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_env', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_query', 3, 4, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_auto', 3, 6, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_lane', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ensure', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_doctor', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_calibration', 3, 6, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_chat', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_text', 3, 8, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_sync', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_repair_run', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_common', 2, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_type', 3, 6, 6).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_key', 3, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_click', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_parse_ui_nl', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'parse_line', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_append_flag', 3, 5, 5).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_status', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_env', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_query', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_auto', 2, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_lane', 2, 1, 1).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ensure', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_doctor', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_calibration', 2, 3, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_chat', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_text', 2, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_sync', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_repair_run', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_repair_history', 2, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_type', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_key', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_click', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', '_serialize_ui_nl', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/grammar.py', 'to_text', 1, 4, 9).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_text_args', 1, 6, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_chat_args', 1, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_auto_args', 1, 5, 5).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_ensure_args', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_lane_args', 1, 4, 3).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_status_args', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_doctor_args', 1, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_calibration_args', 1, 5, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_repair_run_args', 1, 4, 3).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_repair_history_args', 1, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_sync_args', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_env_args', 1, 4, 2).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', '_build_query_args', 1, 6, 4).
+python_function('packages/dsl2coru/src/dsl2coru/handlers/argv.py', 'to_cli_args', 1, 4, 4).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/command.py', 'run_command', 1, 6, 6).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/query.py', 'run_query', 1, 6, 6).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/runner.py', '_capture_output', 0, 1, 1).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/runner.py', '_run_subprocess', 1, 4, 1).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/runner.py', 'default_runner', 1, 5, 5).
 python_function('packages/dsl2coru/src/dsl2coru/handlers/ui.py', 'run_ui_command', 1, 15, 9).
-python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_body', 2, 31, 8).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_split_command', 1, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_truthy', 1, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_flag', 2, 7, 5).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_ui_args', 2, 9, 4).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_status', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_repair_history', 3, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_env', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_query', 3, 4, 2).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_auto', 3, 6, 3).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_lane', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ensure', 3, 2, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_doctor', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_calibration', 3, 6, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_chat', 3, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_text', 3, 8, 3).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_sync', 3, 3, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_repair_run', 3, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_common', 2, 5, 1).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_type', 3, 6, 6).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_key', 3, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_click', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', '_parse_ui_nl', 3, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/parser.py', 'parse_line', 1, 4, 6).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_status', 2, 1, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_env', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_query', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_auto', 2, 6, 5).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_lane', 2, 4, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_ensure', 2, 1, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_doctor', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_calibration', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_chat', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_text', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_sync', 2, 1, 2).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_repair_run', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_set_body', 2, 3, 5).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'dict_to_envelope', 1, 1, 5).
-python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'envelope_to_dict', 1, 44, 5).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_status', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_env', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_query', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_auto', 2, 4, 1).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_lane', 2, 5, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_ensure', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_doctor', 2, 4, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_calibration', 2, 5, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_chat', 2, 4, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_text', 2, 5, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_sync', 2, 2, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', '_extract_repair_run', 2, 4, 0).
+python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'envelope_to_dict', 1, 4, 5).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'encode_protobuf', 1, 1, 2).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'decode_protobuf', 1, 1, 3).
 python_function('packages/dsl2coru/src/dsl2coru/pb_codec.py', 'encode_text_to_protobuf', 1, 3, 3).
@@ -2156,6 +2283,25 @@ python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', '_load_sche
 python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', 'schema_for_verb', 1, 2, 4).
 python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', 'all_verbs', 0, 1, 3).
 python_function('packages/dsl2coru/src/dsl2coru/schema_registry.py', 'validate_schemas', 0, 3, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_append_flag', 3, 5, 5).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_status', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_env', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_query', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_auto', 2, 2, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_lane', 2, 1, 1).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ensure', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_doctor', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_calibration', 2, 3, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_chat', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_text', 2, 4, 4).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_sync', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_repair_run', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_repair_history', 2, 1, 0).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_type', 2, 3, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_key', 2, 2, 3).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_click', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', '_serialize_ui_nl', 2, 2, 2).
+python_function('packages/dsl2coru/src/dsl2coru/serializer.py', 'to_text', 1, 4, 9).
 python_function('packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py', '_mock_runner', 1, 1, 0).
 python_function('packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py', 'test_status_across_adapters', 1, 8, 8).
 python_function('packages/dsl2coru/tests/test_dsl2coru_bus.py', '_mock_runner', 1, 1, 1).
@@ -2186,7 +2332,13 @@ python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_run_results', 1, 6, 4
 python_function('packages/dsl2koru/src/dsl2koru/cli.py', 'main', 1, 4, 2).
 python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_main_subcommand', 1, 1, 6).
 python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_main_legacy', 1, 4, 11).
-python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_handle_subcommand', 1, 17, 23).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_validate_schema', 1, 3, 2).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_encode', 1, 3, 6).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_decode', 1, 2, 6).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_roundtrip', 1, 1, 2).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_replay', 1, 4, 8).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_cmd_run', 1, 3, 6).
+python_function('packages/dsl2koru/src/dsl2koru/cli.py', '_handle_subcommand', 1, 2, 2).
 python_function('packages/dsl2koru/src/dsl2koru/codec.py', 'validate_payload', 1, 2, 6).
 python_function('packages/dsl2koru/src/dsl2koru/codec.py', 'parse_text', 1, 2, 2).
 python_function('packages/dsl2koru/src/dsl2koru/codec.py', 'envelope_to_bytes', 1, 1, 2).
@@ -2354,7 +2506,15 @@ python_function('packages/rest2koru/src/rest2koru/cli.py', 'main', 1, 2, 5).
 python_function('packages/rest2koru/tests/test_rest2koru.py', 'test_health_and_dsl', 0, 5, 5).
 python_function('packages/uri2coru/src/uri2coru/cli.py', 'main', 1, 11, 12).
 python_function('packages/uri2coru/src/uri2coru/decode.py', '_context', 1, 4, 2).
-python_function('packages/uri2coru/src/uri2coru/decode.py', 'uri_to_dsl', 1, 15, 9).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_repair_history', 2, 2, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_lane_status', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_validate_lane', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_repair_run', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_resolve', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_cmd_status', 2, 1, 0).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_block_repair_history', 2, 2, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', '_block_lane_status', 2, 1, 1).
+python_function('packages/uri2coru/src/uri2coru/decode.py', 'uri_to_dsl', 1, 7, 11).
 python_function('packages/uri2coru/src/uri2coru/nlp2uri.py', 'nlp2uri', 1, 14, 11).
 python_function('packages/uri2coru/src/uri2coru/nlp2uri.py', 'best_uri', 1, 2, 1).
 python_function('packages/uri2coru/src/uri2coru/run.py', 'run_uri', 1, 2, 2).
@@ -3843,7 +4003,14 @@ python_function('src/koru/cli.py', '_maybe_print_project_venv_hint', 1, 5, 9).
 python_function('src/koru/cli.py', '_should_suggest_wizard', 2, 6, 5).
 python_function('src/koru/cli.py', '_lazy_module_main', 3, 1, 2).
 python_function('src/koru/cli.py', '_maybe_reexec_for_project_venv', 1, 7, 9).
-python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 8, 8).
+python_function('src/koru/cli.py', '_run_doctor', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_init_agent_lane', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_init', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_context', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_bootstrap', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_watch', 2, 1, 2).
+python_function('src/koru/cli.py', '_run_queue', 2, 1, 2).
+python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 3, 1).
 python_function('src/koru/cli.py', '_suggest_subcommand', 1, 7, 3).
 python_function('src/koru/cli.py', '_dispatch_auto_alias', 1, 7, 2).
 python_function('src/koru/cli.py', '_print_unknown_subcommand_hint', 1, 2, 4).
@@ -3882,7 +4049,7 @@ python_function('src/koru/cli_cleaned.py', '_context_main', 1, 2, 5).
 python_function('src/koru/cli_cleaned.py', '_bootstrap_main', 1, 5, 7).
 python_function('src/koru/cli_cleaned.py', '_command_loop_main', 1, 7, 7).
 python_function('src/koru/cli_cleaned.py', '_maybe_reexec_for_project_venv', 1, 8, 7).
-python_function('src/koru/cli_cleaned.py', '_dispatch_flag_action', 2, 8, 7).
+python_function('src/koru/cli_cleaned.py', '_dispatch_flag_action', 2, 3, 1).
 python_function('src/koru/cli_cleaned.py', 'main', 0, 11, 9).
 python_function('src/koru/cli_context.py', '_context_main', 1, 2, 5).
 python_function('src/koru/cli_doctor.py', '_doctor_selected_ide', 0, 5, 4).
