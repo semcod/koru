@@ -204,3 +204,58 @@ def test_run_direct_drive_emits_desktop_gui_control_command(
     assert command["replayable"] is True
     assert command["args"]["text"] == "hello replay"
     assert command["args"]["profile_id"] == "vscode"
+
+
+def test_run_direct_drive_prefers_calibrated_jetbrains_profile(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import cli_command
+    import gillm.injection.os_injector as oi
+
+    class _DummyInjector:
+        session = "wayland"
+
+        def select_backend(self) -> str:
+            return "stub"
+
+    profile_calls: list[str] = []
+    vdisplay_calls: list[str] = []
+
+    monkeypatch.setattr(cli_command, "Injector", _DummyInjector)
+    monkeypatch.setattr(
+        cli_command,
+        "resolve_drive_target",
+        lambda _ide, _profile, project=None: ("jetbrains", "jetbrains", "explicit"),
+    )
+    monkeypatch.setattr(
+        oi,
+        "try_load_profile",
+        lambda tool_id, project=None: oi.OsInjectorProfile(tool_id=tool_id, chat_x=1, chat_y=2),
+    )
+    monkeypatch.setattr(
+        oi,
+        "try_drive_with_profile",
+        lambda **kwargs: profile_calls.append(kwargs["tool_id"])
+        or {"ok": True, "backend": "os_injector", "submitted": kwargs["submit"]},
+    )
+    monkeypatch.setattr(
+        cli_direct_drive,
+        "_try_vdisplay_ide_prompt_direct",
+        lambda *args, **kwargs: vdisplay_calls.append("vdisplay") or (False, 0, None),
+    )
+    args = _ns(
+        ide="jetbrains",
+        os_profile="",
+        project=tmp_path,
+        submit=False,
+        dry_run=False,
+        delay_seconds=0.0,
+    )
+
+    rc, payload = cli_direct_drive._run_direct_drive(args, "calibrated", emit_payload=False)
+
+    assert rc == 0
+    assert payload == {"ok": True, "backend": "os_injector", "submitted": False}
+    assert profile_calls == ["jetbrains"]
+    assert vdisplay_calls == []

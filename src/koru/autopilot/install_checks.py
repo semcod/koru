@@ -68,7 +68,15 @@ def check_koru_path_issues(
       ),
     )
   elif repo_koru is not None and path_koru != repo_koru:
-    if editable_source_root is not None and editable_source_root == source_root.resolve():
+    try:
+      editable_resolved = editable_source_root.resolve() if editable_source_root is not None else None
+    except Exception:
+      editable_resolved = editable_source_root
+    try:
+      source_resolved = source_root.resolve()
+    except Exception:
+      source_resolved = source_root
+    if editable_resolved is not None and editable_resolved == source_resolved:
       return issues
     issues.append(
       ManagerIssue(

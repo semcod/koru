@@ -18,32 +18,95 @@ _BODY_MAP = {
 }
 
 
+def _set_query_repair_history(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.project = str(cmd.get("project", "."))
+    msg.limit = int(cmd.get("limit", 20))
+    if cmd.get("code"):
+        msg.code = str(cmd["code"])
+
+
+def _set_query_lane_status(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.ide = str(cmd.get("ide", "auto"))
+    msg.instance = str(cmd.get("instance", "default"))
+
+
+def _set_validate_lane(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.ide = str(cmd.get("ide", "auto"))
+    msg.instance = str(cmd.get("instance", "default"))
+
+
+def _set_resolve(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.prompt = str(cmd.get("prompt", ""))
+    if cmd.get("project"):
+        msg.project = str(cmd["project"])
+
+
+def _set_repair_run(msg: Any, cmd: dict[str, Any]) -> None:
+    msg.ide = str(cmd.get("ide", "auto"))
+    msg.instance = str(cmd.get("instance", "default"))
+    msg.project = str(cmd.get("project", "."))
+    msg.trigger = str(cmd.get("trigger", "manual"))
+
+
+_BODY_SETTERS: dict[str, Any] = {
+    "QUERY_REPAIR_HISTORY": _set_query_repair_history,
+    "QUERY_LANE_STATUS": _set_query_lane_status,
+    "VALIDATE_LANE": _set_validate_lane,
+    "RESOLVE": _set_resolve,
+    "REPAIR_RUN": _set_repair_run,
+}
+
+
 def _set_body(envelope: command_pb2.DslEnvelope, cmd: dict[str, Any]) -> None:
     verb = str(cmd.get("verb", "")).upper()
     field = _BODY_MAP.get(verb)
     if not field:
         return
-    msg = getattr(envelope, field)
-    if verb == "QUERY_REPAIR_HISTORY":
-        msg.project = str(cmd.get("project", "."))
-        msg.limit = int(cmd.get("limit", 20))
-        if cmd.get("code"):
-            msg.code = str(cmd["code"])
-    elif verb == "QUERY_LANE_STATUS":
-        msg.ide = str(cmd.get("ide", "auto"))
-        msg.instance = str(cmd.get("instance", "default"))
-    elif verb == "VALIDATE_LANE":
-        msg.ide = str(cmd.get("ide", "auto"))
-        msg.instance = str(cmd.get("instance", "default"))
-    elif verb == "RESOLVE":
-        msg.prompt = str(cmd.get("prompt", ""))
-        if cmd.get("project"):
-            msg.project = str(cmd["project"])
-    elif verb == "REPAIR_RUN":
-        msg.ide = str(cmd.get("ide", "auto"))
-        msg.instance = str(cmd.get("instance", "default"))
-        msg.project = str(cmd.get("project", "."))
-        msg.trigger = str(cmd.get("trigger", "manual"))
+    setter = _BODY_SETTERS.get(verb)
+    if setter:
+        setter(getattr(envelope, field), cmd)
+
+
+def _extract_query_repair_history(msg: Any, cmd: dict[str, Any]) -> None:
+    cmd["project"] = msg.project or "."
+    if msg.limit:
+        cmd["limit"] = msg.limit
+    if msg.code:
+        cmd["code"] = msg.code
+
+
+def _extract_query_lane_status(msg: Any, cmd: dict[str, Any]) -> None:
+    cmd["ide"] = msg.ide or "auto"
+    cmd["instance"] = msg.instance or "default"
+
+
+def _extract_validate_lane(msg: Any, cmd: dict[str, Any]) -> None:
+    cmd["ide"] = msg.ide or "auto"
+    cmd["instance"] = msg.instance or "default"
+
+
+def _extract_resolve(msg: Any, cmd: dict[str, Any]) -> None:
+    if msg.prompt:
+        cmd["prompt"] = msg.prompt
+    if msg.project:
+        cmd["project"] = msg.project
+
+
+def _extract_repair_run(msg: Any, cmd: dict[str, Any]) -> None:
+    cmd["ide"] = msg.ide or "auto"
+    cmd["instance"] = msg.instance or "default"
+    cmd["project"] = msg.project or "."
+    if msg.trigger:
+        cmd["trigger"] = msg.trigger
+
+
+_BODY_EXTRACTORS: dict[str, Any] = {
+    "QUERY_REPAIR_HISTORY": _extract_query_repair_history,
+    "QUERY_LANE_STATUS": _extract_query_lane_status,
+    "VALIDATE_LANE": _extract_validate_lane,
+    "RESOLVE": _extract_resolve,
+    "REPAIR_RUN": _extract_repair_run,
+}
 
 
 def envelope_to_dict(envelope: command_pb2.DslEnvelope) -> dict[str, Any]:
@@ -52,30 +115,9 @@ def envelope_to_dict(envelope: command_pb2.DslEnvelope) -> dict[str, Any]:
     field = _BODY_MAP.get(verb)
     if not field or envelope.WhichOneof("body") != field:
         return cmd
-    msg = getattr(envelope, field)
-    if verb == "QUERY_REPAIR_HISTORY":
-        cmd["project"] = msg.project or "."
-        if msg.limit:
-            cmd["limit"] = msg.limit
-        if msg.code:
-            cmd["code"] = msg.code
-    elif verb == "QUERY_LANE_STATUS":
-        cmd["ide"] = msg.ide or "auto"
-        cmd["instance"] = msg.instance or "default"
-    elif verb == "VALIDATE_LANE":
-        cmd["ide"] = msg.ide or "auto"
-        cmd["instance"] = msg.instance or "default"
-    elif verb == "RESOLVE":
-        if msg.prompt:
-            cmd["prompt"] = msg.prompt
-        if msg.project:
-            cmd["project"] = msg.project
-    elif verb == "REPAIR_RUN":
-        cmd["ide"] = msg.ide or "auto"
-        cmd["instance"] = msg.instance or "default"
-        cmd["project"] = msg.project or "."
-        if msg.trigger:
-            cmd["trigger"] = msg.trigger
+    extractor = _BODY_EXTRACTORS.get(verb)
+    if extractor:
+        extractor(getattr(envelope, field), cmd)
     return cmd
 
 

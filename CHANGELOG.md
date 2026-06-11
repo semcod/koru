@@ -73,6 +73,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.327] - 2026-06-11
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_cli_direct_drive.py
+- Update tests/test_deps_autorepair.py
+- Update tests/test_vdisplay_control_fallback.py
+
+### Other
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update TODO.lock
+- Update app.doql.less
+- Update packages/dsl2coru/src/dsl2coru/grammar.py
+- Update packages/dsl2coru/src/dsl2coru/handlers/argv.py
+- Update packages/dsl2koru/src/dsl2koru/grammar.py
+- Update packages/dsl2koru/src/dsl2koru/pb_codec.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- ... and 17 more files
+
 ## [0.1.326] - 2026-06-10
 
 ### Docs

@@ -28,6 +28,81 @@ def _auto_direct_fallback_enabled() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
+def _drive_verify_enabled(args: argparse.Namespace) -> bool:
+    if bool(getattr(args, "verify", False)):
+        return True
+    raw = os.environ.get("KORU_DRIVE_VERIFY", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _record_direct_drive_audit(
+    payload: dict[str, Any] | None,
+    *,
+    profile_id: str,
+    text: str,
+) -> None:
+    if not payload:
+        return
+    try:
+        from koru.integrations.vdisplay_client import record_koru_drive_step
+
+        record_koru_drive_step(payload, profile_id=profile_id, text=text)
+    except Exception:
+        pass
+
+
+def _apply_drive_verification(
+    args: argparse.Namespace,
+    payload: dict[str, Any] | None,
+    *,
+    text: str,
+    profile_id: str,
+) -> tuple[dict[str, Any] | None, int]:
+    if payload is None or not payload.get("ok") or not _drive_verify_enabled(args):
+        return payload, 0
+    from koru.integrations.vdisplay_client import verify_chat_text_visible
+
+    chat_x = payload.get("chat_x")
+    chat_y = payload.get("chat_y")
+    map_path = payload.get("map_path")
+    typed = payload.get("typed") if isinstance(payload.get("typed"), dict) else {}
+    if chat_x is None and isinstance(typed, dict):
+        target = typed.get("target") if isinstance(typed.get("target"), dict) else {}
+        state = target.get("state") if isinstance(target.get("state"), dict) else {}
+        click = state.get("click_point") if isinstance(state.get("click_point"), dict) else {}
+        if click.get("x") is not None and map_path:
+            try:
+                from vdisplay.control.gui_map import load_gui_map
+                from vdisplay.input.coords import global_pointer_coords
+
+                pack = load_gui_map(str(map_path))
+                element = pack.elements.get(str(typed.get("map_target") or "ai-chat-input"))
+                meta = (element.capture_meta if element else None) or pack.capture_meta or {}
+                chat_x, chat_y, _ = global_pointer_coords(int(click["x"]), int(click["y"]), meta)
+            except Exception:
+                pass
+
+    verification = verify_chat_text_visible(
+        text,
+        ide=profile_id,
+        chat_x=int(chat_x) if chat_x is not None else None,
+        chat_y=int(chat_y) if chat_y is not None else None,
+        map_path=str(map_path) if map_path else None,
+    )
+    payload["verification"] = verification
+    payload["verified"] = verification.get("verified")
+    payload["verify_mode"] = verification.get("mode")
+    if verification.get("screenshot_path"):
+        payload.setdefault("artifacts", {})["verify_screenshot"] = verification["screenshot_path"]
+    if verification.get("verified") is False:
+        payload["ok"] = False
+        payload["message"] = str(
+            verification.get("error") or verification.get("reason") or "chat text verify failed"
+        )
+        return payload, 1
+    return payload, 0
+
+
 def _should_fallback_to_direct(args: argparse.Namespace, reply: dict[str, Any]) -> bool:
     if args.require_plugin:
         return False
@@ -125,6 +200,67 @@ def _emit_desktop_drive_command(
     )
 
 
+def _prefer_calibrated_os_injector(profile_id: str, project: Any) -> bool:
+    """Use mouse calibration when available for JetBrains/PyCharm on Wayland."""
+    if profile_id not in {"jetbrains", "pycharm"}:
+        return False
+    from pathlib import Path
+
+    import gillm.injection.os_injector as oi
+
+    project_path = Path(project) if project else None
+    return oi.try_load_profile(profile_id, project=project_path) is not None
+
+
+def _try_vdisplay_ide_prompt_direct(
+    args: argparse.Namespace,
+    text: str,
+    profile_id: str,
+    *,
+    corr: str,
+    emit_payload: bool,
+) -> tuple[bool, int, dict[str, Any] | None]:
+    if profile_id not in {"jetbrains", "pycharm"}:
+        return False, 0, None
+    from koru.integrations.vdisplay_client import send_chat_via_ide_prompt, vdisplay_available
+
+    if not vdisplay_available():
+        return False, 0, None
+    if float(args.delay_seconds) > 0:
+        _print_drive_delay_message(float(args.delay_seconds))
+    _emit_desktop_drive_command(
+        args,
+        corr=corr,
+        operation="vdisplay.ide_prompt",
+        backend="vdisplay+ide-prompt",
+        target=profile_id,
+        text=text,
+        replayable=True,
+    )
+    result = send_chat_via_ide_prompt(
+        text,
+        ide=profile_id,
+        submit=args.submit,
+        dry_run=args.dry_run,
+        verify=_drive_verify_enabled(args),
+    )
+    if result is None or not result.get("ok"):
+        return False, 0, result
+    verify_rc = 0
+    if _drive_verify_enabled(args):
+        typed_block = result.get("typed") if isinstance(result.get("typed"), dict) else {}
+        if typed_block.get("verified") is None:
+            result, verify_rc = _apply_drive_verification(args, result, text=text, profile_id=profile_id)
+        else:
+            result["verified"] = typed_block.get("verified")
+            if not typed_block.get("verified"):
+                result["ok"] = False
+                verify_rc = 1
+    _emit_json_payload(result, enabled=emit_payload)
+    _record_direct_drive_audit(result, profile_id=profile_id, text=text)
+    return True, verify_rc, result
+
+
 def _try_profile_direct_drive(
     args: argparse.Namespace,
     text: str,
@@ -156,8 +292,12 @@ def _try_profile_direct_drive(
     )
     if os_res is None:
         return False, 0, None
+    verify_rc = 0
+    if _drive_verify_enabled(args):
+        os_res, verify_rc = _apply_drive_verification(args, os_res, text=text, profile_id=profile_id)
     _emit_json_payload(os_res, enabled=emit_payload)
-    return True, 0, os_res
+    _record_direct_drive_audit(os_res, profile_id=profile_id, text=text)
+    return True, verify_rc if os_res.get("ok") else 1, os_res
 
 
 def _selected_keyboard_backend(injector: Injector) -> str:
@@ -234,15 +374,29 @@ def _run_direct_drive(
     _emit_direct_drive_auto_selection(args, profile_id, selection)
 
     try:
-        handled, rc, payload = _try_profile_direct_drive(
-            args,
-            text,
-            profile_id,
-            corr=corr,
-            emit_payload=emit_payload,
+        profile_first = _prefer_calibrated_os_injector(profile_id, args.project)
+        drive_attempts: tuple[str, ...] = (
+            ("profile", "vdisplay") if profile_first else ("vdisplay", "profile")
         )
-        if handled:
-            return rc, payload
+        for attempt in drive_attempts:
+            if attempt == "vdisplay":
+                handled, rc, payload = _try_vdisplay_ide_prompt_direct(
+                    args,
+                    text,
+                    profile_id,
+                    corr=corr,
+                    emit_payload=emit_payload,
+                )
+            else:
+                handled, rc, payload = _try_profile_direct_drive(
+                    args,
+                    text,
+                    profile_id,
+                    corr=corr,
+                    emit_payload=emit_payload,
+                )
+            if handled:
+                return rc, payload
         fallback_rc, _unused_payload = _handle_os_injector_fallback(args, profile_id, injector)
         if fallback_rc is not None:
             return fallback_rc, None

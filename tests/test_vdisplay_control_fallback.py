@@ -30,6 +30,35 @@ def test_send_chat_dry_run() -> None:
     assert reply["app"] == "Windsurf"
 
 
+def test_send_chat_prefers_ide_prompt_for_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(vdisplay_client, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(
+        "gillm.injection.os_injector.try_drive_with_profile",
+        lambda **kwargs: {
+            "ok": True,
+            "backend": "os_injector",
+            "chat_x": 2323,
+            "chat_y": 2409,
+            "submitted": kwargs["submit"],
+        },
+    )
+    monkeypatch.setattr(vdisplay_client, "_resolve_ide_prompt_map", lambda app_id: "/maps/pycharm-chat.json")
+    ide_prompt = MagicMock(
+        return_value={
+            "ok": True,
+            "backend": "vdisplay+ide-prompt",
+            "message": "typed via vdisplay ide prompt",
+            "map_path": "/maps/pycharm-chat.json",
+        }
+    )
+    monkeypatch.setattr(vdisplay_client, "send_chat_via_ide_prompt", ide_prompt)
+
+    reply = vdisplay_client.send_chat("hello jetbrains", ide="jetbrains", submit=False, dry_run=False)
+    assert reply["ok"] is True
+    assert reply["backend"] == "os_injector"
+    ide_prompt.assert_not_called()
+
+
 def test_send_chat_uses_semantic_set_value(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(vdisplay_client, "vdisplay_available", lambda: True)
     monkeypatch.setattr(vdisplay_client, "_VDISPLAY_DIRECT", True)

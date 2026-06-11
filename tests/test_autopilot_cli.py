@@ -16,6 +16,13 @@ from koru.autopilot.cli_parser import build_autopilot_parser
 from koru.autopilot.cli_trace import action_trace
 
 
+def _json_payload_from_stdout(text: str) -> dict:
+    start = text.find("{")
+    if start < 0:
+        raise ValueError("no JSON object in stdout")
+    return json.loads(text[start:])
+
+
 @pytest.fixture(autouse=True)
 def _clear_host_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for key in (
@@ -459,7 +466,7 @@ def test_calibrate_auto_ide_resolves_from_running_processes(
     )
     assert rc == 0
     out = capsys.readouterr().out
-    payload = json.loads("\n".join(out.splitlines()[1:]))
+    payload = _json_payload_from_stdout(out)
     assert payload["profile"] == "cursor"
     assert payload["auto_detected"] is True
 
@@ -486,8 +493,7 @@ def test_calibrate_writes_profile_from_mouse(
     )
     assert rc == 0
     out = capsys.readouterr().out
-    # JSON payload is printed after one human instruction line.
-    payload = json.loads("\n".join(out.splitlines()[1:]))
+    payload = _json_payload_from_stdout(out)
     assert payload["profile"] == "windsurf"
     assert payload["chat_x"] == 123
     assert payload["chat_y"] == 456

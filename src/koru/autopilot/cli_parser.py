@@ -188,6 +188,15 @@ def _add_drive_parser(sub: argparse._SubParsersAction) -> None:
         metavar="SECONDS",
         help="With --direct, wait before injection so you can focus the target IDE window.",
     )
+    drive.add_argument(
+        "--verify",
+        action="store_true",
+        help=(
+            "After typing, capture the chat region and OCR-check that the prompt "
+            "appeared (requires tesseract + Pillow/pytesseract; auto-install via "
+            "KORU_AUTO_INSTALL_DEPS). Also enabled by KORU_DRIVE_VERIFY=1."
+        ),
+    )
 
 
 def _add_calibrate_parser(sub: argparse._SubParsersAction) -> None:

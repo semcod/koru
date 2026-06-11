@@ -27,10 +27,22 @@ def _sync_calibration_registry(
     chat_y: int,
     config_path: Path,
 ) -> dict[str, object] | None:
+    from koru.deps_autorepair import ensure_desktop_stack
+
+    if not ensure_desktop_stack(label="koru calibrate"):
+        pass  # still try import — may work via PYTHONPATH
+
     try:
         from koruapi.env2llm_registry import env2llm_sync_after_calibration
     except ImportError:
-        return None
+        return {
+            "ok": False,
+            "error": (
+                "env2llm unavailable after auto-install attempt; "
+                "set KORU_AUTO_INSTALL_DEPS=0 to disable or run: "
+                "pip install 'koru[desktop]'"
+            ),
+        }
 
     project_dir = _resolve_calibration_project_dir(args)
     result = env2llm_sync_after_calibration(project_dir=str(project_dir))
@@ -114,13 +126,19 @@ def action_calibrate(
         ide = raw
         auto_detected = False
 
-    delay = max(10.0, float(args.delay_seconds))
+    delay = max(0.0, float(args.delay_seconds))
     print("Please place your mouse cursor over the chat input field in your IDE.")
-    print("The calibration will start in 10 seconds. Do not move the mouse during the countdown.")
-    for i in range(10, 0, -1):
-        print(f"Capturing in {i}...", end="\r")
-        sleep_fn(1)
-    print("\nCapturing mouse position...")
+    if delay > 0:
+        print(
+            f"The calibration will start in {delay:.0f} seconds. "
+            "Do not move the mouse during the countdown."
+        )
+        for i in range(int(delay), 0, -1):
+            print(f"Capturing in {i}...", end="\r")
+            sleep_fn(1)
+        print("\nCapturing mouse position...")
+    else:
+        print("Capturing mouse position...")
 
     try:
         x, y = oi.capture_mouse_xy()

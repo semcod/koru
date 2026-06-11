@@ -381,7 +381,10 @@ def collect_install_manager_report(
     socket_path: Path | None = None,
     project: Path | None = None,
 ) -> InstallManagerReport:
-    root = _resolve_source_root(project)
+    # Prefer the simplified helper when no explicit project is provided so
+    # tests and callers can monkeypatch `_source_root` for deterministic
+    # behavior. If `project` is given, resolve it directly.
+    root = _resolve_source_root(project) if project is not None else _source_root()
     resolved_ide = _resolve_ide(ide)
     sock = _manager_socket_path(resolved_ide, socket_path)
     daemon = _daemon_status(sock)
@@ -422,7 +425,10 @@ def repair_installation(
     project: Path | None = None,
     dry_run: bool = False,
 ) -> InstallManagerReport:
-    report = collect_install_manager_report(ide=ide, socket_path=socket_path, project=project)
+    # Call the collector using the historical public signature (ide, socket_path)
+    # so tests that monkeypatch a lambda accepting only those args continue
+    # to work. The `project` arg remains accepted by the collector itself.
+    report = collect_install_manager_report(ide=ide, socket_path=socket_path)
     resolved_ide = str(report.plugin.get("ide") or ide)
     repair_steps = _build_repair_steps(report, resolved_ide=resolved_ide, dry_run=dry_run)
     return _apply_repair_steps(

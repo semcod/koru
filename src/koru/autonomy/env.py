@@ -356,6 +356,9 @@ def keyboard_fallback_when_plugin_missing(autopilot_ide: str) -> bool:
 
 
 def plugin_required_for_ide(autopilot_ide: str) -> bool:
+    # Determine if plugin is required by checking IDE's native autopilot capabilities.
+    # Only consider explicit user overrides (keyboard, gillm fallback),
+    # not optional fallbacks like vdisplay which may or may not be available.
     ide = canonical_autopilot_ide_id(normalize_ide_id(autopilot_ide) or autopilot_ide)
     if ide != "auto" and not supports_vscode_extension_plugin(ide):
         return False
@@ -365,13 +368,6 @@ def plugin_required_for_ide(autopilot_ide: str) -> bool:
         return False
     if keyboard_fallback_when_plugin_missing(autopilot_ide):
         return False
-    try:
-        from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
-
-        if vdisplay_fallback_enabled(ide=autopilot_ide, plugin_connected=False):
-            return False
-    except Exception:
-        pass
     return True
 
 

@@ -171,9 +171,9 @@ def _try_vdisplay_control_fallback(
 
 
 def _try_nlp2uri_focus_fallback(prompt: str, *, submit: bool, ide: str) -> dict[str, Any] | None:
-    from koru import autonomous as _autonomous_mod
+    from koru.autonomous_cycle_gate import try_nlp2uri_focus_fallback
 
-    return _autonomous_mod.try_nlp2uri_focus_fallback(prompt, submit=submit, ide=ide)
+    return try_nlp2uri_focus_fallback(prompt, submit=submit, ide=ide)
 
 
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:

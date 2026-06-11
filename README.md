@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.326-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$26.71-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-147.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.327-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$25.65-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-147.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $26.7096 (432 commits)
+- 🤖 **LLM usage:** $25.6539 (433 commits)
 - 👤 **Human dev:** ~$14793 (147.9h @ $100/h, 30min dedup)
 
-Generated on 2026-06-10 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
+Generated on 2026-06-11 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 
@@ -172,6 +172,13 @@ pip install "koru[watch]"    # WebSocket queue watcher
 pip install "koru[vision]"   # local screen capture for observation mesh
 pip install "koru[mesh]"     # WebSocket relay/publish transport for observation mesh
 pip install "koru[observe]"  # full local observation stack (vision + mesh)
+pip install "koru[desktop]"  # desktop automation stack (nlp2uri, env2llm, testql)
+pip install "koru[imgl]"     # IMGL HTTP client integration
+pip install "koru[envmap]"   # environment mapping probes (nlp2uri, env2llm)
+pip install "koru[testql]"   # TestQL GUI/DOM scenario runner
+pip install "koru[curllm]"   # curllm MCP shell bridge
+pip install "koru[browser]"  # browser automation (testql + playwright + curllm)
+pip install "koru[vdisplay]" # vdisplay remote desktop agent
 pip install "koru[dev]"      # tests, lint, typing, local quality tooling
 pip install "koru[api]"      # FastAPI healing webhook service
 pip install "koru[agent]"    # LLM / structured-output integrations

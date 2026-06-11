@@ -21,7 +21,22 @@ _SERVICE_CACHE: dict[tuple[str, str], Any] = {}
 
 
 def env2llm_available() -> bool:
-    return _ENV2LLM_AVAILABLE
+    global _ENV2LLM_AVAILABLE, _ENV2LLM_IMPORT_ERROR, RegistryService
+    if _ENV2LLM_AVAILABLE:
+        return True
+    from koru.deps_autorepair import ensure_desktop_stack
+
+    if ensure_desktop_stack(label="koru"):
+        try:
+            from env2llm.service.registry_service import RegistryService as _RS
+
+            RegistryService = _RS
+            _ENV2LLM_AVAILABLE = True
+            _ENV2LLM_IMPORT_ERROR = None
+            return True
+        except ImportError as exc:
+            _ENV2LLM_IMPORT_ERROR = str(exc)
+    return False
 
 
 def env2llm_missing_message() -> str:
@@ -186,6 +201,19 @@ def env2llm_sync_after_calibration(
     project_id: str | None = None,
 ) -> dict[str, Any]:
     """Refresh env2llm registry after OS-injector calibration (desktop + ide anchors)."""
+    global _ENV2LLM_AVAILABLE, _ENV2LLM_IMPORT_ERROR, RegistryService
+    if not _ENV2LLM_AVAILABLE:
+        from koru.deps_autorepair import ensure_desktop_stack
+
+        if ensure_desktop_stack(label="koru calibrate"):
+            try:
+                from env2llm.service.registry_service import RegistryService as _RS
+
+                RegistryService = _RS
+                _ENV2LLM_AVAILABLE = True
+                _ENV2LLM_IMPORT_ERROR = None
+            except ImportError as exc:
+                _ENV2LLM_IMPORT_ERROR = str(exc)
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:

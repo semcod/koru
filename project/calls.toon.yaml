@@ -1,66 +1,66 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.39s
-# nodes: 386 | edges: 500 | modules: 86
+# generated in 0.35s
+# nodes: 347 | edges: 500 | modules: 65
 # CC̄=3.7
 
 HUBS[20]:
   project.print
-    CC=0  in:917  out:0  total:917
+    CC=0  in:928  out:0  total:928
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:191  out:9  total:200
-  packages.dsl2coru.src.dsl2coru.grammar.parse_line
-    CC=73  in:0  out:78  total:78
-  packages.dsl2coru.src.dsl2coru.handlers.argv.to_cli_args
-    CC=50  in:2  out:70  total:72
   packages.dsl2coru.src.dsl2coru.pb_codec._set_body
     CC=31  in:1  out:67  total:68
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
+  packages.coru.src.coru.cli._auto_readiness_gate
+    CC=24  in:1  out:40  total:41
   src.koruide.ide.detect_running_ides
     CC=17  in:27  out:11  total:38
-  packages.coru.src.coru.supervisor.cli.cmd_start
-    CC=15  in:1  out:35  total:36
   packages.dsl2coru.src.dsl2coru.cli._handle_subcommand
     CC=23  in:1  out:33  total:34
   packages.dsl2koru.src.dsl2koru.cli._handle_subcommand
     CC=17  in:1  out:32  total:33
-  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
-    CC=3  in:0  out:33  total:33
   packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command
     CC=15  in:1  out:32  total:33
-  packages.dsl2koru.src.dsl2koru.pb_codec._set_body
-    CC=9  in:1  out:31  total:32
+  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
+    CC=3  in:0  out:33  total:33
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
   packages.coru.src.coru.cli._run_lane_repair
     CC=7  in:7  out:24  total:31
-  packages.coru.src.coru.supervisor.http_util.json_response
-    CC=1  in:21  out:9  total:30
-  packages.dsl2koru.src.dsl2koru.grammar.parse_line
-    CC=29  in:4  out:25  total:29
-  packages.dsl2coru.src.dsl2coru.cli._main_subcommand
-    CC=1  in:1  out:28  total:29
   src.koru.integrations.imgl_client.execute_nl
     CC=14  in:4  out:25  total:29
-  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
-    CC=2  in:27  out:1  total:28
+  packages.dsl2coru.src.dsl2coru.cli._main_subcommand
+    CC=1  in:1  out:28  total:29
+  packages.coru.src.coru.cli._trace
+    CC=3  in:23  out:5  total:28
+  packages.coru.src.coru.cli._maybe_reexec_into_project_python
+    CC=13  in:1  out:27  total:28
+  packages.uri2coru.src.uri2coru.decode.uri_to_dsl
+    CC=15  in:4  out:24  total:28
+  packages.coru.src.coru.cli._run_default_autonomous
+    CC=11  in:2  out:25  total:27
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
+    CC=14  in:4  out:23  total:27
+  packages.coru.src.coru.cli_calibration._lane_calibration
+    CC=14  in:2  out:25  total:27
 
 MODULES:
   packages.cli2coru.src.cli2coru.shell  [1 funcs]
     run_shell  CC=9  out:12
   packages.cli2koru.src.cli2koru.shell  [1 funcs]
     run_shell  CC=9  out:12
-  packages.coru.src.coru.cli  [10 funcs]
+  packages.coru.src.coru.cli  [125 funcs]
+    _active_project_root  CC=3  out:3
     _add_lane_identifiers  CC=1  out:2
-    _diagnose_lane  CC=10  out:18
-    _infer_default_instance  CC=7  out:11
-    _koru_exec_argv  CC=4  out:4
-    _lane_subprocess_env  CC=2  out:3
-    _print_terminal_context  CC=4  out:6
-    _print_troubleshooting_log_locations  CC=4  out:15
-    _run_lane_repair  CC=7  out:24
-    _target_plugin_rows  CC=7  out:9
-    _terminal_shell_context  CC=3  out:2
+    _agent_lane_from_auto_args  CC=7  out:7
+    _alive_daemon_ide  CC=8  out:6
+    _alive_daemon_instance  CC=13  out:16
+    _apply_strict_plugin_policy_defaults  CC=6  out:3
+    _auto_default_instance  CC=4  out:3
+    _auto_readiness_gate  CC=24  out:40
+    _autonomous_startup_chain  CC=2  out:8
+    _binary_path  CC=8  out:13
   packages.coru.src.coru.cli_calibration  [22 funcs]
     _append_desktop_focus_lines  CC=2  out:2
     _calibration_desktop_focus_titles  CC=4  out:7
@@ -72,147 +72,19 @@ MODULES:
     _lane_calibration  CC=14  out:25
     _lane_drive_capture  CC=8  out:12
     _materialize_calibration_desktop_oql  CC=7  out:22
-  packages.coru.src.coru.control  [5 funcs]
-    apply_nl  CC=6  out:8
-    dispatch_line  CC=3  out:7
-    dispatch_repair_history  CC=2  out:3
-    dispatch_status  CC=1  out:1
-    dispatch_validate_lane  CC=1  out:1
   packages.coru.src.coru.ecosystem  [5 funcs]
     _default_runner  CC=1  out:2
     _detect_running_plugin_ides  CC=4  out:2
     _local_package_paths  CC=5  out:7
     sync_ecosystem  CC=14  out:13
     sync_python_packages  CC=6  out:5
-  packages.coru.src.coru.ide_detection  [7 funcs]
-    _cursor_shell_context  CC=4  out:2
-    _generic_term_program_context  CC=3  out:0
-    _terminal_shell_context_fallback  CC=7  out:11
-    _vscode_term_program_context  CC=7  out:7
-    terminal_host_kind  CC=2  out:1
-    terminal_ide_hint  CC=1  out:1
-    terminal_shell_context  CC=3  out:2
-  packages.coru.src.coru.repair.diagnostics  [25 funcs]
-    _collect_manage_action_problems  CC=4  out:3
-    _collect_manage_issue_problems  CC=4  out:3
-    _collect_plugin_alignment_problems  CC=14  out:24
-    _dedupe_problems  CC=3  out:3
-    _disk_build_for_ide  CC=2  out:2
-    _drive_intent_unverified_problem  CC=8  out:11
-    _focus_risk_problem  CC=4  out:6
-    _host_key_trace_problem  CC=10  out:11
-    _installed_extension_dir  CC=4  out:6
-    _missing_status_payload_problems  CC=2  out:1
-  packages.coru.src.coru.repair.events  [1 funcs]
-    aggregate_id_for  CC=1  out:3
-  packages.coru.src.coru.repair.pipeline  [32 funcs]
-    _apply_round_actions  CC=1  out:1
-    _apply_round_resolution  CC=2  out:1
-    _attempt_ensure_daemon  CC=7  out:6
-    _clear_plugin_not_connected_if_ready  CC=5  out:1
-    _drop_codes_after_action  CC=6  out:1
-    _emit  CC=2  out:1
-    _emit_problems_detected  CC=2  out:2
-    _emit_session_finished  CC=2  out:3
-    _emit_session_started  CC=1  out:1
-    _execute_step  CC=19  out:20
-  packages.coru.src.coru.repair.projector  [4 funcs]
-    _project_one_session  CC=19  out:25
-    format_case_llm  CC=5  out:5
-    format_history_llm  CC=3  out:2
-    project_repair_cases  CC=9  out:10
-  packages.coru.src.coru.repair.query  [3 funcs]
-    cases  CC=2  out:2
-    cases_for_lane  CC=5  out:4
-    format_llm  CC=2  out:3
-  packages.coru.src.coru.repair.registry  [3 funcs]
-    playbook_for_codes  CC=5  out:6
-    registry_step  CC=3  out:0
-    registry_steps_for_code  CC=3  out:1
   packages.coru.src.coru.repair.runtime  [1 funcs]
     run_lane_repair  CC=1  out:1
-  packages.coru.src.coru.repair.service  [3 funcs]
-    record_diagnosis  CC=2  out:5
-    run_session  CC=1  out:6
-    run_repair_with_events  CC=3  out:7
-  packages.coru.src.coru.repair_registry  [1 funcs]
-    run_repair_pipeline  CC=1  out:1
-  packages.coru.src.coru.supervisor.cli  [18 funcs]
-    _print_lanes_human  CC=6  out:6
-    _register_daemon_commands  CC=1  out:5
-    _register_install_unit_command  CC=1  out:4
-    _register_registry_commands  CC=1  out:19
-    _register_start_command  CC=1  out:10
-    _resolve_koru_argv  CC=3  out:3
-    build_parser  CC=1  out:6
-    cmd_active  CC=6  out:14
-    cmd_daemon  CC=3  out:7
-    cmd_lanes  CC=2  out:5
-  packages.coru.src.coru.supervisor.daemon_ctl  [3 funcs]
-    _lane_environ  CC=2  out:1
-    start_daemon  CC=9  out:7
-    stop_daemon  CC=8  out:6
-  packages.coru.src.coru.supervisor.editor_cli  [2 funcs]
-    _is_appimage_mount  CC=2  out:2
-    resolve_editor_cli  CC=9  out:8
-  packages.coru.src.coru.supervisor.http_handlers  [16 funcs]
-    _lane_instance_from_suffix  CC=1  out:3
-    _normalize_path  CC=2  out:1
-    dispatch_delete  CC=2  out:5
-    dispatch_get  CC=6  out:8
-    dispatch_post  CC=9  out:15
-    dispatch_put  CC=2  out:2
-    handle_delete_lane  CC=4  out:4
-    handle_get_active_lane  CC=2  out:5
-    handle_get_health  CC=1  out:2
-    handle_get_lane_health  CC=2  out:6
-  packages.coru.src.coru.supervisor.http_server  [2 funcs]
-    __init__  CC=1  out:2
-    make_handler  CC=1  out:14
-  packages.coru.src.coru.supervisor.http_util  [3 funcs]
-    json_response  CC=1  out:9
-    lanes_payload  CC=2  out:2
-    read_json_body  CC=5  out:6
-  packages.coru.src.coru.supervisor.paths  [6 funcs]
-    default_http_host  CC=3  out:2
-    default_http_port  CC=3  out:3
-    pid_path  CC=1  out:1
+  packages.coru.src.coru.supervisor.paths  [1 funcs]
     registry_path  CC=1  out:1
-    state_dir  CC=5  out:11
-    supervisor_url  CC=3  out:5
-  packages.coru.src.coru.supervisor.probe  [8 funcs]
-    _failure_health  CC=4  out:4
-    _iso_now  CC=1  out:4
-    _lane_environ  CC=2  out:1
-    _run_status_probe  CC=2  out:6
-    _select_plugin  CC=10  out:7
-    _status_command  CC=2  out:1
-    _success_health  CC=13  out:18
-    probe_lane_health  CC=5  out:10
-  packages.coru.src.coru.supervisor.registry  [10 funcs]
-    _ensure_state_dir  CC=1  out:2
-    _iso_now  CC=1  out:4
-    _registry_lock  CC=2  out:7
+  packages.coru.src.coru.supervisor.registry  [2 funcs]
     active_lane_pair  CC=2  out:2
     load_registry  CC=5  out:11
-    register_lane  CC=14  out:15
-    remove_lane  CC=3  out:5
-    save_registry  CC=2  out:8
-    set_active_lane  CC=2  out:5
-    update_lane_health  CC=2  out:4
-  packages.coru.src.coru.supervisor.service  [7 funcs]
-    __init__  CC=3  out:4
-    _record_for  CC=1  out:2
-    refresh_all_health  CC=2  out:3
-    refresh_lane_health  CC=1  out:2
-    read_supervisor_pid  CC=3  out:6
-    stop_supervisor_process  CC=5  out:11
-    supervisor_running  CC=3  out:2
-  packages.coru.src.coru.supervisor.socket_path  [2 funcs]
-    socket_basename  CC=5  out:5
-    socket_path_for_instance  CC=8  out:22
-  packages.coru.src.coru.supervisor.systemd_unit  [1 funcs]
-    action_install_unit  CC=9  out:15
   packages.dsl2coru.src.dsl2coru.bus  [5 funcs]
     _dispatch_koru  CC=6  out:7
     dispatch  CC=14  out:24
@@ -242,11 +114,8 @@ MODULES:
   packages.dsl2coru.src.dsl2coru.events  [2 funcs]
     _append_jsonl  CC=3  out:26
     _append_pb  CC=3  out:26
-  packages.dsl2coru.src.dsl2coru.grammar  [2 funcs]
-    _split_command  CC=3  out:3
-    parse_line  CC=73  out:78
   packages.dsl2coru.src.dsl2coru.handlers.argv  [1 funcs]
-    to_cli_args  CC=50  out:70
+    to_cli_args  CC=4  out:7
   packages.dsl2coru.src.dsl2coru.handlers.command  [1 funcs]
     run_command  CC=6  out:9
   packages.dsl2coru.src.dsl2coru.handlers.query  [1 funcs]
@@ -298,9 +167,15 @@ MODULES:
     validate_payload  CC=2  out:7
   packages.dsl2koru.src.dsl2koru.events  [1 funcs]
     append_command  CC=3  out:33
-  packages.dsl2koru.src.dsl2koru.grammar  [2 funcs]
-    parse_line  CC=29  out:25
-    to_text  CC=8  out:20
+  packages.dsl2koru.src.dsl2koru.grammar  [8 funcs]
+    _flag  CC=3  out:3
+    _parse_query_lane_status  CC=4  out:2
+    _parse_query_repair_history  CC=5  out:4
+    _parse_repair_run  CC=7  out:4
+    _parse_resolve  CC=5  out:5
+    _parse_validate_lane  CC=4  out:2
+    parse_line  CC=5  out:7
+    to_text  CC=2  out:6
   packages.dsl2koru.src.dsl2koru.handlers  [7 funcs]
     _query_lane_status  CC=1  out:11
     _query_repair_history  CC=2  out:14
@@ -310,13 +185,13 @@ MODULES:
     run_command  CC=2  out:4
     run_query  CC=5  out:7
   packages.dsl2koru.src.dsl2koru.pb_codec  [8 funcs]
-    _set_body  CC=9  out:31
+    _set_body  CC=3  out:7
     decode_protobuf  CC=1  out:3
     decode_protobuf_to_text  CC=1  out:2
     encode_protobuf  CC=1  out:6
     encode_result_protobuf  CC=1  out:2
     encode_text_to_protobuf  CC=3  out:3
-    envelope_to_dict  CC=21  out:4
+    envelope_to_dict  CC=4  out:6
     result_to_pb  CC=3  out:3
   packages.dsl2koru.src.dsl2koru.schema_registry  [4 funcs]
     _load_schemas  CC=4  out:11
@@ -339,9 +214,8 @@ MODULES:
     validate_instance  CC=3  out:4
   packages.mcp2coru.src.mcp2coru.cli  [1 funcs]
     main  CC=4  out:9
-  packages.mcp2coru.src.mcp2coru.server  [5 funcs]
+  packages.mcp2coru.src.mcp2coru.server  [4 funcs]
     __post_init__  CC=1  out:3
-    run  CC=1  out:1
     _require_fastmcp  CC=2  out:1
     create_server  CC=1  out:1
     run_server  CC=1  out:2
@@ -439,22 +313,24 @@ MODULES:
     parse_koru_uri  CC=7  out:9
     uri_for_block  CC=4  out:3
     uri_for_cmd  CC=4  out:5
-  plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
-    next  CC=2  out:1
   project  [1 funcs]
     print  CC=0  out:0
+  src.koru.autonomous_runtime  [2 funcs]
+    normalize_project_root  CC=7  out:6
+    projects_equivalent  CC=3  out:2
+  src.koru.autonomy.ide_operator_guidance  [1 funcs]
+    terminal_kind_label  CC=3  out:0
+  src.koru.ide_adapters.ide_reload  [2 funcs]
+    connect_via_command_palette  CC=1  out:1
+    try_reload_vscode_family_ide  CC=12  out:15
   src.koru.integrations.imgl_client  [2 funcs]
     execute_nl  CC=14  out:25
     imgl_available  CC=2  out:3
-  src.koru.scripts.koru-autoloop  [1 funcs]
-    run_koru  CC=0  out:0
   src.koru.wizard.gui.static.wizard  [1 funcs]
     list  CC=5  out:9
   src.koruide.ide  [2 funcs]
     detect_running_ides  CC=17  out:11
     detect_terminal_host_context  CC=9  out:9
-  src.koruide.plugin_installer  [1 funcs]
-    _repo_root  CC=4  out:4
 
 EDGES:
   packages.dsl2koru.src.dsl2koru.bus.dispatch → packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes
@@ -491,6 +367,11 @@ EDGES:
   packages.dsl2koru.src.dsl2koru.codegen.main → packages.dsl2koru.src.dsl2koru.codegen.render_models_module
   packages.dsl2koru.src.dsl2koru.codegen.main → packages.dsl2koru.src.dsl2koru.codegen.build_model_registry
   packages.dsl2koru.src.dsl2koru.codegen.main → project.print
+  packages.dsl2koru.src.dsl2koru.grammar._parse_query_repair_history → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_query_lane_status → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_validate_lane → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_resolve → packages.dsl2koru.src.dsl2koru.grammar._flag
+  packages.dsl2koru.src.dsl2koru.grammar._parse_repair_run → packages.dsl2koru.src.dsl2koru.grammar._flag
   packages.dsl2koru.src.dsl2koru.codec.validate_payload → packages.dsl2koru.src.dsl2koru.schema_registry.schema_for_verb
   packages.dsl2koru.src.dsl2koru.codec.parse_text → packages.dsl2koru.src.dsl2koru.grammar.parse_line
   packages.dsl2koru.src.dsl2koru.codec.parse_text → packages.dsl2koru.src.dsl2koru.codec.validate_payload
@@ -502,8 +383,3 @@ EDGES:
   packages.dsl2koru.src.dsl2koru.codec.envelope_from_json → packages.dsl2koru.src.dsl2koru.codec.validate_payload
   packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.codec.parse_text
   packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.grammar.to_text
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text → packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes
-  packages.dsl2koru.src.dsl2koru.handlers.run_query → packages.dsl2koru.src.dsl2koru.handlers._query_repair_history
-  packages.dsl2koru.src.dsl2koru.handlers.run_query → packages.dsl2koru.src.dsl2koru.handlers._query_lane_status
-  packages.dsl2koru.src.dsl2koru.handlers.run_query → packages.dsl2koru.src.dsl2koru.handlers._validate_lane

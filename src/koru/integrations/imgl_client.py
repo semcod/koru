@@ -36,6 +36,7 @@ _UI_PROMPT_RE = (
 
 
 def imgl_available() -> bool:
+    """Check if imgl control layer is available (direct import or REST)."""
     if _IMGL_DIRECT:
         return True
     return bool(os.environ.get("KORU_IMGL_REST_URL", "").strip())

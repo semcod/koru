@@ -98,11 +98,13 @@ def analyze_socket_settings(
     workspace_path = workspace_settings_path(project, ide) if project is not None else None
     user_sock = read_socket_from_settings(user_path)
     workspace_sock = read_socket_from_settings(workspace_path)
-    expected = str(Path(expected_socket).resolve())
+    # Store expected socket without resolving symlinks
+    expected = str(Path(expected_socket).expanduser())
     mismatch = False
-    if workspace_sock and Path(workspace_sock).resolve() != Path(expected).resolve():
+    # Compare as strings (not resolved) to catch symlink mismatches
+    if workspace_sock and workspace_sock.strip() != expected:
         mismatch = True
-    if user_sock and Path(user_sock).resolve() != Path(expected).resolve():
+    if user_sock and user_sock.strip() != expected:
         mismatch = True
     return SettingsReport(
         expected_socket=expected,
@@ -125,7 +127,8 @@ def fix_workspace_socket(*, project: Path, ide: str, expected_socket: str) -> Pa
     else:
         return None
     data = _read_json_object(path) or {}
-    wanted = str(Path(expected_socket).resolve())
+    # Use expanduser to handle ~, but don't resolve() which would follow symlinks
+    wanted = str(Path(expected_socket).expanduser())
     current = data.get(SOCKET_SETTING_KEY)
     if current == wanted:
         return path if path.is_file() else None
@@ -142,7 +145,8 @@ def fix_user_socket(*, ide: str, expected_socket: str) -> Path | None:
     if path is None:
         return None
     data = _read_json_object(path) or {}
-    wanted = str(Path(expected_socket).resolve())
+    # Use expanduser to handle ~, but don't resolve() which would follow symlinks
+    wanted = str(Path(expected_socket).expanduser())
     current = data.get(SOCKET_SETTING_KEY)
     if current == wanted:
         return path if path.is_file() else None

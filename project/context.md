@@ -1,21 +1,21 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.03s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 649, md: 123, typescript: 93, shell: 56, json: 39
+- **Languages**: python: 662, typescript: 93, shell: 56, json: 39, yaml: 30
 - **Analysis Mode**: static
-- **Total Functions**: 6020
-- **Total Classes**: 474
-- **Modules**: 1042
-- **Entry Points**: 2412
+- **Total Functions**: 6188
+- **Total Classes**: 476
+- **Modules**: 933
+- **Entry Points**: 2502
 
 ## Architecture by Module
 
 ### packages.coru.src.coru.cli
-- **Functions**: 187
+- **Functions**: 200
 - **Classes**: 3
 - **File**: `cli.py`
 
@@ -35,7 +35,7 @@
 - **File**: `bridge-network.ts`
 
 ### src.koru.autonomous
-- **Functions**: 65
+- **Functions**: 66
 - **File**: `autonomous.py`
 
 ### plugins.koru-autopilot-shared.src.bridge-focus-strategy
@@ -63,7 +63,7 @@
 - **File**: `autonomous_loop_runner.py`
 
 ### src.koru.autopilot.install_manager
-- **Functions**: 54
+- **Functions**: 55
 - **Classes**: 1
 - **File**: `install_manager.py`
 
@@ -111,12 +111,6 @@
 
 Main execution flows into the system:
 
-### packages.dsl2coru.src.dsl2coru.grammar.parse_line
-- **Calls**: packages.dsl2coru.src.dsl2coru.grammar._split_command, None.upper, packages.dsl2coru.src.dsl2coru.schema_registry.normalize_verb, verb.startswith, ValueError, name.upper, _flag, _flag
-
-### packages.dsl2coru.src.dsl2coru.grammar.to_text
-- **Calls**: None.upper, None.join, payload.get, payload.get, str, parts.append, parts.append, payload.get
-
 ### scripts.e2e_envmap_koru.main
 - **Calls**: scripts.e2e_envmap_koru._section, project.print, project.print, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section, env2llm_registry.env2llm_available, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section
 
@@ -139,6 +133,10 @@ Args:
 > Print a unified shell OQL/DSL snapshot with replay/validate commands.
 - **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._decision_lines, lines.extend, lines.extend, lines.extend, src.koru.autopilot.cli_snapshot._lane_shell_env
 
+### src.koru.integrations.vdisplay_client.send_chat
+> Semantic IDE chat drive via vdisplay control plane.
+- **Calls**: src.koru.integrations.vdisplay_client._canonical_ide, src.koru.integrations.vdisplay_client.send_chat_via_ide_prompt, src.koru.integrations.vdisplay_client._ide_hints, src.koru.integrations.vdisplay_client._find_first_selector, src.koru.integrations.vdisplay_client._dry_run, src.koru.integrations.vdisplay_client._ide_prompt_app_id, src.koru.integrations.vdisplay_client._resolve_ide_prompt_map, src.koru.integrations.vdisplay_client._ide_hints
+
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
 - **Calls**: max, cls, src.koru.env_flags.env_int, int, Path, src.koruvision.providers.env.env_truthy, src.koru.env_flags.env_int, src.koru.env_flags.env_int
@@ -149,6 +147,13 @@ Args:
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, str, urlparse, src.koru.control_commands.api_command, urllib.request.Request, float, str, str
+
+### src.koru.agent_backend_runtime.build_agent_backend
+> Resolve a lane backend id into a concrete :class:`AgentBackend`.
+
+Lane ids follow :mod:`koru.agent_backends` (``plugin_socket``,
+``mcp_tool``, ``os_in
+- **Calls**: None.replace, src.koru.agent_backends.normalize_agent_backend_id, ValueError, PluginSocketBackend, McpToolBackend, TillmShellBackend, GillmGuiBackend, None.strip
 
 ### src.koru.local_manager_state.WorkerRegistry.register
 - **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
@@ -169,13 +174,6 @@ Args:
 ### src.koruide.daemon.handlers_drive.handle_drive
 > Handle a drive request from CLI client.
 - **Calls**: msg.data.get, src.koruide.ide.normalize_ide_id, bool, bool, msg.data.get, daemon.log, daemon._plugin_for, daemon.log
-
-### src.koru.agent_backend_runtime.build_agent_backend
-> Resolve a lane backend id into a concrete :class:`AgentBackend`.
-
-Lane ids follow :mod:`koru.agent_backends` (``plugin_socket``,
-``mcp_tool``, ``os_in
-- **Calls**: None.replace, src.koru.agent_backends.normalize_agent_backend_id, ValueError, PluginSocketBackend, McpToolBackend, TillmShellBackend, GillmGuiBackend, None.strip
 
 ### src.koru.autopilot.commands.handoff.action_handoff
 > Execute ``koru autopilot handoff`` command (P2.5).
@@ -230,23 +228,15 @@ Args:
 ### src.koru.autonomy.phases.scan_phase.handle_scan_phase
 - **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
 
+### src.koru.doctor_render.render_text
+> Human-readable rendering — fixed-width status column.
+- **Calls**: lines.append, lines.append, max, report.summary, sum, counts.get, counts.get, counts.get
+
 ## Process Flows
 
 Key execution flows identified:
 
-### Flow 1: parse_line
-```
-parse_line [packages.dsl2coru.src.dsl2coru.grammar]
-  └─> _split_command
-  └─ →> normalize_verb
-```
-
-### Flow 2: to_text
-```
-to_text [packages.dsl2coru.src.dsl2coru.grammar]
-```
-
-### Flow 3: main
+### Flow 1: main
 ```
 main [scripts.e2e_envmap_koru]
   └─> _section
@@ -256,14 +246,14 @@ main [scripts.e2e_envmap_koru]
   └─ →> print
 ```
 
-### Flow 4: _select_auto_pipeline_profile
+### Flow 2: _select_auto_pipeline_profile
 ```
 _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
   └─> _auto_pipeline_stage
       └─> _auto_pipeline_has_pressure
 ```
 
-### Flow 5: action_status
+### Flow 3: action_status
 ```
 action_status [src.koru.autopilot.commands.status]
   └─> _print_status_json
@@ -276,12 +266,12 @@ action_status [src.koru.autopilot.commands.status]
       └─> _resolve_log_format
 ```
 
-### Flow 6: imgl_main
+### Flow 4: imgl_main
 ```
 imgl_main [src.koru.cli_imgl]
 ```
 
-### Flow 7: action_snapshot
+### Flow 5: action_snapshot
 ```
 action_snapshot [src.koru.autopilot.cli_snapshot]
   └─> _decision_lines
@@ -291,24 +281,45 @@ action_snapshot [src.koru.autopilot.cli_snapshot]
       └─> normalize_ide_id
 ```
 
-### Flow 8: from_env
+### Flow 6: send_chat
+```
+send_chat [src.koru.integrations.vdisplay_client]
+  └─> _canonical_ide
+      └─ →> canonical_autopilot_ide_id
+          └─> normalize_ide_id
+  └─> send_chat_via_ide_prompt
+      └─> _ide_prompt_app_id
+          └─> _canonical_ide
+      └─> _resolve_ide_prompt_map
+```
+
+### Flow 7: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
 ```
 
-### Flow 9: create_app
+### Flow 8: create_app
 ```
 create_app [packages.rest2koru.src.rest2koru.app]
 ```
 
-### Flow 10: run_api_request
+### Flow 9: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
   └─ →> api_command
       └─> emit_control_command
           └─ →> record_obs_event
       └─> control_command
+```
+
+### Flow 10: build_agent_backend
+```
+build_agent_backend [src.koru.agent_backend_runtime]
+  └─ →> normalize_agent_backend_id
+      └─> _normalize_key
+      └─> _backend_aliases
+          └─> _normalize_key
 ```
 
 ## Key Classes
@@ -408,6 +419,11 @@ no
 
 Key functions that process and transform data:
 
+### packages.dsl2koru.src.dsl2koru.pb_codec._set_validate_lane
+- **Output to**: str, str, cmd.get, cmd.get
+
+### packages.dsl2koru.src.dsl2koru.pb_codec._extract_validate_lane
+
 ### packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf
 - **Output to**: command_pb2.DslEnvelope, None.upper, packages.dsl2koru.src.dsl2koru.pb_codec._set_body, envelope.SerializeToString, str
 
@@ -429,8 +445,38 @@ Key functions that process and transform data:
 ### packages.dsl2koru.src.dsl2koru.codegen.validate_payload
 - **Output to**: None.upper, packages.dsl2koru.src.dsl2koru.codegen.build_model_registry, models.get, model.model_validate, KeyError
 
+### packages.dsl2koru.src.dsl2koru.grammar._parse_query_repair_history
+- **Output to**: packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag, int
+
+### packages.dsl2koru.src.dsl2koru.grammar._parse_query_lane_status
+- **Output to**: packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag
+
+### packages.dsl2koru.src.dsl2koru.grammar._parse_validate_lane
+- **Output to**: packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag
+
+### packages.dsl2koru.src.dsl2koru.grammar._parse_resolve
+- **Output to**: None.startswith, None.strip, None.join, packages.dsl2koru.src.dsl2koru.grammar._flag, None.join
+
+### packages.dsl2koru.src.dsl2koru.grammar._parse_repair_run
+- **Output to**: packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag
+
 ### packages.dsl2koru.src.dsl2koru.grammar.parse_line
-- **Output to**: line.strip, shlex.split, None.upper, ValueError, line.startswith
+- **Output to**: line.strip, shlex.split, None.upper, _PARSERS.get, parser
+
+### packages.dsl2koru.src.dsl2koru.grammar._serialize_query_repair_history
+- **Output to**: payload.get, None.join, payload.get, parts.extend, parts.extend
+
+### packages.dsl2koru.src.dsl2koru.grammar._serialize_query_lane_status
+- **Output to**: payload.get, payload.get
+
+### packages.dsl2koru.src.dsl2koru.grammar._serialize_validate_lane
+- **Output to**: payload.get, payload.get
+
+### packages.dsl2koru.src.dsl2koru.grammar._serialize_resolve
+- **Output to**: payload.get
+
+### packages.dsl2koru.src.dsl2koru.grammar._serialize_repair_run
+- **Output to**: payload.get, payload.get, payload.get
 
 ### packages.dsl2koru.src.dsl2koru.codec.validate_payload
 - **Output to**: None.upper, packages.dsl2koru.src.dsl2koru.schema_registry.schema_for_verb, jsonschema.validate, ValueError, str
@@ -447,50 +493,17 @@ Key functions that process and transform data:
 ### packages.uri2coru.src.uri2coru.uri._decode
 - **Output to**: unquote
 
-### packages.uri2coru.src.uri2coru.uri.parse_coru_uri
-- **Output to**: urlparse, packages.uri2coru.src.uri2coru.uri._decode, packages.uri2coru.src.uri2coru.uri.is_coru_uri, ValueError, packages.uri2coru.src.uri2coru.uri._decode
-
-### packages.koruenv.src.koruenv.cli._normalize_log_format
-- **Output to**: None.lower, None.strip
-
-### packages.koruenv.src.koruenv.cli._build_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, p_env.add_argument
-
-### packages.koruenv.src.koruenv.lane.validate_ide
-- **Output to**: None.lower, None.join, ValueError, None.strip, sorted
-
-### packages.koruenv.src.koruenv.lane.validate_instance
-- **Output to**: None.strip, _INSTANCE_RE.fullmatch, ValueError, str
-
-### packages.nlpshim.src.nlpshim.client.NLPBridgeClient.parse_intent
-> Parse natural language command into structured workflow steps.
-- **Output to**: packages.nlpshim.src.nlpshim.client.analyze_text_structure, structure.get, self.client.workflow_from_text, src.koru.wizard.gui.static.wizard.list, res.get
-
-### packages.nlpshim.src.nlpshim.conversation_test_api.parse_conversation_step
-> Parse one dialog step without executing side-effects.
-- **Output to**: str, active.message, DialogResponse, ConversationTestClient, input.get
-
-### packages.dsl2coru.src.dsl2coru.pb_codec.encode_protobuf
-- **Output to**: None.SerializeToString, packages.dsl2coru.src.dsl2coru.pb_codec.dict_to_envelope
-
-### packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf
-- **Output to**: command_pb2.DslEnvelope, envelope.ParseFromString, packages.dsl2coru.src.dsl2coru.pb_codec.envelope_to_dict
-
-### packages.dsl2coru.src.dsl2coru.pb_codec.encode_text_to_protobuf
-- **Output to**: packages.dsl2koru.src.dsl2koru.grammar.parse_line, packages.dsl2coru.src.dsl2coru.pb_codec.encode_protobuf, ValueError
-
-### packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf_to_text
-- **Output to**: packages.dsl2koru.src.dsl2koru.grammar.to_text, packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf
-
-### packages.dsl2coru.src.dsl2coru.pb_codec.encode_result_protobuf
-- **Output to**: None.SerializeToString, packages.dsl2coru.src.dsl2coru.pb_codec.result_to_pb
-
 ## Behavioral Patterns
 
 ### recursion_to_dsl
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: packages.nlpshim.src.nlpshim.control.to_dsl
+
+### recursion_main
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: packages.coru.src.coru.cli.main
 
 ### recursion_create_ticket_from_dashboard
 - **Type**: recursion
@@ -517,15 +530,20 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koru.agent_backend_runtime.ImglDesktopBackend.send_chat
 
+### recursion_send_chat
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.agent_backend_runtime.VdisplayControlBackend.send_chat
+
 ### recursion_enabled_components_for_pipeline
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
-### recursion_main
+### recursion_verify_chat_text_visible
 - **Type**: recursion
 - **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
+- **Functions**: src.koru.integrations.vdisplay_client.verify_chat_text_visible
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
@@ -556,18 +574,17 @@ Key functions that process and transform data:
 
 Functions exposed as public API (no underscore prefix):
 
-- `packages.dsl2coru.src.dsl2coru.grammar.parse_line` - 78 calls
-- `packages.dsl2coru.src.dsl2coru.grammar.to_text` - 73 calls
 - `scripts.e2e_envmap_koru.main` - 73 calls
-- `packages.dsl2coru.src.dsl2coru.handlers.argv.to_cli_args` - 70 calls
 - `src.koru.autopilot.commands.status.action_status` - 53 calls
 - `src.koru.cli_imgl.imgl_main` - 52 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
+- `src.koru.integrations.vdisplay_client.send_chat` - 48 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 46 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
+- `src.koru.agent_backend_runtime.build_agent_backend` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
 - `packages.coru.src.coru.supervisor.cli.cmd_start` - 35 calls
@@ -575,7 +592,7 @@ Functions exposed as public API (no underscore prefix):
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koruide.daemon.handlers_drive.handle_drive` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
-- `src.koru.agent_backend_runtime.build_agent_backend` - 33 calls
+- `src.koru.integrations.vdisplay_client.verify_chat_text_visible` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `packages.cli2koru.src.cli2koru.cli.main` - 32 calls
 - `packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command` - 32 calls
@@ -596,6 +613,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls
+- `src.koru.autonomous_runtime.setup_autonomous_session` - 27 calls
 
 ## System Interactions
 
@@ -603,15 +621,6 @@ How components interact:
 
 ```mermaid
 graph TD
-    parse_line --> _split_command
-    parse_line --> upper
-    parse_line --> normalize_verb
-    parse_line --> startswith
-    parse_line --> ValueError
-    to_text --> upper
-    to_text --> join
-    to_text --> get
-    to_text --> str
     main --> _section
     main --> print
     _select_auto_pipelin --> _auto_pipeline_stage
@@ -631,8 +640,17 @@ graph TD
     action_snapshot --> max
     action_snapshot --> _decision_lines
     action_snapshot --> extend
+    send_chat --> _canonical_ide
+    send_chat --> send_chat_via_ide_pr
+    send_chat --> _ide_hints
+    send_chat --> _find_first_selector
+    send_chat --> _dry_run
     from_env --> max
     from_env --> cls
+    from_env --> env_int
+    from_env --> int
+    from_env --> Path
+    create_app --> FastAPI
 ```
 
 ## Reverse Engineering Guidelines

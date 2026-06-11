@@ -1630,7 +1630,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     )
 
     assert rc == 0
-    assert install_calls == ["cursor:koru-autopilot-cursor.sock"]
+    assert install_calls == ["cursor:koru-autopilot-cursor-main.sock"]
     assert "KORU_STRICT_PLUGIN_VERSION" not in os.environ
     for key in ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET"):
         os.environ.pop(key, None)

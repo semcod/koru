@@ -47,16 +47,16 @@ def action_manage(
         dry_run=bool(args.dry_run),
     )
     project = getattr(args, "project", None)
-    report: InstallManagerReport = (
-        repair_fn(
-            ide=args.ide,
-            socket_path=args.socket,
-            project=project,
-            dry_run=args.dry_run,
-        )
-        if args.fix
-        else collect_report_fn(ide=args.ide, socket_path=args.socket, project=project)
-    )
+    if args.fix:
+        kwargs = dict(ide=args.ide, socket_path=args.socket, dry_run=args.dry_run)
+        if project is not None:
+            kwargs["project"] = project
+        report = repair_fn(**kwargs)
+    else:
+        kwargs = dict(ide=args.ide, socket_path=args.socket)
+        if project is not None:
+            kwargs["project"] = project
+        report = collect_report_fn(**kwargs)
     if args.output_format == "json":
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
     else:

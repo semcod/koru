@@ -21,6 +21,205 @@ def _truthy(value: Any) -> bool:
     return str(value).lower() in {"1", "true", "yes"}
 
 
+def _flag(rest: list[str], name: str) -> str | None:
+    key = f"--{name.replace('_', '-')}"
+    if key in rest:
+        idx = rest.index(key)
+        if idx + 1 < len(rest) and not rest[idx + 1].startswith("--"):
+            return rest[idx + 1]
+        return "true"
+    upper = name.upper()
+    if upper in rest:
+        idx = rest.index(upper)
+        if idx + 1 < len(rest) and not rest[idx + 1].startswith("--"):
+            return rest[idx + 1]
+    return None
+
+
+def _ui_args(rest: list[str], skip: set[str] | None = None) -> list[str]:
+    skip = skip or {"WINDOW", "IMAGE", "EXECUTE"}
+    out: list[str] = []
+    i = 0
+    while i < len(rest):
+        tok = rest[i]
+        if tok.startswith("--"):
+            i += 2 if i + 1 < len(rest) and not rest[i + 1].startswith("--") else 1
+            continue
+        if tok.upper() in skip:
+            i += 2 if tok.upper() in {"WINDOW", "IMAGE"} and i + 1 < len(rest) else 1
+            continue
+        out.append(tok)
+        i += 1
+    return out
+
+
+def _parse_status(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if _flag(rest, "probe"):
+        payload["probe"] = True
+
+
+def _parse_repair_history(_rest: list[str], _payload: dict[str, Any], _default_file: str | None) -> None:
+    pass
+
+
+def _parse_env(rest: list[str], payload: dict[str, Any], default_file: str | None) -> None:
+    file_val = _flag(rest, "file") or default_file
+    if file_val:
+        payload["file"] = file_val
+
+
+def _parse_query(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    args = [t for t in rest if not t.startswith("--")]
+    if args:
+        payload["target"] = " ".join(args)
+
+
+def _parse_auto(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if shell := _flag(rest, "shell"):
+        payload["shell"] = shell
+    if auto_args := _flag(rest, "auto_args"):
+        payload["auto_args"] = auto_args
+    args = [t for t in rest if not t.startswith("--")]
+    if args:
+        payload["target"] = " ".join(args)
+
+
+def _parse_lane(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if ide := _flag(rest, "ide"):
+        payload["ide"] = ide
+    if instance := _flag(rest, "instance"):
+        payload["instance"] = instance
+    if file_val := _flag(rest, "file"):
+        payload["file"] = file_val
+
+
+def _parse_ensure(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if _flag(rest, "install"):
+        payload["install"] = True
+
+
+def _parse_doctor(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if _flag(rest, "fix"):
+        payload["fix"] = True
+    if _flag(rest, "probe"):
+        payload["probe"] = True
+    if probe_prompt := _flag(rest, "probe_prompt") or _flag(rest, "probe-prompt"):
+        payload["probe_prompt"] = probe_prompt
+
+
+def _parse_calibration(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    for key, flag in (
+        ("skip_fix", "skip-fix"),
+        ("skip_desktop", "skip-desktop"),
+        ("skip_bridge", "skip-bridge"),
+    ):
+        if _flag(rest, flag) or _flag(rest, key):
+            payload[key] = True
+    if probe_prompt := _flag(rest, "probe_prompt") or _flag(rest, "probe-prompt"):
+        payload["probe_prompt"] = probe_prompt
+
+
+def _parse_chat(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if _flag(rest, "llm"):
+        payload["llm"] = True
+    if shell := _flag(rest, "shell"):
+        payload["shell"] = shell
+    if _flag(rest, "single_action") or _flag(rest, "single-action"):
+        payload["single_action"] = True
+
+
+def _parse_text(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    args = [t for t in rest if not t.startswith("--")]
+    if args:
+        payload["target"] = " ".join(args)
+    if _flag(rest, "llm"):
+        payload["llm"] = True
+    if shell := _flag(rest, "shell"):
+        payload["shell"] = shell
+    if _flag(rest, "single_action") or _flag(rest, "single-action"):
+        payload["single_action"] = True
+
+
+def _parse_sync(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if _flag(rest, "all_ides") or _flag(rest, "all-ides"):
+        payload["all_ides"] = True
+
+
+def _parse_repair_run(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    if _flag(rest, "fix"):
+        payload["fix"] = True
+    if ide := _flag(rest, "ide"):
+        payload["ide"] = ide
+    if instance := _flag(rest, "instance"):
+        payload["instance"] = instance
+
+
+def _parse_ui_common(rest: list[str], payload: dict[str, Any]) -> None:
+    if image := _flag(rest, "image"):
+        payload["image"] = image
+    if window := _flag(rest, "window"):
+        payload["window"] = window
+    if _flag(rest, "execute") == "0" or _flag(rest, "dry_run"):
+        payload["execute"] = False
+    else:
+        payload["execute"] = True
+
+
+def _parse_ui_type(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    _parse_ui_common(rest, payload)
+    args = _ui_args(rest)
+    if len(args) >= 2 and args[0].upper() == "IN":
+        payload["value"] = ""
+        payload["field"] = " ".join(args[1:]).strip('"')
+    elif len(args) >= 3 and args[1].upper() == "IN":
+        payload["value"] = args[0].strip('"')
+        payload["field"] = " ".join(args[2:]).strip('"')
+    elif args:
+        payload["value"] = args[0].strip('"')
+
+
+def _parse_ui_key(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    _parse_ui_common(rest, payload)
+    args = _ui_args(rest)
+    if args:
+        payload["keys"] = args[0]
+
+
+def _parse_ui_click(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    _parse_ui_common(rest, payload)
+    args = _ui_args(rest)
+    if args:
+        payload["target"] = " ".join(args).strip('"')
+
+
+def _parse_ui_nl(rest: list[str], payload: dict[str, Any], _default_file: str | None) -> None:
+    _parse_ui_common(rest, payload)
+    args = _ui_args(rest)
+    if args:
+        payload["prompt"] = " ".join(args).strip('"')
+
+
+_PARSERS: dict[str, Any] = {
+    "STATUS": _parse_status,
+    "REPAIR_HISTORY": _parse_repair_history,
+    "ENV": _parse_env,
+    "QUERY": _parse_query,
+    "AUTO": _parse_auto,
+    "LANE": _parse_lane,
+    "ENSURE": _parse_ensure,
+    "DOCTOR": _parse_doctor,
+    "CALIBRATION": _parse_calibration,
+    "CHAT": _parse_chat,
+    "TEXT": _parse_text,
+    "SYNC": _parse_sync,
+    "REPAIR_RUN": _parse_repair_run,
+    "UI_TYPE": _parse_ui_type,
+    "UI_KEY": _parse_ui_key,
+    "UI_CLICK": _parse_ui_click,
+    "UI_NL": _parse_ui_nl,
+}
+
+
 def parse_line(line: str, *, default_file: str | None = None) -> dict[str, Any]:
     tokens = _split_command(line)
     if not tokens:
@@ -29,259 +228,160 @@ def parse_line(line: str, *, default_file: str | None = None) -> dict[str, Any]:
     verb = normalize_verb(raw_verb)
     rest = tokens[1:]
     payload: dict[str, Any] = {"verb": verb}
+    if raw_verb in {"LANE_STATUS", "LANE-STATUS"}:
+        payload["lane_status"] = True
+    parser = _PARSERS.get(verb)
+    if parser:
+        parser(rest, payload, default_file)
+    else:
+        raise ValueError(f"unknown DSL verb: {verb}")
+    return payload
 
-    def _flag(name: str) -> str | None:
-        key = f"--{name.replace('_', '-')}"
-        if key in rest:
-            idx = rest.index(key)
-            if idx + 1 < len(rest) and not rest[idx + 1].startswith("--"):
-                return rest[idx + 1]
-            return "true"
-        upper = name.upper()
-        if upper in rest:
-            idx = rest.index(upper)
-            if idx + 1 < len(rest) and not rest[idx + 1].startswith("--"):
-                return rest[idx + 1]
-        return None
 
-    if verb == "STATUS":
-        if _flag("probe"):
-            payload["probe"] = True
-        return payload
+def _append_flag(parts: list[str], payload: dict[str, Any], name: str, *, flag: str | None = None) -> None:
+    value = payload.get(name)
+    if value is True:
+        parts.append(flag or f"--{name.replace('_', '-')}")
+    elif value not in (None, "", False):
+        parts.extend([flag or f"--{name.replace('_', '-')}", str(value)])
 
-    if verb == "REPAIR_HISTORY":
-        return payload
 
-    if verb == "ENV":
-        file_val = _flag("file") or default_file
-        if file_val:
-            payload["file"] = file_val
-        return payload
+def _serialize_status(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("probe"):
+        parts.append("--probe")
 
-    if verb == "QUERY":
-        args = [t for t in rest if not t.startswith("--")]
-        if args:
-            payload["target"] = " ".join(args)
-        return payload
 
-    if verb == "AUTO":
-        if shell := _flag("shell"):
-            payload["shell"] = shell
-        if auto_args := _flag("auto_args"):
-            payload["auto_args"] = auto_args
-        args = [t for t in rest if not t.startswith("--")]
-        if args:
-            payload["target"] = " ".join(args)
-        return payload
+def _serialize_env(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("file"):
+        parts.extend(["--file", str(payload["file"])])
 
-    if verb == "LANE":
-        if ide := _flag("ide"):
-            payload["ide"] = ide
-        if instance := _flag("instance"):
-            payload["instance"] = instance
-        if file_val := _flag("file"):
-            payload["file"] = file_val
-        if raw_verb in {"LANE_STATUS", "LANE-STATUS"}:
-            payload["lane_status"] = True
-        return payload
 
-    if verb == "ENSURE":
-        if _flag("install"):
-            payload["install"] = True
-        return payload
+def _serialize_query(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("target"):
+        parts.append(str(payload["target"]))
 
-    if verb == "DOCTOR":
-        if _flag("fix"):
-            payload["fix"] = True
-        if _flag("probe"):
-            payload["probe"] = True
-        if probe_prompt := _flag("probe_prompt") or _flag("probe-prompt"):
-            payload["probe_prompt"] = probe_prompt
-        return payload
 
-    if verb == "CALIBRATION":
-        for key, flag in (
-            ("skip_fix", "skip-fix"),
-            ("skip_desktop", "skip-desktop"),
-            ("skip_bridge", "skip-bridge"),
-        ):
-            if _flag(flag) or _flag(key):
-                payload[key] = True
-        if probe_prompt := _flag("probe_prompt") or _flag("probe-prompt"):
-            payload["probe_prompt"] = probe_prompt
-        return payload
+def _serialize_auto(parts: list[str], payload: dict[str, Any]) -> None:
+    _append_flag(parts, payload, "shell")
+    _append_flag(parts, payload, "auto_args")
+    if payload.get("target"):
+        parts.append(str(payload["target"]))
 
-    if verb == "CHAT":
-        if _flag("llm"):
-            payload["llm"] = True
-        if shell := _flag("shell"):
-            payload["shell"] = shell
-        if _flag("single_action") or _flag("single-action"):
-            payload["single_action"] = True
-        return payload
 
-    if verb == "TEXT":
-        args = [t for t in rest if not t.startswith("--")]
-        if args:
-            payload["target"] = " ".join(args)
-        if _flag("llm"):
-            payload["llm"] = True
-        if shell := _flag("shell"):
-            payload["shell"] = shell
-        if _flag("single_action") or _flag("single-action"):
-            payload["single_action"] = True
-        return payload
+def _serialize_lane(parts: list[str], payload: dict[str, Any]) -> None:
+    _append_flag(parts, payload, "ide")
+    _append_flag(parts, payload, "instance")
+    _append_flag(parts, payload, "file")
 
-    if verb == "SYNC":
-        if _flag("all_ides") or _flag("all-ides"):
-            payload["all_ides"] = True
-        return payload
 
-    if verb == "REPAIR_RUN":
-        if _flag("fix"):
-            payload["fix"] = True
-        if ide := _flag("ide"):
-            payload["ide"] = ide
-        if instance := _flag("instance"):
-            payload["instance"] = instance
-        return payload
+def _serialize_ensure(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("install"):
+        parts.append("--install")
 
-    if verb.startswith("UI_"):
-        if image := _flag("image"):
-            payload["image"] = image
-        if window := _flag("window"):
-            payload["window"] = window
-        if _flag("execute") == "0" or _flag("dry_run"):
-            payload["execute"] = False
-        else:
-            payload["execute"] = True
 
-        def _ui_args() -> list[str]:
-            skip = {"WINDOW", "IMAGE", "EXECUTE"}
-            out: list[str] = []
-            i = 0
-            while i < len(rest):
-                tok = rest[i]
-                if tok.startswith("--"):
-                    i += 2 if i + 1 < len(rest) and not rest[i + 1].startswith("--") else 1
-                    continue
-                if tok.upper() in skip:
-                    i += 2 if tok.upper() in {"WINDOW", "IMAGE"} and i + 1 < len(rest) else 1
-                    continue
-                out.append(tok)
-                i += 1
-            return out
+def _serialize_doctor(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("fix"):
+        parts.append("--fix")
+    if payload.get("probe"):
+        parts.append("--probe")
+    _append_flag(parts, payload, "probe_prompt", flag="--probe-prompt")
 
-        if verb == "UI_TYPE":
-            args = _ui_args()
-            if len(args) >= 2 and args[0].upper() == "IN":
-                payload["value"] = ""
-                payload["field"] = " ".join(args[1:]).strip('"')
-            elif len(args) >= 3 and args[1].upper() == "IN":
-                payload["value"] = args[0].strip('"')
-                payload["field"] = " ".join(args[2:]).strip('"')
-            elif args:
-                payload["value"] = args[0].strip('"')
-        elif verb == "UI_KEY":
-            args = _ui_args()
-            if args:
-                payload["keys"] = args[0]
-        elif verb == "UI_CLICK":
-            args = _ui_args()
-            if args:
-                payload["target"] = " ".join(args).strip('"')
-        elif verb == "UI_NL":
-            args = _ui_args()
-            if args:
-                payload["prompt"] = " ".join(args).strip('"')
-        return payload
 
-    raise ValueError(f"unknown DSL verb: {verb}")
+def _serialize_calibration(parts: list[str], payload: dict[str, Any]) -> None:
+    for key in ("skip_fix", "skip_desktop", "skip_bridge"):
+        if payload.get(key):
+            parts.append(f"--{key.replace('_', '-')}")
+    _append_flag(parts, payload, "probe_prompt", flag="--probe-prompt")
+
+
+def _serialize_chat(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("llm"):
+        parts.append("--llm")
+    _append_flag(parts, payload, "shell")
+    if payload.get("single_action"):
+        parts.append("--single-action")
+
+
+def _serialize_text(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("target"):
+        parts.append(str(payload["target"]))
+    if payload.get("llm"):
+        parts.append("--llm")
+    _append_flag(parts, payload, "shell")
+    if payload.get("single_action"):
+        parts.append("--single-action")
+
+
+def _serialize_sync(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("all_ides"):
+        parts.append("--all-ides")
+
+
+def _serialize_repair_run(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("fix"):
+        parts.append("--fix")
+    _append_flag(parts, payload, "ide")
+    _append_flag(parts, payload, "instance")
+
+
+def _serialize_repair_history(_parts: list[str], _payload: dict[str, Any]) -> None:
+    pass
+
+
+def _serialize_ui_type(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("value") is not None:
+        parts.append(f'"{payload["value"]}"')
+    if payload.get("field"):
+        parts.extend(["IN", f'"{payload["field"]}"'])
+
+
+def _serialize_ui_key(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("keys"):
+        parts.append(str(payload["keys"]))
+
+
+def _serialize_ui_click(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("target"):
+        parts.append(f'"{payload["target"]}"')
+
+
+def _serialize_ui_nl(parts: list[str], payload: dict[str, Any]) -> None:
+    if payload.get("prompt"):
+        parts.append(f'"{payload["prompt"]}"')
+
+
+_SERIALIZERS: dict[str, Any] = {
+    "STATUS": _serialize_status,
+    "ENV": _serialize_env,
+    "QUERY": _serialize_query,
+    "AUTO": _serialize_auto,
+    "LANE": _serialize_lane,
+    "ENSURE": _serialize_ensure,
+    "DOCTOR": _serialize_doctor,
+    "CALIBRATION": _serialize_calibration,
+    "CHAT": _serialize_chat,
+    "TEXT": _serialize_text,
+    "SYNC": _serialize_sync,
+    "REPAIR_RUN": _serialize_repair_run,
+    "REPAIR_HISTORY": _serialize_repair_history,
+    "UI_TYPE": _serialize_ui_type,
+    "UI_KEY": _serialize_ui_key,
+    "UI_CLICK": _serialize_ui_click,
+    "UI_NL": _serialize_ui_nl,
+}
 
 
 def to_text(payload: dict[str, Any]) -> str:
     verb = str(payload.get("verb", "")).upper()
     parts = [verb]
-
-    def _append_flag(name: str, *, flag: str | None = None) -> None:
-        value = payload.get(name)
-        if value is True:
-            parts.append(flag or f"--{name.replace('_', '-')}")
-        elif value not in (None, "", False):
-            parts.extend([flag or f"--{name.replace('_', '-')}", str(value)])
-
-    if verb == "STATUS":
-        if payload.get("probe"):
-            parts.append("--probe")
-    elif verb == "ENV":
-        if payload.get("file"):
-            parts.extend(["--file", str(payload["file"])])
-    elif verb == "QUERY":
-        if payload.get("target"):
-            parts.append(str(payload["target"]))
-    elif verb == "AUTO":
-        _append_flag("shell")
-        _append_flag("auto_args")
-        if payload.get("target"):
-            parts.append(str(payload["target"]))
-    elif verb == "LANE":
-        _append_flag("ide")
-        _append_flag("instance")
-        _append_flag("file")
-    elif verb == "ENSURE":
-        if payload.get("install"):
-            parts.append("--install")
-    elif verb == "DOCTOR":
-        if payload.get("fix"):
-            parts.append("--fix")
-        if payload.get("probe"):
-            parts.append("--probe")
-        _append_flag("probe_prompt", flag="--probe-prompt")
-    elif verb == "CALIBRATION":
-        for key in ("skip_fix", "skip_desktop", "skip_bridge"):
-            if payload.get(key):
-                parts.append(f"--{key.replace('_', '-')}")
-        _append_flag("probe_prompt", flag="--probe-prompt")
-    elif verb == "CHAT":
-        if payload.get("llm"):
-            parts.append("--llm")
-        _append_flag("shell")
-        if payload.get("single_action"):
-            parts.append("--single-action")
-    elif verb == "TEXT":
-        if payload.get("target"):
-            parts.append(str(payload["target"]))
-        if payload.get("llm"):
-            parts.append("--llm")
-        _append_flag("shell")
-        if payload.get("single_action"):
-            parts.append("--single-action")
-    elif verb == "SYNC":
-        if payload.get("all_ides"):
-            parts.append("--all-ides")
-    elif verb == "REPAIR_RUN":
-        if payload.get("fix"):
-            parts.append("--fix")
-        _append_flag("ide")
-        _append_flag("instance")
-    elif verb == "REPAIR_HISTORY":
-        pass
-    elif verb.startswith("UI_"):
-        _append_flag("image")
-        _append_flag("window")
+    if verb.startswith("UI_"):
+        _append_flag(parts, payload, "image")
+        _append_flag(parts, payload, "window")
         if payload.get("execute") is False:
             parts.append("EXECUTE 0")
-        if verb == "UI_TYPE":
-            if payload.get("value") is not None:
-                parts.append(f'"{payload["value"]}"')
-            if payload.get("field"):
-                parts.extend(["IN", f'"{payload["field"]}"'])
-        elif verb == "UI_KEY" and payload.get("keys"):
-            parts.append(str(payload["keys"]))
-        elif verb == "UI_CLICK" and payload.get("target"):
-            parts.append(f'"{payload["target"]}"')
-        elif verb == "UI_NL" and payload.get("prompt"):
-            parts.append(f'"{payload["prompt"]}"')
+    serializer = _SERIALIZERS.get(verb)
+    if serializer:
+        serializer(parts, payload)
     else:
         raise ValueError(f"cannot serialize verb: {verb}")
     return " ".join(parts)

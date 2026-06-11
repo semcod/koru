@@ -1,52 +1,52 @@
-# koru | 6020 func | 640f | 169309L | python | 2026-06-09
+# koru | 6188 func | 648f | 142902L | python | 2026-06-11
 # generated in 0.01s
 
 HEALTH:
-  CC̄=3.7  critical=400 (limit:10)  dup=21  cycles=0
+  CC̄=3.7  critical=406 (limit:10)  dup=21  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      parse_line = 73 (limit:15)
-  !!! cc_exceeded      to_cli_args = 50 (limit:15)
   !!! cc_exceeded      envelope_to_dict = 44 (limit:15)
-  !!! cc_exceeded      to_text = 41 (limit:15)
+  !!! cc_exceeded      send_chat = 32 (limit:15)
   !!! cc_exceeded      _set_body = 31 (limit:15)
   !!! high_fan_out     action_snapshot = 31 (limit:10)
-  !!! cc_exceeded      parse_line = 29 (limit:15)
+  !!! cc_exceeded      _auto_ownership_gate = 29 (limit:15)
+  !!! high_fan_out     send_chat = 29 (limit:10)
+  !!! cc_exceeded      verify_chat_text_visible = 28 (limit:15)
   !!! cc_exceeded      SharedAutopilotBridgePaste.shouldProbeInput = 26 (limit:15)
   !!! high_fan_out     create_app = 26 (limit:10)
   !!! high_fan_out     create_app = 26 (limit:10)
 
-MODULES[1042] (top by size):
-  M[CHANGELOG.md] 6619L C:0 F:0 CC↑0 D:0 (md)
-  M[packages/coru/src/coru/cli.py] 3613L C:3 F:187 CC↑24 D:2 (python)
+MODULES[933] (top by size):
+  M[packages/coru/src/coru/cli.py] 3822L C:3 F:200 CC↑29 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[src/koru/scan.py] 1621L C:0 F:61 CC↑13 D:7 (python)
   M[src/koru/autonomous_cycle.py] 1443L C:0 F:46 CC↑14 D:1 (python)
-  M[README.md] 1376L C:0 F:0 CC↑0 D:0 (md)
   M[planfile.yaml] 1331L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/autopilot/install_manager.py] 1265L C:1 F:54 CC↑18 D:3 (python)
+  M[src/koru/autopilot/install_manager.py] 1289L C:1 F:55 CC↑18 D:3 (python)
   M[src/koru/autonomous_loop_runner.py] 1256L C:1 F:56 CC↑12 D:2 (python)
-  M[src/koruide/plugin_installer.py] 1197L C:3 F:56 CC↑22 D:10 (python)
-  M[src/koru/autonomous.py] 1047L C:0 F:65 CC↑4 D:3 (python)
+  M[src/koruide/plugin_installer.py] 1197L C:3 F:56 CC↑22 D:9 (python)
+  M[src/koru/autonomous.py] 1065L C:0 F:66 CC↑4 D:3 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1009L C:2 F:44 CC↑14 D:0 (python)
   M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 992L C:1 F:72 CC↑13 D:1 (typescript)
   M[src/koruide/drive_orchestrator.py] 965L C:1 F:56 CC↑14 D:0 (python)
-  M[src/koruide/ide.py] 939L C:2 F:53 CC↑17 D:43 (python)
-  LANGS: python:650/md:123/typescript:93/shell:56/json:39/yaml:30/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/properties:1/xml:1
+  M[src/koruide/ide.py] 939L C:2 F:53 CC↑17 D:44 (python)
+  M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/autonomous_readiness.py] 910L C:3 F:37 CC↑19 D:4 (python)
+  LANGS: python:663/typescript:93/shell:56/json:39/yaml:30/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
 
 HOTSPOTS[10]:
   ★ action_snapshot fan=31  // Print a unified shell OQL/DSL snapshot with replay/validate commands.
+  ★ send_chat fan=29  // Semantic IDE chat drive via vdisplay control plane.
   ★ create_app fan=26  // Orchestrates 26 calls
   ★ create_app fan=26  // Orchestrates 26 calls
-  ★ main fan=25  // Orchestrates 25 calls
-  ★ imgl_main fan=24  // Orchestrates 24 calls
+  ★ _auto_ownership_gate fan=25  // Orchestrates 25 calls
 
 REFACTOR[15]:
-  [1] H/L Split parse_line (CC=29)
-  [2] H/L Split _set_body (CC=31)
-  [3] H/L Split envelope_to_dict (CC=44)
-  [4] H/L Split parse_line (CC=73)
-  [5] H/L Split to_text (CC=41)
+  [1] H/L Split _set_body (CC=31)
+  [2] H/L Split envelope_to_dict (CC=44)
+  [3] H/L Split _auto_ownership_gate (CC=29)
+  [4] H/L Split imgl_main (CC=25)
+  [5] H/L Split verify_chat_text_visible (CC=28)
 
 EVOLUTION:
-  2026-06-09 CC̄=3.7 crit=400 169309L // Automated analysis
+  2026-06-11 CC̄=3.7 crit=406 142902L // Automated analysis
