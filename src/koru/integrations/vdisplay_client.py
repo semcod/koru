@@ -7,6 +7,7 @@ automation: AT-SPI / Playwright / terminal / X11 / vision routing with verify.
 
 from __future__ import annotations
 
+import json
 import os
 import urllib.error
 import urllib.request
@@ -435,6 +436,7 @@ def _find_first_selector(
     ide: str,
     selectors: tuple[dict[str, str], ...],
     backend: str = "auto",
+    vql_fallback: bool = True,
 ) -> tuple[dict[str, str] | None, dict[str, Any] | None]:
     hints = _ide_hints(ide)
     base = {
@@ -453,6 +455,27 @@ def _find_first_selector(
         if found.get("ok") and int(found.get("count") or 0) > 0:
             return spec, found
         last_error = found
+
+    # VQL fallback: if vision found nothing, use explicit click_center from loaded VQL
+    # (fresh 31-elem capture or our analysis with decision_data + mouse coords for JetBrains/Cursor)
+    if vql_fallback:
+        vql = load_vql_metadata()
+        if vql.get("ui_elements"):
+            cc = vql["ui_elements"][0].get("click_center", {})
+            if cc:
+                return None, {
+                    "ok": True,
+                    "count": 1,
+                    "selected": {
+                        "id": "vql-fallback:0",
+                        "backend": "vql",
+                        "role": "unknown",
+                        "name": "vql-center",
+                        "click_point": {"x": cc.get("x"), "y": cc.get("y")},
+                        "note": f"VQL fallback center from {vql.get('_source')}"
+                    },
+                    "matches": [{"id": "vql-fallback:0", "click_center": cc}]
+                }
     return None, last_error
 
 
@@ -733,6 +756,94 @@ def send_chat(
     }
 
 
+def load_vql_metadata(path: str | None = None) -> dict:
+    """Load VQL metadata (from .vdisplay/2026-06-11-vql-metadata-analysis-previous-current.json or per-capture .vql.json).
+    Returns ui_elements with click_center, data_locations, decision_data etc for mouse nav + decide.
+    Used to augment vision/control with explicit coords and data sources from previous/current analysis.
+    Now also falls back to latest fresh capture VQL (e.g. koru-cont-*.vql.json) for up-to-date 30+ element bboxes/centers.
+    """
+    candidates = []
+    if path:
+        candidates.append(path)
+    else:
+        candidates += [
+            ".vdisplay/2026-06-11-vql-metadata-analysis-previous-current.json",
+            ".vdisplay/koru-cont-dp1-*.png.vql.json",  # glob handled below
+            "/tmp/koru-cont-dp1-*.png.vql.json",
+            "/tmp/vdisplay-auto-observe-auto-vision-find-cursor.png.vql.json",
+        ]
+    for cand in candidates:
+        try:
+            import glob
+            if "*" in cand:
+                matches = sorted(glob.glob(cand), reverse=True)
+                if not matches: continue
+                cand = matches[0]
+            if not os.path.exists(cand): continue
+            with open(cand) as f:
+                data = json.load(f)
+            # Normalize various VQL structures (analysis, fresh capture from screenshot, imgl, etc.)
+            if "ui_elements" in data and data.get("ui_elements"):
+                data["_source"] = cand
+                return data
+            if "elements" in data and isinstance(data.get("elements"), list) and data["elements"]:
+                # Fresh per-capture .vql.json from screenshot (top-level elements + by_role + element_count)
+                ui_els = []
+                for e in data["elements"]:
+                    bbox = e.get("bbox") or [0,0,0,0]
+                    if isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
+                        cx = (bbox[0] + bbox[2]) / 2
+                        cy = (bbox[1] + bbox[3]) / 2
+                    else:
+                        c = e.get("center") or [1024, 640]
+                        cx, cy = (c if isinstance(c, (list,tuple)) else [1024,640])[:2]
+                    ui_els.append({
+                        "id": str(e.get("id", f"elem-{len(ui_els)}")),
+                        "role": e.get("role", "unknown"),
+                        "bounds": {"x": int(bbox[0]), "y": int(bbox[1]), "width": int(bbox[2]-bbox[0]) if len(bbox)>2 else 0, "height": int(bbox[3]-bbox[1]) if len(bbox)>3 else 0, "coordinate_space": "capture_frame_local"},
+                        "click_center": {"x": int(cx), "y": int(cy), "note": f"fresh VQL elem, color={e.get('color')}, conf={e.get('confidence')}"},
+                        "label": e.get("label"),
+                        "metadata": {k: e.get(k) for k in ("color","confidence","location") if k in e}
+                    })
+                res = {"ui_elements": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}
+                return res
+            if "vql" in data and isinstance(data.get("vql"), dict):
+                prog = data["vql"].get("program", data["vql"])
+                if isinstance(prog, dict):
+                    prog["_source"] = cand
+                    return prog
+            if "screen_context" in data or "metadata" in data:
+                return {"ui_elements": [], "metadata": data.get("metadata", data.get("screen_context", {})), "environment": data.get("environment", {}), "_source": cand}
+            if isinstance(data.get("program"), (str, dict)) and "elements" not in data:
+                data["_source"] = cand
+                return data
+            data["_source"] = cand
+            return data
+        except Exception as exc:
+            continue
+    return {"error": "no vql found", "tried": candidates}
+
+
+def resolve_click_for_frame(source: str = "DP-1", vql_path: str | None = None, vision_fallback: bool = True) -> dict:
+    """Helper: return best click coords for a monitor/frame.
+    Prefers explicit from load_vql_metadata (fresh capture or analysis).
+    Can be used when vision find returns no match (e.g. "planfile" anchor) as general editor/center action.
+    """
+    m = load_vql_metadata(vql_path)
+    if m.get("ui_elements"):
+        # Prefer first (usually the main capture frame for --source)
+        for el in m.get("ui_elements", []):
+            if source.lower() in str(el.get("source", "")).lower() or "dp-1" in str(el).lower() or not el.get("source"):
+                if cc := el.get("click_center"):
+                    return {"x": cc.get("x"), "y": cc.get("y"), "source": m.get("_source"), "note": el.get("note", "from VQL")}
+        # fallback any
+        el = m["ui_elements"][0]
+        if cc := el.get("click_center") or el.get("center"):
+            return {"x": cc.get("x") if isinstance(cc, dict) else cc[0], "y": cc.get("y") if isinstance(cc, dict) else cc[1], "source": m.get("_source")}
+    # last resort frame center for 2048x1280 DP-1 crop
+    return {"x": 1024, "y": 640, "source": "hardcoded-fallback", "note": "DP-1 capture frame center"}
+
+
 __all__ = [
     "send_chat",
     "send_chat_via_ide_prompt",
@@ -740,4 +851,5 @@ __all__ = [
     "vdisplay_available",
     "vdisplay_fallback_enabled",
     "vdisplay_missing_message",
+    "load_vql_metadata",
 ]

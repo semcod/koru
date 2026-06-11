@@ -347,6 +347,17 @@ def _invoke_client_autopilot_drive(
     ok = bool(reply.get("ok", True))
     if ok or require_plugin:
         return reply, ok
+    # Prefer vdisplay semantic control (with VQL click_centers, vision, resolve fallback)
+    # for non-plugin lanes like jetbrains when available (Wayland, KORU_VDISPLAY_...=1)
+    vdisplay = _try_vdisplay_control_fallback(
+        prompt,
+        submit=submit,
+        ide=autopilot_ide,
+        project=project,
+        plugin_connected=bool(reply.get("ok")),
+    )
+    if vdisplay is not None and vdisplay.get("ok"):
+        return vdisplay, True
     imgl = _try_imgl_gui_fallback(
         prompt,
         submit=submit,
@@ -363,15 +374,6 @@ def _invoke_client_autopilot_drive(
     )
     if gillm is not None and gillm.get("ok"):
         return gillm, True
-    vdisplay = _try_vdisplay_control_fallback(
-        prompt,
-        submit=submit,
-        ide=autopilot_ide,
-        project=project,
-        plugin_connected=bool(reply.get("ok")),
-    )
-    if vdisplay is not None and vdisplay.get("ok"):
-        return vdisplay, True
     nlp2uri_focus = _try_nlp2uri_focus_fallback(prompt, submit=submit, ide=autopilot_ide)
     if nlp2uri_focus is not None and nlp2uri_focus.get("ok"):
         return nlp2uri_focus, True

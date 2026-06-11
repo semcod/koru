@@ -1,0 +1,38 @@
+{
+  "summary_visible_state": "Cursor IDE is active on DP-1 (2048x1280) with the 'vdisplay console' webview tab active, showing a local portal screencast loop. The bottom terminal is in ~/github/semcod/koru. Visible: planfile.yaml, run-dev-automation.sh, vdisplay code (cli_direct etc), dark #181818 theme, explorer sidebar, editor, terminal panels. Matches VQL 4 large regions + NL. Keeper capture_ready true (preflight), agent healthy.",
+  "recommended_actions": [
+    {
+      "priority": 1,
+      "action": "Add VQL metadata loader to koru vdisplay_client for click_center + data_locations driven decisions (use the 2026-06-11 analysis + future per-screenshot VQLs)",
+      "command": "python -c \"from koru.integrations.vdisplay_client import load_vql_metadata; m=load_vql_metadata(); print(m['ui_elements'][0]['click_center'])\"",
+      "code_change": "Add def load_vql_metadata(...) near top of src/koru/integrations/vdisplay_client.py ; use in _find_first_selector or verify to override bounds with VQL when available for --source DP-1",
+      "vql_use": "ui_elements[0].click_center + data_locations['png'] + decision_data for LLM prompt or direct control click on Cursor chat/editor visible in image"
+    },
+    {
+      "priority": 2,
+      "action": "Persist VQL+LLM decisions in .vdisplay session + update planfile with autonomy loop task; re-run dev script with real LLM",
+      "command": "vdisplay agent screencast probe --source DP-1; vdisplay screenshot -o /tmp/fresh-dp1.png --source DP-1",
+      "code_change": null,
+      "vql_use": "Load this VQL, feed to LLM via .env, drive send_chat or control on visible \"planfile\" or \"Chat\" tab"
+    },
+    {
+      "priority": 3,
+      "action": "Test vision control on current Cursor state (planfile or vdisplay console) using VQL coords as hint",
+      "command": "vdisplay control find --backend vision --vision-anchor \"planfile\" ; vdisplay control find --backend vision --vision-anchor \"Chat\" --source DP-1 || true",
+      "code_change": null,
+      "vql_use": "click_center 1024,640 as fallback/verify anchor for DP-1 frame"
+    }
+  ],
+  "planfile_task_suggestion": {
+    "id": "autonomy-vql-llm-001",
+    "title": "VQL + LLM desktop decision loop for full koru/vdisplay autonomy (observe via portal DP-1, decide with .env OpenRouter + VQL mouse/data, act via vdisplay_client + control)",
+    "handler": "echo \"=== VQL autonomy step ===\"; source .env; vdisplay agent preflight; vdisplay screenshot --source DP-1 -o /tmp/vdisplay-autonomy-$(date +%s).png; python -c \"from koru.integrations import vdisplay_client as vc; print(vc.vdisplay_available()); m=vc.load_vql_metadata() if hasattr(vc,'load_vql_metadata') else {}; print('VQL loaded click:', m.get('ui_elements',[{}])[0].get('click_center'))\"; # then LLM call + send_chat or control; update planfile status"
+  },
+  "blockers": [
+    "LLM prompt was long (image+VQL excerpt) -> truncated response; shorten future prompts or use smaller image",
+    "vdisplay CLI monitors does not accept --source (use screenshot/control with --source)",
+    "imgl not installed for full layers in .vql (rely on capture meta + external vision)"
+  ],
+  "llm_confidence": 0.75,
+  "note": "LLM response was truncated JSON (partial visible state); this decision synthesized from partial LLM + full VQL analysis + preflight (keeper capture_ready true, agent ok, screencast ready) + image visual description. Agent healthy + keeper ready = strong base for autonomy loop."
+}

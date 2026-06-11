@@ -1,0 +1,2462 @@
+{
+  "ok": true,
+  "path": "/tmp/koru-cont-dp1-1781195445.png",
+  "program": "ui.vql.json",
+  "element_count": 31,
+  "by_role": {
+    "window": 1,
+    "button": 24,
+    "toolbar": 1,
+    "panel": 4,
+    "titlebar": 1
+  },
+  "description": "Zrzut 2048×1280 px — wykryto 31 elementów UI (button=24, panel=4, titlebar=1, toolbar=1, window=1).\n- okno na środku: (0,0)–(2048,986), 2048×986 px, kolor #1B1B1B, pewność 90%\n- przycisk u góry: (1088,300)–(1350,384), 262×84 px, kolor #212628, pewność 68%\n- przycisk na dole: (1222,953)–(1344,985), 122×32 px, kolor #222222, pewność 68%\n- przycisk na dole po lewej: (492,870)–(608,902), 116×32 px, kolor #242524, pewność 68%\n- przycisk u góry: (1235,390)–(1331,428), 96×38 px, kolor #262D21, pewność 68%\n- przycisk na dole po prawej: (1401,1056)–(1510,1088), 109×32 px, kolor #414141, pewność 68%\n- przycisk na dole: (678,870)–(780,902), 102×32 px, kolor #2E2E2E, pewność 68%\n- przycisk u góry: (736,160)–(812,198), 76×38 px, kolor #2F2F2F, pewność 68%\n- przycisk na dole: (1030,1228)–(1113,1260), 83×32 px, kolor #471E3A, pewność 68%\n- przycisk na środku: (966,742)–(1068,768), 102×26 px, kolor #262D1F, pewność 68%\n- przycisk na dole po prawej: (1542,1062)–(1644,1088), 102×26 px, kolor #444444, pewność 68%\n- przycisk na środku: (1222,697)–(1318,723), 96×26 px, kolor #282828, pewność 68%\n- … i 19 więcej",
+  "elements": [
+    {
+      "id": "window_0",
+      "role": "window",
+      "bbox": [
+        0,
+        0,
+        2048,
+        986
+      ],
+      "bbox_norm": [
+        0.0,
+        0.0,
+        1.0,
+        0.771
+      ],
+      "center": [
+        1024.0,
+        493.0
+      ],
+      "width": 2048,
+      "height": 986,
+      "color": "#1B1B1B",
+      "confidence": 0.9,
+      "label": "window region 1",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.0,
+          0.0,
+          1.0,
+          0.771
+        ],
+        "area_ratio": 0.5486,
+        "source": "color_region"
+      }
+    },
+    {
+      "id": "button_41",
+      "role": "button",
+      "bbox": [
+        1088,
+        300,
+        1350,
+        384
+      ],
+      "bbox_norm": [
+        0.5312,
+        0.2344,
+        0.6592,
+        0.3
+      ],
+      "center": [
+        1219.0,
+        342.0
+      ],
+      "width": 262,
+      "height": 84,
+      "color": "#212628",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "top",
+      "metadata": {
+        "bbox_norm": [
+          0.5312,
+          0.2344,
+          0.6592,
+          0.3
+        ],
+        "aspect": 3.15,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_94",
+      "role": "button",
+      "bbox": [
+        1222,
+        953,
+        1344,
+        985
+      ],
+      "bbox_norm": [
+        0.5967,
+        0.7445,
+        0.6562,
+        0.7695
+      ],
+      "center": [
+        1283.0,
+        969.0
+      ],
+      "width": 122,
+      "height": 32,
+      "color": "#222222",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.5967,
+          0.7445,
+          0.6562,
+          0.7695
+        ],
+        "aspect": 3.8,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_80",
+      "role": "button",
+      "bbox": [
+        492,
+        870,
+        608,
+        902
+      ],
+      "bbox_norm": [
+        0.2402,
+        0.6797,
+        0.2969,
+        0.7047
+      ],
+      "center": [
+        550.0,
+        886.0
+      ],
+      "width": 116,
+      "height": 32,
+      "color": "#242524",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom-left",
+      "metadata": {
+        "bbox_norm": [
+          0.2402,
+          0.6797,
+          0.2969,
+          0.7047
+        ],
+        "aspect": 3.6,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_42",
+      "role": "button",
+      "bbox": [
+        1235,
+        390,
+        1331,
+        428
+      ],
+      "bbox_norm": [
+        0.603,
+        0.3047,
+        0.6499,
+        0.3344
+      ],
+      "center": [
+        1283.0,
+        409.0
+      ],
+      "width": 96,
+      "height": 38,
+      "color": "#262D21",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "top",
+      "metadata": {
+        "bbox_norm": [
+          0.603,
+          0.3047,
+          0.6499,
+          0.3344
+        ],
+        "aspect": 2.5,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_98",
+      "role": "button",
+      "bbox": [
+        1401,
+        1056,
+        1510,
+        1088
+      ],
+      "bbox_norm": [
+        0.6841,
+        0.825,
+        0.7373,
+        0.85
+      ],
+      "center": [
+        1455.5,
+        1072.0
+      ],
+      "width": 109,
+      "height": 32,
+      "color": "#414141",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom-right",
+      "metadata": {
+        "bbox_norm": [
+          0.6841,
+          0.825,
+          0.7373,
+          0.85
+        ],
+        "aspect": 3.4,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_81",
+      "role": "button",
+      "bbox": [
+        678,
+        870,
+        780,
+        902
+      ],
+      "bbox_norm": [
+        0.3311,
+        0.6797,
+        0.3809,
+        0.7047
+      ],
+      "center": [
+        729.0,
+        886.0
+      ],
+      "width": 102,
+      "height": 32,
+      "color": "#2E2E2E",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.3311,
+          0.6797,
+          0.3809,
+          0.7047
+        ],
+        "aspect": 3.2,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_13",
+      "role": "button",
+      "bbox": [
+        736,
+        160,
+        812,
+        198
+      ],
+      "bbox_norm": [
+        0.3594,
+        0.125,
+        0.3965,
+        0.1547
+      ],
+      "center": [
+        774.0,
+        179.0
+      ],
+      "width": 76,
+      "height": 38,
+      "color": "#2F2F2F",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "top",
+      "metadata": {
+        "bbox_norm": [
+          0.3594,
+          0.125,
+          0.3965,
+          0.1547
+        ],
+        "aspect": 2.0,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_102",
+      "role": "button",
+      "bbox": [
+        1030,
+        1228,
+        1113,
+        1260
+      ],
+      "bbox_norm": [
+        0.5029,
+        0.9594,
+        0.5435,
+        0.9844
+      ],
+      "center": [
+        1071.5,
+        1244.0
+      ],
+      "width": 83,
+      "height": 32,
+      "color": "#471E3A",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.5029,
+          0.9594,
+          0.5435,
+          0.9844
+        ],
+        "aspect": 2.6,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_68",
+      "role": "button",
+      "bbox": [
+        966,
+        742,
+        1068,
+        768
+      ],
+      "bbox_norm": [
+        0.4717,
+        0.5797,
+        0.5215,
+        0.6
+      ],
+      "center": [
+        1017.0,
+        755.0
+      ],
+      "width": 102,
+      "height": 26,
+      "color": "#262D1F",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.4717,
+          0.5797,
+          0.5215,
+          0.6
+        ],
+        "aspect": 4.0,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_99",
+      "role": "button",
+      "bbox": [
+        1542,
+        1062,
+        1644,
+        1088
+      ],
+      "bbox_norm": [
+        0.7529,
+        0.8297,
+        0.8027,
+        0.85
+      ],
+      "center": [
+        1593.0,
+        1075.0
+      ],
+      "width": 102,
+      "height": 26,
+      "color": "#444444",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom-right",
+      "metadata": {
+        "bbox_norm": [
+          0.7529,
+          0.8297,
+          0.8027,
+          0.85
+        ],
+        "aspect": 4.0,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_61",
+      "role": "button",
+      "bbox": [
+        1222,
+        697,
+        1318,
+        723
+      ],
+      "bbox_norm": [
+        0.5967,
+        0.5445,
+        0.6436,
+        0.5648
+      ],
+      "center": [
+        1270.0,
+        710.0
+      ],
+      "width": 96,
+      "height": 26,
+      "color": "#282828",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.5967,
+          0.5445,
+          0.6436,
+          0.5648
+        ],
+        "aspect": 3.75,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_83",
+      "role": "button",
+      "bbox": [
+        1145,
+        870,
+        1222,
+        902
+      ],
+      "bbox_norm": [
+        0.5591,
+        0.6797,
+        0.5967,
+        0.7047
+      ],
+      "center": [
+        1183.5,
+        886.0
+      ],
+      "width": 77,
+      "height": 32,
+      "color": "#282827",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.5591,
+          0.6797,
+          0.5967,
+          0.7047
+        ],
+        "aspect": 2.4,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_82",
+      "role": "button",
+      "bbox": [
+        928,
+        870,
+        1004,
+        902
+      ],
+      "bbox_norm": [
+        0.4531,
+        0.6797,
+        0.4902,
+        0.7047
+      ],
+      "center": [
+        966.0,
+        886.0
+      ],
+      "width": 76,
+      "height": 32,
+      "color": "#2A2A2A",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.4531,
+          0.6797,
+          0.4902,
+          0.7047
+        ],
+        "aspect": 2.4,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_60",
+      "role": "button",
+      "bbox": [
+        1177,
+        697,
+        1267,
+        723
+      ],
+      "bbox_norm": [
+        0.5747,
+        0.5445,
+        0.6187,
+        0.5648
+      ],
+      "center": [
+        1222.0,
+        710.0
+      ],
+      "width": 90,
+      "height": 26,
+      "color": "#2C2D2D",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.5747,
+          0.5445,
+          0.6187,
+          0.5648
+        ],
+        "aspect": 3.5,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_14",
+      "role": "button",
+      "bbox": [
+        486,
+        166,
+        556,
+        198
+      ],
+      "bbox_norm": [
+        0.2373,
+        0.1297,
+        0.2715,
+        0.1547
+      ],
+      "center": [
+        521.0,
+        182.0
+      ],
+      "width": 70,
+      "height": 32,
+      "color": "#2D2D2D",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "top-left",
+      "metadata": {
+        "bbox_norm": [
+          0.2373,
+          0.1297,
+          0.2715,
+          0.1547
+        ],
+        "aspect": 2.2,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_15",
+      "role": "button",
+      "bbox": [
+        396,
+        172,
+        480,
+        198
+      ],
+      "bbox_norm": [
+        0.1934,
+        0.1344,
+        0.2344,
+        0.1547
+      ],
+      "center": [
+        438.0,
+        185.0
+      ],
+      "width": 84,
+      "height": 26,
+      "color": "#2C2D2D",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "top-left",
+      "metadata": {
+        "bbox_norm": [
+          0.1934,
+          0.1344,
+          0.2344,
+          0.1547
+        ],
+        "aspect": 3.25,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_50",
+      "role": "button",
+      "bbox": [
+        716,
+        588,
+        800,
+        614
+      ],
+      "bbox_norm": [
+        0.3496,
+        0.4594,
+        0.3906,
+        0.4797
+      ],
+      "center": [
+        758.0,
+        601.0
+      ],
+      "width": 84,
+      "height": 26,
+      "color": "#232323",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.3496,
+          0.4594,
+          0.3906,
+          0.4797
+        ],
+        "aspect": 3.25,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_67",
+      "role": "button",
+      "bbox": [
+        876,
+        742,
+        960,
+        768
+      ],
+      "bbox_norm": [
+        0.4277,
+        0.5797,
+        0.4688,
+        0.6
+      ],
+      "center": [
+        918.0,
+        755.0
+      ],
+      "width": 84,
+      "height": 26,
+      "color": "#22281D",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.4277,
+          0.5797,
+          0.4688,
+          0.6
+        ],
+        "aspect": 3.25,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_97",
+      "role": "button",
+      "bbox": [
+        1369,
+        1004,
+        1452,
+        1030
+      ],
+      "bbox_norm": [
+        0.6685,
+        0.7844,
+        0.709,
+        0.8047
+      ],
+      "center": [
+        1410.5,
+        1017.0
+      ],
+      "width": 83,
+      "height": 26,
+      "color": "#464646",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom-right",
+      "metadata": {
+        "bbox_norm": [
+          0.6685,
+          0.7844,
+          0.709,
+          0.8047
+        ],
+        "aspect": 3.25,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_37",
+      "role": "button",
+      "bbox": [
+        345,
+        300,
+        409,
+        332
+      ],
+      "bbox_norm": [
+        0.1685,
+        0.2344,
+        0.1997,
+        0.2594
+      ],
+      "center": [
+        377.0,
+        316.0
+      ],
+      "width": 64,
+      "height": 32,
+      "color": "#292B2C",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "top-left",
+      "metadata": {
+        "bbox_norm": [
+          0.1685,
+          0.2344,
+          0.1997,
+          0.2594
+        ],
+        "aspect": 2.0,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_52",
+      "role": "button",
+      "bbox": [
+        921,
+        588,
+        998,
+        614
+      ],
+      "bbox_norm": [
+        0.4497,
+        0.4594,
+        0.4873,
+        0.4797
+      ],
+      "center": [
+        959.5,
+        601.0
+      ],
+      "width": 77,
+      "height": 26,
+      "color": "#212121",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.4497,
+          0.4594,
+          0.4873,
+          0.4797
+        ],
+        "aspect": 3.0,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_100",
+      "role": "button",
+      "bbox": [
+        1651,
+        1062,
+        1728,
+        1088
+      ],
+      "bbox_norm": [
+        0.8062,
+        0.8297,
+        0.8438,
+        0.85
+      ],
+      "center": [
+        1689.5,
+        1075.0
+      ],
+      "width": 77,
+      "height": 26,
+      "color": "#444444",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom-right",
+      "metadata": {
+        "bbox_norm": [
+          0.8062,
+          0.8297,
+          0.8438,
+          0.85
+        ],
+        "aspect": 3.0,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_54",
+      "role": "button",
+      "bbox": [
+        1062,
+        588,
+        1126,
+        614
+      ],
+      "bbox_norm": [
+        0.5186,
+        0.4594,
+        0.5498,
+        0.4797
+      ],
+      "center": [
+        1094.0,
+        601.0
+      ],
+      "width": 64,
+      "height": 26,
+      "color": "#212121",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.5186,
+          0.4594,
+          0.5498,
+          0.4797
+        ],
+        "aspect": 2.5,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "button_93",
+      "role": "button",
+      "bbox": [
+        12,
+        953,
+        64,
+        985
+      ],
+      "bbox_norm": [
+        0.0059,
+        0.7445,
+        0.0312,
+        0.7695
+      ],
+      "center": [
+        38.0,
+        969.0
+      ],
+      "width": 52,
+      "height": 32,
+      "color": "#404040",
+      "confidence": 0.68,
+      "label": "button",
+      "location": "bottom-left",
+      "metadata": {
+        "bbox_norm": [
+          0.0059,
+          0.7445,
+          0.0312,
+          0.7695
+        ],
+        "aspect": 1.6,
+        "source": "contrast_blob"
+      }
+    },
+    {
+      "id": "toolbar_0",
+      "role": "toolbar",
+      "bbox": [
+        492,
+        870,
+        1222,
+        902
+      ],
+      "bbox_norm": [
+        0.2402,
+        0.6797,
+        0.5967,
+        0.7047
+      ],
+      "center": [
+        857.0,
+        886.0
+      ],
+      "width": 730,
+      "height": 32,
+      "color": "#888888",
+      "confidence": 0.6,
+      "label": "toolbar (4 controls)",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.2402,
+          0.6797,
+          0.5967,
+          0.7047
+        ],
+        "button_count": 4,
+        "source": "button_row"
+      }
+    },
+    {
+      "id": "panel_1",
+      "role": "panel",
+      "bbox": [
+        256,
+        1093,
+        2048,
+        1280
+      ],
+      "bbox_norm": [
+        0.125,
+        0.854,
+        1.0,
+        1.0
+      ],
+      "center": [
+        1152.0,
+        1186.5
+      ],
+      "width": 1792,
+      "height": 187,
+      "color": "#3D122F",
+      "confidence": 0.592,
+      "label": "panel region 2",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.125,
+          0.854,
+          1.0,
+          1.0
+        ],
+        "area_ratio": 0.092,
+        "source": "color_region"
+      }
+    },
+    {
+      "id": "panel_2",
+      "role": "panel",
+      "bbox": [
+        0,
+        906,
+        2048,
+        1120
+      ],
+      "bbox_norm": [
+        0.0,
+        0.708,
+        1.0,
+        0.875
+      ],
+      "center": [
+        1024.0,
+        1013.0
+      ],
+      "width": 2048,
+      "height": 214,
+      "color": "#282426",
+      "confidence": 0.581,
+      "label": "panel region 3",
+      "location": "bottom",
+      "metadata": {
+        "bbox_norm": [
+          0.0,
+          0.708,
+          1.0,
+          0.875
+        ],
+        "area_ratio": 0.0807,
+        "source": "color_region"
+      }
+    },
+    {
+      "id": "panel_3",
+      "role": "panel",
+      "bbox": [
+        385,
+        320,
+        1323,
+        560
+      ],
+      "bbox_norm": [
+        0.188,
+        0.25,
+        0.646,
+        0.438
+      ],
+      "center": [
+        854.0,
+        440.0
+      ],
+      "width": 938,
+      "height": 240,
+      "color": "#242825",
+      "confidence": 0.555,
+      "label": "panel region 4",
+      "location": "center",
+      "metadata": {
+        "bbox_norm": [
+          0.188,
+          0.25,
+          0.646,
+          0.438
+        ],
+        "area_ratio": 0.0551,
+        "source": "color_region"
+      }
+    },
+    {
+      "id": "titlebar_0",
+      "role": "titlebar",
+      "bbox": [
+        0,
+        0,
+        2048,
+        57
+      ],
+      "bbox_norm": [
+        0.0,
+        0.0,
+        1.0,
+        0.0445
+      ],
+      "center": [
+        1024.0,
+        28.5
+      ],
+      "width": 2048,
+      "height": 57,
+      "color": "#242424",
+      "confidence": 0.55,
+      "label": "window title bar",
+      "location": "top",
+      "metadata": {
+        "bbox_norm": [
+          0.0,
+          0.0,
+          1.0,
+          0.0445
+        ],
+        "source": "titlebar_band"
+      }
+    },
+    {
+      "id": "panel_4",
+      "role": "panel",
+      "bbox": [
+        342,
+        160,
+        1323,
+        320
+      ],
+      "bbox_norm": [
+        0.167,
+        0.125,
+        0.646,
+        0.25
+      ],
+      "center": [
+        832.5,
+        240.0
+      ],
+      "width": 981,
+      "height": 160,
+      "color": "#222323",
+      "confidence": 0.532,
+      "label": "panel region 5",
+      "location": "top",
+      "metadata": {
+        "bbox_norm": [
+          0.167,
+          0.125,
+          0.646,
+          0.25
+        ],
+        "area_ratio": 0.0317,
+        "source": "color_region"
+      }
+    }
+  ],
+  "object_count": 31,
+  "scene": {
+    "width": 2048.0,
+    "height": 1280.0
+  },
+  "fingerprint": {
+    "available": true,
+    "phash": "c101f634649f69b7",
+    "dhash": "c2c2d2c2d2924804",
+    "whash": "7b7878380002fffa"
+  },
+  "special_hits": {
+    "has_qr": false,
+    "has_text": true,
+    "barcode_count": 0,
+    "ocr_preview": "x @o0A0 > 3 tom@nvidia:"
+  },
+  "scene_class": "general",
+  "llm_hint": {
+    "send_to_llm": true,
+    "confidence": 1.0,
+    "reasons": [
+      "rich_palette",
+      "textured_noise",
+      "large_regions",
+      "multiple_regions",
+      "text_likelihood"
+    ],
+    "recommendation": "send"
+  },
+  "metadata": {
+    "capture": {
+      "display": ":0",
+      "source": "DP-1",
+      "monitor": 1,
+      "method": "portal-screencast+stream",
+      "target": null,
+      "screencast_nodes": [
+        100,
+        126,
+        119
+      ],
+      "screencast_stream_index": 0,
+      "screencast_multi_stream": true,
+      "region": {
+        "x": 0,
+        "y": 652,
+        "width": 2048,
+        "height": 1280
+      },
+      "screencast_stream": true,
+      "monitor_name": "DP-1",
+      "path": "/tmp/koru-cont-dp1-1781195445.png",
+      "bytes": 322884,
+      "width": 2048,
+      "height": 1280,
+      "ok": true,
+      "mode": "host",
+      "img2nl": {
+        "ok": true,
+        "text": "Zrzut 2048×1280 px — wykryto 31 elementów UI (button=24, panel=4, titlebar=1, toolbar=1, window=1).\n- okno na środku: (0,0)–(2048,986), 2048×986 px, kolor #1B1B1B, pewność 90%\n- przycisk u góry: (1088,300)–(1350,384), 262×84 px, kolor #212628, pewność 68%\n- przycisk na dole: (1222,953)–(1344,985), 122×32 px, kolor #222222, pewność 68%\n- przycisk na dole po lewej: (492,870)–(608,902), 116×32 px, kolor #242524, pewność 68%\n- przycisk u góry: (1235,390)–(1331,428), 96×38 px, kolor #262D21, pewność 68%\n- przycisk na dole po prawej: (1401,1056)–(1510,1088), 109×32 px, kolor #414141, pewność 68%\n- przycisk na dole: (678,870)–(780,902), 102×32 px, kolor #2E2E2E, pewność 68%\n- przycisk u góry: (736,160)–(812,198), 76×38 px, kolor #2F2F2F, pewność 68%\n- przycisk na dole: (1030,1228)–(1113,1260), 83×32 px, kolor #471E3A, pewność 68%\n- przycisk na środku: (966,742)–(1068,768), 102×26 px, kolor #262D1F, pewność 68%\n- przycisk na dole po prawej: (1542,1062)–(1644,1088), 102×26 px, kolor #444444, pewność 68%\n- przycisk na środku: (1222,697)–(1318,723), 96×26 px, kolor #282828, pewność 68%\n- … i 19 więcej",
+        "locale": "pl",
+        "scene_class": "vql_detection",
+        "source": "img2vql",
+        "metadata": {
+          "detection": {
+            "ok": true,
+            "path": "/tmp/koru-cont-dp1-1781195445.png",
+            "width": 2048,
+            "height": 1280,
+            "element_count": 31,
+            "by_role": {
+              "window": 1,
+              "button": 24,
+              "toolbar": 1,
+              "panel": 4,
+              "titlebar": 1
+            },
+            "elements": [
+              {
+                "id": "window_0",
+                "role": "window",
+                "bbox": [
+                  0,
+                  0,
+                  2048,
+                  986
+                ],
+                "bbox_norm": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.771
+                ],
+                "center": [
+                  1024.0,
+                  493.0
+                ],
+                "width": 2048,
+                "height": 986,
+                "color": "#1B1B1B",
+                "confidence": 0.9,
+                "label": "window region 1",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.771
+                  ],
+                  "area_ratio": 0.5486,
+                  "source": "color_region"
+                }
+              },
+              {
+                "id": "button_41",
+                "role": "button",
+                "bbox": [
+                  1088,
+                  300,
+                  1350,
+                  384
+                ],
+                "bbox_norm": [
+                  0.5312,
+                  0.2344,
+                  0.6592,
+                  0.3
+                ],
+                "center": [
+                  1219.0,
+                  342.0
+                ],
+                "width": 262,
+                "height": 84,
+                "color": "#212628",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "top",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5312,
+                    0.2344,
+                    0.6592,
+                    0.3
+                  ],
+                  "aspect": 3.15,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_94",
+                "role": "button",
+                "bbox": [
+                  1222,
+                  953,
+                  1344,
+                  985
+                ],
+                "bbox_norm": [
+                  0.5967,
+                  0.7445,
+                  0.6562,
+                  0.7695
+                ],
+                "center": [
+                  1283.0,
+                  969.0
+                ],
+                "width": 122,
+                "height": 32,
+                "color": "#222222",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5967,
+                    0.7445,
+                    0.6562,
+                    0.7695
+                  ],
+                  "aspect": 3.8,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_80",
+                "role": "button",
+                "bbox": [
+                  492,
+                  870,
+                  608,
+                  902
+                ],
+                "bbox_norm": [
+                  0.2402,
+                  0.6797,
+                  0.2969,
+                  0.7047
+                ],
+                "center": [
+                  550.0,
+                  886.0
+                ],
+                "width": 116,
+                "height": 32,
+                "color": "#242524",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom-left",
+                "metadata": {
+                  "bbox_norm": [
+                    0.2402,
+                    0.6797,
+                    0.2969,
+                    0.7047
+                  ],
+                  "aspect": 3.6,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_42",
+                "role": "button",
+                "bbox": [
+                  1235,
+                  390,
+                  1331,
+                  428
+                ],
+                "bbox_norm": [
+                  0.603,
+                  0.3047,
+                  0.6499,
+                  0.3344
+                ],
+                "center": [
+                  1283.0,
+                  409.0
+                ],
+                "width": 96,
+                "height": 38,
+                "color": "#262D21",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "top",
+                "metadata": {
+                  "bbox_norm": [
+                    0.603,
+                    0.3047,
+                    0.6499,
+                    0.3344
+                  ],
+                  "aspect": 2.5,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_98",
+                "role": "button",
+                "bbox": [
+                  1401,
+                  1056,
+                  1510,
+                  1088
+                ],
+                "bbox_norm": [
+                  0.6841,
+                  0.825,
+                  0.7373,
+                  0.85
+                ],
+                "center": [
+                  1455.5,
+                  1072.0
+                ],
+                "width": 109,
+                "height": 32,
+                "color": "#414141",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom-right",
+                "metadata": {
+                  "bbox_norm": [
+                    0.6841,
+                    0.825,
+                    0.7373,
+                    0.85
+                  ],
+                  "aspect": 3.4,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_81",
+                "role": "button",
+                "bbox": [
+                  678,
+                  870,
+                  780,
+                  902
+                ],
+                "bbox_norm": [
+                  0.3311,
+                  0.6797,
+                  0.3809,
+                  0.7047
+                ],
+                "center": [
+                  729.0,
+                  886.0
+                ],
+                "width": 102,
+                "height": 32,
+                "color": "#2E2E2E",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.3311,
+                    0.6797,
+                    0.3809,
+                    0.7047
+                  ],
+                  "aspect": 3.2,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_13",
+                "role": "button",
+                "bbox": [
+                  736,
+                  160,
+                  812,
+                  198
+                ],
+                "bbox_norm": [
+                  0.3594,
+                  0.125,
+                  0.3965,
+                  0.1547
+                ],
+                "center": [
+                  774.0,
+                  179.0
+                ],
+                "width": 76,
+                "height": 38,
+                "color": "#2F2F2F",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "top",
+                "metadata": {
+                  "bbox_norm": [
+                    0.3594,
+                    0.125,
+                    0.3965,
+                    0.1547
+                  ],
+                  "aspect": 2.0,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_102",
+                "role": "button",
+                "bbox": [
+                  1030,
+                  1228,
+                  1113,
+                  1260
+                ],
+                "bbox_norm": [
+                  0.5029,
+                  0.9594,
+                  0.5435,
+                  0.9844
+                ],
+                "center": [
+                  1071.5,
+                  1244.0
+                ],
+                "width": 83,
+                "height": 32,
+                "color": "#471E3A",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5029,
+                    0.9594,
+                    0.5435,
+                    0.9844
+                  ],
+                  "aspect": 2.6,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_68",
+                "role": "button",
+                "bbox": [
+                  966,
+                  742,
+                  1068,
+                  768
+                ],
+                "bbox_norm": [
+                  0.4717,
+                  0.5797,
+                  0.5215,
+                  0.6
+                ],
+                "center": [
+                  1017.0,
+                  755.0
+                ],
+                "width": 102,
+                "height": 26,
+                "color": "#262D1F",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.4717,
+                    0.5797,
+                    0.5215,
+                    0.6
+                  ],
+                  "aspect": 4.0,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_99",
+                "role": "button",
+                "bbox": [
+                  1542,
+                  1062,
+                  1644,
+                  1088
+                ],
+                "bbox_norm": [
+                  0.7529,
+                  0.8297,
+                  0.8027,
+                  0.85
+                ],
+                "center": [
+                  1593.0,
+                  1075.0
+                ],
+                "width": 102,
+                "height": 26,
+                "color": "#444444",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom-right",
+                "metadata": {
+                  "bbox_norm": [
+                    0.7529,
+                    0.8297,
+                    0.8027,
+                    0.85
+                  ],
+                  "aspect": 4.0,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_61",
+                "role": "button",
+                "bbox": [
+                  1222,
+                  697,
+                  1318,
+                  723
+                ],
+                "bbox_norm": [
+                  0.5967,
+                  0.5445,
+                  0.6436,
+                  0.5648
+                ],
+                "center": [
+                  1270.0,
+                  710.0
+                ],
+                "width": 96,
+                "height": 26,
+                "color": "#282828",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5967,
+                    0.5445,
+                    0.6436,
+                    0.5648
+                  ],
+                  "aspect": 3.75,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_83",
+                "role": "button",
+                "bbox": [
+                  1145,
+                  870,
+                  1222,
+                  902
+                ],
+                "bbox_norm": [
+                  0.5591,
+                  0.6797,
+                  0.5967,
+                  0.7047
+                ],
+                "center": [
+                  1183.5,
+                  886.0
+                ],
+                "width": 77,
+                "height": 32,
+                "color": "#282827",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5591,
+                    0.6797,
+                    0.5967,
+                    0.7047
+                  ],
+                  "aspect": 2.4,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_82",
+                "role": "button",
+                "bbox": [
+                  928,
+                  870,
+                  1004,
+                  902
+                ],
+                "bbox_norm": [
+                  0.4531,
+                  0.6797,
+                  0.4902,
+                  0.7047
+                ],
+                "center": [
+                  966.0,
+                  886.0
+                ],
+                "width": 76,
+                "height": 32,
+                "color": "#2A2A2A",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.4531,
+                    0.6797,
+                    0.4902,
+                    0.7047
+                  ],
+                  "aspect": 2.4,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_60",
+                "role": "button",
+                "bbox": [
+                  1177,
+                  697,
+                  1267,
+                  723
+                ],
+                "bbox_norm": [
+                  0.5747,
+                  0.5445,
+                  0.6187,
+                  0.5648
+                ],
+                "center": [
+                  1222.0,
+                  710.0
+                ],
+                "width": 90,
+                "height": 26,
+                "color": "#2C2D2D",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5747,
+                    0.5445,
+                    0.6187,
+                    0.5648
+                  ],
+                  "aspect": 3.5,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_14",
+                "role": "button",
+                "bbox": [
+                  486,
+                  166,
+                  556,
+                  198
+                ],
+                "bbox_norm": [
+                  0.2373,
+                  0.1297,
+                  0.2715,
+                  0.1547
+                ],
+                "center": [
+                  521.0,
+                  182.0
+                ],
+                "width": 70,
+                "height": 32,
+                "color": "#2D2D2D",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "top-left",
+                "metadata": {
+                  "bbox_norm": [
+                    0.2373,
+                    0.1297,
+                    0.2715,
+                    0.1547
+                  ],
+                  "aspect": 2.2,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_15",
+                "role": "button",
+                "bbox": [
+                  396,
+                  172,
+                  480,
+                  198
+                ],
+                "bbox_norm": [
+                  0.1934,
+                  0.1344,
+                  0.2344,
+                  0.1547
+                ],
+                "center": [
+                  438.0,
+                  185.0
+                ],
+                "width": 84,
+                "height": 26,
+                "color": "#2C2D2D",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "top-left",
+                "metadata": {
+                  "bbox_norm": [
+                    0.1934,
+                    0.1344,
+                    0.2344,
+                    0.1547
+                  ],
+                  "aspect": 3.25,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_50",
+                "role": "button",
+                "bbox": [
+                  716,
+                  588,
+                  800,
+                  614
+                ],
+                "bbox_norm": [
+                  0.3496,
+                  0.4594,
+                  0.3906,
+                  0.4797
+                ],
+                "center": [
+                  758.0,
+                  601.0
+                ],
+                "width": 84,
+                "height": 26,
+                "color": "#232323",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.3496,
+                    0.4594,
+                    0.3906,
+                    0.4797
+                  ],
+                  "aspect": 3.25,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_67",
+                "role": "button",
+                "bbox": [
+                  876,
+                  742,
+                  960,
+                  768
+                ],
+                "bbox_norm": [
+                  0.4277,
+                  0.5797,
+                  0.4688,
+                  0.6
+                ],
+                "center": [
+                  918.0,
+                  755.0
+                ],
+                "width": 84,
+                "height": 26,
+                "color": "#22281D",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.4277,
+                    0.5797,
+                    0.4688,
+                    0.6
+                  ],
+                  "aspect": 3.25,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_97",
+                "role": "button",
+                "bbox": [
+                  1369,
+                  1004,
+                  1452,
+                  1030
+                ],
+                "bbox_norm": [
+                  0.6685,
+                  0.7844,
+                  0.709,
+                  0.8047
+                ],
+                "center": [
+                  1410.5,
+                  1017.0
+                ],
+                "width": 83,
+                "height": 26,
+                "color": "#464646",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom-right",
+                "metadata": {
+                  "bbox_norm": [
+                    0.6685,
+                    0.7844,
+                    0.709,
+                    0.8047
+                  ],
+                  "aspect": 3.25,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_37",
+                "role": "button",
+                "bbox": [
+                  345,
+                  300,
+                  409,
+                  332
+                ],
+                "bbox_norm": [
+                  0.1685,
+                  0.2344,
+                  0.1997,
+                  0.2594
+                ],
+                "center": [
+                  377.0,
+                  316.0
+                ],
+                "width": 64,
+                "height": 32,
+                "color": "#292B2C",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "top-left",
+                "metadata": {
+                  "bbox_norm": [
+                    0.1685,
+                    0.2344,
+                    0.1997,
+                    0.2594
+                  ],
+                  "aspect": 2.0,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_52",
+                "role": "button",
+                "bbox": [
+                  921,
+                  588,
+                  998,
+                  614
+                ],
+                "bbox_norm": [
+                  0.4497,
+                  0.4594,
+                  0.4873,
+                  0.4797
+                ],
+                "center": [
+                  959.5,
+                  601.0
+                ],
+                "width": 77,
+                "height": 26,
+                "color": "#212121",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.4497,
+                    0.4594,
+                    0.4873,
+                    0.4797
+                  ],
+                  "aspect": 3.0,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_100",
+                "role": "button",
+                "bbox": [
+                  1651,
+                  1062,
+                  1728,
+                  1088
+                ],
+                "bbox_norm": [
+                  0.8062,
+                  0.8297,
+                  0.8438,
+                  0.85
+                ],
+                "center": [
+                  1689.5,
+                  1075.0
+                ],
+                "width": 77,
+                "height": 26,
+                "color": "#444444",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom-right",
+                "metadata": {
+                  "bbox_norm": [
+                    0.8062,
+                    0.8297,
+                    0.8438,
+                    0.85
+                  ],
+                  "aspect": 3.0,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_54",
+                "role": "button",
+                "bbox": [
+                  1062,
+                  588,
+                  1126,
+                  614
+                ],
+                "bbox_norm": [
+                  0.5186,
+                  0.4594,
+                  0.5498,
+                  0.4797
+                ],
+                "center": [
+                  1094.0,
+                  601.0
+                ],
+                "width": 64,
+                "height": 26,
+                "color": "#212121",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.5186,
+                    0.4594,
+                    0.5498,
+                    0.4797
+                  ],
+                  "aspect": 2.5,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "button_93",
+                "role": "button",
+                "bbox": [
+                  12,
+                  953,
+                  64,
+                  985
+                ],
+                "bbox_norm": [
+                  0.0059,
+                  0.7445,
+                  0.0312,
+                  0.7695
+                ],
+                "center": [
+                  38.0,
+                  969.0
+                ],
+                "width": 52,
+                "height": 32,
+                "color": "#404040",
+                "confidence": 0.68,
+                "label": "button",
+                "location": "bottom-left",
+                "metadata": {
+                  "bbox_norm": [
+                    0.0059,
+                    0.7445,
+                    0.0312,
+                    0.7695
+                  ],
+                  "aspect": 1.6,
+                  "source": "contrast_blob"
+                }
+              },
+              {
+                "id": "toolbar_0",
+                "role": "toolbar",
+                "bbox": [
+                  492,
+                  870,
+                  1222,
+                  902
+                ],
+                "bbox_norm": [
+                  0.2402,
+                  0.6797,
+                  0.5967,
+                  0.7047
+                ],
+                "center": [
+                  857.0,
+                  886.0
+                ],
+                "width": 730,
+                "height": 32,
+                "color": "#888888",
+                "confidence": 0.6,
+                "label": "toolbar (4 controls)",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.2402,
+                    0.6797,
+                    0.5967,
+                    0.7047
+                  ],
+                  "button_count": 4,
+                  "source": "button_row"
+                }
+              },
+              {
+                "id": "panel_1",
+                "role": "panel",
+                "bbox": [
+                  256,
+                  1093,
+                  2048,
+                  1280
+                ],
+                "bbox_norm": [
+                  0.125,
+                  0.854,
+                  1.0,
+                  1.0
+                ],
+                "center": [
+                  1152.0,
+                  1186.5
+                ],
+                "width": 1792,
+                "height": 187,
+                "color": "#3D122F",
+                "confidence": 0.592,
+                "label": "panel region 2",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.125,
+                    0.854,
+                    1.0,
+                    1.0
+                  ],
+                  "area_ratio": 0.092,
+                  "source": "color_region"
+                }
+              },
+              {
+                "id": "panel_2",
+                "role": "panel",
+                "bbox": [
+                  0,
+                  906,
+                  2048,
+                  1120
+                ],
+                "bbox_norm": [
+                  0.0,
+                  0.708,
+                  1.0,
+                  0.875
+                ],
+                "center": [
+                  1024.0,
+                  1013.0
+                ],
+                "width": 2048,
+                "height": 214,
+                "color": "#282426",
+                "confidence": 0.581,
+                "label": "panel region 3",
+                "location": "bottom",
+                "metadata": {
+                  "bbox_norm": [
+                    0.0,
+                    0.708,
+                    1.0,
+                    0.875
+                  ],
+                  "area_ratio": 0.0807,
+                  "source": "color_region"
+                }
+              },
+              {
+                "id": "panel_3",
+                "role": "panel",
+                "bbox": [
+                  385,
+                  320,
+                  1323,
+                  560
+                ],
+                "bbox_norm": [
+                  0.188,
+                  0.25,
+                  0.646,
+                  0.438
+                ],
+                "center": [
+                  854.0,
+                  440.0
+                ],
+                "width": 938,
+                "height": 240,
+                "color": "#242825",
+                "confidence": 0.555,
+                "label": "panel region 4",
+                "location": "center",
+                "metadata": {
+                  "bbox_norm": [
+                    0.188,
+                    0.25,
+                    0.646,
+                    0.438
+                  ],
+                  "area_ratio": 0.0551,
+                  "source": "color_region"
+                }
+              },
+              {
+                "id": "titlebar_0",
+                "role": "titlebar",
+                "bbox": [
+                  0,
+                  0,
+                  2048,
+                  57
+                ],
+                "bbox_norm": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0445
+                ],
+                "center": [
+                  1024.0,
+                  28.5
+                ],
+                "width": 2048,
+                "height": 57,
+                "color": "#242424",
+                "confidence": 0.55,
+                "label": "window title bar",
+                "location": "top",
+                "metadata": {
+                  "bbox_norm": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0445
+                  ],
+                  "source": "titlebar_band"
+                }
+              },
+              {
+                "id": "panel_4",
+                "role": "panel",
+                "bbox": [
+                  342,
+                  160,
+                  1323,
+                  320
+                ],
+                "bbox_norm": [
+                  0.167,
+                  0.125,
+                  0.646,
+                  0.25
+                ],
+                "center": [
+                  832.5,
+                  240.0
+                ],
+                "width": 981,
+                "height": 160,
+                "color": "#222323",
+                "confidence": 0.532,
+                "label": "panel region 5",
+                "location": "top",
+                "metadata": {
+                  "bbox_norm": [
+                    0.167,
+                    0.125,
+                    0.646,
+                    0.25
+                  ],
+                  "area_ratio": 0.0317,
+                  "source": "color_region"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "nl": "Zrzut 2048×1280 px — wykryto 31 elementów UI (button=24, panel=4, titlebar=1, toolbar=1, window=1).\n- okno na środku: (0,0)–(2048,986), 2048×986 px, kolor #1B1B1B, pewność 90%\n- przycisk u góry: (1088,300)–(1350,384), 262×84 px, kolor #212628, pewność 68%\n- przycisk na dole: (1222,953)–(1344,985), 122×32 px, kolor #222222, pewność 68%\n- przycisk na dole po lewej: (492,870)–(608,902), 116×32 px, kolor #242524, pewność 68%\n- przycisk u góry: (1235,390)–(1331,428), 96×38 px, kolor #262D21, pewność 68%\n- przycisk na dole po prawej: (1401,1056)–(1510,1088), 109×32 px, kolor #414141, pewność 68%\n- przycisk na dole: (678,870)–(780,902), 102×32 px, kolor #2E2E2E, pewność 68%\n- przycisk u góry: (736,160)–(812,198), 76×38 px, kolor #2F2F2F, pewność 68%\n- przycisk na dole: (1030,1228)–(1113,1260), 83×32 px, kolor #471E3A, pewność 68%\n- przycisk na środku: (966,742)–(1068,768), 102×26 px, kolor #262D1F, pewność 68%\n- przycisk na dole po prawej: (1542,1062)–(1644,1088), 102×26 px, kolor #444444, pewność 68%\n- przycisk na środku: (1222,697)–(1318,723), 96×26 px, kolor #282828, pewność 68%\n- … i 19 więcej",
+      "fingerprint": "1d6709128eb50f23"
+    },
+    "environment": {
+      "capture": {
+        "display": ":0",
+        "monitor": 1,
+        "source": "DP-1",
+        "method": "portal-screencast+stream"
+      },
+      "display": ":0",
+      "monitors": [
+        {
+          "name": "HDMI-1",
+          "connected": true,
+          "primary": true,
+          "geometry": "4096x2560+0+2560",
+          "monitor_index": 0,
+          "label": "HDMI-1",
+          "geometry_mm": "4096/300x2560/260+0+2560",
+          "geometry_px": "4096x2560+0+2560",
+          "width": 4096,
+          "height": 2560,
+          "x": 0,
+          "y": 2560,
+          "rotation": "normal",
+          "rotation_degrees": 0,
+          "width_px": 4096,
+          "height_px": 2560,
+          "width_mm": 300,
+          "height_mm": 260,
+          "geometry_x": 0,
+          "geometry_y": 2560,
+          "diagonal_in": 15.6,
+          "monitor_id": 0,
+          "nl": "Primary monitor HDMI-1 (4096×2560). Visible apps: Toolbox."
+        },
+        {
+          "name": "DP-1",
+          "connected": true,
+          "primary": false,
+          "geometry": "4096x2560+0+0",
+          "monitor_index": 1,
+          "label": "DP-1",
+          "geometry_mm": "4096/610x2560/350+0+0",
+          "geometry_px": "4096x2560+0+0",
+          "width": 4096,
+          "height": 2560,
+          "x": 0,
+          "y": 0,
+          "rotation": "normal",
+          "rotation_degrees": 0,
+          "width_px": 4096,
+          "height_px": 2560,
+          "width_mm": 610,
+          "height_mm": 350,
+          "geometry_x": 0,
+          "geometry_y": 0,
+          "diagonal_in": 27.7,
+          "monitor_id": 1,
+          "nl": "monitor DP-1 (4096×2560). No user application windows detected via X11 (internal/helper windows only, or native Wayland apps not listed)."
+        }
+      ],
+      "windows": [
+        {
+          "window_id": "10485909",
+          "title": "Toolbox",
+          "name": "Toolbox",
+          "type": "application",
+          "wm_class": "jetbrains-toolbox",
+          "wm_class_instance": "JetBrains Toolbox",
+          "window_type": "normal",
+          "pid": 25432,
+          "process_name": "jetbrains-toolb",
+          "process_cmdline": "/home/tom/.local/share/JetBrains/Toolbox/bin/jetbrains-toolbox --minimize",
+          "app_label": "Toolbox",
+          "is_internal": false,
+          "x": 3266,
+          "y": 2822,
+          "width": 880,
+          "height": 1326,
+          "display": ":0",
+          "nl": "Toolbox application window (880×1326 at (3266,2822)) on monitor HDMI-1, process jetbrains-toolb, class jetbrains-toolbox.",
+          "monitor_id": 0,
+          "monitor_name": "HDMI-1",
+          "monitor_index": 0
+        }
+      ],
+      "observed_at": "2026-06-11T16:30:57.682407+00:00"
+    },
+    "describe": {
+      "nl": "Zrzut 2048×1280 px — wykryto 31 elementów UI (button=24, panel=4, titlebar=1, toolbar=1, window=1).\n- okno na środku: (0,0)–(2048,986), 2048×986 px, kolor #1B1B1B, pewność 90%\n- przycisk u góry: (1088,300)–(1350,384), 262×84 px, kolor #212628, pewność 68%\n- przycisk na dole: (1222,953)–(1344,985), 122×32 px, kolor #222222, pewność 68%\n- przycisk na dole po lewej: (492,870)–(608,902), 116×32 px, kolor #242524, pewność 68%\n- przycisk u góry: (1235,390)–(1331,428), 96×38 px, kolor #262D21, pewność 68%\n- przycisk na dole po prawej: (1401,1056)–(1510,1088), 109×32 px, kolor #414141, pewność 68%\n- przycisk na dole: (678,870)–(780,902), 102×32 px, kolor #2E2E2E, pewność 68%\n- przycisk u góry: (736,160)–(812,198), 76×38 px, kolor #2F2F2F, pewność 68%\n- przycisk na dole: (1030,1228)–(1113,1260), 83×32 px, kolor #471E3A, pewność 68%\n- przycisk na środku: (966,742)–(1068,768), 102×26 px, kolor #262D1F, pewność 68%\n- przycisk na dole po prawej: (1542,1062)–(1644,1088), 102×26 px, kolor #444444, pewność 68%\n- przycisk na środku: (1222,697)–(1318,723), 96×26 px, kolor #282828, pewność 68%\n- … i 19 więcej"
+    },
+    "render_intent": {
+      "mode": "layout_reconstruction",
+      "canvas": {
+        "width": 2048,
+        "height": 1280
+      },
+      "nl": "Zrzut 2048×1280 px — wykryto 31 elementów UI (button=24, panel=4, titlebar=1, toolbar=1, window=1).\n- okno na środku: (0,0)–(2048,986), 2048×986 px, kolor #1B1B1B, pewność 90%\n- przycisk u góry: (1088,300)–(1350,384), 262×84 px, kolor #212628, pewność 68%\n- przycisk na dole: (1222,953)–(1344,985), 122×32 px, kolor #222222, pewność 68%\n- przycisk na dole po lewej: (492,870)–(608,902), 116×32 px, kolor #242524, pewność 68%\n- przycisk u góry: (1235,390)–(1331,428), 96×38 px, kolor #262D21, pewność 68%\n- przycisk na dole po prawej: (1401,1056)–(1510,1088), 109×32 px, kolor #414141, pewność 68%\n- przycisk na dole: (678,870)–(780,902), 102×32 px, kolor #2E2E2E, pewność 68%\n- przycisk u góry: (736,160)–(812,198), 76×38 px, kolor #2F2F2F, pewność 68%\n- przycisk na dole: (1030,1228)–(1113,1260), 83×32 px, kolor #471E3A, pewność 68%\n- przycisk na środku: (966,742)–(1068,768), 102×26 px, kolor #262D1F, pewność 68%\n- przycisk na dole po prawej: (1542,1062)–(1644,1088), 102×26 px, kolor #444444, pewność 68%\n- przycisk na środku: (1222,697)–(1318,723), 96×26 px, kolor #282828, pewność 68%\n- … i 19 więcej",
+      "layers": [],
+      "prompt_block": "Zrzut 2048×1280 px — wykryto 31 elementów UI (button=24, panel=4, titlebar=1, toolbar=1, window=1).\n- okno na środku: (0,0)–(2048,986), 2048×986 px, kolor #1B1B1B, pewność 90%\n- przycisk u góry: (1088,300)–(1350,384), 262×84 px, kolor #212628, pewność 68%\n- przycisk na dole: (1222,953)–(1344,985), 122×32 px, kolor #222222, pewność 68%\n- przycisk na dole po lewej: (492,870)–(608,902), 116×32 px, kolor #242524, pewność 68%\n- przycisk u góry: (1235,390)–(1331,428), 96×38 px, kolor #262D21, pewność 68%\n- przycisk na dole po prawej: (1401,1056)–(1510,1088), 109×32 px, kolor #414141, pewność 68%\n- przycisk na dole: (678,870)–(780,902), 102×32 px, kolor #2E2E2E, pewność 68%\n- przycisk u góry: (736,160)–(812,198), 76×38 px, kolor #2F2F2F, pewność 68%\n- przycisk na dole: (1030,1228)–(1113,1260), 83×32 px, kolor #471E3A, pewność 68%\n- przycisk na środku: (966,742)–(1068,768), 102×26 px, kolor #262D1F, pewność 68%\n- przycisk na dole po prawej: (1542,1062)–(1644,1088), 102×26 px, kolor #444444, pewność 68%\n- przycisk na środku: (1222,697)–(1318,723), 96×26 px, kolor #282828, pewność 68%\n- … i 19 więcej",
+      "scene_class": "vql_detection"
+    },
+    "img2nl_text": "Obraz 2048×1280 px. Widocznych ~722 kolorów w próbce. Dominują: #141414, #181818, #380C2A. Jasność 14–90 (zakres dynamiki 238). Widoczny szum lub drobna tekstura. Wykryto 5 dużych regionów/obiektów. Wykryte elementy: button, window, panel, titlebar, icon.",
+    "scene_class": "general",
+    "llm_hint": {
+      "send_to_llm": true,
+      "confidence": 1.0,
+      "reasons": [
+        "rich_palette",
+        "textured_noise",
+        "large_regions",
+        "multiple_regions",
+        "text_likelihood"
+      ],
+      "recommendation": "send"
+    },
+    "special_hits": {
+      "has_qr": false,
+      "has_text": true,
+      "barcode_count": 0,
+      "ocr_preview": "x @o0A0 > 3 tom@nvidia:"
+    },
+    "fingerprint": {
+      "available": true,
+      "phash": "c101f634649f69b7",
+      "dhash": "c2c2d2c2d2924804",
+      "whash": "7b7878380002fffa"
+    },
+    "analyzed_at": "2026-06-11T16:31:13.054185+00:00",
+    "image": "/tmp/koru-cont-dp1-1781195445.png"
+  }
+}

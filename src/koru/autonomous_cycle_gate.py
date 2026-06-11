@@ -264,8 +264,24 @@ def try_vdisplay_control_fallback(
     if not vdisplay_fallback_enabled(ide=ide, plugin_connected=plugin_connected):
         return None
     try:
+        # Load VQL metadata (our analysis or fresh per-screenshot) to provide
+        # click_center / data_locations / decision_data for semantic actions.
+        # This gives the autonomy loop precise mouse coords and "where the data is"
+        # (pngs, client code, .env LLM, planfile) for decisions in JetBrains/Cursor.
+        from koru.integrations.vdisplay_client import load_vql_metadata
+        vql = load_vql_metadata()
+        vql_note = ""
+        if vql.get("ui_elements"):
+            cc = vql["ui_elements"][0].get("click_center", {})
+            vql_note = f" VQL click_center={cc} (use for editor focus / chat in IDE)"
         reply = send_chat(prompt, ide=ide, submit=submit)
         reply.setdefault("fallback_from", "plugin")
+        reply.setdefault("vql_context", vql.get("_source") or "loaded")
+        if vql_note:
+            reply["vql_note"] = vql_note
+        # If the drive used vdisplay, autonomy can now use the coords from VQL
+        # (e.g. resolve_click_for_frame or the centers from fresh 31-elem captures)
+        # instead of blind keyboard.
         return reply
     except Exception as exc:
         return {
