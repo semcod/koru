@@ -386,6 +386,35 @@ def _entrypoint_component(project: Path) -> EcosystemComponent:
     )
 
 
+def _install_manager_failure_component(ide: str, exc: Exception) -> list[EcosystemComponent]:
+    return [
+        EcosystemComponent(
+            "autopilot_install_manager",
+            "control_plane",
+            "fail",
+            repair=f"koru autopilot manage --ide {ide} --fix",
+            detail=f"collect failed: {type(exc).__name__}: {exc}",
+        )
+    ]
+
+
+def _install_manager_status_fields(
+    report: Any,
+    *,
+    ide: str,
+    repairable: bool,
+    advisory: bool,
+) -> tuple[str, str, str]:
+    status = "warn" if repairable or advisory else "ok"
+    repair = (
+        f"koru autopilot manage --ide {report.plugin.get('ide') or ide} --fix"
+        if repairable
+        else ""
+    )
+    plugin_status = status if repairable or advisory else "ok"
+    return status, repair, plugin_status
+
+
 def _install_manager_component(
     *,
     ide: str,
@@ -394,25 +423,14 @@ def _install_manager_component(
     try:
         report = collect_install_manager_report(ide=ide, socket_path=socket_path)
     except Exception as exc:
-        return [
-            EcosystemComponent(
-                "autopilot_install_manager",
-                "control_plane",
-                "fail",
-                repair=f"koru autopilot manage --ide {ide} --fix",
-                detail=f"collect failed: {type(exc).__name__}: {exc}",
-            )
-        ]
+        return _install_manager_failure_component(ide, exc)
     repairable, advisory = _install_manager_issue_groups(report)
-    status = "warn" if repairable else ("warn" if advisory else "ok")
-    repair = (
-        f"koru autopilot manage --ide {report.plugin.get('ide') or ide} --fix"
-        if repairable
-        else ""
+    status, repair, plugin_status = _install_manager_status_fields(
+        report,
+        ide=ide,
+        repairable=repairable,
+        advisory=advisory,
     )
-    plugin_status = "ok"
-    if repairable or advisory:
-        plugin_status = status
     current = str(
         report.plugin.get("connected_version")
         or report.plugin.get("installed_version")

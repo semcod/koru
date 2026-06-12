@@ -284,15 +284,18 @@ def _candidate_score(ide_id: str, pid: int, comm: str, cmdline: str, exe: str) -
     )
 
 
-def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
-    """Return a deduplicated list of IDEs visible in ``/proc``.
-
-    The ``_pids`` hook is used by tests to inject a fixed snapshot.
-    """
+def _in_test_mode() -> bool:
     import sys
-    if _pids is None and ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):
-        return []
-    pids = _pids if _pids is not None else _iter_proc_pids()
+    return (
+        "pytest" in sys.modules
+        or "unittest" in sys.modules
+        or bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    )
+
+
+def _collect_best_ide_per_pid(
+    pids: list[int],
+) -> dict[str, tuple[RunningIDE, int]]:
     seen: dict[str, tuple[RunningIDE, int]] = {}
     for pid in pids:
         comm = _read_comm(pid)
@@ -309,8 +312,26 @@ def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
                 if prev is None or score > prev[1]:
                     seen[ide_id] = (row, score)
                 break
+    return seen
+
+
+def _order_ide_results(
+    seen: dict[str, tuple[RunningIDE, int]],
+) -> list[RunningIDE]:
     # Stable order: declared order in _IDE_SIGNATURES.
     return [seen[k][0] for k in _IDE_SIGNATURES if k in seen]
+
+
+def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
+    """Return a deduplicated list of IDEs visible in ``/proc``.
+
+    The ``_pids`` hook is used by tests to inject a fixed snapshot.
+    """
+    if _pids is None and _in_test_mode():
+        return []
+    pids = _pids if _pids is not None else _iter_proc_pids()
+    seen = _collect_best_ide_per_pid(pids)
+    return _order_ide_results(seen)
 
 
 def _active_window_pid_x11() -> int | None:

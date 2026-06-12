@@ -248,6 +248,54 @@ def validate_single_calibration(
     return issues
 
 
+def _empty_desktop_result() -> dict[str, Any]:
+    return {
+        "ok": False,
+        "calibrations_checked": 0,
+        "issues": [{
+            "severity": SEVERITY_ERROR,
+            "code": "no_desktop_data",
+            "message": "No desktop data available. Run with ENV2LLM_DESKTOP_PROBE=1.",
+            "ide": None,
+        }],
+        "error_count": 1,
+        "warning_count": 0,
+        "summary": "No desktop data available",
+    }
+
+
+def _no_calibrations_result() -> dict[str, Any]:
+    return {
+        "ok": False,
+        "calibrations_checked": 0,
+        "issues": [{
+            "severity": SEVERITY_WARNING,
+            "code": "no_calibrations",
+            "message": (
+                "No IDE calibrations found. "
+                "Run `koru autopilot calibrate --ide auto` first."
+            ),
+            "ide": None,
+        }],
+        "error_count": 0,
+        "warning_count": 1,
+        "summary": "No calibrations to validate",
+    }
+
+
+def _build_validation_summary(
+    checked: int, error_count: int, warning_count: int, ok: bool
+) -> str:
+    if ok:
+        return f"{checked} calibration(s) validated OK"
+    parts: list[str] = []
+    if error_count:
+        parts.append(f"{error_count} error(s)")
+    if warning_count:
+        parts.append(f"{warning_count} warning(s)")
+    return f"{checked} calibration(s) checked: {', '.join(parts)}"
+
+
 def validate_calibrations(
     desktop: dict[str, Any] | None,
     *,
@@ -274,41 +322,14 @@ def validate_calibrations(
         summary: str — human-readable one-liner.
     """
     if not desktop:
-        return {
-            "ok": False,
-            "calibrations_checked": 0,
-            "issues": [{
-                "severity": SEVERITY_ERROR,
-                "code": "no_desktop_data",
-                "message": "No desktop data available. Run with ENV2LLM_DESKTOP_PROBE=1.",
-                "ide": None,
-            }],
-            "error_count": 1,
-            "warning_count": 0,
-            "summary": "No desktop data available",
-        }
+        return _empty_desktop_result()
 
     calibrations = desktop.get("ide_calibrations") or []
     displays = desktop.get("displays") or []
     pointer = desktop.get("pointer")
 
     if not calibrations:
-        return {
-            "ok": False,
-            "calibrations_checked": 0,
-            "issues": [{
-                "severity": SEVERITY_WARNING,
-                "code": "no_calibrations",
-                "message": (
-                    "No IDE calibrations found. "
-                    "Run `koru autopilot calibrate --ide auto` first."
-                ),
-                "ide": None,
-            }],
-            "error_count": 0,
-            "warning_count": 1,
-            "summary": "No calibrations to validate",
-        }
+        return _no_calibrations_result()
 
     all_issues: list[dict[str, Any]] = []
     checked = 0
@@ -325,21 +346,11 @@ def validate_calibrations(
     warning_count = sum(1 for i in all_issues if i["severity"] == SEVERITY_WARNING)
     ok = error_count == 0 and warning_count == 0
 
-    if ok:
-        summary = f"{checked} calibration(s) validated OK"
-    else:
-        parts = []
-        if error_count:
-            parts.append(f"{error_count} error(s)")
-        if warning_count:
-            parts.append(f"{warning_count} warning(s)")
-        summary = f"{checked} calibration(s) checked: {', '.join(parts)}"
-
     return {
         "ok": ok,
         "calibrations_checked": checked,
         "issues": all_issues,
         "error_count": error_count,
         "warning_count": warning_count,
-        "summary": summary,
+        "summary": _build_validation_summary(checked, error_count, warning_count, ok),
     }

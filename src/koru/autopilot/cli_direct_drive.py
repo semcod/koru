@@ -51,6 +51,33 @@ def _record_direct_drive_audit(
         pass
 
 
+def _resolve_verify_coords(
+    payload: dict[str, Any],
+) -> tuple["int | None", "int | None"]:
+    """Extract (chat_x, chat_y) from payload, falling back to typed target coords."""
+    chat_x = payload.get("chat_x")
+    chat_y = payload.get("chat_y")
+    if chat_x is not None:
+        return chat_x, chat_y
+    typed = payload.get("typed") if isinstance(payload.get("typed"), dict) else {}
+    map_path = payload.get("map_path")
+    target = typed.get("target") if isinstance(typed.get("target"), dict) else {}
+    state = target.get("state") if isinstance(target.get("state"), dict) else {}
+    click = state.get("click_point") if isinstance(state.get("click_point"), dict) else {}
+    if click.get("x") is not None and map_path:
+        try:
+            from vdisplay.control.gui_map import load_gui_map
+            from vdisplay.input.coords import global_pointer_coords
+
+            pack = load_gui_map(str(map_path))
+            element = pack.elements.get(str(typed.get("map_target") or "ai-chat-input"))
+            meta = (element.capture_meta if element else None) or pack.capture_meta or {}
+            chat_x, chat_y, _ = global_pointer_coords(int(click["x"]), int(click["y"]), meta)
+        except Exception:
+            pass
+    return chat_x, chat_y
+
+
 def _apply_drive_verification(
     args: argparse.Namespace,
     payload: dict[str, Any] | None,
@@ -62,26 +89,8 @@ def _apply_drive_verification(
         return payload, 0
     from koru.integrations.vdisplay_client import verify_chat_text_visible
 
-    chat_x = payload.get("chat_x")
-    chat_y = payload.get("chat_y")
     map_path = payload.get("map_path")
-    typed = payload.get("typed") if isinstance(payload.get("typed"), dict) else {}
-    if chat_x is None and isinstance(typed, dict):
-        target = typed.get("target") if isinstance(typed.get("target"), dict) else {}
-        state = target.get("state") if isinstance(target.get("state"), dict) else {}
-        click = state.get("click_point") if isinstance(state.get("click_point"), dict) else {}
-        if click.get("x") is not None and map_path:
-            try:
-                from vdisplay.control.gui_map import load_gui_map
-                from vdisplay.input.coords import global_pointer_coords
-
-                pack = load_gui_map(str(map_path))
-                element = pack.elements.get(str(typed.get("map_target") or "ai-chat-input"))
-                meta = (element.capture_meta if element else None) or pack.capture_meta or {}
-                chat_x, chat_y, _ = global_pointer_coords(int(click["x"]), int(click["y"]), meta)
-            except Exception:
-                pass
-
+    chat_x, chat_y = _resolve_verify_coords(payload)
     verification = verify_chat_text_visible(
         text,
         ide=profile_id,

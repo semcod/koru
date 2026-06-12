@@ -3,7 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from koru.autonomous_cycle_config import compute_cycle_sleep, configure_loop_state
+from koru.autonomous_cycle_config import (
+    compute_cycle_sleep,
+    configure_loop_state,
+    resolve_agent_lane_from_environ,
+)
+from koru.autonomous_runtime import default_autopilot_instance_for_ide
 
 
 def test_configure_loop_state_uses_existing_agent_lane_env(
@@ -52,6 +57,32 @@ def test_configure_loop_state_uses_existing_agent_lane_env(
     assert restored_state is loop_state
     assert checkpoint_path == (tmp_path / ".planfile/.koru/autonomous-state.json").resolve()
     assert restored_cycle == 7
+
+
+def test_resolve_agent_lane_from_injected_environ(tmp_path: Path) -> None:
+    args = SimpleNamespace(agent_lane="auto")
+
+    lane = resolve_agent_lane_from_environ(
+        args,
+        tmp_path,
+        apply_agent_lane_environ=lambda *_args: "should-not-run",
+        environ={"KORU_AUTOPILOT_INSTANCE": "jetbrains-main"},
+    )
+
+    assert lane == "jetbrains-main"
+
+
+def test_resolve_agent_lane_falls_back_to_apply_agent_lane(tmp_path: Path) -> None:
+    args = SimpleNamespace(agent_lane="cursor")
+
+    lane = resolve_agent_lane_from_environ(
+        args,
+        tmp_path,
+        apply_agent_lane_environ=lambda project, agent_lane: f"{agent_lane}@{project.name}",
+        environ={},
+    )
+
+    assert lane == f"cursor@{tmp_path.name}"
 
 
 def test_configure_loop_state_canonicalizes_lane_slug(tmp_path: Path, monkeypatch) -> None:
@@ -111,6 +142,30 @@ def test_compute_cycle_sleep_caps_plugin_reconnect_blockers() -> None:
     assert sleep == 15.0
 
 
+def test_compute_cycle_sleep_caps_plugin_reconnect_via_status_parser() -> None:
+    args = SimpleNamespace(
+        sleep_seconds=60.0,
+        max_sleep_seconds=900.0,
+        backoff_on_stagnation=True,
+    )
+    loop_state = SimpleNamespace(
+        stagnation_streak=8,
+        last_message_sent_ts=0.0,
+    )
+    queue_result = SimpleNamespace(last_status="idle")
+
+    sleep = compute_cycle_sleep(
+        args,
+        loop_state,
+        queue_result,
+        autopilot_status="skipped(plugin_not_connected)",
+        compute_backoff_sleep=lambda *_args: 900.0,
+        now=lambda: 500.0,
+    )
+
+    assert sleep == 15.0
+
+
 def test_compute_cycle_sleep_keeps_backoff_for_plain_idle_skip() -> None:
     args = SimpleNamespace(
         sleep_seconds=60.0,
@@ -133,3 +188,10 @@ def test_compute_cycle_sleep_keeps_backoff_for_plain_idle_skip() -> None:
     )
 
     assert sleep == 900.0
+
+
+def test_default_autopilot_instance_for_ide_uses_main_lane() -> None:
+    assert default_autopilot_instance_for_ide("cursor") == "cursor-main"
+    assert default_autopilot_instance_for_ide("jetbrains") == "jetbrains"
+    assert default_autopilot_instance_for_ide("vscodium") == "vscodium"
+    assert default_autopilot_instance_for_ide("cursor-alt") == "cursor-alt"

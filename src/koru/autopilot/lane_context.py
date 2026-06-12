@@ -105,6 +105,33 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+def _instance_from_payload(
+    payload: dict,
+    path: "Path",
+    ide: "str | None",
+) -> "tuple[str, str, float] | None":
+    """Return (instance, source, uptime) from a valid daemon payload, or None."""
+    pid = payload.get("pid")
+    if not isinstance(pid, int) or not _pid_alive(pid):
+        return None
+    env = payload.get("env") if isinstance(payload.get("env"), dict) else {}
+    instance = str(env.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    if not instance:
+        instance = instance_from_socket_path(str(payload.get("socket") or "")) or ""
+    if not instance:
+        stem = path.name.removeprefix("koru-autopilot-").removesuffix(".daemon.json")
+        instance = stem.strip()
+    if not instance:
+        return None
+    if ide:
+        inst_ide = canonical_autopilot_ide_id(instance)
+        if inst_ide != normalize_ide_id(ide):
+            return None
+    uptime = float(payload.get("uptime_seconds") or 0.0)
+    source = f"daemon-metadata:{path.name}"
+    return instance, source, uptime
+
+
 def _live_daemon_instance(*, project: Path, ide: str | None = None) -> tuple[str, str] | None:
     rt = project / ".planfile" / ".koru"
     if not rt.is_dir():
@@ -117,26 +144,11 @@ def _live_daemon_instance(*, project: Path, ide: str | None = None) -> tuple[str
             continue
         if not isinstance(payload, dict):
             continue
-        pid = payload.get("pid")
-        if not isinstance(pid, int) or not _pid_alive(pid):
+        result = _instance_from_payload(payload, path, ide)
+        if result is None:
             continue
-        env = payload.get("env") if isinstance(payload.get("env"), dict) else {}
-        instance = str(env.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-        if not instance:
-            instance = instance_from_socket_path(str(payload.get("socket") or "")) or ""
-        if not instance:
-            stem = path.name.removeprefix("koru-autopilot-").removesuffix(".daemon.json")
-            instance = stem.strip()
-        if not instance:
-            continue
-        if ide:
-            inst_ide = canonical_autopilot_ide_id(instance)
-            if inst_ide != normalize_ide_id(ide):
-                continue
-        uptime = float(payload.get("uptime_seconds") or 0.0)
-        if best is None or uptime >= best[2]:
-            source = f"daemon-metadata:{path.name}"
-            best = (instance, source, uptime)
+        if best is None or result[2] >= best[2]:
+            best = result
     if best is None:
         return None
     return best[0], best[1]
@@ -144,6 +156,30 @@ def _live_daemon_instance(*, project: Path, ide: str | None = None) -> tuple[str
 
 def _instance_matches_ide(instance: str, ide: str) -> bool:
     return canonical_autopilot_ide_id(instance) == normalize_ide_id(ide)
+
+
+def _resolve_from_requested_ide(
+    requested: str,
+    project_root: "Path",
+) -> "tuple[str | None, str] | None":
+    """Try to resolve instance for a specific (non-auto) IDE. Returns (instance, source) or None."""
+    from_settings = instance_from_socket_path(
+        socket_path_from_ide_settings(requested, project=project_root),
+    )
+    if from_settings and _instance_matches_ide(from_settings, requested):
+        return from_settings, f"ide-settings:{requested}"
+
+    supervisor = _supervisor_active_lane()
+    if supervisor is not None:
+        sup_ide, sup_instance = supervisor
+        if normalize_ide_id(sup_ide) == requested:
+            return sup_instance, "supervisor:active_lane"
+
+    live = _live_daemon_instance(project=project_root, ide=requested)
+    if live is not None:
+        return live
+    return None
+
 
 
 def resolve_autopilot_instance(
@@ -160,25 +196,13 @@ def resolve_autopilot_instance(
 
     requested = normalize_ide_id(requested_ide) or "auto"
 
-    if requested and requested not in {"auto", * _CANONICAL_IDES}:
+    if requested and requested not in {"auto", *_CANONICAL_IDES}:
         return requested, f"cli:{requested}"
 
     if requested and requested != "auto":
-        from_settings = instance_from_socket_path(
-            socket_path_from_ide_settings(requested, project=project_root),
-        )
-        if from_settings and _instance_matches_ide(from_settings, requested):
-            return from_settings, f"ide-settings:{requested}"
-
-        supervisor = _supervisor_active_lane()
-        if supervisor is not None:
-            sup_ide, sup_instance = supervisor
-            if normalize_ide_id(sup_ide) == requested:
-                return sup_instance, "supervisor:active_lane"
-
-        live = _live_daemon_instance(project=project_root, ide=requested)
-        if live is not None:
-            return live
+        resolved = _resolve_from_requested_ide(requested, project_root)
+        if resolved is not None:
+            return resolved
 
     lane, lane_source = resolve_agent_lane_id(
         project_root,

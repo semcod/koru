@@ -1,306 +1,106 @@
-# code2llm | 250f 46339L | typescript:205,yaml:15,md:12,json:11,kotlin:5,properties:1,xml:1 | 2026-05-25
-# CC̄=3.1 | critical:4/3385 | dups:39 | cycles:0
+# code2llm | 12f 2367L | python:12 | 2026-06-12
+# generated in 0.00s
+# CC̅=3.9 | critical:0/102 | dups:0 | cycles:0
 
-HEALTH[8]:
-  🔴 DUP   39 classes duplicated
-  🔴 GOD   koru-autopilot-shared/src/autopilot-bridge.ts = 3059L, 4 classes, 209m, max CC=16
-  🔴 GOD   koru-autopilot-cursor/src/_shared/autopilot-bridge.ts = 3049L, 4 classes, 209m, max CC=16
-  🔴 GOD   koru-autopilot-vscode/src/_shared/autopilot-bridge.ts = 3049L, 4 classes, 209m, max CC=16
-  🟡 CC    _performInject CC=16 (limit:15)
-  🟡 CC    _performInject CC=16 (limit:15)
-  🟡 CC    _performInject CC=16 (limit:15)
-  🟡 CC    _performInject CC=16 (limit:15)
+HEALTH[0]: ok
 
-REFACTOR[5]:
-  1. rm duplicates  (-39 dup classes)
-  2. split koru-autopilot-shared/src/autopilot-bridge.ts  (god module)
-  3. split koru-autopilot-cursor/src/_shared/autopilot-bridge.ts  (god module)
-  4. split koru-autopilot-vscode/src/_shared/autopilot-bridge.ts  (god module)
-  5. split 4 high-CC methods  (CC>15)
+REFACTOR[0]: none needed
 
-PIPELINES[1665]:
-  [1] Src [DISALLOWED_FOCUS_OPEN_COMMANDS]: DISALLOWED_FOCUS_OPEN_COMMANDS
+PIPELINES[33]:
+  [1] Src [run_lane_repair]: run_lane_repair
       PURITY: 100% pure
-  [2] Src [UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS]: UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS
+  [2] Src [for_project]: for_project
       PURITY: 100% pure
-  [3] Src [sanitizeFocusOpenCommand]: sanitizeFocusOpenCommand → isAllowedFocusOpenCommand
+  [3] Src [append]: append
       PURITY: 100% pure
-  [4] Src [sanitizeFocusOpenCandidates]: sanitizeFocusOpenCandidates
+  [4] Src [append_many]: append_many
       PURITY: 100% pure
-  [5] Src [filterUnsafeFocusOpenForIde]: filterUnsafeFocusOpenForIde
+  [5] Src [read_all]: read_all
+      PURITY: 100% pure
+  [6] Src [read_recent]: read_recent
+      PURITY: 100% pure
+  [7] Src [for_project]: for_project
+      PURITY: 100% pure
+  [8] Src [cases]: cases → project_repair_cases → _project_one_session → _extract_problem_codes
+      PURITY: 100% pure
+  [9] Src [cases_for_lane]: cases_for_lane → aggregate_id_for
+      PURITY: 100% pure
+  [10] Src [cases_matching_code]: cases_matching_code
+      PURITY: 100% pure
+  [11] Src [format_llm]: format_llm → format_history_llm → format_case_llm
+      PURITY: 100% pure
+  [12] Src [format_json]: format_json
+      PURITY: 100% pure
+  [13] Src [problems_to_payload]: problems_to_payload
+      PURITY: 100% pure
+  [14] Src [from_dict]: from_dict
+      PURITY: 100% pure
+  [15] Src [dedupe_problems]: dedupe_problems → _dedupe_problems
+      PURITY: 100% pure
+  [16] Src [collect_problems_from_manage_report]: collect_problems_from_manage_report → _collect_manage_issue_problems → _problem_from_manage_issue
+      PURITY: 100% pure
+  [17] Src [collect_problems_from_status]: collect_problems_from_status → _rejected_plugin_problems
+      PURITY: 100% pure
+  [18] Src [collect_problems_from_drive_result]: collect_problems_from_drive_result → _dedupe_problems
+      PURITY: 100% pure
+  [19] Src [collect_problems_from_console_logs]: collect_problems_from_console_logs → _dedupe_problems
+      PURITY: 100% pure
+  [20] Src [_exec_ensure_daemon]: _exec_ensure_daemon
+      PURITY: 100% pure
+  [21] Src [_exec_manage_fix]: _exec_manage_fix
+      PURITY: 100% pure
+  [22] Src [_exec_manual_vsix_unpack]: _exec_manual_vsix_unpack → manual_vsix_unpack → _vsix_unpack_layout
+      PURITY: 100% pure
+  [23] Src [_exec_plugin_upgrade_and_reload]: _exec_plugin_upgrade_and_reload → manual_vsix_unpack → _vsix_unpack_layout
+      PURITY: 100% pure
+  [24] Src [_exec_strict_handshake_cycle]: _exec_strict_handshake_cycle → _poll_plugin_ready → plugin_build_aligned → _plugin_row_for_ide
+      PURITY: 100% pure
+  [25] Src [_exec_reload_and_connect]: _exec_reload_and_connect → _run_reload_and_connect → _poll_plugin_ready → plugin_build_aligned → ...(1 more)
+      PURITY: 100% pure
+  [26] Src [_exec_cross_ide_guidance]: _exec_cross_ide_guidance
+      PURITY: 100% pure
+  [27] Src [_exec_submit_unverified_guidance]: _exec_submit_unverified_guidance → registry_step
+      PURITY: 100% pure
+  [28] Src [_exec_default]: _exec_default
+      PURITY: 100% pure
+  [29] Src [format_repair_lines]: format_repair_lines
+      PURITY: 100% pure
+  [30] Src [for_project]: for_project
+      PURITY: 100% pure
+  [31] Src [record_diagnosis]: record_diagnosis → aggregate_id_for
+      PURITY: 100% pure
+  [32] Src [run_session]: run_session → aggregate_id_for
+      PURITY: 100% pure
+  [33] Src [run_repair_with_events]: run_repair_with_events → run_repair_pipeline → _emit_session_started → _emit
       PURITY: 100% pure
 
 LAYERS:
-  koru-autopilot-shared/          CC̄=3.5    ←in:0  →out:0  ×DUP
-  │ !! autopilot-bridge.ts       3059L  4C  209m  CC=16     ←0  ×DUP
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ socketPath.ts               67L  0C   14m  CC=9      ←0
-  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
-  │ index.ts                    54L  0C    0m  CC=0.0    ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ types.ts                    25L  1C    0m  CC=0.0    ←0
-  │ package.json                10L  0C    0m  CC=0.0    ←0
-  │ bridge-base.ts               0L  0C    0m  CC=0.0    ←0
+  ./                              CC̄=3.9    ←in:0  →out:0
+  │ !! pipeline                  1039L  2C   42m  CC=9      ←1
+  │ !! diagnostics                504L  0C   27m  CC=14     ←1
+  │ registry                   177L  0C    3m  CC=5      ←2
+  │ service                    164L  1C    5m  CC=3      ←0
+  │ projector                  115L  0C    7m  CC=9      ←1
+  │ query                       80L  1C    8m  CC=5      ←0
+  │ domain                      64L  5C    0m  CC=0.0    ←0
+  │ store                       55L  1C    6m  CC=6      ←0
+  │ events                      54L  1C    3m  CC=7      ←2
+  │ __init__                    54L  0C    0m  CC=0.0    ←0
+  │ commands                    38L  3C    0m  CC=0.0    ←0
+  │ runtime                     23L  0C    1m  CC=1      ←0
   │
-  koru-autopilot-antigravity/     CC̄=3.1    ←in:0  →out:0  ×DUP
-  │ !! extension.ts              2704L  2C  202m  CC=14     ←0  ×DUP
-  │ !! CHANGELOG.md               607L  0C    0m  CC=0.0    ←0
-  │ probe-ladder.ts            419L  3C   41m  CC=10     ←0
-  │ chat-history-watcher.test.ts   353L  0C   30m  CC=3      ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ current.yaml               249L  0C    0m  CC=0.0    ←0
-  │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0  ×DUP
-  │ package.json               189L  0C    0m  CC=0.0    ←0
-  │ README.md                  169L  0C    0m  CC=0.0    ←0
-  │ cursor-bubble-adapter.ts   159L  1C   21m  CC=11     ←0  ×DUP
-  │ step-decisions.test.ts     148L  0C   12m  CC=2      ←0
-  │ vscode-chat-session-adapter.ts   146L  2C   22m  CC=10     ←0  ×DUP
-  │ step-decisions.ts          145L  1C   14m  CC=7      ←0
-  │ command-catalog.ts         126L  1C    7m  CC=4      ←0
-  │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
-  │ ide-strategy.ts            108L  2C    0m  CC=0.0    ←0
-  │ koru.yaml                   69L  0C    0m  CC=0.0    ←0
-  │ socketPath.ts               67L  0C   14m  CC=9      ←0
-  │ ide-control-strategy.ts     64L  1C    2m  CC=4      ←0
-  │ probe-ladder.test.ts        63L  0C    8m  CC=2      ←0
-  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
-  │ socketPath.ts               61L  0C   14m  CC=9      ←0
-  │ antigravity.ts              59L  0C    8m  CC=2      ←0
-  │ index.ts                    54L  0C    0m  CC=0.0    ←0
-  │ command-catalog.test.ts     53L  0C    6m  CC=2      ←0
-  │ ack-payload.test.ts         52L  0C    7m  CC=4      ←0
-  │ registry.ts                 42L  0C    7m  CC=6      ←0
-  │ antigravity-fastpath.test.ts    39L  0C    8m  CC=2      ←0
-  │ host-click-submit.test.ts    39L  0C    6m  CC=2      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ types.ts                    25L  1C    0m  CC=0.0    ←0
-  │ chat-history-adapters.ts    24L  0C    1m  CC=2      ←0
-  │ antigravity-fastpath.ts     20L  0C    2m  CC=3      ←0
-  │ unsupported-chat-adapter.ts    19L  1C    2m  CC=1      ←0
-  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
-  │ index.ts                     8L  0C    0m  CC=0.0    ←0
-  │ config.yaml                  3L  0C    0m  CC=0.0    ←0
-  │
-  koru-autopilot-vscode/          CC̄=3.1    ←in:0  →out:0  ×DUP
-  │ !! autopilot-bridge.ts       3049L  4C  209m  CC=16     ←0  ×DUP
-  │ !! CHANGELOG.md               620L  0C    0m  CC=0.0    ←0
-  │ probe-ladder.ts            419L  3C   41m  CC=10     ←0
-  │ chat-history-watcher.test.ts   353L  0C   30m  CC=3      ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ current.yaml               249L  0C    0m  CC=0.0    ←0
-  │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0  ×DUP
-  │ package.json               194L  0C    0m  CC=0.0    ←0
-  │ README.md                  169L  0C    0m  CC=0.0    ←0
-  │ cursor-bubble-adapter.ts   159L  1C   21m  CC=11     ←0  ×DUP
-  │ step-decisions.test.ts     148L  0C   12m  CC=2      ←0
-  │ vscode-chat-session-adapter.ts   146L  2C   22m  CC=10     ←0  ×DUP
-  │ step-decisions.ts          145L  1C   14m  CC=7      ←0
-  │ command-catalog.ts         126L  1C    7m  CC=4      ←0
-  │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
-  │ ide-strategy.ts            108L  2C    0m  CC=0.0    ←0
-  │ extension.ts                94L  0C   12m  CC=7      ←0
-  │ probe-ladder.test.ts        93L  0C   14m  CC=3      ←0
-  │ vscode.ts                   81L  0C   11m  CC=7      ←0
-  │ koru.yaml                   69L  0C    0m  CC=0.0    ←0
-  │ socketPath.ts               67L  0C   14m  CC=9      ←0
-  │ ide-control-strategy.ts     64L  1C    2m  CC=4      ←0
-  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
-  │ socketPath.ts               61L  0C   14m  CC=9      ←0
-  │ index.ts                    54L  0C    0m  CC=0.0    ←0
-  │ command-catalog.test.ts     53L  0C    6m  CC=2      ←0
-  │ ack-payload.test.ts         52L  0C    7m  CC=4      ←0
-  │ registry.ts                 45L  0C    7m  CC=6      ←0
-  │ antigravity-fastpath.test.ts    39L  0C    8m  CC=2      ←0
-  │ host-click-submit.test.ts    39L  0C    6m  CC=2      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ types.ts                    25L  1C    0m  CC=0.0    ←0
-  │ chat-history-adapters.ts    21L  0C    1m  CC=2      ←0
-  │ antigravity-fastpath.ts     20L  0C    2m  CC=3      ←0
-  │ unsupported-chat-adapter.ts    19L  1C    2m  CC=1      ←0
-  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
-  │ index.ts                     8L  0C    0m  CC=0.0    ←0
-  │ config.yaml                  3L  0C    0m  CC=0.0    ←0
-  │
-  koru-autopilot-windsurf/        CC̄=3.1    ←in:0  →out:0  ×DUP
-  │ !! extension.ts              2704L  2C  202m  CC=14     ←0  ×DUP
-  │ !! CHANGELOG.md               607L  0C    0m  CC=0.0    ←0
-  │ probe-ladder.ts            419L  3C   41m  CC=10     ←0
-  │ chat-history-watcher.test.ts   353L  0C   30m  CC=3      ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ current.yaml               249L  0C    0m  CC=0.0    ←0
-  │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0  ×DUP
-  │ package.json               190L  0C    0m  CC=0.0    ←0
-  │ README.md                  169L  0C    0m  CC=0.0    ←0
-  │ cursor-bubble-adapter.ts   159L  1C   21m  CC=11     ←0  ×DUP
-  │ step-decisions.test.ts     148L  0C   12m  CC=2      ←0
-  │ vscode-chat-session-adapter.ts   146L  2C   22m  CC=10     ←0  ×DUP
-  │ step-decisions.ts          145L  1C   14m  CC=7      ←0
-  │ command-catalog.ts         126L  1C    7m  CC=4      ←0
-  │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
-  │ windsurf.ts                108L  0C    8m  CC=6      ←0
-  │ ide-strategy.ts            108L  2C    0m  CC=0.0    ←0
-  │ probe-ladder.test.ts        77L  0C   10m  CC=2      ←0
-  │ koru.yaml                   69L  0C    0m  CC=0.0    ←0
-  │ socketPath.ts               67L  0C   14m  CC=9      ←0
-  │ ide-control-strategy.ts     64L  1C    2m  CC=4      ←0
-  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
-  │ socketPath.ts               61L  0C   14m  CC=9      ←0
-  │ index.ts                    54L  0C    0m  CC=0.0    ←0
-  │ command-catalog.test.ts     53L  0C    6m  CC=2      ←0
-  │ ack-payload.test.ts         52L  0C    7m  CC=4      ←0
-  │ registry.ts                 42L  0C    7m  CC=6      ←0
-  │ host-click-submit.test.ts    39L  0C    6m  CC=2      ←0
-  │ antigravity-fastpath.test.ts    39L  0C    8m  CC=2      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ types.ts                    25L  1C    0m  CC=0.0    ←0
-  │ chat-history-adapters.ts    24L  0C    1m  CC=2      ←0
-  │ antigravity-fastpath.ts     20L  0C    2m  CC=3      ←0
-  │ unsupported-chat-adapter.ts    19L  1C    2m  CC=1      ←0
-  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
-  │ index.ts                     8L  0C    0m  CC=0.0    ←0
-  │ config.yaml                  3L  0C    0m  CC=0.0    ←0
-  │
-  koru-autopilot-vscodium/        CC̄=3.1    ←in:0  →out:0  ×DUP
-  │ !! autopilot-bridge.ts       3034L  3C  208m  CC=16     ←0  ×DUP
-  │ !! extension.ts              2746L  1C  204m  CC=14     ←0  ×DUP
-  │ !! CHANGELOG.md               607L  0C    0m  CC=0.0    ←0
-  │ probe-ladder.ts            432L  3C   43m  CC=10     ←0
-  │ chat-history-watcher.test.ts   355L  0C   30m  CC=3      ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ current.yaml               249L  0C    0m  CC=0.0    ←0
-  │ package.json               199L  0C    0m  CC=0.0    ←0
-  │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0  ×DUP
-  │ README.md                  169L  0C    0m  CC=0.0    ←0
-  │ cursor-bubble-adapter.ts   159L  1C   21m  CC=11     ←0  ×DUP
-  │ step-decisions.test.ts     148L  0C   12m  CC=2      ←0
-  │ vscode-chat-session-adapter.ts   146L  2C   22m  CC=10     ←0  ×DUP
-  │ step-decisions.ts          145L  1C   14m  CC=7      ←0
-  │ command-catalog.ts         126L  1C    7m  CC=4      ←0
-  │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
-  │ ide-strategy.ts            108L  2C    0m  CC=0.0    ←0
-  │ probe-ladder.test.ts        79L  0C   12m  CC=2      ←0
-  │ vscodium.ts                 78L  0C   10m  CC=4      ←0
-  │ koru.yaml                   69L  0C    0m  CC=0.0    ←0
-  │ socketPath.ts               67L  0C   14m  CC=9      ←0
-  │ ide-control-strategy.ts     64L  1C    2m  CC=4      ←0
-  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
-  │ socketPath.ts               61L  0C   14m  CC=9      ←0
-  │ vscodium.test.ts            60L  0C   11m  CC=3      ←0
-  │ index.ts                    54L  0C    0m  CC=0.0    ←0
-  │ command-catalog.test.ts     53L  0C    6m  CC=2      ←0
-  │ ack-payload.test.ts         52L  0C    7m  CC=4      ←0
-  │ registry.ts                 42L  0C    7m  CC=6      ←0
-  │ antigravity-fastpath.test.ts    39L  0C    8m  CC=2      ←0
-  │ host-click-submit.test.ts    39L  0C    6m  CC=2      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ types.ts                    25L  1C    0m  CC=0.0    ←0
-  │ chat-history-adapters.ts    21L  0C    1m  CC=3      ←0
-  │ antigravity-fastpath.ts     20L  0C    2m  CC=3      ←0
-  │ unsupported-chat-adapter.ts    19L  1C    2m  CC=1      ←0
-  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
-  │ index.ts                     8L  0C    0m  CC=0.0    ←0
-  │ config.yaml                  3L  0C    0m  CC=0.0    ←0
-  │
-  koru-autopilot-cursor/          CC̄=3.0    ←in:0  →out:0  ×DUP
-  │ !! autopilot-bridge.ts       3049L  4C  209m  CC=16     ←0  ×DUP
-  │ !! CHANGELOG.md               778L  0C    0m  CC=0.0    ←0
-  │ probe-ladder.ts            419L  3C   41m  CC=10     ←0
-  │ chat-history-watcher.test.ts   363L  0C   30m  CC=5      ←0
-  │ probe-ladder.test.ts       296L  0C   37m  CC=5      ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ ack-payload.ts             260L  0C   31m  CC=12     ←0
-  │ cursor.test.ts             254L  0C   27m  CC=5      ←0
-  │ current.yaml               249L  0C    0m  CC=0.0    ←0
-  │ cursor.ts                  242L  0C   13m  CC=5      ←0
-  │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0  ×DUP
-  │ package.json               174L  0C    0m  CC=0.0    ←0
-  │ README.md                  169L  0C    0m  CC=0.0    ←0
-  │ cursor-bubble-adapter.ts   159L  1C   21m  CC=11     ←0  ×DUP
-  │ step-decisions.test.ts     148L  0C   12m  CC=2      ←0
-  │ vscode-chat-session-adapter.ts   146L  2C   22m  CC=10     ←0  ×DUP
-  │ step-decisions.ts          145L  1C   14m  CC=7      ←0
-  │ command-catalog.ts         126L  1C    7m  CC=4      ←0
-  │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
-  │ ide-strategy.ts            108L  2C    0m  CC=0.0    ←0
-  │ extension.ts                94L  0C   10m  CC=4      ←0
-  │ koru.yaml                   69L  0C    0m  CC=0.0    ←0
-  │ socketPath.ts               67L  0C   14m  CC=9      ←0
-  │ ide-control-strategy.ts     64L  1C    2m  CC=4      ←0
-  │ bridge-helpers.ts           63L  0C    9m  CC=4      ←0
-  │ registry.ts                 63L  0C    7m  CC=6      ←0
-  │ socketPath.ts               61L  0C   14m  CC=9      ←0
-  │ index.ts                    54L  0C    0m  CC=0.0    ←0
-  │ command-catalog.test.ts     53L  0C    6m  CC=2      ←0
-  │ ack-payload.test.ts         52L  0C    7m  CC=4      ←0
-  │ host-click-submit.test.ts    39L  0C    6m  CC=2      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ host-click-submit.ts        35L  0C    7m  CC=6      ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-types.ts       32L  3C    0m  CC=0.0    ←0
-  │ chat-history-adapters.ts    31L  0C    1m  CC=2      ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ chat-history-paths.ts       29L  0C    5m  CC=4      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ dispatch-plan.ts            26L  1C    1m  CC=7      ←0
-  │ types.ts                    25L  1C    0m  CC=0.0    ←0
-  │ antigravity-fastpath.ts     20L  0C    2m  CC=3      ←0
-  │ unsupported-chat-adapter.ts    19L  1C    2m  CC=1      ←0
-  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
-  │ index.ts                     8L  0C    0m  CC=0.0    ←0
-  │ config.yaml                  3L  0C    0m  CC=0.0    ←0
-  │
-  koru-autopilot-jetbrains/       CC̄=0.0    ←in:0  →out:0
-  │ KoruAutopilotService.kt    186L  1C    6m  CC=0.0    ←0
-  │ ChatInjector.kt             74L  0C    2m  CC=0.0    ←0
-  │ README.md                   58L  0C    0m  CC=0.0    ←0
-  │ SocketPath.kt               33L  0C    0m  CC=0.0    ←0
-  │ plugin.xml                  24L  0C    0m  CC=0.0    ←0
-  │ KoruAutopilotReconnectAction.kt    10L  1C    0m  CC=0.0    ←0
-  │ settings.gradle.kts          8L  0C    2m  CC=0.0    ←0
-  │ gradle.properties            6L  0C    0m  CC=0.0    ←0
-  │
-  ./                              CC̄=0.0    ←in:0  →out:0
-  │ README.md                   50L  0C    0m  CC=0.0    ←0
-  │
-  ── zero ──
-     koru-autopilot-shared/src/bridge-base.ts  0L
 
-COUPLING: no cross-package imports detected
+COUPLING:
+                  pipeline  diagnostics    projector        query      service       events     registry
+     pipeline           ──            5                                     ←2                         2
+  diagnostics           ←5           ──                                                                   hub
+    projector                                     ──           ←3                                      1
+        query                                      3           ──                         1             
+      service            2                                                  ──            2             
+       events                                                  ←1           ←2           ──             
+     registry           ←2                        ←1                                                  ──
+  CYCLES: none
+  HUB: diagnostics/ (fan-in=5)
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

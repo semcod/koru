@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from koru.autonomy import AutonomyConfig
+from koru.autonomy.config import structured_cycle_report_enabled
 
 
 def test_autonomy_config_defaults():
@@ -47,6 +48,7 @@ def test_autonomy_config_from_env():
             "ENABLE_IDLE_DIAGNOSTICS": "true",
             "IDLE_DIAGNOSTICS_PROFILE": "full",
             "STRICT_DIAGNOSTICS": "true",
+            "KORU_STRUCTURED_CYCLE_REPORT": "true",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -67,6 +69,7 @@ def test_autonomy_config_from_env():
             assert config.enable_idle_diagnostics is True
             assert config.idle_diagnostics_profile == "full"
             assert config.strict_diagnostics is True
+            assert config.structured_cycle_report is True
 
 
 def test_autonomy_config_from_env_defaults():
@@ -78,6 +81,7 @@ def test_autonomy_config_from_env_defaults():
         assert config.actor == "koru-shell"
         assert config.max_iterations == 50
         assert config.enable_scan is True
+        assert config.structured_cycle_report is False
 
 
 def test_autonomy_config_from_env_actor_name_fallback():
@@ -138,3 +142,9 @@ def test_autonomy_config_diag_state_dir_default():
     """Test that diag_state_dir has correct default."""
     config = AutonomyConfig()
     assert config.diag_state_dir == Path(".planfile/.koru/autoloop-diag")
+
+
+def test_structured_cycle_report_enabled_uses_boolish_env() -> None:
+    assert structured_cycle_report_enabled(environ={"KORU_STRUCTURED_CYCLE_REPORT": "on"}) is True
+    assert structured_cycle_report_enabled(environ={"KORU_STRUCTURED_CYCLE_REPORT": "0"}) is False
+    assert structured_cycle_report_enabled(environ={}) is False

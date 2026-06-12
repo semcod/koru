@@ -42,27 +42,23 @@ def _prefer_keyboard_drive() -> bool:
     )
 
 
-def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
-    """Handle a drive request from CLI client."""
-    if client.role == "unknown":
-        client.role = "cli"
-    text = msg.data.get("text")
-    if not isinstance(text, str) or not text:
-        daemon._send(client, error(msg.id, "missing 'text'").encode())
-        return
-    raw_ide = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
-    normalized_ide = normalize_ide_id(raw_ide)
-    ide_pref = normalized_ide if normalized_ide not in (None, "auto") else None
-    submit = bool(msg.data.get("submit", True))
-    require_plugin = bool(msg.data.get("require_plugin", False))
-    strategy_hint = msg.data.get("strategy_hint")
-    if strategy_hint is not None and not isinstance(strategy_hint, str):
-        strategy_hint = None
+def _log_drive_request(
+    daemon: Any,
+    raw_ide: str | None,
+    text: str,
+    submit: bool,
+    require_plugin: bool,
+) -> None:
     daemon.log(
         "drive request: "
         f"ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, "
         f"require_plugin={require_plugin}"
     )
+
+
+def _select_drive_plugin(
+    daemon: Any, ide_pref: str | None
+) -> Any:
     plugin = daemon._plugin_for(ide_pref)
     if plugin is not None:
         daemon.log(
@@ -72,6 +68,20 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
         )
     else:
         daemon.log(f"drive: no plugin found for ide={ide_pref}")
+    return plugin
+
+
+def _route_drive(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    plugin: Any,
+    ide_pref: str | None,
+    text: str,
+    submit: bool,
+    require_plugin: bool,
+    strategy_hint: str | None,
+) -> None:
     if plugin is not None and not _prefer_keyboard_drive():
         daemon.log(f"drive: routing via plugin (ide={plugin.ide})")
         _drive_via_plugin(
@@ -100,7 +110,16 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
             error=message,
         )
         return
-    daemon.log("drive: routing via keyboard/os_injector fallback")
+    daemon.log("drive: routing via semantic fallback (vdisplay → imgl → keyboard/os_injector)")
+    if _drive_via_vdisplay_backend(
+        daemon=daemon,
+        client=client,
+        msg=msg,
+        ide_pref=ide_pref,
+        text=text,
+        submit=submit,
+    ):
+        return
     if _drive_via_imgl_backend(
         daemon=daemon,
         client=client,
@@ -111,6 +130,37 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
     ):
         return
     _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
+
+
+def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
+    """Handle a drive request from CLI client."""
+    if client.role == "unknown":
+        client.role = "cli"
+    text = msg.data.get("text")
+    if not isinstance(text, str) or not text:
+        daemon._send(client, error(msg.id, "missing 'text'").encode())
+        return
+    raw_ide = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
+    normalized_ide = normalize_ide_id(raw_ide)
+    ide_pref = normalized_ide if normalized_ide not in (None, "auto") else None
+    submit = bool(msg.data.get("submit", True))
+    require_plugin = bool(msg.data.get("require_plugin", False))
+    strategy_hint = msg.data.get("strategy_hint")
+    if strategy_hint is not None and not isinstance(strategy_hint, str):
+        strategy_hint = None
+    _log_drive_request(daemon, raw_ide, text, submit, require_plugin)
+    plugin = _select_drive_plugin(daemon, ide_pref)
+    _route_drive(
+        daemon,
+        client,
+        msg,
+        plugin,
+        ide_pref,
+        text,
+        submit,
+        require_plugin,
+        strategy_hint,
+    )
 
 
 def _check_and_block_plugin_version(
@@ -570,6 +620,68 @@ def _try_os_injector_drive(
             f"uruchom: koru autopilot calibrate --ide {target_id}"
         )
     return result
+
+
+def _drive_via_vdisplay_backend(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide_pref: str | None,
+    text: str,
+    submit: bool,
+) -> bool:
+    """Photo-VQL / semantic chat drive via vdisplay before blind keyboard coords."""
+    from koru.integrations.vdisplay_client import send_chat, vdisplay_fallback_enabled
+
+    target_id = (ide_pref or "auto").strip().lower()
+    if not vdisplay_fallback_enabled(ide=target_id, plugin_connected=False):
+        return False
+    os.environ.setdefault("VDISPLAY_SESSION", "1")
+    preview = text.replace("\n", " ")[:100]
+    daemon.log(
+        f"drive → vdisplay/{target_id}: photo-vql semantic chat "
+        f"({len(text)} zn) «{preview}» submit={submit}"
+    )
+    try:
+        result = send_chat(text, ide=target_id, submit=submit)
+    except Exception as exc:
+        daemon.log(f"drive → vdisplay/{target_id} failed: {exc}; falling back to imgl/keyboard")
+        return False
+    if not result.get("ok"):
+        daemon.log(
+            f"drive → vdisplay/{target_id} declined: "
+            f"{result.get('message') or result.get('error') or 'unknown'}; "
+            "falling back to imgl/keyboard"
+        )
+        return False
+    backend = str(result.get("backend") or "vdisplay")
+    info: dict[str, Any] = {
+        "backend": backend,
+        "submitted": bool(result.get("submitted", submit)),
+        "verification": result.get("verification") or "photo_vql",
+        "tool_id": target_id,
+    }
+    for key in (
+        "photo_vql_observe",
+        "vql_context",
+        "vql_note",
+        "desktop_preflight",
+        "click_center",
+    ):
+        if key in result:
+            info[key] = result[key]
+    daemon._send(client, ack(msg.id or "", info=info).encode())
+    daemon.log(f"drive → {target_id} via {backend} ({len(text)} chars, submit={submit})")
+    daemon.audit.record(
+        "drive",
+        ide=target_id,
+        backend=backend,
+        chars=len(text),
+        submit=submit,
+        ok=True,
+    )
+    return True
 
 
 def _drive_via_imgl_backend(

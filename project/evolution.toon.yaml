@@ -1,30 +1,30 @@
-# code2llm/evolution | 6293 func | 623f | 2026-06-12
+# code2llm/evolution | 6425 func | 632f | 2026-06-12
 # generated in 0.02s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 4565L, 0 classes, max CC=73
-      EFFORT: ~4h  IMPACT: 333245
+      WHY: 4768L, 0 classes, max CC=74
+      EFFORT: ~4h  IMPACT: 352832
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 3875L, 3 classes, max CC=19
-      EFFORT: ~4h  IMPACT: 73625
+      WHY: 3994L, 3 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 51922
 
-  [3] !! SPLIT-FUNC      send_chat  CC=73  fan=54
-      WHY: CC=73 exceeds 15
-      EFFORT: ~1h  IMPACT: 3942
+  [3] !! SPLIT-FUNC      perform_photo_vql_focus_and_edit  CC=74  fan=50
+      WHY: CC=74 exceeds 15
+      EFFORT: ~1h  IMPACT: 3700
 
-  [4] !! SPLIT-FUNC      perform_photo_vql_focus_and_edit  CC=73  fan=50
-      WHY: CC=73 exceeds 15
-      EFFORT: ~1h  IMPACT: 3650
+  [4] !! SPLIT-FUNC      send_chat  CC=48  fan=43
+      WHY: CC=48 exceeds 15
+      EFFORT: ~1h  IMPACT: 2064
 
-  [5] !! SPLIT-FUNC      prepare_photo_vql_for_drive  CC=62  fan=44
-      WHY: CC=62 exceeds 15
-      EFFORT: ~1h  IMPACT: 2728
-
-  [6] !! SPLIT-FUNC      ensure_vdisplay_ide_control  CC=45  fan=37
+  [5] !! SPLIT-FUNC      prepare_photo_vql_for_drive  CC=45  fan=44
       WHY: CC=45 exceeds 15
-      EFFORT: ~1h  IMPACT: 1665
+      EFFORT: ~1h  IMPACT: 1980
+
+  [6] !! SPLIT-FUNC      ensure_vdisplay_ide_control  CC=47  fan=40
+      WHY: CC=47 exceeds 15
+      EFFORT: ~1h  IMPACT: 1880
 
   [7] !! SPLIT-FUNC      _type_text_at_vql_coords  CC=41  fan=36
       WHY: CC=41 exceeds 15
@@ -44,15 +44,15 @@ NEXT[10] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 114 import paths
-  ⚠ Splitting packages/coru/src/coru/cli.py may break 204 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 125 import paths
+  ⚠ Splitting packages/coru/src/coru/cli.py may break 217 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      73 → ≤20
+  max-CC:      74 → ≤20
   god-modules: 49 → 0
-  high-CC(≥15): 65 → ≤32
+  high-CC(≥15): 32 → ≤16
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.8 → now CC̄=3.8
+  prev CC̄=4.4 → now CC̄=3.8

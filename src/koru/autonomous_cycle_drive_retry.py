@@ -23,6 +23,11 @@ from koru.autonomy.env import (
     prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
 )
 from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_drive_prompt
+from koru.autonomy.drive_strategies import (
+    DriveStrategy,
+    DriveStrategyContext,
+    execute_drive_strategies,
+)
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import PromptDecision, build_prompt
 from koru.autonomy.state import AutoloopState
@@ -298,6 +303,152 @@ def _resolve_autopilot_drive_decision(
     return decision, idle_prompt_kind
 
 
+def _build_drive_kwargs(
+    *,
+    submit: bool,
+    autopilot_ide: str,
+    require_plugin: bool,
+    strategy_hint: str | None = None,
+) -> dict[str, Any]:
+    from koru.autonomous_cycle_gate import effective_ide_control_submit
+
+    drive_submit = effective_ide_control_submit(submit=submit, ide=autopilot_ide)
+    drive_kwargs: dict[str, Any] = {
+        "submit": drive_submit,
+        "ide": autopilot_ide,
+        "require_plugin": require_plugin,
+    }
+    if strategy_hint:
+        drive_kwargs["strategy_hint"] = strategy_hint
+    return drive_kwargs
+
+
+def _pre_drive_fallback(
+    client: Any,
+    *,
+    prompt: str,
+    submit: bool,
+    autopilot_ide: str,
+    require_plugin: bool,
+    project: Path | None = None,
+) -> tuple[dict[str, Any], bool] | None:
+    context = DriveStrategyContext(
+        client=client,
+        prompt=prompt,
+        submit=submit,
+        autopilot_ide=autopilot_ide,
+        require_plugin=require_plugin,
+        project=project,
+    )
+    strategies = [
+        DriveStrategy(
+            "nlp2uri_control",
+            lambda ctx: _try_nlp2uri_ide_control(
+                ctx.prompt,
+                submit=ctx.submit,
+                ide=ctx.autopilot_ide,
+                client=ctx.client,
+                project=ctx.project,
+            ),
+            return_on_failure=require_plugin,
+        )
+    ]
+    if not require_plugin:
+        strategies.append(
+            DriveStrategy(
+                "vdisplay",
+                lambda ctx: _try_vdisplay_control_fallback(
+                    ctx.prompt,
+                    submit=ctx.submit,
+                    ide=ctx.autopilot_ide,
+                    project=ctx.project,
+                    plugin_connected=False,
+                ),
+            )
+        )
+        from koru.integrations.imgl_client import imgl_prefer_before_keyboard
+
+        if imgl_prefer_before_keyboard(autopilot_ide):
+            strategies.append(
+                DriveStrategy(
+                    "imgl_pre_keyboard",
+                    lambda ctx: _try_imgl_gui_fallback(
+                        ctx.prompt,
+                        submit=ctx.submit,
+                        ide=ctx.autopilot_ide,
+                        project=ctx.project,
+                    ),
+                )
+            )
+    return execute_drive_strategies(strategies, context)
+
+
+def _post_drive_fallback_chain(
+    *,
+    prompt: str,
+    submit: bool,
+    autopilot_ide: str,
+    reply: dict[str, Any],
+    project: Path | None = None,
+) -> tuple[dict[str, Any], bool] | None:
+    context = DriveStrategyContext(
+        client=None,
+        prompt=prompt,
+        submit=submit,
+        autopilot_ide=autopilot_ide,
+        require_plugin=False,
+        project=project,
+        plugin_reply=reply,
+    )
+    return execute_drive_strategies(
+        [
+            DriveStrategy(
+                "vdisplay",
+                lambda ctx: _try_vdisplay_control_fallback(
+                    ctx.prompt,
+                    submit=ctx.submit,
+                    ide=ctx.autopilot_ide,
+                    project=ctx.project,
+                    plugin_connected=bool((ctx.plugin_reply or {}).get("ok")),
+                ),
+            ),
+            DriveStrategy(
+                "imgl",
+                lambda ctx: _try_imgl_gui_fallback(
+                    ctx.prompt,
+                    submit=ctx.submit,
+                    ide=ctx.autopilot_ide,
+                    project=ctx.project,
+                ),
+            ),
+            DriveStrategy(
+                "gillm",
+                lambda ctx: _try_gillm_gui_fallback(
+                    ctx.prompt,
+                    submit=ctx.submit,
+                    ide=ctx.autopilot_ide,
+                    project=ctx.project,
+                ),
+                keep_failure=True,
+            ),
+            DriveStrategy(
+                "nlp2uri_focus",
+                lambda ctx: _try_nlp2uri_focus_fallback(
+                    ctx.prompt,
+                    submit=ctx.submit,
+                    ide=ctx.autopilot_ide,
+                ),
+            ),
+            DriveStrategy(
+                "os_injector",
+                lambda ctx: _try_os_injector_fallback(ctx.prompt, submit=ctx.submit),
+                return_on_failure=True,
+            ),
+        ],
+        context,
+    )
+
+
 def _invoke_client_autopilot_drive(
     client: Any,
     *,
@@ -308,80 +459,39 @@ def _invoke_client_autopilot_drive(
     strategy_hint: str | None = None,
     project: Path | None = None,
 ) -> tuple[dict[str, Any], bool]:
-    drive_kwargs: dict[str, Any] = {
-        "submit": submit,
-        "ide": autopilot_ide,
-        "require_plugin": require_plugin,
-    }
-    if strategy_hint:
-        drive_kwargs["strategy_hint"] = strategy_hint
-    from koru.autonomous_cycle_gate import effective_ide_control_submit
+    drive_kwargs = _build_drive_kwargs(
+        submit=submit,
+        autopilot_ide=autopilot_ide,
+        require_plugin=require_plugin,
+        strategy_hint=strategy_hint,
+    )
 
-    drive_submit = effective_ide_control_submit(submit=submit, ide=autopilot_ide)
-    drive_kwargs["submit"] = drive_submit
-    nlp2uri = _try_nlp2uri_ide_control(
-        prompt,
-        submit=drive_submit,
-        ide=autopilot_ide,
-        client=client,
+    pre = _pre_drive_fallback(
+        client,
+        prompt=prompt,
+        submit=drive_kwargs["submit"],
+        autopilot_ide=autopilot_ide,
+        require_plugin=require_plugin,
         project=project,
     )
-    if nlp2uri is not None:
-        if nlp2uri.get("ok"):
-            return nlp2uri, True
-        if require_plugin:
-            return nlp2uri, False
-    if not require_plugin:
-        from koru.integrations.imgl_client import imgl_prefer_before_keyboard
+    if pre is not None:
+        return pre
 
-        if imgl_prefer_before_keyboard(autopilot_ide):
-            imgl_first = _try_imgl_gui_fallback(
-                prompt,
-                submit=submit,
-                ide=autopilot_ide,
-                project=project,
-            )
-            if imgl_first is not None and imgl_first.get("ok"):
-                return imgl_first, True
     reply = client.drive(prompt, **drive_kwargs)
     ok = bool(reply.get("ok", True))
     if ok or require_plugin:
         return reply, ok
-    # Prefer vdisplay semantic control (with VQL click_centers, vision, resolve fallback)
-    # for non-plugin lanes like jetbrains when available (Wayland, KORU_VDISPLAY_...=1)
-    vdisplay = _try_vdisplay_control_fallback(
-        prompt,
+
+    post = _post_drive_fallback_chain(
+        prompt=prompt,
         submit=submit,
-        ide=autopilot_ide,
-        project=project,
-        plugin_connected=bool(reply.get("ok")),
-    )
-    if vdisplay is not None and vdisplay.get("ok"):
-        return vdisplay, True
-    imgl = _try_imgl_gui_fallback(
-        prompt,
-        submit=submit,
-        ide=autopilot_ide,
+        autopilot_ide=autopilot_ide,
+        reply=reply,
         project=project,
     )
-    if imgl is not None and imgl.get("ok"):
-        return imgl, True
-    gillm = _try_gillm_gui_fallback(
-        prompt,
-        submit=submit,
-        ide=autopilot_ide,
-        project=project,
-    )
-    if gillm is not None and gillm.get("ok"):
-        return gillm, True
-    nlp2uri_focus = _try_nlp2uri_focus_fallback(prompt, submit=submit, ide=autopilot_ide)
-    if nlp2uri_focus is not None and nlp2uri_focus.get("ok"):
-        return nlp2uri_focus, True
-    fallback = _try_os_injector_fallback(prompt, submit=submit)
-    if fallback is not None:
-        return fallback, bool(fallback.get("ok", True))
-    if gillm is not None:
-        return gillm, bool(gillm.get("ok", True))
+    if post is not None:
+        return post
+
     return reply, ok
 
 

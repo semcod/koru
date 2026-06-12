@@ -264,6 +264,51 @@ class AutopilotSocketDecision:
     env_instance_before: str
 
 
+def default_autopilot_instance_for_ide(autopilot_ide: str) -> str:
+    """Default lane instance slug when CLI gives only a canonical IDE id."""
+    ide = (autopilot_ide or "").strip().lower()
+    if not ide or ide == "auto":
+        return ide
+    if ide == "cursor":
+        return "cursor-main"
+    if "-" in ide or "_" in ide:
+        return ide
+    return ide
+
+
+def _instance_from_socket_path(socket_path: str | Path | None) -> str | None:
+    if not socket_path:
+        return None
+    name = Path(socket_path).name
+    prefix = "koru-autopilot-"
+    suffix = ".sock"
+    if not name.startswith(prefix) or not name.endswith(suffix):
+        return None
+    instance = name[len(prefix) : -len(suffix)].strip().lower()
+    return instance or None
+
+
+def _socket_path_for_lane(default_socket_path: Any, lane: str | None) -> Path:
+    previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    previous_socket = os.environ.get("KORU_AUTOPILOT_SOCKET")
+    try:
+        if lane:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+        else:
+            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+        os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
+        return default_socket_path().resolve()
+    finally:
+        if previous_instance is None:
+            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+        else:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
+        if previous_socket is None:
+            os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
+        else:
+            os.environ["KORU_AUTOPILOT_SOCKET"] = previous_socket
+
+
 def _resolve_autopilot_lane(
     args: Any,
     *,
@@ -278,13 +323,16 @@ def _resolve_autopilot_lane(
     )
     if autopilot_ide and autopilot_ide != "auto":
         if not lane or lane == "auto":
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-            lane = autopilot_ide
-        elif lane == autopilot_ide or lane.startswith(f"{autopilot_ide}-"):
+            lane = default_autopilot_instance_for_ide(autopilot_ide)
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+        elif lane == autopilot_ide:
+            lane = default_autopilot_instance_for_ide(autopilot_ide)
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+        elif lane.startswith(f"{autopilot_ide}-"):
             pass
         else:
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-            lane = autopilot_ide
+            lane = default_autopilot_instance_for_ide(autopilot_ide)
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
     return lane, autopilot_ide
 
 
@@ -326,7 +374,15 @@ def _decide_autopilot_socket(
         env_socket=env_socket,
         env_instance_before=env_instance_before,
     )
-    socket_path = (args.socket or default_socket_path()).resolve()
+    if args.socket:
+        socket_path = Path(args.socket).expanduser().resolve()
+    else:
+        socket_path = _socket_path_for_lane(default_socket_path, lane)
+        env_socket_instance = _instance_from_socket_path(env_socket)
+        if env_socket and lane and env_socket_instance == lane:
+            socket_path = Path(env_socket).expanduser().resolve()
+        else:
+            os.environ["KORU_AUTOPILOT_SOCKET"] = str(socket_path)
     return AutopilotSocketDecision(
         lane=lane,
         autopilot_ide=autopilot_ide,

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from koru.autonomous_cycle import DiagnosticResult
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.queue import QueueLoopResult
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
@@ -88,7 +89,7 @@ def _auto_pipeline_has_pressure(state: AutoPipelineState, max_iterations: int) -
         return True, "queue waiting for input"
     if state.last_diag_status == "failed":
         return True, "diagnostics failed"
-    if state.last_autopilot_status.startswith("failed"):
+    if parse_autopilot_status(state.last_autopilot_status).failed:
         return True, "autopilot failed"
     if state.last_queue_status == "completed" and state.last_iterations >= max_iterations:
         return True, "queue backlog reached max-iterations"

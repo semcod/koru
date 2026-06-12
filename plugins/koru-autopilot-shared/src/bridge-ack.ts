@@ -121,21 +121,25 @@ export abstract class SharedAutopilotBridgeAck extends SharedAutopilotBridgePast
     });
   }
 
-  private async discardToxicFocusOpenCache(focusCommand: string | undefined): Promise<void> {
-    if (!this.probeLadderEnabled()) return;
-    const cache = this.getProbeCache();
-    const cached = cache?.focusOpen;
-    if (!cached) return;
-    const focusToken = (focusCommand || "").toLowerCase();
-    const isInputOnlyFocus =
+  private _isInputOnlyFocusToken(focusToken: string): boolean {
+    return (
       focusToken.includes("focuscomposer") ||
       focusToken.includes("focuscascade") ||
       (this.detectIde() === "cursor" &&
         (focusToken.includes("panel.chat.view") || focusToken.includes("panel.aichat.view"))) ||
       (this.detectIde() === "vscodium" && focusToken.includes("openquickchat")) ||
       (this.detectIde() === "vscodium" && focusToken.includes("quickchat.openinchatview")) ||
-      focusToken.startsWith("input-only");
-    if (!isInputOnlyFocus) return;
+      focusToken.startsWith("input-only")
+    );
+  }
+
+  private async discardToxicFocusOpenCache(focusCommand: string | undefined): Promise<void> {
+    if (!this.probeLadderEnabled()) return;
+    const cache = this.getProbeCache();
+    const cached = cache?.focusOpen;
+    if (!cached) return;
+    const focusToken = (focusCommand || "").toLowerCase();
+    if (!this._isInputOnlyFocusToken(focusToken)) return;
     const cleared: any = { ...cache, focusOpen: undefined };
     await this.context.globalState.update("probeCache.v3", cleared);
     debugLog("PROBE_CACHE_FOCUS_OPEN_DISCARDED", { previous: cached });

@@ -46,3 +46,14 @@ def test_decision_next_step_hint_submit_unverified_does_not_retry() -> None:
         )
         == "manual send required; validate submit trace before any redrive"
     )
+
+
+def test_decision_next_step_hint_reads_submit_unverified_status_without_telemetry() -> None:
+    assert (
+        decision_next_step_hint(
+            queue_status="waiting_input",
+            autopilot_status="failed(submit_unverified)",
+            cycle_telemetry={},
+        )
+        == "manual send required; validate submit trace before any redrive"
+    )

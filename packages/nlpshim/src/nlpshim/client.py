@@ -81,6 +81,29 @@ def analyze_text_structure(text: str, *, include_plan: bool = False) -> dict[str
     return _analyze_query(text, include_plan=include_plan)
 
 
+def _intent_ir_steps(structure: dict[str, Any], *, execute: bool) -> list[dict[str, Any]] | None:
+    ir = structure.get("intent_ir")
+    if not ir:
+        return None
+    if ir.get("intent") in {"unknown", None} and float(ir.get("confidence", 0)) < 0.01:
+        return None
+    if execute:
+        return None
+    return [{"action": str(ir.get("intent") or "unknown"), "config": dict(ir.get("entities") or {})}]
+
+
+def _workflow_steps_from_client(client: Any, text: str, *, execute: bool) -> list[dict[str, Any]]:
+    try:
+        res = client.workflow_from_text(text, execute=execute)
+    except Exception as exc:
+        if os.getenv("NLP2DSL_MOCK", "0") != "1":
+            raise RuntimeError(f"Failed to parse NLP intent via nlp2dsl: {exc}") from exc
+        res = FallbackNLP2DSLClient().workflow_from_text(text)
+    workflow = res.get("workflow") or res.get("dsl") or {}
+    steps = res.get("steps") or workflow.get("steps") or []
+    return list(steps)
+
+
 class NLPBridgeClient:
     """Bridge to nlp2dsl backend for resolving natural language commands."""
 
@@ -91,23 +114,11 @@ class NLPBridgeClient:
     def parse_intent(self, text: str, *, execute: bool = False) -> list[dict[str, Any]]:
         """Parse natural language command into structured workflow steps."""
         structure = analyze_text_structure(text, include_plan=False)
-        if structure and structure.get("intent_ir"):
-            ir = structure["intent_ir"]
-            if ir.get("intent") in {"unknown", None} and float(ir.get("confidence", 0)) < 0.01:
-                pass
-            elif not execute:
-                return [{"action": str(ir.get("intent") or "unknown"), "config": dict(ir.get("entities") or {})}]
-
-        try:
-            res = self.client.workflow_from_text(text, execute=execute)
-            workflow = res.get("workflow") or res.get("dsl") or {}
-            steps = res.get("steps") or workflow.get("steps") or []
-            return list(steps)
-        except Exception as exc:
-            if os.getenv("NLP2DSL_MOCK", "0") != "1":
-                raise RuntimeError(f"Failed to parse NLP intent via nlp2dsl: {exc}") from exc
-            res = FallbackNLP2DSLClient().workflow_from_text(text)
-            return res.get("steps") or []
+        if structure:
+            ir_steps = _intent_ir_steps(structure, execute=execute)
+            if ir_steps is not None:
+                return ir_steps
+        return _workflow_steps_from_client(self.client, text, execute=execute)
 
     def workflow_plan(self, text: str, *, mode: str = "auto") -> dict[str, Any]:
         """Plan workflow via backend lifecycle API (no side effects)."""

@@ -51,16 +51,19 @@ For LLM agents starting a session in a koru-driven repository:
     żeby uniknąć cross-lane chat/event leakage.
 11. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
-12. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
+12. **[`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md)** (PL) —
+   pętla **vdisplay + koru photo-VQL** (observe→decide→act→verify), skrypty
+   `koru-drive-photo-vql.sh`, guardy, PyCharm/Wayland — **użyj tego do chat drive na pulpicie**.
+13. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
    implemented doctor, guided repair, autopilot host repair, and safe
    autonomous diagnostic-ticket loops.
-13. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
+14. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
    how an idle planfile queue triggers whole-project `code2llm` discovery,
    `planfile` ticket generation, and explicit IDE LLM status handoff.
-14. **[`../packages/coru/README.md`](../packages/coru/README.md)** — thin client
+15. **[`../packages/coru/README.md`](../packages/coru/README.md)** — thin client
    layer (`coru`) that keeps user-facing commands stable while `koruenv` + `koru`
    internals can be refactored independently.
-15. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
+16. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
    incremental plan for moving selected modules from `src` to `packages/*`.
 
 For human operators / DevOps:
@@ -180,6 +183,7 @@ Complete index of documentation in this directory. Start with
 | [`ide-command-api-map.md`](./ide-command-api-map.md) | Command API map (+ [`ide-command-api-map.yaml`](./ide-command-api-map.yaml)) |
 | [`ide-strategy-contract.md`](./ide-strategy-contract.md) | Strategy contract per IDE |
 | [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md) | Koru autonomy vs Cursor (PL) |
+| [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md) | vdisplay photo-VQL loop, chat drive (PL) |
 | [`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md) | Doctor, repair, diagnostic loops |
 | [`mcp-ide-flow.md`](./mcp-ide-flow.md) | MCP ↔ IDE integration flow |
 | [`agent-backends-architecture.md`](./agent-backends-architecture.md) | Plugin, MCP, CLI, OS injector layers |

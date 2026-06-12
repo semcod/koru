@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.28s
-# nodes: 384 | edges: 500 | modules: 69
-# CC̄=3.8
+# generated in 0.29s
+# nodes: 389 | edges: 500 | modules: 69
+# CC̄=3.7
 
 HUBS[20]:
   project.print
-    CC=0  in:922  out:0  total:922
+    CC=0  in:923  out:0  total:923
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:200  out:9  total:209
+    CC=5  in:202  out:9  total:211
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
   packages.dsl2coru.src.dsl2coru.grammar._flag
     CC=7  in:33  out:8  total:41
   packages.dsl2coru.src.dsl2coru.parser._flag
     CC=7  in:33  out:8  total:41
-  src.koruide.ide.detect_running_ides
-    CC=17  in:27  out:11  total:38
-  packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command
-    CC=15  in:1  out:32  total:33
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
     CC=3  in:0  out:33  total:33
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
-  src.koru.integrations.imgl_client.execute_nl
-    CC=14  in:4  out:25  total:29
+  src.koruide.ide.detect_running_ides
+    CC=4  in:27  out:4  total:31
   packages.dsl2coru.src.dsl2coru.cli._main_subcommand
     CC=1  in:1  out:28  total:29
   packages.coru.src.coru.cli._trace
     CC=3  in:23  out:5  total:28
   packages.coru.src.coru.cli._maybe_reexec_into_project_python
     CC=13  in:1  out:27  total:28
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
+    CC=14  in:4  out:23  total:27
   packages.coru.src.coru.cli_calibration._lane_calibration
     CC=14  in:2  out:25  total:27
   packages.coru.src.coru.cli._run_default_autonomous
     CC=11  in:2  out:25  total:27
-  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
-    CC=14  in:4  out:23  total:27
+  packages.nlp2coru.src.nlp2coru.cli._emit
+    CC=4  in:22  out:4  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
     CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
     CC=3  in:0  out:26  total:26
-  packages.uri2koru.src.uri2koru.decode.uri_to_dsl
-    CC=16  in:0  out:26  total:26
-  packages.nlp2coru.src.nlp2coru.cli._emit
-    CC=4  in:22  out:4  total:26
+  packages.dsl2koru.src.dsl2koru.cli._main_subcommand
+    CC=1  in:1  out:24  total:25
+  packages.dsl2coru.src.dsl2coru.bus.dispatch
+    CC=14  in:1  out:24  total:25
+  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri
+    CC=13  in:1  out:23  total:24
 
 MODULES:
   packages.cli2coru.src.cli2coru.cli  [4 funcs]
@@ -60,17 +60,17 @@ MODULES:
     _print_result  CC=4  out:6
   packages.cli2koru.src.cli2koru.shell  [1 funcs]
     run_shell  CC=9  out:12
-  packages.coru.src.coru.cli  [87 funcs]
+  packages.coru.src.coru.cli  [85 funcs]
     _active_project_root  CC=3  out:3
     _add_lane_identifiers  CC=1  out:2
     _agent_lane_from_auto_args  CC=7  out:7
     _alive_daemon_ide  CC=8  out:6
     _alive_daemon_instance  CC=13  out:16
-    _auto_default_instance  CC=4  out:3
     _autonomous_startup_chain  CC=2  out:8
     _binary_path  CC=8  out:13
     _chain_project_from_plans  CC=3  out:1
     _choose_option  CC=9  out:11
+    _cmd_exists  CC=1  out:1
   packages.coru.src.coru.cli_calibration  [22 funcs]
     _append_desktop_focus_lines  CC=2  out:2
     _calibration_desktop_focus_titles  CC=4  out:7
@@ -149,8 +149,11 @@ MODULES:
   packages.dsl2coru.src.dsl2coru.handlers.runner  [2 funcs]
     _run_subprocess  CC=4  out:1
     default_runner  CC=5  out:6
-  packages.dsl2coru.src.dsl2coru.handlers.ui  [1 funcs]
-    run_ui_command  CC=15  out:32
+  packages.dsl2coru.src.dsl2coru.handlers.ui  [4 funcs]
+    _build_ui_result  CC=2  out:7
+    _ensure_imgl_available  CC=3  out:2
+    _ui_prompt_for_verb  CC=12  out:11
+    run_ui_command  CC=3  out:13
   packages.dsl2coru.src.dsl2coru.parser  [20 funcs]
     _flag  CC=7  out:8
     _parse_auto  CC=6  out:4
@@ -322,10 +325,12 @@ MODULES:
     rewrite_chat_prompt  CC=4  out:2
   packages.nlp2coru.src.nlp2coru.to_dsl  [1 funcs]
     to_dsl  CC=11  out:11
-  packages.nlpshim.src.nlpshim.client  [5 funcs]
+  packages.nlpshim.src.nlpshim.client  [7 funcs]
     __init__  CC=2  out:2
-    parse_intent  CC=15  out:20
+    parse_intent  CC=3  out:3
+    _intent_ir_steps  CC=7  out:8
     _use_intent_ir  CC=2  out:1
+    _workflow_steps_from_client  CC=7  out:10
     analyze_text_structure  CC=2  out:2
     get_nlp2dsl_client  CC=2  out:0
   packages.nlpshim.src.nlpshim.control  [1 funcs]
@@ -351,8 +356,10 @@ MODULES:
     parse_coru_uri  CC=7  out:9
     uri_for_block  CC=5  out:3
     uri_for_cmd  CC=4  out:5
-  packages.uri2koru.src.uri2koru.decode  [1 funcs]
-    uri_to_dsl  CC=16  out:26
+  packages.uri2koru.src.uri2koru.decode  [3 funcs]
+    _block_uri_to_dsl  CC=4  out:5
+    _cmd_uri_to_dsl  CC=9  out:14
+    uri_to_dsl  CC=5  out:9
   packages.uri2koru.src.uri2koru.nlp2uri  [2 funcs]
     best_uri  CC=2  out:1
     nlp2uri  CC=13  out:23
@@ -373,12 +380,12 @@ MODULES:
   src.koru.autonomy.ide_operator_guidance  [1 funcs]
     terminal_kind_label  CC=3  out:0
   src.koru.integrations.imgl_client  [2 funcs]
-    execute_nl  CC=14  out:25
     imgl_available  CC=2  out:3
+    imgl_missing_message  CC=3  out:2
   src.koru.wizard.gui.static.wizard  [1 funcs]
     list  CC=5  out:9
   src.koruide.ide  [2 funcs]
-    detect_running_ides  CC=17  out:11
+    detect_running_ides  CC=4  out:4
     detect_terminal_host_context  CC=9  out:9
 
 EDGES:

@@ -28,7 +28,7 @@ def _resolved_format(args: argparse.Namespace) -> str:
     return args.output_format
 
 
-def imgl_main(argv: list[str] | None = None) -> int:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="koru imgl", description="Vision-guided UI via imgl")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -58,35 +58,51 @@ def imgl_main(argv: list[str] | None = None) -> int:
         help="Skip img2nl capture diagnostics",
     )
     _add_format_arg(execute)
+    return parser
 
-    args = parser.parse_args(argv)
-    fmt = _resolved_format(args)
 
-    if args.cmd == "doctor":
-        from imgl.autodiag import diagnose_capture, render_report
-        from koru.integrations.imgl_client import default_image_path, doctor_capture
+def _run_doctor(args: argparse.Namespace, fmt: str) -> int:
+    from imgl.autodiag import diagnose_capture, render_report
+    from koru.integrations.imgl_client import default_image_path, doctor_capture
 
-        image = args.image or str(default_image_path())
-        try:
-            capture = doctor_capture(image, locale=args.locale) if args.image else doctor_capture(
-                locale=args.locale
-            )
-        except Exception as exc:
-            capture = diagnose_capture(image, locale=args.locale)
-            capture.setdefault("error", str(exc))
-            capture["ok"] = False
-            capture["verdict"] = "error"
-        print(render_report({"capture": capture, "verdict": capture.get("verdict")}, fmt))
-        return (
-            0
-            if capture.get("verdict") in {"real_ui", "uncertain"} and capture.get("is_fresh", True)
-            else 1
+    image = args.image or str(default_image_path())
+    try:
+        capture = doctor_capture(image, locale=args.locale) if args.image else doctor_capture(
+            locale=args.locale
         )
+    except Exception as exc:
+        capture = diagnose_capture(image, locale=args.locale)
+        capture.setdefault("error", str(exc))
+        capture["ok"] = False
+        capture["verdict"] = "error"
+    print(render_report({"capture": capture, "verdict": capture.get("verdict")}, fmt))
+    return (
+        0
+        if capture.get("verdict") in {"real_ui", "uncertain"} and capture.get("is_fresh", True)
+        else 1
+    )
 
-    if args.cmd != "execute":
-        parser.print_help()
-        return 1
 
+def _render_execute_result(payload: dict[str, Any], fmt: str, json_flag: bool) -> None:
+    if fmt in {"json", "yaml", "markdown", "auto"} and payload.get("diagnostics"):
+        from imgl.autodiag import render_report
+
+        print(render_report(payload["diagnostics"], fmt))
+    elif fmt == "json" or json_flag:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        if payload.get("error"):
+            print(f"error: {payload['error']}", file=sys.stderr)
+        result = payload.get("result") or {}
+        if result.get("output"):
+            print(result["output"])
+        elif result.get("error"):
+            print(f"error: {result['error']}", file=sys.stderr)
+        elif not payload.get("ok"):
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _run_execute(args: argparse.Namespace, fmt: str) -> int:
     from koruapi.desktop_uri import desktop_uri_imgl_execute
 
     dry_run = bool(args.dry_run) and not args.do_execute
@@ -102,22 +118,7 @@ def imgl_main(argv: list[str] | None = None) -> int:
         with_diagnostics=not args.no_diagnose,
     )
 
-    if fmt in {"json", "yaml", "markdown", "auto"} and payload.get("diagnostics"):
-        from imgl.autodiag import render_report
-
-        print(render_report(payload["diagnostics"], fmt))
-    elif fmt == "json" or args.json:
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-    else:
-        if payload.get("error"):
-            print(f"error: {payload['error']}", file=sys.stderr)
-        result = payload.get("result") or {}
-        if result.get("output"):
-            print(result["output"])
-        elif result.get("error"):
-            print(f"error: {result['error']}", file=sys.stderr)
-        elif not payload.get("ok"):
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
+    _render_execute_result(payload, fmt, bool(args.json))
 
     diag = payload.get("diagnostics") or {}
     ok = bool(payload.get("ok"))
@@ -125,6 +126,21 @@ def imgl_main(argv: list[str] | None = None) -> int:
     if checks.get("blocked_blank_capture") or checks.get("blocked_stale_capture"):
         ok = False
     return 0 if ok else 1
+
+
+def imgl_main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    fmt = _resolved_format(args)
+
+    if args.cmd == "doctor":
+        return _run_doctor(args, fmt)
+
+    if args.cmd == "execute":
+        return _run_execute(args, fmt)
+
+    parser.print_help()
+    return 1
 
 
 __all__ = ["imgl_main"]

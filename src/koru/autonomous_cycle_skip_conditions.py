@@ -20,6 +20,7 @@ from koru.autonomy.ide_operator_guidance import (
     ide_label,
     manual_send_operator_steps,
 )
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
@@ -497,9 +498,7 @@ def _clear_submit_unverified_state(state: AutoloopState) -> None:
 
 
 def _previous_drive_needs_manual_send(state: AutoloopState) -> bool:
-    return str(getattr(state, "last_autopilot_status", "") or "").startswith(
-        "failed(submit_"
-    )
+    return parse_autopilot_status(getattr(state, "last_autopilot_status", "") or "").submit_unverified
 
 
 def _manual_send_can_be_cleared_by_message_sent(
@@ -646,7 +645,7 @@ def _handle_stuck_status_skip_candidate(
     cycle_telemetry: dict[str, Any],
     _hp: callable,
 ) -> tuple[bool, str]:
-    if str(getattr(state, "last_autopilot_status", "") or "").startswith("failed"):
+    if parse_autopilot_status(getattr(state, "last_autopilot_status", "") or "").failed:
         _hp(
             "- autopilot not skipped "
             f"(previous drive failed, streak={state.stagnation_streak})",

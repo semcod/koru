@@ -92,6 +92,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from koru.autonomy.autopilot_status import parse_autopilot_status
+
 DECISION_TRACE_RING_SIZE = 10
 """Number of recent decisions kept on disk and exposed by the API."""
 
@@ -381,19 +383,21 @@ def _stuck_status_skip_code(cycle_telemetry: dict[str, Any]) -> str | None:
 
 
 def _status_skip_code(autopilot_status: str) -> str | None:
-    status = (autopilot_status or "").lower()
-    if status.startswith("skipped("):
+    status = parse_autopilot_status(autopilot_status)
+    if status.skipped:
         # ``skipped(idle_only)`` -> ``idle_only`` etc.
-        inner = status[len("skipped("):].rstrip(")").strip()
+        inner = status.code
         if inner in SKIP_CODE_DESCRIPTIONS:
             return inner
         # ``skipped(stuck_waiting_input)`` even when no telemetry flag was set
         # by an upstream skip path (defensive: keeps the trace honest).
         if inner.startswith("stuck_"):
             return inner if inner in SKIP_CODE_DESCRIPTIONS else "stuck_status"
-    if status == "ok":
-        return status
-    if status.startswith("failed"):
+    if status.ok:
+        return "ok"
+    if status.failed:
+        if status.submit_unverified:
+            return "manual_send_required"
         return "failed"
     return None
 
@@ -446,20 +450,20 @@ def _decide_label(
     cycle_telemetry: dict[str, Any],
 ) -> str:
     """``decided=`` field. Maps to drive intent or the chosen skip path."""
-    status = (autopilot_status or "").lower()
-    if status == "ok":
+    status = parse_autopilot_status(autopilot_status)
+    if status.ok:
         return autopilot_drive_kind or "drive"
     if cycle_telemetry.get("autopilot_chat_intake_ticket"):
         return "intake_only"
     if cycle_telemetry.get("autopilot_llx_operator_ticket"):
         return "llx_reflection"
-    if status.startswith("failed") and cycle_telemetry.get("autopilot_submit_unverified"):
+    if status.failed and (status.submit_unverified or cycle_telemetry.get("autopilot_submit_unverified")):
         return "manual_send_required"
-    if status.startswith("skipped("):
-        return f"skip:{status[len('skipped('):].rstrip(')')}"
-    if status.startswith("failed"):
+    if status.skipped:
+        return f"skip:{status.code}"
+    if status.failed:
         return "drive_failed"
-    return status or "no_action"
+    return status.code or "no_action"
 
 
 def _action_label(
@@ -467,15 +471,15 @@ def _action_label(
     autopilot_backend: str | None,
 ) -> str:
     """``action=`` field. ``submit_verified`` / ``submit_unverified`` / ``no_op``."""
-    status = (autopilot_status or "").lower()
-    if status == "ok":
+    status = parse_autopilot_status(autopilot_status)
+    if status.ok:
         backend = autopilot_backend or "unknown"
         return f"submit_verified(backend={backend})"
-    if status.startswith("skipped("):
+    if status.skipped:
         return "no_op"
-    if status.startswith("failed"):
+    if status.failed:
         return "submit_unverified"
-    return status or "no_op"
+    return status.code or "no_op"
 
 
 def _evidence_label(

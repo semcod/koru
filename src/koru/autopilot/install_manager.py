@@ -637,14 +637,14 @@ def _install_plugin_repair_result(
     return result
 
 
-def _plugin_already_aligned(plugin: dict[str, Any]) -> bool:
-    if not plugin.get("connected"):
-        return False
-    live_version = str(plugin.get("connected_version") or "").strip()
-    installed_version = str(plugin.get("installed_version") or "").strip()
-    expected_version = str(plugin.get("expected_version") or "").strip()
-    live_build = str(plugin.get("connected_build_sha") or "").strip()
-    expected_build = str(plugin.get("expected_build_sha") or "").strip()
+def _versions_aligned(
+    live_version: str,
+    installed_version: str,
+    expected_version: str,
+    live_build: str,
+    expected_build: str,
+) -> bool:
+    """Return True when all provided version/build fields are consistent."""
     build_aligned = not expected_build or (live_build and live_build == expected_build)
     if live_version and expected_version and live_version == expected_version and build_aligned:
         if not installed_version or installed_version == live_version:
@@ -654,6 +654,18 @@ def _plugin_already_aligned(plugin: dict[str, Any]) -> bool:
         and installed_version
         and live_version == installed_version
         and build_aligned
+    )
+
+
+def _plugin_already_aligned(plugin: dict[str, Any]) -> bool:
+    if not plugin.get("connected"):
+        return False
+    return _versions_aligned(
+        str(plugin.get("connected_version") or "").strip(),
+        str(plugin.get("installed_version") or "").strip(),
+        str(plugin.get("expected_version") or "").strip(),
+        str(plugin.get("connected_build_sha") or "").strip(),
+        str(plugin.get("expected_build_sha") or "").strip(),
     )
 
 
@@ -956,6 +968,36 @@ def _process_exists(pid: int) -> bool:
     return True
 
 
+def _timeout_result(
+    last_status: dict[str, Any],
+    resolved_ide: str,
+    socket: str,
+    expected_build: str | None,
+) -> dict[str, Any]:
+    """Build the timeout/failure result dict for _wait_for_plugin_reconnect."""
+    last_build = str(last_status.get("_last_plugin_build") or "").strip()
+    expected = str(last_status.get("_expected_plugin_build") or expected_build or "").strip()
+    status = (
+        "build_mismatch"
+        if expected and last_build and last_build != expected
+        else "not_connected"
+    )
+    return {
+        "status": status,
+        "ok": False,
+        "ide": resolved_ide,
+        "socket": socket,
+        "message": (
+            "plugin did not reconnect with the expected build after repair; "
+            "reload the IDE window and run "
+            "`koru: Connect autopilot daemon`"
+        ),
+        "build": last_build or None,
+        "expected_build": expected or None,
+        "daemon_running": bool(last_status.get("running")),
+    }
+
+
 def _wait_for_plugin_reconnect(
     socket: str,
     resolved_ide: str,
@@ -989,27 +1031,7 @@ def _wait_for_plugin_reconnect(
                 "build": build or None,
             }
         time.sleep(0.25)
-    last_build = str(last_status.get("_last_plugin_build") or "").strip()
-    expected = str(last_status.get("_expected_plugin_build") or expected_build or "").strip()
-    status = (
-        "build_mismatch"
-        if expected and last_build and last_build != expected
-        else "not_connected"
-    )
-    return {
-        "status": status,
-        "ok": False,
-        "ide": resolved_ide,
-        "socket": socket,
-        "message": (
-            "plugin did not reconnect with the expected build after repair; "
-            "reload the IDE window and run "
-            "`koru: Connect autopilot daemon`"
-        ),
-        "build": last_build or None,
-        "expected_build": expected or None,
-        "daemon_running": bool(last_status.get("running")),
-    }
+    return _timeout_result(last_status, resolved_ide, socket, expected_build)
 
 
 def _apply_repair_steps(

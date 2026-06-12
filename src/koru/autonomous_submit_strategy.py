@@ -6,6 +6,7 @@ import os
 from collections.abc import Mapping
 from typing import Any
 
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 
@@ -60,11 +61,9 @@ def record_submit_drive_outcome(
         state.pending_submit_strategy_hint = ""
         return
 
+    status = parse_autopilot_status(autopilot_status)
     verification = str(reply.get("verification") or "").strip().lower()
-    if not (
-        autopilot_status.startswith("failed(submit_")
-        or verification in {"submit_unverified", "submit_failed"}
-    ):
+    if not (status.submit_unverified or verification in {"submit_unverified", "submit_failed"}):
         return
 
     signature = failure_signature.strip()
@@ -97,8 +96,8 @@ def consume_pending_submit_strategy_hint(state: AutoloopState) -> str | None:
 
 def should_block_manual_send(state: AutoloopState) -> bool:
     streak = int(getattr(state, "submit_unverified_streak", 0) or 0)
-    status = str(getattr(state, "last_autopilot_status", "") or "")
-    if streak <= 0 and ("submit_unverified" in status or "submit_failed" in status):
+    status = parse_autopilot_status(getattr(state, "last_autopilot_status", "") or "")
+    if streak <= 0 and status.submit_unverified:
         return True
     return streak >= submit_alt_attempt_limit()
 

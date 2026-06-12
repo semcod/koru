@@ -18,6 +18,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.replay_actions import (
     ReplayAction,
     autopilot_retry_drive,
@@ -108,13 +109,11 @@ def _extract_blocker_detail(autopilot_status: str) -> str | None:
 
 def _extract_blocker_code(autopilot_status: str) -> str:
     """Extract the blocker name from an autopilot status like ``skipped(plugin_missing)``."""
-    status = (autopilot_status or "").strip().lower()
-    if status.startswith("skipped("):
-        return status[len("skipped("):].rstrip(")").strip()
-    if status.startswith("failed"):
-        if "submit_unverified" in status or "submit_failed" in status:
-            return "manual_send_required"
-        return "drive_failed"
+    status = parse_autopilot_status(autopilot_status)
+    if status.skipped:
+        return status.code
+    if status.failed:
+        return status.blocker_code or "drive_failed"
     return ""
 
 

@@ -10,6 +10,7 @@ _TESTQL_IMPORT_ERROR: str | None = None
 
 try:
     import testql  # noqa: F401
+    from testql.commands import run_cmd as _testql_run_cmd  # noqa: F401
 
     _TESTQL_AVAILABLE = True
 except ImportError as exc:

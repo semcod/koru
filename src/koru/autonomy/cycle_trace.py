@@ -4,6 +4,7 @@ from typing import Any
 
 from koru.autonomous_cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
 from koru.autonomous_wup import WupHealthResult
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.decision_trace import (
     append_decision_record,
     build_decision_record,
@@ -52,15 +53,15 @@ def decision_next_step_hint(
     cycle_telemetry: dict[str, Any],
 ) -> str:
     """Compact ``next=`` token for the decision trace."""
-    status = (autopilot_status or "").lower()
-    if status == "ok":
+    status = parse_autopilot_status(autopilot_status)
+    if status.ok:
         return "wait for IDE response, then advance queue"
-    if cycle_telemetry.get("autopilot_submit_unverified"):
+    if status.submit_unverified or cycle_telemetry.get("autopilot_submit_unverified"):
         return "manual send required; validate submit trace before any redrive"
     telemetry_hint = _telemetry_next_step_hint(cycle_telemetry)
     if telemetry_hint is not None:
         return telemetry_hint
-    if status.startswith("failed"):
+    if status.failed:
         return "retry next cycle (cached winner discarded)"
     queue_status = (queue_status or "").lower()
     if queue_status == "waiting_input":

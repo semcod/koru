@@ -86,6 +86,14 @@ def test_should_block_manual_send_for_legacy_submit_failure_state() -> None:
     assert should_block_manual_send(state) is True
 
 
+def test_should_block_manual_send_for_submit_failed_status() -> None:
+    state = AutoloopState(
+        last_autopilot_status="failed(submit_failed)",
+        submit_unverified_streak=0,
+    )
+    assert should_block_manual_send(state) is True
+
+
 def test_reorder_submit_registered_before_glass() -> None:
     commands = [
         "composer.sendToAgent",

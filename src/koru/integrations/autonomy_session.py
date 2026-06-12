@@ -141,6 +141,19 @@ def persist_autonomy_phase(
     return path
 
 
+def _vql_load_capture_validation(vql_path: "Path") -> "dict[str, Any] | None":
+    """Load capture_validation from VQL file metadata, or None on failure."""
+    try:
+        import json
+
+        data = json.loads(vql_path.read_text(encoding="utf-8"))
+        meta = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        cv = meta.get("capture_validation")
+        return cv if isinstance(cv, dict) else None
+    except Exception:
+        return None
+
+
 def vql_sidecar_is_stale(
     vql_path: Path,
     png_path: Path | None,
@@ -170,16 +183,7 @@ def vql_sidecar_is_stale(
     }
 
     if capture_validation is None:
-        try:
-            import json
-
-            data = json.loads(vql_path.read_text(encoding="utf-8"))
-            meta = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
-            cv = meta.get("capture_validation")
-            if isinstance(cv, dict):
-                capture_validation = cv
-        except Exception:
-            capture_validation = None
+        capture_validation = _vql_load_capture_validation(vql_path)
 
     if max_age > 0 and age_s > max_age:
         reasons.append(f"vql_age_s>{max_age}")

@@ -13,6 +13,7 @@ from koru.autonomous_cycle_drive_retry import (
     _log_autopilot_result,
     _update_autopilot_state,
 )
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.state import AutoloopState
 from koru.autonomous_submit_strategy import record_submit_drive_outcome, risky_paste_winner
 from koru.queue import QueueLoopResult
@@ -46,7 +47,7 @@ def apply_autopilot_drive_outcome(
         state.last_submit_unverified_ticket_id = ""
         if autopilot_backend:
             state.last_driven_backend = autopilot_backend
-    elif autopilot_status.startswith("failed(submit_") and reply.get("delivered") is True:
+    elif parse_autopilot_status(autopilot_status).submit_unverified and reply.get("delivered") is True:
         state.last_driven_ticket_id = waiting_ticket
         state.last_submit_unverified_ts = time.time()
         state.last_submit_unverified_ticket_id = waiting_ticket

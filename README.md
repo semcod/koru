@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.335-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$26.73-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-152.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.336-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$25.58-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-152.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $26.7256 (441 commits)
-- 👤 **Human dev:** ~$15235 (152.3h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $25.5829 (442 commits)
+- 👤 **Human dev:** ~$15279 (152.8h @ $100/h, 30min dedup)
 
 Generated on 2026-06-12 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
@@ -189,6 +189,50 @@ pip install "koru[queue]"    # optional Redis/scheduler queue adapters
 pip install "koru[quality]"  # deeper refactor quality gates
 pip install "koru[all]"      # local workstation with every optional lane
 ```
+
+### Desktop autonomy — vdisplay + photo-VQL loop
+
+When the IDE plugin path is insufficient (native Wayland PyCharm, multi-monitor GNOME), koru can drive chat through **[vdisplay](https://github.com/wronai/vdisplay)** capture, VQL (imgl), and map/ydotool:
+
+```
+prepare (screenshot + IDE title guard) → decide (VQL/LLM target) → act (paste) → verify (OCR)
+```
+
+**One-shot chat drive** (recommended for manual testing):
+
+```bash
+cd ~/github/wronai/vdisplay
+source .venv/bin/activate
+export VDISPLAY_AGENT_URL=http://127.0.0.1:8765   # vdisplay-agent serve in another terminal
+
+unset KORU_VDISPLAY_DRY_RUN
+KORU_SRC=~/github/semcod/koru/src IMGL_SRC=~/github/semcod/imgl \
+  bash examples/dev-workflow/koru-drive-photo-vql.sh \
+  --ide jetbrains --source DP-2 --prompt "your task" --submit
+
+bash examples/dev-workflow/koru-audit-last-session.sh --ide jetbrains
+```
+
+**Inside `koru autonomous up`:**
+
+```bash
+export KORU_VDISPLAY_CONTROL_FALLBACK=1
+export KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS=1
+export KORU_VDISPLAY_PREFER_PHOTO_VQL=auto
+export VDISPLAY_AGENT_URL=http://127.0.0.1:8765
+export KORU_SRC=~/github/semcod/koru/src IMGL_SRC=~/github/semcod/imgl
+
+koru autonomous up --project . --agent-lane=jetbrains
+```
+
+| Topic | Doc |
+|-------|-----|
+| PyCharm / Wayland / guards / checklist | [`docs/photo-vql-jetbrains-wayland.md`](docs/photo-vql-jetbrains-wayland.md) |
+| Session layout + env vars | [vdisplay `autonomy-loop.md`](https://github.com/wronai/vdisplay/blob/main/docs/guides/autonomy-loop.md) |
+| Dev workflow scripts | [vdisplay `examples/dev-workflow`](https://github.com/wronai/vdisplay/tree/main/examples/dev-workflow) |
+| Broader IDE autonomy | [`docs/autonomy-ide-cursor.md`](docs/autonomy-ide-cursor.md) |
+
+Code: `src/koru/integrations/vdisplay_client.py` · tests: `tests/test_photo_vql_drive.py`.
 
 **PyPI release (maintainers):** `make publish` bumps patch, clears old `dist/koru-*` wheels, builds one version, runs `twine check`, then uploads only `dist/koru-<version>*` (set `PYPI_API_TOKEN` or `TWINE_USERNAME`/`TWINE_PASSWORD`).
 

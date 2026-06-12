@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.96s
+%% generated in 0.97s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__nlp2uri_testql_browser["examples.nlp2uri-testql-browser<br/>3 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
@@ -11,21 +11,21 @@ flowchart TD
     koruide__command_catalog_store["koruide.command_catalog_store<br/>13 funcs"]
     packages__cli2coru["packages.cli2coru<br/>6 funcs"]
     packages__cli2koru["packages.cli2koru<br/>6 funcs"]
-    packages__coru["packages.coru<br/>455 funcs"]
-    packages__dsl2coru["packages.dsl2coru<br/>182 funcs"]
+    packages__coru["packages.coru<br/>473 funcs"]
+    packages__dsl2coru["packages.dsl2coru<br/>185 funcs"]
     packages__dsl2koru["packages.dsl2koru<br/>77 funcs"]
     packages__koruenv["packages.koruenv<br/>14 funcs"]
     packages__mcp2coru["packages.mcp2coru<br/>11 funcs"]
     packages__mcp2koru["packages.mcp2koru<br/>11 funcs"]
     packages__nlp2coru["packages.nlp2coru<br/>27 funcs"]
     packages__nlp2koru["packages.nlp2koru<br/>9 funcs"]
-    packages__nlpshim["packages.nlpshim<br/>24 funcs"]
+    packages__nlpshim["packages.nlpshim<br/>26 funcs"]
     packages__rest2coru["packages.rest2coru<br/>2 funcs"]
     packages__rest2koru["packages.rest2koru<br/>2 funcs"]
     packages__uri2coru["packages.uri2coru<br/>21 funcs"]
-    packages__uri2koru["packages.uri2koru<br/>12 funcs"]
+    packages__uri2koru["packages.uri2koru<br/>14 funcs"]
     plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>183 funcs"]
-    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>523 funcs"]
+    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>527 funcs"]
     project["project<br/>1 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__bump_version["scripts.bump_version<br/>5 funcs"]
@@ -43,28 +43,28 @@ flowchart TD
     services__healing_webhook["services.healing-webhook<br/>39 funcs"]
     src__env2llm["src.env2llm<br/>13 funcs"]
     src__imgl["src.imgl<br/>14 funcs"]
-    src__koru["src.koru<br/>2955 funcs"]
-    src__koruapi["src.koruapi<br/>347 funcs"]
+    src__koru["src.koru<br/>3046 funcs"]
+    src__koruapi["src.koruapi<br/>352 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
-    src__koruide["src.koruide<br/>459 funcs"]
+    src__koruide["src.koruide<br/>466 funcs"]
     src__korullm["src.korullm<br/>39 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>57 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
     src__nlp2imgl["src.nlp2imgl<br/>5 funcs"]
-    src__koru ==>|495| project
+    src__koru ==>|496| project
     src__koru ==>|196| src__koruide
     packages__coru ==>|183| project
-    src__koruapi ==>|96| src__koru
-    src__koru ==>|46| plugins__koru_autopilot_shared
+    src__koruapi ==>|97| src__koru
+    src__koru ==>|47| plugins__koru_autopilot_shared
+    src__koruide ==>|39| src__koru
     packages__dsl2coru ==>|34| packages__dsl2koru
     packages__coru ==>|34| src__koru
-    src__koruide ==>|33| src__koru
     src__koruapi ==>|27| src__koruide
     src__koruide ==>|26| project
     src__koru ==>|23| packages__nlp2coru
     src__koruobserve ==>|22| project
-    src__koru ==>|19| src__koruvision
+    src__koru ==>|20| src__koruvision
     src__koruapi ==>|17| project
     scripts__e2e_envmap_koru ==>|17| project
     src__koru ==>|15| src__koruapi
@@ -76,6 +76,7 @@ flowchart TD
     packages__dsl2coru ==>|11| project
     src__koru ==>|10| src__koruobserve
     src__koruide ==>|9| plugins__koru_autopilot_shared
+    src__koru ==>|9| koru__observability_dsl
     scripts__planfile_sync_todo ==>|9| project
     scripts__sync_vscode_plugin_version ==>|9| project
     packages__cli2koru ==>|8| project
@@ -88,7 +89,6 @@ flowchart TD
     src__koruobserve ==>|7| src__koruvision
     src__korumesh ==>|7| project
     src__koruide ==>|7| koru__observability_events
-    src__koru ==>|7| koru__observability_dsl
     koru__cli_queue ==>|7| project
     packages__dsl2koru ==>|6| packages__koruenv
     packages__uri2coru ==>|6| project
@@ -103,7 +103,6 @@ flowchart TD
     src__koruvision ==>|5| src__koru
     scripts__koru_gate_capture ==>|5| project
     scripts__run_testql_conversations ==>|5| project
-    packages__dsl2coru ==>|4| src__koru
     packages__mcp2coru ==>|4| packages__dsl2koru
     packages__mcp2koru ==>|4| packages__dsl2koru
     packages__coru ==>|4| packages__nlp2coru
@@ -116,6 +115,7 @@ flowchart TD
     packages__koruenv -->|3| src__koru
     packages__koruenv -->|3| project
     packages__cli2koru -->|3| packages__dsl2koru
+    packages__dsl2coru -->|3| src__koru
     packages__cli2coru -->|3| packages__dsl2koru
     packages__coru -->|3| packages__dsl2koru
     packages__coru -->|3| plugins__koru_autopilot_shared

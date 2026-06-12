@@ -277,51 +277,57 @@ def _control_uri_with_runtime_overrides(
     return urlunsplit((parsed.scheme, netloc, parsed.path, urlencode(query), parsed.fragment))
 
 
-def desktop_uri_control_execute(
+def _try_direct_chat_fallback(
     prompt: str,
     *,
-    platform: str | None = None,
-    locale: str | None = None,
-    dry_run: bool = True,
-    text: str | None = None,
-    ide: str | None = None,
-    submit: bool = True,
-    workspace: str = "",
+    text: str | None,
+    ide: str | None,
+    submit: bool,
+    workspace: str,
+    dry_run: bool,
+    client_factory: Any = None,
+) -> dict[str, Any] | None:
+    if not ide:
+        return None
+    message = (text or prompt).strip()
+    if not message:
+        return None
+    return desktop_uri_direct_ide_chat_execute(
+        message,
+        ide=ide,
+        submit=submit,
+        workspace=workspace,
+        dry_run=dry_run,
+        client_factory=client_factory,
+    )
+
+
+def _execute_control_plan(
+    plan_payload: dict[str, Any],
+    *,
+    prompt: str,
+    text: str | None,
+    ide: str | None,
+    submit: bool,
+    workspace: str,
+    dry_run: bool,
     client_factory: Any = None,
 ) -> dict[str, Any]:
-    """Plan + execute IDE control via nlp2uri koruide driver."""
-    if not _NLP2URI_AVAILABLE:
-        return {"ok": False, "error": nlp2uri_missing_message()}
-
     from nlp2uri.control_execute import compile_and_execute_control_uri
 
-    plan_payload = desktop_uri_control_plan(prompt, platform=platform, locale=locale)
-    if not plan_payload.get("ok"):
-        if ide:
-            message = (text or prompt).strip()
-            if message:
-                return desktop_uri_direct_ide_chat_execute(
-                    message,
-                    ide=ide,
-                    submit=submit,
-                    workspace=workspace,
-                    dry_run=dry_run,
-                    client_factory=client_factory,
-                )
-        return plan_payload
     control_plan = plan_payload.get("control_plan")
     if not control_plan:
-        if ide:
-            message = (text or prompt).strip()
-            if message:
-                return desktop_uri_direct_ide_chat_execute(
-                    message,
-                    ide=ide,
-                    submit=submit,
-                    workspace=workspace,
-                    dry_run=dry_run,
-                    client_factory=client_factory,
-                )
+        direct = _try_direct_chat_fallback(
+            prompt,
+            text=text,
+            ide=ide,
+            submit=submit,
+            workspace=workspace,
+            dry_run=dry_run,
+            client_factory=client_factory,
+        )
+        if direct is not None:
+            return direct
         return {
             "ok": False,
             "error": plan_payload.get("control_error", "no control plan"),
@@ -354,6 +360,49 @@ def desktop_uri_control_execute(
         "execution": result,
         "drive_mode": "nlp",
     }
+
+
+def desktop_uri_control_execute(
+    prompt: str,
+    *,
+    platform: str | None = None,
+    locale: str | None = None,
+    dry_run: bool = True,
+    text: str | None = None,
+    ide: str | None = None,
+    submit: bool = True,
+    workspace: str = "",
+    client_factory: Any = None,
+) -> dict[str, Any]:
+    """Plan + execute IDE control via nlp2uri koruide driver."""
+    if not _NLP2URI_AVAILABLE:
+        return {"ok": False, "error": nlp2uri_missing_message()}
+
+    plan_payload = desktop_uri_control_plan(prompt, platform=platform, locale=locale)
+    if not plan_payload.get("ok"):
+        direct = _try_direct_chat_fallback(
+            prompt,
+            text=text,
+            ide=ide,
+            submit=submit,
+            workspace=workspace,
+            dry_run=dry_run,
+            client_factory=client_factory,
+        )
+        if direct is not None:
+            return direct
+        return plan_payload
+
+    return _execute_control_plan(
+        plan_payload,
+        prompt=prompt,
+        text=text,
+        ide=ide,
+        submit=submit,
+        workspace=workspace,
+        dry_run=dry_run,
+        client_factory=client_factory,
+    )
 
 
 def desktop_uri_imgl_execute(

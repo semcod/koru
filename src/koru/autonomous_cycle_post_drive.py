@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.decision_arbiter import ArbiterSignals, decide
 from koru.autonomy.planning_llm import (
     evaluate_drive_result as _llm_evaluate_drive_result,
@@ -325,7 +326,8 @@ def _handle_post_drive_verification(
     _emit: callable,
 ) -> None:
     """Collect evidence and assess verdict after autopilot drive (ADR AUTO-002 Phase 1)."""
-    if drive_status != "ok" and not drive_status.startswith("failed"):
+    status = parse_autopilot_status(drive_status)
+    if not (status.ok or status.failed):
         return
 
     ticket_id = _post_drive_ticket_id(queue_result)

@@ -701,7 +701,8 @@ def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -
     assert "Command Palette" not in text
     assert "--require-plugin" not in text
     assert "koru: Connect autopilot daemon" not in text
-    assert "KORU_OS_INJECTOR=1" in text
+    assert "KORU_VDISPLAY_CONTROL_FALLBACK=1" in text
+    assert "export KORU_AUTOPILOT_INSTANCE=jetbrains" in text
 
 
 def test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_windsurf_selected(
@@ -871,7 +872,7 @@ def test_build_startup_probe_ignores_stale_koruenv_socket_for_explicit_ide(
         resolve_project_lane=lambda _p, _a: None,
     )
 
-    assert probe.socket_path == "/run/user/1000/koru-autopilot-cursor.sock"
+    assert probe.socket_path == "/run/user/1000/koru-autopilot-cursor-main.sock"
 
 
 def test_build_startup_probe_ignores_stale_instance_and_socket_for_explicit_ide(
@@ -892,7 +893,7 @@ def test_build_startup_probe_ignores_stale_instance_and_socket_for_explicit_ide(
         resolve_project_lane=lambda _p, _a: None,
     )
 
-    assert probe.socket_path == "/run/user/1000/koru-autopilot-cursor.sock"
+    assert probe.socket_path == "/run/user/1000/koru-autopilot-cursor-main.sock"
 
 
 def test_build_startup_probe_reports_per_ide_socket_for_antigravity(

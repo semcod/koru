@@ -21,6 +21,18 @@ def _dsl_quote(value: Any, *, max_len: int = 240) -> str:
     return shlex.quote(text)
 
 
+def _bridge_line(*, ide: str, socket_path: str, project: Path, plugins: list) -> str:
+    bridge = evaluate_bridge(ide=ide, socket_path=socket_path, project=project, plugins=plugins)
+    return " ".join([
+        "#003",
+        "act=bridge",
+        'intent="IDE bridge readiness"',
+        f"route=ide:{ide}",
+        f"ok={'true' if bridge.ready else 'false'}",
+        f"reason={_dsl_quote(bridge.operator_detail())}",
+    ])
+
+
 def _runtime_lines(
     *,
     project: Path,
@@ -42,45 +54,24 @@ def _runtime_lines(
     )
     plugin_reason = f"plugins={len(plugins)} labels={','.join(plugin_labels) or '-'}"
     lines = [
-        " ".join(
-            [
-                "#001",
-                "act=runtime",
-                'intent="daemon health"',
-                f"route=socket:{socket_path}",
-                "ok=true",
-                f"detail={_dsl_quote(detail)}",
-            ]
-        ),
-        " ".join(
-            [
-                "#002",
-                "act=runtime",
-                'intent="plugin session"',
-                f"route=ide:{ide}",
-                f"ok={'true' if plugins else 'false'}",
-                f"reason={_dsl_quote(plugin_reason)}",
-            ]
-        ),
+        " ".join([
+            "#001",
+            "act=runtime",
+            'intent="daemon health"',
+            f"route=socket:{socket_path}",
+            "ok=true",
+            f"detail={_dsl_quote(detail)}",
+        ]),
+        " ".join([
+            "#002",
+            "act=runtime",
+            'intent="plugin session"',
+            f"route=ide:{ide}",
+            f"ok={'true' if plugins else 'false'}",
+            f"reason={_dsl_quote(plugin_reason)}",
+        ]),
     ]
-    bridge = evaluate_bridge(
-        ide=ide,
-        socket_path=socket_path,
-        project=project,
-        plugins=plugins,
-    )
-    lines.append(
-        " ".join(
-            [
-                "#003",
-                "act=bridge",
-                'intent="IDE bridge readiness"',
-                f"route=ide:{ide}",
-                f"ok={'true' if bridge.ready else 'false'}",
-                f"reason={_dsl_quote(bridge.operator_detail())}",
-            ]
-        )
-    )
+    lines.append(_bridge_line(ide=ide, socket_path=socket_path, project=project, plugins=plugins))
     return lines
 
 
@@ -181,6 +172,23 @@ def _live_desktop_probe(project: Path) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _env2llm_error_line(error: str) -> str:
+    return " ".join([
+        "#007", "act=env2llm", 'intent="desktop registry"',
+        "route=registry", "ok=false", f"reason={_dsl_quote(error)}",
+    ])
+
+
+def _calibration_line(idx: int, row: dict) -> str:
+    return " ".join([
+        f"#007.{idx + 1}", "act=env2llm", 'intent="IDE chat anchor"',
+        f"route=calibration:{row.get('ide')}",
+        f"chat_x={row.get('chat_x')}",
+        f"chat_y={row.get('chat_y')}",
+        f"display_id={row.get('display_id') or '-'}",
+    ])
+
+
 def _env2llm_lines(project: Path) -> list[str]:
     try:
         from koruapi.env2llm_registry import env2llm_get_desktop
@@ -198,52 +206,23 @@ def _env2llm_lines(project: Path) -> list[str]:
             if isinstance(payload, dict) and payload.get("error")
             else "desktop unavailable (pip install env2llm; ENV2LLM_DESKTOP_PROBE=1 env2llm . --probe-desktop)"
         )
-        return [
-            " ".join(
-                [
-                    "#007",
-                    "act=env2llm",
-                    'intent="desktop registry"',
-                    "route=registry",
-                    "ok=false",
-                    f"reason={_dsl_quote(error)}",
-                ]
-            )
-        ]
+        return [_env2llm_error_line(error)]
     pointer = desktop.get("pointer") if isinstance(desktop.get("pointer"), dict) else {}
     calibrations = desktop.get("ide_calibrations") if isinstance(desktop.get("ide_calibrations"), list) else []
     lines = [
-        " ".join(
-            [
-                "#007",
-                "act=env2llm",
-                'intent="desktop registry"',
-                f"route={route}",
-                "ok=true",
-                f"displays={len(desktop.get('displays') or [])}",
-                f"pointer_display={pointer.get('display_id') or '-'}",
-                f"pointer_x={pointer.get('x') or '-'}",
-                f"pointer_y={pointer.get('y') or '-'}",
-                f"ide_calibrations={len(calibrations)}",
-            ]
-        )
+        " ".join([
+            "#007", "act=env2llm", 'intent="desktop registry"',
+            f"route={route}", "ok=true",
+            f"displays={len(desktop.get('displays') or [])}",
+            f"pointer_display={pointer.get('display_id') or '-'}",
+            f"pointer_x={pointer.get('x') or '-'}",
+            f"pointer_y={pointer.get('y') or '-'}",
+            f"ide_calibrations={len(calibrations)}",
+        ])
     ]
     for idx, row in enumerate(calibrations[:3]):
-        if not isinstance(row, dict):
-            continue
-        lines.append(
-            " ".join(
-                [
-                    f"#007.{idx + 1}",
-                    "act=env2llm",
-                    'intent="IDE chat anchor"',
-                    f"route=calibration:{row.get('ide')}",
-                    f"chat_x={row.get('chat_x')}",
-                    f"chat_y={row.get('chat_y')}",
-                    f"display_id={row.get('display_id') or '-'}",
-                ]
-            )
-        )
+        if isinstance(row, dict):
+            lines.append(_calibration_line(idx, row))
     return lines
 
 

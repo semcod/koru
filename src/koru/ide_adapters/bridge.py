@@ -131,6 +131,31 @@ def _plugins_compatible(plugin_list: list, ide: str, project: Path | None) -> bo
     return False
 
 
+def _build_mismatch_hypothesis(
+    ide: str,
+    plugin: dict,
+    project_path: str,
+    expected_socket: str,
+) -> "Hypothesis":
+    expected = DriveOrchestrator.expected_plugin_build_sha(ide) or "-"
+    connected = str(plugin.get("buildSha") or "-")
+    return Hypothesis(
+        id=f"{ide}.plugin.build_mismatch",
+        confidence=0.95,
+        evidence=(
+            f"Plugin {ide} for workspace {project_path or '-'} has build "
+            f"{connected}, expected {expected}"
+        ),
+        remediation=shared.Remediation(
+            kind="manual",
+            summary=(
+                "Developer: Reload Window, then koru: Connect autopilot daemon "
+                f"(socket {expected_socket})"
+            ),
+        ),
+    )
+
+
 def _incompatible_plugin_hypothesis(
     *,
     ide: str,
@@ -149,23 +174,7 @@ def _incompatible_plugin_hypothesis(
         if project is not None and not _plugin_covers_project(plugin, project):
             continue
         if not _plugin_version_compatible(plugin, ide):
-            expected = DriveOrchestrator.expected_plugin_build_sha(ide) or "-"
-            connected = str(plugin.get("buildSha") or "-")
-            return Hypothesis(
-                id=f"{ide}.plugin.build_mismatch",
-                confidence=0.95,
-                evidence=(
-                    f"Plugin {ide} for workspace {project_path or '-'} has build "
-                    f"{connected}, expected {expected}"
-                ),
-                remediation=shared.Remediation(
-                    kind="manual",
-                    summary=(
-                        "Developer: Reload Window, then koru: Connect autopilot daemon "
-                        f"(socket {expected_socket})"
-                    ),
-                ),
-            )
+            return _build_mismatch_hypothesis(ide, plugin, project_path, expected_socket)
     if project is not None:
         folders = [
             folder for plugin in rows
@@ -377,34 +386,38 @@ def gc_stale_sockets_for_lane(socket_path: Path) -> list[str]:
     return removed
 
 
-def format_bridge_text(status: BridgeStatus, *, explain: bool = False) -> str:
-    lines: list[str] = []
-    mark = "✔" if status.daemon_running else "✘"
-    lines.append(f"{mark} daemon: {status.socket_path}")
-    if status.daemon_running:
-        plug_mark = "✔" if status.plugins_connected else "✘"
-        lines.append(f"{plug_mark} plugin connected (ide={status.ide})")
-        compat_mark = "✔" if status.plugins_compatible else "✘"
-        lines.append(f"{compat_mark} plugin compatible for project")
-    if status.settings is not None and status.settings.mismatch:
-        lines.append(
-            f"✘ settings: workspace={status.settings.workspace_socket} "
-            f"expected={status.settings.expected_socket}",
-        )
-    if status.ready:
-        lines.append("ready: autopilot bridge OK")
-        return "\n".join(lines)
+def _append_diagnostics(lines: list, status: "BridgeStatus", explain: bool) -> None:
     if explain or status.hypotheses:
         lines.append("diagnostics:")
         for hyp in status.hypotheses[:5]:
-            lines.append(f"  · [{hyp.confidence:.0%}] {hyp.id}: {hyp.evidence}")
-            lines.append(f"    → {hyp.remediation.summary}")
+            lines.append(f"  \u00b7 [{hyp.confidence:.0%}] {hyp.id}: {hyp.evidence}")
+            lines.append(f"    \u2192 {hyp.remediation.summary}")
             if hyp.remediation.command:
                 lines.append(f"      $ {hyp.remediation.command}")
     if status.fixes_applied:
         lines.append("fixes applied:")
         for item in status.fixes_applied:
-            lines.append(f"  · {item}")
+            lines.append(f"  \u00b7 {item}")
+
+
+def format_bridge_text(status: BridgeStatus, *, explain: bool = False) -> str:
+    lines: list[str] = []
+    mark = "\u2714" if status.daemon_running else "\u2718"
+    lines.append(f"{mark} daemon: {status.socket_path}")
+    if status.daemon_running:
+        plug_mark = "\u2714" if status.plugins_connected else "\u2718"
+        lines.append(f"{plug_mark} plugin connected (ide={status.ide})")
+        compat_mark = "\u2714" if status.plugins_compatible else "\u2718"
+        lines.append(f"{compat_mark} plugin compatible for project")
+    if status.settings is not None and status.settings.mismatch:
+        lines.append(
+            f"\u2718 settings: workspace={status.settings.workspace_socket} "
+            f"expected={status.settings.expected_socket}",
+        )
+    if status.ready:
+        lines.append("ready: autopilot bridge OK")
+        return "\n".join(lines)
+    _append_diagnostics(lines, status, explain)
     top = status.top_hypothesis()
     if top is not None:
         lines.append(f"next: {top.remediation.summary}")

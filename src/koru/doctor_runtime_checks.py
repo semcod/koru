@@ -173,20 +173,23 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
     return True
 
 
-def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
-    project_venvs = [project / ".venv", project / "venv"]
-    existing_venvs = [venv for venv in project_venvs if venv.exists()]
-    virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
-    executable = Path(sys.executable)
-    python_from_project_venv = any(_is_relative_to(executable, venv) for venv in existing_venvs)
+def _check_path_in_venvs(path: Path | None, venvs: list[Path]) -> bool:
+    if path is None:
+        return False
+    return any(_is_relative_to(path, venv) for venv in venvs)
+
+
+def _collect_venv_detail_bits(
+    existing_venvs: list[Path],
+    project: Path,
+    virtual_env: str,
+    executable: Path,
+) -> tuple[list[str], str]:
     detail_bits = [
         f"virtual_env={virtual_env or '-'}",
         f"python={sys.executable}",
         f"project_venv={existing_venvs[0] if existing_venvs else project / '.venv'}",
     ]
-    if not existing_venvs:
-        return WARN, "; ".join(detail_bits + ["project_venv_missing=true"])
-
     status = PASS
     if virtual_env:
         try:
@@ -200,12 +203,33 @@ def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
     else:
         detail_bits.append("virtual_env_unset=true")
 
-    if not python_from_project_venv:
+    if not _check_path_in_venvs(executable, existing_venvs):
         status = WARN
         detail_bits.append("python_not_from_project_venv=true")
 
     path_koru = shutil.which("koru")
-    if path_koru and not any(_is_relative_to(Path(path_koru), venv) for venv in existing_venvs):
+    if path_koru and not _check_path_in_venvs(Path(path_koru), existing_venvs):
         status = WARN
         detail_bits.append("path_koru_not_from_project_venv=true")
+
+    return detail_bits, status
+
+
+def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
+    project_venvs = [project / ".venv", project / "venv"]
+    existing_venvs = [venv for venv in project_venvs if venv.exists()]
+    virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
+    executable = Path(sys.executable)
+    if not existing_venvs:
+        detail_bits = [
+            f"virtual_env={virtual_env or '-'}",
+            f"python={sys.executable}",
+            f"project_venv={project / '.venv'}",
+            "project_venv_missing=true",
+        ]
+        return WARN, "; ".join(detail_bits)
+
+    detail_bits, status = _collect_venv_detail_bits(
+        existing_venvs, project, virtual_env, executable
+    )
     return status, "; ".join(detail_bits)

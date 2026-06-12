@@ -259,6 +259,68 @@ def check_runtime_consistency(
     return ReadinessResult(ok=ok, issues=tuple(issues), primary_fix=primary_fix)
 
 
+def _check_daemon_version_issue(status: Mapping[str, Any] | None) -> ReadinessIssue | None:
+    compatible, reason = daemon_status_compatible(status)
+    if compatible:
+        return None
+    fix_command = (
+        f"KORU_AUTOPILOT_INSTANCE={os.environ.get('KORU_AUTOPILOT_INSTANCE', '')} "
+        "koru autopilot shutdown && koru auto"
+        if os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        else "koru autopilot shutdown && koru auto"
+    )
+    return ReadinessIssue(
+        code="daemon_version_mismatch",
+        severity="fail",
+        message=reason,
+        fix_command=fix_command,
+    )
+
+
+def _check_daemon_meta_project_python_issues(
+    status: Mapping[str, Any] | None,
+    project: Path,
+    socket_path: Path,
+) -> list[ReadinessIssue]:
+    issues: list[ReadinessIssue] = []
+    meta = _effective_daemon_metadata(status, project, socket_path)
+    if not meta:
+        return issues
+    meta_project = str(meta.get("project") or "").strip()
+    if meta_project:
+        from koru.autonomous_runtime import projects_equivalent
+
+        try:
+            if not projects_equivalent(meta_project, project):
+                issues.append(
+                    ReadinessIssue(
+                        code="daemon_project_mismatch",
+                        severity="fail",
+                        message=(
+                            f"daemon metadata project={meta_project} "
+                            f"!= {project.resolve()}"
+                        ),
+                        fix_command="koru autopilot shutdown && koru auto",
+                    )
+                )
+        except OSError:
+            pass
+    meta_py = str(meta.get("python_executable") or "").strip()
+    if meta_py and _resolve_path(meta_py) != _resolve_path(sys.executable):
+        issues.append(
+            ReadinessIssue(
+                code="daemon_python_mismatch",
+                severity="warn",
+                message=(
+                    f"daemon python={meta_py} != "
+                    f"client python={sys.executable}"
+                ),
+                fix_command="koru autopilot shutdown && koru auto",
+            )
+        )
+    return issues
+
+
 def check_daemon_client_alignment(
     status: Mapping[str, Any] | None,
     *,
@@ -267,57 +329,12 @@ def check_daemon_client_alignment(
 ) -> ReadinessResult:
     """Detect daemon version/build drift vs the current koru process."""
     issues: list[ReadinessIssue] = []
-    compatible, reason = daemon_status_compatible(status)
-    if not compatible:
-        issues.append(
-            ReadinessIssue(
-                code="daemon_version_mismatch",
-                severity="fail",
-                message=reason,
-                fix_command=(
-                    f"KORU_AUTOPILOT_INSTANCE={os.environ.get('KORU_AUTOPILOT_INSTANCE', '')} "
-                    "koru autopilot shutdown && koru auto"
-                    if os.environ.get("KORU_AUTOPILOT_INSTANCE")
-                    else "koru autopilot shutdown && koru auto"
-                ),
-            )
-        )
+    version_issue = _check_daemon_version_issue(status)
+    if version_issue is not None:
+        issues.append(version_issue)
 
     if project is not None and socket_path is not None:
-        meta = _effective_daemon_metadata(status, project, socket_path)
-        if meta:
-            meta_project = str(meta.get("project") or "").strip()
-            if meta_project:
-                from koru.autonomous_runtime import projects_equivalent
-
-                try:
-                    if not projects_equivalent(meta_project, project):
-                        issues.append(
-                            ReadinessIssue(
-                                code="daemon_project_mismatch",
-                                severity="fail",
-                                message=(
-                                    f"daemon metadata project={meta_project} "
-                                    f"!= {project.resolve()}"
-                                ),
-                                fix_command="koru autopilot shutdown && koru auto",
-                            )
-                        )
-                except OSError:
-                    pass
-            meta_py = str(meta.get("python_executable") or "").strip()
-            if meta_py and _resolve_path(meta_py) != _resolve_path(sys.executable):
-                issues.append(
-                    ReadinessIssue(
-                        code="daemon_python_mismatch",
-                        severity="warn",
-                        message=(
-                            f"daemon python={meta_py} != "
-                            f"client python={sys.executable}"
-                        ),
-                        fix_command="koru autopilot shutdown && koru auto",
-                    )
-                )
+        issues.extend(_check_daemon_meta_project_python_issues(status, project, socket_path))
 
     ok = not any(i.severity == "fail" for i in issues)
     fix = issues[0].fix_command if issues else None
@@ -378,6 +395,21 @@ def _effective_daemon_metadata(
     return read_daemon_metadata(daemon_metadata_path(project, socket_path))
 
 
+def _find_project_in_workspace_folders(
+    folders: list[Any], project_path: str, connected: list[str]
+) -> bool:
+    for folder in folders:
+        if not isinstance(folder, str):
+            continue
+        try:
+            if str(Path(folder).resolve()) == project_path:
+                return True
+        except OSError:
+            continue
+        connected.append(folder)
+    return False
+
+
 def plugin_workspace_covers_project(
     status: Mapping[str, Any] | None,
     autopilot_ide: str,
@@ -401,15 +433,8 @@ def plugin_workspace_covers_project(
         folders = row.get("workspaceFolders")
         if not isinstance(folders, list):
             continue
-        for folder in folders:
-            if not isinstance(folder, str):
-                continue
-            try:
-                if str(Path(folder).resolve()) == project_path:
-                    return True, ""
-            except OSError:
-                continue
-            connected.append(folder)
+        if _find_project_in_workspace_folders(folders, project_path, connected):
+            return True, ""
     if connected:
         return False, (
             "plugin connected but workspaceFolders do not include project root "

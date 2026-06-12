@@ -4,7 +4,35 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any
+
+from koru.autonomy.autopilot_status import parse_autopilot_status
+from koru.autonomy.env import env_get
+
+
+_PLUGIN_RECONNECT_BLOCKERS = frozenset(
+    {
+        "plugin_missing",
+        "plugin_not_connected",
+        "plugin_status_unavailable",
+        "plugin_version_mismatch",
+    }
+)
+
+
+def resolve_agent_lane_from_environ(
+    args: Any,
+    project: Path,
+    *,
+    apply_agent_lane_environ: Any,
+    environ: Mapping[str, str] | None = None,
+) -> str | None:
+    """Resolve the selected autopilot lane without hard-coding global env reads."""
+    lane = env_get("KORU_AUTOPILOT_INSTANCE", None, environ=environ)
+    if lane:
+        return lane
+    return apply_agent_lane_environ(project, args.agent_lane)
 
 
 def configure_loop_state(
@@ -23,9 +51,11 @@ def configure_loop_state(
     queue_name = None if use_all_queues else args.queue_name
     # apply_agent_lane_environ is already called in build_and_log_startup_probe
     # so we can read the lane directly from the environment variable
-    lane = os.environ.get("KORU_AUTOPILOT_INSTANCE") or apply_agent_lane_environ(
+    lane = resolve_agent_lane_from_environ(
+        args,
         project,
-        args.agent_lane,
+        apply_agent_lane_environ=apply_agent_lane_environ,
+        environ=os.environ,
     )
     # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
     selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
@@ -202,16 +232,13 @@ def compute_cycle_sleep(
 
 
 def _autopilot_needs_plugin_reconnect(autopilot_status: str) -> bool:
-    return autopilot_status in {
-        "skipped(plugin_missing)",
-        "skipped(plugin_not_connected)",
-        "skipped(plugin_status_unavailable)",
-        "skipped(plugin_version_mismatch)",
-    }
+    status = parse_autopilot_status(autopilot_status)
+    return status.skipped and status.code in _PLUGIN_RECONNECT_BLOCKERS
 
 
 __all__ = [
     "configure_loop_state",
+    "resolve_agent_lane_from_environ",
     "select_and_log_cycle_profile",
     "resolve_effective_cycle_flags",
     "build_cycle_run_kwargs",

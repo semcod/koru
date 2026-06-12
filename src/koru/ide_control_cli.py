@@ -175,31 +175,39 @@ def _print_execution_json(payload: dict[str, Any]) -> int:
     return 0 if payload.get("ok") else 1
 
 
-def _print_execution_text(payload: dict[str, Any]) -> int:
-    if not payload.get("ok"):
-        exec_payload = payload.get("execution") or {}
-        results = exec_payload.get("results") or []
-        reply = (results[0] or {}).get("reply") if results else {}
-        if isinstance(reply, dict) and reply.get("delivered"):
-            print(
-                "koru ide control execute: text pasted but submit not verified "
-                "(try --no-submit or press Enter in chat manually)",
-                file=sys.stderr,
-            )
-        err = (
-            payload.get("error")
-            or (results[0] or {}).get("error")
-            or exec_payload.get("error")
-            or "?"
+def _render_execution_error(payload: dict[str, Any]) -> None:
+    exec_payload = payload.get("execution") or {}
+    results = exec_payload.get("results") or []
+    reply = (results[0] or {}).get("reply") if results else {}
+    if isinstance(reply, dict) and reply.get("delivered"):
+        print(
+            "koru ide control execute: text pasted but submit not verified "
+            "(try --no-submit or press Enter in chat manually)",
+            file=sys.stderr,
         )
-        if err != "?":
-            print(f"koru ide control execute: {err}", file=sys.stderr)
-        return 1
+    err = (
+        payload.get("error")
+        or (results[0] or {}).get("error")
+        or exec_payload.get("error")
+        or "?"
+    )
+    if err != "?":
+        print(f"koru ide control execute: {err}", file=sys.stderr)
+
+
+def _render_execution_success(payload: dict[str, Any]) -> None:
     exec_payload = payload.get("execution") or {}
     results = exec_payload.get("results") or []
     top = results[0] if results else {}
     mode = payload.get("drive_mode", "?")
     print(f"ok={payload.get('ok')} backend={top.get('backend', '?')} mode={mode}")
+
+
+def _print_execution_text(payload: dict[str, Any]) -> int:
+    if not payload.get("ok"):
+        _render_execution_error(payload)
+        return 1
+    _render_execution_success(payload)
     return 0
 
 

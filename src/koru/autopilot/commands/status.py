@@ -52,6 +52,49 @@ def _status_plugin_labels(info: dict) -> list[str]:
     return [str(row.get("ide") or row.get("id") or "?") for row in _status_plugin_rows(info)]
 
 
+def _handle_systemmap_output(
+    args: argparse.Namespace,
+    info: dict,
+    client: "AutopilotClient",
+    normalize_ide_fn: callable,
+) -> int:
+    """Print systemmap format and return exit code."""
+    from koru.ide_status_systemmap import format_autopilot_status_systemmap
+
+    socket = str(getattr(client, "socket_path", "") or "")
+    payload = format_autopilot_status_systemmap(info, socket_path=socket)
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
+    if not plugins:
+        instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
+        hint = (
+            f"hint: no IDE plugin on socket {socket}; "
+            "systemmap has daemon/control surfaces only. "
+            "Try KORU_AUTOPILOT_INSTANCE=cursor-main "
+            "koru autopilot status --format systemmap "
+            "or koru ide doctor --fix"
+        )
+        if instance:
+            hint = (
+                f"hint: no IDE plugin on socket {socket} "
+                f"(KORU_AUTOPILOT_INSTANCE={instance!r}); "
+                f"run koru ide doctor --ide {_status_explain_target_ide(args, normalize_ide_fn)} --fix"
+            )
+        print(hint, file=sys.stderr)
+    if args.explain and not payload.get("ok", True):
+        print(f"systemmap export failed: {payload.get('error', '?')}", file=sys.stderr)
+    emit_log(
+        args,
+        component="autopilot.status",
+        level="info" if payload.get("ok", True) else "error",
+        action="export_systemmap",
+        result="ok" if payload.get("ok", True) else "failed",
+        rc=0 if payload.get("ok", True) else 1,
+        entry_count=len((payload.get("entries") or {})),
+    )
+    return 0 if payload.get("ok", True) else 1
+
+
 def action_status(
     args: argparse.Namespace,
     *,
@@ -118,40 +161,7 @@ def action_status(
 
     output_format = str(getattr(args, "format", "json") or "json")
     if output_format == "systemmap":
-        from koru.ide_status_systemmap import format_autopilot_status_systemmap
-
-        socket = str(getattr(client, "socket_path", "") or "")
-        payload = format_autopilot_status_systemmap(info, socket_path=socket)
-        print(json.dumps(payload, indent=2, sort_keys=True))
-        plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
-        if not plugins:
-            instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
-            hint = (
-                f"hint: no IDE plugin on socket {socket}; "
-                "systemmap has daemon/control surfaces only. "
-                "Try KORU_AUTOPILOT_INSTANCE=cursor-main "
-                "koru autopilot status --format systemmap "
-                "or koru ide doctor --fix"
-            )
-            if instance:
-                hint = (
-                    f"hint: no IDE plugin on socket {socket} "
-                    f"(KORU_AUTOPILOT_INSTANCE={instance!r}); "
-                    f"run koru ide doctor --ide {_status_explain_target_ide(args, normalize_ide_fn)} --fix"
-                )
-            print(hint, file=sys.stderr)
-        if args.explain and not payload.get("ok", True):
-            print(f"systemmap export failed: {payload.get('error', '?')}", file=sys.stderr)
-        emit_log(
-            args,
-            component="autopilot.status",
-            level="info" if payload.get("ok", True) else "error",
-            action="export_systemmap",
-            result="ok" if payload.get("ok", True) else "failed",
-            rc=0 if payload.get("ok", True) else 1,
-            entry_count=len((payload.get("entries") or {})),
-        )
-        return 0 if payload.get("ok", True) else 1
+        return _handle_systemmap_output(args, info, client, normalize_ide_fn)
 
     _print_status_json(info)
     if args.explain:

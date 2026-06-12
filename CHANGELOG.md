@@ -73,6 +73,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.336] - 2026-06-12
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update code2llm_output/README.md
+- Update code2llm_output/context.md
+- Update docs/README.md
+- Update docs/photo-vql-jetbrains-wayland.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autonomous_cycle_config.py
+- Update tests/test_autonomous_cycle_drive_outcome.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autonomous_status_consumers.py
+- Update tests/test_autonomous_submit_strategy.py
+- Update tests/test_autonomy_config.py
+- Update tests/test_autonomy_drive_result.py
+- Update tests/test_autonomy_policy_engine.py
+- Update tests/test_autopilot_status.py
+- Update tests/test_cycle_trace.py
+- ... and 6 more files
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update app.doql.less
+- Update code2llm_output/analysis.toon.yaml
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/src/coru/supervisor/cli.py
+- Update packages/dsl2coru/src/dsl2coru/handlers/ui.py
+- ... and 26 more files
+
 ## [0.1.335] - 2026-06-12
 
 ### Docs

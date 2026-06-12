@@ -53,29 +53,18 @@ def _print_lanes_human(registry) -> None:
         )
 
 
-def cmd_start(args: argparse.Namespace, *, koru_argv: Sequence[str] | None = None) -> int:
-    if supervisor_running() and not args.force:
-        pid = read_supervisor_pid()
-        print(f"coru supervisor: already running (pid={pid})", file=sys.stderr)
-        print(f"coru supervisor: url {supervisor_url()}", file=sys.stderr)
-        return 0
+def _register_active_lane_from_args(args: argparse.Namespace) -> None:
+    if not args.register_active:
+        return
+    ide = str(args.ide or os.environ.get("KORU_AUTOPILOT_IDE") or "cursor").strip().lower()
+    instance = str(
+        args.instance or os.environ.get("KORU_AUTOPILOT_INSTANCE") or ide
+    ).strip()
+    project = str(args.project or os.getcwd()).strip()
+    register_lane(ide=ide, instance=instance, project=project, set_active=True)
 
-    service = SupervisorService(
-        koru_argv=_resolve_koru_argv(koru_argv),
-        verbose=bool(args.verbose),
-        refresh_interval=float(args.refresh_interval),
-    )
-    if args.register_active:
-        ide = str(args.ide or os.environ.get("KORU_AUTOPILOT_IDE") or "cursor").strip().lower()
-        instance = str(
-            args.instance or os.environ.get("KORU_AUTOPILOT_INSTANCE") or ide
-        ).strip()
-        project = str(args.project or os.getcwd()).strip()
-        register_lane(ide=ide, instance=instance, project=project, set_active=True)
 
-    if args.foreground:
-        return service.run(foreground=True, watch=not args.no_watch)
-
+def _build_supervisor_daemon_argv(args: argparse.Namespace) -> list[str]:
     argv = [
         sys.executable,
         "-m",
@@ -88,17 +77,10 @@ def cmd_start(args: argparse.Namespace, *, koru_argv: Sequence[str] | None = Non
         argv.append("--verbose")
     if args.no_watch:
         argv.append("--no-watch")
-    env = dict(os.environ)
-    env["CORU_SUPERVISOR_DAEMONIZED"] = "1"
-    proc = subprocess.Popen(
-        argv,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-        env=env,
-    )
-    pid_path = service.registry_path.parent / "supervisor.pid"
-    # child writes pid; wait briefly
+    return argv
+
+
+def _wait_for_supervisor_start(proc: subprocess.Popen[str]) -> int:
     for _ in range(30):
         if supervisor_running():
             print(f"coru supervisor: started pid={read_supervisor_pid()} url={supervisor_url()}")
@@ -109,6 +91,44 @@ def cmd_start(args: argparse.Namespace, *, koru_argv: Sequence[str] | None = Non
         __import__("time").sleep(0.1)
     print(f"coru supervisor: starting (child pid={proc.pid})", file=sys.stderr)
     return 0
+
+
+def _start_supervisor_foreground(
+    args: argparse.Namespace, *, koru_argv: Sequence[str] | None = None
+) -> int:
+    service = SupervisorService(
+        koru_argv=_resolve_koru_argv(koru_argv),
+        verbose=bool(args.verbose),
+        refresh_interval=float(args.refresh_interval),
+    )
+    return service.run(foreground=True, watch=not args.no_watch)
+
+
+def _start_supervisor_daemonized(args: argparse.Namespace) -> int:
+    env = dict(os.environ)
+    env["CORU_SUPERVISOR_DAEMONIZED"] = "1"
+    proc = subprocess.Popen(
+        _build_supervisor_daemon_argv(args),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+        env=env,
+    )
+    return _wait_for_supervisor_start(proc)
+
+
+def cmd_start(args: argparse.Namespace, *, koru_argv: Sequence[str] | None = None) -> int:
+    if supervisor_running() and not args.force:
+        pid = read_supervisor_pid()
+        print(f"coru supervisor: already running (pid={pid})", file=sys.stderr)
+        print(f"coru supervisor: url {supervisor_url()}", file=sys.stderr)
+        return 0
+
+    _register_active_lane_from_args(args)
+
+    if args.foreground:
+        return _start_supervisor_foreground(args, koru_argv=koru_argv)
+    return _start_supervisor_daemonized(args)
 
 
 def cmd_stop(_args: argparse.Namespace) -> int:

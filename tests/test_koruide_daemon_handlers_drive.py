@@ -51,6 +51,70 @@ def test_handle_drive_rejects_missing_text() -> None:
     assert "missing" in call_args[1].decode().lower()
 
 
+def test_handle_drive_routes_via_vdisplay_before_keyboard(monkeypatch: pytest.MonkeyPatch) -> None:
+    daemon = mock.Mock()
+    daemon._plugin_for.return_value = None
+    daemon.project = "/tmp/test"
+
+    client = mock.Mock()
+    client.role = "cli"
+
+    msg = mock.Mock()
+    msg.id = "test-123"
+    msg.data = {"text": "hello", "ide": "jetbrains", "submit": True, "require_plugin": False}
+
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_drive._prefer_keyboard_drive",
+        lambda: False,
+    )
+
+    with (
+        mock.patch("koruide.daemon.handlers_drive._drive_via_vdisplay_backend") as mock_vdisplay,
+        mock.patch("koruide.daemon.handlers_drive._drive_via_imgl_backend") as mock_imgl,
+        mock.patch("koruide.daemon.handlers_drive._drive_via_keyboard") as mock_keyboard,
+    ):
+        mock_vdisplay.return_value = True
+        handle_drive(daemon, client, msg)
+        mock_vdisplay.assert_called_once()
+        mock_imgl.assert_not_called()
+        mock_keyboard.assert_not_called()
+
+
+def test_handle_drive_falls_through_when_vdisplay_declines(monkeypatch: pytest.MonkeyPatch) -> None:
+    daemon = mock.Mock()
+    daemon._plugin_for.return_value = None
+    daemon.project = "/tmp/test"
+
+    client = mock.Mock()
+    client.role = "cli"
+
+    msg = mock.Mock()
+    msg.id = "test-123"
+    msg.data = {"text": "hello", "ide": "jetbrains", "submit": True, "require_plugin": False}
+
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_drive._prefer_keyboard_drive",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        "koruide.daemon.handlers_drive.imgl_prefer_before_keyboard",
+        lambda _ide: False,
+        raising=False,
+    )
+
+    with (
+        mock.patch("koruide.daemon.handlers_drive._drive_via_vdisplay_backend") as mock_vdisplay,
+        mock.patch("koruide.daemon.handlers_drive._drive_via_imgl_backend") as mock_imgl,
+        mock.patch("koruide.daemon.handlers_drive._drive_via_keyboard") as mock_keyboard,
+    ):
+        mock_vdisplay.return_value = False
+        mock_imgl.return_value = False
+        handle_drive(daemon, client, msg)
+        mock_vdisplay.assert_called_once()
+        mock_imgl.assert_called_once()
+        mock_keyboard.assert_called_once()
+
+
 def test_handle_drive_routes_via_plugin_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
     daemon = mock.Mock()
     daemon._plugin_for.return_value = mock.Mock(

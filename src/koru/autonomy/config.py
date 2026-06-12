@@ -8,6 +8,7 @@ Python CLI arguments (koru autonomous up).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -67,6 +68,9 @@ class AutonomyConfig:
 
     # Topology integration
     topology_integration: bool = True
+
+    # Reporting
+    structured_cycle_report: bool = False
 
     @classmethod
     def from_env(cls) -> AutonomyConfig:
@@ -140,7 +144,16 @@ class AutonomyConfig:
             scan_skip_if_clean=env_truthy("SCAN_SKIP_IF_CLEAN", False, environ=env),
             scan_skip_after=env_int("SCAN_SKIP_AFTER", 1, environ=env),
             topology_integration=env_truthy("TOPOLOGY_INTEGRATION", True, environ=env),
+            structured_cycle_report=structured_cycle_report_enabled(environ=env),
         )
 
 
-__all__ = ["AutonomyConfig"]
+def structured_cycle_report_enabled(
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> bool:
+    """Return whether the human structured cycle report should be emitted."""
+    return env_truthy("KORU_STRUCTURED_CYCLE_REPORT", False, environ=environ)
+
+
+__all__ = ["AutonomyConfig", "structured_cycle_report_enabled"]

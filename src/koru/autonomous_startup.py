@@ -110,6 +110,39 @@ def _explicit_lane_matches_terminal(explicit: str, terminal: str) -> bool:
     return explicit.startswith(f"{terminal}-")
 
 
+def _should_terminal_override_explicit(
+    explicit: str, terminal: str | None
+) -> bool:
+    return (
+        terminal is not None
+        and supports_autopilot_plugin_ide(terminal)
+        and not _explicit_lane_matches_terminal(explicit, terminal)
+        and terminal != "vscode"
+        and supports_autopilot_plugin_ide(explicit)
+    )
+
+
+def _should_running_override_explicit(
+    explicit: str,
+    terminal: str | None,
+    running: Sequence[RunningIDE],
+) -> tuple[str | None, str] | None:
+    if explicit not in _STALE_NONPLUGIN_LANES:
+        return None
+    if terminal and _explicit_lane_matches_terminal(explicit, terminal):
+        return None
+    if (
+        supports_autopilot_plugin_ide(explicit)
+        and terminal
+        and supports_autopilot_plugin_ide(terminal)
+        and terminal != explicit
+    ):
+        picked = _pick_plugin_capable_running(running)
+        if picked is not None:
+            return picked.id, f"running:over-stale:{explicit}"
+    return None
+
+
 def _resolve_lane_from_explicit(
     explicit: str | None,
     explicit_source: str,
@@ -119,29 +152,12 @@ def _resolve_lane_from_explicit(
     """Resolve lane from explicit KORU_AUTOPILOT_INSTANCE env var."""
     if not explicit:
         return None
-    if (
-        terminal
-        and supports_autopilot_plugin_ide(terminal)
-        and not _explicit_lane_matches_terminal(explicit, terminal)
-        and terminal != "vscode"
-        and supports_autopilot_plugin_ide(explicit)  # Only override if explicit is also a plugin IDE
-    ):
+    if _should_terminal_override_explicit(explicit, terminal):
         return terminal, f"terminal:over-{explicit_source}"
-    # Stale ``KORU_AUTOPILOT_INSTANCE=jetbrains`` (or zed) is a common foot-gun:
-    # the lane has no installable plugin, so koru falls back to raw ydotool/wtype
-    # which types into whatever window has focus — usually the file editor when
-    # the integrated terminal lives inside JetBrains. If a plugin-capable IDE is
-    # also running (Cursor, Windsurf, …), prefer it over the explicit env —
-    # unless the user is actively working from that IDE's terminal.
-    # For non-plugin lanes (jetbrains/zed), always respect the explicit choice.
-    if running and explicit in _STALE_NONPLUGIN_LANES:
-        if terminal and _explicit_lane_matches_terminal(explicit, terminal):
-            pass
-        # Only override if explicit is a plugin IDE and terminal is a different plugin IDE
-        elif supports_autopilot_plugin_ide(explicit) and terminal and supports_autopilot_plugin_ide(terminal) and terminal != explicit:
-            picked = _pick_plugin_capable_running(running)
-            if picked is not None:
-                return picked.id, f"running:over-{explicit_source}:{explicit}"
+    if running is not None:
+        override = _should_running_override_explicit(explicit, terminal, running)
+        if override is not None:
+            return override
     return explicit, explicit_source
 
 
@@ -304,6 +320,45 @@ def resolve_agent_lane_id(
 
 
 
+def _try_focused_lane(
+    focused: str | None,
+    running: list[RunningIDE],
+    explicit: str | None,
+    terminal: str | None,
+) -> tuple[str, str] | None:
+    if (
+        focused
+        and focused in _PLUGIN_IDE_LANES
+        and any(ide.id == focused for ide in running)
+        and (
+            not explicit
+            or (not terminal and not _explicit_lane_matches_terminal(explicit, focused))
+        )
+    ):
+        return focused, "focused"
+    return None
+
+
+def _try_runtime_lanes(
+    explicit: str | None,
+    explicit_source: str,
+    terminal: str | None,
+    running: list[RunningIDE],
+) -> tuple[str, str] | None:
+    explicit_result = _resolve_lane_from_explicit(explicit, explicit_source, terminal)
+    if explicit_result:
+        return explicit_result
+
+    for result in (
+        _resolve_lane_from_vscode_terminal(running, terminal),
+        _resolve_lane_from_terminal(terminal, running),
+        _resolve_lane_from_running(running),
+    ):
+        if result:
+            return result
+    return None
+
+
 def resolve_agent_lane(
     *,
     cli_lane: str = "auto",
@@ -323,28 +378,13 @@ def resolve_agent_lane(
     focused = _focused_agent_lane_from_desktop()
     explicit, explicit_source = _explicit_agent_lane_from_env()
 
-    if (
-        focused
-        and focused in _PLUGIN_IDE_LANES
-        and any(ide.id == focused for ide in running)
-        and (
-            not explicit
-            or (not terminal and not _explicit_lane_matches_terminal(explicit, focused))
-        )
-    ):
-        return focused, "focused"
+    focused_result = _try_focused_lane(focused, running, explicit, terminal)
+    if focused_result is not None:
+        return focused_result
 
-    explicit_result = _resolve_lane_from_explicit(explicit, explicit_source, terminal)
-    if explicit_result:
-        return explicit_result
-
-    for result in (
-        _resolve_lane_from_vscode_terminal(running, terminal),
-        _resolve_lane_from_terminal(terminal, running),
-        _resolve_lane_from_running(running),
-    ):
-        if result:
-            return result
+    runtime_result = _try_runtime_lanes(explicit, explicit_source, terminal, running)
+    if runtime_result is not None:
+        return runtime_result
 
     return "auto", "project-markers"
 
@@ -419,10 +459,12 @@ def _normalized_cli_value(raw: str | None) -> str:
 def _autopilot_socket_path_for_probe(ide_id: str) -> str:
     if not ide_id or ide_id == "auto":
         return str(default_socket_path())
+    from koru.autonomous_runtime import default_autopilot_instance_for_ide
+
     previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
     previous_socket = os.environ.get("KORU_AUTOPILOT_SOCKET")
     try:
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = ide_id
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = default_autopilot_instance_for_ide(ide_id)
         # Ignore stale koruenv socket overlays; compute the expected per-IDE path.
         os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
         return str(default_socket_path())
@@ -731,20 +773,24 @@ def _format_keyboard_setup_steps(
     ide: str,
     sock: str,
     project: Path,
+    *,
+    lane: str | None = None,
 ) -> list[str]:
     """Format setup steps for keyboard/OS-injector based IDEs."""
+    instance = (lane or ide).strip()
     return [
         f"koru autonomous: 1) Otwórz {ide} z root = {project}",
         "koru autonomous: 2) MCP: włącz serwer „koru” "
         "(po Reload po task koru:mcp:bootstrap)",
         f"koru autonomous: 3) Socket daemona = {sock}",
-        f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
-        f"koru autonomous: 5) Skalibruj OS injector: task koru:ide-os:calibrate IDE={ide}",
-        "koru autonomous:    Na Waylandzie włącz fallback jawnie: export KORU_OS_INJECTOR=1; "
-        "kliknij/skalibruj pole chatu przed testem.",
-        f"koru autonomous: 6) Test: koru autopilot drive --ide {ide} 'probe test' "
-        "(fallback keyboard/OS-injector)",
-        "koru autonomous: 7) Dashboard: task koru:server → http://localhost:8765/",
+        f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={instance}",
+        "koru autonomous: 5) Na Waylandzie preferuj vdisplay/photo-VQL: "
+        "export KORU_VDISPLAY_CONTROL_FALLBACK=1 KORU_VDISPLAY_SOURCE=DP-1; "
+        "PyCharm/IDE na monitorze DP-1, chat na wierzchu (nie terminal).",
+        f"koru autonomous: 6) Kalibracja OS injectora (ostateczny fallback): "
+        f"task koru:ide-os:calibrate IDE={ide}",
+        f"koru autonomous: 7) Test: koru autopilot drive --ide {ide} 'probe test'",
+        "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
     ]
 
 
@@ -799,7 +845,14 @@ def format_post_startup_operator_hints(
             )
         )
     else:
-        lines.extend(_format_keyboard_setup_steps(ide, sock, probe.project))
+        lines.extend(
+            _format_keyboard_setup_steps(
+                ide,
+                sock,
+                probe.project,
+                lane=probe.resolved_lane,
+            )
+        )
 
     return lines
 

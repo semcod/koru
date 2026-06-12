@@ -19,6 +19,21 @@ def _resolve_calibration_project_dir(args: argparse.Namespace) -> Path:
     return Path(raw).resolve() if raw else Path.cwd().resolve()
 
 
+def _print_calibration_issues(validation: dict, ide: str) -> None:
+    """Print calibration errors/warnings from registry sync validation."""
+    issues = validation.get("issues") or []
+    errors = [i for i in issues if i.get("severity") == "error" and i.get("ide") == ide]
+    warnings = [i for i in issues if i.get("severity") == "warning" and i.get("ide") == ide]
+    if errors:
+        import sys
+        for e in errors:
+            print(f"\u26a0 CALIBRATION ERROR [{ide}]: {e.get('message', '')}", file=sys.stderr)
+    elif warnings:
+        import sys
+        for w in warnings:
+            print(f"\u26a0 CALIBRATION WARNING [{ide}]: {w.get('message', '')}", file=sys.stderr)
+
+
 def _sync_calibration_registry(
     args: argparse.Namespace,
     *,
@@ -67,21 +82,10 @@ def _sync_calibration_registry(
         "display_y": (matched or {}).get("display_y"),
     }
 
-    # Propagate calibration validation from registry sync
     validation = result.get("validation")
     if validation:
         sync_result["validation"] = validation
-        issues = validation.get("issues") or []
-        errors = [i for i in issues if i.get("severity") == "error" and i.get("ide") == ide]
-        warnings = [i for i in issues if i.get("severity") == "warning" and i.get("ide") == ide]
-        if errors:
-            import sys
-            for e in errors:
-                print(f"⚠ CALIBRATION ERROR [{ide}]: {e.get('message', '')}", file=sys.stderr)
-        elif warnings:
-            import sys
-            for w in warnings:
-                print(f"⚠ CALIBRATION WARNING [{ide}]: {w.get('message', '')}", file=sys.stderr)
+        _print_calibration_issues(validation, ide)
 
     return sync_result
 

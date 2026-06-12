@@ -260,6 +260,37 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     };
   }
 
+  private async _pasteCursorGlassUi(
+    text: string,
+    existing: Set<string>,
+  ): Promise<CommandOutcome | undefined> {
+    const { glassUi, promptPastes } = resolveCursorComposerPasteCandidates(existing);
+    if (!glassUi) return undefined;
+    for (const pasteCmd of promptPastes) {
+      this.traceOperation({
+        op: "paste",
+        route: `glass-composer-prompt:${pasteCmd}`,
+        ok: true,
+        command: pasteCmd,
+        detail: { textLength: text.length },
+      });
+      try {
+        const result = await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
+        if (result === false) {
+          this.traceOperation({ op: "paste", route: `glass-composer-prompt:${pasteCmd}`, ok: false, reason: "command returned false" });
+          continue;
+        }
+      } catch (err) {
+        this.traceOperation({ op: "paste", route: `glass-composer-prompt:${pasteCmd}`, ok: false, reason: String(err) });
+        continue;
+      }
+      await this.sleep(this.probePasteDelayMs());
+      this.traceOperation({ op: "paste", route: "glass-composer-prompt", ok: true, command: pasteCmd });
+      return { ok: true, command: pasteCmd };
+    }
+    return undefined;
+  }
+
   protected async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {
     const ide = this.detectIde();
     const useProbe = this.probeLadderEnabled();
@@ -336,46 +367,8 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     }
 
     if (ide === "cursor") {
-      const { glassUi, promptPastes } = resolveCursorComposerPasteCandidates(existing);
-      if (glassUi) {
-        for (const pasteCmd of promptPastes) {
-          this.traceOperation({
-            op: "paste",
-            route: `glass-composer-prompt:${pasteCmd}`,
-            ok: true,
-            command: pasteCmd,
-            detail: { textLength: text.length },
-          });
-          try {
-            const result = await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
-            if (result === false) {
-              this.traceOperation({
-                op: "paste",
-                route: `glass-composer-prompt:${pasteCmd}`,
-                ok: false,
-                reason: "command returned false",
-              });
-              continue;
-            }
-          } catch (err) {
-            this.traceOperation({
-              op: "paste",
-              route: `glass-composer-prompt:${pasteCmd}`,
-              ok: false,
-              reason: String(err),
-            });
-            continue;
-          }
-          await this.sleep(this.probePasteDelayMs());
-          this.traceOperation({
-            op: "paste",
-            route: "glass-composer-prompt",
-            ok: true,
-            command: pasteCmd,
-          });
-          return { ok: true, command: pasteCmd };
-        }
-      }
+      const cursorResult = await this._pasteCursorGlassUi(text, existing);
+      if (cursorResult) return cursorResult;
     }
 
     const typed = await this.tryTypePaste(text, before, useProbe);
@@ -402,6 +395,22 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     return SharedAutopilotBridgePaste.isClipboardReadingPasteCommand(cmd);
   }
 
+  private _shouldSkipDirectCmd(cmd: string, ide: string, submitRequested: boolean): string | null {
+    if (cmd.toLowerCase().includes("terminal.paste")) {
+      return "terminal paste targets the integrated terminal, not chat";
+    }
+    if (ide === "cursor" && cmd.toLowerCase().includes("startcomposerprompt")) {
+      return "startComposerPrompt* is reserved for the Cursor composer fast path";
+    }
+    if (ide === "cursor" && SharedAutopilotBridgePaste.directPasteReadsClipboard(cmd)) {
+      return "clipboard-reading paste is unsafe on Cursor (targets active TextEditor, not chat webview)";
+    }
+    if (!submitRequested && this.directPasteMayImplicitlySubmit(ide, cmd)) {
+      return "command may implicitly submit/toggle chat and was skipped because submit=false";
+    }
+    return null;
+  }
+
   private async tryDirectPasteCommands(
     text: string,
     ide: string,
@@ -419,43 +428,9 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
     let clipboardSeeded = false;
     try {
       for (const cmd of directCommands) {
-        if (cmd.toLowerCase().includes("terminal.paste")) {
-          this.traceOperation({
-            op: "paste",
-            route: `direct-command:${cmd}`,
-            ok: false,
-            reason: "terminal paste targets the integrated terminal, not chat",
-          });
-          continue;
-        }
-        if (
-          ide === "cursor" &&
-          cmd.toLowerCase().includes("startcomposerprompt")
-        ) {
-          this.traceOperation({
-            op: "paste",
-            route: `direct-command:${cmd}`,
-            ok: false,
-            reason: "startComposerPrompt* is reserved for the Cursor composer fast path",
-          });
-          continue;
-        }
-        if (ide === "cursor" && SharedAutopilotBridgePaste.directPasteReadsClipboard(cmd)) {
-          this.traceOperation({
-            op: "paste",
-            route: `direct-command:${cmd}`,
-            ok: false,
-            reason: "clipboard-reading paste is unsafe on Cursor (targets active TextEditor, not chat webview)",
-          });
-          continue;
-        }
-        if (!submitRequested && this.directPasteMayImplicitlySubmit(ide, cmd)) {
-          this.traceOperation({
-            op: "paste",
-            route: `direct-command:${cmd}`,
-            ok: false,
-            reason: "command may implicitly submit/toggle chat and was skipped because submit=false",
-          });
+        const skipReason = this._shouldSkipDirectCmd(cmd, ide, submitRequested);
+        if (skipReason) {
+          this.traceOperation({ op: "paste", route: `direct-command:${cmd}`, ok: false, reason: skipReason });
           continue;
         }
         const readsClipboard = SharedAutopilotBridgePaste.directPasteReadsClipboard(cmd);
@@ -500,6 +475,7 @@ export abstract class SharedAutopilotBridgePaste extends SharedAutopilotBridgeFo
       }
     }
   }
+
 
   private async tryHostClipboardPaste(
     text: string,

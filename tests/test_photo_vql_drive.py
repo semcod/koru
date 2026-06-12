@@ -30,6 +30,12 @@ def _clear_autonomy_session_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "VDISPLAY_SESSION_ID",
         "KORU_VDISPLAY_CAPTURE_MATCHES_IDE",
         "KORU_VDISPLAY_SOURCE",
+        "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH",
+        "KORU_VDISPLAY_ALLOW_IDE_MISMATCH",
+        "KORU_VDISPLAY_PREFER_PHOTO_VQL",
+        "KORU_VDISPLAY_LLM_VISION_DECISION",
+        "KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT",
+        "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS",
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("KORU_VDISPLAY_VERIFY_AFTER_PASTE", "0")
@@ -697,7 +703,27 @@ def test_photo_vql_chat_input_candidates_penalizes_terminal_background() -> None
     assert cands[1]["label"] == "background"
 
 
-def test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero() -> None:
+def test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    map_path = tmp_path / "pycharm-chat.json"
+    map_path.write_text(
+        json.dumps(
+            {
+                "capture_meta": {
+                    "source": "DP-2",
+                    "region": {"x": 0, "y": 1932, "width": 2048, "height": 1280},
+                    "rotation": "left",
+                    "screencast_stream": True,
+                    "width": 2048,
+                    "height": 1280,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda _app_id: str(map_path))
     meta = {"source": "DP-2", "width": 2048, "height": 1280, "region": {"x": 0, "y": 0, "width": 2048, "height": 1280}}
     enriched = vc._enrich_capture_meta_for_pointer(meta, "DP-2")
     region = enriched.get("region") or {}
@@ -997,25 +1023,14 @@ def test_prepare_map_fallback_requires_allow_flag(monkeypatch: pytest.MonkeyPatc
 
 
 def test_prepare_focus_recovery_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = {"refresh": 0}
-
-    def _refresh(**k):
-        calls["refresh"] += 1
-        if calls["refresh"] == 1:
-            return {
-                "ok": True,
-                "source": "DP-2",
-                "png": "/tmp/capture.png",
-                "vql": "/tmp/capture.png.vql.json",
-                "ide_window_warning": {"message": "wrong IDE", "window_titles": ["x - Cursor"]},
-            }
+    def _recovery(**k):
         return {
             "ok": True,
             "source": "DP-2",
             "png": "/tmp/capture.png",
             "vql": "/tmp/capture.png.vql.json",
             "capture_confirmed": True,
-            "capture_provenance": {"capture_confirmed": True, "window_titles": ["proj - PyCharm"]},
+            "focus_recovery": {"ok": True, "recovered_on_attempt": 1, "attempts": [{"attempt": 1, "ok": True}]},
         }
 
     monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-2", {"ok": True}))
@@ -1027,17 +1042,140 @@ def test_prepare_focus_recovery_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
     monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: True)
     monkeypatch.setattr(vc, "ensure_vdisplay_ide_control", lambda **k: {"map_actuation_ok": True})
+    monkeypatch.setattr(
+        vc,
+        "refresh_photo_vql_sidecar",
+        lambda **k: {
+            "ok": True,
+            "source": "DP-2",
+            "png": "/tmp/capture.png",
+            "vql": "/tmp/capture.png.vql.json",
+            "ide_window_warning": {"message": "wrong IDE", "window_titles": ["x - Cursor"]},
+        },
+    )
     monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
-    monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
-    monkeypatch.setattr(vc, "_photo_vql_ide_window_warning", lambda **k: None)
     monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: True)
-    monkeypatch.setattr(vc, "_alt_tab_window_cycle", lambda **k: {"ok": True, "method": "test-alt-tab"})
+    monkeypatch.setattr(vc, "_attempt_focus_recovery_capture", _recovery)
     monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
     monkeypatch.setenv("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3")
 
     out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
 
-    assert calls["refresh"] == 2
     assert out.get("focus_recovery", {}).get("ok") is True
     assert out["ok"] is True
     assert out["capture_ready"] is True
+
+
+def test_prepare_force_refresh_after_ide_control(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"refresh": 0}
+
+    def _refresh(**k):
+        calls["refresh"] += 1
+        return {
+            "ok": True,
+            "source": "DP-2",
+            "png": "/tmp/capture.png",
+            "vql": "/tmp/capture.png.vql.json",
+            "capture_confirmed": True,
+        }
+
+    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-2", {"ok": True}))
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: True)
+    monkeypatch.setattr(
+        vc,
+        "ensure_vdisplay_ide_control",
+        lambda **k: {"map_actuation_ok": True, "interior_focused": True},
+    )
+    monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: False)
+    monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
+    monkeypatch.setattr(vc, "_photo_vql_ide_window_warning", lambda **k: None)
+    monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
+
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+
+    assert calls["refresh"] == 1
+    assert out["ok"] is True
+
+
+def test_real_imgl_src_prefers_semco_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IMGL_SRC", str(Path.home() / "github/semcod/imgl"))
+    src = vc._real_imgl_src()
+    assert src is not None
+    assert (Path(src) / "imgl" / "pipeline.py").is_file()
+
+
+def test_ensure_real_imgl_on_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    imgl_root = vc._real_imgl_src()
+    if imgl_root is None:
+        pytest.skip("semcod imgl not on disk")
+    koru_stub = str(Path(vc.__file__).resolve().parents[2] / "imgl")
+    sys.path.insert(0, koru_stub)
+    vc._ensure_real_imgl_on_path()
+    import imgl
+
+    assert str(Path(imgl.__file__).resolve()).startswith(str(Path(imgl_root).resolve()))
+
+
+def test_import_imgl_targets_clears_cached_stub(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+    import types
+
+    imgl_root = vc._real_imgl_src()
+    if imgl_root is None:
+        pytest.skip("semcod imgl not on disk")
+    koru_stub = Path(vc.__file__).resolve().parents[2] / "imgl"
+    stub = types.ModuleType("imgl")
+    stub.__file__ = str(koru_stub / "__init__.py")
+    stub.__path__ = [str(koru_stub)]
+    monkeypatch.setitem(sys.modules, "imgl", stub)
+    monkeypatch.delitem(sys.modules, "imgl.targets", raising=False)
+
+    resolve_chat_target = vc._import_imgl_targets("resolve_chat_target")
+
+    assert callable(resolve_chat_target)
+    import imgl
+
+    assert str(Path(imgl.__file__).resolve()).startswith(str(Path(imgl_root).resolve()))
+
+
+def test_vdisplay_subprocess_env_puts_imgl_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IMGL_SRC", str(Path.home() / "github/semcod/imgl"))
+    env = vc._vdisplay_subprocess_env(ide="jetbrains")
+    first = (env.get("PYTHONPATH") or "").split(":")[0]
+    assert "imgl" in first
+    assert env.get("VDISPLAY_CAPTURE_VALIDATE_IDE") == "jetbrains"
+
+
+def test_send_chat_persists_drive_result(monkeypatch: pytest.MonkeyPatch) -> None:
+    persisted: list[tuple] = []
+
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(vc, "_prefer_photo_vql_chat", lambda **k: True)
+    monkeypatch.setattr(
+        vc,
+        "perform_photo_vql_focus_and_edit",
+        lambda *a, **k: {"ok": True, "edit": {"ok": True, "method": "test"}, "coords": {"x": 1, "y": 2}},
+    )
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "active_session_dir",
+        lambda: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "persist_autonomy_phase",
+        lambda session, phase, name, payload: persisted.append((phase, name, payload.get("ok"))),
+    )
+
+    out = vc.send_chat("hello", ide="jetbrains", submit=False, dry_run=False)
+
+    assert out["ok"] is True
+    assert ("act", "drive_result", True) in persisted

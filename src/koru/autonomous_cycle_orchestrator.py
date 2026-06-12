@@ -9,7 +9,6 @@ from koru.autonomous_cycle_drive_outcome import apply_autopilot_drive_outcome
 from koru.autonomous_cycle_drive_retry import (
     _client_has_usable_plugin,
     _execute_autopilot_drive,
-    _reply_requires_manual_chat_focus,
 )
 from koru.autonomous_cycle_skip_conditions import _check_autopilot_skip_conditions
 from koru.autonomous_plugin import plugin_skip_code
@@ -20,7 +19,10 @@ from koru.autonomy.env import (
 from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
+from koru.autonomy.drive_result import DriveAttemptResult
+from koru.autonomy.policy_engine import AutopilotPolicyContext, decide_autopilot_policy
 from koru.autonomy.state import AutoloopState
 from koru.observability_events import (
     emit_blocker,
@@ -82,21 +84,21 @@ def _drive_result_autopilot_status(
         cycle_telemetry["autopilot_skipped_waiting_ticket_closed"] = True
         cycle_telemetry["autopilot_skipped_waiting_ticket_closed_ticket"] = waiting_ticket
         return "skipped(waiting_ticket_closed)"
-    if ok:
+    attempt = DriveAttemptResult.from_reply(reply, ok=ok)
+    if attempt.ok:
         return "ok"
-    if _reply_requires_manual_chat_focus(reply):
+    if attempt.requires_manual_focus:
         cycle_telemetry["autopilot_skipped_manual_focus"] = True
         return "skipped(manual_focus)"
-    verification = str(reply.get("verification") or "").strip().lower()
-    if verification in {"submit_unverified", "submit_failed"}:
+    if attempt.is_submit_unverified:
         cycle_telemetry["autopilot_submit_unverified"] = True
         cycle_telemetry["autopilot_submit_unverified_reason"] = (
             reply.get("submit_failure_reason")
             or reply.get("reason")
-            or reply.get("message")
-            or verification
+            or attempt.message
+            or attempt.verification
         )
-        return f"failed({verification})"
+        return attempt.legacy_autopilot_status()
     return "failed"
 
 
@@ -141,22 +143,25 @@ def _handle_autopilot_phase(
         return plugin_status, None, None
     if conflict_status := _terminal_conflict_status(autopilot_ide, cycle_telemetry, _hp):
         return conflict_status, None, None
-    should_skip, skip_reason = _check_autopilot_skip_conditions(
-        project,
-        queue_result,
-        state,
-        autopilot_action,
-        autopilot_on_idle_only,
-        autopilot_skip_on_diagnostics_fail,
-        autopilot_skip_drive_idle_streak,
-        autopilot_skip_statuses,
-        diag_result,
-        topology_integration,
-        cycle_telemetry,
-        _hp,
+    policy_decision = decide_autopilot_policy(
+        AutopilotPolicyContext(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            autopilot_action=autopilot_action,
+            autopilot_on_idle_only=autopilot_on_idle_only,
+            autopilot_skip_on_diagnostics_fail=autopilot_skip_on_diagnostics_fail,
+            autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+            autopilot_skip_statuses=autopilot_skip_statuses,
+            diag_result=diag_result,
+            topology_integration=topology_integration,
+            cycle_telemetry=cycle_telemetry,
+            human_log=_hp,
+        ),
+        check_skip_conditions=_check_autopilot_skip_conditions,
     )
-    if should_skip:
-        return skip_reason, None, None
+    if policy_decision.should_skip:
+        return policy_decision.status, None, None
     return _drive_autopilot_once(
         _AutopilotDriveContext(
             project=project,
@@ -499,7 +504,8 @@ def _emit_autopilot_observability_outcome(
 ) -> None:
     if ok:
         return
-    if not (autopilot_status.startswith("failed") or autopilot_status.startswith("skipped(")):
+    status = parse_autopilot_status(autopilot_status)
+    if not (status.failed or status.skipped):
         return
     corr = str(reply.get("id") or "cli-drive")
     ticket = _queue_loop_waiting_ticket_label(queue_result)
@@ -507,10 +513,10 @@ def _emit_autopilot_observability_outcome(
     blocker = "drive_failed"
     next_action = "retry_next_cycle"
     verification = str(reply.get("verification") or "").strip().lower()
-    if verification in {"submit_unverified", "submit_failed"}:
+    if status.submit_unverified or verification in {"submit_unverified", "submit_failed"}:
         blocker = "manual_send_required"
         next_action = "validate_submit_or_mark_ticket_input"
-    if autopilot_status == "skipped(manual_focus)":
+    if status.manual_focus:
         blocker = "manual_focus_required"
         next_action = "focus_chat_or_open_interfaces"
     elif decision_kind in {

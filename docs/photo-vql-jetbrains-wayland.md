@@ -1,6 +1,6 @@
 # Photo-VQL drive — JetBrains/PyCharm na Wayland (DP-2)
 
-**Stan:** 2026-06-09 · **moduł:** `src/koru/integrations/vdisplay_client.py` · **testy:** `tests/test_photo_vql_drive.py` (49 passed)
+**Stan:** 2026-06-09 · **moduł:** `src/koru/integrations/vdisplay_client.py` · **testy:** `tests/test_photo_vql_drive.py` (54 passed)
 
 ## Podsumowanie
 
@@ -63,6 +63,8 @@ Szczegóły: [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md) — sekcja "20
 
 ## Szybki start (real drive)
 
+Pełna instrukcja krok po kroku: [vdisplay `examples/dev-workflow/README.md`](../../../wronai/vdisplay/examples/dev-workflow/README.md#koru--vdisplay--pętla-autonomiczna-photo-vql).
+
 ```bash
 cd ~/github/wronai/vdisplay
 
@@ -118,11 +120,7 @@ Sekcje decide/act pojawiają się dopiero po **pełnym** drive (bez abortu w pre
 
 - [ ] **PyCharm foreground na DP-2** — titlebar zawiera `- PyCharm` / `PyCharm`, nie `Cursor`.
 - [ ] **Terminal poza DP-2** — historia bash nie widać na screenshot (terminal pollution → fałszywe VQL inputy).
-- [ ] **imgl zainstalowany** w venv vdisplay — bez niego `elements=0`, puste warstwy VQL:
-  ```bash
-  pip install -e ".[observe]"   # w venv vdisplay
-  # + system: tesseract-ocr
-  ```
+- [ ] **imgl zainstalowany** — drive script ustawia `IMGL_SRC` **przed** `KORU_SRC` w `PYTHONPATH`. Koru ma stub `koru/src/imgl` — bez poprawnej kolejności VQL ma 0 warstw (naprawione w `_ensure_real_imgl_on_path` + `_vdisplay_subprocess_env`).
 - [ ] **Pre-check przed drive:**
   ```bash
   VDISPLAY_CAPTURE_VALIDATE_IDE=jetbrains vdisplay screenshot --source DP-2 | jq '.capture_validation'
@@ -171,7 +169,7 @@ Sekcje decide/act pojawiają się dopiero po **pełnym** drive (bez abortu w pre
 
 | Data | Zmiana |
 |------|--------|
-| 2026-06-09 | Usunięto confirmation bias (map ≠ `capture_confirmed`); Alt+Tab recovery; multi-needle GNOME focus; audit prepare; persist `drive_result` z drive script |
+| 2026-06-09 (kontynuuj #2) | Fix imgl stub conflict (`koru/src/imgl` vs semcod imgl); `_vdisplay_subprocess_env`; xdotool focus fallback; 54 testy; refresh → 350 warstw VQL |
 | 2026-06-12 | Sesje datowane, guard terminal pollution, map target `prompt` first, empty VQL → map fallback |
 | wcześniej | Photo-VQL + LLM vision, JetBrains corner heuristic (y>850), enrich capture meta dla rotation |
 

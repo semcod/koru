@@ -8,6 +8,30 @@ import pytest
 from koru.integrations import vdisplay_client
 
 
+@pytest.fixture(autouse=True)
+def _clear_vdisplay_drive_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in (
+        "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH",
+        "KORU_VDISPLAY_ALLOW_IDE_MISMATCH",
+        "KORU_VDISPLAY_CAPTURE_MATCHES_IDE",
+        "KORU_VDISPLAY_PREFER_PHOTO_VQL",
+        "KORU_VDISPLAY_LLM_VISION_DECISION",
+        "KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT",
+        "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS",
+        "KORU_VDISPLAY_DRY_RUN",
+        "KORU_VDISPLAY_CONTROL_FALLBACK",
+        "KORU_VDISPLAY_SOURCE",
+        "KORU_VDISPLAY_VQL_PATH",
+        "KORU_VDISPLAY_PHOTO_PATH",
+        "KORU_VDISPLAY_ABORT_ON_PROBE_FAIL",
+        "KORU_VDISPLAY_PHOTO_VQL_MAP_FALLBACK",
+        "VDISPLAY_METADATA_DIR",
+        "VDISPLAY_SESSION",
+        "VDISPLAY_SESSION_ID",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
 def test_vdisplay_fallback_enabled_auto_on_wayland_without_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     monkeypatch.setenv("KORU_VDISPLAY_CONTROL_FALLBACK", "auto")
@@ -35,6 +59,7 @@ def test_send_chat_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_send_chat_prefers_ide_prompt_for_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("KORU_VDISPLAY_PREFER_PHOTO_VQL", raising=False)
     monkeypatch.setattr(vdisplay_client, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(vdisplay_client, "_photo_vql_ide_capture_mismatch", lambda **kwargs: None)
     import types
 
     fake_oi = types.ModuleType("gillm.injection.os_injector")
@@ -74,6 +99,7 @@ def test_send_chat_uses_semantic_set_value(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT", "0")
     monkeypatch.setenv("KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS", "0")
     monkeypatch.setattr(vdisplay_client, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(vdisplay_client, "_photo_vql_ide_capture_mismatch", lambda **kwargs: None)
     monkeypatch.setattr(vdisplay_client, "_VDISPLAY_DIRECT", True)
 
     def _find_first(*, ide, selectors):
@@ -135,6 +161,83 @@ def test_invoke_drive_uses_vdisplay_after_plugin_failure(monkeypatch: pytest.Mon
     )
     assert ok is True
     assert reply["backend"] == "vdisplay"
+
+
+def test_vdisplay_control_fallback_blocks_when_capture_preflight_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autonomous_cycle_gate import try_vdisplay_control_fallback
+
+    send = MagicMock(return_value={"ok": True, "backend": "vdisplay"})
+    monkeypatch.setattr(vdisplay_client, "vdisplay_fallback_enabled", lambda **kwargs: True)
+    monkeypatch.setattr(
+        vdisplay_client,
+        "prepare_photo_vql_for_drive",
+        lambda **kwargs: {
+            "ok": False,
+            "capture_confirmed": False,
+            "message": "monitor not found: DP-2",
+        },
+    )
+    monkeypatch.setattr(vdisplay_client, "load_vql_metadata", lambda: {"ui_elements": []})
+    monkeypatch.setattr(vdisplay_client, "send_chat", send)
+
+    reply = try_vdisplay_control_fallback(
+        "hello",
+        submit=True,
+        ide="jetbrains",
+        plugin_connected=False,
+    )
+
+    assert reply is not None
+    assert reply["ok"] is False
+    assert reply["backend"] == "vdisplay"
+    assert reply["reason"] == "capture_prepare_failed"
+    assert reply["capture_confirmed"] is False
+    assert reply["desktop_preflight"]["vql_elements"] == 0
+    send.assert_not_called()
+
+
+def test_vdisplay_control_fallback_attaches_successful_desktop_preflight(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autonomous_cycle_gate import try_vdisplay_control_fallback
+
+    send = MagicMock(return_value={"ok": True, "backend": "vdisplay"})
+    monkeypatch.setattr(vdisplay_client, "vdisplay_fallback_enabled", lambda **kwargs: True)
+    monkeypatch.setattr(
+        vdisplay_client,
+        "prepare_photo_vql_for_drive",
+        lambda **kwargs: {"ok": True, "capture_confirmed": True},
+    )
+    monkeypatch.setattr(
+        vdisplay_client,
+        "load_vql_metadata",
+        lambda: {
+            "_source": "test-sidecar",
+            "ui_elements": [
+                {"id": "window_0", "role": "window", "click_center": {"x": 10, "y": 20}}
+            ],
+        },
+    )
+    monkeypatch.setattr(vdisplay_client, "send_chat", send)
+    monkeypatch.setattr(vdisplay_client, "record_koru_drive_step", lambda *args, **kwargs: None)
+
+    reply = try_vdisplay_control_fallback(
+        "hello",
+        submit=True,
+        ide="jetbrains",
+        plugin_connected=False,
+    )
+
+    assert reply is not None
+    assert reply["ok"] is True
+    assert reply["backend"] == "vdisplay"
+    assert reply["desktop_preflight"]["ok"] is True
+    assert reply["desktop_preflight"]["capture_confirmed"] is True
+    assert reply["desktop_preflight"]["vql_elements"] == 1
+    assert reply["vql_context"] == "test-sidecar"
+    send.assert_called_once()
 
 
 def test_send_chat_prefers_photo_vql_when_flag_set(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -244,6 +347,7 @@ def test_send_chat_routes_code_edit_to_photo_vql(monkeypatch: pytest.MonkeyPatch
 def test_perform_photo_vql_focus_and_edit_dry(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("KORU_VDISPLAY_DRY_RUN", "1")
     monkeypatch.setenv("KORU_VDISPLAY_LLM_VISION_DECISION", "0")
+    monkeypatch.setattr(vdisplay_client, "_photo_vql_ide_capture_mismatch", lambda **kwargs: None)
     monkeypatch.setattr(
         vdisplay_client,
         "move_mouse_to_vql_target_and_focus_keyboard",

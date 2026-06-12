@@ -15,18 +15,13 @@ _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 from koru.autonomy.structured_report import emit_structured_cycle_report
 from koru.autonomy.replay_actions import quick_action_to_replay
+from koru.autonomy.autopilot_status import parse_autopilot_status
+from koru.autonomy.config import structured_cycle_report_enabled
 
 
 
 def _blocked_by_from_autopilot_status(autopilot_status: str) -> str:
-    status = (autopilot_status or "").strip().lower()
-    if "submit_unverified" in status or "submit_failed" in status:
-        return "manual_send_required"
-    if status.startswith("skipped("):
-        return status[len("skipped("):].rstrip(")").strip()
-    if status.startswith("failed"):
-        return "drive_failed"
-    return ""
+    return parse_autopilot_status(autopilot_status).blocker_code
 
 
 def _is_plugin_blocker(blocked_by: str) -> bool:
@@ -998,12 +993,7 @@ def _emit_structured_report(
 ) -> None:
     if args.emit_events != "human":
         return
-    if os.environ.get("KORU_STRUCTURED_CYCLE_REPORT", "").strip().lower() not in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
+    if not structured_cycle_report_enabled():
         return
 
     from koru.activity_log import activity

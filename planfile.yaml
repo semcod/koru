@@ -1331,33 +1331,73 @@ sprints:
       implementation: balanced
   - id: autonomy-vql-llm-001
     name: VQL + LLM desktop decision loop for full koru/vdisplay autonomy
-    description: |
-      Observe via portal-screencast DP-1 (or current source) producing .vql.json + context with capture meta (region, nodes, NL).
-      Load VQL (click_center, data_locations with png/.env/vdisplay_client paths, decision_data for Cursor regions).
-      Decide with .env OPENROUTER_API_KEY + LLM_MODEL (gemini vision) + image + this VQL (previous-vs-current delta).
-      Act via vdisplay_client.send_chat or control find/set/click (using VQL coords as hint/verify) or direct shell edits visible in Cursor.
+    description: 'Observe via portal-screencast DP-1 (or current source) producing
+      .vql.json + context with capture meta (region, nodes, NL).
+
+      Load VQL (click_center, data_locations with png/.env/vdisplay_client paths,
+      decision_data for Cursor regions).
+
+      Decide with .env OPENROUTER_API_KEY + LLM_MODEL (gemini vision) + image + this
+      VQL (previous-vs-current delta).
+
+      Act via vdisplay_client.send_chat or control find/set/click (using VQL coords
+      as hint/verify) or direct shell edits visible in Cursor.
+
       Persist decision + artifacts to .vdisplay/ ; update planfile status.
+
       Builds on 2026-06-11 VQL analysis + preflight (keeper capture_ready true).
+
+      '
     task_type: feature
     priority: high
     estimate: 2d
-    status: real execution 2026-06-11 - fresh capture (27 elems VQL) | 2026-06-12T07:41:28 fix: send_chat jetbrains chat now prefers photo+LLM (screenshot analysis for precise input coords + typing). LLM_VISION routes to perform before os_injector/ide map; guard relaxed for chat; LLM refine in focus block; no short-circuit so wpisywanie happens. , photo-vql perform real focus+edit (ydotool-paste) inserted markers in Cursor editor on DP-1 (1024,640 from window_0), post-edit capture + verify append succeeded. autonomy loop (observe fresh VQL -> act at cc) demonstrated live. LLM layer integrated+tested (fallback). See .vdisplay/ analysis and koru-cont-dp1-1781205150.* + post-edit artifacts. | KONTYNUACJA 2026-06-11T21:17:15: In koru workspace w/ latest continue2 28e VQL + .env key: photo paths forced (PREFER=1), perform LLM_used=true (1648/470 chat decision, 1664/480 editor), send_chat photo-vql backend hit, direct vision call succeeded conf0.75. AgentClient ready. Handler examples run. Full loop verified again (dry+LLM). See updated analysis 77 notes + docs.
+    status: 'real execution 2026-06-11 - fresh capture (27 elems VQL) | 2026-06-12T07:41:28
+      fix: send_chat jetbrains chat now prefers photo+LLM (screenshot analysis for
+      precise input coords + typing). LLM_VISION routes to perform before os_injector/ide
+      map; guard relaxed for chat; LLM refine in focus block; no short-circuit so
+      wpisywanie happens. , photo-vql perform real focus+edit (ydotool-paste) inserted
+      markers in Cursor editor on DP-1 (1024,640 from window_0), post-edit capture
+      + verify append succeeded. autonomy loop (observe fresh VQL -> act at cc) demonstrated
+      live. LLM layer integrated+tested (fallback). See .vdisplay/ analysis and koru-cont-dp1-1781205150.*
+      + post-edit artifacts. | KONTYNUACJA 2026-06-11T21:17:15: In koru workspace
+      w/ latest continue2 28e VQL + .env key: photo paths forced (PREFER=1), perform
+      LLM_used=true (1648/470 chat decision, 1664/480 editor), send_chat photo-vql
+      backend hit, direct vision call succeeded conf0.75. AgentClient ready. Handler
+      examples run. Full loop verified again (dry+LLM). See updated analysis 77 notes
+      + docs.'
     files:
     - .vdisplay/2026-06-11-vql-metadata-analysis-previous-current.json
     - .vdisplay/llm-decision-2026-06-11.json
     - src/koru/integrations/vdisplay_client.py
     - planfile.yaml
     - docs/autonomy-ide-cursor.md
-    handler: |
-      source .env || true; vdisplay agent preflight || true; vdisplay screenshot --source DP-1 -o /tmp/vdisplay-autonomy-$(date +%s).png || true; python -c "from koru.integrations.vdisplay_client import perform_photo_vql_focus_and_edit, load_vql_metadata; print(load_vql_metadata().get('element_count')); perform_photo_vql_focus_and_edit('continue autonomy-vql-llm-001', ide='cursor', is_code_edit=True)" || true
+    handler: 'source .env || true; vdisplay agent preflight || true; vdisplay screenshot
+      --source DP-1 -o /tmp/vdisplay-autonomy-$(date +%s).png || true; python -c "from
+      koru.integrations.vdisplay_client import perform_photo_vql_focus_and_edit, load_vql_metadata;
+      print(load_vql_metadata().get(''element_count'')); perform_photo_vql_focus_and_edit(''continue
+      autonomy-vql-llm-001'', ide=''cursor'', is_code_edit=True)" || true
+
       python -c "
-      from koru.integrations.vdisplay_client import load_vql_metadata, vdisplay_available, send_chat
+
+      from koru.integrations.vdisplay_client import load_vql_metadata, vdisplay_available,
+      send_chat
+
       m = load_vql_metadata()
-      print('VQL loaded, click_center:', m.get('ui_elements',[{}])[0].get('click_center') if m.get('ui_elements') else 'n/a')
-      print('vdisplay_available:', vdisplay_available())
-      # Example: send_chat('Improve keeper delegation using VQL click coords from DP-1', ide='cursor', submit=False)
+
+      print(''VQL loaded, click_center:'', m.get(''ui_elements'',[{}])[0].get(''click_center'')
+      if m.get(''ui_elements'') else ''n/a'')
+
+      print(''vdisplay_available:'', vdisplay_available())
+
+      # Example: send_chat(''Improve keeper delegation using VQL click coords from
+      DP-1'', ide=''cursor'', submit=False)
+
       "
-      # Real LLM: base64 latest png + prompt with VQL excerpt + curl $OPENROUTER... ; drive control or edit
+
+      # Real LLM: base64 latest png + prompt with VQL excerpt + curl $OPENROUTER...
+      ; drive control or edit
+
+      '
     model_hints:
       planning: balanced
       implementation: balanced

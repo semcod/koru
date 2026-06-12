@@ -32,6 +32,31 @@ def _record(cycle: int) -> DecisionRecord:
     )
 
 
+def test_classify_skip_code_submit_unverified_from_status_without_telemetry() -> None:
+    assert classify_skip_code({}, "failed(submit_unverified)") == "manual_send_required"
+
+
+def test_build_decision_record_submit_unverified_from_status_without_telemetry() -> None:
+    record = build_decision_record(
+        cycle=1,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-1",
+        stagnation_streak=0,
+        autopilot_status="failed(submit_unverified)",
+        autopilot_ide="cursor",
+        autopilot_backend="plugin",
+        autopilot_drive_kind="ticket_prompt",
+        diag_status="ok",
+        wup_status="ok",
+        cycle_telemetry={},
+        next_step="manual send required",
+    )
+
+    assert record.blocked_by == "manual_send_required"
+    assert record.decided == "manual_send_required"
+    assert record.action == "submit_unverified"
+
+
 def test_compact_line_arrow_separated_format() -> None:
     line = _record(1).compact_line()
     assert line.count(" → ") == 4, "compact line must have exactly 4 arrow separators"
