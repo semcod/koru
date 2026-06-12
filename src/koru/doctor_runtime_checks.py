@@ -191,19 +191,27 @@ def _collect_venv_detail_bits(
         f"project_venv={existing_venvs[0] if existing_venvs else project / '.venv'}",
     ]
     status = PASS
+    python_from_project_venv = _check_path_in_venvs(executable, existing_venvs)
     if virtual_env:
         try:
             virtual_env_path = Path(virtual_env).expanduser().resolve()
-            if not any(virtual_env_path == venv.resolve() for venv in existing_venvs):
-                status = WARN
-                detail_bits.append("virtual_env_mismatch=true")
+            virtual_env_ok = any(virtual_env_path == venv.resolve() for venv in existing_venvs)
+            if not virtual_env_ok:
+                if python_from_project_venv:
+                    detail_bits.append("virtual_env_stale_label=true")
+                else:
+                    status = WARN
+                    detail_bits.append("virtual_env_mismatch=true")
         except OSError:
-            status = WARN
-            detail_bits.append("virtual_env_mismatch=unknown")
+            if python_from_project_venv:
+                detail_bits.append("virtual_env_stale_label=unknown")
+            else:
+                status = WARN
+                detail_bits.append("virtual_env_mismatch=unknown")
     else:
         detail_bits.append("virtual_env_unset=true")
 
-    if not _check_path_in_venvs(executable, existing_venvs):
+    if not python_from_project_venv:
         status = WARN
         detail_bits.append("python_not_from_project_venv=true")
 

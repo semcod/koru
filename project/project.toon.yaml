@@ -1,12 +1,12 @@
-# koru | 6585 func | 663f | 152304L | python | 2026-06-12
-# generated in 0.01s
+# koru | 6653 func | 667f | 153718L | python | 2026-06-12
+# generated in 0.00s
 
 HEALTH:
-  CC̄=3.7  critical=434 (limit:10)  dup=21  cycles=0
+  CC̄=3.7  critical=435 (limit:10)  dup=21  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      perform_photo_vql_focus_and_edit = 74 (limit:15)
-  !!! high_fan_out     perform_photo_vql_focus_and_edit = 50 (limit:10)
+  !!! cc_exceeded      perform_photo_vql_focus_and_edit = 89 (limit:15)
+  !!! high_fan_out     perform_photo_vql_focus_and_edit = 51 (limit:10)
   !!! cc_exceeded      load_vql_metadata = 48 (limit:15)
   !!! cc_exceeded      ensure_vdisplay_ide_control = 47 (limit:15)
   !!! cc_exceeded      prepare_photo_vql_for_drive = 45 (limit:15)
@@ -14,10 +14,10 @@ ALERTS[20]:
   !!! cc_exceeded      _map_chat_target_capture_local = 41 (limit:15)
   !!! cc_exceeded      _type_text_at_vql_coords = 41 (limit:15)
   !!! high_fan_out     ensure_vdisplay_ide_control = 40 (limit:10)
-  !!! cc_exceeded      score_photo_vql_chat_input = 39 (limit:15)
+  !!! cc_exceeded      _normalize_photo_vql_drive_result = 37 (limit:15)
 
-MODULES[950] (top by size):
-  M[src/koru/integrations/vdisplay_client.py] 4488L C:0 F:124 CC↑74 D:5 (python)
+MODULES[955] (top by size):
+  M[src/koru/integrations/vdisplay_client.py] 4690L C:0 F:126 CC↑89 D:6 (python)
   M[packages/coru/src/coru/cli.py] 3994L C:3 F:217 CC↑13 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[ui.vql.json] 1756L C:0 F:0 CC↑0 D:0 (json)
@@ -30,23 +30,23 @@ MODULES[950] (top by size):
   M[src/koru/autonomous.py] 1065L C:0 F:66 CC↑4 D:3 (python)
   M[packages/coru/src/coru/repair/pipeline.py] 1039L C:2 F:42 CC↑9 D:0 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1009L C:2 F:44 CC↑14 D:0 (python)
+  M[src/koruide/daemon/handlers_drive.py] 996L C:0 F:25 CC↑14 D:0 (python)
   M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 992L C:1 F:72 CC↑13 D:1 (typescript)
-  M[src/koru/autonomous_readiness.py] 969L C:3 F:43 CC↑12 D:4 (python)
-  LANGS: python:678/typescript:93/shell:56/json:40/yaml:31/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
+  LANGS: python:682/typescript:93/shell:57/json:40/yaml:31/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
 
 HOTSPOTS[10]:
-  ★ perform_photo_vql_focus_and_edit fan=50  // Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus
+  ★ perform_photo_vql_focus_and_edit fan=51  // Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus
   ★ prepare_photo_vql_for_drive fan=44  // Observe (if needed) + pin sidecar before koru drive / send_chat.
   ★ ensure_vdisplay_ide_control fan=40  // Automatically open/focus IDE window and click interior targets via vdisplay cont
-  ★ _resolve_photo_vql_llm_coords fan=39  // Optional LLM vision refinement of click coords before focus/type.
+  ★ get_vql_chat_target_from_photo fan=37  // Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.target
   ★ _type_text_at_vql_coords fan=36  // Click caret at VQL capture coords, then type/paste via resolved pointer input.
 
 REFACTOR[15]:
   [1] H/L Split SharedAutopilotBridgePaste.shouldProbeInput (CC=26)
-  [2] H/L Split score_photo_vql_chat_input (CC=39)
-  [3] H/L Split ensure_vdisplay_ide_control (CC=47)
-  [4] H/L Split prepare_photo_vql_for_drive (CC=45)
-  [5] H/L Split _enrich_capture_meta_for_pointer (CC=30)
+  [2] H/L Split ensure_vdisplay_ide_control (CC=47)
+  [3] H/L Split prepare_photo_vql_for_drive (CC=45)
+  [4] H/L Split _normalize_photo_vql_drive_result (CC=37)
+  [5] H/L Split get_vql_chat_target_from_photo (CC=32)
 
 EVOLUTION:
-  2026-06-12 CC̄=3.7 crit=434 152304L // Automated analysis
+  2026-06-12 CC̄=3.7 crit=435 153718L // Automated analysis

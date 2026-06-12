@@ -705,6 +705,35 @@ def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -
     assert "export KORU_AUTOPILOT_INSTANCE=jetbrains" in text
 
 
+def test_format_post_startup_operator_hints_for_jetbrains_suffixed_lane() -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=Path("/tmp/project"),
+        agent_lane_cli="jetbrains",
+        autopilot_ide_cli="auto",
+        resolved_lane="jetbrains-main",
+        lane_source="cli:jetbrains",
+        resolved_autopilot_ide="jetbrains",
+        autopilot_ide_source="lane",
+        running_ides=("JetBrains IDE (pid=1)",),
+        terminal_lane="jetbrains",
+        socket_path="/run/user/1000/koru-autopilot-jetbrains-main.sock",
+        session="wayland",
+        term_program="-",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(probe, plugin_connected=False),
+    )
+
+    assert "Socket daemona = /run/user/1000/koru-autopilot-jetbrains-main.sock" in text
+    assert "export KORU_AUTOPILOT_INSTANCE=jetbrains-main" in text
+    assert "export KORU_AUTOPILOT_INSTANCE=jetbrains\n" not in f"{text}\n"
+
+
 def test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_windsurf_selected(
     tmp_path: Path,
 ) -> None:

@@ -113,9 +113,13 @@ def _apply_drive_verification(
 
 
 def _should_fallback_to_direct(args: argparse.Namespace, reply: dict[str, Any]) -> bool:
+    from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
+
     if args.require_plugin:
         return False
     if not _auto_direct_fallback_enabled():
+        return False
+    if daemon_reply_blocks_direct_fallback(reply):
         return False
     if bool(reply.get("ok", True)):
         return False

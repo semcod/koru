@@ -135,6 +135,34 @@ def _is_screen_capture_uri(uri: str) -> bool:
     return uri.startswith("desktop-screenshot://screen")
 
 
+def _screen_capture_uri_for_prompt(prompt: str) -> str | None:
+    text = " ".join((prompt or "").strip().lower().split())
+    if not text:
+        return None
+    capture_phrases = (
+        "capture screen",
+        "screen capture",
+        "take screenshot",
+        "take a screenshot",
+        "screenshot screen",
+        "capture screenshot",
+        "zrzut ekranu",
+        "zrob zrzut ekranu",
+        "zrób zrzut ekranu",
+    )
+    if text in capture_phrases:
+        return "desktop-screenshot://screen"
+    return None
+
+
+def _screen_capture_plan_dict(uri: str) -> dict[str, Any]:
+    return {
+        "uri": uri,
+        "intent": "capture_screen",
+        "transport": "desktop",
+    }
+
+
 def _capture_via_portal(uri: str) -> dict[str, Any] | None:
     try:
         from koruvision.capture_mss import is_wayland
@@ -482,6 +510,30 @@ def desktop_uri_handle(
 
     host = _resolve_platform(platform)
     service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
+    capture_uri = _screen_capture_uri_for_prompt(prompt)
+    if capture_uri:
+        plan_dict = _screen_capture_plan_dict(capture_uri)
+        if not dry_run and _portal_capture_enabled(use_portal_capture):
+            portal_result = _capture_via_portal(capture_uri)
+            if portal_result is not None:
+                return {
+                    "prompt": prompt,
+                    "platform": service._host().value,
+                    "plan": plan_dict,
+                    "result": portal_result,
+                }
+        result = service.execute(capture_uri, dry_run=dry_run)
+        payload = {
+            "prompt": prompt,
+            "platform": service._host().value,
+            "plan": plan_dict,
+            "result": result.to_dict(),
+        }
+        intent_ir = _intent_ir_metadata(prompt)
+        if intent_ir:
+            payload["nlp_bridge"] = intent_ir
+        return payload
+
     plan = service.from_prompt(prompt, locale=locale)
 
     if (

@@ -81,6 +81,8 @@ def test_handle_drive_routes_via_vdisplay_before_keyboard(monkeypatch: pytest.Mo
 
 
 def test_handle_drive_falls_through_when_vdisplay_declines(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
+
     daemon = mock.Mock()
     daemon._plugin_for.return_value = None
     daemon.project = "/tmp/test"

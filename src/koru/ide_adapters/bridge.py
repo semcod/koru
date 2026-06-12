@@ -218,22 +218,40 @@ def _bridge_status_base(
     )
 
 
+def _wayland_session() -> bool:
+    import os
+
+    return bool((os.environ.get("WAYLAND_DISPLAY") or "").strip())
+
+
 def _add_unsupported_ide_hypothesis(status: BridgeStatus) -> None:
     if status.plugins_connected:
         return
     strategy = get_strategy(status.ide)
     if strategy is not None and strategy.keyboard.keyboard_fallback_default:
+        if _wayland_session() and status.ide in {"jetbrains", "pycharm", "idea"}:
+            summary = (
+                "Na Waylandzie preferuj vdisplay/photo-VQL (KORU_VDISPLAY_CONTROL_FALLBACK=1, "
+                "KORU_VDISPLAY_SOURCE=DP-1); OS injector tylko jako ostatni fallback"
+            )
+            evidence = (
+                f"{strategy.label} nie używa pluginu VS Code — na Waylandzie drive idzie "
+                f"vdisplay → imgl → OS-injector dla ide={status.ide}"
+            )
+        else:
+            summary = "Skalibruj OS injector i steruj przez keyboard fallback"
+            evidence = (
+                f"{strategy.label} nie używa pluginu VS Code — sterowanie przez "
+                f"OS-injector (keyboard) jest oczekiwaną ścieżką dla ide={status.ide}"
+            )
         status.hypotheses.append(
             Hypothesis(
                 id="ide.keyboard_lane",
                 confidence=0.4,
-                evidence=(
-                    f"{strategy.label} nie używa pluginu VS Code — sterowanie przez "
-                    f"OS-injector (keyboard) jest oczekiwaną ścieżką dla ide={status.ide}"
-                ),
+                evidence=evidence,
                 remediation=shared.Remediation(
                     kind="manual",
-                    summary="Skalibruj OS injector i steruj przez keyboard fallback",
+                    summary=summary,
                 ),
             ),
         )

@@ -51,6 +51,8 @@ def build_autopilot_parser() -> argparse.ArgumentParser:
     _add_daemon_parser(sub)
     _add_drive_parser(sub)
     _add_calibrate_parser(sub)
+    _add_prepare_vdisplay_parser(sub)
+    _add_diagnose_vdisplay_parser(sub)
     _add_session_start_parser(sub)
     _add_status_parser(sub)
     _add_env_parser(sub)
@@ -240,6 +242,38 @@ def _add_calibrate_parser(sub: argparse._SubParsersAction) -> None:
         default=None,
         metavar="TEXT",
         help="Optional smoke prompt injected immediately after saving the profile.",
+    )
+
+
+def _add_prepare_vdisplay_parser(sub: argparse._SubParsersAction) -> None:
+    prepare = sub.add_parser(
+        "prepare-vdisplay",
+        help="Run photo-VQL observe (screenshot + VQL sidecar) before autopilot drive.",
+    )
+    prepare.add_argument(
+        "--ide",
+        default="auto",
+        metavar="IDE",
+        help="Target IDE (jetbrains, windsurf, cursor, …). Default: auto.",
+    )
+
+
+def _add_diagnose_vdisplay_parser(sub: argparse._SubParsersAction) -> None:
+    diag = sub.add_parser(
+        "diagnose-vdisplay",
+        help="Probe OpenRouter vision chat detection on the latest prepare capture.",
+    )
+    diag.add_argument(
+        "--ide",
+        default="jetbrains",
+        metavar="IDE",
+        help="Target IDE (default: jetbrains).",
+    )
+    diag.add_argument(
+        "--png",
+        default=None,
+        metavar="PATH",
+        help="Capture PNG path (default: newest .vdisplay/.../koru-<ide>/observe/capture.png).",
     )
 
 

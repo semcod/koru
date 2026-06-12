@@ -73,6 +73,34 @@ def test_runtime_consistency_fail_fast_when_strict(
     assert result.primary_fix is not None
 
 
+def test_runtime_consistency_ignores_python_vs_python3_in_same_venv(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    venv_bin = tmp_path / ".venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    python3 = venv_bin / "python3"
+    python = venv_bin / "python"
+    python3.write_text("", encoding="utf-8")
+    python.write_text("", encoding="utf-8")
+    (venv_bin / "koru").write_text("", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "koru"\nversion = "0.1.309"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "koru.autonomous_readiness._installed_koru_version",
+        lambda: "0.1.309",
+    )
+    monkeypatch.setattr(
+        "koru.autonomous_readiness._check_python_venv_alignment",
+        lambda _p: ("pass", "aligned"),
+    )
+
+    result = check_runtime_consistency(tmp_path, launcher_executable=python)
+    assert not any(i.code == "python_executable_mismatch" for i in result.issues)
+
+
 def test_daemon_client_alignment_detects_version_mismatch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

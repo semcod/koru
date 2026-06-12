@@ -326,8 +326,8 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             ):
                 report = _run(project)
             check = _named(report, "python_venv_alignment")
-            self.assertEqual(check.status, WARN)
-            self.assertIn("virtual_env_mismatch=true", check.detail)
+            self.assertEqual(check.status, PASS)
+            self.assertIn("virtual_env_stale_label=true", check.detail)
 
     def test_python_venv_alignment_allows_unset_virtual_env_when_python_matches(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

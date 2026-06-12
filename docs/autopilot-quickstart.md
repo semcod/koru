@@ -74,6 +74,33 @@ version, plugin `drive` is blocked.
 
 Monorepo guide: `maskservice/c2004/docs/autonomy-ide-cursor.md` (section *Po starcie*).
 
+## JetBrains / PyCharm on Wayland (no VS Code plugin)
+
+JetBrains IDEs do **not** use the VS Code extension. Drive order:
+
+1. **vdisplay / photo-VQL** (screenshot + VQL + optional map) — preferred on Wayland
+2. **imgl** vision fallback
+3. **OS injector** / `wtype` — last resort; requires calibration **in the chat input**, not the terminal
+
+```bash
+source .venv/bin/activate
+export KORU_AUTOPILOT_INSTANCE=jetbrains
+export KORU_VDISPLAY_CONTROL_FALLBACK=1
+export KORU_VDISPLAY_SOURCE=DP-1    # monitor where PyCharm window lives
+
+koru autopilot shutdown            # after Ctrl+C, restart daemon via:
+coru                               # or koru auto --agent-lane jetbrains
+
+# focus PyCharm AI chat, then:
+koru autopilot drive --ide jetbrains 'probe test'
+```
+
+`koru auto --agent-lane jetbrains` on Wayland sets `KORU_VDISPLAY_*` automatically if unset.
+
+**Common failure:** text appears in the **integrated terminal** running `coru` because `wtype` targets the focused window and OS-injector coords pointed at the shell. Fix: chat focus + vdisplay path; recalibrate with `task koru:ide-os:calibrate IDE=jetbrains`.
+
+Full checklist: [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md) (calibration still under test).
+
 ## Multiple IDE windows on one machine
 
 Several editors can run koru against the **same** git checkout. Use

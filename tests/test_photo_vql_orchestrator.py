@@ -207,6 +207,183 @@ def test_copy_observe_artifacts_pins_session_paths(tmp_path: Path) -> None:
     assert copied["png"] == str((session / "observe" / "capture.png").resolve())
 
 
+def test_photo_vql_drive_act_uses_llm_photo_vql_before_map_on_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    perform = MagicMock(
+        return_value={
+            "ok": True,
+            "backend": "vdisplay+photo-vql",
+            "edit": {"ok": True},
+            "vql_target": {"id": "llm:chat-input"},
+            "llm_used": True,
+        }
+    )
+    normalize = MagicMock(
+        return_value={"ok": True, "backend": "vdisplay+photo-vql", "message": "llm paste"}
+    )
+    ide_prompt = MagicMock(return_value={"ok": True, "backend": "vdisplay+ide-prompt"})
+    monkeypatch.setattr("koru.integrations.photo_vql_config.llm_vision_enabled", lambda: True)
+    monkeypatch.setattr(vc, "perform_photo_vql_focus_and_edit", perform)
+    monkeypatch.setattr(vc, "_normalize_photo_vql_drive_result", normalize)
+    monkeypatch.setattr(vc, "send_chat_via_ide_prompt", ide_prompt)
+    monkeypatch.setattr(vc, "_vdisplay_source", lambda: "DP-1")
+
+    drive = drive_mod.PhotoVqlDrive(ide="jetbrains")
+    out = drive.act(
+        "probe test",
+        submit=True,
+        observe={"map_only_fallback": True, "ok": True, "png": "/tmp/capture.png"},
+    )
+    assert out["ok"] is True
+    perform.assert_called_once()
+    ide_prompt.assert_not_called()
+
+
+def test_photo_vql_drive_act_uses_ide_prompt_when_llm_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    ide_prompt = MagicMock(return_value={"ok": True, "backend": "vdisplay+ide-prompt", "message": "map paste"})
+    perform = MagicMock()
+    monkeypatch.setattr("koru.integrations.photo_vql_config.llm_vision_enabled", lambda: False)
+    monkeypatch.setattr(vc, "perform_photo_vql_focus_and_edit", perform)
+    monkeypatch.setattr(vc, "send_chat_via_ide_prompt", ide_prompt)
+
+    drive = drive_mod.PhotoVqlDrive(ide="jetbrains")
+    out = drive.act(
+        "probe test",
+        submit=True,
+        observe={"map_only_fallback": True, "ok": True, "ide_control": {"map_actuation_ok": True}},
+    )
+    assert out["ok"] is True
+    assert out["backend"] == "vdisplay+ide-prompt"
+    perform.assert_not_called()
+    ide_prompt.assert_called_once()
+
+
+def test_get_vql_chat_target_prefers_llm_detect_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_LLM_VISION_DECISION", "1")
+    monkeypatch.setattr(vc, "_photo_vql_elements", lambda: ([], None))
+    monkeypatch.setattr(
+        vc,
+        "_photo_vql_ide_capture_mismatch",
+        lambda ide: {"message": "wrong window"},
+    )
+    monkeypatch.setattr(vc, "_vql_candidates_polluted", lambda c: False)
+    monkeypatch.setattr(
+        vc,
+        "_map_chat_target_capture_local",
+        lambda **k: {"click_center": {"x": 100, "y": 200}, "id": "map:prompt"},
+    )
+    monkeypatch.setattr(vc, "_resolve_photo_png_path_from_vql", lambda source: "/tmp/capture.png")
+    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {"ui_elements": [], "capture_validation": {"capture_confirmed": False}})
+    monkeypatch.setattr(vc._autonomy_session, "active_session_dir", lambda: None)
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_log_vql_cursor_positioning_at_command", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "vdisplay.integrations.chat_target.resolve_chat_target_from_screenshot",
+        lambda *a, **k: {
+            "click_center": {"x": 1800, "y": 1200},
+            "id": "llm:chat-input",
+            "role": "input",
+            "llm_used": True,
+        },
+    )
+    monkeypatch.setattr(vc, "validate_vql_chat_target", lambda *a, **k: {"ok": True})
+
+    out = vc.get_vql_chat_target_from_photo(ide="jetbrains")
+    assert out["id"] == "llm:chat-input"
+    assert out.get("selection_method") == "llm_vision_detect"
+
+
+def test_photo_vql_drive_act_uses_ide_prompt_on_map_only_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    ide_prompt = MagicMock(return_value={"ok": True, "backend": "vdisplay+ide-prompt", "message": "map paste"})
+    send_chat = MagicMock(return_value={"ok": True, "backend": "vdisplay+photo-vql"})
+    monkeypatch.setattr("koru.integrations.photo_vql_config.llm_vision_enabled", lambda: False)
+    monkeypatch.setattr(vc, "send_chat_via_ide_prompt", ide_prompt)
+    monkeypatch.setattr(vc, "send_chat", send_chat)
+
+    drive = drive_mod.PhotoVqlDrive(ide="jetbrains")
+    out = drive.act(
+        "probe test",
+        submit=True,
+        observe={"map_only_fallback": True, "ok": True, "ide_control": {"map_actuation_ok": True}},
+    )
+    assert out["ok"] is True
+    assert out["backend"] == "vdisplay+ide-prompt"
+    assert out.get("map_only_fallback") is True
+    ide_prompt.assert_called_once()
+    send_chat.assert_not_called()
+
+
+def test_normalize_drive_result_blocks_map_edit_when_capture_unconfirmed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
+    photo = {
+        "ok": True,
+        "backend": "vdisplay+photo-vql",
+        "edit": {"ok": True, "method": "ydotool-paste"},
+        "verified": False,
+        "capture_confirmed": False,
+        "vql_target": {"id": "map:ai-chat-input"},
+        "vql_command_plan": {"inference_ok": False, "warnings": ["capture_ide_mismatch"]},
+    }
+    out = vc._normalize_photo_vql_drive_result(photo, ide="jetbrains", submit=False)
+    assert out["ok"] is False
+    assert out["capture_confirmed"] is False
+
+
+def test_normalize_drive_result_allows_map_edit_when_ide_mismatch_explicit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", "1")
+    photo = {
+        "ok": True,
+        "backend": "vdisplay+photo-vql",
+        "edit": {"ok": True, "method": "ydotool-paste"},
+        "verified": False,
+        "capture_confirmed": False,
+        "vql_target": {"id": "map:ai-chat-input"},
+        "vql_command_plan": {"inference_ok": False, "warnings": ["capture_ide_mismatch"]},
+    }
+    out = vc._normalize_photo_vql_drive_result(photo, ide="jetbrains", submit=False)
+    assert out["ok"] is True
+    assert out["capture_confirmed"] is False
+
+
+def test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
+    monkeypatch.setattr(
+        vc,
+        "load_vql_metadata",
+        lambda *a, **k: {"error": "no fresh vql found", "stale_skipped": True},
+    )
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
+    monkeypatch.setattr(
+        vc,
+        "get_vql_chat_target_from_photo",
+        lambda **kwargs: {"id": "map:ai-chat-input", "click_center": {"x": 100, "y": 200}},
+    )
+    monkeypatch.setattr(
+        vc,
+        "move_mouse_to_vql_target_and_focus_keyboard",
+        lambda target, **kwargs: {"ok": True},
+    )
+    monkeypatch.setattr(
+        vc,
+        "_type_text_at_vql_coords",
+        lambda value, x, y, **kwargs: {"ok": True, "method": "paste"},
+    )
+    monkeypatch.setattr(vc, "_dry_run", lambda: False)
+    monkeypatch.setattr(vc._autonomy_session, "active_session_dir", lambda: None)
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+
+    out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-1")
+    assert out.get("error") != "no fresh vql found"
+    assert out.get("ok") is False
+    assert "not verified" in str(out.get("error") or "").lower()
+    assert "edit" not in out
+
+
 def test_refresh_photo_vql_sidecar_copies_observe_artifacts(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -25327,10 +25327,50 @@ sprint:
 
 
         code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_lane_terminal_socket_alignment'
+      execution:
+        attempt: 1
+        finished_at: '2026-06-12T14:05:09.487980Z'
+        last_error: <short failure reason>
+        max_attempts: 1
+        queue: default
+        state: failed
       files:
       - src/koru/autonomous_readiness.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-06-12T14:05:04.911478+00:00'
+      - action: update
+        changes:
+        - execution
+        - inputs
+        - outputs
+        execution_state: waiting_input
+        previous_execution_state: done
+        source: planfile.store
+        timestamp: '2026-06-12T14:05:07.201245+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: failed
+        previous_execution_state: waiting_input
+        source: planfile.store
+        timestamp: '2026-06-12T14:05:09.664480+00:00'
       id: STARTER-502
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: <exact input needed>
       labels:
       - llm-ready
       - code2llm
@@ -25338,15 +25378,19 @@ sprint:
       - refactor
       name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_lane_terminal_socket_alignment
         (CC=32)'
+      outputs:
+        artifacts: []
+        notes:
+        - <what you verified>
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:55:40.009274Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:55:40.014223Z'
+      updated_at: '2026-06-12T14:05:09.664445+00:00'
     STARTER-503:
       acceptance_criteria: []
       blocked_by: []

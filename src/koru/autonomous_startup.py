@@ -784,9 +784,10 @@ def _format_keyboard_setup_steps(
         "(po Reload po task koru:mcp:bootstrap)",
         f"koru autonomous: 3) Socket daemona = {sock}",
         f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={instance}",
-        "koru autonomous: 5) Na Waylandzie preferuj vdisplay/photo-VQL: "
-        "export KORU_VDISPLAY_CONTROL_FALLBACK=1 KORU_VDISPLAY_SOURCE=DP-1; "
-        "PyCharm/IDE na monitorze DP-1, chat na wierzchu (nie terminal).",
+        "koru autonomous: 5) Na Waylandzie vdisplay/photo-VQL: "
+        "koru auto ustawia KORU_VDISPLAY_* domyślnie; "
+        "PyCharm na DP-1, chat na wierzchu (nie terminal). "
+        "Ręcznie: export KORU_VDISPLAY_CONTROL_FALLBACK=1 KORU_VDISPLAY_SOURCE=DP-1",
         f"koru autonomous: 6) Kalibracja OS injectora (ostateczny fallback): "
         f"task koru:ide-os:calibrate IDE={ide}",
         f"koru autonomous: 7) Test: koru autopilot drive --ide {ide} 'probe test'",

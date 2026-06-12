@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.03s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 677, typescript: 93, shell: 56, json: 40, yaml: 31
+- **Languages**: python: 681, typescript: 93, shell: 57, json: 40, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 6585
-- **Total Classes**: 486
-- **Modules**: 950
-- **Entry Points**: 2657
+- **Total Functions**: 6653
+- **Total Classes**: 487
+- **Modules**: 955
+- **Entry Points**: 2662
 
 ## Architecture by Module
 
@@ -20,7 +20,7 @@
 - **File**: `cli.py`
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 124
+- **Functions**: 126
 - **File**: `vdisplay_client.py`
 
 ### plugins.koru-autopilot-shared.src.bridge-submit
@@ -121,6 +121,10 @@ Main execution flows into the system:
 > Print a unified shell OQL/DSL snapshot with replay/validate commands.
 - **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._decision_lines, lines.extend, lines.extend, lines.extend, src.koru.autopilot.cli_snapshot._lane_shell_env
 
+### src.koru.integrations.vdisplay_client._desktop_probe
+> Preflight: monitors, X11 windows, correlated surfaces, target IDE processes.
+- **Calls**: src.koru.integrations.vdisplay_client._probe_ide_processes, set, list_monitors_local, mon_payload.get, mon_payload.get, str, list_windows_local, win_payload.get
+
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
 - **Calls**: max, cls, src.koru.env_flags.env_int, int, Path, src.koruvision.providers.env.env_truthy, src.koru.env_flags.env_int, src.koru.env_flags.env_int
@@ -174,6 +178,9 @@ Args:
 > Return (stale, diagnostics). Stale sidecars must not feed decide/act.
 - **Calls**: time.time, src.koru.integrations.autonomy_session.vql_max_age_seconds, bool, vql_path.is_file, vql_path.stat, str, round, src.koru.integrations.autonomy_session._vql_load_capture_validation
 
+### src.koru.autopilot.daemon_cli.run_daemon_command
+- **Calls**: src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.dotenv_loader.load_dotenv, None.lower, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat
+
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
 
@@ -224,12 +231,6 @@ Args:
 > Deploy changes using Tagi's intelligent prioritization.
 - **Calls**: tagi.command, click.argument, click.option, click.option, None.resolve, click.echo, TagiIntegration, tagi.get_deployment_plan
 
-### src.koru.autonomous_runtime.setup_autonomous_session
-- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, src.koru.autonomous_runtime._log_runtime_readiness_gate
-
-### packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
-- **Calls**: result_pb2.DslEvent, pb.command.CopyFrom, DslResult, pb.result.CopyFrom, pb.SerializeToString, packages.dsl2coru.src.dsl2coru.pb_codec.dict_to_envelope, packages.dsl2koru.src.dsl2koru.pb_codec.result_to_pb, self.path.with_suffix
-
 ## Process Flows
 
 Key execution flows identified:
@@ -262,18 +263,27 @@ action_snapshot [src.koru.autopilot.cli_snapshot]
       └─> normalize_ide_id
 ```
 
-### Flow 4: from_env
+### Flow 4: _desktop_probe
+```
+_desktop_probe [src.koru.integrations.vdisplay_client]
+  └─> _probe_ide_processes
+      └─> _canonical_ide
+          └─ →> canonical_autopilot_ide_id
+      └─> _canonical_ide
+```
+
+### Flow 5: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
 ```
 
-### Flow 5: create_app
+### Flow 6: create_app
 ```
 create_app [packages.rest2koru.src.rest2koru.app]
 ```
 
-### Flow 6: run_api_request
+### Flow 7: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
   └─ →> api_command
@@ -282,13 +292,13 @@ run_api_request [src.koru.queue.runners]
       └─> control_command
 ```
 
-### Flow 7: register
+### Flow 8: register
 ```
 register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 8: action_trace
+### Flow 9: action_trace
 ```
 action_trace [src.koru.autopilot.cli_trace]
   └─> _print_observability_dsl_trace
@@ -301,18 +311,11 @@ action_trace [src.koru.autopilot.cli_trace]
       └─> decision_trace_path
 ```
 
-### Flow 9: _diagnose_bridge_after_drive_failure
+### Flow 10: _diagnose_bridge_after_drive_failure
 ```
 _diagnose_bridge_after_drive_failure [src.koru.autopilot.commands.drive]
   └─ →> runtime_for_project
       └─ →> project_event_store_path
-```
-
-### Flow 10: copy_observe_artifacts_to_session
-```
-copy_observe_artifacts_to_session [src.koru.integrations.autonomy_session]
-  └─> session_observe_paths
-      └─> active_session_dir
 ```
 
 ## Key Classes
@@ -567,14 +570,14 @@ Key functions that process and transform data:
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 123 calls
+- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 136 calls
 - `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 95 calls
+- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 77 calls
 - `scripts.e2e_envmap_koru.main` - 73 calls
 - `src.koru.integrations.vdisplay_client.ensure_vdisplay_ide_control` - 72 calls
 - `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 66 calls
 - `src.koru.integrations.vdisplay_client.load_vql_metadata` - 55 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
-- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 50 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
@@ -583,7 +586,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.queue.runners.run_api_request` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
-- `src.koru.integrations.photo_vql_validation.window_titles_from_vql_meta` - 37 calls
 - `src.koru.integrations.autonomy_session.copy_observe_artifacts_to_session` - 35 calls
 - `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 34 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
@@ -591,6 +593,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
 - `src.koru.integrations.autonomy_session.vql_sidecar_is_stale` - 31 calls
+- `src.koru.autopilot.daemon_cli.run_daemon_command` - 31 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
@@ -604,9 +607,9 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
 - `koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
+- `src.koruapi.desktop_uri.desktop_uri_handle` - 27 calls
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls
-- `src.koru.autonomous_runtime.setup_autonomous_session` - 27 calls
 
 ## System Interactions
 
@@ -624,6 +627,10 @@ graph TD
     action_snapshot --> max
     action_snapshot --> _decision_lines
     action_snapshot --> extend
+    _desktop_probe --> _probe_ide_processes
+    _desktop_probe --> set
+    _desktop_probe --> list_monitors_local
+    _desktop_probe --> get
     from_env --> max
     from_env --> cls
     from_env --> env_int
@@ -640,10 +647,6 @@ graph TD
     register --> utc_now
     register --> str
     register --> get
-    register --> _reconcile_locked
-    action_trace --> resolve
-    action_trace --> load_recent_decision
-    action_trace --> print
 ```
 
 ## Reverse Engineering Guidelines

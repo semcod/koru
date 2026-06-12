@@ -95,6 +95,22 @@ def _route_drive(
             strategy_hint=strategy_hint,
         )
         return
+    if _prefer_keyboard_drive():
+        blocker = _blind_keyboard_fallback_blocker(ide_pref)
+        if blocker:
+            _reject_blind_keyboard_fallback(
+                daemon=daemon,
+                client=client,
+                msg=msg,
+                ide=ide_pref or "auto",
+                text=text,
+                submit=submit,
+                message=blocker,
+            )
+            return
+        daemon.log("drive: visible typing requested; routing via keyboard/os_injector")
+        _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
+        return
     if require_plugin:
         label = ide_pref or "auto"
         message = DriveOrchestrator.plugin_required_message(ide_pref)
@@ -129,7 +145,64 @@ def _route_drive(
         submit=submit,
     ):
         return
+    blocker = _blind_keyboard_fallback_blocker(ide_pref)
+    if blocker:
+        _reject_blind_keyboard_fallback(
+            daemon=daemon,
+            client=client,
+            msg=msg,
+            ide=ide_pref or "auto",
+            text=text,
+            submit=submit,
+            message=blocker,
+        )
+        return
     _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
+
+
+def _reject_blind_keyboard_fallback(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide: str,
+    text: str,
+    submit: bool,
+    message: str,
+) -> None:
+    daemon._send(client, error(msg.id, message).encode())
+    daemon.log(f"drive blocked: {message}")
+    daemon.audit.record(
+        "drive",
+        ide=ide,
+        backend="semantic_required",
+        chars=len(text),
+        submit=submit,
+        ok=False,
+        error=message,
+    )
+
+
+def _blind_keyboard_fallback_blocker(ide_pref: str | None) -> str | None:
+    from koru.integrations.vdisplay_client import _canonical_ide, _session_type
+
+    canon = _canonical_ide(ide_pref or "auto")
+    if _session_type() != "wayland":
+        return None
+    if canon not in {"jetbrains", "pycharm", "idea"}:
+        return None
+    if os.environ.get("KORU_ALLOW_BLIND_KEYBOARD_FALLBACK", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return None
+    return (
+        "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains after "
+        "vdisplay/imgl did not confirm the target; focus PyCharm chat and refresh "
+        "photo-VQL, or set KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1 to override"
+    )
 
 
 def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
@@ -632,9 +705,12 @@ def _drive_via_vdisplay_backend(
     submit: bool,
 ) -> bool:
     """Photo-VQL / semantic chat drive via vdisplay before blind keyboard coords."""
-    from koru.integrations.vdisplay_client import send_chat, vdisplay_fallback_enabled
+    from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+    from koru.integrations.photo_vql_drive import PhotoVqlDrive
+    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
 
     target_id = (ide_pref or "auto").strip().lower()
+    apply_vdisplay_drive_defaults(ide=target_id)
     if not vdisplay_fallback_enabled(ide=target_id, plugin_connected=False):
         return False
     os.environ.setdefault("VDISPLAY_SESSION", "1")
@@ -644,14 +720,19 @@ def _drive_via_vdisplay_backend(
         f"({len(text)} zn) «{preview}» submit={submit}"
     )
     try:
-        result = send_chat(text, ide=target_id, submit=submit)
+        result = PhotoVqlDrive(ide=target_id).run(
+            text,
+            submit=submit,
+            reuse_prepare=True,
+        )
     except Exception as exc:
         daemon.log(f"drive → vdisplay/{target_id} failed: {exc}; falling back to imgl/keyboard")
         return False
     if not result.get("ok"):
+        prepare = result.get("photo_vql_observe") or {}
         daemon.log(
             f"drive → vdisplay/{target_id} declined: "
-            f"{result.get('message') or result.get('error') or 'unknown'}; "
+            f"{result.get('message') or result.get('error') or prepare.get('error') or 'unknown'}; "
             "falling back to imgl/keyboard"
         )
         return False
@@ -819,6 +900,14 @@ def _drive_via_os_injector_backend(
     preview: str,
     target: Any,
 ) -> bool:
+    from koru.integrations.vdisplay_client import _send_chat_os_injector_enabled
+
+    if not _send_chat_os_injector_enabled(ide=profile_id):
+        daemon.log(
+            f"drive → os_injector/{profile_id} skipped on Wayland "
+            "(blind coords hit the focused terminal; use vdisplay/photo-VQL)"
+        )
+        return False
     try:
         # Call via the AutopilotDaemon instance method (which proxies back
         # to ``_try_os_injector_drive`` here) so tests can

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+from koru.dotenv_loader import load_dotenv
 
 from koru.autopilot import default_socket_path
 from koru.autopilot.client import AutopilotClient
@@ -82,6 +85,19 @@ def run_daemon_command(
 
     raw_project = args.project.resolve() if args.handoff else None
     project = normalize_project_root(raw_project) if raw_project is not None else None
+    load_dotenv(Path.cwd())
+    if project is not None:
+        load_dotenv(project)
+    instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip().lower()
+    if instance:
+        from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+
+        applied = apply_vdisplay_drive_defaults(ide=instance)
+        if applied:
+            print(
+                "koru autopilot daemon: vdisplay defaults applied "
+                f"({len(applied)} unset keys for {instance})"
+            )
     manager, stop_rc = _start_local_manager(
         socket_path=socket_path,
         project=project,

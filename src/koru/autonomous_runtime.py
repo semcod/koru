@@ -379,8 +379,9 @@ def _decide_autopilot_socket(
     else:
         socket_path = _socket_path_for_lane(default_socket_path, lane)
         env_socket_instance = _instance_from_socket_path(env_socket)
-        if env_socket and lane and env_socket_instance == lane:
-            socket_path = Path(env_socket).expanduser().resolve()
+        env_socket_path = Path(env_socket).expanduser().resolve() if env_socket else None
+        if env_socket_path == socket_path and lane and env_socket_instance == lane:
+            socket_path = env_socket_path
         else:
             os.environ["KORU_AUTOPILOT_SOCKET"] = str(socket_path)
     return AutopilotSocketDecision(

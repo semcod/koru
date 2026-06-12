@@ -48,3 +48,20 @@ def test_drive_repair_policy_counts_recent_direct_fallbacks() -> None:
     assert decision.fallback_to_direct is True
     assert decision.recent_direct_fallbacks == 2
     assert "recent_direct_fallbacks=2" in decision.reason
+
+
+def test_drive_repair_policy_skips_direct_when_semantic_blocked() -> None:
+    reply = {
+        "ok": False,
+        "backend": "semantic_required",
+        "message": "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains",
+    }
+    decision = decide_drive_repair_reaction(
+        _status(),
+        require_plugin=False,
+        drive_reply=reply,
+    )
+
+    assert decision.fallback_to_direct is False
+    assert decision.action == "semantic_required"
+    assert "semantic drive required" in decision.reason

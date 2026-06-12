@@ -64,4 +64,9 @@ class PhotoVqlConfig:
         )
 
 
-__all__ = ["PhotoVqlConfig"]
+def llm_vision_enabled() -> bool:
+    """Whether OpenRouter vision may detect/refine photo-VQL click targets."""
+    return PhotoVqlConfig.from_env().llm_vision_decision
+
+
+__all__ = ["PhotoVqlConfig", "llm_vision_enabled"]

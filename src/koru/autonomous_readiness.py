@@ -93,6 +93,14 @@ def _resolve_path(path: str | Path) -> str:
         return str(path)
 
 
+def _safe_path_for_compare(path: str | Path) -> Path:
+    raw = os.fspath(path)
+    try:
+        return Path(raw).expanduser().resolve()
+    except Exception:
+        return Path(os.path.abspath(os.path.expanduser(raw)))
+
+
 def _runtime_issue_severity(strict: bool) -> Severity:
     return "fail" if strict else "warn"
 
@@ -110,9 +118,15 @@ def _python_executable_mismatch_issue(
 ) -> ReadinessIssue | None:
     if venv_python is None:
         return None
-    launcher_path = _resolve_path(launcher)
-    venv_path = _resolve_path(venv_python)
+    launcher_path = _safe_path_for_compare(launcher)
+    venv_path = _safe_path_for_compare(venv_python)
     if launcher_path == venv_path:
+        return None
+    if (
+        launcher_path.parent == venv_path.parent
+        and launcher_path.name in {"python", "python3"}
+        and venv_path.name in {"python", "python3"}
+    ):
         return None
     return ReadinessIssue(
         code="python_executable_mismatch",

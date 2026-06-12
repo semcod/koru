@@ -19,14 +19,38 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from koru.integrations.autonomy_session import begin_autonomy_session
+from koru.integrations.photo_vql_config import llm_vision_enabled
 from koru.integrations import autonomy_session as _autonomy_session
 from koru.integrations.photo_vql_monitor import resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_impl
-from koru.integrations.photo_vql_target import (
-    jetbrains_chat_corner_target_from_layers as _jetbrains_chat_corner_target_from_layers,
-    photo_vql_chat_input_candidates as _photo_vql_chat_input_candidates,
-    vql_candidates_polluted as _vql_candidates_polluted,
-)
+
+begin_autonomy_session = _autonomy_session.begin_autonomy_session
+
+try:
+    from koru.integrations.photo_vql_target import (
+        VSCODE_FAMILY_TOP_CHAT_IDES,
+        jetbrains_chat_corner_target_from_layers as _jetbrains_chat_corner_target_from_layers,
+        photo_vql_chat_input_candidates as _photo_vql_chat_input_candidates,
+        vql_candidates_polluted as _vql_candidates_polluted,
+        vscode_family_chat_target_from_layers as _vscode_family_chat_target_from_layers,
+    )
+except ImportError:
+    from koru.integrations.photo_vql_target import (
+        jetbrains_chat_corner_target_from_layers as _jetbrains_chat_corner_target_from_layers,
+        photo_vql_chat_input_candidates as _photo_vql_chat_input_candidates,
+        vql_candidates_polluted as _vql_candidates_polluted,
+    )
+    from koru.integrations.photo_vql_validation import (
+        VSCODE_FAMILY_TOP_CHAT_IDES,
+    )
+
+    def _vscode_family_chat_target_from_layers(
+        _layers: list[dict[str, Any]],
+        *,
+        ide: str = "auto",
+        source: str | None = None,
+    ) -> dict[str, Any] | None:
+        del ide, source
+        return None
 from koru.integrations.photo_vql_validation import (
     capture_title_from_meta as _capture_title_from_meta,
     validate_chat_coords_for_ide as _validate_chat_coords_for_ide,
@@ -36,6 +60,7 @@ from koru.integrations.photo_vql_validation import (
 from koru.integrations.photo_vql_guard import (
     CaptureGuard,
     allow_actuation_on_capture_mismatch as _allow_actuation_on_capture_mismatch,
+    allow_prepare_map_on_mismatch as _allow_prepare_map_on_mismatch,
     competing_ide_label_from_warning as _competing_ide_label_from_warning,
     drive_blocked_on_capture_mismatch as _drive_blocked_on_capture_mismatch,
     ide_mismatch_allowed as _ide_mismatch_allowed,
@@ -222,6 +247,14 @@ def verify_chat_text_visible(
             "error": vdisplay_missing_message() or "vdisplay unavailable for verify",
         }
 
+    expected = text.strip()
+    if not expected:
+        return {"ok": True, "verified": True, "mode": "ocr_contains", "reason": "empty text"}
+
+    png, capture_meta, bounds = _capture_for_verify(chat_x, chat_y, map_path, ide)
+    if not png:
+        return {"ok": False, "verified": False, "mode": "ocr_contains", "error": "screenshot capture failed", "bounds": bounds.to_dict() if bounds else None, "ide": ide}
+
     from koru.deps_autorepair import ensure_vision_ocr
 
     if not ensure_vision_ocr(label="koru verify"):
@@ -232,6 +265,20 @@ def verify_chat_text_visible(
             "error": "OCR verify deps missing (tesseract, Pillow, pytesseract)",
         }
 
+    try:
+        from vdisplay.control.vision_ocr import ocr_available
+    except ImportError:
+        import shutil
+
+        def ocr_available() -> tuple[bool, str]:
+            try:
+                import pytesseract  # noqa: F401
+            except ImportError as exc:
+                return False, str(exc)
+            if not shutil.which("tesseract"):
+                return False, "tesseract binary not found on PATH"
+            return True, ""
+
     ready, reason = ocr_available()
     if not ready:
         return {
@@ -240,14 +287,6 @@ def verify_chat_text_visible(
             "mode": "ocr_contains",
             "error": reason,
         }
-
-    expected = text.strip()
-    if not expected:
-        return {"ok": True, "verified": True, "mode": "ocr_contains", "reason": "empty text"}
-
-    png, capture_meta, bounds = _capture_for_verify(chat_x, chat_y, map_path, ide)
-    if not png:
-        return {"ok": False, "verified": False, "mode": "ocr_contains", "error": "screenshot capture failed", "bounds": bounds.to_dict() if bounds else None, "ide": ide}
 
     return _ocr_verify(png, capture_meta, bounds, expected, ide, chat_x, chat_y)
 
@@ -387,7 +426,30 @@ def record_koru_drive_step(
 
 
 def _session_type() -> str:
-    return (os.environ.get("XDG_SESSION_TYPE") or "").strip().lower()
+    explicit = (os.environ.get("XDG_SESSION_TYPE") or "").strip().lower()
+    if explicit in {"wayland", "x11"}:
+        return explicit
+    if (os.environ.get("WAYLAND_DISPLAY") or "").strip():
+        return "wayland"
+    if (os.environ.get("DISPLAY") or "").strip():
+        return "x11"
+    return explicit or "headless"
+
+
+def _send_chat_os_injector_enabled(*, ide: str) -> bool:
+    """Blind OS-injector clicks are unreliable on Wayland (focus stays in the terminal)."""
+    if _session_type() == "wayland":
+        return False
+    return _canonical_ide(ide) in {
+        "jetbrains",
+        "pycharm",
+        "idea",
+        "cursor",
+        "windsurf",
+        "vscode",
+        "vscodium",
+        "antigravity",
+    }
 
 
 def simplified_control_likely_insufficient(*, ide: str, plugin_connected: bool = False) -> bool:
@@ -418,6 +480,11 @@ def vdisplay_fallback_enabled(*, ide: str | None = None, plugin_connected: bool 
     if ide and simplified_control_likely_insufficient(ide=ide, plugin_connected=plugin_connected):
         return True
     return False
+
+
+def _trusted_visual_target_id(target_id: str) -> bool:
+    tid = str(target_id or "")
+    return tid.startswith("map:") or tid.startswith("llm:")
 
 
 def _dry_run() -> bool:
@@ -528,7 +595,7 @@ def _probe_ide_processes(ide: str) -> list[dict[str, Any]]:
 
 
 def _desktop_probe(*, ide: str, source: str | None = None) -> dict[str, Any]:
-    """Preflight: connected monitors, X11 windows, target IDE processes, optional source check."""
+    """Preflight: monitors, X11 windows, correlated surfaces, target IDE processes."""
     out: dict[str, Any] = {"ok": True, "ide": ide, "requested_source": source}
     try:
         from vdisplay.application.services.discovery import list_monitors_local, list_windows_local
@@ -540,10 +607,57 @@ def _desktop_probe(*, ide: str, source: str | None = None) -> dict[str, Any]:
         out["monitor_names"] = monitor_names
         out["monitor_count"] = mon_payload.get("monitor_count")
         try:
-            win_payload = list_windows_local(apps_only=True)
+            win_payload = list_windows_local(apps_only=True, correlate=True)
             out["windows"] = win_payload.get("windows") or []
             out["window_count"] = win_payload.get("window_count")
             out["window_hint"] = win_payload.get("hint")
+            out["correlated"] = bool(win_payload.get("correlated"))
+            out["surfaces"] = win_payload.get("surfaces") or []
+            out["surface_count"] = win_payload.get("surface_count", 0)
+            out["gnome_window_count"] = win_payload.get("gnome_window_count", 0)
+            out["atspi_application_count"] = win_payload.get("atspi_application_count", 0)
+            out["correlation_sources"] = win_payload.get("correlation_sources") or {}
+            out["correlation_process_count"] = win_payload.get("correlation_process_count", 0)
+            canon = _canonical_ide(ide)
+            ide_hints = {canon}
+            if canon in {"jetbrains", "pycharm", "idea"}:
+                ide_hints.add("jetbrains")
+            if canon in {"vscode", "vscodium"}:
+                ide_hints.add("vscode")
+            ide_surfaces = [
+                row
+                for row in out["surfaces"]
+                if isinstance(row, dict) and row.get("ide_hint") in ide_hints
+            ]
+            out["ide_surfaces"] = ide_surfaces
+            if ide_surfaces:
+                def _ide_surface_rank(row: dict[str, Any]) -> float:
+                    score = float(row.get("confidence") or 0)
+                    name = str(row.get("display_name") or "").lower()
+                    if "toolbox" in name:
+                        score -= 0.45
+                    stack = str(row.get("stack") or "")
+                    if stack == "wayland_native":
+                        score += 0.25
+                    elif stack == "xwayland":
+                        score += 0.1
+                    proc = ((row.get("sources") or {}).get("process")) or {}
+                    comm = str(proc.get("comm") or "").lower()
+                    if comm in {"pycharm", "idea", "webstorm", "goland", "clion", "rider"}:
+                        score += 0.35
+                    elif comm == "java" and "pycharm" in str(proc.get("cmdline") or "").lower():
+                        score += 0.3
+                    return score
+
+                best = max(ide_surfaces, key=_ide_surface_rank)
+                out["ide_surface_best"] = {
+                    "display_name": best.get("display_name"),
+                    "pid": best.get("pid"),
+                    "stack": best.get("stack"),
+                    "monitor_name": best.get("monitor_name"),
+                    "confidence": best.get("confidence"),
+                    "match_reasons": best.get("match_reasons"),
+                }
         except Exception as exc:
             out["windows_error"] = str(exc)
     except Exception as exc:
@@ -569,13 +683,31 @@ def _resolve_vdisplay_source_for_ide(
     *,
     probe: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    return _resolve_vdisplay_source_impl(
-        ide,
-        canonical_ide=_canonical_ide,
-        desktop_probe=_desktop_probe,
-        probe=probe,
-        ide_default_source=_IDE_DEFAULT_SOURCE,
-    )
+    try:
+        return _resolve_vdisplay_source_impl(
+            ide,
+            canonical_ide=_canonical_ide,
+            desktop_probe=_desktop_probe,
+            probe=probe,
+            ide_default_source=_IDE_DEFAULT_SOURCE,
+        )
+    except TypeError as exc:
+        if "ide_default_source" not in str(exc):
+            raise
+        from koru.integrations import photo_vql_monitor as _photo_vql_monitor
+
+        previous_defaults = getattr(_photo_vql_monitor, "_IDE_DEFAULT_SOURCE", None)
+        _photo_vql_monitor._IDE_DEFAULT_SOURCE = _IDE_DEFAULT_SOURCE
+        try:
+            return _resolve_vdisplay_source_impl(
+                ide,
+                canonical_ide=_canonical_ide,
+                desktop_probe=_desktop_probe,
+                probe=probe,
+            )
+        finally:
+            if previous_defaults is not None:
+                _photo_vql_monitor._IDE_DEFAULT_SOURCE = previous_defaults
 
 
 def _abort_on_desktop_probe_fail() -> bool:
@@ -1689,7 +1821,7 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
             if isinstance(cv, dict) and cv.get("body_false_positive"):
                 out["body_false_positive"] = True
             if (
-                not _allow_actuation_on_capture_mismatch()
+                not _allow_prepare_map_on_mismatch()
                 and not out.get("_focus_recovery_tried")
                 and _raise_alt_tab_enabled(ide=ide)
             ):
@@ -1702,7 +1834,7 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
                         os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
                     break
                 out["focus_recovery"] = recovered.get("focus_recovery")
-            if not _allow_actuation_on_capture_mismatch():
+            if not _allow_prepare_map_on_mismatch():
                 break
         elif _capture_matches_requested_ide(ide):
             os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
@@ -1713,7 +1845,7 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
         out["capture_matches_ide"] = False
         # On mismatch for JetBrains etc, do extra focus via map when map-only fallback is allowed,
         # then re-capture to get correct VQL for the target IDE on the source.
-        if _allow_actuation_on_capture_mismatch():
+        if _allow_prepare_map_on_mismatch():
             mp = None
             if ide_control:
                 mp = ide_control.get("map_path")
@@ -1803,11 +1935,24 @@ def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, su
         if not _allow_actuation_on_capture_mismatch():
             out["ok"] = False
             out["capture_confirmed"] = False
-    if photo_res.get("verified") is False:
+    if photo_res.get("verified") is False and not (
+        (photo_res.get("edit") or {}).get("ok")
+        and _trusted_visual_target_id(
+            str((photo_res.get("vql_target") or photo_res.get("photo_vql", {}).get("vql_target") or {}).get("id") or "")
+        )
+        and _allow_actuation_on_capture_mismatch()
+    ):
         out["ok"] = False
     if photo_res.get("capture_confirmed") is False:
-        out["ok"] = False
-        out["capture_confirmed"] = False
+        map_id = str(
+            (photo_res.get("vql_target") or photo_res.get("photo_vql", {}).get("vql_target") or {}).get("id") or ""
+        )
+        edit_ok = bool((photo_res.get("edit") or {}).get("ok"))
+        if not (_trusted_visual_target_id(map_id) and edit_ok and _allow_actuation_on_capture_mismatch()):
+            out["ok"] = False
+            out["capture_confirmed"] = False
+        else:
+            out["capture_confirmed"] = False
     elif photo_res.get("capture_confirmed") is True:
         out["capture_confirmed"] = True
     plan = photo_res.get("vql_command_plan") or {}
@@ -2244,39 +2389,42 @@ def _send_chat_preflight(
     blocked = _drive_blocked_on_capture_mismatch(
         ide=ide, mismatch=mismatch, dry_run=effective_dry
     ) if mismatch else None
-    if blocked is not None:
+    prefer_ide_prompt = _prefer_ide_prompt_over_photo_vql(ide=ide)
+    map_on_mismatch_allowed = bool(mismatch and _allow_prepare_map_on_mismatch())
+    if prefer_ide_prompt and (blocked is None or map_on_mismatch_allowed):
+        if not effective_dry and vdisplay_available():
+            ide_prompt = send_chat_via_ide_prompt(
+                prompt, ide=ide, submit=submit, dry_run=False,
+            )
+            if ide_prompt is not None and ide_prompt.get("ok"):
+                if mismatch:
+                    ide_prompt["ide_window_warning"] = mismatch
+                    ide_prompt["photo_vql_skipped"] = True
+                return _finalize_send_chat(ide_prompt, prompt=prompt, ide=ide, submit=submit)
+        if effective_dry:
+            app_id = _ide_prompt_app_id(ide)
+            map_path = _resolve_ide_prompt_map(app_id)
+            out = {
+                "ok": True,
+                "backend": "vdisplay+ide-prompt",
+                "dry_run": True,
+                "ide": ide,
+                "app_id": app_id,
+                "map_path": map_path,
+                "chars": len(prompt),
+                "submit": submit,
+                "photo_vql_skipped": True,
+            }
+            if mismatch:
+                out["ide_window_warning"] = mismatch
+            return _finalize_send_chat(out, prompt=prompt, ide=ide, submit=submit)
+    if blocked is not None and not map_on_mismatch_allowed:
         session = _autonomy_session.active_session_dir()
         if session is not None:
             _autonomy_session.persist_autonomy_phase(session, "decide", "capture_blocked", blocked)
         return _finalize_send_chat(blocked, prompt=prompt, ide=ide, submit=submit)
-    if not _prefer_ide_prompt_over_photo_vql(ide=ide):
+    if not prefer_ide_prompt:
         return None
-    if not effective_dry and vdisplay_available():
-        ide_prompt = send_chat_via_ide_prompt(
-            prompt, ide=ide, submit=submit, dry_run=False,
-        )
-        if ide_prompt is not None and ide_prompt.get("ok"):
-            if mismatch:
-                ide_prompt["ide_window_warning"] = mismatch
-                ide_prompt["photo_vql_skipped"] = True
-            return _finalize_send_chat(ide_prompt, prompt=prompt, ide=ide, submit=submit)
-    if effective_dry:
-        app_id = _ide_prompt_app_id(ide)
-        map_path = _resolve_ide_prompt_map(app_id)
-        out = {
-            "ok": True,
-            "backend": "vdisplay+ide-prompt",
-            "dry_run": True,
-            "ide": ide,
-            "app_id": app_id,
-            "map_path": map_path,
-            "chars": len(prompt),
-            "submit": submit,
-            "photo_vql_skipped": True,
-        }
-        if mismatch:
-            out["ide_window_warning"] = mismatch
-        return _finalize_send_chat(out, prompt=prompt, ide=ide, submit=submit)
     return None
 
 
@@ -2291,9 +2439,12 @@ def _send_chat_try_photo_vql(
     use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {
         "1", "true", "yes", "on",
     }
+    prefer_raw = os.environ.get("KORU_VDISPLAY_PREFER_PHOTO_VQL", "").strip().lower()
+    if prefer_raw in {"0", "false", "no", "off"} and not is_code:
+        return None
     photo_prefer_chat = (
         _prefer_photo_vql_chat(ide=ide)
-        or (use_llm_vision and _capture_matches_requested_ide(ide))
+        or (use_llm_vision and llm_vision_enabled() and _capture_matches_requested_ide(ide))
         or is_code
     )
     if not photo_prefer_chat:
@@ -2347,6 +2498,8 @@ def _send_chat_try_os_injector(
     ide: str,
     submit: bool,
 ) -> dict[str, Any] | None:
+    if not _send_chat_os_injector_enabled(ide=ide):
+        return None
     canon = _canonical_ide(ide)
     if canon not in {"jetbrains", "pycharm"}:
         return None
@@ -2458,12 +2611,7 @@ def _send_chat_photo_vql_mouse_focus(
     photo_vql_target: dict[str, Any] | None = None
     try:
         photo_vql_target = get_vql_chat_target_from_photo()
-        use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {
-            "1",
-            "true",
-            "yes",
-            "on",
-        }
+        use_llm_vision = llm_vision_enabled()
         if use_llm_vision:
             image_path = _resolve_photo_png_path_from_vql(source=_vdisplay_source())
             if image_path and os.path.exists(str(image_path)):
@@ -2734,10 +2882,10 @@ def _photo_vql_elements() -> tuple[list[dict], str | None]:
 def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: str = "auto") -> dict:
     """Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.targets)."""
     els, src = _photo_vql_elements()
-    candidates = _photo_vql_chat_input_candidates(els, limit=8)
     canon = _canonical_ide(ide)
     if canon in {"", "auto"}:
         canon = _canonical_ide(os.environ.get("KORU_DRIVE_IDE", "auto"))
+    candidates = _photo_vql_chat_input_candidates(els, limit=8, ide=canon)
     src_name = os.environ.get("KORU_VDISPLAY_SOURCE", "DP-1")
 
     # Detect terminal pollution in VQL (common on DP-2 when control terminal text is visible in screenshot).
@@ -2795,18 +2943,60 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
             _autonomy_session.persist_autonomy_phase(session, "decide", "vql_validation", validation)
         return out
 
-    mismatch = _photo_vql_ide_capture_mismatch(ide=canon) if canon in {"jetbrains", "pycharm", "idea"} else None
+    mismatch = _photo_vql_ide_capture_mismatch(ide=canon) if canon not in {"", "auto"} else None
     empty_layers = len(els) == 0
+
+    def _try_llm_chat_detect(*, map_hint: dict[str, Any] | None = None) -> dict[str, Any] | None:
+        if not llm_vision_enabled():
+            return None
+        png = _resolve_photo_png_path_from_vql(source=src_name)
+        if not png:
+            return None
+        try:
+            from vdisplay.integrations.chat_target import resolve_chat_target_from_screenshot
+        except ImportError:
+            from koru.integrations.photo_vql_llm_detect import detect_chat_target_from_llm_vision
+
+            meta_for_title = load_vql_metadata(allow_stale=True)
+            capture_title = _capture_title_from_meta(meta_for_title)
+            return detect_chat_target_from_llm_vision(
+                ide=canon,
+                source=src_name,
+                image_path=png,
+                candidates=candidates,
+                map_hint=map_hint,
+                capture_title=capture_title,
+            )
+
+        meta_for_title = load_vql_metadata(allow_stale=True)
+        capture_validation = (meta_for_title.get("capture_validation") or {}) if isinstance(meta_for_title, dict) else {}
+        return resolve_chat_target_from_screenshot(
+            png,
+            ide=canon,
+            source=src_name,
+            layers=els,
+            capture_validation=capture_validation,
+            map_hint=map_hint,
+            polluted=is_polluted,
+        )
 
     if canon in {"jetbrains", "pycharm", "idea"}:
         if mismatch or empty_layers or is_polluted:
-            # If capture title doesn't match requested IDE (e.g. Cursor capture during jetbrains drive),
-            # or VQL layers empty (imgl not installed / observe produced no ui_elements),
-            # or heavily polluted by terminal text (fake inputs from control commands visible on DP-2),
-            # distrust VQL layers and prefer calibrated map target ("prompt" preferred for sane coords).
-            # This prevents "błędy wnioskowania" from bad/empty VQL data.
-            # The log and plan will reflect "map_on_mismatch" or "map_on_empty_vql" so reality is visible in audit.
-            map_target = _map_chat_target_capture_local(ide=canon, source=src_name)
+            map_hint = _map_chat_target_capture_local(ide=canon, source=src_name)
+            llm_target = _try_llm_chat_detect(map_hint=map_hint)
+            if llm_target:
+                llm_target = _finalize(llm_target, method="llm_vision_detect")
+                _log_vql_cursor_positioning_at_command(
+                    llm_target,
+                    stage="vql_target_selection_llm_vision",
+                    ide=canon,
+                    source=src_name,
+                    final_local=llm_target.get("click_center", {}),
+                    vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
+                )
+                return llm_target
+            # Distrust VQL layers; prefer calibrated map when LLM unavailable.
+            map_target = map_hint
             if map_target:
                 method = "map_calibrated_on_empty_vql" if empty_layers else "map_calibrated_on_mismatch"
                 stage = "vql_target_selection_jetbrains_map_on_empty_vql" if empty_layers else "vql_target_selection_jetbrains_map_on_mismatch"
@@ -2846,10 +3036,31 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
                 vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
             )
             return map_target
+    if canon in VSCODE_FAMILY_TOP_CHAT_IDES:
+        if mismatch or empty_layers or is_polluted:
+            llm_target = _try_llm_chat_detect()
+            if llm_target:
+                llm_target = _finalize(llm_target, method="llm_vision_detect")
+                return llm_target
+        top_chat = _vscode_family_chat_target_from_layers(els, ide=canon, source=src)
+        if top_chat:
+            top_chat = _finalize(top_chat, method="vscode_top_chat_heuristic")
+            _log_vql_cursor_positioning_at_command(
+                top_chat,
+                stage="vql_target_selection_vscode_top_chat",
+                ide=canon,
+                source=src_name,
+                final_local=top_chat.get("click_center", {}),
+                vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
+            )
+            return top_chat
     resolve_chat_target = _import_imgl_targets("resolve_chat_target")
     if resolve_chat_target is not None:
         resolved = resolve_chat_target(els, source=src)
         return _finalize(resolved, method="imgl_resolve_chat_target")
+    llm_target = _try_llm_chat_detect()
+    if llm_target:
+        return _finalize(llm_target, method="llm_vision_detect")
     fallback = {
         "click_center": {"x": 1024, "y": 640, "note": "DP-1 main editor/chat area center (imgl not installed)"},
         "id": "dp1-chat-editor-center",
@@ -3551,115 +3762,67 @@ def _resolve_photo_vql_llm_coords(
     cc = target.get("click_center") or {}
     x = int(cc.get("x", 1024))
     y = int(cc.get("y", 640))
-    llm_decision: dict[str, Any] | None = None
+    llm_decision: dict[str, Any] | None = target.get("llm_decision") if target.get("llm_used") else None
+    if str(target.get("selection_method") or "") == "llm_vision_detect" and cc.get("x") is not None:
+        return x, y, llm_decision
+
     canon = _canonical_ide(ide)
 
-    use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    if not (
-        use_llm_vision
-        and image_path
-        and os.path.exists(image_path)
-        and call_openrouter_vision is not None
-    ):
+    if not (llm_vision_enabled() and image_path and os.path.exists(image_path)):
         return x, y, None
 
     try:
-        with open(image_path, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode("ascii")
-        data_url = f"data:image/png;base64,{b64}"
-
-        img_w, img_h = 2048, 1280
-        try:
-            from PIL import Image
-
-            with Image.open(image_path) as img:
-                img_w, img_h = img.size
-        except Exception:
-            meta = _photo_capture_meta_for_source(source)
-            img_w = int(meta.get("width") or img_w)
-            img_h = int(meta.get("height") or img_h)
-
+        png = Path(image_path).read_bytes()
         layers, _src = _photo_vql_elements()
-        candidates = _photo_vql_chat_input_candidates(layers, limit=8)
-        map_hint = _map_chat_target_capture_local(ide=canon, source=source) if canon in {"jetbrains", "pycharm", "idea"} else None
-
-        vql_excerpt = json.dumps(
-            {
-                "id": target.get("id"),
-                "role": target.get("role"),
-                "click_center": target.get("click_center"),
-                "bounds": target.get("bounds"),
-                "note": target.get("note"),
-            }
+        candidates = _photo_vql_chat_input_candidates(layers, limit=8, ide=canon)
+        map_hint = (
+            _map_chat_target_capture_local(ide=canon, source=source)
+            if canon in {"jetbrains", "pycharm", "idea"}
+            else None
         )
         meta_for_title = load_vql_metadata(allow_stale=True)
         capture_title = _capture_title_from_meta(meta_for_title) or "unknown"
-        mismatch = _photo_vql_ide_capture_mismatch(ide=canon) if canon in {"jetbrains", "pycharm", "idea"} else None
-        task_hint = (
-            "Focus the JetBrains/PyCharm AI chat composer input (bottom-right panel, placeholder like 'Ask' or empty message box). "
-            "Do NOT click the main code editor, terminal, or file tabs."
-            if canon in {"jetbrains", "pycharm", "idea"}
-            else "Focus the IDE chat/composer input to type the user prompt."
-        )
-        reject_rules = (
-            "REJECT and lower confidence if: capture title does not match the expected IDE; "
-            "element width<200 or height<25; label is 'background' or a terminal/file tab (.py, session, vdisplay); "
-            "coords look like main editor (y<850 on DP-2) not bottom-right chat panel. "
-            "Only confirm when the element matches the expected IDE and looks like a real Ask/Prompt composer in the image."
-        )
-        text_prompt = (
-            f"Current user task/prompt: {prompt}\n\n"
-            f"Capture foreground window title: {capture_title!r}\n"
-            f"Expected IDE: {canon}. Capture IDE mismatch: {bool(mismatch)}.\n"
-            f"Attached screenshot size: {img_w}x{img_h} pixels (origin top-left).\n"
-            f"Monitor/source: {source}.\n"
-            f"{task_hint}\n"
-            f"{reject_rules}\n\n"
-            f"Primary VQL target from OCR/layout analysis: {vql_excerpt}\n\n"
-            f"Other input candidates (PNG-local coords): {json.dumps(candidates)}\n\n"
-            f"Map-calibrated chat hint (if present): {json.dumps(map_hint.get('click_center') if map_hint else None)}\n\n"
-            f"Return the SINGLE best click_center {{x, y}} IN PNG PIXEL COORDINATES (0..{img_w - 1}, 0..{img_h - 1}) "
-            f"inside the editable chat input field.\n"
-            f"Also provide strategy and confidence. Return ONLY JSON: "
-            f'{{"click_center": {{"x": int, "y": int}}, "strategy": str, "confidence": float, "reason": str}}'
-        )
 
-        llm_res = call_openrouter_vision(text_prompt, data_url)
-        if not llm_res.ok:
+        from vdisplay.control.vision_chat_detect import refine_chat_click_target
+
+        return refine_chat_click_target(
+            png,
+            prompt=prompt,
+            target=target,
+            ide=ide,
+            source=source,
+            candidates=candidates,
+            map_hint=map_hint,
+            capture_title=capture_title,
+        )
+    except ImportError:
+        try:
+            from koru.integrations.photo_vql_llm_detect import detect_chat_target_from_llm_vision
+
+            llm_target = detect_chat_target_from_llm_vision(
+                ide=canon,
+                source=source,
+                image_path=image_path,
+                candidates=candidates,
+                map_hint=map_hint,
+                capture_title=capture_title,
+            )
+            if llm_target:
+                llm_cc = llm_target.get("click_center") or {}
+                llm_x = int(llm_cc.get("x", x))
+                llm_y = int(llm_cc.get("y", y))
+                llm_decision = llm_target.get("llm_decision") or {
+                    "strategy": "llm_vision_detect",
+                    "confidence": llm_target.get("confidence"),
+                    "reason": llm_cc.get("note") or llm_target.get("note"),
+                }
+                return llm_x, llm_y, llm_decision
+        except Exception:
             return x, y, None
-        raw = llm_res.content.strip()
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[1].rsplit("\n", 1)[0] if "\n" in raw else raw.strip("`")
-        decision = json.loads(raw)
-        if not isinstance(decision, dict) or "click_center" not in decision:
-            return x, y, None
-        conf = float(decision.get("confidence", 0.0))
-        if conf < 0.35:
-            return x, y, None
-        new_cc = decision["click_center"]
-        if not isinstance(new_cc, dict) or "x" not in new_cc or "y" not in new_cc:
-            return x, y, None
-        x = max(0, min(int(new_cc["x"]), img_w - 1))
-        y = max(0, min(int(new_cc["y"]), img_h - 1))
-        if canon in {"jetbrains", "pycharm", "idea"} and y < 850:
-            fallback = candidates[0]["click_center"] if candidates else (map_hint or {}).get("click_center")
-            if isinstance(fallback, dict) and fallback.get("x") is not None:
-                x = int(fallback["x"])
-                y = int(fallback["y"])
-                decision["llm_coord_adjusted"] = True
-                decision["reason"] = (
-                    str(decision.get("reason") or "")
-                    + " (adjusted to bottom-right chat candidate — LLM y too high on screen)"
-                ).strip()
-        llm_decision = decision
     except Exception:
         return x, y, None
-    return x, y, llm_decision
+
+    return x, y, None
 
 
 def _photo_vql_map_paste_fallback(
@@ -3716,7 +3879,13 @@ def perform_photo_vql_focus_and_edit(
     if meta_probe.get("error") and not _dry_run():
         stale_only = bool(meta_probe.get("stale_skipped"))
         session_active = _autonomy_session.active_session_dir() is not None
-        if (stale_only or session_active) and not _dry_run():
+        canon_probe = _canonical_ide(ide)
+        map_mismatch_ok = (
+            not is_code_edit
+            and canon_probe in {"jetbrains", "pycharm", "idea"}
+            and _allow_prepare_map_on_mismatch()
+        )
+        if (stale_only or session_active) and not map_mismatch_ok:
             err = {
                 "ok": False,
                 "backend": "vdisplay+photo-vql",
@@ -3739,6 +3908,7 @@ def perform_photo_vql_focus_and_edit(
         and not _dry_run()
         and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
         and not _allow_actuation_on_capture_mismatch()
+        and not (not is_code_edit and _allow_prepare_map_on_mismatch())
     ):
         err = {
             "ok": False,
@@ -3773,23 +3943,18 @@ def perform_photo_vql_focus_and_edit(
     # record "used_map_because_mismatch_or_bad_element" + selection_method for full audit.
     canon_for_map = _canonical_ide(ide)
     if canon_for_map in {"jetbrains", "pycharm", "idea"}:
-        tid = str(t.get("id") or "")
         sel = str(t.get("selection_method") or t.get("vql_validation", {}).get("selection_method") or "")
-        if (
-            _allow_actuation_on_capture_mismatch()
-            and (
-                tid.startswith("map:")
-                or sel.startswith("map_")
-                or sel
-                in {
-                    "map_calibrated_on_mismatch",
-                    "map_calibrated_on_empty_vql",
-                    "map_fallback_after_bad_corner",
-                    "map_calibrated",
-                }
-            )
+        if (_ide_mismatch_allowed() or _allow_prepare_map_on_mismatch()) and (
+            sel.startswith("map_")
+            or sel
+            in {
+                "map_calibrated_on_mismatch",
+                "map_calibrated_on_empty_vql",
+                "map_fallback_after_bad_corner",
+                "map_calibrated",
+            }
         ):
-            mismatch = None  # map-only fallback explicitly allowed
+            mismatch = None
             t["_map_cleared_mismatch_for_actuation"] = True
 
     if image_path is None:
@@ -3861,6 +4026,40 @@ def perform_photo_vql_focus_and_edit(
             session, "act", "command_plan_perform_photo_vql_pre_act", command_plan
         )
 
+    is_jetbrains_map = str((t or {}).get("id") or "").startswith("map:") and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
+    map_mismatch_allowed = is_jetbrains_map and _ide_mismatch_allowed()
+    if (
+        not is_code_edit
+        and not _dry_run()
+        and not command_plan.get("inference_ok")
+        and not _ide_mismatch_allowed()
+        and not map_mismatch_allowed
+    ):
+        blocked = {
+            "ok": False,
+            "backend": "vdisplay+photo-vql",
+            "error": (
+                "photo-VQL chat target not verified for drive "
+                f"(warnings={command_plan.get('warnings') or []})"
+            ),
+            "target": target_desc,
+            "vql_target": t,
+            "vql_command_plan": command_plan,
+            "coords": {"x": x, "y": y},
+            "ide": ide,
+            "capture_confirmed": command_plan.get("capture_confirmed"),
+            "ide_window_warning": mismatch,
+            "hint": (
+                "Focus PyCharm AI chat on the capture monitor, run "
+                "koru autopilot prepare-vdisplay --ide jetbrains, then "
+                "./scripts/diagnose-vdisplay-llm.sh jetbrains. "
+                "Override: KORU_VDISPLAY_ALLOW_IDE_MISMATCH=1"
+            ),
+        }
+        if session is not None:
+            _autonomy_session.persist_autonomy_phase(session, "act", "chat_actuation_blocked", blocked)
+        return blocked
+
     if is_code_edit:
         if llm_decision:
             focus_res = move_mouse_to_vql_target_and_focus_keyboard(t, ide=ide, source=source)
@@ -3904,10 +4103,10 @@ def perform_photo_vql_focus_and_edit(
 
     combined_ok = bool(edit_res.get("ok", False))
     is_jetbrains_map = str((t or {}).get("id") or "").startswith("map:") and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
-    map_mismatch_allowed = is_jetbrains_map and _allow_actuation_on_capture_mismatch()
-    if mismatch and not _allow_actuation_on_capture_mismatch() and not map_mismatch_allowed:
+    map_mismatch_allowed = is_jetbrains_map and _ide_mismatch_allowed()
+    if mismatch and not _ide_mismatch_allowed() and not map_mismatch_allowed:
         combined_ok = False
-    if not command_plan.get("inference_ok", True) and not _allow_actuation_on_capture_mismatch() and not _dry_run() and not map_mismatch_allowed:
+    if not command_plan.get("inference_ok", True) and not _ide_mismatch_allowed() and not _dry_run() and not map_mismatch_allowed:
         combined_ok = False
 
     verification: dict[str, Any] | None = None
@@ -3952,7 +4151,10 @@ def perform_photo_vql_focus_and_edit(
         time.sleep(float(os.environ.get("KORU_VDISPLAY_SUBMIT_DELAY_S", "0.25")))
         submit_result = _photo_vql_submit_chat(ide=ide, source=source)
         submitted = bool(submit_result and submit_result.get("ok"))
-        combined_ok = submitted
+        if not submitted:
+            combined_ok = bool(edit_res.get("ok"))
+        else:
+            combined_ok = True
 
     combined = {
         "ok": combined_ok,

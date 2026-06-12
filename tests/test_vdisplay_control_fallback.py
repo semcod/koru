@@ -57,6 +57,8 @@ def test_send_chat_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_send_chat_prefers_ide_prompt_for_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
+    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
     monkeypatch.delenv("KORU_VDISPLAY_PREFER_PHOTO_VQL", raising=False)
     monkeypatch.setattr(vdisplay_client, "vdisplay_available", lambda: True)
     monkeypatch.setattr(vdisplay_client, "_photo_vql_ide_capture_mismatch", lambda **kwargs: None)
@@ -92,6 +94,53 @@ def test_send_chat_prefers_ide_prompt_for_jetbrains(monkeypatch: pytest.MonkeyPa
     assert reply["ok"] is True
     assert reply["backend"] == "os_injector"
     ide_prompt.assert_not_called()
+
+
+def test_send_chat_skips_os_injector_on_wayland(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-1")
+    monkeypatch.delenv("XDG_SESSION_TYPE", raising=False)
+    monkeypatch.setenv("KORU_VDISPLAY_PREFER_PHOTO_VQL", "0")
+    monkeypatch.setenv("KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS", "0")
+    monkeypatch.setattr(vdisplay_client, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(vdisplay_client, "_photo_vql_ide_capture_mismatch", lambda **kwargs: {"message": "mismatch"})
+    import types
+
+    fake_oi = types.ModuleType("gillm.injection.os_injector")
+    fake_oi.try_drive_with_profile = lambda **kwargs: {
+        "ok": True,
+        "backend": "os_injector",
+        "chat_x": 2323,
+        "chat_y": 2409,
+    }
+    gillm_injection = types.ModuleType("gillm.injection")
+    gillm_injection.os_injector = fake_oi
+    gillm = types.ModuleType("gillm")
+    gillm.injection = gillm_injection
+    monkeypatch.setitem(sys.modules, "gillm", gillm)
+    monkeypatch.setitem(sys.modules, "gillm.injection", gillm_injection)
+    monkeypatch.setitem(sys.modules, "gillm.injection.os_injector", fake_oi)
+    monkeypatch.setattr(vdisplay_client, "send_chat_via_ide_prompt", lambda *a, **k: None)
+    monkeypatch.setattr(vdisplay_client, "_find_first_selector", lambda **k: (None, {"ok": False}))
+    monkeypatch.setattr(vdisplay_client, "get_vql_chat_target_from_photo", lambda **k: {})
+
+    reply = vdisplay_client.send_chat("hello jetbrains", ide="jetbrains", submit=False, dry_run=False)
+    assert reply.get("backend") != "os_injector"
+
+
+def test_verify_chat_text_visible_resolves_ocr_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(vdisplay_client, "_ensure_vdisplay_runtime", lambda: True)
+    monkeypatch.setattr(
+        "koru.deps_autorepair.ensure_vision_ocr",
+        lambda **kwargs: True,
+    )
+    monkeypatch.setattr(
+        vdisplay_client,
+        "_capture_for_verify",
+        lambda *args, **kwargs: (None, None, None),
+    )
+
+    out = vdisplay_client.verify_chat_text_visible("probe test", ide="jetbrains")
+    assert out.get("error") == "screenshot capture failed"
 
 
 def test_send_chat_uses_semantic_set_value(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 _NLP2OQL_IMPORT_ERROR: str | None = None
+_NLP2OQL_COMPAT_CHECKED = False
 
 try:
     import nlp2oql  # noqa: F401
@@ -18,6 +19,28 @@ except ImportError as exc:
 
 
 def nlp2oql_available() -> bool:
+    global _NLP2OQL_AVAILABLE, _NLP2OQL_IMPORT_ERROR, _NLP2OQL_COMPAT_CHECKED
+    if not _NLP2OQL_AVAILABLE:
+        return False
+    if _NLP2OQL_COMPAT_CHECKED:
+        return _NLP2OQL_AVAILABLE
+    _NLP2OQL_COMPAT_CHECKED = True
+    try:
+        from nlp2oql import generate_scenario, run_task
+
+        smoke = generate_scenario(
+            "health check",
+            project_dir=str(Path.cwd()),
+            use_llm=False,
+            validate=False,
+        )
+        if not hasattr(smoke, "ok") or not hasattr(smoke, "oql"):
+            raise RuntimeError("generate_scenario returned an incompatible result")
+        if not callable(run_task):
+            raise RuntimeError("run_task is not callable")
+    except Exception as exc:
+        _NLP2OQL_AVAILABLE = False
+        _NLP2OQL_IMPORT_ERROR = f"incompatible nlp2oql API: {exc}"
     return _NLP2OQL_AVAILABLE
 
 
@@ -48,7 +71,7 @@ def nlp2oql_generate(
     use_llm: bool = False,
     validate: bool = True,
 ) -> dict[str, Any]:
-    if not _NLP2OQL_AVAILABLE:
+    if not nlp2oql_available():
         return {"ok": False, "error": nlp2oql_missing_message()}
     try:
         from nlp2oql import generate_scenario
@@ -81,7 +104,7 @@ def nlp2oql_run(
     captcha_solver: bool = False,
     visual_mode: bool = False,
 ) -> dict[str, Any]:
-    if not _NLP2OQL_AVAILABLE:
+    if not nlp2oql_available():
         return {"ok": False, "error": nlp2oql_missing_message()}
     try:
         from nlp2oql import run_task

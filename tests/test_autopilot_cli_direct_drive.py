@@ -86,6 +86,24 @@ def test_should_fallback_false_when_opened_true(monkeypatch: pytest.MonkeyPatch)
     assert _should_fallback_to_direct(args, reply) is False
 
 
+def test_should_fallback_false_when_daemon_blocks_semantic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_DRIVE_AUTO_DIRECT", raising=False)
+    args = _ns(require_plugin=False)
+    reply = {
+        "ok": False,
+        "backend": "semantic_required",
+        "message": (
+            "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains "
+            "after vdisplay/imgl did not confirm the target"
+        ),
+        "opened": False,
+        "submitted": False,
+    }
+    assert _should_fallback_to_direct(args, reply) is False
+
+
 # ---------------------------------------------------------------------------
 # _emit_json_payload
 # ---------------------------------------------------------------------------

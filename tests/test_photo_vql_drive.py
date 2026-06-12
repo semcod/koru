@@ -698,9 +698,37 @@ def test_photo_vql_chat_input_candidates_penalizes_terminal_background() -> None
             "bounds": {"w": 280, "h": 32},
         },
     ]
-    cands = vc._photo_vql_chat_input_candidates(layers, limit=2)
+    cands = vc._photo_vql_chat_input_candidates(layers, limit=2, ide="jetbrains")
     assert cands[0]["label"] == "ask"
     assert cands[1]["label"] == "background"
+
+
+def test_windsurf_chat_input_candidates_prefer_top_composer() -> None:
+    from koru.integrations.photo_vql_target import vscode_family_chat_target_from_layers
+
+    layers = [
+        {
+            "kind": "input",
+            "text": "",
+            "click_center": {"x": 1200, "y": 51},
+            "bbox": {"w": 420, "h": 36},
+        },
+        {
+            "kind": "input",
+            "text": "Windsurf (Pre-Release)",
+            "click_center": {"x": 900, "y": 1240},
+            "bbox": {"w": 180, "h": 24},
+        },
+        {
+            "kind": "input",
+            "text": "tom@nvidia:~/github/semcod/koru$",
+            "click_center": {"x": 700, "y": 1177},
+            "bbox": {"w": 500, "h": 28},
+        },
+    ]
+    target = vscode_family_chat_target_from_layers(layers, ide="windsurf", source="test.vql.json")
+    assert target is not None
+    assert target["click_center"]["y"] == 51
 
 
 def test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero(
@@ -949,7 +977,7 @@ def test_perform_blocked_on_mismatch_without_allow(monkeypatch: pytest.MonkeyPat
     assert res.get("ide_window_warning")
 
 
-def test_perform_map_path_allowed_with_allow_map_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_perform_map_path_allowed_with_explicit_ide_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_confirmed_observe_meta(monkeypatch)
     monkeypatch.setattr(
         vc,
@@ -971,7 +999,7 @@ def test_perform_map_path_allowed_with_allow_map_on_mismatch(monkeypatch: pytest
     monkeypatch.setattr(vc, "_observe_vql_sidecar_path", lambda **k: "/tmp/capture.png.vql.json")
     monkeypatch.setattr(vc, "move_mouse_to_vql_target_and_focus_keyboard", lambda *a, **k: {"ok": True})
     monkeypatch.setattr(vc, "_type_text_at_vql_coords", lambda *a, **k: {"ok": True, "method": "paste"})
-    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", "1")
 
     res = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
     plan = res.get("vql_command_plan") or {}

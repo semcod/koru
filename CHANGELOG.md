@@ -73,6 +73,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.338] - 2026-06-12
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/autopilot-quickstart.md
+- Update docs/photo-vql-jetbrains-wayland.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autonomous_readiness.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autonomous_vdisplay_defaults.py
+- Update tests/test_autopilot_cli_direct_drive.py
+- Update tests/test_autopilot_commands_drive.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_doctor.py
+- Update tests/test_drive_repair_policy.py
+- Update tests/test_koruide_daemon_handlers_drive.py
+- Update tests/test_photo_vql_drive.py
+- ... and 2 more files
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update app.doql.less
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- ... and 15 more files
+
 ## [0.1.337] - 2026-06-12
 
 ### Docs

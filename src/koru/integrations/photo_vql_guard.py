@@ -16,8 +16,8 @@ def ide_mismatch_allowed() -> bool:
     }
 
 
-def allow_actuation_on_capture_mismatch() -> bool:
-    """When false (default), abort drive instead of map/photo actuation on wrong IDE capture."""
+def allow_prepare_map_on_mismatch() -> bool:
+    """Prepare/focus may use calibrated map clicks to raise the IDE before re-capture."""
     if ide_mismatch_allowed():
         return True
     return os.environ.get("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "").strip().lower() in {
@@ -26,6 +26,11 @@ def allow_actuation_on_capture_mismatch() -> bool:
         "yes",
         "on",
     }
+
+
+def allow_actuation_on_capture_mismatch() -> bool:
+    """When false (default), abort drive typing/clicks on unconfirmed IDE capture."""
+    return ide_mismatch_allowed()
 
 
 def competing_ide_label_from_warning(mismatch: dict[str, Any]) -> str | None:
@@ -99,7 +104,7 @@ class CaptureGuard:
         if confirmed is None:
             confirmed = False if capture_error else not bool(ide_window_warning)
 
-        allow = allow_actuation_on_capture_mismatch()
+        allow = allow_prepare_map_on_mismatch()
         map_fallback = bool(map_only_fallback)
         if (
             not confirmed
@@ -173,6 +178,7 @@ class CaptureGuard:
 __all__ = [
     "CaptureGuard",
     "allow_actuation_on_capture_mismatch",
+    "allow_prepare_map_on_mismatch",
     "competing_ide_label_from_warning",
     "drive_blocked_on_capture_mismatch",
     "ide_mismatch_allowed",

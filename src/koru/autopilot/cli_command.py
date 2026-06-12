@@ -19,9 +19,11 @@ from koru.autopilot import (
     daemon_cli,
     doctor_cli,
     install_plugin_cli,
+    prepare_vdisplay_cli,
     systemd_cli,
     tail_cli,
 )
+from koru.autopilot import diagnose_vdisplay_cli
 from koru.autopilot.cli_direct_drive import (
     _auto_direct_fallback_enabled as _auto_direct_fallback_enabled,
 )
@@ -86,6 +88,14 @@ def _action_calibrate(args: argparse.Namespace) -> int:
         sleep_fn=time.sleep,
         resolve_target=resolve_drive_target,
     )
+
+
+def _action_prepare_vdisplay(args: argparse.Namespace) -> int:
+    return prepare_vdisplay_cli.action_prepare_vdisplay(args)
+
+
+def _action_diagnose_vdisplay(args: argparse.Namespace) -> int:
+    return diagnose_vdisplay_cli.action_diagnose_vdisplay(args)
 
 
 def _action_session_start(args: argparse.Namespace) -> int:
@@ -313,6 +323,8 @@ _ACTIONS = {
     "daemon": _action_daemon,
     "drive": _action_drive,
     "calibrate": _action_calibrate,
+    "prepare-vdisplay": _action_prepare_vdisplay,
+    "diagnose-vdisplay": _action_diagnose_vdisplay,
     "session-start": _action_session_start,
     "status": _action_status,
     "env": _action_env,

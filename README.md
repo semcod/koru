@@ -7,10 +7,10 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.337-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$26.81-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-153.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.338-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$28.14-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-153.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $26.8137 (443 commits)
+- 🤖 **LLM usage:** $28.1396 (444 commits)
 - 👤 **Human dev:** ~$15329 (153.3h @ $100/h, 30min dedup)
 
 Generated on 2026-06-12 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
@@ -208,22 +208,25 @@ export VDISPLAY_AGENT_URL=http://127.0.0.1:8765   # vdisplay-agent serve in anot
 unset KORU_VDISPLAY_DRY_RUN
 KORU_SRC=~/github/semcod/koru/src IMGL_SRC=~/github/semcod/imgl \
   bash examples/dev-workflow/koru-drive-photo-vql.sh \
-  --ide jetbrains --source DP-2 --prompt "your task" --submit
+  --ide jetbrains --source DP-1 --prompt "your task" --submit
 
 bash examples/dev-workflow/koru-audit-last-session.sh --ide jetbrains
 ```
 
-**Inside `koru autonomous up`:**
+**Inside `koru autonomous up` / `coru`:**
 
 ```bash
+source .venv/bin/activate
+export KORU_AUTOPILOT_INSTANCE=jetbrains
+# opcjonalnie — koru auto na Waylandzie ustawia to samo:
 export KORU_VDISPLAY_CONTROL_FALLBACK=1
-export KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS=1
+export KORU_VDISPLAY_SOURCE=DP-1
 export KORU_VDISPLAY_PREFER_PHOTO_VQL=auto
-export VDISPLAY_AGENT_URL=http://127.0.0.1:8765
-export KORU_SRC=~/github/semcod/koru/src IMGL_SRC=~/github/semcod/imgl
 
-koru autonomous up --project . --agent-lane=jetbrains
+coru   # lub: koru autonomous up --agent-lane=jetbrains
 ```
+
+Po `koru autopilot shutdown` uruchom ponownie `coru` — inaczej `drive` zwróci „daemon not running”.
 
 | Topic | Doc |
 |-------|-----|

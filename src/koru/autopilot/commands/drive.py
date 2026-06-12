@@ -120,6 +120,23 @@ def _run_direct_fallback(
     *,
     run_direct_drive_fn: callable,
 ) -> int:
+    from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
+    from koru.autonomy.ide_operator_guidance import (
+        classify_drive_failure_guidance,
+        emit_operator_guidance,
+    )
+
+    if daemon_reply_blocks_direct_fallback(reply):
+        print(
+            "koru autopilot drive: refusing local --direct fallback after daemon "
+            "blocked blind keyboard/OS-injector on Wayland",
+            file=sys.stderr,
+        )
+        guidance = classify_drive_failure_guidance(reply, ide=str(args.ide))
+        if guidance:
+            emit_operator_guidance(guidance, title="Operator — IDE chat control")
+        print(json.dumps(reply, indent=2, sort_keys=True))
+        return 1
     print(
         "koru autopilot drive: daemon could not open/focus chat input; "
         "falling back to local --direct injection",
@@ -213,6 +230,7 @@ def _diagnose_bridge_after_drive_failure(
         status,
         require_plugin=bool(getattr(args, "require_plugin", False)),
         recent_events=recent_history,
+        drive_reply=reply,
     )
     commands.record_diagnostic(
         RecordRepairDiagnosticCommand(

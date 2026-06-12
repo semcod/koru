@@ -114,6 +114,18 @@ def classify_drive_failure_guidance(
     ide: str | None = None,
 ) -> list[str] | None:
     """Map a daemon drive reply to operator steps, if recognizable."""
+    from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
+
+    if daemon_reply_blocks_direct_fallback(reply):
+        target = (ide or "jetbrains").strip().lower()
+        return [
+            f"Wayland {target} drive requires verified photo-VQL (vdisplay + LLM vision), "
+            "not blind OS-injector clicks.",
+            "Focus the IDE AI chat on the vdisplay capture monitor (KORU_VDISPLAY_SOURCE).",
+            f"Run: koru autopilot prepare-vdisplay --ide {target}",
+            f"Run: ./scripts/diagnose-vdisplay-llm.sh {target}  (expect \"ok\": true)",
+            "Unsafe override: KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1",
+        ]
     message = str(reply.get("message") or "").lower()
     paste_reason = str(reply.get("paste_failure_reason") or reply.get("reason") or "").lower()
     verification = str(reply.get("verification") or "").lower()

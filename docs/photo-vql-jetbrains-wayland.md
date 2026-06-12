@@ -1,10 +1,12 @@
-# Photo-VQL drive — JetBrains/PyCharm na Wayland (DP-2)
+# Photo-VQL drive — JetBrains/PyCharm na Wayland
 
-**Stan:** 2026-06-09 · **moduł:** `src/koru/integrations/vdisplay_client.py` · **testy:** `tests/test_photo_vql_drive.py` (54 passed)
+**Stan:** 2026-06-12 · **moduł:** `src/koru/integrations/vdisplay_client.py` · **testy:** `tests/test_photo_vql_drive.py`
+
+> **Kalibracja OS injectora** jest w trakcie testów (współrzędne DP-1). Preferowana ścieżka to **vdisplay/photo-VQL**, nie blind click w terminal.
 
 ## Podsumowanie
 
-Pętla **observe → decide → act → verify** dla wpisywania promptu do czatu PyCharm przez `vdisplay` + photo-VQL:
+Pętla **observe → decide → act → verify** dla wpisywania promptu do czatu PyCharm przez `vdisplay` + photo-VQL (oraz `coru` / `koru autonomous up`):
 
 | Faza | Co robi | Artefakt sesji |
 |------|---------|----------------|
@@ -13,170 +15,186 @@ Pętla **observe → decide → act → verify** dla wpisywania promptu do czatu
 | **Act** | Ruch myszy, focus, paste/ydotool, opcjonalnie submit | `act/cursor_positioning.jsonl`, `act/command_plan_*.json`, `act/drive_result.json` |
 | **Verify** | OCR po wklejce (`verify_chat_text_visible`) | w `drive_result.json` → `verification` |
 
-**Kryterium sukcesu (real run):** tekst promptu ląduje w **PyCharm AI Chat** na monitorze DP-2, a nie w Cursorze/terminalu. Audit pokazuje pełną ścieżkę decide/act z uczciwymi flagami (`capture_confirmed`, `inference_ok`, `submitted`).
+**Routing drive (daemon, od 0.1.336+):** `plugin` → **`vdisplay`** → `imgl` → `OS-injector` / `wtype`.
 
-### Co działa
-
-- Capture portal screencast na DP-2 (2048×1280, rotation=left).
-- Map actuation (`pycharm-chat.json`, target `prompt`) przez ydotool + vision — kliki się udają nawet gdy AT-SPI/X11 focus zawodzi.
-- Guardy **nie raportują fałszywego `ok: true`** przy mismatch IDE, złym inference lub failed verify.
-- `capture_provenance` — osobno od map vs observe; `body_false_positive` gdy OCR widzi „PyCharm” w treści dokumentu Cursora, a nie w titlebarze.
-- Prepare **abortuje** gdy foreground = Cursor (domyślnie), z `competing_ide` i hintem.
-- **Focus recovery:** przed abortem 1× Alt+Tab + ponowny capture (domyślnie włączone dla JetBrains).
-- GNOME Shell raise próbuje wielu needlei (`pycharm`, `intellij`, `jetbrains`, …).
-- Audit script pokazuje sekcję **Prepare/observe** + decide/act.
-
-### Główny problem (desktop state)
-
-**Map click ≠ zmiana foreground window w screencast.** Gdy Cursor jest na wierzchu na DP-2:
-
-- `capture_validation.capture_confirmed: false`
-- `ide_window_mismatch`, `body_false_positive: true`
-- `visual_guard_failed: true`, `confirmation_bias_risk` w `ide_control`
-- Drive **poprawnie abortuje** przed `send_chat` (brak paste do złego okna)
-
-AT-SPI / `window_focus` na natywnym Wayland PyCharm często zwraca `ok: false`. Jedyna niezawodna ścieżka to **użytkownik podnosi PyCharm na DP-2** albo Alt+Tab recovery trafia we właściwe okno.
-
-### Terminal pollution (capture contamination)
-
-Gdy terminal z którego uruchamiasz `bash koru-drive-*.sh` jest na tym samym monitorze (DP-2) co capture, imgl OCR czyta historię bash jako warstwy VQL "button/input":
-
-- Objawy: dekada „button/input" z treścią `KORU_VDISPLAY_*`, `DRY_RUN`, `PREFER LLM`, `po clear:`, `audit`, itp.
-- Skutki: `ide_window_mismatch` + `capture_confirmed: false` + fałszywe VQL candidates z ujemnym `local_y`
-- **Guard:** `_VQL_TERMINAL_LABEL_NOISE` (20+ tokenów) → `-1500` score penalty → odrzut candidates z tokenami shell/env
-- **Przed pre-check i drive:** podnieś PyCharm na DP-2, schowaj/zamknij terminal z DP-2 (żeby jego tekst nie był widoczny na zrzucie)
-
-Szczegóły: [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md) — sekcja "2026-06-12 run analysis (pre-check + drive...)"
-
-### Zasady guardów (2026-06-09)
-
-| Flaga / zachowanie | Domyślnie | Znaczenie |
-|--------------------|-----------|-----------|
-| `capture_confirmed` | z observe/VQL titlebar | **Nigdy** ustawiane na `true` tylko dlatego, że map click się udał |
-| `map_only_fallback` | tylko z `KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH=1` | Można iść map path mimo mismatch; `capture_confirmed` nadal `false` |
-| `KORU_VDISPLAY_RAISE_ALT_TAB` | auto **on** dla jetbrains/pycharm/idea | 1× recovery w prepare + 2 cykle w `ensure_vdisplay_ide_control` |
-| `KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH=1` | off | Map-only bez potwierdzenia tytułu — tylko testy / awaryjnie |
-| `KORU_VDISPLAY_ALLOW_IDE_MISMATCH=1` | off | Szersze zejście z guardów actuation |
-| `KORU_VDISPLAY_VERIFY_AFTER_PASTE=1` | on | OCR verify po paste; `ok: false` gdy tekst niewidoczny |
+**Kryterium sukcesu:** tekst promptu ląduje w **PyCharm AI Chat**, nie w integrated terminal ani w innym IDE. W logu: `backend=vdisplay` lub `photo-vql`, **nie** samo `backend=os_injector`.
 
 ---
 
-## Szybki start (real drive)
+## `coru` / `koru auto` — typowy workflow (2026-06-12)
 
-Pełna instrukcja krok po kroku: [vdisplay `examples/dev-workflow/README.md`](../../../wronai/vdisplay/examples/dev-workflow/README.md#koru--vdisplay--pętla-autonomiczna-photo-vql).
+### 1. Venv i env
+
+```bash
+cd ~/github/semcod/koru
+deactivate 2>/dev/null
+source .venv/bin/activate
+hash -r
+
+export KORU_AUTOPILOT_INSTANCE=jetbrains
+export KORU_VDISPLAY_CONTROL_FALLBACK=1
+export KORU_VDISPLAY_SOURCE=DP-1          # monitory: DP-1, HDMI-1
+export KORU_VDISPLAY_PREFER_PHOTO_VQL=auto
+```
+
+Od **0.1.337** `koru auto --agent-lane jetbrains` na Waylandzie **sam ustawia** powyższe `KORU_VDISPLAY_*`, jeśli nie były w shellu.
+
+**Uwaga venv:** jeśli masz `(venv)` i `(base)` obok `.venv`, usuń lub nie aktywuj starego `venv/` — inaczej `virtual_env_mismatch` w logu (interpreter z `.venv`, a `VIRTUAL_ENV` wskazuje `venv/`).
+
+### 2. Daemon po shutdown
+
+Po `koru autopilot shutdown` drive **nie zadziała**, dopóki nie wystartujesz daemona:
+
+```bash
+koru autopilot shutdown          # zatrzymaj stary proces
+coru                             # lub: koru auto --agent-lane jetbrains
+# albo ręcznie:
+KORU_AUTOPILOT_INSTANCE=jetbrains koru autopilot daemon
+```
+
+Sprawdź w logu `git_sha` daemona — musi być **z bieżącego checkoutu** (np. `774f774…`), nie stary build sprzed routingu vdisplay-first.
+
+### 3. Przed drive — fokus w chacie IDE
+
+- PyCharm na monitorze **DP-1** (nie terminal z historią `coru` w kadrze).
+- Kliknij w **pole AI chat** (mrugający kursor).
+- Dopiero potem test:
+
+```bash
+koru autopilot drive --ide jetbrains 'probe test'
+```
+
+W audit logu (`~/.local/state/koru/autopilot.log`) szukaj:
+
+```
+drive: routing via semantic fallback (vdisplay → imgl → keyboard/os_injector)
+drive → vdisplay/jetbrains: photo-vql semantic chat
+```
+
+Jeśli widzisz tylko `backend=os_injector` — vdisplay odrzucił capture (mismatch) albo daemon był stary.
+
+### 4. OS injector — ostatni fallback (kalibracja w testach)
+
+```bash
+task koru:ide-os:calibrate IDE=jetbrains
+```
+
+- Kalibruj **klikając w pole czatu IDE**, nie w terminal.
+- Przykład poprawnej kalibracji (DP-1): `(2336, 588)` — wcześniejsze `(2323, 2409)` trafiały w terminal.
+- `env2llm validation` może ostrzegać o `pointer_display_mismatch` dla innych IDE — to nie blokuje profilu `jetbrains`.
+
+---
+
+## Monitory (tom@nvidia)
+
+| Monitor | Użycie |
+|---------|--------|
+| **DP-1** | Domyślny `KORU_VDISPLAY_SOURCE` dla JetBrains |
+| **HDMI-1** | Primary w GNOME — nie ustawiaj na sztywno, jeśli PyCharm jest na DP-1 |
+
+Starsza dokumentacja odnosiła się do **DP-2** (inny układ biurka). Dostosuj `--source` / env do monitora, na którym **fizycznie** stoi okno PyCharm.
+
+---
+
+## Dlaczego tekst ląduje w terminalu
+
+| Przyczyna | Objaw w logu |
+|-----------|----------------|
+| Brak pluginu JetBrains | `plugin connected=False`, `plugins: []` |
+| vdisplay capture mismatch | `capture_confirmed: false`, potem `backend=os_injector` |
+| Stary daemon (bez vdisplay-first) | brak linii `drive → vdisplay/…` |
+| Fokus w integrated terminal | `terminal host: integrated`, `wtype` pisze do aktywnego okna |
+| Zła kalibracja OS injectora | klik w `(x,y)` terminala zamiast chatu |
+| Terminal w kadrze screenshot | terminal pollution w VQL (`KORU_*`, `po clear`, …) |
+
+---
+
+## Zmienne środowiskowe
+
+| Zmienna | Domyślnie (JetBrains + Wayland) | Opis |
+|---------|----------------------------------|------|
+| `KORU_VDISPLAY_CONTROL_FALLBACK` | `1` (auto przez `koru auto`) | Włącza vdisplay przed keyboard |
+| `KORU_VDISPLAY_SOURCE` | `DP-1` | Monitor capture |
+| `KORU_VDISPLAY_PREFER_PHOTO_VQL` | `auto` | Photo-VQL gdy capture pasuje do IDE |
+| `KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS` | `1` | Mysz + focus przed paste |
+| `KORU_AUTOPILOT_INSTANCE` | `jetbrains` | Socket lane |
+
+Guardy i flagi mismatch: tabela w sekcji poniżej (bez zmian semantyki).
+
+---
+
+## One-shot drive (vdisplay script)
+
+Pełna instrukcja: [vdisplay `examples/dev-workflow/README.md`](../../../wronai/vdisplay/examples/dev-workflow/README.md#koru--vdisplay--pętla-autonomiczna-photo-vql).
 
 ```bash
 cd ~/github/wronai/vdisplay
+VDISPLAY_CAPTURE_VALIDATE_IDE=jetbrains vdisplay screenshot --source DP-1
 
-# 1. Pre-check — tytuł okna MUSI zawierać PyCharm
-VDISPLAY_CAPTURE_VALIDATE_IDE=jetbrains vdisplay screenshot --source DP-2
-# Sprawdź JSON: capture_validation.capture_confirmed, window_titles
-
-# 2. Upewnij się: PyCharm na wierzchu na DP-2, terminal poza kadrem
-
-# 3. Drive
 unset KORU_VDISPLAY_DRY_RUN
 KORU_SRC=~/github/semcod/koru/src IMGL_SRC=~/github/semcod/imgl \
   bash examples/dev-workflow/koru-drive-photo-vql.sh \
-  --ide jetbrains --source DP-2 --prompt "test" --submit
+  --ide jetbrains --source DP-1 --prompt "test" --submit
 
-# 4. Audit
 bash examples/dev-workflow/koru-audit-last-session.sh --ide jetbrains
 ```
 
-### Zmienne środowiskowe (najważniejsze)
+---
 
-| Zmienna | Domyślnie (JetBrains) | Opis |
-|---------|----------------------|------|
-| `KORU_VDISPLAY_SOURCE` | DP-1 (auto-resolve w prepare) | Monitor capture — użytkownik: `DP-2` |
-| `VDISPLAY_CAPTURE_VALIDATE_IDE` | `jetbrains` w drive script | Walidacja tytułu przy screenshot |
-| `KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S` | `0.8` | Opóźnienie po focus przed capture |
-| `KORU_VDISPLAY_VQL_MAX_AGE_S` | `300` | Maks. wiek sidecara VQL |
-| `KORU_VDISPLAY_LLM_VISION_DECISION` | `1` w drive script | LLM refine coords z foto |
-| `VDISPLAY_ALLOW_YDOTOOL_TYPING` | `1` | ydotool zamiast clipboard na Wayland |
+## Guardy (skrót)
+
+| Flaga | Domyślnie | Znaczenie |
+|-------|-----------|-----------|
+| `capture_confirmed` | z titlebar VQL | Nie ustawiaj `true` tylko dlatego, że map click się udał |
+| `KORU_VDISPLAY_RAISE_ALT_TAB` | on dla jetbrains | Recovery focus przed abort |
+| `KORU_VDISPLAY_ALLOW_IDE_MISMATCH` | off | Nie omijaj guardów na produkcji |
+| `KORU_VDISPLAY_VERIFY_AFTER_PASTE` | on | OCR po paste |
 
 ---
 
-## Interpretacja audit
+## Terminal pollution
 
-Sekcja **0. Prepare/observe** (`observe/prepare.json`):
-
-| Pole | Oczekiwane (sukces) | Problem |
-|------|---------------------|---------|
-| `capture_confirmed` | `true` | `false` → abort lub wymaga ręcznego focus |
-| `competing_ide` | brak | `"Cursor"` → Cursor na wierzchu |
-| `body_false_positive` | `false` | `true` → „PyCharm” w treści, nie w titlebarze |
-| `focus_recovery.ok` | `true` (opcjonalnie) | `false`/brak → Alt+Tab nie pomógł |
-| `ide_control.visual_guard_failed` | `false` | `true` → observe ≠ target IDE mimo map click |
-| `ide_control_attempts` | 1+ | `1` przy early abort na mismatch |
-
-Sekcje decide/act pojawiają się dopiero po **pełnym** drive (bez abortu w prepare).
+Gdy terminal z `coru` jest widoczny na screenshot, imgl OCR tworzy fałszywe warstwy VQL. **Schowaj terminal z kadru DP-1** albo uruchamiaj `coru` z zewnętrznego tmux/TTY.
 
 ---
 
-## Lista zadań
+## Checklist operatora
 
-### A. Do sprawdzenia przez użytkownika (real desktop)
-
-- [ ] **PyCharm foreground na DP-2** — titlebar zawiera `- PyCharm` / `PyCharm`, nie `Cursor`.
-- [ ] **Terminal poza DP-2** — historia bash nie widać na screenshot (terminal pollution → fałszywe VQL inputy).
-- [ ] **imgl zainstalowany** — drive script ustawia `IMGL_SRC` **przed** `KORU_SRC` w `PYTHONPATH`. Koru ma stub `koru/src/imgl` — bez poprawnej kolejności VQL ma 0 warstw (naprawione w `_ensure_real_imgl_on_path` + `_vdisplay_subprocess_env`).
-- [ ] **Pre-check przed drive:**
-  ```bash
-  VDISPLAY_CAPTURE_VALIDATE_IDE=jetbrains vdisplay screenshot --source DP-2 | jq '.capture_validation'
-  ```
-  Oczekiwane: `capture_confirmed: true`, sensowne `window_titles`.
-- [ ] **Pełny drive + audit** — po sukcesie prepare:
-  - `decide/vql_chat_target_selected.json` — target z y>850 (composer, nie editor)
-  - `act/drive_result.json` — `ok: true`, `submitted: true` (z `--submit`)
-  - `verification.verified: true` (jeśli verify włączone)
-- [ ] **Map calibration** — jeśli `chat_local_y` < 850 lub ujemne: przekalibruj `maps/pycharm-chat.json` (target `prompt` preferowany nad `ai-chat-input`).
-
-### B. Do poprawy w kodzie (backlog)
-
-- [ ] **Focus bez ręcznego podnoszenia okna** — Alt+Tab recovery jest pierwszym krokiem; rozważyć:
-  - wielokrotne cykle Alt+Tab z weryfikacją tytułu po każdym,
-  - `wmctrl` / `gdbus` dla konkretnego okna PyCharm (jeśli dostępne na sesji GNOME),
-  - dedykowany skrót klawiszowy do PyCharm z mapy okien.
-- [ ] **Rozdzielenie actuation od foreground** — map click nie zmienia tego, co widzi screencast; rozważyć krótkie oczekiwanie + re-capture po każdym focus step w `ensure_vdisplay_ide_control`.
-- [ ] **Post-paste verify na map path** — upewnić się, że verify OCR działa także gdy target = `map:prompt` (obecnie głównie VQL coords).
-- [ ] **Persist `drive_result` w ścieżce ide-prompt** — drive script zapisuje po `send_chat`; ujednolicić w `send_chat()` dla wszystkich backendów.
-- [ ] **Dokumentacja vdisplay** — zsynchronizować `docs/guides/autonomy-loop.md` z guardami (sekcja poniżej w koru jest aktualna).
-- [ ] **CI / testql** — rozszerzyć scenariusz o testy focus_recovery i `map_only_fallback` (obecnie 16 testów kontraktu w testql).
-
-### C. Znane ograniczenia (nie bugi)
-
-- Native Wayland PyCharm: AT-SPI focus często `false` — map/ydotool to primary path.
-- OCR może widzieć nazwę IDE w **treści edytora** (np. plik o PyCharm) — `body_false_positive` chroni przed fałszywym match.
-- `KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH=1` pozwala paste mimo Cursor foreground — **niezalecane** na produkcji; audit zostawia `capture_confirmed: false`.
+- [ ] `.venv` aktywny (nie stary `venv/`)
+- [ ] Daemon po restarcie z aktualnym `git_sha`
+- [ ] `KORU_VDISPLAY_*` ustawione (lub `koru auto` na Waylandzie)
+- [ ] PyCharm foreground na DP-1, chat focused
+- [ ] `koru autopilot drive --ide jetbrains 'probe test'` → `backend=vdisplay` lub chat widoczny w IDE
+- [ ] OS injector skalibrowany w polu chat (fallback)
+- [ ] Audit: brak samych wpisów `os_injector` bez próby vdisplay
 
 ---
 
-## Pliki i ścieżki
+## Pliki
 
 | Ścieżka | Rola |
 |---------|------|
-| `koru/src/koru/integrations/vdisplay_client.py` | prepare, send_chat, guards, photo VQL |
-| `koru/src/koru/integrations/autonomy_session.py` | sesje `.vdisplay/YYYY-MM-DD/*__koru-{ide}/` |
-| `koru/tests/test_photo_vql_drive.py` | kontrakt testów (49) |
-| `vdisplay/examples/dev-workflow/koru-drive-photo-vql.sh` | entrypoint real drive |
-| `vdisplay/examples/dev-workflow/koru-audit-last-session.sh` | audit z sekcją prepare |
-| `vdisplay/maps/pycharm-chat.json` | kalibracja map DP-2, rotation=left |
+| `src/koru/integrations/vdisplay_client.py` | prepare, send_chat, guards |
+| `src/koru/integrations/photo_vql_*.py` | validation, target, monitor (refactor CC) |
+| `src/koruide/daemon/handlers_drive.py` | routing vdisplay-first |
+| `src/koru/autonomous_vdisplay_defaults.py` | auto env na Wayland |
+| `tests/test_photo_vql_drive.py` | kontrakt |
 
 ---
 
-## Historia zmian (skrót)
+## Historia
 
 | Data | Zmiana |
 |------|--------|
-| 2026-06-09 (kontynuuj #2) | Fix imgl stub conflict (`koru/src/imgl` vs semcod imgl); `_vdisplay_subprocess_env`; xdotool focus fallback; 54 testy; refresh → 350 warstw VQL |
-| 2026-06-12 | Sesje datowane, guard terminal pollution, map target `prompt` first, empty VQL → map fallback |
-| wcześniej | Photo-VQL + LLM vision, JetBrains corner heuristic (y>850), enrich capture meta dla rotation |
+| 2026-06-12 | Doc: coru workflow, DP-1, daemon restart, vdisplay-first routing, kalibracja WIP |
+| 2026-06-12 | Kod: auto `KORU_VDISPLAY_*`, doctor vdisplay hint, venv stale label |
+| 2026-06-09 | imgl stub fix, guard terminal pollution, focus recovery |
+| wcześniej | Photo-VQL + LLM vision, JetBrains corner heuristic |
 
 ---
 
 ## Zobacz też
 
-- [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md) — szerszy kontekst autonomii koru + Cursor
-- [`wronai/vdisplay/docs/guides/autonomy-loop.md`](../../../wronai/vdisplay/docs/guides/autonomy-loop.md) — pętla vdisplay + layout sesji
-- `testql-scenarios/vdisplay-photo-vql-drive.testql.toon.yaml` — kontrakt false-ok guard
+- [`autopilot-quickstart.md`](./autopilot-quickstart.md) — sekcja JetBrains/Wayland
+- [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md) — szerszy kontekst autonomii
+- [`ide-control-architecture.md`](./ide-control-architecture.md) — fallback chain

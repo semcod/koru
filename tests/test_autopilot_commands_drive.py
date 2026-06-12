@@ -545,6 +545,58 @@ def test_action_drive_emits_jsonl_contract(capsys: pytest.CaptureFixture) -> Non
     assert set(["ts", "corr", "component", "level", "action", "result"]).issubset(payload)
 
 
+def test_action_drive_refuses_direct_when_daemon_blocks_semantic() -> None:
+    """Bridge repair must not run os_injector when daemon refused blind keyboard."""
+    args = argparse.Namespace(
+        prompt="probe test",
+        text=[],
+        ide="jetbrains",
+        submit=True,
+        dry_run=False,
+        require_plugin=False,
+        direct=False,
+        project=None,
+    )
+    semantic_reply = {
+        "ok": False,
+        "backend": "semantic_required",
+        "message": (
+            "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains "
+            "after vdisplay/imgl did not confirm the target"
+        ),
+        "opened": None,
+        "submitted": None,
+    }
+    mock_client = mock.Mock()
+    mock_client.is_running.return_value = True
+    mock_client.socket_path = Path("/tmp/koru-autopilot-jetbrains.sock")
+    mock_client.drive.return_value = semantic_reply
+    mock_run_direct = mock.Mock(return_value=(0, {"ok": True, "backend": "os_injector"}))
+
+    def repair_reaction(_args, _client, _reply):  # noqa: ANN001, ANN202
+        return DriveRepairReaction(
+            fallback_to_direct=True,
+            reason="bridge diagnostic: ide.keyboard_lane",
+        )
+
+    with mock.patch("builtins.print") as mock_print:
+        with mock.patch("sys.stderr"):
+            with mock.patch("koru.autopilot.commands.drive.shell_command"):
+                result = action_drive(
+                    args,
+                    client_fn=mock.Mock(return_value=mock_client),
+                    daemon_start_hint_fn=mock.Mock(),
+                    run_direct_drive_fn=mock_run_direct,
+                    should_fallback_fn=mock.Mock(return_value=False),
+                    repair_reaction_fn=repair_reaction,
+                )
+
+    assert result == 1
+    mock_run_direct.assert_not_called()
+    printed = " ".join(str(call.args[0]) for call in mock_print.call_args_list)
+    assert "semantic_required" in printed or "refusing blind keyboard" in printed
+
+
 # ---------------------------------------------------------------------------
 # Backward compatibility tests
 # ---------------------------------------------------------------------------

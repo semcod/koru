@@ -1,18 +1,18 @@
-# code2llm/evolution | 6454 func | 635f | 2026-06-12
-# generated in 0.04s
+# code2llm/evolution | 6522 func | 639f | 2026-06-12
+# generated in 0.02s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 4488L, 0 classes, max CC=74
-      EFFORT: ~4h  IMPACT: 332112
+      WHY: 4690L, 0 classes, max CC=89
+      EFFORT: ~4h  IMPACT: 417410
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3994L, 3 classes, max CC=13
       EFFORT: ~4h  IMPACT: 51922
 
-  [3] !! SPLIT-FUNC      perform_photo_vql_focus_and_edit  CC=74  fan=50
-      WHY: CC=74 exceeds 15
-      EFFORT: ~1h  IMPACT: 3700
+  [3] !! SPLIT-FUNC      perform_photo_vql_focus_and_edit  CC=89  fan=51
+      WHY: CC=89 exceeds 15
+      EFFORT: ~1h  IMPACT: 4539
 
   [4] !! SPLIT-FUNC      prepare_photo_vql_for_drive  CC=45  fan=44
       WHY: CC=45 exceeds 15
@@ -30,9 +30,9 @@ NEXT[10] (ranked by impact):
       WHY: CC=48 exceeds 15
       EFFORT: ~1h  IMPACT: 1248
 
-  [8] !! SPLIT-FUNC      _resolve_photo_vql_llm_coords  CC=31  fan=39
-      WHY: CC=31 exceeds 15
-      EFFORT: ~1h  IMPACT: 1209
+  [8] !! SPLIT-FUNC      get_vql_chat_target_from_photo  CC=32  fan=37
+      WHY: CC=32 exceeds 15
+      EFFORT: ~1h  IMPACT: 1184
 
   [9] !! SPLIT-FUNC      _map_chat_target_capture_local  CC=41  fan=18
       WHY: CC=41 exceeds 15
@@ -44,15 +44,15 @@ NEXT[10] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 124 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 126 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 217 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      74 → ≤20
+  max-CC:      89 → ≤20
   god-modules: 49 → 0
-  high-CC(≥15): 33 → ≤16
+  high-CC(≥15): 35 → ≤17
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
