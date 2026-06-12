@@ -266,11 +266,13 @@ def try_vdisplay_control_fallback(
     # Ensure session for audit/recovery when using vdisplay (addresses gap in auto runner not setting VDISPLAY_SESSION)
     os.environ.setdefault("VDISPLAY_SESSION", "1")
     try:
-        # Load VQL metadata (our analysis or fresh per-screenshot) to provide
-        # click_center / data_locations / decision_data for semantic actions.
-        # This gives the autonomy loop precise mouse coords and "where the data is"
-        # (pngs, client code, .env LLM, planfile) for decisions in JetBrains/Cursor.
-        from koru.integrations.vdisplay_client import load_vql_metadata, record_koru_drive_step
+        from koru.integrations.vdisplay_client import (
+            load_vql_metadata,
+            prepare_photo_vql_for_drive,
+            record_koru_drive_step,
+        )
+
+        observe = prepare_photo_vql_for_drive(ide=ide)
         vql = load_vql_metadata()
         vql_note = ""
         if vql.get("ui_elements"):
@@ -279,6 +281,7 @@ def try_vdisplay_control_fallback(
         reply = send_chat(prompt, ide=ide, submit=submit)
         reply.setdefault("fallback_from", "plugin")
         reply.setdefault("vql_context", vql.get("_source") or "loaded")
+        reply.setdefault("photo_vql_observe", observe)
         if vql_note:
             reply["vql_note"] = vql_note
         # Record to vdisplay session for audit trail (P1)

@@ -1,1 +1,0 @@
-{"actions": [{"action": "click_editor_focus", "

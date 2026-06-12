@@ -99,8 +99,71 @@ def ask_openrouter_for_strategy_patch(
     )
 
 
+def call_openrouter_vision(
+    text_prompt: str,
+    image_data_url: str,  # e.g. "data:image/png;base64,...."
+    *,
+    system_prompt: str = "You are a precise desktop automation agent. Given a screenshot and VQL UI description, decide the best action. Return ONLY valid minified JSON with keys: click_center (dict with int x,y), strategy (short string), confidence (float 0-1), reason (short string).",
+    model: str | None = None,
+    api_key: str | None = None,
+    timeout_seconds: float = 60.0,
+) -> OpenRouterStrategyResponse:
+    """Call OpenRouter with vision (image + text). For models that support image_url content."""
+    key = api_key or os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not key:
+        return OpenRouterStrategyResponse(
+            ok=False,
+            content="",
+            error="OPENROUTER_API_KEY is not set",
+        )
+    if model is None:
+        model = os.environ.get("LLM_MODEL", "google/gemini-flash-1.5")
+    # Normalize: some .env use "openrouter/..." prefix (for registry); OR API expects "provider/model"
+    if isinstance(model, str) and model.startswith("openrouter/"):
+        model = model.split("/", 1)[1]
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": text_prompt},
+                {"type": "image_url", "image_url": {"url": image_data_url}},
+            ],
+        },
+    ]
+    payload = {
+        "model": model,
+        "messages": messages,
+    }
+    req = urllib.request.Request(
+        OPENROUTER_CHAT_COMPLETIONS_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            **get_openrouter_headers(),
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:  # noqa: S310
+            data = json.loads(resp.read().decode("utf-8"))
+    except OSError as exc:
+        return OpenRouterStrategyResponse(ok=False, content="", error=str(exc))
+    try:
+        content = str(data["choices"][0]["message"]["content"])
+    except (KeyError, IndexError, TypeError) as exc:
+        return OpenRouterStrategyResponse(
+            ok=False,
+            content="",
+            error=f"unexpected OpenRouter response: {exc}",
+        )
+    return OpenRouterStrategyResponse(ok=True, content=content)
+
+
 __all__ = [
     "OpenRouterStrategyResponse",
     "ask_openrouter_for_strategy_patch",
     "call_openrouter_json",
+    "call_openrouter_vision",
 ]

@@ -1341,6 +1341,7 @@ sprints:
     task_type: feature
     priority: high
     estimate: 2d
+    status: real execution 2026-06-11 - fresh capture (27 elems VQL) | 2026-06-12T07:41:28 fix: send_chat jetbrains chat now prefers photo+LLM (screenshot analysis for precise input coords + typing). LLM_VISION routes to perform before os_injector/ide map; guard relaxed for chat; LLM refine in focus block; no short-circuit so wpisywanie happens. , photo-vql perform real focus+edit (ydotool-paste) inserted markers in Cursor editor on DP-1 (1024,640 from window_0), post-edit capture + verify append succeeded. autonomy loop (observe fresh VQL -> act at cc) demonstrated live. LLM layer integrated+tested (fallback). See .vdisplay/ analysis and koru-cont-dp1-1781205150.* + post-edit artifacts. | KONTYNUACJA 2026-06-11T21:17:15: In koru workspace w/ latest continue2 28e VQL + .env key: photo paths forced (PREFER=1), perform LLM_used=true (1648/470 chat decision, 1664/480 editor), send_chat photo-vql backend hit, direct vision call succeeded conf0.75. AgentClient ready. Handler examples run. Full loop verified again (dry+LLM). See updated analysis 77 notes + docs.
     files:
     - .vdisplay/2026-06-11-vql-metadata-analysis-previous-current.json
     - .vdisplay/llm-decision-2026-06-11.json
@@ -1348,7 +1349,7 @@ sprints:
     - planfile.yaml
     - docs/autonomy-ide-cursor.md
     handler: |
-      source .env || true; vdisplay agent preflight || true; vdisplay screenshot --source DP-1 -o /tmp/vdisplay-autonomy-$(date +%s).png || true
+      source .env || true; vdisplay agent preflight || true; vdisplay screenshot --source DP-1 -o /tmp/vdisplay-autonomy-$(date +%s).png || true; python -c "from koru.integrations.vdisplay_client import perform_photo_vql_focus_and_edit, load_vql_metadata; print(load_vql_metadata().get('element_count')); perform_photo_vql_focus_and_edit('continue autonomy-vql-llm-001', ide='cursor', is_code_edit=True)" || true
       python -c "
       from koru.integrations.vdisplay_client import load_vql_metadata, vdisplay_available, send_chat
       m = load_vql_metadata()

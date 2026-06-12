@@ -73,6 +73,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.333] - 2026-06-12
+
+### Docs
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/README.md
+- Update README.md
+- Update docs/autonomy-ide-cursor.md
+
+### Test
+- Update testql-scenarios/vdisplay-photo-vql-drive.testql.toon.yaml
+- Update tests/test_photo_vql_drive.py
+- Update tests/test_vdisplay_control_fallback.py
+
+### Other
+- Update .gitignore
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/index.jsonl
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/index.pb
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/projections/backend_scores.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/projections/control_state.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/projections/map_health.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/session.json
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/steps/0001/command.dsl.txt
+- Update .vdisplay/2026-06-10T14-32-42Z__local__cli/steps/0001/diagnostics.json
+- ... and 15 more files
+
 ## [0.1.332] - 2026-06-11
 
 ### Docs

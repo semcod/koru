@@ -1,3 +1,0 @@
-```json
-{
-  "summary_visible_state": "Cursor IDE is active on DP-1 (2048x1280) with the 'vdisplay console' webview tab active, showing a local portal screencast loop. The bottom terminal is in ~/github/sem
