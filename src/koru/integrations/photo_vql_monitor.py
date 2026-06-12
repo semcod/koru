@@ -189,7 +189,42 @@ def resolve_vdisplay_source_for_ide(
     return chosen, _finalize_resolved_probe(probe, preferred=preferred, chosen=chosen, names=names)
 
 
+def format_wayland_vdisplay_operator_hint(*, ide: str) -> str:
+    """Short operator hint for coru auto / bridge (monitor + screencast + prepare)."""
+    monitor: str | None = None
+    try:
+        from koru.integrations.vdisplay_client import _desktop_probe
+
+        probe = _desktop_probe(ide=ide, source=None)
+        best = probe.get("ide_surface_best") if isinstance(probe, dict) else None
+        if isinstance(best, dict):
+            monitor = best.get("monitor_name")  # type: ignore[assignment]
+    except Exception:
+        pass
+    if monitor:
+        mon = f"koru auto-resolves capture to {monitor!r} (IDE surface)"
+    else:
+        mon = "set KORU_VDISPLAY_SOURCE to the monitor where the IDE window lives"
+    port_note = ""
+    try:
+        from koru.integrations.vdisplay_agent_bootstrap import is_koru_dashboard_on_port
+
+        if is_koru_dashboard_on_port(8765):
+            port_note = " (koru dashboard uses :8765 — run vdisplay-agent on :8766)"
+    except ImportError:
+        pass
+    return (
+        f"Wayland vdisplay/photo-VQL: vdisplay-agent serve{port_note}; "
+        "vdisplay agent preflight; "
+        "vdisplay agent screencast start --force (choose All Screens/the IDE monitor); "
+        "vdisplay agent screencast probe --via-agent --source <monitor>; "
+        f"{mon}; koru autopilot prepare-vdisplay --ide {ide}; "
+        "blind OS-injector is blocked unless KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1"
+    )
+
+
 __all__ = [
+    "format_wayland_vdisplay_operator_hint",
     "map_capture_monitor_mismatch",
     "resolve_vdisplay_source_for_ide",
 ]

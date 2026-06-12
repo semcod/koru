@@ -1,33 +1,33 @@
-# code2llm | 955f 153718L | python:681,typescript:93,shell:57,json:40,yaml:31,toml:16,yml:10,kotlin:6,txt:5,proto:4,go:2,md:1,javascript:1,rust:1,properties:1,xml:1 | 2026-06-12
-# generated in 0.71s
-# CC̅=3.7 | critical:37/6653 | dups:0 | cycles:0
+# code2llm | 956f 155810L | python:682,typescript:93,shell:57,json:40,yaml:31,toml:16,yml:10,kotlin:6,txt:5,proto:4,go:2,md:1,javascript:1,rust:1,properties:1,xml:1 | 2026-06-12
+# generated in 1.18s
+# CC̅=3.8 | critical:39/6776 | dups:0 | cycles:0
 
 HEALTH[20]:
   🟡 CC    desktop_uri_handle CC=15 (limit:15)
   🟡 CC    _emit_autopilot_observability_outcome CC=15 (limit:15)
-  🟡 CC    classify_drive_failure_guidance CC=16 (limit:15)
   🟡 CC    _format_entry_details CC=18 (limit:15)
-  🟡 CC    build_user_guidance CC=17 (limit:15)
-  🟡 CC    _monitor_candidate_order CC=16 (limit:15)
-  🟡 CC    vql_sidecar_is_stale CC=21 (limit:15)
-  🟡 CC    act CC=19 (limit:15)
   🟡 CC    _env2llm_lines CC=15 (limit:15)
   🟡 CC    resolve_autopilot_instance CC=20 (limit:15)
-  🟡 CC    run_daemon_command CC=16 (limit:15)
   🟡 CC    shouldProbeInput CC=26 (limit:15)
   🟡 CC    main CC=22 (limit:15)
   🟡 CC    main CC=16 (limit:15)
+  🟡 CC    _drive_via_vdisplay_backend CC=20 (limit:15)
+  🟡 CC    classify_drive_failure_guidance CC=16 (limit:15)
+  🟡 CC    _global_to_capture_local_for_source CC=22 (limit:15)
+  🟡 CC    jetbrains_chat_target_from_surface CC=31 (limit:15)
   🟡 CC    _desktop_probe CC=19 (limit:15)
+  🟡 CC    _apply_surface_capture_confirmation CC=15 (limit:15)
   🟡 CC    _photo_vql_ide_window_warning CC=21 (limit:15)
   🟡 CC    _resolve_photo_png_path_from_vql CC=23 (limit:15)
-  🟡 CC    ensure_vdisplay_ide_control CC=47 (limit:15)
+  🟡 CC    ensure_vdisplay_ide_control CC=54 (limit:15)
   🟡 CC    refresh_photo_vql_sidecar CC=24 (limit:15)
-  🟡 CC    prepare_photo_vql_for_drive CC=45 (limit:15)
+  🟡 CC    prepare_photo_vql_for_drive CC=61 (limit:15)
+  🟡 CC    _normalize_photo_vql_drive_result CC=52 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
 
-PIPELINES[2130]:
+PIPELINES[2142]:
   [1] Src [get_files]: get_files
       PURITY: 100% pure
   [2] Src [main]: main → _main_legacy → _run_results → print
@@ -138,20 +138,20 @@ LAYERS:
   │ app_bootstrap               34L  0C    2m  CC=1      ←0
   │
   src/                            CC̄=4.1    ←in:0  →out:1
-  │ !! vdisplay_client           4690L  0C  126m  CC=89     ←6
+  │ !! vdisplay_client           5493L  0C  155m  CC=70     ←7
   │ !! scan                      1621L  0C   61m  CC=13     ←7
   │ !! autonomous_cycle          1443L  0C   46m  CC=14     ←1
   │ !! install_manager           1311L  1C   57m  CC=14     ←3
   │ !! autonomous_loop_runner    1246L  1C   56m  CC=12     ←2
   │ !! plugin_installer          1207L  3C   58m  CC=13     ←9
   │ !! autonomous                1065L  0C   66m  CC=4      ←3
-  │ !! operator_pipeline         1009L  2C   44m  CC=14     ←0
-  │ !! handlers_drive             996L  0C   25m  CC=14     ←0
-  │ !! autonomous_readiness       983L  3C   44m  CC=12     ←4
+  │ !! operator_pipeline         1046L  2C   46m  CC=14     ←0
+  │ !! handlers_drive            1024L  0C   26m  CC=20     ←0
+  │ !! autonomous_readiness       988L  3C   44m  CC=12     ←4
   │ !! drive_orchestrator         965L  1C   56m  CC=14     ←0
   │ !! ide                        960L  2C   56m  CC=13     ←46
   │ !! ide_reload                 898L  1C   39m  CC=12     ←5
-  │ !! autonomous_startup         873L  3C   41m  CC=11     ←5
+  │ !! autonomous_startup         879L  3C   41m  CC=13     ←5
   │ !! mcp_server_planfile        839L  0C   28m  CC=14     ←1
   │ !! autonomous_cycle_drive_retry   826L  0C   35m  CC=11     ←4
   │ !! context                    822L  0C   31m  CC=12     ←7
@@ -172,6 +172,7 @@ LAYERS:
   │ !! self_control               625L  3C   27m  CC=12     ←2
   │ !! dashboard_routes           607L  0C   35m  CC=9      ←2
   │ !! ide_doctor_cli             595L  0C   24m  CC=11     ←1
+  │ !! photo_vql_target           576L  1C   34m  CC=31     ←1
   │ !! command_catalog            575L  1C    8m  CC=9      ←8
   │ !! install_plugin_cli         575L  0C   23m  CC=12     ←2
   │ !! configurator               552L  3C   29m  CC=12     ←7
@@ -180,6 +181,7 @@ LAYERS:
   │ !! install_checks             520L  1C   22m  CC=10     ←0
   │ !! autonomous_parser          502L  0C   13m  CC=14     ←2
   │ context_render             496L  1C   21m  CC=14     ←5
+  │ photo_vql_validation       493L  0C   31m  CC=13     ←1
   │ command_picker             485L  2C   26m  CC=14     ←1
   │ agent_backend_runtime      484L  10C   21m  CC=9      ←3
   │ shared                     484L  0C   25m  CC=9      ←1
@@ -190,8 +192,7 @@ LAYERS:
   │ drive                      449L  0C   12m  CC=11     ←0
   │ autonomous_cycle_gate      446L  0C   17m  CC=14     ←4
   │ cli_direct_drive           445L  0C   19m  CC=13     ←0
-  │ bridge                     442L  0C   20m  CC=14     ←7
-  │ !! photo_vql_validation       434L  0C   24m  CC=15     ←1
+  │ bridge                     441L  0C   20m  CC=14     ←7
   │ verification_engine        427L  7C   13m  CC=14     ←1
   │ doctor_chat_control        426L  1C   17m  CC=12     ←2
   │ topology                   425L  1C   18m  CC=9      ←9
@@ -199,7 +200,9 @@ LAYERS:
   │ mcp_server_ide             413L  0C   11m  CC=7      ←0
   │ autonomous_cycle_chat_activity_tickets   409L  0C   14m  CC=12     ←1
   │ env                        402L  0C   19m  CC=12     ←8
+  │ !! autonomy_session           397L  0C   29m  CC=15     ←0
   │ handlers_hello             392L  0C   13m  CC=12     ←0
+  │ photo_vql_user_guidance    392L  1C   30m  CC=9      ←1
   │ queue_clean                391L  2C   13m  CC=14     ←1
   │ command_scenario           390L  2C   19m  CC=8      ←4
   │ cli_cleaned                390L  0C   24m  CC=11     ←1
@@ -208,6 +211,7 @@ LAYERS:
   │ autonomous_cycle_post_drive   385L  0C   14m  CC=8      ←0
   │ portal_screencast          383L  1C    7m  CC=10     ←0
   │ post_run_verify            381L  2C   16m  CC=14     ←3
+  │ photo_vql_drive            378L  1C   23m  CC=10     ←0
   │ local_service              376L  1C   15m  CC=10     ←1
   │ env2llm_registry           375L  0C   14m  CC=10     ←4
   │ autonomous_operator        368L  0C   20m  CC=8      ←1
@@ -216,10 +220,10 @@ LAYERS:
   │ gc                         364L  2C   13m  CC=11     ←1
   │ server                     358L  1C   16m  CC=8      ←0
   │ calibration_validator      356L  0C   12m  CC=13     ←1
+  │ photo_vql_llm_detect       356L  0C   20m  CC=11     ←1
   │ autonomous_processes       355L  3C   16m  CC=11     ←3
   │ agents                     354L  1C   17m  CC=14     ←5
   │ cli_command                352L  0C   22m  CC=6      ←0
-  │ photo_vql_target           347L  1C   26m  CC=13     ←1
   │ tree                       342L  5C   19m  CC=10     ←4
   │ imgl_client                339L  0C   17m  CC=14     ←6
   │ init_host_environment      337L  0C   18m  CC=14     ←1
@@ -229,9 +233,9 @@ LAYERS:
   │ dashboard_projects         334L  0C   20m  CC=10     ←2
   │ calibrate_cli              331L  0C   10m  CC=12     ←0
   │ activity_log               329L  0C   14m  CC=10     ←24
-  │ !! photo_vql_llm_detect       329L  0C   14m  CC=15     ←1
   │ lifecycle                  328L  2C   16m  CC=10     ←1
   │ control_commands           325L  0C   13m  CC=12     ←7
+  │ autonomous_drive_retry_policy   324L  0C   10m  CC=13     ←1
   │ dashboard_tickets          322L  2C   17m  CC=10     ←1
   │ ticket_evidence            322L  3C   17m  CC=9      ←1
   │ doctor_autopilot_debug     317L  1C   13m  CC=10     ←0
@@ -251,21 +255,18 @@ LAYERS:
   │ local_manager_state        292L  4C   21m  CC=14     ←0
   │ wizard.js                  292L  0C   38m  CC=13     ←103
   │ queue_cli_helpers          290L  0C   10m  CC=9      ←1
-  │ !! photo_vql_user_guidance    288L  1C   15m  CC=17     ←1
   │ autonomous_daemon          287L  0C   10m  CC=10     ←3
   │ autonomous_plugin          287L  0C   19m  CC=12     ←4
   │ runners                    286L  0C   12m  CC=12     ←2
   │ mcp_server_desktop_uri     282L  0C    9m  CC=1      ←0
   │ agent_backends             282L  3C   11m  CC=11     ←3
   │ doctor_autopilot_checks    281L  0C   22m  CC=13     ←1
-  │ autonomous_drive_retry_policy   281L  0C    9m  CC=13     ←1
   │ cli_parser                 281L  0C    8m  CC=2      ←0
   │ cli_main                   281L  0C    6m  CC=14     ←0
   │ plugin_router              278L  3C   18m  CC=13     ←0
   │ git_cli                    274L  0C   20m  CC=9      ←0
   │ environment_profile        271L  5C   11m  CC=9      ←4
   │ autonomous_process_guard   271L  3C   16m  CC=10     ←1
-  │ !! autonomy_session           268L  0C   12m  CC=21     ←0
   │ browser_getdisplay         266L  1C   14m  CC=8      ←2
   │ integrations               264L  1C    2m  CC=4      ←4
   │ policy                     262L  1C   10m  CC=9      ←3
@@ -284,30 +285,33 @@ LAYERS:
   │ decision_arbiter           241L  2C    9m  CC=9      ←1
   │ ide_install                241L  1C    6m  CC=9      ←1
   │ dashboard_serve            240L  1C   10m  CC=6      ←1
+  │ !! photo_vql_guard            238L  1C    9m  CC=21     ←0
   │ doctor_constants           237L  1C    0m  CC=0.0    ←0
   │ planning_llm               235L  0C    7m  CC=5      ←0
   │ autonomous_up              234L  2C    5m  CC=7      ←0
+  │ vdisplay_agent_bootstrap   233L  0C   13m  CC=14     ←3
   │ cli                        232L  0C   12m  CC=12     ←0
   │ mcp_server_env2llm         231L  0C   10m  CC=3      ←1
   │ obs_websocket              231L  1C   15m  CC=11     ←1
   │ interface_registry         230L  3C   14m  CC=9      ←7
+  │ !! photo_vql_monitor          230L  0C    6m  CC=16     ←4
   │ dev_sync                   229L  1C    9m  CC=11     ←0
   │ autonomous_onboarding      227L  1C   10m  CC=10     ←0
   │ gillm_recovery             227L  0C    3m  CC=2      ←4
+  │ ide_client                 224L  2C   13m  CC=13     ←1
   │ planning_llm_prompts       222L  0C    6m  CC=8      ←1
   │ status                     221L  0C    8m  CC=12     ←0
   │ event_store                220L  4C   17m  CC=10     ←3
+  │ autonomous_plugin_runtime   218L  0C   11m  CC=11     ←2
   │ autonomous_checkpoint      217L  0C   11m  CC=9      ←4
   │ ide                        216L  1C    6m  CC=10     ←1
   │ task_intake                214L  3C   13m  CC=4      ←1
   │ scan_ticket_emission       211L  0C    6m  CC=11     ←1
   │ command_telemetry          210L  1C   11m  CC=13     ←0
-  │ ide_client                 210L  2C   12m  CC=12     ←1
   │ library                    207L  0C   19m  CC=9      ←1
-  │ autonomous_plugin_runtime   203L  0C   10m  CC=11     ←2
   │ gate                       202L  1C    5m  CC=12     ←1
+  │ !! ide_operator_guidance      198L  0C    8m  CC=16     ←6
   │ cli_topology               196L  0C    9m  CC=5      ←0
-  │ !! ide_operator_guidance      196L  0C    8m  CC=16     ←5
   │ templates                  194L  1C   12m  CC=9      ←1
   │ runtime_insights           192L  0C    7m  CC=9      ←1
   │ handlers_plugin_event      191L  1C    9m  CC=7      ←0
@@ -315,18 +319,16 @@ LAYERS:
   │ server                     190L  1C    8m  CC=9      ←1
   │ scan_dedupe_policy         190L  0C    8m  CC=13     ←1
   │ models                     190L  2C    6m  CC=8      ←0
-  │ !! photo_vql_drive            189L  1C    6m  CC=19     ←0
   │ redup_integration          188L  0C   10m  CC=3      ←2
   │ drive_result               185L  1C    8m  CC=12     ←0
-  │ photo_vql_guard            185L  1C    7m  CC=14     ←0
   │ openapi                    183L  0C    1m  CC=2      ←1
   │ cli_task                   183L  0C    5m  CC=11     ←0
   │ diagnostics                175L  0C    8m  CC=8      ←3
   │ events                     174L  1C   11m  CC=7      ←1
   │ llm_reflect                173L  1C    5m  CC=8      ←2
   │ cli                        173L  0C    5m  CC=2      ←6
+  │ !! daemon_cli                 172L  0C    7m  CC=16     ←0
   │ queue_phase                170L  0C    6m  CC=11     ←0
-  │ !! daemon_cli                 170L  0C    7m  CC=16     ←0
   │ openrouter                 169L  1C    3m  CC=8      ←4
   │ autonomous_cli_config      168L  0C   11m  CC=10     ←0
   │ chat_history               166L  1C    6m  CC=13     ←2
@@ -373,7 +375,6 @@ LAYERS:
   │ run_log                    123L  1C    7m  CC=4      ←1
   │ autonomous_submit_strategy   122L  0C    7m  CC=11     ←3
   │ observability_events       122L  0C   10m  CC=3      ←5
-  │ !! photo_vql_monitor          122L  0C    3m  CC=16     ←0
   │ cli_events                 121L  0C    3m  CC=7      ←0
   │ application                120L  2C    4m  CC=12     ←0
   │ prompters                  120L  2C    9m  CC=11     ←0
@@ -390,7 +391,7 @@ LAYERS:
   │ cli_gate                   116L  0C    2m  CC=5      ←0
   │ task_dedupe                116L  0C   10m  CC=12     ←1
   │ heal                       116L  1C    3m  CC=5      ←1
-  │ drive_repair_policy        116L  1C    4m  CC=6      ←3
+  │ drive_repair_policy        116L  1C    4m  CC=6      ←4
   │ loop                       115L  0C    1m  CC=14     ←4
   │ replay_handlers            113L  2C    5m  CC=3      ←0
   │ session                    112L  2C    8m  CC=4      ←0
@@ -523,6 +524,7 @@ LAYERS:
   │ registry                    54L  0C    4m  CC=3      ←2
   │ cli_local_serve             53L  0C    2m  CC=1      ←0
   │ cli_ide_router              53L  0C    1m  CC=3      ←0
+  │ autonomous_vdisplay_defaults    53L  0C    2m  CC=8      ←5
   │ replay_actions              53L  0C    0m  CC=0.0    ←0
   │ mcp_server_transport        52L  0C    3m  CC=7      ←1
   │ scaling                     52L  0C    3m  CC=6      ←5
@@ -544,7 +546,6 @@ LAYERS:
   │ protocol                    48L  0C    0m  CC=0.0    ←0
   │ __init__                    47L  0C    0m  CC=0.0    ←0
   │ plugin_version              46L  0C    1m  CC=2      ←2
-  │ autonomous_vdisplay_defaults    46L  0C    2m  CC=5      ←5
   │ refactor_planfile_handoff    46L  0C    1m  CC=6      ←1
   │ __init__                    46L  3C    0m  CC=0.0    ←0
   │ cli_tools                   45L  1C    5m  CC=3      ←0
@@ -910,7 +911,7 @@ LAYERS:
   │ probe-ladder.test.ts       315L  0C   38m  CC=5      ←0
   │ KoruAutopilotService.kt    264L  1C    6m  CC=0.0    ←0
   │ ack-payload.ts             260L  0C   31m  CC=12     ←3
-  │ bridge-focus-core.ts       239L  1C   33m  CC=5      ←23
+  │ bridge-focus-core.ts       239L  1C   33m  CC=5      ←24
   │ package.json               213L  0C    0m  CC=0.0    ←0
   │ package.json               202L  0C    0m  CC=0.0    ←0
   │ autopilot-bridge.ts        200L  1C   20m  CC=8      ←7
@@ -1120,13 +1121,13 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        project                    src.koruide                  packages.coru                    src.koruapi              packages.dsl2koru  plugins.koru-autopilot-shared                        scripts                 src.koruvision                src.koruobserve                           koru              packages.dsl2coru              packages.nlp2coru                   src.korumesh              packages.uri2coru
-                       src.koru                             ──                            505                            198                              2                             15                              3                             47                             ←1                             20                             10                             25                             ←3                             23                             ←2                             ←1  hub
-                        project                           ←505                             ──                            ←26                           ←183                            ←17                            ←11                                                           ←74                            ←12                            ←22                             ←7                            ←11                             ←6                             ←7                             ←6  hub
-                    src.koruide                             40                             26                             ──                             ←6                            ←27                                                             9                                                                                            1                              7                                                                                                                              hub
+                       src.koru                             ──                            512                            198                              2                             15                              3                             52                             ←1                             20                             10                             25                             ←3                             23                             ←2                             ←1  hub
+                        project                           ←512                             ──                            ←26                           ←183                            ←17                            ←11                                                           ←74                            ←12                            ←22                             ←7                            ←11                             ←6                             ←7                             ←6  hub
+                    src.koruide                             41                             26                             ──                             ←6                            ←27                                                             9                                                                                            1                              7                                                                                                                              hub
                   packages.coru                             34                            183                              6                             ──                                                             3                              3                                                            ←1                                                                                                                           4                                                                hub
                     src.koruapi                             97                             17                             27                                                            ──                                                            13                             ←1                              2                                                             3                                                                                            3                                 hub
               packages.dsl2koru                             ←3                             11                                                             1                                                            ──                                                                                                                                                                                       ←34                             ←2                                                             1  hub
-  plugins.koru-autopilot-shared                            ←47                                                            ←9                             ←3                            ←13                                                            ──                                                            ←2                                                                                                                                                         ←2                                 hub
+  plugins.koru-autopilot-shared                            ←52                                                            ←9                             ←3                            ←13                                                            ──                                                            ←2                                                                                                                                                         ←2                                 hub
                         scripts                              1                             74                                                                                            1                                                                                           ──                                                                                                                                                                                                                           !! fan-out
                  src.koruvision                              5                             12                                                             1                             ←2                                                             2                                                            ──                              1                                                                                                                           8                                 hub
                 src.koruobserve                              7                             22                             ←1                                                                                                                                                                                         7                             ──                              1                                                                                            1                                 hub
@@ -1136,41 +1137,41 @@ COUPLING:
                    src.korumesh                              2                              7                                                                                           ←3                                                             2                                                             2                              1                                                                                                                          ──                                 hub
               packages.uri2coru                              1                              6                                                                                                                           1                                                                                                                                                                                                                       ←1                                                            ──  hub
   CYCLES: none
-  HUB: src.koruvision/ (fan-in=35)
-  HUB: packages.mcp2coru/ (fan-in=6)
-  HUB: src.koruapi/ (fan-in=16)
-  HUB: packages.nlp2coru/ (fan-in=31)
-  HUB: packages.nlpshim/ (fan-in=6)
-  HUB: src.koru/ (fan-in=212)
-  HUB: src.koruobserve/ (fan-in=14)
-  HUB: packages.coru/ (fan-in=5)
-  HUB: project/ (fan-in=932)
-  HUB: koru/ (fan-in=36)
-  HUB: packages.uri2coru/ (fan-in=11)
-  HUB: src.korumesh/ (fan-in=12)
-  HUB: plugins.koru-autopilot-shared/ (fan-in=80)
-  HUB: packages.koruenv/ (fan-in=9)
   HUB: src.koruide/ (fan-in=231)
+  HUB: src.koruvision/ (fan-in=35)
+  HUB: packages.uri2coru/ (fan-in=11)
+  HUB: plugins.koru-autopilot-shared/ (fan-in=85)
+  HUB: packages.coru/ (fan-in=5)
+  HUB: src.koruapi/ (fan-in=16)
+  HUB: koru/ (fan-in=36)
+  HUB: project/ (fan-in=939)
   HUB: src.imgl/ (fan-in=5)
+  HUB: src.koruobserve/ (fan-in=14)
+  HUB: packages.koruenv/ (fan-in=9)
+  HUB: packages.nlp2coru/ (fan-in=31)
+  HUB: packages.mcp2coru/ (fan-in=6)
   HUB: packages.dsl2koru/ (fan-in=71)
-  SMELL: src.koruvision/ fan-out=29 → split needed
-  SMELL: src.koruapi/ fan-out=169 → split needed
-  SMELL: scripts/ fan-out=76 → split needed
-  SMELL: packages.dsl2coru/ fan-out=48 → split needed
-  SMELL: packages.nlp2coru/ fan-out=10 → split needed
-  SMELL: src.koru/ fan-out=865 → split needed
-  SMELL: src.koruobserve/ fan-out=38 → split needed
-  SMELL: packages.cli2koru/ fan-out=11 → split needed
-  SMELL: packages.coru/ fan-out=236 → split needed
-  SMELL: packages.nlp2koru/ fan-out=17 → split needed
-  SMELL: koru/ fan-out=15 → split needed
-  SMELL: packages.cli2coru/ fan-out=12 → split needed
-  SMELL: packages.uri2coru/ fan-out=8 → split needed
+  HUB: packages.nlpshim/ (fan-in=6)
+  HUB: src.korumesh/ (fan-in=12)
+  HUB: src.koru/ (fan-in=213)
   SMELL: packages.uri2koru/ fan-out=16 → split needed
-  SMELL: src.korumesh/ fan-out=14 → split needed
-  SMELL: examples/ fan-out=12 → split needed
-  SMELL: src.koruide/ fan-out=88 → split needed
+  SMELL: src.koruide/ fan-out=89 → split needed
+  SMELL: packages.cli2koru/ fan-out=11 → split needed
+  SMELL: src.koruvision/ fan-out=29 → split needed
+  SMELL: packages.uri2coru/ fan-out=8 → split needed
+  SMELL: packages.coru/ fan-out=236 → split needed
+  SMELL: src.koruapi/ fan-out=169 → split needed
+  SMELL: koru/ fan-out=15 → split needed
+  SMELL: packages.dsl2coru/ fan-out=48 → split needed
+  SMELL: src.koruobserve/ fan-out=38 → split needed
+  SMELL: packages.nlp2koru/ fan-out=17 → split needed
+  SMELL: packages.cli2coru/ fan-out=12 → split needed
+  SMELL: packages.nlp2coru/ fan-out=10 → split needed
   SMELL: packages.dsl2koru/ fan-out=19 → split needed
+  SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: scripts/ fan-out=76 → split needed
+  SMELL: examples/ fan-out=12 → split needed
+  SMELL: src.koru/ fan-out=877 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

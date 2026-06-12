@@ -145,6 +145,32 @@ def _warn_autopilot_submit_retry(
     print("\033[0m")  # reset colors
 
 
+def _warn_autopilot_semantic_required(reply: dict[str, Any] | None = None) -> None:
+    import sys
+
+    from koru.autonomy.ide_operator_guidance import (
+        classify_drive_failure_guidance,
+        emit_operator_guidance,
+    )
+
+    guidance = classify_drive_failure_guidance(reply or {}, ide="jetbrains") or []
+    if guidance:
+        emit_operator_guidance(
+            guidance,
+            title="Operator — verified vdisplay/photo-VQL required",
+            stream=sys.stdout,
+        )
+    print("\033[1;33m")  # bold yellow
+    print("================================================================================")
+    print("[AUTOPILOT SEMANTIC TARGET REQUIRED] Not retrying blind JetBrains/Wayland drive.")
+    if reply:
+        for line in _format_autopilot_failure_details(reply):
+            print(line)
+    print("Fix vdisplay/photo-VQL capture first; Koru will not retry as a chat-focus error.")
+    print("================================================================================")
+    print("\033[0m")  # reset colors
+
+
 def _drive_retry_decision(
     reply: dict[str, Any],
     attempt: int,
@@ -152,6 +178,21 @@ def _drive_retry_decision(
     *,
     engine: EnvironmentDecisionEngine | None = None,
 ) -> DriveRetryDecision:
+    from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
+
+    if daemon_reply_blocks_direct_fallback(reply):
+        from korullm import DriveFailureAssessment
+
+        return DriveRetryDecision(
+            assessment=DriveFailureAssessment(
+                kind="semantic_required",
+                failure_signature=str(reply.get("backend") or "semantic_required"),
+                detail=str(reply.get("message") or "verified semantic target required"),
+                warn_banner="semantic_required",
+            ),
+            should_retry=False,
+            should_warn="semantic_required",
+        )
     if engine is not None:
         return engine.assess_drive_failure(
             reply,
@@ -220,6 +261,8 @@ def _handle_failed_drive_attempt(
     if not retry_decision.should_retry:
         if retry_decision.should_warn == "manual_focus":
             _warn_autopilot_manual_focus_required(reply)
+        elif retry_decision.should_warn == "semantic_required":
+            _warn_autopilot_semantic_required(reply)
         return False
     banner = retry_decision.should_warn
     if banner == "submit":

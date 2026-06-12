@@ -230,13 +230,12 @@ def _add_unsupported_ide_hypothesis(status: BridgeStatus) -> None:
     strategy = get_strategy(status.ide)
     if strategy is not None and strategy.keyboard.keyboard_fallback_default:
         if _wayland_session() and status.ide in {"jetbrains", "pycharm", "idea"}:
-            summary = (
-                "Na Waylandzie preferuj vdisplay/photo-VQL (KORU_VDISPLAY_CONTROL_FALLBACK=1, "
-                "KORU_VDISPLAY_SOURCE=DP-1); OS injector tylko jako ostatni fallback"
-            )
+            from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
+
+            summary = format_wayland_vdisplay_operator_hint(ide=status.ide)
             evidence = (
-                f"{strategy.label} nie używa pluginu VS Code — na Waylandzie drive idzie "
-                f"vdisplay → imgl → OS-injector dla ide={status.ide}"
+                f"{strategy.label} nie używa pluginu VS Code — na Waylandzie drive musi przejść "
+                f"vdisplay/photo-VQL lub imgl; ślepy OS-injector jest blokowany dla ide={status.ide}"
             )
         else:
             summary = "Skalibruj OS injector i steruj przez keyboard fallback"

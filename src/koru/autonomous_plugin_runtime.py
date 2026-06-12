@@ -151,9 +151,16 @@ def report_unsupported_plugin_result(
     emit_fmt: str,
     stdio_info: Any,
 ) -> bool:
+    if _semantic_wayland_ide(autopilot_ide):
+        lane_detail = (
+            "na Waylandzie wymagane jest vdisplay/photo-VQL z potwierdzonym targetem; "
+            "ślepy keyboard/OS-injector jest blokowany"
+        )
+    else:
+        lane_detail = "using keyboard/OS-injector path"
     stdio_info(
         "koru autonomous: autopilot plugin unsupported for "
-        f"ide={autopilot_ide}; using keyboard/OS-injector path",
+        f"ide={autopilot_ide}; {lane_detail}",
         fmt=emit_fmt,
     )
 
@@ -171,6 +178,14 @@ def report_unsupported_plugin_result(
             fmt=emit_fmt,
         )
     return False
+
+
+def _semantic_wayland_ide(ide: str) -> bool:
+    session_wayland = bool(
+        os.environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
+        or os.environ.get("WAYLAND_DISPLAY", "").strip()
+    )
+    return session_wayland and str(ide).strip().lower() in {"jetbrains", "pycharm", "idea"}
 
 
 def emit_reload_required_lines(

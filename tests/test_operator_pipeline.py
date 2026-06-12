@@ -117,6 +117,39 @@ def test_build_operator_steps_skips_plugin_for_jetbrains(
     assert plugin.status == "skipped"
     assert plugin.task_command is None
     assert "plugin niedostępny" in plugin.detail
+    assert "vdisplay/photo-VQL" in plugin.detail
+
+
+def test_build_operator_steps_skips_os_calibration_for_jetbrains_wayland(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    jetbrains_probe = replace(
+        probe,
+        resolved_lane="jetbrains",
+        resolved_autopilot_ide="jetbrains",
+        terminal_lane="jetbrains",
+        session="wayland",
+    )
+    profile_checks: list[str] = []
+    monkeypatch.setattr(
+        op,
+        "_os_profile_ok",
+        lambda ide, _project: profile_checks.append(ide) or (True, "profile ok"),
+    )
+
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=jetbrains_probe,
+        plugin_connected=False,
+    )
+    os_step = next(s for s in steps if s.step_id == "os_calibrate")
+
+    assert os_step.status == "skipped"
+    assert os_step.task_command is None
+    assert "vdisplay/photo-VQL" in os_step.detail
+    assert profile_checks == []
 
 
 def test_build_operator_steps_plugin_probe_uses_resolved_ide(

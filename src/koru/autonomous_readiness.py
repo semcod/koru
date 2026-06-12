@@ -86,19 +86,24 @@ def _project_venv_koru(project: Path) -> Path | None:
     return None
 
 
-def _resolve_path(path: str | Path) -> str:
-    try:
-        return str(Path(path).expanduser().resolve())
-    except OSError:
-        return str(path)
-
-
 def _safe_path_for_compare(path: str | Path) -> Path:
     raw = os.fspath(path)
     try:
         return Path(raw).expanduser().resolve()
     except Exception:
         return Path(os.path.abspath(os.path.expanduser(raw)))
+
+
+def _python_executables_equivalent(left: str | Path, right: str | Path) -> bool:
+    left_path = _safe_path_for_compare(left)
+    right_path = _safe_path_for_compare(right)
+    if left_path == right_path:
+        return True
+    return (
+        left_path.parent == right_path.parent
+        and left_path.name in {"python", "python3"}
+        and right_path.name in {"python", "python3"}
+    )
 
 
 def _runtime_issue_severity(strict: bool) -> Severity:
@@ -320,7 +325,7 @@ def _check_daemon_meta_project_python_issues(
         except OSError:
             pass
     meta_py = str(meta.get("python_executable") or "").strip()
-    if meta_py and _resolve_path(meta_py) != _resolve_path(sys.executable):
+    if meta_py and not _python_executables_equivalent(meta_py, sys.executable):
         issues.append(
             ReadinessIssue(
                 code="daemon_python_mismatch",

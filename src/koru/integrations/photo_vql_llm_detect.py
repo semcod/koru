@@ -123,24 +123,32 @@ def _build_detection_prompt(
         "capture_title": capture_title or "",
         "vql_candidates": _candidate_excerpt(candidates),
         "calibrated_map_hint": _map_hint_excerpt(map_hint),
-        "rules": [
-            "Return should_act=false if the requested IDE is not the foreground window.",
-            "Return should_act=false if the best target is a terminal or shell.",
-            "Prefer the visible chat text box. If only the chat panel is visible, choose a safe point inside the chat input area.",
-            "Use screenshot-local coordinates, not global monitor coordinates.",
-            "Use the calibrated_map_hint only as a hint, never as proof that the chat is visible.",
-        ],
-        "schema": {
-            "should_act": "boolean",
-            "target_type": "chat_input|chat_panel|wrong_window|unknown",
-            "click_center": {"x": "integer", "y": "integer"},
-            "bounds": {"x": "integer", "y": "integer", "w": "integer", "h": "integer"},
-            "confidence": "number 0..1",
-            "window_title_seen": "string",
-            "reason": "short string",
-        },
+        "rules": _detection_rules(),
+        "schema": _detection_schema(),
     }
     return json.dumps(payload, ensure_ascii=True, separators=(",", ":"))
+
+
+def _detection_rules() -> list[str]:
+    return [
+        "Return should_act=false if the requested IDE is not the foreground window.",
+        "Return should_act=false if the best target is a terminal or shell.",
+        "Prefer the visible chat text box. If only the chat panel is visible, choose a safe point inside the chat input area.",
+        "Use screenshot-local coordinates, not global monitor coordinates.",
+        "Use the calibrated_map_hint only as a hint, never as proof that the chat is visible.",
+    ]
+
+
+def _detection_schema() -> dict[str, Any]:
+    return {
+        "should_act": "boolean",
+        "target_type": "chat_input|chat_panel|wrong_window|unknown",
+        "click_center": {"x": "integer", "y": "integer"},
+        "bounds": {"x": "integer", "y": "integer", "w": "integer", "h": "integer"},
+        "confidence": "number 0..1",
+        "window_title_seen": "string",
+        "reason": "short string",
+    }
 
 
 def _image_data_url(image_path: str) -> str | None:
@@ -181,19 +189,14 @@ def _target_from_decision(
     source: str,
     map_hint: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    if decision.get("should_act") is not True:
+    target_type = _decision_target_type(decision)
+    if target_type is None:
         return None
-    target_type = str(decision.get("target_type") or "").strip().lower()
-    if target_type not in {"chat_input", "chat_panel"}:
+    confidence = _decision_confidence(decision)
+    if confidence < _min_detection_confidence():
         return None
-    confidence = _float(decision.get("confidence"), default=0.0)
-    min_conf = _float(os.environ.get("KORU_VDISPLAY_LLM_CHAT_DETECT_MIN_CONFIDENCE"), default=0.70)
-    if confidence < min_conf:
-        return None
-    cc = decision.get("click_center") if isinstance(decision.get("click_center"), dict) else {}
-    x = _int(cc.get("x"))
-    y = _int(cc.get("y"))
-    if x is None or y is None or x < 0 or y < 0:
+    click_center = _decision_click_center(decision)
+    if click_center is None:
         return None
     bounds = decision.get("bounds") if isinstance(decision.get("bounds"), dict) else None
     out: dict[str, Any] = {
@@ -201,8 +204,8 @@ def _target_from_decision(
         "role": "input" if target_type == "chat_input" else "panel",
         "label": "LLM detected IDE chat target",
         "click_center": {
-            "x": x,
-            "y": y,
+            "x": click_center["x"],
+            "y": click_center["y"],
             "note": str(decision.get("reason") or "OpenRouter vision chat detection")[:160],
         },
         "source": image_path,
@@ -219,6 +222,30 @@ def _target_from_decision(
         out["map_hint"] = map_hint
     out["vql_source"] = source
     return out
+
+
+def _decision_target_type(decision: dict[str, Any]) -> str | None:
+    if decision.get("should_act") is not True:
+        return None
+    target_type = str(decision.get("target_type") or "").strip().lower()
+    return target_type if target_type in {"chat_input", "chat_panel"} else None
+
+
+def _decision_confidence(decision: dict[str, Any]) -> float:
+    return _float(decision.get("confidence"), default=0.0)
+
+
+def _min_detection_confidence() -> float:
+    return _float(os.environ.get("KORU_VDISPLAY_LLM_CHAT_DETECT_MIN_CONFIDENCE"), default=0.70)
+
+
+def _decision_click_center(decision: dict[str, Any]) -> dict[str, int] | None:
+    cc = decision.get("click_center") if isinstance(decision.get("click_center"), dict) else {}
+    x = _int(cc.get("x"))
+    y = _int(cc.get("y"))
+    if x is None or y is None or x < 0 or y < 0:
+        return None
+    return {"x": x, "y": y}
 
 
 def _normalize_llm_target(

@@ -23,7 +23,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.337`
+- **version**: `0.1.339`
 - **python_requires**: `>=3.12,<3.14`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/deep/deep-v4-pro`
@@ -43,7 +43,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.337;
+  version: 0.1.339;
 }
 
 dependencies {
@@ -1039,7 +1039,7 @@ tests {
 }
 
 env_vars {
-  keys: OPENROUTER_API_KEY, LLM_MODEL, KORU_LLM_NEEDS_INPUT_HEURISTIC, PFIX_AUTO_APPLY, PFIX_AUTO_INSTALL_DEPS, PFIX_AUTO_RESTART, PFIX_MAX_RETRIES, PFIX_DRY_RUN, PFIX_ENABLED, PFIX_GIT_COMMIT, PFIX_GIT_PREFIX, PFIX_CREATE_BACKUPS, OLLAMA_API_URL, OLLAMA_LLM_MODEL, KORU_FORCE_OLLAMA, KORU_VISION_INTERVAL, KORU_VISION_INTERVAL_MIN, KORU_VISION_PROVIDER, KORU_OBS_URL, KORU_OBS_PASSWORD, KORU_OBS_SOURCE, KORU_OBS_IMAGE_WIDTH, KORU_VISION_SCALE, KORU_VISION_PREFER_PORTAL, KORU_PORTAL_PYTHON, KORU_OBSERVE_PYTHON, KORU_MESH_FRAME_STORE, KORU_AGENT_LANE, KORU_PLANFILE_CMD, KORU_VDISPLAY_CONTROL_FALLBACK, KORU_VDISPLAY_SOURCE, KORU_VDISPLAY_LLM_VISION_DECISION, WAYLAND_DISPLAY, DISPLAY, XDG_SESSION_TYPE, ENV2LLM_PROJECT_DIR, KORU_PROJECT_ROOT, ENV2LLM_DESKTOP_PROBE, KORU_SERVE_NO_REPLACE, KORU_SERVE_WORKSPACE, NLP2CMD_INTEGRATION, KORU_PORTAL_CAPTURE, NLP2URI_CAPTURE_DIR, KORU_IMGL_STALE_BLOCK, KORU_IMGL_DIAG_BLOCK, XDG_RUNTIME_DIR, KORU_STRICT_PLUGIN_ACK, KORU_STRICT_PLUGIN_VERSION, KORU_PLUGIN_VERSION_POLICY, KORU_LLM_PICKER, KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS, PYTEST_CURRENT_TEST, CURSOR_AGENT, CURSOR_CLI, TERM_PROGRAM_VERSION, WINDSURF_CASCADE_TERMINAL, GIO_LAUNCHED_DESKTOP_FILE, TERMINAL_EMULATOR, IDEA_INITIAL_DIRECTORY, PYCHARM_HOSTED, JETBRAINS_IDE, VSCODE_PID, WINDSURF_VERSION, WINDSURF_CSRF_TOKEN, CHROME_DESKTOP, TERM_PROGRAM, KORU_AUTOPILOT_IDE, XDG_CONFIG_HOME, KORU_COMMAND_CATALOG, KORU_COMMAND_PICKER, KORU_AUTOPILOT_INSTANCE, KORU_AUTOPILOT_SOCKET, LOCALAPPDATA, TEMP, XDG_STATE_HOME, KORU_AUTOPILOT_VSIX, KORU_AUTOPILOT_REASSERT_INSTALL, KORU_AUTOPILOT_FORCE_REASSERT_INSTALL, KORU_AUTOPILOT_BUILD_LOCAL_VSIX, PATH, KORU_OPERATOR_AUTOSTART_MCP, KORU_PLUGIN_DEBUG_LOG, KORU_SUBMIT_UNVERIFIED_ALT_ATTEMPTS, KORU_AUTO_SKIP_WIZARD, KORU_OBSERVABILITY_TERMINAL, KORU_OBSERVABILITY_DSL_LOG, KORU_DOCTOR_PYTEST_TIMEOUT, VIRTUAL_ENV, KORU_IDE_BACKEND, KORU_TOOL_REGISTRY, CI, GITHUB_ACTIONS, KORU_LOCAL_SERVICE_HOST, KORU_EVENTS_URL, KORU_PLANFILE_API_URL, NO_COLOR, CLICOLOR_FORCE, KORU_OPERATOR_AUTOSTART_ENVMAP, KORU_QUEUE_UNBLOCK, XDG_CURRENT_DESKTOP, KORU_AUTOPILOT_RELOAD_RETRY_WAIT_SECONDS, KORU_SCAN_PATHS, KORU_SCAN_SEMCOD_ARTIFACTS, KORU_INCLUDE_FIXTURES, KORU_LOCAL_MANAGER_URL, KORU_LOCAL_SERVICE_URL, KORU_LOCAL_MANAGER_ENABLED, KORU_LOCAL_SERVICE_PORT, KORU_IDE_CONSOLE_LOG_DIR, KORU_ACTIVITY_LOG, KORU_NFO_LOG_PATH, KORU_NFO_LOG, KORU_FORCE_COLOR, KORU_COLOR, KORU_DOCTOR_CONSOLE_LOG_LINES, ANTIGRAVITY_AGENT, KORU_LLM_REFLECT, KORU_INTEGRATION_LEDGER_PATH, KORU_STDIO_FORMAT, KORU_PLANNING_LLM, KORU_AUTOPILOT_DRIVE_MAX_RETRIES, KORU_CLI_REEXECED, KORU_WUP_COMPOSE_HEALTH_TIMEOUT, KORU_WUP_COMPOSE_PROFILES, KORU_TILLM_CLIENT, KORU_TILLM_DRY_RUN, KORU_OS_INJECTOR_PROFILE, KORU_OS_INJECTOR_CONFIG, KORU_NLP2URI_DRY_RUN, KORU_IMGL_DRY_RUN, KORU_VDISPLAY_DRY_RUN, KORU_AUTO_PIPELINE, KORU_AUTONOMOUS_REEXECED, KORU_CLI_SYNC_DONE, KORU_READINESS_STRICT, KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS, KORU_AUTOPILOT_OS_INJECTOR_COOLDOWN_SECONDS, KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS, KORU_LLM_REFLECTION_SUMMARY_MAX_AGE_SECONDS, KORU_LLM_NEEDS_INPUT_TICKET, KORU_LLM_NEEDS_INPUT_TICKET_QUEUE, KORU_LLM_NEEDS_INPUT_TICKET_PRIORITY, KORU_AUTOPILOT_CHAT_INTAKE_TICKET, KORU_AUTOPILOT_AUTO_LLM_READY, KORU_AUTO_INSTALL_DEPS, KORU_NLP2URI_DESKTOP_FALLBACK, KORU_OS_INJECTOR_DRY_RUN, KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK, KORU_AUTONOMOUS_SCAN_WHILE_WAITING, KORU_PLANNING_LLM_MODEL, KORU_PLANNING_LLM_TIMEOUT, KORU_PLANFILE_HEALTH_URL, KORU_OPERATOR_AUTOSTART_SERVER, KORU_SELF_CONTROL_AUTOREPAIR, KORU_TEST_REAL_SELF_CONTROL, KORU_INPROGRESS_STALE_MINUTES, TICKET_SOURCES, IDLE_DIAGNOSTICS_PROFILE, WUP_MODE, KORU_AUTOPILOT_GILLM_FALLBACK, KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN, KORU_AUTOPILOT_ALLOW_CROSS_IDE, KORU_LLM_ENDPOINT, OPENAI_API_KEY, KORU_LLM_HTTP_REFERER, KORU_LLM_X_TITLE, KORU_QUEUE_RUNNER_LOCK, KORU_TICKET_LEASE_SECONDS, KORU_SRC, IMGL_SRC, VDISPLAY_ROOT, VDISPLAY_SRC, KORU_VDISPLAY_AGENT_URL, VDISPLAY_SESSION_ID, KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT, KORU_VDISPLAY_PREFER_PHOTO_VQL, KORU_VDISPLAY_CAPTURE_MATCHES_IDE, KORU_VDISPLAY_ABORT_ON_PROBE_FAIL, VDISPLAY_METADATA_DIR, KORU_VDISPLAY_VQL_PATH, KORU_VDISPLAY_PHOTO_PATH, KORU_VDISPLAY_AUTO_IDE_CONTROL, KORU_VDISPLAY_AUTO_OPEN_IDE, KORU_VDISPLAY_RAISE_ALT_TAB, KORU_VDISPLAY_FOCUS_RECOVERY_ATTEMPTS, KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S, KORU_VDISPLAY_RAISE_ALT_TAB_CYCLES, KORU_VDISPLAY_PHOTO_VQL_REFRESH, KORU_VDISPLAY_IDE_CONTROL_RETRIES, KORU_VDISPLAY_IDE_CONTROL_RETRY_DELAY_S, KORU_IDE_CONTROL_PASTE_ONLY, KORU_IDE_CONTROL_FORCE_SUBMIT, KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS, KORU_DRIVE_IDE, VDISPLAY_ALLOW_YDOTOOL_TYPING, KORU_VDISPLAY_PHOTO_VQL_MAP_FALLBACK, KORU_VDISPLAY_VERIFY_AFTER_PASTE, KORU_VDISPLAY_SUBMIT_DELAY_S, KORU_IMGL_REST_URL, KORU_IMGL_FALLBACK, KORU_IMGL_DESKTOP, KORU_IMGL_IMAGE, KORU_IMGL_WINDOW, KORU_IMGL_CAPTURE_INTERACTIVE, KORU_VDISPLAY_ALLOW_IDE_MISMATCH, KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH, KORU_VDISPLAY_LLM_CHAT_DETECT_TIMEOUT_S, KORU_VDISPLAY_LLM_CHAT_DETECT_MIN_CONFIDENCE, KORU_VDISPLAY_VQL_MAX_AGE_S, KORU_AUTONOMY_SESSION_DIR, KORU_AUTOPILOT_RESTART_IDE_ON_PLUGIN_BUILD_MISMATCH, KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH, KORU_AUTOPILOT_DRIVE_AUTO_DIRECT, KORU_DRIVE_VERIFY, KORU_AUTOPILOT_AUTO_RELOAD_IDE, KORU_AUTOPILOT_REUSE_WINDOW_RELOAD, KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD, KORU_AUTOPILOT_NEW_WINDOW_RELOAD, KORU_AUTOPILOT_DETACHED_RELOAD, KORU_AUTOPILOT_RELOAD_VERIFY_PLUGIN, KORU_SCAN_CREATE_FAILED_COOLDOWN_SECONDS, KORU_SCAN_DUPLICATE_COOLDOWN_SECONDS, KORU_ALLOW_BLIND_KEYBOARD_FALLBACK, KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS, KORU_VISION_BACKEND, DBUS_SESSION_BUS_ADDRESS, KORU_VISION_BROWSER_INTERVAL, KORU_SCREENCAST_SESSION, KORU_LLM_PROVIDER, KORU_LLM_BACKEND, CODEX_HOME, OLLAMA_MODEL, OPENAI_MODEL, ANTHROPIC_MODEL;
+  keys: OPENROUTER_API_KEY, LLM_MODEL, KORU_LLM_NEEDS_INPUT_HEURISTIC, PFIX_AUTO_APPLY, PFIX_AUTO_INSTALL_DEPS, PFIX_AUTO_RESTART, PFIX_MAX_RETRIES, PFIX_DRY_RUN, PFIX_ENABLED, PFIX_GIT_COMMIT, PFIX_GIT_PREFIX, PFIX_CREATE_BACKUPS, OLLAMA_API_URL, OLLAMA_LLM_MODEL, KORU_FORCE_OLLAMA, KORU_VISION_INTERVAL, KORU_VISION_INTERVAL_MIN, KORU_VISION_PROVIDER, KORU_OBS_URL, KORU_OBS_PASSWORD, KORU_OBS_SOURCE, KORU_OBS_IMAGE_WIDTH, KORU_VISION_SCALE, KORU_VISION_PREFER_PORTAL, KORU_PORTAL_PYTHON, KORU_OBSERVE_PYTHON, KORU_MESH_FRAME_STORE, KORU_AGENT_LANE, KORU_PLANFILE_CMD, KORU_VDISPLAY_CONTROL_FALLBACK, KORU_VDISPLAY_SOURCE, KORU_VDISPLAY_LLM_VISION_DECISION, WAYLAND_DISPLAY, DISPLAY, XDG_SESSION_TYPE, ENV2LLM_PROJECT_DIR, KORU_PROJECT_ROOT, ENV2LLM_DESKTOP_PROBE, KORU_SERVE_NO_REPLACE, KORU_SERVE_WORKSPACE, NLP2CMD_INTEGRATION, KORU_PORTAL_CAPTURE, NLP2URI_CAPTURE_DIR, KORU_IMGL_STALE_BLOCK, KORU_IMGL_DIAG_BLOCK, XDG_RUNTIME_DIR, KORU_STRICT_PLUGIN_ACK, KORU_STRICT_PLUGIN_VERSION, KORU_PLUGIN_VERSION_POLICY, KORU_LLM_PICKER, KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS, PYTEST_CURRENT_TEST, CURSOR_AGENT, CURSOR_CLI, TERM_PROGRAM_VERSION, WINDSURF_CASCADE_TERMINAL, GIO_LAUNCHED_DESKTOP_FILE, TERMINAL_EMULATOR, IDEA_INITIAL_DIRECTORY, PYCHARM_HOSTED, JETBRAINS_IDE, VSCODE_PID, WINDSURF_VERSION, WINDSURF_CSRF_TOKEN, CHROME_DESKTOP, TERM_PROGRAM, KORU_AUTOPILOT_IDE, XDG_CONFIG_HOME, KORU_COMMAND_CATALOG, KORU_COMMAND_PICKER, KORU_AUTOPILOT_INSTANCE, KORU_AUTOPILOT_SOCKET, LOCALAPPDATA, TEMP, XDG_STATE_HOME, KORU_AUTOPILOT_VSIX, KORU_AUTOPILOT_REASSERT_INSTALL, KORU_AUTOPILOT_FORCE_REASSERT_INSTALL, KORU_AUTOPILOT_BUILD_LOCAL_VSIX, PATH, KORU_OPERATOR_AUTOSTART_MCP, KORU_PLUGIN_DEBUG_LOG, KORU_SUBMIT_UNVERIFIED_ALT_ATTEMPTS, KORU_AUTO_SKIP_WIZARD, KORU_OBSERVABILITY_TERMINAL, KORU_OBSERVABILITY_DSL_LOG, KORU_DOCTOR_PYTEST_TIMEOUT, VIRTUAL_ENV, KORU_IDE_BACKEND, KORU_TOOL_REGISTRY, CI, GITHUB_ACTIONS, KORU_LOCAL_SERVICE_HOST, KORU_EVENTS_URL, KORU_PLANFILE_API_URL, NO_COLOR, CLICOLOR_FORCE, KORU_OPERATOR_AUTOSTART_ENVMAP, KORU_QUEUE_UNBLOCK, XDG_CURRENT_DESKTOP, KORU_AUTOPILOT_RELOAD_RETRY_WAIT_SECONDS, KORU_SCAN_PATHS, KORU_SCAN_SEMCOD_ARTIFACTS, KORU_INCLUDE_FIXTURES, KORU_LOCAL_MANAGER_URL, KORU_LOCAL_SERVICE_URL, KORU_LOCAL_MANAGER_ENABLED, KORU_LOCAL_SERVICE_PORT, KORU_IDE_CONSOLE_LOG_DIR, KORU_ACTIVITY_LOG, KORU_NFO_LOG_PATH, KORU_NFO_LOG, KORU_FORCE_COLOR, KORU_COLOR, KORU_DOCTOR_CONSOLE_LOG_LINES, ANTIGRAVITY_AGENT, KORU_LLM_REFLECT, KORU_INTEGRATION_LEDGER_PATH, KORU_STDIO_FORMAT, KORU_PLANNING_LLM, KORU_AUTOPILOT_DRIVE_MAX_RETRIES, KORU_CLI_REEXECED, KORU_WUP_COMPOSE_HEALTH_TIMEOUT, KORU_WUP_COMPOSE_PROFILES, KORU_TILLM_CLIENT, KORU_TILLM_DRY_RUN, KORU_OS_INJECTOR_PROFILE, KORU_OS_INJECTOR_CONFIG, KORU_NLP2URI_DRY_RUN, KORU_IMGL_DRY_RUN, KORU_VDISPLAY_DRY_RUN, KORU_AUTO_PIPELINE, KORU_AUTONOMOUS_REEXECED, KORU_CLI_SYNC_DONE, KORU_READINESS_STRICT, KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS, KORU_AUTOPILOT_OS_INJECTOR_COOLDOWN_SECONDS, KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS, KORU_LLM_REFLECTION_SUMMARY_MAX_AGE_SECONDS, KORU_LLM_NEEDS_INPUT_TICKET, KORU_LLM_NEEDS_INPUT_TICKET_QUEUE, KORU_LLM_NEEDS_INPUT_TICKET_PRIORITY, KORU_AUTOPILOT_CHAT_INTAKE_TICKET, KORU_AUTOPILOT_AUTO_LLM_READY, KORU_AUTO_INSTALL_DEPS, KORU_NLP2URI_DESKTOP_FALLBACK, KORU_OS_INJECTOR_DRY_RUN, KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK, KORU_AUTONOMOUS_SCAN_WHILE_WAITING, KORU_PLANNING_LLM_MODEL, KORU_PLANNING_LLM_TIMEOUT, KORU_PLANFILE_HEALTH_URL, KORU_OPERATOR_AUTOSTART_SERVER, KORU_SELF_CONTROL_AUTOREPAIR, KORU_TEST_REAL_SELF_CONTROL, KORU_INPROGRESS_STALE_MINUTES, TICKET_SOURCES, IDLE_DIAGNOSTICS_PROFILE, WUP_MODE, KORU_AUTOPILOT_GILLM_FALLBACK, KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN, KORU_AUTOPILOT_ALLOW_CROSS_IDE, KORU_LLM_ENDPOINT, OPENAI_API_KEY, KORU_LLM_HTTP_REFERER, KORU_LLM_X_TITLE, KORU_QUEUE_RUNNER_LOCK, KORU_TICKET_LEASE_SECONDS, KORU_SRC, IMGL_SRC, VDISPLAY_ROOT, VDISPLAY_SRC, KORU_VDISPLAY_AGENT_URL, VDISPLAY_SESSION_ID, KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT, KORU_VDISPLAY_PREFER_PHOTO_VQL, KORU_VDISPLAY_CAPTURE_MATCHES_IDE, KORU_DRIVE_IDE, KORU_VDISPLAY_ABORT_ON_PROBE_FAIL, VDISPLAY_METADATA_DIR, KORU_VDISPLAY_VQL_PATH, KORU_VDISPLAY_PHOTO_PATH, KORU_VDISPLAY_AUTO_IDE_CONTROL, KORU_VDISPLAY_AUTO_OPEN_IDE, VDISPLAY_CLI, KORU_VDISPLAY_RAISE_ALT_TAB, KORU_VDISPLAY_FOCUS_RECOVERY_ATTEMPTS, KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S, KORU_VDISPLAY_RAISE_ALT_TAB_CYCLES, KORU_VDISPLAY_PHOTO_VQL_REFRESH, KORU_VDISPLAY_IDE_CONTROL_RETRIES, KORU_VDISPLAY_IDE_CONTROL_RETRY_DELAY_S, KORU_IDE_CONTROL_PASTE_ONLY, KORU_IDE_CONTROL_FORCE_SUBMIT, KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS, VDISPLAY_ALLOW_YDOTOOL_TYPING, KORU_VDISPLAY_PHOTO_VQL_MAP_FALLBACK, KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION, KORU_VDISPLAY_SURFACE_ONLY_FALLBACK, KORU_VDISPLAY_VERIFY_AFTER_PASTE, KORU_VDISPLAY_SUBMIT_DELAY_S, KORU_IMGL_REST_URL, KORU_IMGL_FALLBACK, KORU_IMGL_DESKTOP, KORU_IMGL_IMAGE, KORU_IMGL_WINDOW, KORU_IMGL_CAPTURE_INTERACTIVE, KORU_VDISPLAY_ALLOW_IDE_MISMATCH, KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH, KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR, KORU_VDISPLAY_LLM_CHAT_DETECT_TIMEOUT_S, KORU_VDISPLAY_LLM_CHAT_DETECT_MIN_CONFIDENCE, KORU_VDISPLAY_VQL_MAX_AGE_S, KORU_AUTONOMY_SESSION_DIR, VDISPLAY_AGENT_URL, VDISPLAY_AGENT_PORT, KORU_AUTOPILOT_RESTART_IDE_ON_PLUGIN_BUILD_MISMATCH, KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH, KORU_AUTOPILOT_DRIVE_AUTO_DIRECT, KORU_DRIVE_VERIFY, KORU_AUTOPILOT_AUTO_RELOAD_IDE, KORU_AUTOPILOT_REUSE_WINDOW_RELOAD, KORU_AUTOPILOT_COMMAND_PALETTE_RELOAD, KORU_AUTOPILOT_NEW_WINDOW_RELOAD, KORU_AUTOPILOT_DETACHED_RELOAD, KORU_AUTOPILOT_RELOAD_VERIFY_PLUGIN, KORU_SCAN_CREATE_FAILED_COOLDOWN_SECONDS, KORU_SCAN_DUPLICATE_COOLDOWN_SECONDS, KORU_ALLOW_BLIND_KEYBOARD_FALLBACK, KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS, KORU_VISION_BACKEND, DBUS_SESSION_BUS_ADDRESS, KORU_VISION_BROWSER_INTERVAL, KORU_SCREENCAST_SESSION, KORU_LLM_PROVIDER, KORU_LLM_BACKEND, CODEX_HOME, OLLAMA_MODEL, OPENAI_MODEL, ANTHROPIC_MODEL;
 }
 
 deploy {
@@ -2216,7 +2216,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.337
+  version: 0.1.339
   env: local
 ```
 
@@ -2368,13 +2368,13 @@ Monorepo root for all koru autopilot IDE plugins. Each IDE has its own VSIX so a
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 1555f 255097L | python:969,javascript:328,typescript:183,shell:66,less:5,go:2,rust:1,css:1 | 2026-06-12
-# stats: 7141 func | 615 cls | 1555 mod | CC̄=4.0 | critical:434 | cycles:0
-# alerts[5]: CC perform_photo_vql_focus_and_edit=89; CC load_vql_metadata=48; CC ensure_vdisplay_ide_control=47; CC prepare_photo_vql_for_drive=45; CC _map_chat_target_capture_local=41
-# hotspots[5]: perform_photo_vql_focus_and_edit fan=38; prepare_photo_vql_for_drive fan=37; ensure_vdisplay_ide_control fan=30; get_vql_chat_target_from_photo fan=30; action_snapshot fan=29
+# koru | 1559f 258082L | python:973,javascript:328,typescript:183,shell:66,less:5,go:2,rust:1,css:1 | 2026-06-12
+# stats: 7286 func | 615 cls | 1559 mod | CC̄=4.1 | critical:446 | cycles:0
+# alerts[5]: CC perform_photo_vql_focus_and_edit=70; CC prepare_photo_vql_for_drive=61; CC _type_text_at_vql_coords=58; CC ensure_vdisplay_ide_control=54; CC _normalize_photo_vql_drive_result=52
+# hotspots[5]: perform_photo_vql_focus_and_edit fan=45; get_vql_chat_target_from_photo fan=41; prepare_photo_vql_for_drive fan=40; _type_text_at_vql_coords fan=32; ensure_vdisplay_ide_control fan=31
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1555]:
+M[1559]:
   .nlp2dsl/environment.doql.less,1035
   .nlp2dsl/registry/environment.doql.less,1035
   app.doql.less,1019
@@ -3169,7 +3169,7 @@ M[1555]:
   src/koru/autonomous_daemon.py,288
   src/koru/autonomous_diag_markers.py,17
   src/koru/autonomous_diagnostics.py,306
-  src/koru/autonomous_drive_retry_policy.py,282
+  src/koru/autonomous_drive_retry_policy.py,325
   src/koru/autonomous_env.py,26
   src/koru/autonomous_loop_runner.py,1247
   src/koru/autonomous_onboarding.py,228
@@ -3177,17 +3177,17 @@ M[1555]:
   src/koru/autonomous_parser.py,503
   src/koru/autonomous_plugin.py,288
   src/koru/autonomous_plugin_lifecycle.py,77
-  src/koru/autonomous_plugin_runtime.py,204
+  src/koru/autonomous_plugin_runtime.py,219
   src/koru/autonomous_plugin_wait.py,736
   src/koru/autonomous_process_guard.py,272
   src/koru/autonomous_processes.py,356
-  src/koru/autonomous_readiness.py,984
+  src/koru/autonomous_readiness.py,989
   src/koru/autonomous_resources.py,90
   src/koru/autonomous_runtime.py,676
-  src/koru/autonomous_startup.py,874
+  src/koru/autonomous_startup.py,880
   src/koru/autonomous_submit_strategy.py,123
   src/koru/autonomous_up.py,235
-  src/koru/autonomous_vdisplay_defaults.py,47
+  src/koru/autonomous_vdisplay_defaults.py,54
   src/koru/autonomous_wup.py,809
   src/koru/autonomy/__init__.py,25
   src/koru/autonomy/autopilot_status.py,70
@@ -3204,9 +3204,9 @@ M[1555]:
   src/koru/autonomy/environment.py,251
   src/koru/autonomy/events.py,175
   src/koru/autonomy/heal.py,117
-  src/koru/autonomy/ide_operator_guidance.py,197
+  src/koru/autonomy/ide_operator_guidance.py,199
   src/koru/autonomy/ide_work.py,466
-  src/koru/autonomy/operator_pipeline.py,1010
+  src/koru/autonomy/operator_pipeline.py,1047
   src/koru/autonomy/phases/__init__.py,4
   src/koru/autonomy/phases/contexts.py,108
   src/koru/autonomy/phases/drive_phase.py,98
@@ -3262,7 +3262,7 @@ M[1555]:
   src/koru/autopilot/commands/status.py,222
   src/koru/autopilot/config.py,10
   src/koru/autopilot/daemon.py,17
-  src/koru/autopilot/daemon_cli.py,171
+  src/koru/autopilot/daemon_cli.py,173
   src/koru/autopilot/diagnose_vdisplay_cli.py,60
   src/koru/autopilot/doctor_cli.py,153
   src/koru/autopilot/drive_repair_policy.py,117
@@ -3417,14 +3417,14 @@ M[1555]:
   src/koru/git_cli.py,275
   src/koru/ide_adapters/__init__.py,23
   src/koru/ide_adapters/base.py,79
-  src/koru/ide_adapters/bridge.py,443
+  src/koru/ide_adapters/bridge.py,442
   src/koru/ide_adapters/gillm_client.py,317
   src/koru/ide_adapters/gillm_recovery.py,228
   src/koru/ide_adapters/ide_reload.py,899
   src/koru/ide_adapters/registry.py,55
   src/koru/ide_adapters/shared.py,485
   src/koru/ide_adapters/vscode_family.py,145
-  src/koru/ide_client.py,211
+  src/koru/ide_client.py,225
   src/koru/ide_control_cli.py,296
   src/koru/ide_doctor_cli.py,596
   src/koru/ide_router.py,106
@@ -3434,18 +3434,19 @@ M[1555]:
   src/koru/init_host_environment.py,338
   src/koru/integration_ledger.py,136
   src/koru/integrations/__init__.py,20
-  src/koru/integrations/autonomy_session.py,269
+  src/koru/integrations/autonomy_session.py,398
   src/koru/integrations/imgl_autodiag.py,14
   src/koru/integrations/imgl_client.py,340
   src/koru/integrations/photo_vql_config.py,73
-  src/koru/integrations/photo_vql_drive.py,263
-  src/koru/integrations/photo_vql_guard.py,186
-  src/koru/integrations/photo_vql_llm_detect.py,330
-  src/koru/integrations/photo_vql_monitor.py,123
-  src/koru/integrations/photo_vql_target.py,348
-  src/koru/integrations/photo_vql_user_guidance.py,289
-  src/koru/integrations/photo_vql_validation.py,435
-  src/koru/integrations/vdisplay_client.py,4691
+  src/koru/integrations/photo_vql_drive.py,379
+  src/koru/integrations/photo_vql_guard.py,239
+  src/koru/integrations/photo_vql_llm_detect.py,357
+  src/koru/integrations/photo_vql_monitor.py,231
+  src/koru/integrations/photo_vql_target.py,577
+  src/koru/integrations/photo_vql_user_guidance.py,393
+  src/koru/integrations/photo_vql_validation.py,494
+  src/koru/integrations/vdisplay_agent_bootstrap.py,234
+  src/koru/integrations/vdisplay_client.py,5494
   src/koru/interface_registry.py,231
   src/koru/llm_reflect.py,174
   src/koru/local_manager_client.py,252
@@ -3584,7 +3585,7 @@ M[1555]:
   src/koruide/daemon/__init__.py,51
   src/koruide/daemon/handlers.py,336
   src/koruide/daemon/handlers_ack.py,678
-  src/koruide/daemon/handlers_drive.py,997
+  src/koruide/daemon/handlers_drive.py,1025
   src/koruide/daemon/handlers_hello.py,393
   src/koruide/daemon/handlers_plugin_event.py,192
   src/koruide/daemon/metadata.py,137
@@ -3693,7 +3694,7 @@ M[1555]:
   tests/test_agent_cli.py,108
   tests/test_agents.py,222
   tests/test_autoloop_cli.py,52
-  tests/test_autonomous.py,5379
+  tests/test_autonomous.py,5437
   tests/test_autonomous_cycle_bridge.py,26
   tests/test_autonomous_cycle_chat_activity_analyzer.py,392
   tests/test_autonomous_cycle_chat_activity_config.py,179
@@ -3723,11 +3724,11 @@ M[1555]:
   tests/test_autonomous_redrive_cooldown.py,399
   tests/test_autonomous_runtime.py,319
   tests/test_autonomous_scenarios.py,390
-  tests/test_autonomous_startup.py,990
+  tests/test_autonomous_startup.py,993
   tests/test_autonomous_status_consumers.py,29
   tests/test_autonomous_submit_strategy.py,122
   tests/test_autonomous_up.py,76
-  tests/test_autonomous_vdisplay_defaults.py,52
+  tests/test_autonomous_vdisplay_defaults.py,55
   tests/test_autonomy_config.py,151
   tests/test_autonomy_drive_result.py,57
   tests/test_autonomy_env.py,83
@@ -3747,7 +3748,7 @@ M[1555]:
   tests/test_autopilot_commands_shutdown.py,86
   tests/test_autopilot_commands_status.py,254
   tests/test_autopilot_config.py,150
-  tests/test_autopilot_daemon.py,1885
+  tests/test_autopilot_daemon.py,1894
   tests/test_autopilot_host_setup.py,183
   tests/test_autopilot_ide.py,699
   tests/test_autopilot_jetbrains_scaffold.py,75
@@ -3818,7 +3819,7 @@ M[1555]:
   tests/test_git_cli.py,151
   tests/test_healing_webhook_split.py,213
   tests/test_ide_adapters.py,258
-  tests/test_ide_client.py,121
+  tests/test_ide_client.py,151
   tests/test_ide_client_contract.py,129
   tests/test_ide_command_catalog.py,163
   tests/test_ide_doctor_cli.py,369
@@ -3835,6 +3836,7 @@ M[1555]:
   tests/test_install_manager.py,1249
   tests/test_integration_ledger.py,35
   tests/test_interface_registry.py,88
+  tests/test_jetbrains_surface_chat_target.py,93
   tests/test_koru_browser_stack.py,70
   tests/test_koru_gate_capture.py,34
   tests/test_koru_queue_argv.py,24
@@ -3870,10 +3872,10 @@ M[1555]:
   tests/test_observability_dsl.py,769
   tests/test_observation_mesh_e2e.py,230
   tests/test_observe_providers_cli.py,83
-  tests/test_operator_pipeline.py,895
+  tests/test_operator_pipeline.py,928
   tests/test_package_deduplication.py,134
-  tests/test_photo_vql_drive.py,1210
-  tests/test_photo_vql_orchestrator.py,426
+  tests/test_photo_vql_drive.py,1466
+  tests/test_photo_vql_orchestrator.py,670
   tests/test_planfile_queue.py,1380
   tests/test_planning_llm.py,633
   tests/test_plugin_router.py,202
@@ -3906,6 +3908,7 @@ M[1555]:
   tests/test_strategy_metadata_accessors.py,78
   tests/test_strategy_prompt.py,105
   tests/test_structured_report.py,60
+  tests/test_surface_capture_confirmation.py,120
   tests/test_sync_plugin_build.py,109
   tests/test_tasks.py,119
   tests/test_testql_bridge.py,37
@@ -3913,6 +3916,7 @@ M[1555]:
   tests/test_tools.py,138
   tests/test_topology.py,55
   tests/test_topology_cli.py,28
+  tests/test_vdisplay_agent_bootstrap.py,116
   tests/test_vdisplay_control_fallback.py,537
   tests/test_verification_cycle_integration.py,332
   tests/test_verification_engine.py,250
@@ -5984,12 +5988,13 @@ D:
     read_wup_health()
     run_idle_diagnostics()
   src/koru/autonomous_drive_retry_policy.py:
-    e: _format_autopilot_failure_details,_warn_autopilot_focus_retry,_warn_autopilot_manual_focus_required,_warn_autopilot_plugin_retry,_warn_autopilot_submit_retry,_drive_retry_decision,_submit_retry_is_known_unsafe_without_engine,_handle_failed_drive_attempt,_record_drive_retry_decision
+    e: _format_autopilot_failure_details,_warn_autopilot_focus_retry,_warn_autopilot_manual_focus_required,_warn_autopilot_plugin_retry,_warn_autopilot_submit_retry,_warn_autopilot_semantic_required,_drive_retry_decision,_submit_retry_is_known_unsafe_without_engine,_handle_failed_drive_attempt,_record_drive_retry_decision
     _format_autopilot_failure_details(reply)
     _warn_autopilot_focus_retry(attempt;attempts;reply)
     _warn_autopilot_manual_focus_required(reply)
     _warn_autopilot_plugin_retry(attempt;attempts;reply)
     _warn_autopilot_submit_retry(attempt;attempts;reply)
+    _warn_autopilot_semantic_required(reply)
     _drive_retry_decision(reply;attempt;attempts)
     _submit_retry_is_known_unsafe_without_engine(reply)
     _handle_failed_drive_attempt(reply;attempt;attempts)
@@ -6130,7 +6135,7 @@ D:
     PluginLifecycleHooks:
     setup_autopilot_plugin_lifecycle(args;autopilot_ide;socket_path;client)
   src/koru/autonomous_plugin_runtime.py:
-    e: ensure_trusted_publisher_for_plugin,extension_active_in_latest_session,live_plugin_version,detect_stale_extension_host,plugin_status_reason,plugin_reason_requires_reload,plugin_blocker_line,reload_retry_wait_seconds,report_unsupported_plugin_result,emit_reload_required_lines
+    e: ensure_trusted_publisher_for_plugin,extension_active_in_latest_session,live_plugin_version,detect_stale_extension_host,plugin_status_reason,plugin_reason_requires_reload,plugin_blocker_line,reload_retry_wait_seconds,report_unsupported_plugin_result,_semantic_wayland_ide,emit_reload_required_lines
     ensure_trusted_publisher_for_plugin(autopilot_ide)
     extension_active_in_latest_session(autopilot_ide)
     live_plugin_version(client;autopilot_ide)
@@ -6140,6 +6145,7 @@ D:
     plugin_blocker_line(reason;autopilot_ide)
     reload_retry_wait_seconds(base_wait_seconds)
     report_unsupported_plugin_result(autopilot_ide)
+    _semantic_wayland_ide(ide)
     emit_reload_required_lines(autopilot_ide)
   src/koru/autonomous_plugin_wait.py:
     e: _running_from_integrated_ide_terminal,_terminal_host_ide_id,prepare_plugin_wait,force_reload_if_extension_host_stale,retry_plugin_wait_after_reload,_wait_after_successful_reload,_report_reload_retry_wait,_plugin_reconnected_after_wait,_try_fresh_window_after_reuse_reload,_plugin_connected_after_fresh_window,_report_fresh_window_failure,_report_reload_failure,wait_for_plugin_connection,_try_plugin_reconnect_pipeline,_temporary_reuse_window_reload_if_same_workspace,_restore_reuse_window_reload,_reason_is_connected_plugin_mismatch,_status_has_plugin_workspace,_emit_plugin_bootstrap_blocker_trace
@@ -6205,15 +6211,15 @@ D:
     stop_prior_autonomous_for_auto_start(project)
     guard_existing_autonomous_processes(args;project)
   src/koru/autonomous_readiness.py:
-    e: _project_venv_roots,_project_venv_python,_project_venv_koru,_resolve_path,_safe_path_for_compare,_runtime_issue_severity,_first_fix_command,_python_executable_mismatch_issue,_venv_alignment_fix,_venv_alignment_issue,_koru_runtime_identity_issue,_editable_install_fix,_package_version_drift_issue,_append_issue,check_runtime_consistency,_check_daemon_version_issue,_check_daemon_meta_project_python_issues,check_daemon_client_alignment,_pid_alive,_socket_inode,_metadata_socket_matches,_status_daemon_metadata,_effective_daemon_metadata,_find_project_in_workspace_folders,plugin_workspace_covers_project,_check_socket_health_issues,_check_daemon_meta_issues,_check_plugin_workspace_issues,check_workspace_socket_ownership,apply_socket_ownership_repairs,attempt_plugin_gate_recovery,_canonical_target_ide,_lane_instance_value,_terminal_context,_terminal_lane_context,_terminal_lane_mismatch_issues,_lane_ide_mismatch_issue,_socket_lane_mismatch_issue,check_lane_terminal_socket_alignment,check_queue_runner_contention,warn_pre_drive_queue_without_plugin,run_plugin_reconnect_pipeline,evaluate_autonomous_readiness,format_readiness_lines,ReadinessIssue,ReadinessResult,_TerminalLaneContext
+    e: _project_venv_roots,_project_venv_python,_project_venv_koru,_safe_path_for_compare,_python_executables_equivalent,_runtime_issue_severity,_first_fix_command,_python_executable_mismatch_issue,_venv_alignment_fix,_venv_alignment_issue,_koru_runtime_identity_issue,_editable_install_fix,_package_version_drift_issue,_append_issue,check_runtime_consistency,_check_daemon_version_issue,_check_daemon_meta_project_python_issues,check_daemon_client_alignment,_pid_alive,_socket_inode,_metadata_socket_matches,_status_daemon_metadata,_effective_daemon_metadata,_find_project_in_workspace_folders,plugin_workspace_covers_project,_check_socket_health_issues,_check_daemon_meta_issues,_check_plugin_workspace_issues,check_workspace_socket_ownership,apply_socket_ownership_repairs,attempt_plugin_gate_recovery,_canonical_target_ide,_lane_instance_value,_terminal_context,_terminal_lane_context,_terminal_lane_mismatch_issues,_lane_ide_mismatch_issue,_socket_lane_mismatch_issue,check_lane_terminal_socket_alignment,check_queue_runner_contention,warn_pre_drive_queue_without_plugin,run_plugin_reconnect_pipeline,evaluate_autonomous_readiness,format_readiness_lines,ReadinessIssue,ReadinessResult,_TerminalLaneContext
     ReadinessIssue:
     ReadinessResult: fail_messages(0),warn_messages(0)
     _TerminalLaneContext:
     _project_venv_roots(project)
     _project_venv_python(project)
     _project_venv_koru(project)
-    _resolve_path(path)
     _safe_path_for_compare(path)
+    _python_executables_equivalent(left;right)
     _runtime_issue_severity(strict)
     _first_fix_command(issues)
     _python_executable_mismatch_issue(project;launcher;venv_python)
@@ -6593,7 +6599,7 @@ D:
     resolve_in_progress_stale_minutes(project)
     release_in_progress_tickets(project)
   src/koru/autonomy/operator_pipeline.py:
-    e: _operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_is_closed,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_autopilot_plugin_operator_hints,_host_injectors_ok,_self_control_autorepair_enabled,_first_self_control_problem,_self_control_problem_detail,_summarize_self_control_actions,_self_control_ok,_build_os_calibration_step,_build_planfile_api_step,_build_mcp_step,_build_plugin_step,_build_host_injectors_step,_build_self_control_step,_build_ready_step,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format,OperatorStep,OperatorPipelineResult
+    e: _operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_is_closed,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_wayland_session,_semantic_drive_required,_autopilot_plugin_operator_hints,_host_injectors_ok,_self_control_autorepair_enabled,_first_self_control_problem,_self_control_problem_detail,_summarize_self_control_actions,_self_control_ok,_build_os_calibration_step,_build_planfile_api_step,_build_mcp_step,_build_plugin_step,_build_host_injectors_step,_build_self_control_step,_build_ready_step,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format,OperatorStep,OperatorPipelineResult
     OperatorStep:
     OperatorPipelineResult:
     _operator_state_dir(project)
@@ -6614,6 +6620,8 @@ D:
     _operator_autostart_server_enabled()
     _try_start_planfile_api(project)
     _os_profile_ok(ide;project)
+    _wayland_session()
+    _semantic_drive_required(ide)
     _autopilot_plugin_operator_hints()
     _host_injectors_ok()
     _self_control_autorepair_enabled()
@@ -8257,9 +8265,10 @@ D:
     e: VSCodeFamilyAdapter
     VSCodeFamilyAdapter: extension_id(0),diagnose_activation(0),analyze_settings(0),collect_hypotheses(0),apply_safe_fixes(0)
   src/koru/ide_client.py:
-    e: adapt_legacy_autopilot_client,build_legacy_ide_client,build_koruide_client,build_ide_client,IDEControlClient,LegacyAutopilotClientAdapter
+    e: _semantic_drive_operator_lines,adapt_legacy_autopilot_client,build_legacy_ide_client,build_koruide_client,build_ide_client,IDEControlClient,LegacyAutopilotClientAdapter
     IDEControlClient: is_running(0),drive(1),status(0),shutdown(0)  # Minimal interface `koru` runtime code expects from an IDE cl
     LegacyAutopilotClientAdapter: is_running(0),drive(1),status(0),shutdown(0)  # Expose legacy :class:`AutopilotClient` through :class:`IDECo
+    _semantic_drive_operator_lines(reply)
     adapt_legacy_autopilot_client(client)
     build_legacy_ide_client()
     build_koruide_client()
@@ -8369,19 +8378,36 @@ D:
     record_integration_action()
   src/koru/integrations/__init__.py:
   src/koru/integrations/autonomy_session.py:
-    e: metadata_root,vql_max_age_seconds,active_session_dir,session_observe_paths,begin_autonomy_session,append_session_index,find_latest_koru_session,append_session_jsonl,persist_autonomy_phase,_vql_load_capture_validation,vql_sidecar_is_stale,copy_observe_artifacts_to_session
+    e: metadata_root,vql_max_age_seconds,active_session_dir,session_observe_paths,begin_autonomy_session,_create_session_dirs,_session_manifest,_pin_session_env,append_session_index,find_latest_koru_session,append_session_jsonl,persist_autonomy_phase,_vql_load_capture_validation,vql_sidecar_is_stale,_missing_vql_info,_base_vql_stale_info,_append_vql_age_reason,_append_png_staleness,_append_png_age_reason,_append_sidecar_order_reason,_append_layer_count_reason,_append_capture_validation_reasons,_append_unique_reasons,copy_observe_artifacts_to_session,_same_resolved_path,_copy_binary_if_needed,_copy_text_if_needed,_imgl_sidecar_path,_pin_observe_env
     metadata_root()
     vql_max_age_seconds()
     active_session_dir()
     session_observe_paths(session_dir)
     begin_autonomy_session()
+    _create_session_dirs(session_dir)
+    _session_manifest()
+    _pin_session_env()
     append_session_index(session_dir)
     find_latest_koru_session()
     append_session_jsonl(session_dir;rel_path;entry)
     persist_autonomy_phase(session_dir;phase;name;payload)
     _vql_load_capture_validation(vql_path)
     vql_sidecar_is_stale(vql_path;png_path)
+    _missing_vql_info(vql_path)
+    _base_vql_stale_info()
+    _append_vql_age_reason()
+    _append_png_staleness()
+    _append_png_age_reason()
+    _append_sidecar_order_reason()
+    _append_layer_count_reason()
+    _append_capture_validation_reasons()
+    _append_unique_reasons(reasons;items)
     copy_observe_artifacts_to_session(session_dir)
+    _same_resolved_path(left;right)
+    _copy_binary_if_needed()
+    _copy_text_if_needed()
+    _imgl_sidecar_path(vql_path)
+    _pin_observe_env()
   src/koru/integrations/imgl_autodiag.py:
   src/koru/integrations/imgl_client.py:
     e: imgl_available,imgl_missing_message,imgl_fallback_enabled,imgl_prefer_before_keyboard,imgl_desktop_transport_enabled,default_image_path,default_window,is_ui_prompt,resolve_image,_rest_url,_dry_run,diagnostics_enabled,doctor_capture,execute_nl,_rest_doctor,_submit_key_for_ide,send_chat
@@ -8410,26 +8436,39 @@ D:
     _env_int(name;default)
     llm_vision_enabled()
   src/koru/integrations/photo_vql_drive.py:
-    e: session_prepare_is_fresh,run_photo_vql_drive,PhotoVqlDrive
-    PhotoVqlDrive: __init__(0),prepare(0),_set_source_env(0),act(1),_act_map_only_with_photo_vql(1),_observe_png(1),_photo_vql_attempt_succeeded(0),_mark_llm_backend_if_used(0),_act_map_only_with_ide_prompt(1),_send_chat(1),run(1),_observe_allows_act(1),_prepare_failed_reply(1),_finalize_reply(1)  # One-shot photo-VQL drive: prepare (observe) then send_chat (
+    e: session_prepare_is_fresh,_fresh_prepare_age,_load_prepare_payload,_prepare_payload_reusable,_allow_surface_only_actuation,_mark_prepare_reused,run_photo_vql_drive,PhotoVqlDrive
+    PhotoVqlDrive: __init__(0),prepare(0),_set_source_env(0),act(1),_surface_only_blocked(0),_act_surface_only(1),_act_map_only_with_photo_vql(1),_observe_png(1),_photo_vql_attempt_succeeded(0),_mark_llm_backend_if_used(0),_act_map_only_with_ide_prompt(1),_send_chat(1),run(1),_observe_allows_act(1),_prepare_failed_reply(1),_finalize_reply(1)  # One-shot photo-VQL drive: prepare (observe) then send_chat (
     session_prepare_is_fresh(session_dir)
+    _fresh_prepare_age(path)
+    _load_prepare_payload(path)
+    _prepare_payload_reusable(payload)
+    _allow_surface_only_actuation()
+    _mark_prepare_reused(payload)
     run_photo_vql_drive(prompt)
   src/koru/integrations/photo_vql_guard.py:
-    e: ide_mismatch_allowed,allow_prepare_map_on_mismatch,allow_actuation_on_capture_mismatch,competing_ide_label_from_warning,drive_blocked_on_capture_mismatch,CaptureGuard
+    e: ide_mismatch_allowed,allow_prepare_map_on_mismatch,allow_prepare_surface_on_capture_error,allow_surface_only_actuation,allow_actuation_on_capture_mismatch,competing_ide_label_from_warning,drive_blocked_on_capture_mismatch,CaptureGuard
     CaptureGuard: from_observe(1),apply_to_prepare_out(1)
     ide_mismatch_allowed()
     allow_prepare_map_on_mismatch()
+    allow_prepare_surface_on_capture_error()
+    allow_surface_only_actuation()
     allow_actuation_on_capture_mismatch()
     competing_ide_label_from_warning(mismatch)
     drive_blocked_on_capture_mismatch()
   src/koru/integrations/photo_vql_llm_detect.py:
-    e: detect_chat_target_from_llm_vision,_detect_chat_target_with_openrouter,_build_detection_prompt,_image_data_url,_parse_json_object,_target_from_decision,_normalize_llm_target,_candidates_to_layers,_candidate_excerpt,_map_hint_excerpt,_clean_bounds,_int,_float,_looks_polluted
+    e: detect_chat_target_from_llm_vision,_detect_chat_target_with_openrouter,_build_detection_prompt,_detection_rules,_detection_schema,_image_data_url,_parse_json_object,_target_from_decision,_decision_target_type,_decision_confidence,_min_detection_confidence,_decision_click_center,_normalize_llm_target,_candidates_to_layers,_candidate_excerpt,_map_hint_excerpt,_clean_bounds,_int,_float,_looks_polluted
     detect_chat_target_from_llm_vision()
     _detect_chat_target_with_openrouter()
     _build_detection_prompt()
+    _detection_rules()
+    _detection_schema()
     _image_data_url(image_path)
     _parse_json_object(content)
     _target_from_decision(decision)
+    _decision_target_type(decision)
+    _decision_confidence(decision)
+    _min_detection_confidence()
+    _decision_click_center(decision)
     _normalize_llm_target(target)
     _candidates_to_layers(candidates)
     _candidate_excerpt(candidates)
@@ -8439,12 +8478,15 @@ D:
     _float(value)
     _looks_polluted(candidates)
   src/koru/integrations/photo_vql_monitor.py:
-    e: _monitor_candidate_order,_finalize_resolved_probe,resolve_vdisplay_source_for_ide
+    e: _monitor_candidate_order,_finalize_resolved_probe,_surface_preferred_monitor,map_capture_monitor_mismatch,resolve_vdisplay_source_for_ide,format_wayland_vdisplay_operator_hint
     _monitor_candidate_order()
     _finalize_resolved_probe(probe)
+    _surface_preferred_monitor(probe)
+    map_capture_monitor_mismatch(map_path)
     resolve_vdisplay_source_for_ide(ide)
+    format_wayland_vdisplay_operator_hint()
   src/koru/integrations/photo_vql_target.py:
-    e: _layer_role,_layer_label,_layer_bounds,_layer_click_center,_canonical_ide,_input_metrics,_has_any,_terminal_or_shell_noise,vql_candidates_polluted,score_photo_vql_chat_input,_score_jetbrains_metrics,_jetbrains_position_score,_jetbrains_size_score,_label_noise_penalty,_score_vscode_top_chat_input,_score_vscode_metrics,_vscode_label_score,_vscode_position_score,_vscode_size_score,photo_vql_chat_input_candidates,vscode_family_top_chat_rejected,vscode_family_chat_target_from_layers,jetbrains_corner_rejected,_target_bounds,_target_bounds_too_small,jetbrains_chat_corner_target_from_layers,_InputMetrics
+    e: _layer_role,_layer_label,_layer_bounds,_layer_click_center,_canonical_ide,_input_metrics,_has_any,_terminal_or_shell_noise,vql_candidates_polluted,score_photo_vql_chat_input,_score_jetbrains_metrics,_jetbrains_position_score,_jetbrains_size_score,_label_noise_penalty,_score_vscode_top_chat_input,_score_vscode_metrics,_vscode_label_score,_vscode_position_score,_vscode_size_score,photo_vql_chat_input_candidates,_chat_candidate_from_layer,vscode_family_top_chat_rejected,vscode_family_chat_target_from_layers,jetbrains_corner_rejected,_target_bounds,_target_bounds_too_small,jetbrains_chat_corner_target_from_layers,_capture_png_dimensions,_monitor_geometry_for_source,_clamp_rect_to_monitor,_capture_local_rect_for_global_rect,_global_to_capture_local_for_source,jetbrains_chat_target_from_surface,_target_from_candidate,_InputMetrics
     _InputMetrics:
     _layer_role(layer)
     _layer_label(layer)
@@ -8466,14 +8508,22 @@ D:
     _vscode_position_score(cy)
     _vscode_size_score(metrics)
     photo_vql_chat_input_candidates(layers)
+    _chat_candidate_from_layer(layer)
     vscode_family_top_chat_rejected(candidate)
     vscode_family_chat_target_from_layers(layers)
     jetbrains_corner_rejected(corner)
     _target_bounds(target)
     _target_bounds_too_small(bounds)
     jetbrains_chat_corner_target_from_layers(layers)
+    _capture_png_dimensions(capture_meta)
+    _monitor_geometry_for_source(source)
+    _clamp_rect_to_monitor(x;y;w;h;monitor)
+    _capture_local_rect_for_global_rect(left;top;width;height)
+    _global_to_capture_local_for_source(global_x;global_y)
+    jetbrains_chat_target_from_surface(surface)
+    _target_from_candidate(candidate)
   src/koru/integrations/photo_vql_user_guidance.py:
-    e: _truthy,preflight_repo_paths,_drive_retry_cmd,_audit_cmd,_guidance_success,_guidance_missing_repo,_guidance_monitor_not_connected,_guidance_ide_mismatch,_guidance_empty_vql,_guidance_prepare_failed,_guidance_drive_failed,build_user_guidance,format_user_guidance,speak_user_guidance,emit_user_guidance,_GuidanceContext
+    e: _truthy,preflight_repo_paths,_drive_retry_cmd,_audit_cmd,_guidance_success,_guidance_missing_repo,_guidance_monitor_not_connected,_monitor_not_connected,_fallback_monitor,_available_monitors_label,_guidance_ide_mismatch,_ide_mismatch_detected,_guidance_empty_vql,_empty_vql_error,_guidance_screencast,_guidance_map_capture_mismatch,_guidance_prepare_failed,_prepare_failed,_guidance_drive_failed,_build_guidance_context,_resolve_source,_monitor_names,_combined_error,build_user_guidance,format_user_guidance,speak_user_guidance,_user_guidance_speech_enabled,_notify_user_guidance,_speak_user_guidance_text,emit_user_guidance,_GuidanceContext
     _GuidanceContext:
     _truthy(name;default)
     preflight_repo_paths()
@@ -8482,16 +8532,31 @@ D:
     _guidance_success(ctx)
     _guidance_missing_repo(ctx)
     _guidance_monitor_not_connected(ctx)
+    _monitor_not_connected(ctx)
+    _fallback_monitor(monitors)
+    _available_monitors_label(monitors)
     _guidance_ide_mismatch(ctx)
+    _ide_mismatch_detected(ctx)
     _guidance_empty_vql(ctx)
+    _empty_vql_error(err)
+    _guidance_screencast(ctx)
+    _guidance_map_capture_mismatch(ctx)
     _guidance_prepare_failed(ctx)
+    _prepare_failed(ctx)
     _guidance_drive_failed(ctx)
+    _build_guidance_context()
+    _resolve_source()
+    _monitor_names(probe)
+    _combined_error()
     build_user_guidance()
     format_user_guidance(lines)
     speak_user_guidance(lines)
+    _user_guidance_speech_enabled()
+    _notify_user_guidance()
+    _speak_user_guidance_text(text)
     emit_user_guidance()
   src/koru/integrations/photo_vql_validation.py:
-    e: _canonical_ide,window_titles_from_vql_meta,_window_titles_from_layers,_window_title_from_layer,_window_titles_from_capture_validation,_strings_from_capture_value,_unique_titles,capture_title_from_meta,_coord_warnings_for_bounds,_coord_warnings_for_label,_coord_warnings_for_jetbrains,_coord_warnings_for_vscode_family,validate_chat_coords_for_ide,_target_geometry,_label_ok_for_chat,_has_any,_collect_vql_validation_errors,_capture_validation_errors,_map_validation_errors,_live_vql_validation_errors,_target_confidence_too_low,_vql_valid,_used_map_because_mismatch_or_bad_element,validate_vql_chat_target
+    e: _canonical_ide,window_titles_from_vql_meta,_window_titles_from_layers,_window_title_from_layer,_window_titles_from_capture_validation,_strings_from_capture_value,_unique_titles,capture_title_from_meta,_coord_warnings_for_bounds,_coord_warnings_for_label,_label_looks_like_code_file,_label_looks_like_terminal_metadata,_label_looks_like_vdisplay_env,_coord_warnings_for_jetbrains,_coord_warnings_for_jetbrains_surface,_coord_warnings_for_vscode_family,validate_chat_coords_for_ide,_target_uses_fallback_center,_target_bounds_size,_target_label,_target_geometry,_label_ok_for_chat,_has_any,_collect_vql_validation_errors,_capture_validation_errors,_map_validation_errors,_live_vql_validation_errors,_target_confidence_too_low,_vql_valid,_used_map_because_mismatch_or_bad_element,validate_vql_chat_target
     _canonical_ide(ide)
     window_titles_from_vql_meta(meta)
     _window_titles_from_layers(meta)
@@ -8502,9 +8567,16 @@ D:
     capture_title_from_meta(meta)
     _coord_warnings_for_bounds()
     _coord_warnings_for_label()
+    _label_looks_like_code_file(label)
+    _label_looks_like_terminal_metadata(label)
+    _label_looks_like_vdisplay_env(label)
     _coord_warnings_for_jetbrains()
+    _coord_warnings_for_jetbrains_surface()
     _coord_warnings_for_vscode_family()
     validate_chat_coords_for_ide()
+    _target_uses_fallback_center(target)
+    _target_bounds_size(target)
+    _target_label(target)
     _target_geometry(target)
     _label_ok_for_chat()
     _has_any(text;tokens)
@@ -8516,8 +8588,23 @@ D:
     _vql_valid()
     _used_map_because_mismatch_or_bad_element()
     validate_vql_chat_target(target)
+  src/koru/integrations/vdisplay_agent_bootstrap.py:
+    e: _fetch,_parse_health,_screencast_status_data,_keeper_ready,_wayland_session,is_vdisplay_agent_health,is_koru_dashboard_on_port,probe_vdisplay_agent,resolve_vdisplay_agent_url,apply_vdisplay_agent_env,_fetch_screencast_status,ensure_screencast_session,bootstrap_vdisplay_capture
+    _fetch(url)
+    _parse_health(raw)
+    _screencast_status_data(payload)
+    _keeper_ready(status)
+    _wayland_session()
+    is_vdisplay_agent_health(payload)
+    is_koru_dashboard_on_port(port)
+    probe_vdisplay_agent(base_url)
+    resolve_vdisplay_agent_url()
+    apply_vdisplay_agent_env()
+    _fetch_screencast_status(base)
+    ensure_screencast_session()
+    bootstrap_vdisplay_capture()
   src/koru/integrations/vdisplay_client.py:
-    e: _real_vdisplay_src,_ensure_real_vdisplay_on_path,_load_vdisplay_control,_canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,_capture_for_verify,_ocr_verify,record_koru_drive_step,_session_type,_send_chat_os_injector_enabled,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_trusted_visual_target_id,_dry_run,_photo_vql_code_edit_enabled,_prefer_photo_vql_chat,_capture_matches_requested_ide,_vdisplay_source,_probe_ide_processes,_desktop_probe,_resolve_vdisplay_source_for_ide,_abort_on_desktop_probe_fail,_vdisplay_source_for_ide,_photo_vql_metadata_root,_capture_validation_from_meta,_capture_confirmed_from_meta,_capture_provenance,_photo_vql_ide_window_warning,_observe_vql_sidecar_path,_resolve_photo_png_path_from_vql,_photo_vql_ide_capture_mismatch,_prefer_ide_prompt_over_photo_vql,_auto_ide_control_enabled,_auto_open_ide_enabled,_real_imgl_src,_ensure_real_imgl_on_path,_vdisplay_subprocess_env,_focus_window_xdotool,_focus_window_xdotool_for_ide,_focus_window_gnome_shell,_focus_window_gnome_shell_for_ide,_click_map_region_center,_raise_alt_tab_enabled,_alt_tab_window_cycle,_attempt_focus_recovery_capture,_persist_send_chat_drive_result,_map_raise_targets_for_ide,_map_interior_targets_for_ide,_dismiss_gnome_overview,ensure_vdisplay_ide_control,_import_imgl_targets,_main_vql_layer_count,_png_path_for_vql_sidecar,_resolve_photo_png_path,_photo_vql_refresh_mode,photo_vql_sidecar_needs_refresh,refresh_photo_vql_sidecar,prepare_photo_vql_for_drive,_normalize_photo_vql_drive_result,_finalize_send_chat,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_effective_submit_enabled,_submit_via_keyboard,_photo_vql_submit_chat,_ide_prompt_app_id,_resolve_ide_prompt_map,_ide_map_message_target,_type_text_via_ide_map_fallback,send_chat_via_ide_prompt,_send_chat_preflight,_send_chat_try_photo_vql,_send_chat_dry_run,_send_chat_try_os_injector,_send_chat_try_ide_prompt_fallback,_send_chat_semantic_vdisplay,_send_chat_photo_vql_mouse_focus,_send_chat_resolve_chat_selector,_send_chat_type_at_selector,_send_chat_submit_if_requested,send_chat,_resolve_vql_chat_target,_find_vql_chat_target,_extract_vql_click_from_target,_get_pycharm_vql_editor_center,_get_jetbrains_pycharm_chat_center,_photo_vql_elements,get_vql_chat_target_from_photo,get_vql_editor_target_from_photo,click_editor_via_photo_vql,_photo_capture_meta_for_source,_enrich_capture_meta_for_pointer,_map_chat_target_capture_local,_global_coords_from_vql_local,_build_vql_command_plan,_log_vql_cursor_positioning_at_command,_ydotool_click_capture_local,_type_text_at_vql_coords,_resolve_photo_vql_llm_coords,_photo_vql_map_paste_fallback,perform_photo_vql_focus_and_edit,move_mouse_to_vql_target_and_focus_keyboard,_imgl_sidecar_path_for_vql,_layers_from_imgl_sidecar_file,_layers_from_vdisplay_sidecar,_with_embedded_capture_validation,load_vql_metadata,_resolve_vql_candidate,_monitor_source_slugs,_get_vql_candidates,_parse_fresh_vql_elements,get_vql_target,resolve_click_for_frame
+    e: _real_vdisplay_src,_ensure_real_vdisplay_on_path,_load_vdisplay_control,_canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,_capture_for_verify,_ocr_verify,record_koru_drive_step,_session_type,_send_chat_os_injector_enabled,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_trusted_visual_target_id,_dry_run,_photo_vql_code_edit_enabled,_prefer_photo_vql_chat,sync_prepare_capture_flags_to_env,_capture_matches_requested_ide,_vdisplay_source,_probe_ide_processes,_desktop_probe,_surface_confirms_ide_capture,_apply_surface_capture_confirmation,_resolve_vdisplay_source_for_ide,_abort_on_desktop_probe_fail,_vdisplay_source_for_ide,_photo_vql_metadata_root,_capture_validation_from_meta,_capture_confirmed_from_meta,_capture_provenance,_photo_vql_ide_window_warning,_observe_vql_sidecar_path,_resolve_photo_png_path_from_vql,_photo_vql_ide_capture_mismatch,_prefer_ide_prompt_over_photo_vql,_auto_ide_control_enabled,_auto_open_ide_enabled,_real_imgl_src,_ensure_real_imgl_on_path,_vdisplay_cli_path,_vdisplay_subprocess_env,_focus_window_xdotool,_focus_window_xdotool_for_ide,_focus_window_gnome_shell,_focus_window_gnome_shell_for_ide,_click_map_region_center,_raise_alt_tab_enabled,_alt_tab_window_cycle,_attempt_focus_recovery_capture,_persist_send_chat_drive_result,_map_raise_targets_for_ide,_map_interior_targets_for_ide,_dismiss_gnome_overview,ensure_vdisplay_ide_control,_import_imgl_targets,_main_vql_layer_count,_png_path_for_vql_sidecar,_resolve_photo_png_path,_photo_vql_refresh_mode,photo_vql_sidecar_needs_refresh,refresh_photo_vql_sidecar,_vdisplay_capture_failure_hint,prepare_photo_vql_for_drive,_normalize_photo_vql_drive_result,_finalize_send_chat,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_effective_submit_enabled,_submit_via_keyboard,_photo_vql_submit_chat,_ide_prompt_app_id,_resolve_ide_prompt_map,_ide_map_message_target,_type_text_via_ide_map_fallback,send_chat_via_ide_prompt,_send_chat_preflight,_send_chat_try_photo_vql,_send_chat_dry_run,_send_chat_try_os_injector,_send_chat_try_ide_prompt_fallback,_send_chat_semantic_vdisplay,_send_chat_photo_vql_mouse_focus,_send_chat_resolve_chat_selector,_send_chat_type_at_selector,_send_chat_submit_if_requested,send_chat,_resolve_vql_chat_target,_find_vql_chat_target,_extract_vql_click_from_target,_get_pycharm_vql_editor_center,_get_jetbrains_pycharm_chat_center,_photo_vql_elements,_live_surface_capture_meta,_jetbrains_surface_chat_target,_chat_target_validation_accepts,get_vql_chat_target_from_photo,_photo_vql_needs_vision_or_map,_jetbrains_map_selection_method,_jetbrains_map_selection_stage,get_vql_editor_target_from_photo,click_editor_via_photo_vql,_photo_capture_meta_for_source,_enrich_capture_meta_for_pointer,_map_chat_target_capture_local,_global_coords_from_vql_local,_build_vql_command_plan,_log_vql_cursor_positioning_at_command,_ydotool_click_capture_local,_type_text_at_vql_coords,_resolve_photo_vql_llm_coords,_resolve_photo_vql_llm_coords_via_koru_detector,_llm_detection_decision_from_target,_photo_vql_map_paste_fallback,_photo_vql_capture_mismatch_blocks,_surface_only_fallback_active,_surface_bounds_target_trusted,_surface_bounds_target_safe_for_actuation,_photo_vql_capture_mismatch_error,_target_selection_method,_selection_method_is_map,_map_target_can_clear_capture_mismatch,_is_jetbrains_map_target,_map_mismatch_allowed_for_target,_surface_target_can_clear_capture_mismatch,_surface_mismatch_allowed_for_target,_photo_vql_should_block_unverified_chat,_photo_vql_unverified_chat_blocked,_photo_vql_focus_target,_photo_vql_edit_result,perform_photo_vql_focus_and_edit,move_mouse_to_vql_target_and_focus_keyboard,_imgl_sidecar_path_for_vql,_layers_from_imgl_sidecar_file,_layers_from_vdisplay_sidecar,_with_embedded_capture_validation,load_vql_metadata,_resolve_vql_candidate,_monitor_source_slugs,_get_vql_candidates,_parse_fresh_vql_elements,get_vql_target,resolve_click_for_frame
     _real_vdisplay_src()
     _ensure_real_vdisplay_on_path()
     _load_vdisplay_control()
@@ -8540,10 +8627,13 @@ D:
     _dry_run()
     _photo_vql_code_edit_enabled()
     _prefer_photo_vql_chat()
+    sync_prepare_capture_flags_to_env(prepare)
     _capture_matches_requested_ide(ide)
     _vdisplay_source()
     _probe_ide_processes(ide)
     _desktop_probe()
+    _surface_confirms_ide_capture()
+    _apply_surface_capture_confirmation(out)
     _resolve_vdisplay_source_for_ide(ide)
     _abort_on_desktop_probe_fail()
     _vdisplay_source_for_ide(ide)
@@ -8560,6 +8650,7 @@ D:
     _auto_open_ide_enabled()
     _real_imgl_src()
     _ensure_real_imgl_on_path()
+    _vdisplay_cli_path()
     _vdisplay_subprocess_env()
     _focus_window_xdotool()
     _focus_window_xdotool_for_ide()
@@ -8581,6 +8672,7 @@ D:
     _photo_vql_refresh_mode()
     photo_vql_sidecar_needs_refresh()
     refresh_photo_vql_sidecar()
+    _vdisplay_capture_failure_hint(error)
     prepare_photo_vql_for_drive()
     _normalize_photo_vql_drive_result(photo_res)
     _finalize_send_chat(result)
@@ -8618,7 +8710,13 @@ D:
     _get_pycharm_vql_editor_center()
     _get_jetbrains_pycharm_chat_center()
     _photo_vql_elements()
+    _live_surface_capture_meta(source)
+    _jetbrains_surface_chat_target()
+    _chat_target_validation_accepts(target)
     get_vql_chat_target_from_photo()
+    _photo_vql_needs_vision_or_map()
+    _jetbrains_map_selection_method()
+    _jetbrains_map_selection_stage()
     get_vql_editor_target_from_photo()
     click_editor_via_photo_vql(ide;source)
     _photo_capture_meta_for_source(source)
@@ -8630,7 +8728,25 @@ D:
     _ydotool_click_capture_local()
     _type_text_at_vql_coords(value)
     _resolve_photo_vql_llm_coords()
+    _resolve_photo_vql_llm_coords_via_koru_detector()
+    _llm_detection_decision_from_target()
     _photo_vql_map_paste_fallback(prompt)
+    _photo_vql_capture_mismatch_blocks()
+    _surface_only_fallback_active()
+    _surface_bounds_target_trusted()
+    _surface_bounds_target_safe_for_actuation()
+    _photo_vql_capture_mismatch_error()
+    _target_selection_method(target)
+    _selection_method_is_map(method)
+    _map_target_can_clear_capture_mismatch()
+    _is_jetbrains_map_target()
+    _map_mismatch_allowed_for_target()
+    _surface_target_can_clear_capture_mismatch()
+    _surface_mismatch_allowed_for_target()
+    _photo_vql_should_block_unverified_chat()
+    _photo_vql_unverified_chat_blocked()
+    _photo_vql_focus_target()
+    _photo_vql_edit_result(prompt)
     perform_photo_vql_focus_and_edit(prompt)
     move_mouse_to_vql_target_and_focus_keyboard(target)
     _imgl_sidecar_path_for_vql(vql_path)
@@ -10010,13 +10126,14 @@ D:
     _record_plugin_ack_integration(daemon)
     handle_ack(daemon;client;msg)
   src/koruide/daemon/handlers_drive.py:
-    e: _prefer_keyboard_drive,_log_drive_request,_select_drive_plugin,_route_drive,_reject_blind_keyboard_fallback,_blind_keyboard_fallback_blocker,handle_drive,_check_and_block_plugin_version,_record_plugin_route_telemetry,_pending_corr_owner_alive,_clear_stale_pending_plugin_drive,_active_pending_plugin_drive,_reject_overlapping_plugin_drive,_deliver_chat_via_plugin_socket,_drive_via_plugin,_load_injector_config,_coords_collision,_calibration_collision,_try_os_injector_drive,_drive_via_vdisplay_backend,_drive_via_imgl_backend,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend
+    e: _prefer_keyboard_drive,_log_drive_request,_select_drive_plugin,_route_drive,_reject_blind_keyboard_fallback,_blind_keyboard_fallback_blocker,_remember_semantic_drive_decline,handle_drive,_check_and_block_plugin_version,_record_plugin_route_telemetry,_pending_corr_owner_alive,_clear_stale_pending_plugin_drive,_active_pending_plugin_drive,_reject_overlapping_plugin_drive,_deliver_chat_via_plugin_socket,_drive_via_plugin,_load_injector_config,_coords_collision,_calibration_collision,_try_os_injector_drive,_drive_via_vdisplay_backend,_drive_via_imgl_backend,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend
     _prefer_keyboard_drive()
     _log_drive_request(daemon;raw_ide;text;submit;require_plugin)
     _select_drive_plugin(daemon;ide_pref)
     _route_drive(daemon;client;msg;plugin;ide_pref;text;submit;require_plugin;strategy_hint)
     _reject_blind_keyboard_fallback()
     _blind_keyboard_fallback_blocker(ide_pref)
+    _remember_semantic_drive_decline(reason)
     handle_drive(daemon;client;msg)
     _check_and_block_plugin_version(daemon;client;msg;plugin;text;submit)
     _record_plugin_route_telemetry(daemon;client;msg;plugin;text;submit;require_plugin;corr)
@@ -10771,7 +10888,7 @@ D:
     test_autoloop_print_script(capsys)
     test_autoloop_runs_packaged_script_with_env_assignments(tmp_path)
   tests/test_autonomous.py:
-    e: _isolate_terminal_ide,_force_idle_drive_prompt,test_effective_flags_matrix,test_scan_after_idle_queue_runs_scan_when_queue_idle,test_run_cycle_records_environment_profile_in_telemetry,test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty,test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery,test_cycle_code2llm_discovery_ensures_standardized_follow_up_ticket,test_scan_after_idle_min_interval_skips_second_scan,test_idle_streak_skip_increments_telemetry,test_ticket_sources_env_overrides_cli_queue_to_scan,test_ticket_sources_env_invalid_keeps_cli_queue,test_autonomous_environ_doctor_probe_invalid_ticket_sources,test_autonomous_environ_doctor_probe_pass_summary,test_looks_like_autonomous_matches_koru_cli_auto,test_looks_like_autonomous_matches_koru_autonomous_regex,test_auto_main_argv_injects_replace_existing,test_auto_invocation_uses_full_autonomous_defaults,test_auto_invocation_can_disable_after_idle_intake,test_auto_invocation_applies_koru_yaml_strategy_defaults,test_auto_invocation_cli_flags_override_koru_yaml_strategy_defaults,test_auto_invocation_can_enable_adaptive_pipeline,test_auto_onboarding_flow_uses_simulated_stdin,test_auto_pipeline_profiles_escalate_when_queue_stays_idle,test_effective_cycle_autopilot_skips_required_plugin_when_missing,test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive,test_autopilot_terminal_conflict_can_be_explicitly_allowed,test_autopilot_terminal_conflict_allows_connected_target_plugin,test_effective_cycle_autopilot_allows_non_plugin_required_ide,test_effective_cycle_scan_skips_after_waiting_input,test_effective_cycle_scan_waiting_override,test_build_queue_command_omits_unsupported_all_queues_flag,test_stop_prior_autonomous_for_auto_start_terminates,test_guard_existing_autonomous_noninteractive_blocks_duplicate,test_guard_existing_autonomous_replace_existing_terminates,test_guard_existing_autonomous_replace_existing_terminates_stale_wup,test_guard_existing_autonomous_interactive_decline_blocks_duplicate,test_autonomous_jsonl_keyboard_interrupt_emits_reason,test_queue_loop_result_summary_includes_waiting_ticket,test_queue_loop_waiting_ticket_label_helper,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_resolve_autopilot_ide_headless_forces_auto,test_resolve_autopilot_ide_headless_allow_autopilot_honors_env,test_resolve_autopilot_ide_koru_ide_mode_headless,test_resolve_autopilot_ide_ssh_without_display_headless,test_resolve_autopilot_ide_ssh_with_display_uses_cli,test_resolve_autopilot_ide_os_environ_autopilot_ide,test_resolve_autopilot_ide_os_environ_autopilot_instance,test_resolve_autopilot_ide_headless_allow_yes,_isolate_integrated_terminal_env,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_auto_prefers_vscode_terminal,test_apply_agent_lane_environ_auto_prefers_vscodium_terminal,test_apply_agent_lane_environ_auto_preserves_explicit_vscodium_over_vscode_terminal,test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_safe_up_uses_queue_diagnostics_without_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_setup_autopilot_plugin_unsupported_skips_wait,test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload,test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again,test_setup_autopilot_plugin_empty_plugin_list_attempts_reload,test_status_has_autopilot_plugin_matches_specific_ide,test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict,test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol,test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy,test_autonomous_defaults_to_strict_plugin_policy,test_autonomous_respects_explicit_plugin_version_policy,test_build_cycle_run_kwargs_forwards_effective_autopilot,test_wait_for_autopilot_plugin_polls_until_connected,test_start_or_reuse_daemon_reuses_current_version,test_start_or_reuse_daemon_restarts_daemon_without_version,test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message,test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list,test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping,test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip,test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip,test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity,test_skip_due_to_recent_chat_activity_passes_events_to_llx_reflection,test_extract_needs_input_question_prefers_recent_received_question,test_skip_due_to_recent_chat_activity_creates_operator_ticket_on_needs_input,test_skip_due_to_recent_chat_activity_dedupes_needs_input_ticket_upsert,test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx,test_skip_due_to_recent_chat_activity_uses_openrouter_reflection_fallback,test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled,test_phase4_advisory_prioritize_tickets_emits_event,test_phase4_advisory_strategy_tuning_emits_event,test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket,test_skip_chat_activity_allows_llm_ready_redrive_after_no_change_verdict,test_skip_chat_activity_allows_redrive_when_sent_without_received,test_skip_chat_activity_upserts_external_chat_intake_ticket,test_skip_chat_activity_treats_short_explicit_sent_text_as_intake,test_skip_chat_activity_does_not_reupsert_current_chat_intake_ticket,test_skip_chat_activity_prefers_external_intake_over_self_drive_cooldown,test_skip_chat_activity_blocks_self_drive_even_without_ticket_ack,test_skip_chat_activity_does_not_ticket_self_driven_message,test_autopilot_escalation_cooldown_applies_after_escalation_prompt,test_reply_chat_input_busy_recognizes_plugin_ack_shape,test_submit_unverified_drive_failure_is_not_retryable,test_submit_unverified_drive_status_is_specific,test_submit_unverified_previous_drive_skips_redrive,test_submit_unverified_previous_drive_allows_alt_strategy_before_limit,test_submit_unverified_previous_drive_does_not_block_next_ticket,test_submit_unverified_previous_drive_clears_after_message_sent_same_ticket,test_submit_unverified_previous_drive_not_cleared_by_stale_message_sent,test_resolve_autopilot_drive_decision_includes_recent_llx_summary,test_resolve_autopilot_drive_decision_skips_closed_waiting_ticket,test_resolve_autopilot_drive_decision_does_not_skip_closed_waiting_ticket_when_disabled,test_autopilot_idle_without_open_ticket_does_not_drive,test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telemetry,test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure,test_run_cycle_plugin_required_failure_skips_os_injector_fallback,test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns,test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure,test_run_cycle_does_not_retry_missing_plugin_as_focus_error,test_run_cycle_does_not_retry_when_plugin_requires_manual_focus,test_log_autopilot_result_reports_manual_focus_as_skipped,test_run_cycle_skips_drive_when_required_plugin_missing,test_run_cycle_visible_typing_does_not_require_plugin,test_run_cycle_jetbrains_does_not_require_plugin_by_default,_fast_autonomous_up,test_up_keeps_running_on_waiting_input_by_default,test_up_stops_on_waiting_input_when_flag_set,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_compute_backoff_sleep_caps_stagnation,test_env_apply_autoloop_defaults_enables_full_diagnostics,test_run_idle_diagnostics_profile_off_message,test_run_idle_diagnostics_creates_deduped_ticket,test_wup_watch_command_uses_testql_mode,test_wup_watch_command_prefers_project_venv_wrapper,test_wup_watch_command_keeps_explicit_testql_bin,test_wup_watch_command_normalizes_percent_cpu_throttle,test_wup_subprocess_env_loads_project_wup_env,test_start_wup_watch_passes_playwright_env,test_wup_profiled_compose_services_start_before_watch,test_wup_compose_ps_accepts_json_lines,test_wup_compose_service_ready_rejects_unhealthy_or_stopped,test_wup_compose_service_ready_accepts_status_when_state_missing,test_wup_topology_gate_uses_pipeline_for_gate_wup,test_read_wup_health_creates_high_priority_planfile_ticket,test_read_wup_health_sanitizes_slash_in_service_marker_path,test_read_wup_health_ignores_stale_services_not_in_wup_yaml,test_read_wup_health_ignores_degraded_fleet_and_clears_marker,test_read_wup_health_treats_aborted_as_interrupted_not_failure
+    e: _isolate_terminal_ide,_force_idle_drive_prompt,test_effective_flags_matrix,test_scan_after_idle_queue_runs_scan_when_queue_idle,test_run_cycle_records_environment_profile_in_telemetry,test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty,test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery,test_cycle_code2llm_discovery_ensures_standardized_follow_up_ticket,test_scan_after_idle_min_interval_skips_second_scan,test_idle_streak_skip_increments_telemetry,test_ticket_sources_env_overrides_cli_queue_to_scan,test_ticket_sources_env_invalid_keeps_cli_queue,test_autonomous_environ_doctor_probe_invalid_ticket_sources,test_autonomous_environ_doctor_probe_pass_summary,test_looks_like_autonomous_matches_koru_cli_auto,test_looks_like_autonomous_matches_koru_autonomous_regex,test_auto_main_argv_injects_replace_existing,test_auto_invocation_uses_full_autonomous_defaults,test_auto_invocation_can_disable_after_idle_intake,test_auto_invocation_applies_koru_yaml_strategy_defaults,test_auto_invocation_cli_flags_override_koru_yaml_strategy_defaults,test_auto_invocation_can_enable_adaptive_pipeline,test_auto_onboarding_flow_uses_simulated_stdin,test_auto_pipeline_profiles_escalate_when_queue_stays_idle,test_effective_cycle_autopilot_skips_required_plugin_when_missing,test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive,test_autopilot_terminal_conflict_can_be_explicitly_allowed,test_autopilot_terminal_conflict_allows_connected_target_plugin,test_effective_cycle_autopilot_allows_non_plugin_required_ide,test_effective_cycle_scan_skips_after_waiting_input,test_effective_cycle_scan_waiting_override,test_build_queue_command_omits_unsupported_all_queues_flag,test_stop_prior_autonomous_for_auto_start_terminates,test_guard_existing_autonomous_noninteractive_blocks_duplicate,test_guard_existing_autonomous_replace_existing_terminates,test_guard_existing_autonomous_replace_existing_terminates_stale_wup,test_guard_existing_autonomous_interactive_decline_blocks_duplicate,test_autonomous_jsonl_keyboard_interrupt_emits_reason,test_queue_loop_result_summary_includes_waiting_ticket,test_queue_loop_waiting_ticket_label_helper,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_resolve_autopilot_ide_headless_forces_auto,test_resolve_autopilot_ide_headless_allow_autopilot_honors_env,test_resolve_autopilot_ide_koru_ide_mode_headless,test_resolve_autopilot_ide_ssh_without_display_headless,test_resolve_autopilot_ide_ssh_with_display_uses_cli,test_resolve_autopilot_ide_os_environ_autopilot_ide,test_resolve_autopilot_ide_os_environ_autopilot_instance,test_resolve_autopilot_ide_headless_allow_yes,_isolate_integrated_terminal_env,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_auto_prefers_vscode_terminal,test_apply_agent_lane_environ_auto_prefers_vscodium_terminal,test_apply_agent_lane_environ_auto_preserves_explicit_vscodium_over_vscode_terminal,test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_safe_up_uses_queue_diagnostics_without_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_setup_autopilot_plugin_unsupported_skips_wait,test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload,test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again,test_setup_autopilot_plugin_empty_plugin_list_attempts_reload,test_status_has_autopilot_plugin_matches_specific_ide,test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict,test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol,test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy,test_autonomous_defaults_to_strict_plugin_policy,test_autonomous_respects_explicit_plugin_version_policy,test_build_cycle_run_kwargs_forwards_effective_autopilot,test_wait_for_autopilot_plugin_polls_until_connected,test_start_or_reuse_daemon_reuses_current_version,test_start_or_reuse_daemon_restarts_daemon_without_version,test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message,test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list,test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping,test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip,test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip,test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity,test_skip_due_to_recent_chat_activity_passes_events_to_llx_reflection,test_extract_needs_input_question_prefers_recent_received_question,test_skip_due_to_recent_chat_activity_creates_operator_ticket_on_needs_input,test_skip_due_to_recent_chat_activity_dedupes_needs_input_ticket_upsert,test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx,test_skip_due_to_recent_chat_activity_uses_openrouter_reflection_fallback,test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled,test_phase4_advisory_prioritize_tickets_emits_event,test_phase4_advisory_strategy_tuning_emits_event,test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket,test_skip_chat_activity_allows_llm_ready_redrive_after_no_change_verdict,test_skip_chat_activity_allows_redrive_when_sent_without_received,test_skip_chat_activity_upserts_external_chat_intake_ticket,test_skip_chat_activity_treats_short_explicit_sent_text_as_intake,test_skip_chat_activity_does_not_reupsert_current_chat_intake_ticket,test_skip_chat_activity_prefers_external_intake_over_self_drive_cooldown,test_skip_chat_activity_blocks_self_drive_even_without_ticket_ack,test_skip_chat_activity_does_not_ticket_self_driven_message,test_autopilot_escalation_cooldown_applies_after_escalation_prompt,test_reply_chat_input_busy_recognizes_plugin_ack_shape,test_submit_unverified_drive_failure_is_not_retryable,test_submit_unverified_drive_status_is_specific,test_submit_unverified_previous_drive_skips_redrive,test_submit_unverified_previous_drive_allows_alt_strategy_before_limit,test_submit_unverified_previous_drive_does_not_block_next_ticket,test_submit_unverified_previous_drive_clears_after_message_sent_same_ticket,test_submit_unverified_previous_drive_not_cleared_by_stale_message_sent,test_resolve_autopilot_drive_decision_includes_recent_llx_summary,test_resolve_autopilot_drive_decision_skips_closed_waiting_ticket,test_resolve_autopilot_drive_decision_does_not_skip_closed_waiting_ticket_when_disabled,test_autopilot_idle_without_open_ticket_does_not_drive,test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telemetry,test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure,test_run_cycle_plugin_required_failure_skips_os_injector_fallback,test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns,test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure,test_run_cycle_does_not_retry_missing_plugin_as_focus_error,test_run_cycle_does_not_retry_semantic_required_as_focus_error,test_run_cycle_does_not_retry_when_plugin_requires_manual_focus,test_log_autopilot_result_reports_manual_focus_as_skipped,test_run_cycle_skips_drive_when_required_plugin_missing,test_run_cycle_visible_typing_does_not_require_plugin,test_run_cycle_jetbrains_does_not_require_plugin_by_default,_fast_autonomous_up,test_up_keeps_running_on_waiting_input_by_default,test_up_stops_on_waiting_input_when_flag_set,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_compute_backoff_sleep_caps_stagnation,test_env_apply_autoloop_defaults_enables_full_diagnostics,test_run_idle_diagnostics_profile_off_message,test_run_idle_diagnostics_creates_deduped_ticket,test_wup_watch_command_uses_testql_mode,test_wup_watch_command_prefers_project_venv_wrapper,test_wup_watch_command_keeps_explicit_testql_bin,test_wup_watch_command_normalizes_percent_cpu_throttle,test_wup_subprocess_env_loads_project_wup_env,test_start_wup_watch_passes_playwright_env,test_wup_profiled_compose_services_start_before_watch,test_wup_compose_ps_accepts_json_lines,test_wup_compose_service_ready_rejects_unhealthy_or_stopped,test_wup_compose_service_ready_accepts_status_when_state_missing,test_wup_topology_gate_uses_pipeline_for_gate_wup,test_read_wup_health_creates_high_priority_planfile_ticket,test_read_wup_health_sanitizes_slash_in_service_marker_path,test_read_wup_health_ignores_stale_services_not_in_wup_yaml,test_read_wup_health_ignores_degraded_fleet_and_clears_marker,test_read_wup_health_treats_aborted_as_interrupted_not_failure
     _isolate_terminal_ide(monkeypatch)
     _force_idle_drive_prompt(monkeypatch)
     test_effective_flags_matrix()
@@ -10892,6 +11009,7 @@ D:
     test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(tmp_path;monkeypatch;capsys)
     test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure(tmp_path;monkeypatch;capsys)
     test_run_cycle_does_not_retry_missing_plugin_as_focus_error(tmp_path;monkeypatch;capsys)
+    test_run_cycle_does_not_retry_semantic_required_as_focus_error(tmp_path;monkeypatch;capsys)
     test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(tmp_path;monkeypatch;capsys)
     test_log_autopilot_result_reports_manual_focus_as_skipped()
     test_run_cycle_skips_drive_when_required_plugin_missing(tmp_path;monkeypatch;capsys)
@@ -12306,8 +12424,9 @@ D:
     test_evaluate_bridge_jetbrains_uses_keyboard_lane_not_unsupported(tmp_path)
     test_get_adapter_cursor()
   tests/test_ide_client.py:
-    e: test_legacy_adapter_forwards_all_operations,test_build_legacy_ide_client_uses_autopilot_client,test_build_koruide_client_uses_koruide_package,test_build_ide_client_defaults_to_legacy,test_build_ide_client_can_select_koruide,test_build_ide_client_uses_env_when_backend_not_passed
+    e: test_legacy_adapter_forwards_all_operations,test_legacy_adapter_emits_operator_guidance_for_semantic_required,test_build_legacy_ide_client_uses_autopilot_client,test_build_koruide_client_uses_koruide_package,test_build_ide_client_defaults_to_legacy,test_build_ide_client_can_select_koruide,test_build_ide_client_uses_env_when_backend_not_passed
     test_legacy_adapter_forwards_all_operations()
+    test_legacy_adapter_emits_operator_guidance_for_semantic_required(monkeypatch)
     test_build_legacy_ide_client_uses_autopilot_client(monkeypatch)
     test_build_koruide_client_uses_koruide_package(monkeypatch)
     test_build_ide_client_defaults_to_legacy(monkeypatch)
@@ -12554,6 +12673,12 @@ D:
     test_interface_registry_family_summary_has_multiple_families()
     test_blocker_interface_payload_returns_recovery_for_plugin_mismatch()
     test_interface_registry_payload_contains_blocker_index()
+  tests/test_jetbrains_surface_chat_target.py:
+    e: test_jetbrains_chat_target_from_surface_hdmi1,test_jetbrains_surface_target_passes_window_relative_validation,test_jetbrains_chat_target_skips_toolbox,test_jetbrains_chat_target_skips_wrong_monitor
+    test_jetbrains_chat_target_from_surface_hdmi1()
+    test_jetbrains_surface_target_passes_window_relative_validation()
+    test_jetbrains_chat_target_skips_toolbox()
+    test_jetbrains_chat_target_skips_wrong_monitor()
   tests/test_koru_browser_stack.py:
     e: koru_root,test_env2llm_refresh_includes_browser_stack,test_nlp2oql_router_from_koru,test_mcp_tools_include_nlp2oql,test_testql_environment_scenario_dry_run
     koru_root()
@@ -12884,7 +13009,7 @@ D:
     test_providers_reset_clears_session_file(tmp_path)
     test_cmd_providers_list_prints(capsys)
   tests/test_operator_pipeline.py:
-    e: _ticket_args,probe,self_control_ok_by_default,test_build_operator_steps_mcp_pending_without_config,test_build_operator_steps_mcp_ok_when_configured,test_build_operator_steps_vscode_ignores_cursor_mcp_config,test_build_operator_steps_skips_plugin_for_jetbrains,test_build_operator_steps_plugin_probe_uses_resolved_ide,test_build_operator_steps_skips_os_calibration_for_plugin_ide,test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance,test_build_operator_steps_adds_self_control_step,_self_report,test_self_control_ok_auto_repairs_when_fix_clears_problem,test_self_control_ok_keeps_task_when_auto_repair_still_needs_reload,test_self_control_ok_respects_autorepair_opt_out,test_run_startup_operator_pipeline_creates_tickets,test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing,test_candidate_planfile_health_urls_use_serve_endpoint,test_run_startup_operator_pipeline_dedup_markers,test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket,test_run_startup_operator_pipeline_replaces_stale_ide_marker,test_run_startup_operator_pipeline_keeps_plugin_ticket_with_matching_dedupe_key,test_run_startup_operator_pipeline_closes_resolved_marker_ticket,test_run_startup_operator_pipeline_replaces_closed_pending_marker,test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket,test_run_startup_operator_pipeline_keeps_marker_when_close_times_out,test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped
+    e: _ticket_args,probe,self_control_ok_by_default,test_build_operator_steps_mcp_pending_without_config,test_build_operator_steps_mcp_ok_when_configured,test_build_operator_steps_vscode_ignores_cursor_mcp_config,test_build_operator_steps_skips_plugin_for_jetbrains,test_build_operator_steps_skips_os_calibration_for_jetbrains_wayland,test_build_operator_steps_plugin_probe_uses_resolved_ide,test_build_operator_steps_skips_os_calibration_for_plugin_ide,test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance,test_build_operator_steps_adds_self_control_step,_self_report,test_self_control_ok_auto_repairs_when_fix_clears_problem,test_self_control_ok_keeps_task_when_auto_repair_still_needs_reload,test_self_control_ok_respects_autorepair_opt_out,test_run_startup_operator_pipeline_creates_tickets,test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing,test_candidate_planfile_health_urls_use_serve_endpoint,test_run_startup_operator_pipeline_dedup_markers,test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket,test_run_startup_operator_pipeline_replaces_stale_ide_marker,test_run_startup_operator_pipeline_keeps_plugin_ticket_with_matching_dedupe_key,test_run_startup_operator_pipeline_closes_resolved_marker_ticket,test_run_startup_operator_pipeline_replaces_closed_pending_marker,test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket,test_run_startup_operator_pipeline_keeps_marker_when_close_times_out,test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped
     _ticket_args(command)
     probe(tmp_path)
     self_control_ok_by_default(monkeypatch)
@@ -12892,6 +13017,7 @@ D:
     test_build_operator_steps_mcp_ok_when_configured(tmp_path;probe)
     test_build_operator_steps_vscode_ignores_cursor_mcp_config(tmp_path;probe)
     test_build_operator_steps_skips_plugin_for_jetbrains(tmp_path;probe)
+    test_build_operator_steps_skips_os_calibration_for_jetbrains_wayland(tmp_path;probe;monkeypatch)
     test_build_operator_steps_plugin_probe_uses_resolved_ide(tmp_path;probe)
     test_build_operator_steps_skips_os_calibration_for_plugin_ide(tmp_path;probe;monkeypatch)
     test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance(tmp_path;probe;monkeypatch)
@@ -12926,7 +13052,7 @@ D:
     test_koruos_import_emits_deprecation_warning()
     test_tillm_bridge_delegates_shell_drive_to_tillm()
   tests/test_photo_vql_drive.py:
-    e: _clear_autonomy_session_env,_patch_confirmed_observe_meta,test_validate_chat_coords_warns_on_editor_like_position,test_build_vql_command_plan_includes_commands,test_photo_vql_sidecar_needs_refresh_when_missing,test_photo_vql_sidecar_skip_when_layers_present,test_vdisplay_source_for_ide_defaults,test_photo_vql_ide_window_warning_detects_cursor_on_jetbrains_drive,test_photo_vql_ide_window_warning_accepts_pycharm_title,test_photo_vql_ide_window_warning_rejects_cursor_despite_pycharm_breadcrumb,test_photo_vql_ide_window_warning_uses_embedded_capture_validation,test_vql_sidecar_stale_from_embedded_capture_validation,test_photo_vql_sidecar_stale_when_older_than_max_age,test_begin_autonomy_session_creates_date_scoped_dir,test_load_vql_metadata_skips_stale_global_sidecar,test_resolve_photo_png_path_from_vql_sidecar,test_ensure_vdisplay_ide_control_clicks_map_interior,test_prefer_photo_vql_auto_enables_when_capture_matches,test_prefer_photo_vql_auto_falls_back_to_map_on_mismatch,test_ensure_vdisplay_ide_control_dry,test_perform_photo_vql_llm_coords_before_focus,test_perform_photo_vql_map_fallback_when_type_fails,test_jetbrains_chat_corner_prefers_bottom_right_input,test_jetbrains_chat_corner_rejects_small_background,test_validate_vql_chat_target_rejects_background_small,test_validate_vql_chat_target_mismatch,test_get_vql_chat_map_on_mismatch,test_capture_provenance_uses_embedded_validation,test_capture_validation_false_without_titles_triggers_warning,test_build_vql_command_plan_uses_observe_provenance_not_map,test_perform_photo_vql_verify_failure_blocks_ok,test_normalize_drive_result_blocks_false_ok_when_edit_ok_but_unverified,test_normalize_drive_result_blocks_false_ok_on_inference_fail,test_prepare_syncs_ide_control_capture_confirmed_from_observe,test_photo_vql_chat_input_candidates_penalizes_terminal_background,test_windsurf_chat_input_candidates_prefer_top_composer,test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero,test_perform_photo_vql_submit_after_paste,test_build_vql_command_plan_flags_capture_mismatch,test_perform_photo_vql_blocks_jetbrains_chat_on_capture_mismatch,test_resolve_auto_picks_dp_when_default_missing,test_resolve_explicit_missing_monitor_fails,test_desktop_probe_missing_source_errors,test_prepare_aborts_when_probe_fails,test_find_latest_koru_session_uses_mtime_not_artifacts,test_competing_ide_label_from_warning,test_prepare_aborts_after_single_attempt_on_mismatch,test_perform_blocked_on_mismatch_without_allow,test_perform_map_path_allowed_with_explicit_ide_mismatch,test_raise_alt_tab_default_on_for_jetbrains,test_prepare_map_fallback_requires_allow_flag,test_prepare_focus_recovery_on_mismatch,test_prepare_force_refresh_after_ide_control,test_real_imgl_src_prefers_semco_path,test_ensure_real_imgl_on_path,test_import_imgl_targets_clears_cached_stub,test_vdisplay_subprocess_env_puts_imgl_first,test_send_chat_persists_drive_result
+    e: _clear_autonomy_session_env,_patch_confirmed_observe_meta,test_validate_chat_coords_warns_on_editor_like_position,test_build_vql_command_plan_includes_commands,test_photo_vql_sidecar_needs_refresh_when_missing,test_photo_vql_sidecar_skip_when_layers_present,test_vdisplay_source_for_ide_defaults,test_photo_vql_ide_window_warning_detects_cursor_on_jetbrains_drive,test_photo_vql_ide_window_warning_accepts_pycharm_title,test_photo_vql_ide_window_warning_rejects_cursor_despite_pycharm_breadcrumb,test_photo_vql_ide_window_warning_uses_embedded_capture_validation,test_vql_sidecar_stale_from_embedded_capture_validation,test_photo_vql_sidecar_stale_when_older_than_max_age,test_begin_autonomy_session_creates_date_scoped_dir,test_load_vql_metadata_skips_stale_global_sidecar,test_resolve_photo_png_path_from_vql_sidecar,test_ensure_vdisplay_ide_control_clicks_map_interior,test_prefer_photo_vql_auto_enables_when_capture_matches,test_prefer_photo_vql_auto_falls_back_to_map_on_mismatch,test_ensure_vdisplay_ide_control_dry,test_perform_photo_vql_llm_coords_before_focus,test_perform_photo_vql_map_fallback_when_type_fails,test_jetbrains_chat_corner_prefers_bottom_right_input,test_jetbrains_chat_corner_rejects_small_background,test_validate_vql_chat_target_rejects_background_small,test_validate_vql_chat_target_mismatch,test_get_vql_chat_map_on_mismatch,test_capture_provenance_uses_embedded_validation,test_capture_validation_false_without_titles_triggers_warning,test_build_vql_command_plan_uses_observe_provenance_not_map,test_perform_photo_vql_verify_failure_blocks_ok,test_normalize_drive_result_blocks_false_ok_when_edit_ok_but_unverified,test_normalize_drive_result_blocks_false_ok_on_inference_fail,test_prepare_syncs_ide_control_capture_confirmed_from_observe,test_prepare_does_not_surface_confirm_when_vql_refresh_fails,test_photo_vql_chat_input_candidates_penalizes_terminal_background,test_windsurf_chat_input_candidates_prefer_top_composer,test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero,test_perform_photo_vql_submit_after_paste,test_build_vql_command_plan_flags_capture_mismatch,test_perform_photo_vql_blocks_jetbrains_chat_on_capture_mismatch,test_perform_photo_vql_blocks_invalid_chat_target_before_actuation,test_perform_photo_vql_blocks_suspicious_surface_target_before_actuation,test_type_text_at_vql_coords_blocks_suspicious_chat_coords_before_click,test_resolve_auto_picks_dp_when_default_missing,test_resolve_explicit_missing_monitor_fails,test_resolve_prefers_ide_surface_monitor,test_map_capture_monitor_mismatch,test_format_wayland_vdisplay_operator_hint,test_desktop_probe_missing_source_errors,test_prepare_aborts_when_probe_fails,test_find_latest_koru_session_uses_mtime_not_artifacts,test_competing_ide_label_from_warning,test_prepare_aborts_after_single_attempt_on_mismatch,test_perform_blocked_on_mismatch_without_allow,test_perform_map_path_allowed_with_explicit_ide_mismatch,test_raise_alt_tab_default_on_for_jetbrains,test_prepare_map_fallback_requires_allow_flag,test_prepare_focus_recovery_on_mismatch,test_prepare_force_refresh_after_ide_control,test_real_imgl_src_prefers_semco_path,test_ensure_real_imgl_on_path,test_import_imgl_targets_clears_cached_stub,test_vdisplay_subprocess_env_puts_imgl_first,test_send_chat_persists_drive_result
     _clear_autonomy_session_env(monkeypatch)
     _patch_confirmed_observe_meta(monkeypatch)
     test_validate_chat_coords_warns_on_editor_like_position()
@@ -12961,14 +13087,21 @@ D:
     test_normalize_drive_result_blocks_false_ok_when_edit_ok_but_unverified()
     test_normalize_drive_result_blocks_false_ok_on_inference_fail()
     test_prepare_syncs_ide_control_capture_confirmed_from_observe(monkeypatch)
+    test_prepare_does_not_surface_confirm_when_vql_refresh_fails(monkeypatch)
     test_photo_vql_chat_input_candidates_penalizes_terminal_background()
     test_windsurf_chat_input_candidates_prefer_top_composer()
     test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero(monkeypatch;tmp_path)
     test_perform_photo_vql_submit_after_paste(monkeypatch)
     test_build_vql_command_plan_flags_capture_mismatch()
     test_perform_photo_vql_blocks_jetbrains_chat_on_capture_mismatch(monkeypatch)
+    test_perform_photo_vql_blocks_invalid_chat_target_before_actuation(monkeypatch)
+    test_perform_photo_vql_blocks_suspicious_surface_target_before_actuation(monkeypatch)
+    test_type_text_at_vql_coords_blocks_suspicious_chat_coords_before_click(monkeypatch)
     test_resolve_auto_picks_dp_when_default_missing(monkeypatch)
     test_resolve_explicit_missing_monitor_fails(monkeypatch)
+    test_resolve_prefers_ide_surface_monitor(monkeypatch)
+    test_map_capture_monitor_mismatch(tmp_path)
+    test_format_wayland_vdisplay_operator_hint(monkeypatch)
     test_desktop_probe_missing_source_errors()
     test_prepare_aborts_when_probe_fails(monkeypatch)
     test_find_latest_koru_session_uses_mtime_not_artifacts(tmp_path)
@@ -12986,14 +13119,18 @@ D:
     test_vdisplay_subprocess_env_puts_imgl_first(monkeypatch)
     test_send_chat_persists_drive_result(monkeypatch)
   tests/test_photo_vql_orchestrator.py:
-    e: _clear_guard_env,test_capture_guard_blocks_mismatch_by_default,test_capture_guard_allows_map_only_fallback,test_session_prepare_is_fresh_reads_recent_prepare,test_session_prepare_is_fresh_rejects_stale,test_photo_vql_drive_reuses_fresh_prepare,test_run_photo_vql_drive_aborts_on_prepare_failure,test_build_user_guidance_monitor_not_connected,test_preflight_repo_paths_detects_missing_koru,test_emit_user_guidance_includes_success_audit,test_import_imgl_targets_with_koru_stub_on_path,test_copy_observe_artifacts_pins_session_paths,test_photo_vql_drive_act_uses_llm_photo_vql_before_map_on_fallback,test_photo_vql_drive_act_uses_ide_prompt_when_llm_disabled,test_get_vql_chat_target_prefers_llm_detect_on_mismatch,test_photo_vql_drive_act_uses_ide_prompt_on_map_only_fallback,test_normalize_drive_result_blocks_map_edit_when_capture_unconfirmed,test_normalize_drive_result_allows_map_edit_when_ide_mismatch_explicit,test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed,test_refresh_photo_vql_sidecar_copies_observe_artifacts
+    e: _clear_guard_env,test_capture_guard_blocks_mismatch_by_default,test_capture_guard_allows_map_only_fallback,test_session_prepare_is_fresh_reads_recent_prepare,test_session_prepare_is_fresh_rejects_stale,test_session_prepare_is_fresh_rejects_unconfirmed_map_fallback,test_session_prepare_is_fresh_finds_latest_session_without_env,test_photo_vql_drive_act_surface_only_blocks_send_chat,test_photo_vql_drive_reuses_fresh_prepare,test_run_photo_vql_drive_aborts_on_prepare_failure,test_run_photo_vql_drive_blocks_surface_only_fallback,test_build_user_guidance_monitor_not_connected,test_preflight_repo_paths_detects_missing_koru,test_emit_user_guidance_includes_success_audit,test_import_imgl_targets_with_koru_stub_on_path,test_copy_observe_artifacts_pins_session_paths,test_photo_vql_drive_act_uses_llm_photo_vql_before_map_on_fallback,test_photo_vql_drive_act_uses_ide_prompt_when_llm_disabled,test_get_vql_chat_target_uses_jetbrains_surface_bounds_on_hdmi1,test_get_vql_chat_target_rejects_suspicious_jetbrains_surface_bounds,test_get_vql_chat_target_accepts_jetbrains_surface_when_surface_fallback_active,test_get_vql_chat_target_prefers_llm_detect_on_mismatch,test_photo_vql_drive_act_uses_ide_prompt_on_map_only_fallback,test_normalize_drive_result_blocks_map_edit_when_capture_unconfirmed,test_normalize_drive_result_allows_map_edit_when_ide_mismatch_explicit,test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed,test_refresh_photo_vql_sidecar_copies_observe_artifacts
     _clear_guard_env(monkeypatch)
     test_capture_guard_blocks_mismatch_by_default()
     test_capture_guard_allows_map_only_fallback(monkeypatch)
     test_session_prepare_is_fresh_reads_recent_prepare(tmp_path;monkeypatch)
     test_session_prepare_is_fresh_rejects_stale(tmp_path;monkeypatch)
+    test_session_prepare_is_fresh_rejects_unconfirmed_map_fallback(tmp_path;monkeypatch)
+    test_session_prepare_is_fresh_finds_latest_session_without_env(tmp_path;monkeypatch)
+    test_photo_vql_drive_act_surface_only_blocks_send_chat(monkeypatch)
     test_photo_vql_drive_reuses_fresh_prepare(monkeypatch)
     test_run_photo_vql_drive_aborts_on_prepare_failure(monkeypatch)
+    test_run_photo_vql_drive_blocks_surface_only_fallback(monkeypatch)
     test_build_user_guidance_monitor_not_connected()
     test_preflight_repo_paths_detects_missing_koru(tmp_path;monkeypatch)
     test_emit_user_guidance_includes_success_audit(tmp_path)
@@ -13001,6 +13138,9 @@ D:
     test_copy_observe_artifacts_pins_session_paths(tmp_path)
     test_photo_vql_drive_act_uses_llm_photo_vql_before_map_on_fallback(monkeypatch)
     test_photo_vql_drive_act_uses_ide_prompt_when_llm_disabled(monkeypatch)
+    test_get_vql_chat_target_uses_jetbrains_surface_bounds_on_hdmi1(monkeypatch)
+    test_get_vql_chat_target_rejects_suspicious_jetbrains_surface_bounds(monkeypatch)
+    test_get_vql_chat_target_accepts_jetbrains_surface_when_surface_fallback_active(monkeypatch)
     test_get_vql_chat_target_prefers_llm_detect_on_mismatch(monkeypatch)
     test_photo_vql_drive_act_uses_ide_prompt_on_map_only_fallback(monkeypatch)
     test_normalize_drive_result_blocks_map_edit_when_capture_unconfirmed(monkeypatch)
@@ -13268,6 +13408,14 @@ D:
   tests/test_structured_report.py:
     e: test_structured_cycle_report_emits_diagnostics_and_plans
     test_structured_cycle_report_emits_diagnostics_and_plans()
+  tests/test_surface_capture_confirmation.py:
+    e: test_surface_confirms_jetbrains_on_hdmi,test_apply_surface_capture_confirmation_clears_mismatch_block,test_apply_surface_capture_confirmation_allows_prepare_without_png,test_capture_guard_allows_surface_only_fallback_on_capture_error,test_sync_prepare_capture_flags_sets_source,test_surface_target_can_clear_capture_mismatch
+    test_surface_confirms_jetbrains_on_hdmi()
+    test_apply_surface_capture_confirmation_clears_mismatch_block()
+    test_apply_surface_capture_confirmation_allows_prepare_without_png()
+    test_capture_guard_allows_surface_only_fallback_on_capture_error(monkeypatch)
+    test_sync_prepare_capture_flags_sets_source(monkeypatch)
+    test_surface_target_can_clear_capture_mismatch(monkeypatch)
   tests/test_sync_plugin_build.py:
     e: _load_script,test_bump_patch_increments_plain_semver,test_bump_patch_refuses_non_plain_semver,_make_plugin,_read,test_update_package_bumps_version_when_source_changes,test_content_sha_is_independent_of_version
     _load_script()
@@ -13309,6 +13457,15 @@ D:
   tests/test_topology_cli.py:
     e: test_render_topology_text_includes_components_and_pipelines
     test_render_topology_text_includes_components_and_pipelines()
+  tests/test_vdisplay_agent_bootstrap.py:
+    e: test_is_vdisplay_agent_health,test_is_koru_dashboard_on_port,test_resolve_skips_koru_dashboard_port,test_apply_vdisplay_agent_env_sets_url,test_ensure_screencast_session_accepts_keeper_managed,test_ensure_screencast_session_rejects_active_without_keeper,test_ensure_screencast_session_skips_rest_start_on_wayland
+    test_is_vdisplay_agent_health()
+    test_is_koru_dashboard_on_port(monkeypatch)
+    test_resolve_skips_koru_dashboard_port(monkeypatch)
+    test_apply_vdisplay_agent_env_sets_url(monkeypatch)
+    test_ensure_screencast_session_accepts_keeper_managed(monkeypatch)
+    test_ensure_screencast_session_rejects_active_without_keeper(monkeypatch)
+    test_ensure_screencast_session_skips_rest_start_on_wayland(monkeypatch)
   tests/test_vdisplay_control_fallback.py:
     e: _clear_vdisplay_drive_env,test_vdisplay_fallback_enabled_auto_on_wayland_without_plugin,test_vdisplay_fallback_disabled_explicitly,test_send_chat_dry_run,test_send_chat_prefers_ide_prompt_for_jetbrains,test_send_chat_skips_os_injector_on_wayland,test_verify_chat_text_visible_resolves_ocr_available,test_send_chat_uses_semantic_set_value,test_invoke_drive_uses_vdisplay_after_plugin_failure,test_vdisplay_control_fallback_blocks_when_capture_preflight_fails,test_vdisplay_control_fallback_attaches_successful_desktop_preflight,test_send_chat_prefers_photo_vql_when_flag_set,test_send_chat_skips_photo_vql_for_jetbrains_on_capture_mismatch,test_send_chat_blocks_jetbrains_on_capture_mismatch_by_default,test_jetbrains_ide_hints_use_pycharm_not_toolbox,test_send_chat_routes_code_edit_to_photo_vql,test_perform_photo_vql_focus_and_edit_dry,test_load_vql_metadata_sidecar_layers,test_get_vql_editor_target_uses_window_bbox_w_h,test_get_vql_chat_target_prefers_panel_over_send_chat_ocr,test_send_chat_via_ide_prompt_map_fallback
     _clear_vdisplay_drive_env(monkeypatch)
@@ -13541,7 +13698,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.337', 'python').
+project_metadata('koru', '0.1.339', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('.nlp2dsl/environment.doql.less', 1035, 'less').
@@ -14338,7 +14495,7 @@ project_file('src/koru/autonomous_cycle_skip_conditions.py', 681, 'python').
 project_file('src/koru/autonomous_daemon.py', 288, 'python').
 project_file('src/koru/autonomous_diag_markers.py', 17, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 306, 'python').
-project_file('src/koru/autonomous_drive_retry_policy.py', 282, 'python').
+project_file('src/koru/autonomous_drive_retry_policy.py', 325, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_loop_runner.py', 1247, 'python').
 project_file('src/koru/autonomous_onboarding.py', 228, 'python').
@@ -14346,17 +14503,17 @@ project_file('src/koru/autonomous_operator.py', 369, 'python').
 project_file('src/koru/autonomous_parser.py', 503, 'python').
 project_file('src/koru/autonomous_plugin.py', 288, 'python').
 project_file('src/koru/autonomous_plugin_lifecycle.py', 77, 'python').
-project_file('src/koru/autonomous_plugin_runtime.py', 204, 'python').
+project_file('src/koru/autonomous_plugin_runtime.py', 219, 'python').
 project_file('src/koru/autonomous_plugin_wait.py', 736, 'python').
 project_file('src/koru/autonomous_process_guard.py', 272, 'python').
 project_file('src/koru/autonomous_processes.py', 356, 'python').
-project_file('src/koru/autonomous_readiness.py', 984, 'python').
+project_file('src/koru/autonomous_readiness.py', 989, 'python').
 project_file('src/koru/autonomous_resources.py', 90, 'python').
 project_file('src/koru/autonomous_runtime.py', 676, 'python').
-project_file('src/koru/autonomous_startup.py', 874, 'python').
+project_file('src/koru/autonomous_startup.py', 880, 'python').
 project_file('src/koru/autonomous_submit_strategy.py', 123, 'python').
 project_file('src/koru/autonomous_up.py', 235, 'python').
-project_file('src/koru/autonomous_vdisplay_defaults.py', 47, 'python').
+project_file('src/koru/autonomous_vdisplay_defaults.py', 54, 'python').
 project_file('src/koru/autonomous_wup.py', 809, 'python').
 project_file('src/koru/autonomy/__init__.py', 25, 'python').
 project_file('src/koru/autonomy/autopilot_status.py', 70, 'python').
@@ -14373,9 +14530,9 @@ project_file('src/koru/autonomy/env.py', 403, 'python').
 project_file('src/koru/autonomy/environment.py', 251, 'python').
 project_file('src/koru/autonomy/events.py', 175, 'python').
 project_file('src/koru/autonomy/heal.py', 117, 'python').
-project_file('src/koru/autonomy/ide_operator_guidance.py', 197, 'python').
+project_file('src/koru/autonomy/ide_operator_guidance.py', 199, 'python').
 project_file('src/koru/autonomy/ide_work.py', 466, 'python').
-project_file('src/koru/autonomy/operator_pipeline.py', 1010, 'python').
+project_file('src/koru/autonomy/operator_pipeline.py', 1047, 'python').
 project_file('src/koru/autonomy/phases/__init__.py', 4, 'python').
 project_file('src/koru/autonomy/phases/contexts.py', 108, 'python').
 project_file('src/koru/autonomy/phases/drive_phase.py', 98, 'python').
@@ -14431,7 +14588,7 @@ project_file('src/koru/autopilot/commands/shutdown.py', 51, 'python').
 project_file('src/koru/autopilot/commands/status.py', 222, 'python').
 project_file('src/koru/autopilot/config.py', 10, 'python').
 project_file('src/koru/autopilot/daemon.py', 17, 'python').
-project_file('src/koru/autopilot/daemon_cli.py', 171, 'python').
+project_file('src/koru/autopilot/daemon_cli.py', 173, 'python').
 project_file('src/koru/autopilot/diagnose_vdisplay_cli.py', 60, 'python').
 project_file('src/koru/autopilot/doctor_cli.py', 153, 'python').
 project_file('src/koru/autopilot/drive_repair_policy.py', 117, 'python').
@@ -14586,14 +14743,14 @@ project_file('src/koru/git_attribution.py', 147, 'python').
 project_file('src/koru/git_cli.py', 275, 'python').
 project_file('src/koru/ide_adapters/__init__.py', 23, 'python').
 project_file('src/koru/ide_adapters/base.py', 79, 'python').
-project_file('src/koru/ide_adapters/bridge.py', 443, 'python').
+project_file('src/koru/ide_adapters/bridge.py', 442, 'python').
 project_file('src/koru/ide_adapters/gillm_client.py', 317, 'python').
 project_file('src/koru/ide_adapters/gillm_recovery.py', 228, 'python').
 project_file('src/koru/ide_adapters/ide_reload.py', 899, 'python').
 project_file('src/koru/ide_adapters/registry.py', 55, 'python').
 project_file('src/koru/ide_adapters/shared.py', 485, 'python').
 project_file('src/koru/ide_adapters/vscode_family.py', 145, 'python').
-project_file('src/koru/ide_client.py', 211, 'python').
+project_file('src/koru/ide_client.py', 225, 'python').
 project_file('src/koru/ide_control_cli.py', 296, 'python').
 project_file('src/koru/ide_doctor_cli.py', 596, 'python').
 project_file('src/koru/ide_router.py', 106, 'python').
@@ -14603,18 +14760,19 @@ project_file('src/koru/init.py', 660, 'python').
 project_file('src/koru/init_host_environment.py', 338, 'python').
 project_file('src/koru/integration_ledger.py', 136, 'python').
 project_file('src/koru/integrations/__init__.py', 20, 'python').
-project_file('src/koru/integrations/autonomy_session.py', 269, 'python').
+project_file('src/koru/integrations/autonomy_session.py', 398, 'python').
 project_file('src/koru/integrations/imgl_autodiag.py', 14, 'python').
 project_file('src/koru/integrations/imgl_client.py', 340, 'python').
 project_file('src/koru/integrations/photo_vql_config.py', 73, 'python').
-project_file('src/koru/integrations/photo_vql_drive.py', 263, 'python').
-project_file('src/koru/integrations/photo_vql_guard.py', 186, 'python').
-project_file('src/koru/integrations/photo_vql_llm_detect.py', 330, 'python').
-project_file('src/koru/integrations/photo_vql_monitor.py', 123, 'python').
-project_file('src/koru/integrations/photo_vql_target.py', 348, 'python').
-project_file('src/koru/integrations/photo_vql_user_guidance.py', 289, 'python').
-project_file('src/koru/integrations/photo_vql_validation.py', 435, 'python').
-project_file('src/koru/integrations/vdisplay_client.py', 4691, 'python').
+project_file('src/koru/integrations/photo_vql_drive.py', 379, 'python').
+project_file('src/koru/integrations/photo_vql_guard.py', 239, 'python').
+project_file('src/koru/integrations/photo_vql_llm_detect.py', 357, 'python').
+project_file('src/koru/integrations/photo_vql_monitor.py', 231, 'python').
+project_file('src/koru/integrations/photo_vql_target.py', 577, 'python').
+project_file('src/koru/integrations/photo_vql_user_guidance.py', 393, 'python').
+project_file('src/koru/integrations/photo_vql_validation.py', 494, 'python').
+project_file('src/koru/integrations/vdisplay_agent_bootstrap.py', 234, 'python').
+project_file('src/koru/integrations/vdisplay_client.py', 5494, 'python').
 project_file('src/koru/interface_registry.py', 231, 'python').
 project_file('src/koru/llm_reflect.py', 174, 'python').
 project_file('src/koru/local_manager_client.py', 252, 'python').
@@ -14753,7 +14911,7 @@ project_file('src/koruide/config.py', 24, 'python').
 project_file('src/koruide/daemon/__init__.py', 51, 'python').
 project_file('src/koruide/daemon/handlers.py', 336, 'python').
 project_file('src/koruide/daemon/handlers_ack.py', 678, 'python').
-project_file('src/koruide/daemon/handlers_drive.py', 997, 'python').
+project_file('src/koruide/daemon/handlers_drive.py', 1025, 'python').
 project_file('src/koruide/daemon/handlers_hello.py', 393, 'python').
 project_file('src/koruide/daemon/handlers_plugin_event.py', 192, 'python').
 project_file('src/koruide/daemon/metadata.py', 137, 'python').
@@ -14862,7 +15020,7 @@ project_file('tests/test_agent_backends_cli.py', 34, 'python').
 project_file('tests/test_agent_cli.py', 108, 'python').
 project_file('tests/test_agents.py', 222, 'python').
 project_file('tests/test_autoloop_cli.py', 52, 'python').
-project_file('tests/test_autonomous.py', 5379, 'python').
+project_file('tests/test_autonomous.py', 5437, 'python').
 project_file('tests/test_autonomous_cycle_bridge.py', 26, 'python').
 project_file('tests/test_autonomous_cycle_chat_activity_analyzer.py', 392, 'python').
 project_file('tests/test_autonomous_cycle_chat_activity_config.py', 179, 'python').
@@ -14892,11 +15050,11 @@ project_file('tests/test_autonomous_readiness.py', 317, 'python').
 project_file('tests/test_autonomous_redrive_cooldown.py', 399, 'python').
 project_file('tests/test_autonomous_runtime.py', 319, 'python').
 project_file('tests/test_autonomous_scenarios.py', 390, 'python').
-project_file('tests/test_autonomous_startup.py', 990, 'python').
+project_file('tests/test_autonomous_startup.py', 993, 'python').
 project_file('tests/test_autonomous_status_consumers.py', 29, 'python').
 project_file('tests/test_autonomous_submit_strategy.py', 122, 'python').
 project_file('tests/test_autonomous_up.py', 76, 'python').
-project_file('tests/test_autonomous_vdisplay_defaults.py', 52, 'python').
+project_file('tests/test_autonomous_vdisplay_defaults.py', 55, 'python').
 project_file('tests/test_autonomy_config.py', 151, 'python').
 project_file('tests/test_autonomy_drive_result.py', 57, 'python').
 project_file('tests/test_autonomy_env.py', 83, 'python').
@@ -14916,7 +15074,7 @@ project_file('tests/test_autopilot_commands_manage.py', 173, 'python').
 project_file('tests/test_autopilot_commands_shutdown.py', 86, 'python').
 project_file('tests/test_autopilot_commands_status.py', 254, 'python').
 project_file('tests/test_autopilot_config.py', 150, 'python').
-project_file('tests/test_autopilot_daemon.py', 1885, 'python').
+project_file('tests/test_autopilot_daemon.py', 1894, 'python').
 project_file('tests/test_autopilot_host_setup.py', 183, 'python').
 project_file('tests/test_autopilot_ide.py', 699, 'python').
 project_file('tests/test_autopilot_jetbrains_scaffold.py', 75, 'python').
@@ -14987,7 +15145,7 @@ project_file('tests/test_git_attribution.py', 61, 'python').
 project_file('tests/test_git_cli.py', 151, 'python').
 project_file('tests/test_healing_webhook_split.py', 213, 'python').
 project_file('tests/test_ide_adapters.py', 258, 'python').
-project_file('tests/test_ide_client.py', 121, 'python').
+project_file('tests/test_ide_client.py', 151, 'python').
 project_file('tests/test_ide_client_contract.py', 129, 'python').
 project_file('tests/test_ide_command_catalog.py', 163, 'python').
 project_file('tests/test_ide_doctor_cli.py', 369, 'python').
@@ -15004,6 +15162,7 @@ project_file('tests/test_install_checks.py', 252, 'python').
 project_file('tests/test_install_manager.py', 1249, 'python').
 project_file('tests/test_integration_ledger.py', 35, 'python').
 project_file('tests/test_interface_registry.py', 88, 'python').
+project_file('tests/test_jetbrains_surface_chat_target.py', 93, 'python').
 project_file('tests/test_koru_browser_stack.py', 70, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
@@ -15039,10 +15198,10 @@ project_file('tests/test_nlp2uri_ide_control_gate.py', 77, 'python').
 project_file('tests/test_observability_dsl.py', 769, 'python').
 project_file('tests/test_observation_mesh_e2e.py', 230, 'python').
 project_file('tests/test_observe_providers_cli.py', 83, 'python').
-project_file('tests/test_operator_pipeline.py', 895, 'python').
+project_file('tests/test_operator_pipeline.py', 928, 'python').
 project_file('tests/test_package_deduplication.py', 134, 'python').
-project_file('tests/test_photo_vql_drive.py', 1210, 'python').
-project_file('tests/test_photo_vql_orchestrator.py', 426, 'python').
+project_file('tests/test_photo_vql_drive.py', 1466, 'python').
+project_file('tests/test_photo_vql_orchestrator.py', 670, 'python').
 project_file('tests/test_planfile_queue.py', 1380, 'python').
 project_file('tests/test_planning_llm.py', 633, 'python').
 project_file('tests/test_plugin_router.py', 202, 'python').
@@ -15075,6 +15234,7 @@ project_file('tests/test_stdio_autonomous_jsonl.py', 99, 'python').
 project_file('tests/test_strategy_metadata_accessors.py', 78, 'python').
 project_file('tests/test_strategy_prompt.py', 105, 'python').
 project_file('tests/test_structured_report.py', 60, 'python').
+project_file('tests/test_surface_capture_confirmation.py', 120, 'python').
 project_file('tests/test_sync_plugin_build.py', 109, 'python').
 project_file('tests/test_tasks.py', 119, 'python').
 project_file('tests/test_testql_bridge.py', 37, 'python').
@@ -15082,6 +15242,7 @@ project_file('tests/test_ticket_evidence.py', 145, 'python').
 project_file('tests/test_tools.py', 138, 'python').
 project_file('tests/test_topology.py', 55, 'python').
 project_file('tests/test_topology_cli.py', 28, 'python').
+project_file('tests/test_vdisplay_agent_bootstrap.py', 116, 'python').
 project_file('tests/test_vdisplay_control_fallback.py', 537, 'python').
 project_file('tests/test_verification_cycle_integration.py', 332, 'python').
 project_file('tests/test_verification_engine.py', 250, 'python').
@@ -16679,9 +16840,10 @@ python_function('src/koru/autonomous_drive_retry_policy.py', '_warn_autopilot_fo
 python_function('src/koru/autonomous_drive_retry_policy.py', '_warn_autopilot_manual_focus_required', 1, 8, 8).
 python_function('src/koru/autonomous_drive_retry_policy.py', '_warn_autopilot_plugin_retry', 3, 3, 2).
 python_function('src/koru/autonomous_drive_retry_policy.py', '_warn_autopilot_submit_retry', 3, 7, 7).
-python_function('src/koru/autonomous_drive_retry_policy.py', '_drive_retry_decision', 3, 5, 8).
+python_function('src/koru/autonomous_drive_retry_policy.py', '_warn_autopilot_semantic_required', 1, 6, 4).
+python_function('src/koru/autonomous_drive_retry_policy.py', '_drive_retry_decision', 3, 8, 9).
 python_function('src/koru/autonomous_drive_retry_policy.py', '_submit_retry_is_known_unsafe_without_engine', 1, 8, 4).
-python_function('src/koru/autonomous_drive_retry_policy.py', '_handle_failed_drive_attempt', 3, 8, 7).
+python_function('src/koru/autonomous_drive_retry_policy.py', '_handle_failed_drive_attempt', 3, 9, 8).
 python_function('src/koru/autonomous_drive_retry_policy.py', '_record_drive_retry_decision', 4, 13, 5).
 python_function('src/koru/autonomous_env.py', 'apply_autonomous_env_overrides', 1, 1, 1).
 python_function('src/koru/autonomous_loop_runner.py', '_blocked_by_from_autopilot_status', 1, 1, 1).
@@ -16809,7 +16971,8 @@ python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_status_reason',
 python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_reason_requires_reload', 1, 5, 1).
 python_function('src/koru/autonomous_plugin_runtime.py', 'plugin_blocker_line', 2, 2, 2).
 python_function('src/koru/autonomous_plugin_runtime.py', 'reload_retry_wait_seconds', 1, 3, 5).
-python_function('src/koru/autonomous_plugin_runtime.py', 'report_unsupported_plugin_result', 1, 3, 5).
+python_function('src/koru/autonomous_plugin_runtime.py', 'report_unsupported_plugin_result', 1, 4, 6).
+python_function('src/koru/autonomous_plugin_runtime.py', '_semantic_wayland_ide', 1, 3, 5).
 python_function('src/koru/autonomous_plugin_runtime.py', 'emit_reload_required_lines', 1, 2, 2).
 python_function('src/koru/autonomous_plugin_wait.py', '_running_from_integrated_ide_terminal', 0, 1, 1).
 python_function('src/koru/autonomous_plugin_wait.py', '_terminal_host_ide_id', 0, 1, 1).
@@ -16865,8 +17028,8 @@ python_function('src/koru/autonomous_processes.py', 'guard_existing_autonomous_p
 python_function('src/koru/autonomous_readiness.py', '_project_venv_roots', 1, 3, 2).
 python_function('src/koru/autonomous_readiness.py', '_project_venv_python', 1, 4, 2).
 python_function('src/koru/autonomous_readiness.py', '_project_venv_koru', 1, 3, 2).
-python_function('src/koru/autonomous_readiness.py', '_resolve_path', 1, 2, 4).
 python_function('src/koru/autonomous_readiness.py', '_safe_path_for_compare', 1, 2, 5).
+python_function('src/koru/autonomous_readiness.py', '_python_executables_equivalent', 2, 4, 1).
 python_function('src/koru/autonomous_readiness.py', '_runtime_issue_severity', 1, 2, 0).
 python_function('src/koru/autonomous_readiness.py', '_first_fix_command', 1, 3, 1).
 python_function('src/koru/autonomous_readiness.py', '_python_executable_mismatch_issue', 3, 6, 3).
@@ -16972,10 +17135,10 @@ python_function('src/koru/autonomous_startup.py', '_build_startup_probe_from_res
 python_function('src/koru/autonomous_startup.py', 'build_startup_probe', 1, 1, 3).
 python_function('src/koru/autonomous_startup.py', 'format_startup_banner', 1, 6, 2).
 python_function('src/koru/autonomous_startup.py', '_get_settings_hint', 1, 5, 0).
-python_function('src/koru/autonomous_startup.py', '_format_plugin_status_line', 6, 11, 1).
+python_function('src/koru/autonomous_startup.py', '_format_plugin_status_line', 6, 13, 2).
 python_function('src/koru/autonomous_startup.py', '_format_ide_mismatch_warnings', 1, 11, 3).
 python_function('src/koru/autonomous_startup.py', '_format_plugin_setup_steps', 4, 2, 1).
-python_function('src/koru/autonomous_startup.py', '_format_keyboard_setup_steps', 3, 2, 1).
+python_function('src/koru/autonomous_startup.py', '_format_keyboard_setup_steps', 3, 2, 2).
 python_function('src/koru/autonomous_startup.py', 'format_post_startup_operator_hints', 1, 5, 8).
 python_function('src/koru/autonomous_submit_strategy.py', 'risky_paste_winner', 1, 5, 5).
 python_function('src/koru/autonomous_submit_strategy.py', 'submit_alt_attempt_limit', 0, 3, 5).
@@ -16990,7 +17153,7 @@ python_function('src/koru/autonomous_up.py', 'prepare_autonomous_up_context', 1,
 python_function('src/koru/autonomous_up.py', 'run_autonomous_up_loop', 1, 7, 9).
 python_function('src/koru/autonomous_up.py', 'action_up', 1, 3, 4).
 python_function('src/koru/autonomous_vdisplay_defaults.py', '_session_type', 0, 5, 2).
-python_function('src/koru/autonomous_vdisplay_defaults.py', 'apply_vdisplay_drive_defaults', 0, 5, 6).
+python_function('src/koru/autonomous_vdisplay_defaults.py', 'apply_vdisplay_drive_defaults', 0, 8, 9).
 python_function('src/koru/autonomous_wup.py', '_wup_stdio_info', 1, 2, 1).
 python_function('src/koru/autonomous_wup.py', '_wup_topology_gate', 2, 4, 2).
 python_function('src/koru/autonomous_wup.py', '_build_wup_watch_config', 2, 1, 1).
@@ -17153,7 +17316,7 @@ python_function('src/koru/autonomy/ide_operator_guidance.py', 'terminal_kind_lab
 python_function('src/koru/autonomy/ide_operator_guidance.py', 'chat_focus_operator_steps', 1, 5, 2).
 python_function('src/koru/autonomy/ide_operator_guidance.py', 'manual_send_operator_steps', 1, 2, 2).
 python_function('src/koru/autonomy/ide_operator_guidance.py', 'lane_mismatch_operator_steps', 0, 8, 2).
-python_function('src/koru/autonomy/ide_operator_guidance.py', 'classify_drive_failure_guidance', 1, 16, 8).
+python_function('src/koru/autonomy/ide_operator_guidance.py', 'classify_drive_failure_guidance', 1, 16, 9).
 python_function('src/koru/autonomy/ide_operator_guidance.py', 'format_operator_guidance_block', 1, 3, 2).
 python_function('src/koru/autonomy/ide_operator_guidance.py', 'emit_operator_guidance', 1, 3, 2).
 python_function('src/koru/autonomy/ide_work.py', 'extract_ticket_id_from_text', 1, 3, 3).
@@ -17191,6 +17354,8 @@ python_function('src/koru/autonomy/operator_pipeline.py', '_planfile_api_ok', 1,
 python_function('src/koru/autonomy/operator_pipeline.py', '_operator_autostart_server_enabled', 0, 1, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_try_start_planfile_api', 1, 10, 7).
 python_function('src/koru/autonomy/operator_pipeline.py', '_os_profile_ok', 2, 6, 3).
+python_function('src/koru/autonomy/operator_pipeline.py', '_wayland_session', 0, 2, 4).
+python_function('src/koru/autonomy/operator_pipeline.py', '_semantic_drive_required', 1, 4, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_autopilot_plugin_operator_hints', 0, 3, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_host_injectors_ok', 0, 11, 5).
 python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_autorepair_enabled', 0, 1, 3).
@@ -17198,10 +17363,10 @@ python_function('src/koru/autonomy/operator_pipeline.py', '_first_self_control_p
 python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_problem_detail', 1, 2, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_summarize_self_control_actions', 1, 6, 6).
 python_function('src/koru/autonomy/operator_pipeline.py', '_self_control_ok', 3, 12, 10).
-python_function('src/koru/autonomy/operator_pipeline.py', '_build_os_calibration_step', 2, 4, 3).
+python_function('src/koru/autonomy/operator_pipeline.py', '_build_os_calibration_step', 2, 5, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_planfile_api_step', 1, 3, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_mcp_step', 2, 5, 2).
-python_function('src/koru/autonomy/operator_pipeline.py', '_build_plugin_step', 0, 4, 3).
+python_function('src/koru/autonomy/operator_pipeline.py', '_build_plugin_step', 0, 5, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_host_injectors_step', 0, 3, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_self_control_step', 3, 2, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_build_ready_step', 0, 1, 1).
@@ -17486,7 +17651,7 @@ python_function('src/koru/autopilot/daemon_cli.py', '_daemon_already_running', 2
 python_function('src/koru/autopilot/daemon_cli.py', '_start_local_manager', 0, 4, 6).
 python_function('src/koru/autopilot/daemon_cli.py', '_record_daemon_start_failure', 1, 2, 2).
 python_function('src/koru/autopilot/daemon_cli.py', '_stop_heartbeat', 1, 2, 2).
-python_function('src/koru/autopilot/daemon_cli.py', 'run_daemon_command', 1, 16, 23).
+python_function('src/koru/autopilot/daemon_cli.py', 'run_daemon_command', 1, 16, 24).
 python_function('src/koru/autopilot/daemon_cli.py', 'shutdown_daemon_command', 1, 1, 2).
 python_function('src/koru/autopilot/daemon_cli.py', 'list_detected_ides_command', 1, 5, 3).
 python_function('src/koru/autopilot/diagnose_vdisplay_cli.py', '_latest_jetbrains_capture', 1, 2, 3).
@@ -18173,7 +18338,7 @@ python_function('src/koru/ide_adapters/bridge.py', '_build_mismatch_hypothesis',
 python_function('src/koru/ide_adapters/bridge.py', '_incompatible_plugin_hypothesis', 0, 14, 10).
 python_function('src/koru/ide_adapters/bridge.py', '_bridge_status_base', 0, 2, 3).
 python_function('src/koru/ide_adapters/bridge.py', '_wayland_session', 0, 2, 3).
-python_function('src/koru/ide_adapters/bridge.py', '_add_unsupported_ide_hypothesis', 1, 6, 5).
+python_function('src/koru/ide_adapters/bridge.py', '_add_unsupported_ide_hypothesis', 1, 6, 6).
 python_function('src/koru/ide_adapters/bridge.py', '_populate_adapter_diagnostics', 1, 2, 5).
 python_function('src/koru/ide_adapters/bridge.py', '_append_stale_plugin_hypothesis', 1, 3, 3).
 python_function('src/koru/ide_adapters/bridge.py', '_append_incompatible_plugin_hypothesis', 1, 3, 3).
@@ -18254,6 +18419,7 @@ python_function('src/koru/ide_adapters/shared.py', 'gc_stale_autopilot_sockets',
 python_function('src/koru/ide_adapters/shared.py', 'settings_mismatch_hypothesis', 1, 3, 2).
 python_function('src/koru/ide_adapters/shared.py', 'untrusted_publisher_hypothesis', 1, 3, 4).
 python_function('src/koru/ide_adapters/shared.py', 'inactive_extension_hypothesis', 1, 3, 6).
+python_function('src/koru/ide_client.py', '_semantic_drive_operator_lines', 1, 4, 4).
 python_function('src/koru/ide_client.py', 'adapt_legacy_autopilot_client', 1, 1, 1).
 python_function('src/koru/ide_client.py', 'build_legacy_ide_client', 0, 1, 2).
 python_function('src/koru/ide_client.py', 'build_koruide_client', 0, 1, 1).
@@ -18345,14 +18511,31 @@ python_function('src/koru/integrations/autonomy_session.py', 'metadata_root', 0,
 python_function('src/koru/integrations/autonomy_session.py', 'vql_max_age_seconds', 0, 2, 4).
 python_function('src/koru/integrations/autonomy_session.py', 'active_session_dir', 0, 3, 5).
 python_function('src/koru/integrations/autonomy_session.py', 'session_observe_paths', 1, 3, 3).
-python_function('src/koru/integrations/autonomy_session.py', 'begin_autonomy_session', 0, 5, 16).
+python_function('src/koru/integrations/autonomy_session.py', 'begin_autonomy_session', 0, 4, 13).
+python_function('src/koru/integrations/autonomy_session.py', '_create_session_dirs', 1, 2, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_session_manifest', 0, 1, 2).
+python_function('src/koru/integrations/autonomy_session.py', '_pin_session_env', 0, 1, 3).
 python_function('src/koru/integrations/autonomy_session.py', 'append_session_index', 1, 1, 5).
-python_function('src/koru/integrations/autonomy_session.py', 'find_latest_koru_session', 0, 9, 10).
+python_function('src/koru/integrations/autonomy_session.py', 'find_latest_koru_session', 0, 15, 17).
 python_function('src/koru/integrations/autonomy_session.py', 'append_session_jsonl', 3, 1, 6).
 python_function('src/koru/integrations/autonomy_session.py', 'persist_autonomy_phase', 4, 1, 5).
 python_function('src/koru/integrations/autonomy_session.py', '_vql_load_capture_validation', 1, 4, 4).
-python_function('src/koru/integrations/autonomy_session.py', 'vql_sidecar_is_stale', 2, 21, 13).
-python_function('src/koru/integrations/autonomy_session.py', 'copy_observe_artifacts_to_session', 1, 9, 11).
+python_function('src/koru/integrations/autonomy_session.py', 'vql_sidecar_is_stale', 2, 3, 12).
+python_function('src/koru/integrations/autonomy_session.py', '_missing_vql_info', 1, 1, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_base_vql_stale_info', 0, 1, 3).
+python_function('src/koru/integrations/autonomy_session.py', '_append_vql_age_reason', 0, 3, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_append_png_staleness', 0, 3, 7).
+python_function('src/koru/integrations/autonomy_session.py', '_append_png_age_reason', 0, 3, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_append_sidecar_order_reason', 0, 3, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_append_layer_count_reason', 0, 3, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_append_capture_validation_reasons', 0, 7, 6).
+python_function('src/koru/integrations/autonomy_session.py', '_append_unique_reasons', 2, 3, 2).
+python_function('src/koru/integrations/autonomy_session.py', 'copy_observe_artifacts_to_session', 1, 1, 7).
+python_function('src/koru/integrations/autonomy_session.py', '_same_resolved_path', 2, 2, 1).
+python_function('src/koru/integrations/autonomy_session.py', '_copy_binary_if_needed', 0, 3, 4).
+python_function('src/koru/integrations/autonomy_session.py', '_copy_text_if_needed', 0, 3, 4).
+python_function('src/koru/integrations/autonomy_session.py', '_imgl_sidecar_path', 1, 1, 3).
+python_function('src/koru/integrations/autonomy_session.py', '_pin_observe_env', 0, 1, 2).
 python_function('src/koru/integrations/imgl_client.py', 'imgl_available', 0, 2, 3).
 python_function('src/koru/integrations/imgl_client.py', 'imgl_missing_message', 0, 3, 2).
 python_function('src/koru/integrations/imgl_client.py', 'imgl_fallback_enabled', 0, 6, 4).
@@ -18374,19 +18557,32 @@ python_function('src/koru/integrations/photo_vql_config.py', '_env_truthy', 1, 3
 python_function('src/koru/integrations/photo_vql_config.py', '_env_float', 2, 3, 3).
 python_function('src/koru/integrations/photo_vql_config.py', '_env_int', 2, 3, 3).
 python_function('src/koru/integrations/photo_vql_config.py', 'llm_vision_enabled', 0, 1, 1).
-python_function('src/koru/integrations/photo_vql_drive.py', 'session_prepare_is_fresh', 1, 10, 11).
+python_function('src/koru/integrations/photo_vql_drive.py', 'session_prepare_is_fresh', 1, 10, 9).
+python_function('src/koru/integrations/photo_vql_drive.py', '_fresh_prepare_age', 1, 4, 3).
+python_function('src/koru/integrations/photo_vql_drive.py', '_load_prepare_payload', 1, 3, 3).
+python_function('src/koru/integrations/photo_vql_drive.py', '_prepare_payload_reusable', 1, 6, 3).
+python_function('src/koru/integrations/photo_vql_drive.py', '_allow_surface_only_actuation', 0, 1, 3).
+python_function('src/koru/integrations/photo_vql_drive.py', '_mark_prepare_reused', 1, 1, 3).
 python_function('src/koru/integrations/photo_vql_drive.py', 'run_photo_vql_drive', 1, 1, 2).
 python_function('src/koru/integrations/photo_vql_guard.py', 'ide_mismatch_allowed', 0, 1, 3).
 python_function('src/koru/integrations/photo_vql_guard.py', 'allow_prepare_map_on_mismatch', 0, 2, 4).
+python_function('src/koru/integrations/photo_vql_guard.py', 'allow_prepare_surface_on_capture_error', 0, 2, 4).
+python_function('src/koru/integrations/photo_vql_guard.py', 'allow_surface_only_actuation', 0, 2, 4).
 python_function('src/koru/integrations/photo_vql_guard.py', 'allow_actuation_on_capture_mismatch', 0, 1, 1).
 python_function('src/koru/integrations/photo_vql_guard.py', 'competing_ide_label_from_warning', 1, 11, 6).
 python_function('src/koru/integrations/photo_vql_guard.py', 'drive_blocked_on_capture_mismatch', 0, 5, 4).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', 'detect_chat_target_from_llm_vision', 0, 8, 7).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_detect_chat_target_with_openrouter', 0, 5, 7).
-python_function('src/koru/integrations/photo_vql_llm_detect.py', '_build_detection_prompt', 0, 2, 3).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_build_detection_prompt', 0, 2, 5).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_detection_rules', 0, 1, 0).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_detection_schema', 0, 1, 0).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_image_data_url', 1, 4, 5).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_parse_json_object', 1, 9, 8).
-python_function('src/koru/integrations/photo_vql_llm_detect.py', '_target_from_decision', 1, 15, 8).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_target_from_decision', 1, 9, 8).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_decision_target_type', 1, 4, 4).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_decision_confidence', 1, 1, 2).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_min_detection_confidence', 0, 1, 2).
+python_function('src/koru/integrations/photo_vql_llm_detect.py', '_decision_click_center', 1, 6, 3).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_normalize_llm_target', 1, 11, 3).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_candidates_to_layers', 1, 5, 3).
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_candidate_excerpt', 1, 8, 5).
@@ -18397,7 +18593,10 @@ python_function('src/koru/integrations/photo_vql_llm_detect.py', '_float', 1, 2,
 python_function('src/koru/integrations/photo_vql_llm_detect.py', '_looks_polluted', 1, 6, 6).
 python_function('src/koru/integrations/photo_vql_monitor.py', '_monitor_candidate_order', 0, 16, 5).
 python_function('src/koru/integrations/photo_vql_monitor.py', '_finalize_resolved_probe', 1, 6, 4).
-python_function('src/koru/integrations/photo_vql_monitor.py', 'resolve_vdisplay_source_for_ide', 1, 10, 8).
+python_function('src/koru/integrations/photo_vql_monitor.py', '_surface_preferred_monitor', 1, 14, 4).
+python_function('src/koru/integrations/photo_vql_monitor.py', 'map_capture_monitor_mismatch', 1, 8, 5).
+python_function('src/koru/integrations/photo_vql_monitor.py', 'resolve_vdisplay_source_for_ide', 1, 13, 9).
+python_function('src/koru/integrations/photo_vql_monitor.py', 'format_wayland_vdisplay_operator_hint', 0, 7, 4).
 python_function('src/koru/integrations/photo_vql_target.py', '_layer_role', 1, 3, 3).
 python_function('src/koru/integrations/photo_vql_target.py', '_layer_label', 1, 3, 3).
 python_function('src/koru/integrations/photo_vql_target.py', '_layer_bounds', 1, 4, 2).
@@ -18417,27 +18616,50 @@ python_function('src/koru/integrations/photo_vql_target.py', '_score_vscode_metr
 python_function('src/koru/integrations/photo_vql_target.py', '_vscode_label_score', 1, 7, 2).
 python_function('src/koru/integrations/photo_vql_target.py', '_vscode_position_score', 1, 5, 0).
 python_function('src/koru/integrations/photo_vql_target.py', '_vscode_size_score', 1, 8, 0).
-python_function('src/koru/integrations/photo_vql_target.py', 'photo_vql_chat_input_candidates', 1, 5, 8).
+python_function('src/koru/integrations/photo_vql_target.py', 'photo_vql_chat_input_candidates', 1, 4, 4).
+python_function('src/koru/integrations/photo_vql_target.py', '_chat_candidate_from_layer', 1, 2, 5).
 python_function('src/koru/integrations/photo_vql_target.py', 'vscode_family_top_chat_rejected', 1, 9, 5).
-python_function('src/koru/integrations/photo_vql_target.py', 'vscode_family_chat_target_from_layers', 1, 5, 3).
+python_function('src/koru/integrations/photo_vql_target.py', 'vscode_family_chat_target_from_layers', 1, 3, 3).
 python_function('src/koru/integrations/photo_vql_target.py', 'jetbrains_corner_rejected', 1, 7, 7).
 python_function('src/koru/integrations/photo_vql_target.py', '_target_bounds', 1, 7, 3).
 python_function('src/koru/integrations/photo_vql_target.py', '_target_bounds_too_small', 1, 4, 1).
-python_function('src/koru/integrations/photo_vql_target.py', 'jetbrains_chat_corner_target_from_layers', 1, 5, 3).
+python_function('src/koru/integrations/photo_vql_target.py', 'jetbrains_chat_corner_target_from_layers', 1, 3, 3).
+python_function('src/koru/integrations/photo_vql_target.py', '_capture_png_dimensions', 1, 10, 3).
+python_function('src/koru/integrations/photo_vql_target.py', '_monitor_geometry_for_source', 1, 13, 6).
+python_function('src/koru/integrations/photo_vql_target.py', '_clamp_rect_to_monitor', 5, 5, 2).
+python_function('src/koru/integrations/photo_vql_target.py', '_capture_local_rect_for_global_rect', 4, 9, 2).
+python_function('src/koru/integrations/photo_vql_target.py', '_global_to_capture_local_for_source', 2, 22, 10).
+python_function('src/koru/integrations/photo_vql_target.py', 'jetbrains_chat_target_from_surface', 1, 31, 12).
+python_function('src/koru/integrations/photo_vql_target.py', '_target_from_candidate', 1, 3, 1).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_truthy', 2, 2, 3).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'preflight_repo_paths', 0, 7, 5).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_drive_retry_cmd', 0, 2, 1).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_audit_cmd', 0, 2, 1).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_success', 1, 2, 1).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_missing_repo', 1, 3, 1).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_monitor_not_connected', 1, 9, 4).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_ide_mismatch', 1, 7, 2).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_empty_vql', 1, 3, 1).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_prepare_failed', 1, 6, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_monitor_not_connected', 1, 2, 4).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_monitor_not_connected', 1, 4, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_fallback_monitor', 1, 4, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_available_monitors_label', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_ide_mismatch', 1, 4, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_ide_mismatch_detected', 1, 4, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_empty_vql', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_empty_vql_error', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_screencast', 1, 3, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_map_capture_mismatch', 1, 7, 3).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_prepare_failed', 1, 5, 3).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_prepare_failed', 1, 2, 1).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_drive_failed', 1, 2, 1).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', 'build_user_guidance', 0, 17, 11).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_build_guidance_context', 0, 9, 10).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_resolve_source', 0, 4, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_monitor_names', 1, 4, 3).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_combined_error', 0, 3, 3).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', 'build_user_guidance', 0, 3, 3).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'format_user_guidance', 1, 2, 2).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', 'speak_user_guidance', 1, 10, 5).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', 'speak_user_guidance', 1, 4, 5).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_user_guidance_speech_enabled', 0, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_notify_user_guidance', 0, 3, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_speak_user_guidance_text', 1, 4, 2).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'emit_user_guidance', 0, 2, 4).
 python_function('src/koru/integrations/photo_vql_validation.py', '_canonical_ide', 1, 3, 3).
 python_function('src/koru/integrations/photo_vql_validation.py', 'window_titles_from_vql_meta', 1, 2, 3).
@@ -18448,11 +18670,18 @@ python_function('src/koru/integrations/photo_vql_validation.py', '_strings_from_
 python_function('src/koru/integrations/photo_vql_validation.py', '_unique_titles', 1, 3, 4).
 python_function('src/koru/integrations/photo_vql_validation.py', 'capture_title_from_meta', 1, 3, 1).
 python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_bounds', 0, 5, 0).
-python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_label', 0, 11, 5).
+python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_label', 0, 8, 5).
+python_function('src/koru/integrations/photo_vql_validation.py', '_label_looks_like_code_file', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_validation.py', '_label_looks_like_terminal_metadata', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_validation.py', '_label_looks_like_vdisplay_env', 1, 1, 1).
 python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_jetbrains', 0, 5, 1).
+python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_jetbrains_surface', 0, 10, 4).
 python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_vscode_family', 0, 6, 1).
-python_function('src/koru/integrations/photo_vql_validation.py', 'validate_chat_coords_for_ide', 0, 12, 11).
-python_function('src/koru/integrations/photo_vql_validation.py', '_target_geometry', 1, 15, 4).
+python_function('src/koru/integrations/photo_vql_validation.py', 'validate_chat_coords_for_ide', 0, 4, 14).
+python_function('src/koru/integrations/photo_vql_validation.py', '_target_uses_fallback_center', 1, 4, 3).
+python_function('src/koru/integrations/photo_vql_validation.py', '_target_bounds_size', 1, 7, 3).
+python_function('src/koru/integrations/photo_vql_validation.py', '_target_label', 1, 3, 3).
+python_function('src/koru/integrations/photo_vql_validation.py', '_target_geometry', 1, 8, 4).
 python_function('src/koru/integrations/photo_vql_validation.py', '_label_ok_for_chat', 0, 6, 1).
 python_function('src/koru/integrations/photo_vql_validation.py', '_has_any', 2, 2, 2).
 python_function('src/koru/integrations/photo_vql_validation.py', '_collect_vql_validation_errors', 0, 3, 4).
@@ -18463,12 +18692,25 @@ python_function('src/koru/integrations/photo_vql_validation.py', '_target_confid
 python_function('src/koru/integrations/photo_vql_validation.py', '_vql_valid', 0, 3, 0).
 python_function('src/koru/integrations/photo_vql_validation.py', '_used_map_because_mismatch_or_bad_element', 0, 3, 1).
 python_function('src/koru/integrations/photo_vql_validation.py', 'validate_vql_chat_target', 1, 13, 10).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', '_fetch', 1, 1, 3).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', '_parse_health', 1, 3, 3).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', '_screencast_status_data', 1, 3, 2).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', '_keeper_ready', 1, 6, 4).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', '_wayland_session', 0, 2, 3).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'is_vdisplay_agent_health', 1, 6, 5).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'is_koru_dashboard_on_port', 1, 4, 4).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'probe_vdisplay_agent', 1, 3, 4).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'resolve_vdisplay_agent_url', 0, 12, 8).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'apply_vdisplay_agent_env', 0, 5, 5).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', '_fetch_screencast_status', 1, 2, 3).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'ensure_screencast_session', 0, 14, 15).
+python_function('src/koru/integrations/vdisplay_agent_bootstrap.py', 'bootstrap_vdisplay_capture', 0, 1, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_real_vdisplay_src', 0, 5, 9).
 python_function('src/koru/integrations/vdisplay_client.py', '_ensure_real_vdisplay_on_path', 0, 6, 9).
 python_function('src/koru/integrations/vdisplay_client.py', '_load_vdisplay_control', 0, 4, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_canonical_ide', 1, 3, 3).
-python_function('src/koru/integrations/vdisplay_client.py', '_agent_url', 0, 3, 4).
-python_function('src/koru/integrations/vdisplay_client.py', '_probe_agent', 1, 2, 2).
+python_function('src/koru/integrations/vdisplay_client.py', '_agent_url', 0, 7, 6).
+python_function('src/koru/integrations/vdisplay_client.py', '_probe_agent', 1, 3, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_reload_vdisplay_direct', 0, 1, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_ensure_vdisplay_runtime', 0, 3, 2).
 python_function('src/koru/integrations/vdisplay_client.py', 'vdisplay_available', 0, 5, 5).
@@ -18485,13 +18727,16 @@ python_function('src/koru/integrations/vdisplay_client.py', '_trusted_visual_tar
 python_function('src/koru/integrations/vdisplay_client.py', '_dry_run', 0, 1, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_code_edit_enabled', 0, 1, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_prefer_photo_vql_chat', 0, 5, 5).
+python_function('src/koru/integrations/vdisplay_client.py', 'sync_prepare_capture_flags_to_env', 1, 14, 12).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_matches_requested_ide', 1, 2, 4).
-python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_source', 0, 2, 2).
+python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_source', 0, 4, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_probe_ide_processes', 1, 8, 11).
 python_function('src/koru/integrations/vdisplay_client.py', '_desktop_probe', 0, 19, 14).
+python_function('src/koru/integrations/vdisplay_client.py', '_surface_confirms_ide_capture', 0, 10, 5).
+python_function('src/koru/integrations/vdisplay_client.py', '_apply_surface_capture_confirmation', 1, 15, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_resolve_vdisplay_source_for_ide', 1, 4, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_abort_on_desktop_probe_fail', 0, 1, 3).
-python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_source_for_ide', 1, 2, 3).
+python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_source_for_ide', 1, 4, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_metadata_root', 0, 1, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_validation_from_meta', 1, 6, 2).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_confirmed_from_meta', 0, 5, 6).
@@ -18505,7 +18750,8 @@ python_function('src/koru/integrations/vdisplay_client.py', '_auto_ide_control_e
 python_function('src/koru/integrations/vdisplay_client.py', '_auto_open_ide_enabled', 0, 3, 4).
 python_function('src/koru/integrations/vdisplay_client.py', '_real_imgl_src', 0, 5, 8).
 python_function('src/koru/integrations/vdisplay_client.py', '_ensure_real_imgl_on_path', 0, 14, 11).
-python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_subprocess_env', 0, 9, 13).
+python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_cli_path', 0, 5, 7).
+python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_subprocess_env', 0, 10, 14).
 python_function('src/koru/integrations/vdisplay_client.py', '_focus_window_xdotool', 0, 11, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_focus_window_xdotool_for_ide', 0, 7, 7).
 python_function('src/koru/integrations/vdisplay_client.py', '_focus_window_gnome_shell', 0, 8, 7).
@@ -18518,16 +18764,17 @@ python_function('src/koru/integrations/vdisplay_client.py', '_persist_send_chat_
 python_function('src/koru/integrations/vdisplay_client.py', '_map_raise_targets_for_ide', 2, 6, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_map_interior_targets_for_ide', 2, 7, 7).
 python_function('src/koru/integrations/vdisplay_client.py', '_dismiss_gnome_overview', 0, 4, 4).
-python_function('src/koru/integrations/vdisplay_client.py', 'ensure_vdisplay_ide_control', 0, 47, 30).
-python_function('src/koru/integrations/vdisplay_client.py', '_import_imgl_targets', 1, 4, 5).
+python_function('src/koru/integrations/vdisplay_client.py', 'ensure_vdisplay_ide_control', 0, 54, 31).
+python_function('src/koru/integrations/vdisplay_client.py', '_import_imgl_targets', 1, 13, 19).
 python_function('src/koru/integrations/vdisplay_client.py', '_main_vql_layer_count', 1, 3, 6).
 python_function('src/koru/integrations/vdisplay_client.py', '_png_path_for_vql_sidecar', 1, 3, 4).
 python_function('src/koru/integrations/vdisplay_client.py', '_resolve_photo_png_path', 1, 7, 14).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_refresh_mode', 0, 1, 3).
-python_function('src/koru/integrations/vdisplay_client.py', 'photo_vql_sidecar_needs_refresh', 0, 8, 11).
-python_function('src/koru/integrations/vdisplay_client.py', 'refresh_photo_vql_sidecar', 0, 24, 22).
-python_function('src/koru/integrations/vdisplay_client.py', 'prepare_photo_vql_for_drive', 0, 45, 37).
-python_function('src/koru/integrations/vdisplay_client.py', '_normalize_photo_vql_drive_result', 1, 37, 5).
+python_function('src/koru/integrations/vdisplay_client.py', 'photo_vql_sidecar_needs_refresh', 0, 9, 12).
+python_function('src/koru/integrations/vdisplay_client.py', 'refresh_photo_vql_sidecar', 0, 24, 24).
+python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_capture_failure_hint', 1, 14, 5).
+python_function('src/koru/integrations/vdisplay_client.py', 'prepare_photo_vql_for_drive', 0, 61, 40).
+python_function('src/koru/integrations/vdisplay_client.py', '_normalize_photo_vql_drive_result', 1, 52, 7).
 python_function('src/koru/integrations/vdisplay_client.py', '_finalize_send_chat', 1, 1, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_ide_hints', 1, 3, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_chat_selectors_for', 1, 1, 0).
@@ -18546,7 +18793,7 @@ python_function('src/koru/integrations/vdisplay_client.py', '_resolve_ide_prompt
 python_function('src/koru/integrations/vdisplay_client.py', '_ide_map_message_target', 1, 6, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_type_text_via_ide_map_fallback', 1, 12, 9).
 python_function('src/koru/integrations/vdisplay_client.py', 'send_chat_via_ide_prompt', 1, 14, 10).
-python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_preflight', 1, 18, 14).
+python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_preflight', 1, 22, 16).
 python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_try_photo_vql', 1, 9, 10).
 python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_dry_run', 1, 3, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_try_os_injector', 1, 8, 5).
@@ -18563,20 +18810,44 @@ python_function('src/koru/integrations/vdisplay_client.py', '_extract_vql_click_
 python_function('src/koru/integrations/vdisplay_client.py', '_get_pycharm_vql_editor_center', 0, 1, 0).
 python_function('src/koru/integrations/vdisplay_client.py', '_get_jetbrains_pycharm_chat_center', 0, 1, 0).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_elements', 0, 3, 2).
-python_function('src/koru/integrations/vdisplay_client.py', 'get_vql_chat_target_from_photo', 0, 32, 30).
+python_function('src/koru/integrations/vdisplay_client.py', '_live_surface_capture_meta', 1, 28, 12).
+python_function('src/koru/integrations/vdisplay_client.py', '_jetbrains_surface_chat_target', 0, 12, 9).
+python_function('src/koru/integrations/vdisplay_client.py', '_chat_target_validation_accepts', 1, 5, 2).
+python_function('src/koru/integrations/vdisplay_client.py', 'get_vql_chat_target_from_photo', 0, 31, 41).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_needs_vision_or_map', 0, 3, 1).
+python_function('src/koru/integrations/vdisplay_client.py', '_jetbrains_map_selection_method', 0, 2, 0).
+python_function('src/koru/integrations/vdisplay_client.py', '_jetbrains_map_selection_stage', 0, 2, 0).
 python_function('src/koru/integrations/vdisplay_client.py', 'get_vql_editor_target_from_photo', 0, 2, 3).
 python_function('src/koru/integrations/vdisplay_client.py', 'click_editor_via_photo_vql', 2, 1, 2).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_capture_meta_for_source', 1, 9, 12).
 python_function('src/koru/integrations/vdisplay_client.py', '_enrich_capture_meta_for_pointer', 2, 30, 13).
-python_function('src/koru/integrations/vdisplay_client.py', '_map_chat_target_capture_local', 0, 41, 13).
+python_function('src/koru/integrations/vdisplay_client.py', '_map_chat_target_capture_local', 0, 46, 15).
 python_function('src/koru/integrations/vdisplay_client.py', '_global_coords_from_vql_local', 0, 2, 6).
-python_function('src/koru/integrations/vdisplay_client.py', '_build_vql_command_plan', 0, 37, 17).
+python_function('src/koru/integrations/vdisplay_client.py', '_build_vql_command_plan', 0, 40, 19).
 python_function('src/koru/integrations/vdisplay_client.py', '_log_vql_cursor_positioning_at_command', 1, 16, 16).
 python_function('src/koru/integrations/vdisplay_client.py', '_ydotool_click_capture_local', 0, 2, 10).
-python_function('src/koru/integrations/vdisplay_client.py', '_type_text_at_vql_coords', 1, 41, 27).
-python_function('src/koru/integrations/vdisplay_client.py', '_resolve_photo_vql_llm_coords', 0, 18, 15).
+python_function('src/koru/integrations/vdisplay_client.py', '_type_text_at_vql_coords', 1, 58, 32).
+python_function('src/koru/integrations/vdisplay_client.py', '_resolve_photo_vql_llm_coords', 0, 14, 15).
+python_function('src/koru/integrations/vdisplay_client.py', '_resolve_photo_vql_llm_coords_via_koru_detector', 0, 5, 4).
+python_function('src/koru/integrations/vdisplay_client.py', '_llm_detection_decision_from_target', 0, 2, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_map_paste_fallback', 1, 4, 7).
-python_function('src/koru/integrations/vdisplay_client.py', 'perform_photo_vql_focus_and_edit', 1, 89, 38).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_capture_mismatch_blocks', 0, 9, 7).
+python_function('src/koru/integrations/vdisplay_client.py', '_surface_only_fallback_active', 0, 4, 4).
+python_function('src/koru/integrations/vdisplay_client.py', '_surface_bounds_target_trusted', 0, 4, 2).
+python_function('src/koru/integrations/vdisplay_client.py', '_surface_bounds_target_safe_for_actuation', 0, 11, 3).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_capture_mismatch_error', 0, 1, 1).
+python_function('src/koru/integrations/vdisplay_client.py', '_target_selection_method', 1, 3, 2).
+python_function('src/koru/integrations/vdisplay_client.py', '_selection_method_is_map', 1, 2, 1).
+python_function('src/koru/integrations/vdisplay_client.py', '_map_target_can_clear_capture_mismatch', 0, 4, 6).
+python_function('src/koru/integrations/vdisplay_client.py', '_is_jetbrains_map_target', 0, 4, 5).
+python_function('src/koru/integrations/vdisplay_client.py', '_map_mismatch_allowed_for_target', 0, 2, 2).
+python_function('src/koru/integrations/vdisplay_client.py', '_surface_target_can_clear_capture_mismatch', 0, 5, 6).
+python_function('src/koru/integrations/vdisplay_client.py', '_surface_mismatch_allowed_for_target', 0, 1, 1).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_should_block_unverified_chat', 0, 6, 4).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_unverified_chat_blocked', 0, 2, 1).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_focus_target', 0, 3, 2).
+python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_edit_result', 1, 7, 8).
+python_function('src/koru/integrations/vdisplay_client.py', 'perform_photo_vql_focus_and_edit', 1, 70, 45).
 python_function('src/koru/integrations/vdisplay_client.py', 'move_mouse_to_vql_target_and_focus_keyboard', 1, 23, 14).
 python_function('src/koru/integrations/vdisplay_client.py', '_imgl_sidecar_path_for_vql', 1, 3, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_layers_from_imgl_sidecar_file', 1, 8, 7).
@@ -19622,8 +19893,9 @@ python_function('src/koruide/daemon/handlers_drive.py', '_log_drive_request', 5,
 python_function('src/koruide/daemon/handlers_drive.py', '_select_drive_plugin', 2, 2, 2).
 python_function('src/koruide/daemon/handlers_drive.py', '_route_drive', 9, 12, 14).
 python_function('src/koruide/daemon/handlers_drive.py', '_reject_blind_keyboard_fallback', 0, 1, 6).
-python_function('src/koruide/daemon/handlers_drive.py', '_blind_keyboard_fallback_blocker', 1, 5, 5).
-python_function('src/koruide/daemon/handlers_drive.py', 'handle_drive', 3, 8, 10).
+python_function('src/koruide/daemon/handlers_drive.py', '_blind_keyboard_fallback_blocker', 1, 6, 6).
+python_function('src/koruide/daemon/handlers_drive.py', '_remember_semantic_drive_decline', 1, 7, 2).
+python_function('src/koruide/daemon/handlers_drive.py', 'handle_drive', 3, 8, 11).
 python_function('src/koruide/daemon/handlers_drive.py', '_check_and_block_plugin_version', 6, 4, 11).
 python_function('src/koruide/daemon/handlers_drive.py', '_record_plugin_route_telemetry', 8, 1, 8).
 python_function('src/koruide/daemon/handlers_drive.py', '_pending_corr_owner_alive', 1, 5, 6).
@@ -19636,7 +19908,7 @@ python_function('src/koruide/daemon/handlers_drive.py', '_load_injector_config',
 python_function('src/koruide/daemon/handlers_drive.py', '_coords_collision', 4, 6, 3).
 python_function('src/koruide/daemon/handlers_drive.py', '_calibration_collision', 2, 5, 4).
 python_function('src/koruide/daemon/handlers_drive.py', '_try_os_injector_drive', 4, 5, 7).
-python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_vdisplay_backend', 0, 14, 17).
+python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_vdisplay_backend', 0, 20, 22).
 python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_imgl_backend', 0, 10, 13).
 python_function('src/koruide/daemon/handlers_drive.py', '_drive_via_keyboard', 6, 3, 5).
 python_function('src/koruide/daemon/handlers_drive.py', '_resolve_keyboard_drive_selection', 0, 2, 5).
@@ -20235,6 +20507,7 @@ python_function('tests/test_autonomous.py', 'test_run_cycle_plugin_required_fail
 python_function('tests/test_autonomous.py', 'test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns', 3, 10, 8).
 python_function('tests/test_autonomous.py', 'test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure', 3, 7, 8).
 python_function('tests/test_autonomous.py', 'test_run_cycle_does_not_retry_missing_plugin_as_focus_error', 3, 4, 7).
+python_function('tests/test_autonomous.py', 'test_run_cycle_does_not_retry_semantic_required_as_focus_error', 3, 7, 7).
 python_function('tests/test_autonomous.py', 'test_run_cycle_does_not_retry_when_plugin_requires_manual_focus', 3, 7, 7).
 python_function('tests/test_autonomous.py', 'test_log_autopilot_result_reports_manual_focus_as_skipped', 0, 2, 2).
 python_function('tests/test_autonomous.py', 'test_run_cycle_skips_drive_when_required_plugin_missing', 3, 12, 11).
@@ -20428,7 +20701,7 @@ python_function('tests/test_autonomous_operator.py', 'test_plugin_blocker_line_i
 python_function('tests/test_autonomous_operator.py', 'test_plugin_blocker_line_for_empty_list_is_reload_first', 0, 4, 1).
 python_function('tests/test_autonomous_operator.py', 'test_plugin_status_decision_uses_stale_rejection_when_plugin_list_empty', 0, 5, 2).
 python_function('tests/test_autonomous_operator_unsupported_ide.py', '_stub_plugin_install_result_unsupported', 0, 1, 1).
-python_function('tests/test_autonomous_operator_unsupported_ide.py', 'test_unsupported_ide_emits_env_remedy', 1, 5, 7).
+python_function('tests/test_autonomous_operator_unsupported_ide.py', 'test_unsupported_ide_emits_env_remedy', 1, 6, 7).
 python_function('tests/test_autonomous_operator_unsupported_ide.py', 'test_unsupported_ide_without_env_does_not_print_env_remedy', 1, 3, 7).
 python_function('tests/test_autonomous_parser_detection.py', 'test_looks_like_koru_auto_command', 0, 2, 1).
 python_function('tests/test_autonomous_parser_detection.py', 'test_looks_like_koru_autonomous_up_command', 0, 2, 1).
@@ -20522,7 +20795,7 @@ python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_op
 python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_compact_for_disconnected_plugin', 1, 8, 3).
 python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_can_name_plugin_version_mismatch', 1, 4, 3).
 python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_warns_when_vscode_selected_with_vscodium_running', 1, 4, 3).
-python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps', 0, 7, 4).
+python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps', 0, 10, 4).
 python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_for_jetbrains_suffixed_lane', 0, 4, 4).
 python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_windsurf_selected', 1, 4, 3).
 python_function('tests/test_autonomous_startup.py', 'test_format_post_startup_operator_hints_for_zed_uses_keyboard_path', 0, 6, 4).
@@ -20551,7 +20824,7 @@ python_function('tests/test_autonomous_submit_strategy.py', 'test_reorder_submit
 python_function('tests/test_autonomous_submit_strategy.py', 'test_heuristic_picker_applies_submit_hint', 0, 2, 2).
 python_function('tests/test_autonomous_up.py', 'test_autonomous_context_resource_kwargs_maps_resource_tuple', 0, 5, 2).
 python_function('tests/test_autonomous_up.py', 'test_run_autonomous_up_loop_runs_prechecks_cycle_and_cleanup', 0, 5, 6).
-python_function('tests/test_autonomous_vdisplay_defaults.py', 'test_apply_vdisplay_defaults_jetbrains_wayland', 1, 4, 3).
+python_function('tests/test_autonomous_vdisplay_defaults.py', 'test_apply_vdisplay_defaults_jetbrains_wayland', 1, 6, 5).
 python_function('tests/test_autonomous_vdisplay_defaults.py', 'test_apply_vdisplay_defaults_skips_when_already_set', 1, 3, 4).
 python_function('tests/test_autonomous_vdisplay_defaults.py', 'test_apply_vdisplay_defaults_skips_unsupported_ide', 1, 2, 3).
 python_function('tests/test_autonomous_vdisplay_defaults.py', 'test_apply_vdisplay_defaults_windsurf_wayland', 1, 3, 3).
@@ -20786,7 +21059,7 @@ python_function('tests/test_autopilot_daemon.py', 'test_drive_uses_os_injector_w
 python_function('tests/test_autopilot_daemon.py', 'test_drive_os_injector_skipped_when_env_disabled', 2, 4, 7).
 python_function('tests/test_autopilot_daemon.py', 'test_drive_os_injector_forced_without_profile_falls_back_to_keyboard', 2, 4, 6).
 python_function('tests/test_autopilot_daemon.py', 'test_drive_os_injector_failure_falls_back_to_keyboard', 2, 4, 8).
-python_function('tests/test_autopilot_daemon.py', 'test_wayland_jetbrains_refuses_blind_keyboard_after_semantic_decline', 2, 4, 6).
+python_function('tests/test_autopilot_daemon.py', 'test_wayland_jetbrains_refuses_blind_keyboard_after_semantic_decline', 2, 6, 7).
 python_function('tests/test_autopilot_daemon.py', 'test_calibration_collision_detects_duplicate_chat_coords', 1, 2, 4).
 python_function('tests/test_autopilot_daemon.py', 'test_calibration_collision_none_when_coords_distinct', 1, 2, 4).
 python_function('tests/test_autopilot_daemon.py', 'test_drive_empty_text_returns_error', 1, 2, 2).
@@ -21307,6 +21580,7 @@ python_function('tests/test_ide_adapters.py', 'test_evaluate_bridge_maps_lane_sl
 python_function('tests/test_ide_adapters.py', 'test_evaluate_bridge_jetbrains_uses_keyboard_lane_not_unsupported', 1, 4, 3).
 python_function('tests/test_ide_adapters.py', 'test_get_adapter_cursor', 0, 3, 1).
 python_function('tests/test_ide_client.py', 'test_legacy_adapter_forwards_all_operations', 0, 5, 7).
+python_function('tests/test_ide_client.py', 'test_legacy_adapter_emits_operator_guidance_for_semantic_required', 1, 7, 7).
 python_function('tests/test_ide_client.py', 'test_build_legacy_ide_client_uses_autopilot_client', 1, 4, 5).
 python_function('tests/test_ide_client.py', 'test_build_koruide_client_uses_koruide_package', 1, 3, 5).
 python_function('tests/test_ide_client.py', 'test_build_ide_client_defaults_to_legacy', 1, 2, 4).
@@ -21512,6 +21786,10 @@ python_function('tests/test_interface_registry.py', 'test_get_interface_descript
 python_function('tests/test_interface_registry.py', 'test_interface_registry_family_summary_has_multiple_families', 0, 4, 1).
 python_function('tests/test_interface_registry.py', 'test_blocker_interface_payload_returns_recovery_for_plugin_mismatch', 0, 4, 1).
 python_function('tests/test_interface_registry.py', 'test_interface_registry_payload_contains_blocker_index', 0, 6, 1).
+python_function('tests/test_jetbrains_surface_chat_target.py', 'test_jetbrains_chat_target_from_surface_hdmi1', 0, 8, 4).
+python_function('tests/test_jetbrains_surface_chat_target.py', 'test_jetbrains_surface_target_passes_window_relative_validation', 0, 4, 3).
+python_function('tests/test_jetbrains_surface_chat_target.py', 'test_jetbrains_chat_target_skips_toolbox', 0, 2, 1).
+python_function('tests/test_jetbrains_surface_chat_target.py', 'test_jetbrains_chat_target_skips_wrong_monitor', 0, 2, 1).
 python_function('tests/test_koru_browser_stack.py', 'koru_root', 0, 1, 1).
 python_function('tests/test_koru_browser_stack.py', 'test_env2llm_refresh_includes_browser_stack', 1, 4, 3).
 python_function('tests/test_koru_browser_stack.py', 'test_nlp2oql_router_from_koru', 1, 7, 7).
@@ -21770,7 +22048,8 @@ python_function('tests/test_operator_pipeline.py', 'self_control_ok_by_default',
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_pending_without_config', 2, 5, 2).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_ok_when_configured', 2, 4, 5).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_vscode_ignores_cursor_mcp_config', 2, 5, 6).
-python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_plugin_for_jetbrains', 2, 6, 3).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_plugin_for_jetbrains', 2, 7, 3).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_os_calibration_for_jetbrains_wayland', 3, 8, 5).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_plugin_probe_uses_resolved_ide', 2, 5, 2).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_os_calibration_for_plugin_ide', 3, 8, 5).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance', 3, 7, 5).
@@ -21836,14 +22115,21 @@ python_function('tests/test_photo_vql_drive.py', 'test_perform_photo_vql_verify_
 python_function('tests/test_photo_vql_drive.py', 'test_normalize_drive_result_blocks_false_ok_when_edit_ok_but_unverified', 0, 3, 1).
 python_function('tests/test_photo_vql_drive.py', 'test_normalize_drive_result_blocks_false_ok_on_inference_fail', 0, 3, 1).
 python_function('tests/test_photo_vql_drive.py', 'test_prepare_syncs_ide_control_capture_confirmed_from_observe', 1, 7, 5).
+python_function('tests/test_photo_vql_drive.py', 'test_prepare_does_not_surface_confirm_when_vql_refresh_fails', 1, 8, 7).
 python_function('tests/test_photo_vql_drive.py', 'test_photo_vql_chat_input_candidates_penalizes_terminal_background', 0, 3, 1).
 python_function('tests/test_photo_vql_drive.py', 'test_windsurf_chat_input_candidates_prefer_top_composer', 0, 3, 1).
 python_function('tests/test_photo_vql_drive.py', 'test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero', 2, 3, 7).
 python_function('tests/test_photo_vql_drive.py', 'test_perform_photo_vql_submit_after_paste', 1, 4, 5).
 python_function('tests/test_photo_vql_drive.py', 'test_build_vql_command_plan_flags_capture_mismatch', 0, 5, 1).
 python_function('tests/test_photo_vql_drive.py', 'test_perform_photo_vql_blocks_jetbrains_chat_on_capture_mismatch', 1, 4, 6).
+python_function('tests/test_photo_vql_drive.py', 'test_perform_photo_vql_blocks_invalid_chat_target_before_actuation', 1, 6, 5).
+python_function('tests/test_photo_vql_drive.py', 'test_perform_photo_vql_blocks_suspicious_surface_target_before_actuation', 1, 7, 8).
+python_function('tests/test_photo_vql_drive.py', 'test_type_text_at_vql_coords_blocks_suspicious_chat_coords_before_click', 1, 6, 6).
 python_function('tests/test_photo_vql_drive.py', 'test_resolve_auto_picks_dp_when_default_missing', 1, 5, 4).
 python_function('tests/test_photo_vql_drive.py', 'test_resolve_explicit_missing_monitor_fails', 1, 4, 4).
+python_function('tests/test_photo_vql_drive.py', 'test_resolve_prefers_ide_surface_monitor', 1, 4, 3).
+python_function('tests/test_photo_vql_drive.py', 'test_map_capture_monitor_mismatch', 1, 3, 4).
+python_function('tests/test_photo_vql_drive.py', 'test_format_wayland_vdisplay_operator_hint', 1, 6, 2).
 python_function('tests/test_photo_vql_drive.py', 'test_desktop_probe_missing_source_errors', 0, 5, 3).
 python_function('tests/test_photo_vql_drive.py', 'test_prepare_aborts_when_probe_fails', 1, 4, 5).
 python_function('tests/test_photo_vql_drive.py', 'test_find_latest_koru_session_uses_mtime_not_artifacts', 1, 2, 5).
@@ -21856,7 +22142,7 @@ python_function('tests/test_photo_vql_drive.py', 'test_prepare_map_fallback_requ
 python_function('tests/test_photo_vql_drive.py', 'test_prepare_focus_recovery_on_mismatch', 1, 4, 5).
 python_function('tests/test_photo_vql_drive.py', 'test_prepare_force_refresh_after_ide_control', 1, 3, 4).
 python_function('tests/test_photo_vql_drive.py', 'test_real_imgl_src_prefers_semco_path', 1, 3, 6).
-python_function('tests/test_photo_vql_drive.py', 'test_ensure_real_imgl_on_path', 1, 3, 8).
+python_function('tests/test_photo_vql_drive.py', 'test_ensure_real_imgl_on_path', 1, 4, 7).
 python_function('tests/test_photo_vql_drive.py', 'test_import_imgl_targets_clears_cached_stub', 1, 4, 11).
 python_function('tests/test_photo_vql_drive.py', 'test_vdisplay_subprocess_env_puts_imgl_first', 1, 4, 6).
 python_function('tests/test_photo_vql_drive.py', 'test_send_chat_persists_drive_result', 1, 3, 5).
@@ -21865,8 +22151,12 @@ python_function('tests/test_photo_vql_orchestrator.py', 'test_capture_guard_bloc
 python_function('tests/test_photo_vql_orchestrator.py', 'test_capture_guard_allows_map_only_fallback', 1, 4, 3).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_session_prepare_is_fresh_reads_recent_prepare', 2, 4, 6).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_session_prepare_is_fresh_rejects_stale', 2, 2, 8).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_session_prepare_is_fresh_rejects_unconfirmed_map_fallback', 2, 2, 6).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_session_prepare_is_fresh_finds_latest_session_without_env', 2, 2, 7).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_photo_vql_drive_act_surface_only_blocks_send_chat', 1, 4, 5).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_photo_vql_drive_reuses_fresh_prepare', 1, 2, 5).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_run_photo_vql_drive_aborts_on_prepare_failure', 1, 3, 4).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_run_photo_vql_drive_blocks_surface_only_fallback', 1, 3, 2).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_build_user_guidance_monitor_not_connected', 0, 7, 4).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_preflight_repo_paths_detects_missing_koru', 2, 3, 7).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_emit_user_guidance_includes_success_audit', 1, 3, 3).
@@ -21874,11 +22164,14 @@ python_function('tests/test_photo_vql_orchestrator.py', 'test_import_imgl_target
 python_function('tests/test_photo_vql_orchestrator.py', 'test_copy_observe_artifacts_pins_session_paths', 1, 3, 7).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_photo_vql_drive_act_uses_llm_photo_vql_before_map_on_fallback', 1, 2, 6).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_photo_vql_drive_act_uses_ide_prompt_when_llm_disabled', 1, 3, 6).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_get_vql_chat_target_uses_jetbrains_surface_bounds_on_hdmi1', 1, 4, 4).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_get_vql_chat_target_rejects_suspicious_jetbrains_surface_bounds', 1, 3, 4).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_get_vql_chat_target_accepts_jetbrains_surface_when_surface_fallback_active', 1, 4, 5).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_get_vql_chat_target_prefers_llm_detect_on_mismatch', 1, 3, 4).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_photo_vql_drive_act_uses_ide_prompt_on_map_only_fallback', 1, 4, 7).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_normalize_drive_result_blocks_map_edit_when_capture_unconfirmed', 1, 3, 2).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_normalize_drive_result_allows_map_edit_when_ide_mismatch_explicit', 1, 3, 2).
-python_function('tests/test_photo_vql_orchestrator.py', 'test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed', 1, 5, 6).
+python_function('tests/test_photo_vql_orchestrator.py', 'test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed', 1, 4, 4).
 python_function('tests/test_photo_vql_orchestrator.py', 'test_refresh_photo_vql_sidecar_copies_observe_artifacts', 2, 4, 12).
 python_function('tests/test_planfile_queue.py', '_ok', 1, 1, 1).
 python_function('tests/test_planfile_queue.py', '_ticket_args', 1, 1, 1).
@@ -22037,6 +22330,12 @@ python_function('tests/test_strategy_prompt.py', 'test_format_strategy_prompt_te
 python_function('tests/test_strategy_prompt.py', 'test_mcp_tool_strategy_prompt_returns_payload', 0, 6, 3).
 python_function('tests/test_strategy_prompt.py', 'test_mcp_tool_strategy_prompt_unknown_ide_returns_error', 0, 4, 2).
 python_function('tests/test_structured_report.py', 'test_structured_cycle_report_emits_diagnostics_and_plans', 0, 23, 4).
+python_function('tests/test_surface_capture_confirmation.py', 'test_surface_confirms_jetbrains_on_hdmi', 0, 3, 1).
+python_function('tests/test_surface_capture_confirmation.py', 'test_apply_surface_capture_confirmation_clears_mismatch_block', 0, 4, 1).
+python_function('tests/test_surface_capture_confirmation.py', 'test_apply_surface_capture_confirmation_allows_prepare_without_png', 0, 5, 1).
+python_function('tests/test_surface_capture_confirmation.py', 'test_capture_guard_allows_surface_only_fallback_on_capture_error', 1, 4, 3).
+python_function('tests/test_surface_capture_confirmation.py', 'test_sync_prepare_capture_flags_sets_source', 1, 4, 3).
+python_function('tests/test_surface_capture_confirmation.py', 'test_surface_target_can_clear_capture_mismatch', 1, 3, 2).
 python_function('tests/test_sync_plugin_build.py', '_load_script', 0, 2, 3).
 python_function('tests/test_sync_plugin_build.py', 'test_bump_patch_increments_plain_semver', 2, 2, 2).
 python_function('tests/test_sync_plugin_build.py', 'test_bump_patch_refuses_non_plain_semver', 1, 2, 2).
@@ -22062,6 +22361,13 @@ python_function('tests/test_tools.py', 'test_infer_adapter_kind_defaults', 0, 4,
 python_function('tests/test_tools.py', 'test_build_tool_task_scaffold_contains_expected_fields', 0, 5, 1).
 python_function('tests/test_tools.py', 'test_build_tool_task_scaffold_plugin_bridge_shape', 0, 6, 1).
 python_function('tests/test_topology_cli.py', 'test_render_topology_text_includes_components_and_pipelines', 0, 4, 1).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_is_vdisplay_agent_health', 0, 4, 1).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_is_koru_dashboard_on_port', 1, 3, 3).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_resolve_skips_koru_dashboard_port', 1, 2, 7).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_apply_vdisplay_agent_env_sets_url', 1, 3, 3).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_ensure_screencast_session_accepts_keeper_managed', 1, 3, 6).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_ensure_screencast_session_rejects_active_without_keeper', 1, 4, 7).
+python_function('tests/test_vdisplay_agent_bootstrap.py', 'test_ensure_screencast_session_skips_rest_start_on_wayland', 1, 4, 7).
 python_function('tests/test_vdisplay_control_fallback.py', '_clear_vdisplay_drive_env', 1, 2, 2).
 python_function('tests/test_vdisplay_control_fallback.py', 'test_vdisplay_fallback_enabled_auto_on_wayland_without_plugin', 1, 3, 3).
 python_function('tests/test_vdisplay_control_fallback.py', 'test_vdisplay_fallback_disabled_explicitly', 1, 2, 3).
@@ -22857,12 +23163,12 @@ python_method('VSCodeFamilyAdapter', 'collect_hypotheses', 0, 4, 8).
 python_method('VSCodeFamilyAdapter', 'apply_safe_fixes', 0, 9, 6).
 python_class('src/koru/ide_client.py', 'IDEControlClient').
 python_method('IDEControlClient', 'is_running', 0, 1, 0).
-python_method('IDEControlClient', 'drive', 1, 12, 0).
+python_method('IDEControlClient', 'drive', 1, 13, 0).
 python_method('IDEControlClient', 'status', 0, 1, 0).
 python_method('IDEControlClient', 'shutdown', 0, 1, 0).
 python_class('src/koru/ide_client.py', 'LegacyAutopilotClientAdapter').
 python_method('LegacyAutopilotClientAdapter', 'is_running', 0, 1, 2).
-python_method('LegacyAutopilotClientAdapter', 'drive', 1, 12, 10).
+python_method('LegacyAutopilotClientAdapter', 'drive', 1, 13, 11).
 python_method('LegacyAutopilotClientAdapter', 'status', 0, 1, 1).
 python_method('LegacyAutopilotClientAdapter', 'shutdown', 0, 1, 1).
 python_class('src/koru/ide_router.py', 'IDERoute').
@@ -22877,9 +23183,11 @@ python_class('src/koru/integrations/photo_vql_config.py', 'PhotoVqlConfig').
 python_method('PhotoVqlConfig', 'from_env', 1, 1, 5).
 python_class('src/koru/integrations/photo_vql_drive.py', 'PhotoVqlDrive').
 python_method('PhotoVqlDrive', '__init__', 0, 1, 0).
-python_method('PhotoVqlDrive', 'prepare', 0, 3, 3).
+python_method('PhotoVqlDrive', 'prepare', 0, 3, 4).
 python_method('PhotoVqlDrive', '_set_source_env', 0, 2, 0).
-python_method('PhotoVqlDrive', 'act', 1, 6, 4).
+python_method('PhotoVqlDrive', 'act', 1, 10, 7).
+python_method('PhotoVqlDrive', '_surface_only_blocked', 0, 1, 0).
+python_method('PhotoVqlDrive', '_act_surface_only', 1, 4, 9).
 python_method('PhotoVqlDrive', '_act_map_only_with_photo_vql', 1, 4, 9).
 python_method('PhotoVqlDrive', '_observe_png', 1, 4, 2).
 python_method('PhotoVqlDrive', '_photo_vql_attempt_succeeded', 0, 5, 2).
@@ -22887,12 +23195,12 @@ python_method('PhotoVqlDrive', '_mark_llm_backend_if_used', 0, 5, 3).
 python_method('PhotoVqlDrive', '_act_map_only_with_ide_prompt', 1, 3, 3).
 python_method('PhotoVqlDrive', '_send_chat', 1, 1, 1).
 python_method('PhotoVqlDrive', 'run', 1, 2, 5).
-python_method('PhotoVqlDrive', '_observe_allows_act', 1, 2, 2).
+python_method('PhotoVqlDrive', '_observe_allows_act', 1, 3, 2).
 python_method('PhotoVqlDrive', '_prepare_failed_reply', 1, 2, 2).
 python_method('PhotoVqlDrive', '_finalize_reply', 1, 5, 4).
 python_class('src/koru/integrations/photo_vql_guard.py', 'CaptureGuard').
-python_method('CaptureGuard', 'from_observe', 1, 14, 6).
-python_method('CaptureGuard', 'apply_to_prepare_out', 1, 12, 1).
+python_method('CaptureGuard', 'from_observe', 1, 21, 8).
+python_method('CaptureGuard', 'apply_to_prepare_out', 1, 20, 1).
 python_class('src/koru/integrations/photo_vql_target.py', '_InputMetrics').
 python_class('src/koru/integrations/photo_vql_user_guidance.py', '_GuidanceContext').
 python_class('src/koru/interface_registry.py', 'InterfaceVerification').
@@ -24897,14 +25205,14 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*389 nodes · 500 edges · 69 modules · CC̄=3.7*
+*389 nodes · 500 edges · 69 modules · CC̄=3.8*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in project)* | 0 | 932 | 0 | **932** |
-| `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 203 | 9 | **212** |
+| `print` *(in project)* | 0 | 939 | 0 | **939** |
+| `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 206 | 9 | **215** |
 | `dispatch` *(in packages.dsl2koru.src.dsl2koru.bus)* | 11 ⚠ | 27 | 25 | **52** |
 | `_flag` *(in packages.dsl2coru.src.dsl2coru.grammar)* | 7 | 33 | 8 | **41** |
 | `_flag` *(in packages.dsl2coru.src.dsl2coru.parser)* | 7 | 33 | 8 | **41** |
@@ -24914,15 +25222,15 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.27s
+# generated in 0.37s
 # nodes: 389 | edges: 500 | modules: 69
-# CC̄=3.7
+# CC̄=3.8
 
 HUBS[20]:
   project.print
-    CC=0  in:932  out:0  total:932
+    CC=0  in:939  out:0  total:939
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:203  out:9  total:212
+    CC=5  in:206  out:9  total:215
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
   packages.dsl2coru.src.dsl2coru.grammar._flag
@@ -24937,10 +25245,10 @@ HUBS[20]:
     CC=4  in:27  out:4  total:31
   packages.dsl2coru.src.dsl2coru.cli._main_subcommand
     CC=1  in:1  out:28  total:29
-  packages.coru.src.coru.cli._maybe_reexec_into_project_python
-    CC=13  in:1  out:27  total:28
   packages.coru.src.coru.cli._trace
     CC=3  in:23  out:5  total:28
+  packages.coru.src.coru.cli._maybe_reexec_into_project_python
+    CC=13  in:1  out:27  total:28
   packages.coru.src.coru.cli._run_default_autonomous
     CC=11  in:2  out:25  total:27
   packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
@@ -24949,9 +25257,9 @@ HUBS[20]:
     CC=14  in:2  out:25  total:27
   packages.nlp2coru.src.nlp2coru.cli._emit
     CC=4  in:22  out:4  total:26
-  packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
-    CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
+    CC=3  in:0  out:26  total:26
+  packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
     CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.bus.dispatch
     CC=14  in:1  out:24  total:25

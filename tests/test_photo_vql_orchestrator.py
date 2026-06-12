@@ -83,6 +83,75 @@ def test_session_prepare_is_fresh_rejects_stale(tmp_path: Path, monkeypatch: pyt
     assert drive_mod.session_prepare_is_fresh(max_age_s=120.0) is None
 
 
+def test_session_prepare_is_fresh_rejects_unconfirmed_map_fallback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = tmp_path / "2026-06-09__koru-jetbrains"
+    observe = session / "observe"
+    observe.mkdir(parents=True)
+    prepare = observe / "prepare.json"
+    prepare.write_text(
+        json.dumps({"ok": False, "map_only_fallback": True, "capture_confirmed": False}),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTONOMY_SESSION_DIR", str(session))
+
+    assert drive_mod.session_prepare_is_fresh(max_age_s=120.0) is None
+
+
+def test_session_prepare_is_fresh_finds_latest_session_without_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    day = tmp_path / "2026-06-12"
+    older = day / "2026-06-12T10-00-00Z__koru-jetbrains" / "observe"
+    newer = day / "2026-06-12T11-00-00Z__koru-jetbrains" / "observe"
+    older.mkdir(parents=True)
+    newer.mkdir(parents=True)
+    (older / "prepare.json").write_text(
+        json.dumps({"ok": True, "source": "DP-1", "capture_confirmed": True}),
+        encoding="utf-8",
+    )
+    (newer / "prepare.json").write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "source": "HDMI-1",
+                "capture_confirmed": True,
+                "surface_only_fallback": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("KORU_AUTONOMY_SESSION_DIR", raising=False)
+    monkeypatch.setenv("VDISPLAY_METADATA_DIR", str(tmp_path))
+
+    reused = drive_mod.session_prepare_is_fresh(ide="jetbrains", max_age_s=120.0)
+    assert reused is None
+
+
+def test_photo_vql_drive_act_surface_only_blocks_send_chat(monkeypatch: pytest.MonkeyPatch) -> None:
+    observe = {
+        "ok": True,
+        "surface_only_fallback": True,
+        "capture_confirmed": True,
+        "source": "HDMI-1",
+    }
+    surface_act = MagicMock(return_value={"ok": True, "backend": "vdisplay+photo-vql"})
+    send_chat = MagicMock()
+    monkeypatch.setattr(drive_mod.PhotoVqlDrive, "_act_surface_only", surface_act)
+    monkeypatch.setattr(drive_mod.PhotoVqlDrive, "_send_chat", send_chat)
+
+    drive = drive_mod.PhotoVqlDrive(ide="jetbrains")
+    reply = drive.act("probe test", submit=True, observe=observe)
+    assert reply["ok"] is False
+    assert reply["backend"] == "semantic_required"
+    assert reply["surface_only_fallback"] is True
+    surface_act.assert_not_called()
+    send_chat.assert_not_called()
+
+
 def test_photo_vql_drive_reuses_fresh_prepare(monkeypatch: pytest.MonkeyPatch) -> None:
     prepare_fn = MagicMock(return_value={"ok": True, "capture_confirmed": True})
     monkeypatch.setattr(vc, "prepare_photo_vql_for_drive", prepare_fn)
@@ -111,6 +180,23 @@ def test_run_photo_vql_drive_aborts_on_prepare_failure(monkeypatch: pytest.Monke
     assert reply["ok"] is False
     assert reply["phase"] == "prepare"
     act.assert_not_called()
+
+
+def test_run_photo_vql_drive_blocks_surface_only_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    observe = {
+        "ok": True,
+        "surface_only_fallback": True,
+        "capture_confirmed": True,
+    }
+    monkeypatch.setattr(
+        drive_mod.PhotoVqlDrive,
+        "prepare",
+        lambda self, **kwargs: observe,
+    )
+
+    reply = drive_mod.run_photo_vql_drive("probe test", ide="jetbrains")
+    assert reply["ok"] is False
+    assert reply["backend"] == "semantic_required"
 
 
 def test_build_user_guidance_monitor_not_connected() -> None:
@@ -257,6 +343,165 @@ def test_photo_vql_drive_act_uses_ide_prompt_when_llm_disabled(monkeypatch: pyte
     ide_prompt.assert_called_once()
 
 
+def test_get_vql_chat_target_uses_jetbrains_surface_bounds_on_hdmi1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_elements", lambda: ([], None))
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
+    monkeypatch.setattr(vc, "_vql_candidates_polluted", lambda c: False)
+    monkeypatch.setattr(vc, "llm_vision_enabled", lambda: False)
+    monkeypatch.setattr(
+        vc,
+        "_resolve_vdisplay_source_for_ide",
+        lambda ide, probe=None: (
+            "HDMI-1",
+            {
+                "ide_surface_best": {
+                    "display_name": "PyCharm",
+                    "pid": 35616,
+                    "monitor_name": "HDMI-1",
+                    "bounds": {"x": 3216, "y": 2550, "width": 880, "height": 1548},
+                }
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        vc,
+        "_live_surface_capture_meta",
+        lambda source: {
+            "source": source,
+            "monitor_name": source,
+            "width": 2048,
+            "height": 1280,
+            "region": {"x": 0, "y": 2560, "width": 4096, "height": 2560},
+        },
+    )
+    monkeypatch.setattr(vc, "_enrich_capture_meta_for_pointer", lambda meta, source: meta)
+    monkeypatch.setattr(vc._autonomy_session, "active_session_dir", lambda: None)
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_log_vql_cursor_positioning_at_command", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "validate_vql_chat_target", lambda *a, **k: {"ok": True})
+
+    out = vc.get_vql_chat_target_from_photo(ide="jetbrains")
+    assert out.get("selection_method") == "jetbrains_surface_bounds"
+    assert out["id"] == "surface:jetbrains-chat"
+    assert out["click_center"]["y"] >= 600
+
+
+def test_get_vql_chat_target_rejects_suspicious_jetbrains_surface_bounds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
+    monkeypatch.delenv("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_elements", lambda: ([], None))
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
+    monkeypatch.setattr(vc, "_vql_candidates_polluted", lambda c: False)
+    monkeypatch.setattr(vc, "llm_vision_enabled", lambda: False)
+    monkeypatch.setattr(
+        vc,
+        "_resolve_vdisplay_source_for_ide",
+        lambda ide, probe=None: (
+            "HDMI-1",
+            {
+                "ide_surface_best": {
+                    "display_name": "PyCharm",
+                    "pid": 35616,
+                    "monitor_name": "HDMI-1",
+                    "bounds": {"x": 3216, "y": 2550, "width": 880, "height": 1548},
+                }
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        vc,
+        "_live_surface_capture_meta",
+        lambda source: {
+            "source": source,
+            "monitor_name": source,
+            "width": 2048,
+            "height": 1280,
+            "region": {"x": 0, "y": 2560, "width": 4096, "height": 2560},
+        },
+    )
+    monkeypatch.setattr(
+        vc,
+        "_map_chat_target_capture_local",
+        lambda **k: {"click_center": {"x": 1900, "y": 1160}, "id": "map:chat", "role": "input"},
+    )
+    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {})
+    monkeypatch.setattr(vc._autonomy_session, "active_session_dir", lambda: None)
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_log_vql_cursor_positioning_at_command", lambda *a, **k: None)
+
+    def fake_validate(target, *, selection_method=None, **kwargs):
+        if selection_method == "jetbrains_surface_bounds":
+            return {
+                "ok": False,
+                "coord_warnings": ["chat_local_y=691_below_850_likely_editor_not_bottom_right_composer"],
+                "validation_errors": [],
+            }
+        return {"ok": True, "coord_warnings": [], "validation_errors": []}
+
+    monkeypatch.setattr(vc, "validate_vql_chat_target", fake_validate)
+
+    out = vc.get_vql_chat_target_from_photo(ide="jetbrains")
+    assert out.get("selection_method") == "map_calibrated_on_empty_vql"
+    assert out["id"] == "map:chat"
+
+
+def test_get_vql_chat_target_accepts_jetbrains_surface_when_surface_fallback_active(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", "1")
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION", "1")
+    monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_elements", lambda: ([], None))
+    monkeypatch.setattr(
+        vc,
+        "_photo_vql_ide_capture_mismatch",
+        lambda ide: {"message": "capture does not match requested IDE"},
+    )
+    monkeypatch.setattr(vc, "_vql_candidates_polluted", lambda c: False)
+    monkeypatch.setattr(vc, "llm_vision_enabled", lambda: False)
+    monkeypatch.setattr(
+        vc,
+        "_resolve_vdisplay_source_for_ide",
+        lambda ide, probe=None: (
+            "HDMI-1",
+            {
+                "ide_surface_best": {
+                    "display_name": "PyCharm",
+                    "pid": 35616,
+                    "monitor_name": "HDMI-1",
+                    "stack": "jetbrains_xwayland",
+                    "bounds": {"x": 3216, "y": 3100, "width": 880, "height": 1548},
+                }
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        vc,
+        "_live_surface_capture_meta",
+        lambda source: {
+            "source": source,
+            "monitor_name": source,
+            "width": 2048,
+            "height": 1280,
+            "region": {"x": 0, "y": 2560, "width": 4096, "height": 2560},
+        },
+    )
+    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {})
+    monkeypatch.setattr(vc._autonomy_session, "active_session_dir", lambda: None)
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_log_vql_cursor_positioning_at_command", lambda *a, **k: None)
+
+    out = vc.get_vql_chat_target_from_photo(ide="jetbrains")
+    assert out.get("selection_method") == "jetbrains_surface_bounds"
+    assert out["vql_validation"]["surface_bounds_trusted"] is True
+    assert out["vql_validation"]["ok"] is True
+
+
 def test_get_vql_chat_target_prefers_llm_detect_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("KORU_VDISPLAY_LLM_VISION_DECISION", "1")
     monkeypatch.setattr(vc, "_photo_vql_elements", lambda: ([], None))
@@ -379,9 +624,8 @@ def test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed(
 
     out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-1")
     assert out.get("error") != "no fresh vql found"
-    assert out.get("ok") is False
-    assert "not verified" in str(out.get("error") or "").lower()
-    assert "edit" not in out
+    assert (out.get("edit") or {}).get("ok") is True
+    assert out.get("vql_command_plan", {}).get("inference_ok") is False
 
 
 def test_refresh_photo_vql_sidecar_copies_observe_artifacts(

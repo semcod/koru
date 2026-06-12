@@ -37,6 +37,17 @@ class IDEControlClient(Protocol):
     def shutdown(self) -> dict[str, Any]: ...
 
 
+def _semantic_drive_operator_lines(reply: dict[str, Any], *, ide: str) -> list[str]:
+    if isinstance(reply.get("drive_dsl_operator"), list):
+        return []
+    try:
+        from koru.autonomy.ide_operator_guidance import classify_drive_failure_guidance
+    except Exception:
+        return []
+    lines = classify_drive_failure_guidance(reply, ide=ide)
+    return list(lines or [])
+
+
 @dataclass
 class LegacyAutopilotClientAdapter:
     """Expose legacy :class:`AutopilotClient` through :class:`IDEControlClient`."""
@@ -134,6 +145,9 @@ class LegacyAutopilotClientAdapter:
                 if not line:
                     continue
                 activity("DSL", line, data={"ide": ide, "phase": "operator"})
+        else:
+            for line in _semantic_drive_operator_lines(reply, ide=ide):
+                activity("DSL", str(line), data={"ide": ide, "phase": "operator"})
         return reply
 
     def status(self) -> dict[str, Any]:

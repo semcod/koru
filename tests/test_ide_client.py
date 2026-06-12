@@ -41,6 +41,36 @@ def test_legacy_adapter_forwards_all_operations() -> None:
     client.shutdown.assert_called_once_with()
 
 
+def test_legacy_adapter_emits_operator_guidance_for_semantic_required(monkeypatch) -> None:
+    events: list[tuple[str, str, dict]] = []
+    client = MagicMock()
+    client.drive.return_value = {
+        "ok": False,
+        "backend": "semantic_required",
+        "message": (
+            "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains "
+            "after vdisplay/imgl did not confirm the target"
+        ),
+    }
+    monkeypatch.setattr(
+        "koru.activity_log.activity",
+        lambda component, message, **kwargs: events.append((component, message, kwargs)),
+    )
+
+    adapter = LegacyAutopilotClientAdapter(client=client)
+    out = adapter.drive("hello", ide="jetbrains")
+
+    assert out["ok"] is False
+    operator_messages = [
+        message
+        for component, message, kwargs in events
+        if component == "DSL" and kwargs.get("data", {}).get("phase") == "operator"
+    ]
+    joined = " ".join(operator_messages)
+    assert "photo-VQL" in joined
+    assert "screencast start --force" in joined
+
+
 def test_build_legacy_ide_client_uses_autopilot_client(monkeypatch) -> None:
     captured: dict[str, object] = {}
 

@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.05s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 681, typescript: 93, shell: 57, json: 40, yaml: 31
+- **Languages**: python: 682, typescript: 93, shell: 57, json: 40, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 6653
+- **Total Functions**: 6776
 - **Total Classes**: 487
-- **Modules**: 955
-- **Entry Points**: 2662
+- **Modules**: 956
+- **Entry Points**: 2676
 
 ## Architecture by Module
 
@@ -20,7 +20,7 @@
 - **File**: `cli.py`
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 126
+- **Functions**: 155
 - **File**: `vdisplay_client.py`
 
 ### plugins.koru-autopilot-shared.src.bridge-submit
@@ -121,13 +121,13 @@ Main execution flows into the system:
 > Print a unified shell OQL/DSL snapshot with replay/validate commands.
 - **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._decision_lines, lines.extend, lines.extend, lines.extend, src.koru.autopilot.cli_snapshot._lane_shell_env
 
-### src.koru.integrations.vdisplay_client._desktop_probe
-> Preflight: monitors, X11 windows, correlated surfaces, target IDE processes.
-- **Calls**: src.koru.integrations.vdisplay_client._probe_ide_processes, set, list_monitors_local, mon_payload.get, mon_payload.get, str, list_windows_local, win_payload.get
-
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
 - **Calls**: max, cls, src.koru.env_flags.env_int, int, Path, src.koruvision.providers.env.env_truthy, src.koru.env_flags.env_int, src.koru.env_flags.env_int
+
+### src.koru.integrations.photo_vql_target.jetbrains_chat_target_from_surface
+> Estimate JetBrains AI chat composer from correlated IDE surface bounds (Wayland/native).
+- **Calls**: None.strip, None.lower, surface.get, int, int, int, int, src.koru.integrations.photo_vql_target._monitor_geometry_for_source
 
 ### packages.rest2koru.src.rest2koru.app.create_app
 - **Calls**: FastAPI, app.get, app.get, app.get, app.post, app.post, app.get, app.get
@@ -146,12 +146,11 @@ Main execution flows into the system:
 ### src.koru.autopilot.commands.drive._diagnose_bridge_after_drive_failure
 - **Calls**: bool, None.resolve, str, src.koru.cqrs.runtime_for_project, RepairCommandService, RepairQueryService, src.koru.autopilot.commands.drive._bridge_hypotheses_payload, src.koru.autopilot.commands.drive._bridge_subject
 
-### src.koru.integrations.autonomy_session.copy_observe_artifacts_to_session
-> Copy fresh capture + sidecars into session observe/ and pin env paths.
-- **Calls**: src.koru.integrations.autonomy_session.session_observe_paths, png.with_suffix, dest_png.with_suffix, Path, Path, str, str, png.is_file
-
 ### src.koru.ide_client.LegacyAutopilotClientAdapter.drive
 - **Calls**: src.koru.activity_log.activity, self.client.drive, reply.get, bool, reply.get, src.koru.activity_log.activity, reply.get, isinstance
+
+### src.koru.autopilot.daemon_cli.run_daemon_command
+- **Calls**: src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.dotenv_loader.load_dotenv, None.lower, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat
 
 ### packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
 - **Calls**: StoredEvent, self.path.parent.mkdir, uuid.uuid4, result_pb2.DslEvent, pb.command.ParseFromString, DslResult, pb.result.CopyFrom, pb.SerializeToString
@@ -173,13 +172,6 @@ Args:
     client_fn: Factory for AutopilotClient
     daemon_start_
 - **Calls**: client_fn, src.koru.autopilot.log_contract.emit_log, str, src.koru.autopilot.commands.status._print_status_json, src.koru.autopilot.commands.status._maybe_print_empty_plugin_bridge_explain, src.koru.autopilot.log_contract.emit_log, client.is_running, project.print
-
-### src.koru.integrations.autonomy_session.vql_sidecar_is_stale
-> Return (stale, diagnostics). Stale sidecars must not feed decide/act.
-- **Calls**: time.time, src.koru.integrations.autonomy_session.vql_max_age_seconds, bool, vql_path.is_file, vql_path.stat, str, round, src.koru.integrations.autonomy_session._vql_load_capture_validation
-
-### src.koru.autopilot.daemon_cli.run_daemon_command
-- **Calls**: src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.dotenv_loader.load_dotenv, None.lower, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat
 
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
@@ -206,6 +198,10 @@ Args:
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
 
+### src.koru.integrations.autonomy_session.find_latest_koru_session
+> Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime.
+- **Calls**: set, candidates.sort, bases.append, None.strip, None.strip, None.replace, base.iterdir, bases.append
+
 ### packages.uri2coru.src.uri2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, dec.add_argument, dec.add_argument, sub.add_parser, run.add_argument, run.add_argument
 
@@ -230,6 +226,9 @@ Args:
 ### src.koru.cli_tagi.deploy
 > Deploy changes using Tagi's intelligent prioritization.
 - **Calls**: tagi.command, click.argument, click.option, click.option, None.resolve, click.echo, TagiIntegration, tagi.get_deployment_plan
+
+### src.koru.autonomous_runtime.setup_autonomous_session
+- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, src.koru.autonomous_runtime._log_runtime_readiness_gate
 
 ## Process Flows
 
@@ -263,19 +262,15 @@ action_snapshot [src.koru.autopilot.cli_snapshot]
       └─> normalize_ide_id
 ```
 
-### Flow 4: _desktop_probe
-```
-_desktop_probe [src.koru.integrations.vdisplay_client]
-  └─> _probe_ide_processes
-      └─> _canonical_ide
-          └─ →> canonical_autopilot_ide_id
-      └─> _canonical_ide
-```
-
-### Flow 5: from_env
+### Flow 4: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
+```
+
+### Flow 5: jetbrains_chat_target_from_surface
+```
+jetbrains_chat_target_from_surface [src.koru.integrations.photo_vql_target]
 ```
 
 ### Flow 6: create_app
@@ -365,6 +360,11 @@ _diagnose_bridge_after_drive_failure [src.koru.autopilot.commands.drive]
 - **Methods**: 16
 - **Key Methods**: plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
+### src.koru.integrations.photo_vql_drive.PhotoVqlDrive
+> One-shot photo-VQL drive: prepare (observe) then send_chat (decide/act/verify).
+- **Methods**: 16
+- **Key Methods**: src.koru.integrations.photo_vql_drive.PhotoVqlDrive.__init__, src.koru.integrations.photo_vql_drive.PhotoVqlDrive.prepare, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._set_source_env, src.koru.integrations.photo_vql_drive.PhotoVqlDrive.act, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._surface_only_blocked, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._act_surface_only, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._act_map_only_with_photo_vql, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._observe_png, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._photo_vql_attempt_succeeded, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._mark_llm_backend_if_used
+
 ### src.koruide.plugin_router.PluginRouter
 > Select, enumerate and deduplicate connected plugin sessions.
 - **Methods**: 15
@@ -406,10 +406,6 @@ no
 > Analyzer for deployment event history with reflection capabilities.
 - **Methods**: 12
 - **Key Methods**: src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
-
-### plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher
-- **Methods**: 11
-- **Key Methods**: plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.setCursor, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.start, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.tick, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.stop, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, plugins.koru-autopilot-shared.src.chat-history-watcher.ChatHistoryWatcher.a
 
 ## Data Transformation Functions
 
@@ -570,30 +566,30 @@ Key functions that process and transform data:
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 136 calls
-- `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 95 calls
-- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 77 calls
+- `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 113 calls
+- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 113 calls
+- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 103 calls
+- `src.koru.integrations.vdisplay_client.ensure_vdisplay_ide_control` - 74 calls
 - `scripts.e2e_envmap_koru.main` - 73 calls
-- `src.koru.integrations.vdisplay_client.ensure_vdisplay_ide_control` - 72 calls
-- `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 66 calls
+- `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 69 calls
 - `src.koru.integrations.vdisplay_client.load_vql_metadata` - 55 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
+- `src.koru.integrations.photo_vql_target.jetbrains_chat_target_from_surface` - 42 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
 - `src.koru.integrations.vdisplay_client.move_mouse_to_vql_target_and_focus_keyboard` - 40 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
-- `src.koru.integrations.autonomy_session.copy_observe_artifacts_to_session` - 35 calls
-- `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 34 calls
+- `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
+- `src.koru.autopilot.daemon_cli.run_daemon_command` - 37 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
-- `src.koru.integrations.autonomy_session.vql_sidecar_is_stale` - 31 calls
-- `src.koru.autopilot.daemon_cli.run_daemon_command` - 31 calls
+- `src.koru.integrations.vdisplay_client.sync_prepare_capture_flags_to_env` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
@@ -602,6 +598,7 @@ Functions exposed as public API (no underscore prefix):
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
 - `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
+- `src.koru.integrations.autonomy_session.find_latest_koru_session` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
@@ -609,7 +606,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koruapi.desktop_uri.desktop_uri_handle` - 27 calls
 - `src.koru.doctor_render.render_text` - 27 calls
-- `src.koru.cli_tagi.deploy` - 27 calls
 
 ## System Interactions
 
@@ -627,15 +623,15 @@ graph TD
     action_snapshot --> max
     action_snapshot --> _decision_lines
     action_snapshot --> extend
-    _desktop_probe --> _probe_ide_processes
-    _desktop_probe --> set
-    _desktop_probe --> list_monitors_local
-    _desktop_probe --> get
     from_env --> max
     from_env --> cls
     from_env --> env_int
     from_env --> int
     from_env --> Path
+    jetbrains_chat_targe --> strip
+    jetbrains_chat_targe --> lower
+    jetbrains_chat_targe --> get
+    jetbrains_chat_targe --> int
     create_app --> FastAPI
     create_app --> get
     create_app --> post

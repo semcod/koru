@@ -118,10 +118,12 @@ def classify_drive_failure_guidance(
 
     if daemon_reply_blocks_direct_fallback(reply):
         target = (ide or "jetbrains").strip().lower()
+        from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
+
         return [
             f"Wayland {target} drive requires verified photo-VQL (vdisplay + LLM vision), "
             "not blind OS-injector clicks.",
-            "Focus the IDE AI chat on the vdisplay capture monitor (KORU_VDISPLAY_SOURCE).",
+            format_wayland_vdisplay_operator_hint(ide=target),
             f"Run: koru autopilot prepare-vdisplay --ide {target}",
             f"Run: ./scripts/diagnose-vdisplay-llm.sh {target}  (expect \"ok\": true)",
             "Unsafe override: KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1",

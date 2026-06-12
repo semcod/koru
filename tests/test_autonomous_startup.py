@@ -701,7 +701,10 @@ def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -
     assert "Command Palette" not in text
     assert "--require-plugin" not in text
     assert "koru: Connect autopilot daemon" not in text
-    assert "KORU_VDISPLAY_CONTROL_FALLBACK=1" in text
+    assert "vdisplay/photo-VQL" in text
+    assert "screencast start --force" in text
+    assert "screencast probe --via-agent" in text
+    assert "KORU_VDISPLAY_CONTROL_FALLBACK=1" not in text
     assert "export KORU_AUTOPILOT_INSTANCE=jetbrains" in text
 
 
@@ -762,7 +765,7 @@ def test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_win
 
     assert "JetBrains IDE działa, ale autopilot wybrał ide=windsurf" in text
     assert "--agent-lane jetbrains --autopilot-ide jetbrains" in text
-    assert "keyboard/OS-injector" in text
+    assert "vdisplay/photo-VQL" in text
 
 
 def test_format_post_startup_operator_hints_for_zed_uses_keyboard_path() -> None:

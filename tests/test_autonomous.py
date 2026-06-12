@@ -4364,6 +4364,64 @@ def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(
     assert "[AUTOPILOT FOCUS ERROR]" not in capsys.readouterr().out
 
 
+def test_run_cycle_does_not_retry_semantic_required_as_focus_error(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    import time
+
+    calls: list[int] = []
+
+    class SemanticRequiredClient:
+        def drive(self, *_args, **_kwargs):
+            calls.append(1)
+            return {
+                "ok": False,
+                "backend": "semantic_required",
+                "message": (
+                    "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains "
+                    "after vdisplay/imgl did not confirm the target"
+                ),
+            }
+
+    monkeypatch.setattr(time, "sleep", lambda _x: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+    _force_idle_drive_prompt(monkeypatch)
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="jetbrains",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=SemanticRequiredClient(),
+    )
+
+    assert calls == [1]
+    assert autopilot_status == "failed"
+    captured = capsys.readouterr().out
+    assert "[AUTOPILOT SEMANTIC TARGET REQUIRED]" in captured
+    assert "screencast start --force" in captured
+    assert "[AUTOPILOT FOCUS ERROR]" not in captured
+    assert "Retrying in 5 seconds" not in captured
+
+
 def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
     tmp_path,
     monkeypatch,

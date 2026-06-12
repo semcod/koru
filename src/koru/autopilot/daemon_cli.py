@@ -88,6 +88,8 @@ def run_daemon_command(
     load_dotenv(Path.cwd())
     if project is not None:
         load_dotenv(project)
+        os.environ.setdefault("VDISPLAY_METADATA_DIR", str(project.resolve() / ".vdisplay"))
+        os.environ.setdefault("KORU_PROJECT_ROOT", str(project.resolve()))
     instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip().lower()
     if instance:
         from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults

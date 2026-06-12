@@ -4,10 +4,8 @@ selected IDE lane has no installable plugin.
 The user-facing scenario: running ``koru auto`` in a shell where
 ``KORU_AUTOPILOT_INSTANCE=jetbrains`` is set (e.g. left over from a previous
 session). The autonomous loop picks the JetBrains lane, the plugin installer
-reports ``unsupported``, and the loop silently falls back to the keyboard /
-OS-injector path — which is unreliable on Wayland. The previous log only said
-``autopilot plugin unsupported for ide=jetbrains; using keyboard/OS-injector
-path`` without telling the user how to fix it.
+reports ``unsupported``, and the loop must not imply that blind keyboard /
+OS-injector drive is the normal Wayland path.
 
 This test pins the new, actionable warning that explicitly names the env var
 and the supported lanes.
@@ -44,6 +42,7 @@ def test_unsupported_ide_emits_env_remedy(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "jetbrains")
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     captured: list[str] = []
 
     def stdio_info(msg: str, *, fmt: str) -> None:
@@ -63,6 +62,7 @@ def test_unsupported_ide_emits_env_remedy(
 
     joined = "\n".join(captured)
     assert "autopilot plugin unsupported for ide=jetbrains" in joined
+    assert "vdisplay/photo-VQL" in joined
     assert "KORU_AUTOPILOT_INSTANCE=jetbrains" in joined
     assert "unset KORU_AUTOPILOT_INSTANCE" in joined
     assert "cursor" in joined and "vscode" in joined and "windsurf" in joined

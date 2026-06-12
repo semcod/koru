@@ -32,6 +32,7 @@ def _clear_autonomy_session_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "KORU_VDISPLAY_SOURCE",
         "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH",
         "KORU_VDISPLAY_ALLOW_IDE_MISMATCH",
+        "KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION",
         "KORU_VDISPLAY_PREFER_PHOTO_VQL",
         "KORU_VDISPLAY_LLM_VISION_DECISION",
         "KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT",
@@ -313,6 +314,10 @@ def test_ensure_vdisplay_ide_control_clicks_map_interior(monkeypatch: pytest.Mon
     monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: "/maps/pycharm-chat.json")
     monkeypatch.setattr(vc, "_map_interior_targets_for_ide", lambda app_id, map_path: ("ai-chat-input",))
     monkeypatch.setattr(vc, "_map_raise_targets_for_ide", lambda app_id, map_path: ("prompt",))
+    monkeypatch.setattr(
+        "koru.integrations.photo_vql_monitor.map_capture_monitor_mismatch",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr(vc, "_control_focus", lambda **kwargs: {"ok": True})
     monkeypatch.setattr(vc, "_dismiss_gnome_overview", lambda **kwargs: {"ok": True, "skipped": True})
     monkeypatch.setattr(
@@ -683,6 +688,63 @@ def test_prepare_syncs_ide_control_capture_confirmed_from_observe(monkeypatch: p
     assert out["ide_control"]["confirmation_bias_risk"]
 
 
+def test_prepare_does_not_surface_confirm_when_vql_refresh_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        vc,
+        "_resolve_vdisplay_source_for_ide",
+        lambda ide, **k: (
+            "HDMI-1",
+            {
+                "ok": True,
+                "ide_surface_best": {
+                    "display_name": "PyCharm",
+                    "monitor_name": "HDMI-1",
+                    "stack": "jetbrains_xwayland",
+                    "pid": 123,
+                },
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: False)
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
+    monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
+    capture_error = (
+        "vdisplay host capture failed; screencast capture needs python3-dbus: "
+        "No module named 'dbus'; portal screenshot denied (Screen Recording permission missing)"
+    )
+    monkeypatch.setattr(
+        vc,
+        "refresh_photo_vql_sidecar",
+        lambda **k: {
+            "ok": False,
+            "source": "HDMI-1",
+            "png": "/tmp/capture.png",
+            "returncode": 1,
+            "error": capture_error,
+            "hint": vc._vdisplay_capture_failure_hint(capture_error),
+        },
+    )
+    monkeypatch.setenv("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "1")
+
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+
+    assert out["ok"] is False
+    assert out["capture_confirmed"] is False
+    assert out["capture_ready"] is False
+    assert "vdisplay host capture failed" in out["error"]
+    assert "dbus" in out["hint"].lower()
+    assert "Screen Recording" in out["hint"]
+    assert out.get("capture_confirmation_source") != "ide_surface_best"
+
+
 def test_photo_vql_chat_input_candidates_penalizes_terminal_background() -> None:
     layers = [
         {
@@ -824,6 +886,139 @@ def test_perform_photo_vql_blocks_jetbrains_chat_on_capture_mismatch(monkeypatch
     assert out.get("ide_window_warning")
 
 
+def test_perform_photo_vql_blocks_invalid_chat_target_before_actuation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_confirmed_observe_meta(monkeypatch)
+    calls = {"focus": 0, "type": 0}
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", raising=False)
+    monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(
+        vc,
+        "get_vql_chat_target_from_photo",
+        lambda **k: {
+            "id": "photo-chat-editor-center",
+            "click_center": {"x": 1024, "y": 640},
+            "selection_method": "imgl_resolve_chat_target",
+            "vql_validation": {
+                "ok": False,
+                "coord_warnings": [
+                    "target_not_from_live_vql_layers_using_fallback_center",
+                    "chat_local_y=640_below_850_likely_editor_not_bottom_right_composer",
+                ],
+                "validation_errors": [],
+            },
+        },
+    )
+    monkeypatch.setattr(vc, "_resolve_photo_vql_llm_coords", lambda **k: (1024, 640, None))
+    monkeypatch.setattr(
+        vc,
+        "move_mouse_to_vql_target_and_focus_keyboard",
+        lambda *a, **k: calls.__setitem__("focus", calls["focus"] + 1) or {"ok": True},
+    )
+    monkeypatch.setattr(
+        vc,
+        "_type_text_at_vql_coords",
+        lambda *a, **k: calls.__setitem__("type", calls["type"] + 1) or {"ok": True},
+    )
+    monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
+
+    out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
+    assert out["ok"] is False
+    assert "photo-VQL chat target not verified" in out["error"]
+    assert calls == {"focus": 0, "type": 0}
+
+
+def test_perform_photo_vql_blocks_suspicious_surface_target_before_actuation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_confirmed_observe_meta(monkeypatch)
+    calls = {"focus": 0, "type": 0}
+    monkeypatch.setenv("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", "1")
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR", "1")
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", raising=False)
+    monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(
+        vc,
+        "get_vql_chat_target_from_photo",
+        lambda **k: {
+            "id": "surface:jetbrains-chat",
+            "role": "input",
+            "click_center": {"x": 1880, "y": 691},
+            "selection_method": "jetbrains_surface_bounds",
+            "vql_validation": {
+                "ok": False,
+                "vql_valid": True,
+                "app_match": True,
+                "coord_warnings": [
+                    "chat_local_y=691_below_850_likely_editor_not_bottom_right_composer"
+                ],
+                "validation_errors": [],
+                "surface_bounds_trusted": True,
+            },
+        },
+    )
+    monkeypatch.setattr(vc, "_resolve_photo_vql_llm_coords", lambda **k: (1880, 691, None))
+    monkeypatch.setattr(
+        vc,
+        "move_mouse_to_vql_target_and_focus_keyboard",
+        lambda *a, **k: calls.__setitem__("focus", calls["focus"] + 1) or {"ok": True},
+    )
+    monkeypatch.setattr(
+        vc,
+        "_type_text_at_vql_coords",
+        lambda *a, **k: calls.__setitem__("type", calls["type"] + 1) or {"ok": True},
+    )
+    monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
+
+    out = vc.perform_photo_vql_focus_and_edit("probe test", ide="jetbrains", source="HDMI-1", submit=True)
+    assert out["ok"] is False
+    assert "photo-VQL chat target not verified" in out["error"]
+    assert "chat_local_y=691" in str(out.get("vql_command_plan", {}).get("warnings"))
+    assert calls == {"focus": 0, "type": 0}
+
+
+def test_type_text_at_vql_coords_blocks_suspicious_chat_coords_before_click(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = {"click": 0}
+    monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
+    monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(
+        vc,
+        "_ydotool_click_capture_local",
+        lambda **k: calls.__setitem__("click", calls["click"] + 1) or {"ok": True},
+    )
+
+    out = vc._type_text_at_vql_coords(
+        "probe test",
+        x=1880,
+        y=691,
+        source="HDMI-1",
+        ide="jetbrains",
+        force_point_click=True,
+        vql_target={
+            "id": "surface:jetbrains-chat",
+            "selection_method": "jetbrains_surface_bounds",
+            "click_center": {"x": 1880, "y": 691},
+            "vql_validation": {
+                "ok": False,
+                "coord_warnings": [
+                    "chat_local_y=691_below_850_likely_editor_not_bottom_right_composer"
+                ],
+                "validation_errors": [],
+            },
+        },
+    )
+
+    assert out["ok"] is False
+    assert "refusing to type at suspicious VQL chat coords" in out["error"]
+    assert "chat_local_y=691" in str(out.get("warnings"))
+    assert calls == {"click": 0}
+
+
 def test_resolve_auto_picks_dp_when_default_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
     monkeypatch.setitem(vc._IDE_DEFAULT_SOURCE, "jetbrains", "DP-2")
@@ -897,6 +1092,23 @@ def test_map_capture_monitor_mismatch(tmp_path: Path) -> None:
         ),
     }
     assert map_capture_monitor_mismatch(str(map_path), source="DP-2") is None
+
+
+def test_format_wayland_vdisplay_operator_hint(monkeypatch: pytest.MonkeyPatch) -> None:
+    from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
+
+    monkeypatch.setattr(
+        "koru.integrations.vdisplay_client._desktop_probe",
+        lambda **kwargs: {
+            "ide_surface_best": {"monitor_name": "HDMI-1", "display_name": "PyCharm"},
+        },
+    )
+    hint = format_wayland_vdisplay_operator_hint(ide="jetbrains")
+    assert "HDMI-1" in hint
+    assert "vdisplay-agent serve" in hint
+    assert "screencast start --force" in hint
+    assert "screencast probe --via-agent" in hint
+    assert "prepare-vdisplay" in hint
 
 
 def test_desktop_probe_missing_source_errors() -> None:
@@ -1191,9 +1403,9 @@ def test_ensure_real_imgl_on_path(monkeypatch: pytest.MonkeyPatch) -> None:
     koru_stub = str(Path(vc.__file__).resolve().parents[2] / "imgl")
     sys.path.insert(0, koru_stub)
     vc._ensure_real_imgl_on_path()
-    import imgl
 
-    assert str(Path(imgl.__file__).resolve()).startswith(str(Path(imgl_root).resolve()))
+    assert sys.path[0] == imgl_root
+    assert koru_stub not in sys.path[:2]
 
 
 def test_import_imgl_targets_clears_cached_stub(monkeypatch: pytest.MonkeyPatch) -> None:

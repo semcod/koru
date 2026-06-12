@@ -198,15 +198,29 @@ def _blind_keyboard_fallback_blocker(ide_pref: str | None) -> str | None:
         "on",
     }:
         return None
-    return (
+    message = (
         "refusing blind keyboard/OS-injector fallback on Wayland for JetBrains after "
         "vdisplay/imgl did not confirm the target; focus PyCharm chat and refresh "
         "photo-VQL, or set KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1 to override"
     )
+    detail = os.environ.pop("KORU_LAST_SEMANTIC_DRIVE_DECLINE", "").strip()
+    if detail:
+        message += f"; last semantic refusal: {detail[:900]}"
+    return message
+
+
+def _remember_semantic_drive_decline(reason: str | None, *, hint: str | None = None) -> None:
+    detail = str(reason or "").strip()
+    extra = str(hint or "").strip()
+    if extra and extra not in detail:
+        detail = f"{detail}; hint: {extra}" if detail else f"hint: {extra}"
+    if detail:
+        os.environ["KORU_LAST_SEMANTIC_DRIVE_DECLINE"] = detail[:1200]
 
 
 def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
     """Handle a drive request from CLI client."""
+    os.environ.pop("KORU_LAST_SEMANTIC_DRIVE_DECLINE", None)
     if client.role == "unknown":
         client.role = "cli"
     text = msg.data.get("text")
@@ -707,11 +721,18 @@ def _drive_via_vdisplay_backend(
     """Photo-VQL / semantic chat drive via vdisplay before blind keyboard coords."""
     from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
     from koru.integrations.photo_vql_drive import PhotoVqlDrive
-    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
+    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled, vdisplay_missing_message
 
     target_id = (ide_pref or "auto").strip().lower()
     apply_vdisplay_drive_defaults(ide=target_id)
+    if getattr(daemon, "project", None) is not None:
+        meta = Path(daemon.project).resolve() / ".vdisplay"
+        os.environ.setdefault("VDISPLAY_METADATA_DIR", str(meta))
+        os.environ.setdefault("KORU_PROJECT_ROOT", str(Path(daemon.project).resolve()))
     if not vdisplay_fallback_enabled(ide=target_id, plugin_connected=False):
+        decline = vdisplay_missing_message() or "vdisplay fallback disabled or agent unavailable"
+        _remember_semantic_drive_decline(decline)
+        daemon.log(f"drive → vdisplay/{target_id} skipped: {decline}")
         return False
     os.environ.setdefault("VDISPLAY_SESSION", "1")
     preview = text.replace("\n", " ")[:100]
@@ -726,13 +747,20 @@ def _drive_via_vdisplay_backend(
             reuse_prepare=True,
         )
     except Exception as exc:
+        _remember_semantic_drive_decline(str(exc))
         daemon.log(f"drive → vdisplay/{target_id} failed: {exc}; falling back to imgl/keyboard")
         return False
     if not result.get("ok"):
         prepare = result.get("photo_vql_observe") or {}
+        reason = result.get("message") or result.get("error") or prepare.get("error") or "unknown"
+        hint = result.get("hint") or prepare.get("hint")
+        _remember_semantic_drive_decline(str(reason), hint=str(hint) if hint else None)
+        log_detail = str(reason)
+        if hint and str(hint) not in log_detail:
+            log_detail = f"{log_detail}; hint: {hint}"
         daemon.log(
             f"drive → vdisplay/{target_id} declined: "
-            f"{result.get('message') or result.get('error') or prepare.get('error') or 'unknown'}; "
+            f"{log_detail}; "
             "falling back to imgl/keyboard"
         )
         return False

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.autopilot import default_socket_path
+from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
 from koru.ide_router import is_headless_environment, resolve_ide_route
 from koruide.ide import (
     RunningIDE,
@@ -683,6 +684,12 @@ def _format_plugin_status_line(
             f"drive jest wstrzymany w trybie strict; {tail}{reason_part}"
         )
     if not plugin_supported:
+        if ide in {"jetbrains", "pycharm", "idea"} and _session_label() == "wayland":
+            return (
+                f"koru autonomous: [i] plugin niedostępny dla ide={ide} — "
+                "na Waylandzie wymagana jest ścieżka vdisplay/photo-VQL; "
+                "ślepy keyboard/OS-injector jest blokowany"
+            )
         return (
             f"koru autonomous: [i] plugin niedostępny dla ide={ide} — "
             f"używam ścieżki keyboard/OS-injector"
@@ -726,7 +733,7 @@ def _format_ide_mismatch_warnings(probe: AutonomousStartupProbe) -> list[str]:
             f"ide={ide}; Koru nie będzie sterował oknem chatu JetBrains. "
             "Jeśli chcesz JetBrains, uruchom z --agent-lane jetbrains "
             "--autopilot-ide jetbrains albo ustaw KORU_AUTOPILOT_INSTANCE=jetbrains. "
-            "Uwaga: JetBrains używa ścieżki keyboard/OS-injector, nie VSIX pluginu."
+            "Uwaga: na Waylandzie JetBrains wymaga vdisplay/photo-VQL, nie ślepego OS-injectora."
         )
 
     return lines
@@ -784,14 +791,13 @@ def _format_keyboard_setup_steps(
         "(po Reload po task koru:mcp:bootstrap)",
         f"koru autonomous: 3) Socket daemona = {sock}",
         f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={instance}",
-        "koru autonomous: 5) Na Waylandzie vdisplay/photo-VQL: "
-        "koru auto ustawia KORU_VDISPLAY_* domyślnie; "
-        "PyCharm na DP-1, chat na wierzchu (nie terminal). "
-        "Ręcznie: export KORU_VDISPLAY_CONTROL_FALLBACK=1 KORU_VDISPLAY_SOURCE=DP-1",
-        f"koru autonomous: 6) Kalibracja OS injectora (ostateczny fallback): "
+        f"koru autonomous: 5) {format_wayland_vdisplay_operator_hint(ide=ide)}",
+        "koru autonomous: 6) Na Waylandzie nie używaj ślepego OS injectora dla JetBrains; "
+        "daemon odmówi, jeśli vdisplay/imgl nie potwierdzi celu.",
+        f"koru autonomous: 7) Kalibracja OS injectora (ostateczny fallback): "
         f"task koru:ide-os:calibrate IDE={ide}",
-        f"koru autonomous: 7) Test: koru autopilot drive --ide {ide} 'probe test'",
-        "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
+        f"koru autonomous: 8) Test semantyczny: koru autopilot drive --ide {ide} 'probe test'",
+        "koru autonomous: 9) Dashboard: task koru:server → http://localhost:8765/",
     ]
 
 

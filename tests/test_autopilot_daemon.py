@@ -505,7 +505,14 @@ def test_wayland_jetbrains_refuses_blind_keyboard_after_semantic_decline(
 
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     monkeypatch.delenv("KORU_ALLOW_BLIND_KEYBOARD_FALLBACK", raising=False)
-    monkeypatch.setattr(drive_mod, "_drive_via_vdisplay_backend", lambda **_kwargs: False)
+    def decline_vdisplay(**_kwargs):
+        drive_mod._remember_semantic_drive_decline(
+            "vdisplay host capture failed",
+            hint="ScreenCast probe failed on HDMI-1",
+        )
+        return False
+
+    monkeypatch.setattr(drive_mod, "_drive_via_vdisplay_backend", decline_vdisplay)
     monkeypatch.setattr(drive_mod, "_drive_via_imgl_backend", lambda **_kwargs: False)
 
     with _daemon(tmp_path, monkeypatch) as h:
@@ -513,6 +520,8 @@ def test_wayland_jetbrains_refuses_blind_keyboard_after_semantic_decline(
 
     assert reply["type"] == "error"
     assert "refusing blind keyboard/OS-injector fallback on Wayland" in reply["message"]
+    assert "last semantic refusal: vdisplay host capture failed" in reply["message"]
+    assert "ScreenCast probe failed on HDMI-1" in reply["message"]
     assert h.injector.calls == []
 
 

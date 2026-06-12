@@ -56,13 +56,28 @@ def begin_autonomy_session(*, ide: str, source: str) -> Path:
     ts = now.strftime("%Y-%m-%dT%H-%M-%SZ")
     slug = (ide or "auto").strip().lower().replace(" ", "-")[:32] or "auto"
     session_dir = date_dir / f"{ts}__koru-{slug}"
+    _create_session_dirs(session_dir)
+    manifest = _session_manifest(ide=ide, source=source, started_at=now)
+    (session_dir / "session.json").write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    png, vql = session_observe_paths(session_dir)
+    _pin_session_env(session_dir=session_dir, slug=slug, png=png, vql=vql)
+    return session_dir
+
+
+def _create_session_dirs(session_dir: Path) -> None:
     session_dir.mkdir(parents=True, exist_ok=True)
     for sub in ("observe", "decide", "act", "verify"):
         (session_dir / sub).mkdir(exist_ok=True)
 
-    manifest = {
+
+def _session_manifest(*, ide: str, source: str, started_at: datetime) -> dict[str, Any]:
+    return {
         "kind": "koru-autonomy-session",
-        "started_at": now.isoformat(),
+        "started_at": started_at.isoformat(),
         "ide": ide,
         "source": source,
         "observe_dir": "observe",
@@ -71,20 +86,16 @@ def begin_autonomy_session(*, ide: str, source: str) -> Path:
         "verify_dir": "verify",
         "vql_max_age_s": vql_max_age_seconds(),
     }
-    (session_dir / "session.json").write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
 
-    os.environ["KORU_AUTONOMY_SESSION_DIR"] = str(session_dir.resolve())
-    os.environ["VDISPLAY_SESSION_DIR"] = str(session_dir.resolve())
+
+def _pin_session_env(*, session_dir: Path, slug: str, png: Path, vql: Path) -> None:
+    resolved = str(session_dir.resolve())
+    os.environ["KORU_AUTONOMY_SESSION_DIR"] = resolved
+    os.environ["VDISPLAY_SESSION_DIR"] = resolved
     os.environ.setdefault("VDISPLAY_SESSION", "1")
     os.environ.setdefault("VDISPLAY_SESSION_ID", f"koru-{slug}")
-
-    png, vql = session_observe_paths(session_dir)
     os.environ["KORU_VDISPLAY_PHOTO_PATH"] = str(png.resolve())
     os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql.resolve())
-    return session_dir
 
 
 def append_session_index(session_dir: Path, *, phase: str, name: str, ok: bool | None) -> None:
@@ -101,16 +112,39 @@ def append_session_index(session_dir: Path, *, phase: str, name: str, ok: bool |
 
 def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None) -> Path | None:
     """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime."""
-    base = root or metadata_root()
-    if not base.is_dir():
-        return None
+    bases: list[Path] = []
+    if root is not None:
+        bases.append(root)
+    else:
+        env_root = os.environ.get("VDISPLAY_METADATA_DIR", "").strip()
+        if env_root:
+            bases.append(Path(env_root).expanduser())
+        proj = os.environ.get("KORU_PROJECT_ROOT", "").strip()
+        if proj:
+            bases.append(Path(proj).expanduser() / ".vdisplay")
+        cwd_root = Path.cwd() / ".vdisplay"
+        if cwd_root not in bases:
+            bases.append(cwd_root)
+        if not bases:
+            bases.append(metadata_root())
     slug = (ide or "jetbrains").strip().lower().replace(" ", "-")[:32]
     pattern = f"*__koru-{slug}"
     candidates: list[Path] = []
-    for child in base.iterdir():
-        if not child.is_dir():
+    seen: set[Path] = set()
+    for base in bases:
+        if not base.is_dir():
             continue
-        candidates.extend(p for p in child.glob(pattern) if p.is_dir())
+        for child in base.iterdir():
+            if not child.is_dir():
+                continue
+            for session in child.glob(pattern):
+                if not session.is_dir():
+                    continue
+                resolved = session.resolve()
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                candidates.append(resolved)
     if not candidates:
         return None
     candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
@@ -311,24 +345,41 @@ def copy_observe_artifacts_to_session(
 ) -> dict[str, str]:
     """Copy fresh capture + sidecars into session observe/ and pin env paths."""
     dest_png, dest_vql = session_observe_paths(session_dir)
-    if png.resolve() != dest_png.resolve() and png.is_file():
-        dest_png.write_bytes(png.read_bytes())
-    if vql.resolve() != dest_vql.resolve() and vql.is_file():
-        dest_vql.write_text(vql.read_text(encoding="utf-8"), encoding="utf-8")
+    _copy_binary_if_needed(src=png, dest=dest_png)
+    _copy_text_if_needed(src=vql, dest=dest_vql)
+    _copy_text_if_needed(
+        src=png.with_suffix(png.suffix + ".context.json"),
+        dest=dest_png.with_suffix(dest_png.suffix + ".context.json"),
+    )
+    _copy_text_if_needed(src=_imgl_sidecar_path(vql), dest=_imgl_sidecar_path(dest_vql))
+    _pin_observe_env(dest_png=dest_png, dest_vql=dest_vql)
+    return {"png": str(dest_png), "vql": str(dest_vql)}
 
-    ctx = png.with_suffix(png.suffix + ".context.json")
-    dest_ctx = dest_png.with_suffix(dest_png.suffix + ".context.json")
-    if ctx.is_file() and ctx.resolve() != dest_ctx.resolve():
-        dest_ctx.write_text(ctx.read_text(encoding="utf-8"), encoding="utf-8")
 
-    imgl = Path(str(vql).replace(".png.vql.json", ".png.vql.imgl.json"))
-    dest_imgl = Path(str(dest_vql).replace(".png.vql.json", ".png.vql.imgl.json"))
-    if imgl.is_file() and imgl.resolve() != dest_imgl.resolve():
-        dest_imgl.write_text(imgl.read_text(encoding="utf-8"), encoding="utf-8")
+def _same_resolved_path(left: Path, right: Path) -> bool:
+    try:
+        return left.resolve() == right.resolve()
+    except OSError:
+        return False
 
+
+def _copy_binary_if_needed(*, src: Path, dest: Path) -> None:
+    if src.is_file() and not _same_resolved_path(src, dest):
+        dest.write_bytes(src.read_bytes())
+
+
+def _copy_text_if_needed(*, src: Path, dest: Path) -> None:
+    if src.is_file() and not _same_resolved_path(src, dest):
+        dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def _imgl_sidecar_path(vql_path: Path) -> Path:
+    return Path(str(vql_path).replace(".png.vql.json", ".png.vql.imgl.json"))
+
+
+def _pin_observe_env(*, dest_png: Path, dest_vql: Path) -> None:
     os.environ["KORU_VDISPLAY_PHOTO_PATH"] = str(dest_png.resolve())
     os.environ["KORU_VDISPLAY_VQL_PATH"] = str(dest_vql.resolve())
-    return {"png": str(dest_png), "vql": str(dest_vql)}
 
 
 __all__ = [

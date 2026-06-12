@@ -351,6 +351,18 @@ def _os_profile_ok(ide: str, project: Path) -> tuple[bool, str]:
     return False, f"brak kalibracji chatu dla {ide} — task koru:ide-os:calibrate IDE={ide}"
 
 
+def _wayland_session() -> bool:
+    return bool(
+        os.environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
+        or os.environ.get("WAYLAND_DISPLAY", "").strip()
+    )
+
+
+def _semantic_drive_required(ide: str, *, session: str | None = None) -> bool:
+    session_is_wayland = (session or "").strip().lower() == "wayland" or _wayland_session()
+    return session_is_wayland and ide in {"jetbrains", "pycharm", "idea"}
+
+
 def _autopilot_plugin_operator_hints(
     *,
     ide: str,
@@ -467,7 +479,12 @@ def _self_control_ok(project: Path, ide: str, socket_path: str) -> tuple[bool, s
     )
 
 
-def _build_os_calibration_step(ide: str, project: Path) -> OperatorStep:
+def _build_os_calibration_step(
+    ide: str,
+    project: Path,
+    *,
+    session: str | None = None,
+) -> OperatorStep:
     """Return OS injector calibration status for IDEs that need keyboard fallback."""
     if supports_autopilot_plugin_ide(ide):
         return OperatorStep(
@@ -478,6 +495,18 @@ def _build_os_calibration_step(ide: str, project: Path) -> OperatorStep:
             detail=(
                 f"niewymagana dla ide={ide}; autopilot używa wtyczki/socketu, "
                 "a OS injector jest tylko fallbackiem"
+            ),
+            task_command=None,
+        )
+    if _semantic_drive_required(ide, session=session):
+        return OperatorStep(
+            step_id="os_calibrate",
+            title=f"Kalibracja czatu OS injectora ({ide})",
+            actor="human",
+            status="skipped",
+            detail=(
+                "niewymagana i nieużywana na Waylandzie; dla JetBrains wymagane jest "
+                "vdisplay/photo-VQL albo imgl z potwierdzonym targetem"
             ),
             task_command=None,
         )
@@ -525,10 +554,17 @@ def _build_plugin_step(
     plugin_connected: bool | None,
     socket_path: str,
     project: Path,
+    session: str | None = None,
 ) -> OperatorStep:
     if not supports_autopilot_plugin_ide(ide):
         plug_status: StepStatus = "skipped"
-        plug_detail = f"plugin niedostępny dla ide={ide}; użyj ścieżki keyboard/OS-injector"
+        if _semantic_drive_required(ide, session=session):
+            plug_detail = (
+                f"plugin niedostępny dla ide={ide}; użyj ścieżki vdisplay/photo-VQL "
+                "z potwierdzonym targetem czatu"
+            )
+        else:
+            plug_detail = f"plugin niedostępny dla ide={ide}; użyj ścieżki keyboard/OS-injector"
         plug_task = None
     elif plugin_connected is True:
         plug_status = "ok"
@@ -612,10 +648,11 @@ def build_operator_steps(
             plugin_connected=plugin_connected,
             socket_path=str(probe.socket_path),
             project=project,
+            session=probe.session,
         ),
         _build_host_injectors_step(),
         _build_self_control_step(project, ide, str(probe.socket_path)),
-        _build_os_calibration_step(ide, project),
+        _build_os_calibration_step(ide, project, session=probe.session),
         _build_ready_step(),
     ]
 

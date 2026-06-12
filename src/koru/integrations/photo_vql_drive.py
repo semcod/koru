@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -14,30 +15,74 @@ from koru.integrations.photo_vql_user_guidance import build_user_guidance
 def session_prepare_is_fresh(
     session_dir: Path | None = None,
     *,
+    ide: str | None = None,
     max_age_s: float = 120.0,
 ) -> dict[str, Any] | None:
     """Return recent observe/prepare.json if still valid for this run."""
     root = session_dir or _autonomy_session.active_session_dir()
     if root is None:
+        slug = (ide or os.environ.get("KORU_AUTOPILOT_INSTANCE") or "jetbrains").strip().lower()
+        latest = _autonomy_session.find_latest_koru_session(ide=slug)
+        if latest is not None:
+            root = latest
+    if root is None:
         return None
     path = root / "observe" / "prepare.json"
+    age = _fresh_prepare_age(path, max_age_s=max_age_s)
+    if age is None:
+        return None
+    payload = _load_prepare_payload(path)
+    if payload is None or not _prepare_payload_reusable(payload):
+        return None
+    return _mark_prepare_reused(payload, root=root, age=age)
+
+
+def _fresh_prepare_age(path: Path, *, max_age_s: float) -> float | None:
     if not path.is_file():
         return None
     age = time.time() - path.stat().st_mtime
     if max_age_s > 0 and age > max_age_s:
         return None
+    return age
+
+
+def _load_prepare_payload(path: Path) -> dict[str, Any] | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return None
-    if not isinstance(payload, dict):
-        return None
-    if payload.get("ok") or payload.get("map_only_fallback"):
-        payload.setdefault("session_dir", str(root))
-        payload["prepare_reused"] = True
-        payload["prepare_age_s"] = round(age, 2)
-        return payload
-    return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _prepare_payload_reusable(payload: dict[str, Any]) -> bool:
+    if bool(payload.get("surface_only_fallback")):
+        return bool(payload.get("capture_confirmed") and _allow_surface_only_actuation())
+    if bool(payload.get("ok")):
+        return True
+    if bool(payload.get("map_only_fallback") and payload.get("capture_confirmed")):
+        return True
+    return False
+
+
+def _allow_surface_only_actuation() -> bool:
+    return os.environ.get("KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _mark_prepare_reused(
+    payload: dict[str, Any],
+    *,
+    root: Path,
+    age: float,
+) -> dict[str, Any]:
+    payload.setdefault("session_dir", str(root))
+    payload["prepare_reused"] = True
+    payload["prepare_age_s"] = round(age, 2)
+    return payload
 
 
 class PhotoVqlDrive:
@@ -49,8 +94,11 @@ class PhotoVqlDrive:
 
     def prepare(self, *, reuse_fresh: bool = True) -> dict[str, Any]:
         if reuse_fresh:
-            existing = session_prepare_is_fresh()
+            existing = session_prepare_is_fresh(ide=self.ide)
             if existing is not None:
+                from koru.integrations.vdisplay_client import sync_prepare_capture_flags_to_env
+
+                sync_prepare_capture_flags_to_env(existing)
                 return existing
         from koru.integrations.vdisplay_client import prepare_photo_vql_for_drive
 
@@ -73,6 +121,14 @@ class PhotoVqlDrive:
         observe: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         observe = observe or {}
+        if observe.get("surface_only_fallback") and observe.get("capture_confirmed") and not dry_run:
+            if not _allow_surface_only_actuation():
+                return self._surface_only_blocked(observe=observe)
+            return self._act_surface_only(
+                prompt,
+                submit=submit,
+                observe=observe,
+            )
         if observe.get("map_only_fallback") and not dry_run:
             llm_reply = self._act_map_only_with_photo_vql(
                 prompt,
@@ -90,6 +146,62 @@ class PhotoVqlDrive:
                 return ide_prompt
 
         return self._send_chat(prompt, submit=submit, dry_run=dry_run)
+
+    def _surface_only_blocked(self, *, observe: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "ok": False,
+            "backend": "semantic_required",
+            "type": "drive",
+            "fallback_from": "plugin",
+            "ide": self.ide,
+            "surface_only_fallback": True,
+            "capture_confirmed": False,
+            "photo_vql_observe": observe,
+            "error": (
+                "refusing surface-only photo-VQL actuation: desktop surface confirms "
+                "the IDE window, but no fresh screenshot/VQL frame confirmed the chat target"
+            ),
+            "hint": (
+                "Restart vdisplay-agent, run `vdisplay agent screencast start --force`, "
+                "verify `vdisplay agent screencast probe --via-agent --source <monitor>`, "
+                "then rerun prepare. Override only for manual debugging with "
+                "KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION=1."
+            ),
+        }
+
+    def _act_surface_only(
+        self,
+        prompt: str,
+        *,
+        submit: bool,
+        observe: dict[str, Any],
+    ) -> dict[str, Any]:
+        from koru.integrations.vdisplay_client import (
+            _normalize_photo_vql_drive_result,
+            _vdisplay_source_for_ide,
+            perform_photo_vql_focus_and_edit,
+            sync_prepare_capture_flags_to_env,
+        )
+
+        sync_prepare_capture_flags_to_env(observe)
+        source = str(observe.get("source") or self.source or "").strip()
+        if not source:
+            source = _vdisplay_source_for_ide(self.ide)
+        photo_res = perform_photo_vql_focus_and_edit(
+            prompt,
+            ide=self.ide,
+            source=source,
+            submit=submit,
+            image_path=self._observe_png(observe),
+        )
+        reply = _normalize_photo_vql_drive_result(
+            photo_res,
+            ide=self.ide,
+            submit=submit,
+        )
+        reply.setdefault("photo_vql_observe", observe)
+        reply.setdefault("surface_only_fallback", True)
+        return reply
 
     def _act_map_only_with_photo_vql(
         self,
@@ -198,7 +310,11 @@ class PhotoVqlDrive:
 
     @staticmethod
     def _observe_allows_act(observe: dict[str, Any]) -> bool:
-        return bool(observe.get("ok")) or bool(observe.get("map_only_fallback"))
+        return (
+            bool(observe.get("ok"))
+            or bool(observe.get("map_only_fallback"))
+            or bool(observe.get("surface_only_fallback"))
+        )
 
     def _prepare_failed_reply(self, observe: dict[str, Any]) -> dict[str, Any]:
         out = {

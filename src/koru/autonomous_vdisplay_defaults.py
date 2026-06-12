@@ -30,6 +30,7 @@ def apply_vdisplay_drive_defaults(*, ide: str) -> list[str]:
         "KORU_VDISPLAY_PREFER_PHOTO_VQL": "auto",
         "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS": "1",
         "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH": "1",
+        "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR": "1",
         "KORU_VDISPLAY_LLM_VISION_DECISION": "1",
         "VDISPLAY_VISION_LLM_ENABLED": "1",
         "VDISPLAY_VISION_LLM_MODE": "both",
@@ -39,6 +40,13 @@ def apply_vdisplay_drive_defaults(*, ide: str) -> list[str]:
         if not os.environ.get(key, "").strip():
             os.environ[key] = value
             applied.append(f"{key}={value}")
+    try:
+        from koru.integrations.vdisplay_agent_bootstrap import apply_vdisplay_agent_env
+
+        agent = apply_vdisplay_agent_env()
+        applied.extend(str(item) for item in agent.get("applied") or [])
+    except ImportError:
+        pass
     return applied
 
 

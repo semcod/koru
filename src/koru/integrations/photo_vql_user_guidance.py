@@ -168,6 +168,45 @@ def _empty_vql_error(err: str) -> bool:
     return any(token in err for token in ("empty_vql", "no ui elements", "no foreground window title"))
 
 
+def _guidance_screencast(ctx: _GuidanceContext) -> list[str] | None:
+    if not any(
+        token in ctx.err
+        for token in (
+            "portal-screencast",
+            "no active session",
+            "screencast",
+            "host capture failed",
+        )
+    ):
+        return None
+    return [
+        "Wayland capture wymaga persistent screencast + keeper:",
+        "  vdisplay-agent serve",
+        "  vdisplay agent preflight",
+        "  vdisplay agent screencast start --force  # wybierz All Screens albo monitor IDE",
+        f"  vdisplay agent screencast probe --via-agent --source {ctx.resolved}",
+        f"koru autopilot prepare-vdisplay --ide {ctx.ide}",
+        ctx.retry_cmd,
+    ]
+
+
+def _guidance_map_capture_mismatch(ctx: _GuidanceContext) -> list[str] | None:
+    mm = ctx.observe.get("map_capture_mismatch")
+    if not mm:
+        probe = ctx.observe.get("desktop_probe") or {}
+        if isinstance(probe, dict):
+            mm = probe.get("map_capture_mismatch")
+    if not isinstance(mm, dict):
+        return None
+    msg = str(mm.get("message") or "")
+    return [
+        msg or "GUI map calibrated on a different monitor than capture source.",
+        "Recalibrate the map for the capture monitor, or set KORU_VDISPLAY_SOURCE to the map monitor.",
+        f"koru autopilot prepare-vdisplay --ide {ctx.ide}",
+        ctx.retry_cmd,
+    ]
+
+
 def _guidance_prepare_failed(ctx: _GuidanceContext) -> list[str] | None:
     if not _prepare_failed(ctx):
         return None
@@ -197,6 +236,8 @@ _GUIDANCE_BUILDERS: tuple[Callable[[_GuidanceContext], list[str] | None], ...] =
     _guidance_success,
     _guidance_missing_repo,
     _guidance_monitor_not_connected,
+    _guidance_screencast,
+    _guidance_map_capture_mismatch,
     _guidance_ide_mismatch,
     _guidance_empty_vql,
     _guidance_prepare_failed,
@@ -279,23 +320,35 @@ def format_user_guidance(lines: list[str]) -> str:
 
 def speak_user_guidance(lines: list[str], *, title: str = "Koru photo-VQL") -> None:
     """Optional spoken + desktop notification for the first actionable lines."""
-    if not lines or not _truthy("KORU_VDISPLAY_USER_TTS") and not _truthy("KORU_VDISPLAY_SPEAK"):
+    if not lines or not _user_guidance_speech_enabled():
         return
     short = ". ".join(line.rstrip(".") for line in lines[:2])
+    _notify_user_guidance(title=title, text=short)
+    _speak_user_guidance_text(short)
+
+
+def _user_guidance_speech_enabled() -> bool:
+    return _truthy("KORU_VDISPLAY_USER_TTS") or _truthy("KORU_VDISPLAY_SPEAK")
+
+
+def _notify_user_guidance(*, title: str, text: str) -> None:
     if shutil.which("notify-send"):
         try:
             subprocess.run(
-                ["notify-send", title, short[:240]],
+                ["notify-send", title, text[:240]],
                 check=False,
                 timeout=5,
                 capture_output=True,
             )
         except Exception:
             pass
+
+
+def _speak_user_guidance_text(text: str) -> None:
     for cmd, args in (
-        ("spd-say", ["-r", "0", "-t", short[:400]]),
-        ("espeak", ["-s", "150", short[:400]]),
-        ("espeak-ng", ["-s", "150", short[:400]]),
+        ("spd-say", ["-r", "0", "-t", text[:400]]),
+        ("espeak", ["-s", "150", text[:400]]),
+        ("espeak-ng", ["-s", "150", text[:400]]),
     ):
         if shutil.which(cmd):
             try:

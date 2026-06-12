@@ -160,17 +160,30 @@ def _coord_warnings_for_label(*, label: str, y: int) -> list[str]:
     warnings: list[str] = []
     if label == "background":
         warnings.append("label_background_not_chat_composer")
-    if any(term in label for term in {".py", ".ts"}):
+    if _label_looks_like_code_file(label):
         warnings.append(f"label_{label}_looks_like_code_file_not_chat")
-    if label.startswith("session") or label.startswith("metadata"):
+    if _label_looks_like_terminal_metadata(label):
         warnings.append(f"label_{label}_looks_like_terminal_not_chat")
-    if "vdisplay_metadata_dir" in label.replace("_", "").replace("=", "").replace(".", ""):
+    if _label_looks_like_vdisplay_env(label):
         warnings.append(f"label_{label}_looks_like_env_var_not_chat")
-    if any(tok.lower() in label for tok in SHELL_POLLUTION_TOKENS):
+    if _has_any(label, SHELL_POLLUTION_TOKENS):
         warnings.append("label_looks_like_terminal_command_history_or_env_pollution")
     if "pycharm/jb" in label and y < 850:
         warnings.append("breadcrumb_pycharm_jb_label_but_y_too_high_for_chat_composer")
     return warnings
+
+
+def _label_looks_like_code_file(label: str) -> bool:
+    return any(term in label for term in {".py", ".ts"})
+
+
+def _label_looks_like_terminal_metadata(label: str) -> bool:
+    return label.startswith("session") or label.startswith("metadata")
+
+
+def _label_looks_like_vdisplay_env(label: str) -> bool:
+    normalized = label.replace("_", "").replace("=", "").replace(".", "")
+    return "vdisplay_metadata_dir" in normalized
 
 
 def _coord_warnings_for_jetbrains(*, x: int, y: int, canon: str, is_code_edit: bool) -> list[str]:
@@ -181,6 +194,35 @@ def _coord_warnings_for_jetbrains(*, x: int, y: int, canon: str, is_code_edit: b
         warnings.append(f"chat_local_y={y}_below_850_likely_editor_not_bottom_right_composer")
     if x < 1100:
         warnings.append(f"chat_local_x={x}_below_1100_likely_left_panel_not_chat_corner")
+    return warnings
+
+
+def _coord_warnings_for_jetbrains_surface(
+    *,
+    x: int,
+    y: int,
+    target: dict[str, Any],
+) -> list[str]:
+    rect = target.get("surface_window_capture_local")
+    if not isinstance(rect, dict):
+        return []
+    tlx = int(rect.get("x") or 0)
+    tly = int(rect.get("y") or 0)
+    ww = int(rect.get("w") or 0)
+    hh = int(rect.get("h") or 0)
+    if ww < 120 or hh < 160:
+        return []
+    warnings: list[str] = []
+    rel_x = x - tlx
+    rel_y = y - tly
+    if rel_y < int(hh * 0.82):
+        warnings.append(
+            f"chat_local_y={y}_not_in_bottom_18pct_of_ide_surface_window"
+        )
+    if rel_x < int(ww * 0.55):
+        warnings.append(
+            f"chat_local_x={x}_not_in_right_45pct_of_ide_surface_window"
+        )
     return warnings
 
 
@@ -208,18 +250,38 @@ def validate_chat_coords_for_ide(
     """Heuristic warnings when VQL-derived chat coords look wrong for the IDE."""
     warnings: list[str] = []
     canon = _canonical_ide(ide)
-    src = str(target.get("source") or "")
-    if src in {"vql-analysis-fallback", ""} or "fallback" in str(target.get("note") or "").lower():
+    if _target_uses_fallback_center(target):
         warnings.append("target_not_from_live_vql_layers_using_fallback_center")
-    bounds = target.get("bounds") or {}
-    bw = int(bounds.get("w") or bounds.get("width") or 0)
-    bh = int(bounds.get("h") or bounds.get("height") or 0)
-    label = str(target.get("label") or target.get("note") or "").lower()
+    bw, bh = _target_bounds_size(target)
+    label = _target_label(target)
     warnings.extend(_coord_warnings_for_bounds(bw=bw, bh=bh))
     warnings.extend(_coord_warnings_for_label(label=label, y=y))
-    warnings.extend(_coord_warnings_for_jetbrains(x=x, y=y, canon=canon, is_code_edit=is_code_edit))
+    if str(target.get("id") or "").startswith("surface:"):
+        warnings.extend(_coord_warnings_for_jetbrains_surface(x=x, y=y, target=target))
+    else:
+        warnings.extend(_coord_warnings_for_jetbrains(x=x, y=y, canon=canon, is_code_edit=is_code_edit))
     warnings.extend(_coord_warnings_for_vscode_family(x=x, y=y, canon=canon, is_code_edit=is_code_edit))
     return warnings
+
+
+def _target_uses_fallback_center(target: dict[str, Any]) -> bool:
+    src = str(target.get("source") or "")
+    note = str(target.get("note") or "").lower()
+    return src in {"vql-analysis-fallback", ""} or "fallback" in note
+
+
+def _target_bounds_size(target: dict[str, Any]) -> tuple[int, int]:
+    bounds = target.get("bounds") or {}
+    if not isinstance(bounds, dict):
+        return 0, 0
+    return (
+        int(bounds.get("w") or bounds.get("width") or 0),
+        int(bounds.get("h") or bounds.get("height") or 0),
+    )
+
+
+def _target_label(target: dict[str, Any]) -> str:
+    return str(target.get("label") or target.get("note") or "").lower()
 
 
 def _target_geometry(
@@ -231,12 +293,9 @@ def _target_geometry(
     cc = target.get("click_center") or {}
     lx = int(x if x is not None else cc.get("x") or 0)
     ly = int(y if y is not None else cc.get("y") or 0)
-    bounds = target.get("bounds") or {}
-    bw = int(bounds.get("w") or bounds.get("width") or 0)
-    bh = int(bounds.get("h") or bounds.get("height") or 0)
+    bw, bh = _target_bounds_size(target)
     has_bounds = bw > 0 and bh > 0
-    label = str(target.get("label") or target.get("note") or "").lower()
-    return lx, ly, bw, bh, bw * bh if has_bounds else 0, has_bounds, label
+    return lx, ly, bw, bh, bw * bh if has_bounds else 0, has_bounds, _target_label(target)
 
 
 def _label_ok_for_chat(*, label: str, has_bounds: bool, bw: int, bh: int) -> bool:
