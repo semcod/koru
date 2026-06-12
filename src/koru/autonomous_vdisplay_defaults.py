@@ -27,7 +27,6 @@ def apply_vdisplay_drive_defaults(*, ide: str) -> list[str]:
     applied: list[str] = []
     defaults = {
         "KORU_VDISPLAY_CONTROL_FALLBACK": "1",
-        "KORU_VDISPLAY_SOURCE": "DP-1",
         "KORU_VDISPLAY_PREFER_PHOTO_VQL": "auto",
         "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS": "1",
         "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH": "1",

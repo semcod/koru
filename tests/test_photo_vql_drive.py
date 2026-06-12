@@ -855,6 +855,50 @@ def test_resolve_explicit_missing_monitor_fails(monkeypatch: pytest.MonkeyPatch)
     assert "DP-2" in str(resolved.get("error"))
 
 
+def test_resolve_prefers_ide_surface_monitor(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
+    probe = {
+        "ok": True,
+        "monitor_names": ["DP-1", "HDMI-1"],
+        "monitors": [
+            {"name": "DP-1", "primary": False},
+            {"name": "HDMI-1", "primary": True},
+        ],
+        "ide_surface_best": {
+            "display_name": "PyCharm",
+            "ide_hint": "jetbrains",
+            "monitor_name": "HDMI-1",
+            "stack": "jetbrains_xwayland",
+        },
+    }
+    src, resolved = vc._resolve_vdisplay_source_for_ide("jetbrains", probe=probe)
+    assert src == "HDMI-1"
+    assert resolved.get("source_from_ide_surface") == "HDMI-1"
+    assert resolved.get("ok") is True
+
+
+def test_map_capture_monitor_mismatch(tmp_path: Path) -> None:
+    from koru.integrations.photo_vql_monitor import map_capture_monitor_mismatch
+
+    map_path = tmp_path / "pycharm-chat.json"
+    map_path.write_text(
+        json.dumps({"capture_meta": {"source": "DP-2", "rotation": "left"}, "elements": {}}),
+        encoding="utf-8",
+    )
+    assert map_capture_monitor_mismatch(str(map_path), source="HDMI-1") == {
+        "map_path": str(map_path),
+        "map_source": "DP-2",
+        "capture_source": "HDMI-1",
+        "map_rotation": "left",
+        "message": (
+            f"GUI map {str(map_path)!r} is calibrated for monitor 'DP-2' (rotation='left'), "
+            "but capture source is 'HDMI-1'. "
+            "Recalibrate the map or set KORU_VDISPLAY_SOURCE='DP-2'."
+        ),
+    }
+    assert map_capture_monitor_mismatch(str(map_path), source="DP-2") is None
+
+
 def test_desktop_probe_missing_source_errors() -> None:
     probe = vc._desktop_probe(ide="jetbrains", source="DP-2")
     if probe.get("monitor_names") and "DP-2" not in probe["monitor_names"]:

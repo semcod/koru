@@ -169,60 +169,138 @@ def vql_sidecar_is_stale(
     max_age = vql_max_age_seconds()
 
     if not vql_path.is_file():
-        return True, {"stale": True, "reasons": ["missing_vql"], "vql_path": str(vql_path)}
+        return True, _missing_vql_info(vql_path)
 
     vql_mt = vql_path.stat().st_mtime
-    age_s = now - vql_mt
-    info: dict[str, Any] = {
-        "stale": False,
-        "reasons": reasons,
-        "vql_path": str(vql_path.resolve()),
-        "vql_mtime": vql_mt,
-        "age_s": round(age_s, 2),
-        "max_age_s": max_age,
-    }
+    info = _base_vql_stale_info(vql_path=vql_path, vql_mtime=vql_mt, now=now, max_age=max_age, reasons=reasons)
 
     if capture_validation is None:
         capture_validation = _vql_load_capture_validation(vql_path)
 
-    if max_age > 0 and age_s > max_age:
-        reasons.append(f"vql_age_s>{max_age}")
-
-    if png_path is not None:
-        if not png_path.is_file():
-            reasons.append("missing_png")
-        else:
-            png_mt = png_path.stat().st_mtime
-            info["png_mtime"] = png_mt
-            info["png_path"] = str(png_path.resolve())
-            if max_age > 0 and (now - png_mt) > max_age:
-                reasons.append(f"png_age_s>{max_age}")
-            # Sidecar is written after screenshot — VQL mtime may be newer than PNG by seconds.
-            # Stale only when VQL is older than PNG (sidecar not regenerated for this capture).
-            if vql_mt + 2.0 < png_mt:
-                reasons.append("vql_sidecar_older_than_png")
-            elif png_mt > vql_mt + 600.0:
-                reasons.append("png_newer_than_vql_by_600s")
-
-    if layer_count is not None and layer_count == 0:
-        reasons.append("empty_vql_layers")
-
-    if window_mismatch is not None:
-        reasons.append("ide_window_mismatch")
-        info["ide_window_warning"] = window_mismatch
-    elif isinstance(capture_validation, dict):
-        info["capture_validation"] = capture_validation
-        cv_reasons = capture_validation.get("reasons") or []
-        expected = str(capture_validation.get("expected_ide") or "").strip()
-        if expected and capture_validation.get("capture_confirmed") is False:
-            reasons.append("capture_validation_failed")
-            for item in cv_reasons:
-                if item not in reasons:
-                    reasons.append(str(item))
+    _append_vql_age_reason(reasons=reasons, age_s=now - vql_mt, max_age=max_age)
+    _append_png_staleness(
+        info=info,
+        reasons=reasons,
+        png_path=png_path,
+        vql_mtime=vql_mt,
+        now=now,
+        max_age=max_age,
+    )
+    _append_layer_count_reason(reasons=reasons, layer_count=layer_count)
+    _append_capture_validation_reasons(
+        info=info,
+        reasons=reasons,
+        window_mismatch=window_mismatch,
+        capture_validation=capture_validation,
+    )
 
     info["stale"] = bool(reasons)
     info["reasons"] = reasons
     return bool(reasons), info
+
+
+def _missing_vql_info(vql_path: Path) -> dict[str, Any]:
+    return {"stale": True, "reasons": ["missing_vql"], "vql_path": str(vql_path)}
+
+
+def _base_vql_stale_info(
+    *,
+    vql_path: Path,
+    vql_mtime: float,
+    now: float,
+    max_age: float,
+    reasons: list[str],
+) -> dict[str, Any]:
+    return {
+        "stale": False,
+        "reasons": reasons,
+        "vql_path": str(vql_path.resolve()),
+        "vql_mtime": vql_mtime,
+        "age_s": round(now - vql_mtime, 2),
+        "max_age_s": max_age,
+    }
+
+
+def _append_vql_age_reason(*, reasons: list[str], age_s: float, max_age: float) -> None:
+    if max_age > 0 and age_s > max_age:
+        reasons.append(f"vql_age_s>{max_age}")
+
+
+def _append_png_staleness(
+    *,
+    info: dict[str, Any],
+    reasons: list[str],
+    png_path: Path | None,
+    vql_mtime: float,
+    now: float,
+    max_age: float,
+) -> None:
+    if png_path is None:
+        return
+    if not png_path.is_file():
+        reasons.append("missing_png")
+        return
+    png_mtime = png_path.stat().st_mtime
+    info["png_mtime"] = png_mtime
+    info["png_path"] = str(png_path.resolve())
+    _append_png_age_reason(reasons=reasons, png_mtime=png_mtime, now=now, max_age=max_age)
+    _append_sidecar_order_reason(reasons=reasons, png_mtime=png_mtime, vql_mtime=vql_mtime)
+
+
+def _append_png_age_reason(
+    *,
+    reasons: list[str],
+    png_mtime: float,
+    now: float,
+    max_age: float,
+) -> None:
+    if max_age > 0 and (now - png_mtime) > max_age:
+        reasons.append(f"png_age_s>{max_age}")
+
+
+def _append_sidecar_order_reason(
+    *,
+    reasons: list[str],
+    png_mtime: float,
+    vql_mtime: float,
+) -> None:
+    # Sidecar is written after screenshot — VQL mtime may be newer than PNG by seconds.
+    # Stale only when VQL is older than PNG (sidecar not regenerated for this capture).
+    if vql_mtime + 2.0 < png_mtime:
+        reasons.append("vql_sidecar_older_than_png")
+    elif png_mtime > vql_mtime + 600.0:
+        reasons.append("png_newer_than_vql_by_600s")
+
+
+def _append_layer_count_reason(*, reasons: list[str], layer_count: int | None) -> None:
+    if layer_count is not None and layer_count == 0:
+        reasons.append("empty_vql_layers")
+
+
+def _append_capture_validation_reasons(
+    *,
+    info: dict[str, Any],
+    reasons: list[str],
+    window_mismatch: dict[str, Any] | None,
+    capture_validation: dict[str, Any] | None,
+) -> None:
+    if window_mismatch is not None:
+        reasons.append("ide_window_mismatch")
+        info["ide_window_warning"] = window_mismatch
+        return
+    if not isinstance(capture_validation, dict):
+        return
+    info["capture_validation"] = capture_validation
+    expected = str(capture_validation.get("expected_ide") or "").strip()
+    if expected and capture_validation.get("capture_confirmed") is False:
+        reasons.append("capture_validation_failed")
+        _append_unique_reasons(reasons, capture_validation.get("reasons") or [])
+
+
+def _append_unique_reasons(reasons: list[str], items: Any) -> None:
+    for item in items:
+        if item not in reasons:
+            reasons.append(str(item))
 
 
 def copy_observe_artifacts_to_session(

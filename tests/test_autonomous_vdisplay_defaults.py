@@ -20,7 +20,7 @@ def test_apply_vdisplay_defaults_jetbrains_wayland(monkeypatch: pytest.MonkeyPat
         monkeypatch.delenv(key, raising=False)
     applied = apply_vdisplay_drive_defaults(ide="jetbrains")
     assert "KORU_VDISPLAY_CONTROL_FALLBACK=1" in applied
-    assert os.environ["KORU_VDISPLAY_SOURCE"] == "DP-1"
+    assert "KORU_VDISPLAY_SOURCE" not in os.environ
 
 
 def test_apply_vdisplay_defaults_skips_when_already_set(monkeypatch: pytest.MonkeyPatch) -> None:

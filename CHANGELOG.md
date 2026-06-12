@@ -73,6 +73,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.339] - 2026-06-12
+
+### Docs
+- Update README.md
+- Update SUMD.md
+
+### Test
+- Update tests/test_autonomous_vdisplay_defaults.py
+- Update tests/test_photo_vql_drive.py
+
+### Other
+- Update .koru/project.json
+- Update project/logic.pl
+- Update wup.yaml
+
 ## [0.1.338] - 2026-06-12
 
 ### Docs

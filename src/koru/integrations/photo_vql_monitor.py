@@ -74,6 +74,66 @@ def _finalize_resolved_probe(
     return resolved_probe
 
 
+def _surface_preferred_monitor(probe: dict[str, Any], *, canon: str) -> str | None:
+    """Best-effort monitor from correlated IDE surface (e.g. PyCharm on HDMI-1)."""
+    best = probe.get("ide_surface_best")
+    if not isinstance(best, dict):
+        for row in probe.get("ide_surfaces") or []:
+            if not isinstance(row, dict):
+                continue
+            if row.get("ide_hint") != canon and not (
+                canon in {"jetbrains", "pycharm", "idea"} and row.get("ide_hint") == "jetbrains"
+            ):
+                continue
+            name = str(row.get("display_name") or "").lower()
+            if "toolbox" in name:
+                continue
+            monitor = row.get("monitor_name")
+            if monitor:
+                return str(monitor)
+        return None
+    if canon in {"jetbrains", "pycharm", "idea"} and best.get("ide_hint") not in {None, "jetbrains"}:
+        return None
+    monitor = best.get("monitor_name")
+    return str(monitor) if monitor else None
+
+
+def map_capture_monitor_mismatch(
+    map_path: str,
+    *,
+    source: str,
+) -> dict[str, Any] | None:
+    """Return mismatch details when GUI map was calibrated on a different monitor."""
+    try:
+        from vdisplay.control.gui_map import load_gui_map
+
+        pack = load_gui_map(map_path)
+    except Exception as exc:
+        return {
+            "map_path": map_path,
+            "capture_source": source,
+            "error": str(exc),
+            "message": f"could not load GUI map {map_path!r} to verify capture source",
+        }
+    meta = pack.capture_meta if isinstance(pack.capture_meta, dict) else {}
+    map_source = str(meta.get("source") or meta.get("monitor_name") or "").strip()
+    if not map_source or map_source == source:
+        return None
+    rotation = meta.get("rotation")
+    return {
+        "map_path": map_path,
+        "map_source": map_source,
+        "capture_source": source,
+        "map_rotation": rotation,
+        "message": (
+            f"GUI map {map_path!r} is calibrated for monitor {map_source!r}"
+            f"{f' (rotation={rotation!r})' if rotation else ''}, "
+            f"but capture source is {source!r}. "
+            f"Recalibrate the map or set KORU_VDISPLAY_SOURCE={map_source!r}."
+        ),
+    }
+
+
 def resolve_vdisplay_source_for_ide(
     ide: str,
     *,
@@ -90,6 +150,16 @@ def resolve_vdisplay_source_for_ide(
     if probe is None:
         probe = desktop_probe(ide=ide, source=preferred)
     names = set(probe.get("monitor_names") or [])
+
+    if not explicit:
+        surface_monitor = _surface_preferred_monitor(probe, canon=canon)
+        if surface_monitor and surface_monitor in names:
+            preferred = surface_monitor
+            probe = {
+                **probe,
+                "source_from_ide_surface": surface_monitor,
+                "ide_surface_best": probe.get("ide_surface_best"),
+            }
 
     if explicit and explicit not in names and names:
         failed_probe = {
@@ -119,4 +189,7 @@ def resolve_vdisplay_source_for_ide(
     return chosen, _finalize_resolved_probe(probe, preferred=preferred, chosen=chosen, names=names)
 
 
-__all__ = ["resolve_vdisplay_source_for_ide"]
+__all__ = [
+    "map_capture_monitor_mismatch",
+    "resolve_vdisplay_source_for_ide",
+]

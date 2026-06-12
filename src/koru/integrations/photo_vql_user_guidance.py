@@ -95,17 +95,10 @@ def _guidance_missing_repo(ctx: _GuidanceContext) -> list[str] | None:
 
 
 def _guidance_monitor_not_connected(ctx: _GuidanceContext) -> list[str] | None:
-    if not (
-        "monitor not found" in ctx.err
-        or "not connected" in ctx.err
-        or ("requested monitor" in ctx.err and ctx.monitors)
-    ):
+    if not _monitor_not_connected(ctx):
         return None
-    fallback = next(
-        (m for m in ctx.monitors if m.startswith("DP-")),
-        ctx.monitors[0] if ctx.monitors else "DP-1",
-    )
-    avail = ", ".join(ctx.monitors) if ctx.monitors else "(brak — uruchom: vdisplay monitors)"
+    fallback = _fallback_monitor(ctx.monitors)
+    avail = _available_monitors_label(ctx.monitors)
     return [
         f"Monitor {ctx.src} nie jest podpięty. Dostępne: {avail}.",
         f"Podłącz DP-2 albo użyj --source {fallback} (u Ciebie: DP-1 + HDMI-1).",
@@ -114,13 +107,27 @@ def _guidance_monitor_not_connected(ctx: _GuidanceContext) -> list[str] | None:
     ]
 
 
+def _monitor_not_connected(ctx: _GuidanceContext) -> bool:
+    return (
+        "monitor not found" in ctx.err
+        or "not connected" in ctx.err
+        or ("requested monitor" in ctx.err and bool(ctx.monitors))
+    )
+
+
+def _fallback_monitor(monitors: list[str]) -> str:
+    return next(
+        (m for m in monitors if m.startswith("DP-")),
+        monitors[0] if monitors else "DP-1",
+    )
+
+
+def _available_monitors_label(monitors: list[str]) -> str:
+    return ", ".join(monitors) if monitors else "(brak — uruchom: vdisplay monitors)"
+
+
 def _guidance_ide_mismatch(ctx: _GuidanceContext) -> list[str] | None:
-    if not (
-        ctx.competing
-        or "capture does not match" in ctx.err
-        or "ide_window_mismatch" in ctx.err
-        or ctx.observe.get("ide_window_warning")
-    ):
+    if not _ide_mismatch_detected(ctx):
         return None
     rival = ctx.competing or "Cursor/inne okno"
     steps = [
@@ -137,11 +144,17 @@ def _guidance_ide_mismatch(ctx: _GuidanceContext) -> list[str] | None:
     return steps
 
 
+def _ide_mismatch_detected(ctx: _GuidanceContext) -> bool:
+    return bool(
+        ctx.competing
+        or "capture does not match" in ctx.err
+        or "ide_window_mismatch" in ctx.err
+        or ctx.observe.get("ide_window_warning")
+    )
+
+
 def _guidance_empty_vql(ctx: _GuidanceContext) -> list[str] | None:
-    if not any(
-        token in ctx.err
-        for token in ("empty_vql", "no ui elements", "no foreground window title")
-    ):
+    if not _empty_vql_error(ctx.err):
         return None
     return [
         f"Zrzut ekranu na {ctx.resolved} nie zawiera rozpoznawalnego okna IDE.",
@@ -151,8 +164,12 @@ def _guidance_empty_vql(ctx: _GuidanceContext) -> list[str] | None:
     ]
 
 
+def _empty_vql_error(err: str) -> bool:
+    return any(token in err for token in ("empty_vql", "no ui elements", "no foreground window title"))
+
+
 def _guidance_prepare_failed(ctx: _GuidanceContext) -> list[str] | None:
-    if not (ctx.observe.get("ok") is False or ctx.reply.get("phase") == "prepare"):
+    if not _prepare_failed(ctx):
         return None
     steps = [
         f"Prepare nie przeszedł ({ctx.observe.get('error') or ctx.reply.get('error') or 'nieznany błąd'}).",
@@ -162,6 +179,10 @@ def _guidance_prepare_failed(ctx: _GuidanceContext) -> list[str] | None:
     if ctx.hint:
         steps.append(f"Hint: {ctx.hint}")
     return steps
+
+
+def _prepare_failed(ctx: _GuidanceContext) -> bool:
+    return ctx.observe.get("ok") is False or ctx.reply.get("phase") == "prepare"
 
 
 def _guidance_drive_failed(ctx: _GuidanceContext) -> list[str]:
@@ -182,6 +203,52 @@ _GUIDANCE_BUILDERS: tuple[Callable[[_GuidanceContext], list[str] | None], ...] =
 )
 
 
+def _build_guidance_context(
+    *,
+    ide: str,
+    observe: dict[str, Any] | None,
+    reply: dict[str, Any] | None,
+    source: str | None,
+    vdisplay_root: str | Path | None,
+) -> _GuidanceContext:
+    observe = observe or {}
+    reply = reply or {}
+    src = _resolve_source(source=source, observe=observe)
+    root = Path(vdisplay_root or os.environ.get("VDISPLAY_ROOT", "")).expanduser()
+    probe = observe.get("desktop_probe") or {}
+    monitors = _monitor_names(probe)
+    resolved = str(probe.get("resolved_source") or src)
+    return _GuidanceContext(
+        ide=ide,
+        observe=observe,
+        reply=reply,
+        src=src,
+        resolved=resolved,
+        monitors=monitors,
+        root=root,
+        err=_combined_error(observe=observe, reply=reply),
+        hint=str(observe.get("hint") or reply.get("hint") or ""),
+        competing=observe.get("competing_ide") or reply.get("competing_ide"),
+        retry_cmd=_drive_retry_cmd(ide=ide, source=src, root=root),
+        audit_cmd=_audit_cmd(ide=ide, root=root),
+    )
+
+
+def _resolve_source(*, source: str | None, observe: dict[str, Any]) -> str:
+    return str(source or observe.get("source") or os.environ.get("KORU_VDISPLAY_SOURCE") or "DP-1")
+
+
+def _monitor_names(probe: Any) -> list[str]:
+    if not isinstance(probe, dict):
+        return []
+    monitors = probe.get("monitor_names") or []
+    return [str(m) for m in monitors]
+
+
+def _combined_error(*, observe: dict[str, Any], reply: dict[str, Any]) -> str:
+    return str(observe.get("error") or reply.get("error") or "").lower()
+
+
 def build_user_guidance(
     *,
     ide: str,
@@ -191,29 +258,13 @@ def build_user_guidance(
     vdisplay_root: str | Path | None = None,
 ) -> list[str]:
     """Actionable steps for the operator based on prepare/drive outcome."""
-    observe = observe or {}
-    reply = reply or {}
-    src = source or observe.get("source") or os.environ.get("KORU_VDISPLAY_SOURCE") or "DP-1"
-    root = Path(vdisplay_root or os.environ.get("VDISPLAY_ROOT", "")).expanduser()
-    probe = observe.get("desktop_probe") or {}
-    monitors = probe.get("monitor_names") or []
-    resolved = probe.get("resolved_source") or src
-
-    ctx = _GuidanceContext(
+    ctx = _build_guidance_context(
         ide=ide,
         observe=observe,
         reply=reply,
-        src=src,
-        resolved=resolved,
-        monitors=list(monitors),
-        root=root,
-        err=str(observe.get("error") or reply.get("error") or "").lower(),
-        hint=str(observe.get("hint") or reply.get("hint") or ""),
-        competing=observe.get("competing_ide") or reply.get("competing_ide"),
-        retry_cmd=_drive_retry_cmd(ide=ide, source=src, root=root),
-        audit_cmd=_audit_cmd(ide=ide, root=root),
+        source=source,
+        vdisplay_root=vdisplay_root,
     )
-
     for builder in _GUIDANCE_BUILDERS:
         steps = builder(ctx)
         if steps is not None:
