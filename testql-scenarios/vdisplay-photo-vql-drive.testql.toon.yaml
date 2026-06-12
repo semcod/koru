@@ -1,11 +1,12 @@
-# SCENARIO: Photo-VQL drive contract (SUMD autonomy loop)
+# SCENARIO: Photo-VQL drive contract (SUMD autonomy loop — observe→decide→act→verify)
 # TYPE: integration
-# Guards against false ok:true when capture mismatch / bad VQL / missing verify.
+# SUMD gap: drive must not report ok:true when capture unconfirmed, inference bad, or verify fails.
 # Runs fast unit tests only (no desktop / no real paste).
 
-CONFIG[2]{key, value}:
+CONFIG[3]{key, value}:
   timeout_ms, 120000
   workdir, ${KORU_ROOT:-.}
+  description, photo-vql false-ok guard contract
 
-SHELL "PYTHONPATH=src python -m pytest tests/test_photo_vql_drive.py -q --noconftest -k 'validate_vql or map_on_mismatch or capture_provenance or rejects_small_background or penalizes_terminal'" 120000
+SHELL "PYTHONPATH=src python -m pytest tests/test_photo_vql_drive.py -q --noconftest -k 'validate_vql or map_on_mismatch or capture_provenance or capture_validation or observe_provenance or verify_failure or false_ok or rejects_small_background or penalizes_terminal or blocks_jetbrains'" 120000
 ASSERT_EXIT_CODE 0

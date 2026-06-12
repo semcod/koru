@@ -100,7 +100,7 @@ def append_session_index(session_dir: Path, *, phase: str, name: str, ok: bool |
 
 
 def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None) -> Path | None:
-    """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` with act/decide artifacts if possible."""
+    """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime."""
     base = root or metadata_root()
     if not base.is_dir():
         return None
@@ -113,15 +113,8 @@ def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None
         candidates.extend(p for p in child.glob(pattern) if p.is_dir())
     if not candidates:
         return None
-    with_artifacts = [
-        p
-        for p in candidates
-        if (p / "act" / "drive_result.json").is_file()
-        or (p / "decide" / "vql_chat_target_selected.json").is_file()
-    ]
-    pool = with_artifacts if with_artifacts else candidates
-    pool.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    return pool[0]
+    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return candidates[0]
 
 
 def append_session_jsonl(session_dir: Path, rel_path: str, entry: dict[str, Any]) -> Path:

@@ -24,7 +24,9 @@
 3. `perform_photo_vql_focus_and_edit` — abort gdy sesja aktywna a brak świeżego observe; zapis decide/act do sesji.
 4. Usunięto fallback do statycznego `2026-06-11-vql-metadata-analysis-*.json` w `_get_vql_candidates`.
 
-**Moduł:** `src/koru/integrations/autonomy_session.py` · **testy:** `tests/test_photo_vql_drive.py` (21 passed).
+**Moduł:** `src/koru/integrations/autonomy_session.py` · **testy:** `tests/test_photo_vql_drive.py` (49 passed).
+
+**JetBrains / Wayland / DP-2 (photo-VQL):** aktualne podsumowanie, guardy i checklista → [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md).
 
 **Logowanie pozycjonowania (2026-06-12):** w momencie rozkazu wpisania do chatu system loguje i persystuje:
 - `decide/vql_chat_candidates.json` — wszystkie warstwy VQL `role=input` z score (y>850, x>1400)
@@ -32,12 +34,13 @@
 - `act/command_plan_perform_photo_vql_pre_act.json` — sekwencja komend z VQL
 - `warnings` gdy coords wyglądają jak edytor (y<850 dla JetBrains)
 
-**Routing JetBrains przy złym capture (2026-06-12):**
+**Routing JetBrains przy złym capture (2026-06-09 — uczciwe guardy):**
 
-- Gdy tytuł okna na zrzucie to **Cursor** (a nie PyCharm), domyślnie `send_chat()` zwraca **`ok: false`** (`backend: vdisplay+capture-blocked`) — brak actuation (map ani photo-VQL), żeby uniknąć confirmation bias.
-- Opt-in: `KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH=1` lub `KORU_VDISPLAY_ALLOW_IDE_MISMATCH=1` przywraca map-fallback / photo-VQL mimo złego capture.
-- `inference_ok: false` gdy `capture_ide_mismatch` lub coords wyglądają jak edytor; `capture_provenance` (png/vql mtime + window_titles) w `observe/prepare.json` i `drive_reply`.
-- Pełna ścieżka photo-VQL+LLM wymaga PyCharma na wierzchu (`capture_confirmed: true`).
+- Gdy tytuł okna na zrzucie to **Cursor** (a nie PyCharm), prepare ustawia `capture_ready=false`, `capture_confirmed=false` + warning.
+- Domyślnie drive script **abortuje** — map click sam w sobie **nie** ustawia `capture_confirmed=true` (usunięto confirmation bias).
+- Przed abortem: **Alt+Tab recovery** (domyślnie włączone dla JetBrains) + ponowny capture.
+- Map-only fallback (`map_only_fallback=true`) **tylko** z `KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH=1`; audit nadal pokazuje `visual_guard_failed` i `confirmation_bias_risk`.
+- Zalecenie: PyCharm na wierzchu na DP-2, terminal poza kadrem; szczegóły → [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md).
 
 **Audyt sesji** (nie używaj samej daty — szukaj po całym `.vdisplay/`):
 
@@ -194,6 +197,7 @@ Szczegóły krok po kroku: `wronai/vdisplay/docs/guides/autonomy-loop.md` (sekcj
 
 ## Zobacz też
 
+- [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md) — photo-VQL drive PyCharm/Wayland: podsumowanie, guardy, checklista zadań.
 - [`autopilot-quickstart.md`](./autopilot-quickstart.md) — jak włączyć autopilota z terminala.
 - [`autopilot-roadmap.md`](./autopilot-roadmap.md) — fazy P2+ (m.in. `session.ended`, read-side).
 - [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) — plan na bramkę wykonania dla wielu aktorów.
@@ -281,6 +285,36 @@ python -c 'import os; os.environ["KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT"]="1"; from 
 
 **Dry demo (31 elems):** chat panel_3 @854,440; editor window_0 @1024,493 — oba ok=True w dry.
 **Real:** move ok=True post-fix (atspi actuation na panelu z foto coords).
+
+### 2026-06-12 run analysis (pre-check + drive with "test po fix kontynuuj", audit) — terminal pollution in capture
+The pre-check screenshot JSON (and the drive's internal observe) showed:
+- Window title: "... - ts - Cursor" (capture_confirmed=false, ok_for_drive=false, ide_window_mismatch).
+- body_ide_mentions had "PyCharm"/"jetbrains" but body_false_positive=true + reason "body_mentions_target_ide_not_window_title" (correctly rejected — mentions were not from the actual window title layer).
+- Dozens of "button" and "input" (chat_composer_candidates) were OCR from the *visible terminal text in the screenshot*: the user's own commands and previous outputs ("PREFER LLM", "KORU_VDISPLAY_DRY_RUN", "po clear:", "recznie vdisplay", "wpisz", "to do", "drive after", "Re-run", "audit-last-session", "cursor_positioning.jsonl", "Explored", "passed", "Clear", "Gap Analysis", "Monitored", "screenshot", "act/", "247K /", "@ Publish v", "File Edit Selection View Go Run Terminal Help automation-gap-analysis - ts - Cursor", env vars, etc.).
+- This happens when the control terminal running the bash commands is on the captured monitor (DP-2) and its text is visible at the moment of `vdisplay screenshot`.
+
+**Code improvements (in this continuation):**
+- Expanded `_VQL_TERMINAL_LABEL_NOISE` with 20+ tokens from this exact run (KORU_, DRY_RUN, PREFER LLM, po clear, reicznie, wpisz, to do, drive after, Re-run, audit, cursor_positioning, Explored, passed, Clear, Gap Analysis, Monitored, screenshot, act/, ts - Cursor, File Edit, Go Run Terminal, Publish v, 247K, automation-gap).
+- In `_photo_vql_chat_input_candidates`, `_jetbrains_chat_corner_target_from_layers`, `_validate_chat_coords_for_ide`, and `validate_vql_chat_target`: extra heavy score penalty (-1500) + explicit warnings/validation_errors ("vql_label_shell_pollution_from_terminal_text") for labels containing shell/command/env pollution tokens.
+- This makes polluted captures produce 0 or very low-scoring VQL chat candidates → get_vql for jetbrains cleanly falls through to the calibrated map path ("prompt" priority, sane coords after rotation mapping), and with the earlier guard relaxation + submit path the drive can still succeed in typing + --submit via ydotool map (while the plan/audit honestly records the pollution + map fallback).
+
+**User-side root cause + recommendation (still the most important):**
+- Even with all the map/prompt/pollution/guard fixes, the *observe capture must be of PyCharm with "PyCharm" (or " - PyCharm") in the *window title bar* (not just body text) and without the control terminal's command history visible in the image.
+- **Quick helper before pre-check**: Manually raise PyCharm on DP-2 (click its title bar until "PyCharm" is visible in title), minimize/hide the control terminal (so its command text like "po fix", "KORU_VDISPLAY_*", "recznie vdisplay", "audit" is not in the screenshot), then run the pre-check. The prepare/ide_control tries to help with gtk-launch + map "prompt" clicks, but user visual state on DP-2 is key.
+- Before the pre-check and the drive:
+  1. Make sure PyCharm is launched on DP-2 and its title bar visibly contains "PyCharm" (click the title bar of the PyCharm window to raise/focus it).
+  2. Minimize, hide, or move the terminal (the one running the `bash koru-drive...` commands) off DP-2 or out of the captured region so its text (the "po fix", "KORU_VDISPLAY_*", "recznie vdisplay", audit output, etc.) is not in the screenshot.
+  3. Optionally run the control commands from a different shell/monitor or with a short delay after manual focus.
+- The prepare/ide_control (gtk-launch of jetbrains-pycharm + map "prompt" interior click + re-observe retries) tries to help raise PyCharm, but if Cursor is also open and "wins" the foreground or the terminal text pollutes the image, validation will (correctly) flag mismatch and the VQL will be noisy (now rejected by the new scoring).
+- After a clean capture (pre-check shows window_titles with "PyCharm", capture_confirmed true or at least no hard mismatch, and real chat input candidates with reasonable labels/sizes in bottom-right), the drive should use either good VQL or the "prompt" map and succeed with submit.
+
+Re-run the exact block after cleaning the visual state on DP-2 (focus PyCharm title bar, hide terminal text from DP-2). The prepare override for jetbrains map success + pollution rejection + prompt preference + submit relaxation should make the drive proceed with map even on bad/polluted capture (as in this log where ide_control map clicks succeeded but title was Cursor + terminal pollution).
+
+**Wnioski z analizy tego logu (kontynuacja, zaktualizowane 2026-06-09):**
+- Terminal pollution jest chroniczna gdy komendy uruchamiane są na tym samym monitorze (DP-2) co capture — imgl czyta bash historię jako "button/input".
+- Nawet po map focus w ide_control, observe może nadal łapać Cursor (map click ≠ foreground w screencast).
+- System **poprawnie abortuje** na mismatch bez `ALLOW_MAP_ON_MISMATCH`; map nie nadpisuje `capture_confirmed`.
+- Najlepszy wynik: czysty capture (PyCharm w titlebarze + composer w VQL). Pełna checklista → [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md).
 
 ### 2026-06-12 real drive JetBrains DP-2 (pre-check + koru-drive-photo-vql.sh --submit, audit)
 

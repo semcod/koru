@@ -73,6 +73,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.334] - 2026-06-12
+
+### Docs
+- Update README.md
+- Update docs/autonomy-ide-cursor.md
+- Update docs/photo-vql-jetbrains-wayland.md
+
+### Test
+- Update testql-scenarios/vdisplay-photo-vql-drive.testql.toon.yaml
+- Update tests/test_photo_vql_drive.py
+
 ## [0.1.333] - 2026-06-12
 
 ### Docs

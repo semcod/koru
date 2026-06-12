@@ -29,9 +29,20 @@ def _clear_autonomy_session_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "VDISPLAY_SESSION",
         "VDISPLAY_SESSION_ID",
         "KORU_VDISPLAY_CAPTURE_MATCHES_IDE",
+        "KORU_VDISPLAY_SOURCE",
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("KORU_VDISPLAY_VERIFY_AFTER_PASTE", "0")
+
+
+_CONFIRMED_OBSERVE_META = {
+    "ui_elements": [{"id": "w0", "role": "window", "label": "proj - PyCharm"}],
+    "capture_validation": {"capture_confirmed": True, "expected_ide": "jetbrains"},
+}
+
+
+def _patch_confirmed_observe_meta(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: dict(_CONFIRMED_OBSERVE_META))
 
 
 def test_validate_chat_coords_warns_on_editor_like_position() -> None:
@@ -64,6 +75,7 @@ def test_build_vql_command_plan_includes_commands(monkeypatch: pytest.MonkeyPatc
         ide="jetbrains",
         prompt="hello autonomy",
         stage="test",
+        capture_provenance={"capture_confirmed": True, "png_path": "observe/capture.png"},
     )
     assert plan["inference_ok"] is True
     assert plan["final_global"] == {"x": 1588, "y": 2771}
@@ -116,7 +128,7 @@ def test_photo_vql_sidecar_skip_when_layers_present(tmp_path, monkeypatch: pytes
 def test_vdisplay_source_for_ide_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
     assert vc._vdisplay_source_for_ide("cursor") == "DP-1"
-    assert vc._vdisplay_source_for_ide("jetbrains") == "DP-2"
+    assert vc._vdisplay_source_for_ide("jetbrains") == "DP-1"
 
 
 def test_photo_vql_ide_window_warning_detects_cursor_on_jetbrains_drive() -> None:
@@ -337,7 +349,7 @@ def test_ensure_vdisplay_ide_control_dry(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_perform_photo_vql_llm_coords_before_focus(monkeypatch: pytest.MonkeyPatch) -> None:
     order: list[str] = []
-    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {"layers": [{"id": "w"}], "ui_elements": [{"id": "w"}]})
+    _patch_confirmed_observe_meta(monkeypatch)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
     monkeypatch.setattr(
         vc,
@@ -373,7 +385,7 @@ def test_perform_photo_vql_llm_coords_before_focus(monkeypatch: pytest.MonkeyPat
 
 
 def test_perform_photo_vql_map_fallback_when_type_fails(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {"layers": [{"id": "w"}], "ui_elements": [{"id": "w"}]})
+    _patch_confirmed_observe_meta(monkeypatch)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
     monkeypatch.setattr(
         vc,
@@ -516,6 +528,155 @@ def test_capture_provenance_uses_embedded_validation() -> None:
     assert prov["capture_title"] == "proj - PyCharm"
 
 
+def test_capture_validation_false_without_titles_triggers_warning() -> None:
+    meta = {
+        "capture_validation": {
+            "capture_confirmed": False,
+            "expected_ide": "jetbrains",
+            "reasons": ["empty_vql_layers", "missing_window_layer"],
+            "window_titles": [],
+        }
+    }
+    warn = vc._photo_vql_ide_window_warning(ide="jetbrains", meta=meta)
+    assert warn is not None
+    assert warn.get("capture_validation_failed") is True
+    assert "empty_vql_layers" in str(warn.get("reasons"))
+
+
+def test_build_vql_command_plan_uses_observe_provenance_not_map() -> None:
+    target = {
+        "id": "map:ai-chat-input",
+        "click_center": {"x": 1900, "y": 1629},
+        "source": "/maps/pycharm-chat.json",
+    }
+    observe_prov = {
+        "capture_confirmed": False,
+        "png_path": "/session/observe/capture.png",
+        "vql_path": "/session/observe/capture.png.vql.json",
+    }
+    plan = vc._build_vql_command_plan(
+        target=target,
+        x=1900,
+        y=1629,
+        source="DP-1",
+        ide="jetbrains",
+        prompt="hello",
+        capture_provenance=observe_prov,
+    )
+    assert plan["capture_confirmed"] is False
+    assert plan["inference_ok"] is False
+    assert plan["capture_provenance"]["vql_path"] == "/session/observe/capture.png.vql.json"
+
+
+def test_perform_photo_vql_verify_failure_blocks_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_VERIFY_AFTER_PASTE", "1")
+    monkeypatch.setattr(
+        vc,
+        "load_vql_metadata",
+        lambda *a, **k: {
+            "ui_elements": [{"id": "w0", "role": "window", "label": "proj - PyCharm"}],
+            "capture_validation": {"capture_confirmed": True, "expected_ide": "jetbrains"},
+        },
+    )
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(
+        vc,
+        "get_vql_chat_target_from_photo",
+        lambda **kwargs: dict(_VALID_JB_CHAT_TARGET),
+    )
+    monkeypatch.setattr(vc, "_resolve_photo_vql_llm_coords", lambda **kwargs: (1985, 1049, None))
+    monkeypatch.setattr(vc, "move_mouse_to_vql_target_and_focus_keyboard", lambda *a, **k: {"ok": True})
+    monkeypatch.setattr(
+        vc,
+        "_type_text_at_vql_coords",
+        lambda value, **kwargs: {"ok": True, "method": "ydotool-paste", "value": value},
+    )
+    monkeypatch.setattr(
+        vc,
+        "verify_chat_text_visible",
+        lambda *a, **k: {"ok": False, "verified": False, "mode": "ocr_contains", "error": "text not found"},
+    )
+    monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
+    monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
+
+    out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
+    assert out["edit"]["ok"] is True
+    assert out["verified"] is False
+    assert out["ok"] is False
+
+
+def test_normalize_drive_result_blocks_false_ok_when_edit_ok_but_unverified() -> None:
+    photo = {
+        "ok": False,
+        "backend": "vdisplay+photo-vql",
+        "edit": {"ok": True, "method": "ydotool-paste"},
+        "verified": False,
+        "verification": {"verified": False},
+        "capture_confirmed": True,
+        "vql_command_plan": {"inference_ok": True},
+    }
+    out = vc._normalize_photo_vql_drive_result(photo, ide="jetbrains", submit=False)
+    assert out["ok"] is False
+    assert out["verified"] is False
+
+
+def test_normalize_drive_result_blocks_false_ok_on_inference_fail() -> None:
+    photo = {
+        "ok": False,
+        "backend": "vdisplay+photo-vql",
+        "edit": {"ok": True, "method": "ydotool-paste"},
+        "capture_confirmed": False,
+        "capture_provenance": {"capture_confirmed": False},
+        "vql_command_plan": {"inference_ok": False, "warnings": ["capture_ide_mismatch"]},
+    }
+    out = vc._normalize_photo_vql_drive_result(photo, ide="jetbrains", submit=False)
+    assert out["ok"] is False
+    assert out["capture_confirmed"] is False
+
+
+def test_prepare_syncs_ide_control_capture_confirmed_from_observe(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pathlib import Path
+
+    capture_png = Path("/tmp/capture.png")
+    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-1", {"ok": True, "resolved_source": "DP-1"}))
+    monkeypatch.setattr(vc, "_vdisplay_source_for_ide", lambda ide: "DP-1")
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: True)
+    monkeypatch.setattr(
+        vc,
+        "ensure_vdisplay_ide_control",
+        lambda **k: {"map_path": "/maps/pycharm-chat.json", "map_actuation_ok": True, "interior_focused": True},
+    )
+    monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: False)
+    monkeypatch.setattr(vc, "_resolve_photo_png_path", lambda src: capture_png)
+    monkeypatch.setattr(
+        vc,
+        "load_vql_metadata",
+        lambda *a, **k: {
+            "ui_elements": [{"id": "w0", "role": "window", "label": "proj - PyCharm"}],
+            "capture_validation": {
+                "capture_confirmed": False,
+                "expected_ide": "jetbrains",
+                "reasons": ["empty_vql_layers"],
+            },
+        },
+    )
+
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+
+    assert out["capture_confirmed"] is False
+    assert out["capture_ready"] is False
+    assert out["ok"] is False
+    assert out.get("error")
+    assert out["ide_control"]["capture_confirmed"] is False
+    assert out["ide_control"]["confirmation_bias_risk"]
+
+
 def test_photo_vql_chat_input_candidates_penalizes_terminal_background() -> None:
     layers = [
         {
@@ -544,7 +705,7 @@ def test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero() -> None:
 
 
 def test_perform_photo_vql_submit_after_paste(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {"layers": [{"id": "w"}], "ui_elements": [{"id": "w"}]})
+    _patch_confirmed_observe_meta(monkeypatch)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
     monkeypatch.setattr(
         vc,
@@ -608,3 +769,275 @@ def test_perform_photo_vql_blocks_jetbrains_chat_on_capture_mismatch(monkeypatch
     assert "Cursor" in str(out.get("error", ""))
     assert out.get("ide_window_warning")
 
+
+def test_resolve_auto_picks_dp_when_default_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
+    monkeypatch.setitem(vc._IDE_DEFAULT_SOURCE, "jetbrains", "DP-2")
+    probe = {
+        "ok": True,
+        "monitor_names": ["DP-1", "HDMI-1"],
+        "monitors": [
+            {"name": "DP-1", "primary": False},
+            {"name": "HDMI-1", "primary": True},
+        ],
+    }
+    src, resolved = vc._resolve_vdisplay_source_for_ide("jetbrains", probe=probe)
+    assert src == "DP-1"
+    assert resolved.get("source_auto_resolved") is True
+    assert resolved.get("source_was") == "DP-2"
+    assert resolved.get("ok") is True
+
+
+def test_resolve_explicit_missing_monitor_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_SOURCE", "DP-2")
+    probe = {
+        "ok": True,
+        "monitor_names": ["DP-1", "HDMI-1"],
+        "monitors": [{"name": "DP-1"}, {"name": "HDMI-1", "primary": True}],
+    }
+    src, resolved = vc._resolve_vdisplay_source_for_ide("jetbrains", probe=probe)
+    assert src == "DP-2"
+    assert resolved.get("ok") is False
+    assert "DP-2" in str(resolved.get("error"))
+
+
+def test_desktop_probe_missing_source_errors() -> None:
+    probe = vc._desktop_probe(ide="jetbrains", source="DP-2")
+    if probe.get("monitor_names") and "DP-2" not in probe["monitor_names"]:
+        assert probe.get("ok") is False
+        assert "DP-2" in str(probe.get("error"))
+
+
+def test_prepare_aborts_when_probe_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_VDISPLAY_ABORT_ON_PROBE_FAIL", "1")
+    monkeypatch.setattr(
+        vc,
+        "_resolve_vdisplay_source_for_ide",
+        lambda ide, **k: (
+            "DP-2",
+            {"ok": False, "error": "no connected monitor", "monitor_names": ["DP-1"]},
+        ),
+    )
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    persisted: list[tuple[str, str]] = []
+
+    def _persist(session_dir, phase, name, payload):
+        persisted.append((phase, name))
+
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", _persist)
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+    assert out["ok"] is False
+    assert "desktop_probe" in out
+    assert ("decide", "desktop_probe") in persisted
+
+
+def test_find_latest_koru_session_uses_mtime_not_artifacts(tmp_path: Path) -> None:
+    from koru.integrations import autonomy_session as sess
+
+    day = tmp_path / "2026-06-12"
+    day.mkdir()
+    older = day / "09-00-00__koru-jetbrains"
+    newer = day / "09-05-00__koru-jetbrains"
+    older.mkdir()
+    newer.mkdir()
+    (older / "act").mkdir()
+    (older / "act" / "drive_result.json").write_text("{}", encoding="utf-8")
+    import os
+    import time
+
+    os.utime(newer, (time.time(), time.time() + 10))
+    latest = sess.find_latest_koru_session(ide="jetbrains", root=tmp_path)
+    assert latest == newer
+
+
+def test_competing_ide_label_from_warning() -> None:
+    warn = {
+        "window_titles": ["automation-gap - Cursor"],
+        "competing_detected": ["cursor", "vscode"],
+    }
+    assert vc._competing_ide_label_from_warning(warn) == "Cursor"
+
+
+def test_prepare_aborts_after_single_attempt_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pathlib import Path
+
+    calls = {"ide_control": 0, "refresh": 0}
+
+    def _ide_control(**k):
+        calls["ide_control"] += 1
+        return {"map_path": "/maps/pycharm-chat.json", "map_actuation_ok": True}
+
+    def _refresh(**k):
+        calls["refresh"] += 1
+        return {
+            "ok": True,
+            "source": "DP-2",
+            "png": "/tmp/capture.png",
+            "vql": "/tmp/capture.png.vql.json",
+            "ide_window_warning": {
+                "message": "wrong IDE",
+                "window_titles": ["proj - Cursor"],
+                "competing_detected": ["cursor"],
+            },
+        }
+
+    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-2", {"ok": True}))
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: True)
+    monkeypatch.setattr(vc, "ensure_vdisplay_ide_control", _ide_control)
+    monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
+    monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
+    monkeypatch.setenv("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3")
+    monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
+    monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: False)
+
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+
+    assert out["ok"] is False
+    assert out["ide_control_attempts"] == 1
+    assert calls["ide_control"] == 1
+    assert calls["refresh"] == 1
+    assert out.get("competing_ide") == "Cursor"
+
+
+def test_perform_blocked_on_mismatch_without_allow(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        vc,
+        "_photo_vql_ide_capture_mismatch",
+        lambda **k: {"message": "cursor foreground", "window_titles": ["x - Cursor"]},
+    )
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", raising=False)
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", raising=False)
+
+    res = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
+    assert res["ok"] is False
+    assert res.get("ide_window_warning")
+
+
+def test_perform_map_path_allowed_with_allow_map_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_confirmed_observe_meta(monkeypatch)
+    monkeypatch.setattr(
+        vc,
+        "_photo_vql_ide_capture_mismatch",
+        lambda **k: {"message": "cursor foreground"},
+    )
+    monkeypatch.setattr(
+        vc,
+        "get_vql_chat_target_from_photo",
+        lambda **k: {
+            "id": "map:prompt",
+            "click_center": {"x": 1900, "y": 1629},
+            "selection_method": "map_calibrated_on_mismatch",
+            "vql_validation": {"ok": True, "app_match": True},
+        },
+    )
+    monkeypatch.setattr(vc, "_resolve_photo_vql_llm_coords", lambda **k: (1900, 1629, None))
+    monkeypatch.setattr(vc, "_resolve_photo_png_path_from_vql", lambda **k: "/tmp/capture.png")
+    monkeypatch.setattr(vc, "_observe_vql_sidecar_path", lambda **k: "/tmp/capture.png.vql.json")
+    monkeypatch.setattr(vc, "move_mouse_to_vql_target_and_focus_keyboard", lambda *a, **k: {"ok": True})
+    monkeypatch.setattr(vc, "_type_text_at_vql_coords", lambda *a, **k: {"ok": True, "method": "paste"})
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
+
+    res = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
+    plan = res.get("vql_command_plan") or {}
+    assert plan.get("selection_method") == "map_calibrated_on_mismatch"
+    assert plan.get("inference_ok") is True
+    assert res.get("ok") is True
+
+
+def test_raise_alt_tab_default_on_for_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_VDISPLAY_RAISE_ALT_TAB", raising=False)
+    assert vc._raise_alt_tab_enabled(ide="jetbrains") is True
+    assert vc._raise_alt_tab_enabled(ide="cursor") is False
+
+
+def test_prepare_map_fallback_requires_allow_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pathlib import Path
+
+    capture_png = Path("/tmp/capture.png")
+    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-2", {"ok": True}))
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: True)
+    monkeypatch.setattr(
+        vc,
+        "ensure_vdisplay_ide_control",
+        lambda **k: {"map_path": "/maps/pycharm-chat.json", "map_actuation_ok": True},
+    )
+    monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: False)
+    monkeypatch.setattr(vc, "_resolve_photo_png_path", lambda src: capture_png)
+    monkeypatch.setattr(
+        vc,
+        "load_vql_metadata",
+        lambda *a, **k: {
+            "ui_elements": [{"id": "w0", "role": "window", "label": "proj - Cursor"}],
+            "capture_validation": {"capture_confirmed": False, "expected_ide": "jetbrains"},
+        },
+    )
+    monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: False)
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", raising=False)
+
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+    assert out["ok"] is False
+    assert out.get("map_only_fallback") is not True
+    assert out["capture_confirmed"] is False
+
+
+def test_prepare_focus_recovery_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"refresh": 0}
+
+    def _refresh(**k):
+        calls["refresh"] += 1
+        if calls["refresh"] == 1:
+            return {
+                "ok": True,
+                "source": "DP-2",
+                "png": "/tmp/capture.png",
+                "vql": "/tmp/capture.png.vql.json",
+                "ide_window_warning": {"message": "wrong IDE", "window_titles": ["x - Cursor"]},
+            }
+        return {
+            "ok": True,
+            "source": "DP-2",
+            "png": "/tmp/capture.png",
+            "vql": "/tmp/capture.png.vql.json",
+            "capture_confirmed": True,
+            "capture_provenance": {"capture_confirmed": True, "window_titles": ["proj - PyCharm"]},
+        }
+
+    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-2", {"ok": True}))
+    monkeypatch.setattr(
+        vc._autonomy_session,
+        "begin_autonomy_session",
+        lambda **k: type("S", (), {"__str__": lambda self: "/tmp/session"})(),
+    )
+    monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
+    monkeypatch.setattr(vc, "_auto_ide_control_enabled", lambda: True)
+    monkeypatch.setattr(vc, "ensure_vdisplay_ide_control", lambda **k: {"map_actuation_ok": True})
+    monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
+    monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
+    monkeypatch.setattr(vc, "_photo_vql_ide_window_warning", lambda **k: None)
+    monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: True)
+    monkeypatch.setattr(vc, "_alt_tab_window_cycle", lambda **k: {"ok": True, "method": "test-alt-tab"})
+    monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
+    monkeypatch.setenv("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3")
+
+    out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
+
+    assert calls["refresh"] == 2
+    assert out.get("focus_recovery", {}).get("ok") is True
+    assert out["ok"] is True
+    assert out["capture_ready"] is True
