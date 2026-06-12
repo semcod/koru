@@ -1,13 +1,13 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.43s
+# generated in 0.28s
 # nodes: 384 | edges: 500 | modules: 69
-# CC̄=3.6
+# CC̄=3.8
 
 HUBS[20]:
   project.print
     CC=0  in:922  out:0  total:922
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:191  out:9  total:200
+    CC=5  in:200  out:9  total:209
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
   packages.dsl2coru.src.dsl2coru.grammar._flag
@@ -16,10 +16,10 @@ HUBS[20]:
     CC=7  in:33  out:8  total:41
   src.koruide.ide.detect_running_ides
     CC=17  in:27  out:11  total:38
-  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
-    CC=3  in:0  out:33  total:33
   packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command
     CC=15  in:1  out:32  total:33
+  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
+    CC=3  in:0  out:33  total:33
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:21  out:11  total:32
   src.koru.integrations.imgl_client.execute_nl
@@ -30,12 +30,12 @@ HUBS[20]:
     CC=3  in:23  out:5  total:28
   packages.coru.src.coru.cli._maybe_reexec_into_project_python
     CC=13  in:1  out:27  total:28
-  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
-    CC=14  in:4  out:23  total:27
-  packages.coru.src.coru.cli._run_default_autonomous
-    CC=11  in:2  out:25  total:27
   packages.coru.src.coru.cli_calibration._lane_calibration
     CC=14  in:2  out:25  total:27
+  packages.coru.src.coru.cli._run_default_autonomous
+    CC=11  in:2  out:25  total:27
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
+    CC=14  in:4  out:23  total:27
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
     CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl

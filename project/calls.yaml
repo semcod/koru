@@ -5,188 +5,6 @@ stats:
   total_edges: 500
   modules_count: 69
 nodes:
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_doctor:
-    name: _serialize_doctor
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 49
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 0
-  packages.nlp2coru.src.nlp2coru.control.dispatch_line:
-    name: dispatch_line
-    module: packages.nlp2coru.src.nlp2coru.control
-    line: 15
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._parse_status:
-    name: _parse_status
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 56
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._parse_sync:
-    name: _parse_sync
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 143
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.cli._runtime_metadata_roots:
-    name: _runtime_metadata_roots
-    module: packages.coru.src.coru.cli
-    line: 802
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.pb_codec.encode_result_protobuf:
-    name: encode_result_protobuf
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 162
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.pb_codec._set_body:
-    name: _set_body
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 60
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 1
-  packages.koruenv.src.koruenv.cli._normalize_log_format:
-    name: _normalize_log_format
-    module: packages.koruenv.src.koruenv.cli
-    line: 16
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.cli._main_legacy:
-    name: _main_legacy
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 75
-    cyclomatic_complexity: 4
-    calls_out: 17
-    calls_in: 1
-  packages.coru.src.coru.ecosystem._default_runner:
-    name: _default_runner
-    module: packages.coru.src.coru.ecosystem
-    line: 78
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._ui_args:
-    name: _ui_args
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 39
-    cyclomatic_complexity: 9
-    calls_out: 8
-    calls_in: 4
-  packages.nlp2coru.src.nlp2coru.openrouter_config.get_fallback_model:
-    name: get_fallback_model
-    module: packages.nlp2coru.src.nlp2coru.openrouter_config
-    line: 63
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  packages.nlpshim.src.nlpshim.conversation_test_api.complete_missing_fields:
-    name: complete_missing_fields
-    module: packages.nlpshim.src.nlpshim.conversation_test_api
-    line: 55
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_type:
-    name: _parse_ui_type
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 168
-    cyclomatic_complexity: 6
-    calls_out: 12
-    calls_in: 0
-  packages.uri2koru.src.uri2koru.uri._encode:
-    name: _encode
-    module: packages.uri2koru.src.uri2koru.uri
-    line: 12
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 4
-  packages.coru.src.coru.cli._lane_subprocess_env:
-    name: _lane_subprocess_env
-    module: packages.coru.src.coru.cli
-    line: 1360
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 5
-  packages.dsl2coru.src.dsl2coru.pb_codec._extract_auto:
-    name: _extract_auto
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 162
-    cyclomatic_complexity: 4
-    calls_out: 1
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codec.envelope_to_bytes:
-    name: envelope_to_bytes
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 31
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.bus._dispatch_koru:
-    name: _dispatch_koru
-    module: packages.dsl2coru.src.dsl2coru.bus
-    line: 16
-    cyclomatic_complexity: 6
-    calls_out: 7
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.serializer.to_text:
-    name: to_text
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 141
-    cyclomatic_complexity: 4
-    calls_out: 12
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.handlers._query_repair_history:
-    name: _query_repair_history
-    module: packages.dsl2koru.src.dsl2koru.handlers
-    line: 42
-    cyclomatic_complexity: 2
-    calls_out: 14
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.codegen._python_type:
-    name: _python_type
-    module: packages.dsl2coru.src.dsl2coru.codegen
-    line: 13
-    cyclomatic_complexity: 9
-    calls_out: 4
-    calls_in: 1
-  packages.coru.src.coru.cli._env_default_ide:
-    name: _env_default_ide
-    module: packages.coru.src.coru.cli
-    line: 1201
-    cyclomatic_complexity: 10
-    calls_out: 15
-    calls_in: 1
-  packages.koruenv.src.koruenv.cli._emit_log:
-    name: _emit_log
-    module: packages.koruenv.src.koruenv.cli
-    line: 25
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 6
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_calibration:
-    name: _serialize_calibration
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 290
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._parse_drive_json_from_stdout:
-    name: _parse_drive_json_from_stdout
-    module: packages.coru.src.coru.cli_calibration
-    line: 335
-    cyclomatic_complexity: 8
-    calls_out: 7
-    calls_in: 2
   packages.mcp2coru.src.mcp2coru.server.run_server:
     name: run_server
     module: packages.mcp2coru.src.mcp2coru.server
@@ -194,76 +12,62 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 2
     calls_in: 0
-  packages.coru.src.coru.cli._installed_module_source_dir:
-    name: _installed_module_source_dir
-    module: packages.coru.src.coru.cli
-    line: 721
-    cyclomatic_complexity: 7
-    calls_out: 8
-    calls_in: 1
-  packages.coru.src.coru.ecosystem._local_package_paths:
-    name: _local_package_paths
-    module: packages.coru.src.coru.ecosystem
-    line: 45
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.cli._main_subcommand:
-    name: _main_subcommand
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 41
+  packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf:
+    name: decode_protobuf
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 273
     cyclomatic_complexity: 1
-    calls_out: 24
+    calls_out: 3
     calls_in: 1
-  packages.dsl2koru.src.dsl2koru.handlers._repair_run:
-    name: _repair_run
-    module: packages.dsl2koru.src.dsl2koru.handlers
-    line: 94
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_text:
-    name: _serialize_text
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 72
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 0
-  packages.coru.src.coru.cli._instance_for_ide_choice:
-    name: _instance_for_ide_choice
+  packages.coru.src.coru.cli._active_project_root:
+    name: _active_project_root
     module: packages.coru.src.coru.cli
-    line: 398
-    cyclomatic_complexity: 12
-    calls_out: 13
-    calls_in: 2
-  packages.coru.src.coru.cli_calibration._append_desktop_focus_lines:
-    name: _append_desktop_focus_lines
-    module: packages.coru.src.coru.cli_calibration
-    line: 54
-    cyclomatic_complexity: 2
-    calls_out: 2
+    line: 128
+    cyclomatic_complexity: 3
+    calls_out: 3
     calls_in: 1
-  packages.coru.src.coru.cli_calibration._write_calibration_desktop_oql:
-    name: _write_calibration_desktop_oql
-    module: packages.coru.src.coru.cli_calibration
-    line: 114
+  packages.cli2koru.src.cli2koru.cli._handle_shell:
+    name: _handle_shell
+    module: packages.cli2koru.src.cli2koru.cli
+    line: 26
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 0
-  packages.mcp2coru.src.mcp2coru.server.create_server:
-    name: create_server
-    module: packages.mcp2coru.src.mcp2coru.server
-    line: 53
+  packages.dsl2coru.src.dsl2coru.cli._main_legacy:
+    name: _main_legacy
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 80
+    cyclomatic_complexity: 5
+    calls_out: 17
+    calls_in: 1
+  packages.uri2koru.src.uri2koru.uri._decode:
+    name: _decode
+    module: packages.uri2koru.src.uri2koru.uri
+    line: 16
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  packages.dsl2coru.src.dsl2coru.parser._parse_text:
+    name: _parse_text
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 131
+    cyclomatic_complexity: 8
+    calls_out: 6
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._parse_repair_run:
+    name: _parse_repair_run
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 148
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 0
+  packages.coru.src.coru.cli._terminal_ide_hint:
+    name: _terminal_ide_hint
+    module: packages.coru.src.coru.cli
+    line: 870
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 3
-  packages.mcp2coru.src.mcp2coru.tools.coru_to_dsl:
-    name: coru_to_dsl
-    module: packages.mcp2coru.src.mcp2coru.tools
-    line: 27
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
   packages.dsl2koru.src.dsl2koru.codegen.validate_payload:
     name: validate_payload
     module: packages.dsl2koru.src.dsl2koru.codegen
@@ -271,66 +75,59 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 7
     calls_in: 2
-  packages.dsl2coru.src.dsl2coru.grammar._append_flag:
-    name: _append_flag
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_repair_run:
+    name: _serialize_repair_run
     module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 241
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 13
-  packages.coru.src.coru.cli_calibration._probe_report_unverified_hint:
-    name: _probe_report_unverified_hint
-    module: packages.coru.src.coru.cli_calibration
-    line: 426
+    line: 320
     cyclomatic_complexity: 2
-    calls_out: 0
-    calls_in: 1
-  packages.coru.src.coru.cli._python_module_exists:
-    name: _python_module_exists
+    calls_out: 4
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.openrouter_config.should_use_ollama_fallback:
+    name: should_use_ollama_fallback
+    module: packages.nlp2coru.src.nlp2coru.openrouter_config
+    line: 73
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  packages.coru.src.coru.cli._instance_for_ide_choice:
+    name: _instance_for_ide_choice
     module: packages.coru.src.coru.cli
-    line: 573
-    cyclomatic_complexity: 2
+    line: 398
+    cyclomatic_complexity: 12
+    calls_out: 13
+    calls_in: 2
+  packages.cli2koru.src.cli2koru.cli._handle_run:
+    name: _handle_run
+    module: packages.cli2koru.src.cli2koru.cli
+    line: 30
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
+  packages.coru.src.coru.cli._prefer_terminal_over_lane:
+    name: _prefer_terminal_over_lane
+    module: packages.coru.src.coru.cli
+    line: 1150
+    cyclomatic_complexity: 3
     calls_out: 1
     calls_in: 3
-  packages.coru.src.coru.cli._normalize_log_format:
-    name: _normalize_log_format
-    module: packages.coru.src.coru.cli
-    line: 168
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 4
-  packages.coru.src.coru.cli._choose_option:
-    name: _choose_option
-    module: packages.coru.src.coru.cli
-    line: 423
-    cyclomatic_complexity: 9
-    calls_out: 11
-    calls_in: 2
-  packages.coru.src.coru.supervisor.paths.registry_path:
-    name: registry_path
-    module: packages.coru.src.coru.supervisor.paths
-    line: 19
+  packages.coru.src.coru.cli_calibration._register_calibration_command:
+    name: _register_calibration_command
+    module: packages.coru.src.coru.cli_calibration
+    line: 607
     cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 9
-  packages.dsl2koru.src.dsl2koru.pb_codec.envelope_to_dict:
-    name: envelope_to_dict
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 112
-    cyclomatic_complexity: 4
     calls_out: 6
-    calls_in: 4
-  packages.coru.src.coru.cli._supervisor_default_instance:
-    name: _supervisor_default_instance
-    module: packages.coru.src.coru.cli
-    line: 1250
-    cyclomatic_complexity: 10
-    calls_out: 3
     calls_in: 1
-  packages.coru.src.coru.cli._workspace_socket_path_for_ide:
-    name: _workspace_socket_path_for_ide
+  packages.dsl2coru.src.dsl2coru.handlers.runner._run_subprocess:
+    name: _run_subprocess
+    module: packages.dsl2coru.src.dsl2coru.handlers.runner
+    line: 25
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 1
+  packages.coru.src.coru.cli._running_ide_choices:
+    name: _running_ide_choices
     module: packages.coru.src.coru.cli
-    line: 945
+    line: 327
     cyclomatic_complexity: 7
     calls_out: 8
     calls_in: 1
@@ -341,89 +138,61 @@ nodes:
     cyclomatic_complexity: 3
     calls_out: 0
     calls_in: 2
-  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri:
-    name: nlp2uri
-    module: packages.uri2koru.src.uri2koru.nlp2uri
-    line: 28
-    cyclomatic_complexity: 13
-    calls_out: 23
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.rewrite.rewrite_chat_prompt:
-    name: rewrite_chat_prompt
-    module: packages.nlp2coru.src.nlp2coru.rewrite
-    line: 8
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 2
-  packages.koruenv.src.koruenv.cli.main:
-    name: main
-    module: packages.koruenv.src.koruenv.cli
-    line: 143
-    cyclomatic_complexity: 5
-    calls_out: 18
-    calls_in: 0
-  packages.nlp2coru.src.nlp2coru.heuristic.heuristic_plan:
-    name: heuristic_plan
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 78
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.bus.execute_dsl_line:
-    name: execute_dsl_line
-    module: packages.dsl2koru.src.dsl2koru.bus
-    line: 74
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 3
-  packages.coru.src.coru.cli._local_install_target:
-    name: _local_install_target
-    module: packages.coru.src.coru.cli
-    line: 824
-    cyclomatic_complexity: 8
-    calls_out: 8
-    calls_in: 1
-  packages.coru.src.coru.cli._tool_argv:
-    name: _tool_argv
-    module: packages.coru.src.coru.cli
-    line: 581
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 2
-  packages.coru.src.coru.ecosystem.sync_python_packages:
-    name: sync_python_packages
-    module: packages.coru.src.coru.ecosystem
-    line: 56
-    cyclomatic_complexity: 6
-    calls_out: 5
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.parser._parse_calibration:
-    name: _parse_calibration
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 110
-    cyclomatic_complexity: 6
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_calibration:
+    name: _serialize_calibration
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 57
+    cyclomatic_complexity: 3
     calls_out: 4
     calls_in: 0
-  packages.dsl2koru.src.dsl2koru.cli._cmd_decode:
-    name: _cmd_decode
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 123
+  packages.nlp2coru.src.nlp2coru.llm._parse_llm_json:
+    name: _parse_llm_json
+    module: packages.nlp2coru.src.nlp2coru.llm
+    line: 16
     cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.cli._cmd_roundtrip:
-    name: _cmd_roundtrip
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 135
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._split_command:
-    name: _split_command
+    calls_out: 4
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_lane:
+    name: _serialize_lane
     module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 11
-    cyclomatic_complexity: 3
+    line: 271
+    cyclomatic_complexity: 1
     calls_out: 3
+    calls_in: 0
+  packages.coru.src.coru.cli._coru_normalize_project:
+    name: _coru_normalize_project
+    module: packages.coru.src.coru.cli
+    line: 96
+    cyclomatic_complexity: 7
+    calls_out: 6
+    calls_in: 4
+  packages.coru.src.coru.cli._cmd_exists:
+    name: _cmd_exists
+    module: packages.coru.src.coru.cli
+    line: 542
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  packages.coru.src.coru.supervisor.paths.registry_path:
+    name: registry_path
+    module: packages.coru.src.coru.supervisor.paths
+    line: 19
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 9
+  packages.dsl2koru.src.dsl2koru.codec.envelope_to_json:
+    name: envelope_to_json
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 41
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  packages.coru.src.coru.repair.runtime.run_lane_repair:
+    name: run_lane_repair
+    module: packages.coru.src.coru.repair.runtime
+    line: 11
+    cyclomatic_complexity: 1
+    calls_out: 1
     calls_in: 1
   packages.dsl2koru.src.dsl2koru.grammar._parse_query_repair_history:
     name: _parse_query_repair_history
@@ -432,54 +201,54 @@ nodes:
     cyclomatic_complexity: 5
     calls_out: 4
     calls_in: 0
-  packages.coru.src.coru.cli._infer_default_ide:
-    name: _infer_default_ide
-    module: packages.coru.src.coru.cli
-    line: 1226
-    cyclomatic_complexity: 3
-    calls_out: 10
-    calls_in: 3
-  packages.coru.src.coru.cli._run:
-    name: _run
-    module: packages.coru.src.coru.cli
-    line: 516
-    cyclomatic_complexity: 7
-    calls_out: 7
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.codegen.main:
-    name: main
-    module: packages.dsl2koru.src.dsl2koru.codegen
-    line: 98
-    cyclomatic_complexity: 6
-    calls_out: 18
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.serializer._append_flag:
-    name: _append_flag
+  packages.dsl2coru.src.dsl2coru.serializer.to_text:
+    name: to_text
     module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 8
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 13
-  packages.uri2coru.src.uri2coru.uri.uri_for_cmd:
-    name: uri_for_cmd
-    module: packages.uri2coru.src.uri2coru.uri
-    line: 29
+    line: 141
     cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas:
-    name: validate_schemas
-    module: packages.dsl2koru.src.dsl2koru.schema_registry
-    line: 38
-    cyclomatic_complexity: 3
+    calls_out: 12
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.grammar.to_text:
+    name: to_text
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 127
+    cyclomatic_complexity: 2
     calls_out: 6
-    calls_in: 4
-  packages.dsl2coru.src.dsl2coru.parser._parse_status:
-    name: _parse_status
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 56
+    calls_in: 5
+  packages.coru.src.coru.cli._module_runtime_source_dir:
+    name: _module_runtime_source_dir
+    module: packages.coru.src.coru.cli
+    line: 742
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  packages.coru.src.coru.cli._supervisor_lane_defaults:
+    name: _supervisor_lane_defaults
+    module: packages.coru.src.coru.cli
+    line: 1044
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.grammar._parse_ensure:
+    name: _parse_ensure
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 96
     cyclomatic_complexity: 2
     calls_out: 1
+    calls_in: 0
+  packages.nlpshim.src.nlpshim.control.to_dsl:
+    name: to_dsl
+    module: packages.nlpshim.src.nlpshim.control
+    line: 12
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 5
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message:
+    name: message
+    module: packages.nlpshim.src.nlpshim.conversation_client
+    line: 41
+    cyclomatic_complexity: 9
+    calls_out: 22
     calls_in: 0
   packages.coru.src.coru.cli._terminal_shell_context_fallback:
     name: _terminal_shell_context_fallback
@@ -488,34 +257,76 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 1
-  packages.dsl2koru.src.dsl2koru.grammar.parse_line:
-    name: parse_line
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 73
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 4
-  packages.dsl2coru.src.dsl2coru.grammar._parse_chat:
-    name: _parse_chat
+  packages.nlp2coru.src.nlp2coru.heuristic._parse_lane_mentions:
+    name: _parse_lane_mentions
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 27
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._flag:
+    name: _flag
     module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 122
+    line: 24
+    cyclomatic_complexity: 7
+    calls_out: 8
+    calls_in: 33
+  packages.dsl2coru.src.dsl2coru.parser._parse_lane:
+    name: _parse_lane
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 87
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 0
+  packages.uri2koru.src.uri2koru.uri.uri_for_block:
+    name: uri_for_block
+    module: packages.uri2koru.src.uri2koru.uri
+    line: 20
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 0
+  packages.coru.src.coru.cli._normalize_log_format:
+    name: _normalize_log_format
+    module: packages.coru.src.coru.cli
+    line: 168
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.handlers.command.run_command:
+    name: run_command
+    module: packages.dsl2coru.src.dsl2coru.handlers.command
+    line: 12
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 0
+  packages.coru.src.coru.cli._tool_argv:
+    name: _tool_argv
+    module: packages.coru.src.coru.cli
+    line: 581
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.parser._parse_ui_common:
+    name: _parse_ui_common
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 157
     cyclomatic_complexity: 5
     calls_out: 4
-    calls_in: 0
-  packages.cli2koru.src.cli2koru.cli._handle_exec:
-    name: _handle_exec
-    module: packages.cli2koru.src.cli2koru.cli
-    line: 40
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._testql_run_scenario:
-    name: _testql_run_scenario
-    module: packages.coru.src.coru.cli_calibration
-    line: 153
-    cyclomatic_complexity: 12
+    calls_in: 4
+  packages.dsl2koru.src.dsl2koru.handlers._query_lane_status:
+    name: _query_lane_status
+    module: packages.dsl2koru.src.dsl2koru.handlers
+    line: 57
+    cyclomatic_complexity: 1
     calls_out: 11
-    calls_in: 2
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.cli._cmd_encode:
+    name: _cmd_encode
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 108
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 0
   packages.coru.src.coru.cli._warn_integrated_terminal_daemon_mismatch:
     name: _warn_integrated_terminal_daemon_mismatch
     module: packages.coru.src.coru.cli
@@ -523,19 +334,271 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 4
     calls_in: 1
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_chat:
-    name: _serialize_chat
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 64
+  packages.mcp2coru.src.mcp2coru.server.create_server:
+    name: create_server
+    module: packages.mcp2coru.src.mcp2coru.server
+    line: 53
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 3
+  packages.nlp2coru.src.nlp2coru.heuristic._contains_any:
+    name: _contains_any
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 39
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 8
+  packages.dsl2coru.src.dsl2coru.pb_codec.result_to_pb:
+    name: result_to_pb
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 290
     cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  packages.coru.src.coru.cli._chain_project_from_plans:
+    name: _chain_project_from_plans
+    module: packages.coru.src.coru.cli
+    line: 88
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  packages.coru.src.coru.cli_calibration._format_calibration_bridge_report:
+    name: _format_calibration_bridge_report
+    module: packages.coru.src.coru.cli_calibration
+    line: 236
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 2
+  packages.uri2coru.src.uri2coru.decode.uri_to_dsl:
+    name: uri_to_dsl
+    module: packages.uri2coru.src.uri2coru.decode
+    line: 86
+    cyclomatic_complexity: 7
+    calls_out: 18
+    calls_in: 4
+  packages.dsl2koru.src.dsl2koru.handlers._query_repair_history:
+    name: _query_repair_history
+    module: packages.dsl2koru.src.dsl2koru.handlers
+    line: 42
+    cyclomatic_complexity: 2
+    calls_out: 14
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.pb_codec._set_body:
+    name: _set_body
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 128
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 1
+  packages.coru.src.coru.cli._infer_default_ide:
+    name: _infer_default_ide
+    module: packages.coru.src.coru.cli
+    line: 1226
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 3
+  packages.coru.src.coru.ecosystem.sync_python_packages:
+    name: sync_python_packages
+    module: packages.coru.src.coru.ecosystem
+    line: 56
+    cyclomatic_complexity: 6
     calls_out: 5
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_key:
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.parser._parse_ui_key:
     name: _parse_ui_key
-    module: packages.dsl2coru.src.dsl2coru.grammar
+    module: packages.dsl2coru.src.dsl2coru.parser
     line: 181
     cyclomatic_complexity: 2
     calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli_calibration._lane_calibration:
+    name: _lane_calibration
+    module: packages.coru.src.coru.cli_calibration
+    line: 504
+    cyclomatic_complexity: 14
+    calls_out: 25
+    calls_in: 2
+  packages.nlp2coru.src.nlp2coru.apply._execute_line:
+    name: _execute_line
+    module: packages.nlp2coru.src.nlp2coru.apply
+    line: 12
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  packages.coru.src.coru.cli._project_from_argv:
+    name: _project_from_argv
+    module: packages.coru.src.coru.cli
+    line: 77
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.pb_codec.encode_protobuf:
+    name: encode_protobuf
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 269
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.koruenv.src.koruenv.cli._iso_ts:
+    name: _iso_ts
+    module: packages.koruenv.src.koruenv.cli
+    line: 21
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.koru.wizard.gui.static.wizard.list:
+    name: list
+    module: src.koru.wizard.gui.static.wizard
+    line: 142
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 200
+  packages.coru.src.coru.cli_calibration._format_calibration_probe_report:
+    name: _format_calibration_probe_report
+    module: packages.coru.src.coru.cli_calibration
+    line: 435
+    cyclomatic_complexity: 9
+    calls_out: 11
+    calls_in: 1
+  packages.nlp2coru.src.nlp2coru.heuristic._refactor_intent:
+    name: _refactor_intent
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 17
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 2
+  packages.coru.src.coru.cli._remember_project_ide_settings:
+    name: _remember_project_ide_settings
+    module: packages.coru.src.coru.cli
+    line: 1024
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 1
+  packages.mcp2koru.src.mcp2koru.tools.koru_run_command_pb:
+    name: koru_run_command_pb
+    module: packages.mcp2koru.src.mcp2koru.tools
+    line: 20
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.cli._run_results:
+    name: _run_results
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 19
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 4
+  packages.uri2koru.src.uri2koru.uri.uri_for_cmd:
+    name: uri_for_cmd
+    module: packages.uri2koru.src.uri2koru.uri
+    line: 28
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._parse_env:
+    name: _parse_env
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 65
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 0
+  packages.coru.src.coru.cli._venv_has_installed_module:
+    name: _venv_has_installed_module
+    module: packages.coru.src.coru.cli
+    line: 621
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.grammar._split_command:
+    name: _split_command
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 11
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koru.integrations.imgl_client.execute_nl:
+    name: execute_nl
+    module: src.koru.integrations.imgl_client
+    line: 169
+    cyclomatic_complexity: 14
+    calls_out: 25
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.parser._parse_auto:
+    name: _parse_auto
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 77
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.pb_codec.dict_to_envelope:
+    name: dict_to_envelope
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 138
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 3
+  packages.coru.src.coru.cli._print_runtime_versions:
+    name: _print_runtime_versions
+    module: packages.coru.src.coru.cli
+    line: 236
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 3
+  packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command:
+    name: run_ui_command
+    module: packages.dsl2coru.src.dsl2coru.handlers.ui
+    line: 10
+    cyclomatic_complexity: 15
+    calls_out: 32
+    calls_in: 1
+  packages.coru.src.coru.cli._env_default_ide:
+    name: _env_default_ide
+    module: packages.coru.src.coru.cli
+    line: 1201
+    cyclomatic_complexity: 10
+    calls_out: 15
+    calls_in: 1
+  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.__init__:
+    name: __init__
+    module: packages.nlpshim.src.nlpshim.client
+    line: 87
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.pb_codec.encode_result_protobuf:
+    name: encode_result_protobuf
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 162
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 4
+  packages.coru.src.coru.cli_calibration._probe_report_unverified_hint:
+    name: _probe_report_unverified_hint
+    module: packages.coru.src.coru.cli_calibration
+    line: 426
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 1
+  packages.cli2coru.src.cli2coru.cli._handle_run:
+    name: _handle_run
+    module: packages.cli2coru.src.cli2coru.cli
+    line: 30
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.codegen.build_model_registry:
+    name: build_model_registry
+    module: packages.dsl2koru.src.dsl2koru.codegen
+    line: 35
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb:
+    name: _append_pb
+    module: packages.dsl2coru.src.dsl2coru.events
+    line: 65
+    cyclomatic_complexity: 3
+    calls_out: 26
     calls_in: 0
   packages.dsl2coru.src.dsl2coru.pb_codec.encode_text_to_protobuf:
     name: encode_text_to_protobuf
@@ -544,20 +607,216 @@ nodes:
     cyclomatic_complexity: 3
     calls_out: 3
     calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_lane:
-    name: _serialize_lane
+  packages.dsl2coru.src.dsl2coru.grammar._parse_auto:
+    name: _parse_auto
     module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 271
+    line: 77
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 0
+  packages.cli2koru.src.cli2koru.cli._print_result:
+    name: _print_result
+    module: packages.cli2koru.src.cli2koru.cli
+    line: 16
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.pb_codec.encode_text_to_protobuf:
+    name: encode_text_to_protobuf
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 139
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 0
+  src.koruide.ide.detect_terminal_host_context:
+    name: detect_terminal_host_context
+    module: src.koruide.ide
+    line: 657
+    cyclomatic_complexity: 9
+    calls_out: 9
+    calls_in: 5
+  packages.coru.src.coru.cli._coru_projects_equivalent:
+    name: _coru_projects_equivalent
+    module: packages.coru.src.coru.cli
+    line: 115
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  packages.coru.src.coru.cli_calibration._calibration_desktop_focus_titles:
+    name: _calibration_desktop_focus_titles
+    module: packages.coru.src.coru.cli_calibration
+    line: 28
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.codec.validate_payload:
+    name: validate_payload
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 15
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 5
+  packages.mcp2coru.src.mcp2coru.tools.coru_run_command:
+    name: coru_run_command
+    module: packages.mcp2coru.src.mcp2coru.tools
+    line: 8
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.parser._parse_doctor:
+    name: _parse_doctor
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 101
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 0
+  packages.coru.src.coru.cli._agent_lane_from_auto_args:
+    name: _agent_lane_from_auto_args
+    module: packages.coru.src.coru.cli
+    line: 269
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 1
+  packages.nlp2coru.src.nlp2coru.llm_backend.get_backend:
+    name: get_backend
+    module: packages.nlp2coru.src.nlp2coru.llm_backend
+    line: 88
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_chat:
+    name: _serialize_chat
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 64
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.pb_codec.envelope_to_dict:
+    name: envelope_to_dict
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 257
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.schema_registry.schema_for_verb:
+    name: schema_for_verb
+    module: packages.dsl2coru.src.dsl2coru.schema_registry
+    line: 62
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.parser._parse_ensure:
+    name: _parse_ensure
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 96
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  packages.nlpshim.src.nlpshim.conversation_test_api.parse_conversation_step:
+    name: parse_conversation_step
+    module: packages.nlpshim.src.nlpshim.conversation_test_api
+    line: 32
+    cyclomatic_complexity: 10
+    calls_out: 16
+    calls_in: 0
+  packages.coru.src.coru.cli._alive_daemon_ide:
+    name: _alive_daemon_ide
+    module: packages.coru.src.coru.cli
+    line: 1130
+    cyclomatic_complexity: 8
+    calls_out: 6
+    calls_in: 2
+  packages.mcp2koru.src.mcp2koru.cli.main:
+    name: main
+    module: packages.mcp2koru.src.mcp2koru.cli
+    line: 11
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 0
+  packages.coru.src.coru.cli._autonomous_startup_chain:
+    name: _autonomous_startup_chain
+    module: packages.coru.src.coru.cli
+    line: 252
+    cyclomatic_complexity: 2
+    calls_out: 8
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._parse_text:
+    name: _parse_text
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 131
+    cyclomatic_complexity: 8
+    calls_out: 6
+    calls_in: 0
+  packages.coru.src.coru.cli._extract_global_flags:
+    name: _extract_global_flags
+    module: packages.coru.src.coru.cli
+    line: 487
+    cyclomatic_complexity: 10
+    calls_out: 11
+    calls_in: 1
+  packages.coru.src.coru.cli._choose_option:
+    name: _choose_option
+    module: packages.coru.src.coru.cli
+    line: 423
+    cyclomatic_complexity: 9
+    calls_out: 11
+    calls_in: 2
+  packages.mcp2coru.src.mcp2coru.server._require_fastmcp:
+    name: _require_fastmcp
+    module: packages.mcp2coru.src.mcp2coru.server
+    line: 9
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.codec.envelope_to_json:
+    name: envelope_to_json
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 41
     cyclomatic_complexity: 1
     calls_out: 3
     calls_in: 0
-  packages.cli2coru.src.cli2coru.cli._handle_run:
-    name: _handle_run
+  packages.uri2coru.src.uri2coru.uri.parse_coru_uri:
+    name: parse_coru_uri
+    module: packages.uri2coru.src.uri2coru.uri
+    line: 41
+    cyclomatic_complexity: 7
+    calls_out: 9
+    calls_in: 1
+  packages.cli2coru.src.cli2coru.cli._handle_shell:
+    name: _handle_shell
     module: packages.cli2coru.src.cli2coru.cli
-    line: 30
-    cyclomatic_complexity: 3
-    calls_out: 4
+    line: 26
+    cyclomatic_complexity: 1
+    calls_out: 1
     calls_in: 0
+  packages.dsl2coru.src.dsl2coru.bus._dispatch_koru:
+    name: _dispatch_koru
+    module: packages.dsl2coru.src.dsl2coru.bus
+    line: 16
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 2
+  packages.coru.src.coru.cli._connected_daemon_instance:
+    name: _connected_daemon_instance
+    module: packages.coru.src.coru.cli
+    line: 1096
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 2
+  packages.coru.src.coru.cli._supervisor_default_instance:
+    name: _supervisor_default_instance
+    module: packages.coru.src.coru.cli
+    line: 1250
+    cyclomatic_complexity: 10
+    calls_out: 3
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.cli._main_subcommand:
+    name: _main_subcommand
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 41
+    cyclomatic_complexity: 1
+    calls_out: 28
+    calls_in: 1
   packages.coru.src.coru.cli_calibration._format_calibration_desktop_report:
     name: _format_calibration_desktop_report
     module: packages.coru.src.coru.cli_calibration
@@ -572,38 +831,1081 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 7
     calls_in: 1
-  packages.dsl2coru.src.dsl2coru.cli._main_legacy:
-    name: _main_legacy
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 80
-    cyclomatic_complexity: 5
-    calls_out: 17
+  packages.dsl2koru.src.dsl2koru.cli._main_subcommand:
+    name: _main_subcommand
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 41
+    cyclomatic_complexity: 1
+    calls_out: 24
     calls_in: 1
-  project.print:
-    name: print
-    module: project
-    line: 92
-    cyclomatic_complexity: 0
-    calls_out: 0
-    calls_in: 922
-  packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes:
-    name: envelope_from_bytes
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 36
+  packages.dsl2koru.src.dsl2koru.schema_registry.schema_for_verb:
+    name: schema_for_verb
+    module: packages.dsl2koru.src.dsl2koru.schema_registry
+    line: 27
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.grammar.to_text:
+    name: to_text
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 374
+    cyclomatic_complexity: 4
+    calls_out: 12
+    calls_in: 0
+  packages.coru.src.coru.cli_calibration._write_calibration_bridge_testql:
+    name: _write_calibration_bridge_testql
+    module: packages.coru.src.coru.cli_calibration
+    line: 128
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  packages.mcp2coru.src.mcp2coru.tools.coru_to_dsl:
+    name: coru_to_dsl
+    module: packages.mcp2coru.src.mcp2coru.tools
+    line: 27
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.schema_registry._load_schemas:
+    name: _load_schemas
+    module: packages.dsl2koru.src.dsl2koru.schema_registry
+    line: 15
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 9
+  packages.dsl2koru.src.dsl2koru.bus.dispatch:
+    name: dispatch
+    module: packages.dsl2koru.src.dsl2koru.bus
+    line: 15
+    cyclomatic_complexity: 11
+    calls_out: 25
+    calls_in: 27
+  packages.uri2coru.src.uri2coru.nlp2uri.best_uri:
+    name: best_uri
+    module: packages.uri2coru.src.uri2coru.nlp2uri
+    line: 90
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 2
+  packages.koruenv.src.koruenv.lane._fallback_temp_dir:
+    name: _fallback_temp_dir
+    module: packages.koruenv.src.koruenv.lane
+    line: 41
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl:
+    name: _append_jsonl
+    module: packages.dsl2coru.src.dsl2coru.events
+    line: 91
+    cyclomatic_complexity: 3
+    calls_out: 26
+    calls_in: 0
+  packages.cli2koru.src.cli2koru.cli._handle_exec:
+    name: _handle_exec
+    module: packages.cli2koru.src.cli2koru.cli
+    line: 40
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._parse_calibration:
+    name: _parse_calibration
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 110
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 0
+  packages.coru.src.coru.ecosystem._detect_running_plugin_ides:
+    name: _detect_running_plugin_ides
+    module: packages.coru.src.coru.ecosystem
+    line: 83
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  packages.coru.src.coru.cli._startup_mode:
+    name: _startup_mode
+    module: packages.coru.src.coru.cli
+    line: 240
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.handlers._repair_run:
+    name: _repair_run
+    module: packages.dsl2koru.src.dsl2koru.handlers
+    line: 94
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 1
+  packages.coru.src.coru.cli_calibration._run_calibration_bridge_preflight:
+    name: _run_calibration_bridge_preflight
+    module: packages.coru.src.coru.cli_calibration
+    line: 304
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 1
+  packages.koruenv.src.koruenv.lane.validate_instance:
+    name: validate_instance
+    module: packages.koruenv.src.koruenv.lane
+    line: 34
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 4
+  packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql:
+    name: _materialize_calibration_desktop_oql
+    module: packages.coru.src.coru.cli_calibration
+    line: 60
+    cyclomatic_complexity: 7
+    calls_out: 22
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.codegen.main:
+    name: main
+    module: packages.dsl2koru.src.dsl2koru.codegen
+    line: 98
+    cyclomatic_complexity: 6
+    calls_out: 18
+    calls_in: 0
+  packages.uri2coru.src.uri2coru.uri._decode:
+    name: _decode
+    module: packages.uri2coru.src.uri2coru.uri
+    line: 16
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  packages.coru.src.coru.cli_calibration._desktop_capture_enabled:
+    name: _desktop_capture_enabled
+    module: packages.coru.src.coru.cli_calibration
+    line: 37
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  packages.cli2coru.src.cli2coru.shell.run_shell:
+    name: run_shell
+    module: packages.cli2coru.src.cli2coru.shell
+    line: 8
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.bus.execute_dsl_line:
+    name: execute_dsl_line
+    module: packages.dsl2koru.src.dsl2koru.bus
+    line: 74
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 3
+  packages.dsl2koru.src.dsl2koru.grammar.parse_line:
+    name: parse_line
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 73
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 4
+  packages.coru.src.coru.cli._project_venv_python:
+    name: _project_venv_python
+    module: packages.coru.src.coru.cli
+    line: 638
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 5
+  src.koru.autonomous_runtime.normalize_project_root:
+    name: normalize_project_root
+    module: src.koru.autonomous_runtime
+    line: 91
+    cyclomatic_complexity: 7
+    calls_out: 6
+    calls_in: 11
+  packages.dsl2koru.src.dsl2koru.grammar._parse_resolve:
+    name: _parse_resolve
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 43
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.codegen._python_type:
+    name: _python_type
+    module: packages.dsl2koru.src.dsl2koru.codegen
+    line: 14
+    cyclomatic_complexity: 11
+    calls_out: 5
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_text:
+    name: _serialize_text
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 305
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  packages.mcp2coru.src.mcp2coru.server.CoruMCPServer.__post_init__:
+    name: __post_init__
+    module: packages.mcp2coru.src.mcp2coru.server
+    line: 21
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.openrouter_config.setup_openrouter_env:
+    name: setup_openrouter_env
+    module: packages.nlp2coru.src.nlp2coru.openrouter_config
+    line: 37
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.parser._split_command:
+    name: _split_command
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 11
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  packages.uri2coru.src.uri2coru.run.run_uri:
+    name: run_uri
+    module: packages.uri2coru.src.uri2coru.run
+    line: 10
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.grammar._parse_status:
+    name: _parse_status
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 56
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf_to_text:
+    name: decode_protobuf_to_text
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 146
     cyclomatic_complexity: 1
     calls_out: 2
-    calls_in: 5
-  packages.dsl2coru.src.dsl2coru.parser._parse_lane:
-    name: _parse_lane
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_doctor:
+    name: _serialize_doctor
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 282
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  packages.coru.src.coru.cli._trace_enabled:
+    name: _trace_enabled
+    module: packages.coru.src.coru.cli
+    line: 150
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.bus.execute_dsl:
+    name: execute_dsl
+    module: packages.dsl2koru.src.dsl2koru.bus
+    line: 78
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 12
+  packages.dsl2koru.src.dsl2koru.cli._cmd_validate_schema:
+    name: _cmd_validate_schema
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 98
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.cli._cmd_roundtrip:
+    name: _cmd_roundtrip
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 141
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.heuristic.heuristic_plan:
+    name: heuristic_plan
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 78
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 4
+  packages.coru.src.coru.cli._trace:
+    name: _trace
+    module: packages.coru.src.coru.cli
+    line: 154
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 23
+  packages.coru.src.coru.cli._interactive_default_auto_args:
+    name: _interactive_default_auto_args
+    module: packages.coru.src.coru.cli
+    line: 478
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.parser._parse_ui_click:
+    name: _parse_ui_click
     module: packages.dsl2coru.src.dsl2coru.parser
+    line: 188
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._append_flag:
+    name: _append_flag
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 241
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 13
+  packages.nlp2coru.src.nlp2coru.heuristic._heuristic_intent:
+    name: _heuristic_intent
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 43
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.nlp2coru.src.nlp2coru.apply.apply_prompt:
+    name: apply_prompt
+    module: packages.nlp2coru.src.nlp2coru.apply
+    line: 18
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 2
+  packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os:
+    name: resolve_lane_socket_for_os
+    module: packages.koruenv.src.koruenv.lane
+    line: 55
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 2
+  packages.coru.src.coru.cli._supervisor_project_choices:
+    name: _supervisor_project_choices
+    module: packages.coru.src.coru.cli
+    line: 344
+    cyclomatic_complexity: 7
+    calls_out: 10
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.schema_registry.all_verbs:
+    name: all_verbs
+    module: packages.dsl2coru.src.dsl2coru.schema_registry
+    line: 69
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.control.is_dsl2koru_line:
+    name: is_dsl2koru_line
+    module: packages.nlp2coru.src.nlp2coru.control
+    line: 8
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  packages.uri2koru.src.uri2koru.nlp2uri.best_uri:
+    name: best_uri
+    module: packages.uri2koru.src.uri2koru.nlp2uri
+    line: 83
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.bus.dispatch:
+    name: dispatch
+    module: packages.dsl2coru.src.dsl2coru.bus
+    line: 42
+    cyclomatic_complexity: 14
+    calls_out: 24
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.grammar._flag:
+    name: _flag
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 9
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 12
+  packages.koruenv.src.koruenv.cli._strip_double_dash:
+    name: _strip_double_dash
+    module: packages.koruenv.src.koruenv.cli
+    line: 99
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.pb_codec.envelope_to_dict:
+    name: envelope_to_dict
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 112
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 4
+  packages.coru.src.coru.cli._lane_status_payload:
+    name: _lane_status_payload
+    module: packages.coru.src.coru.cli
+    line: 1615
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 12
+  packages.dsl2coru.src.dsl2coru.codegen.render_models_module:
+    name: render_models_module
+    module: packages.dsl2coru.src.dsl2coru.codegen
+    line: 54
+    cyclomatic_complexity: 7
+    calls_out: 19
+    calls_in: 1
+  packages.nlp2coru.src.nlp2coru.openrouter_config.get_fallback_model:
+    name: get_fallback_model
+    module: packages.nlp2coru.src.nlp2coru.openrouter_config
+    line: 63
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  packages.uri2coru.src.uri2coru.uri.uri_for_block:
+    name: uri_for_block
+    module: packages.uri2coru.src.uri2coru.uri
+    line: 20
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.parser._parse_sync:
+    name: _parse_sync
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 143
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.heuristic.to_dsl_lines:
+    name: to_dsl_lines
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 85
+    cyclomatic_complexity: 13
+    calls_out: 14
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.codec.envelope_from_json:
+    name: envelope_from_json
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 45
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.grammar._parse_query_lane_status:
+    name: _parse_query_lane_status
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 29
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._add_lane_identifiers:
+    name: _add_lane_identifiers
+    module: packages.coru.src.coru.cli
+    line: 3355
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 11
+  packages.dsl2coru.src.dsl2coru.bus.dispatch_text:
+    name: dispatch_text
+    module: packages.dsl2coru.src.dsl2coru.bus
+    line: 133
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._alive_daemon_instance:
+    name: _alive_daemon_instance
+    module: packages.coru.src.coru.cli
+    line: 367
+    cyclomatic_complexity: 13
+    calls_out: 16
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.cli.main:
+    name: main
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 34
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.cli._cmd_run:
+    name: _cmd_run
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 159
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.pb_codec._extract_auto:
+    name: _extract_auto
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 162
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 0
+  packages.coru.src.coru.cli_calibration._write_calibration_desktop_oql:
+    name: _write_calibration_desktop_oql
+    module: packages.coru.src.coru.cli_calibration
+    line: 114
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  packages.coru.src.coru.cli_calibration._parse_drive_json_from_stdout:
+    name: _parse_drive_json_from_stdout
+    module: packages.coru.src.coru.cli_calibration
+    line: 335
+    cyclomatic_complexity: 8
+    calls_out: 7
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.codegen._python_type:
+    name: _python_type
+    module: packages.dsl2coru.src.dsl2coru.codegen
+    line: 13
+    cyclomatic_complexity: 9
+    calls_out: 4
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.cli._cmd_run:
+    name: _cmd_run
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 153
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes:
+    name: envelope_to_bytes
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 31
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 3
+  packages.koruenv.src.koruenv.cli._emit_log:
+    name: _emit_log
+    module: packages.koruenv.src.koruenv.cli
+    line: 25
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 6
+  packages.coru.src.coru.cli_calibration._append_desktop_focus_lines:
+    name: _append_desktop_focus_lines
+    module: packages.coru.src.coru.cli_calibration
+    line: 54
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  packages.koruenv.src.koruenv.cli.main:
+    name: main
+    module: packages.koruenv.src.koruenv.cli
+    line: 143
+    cyclomatic_complexity: 5
+    calls_out: 18
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.pb_codec._set_body:
+    name: _set_body
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 60
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.handlers._resolve:
+    name: _resolve
+    module: packages.dsl2koru.src.dsl2koru.handlers
+    line: 80
+    cyclomatic_complexity: 3
+    calls_out: 8
+    calls_in: 1
+  packages.coru.src.coru.cli_calibration._lane_drive_capture:
+    name: _lane_drive_capture
+    module: packages.coru.src.coru.cli_calibration
+    line: 355
+    cyclomatic_complexity: 8
+    calls_out: 12
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.pb_codec.encode_result_protobuf:
+    name: encode_result_protobuf
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 322
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.mcp2koru.src.mcp2koru.server.run_server:
+    name: run_server
+    module: packages.mcp2koru.src.mcp2koru.server
+    line: 57
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._project_repo_root:
+    name: _project_repo_root
+    module: packages.coru.src.coru.cli
+    line: 606
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 18
+  packages.coru.src.coru.cli._current_log_format:
+    name: _current_log_format
+    module: packages.coru.src.coru.cli
+    line: 178
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._parse_lane:
+    name: _parse_lane
+    module: packages.dsl2coru.src.dsl2coru.grammar
     line: 87
     cyclomatic_complexity: 4
     calls_out: 3
     calls_in: 0
-  packages.mcp2coru.src.mcp2coru.tools.coru_run_command_pb:
-    name: coru_run_command_pb
-    module: packages.mcp2coru.src.mcp2coru.tools
-    line: 20
+  packages.coru.src.coru.cli._auto_default_instance:
+    name: _auto_default_instance
+    module: packages.coru.src.coru.cli
+    line: 1281
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.parser._parse_chat:
+    name: _parse_chat
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 122
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.codec.envelope_to_bytes:
+    name: envelope_to_bytes
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 31
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.koruenv.src.koruenv.lane.resolve_lane_socket:
+    name: resolve_lane_socket
+    module: packages.koruenv.src.koruenv.lane
+    line: 50
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.pb_codec.result_to_pb:
+    name: result_to_pb
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 150
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 4
+  packages.coru.src.coru.cli._installed_module_source_dir:
+    name: _installed_module_source_dir
+    module: packages.coru.src.coru.cli
+    line: 721
+    cyclomatic_complexity: 7
+    calls_out: 8
+    calls_in: 1
+  packages.coru.src.coru.cli._interactive_select_agent_lane:
+    name: _interactive_select_agent_lane
+    module: packages.coru.src.coru.cli
+    line: 445
+    cyclomatic_complexity: 8
+    calls_out: 7
+    calls_in: 1
+  packages.coru.src.coru.cli._binary_path:
+    name: _binary_path
+    module: packages.coru.src.coru.cli
+    line: 546
+    cyclomatic_complexity: 8
+    calls_out: 13
+    calls_in: 4
+  packages.dsl2koru.src.dsl2koru.handlers.run_command:
+    name: run_command
+    module: packages.dsl2koru.src.dsl2koru.handlers
+    line: 35
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 3
+  packages.nlp2coru.src.nlp2coru.to_dsl.to_dsl:
+    name: to_dsl
+    module: packages.nlp2coru.src.nlp2coru.to_dsl
+    line: 13
+    cyclomatic_complexity: 11
+    calls_out: 11
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.openrouter_config.get_ollama_base_url:
+    name: get_ollama_base_url
+    module: packages.nlp2coru.src.nlp2coru.openrouter_config
+    line: 68
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  packages.coru.src.coru.cli_calibration._testql_run_scenario:
+    name: _testql_run_scenario
+    module: packages.coru.src.coru.cli_calibration
+    line: 153
+    cyclomatic_complexity: 12
+    calls_out: 11
+    calls_in: 2
+  packages.coru.src.coru.cli._cwd_repo_root:
+    name: _cwd_repo_root
+    module: packages.coru.src.coru.cli
+    line: 599
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  packages.coru.src.coru.cli._workspace_socket_path_for_ide:
+    name: _workspace_socket_path_for_ide
+    module: packages.coru.src.coru.cli
+    line: 945
+    cyclomatic_complexity: 7
+    calls_out: 8
+    calls_in: 1
+  packages.koruenv.src.koruenv.cli._run_with_overlay:
+    name: _run_with_overlay
+    module: packages.koruenv.src.koruenv.cli
+    line: 106
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 2
+  packages.cli2coru.src.cli2coru.cli._handle_exec:
+    name: _handle_exec
+    module: packages.cli2coru.src.cli2coru.cli
+    line: 40
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_key:
+    name: _parse_ui_key
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 181
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.export_trace:
+    name: export_trace
+    module: packages.nlpshim.src.nlpshim.conversation_client
+    line: 72
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._ui_args:
+    name: _ui_args
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 39
+    cyclomatic_complexity: 9
+    calls_out: 8
+    calls_in: 4
+  packages.uri2coru.src.uri2coru.uri._encode:
+    name: _encode
+    module: packages.uri2coru.src.uri2coru.uri
+    line: 12
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 4
+  packages.coru.src.coru.cli._supervisor_lane_project:
+    name: _supervisor_lane_project
+    module: packages.coru.src.coru.cli
+    line: 1056
+    cyclomatic_complexity: 8
+    calls_out: 9
+    calls_in: 1
+  packages.mcp2koru.src.mcp2koru.server.create_server:
+    name: create_server
+    module: packages.mcp2koru.src.mcp2koru.server
+    line: 53
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_repair_run:
+    name: _serialize_repair_run
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 87
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.heuristic.detect_setup_intent:
+    name: detect_setup_intent
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 22
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  packages.coru.src.coru.cli_calibration._testql_run_oql:
+    name: _testql_run_oql
+    module: packages.coru.src.coru.cli_calibration
+    line: 197
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.serializer._append_flag:
+    name: _append_flag
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 8
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 13
+  packages.coru.src.coru.cli._project_settings_default_ide:
+    name: _project_settings_default_ide
+    module: packages.coru.src.coru.cli
+    line: 1183
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.handlers.query.run_query:
+    name: run_query
+    module: packages.dsl2coru.src.dsl2coru.handlers.query
+    line: 12
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.cli._cmd_roundtrip:
+    name: _cmd_roundtrip
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 135
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.uri2koru.src.uri2koru.uri.parse_koru_uri:
+    name: parse_koru_uri
+    module: packages.uri2koru.src.uri2koru.uri
+    line: 40
+    cyclomatic_complexity: 7
+    calls_out: 9
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text:
+    name: roundtrip_text
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 52
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.grammar._parse_validate_lane:
+    name: _parse_validate_lane
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 36
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._run_default_autonomous:
+    name: _run_default_autonomous
+    module: packages.coru.src.coru.cli
+    line: 280
+    cyclomatic_complexity: 11
+    calls_out: 25
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_click:
+    name: _parse_ui_click
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 188
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  packages.coru.src.coru.cli_calibration._probe_report_header_lines:
+    name: _probe_report_header_lines
+    module: packages.coru.src.coru.cli_calibration
+    line: 404
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  packages.cli2coru.src.cli2coru.cli._print_result:
+    name: _print_result
+    module: packages.cli2coru.src.cli2coru.cli
+    line: 16
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 2
+  packages.coru.src.coru.cli._run:
+    name: _run
+    module: packages.coru.src.coru.cli
+    line: 516
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 4
+  packages.nlp2coru.src.nlp2coru.control.dispatch_line:
+    name: dispatch_line
+    module: packages.nlp2coru.src.nlp2coru.control
+    line: 15
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf_to_text:
+    name: decode_protobuf_to_text
+    module: packages.dsl2coru.src.dsl2coru.pb_codec
+    line: 286
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_auto:
+    name: _serialize_auto
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 31
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_common:
+    name: _parse_ui_common
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 157
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 4
+  src.koruide.ide.detect_running_ides:
+    name: detect_running_ides
+    module: src.koruide.ide
+    line: 287
+    cyclomatic_complexity: 17
+    calls_out: 11
+    calls_in: 27
+  packages.coru.src.coru.cli._local_module_source_dir:
+    name: _local_module_source_dir
+    module: packages.coru.src.coru.cli
+    line: 706
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.codegen.build_model_registry:
+    name: build_model_registry
+    module: packages.dsl2coru.src.dsl2coru.codegen
+    line: 31
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.schema_registry.validate_schemas:
+    name: validate_schemas
+    module: packages.dsl2coru.src.dsl2coru.schema_registry
+    line: 73
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 0
+  packages.koruenv.src.koruenv.lane.validate_ide:
+    name: validate_ide
+    module: packages.koruenv.src.koruenv.lane
+    line: 26
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 3
+  packages.uri2coru.src.uri2coru.uri.is_coru_uri:
+    name: is_coru_uri
+    module: packages.uri2coru.src.uri2coru.uri
+    line: 37
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.cli._main_legacy:
+    name: _main_legacy
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 75
+    cyclomatic_complexity: 4
+    calls_out: 17
+    calls_in: 1
+  packages.coru.src.coru.cli._distribution_version:
+    name: _distribution_version
+    module: packages.coru.src.coru.cli
+    line: 220
+    cyclomatic_complexity: 6
+    calls_out: 2
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.cli._cmd_replay:
+    name: _cmd_replay
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 146
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 0
+  packages.coru.src.coru.cli._ensure_commands:
+    name: _ensure_commands
+    module: packages.coru.src.coru.cli
+    line: 754
+    cyclomatic_complexity: 11
+    calls_out: 13
+    calls_in: 4
+  packages.uri2koru.src.uri2koru.uri.is_koru_uri:
+    name: is_koru_uri
+    module: packages.uri2koru.src.uri2koru.uri
+    line: 36
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._parse_sync:
+    name: _parse_sync
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 143
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.cli._cmd_replay:
+    name: _cmd_replay
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 140
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  packages.mcp2koru.src.mcp2koru.server.KoruMCPServer.__post_init__:
+    name: __post_init__
+    module: packages.mcp2koru.src.mcp2koru.server
+    line: 21
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.codec.envelope_from_json:
+    name: envelope_from_json
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 45
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.bus.execute_dsl_line:
+    name: execute_dsl_line
+    module: packages.dsl2coru.src.dsl2coru.bus
+    line: 107
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.parser._parse_status:
+    name: _parse_status
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 56
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  packages.coru.src.coru.cli._local_install_target:
+    name: _local_install_target
+    module: packages.coru.src.coru.cli
+    line: 824
+    cyclomatic_complexity: 8
+    calls_out: 8
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.cli._cmd_validate_schema:
+    name: _cmd_validate_schema
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 104
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 0
+  packages.koruenv.src.koruenv.cli._normalize_log_format:
+    name: _normalize_log_format
+    module: packages.koruenv.src.koruenv.cli
+    line: 16
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.codegen.main:
+    name: main
+    module: packages.dsl2coru.src.dsl2coru.codegen
+    line: 88
+    cyclomatic_complexity: 9
+    calls_out: 19
+    calls_in: 0
+  packages.coru.src.coru.cli._is_lane_plugin_connected:
+    name: _is_lane_plugin_connected
+    module: packages.coru.src.coru.cli
+    line: 1079
+    cyclomatic_complexity: 12
+    calls_out: 13
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.cli._cmd_decode:
+    name: _cmd_decode
+    module: packages.dsl2koru.src.dsl2koru.cli
+    line: 123
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 0
+  packages.coru.src.coru.cli._maybe_reexec_into_project_python:
+    name: _maybe_reexec_into_project_python
+    module: packages.coru.src.coru.cli
+    line: 651
+    cyclomatic_complexity: 13
+    calls_out: 27
+    calls_in: 1
+  packages.coru.src.coru.supervisor.registry.active_lane_pair:
+    name: active_lane_pair
+    module: packages.coru.src.coru.supervisor.registry
+    line: 141
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 3
+  packages.cli2koru.src.cli2koru.shell.run_shell:
+    name: run_shell
+    module: packages.cli2koru.src.cli2koru.shell
+    line: 8
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 2
+  packages.nlpshim.src.nlpshim.conversation_test_api.complete_missing_fields:
+    name: complete_missing_fields
+    module: packages.nlpshim.src.nlpshim.conversation_test_api
+    line: 55
     cyclomatic_complexity: 1
     calls_out: 2
     calls_in: 0
@@ -614,321 +1916,6 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 4
     calls_in: 1
-  packages.dsl2coru.src.dsl2coru.codegen.main:
-    name: main
-    module: packages.dsl2coru.src.dsl2coru.codegen
-    line: 88
-    cyclomatic_complexity: 9
-    calls_out: 19
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.bus.execute_dsl_line:
-    name: execute_dsl_line
-    module: packages.dsl2coru.src.dsl2coru.bus
-    line: 107
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.grammar.to_text:
-    name: to_text
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 127
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 5
-  packages.nlp2coru.src.nlp2coru.heuristic._contains_any:
-    name: _contains_any
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 39
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 8
-  packages.dsl2koru.src.dsl2koru.pb_codec.encode_text_to_protobuf:
-    name: encode_text_to_protobuf
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 139
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 0
-  packages.coru.src.coru.cli._print_troubleshooting_log_locations:
-    name: _print_troubleshooting_log_locations
-    module: packages.coru.src.coru.cli
-    line: 2912
-    cyclomatic_complexity: 4
-    calls_out: 15
-    calls_in: 5
-  packages.coru.src.coru.cli._coru_projects_equivalent:
-    name: _coru_projects_equivalent
-    module: packages.coru.src.coru.cli
-    line: 115
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._parse_repair_run:
-    name: _parse_repair_run
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 148
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 0
-  packages.mcp2coru.src.mcp2coru.tools.coru_run_dsl:
-    name: coru_run_dsl
-    module: packages.mcp2coru.src.mcp2coru.tools
-    line: 14
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.cli._target_plugin_rows:
-    name: _target_plugin_rows
-    module: packages.coru.src.coru.cli
-    line: 1928
-    cyclomatic_complexity: 7
-    calls_out: 9
-    calls_in: 2
-  packages.coru.src.coru.cli._trace:
-    name: _trace
-    module: packages.coru.src.coru.cli
-    line: 154
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 23
-  packages.coru.src.coru.cli._instance_from_socket_path:
-    name: _instance_from_socket_path
-    module: packages.coru.src.coru.cli
-    line: 962
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes:
-    name: envelope_to_bytes
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 31
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 3
-  packages.dsl2coru.src.dsl2coru.parser.parse_line:
-    name: parse_line
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 223
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.codec.parse_text:
-    name: parse_text
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 24
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 5
-  packages.nlp2coru.src.nlp2coru.llm_backend.LitellmBackend.complete:
-    name: complete
-    module: packages.nlp2coru.src.nlp2coru.llm_backend
-    line: 38
-    cyclomatic_complexity: 9
-    calls_out: 10
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.handlers.run_query:
-    name: run_query
-    module: packages.dsl2koru.src.dsl2koru.handlers
-    line: 22
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.pb_codec.result_to_pb:
-    name: result_to_pb
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 150
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 4
-  packages.uri2coru.src.uri2coru.run.run_uri:
-    name: run_uri
-    module: packages.uri2coru.src.uri2coru.run
-    line: 10
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.parser._parse_ui_click:
-    name: _parse_ui_click
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 188
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.cli2koru.src.cli2koru.cli._handle_shell:
-    name: _handle_shell
-    module: packages.cli2koru.src.cli2koru.cli
-    line: 26
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  packages.coru.src.coru.cli._emit_log:
-    name: _emit_log
-    module: packages.coru.src.coru.cli
-    line: 182
-    cyclomatic_complexity: 8
-    calls_out: 10
-    calls_in: 5
-  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri:
-    name: nlp2uri
-    module: packages.uri2coru.src.uri2coru.nlp2uri
-    line: 28
-    cyclomatic_complexity: 14
-    calls_out: 23
-    calls_in: 4
-  packages.uri2coru.src.uri2coru.uri.is_coru_uri:
-    name: is_coru_uri
-    module: packages.uri2coru.src.uri2coru.uri
-    line: 37
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.coru.src.coru.cli._tool_available:
-    name: _tool_available
-    module: packages.coru.src.coru.cli
-    line: 746
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 2
-  src.koru.integrations.imgl_client.execute_nl:
-    name: execute_nl
-    module: src.koru.integrations.imgl_client
-    line: 169
-    cyclomatic_complexity: 14
-    calls_out: 25
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.codec.envelope_from_json:
-    name: envelope_from_json
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 45
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 2
-  packages.coru.src.coru.cli._startup_mode:
-    name: _startup_mode
-    module: packages.coru.src.coru.cli
-    line: 240
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 1
-  packages.nlpshim.src.nlpshim.client.analyze_text_structure:
-    name: analyze_text_structure
-    module: packages.nlpshim.src.nlpshim.client
-    line: 77
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 3
-  packages.koruenv.src.koruenv.lane.validate_ide:
-    name: validate_ide
-    module: packages.koruenv.src.koruenv.lane
-    line: 26
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 3
-  packages.coru.src.coru.cli._active_project_root:
-    name: _active_project_root
-    module: packages.coru.src.coru.cli
-    line: 128
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.codec.envelope_from_json:
-    name: envelope_from_json
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 45
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 0
-  packages.uri2koru.src.uri2koru.uri._decode:
-    name: _decode
-    module: packages.uri2koru.src.uri2koru.uri
-    line: 16
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  packages.nlp2coru.src.nlp2coru.heuristic.detect_setup_intent:
-    name: detect_setup_intent
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 22
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.pb_codec._set_body:
-    name: _set_body
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 128
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 1
-  packages.uri2coru.src.uri2coru.decode.uri_to_dsl:
-    name: uri_to_dsl
-    module: packages.uri2coru.src.uri2coru.decode
-    line: 86
-    cyclomatic_complexity: 7
-    calls_out: 18
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command:
-    name: append_command
-    module: packages.dsl2koru.src.dsl2koru.events
-    line: 50
-    cyclomatic_complexity: 3
-    calls_out: 33
-    calls_in: 0
-  packages.coru.src.coru.cli._is_lane_plugin_connected:
-    name: _is_lane_plugin_connected
-    module: packages.coru.src.coru.cli
-    line: 1079
-    cyclomatic_complexity: 12
-    calls_out: 13
-    calls_in: 2
-  packages.coru.src.coru.cli_calibration._run_calibration_bridge_preflight:
-    name: _run_calibration_bridge_preflight
-    module: packages.coru.src.coru.cli_calibration
-    line: 304
-    cyclomatic_complexity: 5
-    calls_out: 9
-    calls_in: 1
-  packages.coru.src.coru.cli._environment_default_instance:
-    name: _environment_default_instance
-    module: packages.coru.src.coru.cli
-    line: 1267
-    cyclomatic_complexity: 7
-    calls_out: 5
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.handlers._resolve:
-    name: _resolve
-    module: packages.dsl2koru.src.dsl2koru.handlers
-    line: 80
-    cyclomatic_complexity: 3
-    calls_out: 8
-    calls_in: 1
-  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.parse_intent:
-    name: parse_intent
-    module: packages.nlpshim.src.nlpshim.client
-    line: 91
-    cyclomatic_complexity: 15
-    calls_out: 20
-    calls_in: 0
-  packages.coru.src.coru.cli._print_runtime_versions:
-    name: _print_runtime_versions
-    module: packages.coru.src.coru.cli
-    line: 236
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 3
-  packages.dsl2koru.src.dsl2koru.cli._cmd_run:
-    name: _cmd_run
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 153
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 0
-  src.koru.wizard.gui.static.wizard.list:
-    name: list
-    module: src.koru.wizard.gui.static.wizard
-    line: 142
-    cyclomatic_complexity: 5
-    calls_out: 9
-    calls_in: 191
   packages.coru.src.coru.cli._project_venv_candidates:
     name: _project_venv_candidates
     module: packages.coru.src.coru.cli
@@ -936,914 +1923,32 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 3
     calls_in: 1
-  packages.dsl2koru.src.dsl2koru.cli._run_results:
-    name: _run_results
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 19
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 4
-  packages.koruenv.src.koruenv.lane.resolve_lane_socket:
-    name: resolve_lane_socket
-    module: packages.koruenv.src.koruenv.lane
-    line: 50
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  packages.coru.src.coru.cli._trace_enabled:
-    name: _trace_enabled
-    module: packages.coru.src.coru.cli
-    line: 150
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf:
-    name: encode_protobuf
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 124
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.cli._cmd_validate_schema:
-    name: _cmd_validate_schema
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 98
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._write_calibration_bridge_testql:
-    name: _write_calibration_bridge_testql
-    module: packages.coru.src.coru.cli_calibration
-    line: 128
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.heuristic._heuristic_intent:
-    name: _heuristic_intent
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 43
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.parser._parse_doctor:
-    name: _parse_doctor
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 101
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 0
-  packages.cli2koru.src.cli2koru.cli._handle_run:
-    name: _handle_run
-    module: packages.cli2koru.src.cli2koru.cli
-    line: 30
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._parse_lane:
-    name: _parse_lane
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_calibration:
+    name: _serialize_calibration
     module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 87
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codec.roundtrip_text:
-    name: roundtrip_text
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 52
-    cyclomatic_complexity: 2
+    line: 290
+    cyclomatic_complexity: 3
     calls_out: 4
     calls_in: 0
-  packages.coru.src.coru.cli._infer_default_instance:
-    name: _infer_default_instance
+  packages.coru.src.coru.cli._normalize_lane_pair:
+    name: _normalize_lane_pair
     module: packages.coru.src.coru.cli
-    line: 1302
+    line: 1349
     cyclomatic_complexity: 7
-    calls_out: 11
-    calls_in: 3
-  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.export_trace:
-    name: export_trace
-    module: packages.nlpshim.src.nlpshim.conversation_client
-    line: 72
-    cyclomatic_complexity: 1
     calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.parser._parse_sync:
-    name: _parse_sync
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 143
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.bus.dispatch:
-    name: dispatch
-    module: packages.dsl2koru.src.dsl2koru.bus
-    line: 15
-    cyclomatic_complexity: 11
-    calls_out: 25
-    calls_in: 27
-  packages.coru.src.coru.cli._interactive_select_agent_lane:
-    name: _interactive_select_agent_lane
-    module: packages.coru.src.coru.cli
-    line: 445
-    cyclomatic_complexity: 8
-    calls_out: 7
-    calls_in: 1
-  packages.coru.src.coru.cli._prefer_terminal_over_lane:
-    name: _prefer_terminal_over_lane
-    module: packages.coru.src.coru.cli
-    line: 1150
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 3
-  packages.coru.src.coru.cli._project_ide_settings_instance:
-    name: _project_ide_settings_instance
-    module: packages.coru.src.coru.cli
-    line: 1243
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  packages.coru.src.coru.cli._integrated_terminal_default_ide:
-    name: _integrated_terminal_default_ide
-    module: packages.coru.src.coru.cli
-    line: 1175
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.openrouter_config.setup_openrouter_env:
-    name: setup_openrouter_env
-    module: packages.nlp2coru.src.nlp2coru.openrouter_config
-    line: 37
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.apply.apply_prompt:
-    name: apply_prompt
-    module: packages.nlp2coru.src.nlp2coru.apply
-    line: 18
-    cyclomatic_complexity: 7
-    calls_out: 7
-    calls_in: 2
-  packages.nlp2coru.src.nlp2coru.openrouter_config.load_project_metadata:
-    name: load_project_metadata
-    module: packages.nlp2coru.src.nlp2coru.openrouter_config
-    line: 10
-    cyclomatic_complexity: 7
-    calls_out: 14
-    calls_in: 1
-  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.__init__:
-    name: __init__
-    module: packages.nlpshim.src.nlpshim.client
-    line: 87
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.uri2coru.src.uri2coru.uri._encode:
-    name: _encode
-    module: packages.uri2coru.src.uri2coru.uri
-    line: 12
-    cyclomatic_complexity: 1
-    calls_out: 1
     calls_in: 4
-  packages.coru.src.coru.cli._cwd_repo_root:
-    name: _cwd_repo_root
-    module: packages.coru.src.coru.cli
-    line: 599
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 1
-  packages.coru.src.coru.ecosystem._detect_running_plugin_ides:
-    name: _detect_running_plugin_ides
-    module: packages.coru.src.coru.ecosystem
-    line: 83
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.cli._cmd_encode:
-    name: _cmd_encode
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 108
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf_to_text:
-    name: decode_protobuf_to_text
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 146
+  packages.dsl2coru.src.dsl2coru.schema_registry.normalize_verb:
+    name: normalize_verb
+    module: packages.dsl2coru.src.dsl2coru.schema_registry
+    line: 44
     cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.cli2coru.src.cli2coru.cli._print_result:
-    name: _print_result
-    module: packages.cli2coru.src.cli2coru.cli
-    line: 16
-    cyclomatic_complexity: 4
     calls_out: 6
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.codegen._python_type:
-    name: _python_type
-    module: packages.dsl2koru.src.dsl2koru.codegen
-    line: 14
-    cyclomatic_complexity: 11
-    calls_out: 5
-    calls_in: 1
-  packages.cli2koru.src.cli2koru.cli._print_result:
-    name: _print_result
-    module: packages.cli2koru.src.cli2koru.cli
-    line: 16
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.codec.parse_text:
-    name: parse_text
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 24
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.parser._parse_ui_type:
-    name: _parse_ui_type
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 168
-    cyclomatic_complexity: 6
-    calls_out: 12
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._run_calibration_desktop_preflight:
-    name: _run_calibration_desktop_preflight
-    module: packages.coru.src.coru.cli_calibration
-    line: 267
-    cyclomatic_complexity: 5
-    calls_out: 10
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.bus.dispatch_text:
-    name: dispatch_text
-    module: packages.dsl2coru.src.dsl2coru.bus
-    line: 133
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.uri2coru.src.uri2coru.nlp2uri.best_uri:
-    name: best_uri
-    module: packages.uri2coru.src.uri2coru.nlp2uri
-    line: 90
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 2
-  packages.coru.src.coru.cli._lane_status_payload:
-    name: _lane_status_payload
-    module: packages.coru.src.coru.cli
-    line: 1615
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 12
-  packages.dsl2koru.src.dsl2koru.grammar._flag:
-    name: _flag
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 9
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 12
-  src.koruide.ide.detect_terminal_host_context:
-    name: detect_terminal_host_context
-    module: src.koruide.ide
-    line: 657
-    cyclomatic_complexity: 9
-    calls_out: 9
     calls_in: 5
-  packages.mcp2koru.src.mcp2koru.tools.koru_run_command_pb:
-    name: koru_run_command_pb
-    module: packages.mcp2koru.src.mcp2koru.tools
-    line: 20
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_click:
-    name: _parse_ui_click
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 188
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.coru.src.coru.cli._ensure_commands:
-    name: _ensure_commands
-    module: packages.coru.src.coru.cli
-    line: 754
-    cyclomatic_complexity: 11
-    calls_out: 13
-    calls_in: 4
-  packages.coru.src.coru.cli._binary_path:
-    name: _binary_path
-    module: packages.coru.src.coru.cli
-    line: 546
-    cyclomatic_complexity: 8
-    calls_out: 13
-    calls_in: 4
-  packages.dsl2coru.src.dsl2coru.grammar._parse_calibration:
-    name: _parse_calibration
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 110
-    cyclomatic_complexity: 6
-    calls_out: 4
-    calls_in: 0
-  packages.coru.src.coru.cli._project_settings_default_ide:
-    name: _project_settings_default_ide
-    module: packages.coru.src.coru.cli
-    line: 1183
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 1
-  packages.koruenv.src.koruenv.lane.validate_instance:
-    name: validate_instance
-    module: packages.koruenv.src.koruenv.lane
-    line: 34
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 4
-  packages.dsl2coru.src.dsl2coru.pb_codec.dict_to_envelope:
-    name: dict_to_envelope
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 138
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 3
-  packages.dsl2coru.src.dsl2coru.parser._parse_ensure:
-    name: _parse_ensure
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 96
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 0
-  packages.coru.src.coru.cli._interactive_default_auto_args:
-    name: _interactive_default_auto_args
-    module: packages.coru.src.coru.cli
-    line: 478
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 1
-  packages.mcp2koru.src.mcp2koru.cli.main:
-    name: main
-    module: packages.mcp2koru.src.mcp2koru.cli
-    line: 11
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 0
-  packages.coru.src.coru.cli._supervisor_lane_defaults:
-    name: _supervisor_lane_defaults
-    module: packages.coru.src.coru.cli
-    line: 1044
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 2
-  packages.coru.src.coru.cli._workspace_default_instance:
-    name: _workspace_default_instance
-    module: packages.coru.src.coru.cli
-    line: 1294
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  packages.koruenv.src.koruenv.lane._fallback_temp_dir:
-    name: _fallback_temp_dir
-    module: packages.koruenv.src.koruenv.lane
-    line: 41
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 1
-  packages.coru.src.coru.cli._supervisor_default_ide:
-    name: _supervisor_default_ide
-    module: packages.coru.src.coru.cli
-    line: 1190
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.codegen.render_models_module:
-    name: render_models_module
-    module: packages.dsl2koru.src.dsl2koru.codegen
-    line: 59
-    cyclomatic_complexity: 12
-    calls_out: 22
-    calls_in: 1
-  packages.coru.src.coru.cli._project_from_argv:
-    name: _project_from_argv
-    module: packages.coru.src.coru.cli
-    line: 77
-    cyclomatic_complexity: 7
-    calls_out: 7
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf:
-    name: decode_protobuf
-    module: packages.dsl2koru.src.dsl2koru.pb_codec
-    line: 133
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 3
-  packages.cli2coru.src.cli2coru.cli._handle_shell:
-    name: _handle_shell
-    module: packages.cli2coru.src.cli2coru.cli
-    line: 26
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.parser._parse_env:
-    name: _parse_env
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 65
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._lane_drive_capture:
-    name: _lane_drive_capture
-    module: packages.coru.src.coru.cli_calibration
-    line: 355
-    cyclomatic_complexity: 8
-    calls_out: 12
-    calls_in: 1
-  src.koruide.ide.detect_running_ides:
-    name: detect_running_ides
-    module: src.koruide.ide
-    line: 287
-    cyclomatic_complexity: 17
-    calls_out: 11
-    calls_in: 27
-  packages.coru.src.coru.cli._coru_normalize_project:
-    name: _coru_normalize_project
-    module: packages.coru.src.coru.cli
-    line: 96
-    cyclomatic_complexity: 7
-    calls_out: 6
-    calls_in: 4
-  packages.coru.src.coru.cli._local_module_source_dir:
-    name: _local_module_source_dir
-    module: packages.coru.src.coru.cli
-    line: 706
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 4
-  packages.coru.src.coru.cli._alive_daemon_ide:
-    name: _alive_daemon_ide
-    module: packages.coru.src.coru.cli
-    line: 1130
-    cyclomatic_complexity: 8
-    calls_out: 6
-    calls_in: 2
-  packages.coru.src.coru.cli_calibration._probe_report_header_lines:
-    name: _probe_report_header_lines
-    module: packages.coru.src.coru.cli_calibration
-    line: 404
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_chat:
-    name: _serialize_chat
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 297
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._probe_report_verification:
-    name: _probe_report_verification
-    module: packages.coru.src.coru.cli_calibration
-    line: 400
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.parser._parse_chat:
-    name: _parse_chat
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 122
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codec.envelope_from_bytes:
-    name: envelope_from_bytes
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 36
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.pb_codec.encode_protobuf:
-    name: encode_protobuf
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 269
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.bus.execute_dsl:
-    name: execute_dsl
-    module: packages.dsl2koru.src.dsl2koru.bus
-    line: 78
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 12
-  packages.coru.src.coru.cli._diagnose_lane:
-    name: _diagnose_lane
-    module: packages.coru.src.coru.cli
-    line: 2860
-    cyclomatic_complexity: 10
-    calls_out: 18
-    calls_in: 4
-  packages.dsl2coru.src.dsl2coru.handlers.runner._run_subprocess:
-    name: _run_subprocess
-    module: packages.dsl2coru.src.dsl2coru.handlers.runner
-    line: 25
-    cyclomatic_complexity: 4
-    calls_out: 1
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.pb_codec.envelope_to_dict:
-    name: envelope_to_dict
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 257
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_auto:
-    name: _serialize_auto
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 264
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.schema_registry.schema_for_verb:
-    name: schema_for_verb
-    module: packages.dsl2koru.src.dsl2koru.schema_registry
-    line: 27
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 4
-  packages.mcp2coru.src.mcp2coru.tools.coru_run_command:
-    name: coru_run_command
-    module: packages.mcp2coru.src.mcp2coru.tools
+  packages.uri2koru.src.uri2koru.decode.uri_to_dsl:
+    name: uri_to_dsl
+    module: packages.uri2koru.src.uri2koru.decode
     line: 8
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.mcp2koru.src.mcp2koru.server.create_server:
-    name: create_server
-    module: packages.mcp2koru.src.mcp2koru.server
-    line: 53
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.llm.llm_plan:
-    name: llm_plan
-    module: packages.nlp2coru.src.nlp2coru.llm
-    line: 23
-    cyclomatic_complexity: 9
-    calls_out: 17
-    calls_in: 3
-  packages.dsl2coru.src.dsl2coru.cli._cmd_validate_schema:
-    name: _cmd_validate_schema
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 104
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 0
-  src.koru.integrations.imgl_client.imgl_available:
-    name: imgl_available
-    module: src.koru.integrations.imgl_client
-    line: 38
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 7
-  packages.coru.src.coru.cli_calibration._format_calibration_probe_report:
-    name: _format_calibration_probe_report
-    module: packages.coru.src.coru.cli_calibration
-    line: 435
-    cyclomatic_complexity: 9
-    calls_out: 11
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.cli._cmd_exec:
-    name: _cmd_exec
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 172
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.mcp2coru.src.mcp2coru.server.CoruMCPServer.__post_init__:
-    name: __post_init__
-    module: packages.mcp2coru.src.mcp2coru.server
-    line: 21
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.parser._ui_args:
-    name: _ui_args
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 39
-    cyclomatic_complexity: 9
-    calls_out: 8
-    calls_in: 4
-  packages.mcp2koru.src.mcp2koru.server.KoruMCPServer.__post_init__:
-    name: __post_init__
-    module: packages.mcp2koru.src.mcp2koru.server
-    line: 21
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
-  packages.coru.src.coru.repair.runtime.run_lane_repair:
-    name: run_lane_repair
-    module: packages.coru.src.coru.repair.runtime
-    line: 11
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  packages.coru.src.coru.cli._running_ide_choices:
-    name: _running_ide_choices
-    module: packages.coru.src.coru.cli
-    line: 327
-    cyclomatic_complexity: 7
-    calls_out: 8
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.handlers.command.run_command:
-    name: run_command
-    module: packages.dsl2coru.src.dsl2coru.handlers.command
-    line: 12
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 0
-  packages.coru.src.coru.cli_calibration._testql_run_oql:
-    name: _testql_run_oql
-    module: packages.coru.src.coru.cli_calibration
-    line: 197
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  packages.coru.src.coru.cli._connected_daemon_instance:
-    name: _connected_daemon_instance
-    module: packages.coru.src.coru.cli
-    line: 1096
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 2
-  packages.coru.src.coru.cli._supervisor_lane_project:
-    name: _supervisor_lane_project
-    module: packages.coru.src.coru.cli
-    line: 1056
-    cyclomatic_complexity: 8
-    calls_out: 9
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_text:
-    name: _serialize_text
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 305
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 0
-  packages.uri2koru.src.uri2koru.run.run_uri:
-    name: run_uri
-    module: packages.uri2koru.src.uri2koru.run
-    line: 10
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.codegen.build_model_registry:
-    name: build_model_registry
-    module: packages.dsl2koru.src.dsl2koru.codegen
-    line: 35
-    cyclomatic_complexity: 3
-    calls_out: 10
-    calls_in: 2
-  packages.coru.src.coru.cli._terminal_ide_hint:
-    name: _terminal_ide_hint
-    module: packages.coru.src.coru.cli
-    line: 870
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 3
-  packages.nlp2coru.src.nlp2coru.heuristic.to_dsl_lines:
-    name: to_dsl_lines
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 85
-    cyclomatic_complexity: 13
-    calls_out: 14
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.grammar._parse_resolve:
-    name: _parse_resolve
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 43
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 0
-  packages.coru.src.coru.cli._ide_from_instance:
-    name: _ide_from_instance
-    module: packages.coru.src.coru.cli
-    line: 927
-    cyclomatic_complexity: 5
-    calls_out: 3
-    calls_in: 8
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_auto:
-    name: _serialize_auto
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 31
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 0
-  packages.coru.src.coru.cli._koru_exec_argv:
-    name: _koru_exec_argv
-    module: packages.coru.src.coru.cli
-    line: 2472
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 15
-  packages.dsl2coru.src.dsl2coru.parser._parse_ui_key:
-    name: _parse_ui_key
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 181
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.parser._parse_text:
-    name: _parse_text
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 131
-    cyclomatic_complexity: 8
-    calls_out: 6
-    calls_in: 0
-  packages.cli2koru.src.cli2koru.shell.run_shell:
-    name: run_shell
-    module: packages.cli2koru.src.cli2koru.shell
-    line: 8
-    cyclomatic_complexity: 9
-    calls_out: 12
-    calls_in: 2
-  packages.nlp2coru.src.nlp2coru.llm_backend.get_backend:
-    name: get_backend
-    module: packages.nlp2coru.src.nlp2coru.llm_backend
-    line: 88
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.grammar._parse_repair_run:
-    name: _parse_repair_run
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 55
-    cyclomatic_complexity: 7
-    calls_out: 4
-    calls_in: 0
-  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message:
-    name: message
-    module: packages.nlpshim.src.nlpshim.conversation_client
-    line: 41
-    cyclomatic_complexity: 9
-    calls_out: 22
-    calls_in: 0
-  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.__init__:
-    name: __init__
-    module: packages.nlpshim.src.nlpshim.conversation_client
-    line: 23
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.parser._parse_ui_nl:
-    name: _parse_ui_nl
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 195
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.pb_codec.encode_result_protobuf:
-    name: encode_result_protobuf
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 322
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.cli._workspace_lane_hint:
-    name: _workspace_lane_hint
-    module: packages.coru.src.coru.cli
-    line: 973
-    cyclomatic_complexity: 8
-    calls_out: 7
-    calls_in: 3
-  packages.coru.src.coru.cli._add_lane_identifiers:
-    name: _add_lane_identifiers
-    module: packages.coru.src.coru.cli
-    line: 3355
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 11
-  packages.coru.src.coru.cli._auto_default_instance:
-    name: _auto_default_instance
-    module: packages.coru.src.coru.cli
-    line: 1281
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.cli._cmd_run:
-    name: _cmd_run
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 159
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 0
-  packages.uri2koru.src.uri2koru.uri.uri_for_cmd:
-    name: uri_for_cmd
-    module: packages.uri2koru.src.uri2koru.uri
-    line: 28
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 0
-  packages.nlpshim.src.nlpshim.conversation_test_api.parse_conversation_step:
-    name: parse_conversation_step
-    module: packages.nlpshim.src.nlpshim.conversation_test_api
-    line: 32
-    cyclomatic_complexity: 10
-    calls_out: 16
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.parser._parse_auto:
-    name: _parse_auto
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 77
-    cyclomatic_complexity: 6
-    calls_out: 4
-    calls_in: 0
-  packages.coru.src.coru.cli._cmd_exists:
-    name: _cmd_exists
-    module: packages.coru.src.coru.cli
-    line: 542
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  packages.nlp2coru.src.nlp2coru.to_dsl.to_dsl:
-    name: to_dsl
-    module: packages.nlp2coru.src.nlp2coru.to_dsl
-    line: 13
-    cyclomatic_complexity: 11
-    calls_out: 11
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.bus.execute_dsl:
-    name: execute_dsl
-    module: packages.dsl2coru.src.dsl2coru.bus
-    line: 117
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.cli._cmd_roundtrip:
-    name: _cmd_roundtrip
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 141
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.cli._run_default_autonomous:
-    name: _run_default_autonomous
-    module: packages.coru.src.coru.cli
-    line: 280
-    cyclomatic_complexity: 11
-    calls_out: 25
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_nl:
-    name: _parse_ui_nl
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 195
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.nlpshim.src.nlpshim.client.get_nlp2dsl_client:
-    name: get_nlp2dsl_client
-    module: packages.nlpshim.src.nlpshim.client
-    line: 66
-    cyclomatic_complexity: 2
-    calls_out: 0
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.cli._main_subcommand:
-    name: _main_subcommand
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 41
-    cyclomatic_complexity: 1
-    calls_out: 28
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_repair_run:
-    name: _serialize_repair_run
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 320
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.cli.main:
-    name: main
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 34
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.cli._remember_project_ide_settings:
-    name: _remember_project_ide_settings
-    module: packages.coru.src.coru.cli
-    line: 1024
-    cyclomatic_complexity: 8
-    calls_out: 11
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.handlers._query_lane_status:
-    name: _query_lane_status
-    module: packages.dsl2koru.src.dsl2koru.handlers
-    line: 57
-    cyclomatic_complexity: 1
-    calls_out: 11
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb:
-    name: _append_pb
-    module: packages.dsl2coru.src.dsl2coru.events
-    line: 65
-    cyclomatic_complexity: 3
+    cyclomatic_complexity: 16
     calls_out: 26
     calls_in: 0
   packages.mcp2koru.src.mcp2koru.tools.koru_run_dsl:
@@ -1853,719 +1958,26 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 2
     calls_in: 0
-  packages.dsl2coru.src.dsl2coru.handlers.runner.default_runner:
-    name: default_runner
-    module: packages.dsl2coru.src.dsl2coru.handlers.runner
-    line: 33
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 0
-  packages.uri2koru.src.uri2koru.uri.uri_for_block:
-    name: uri_for_block
-    module: packages.uri2koru.src.uri2koru.uri
-    line: 20
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.cli._cmd_decode:
-    name: _cmd_decode
+  packages.dsl2coru.src.dsl2coru.cli._cmd_exec:
+    name: _cmd_exec
     module: packages.dsl2coru.src.dsl2coru.cli
-    line: 129
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codegen.validate_payload:
-    name: validate_payload
-    module: packages.dsl2coru.src.dsl2coru.codegen
-    line: 45
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.handlers.argv.to_cli_args:
-    name: to_cli_args
-    module: packages.dsl2coru.src.dsl2coru.handlers.argv
-    line: 154
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 2
-  packages.mcp2coru.src.mcp2coru.server._require_fastmcp:
-    name: _require_fastmcp
-    module: packages.mcp2coru.src.mcp2coru.server
-    line: 9
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 2
-  packages.coru.src.coru.supervisor.registry.active_lane_pair:
-    name: active_lane_pair
-    module: packages.coru.src.coru.supervisor.registry
-    line: 141
+    line: 172
     cyclomatic_complexity: 2
     calls_out: 2
-    calls_in: 3
-  packages.coru.src.coru.supervisor.registry.load_registry:
-    name: load_registry
-    module: packages.coru.src.coru.supervisor.registry
-    line: 41
-    cyclomatic_complexity: 5
-    calls_out: 11
-    calls_in: 21
-  packages.uri2koru.src.uri2koru.nlp2uri.best_uri:
-    name: best_uri
-    module: packages.uri2koru.src.uri2koru.nlp2uri
-    line: 83
-    cyclomatic_complexity: 2
-    calls_out: 1
     calls_in: 0
-  packages.coru.src.coru.cli._interactive_select_project_arg:
-    name: _interactive_select_project_arg
-    module: packages.coru.src.coru.cli
-    line: 465
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  packages.coru.src.coru.cli._alive_daemon_instance:
-    name: _alive_daemon_instance
-    module: packages.coru.src.coru.cli
-    line: 367
-    cyclomatic_complexity: 13
-    calls_out: 16
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.grammar.parse_line:
-    name: parse_line
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 223
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 0
-  packages.coru.src.coru.cli._instance_matches_ide:
-    name: _instance_matches_ide
-    module: packages.coru.src.coru.cli
-    line: 923
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  packages.coru.src.coru.cli._normalize_lane_pair:
-    name: _normalize_lane_pair
-    module: packages.coru.src.coru.cli
-    line: 1349
-    cyclomatic_complexity: 7
-    calls_out: 2
-    calls_in: 4
-  packages.dsl2coru.src.dsl2coru.grammar._flag:
+  packages.dsl2coru.src.dsl2coru.parser._flag:
     name: _flag
-    module: packages.dsl2coru.src.dsl2coru.grammar
+    module: packages.dsl2coru.src.dsl2coru.parser
     line: 24
     cyclomatic_complexity: 7
     calls_out: 8
     calls_in: 33
-  packages.dsl2koru.src.dsl2koru.codec.roundtrip_text:
-    name: roundtrip_text
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 52
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 2
-  packages.nlpshim.src.nlpshim.client._use_intent_ir:
-    name: _use_intent_ir
-    module: packages.nlpshim.src.nlpshim.client
-    line: 73
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  packages.koruenv.src.koruenv.cli._iso_ts:
-    name: _iso_ts
-    module: packages.koruenv.src.koruenv.cli
-    line: 21
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 1
-  packages.cli2coru.src.cli2coru.cli._handle_exec:
-    name: _handle_exec
-    module: packages.cli2coru.src.cli2coru.cli
-    line: 40
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  packages.coru.src.coru.ecosystem.sync_ecosystem:
-    name: sync_ecosystem
-    module: packages.coru.src.coru.ecosystem
-    line: 150
-    cyclomatic_complexity: 14
-    calls_out: 13
-    calls_in: 1
-  packages.coru.src.coru.cli_calibration._format_calibration_bridge_report:
-    name: _format_calibration_bridge_report
-    module: packages.coru.src.coru.cli_calibration
-    line: 236
-    cyclomatic_complexity: 7
-    calls_out: 13
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.codec.envelope_to_json:
-    name: envelope_to_json
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 41
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 2
-  packages.coru.src.coru.cli._maybe_reexec_into_project_python:
-    name: _maybe_reexec_into_project_python
+  packages.coru.src.coru.cli._supervisor_default_ide:
+    name: _supervisor_default_ide
     module: packages.coru.src.coru.cli
-    line: 651
-    cyclomatic_complexity: 13
-    calls_out: 27
-    calls_in: 1
-  packages.uri2koru.src.uri2koru.uri.is_koru_uri:
-    name: is_koru_uri
-    module: packages.uri2koru.src.uri2koru.uri
-    line: 36
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.mcp2koru.src.mcp2koru.tools.koru_to_dsl:
-    name: koru_to_dsl
-    module: packages.mcp2koru.src.mcp2koru.tools
-    line: 27
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  packages.coru.src.coru.cli._project_repo_root:
-    name: _project_repo_root
-    module: packages.coru.src.coru.cli
-    line: 606
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 18
-  packages.coru.src.coru.cli._project_venv_python:
-    name: _project_venv_python
-    module: packages.coru.src.coru.cli
-    line: 638
-    cyclomatic_complexity: 5
-    calls_out: 3
-    calls_in: 5
-  packages.uri2coru.src.uri2coru.uri.uri_for_block:
-    name: uri_for_block
-    module: packages.uri2coru.src.uri2coru.uri
-    line: 20
-    cyclomatic_complexity: 5
-    calls_out: 3
-    calls_in: 4
-  packages.coru.src.coru.cli._repo_root:
-    name: _repo_root
-    module: packages.coru.src.coru.cli
-    line: 816
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 10
-  packages.dsl2coru.src.dsl2coru.cli._run_results:
-    name: _run_results
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 19
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 5
-  packages.coru.src.coru.cli_calibration._calibration_desktop_focus_titles:
-    name: _calibration_desktop_focus_titles
-    module: packages.coru.src.coru.cli_calibration
-    line: 28
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.parser._parse_ui_common:
-    name: _parse_ui_common
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 157
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 4
-  packages.nlp2coru.src.nlp2coru.apply._execute_line:
-    name: _execute_line
-    module: packages.nlp2coru.src.nlp2coru.apply
-    line: 12
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 1
-  packages.koruenv.src.koruenv.cli._run_with_overlay:
-    name: _run_with_overlay
-    module: packages.koruenv.src.koruenv.cli
-    line: 106
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 2
-  packages.coru.src.coru.cli_calibration._desktop_capture_enabled:
-    name: _desktop_capture_enabled
-    module: packages.coru.src.coru.cli_calibration
-    line: 37
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 2
-  packages.dsl2koru.src.dsl2koru.schema_registry.all_verbs:
-    name: all_verbs
-    module: packages.dsl2koru.src.dsl2koru.schema_registry
-    line: 34
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 2
-  packages.coru.src.coru.cli._resolve_defaults:
-    name: _resolve_defaults
-    module: packages.coru.src.coru.cli
-    line: 3026
-    cyclomatic_complexity: 10
-    calls_out: 7
-    calls_in: 8
-  packages.nlp2coru.src.nlp2coru.heuristic._parse_lane_mentions:
-    name: _parse_lane_mentions
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 27
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 1
-  packages.koruenv.src.koruenv.cli._strip_double_dash:
-    name: _strip_double_dash
-    module: packages.koruenv.src.koruenv.cli
-    line: 99
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_common:
-    name: _parse_ui_common
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 157
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 4
-  packages.dsl2koru.src.dsl2koru.cli._cmd_replay:
-    name: _cmd_replay
-    module: packages.dsl2koru.src.dsl2koru.cli
-    line: 140
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 0
-  packages.nlp2coru.src.nlp2coru.heuristic._refactor_intent:
-    name: _refactor_intent
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 17
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_lane:
-    name: _serialize_lane
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 38
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codegen.render_models_module:
-    name: render_models_module
-    module: packages.dsl2coru.src.dsl2coru.codegen
-    line: 54
-    cyclomatic_complexity: 7
-    calls_out: 19
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.handlers.ui.run_ui_command:
-    name: run_ui_command
-    module: packages.dsl2coru.src.dsl2coru.handlers.ui
-    line: 10
-    cyclomatic_complexity: 15
-    calls_out: 32
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.parser._split_command:
-    name: _split_command
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 11
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.openrouter_config.should_use_ollama_fallback:
-    name: should_use_ollama_fallback
-    module: packages.nlp2coru.src.nlp2coru.openrouter_config
-    line: 73
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 2
-  packages.mcp2koru.src.mcp2koru.server.run_server:
-    name: run_server
-    module: packages.mcp2koru.src.mcp2koru.server
-    line: 57
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.cli._cmd_replay:
-    name: _cmd_replay
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 146
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codec.envelope_to_json:
-    name: envelope_to_json
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 41
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
-  packages.coru.src.coru.cli._current_log_format:
-    name: _current_log_format
-    module: packages.coru.src.coru.cli
-    line: 178
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.control.is_dsl2koru_line:
-    name: is_dsl2koru_line
-    module: packages.nlp2coru.src.nlp2coru.control
-    line: 8
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.grammar._parse_validate_lane:
-    name: _parse_validate_lane
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 36
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.grammar._parse_query_lane_status:
-    name: _parse_query_lane_status
-    module: packages.dsl2koru.src.dsl2koru.grammar
-    line: 29
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 0
-  packages.nlpshim.src.nlpshim.control.to_dsl:
-    name: to_dsl
-    module: packages.nlpshim.src.nlpshim.control
-    line: 12
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 5
-  packages.dsl2coru.src.dsl2coru.parser._parse_repair_run:
-    name: _parse_repair_run
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 148
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.schema_registry.normalize_verb:
-    name: normalize_verb
-    module: packages.dsl2coru.src.dsl2coru.schema_registry
-    line: 44
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 5
-  packages.coru.src.coru.cli_calibration._register_calibration_command:
-    name: _register_calibration_command
-    module: packages.coru.src.coru.cli_calibration
-    line: 607
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 1
-  packages.coru.src.coru.cli_calibration._lane_calibration:
-    name: _lane_calibration
-    module: packages.coru.src.coru.cli_calibration
-    line: 504
-    cyclomatic_complexity: 14
-    calls_out: 25
-    calls_in: 2
-  packages.coru.src.coru.cli._extract_global_flags:
-    name: _extract_global_flags
-    module: packages.coru.src.coru.cli
-    line: 487
-    cyclomatic_complexity: 10
-    calls_out: 11
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.grammar.to_text:
-    name: to_text
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 374
-    cyclomatic_complexity: 4
-    calls_out: 12
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._parse_auto:
-    name: _parse_auto
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 77
-    cyclomatic_complexity: 6
-    calls_out: 4
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf:
-    name: decode_protobuf
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 273
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  packages.coru.src.coru.cli._terminal_shell_context:
-    name: _terminal_shell_context
-    module: packages.coru.src.coru.cli
-    line: 876
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 11
-  packages.coru.src.coru.cli_calibration._calibration_desktop_template_path:
-    name: _calibration_desktop_template_path
-    module: packages.coru.src.coru.cli_calibration
-    line: 45
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  packages.coru.src.coru.cli._project_ide_settings_lane:
-    name: _project_ide_settings_lane
-    module: packages.coru.src.coru.cli
-    line: 1008
-    cyclomatic_complexity: 12
-    calls_out: 16
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl:
-    name: _append_jsonl
-    module: packages.dsl2coru.src.dsl2coru.events
-    line: 91
-    cyclomatic_complexity: 3
-    calls_out: 26
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.grammar._serialize_doctor:
-    name: _serialize_doctor
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 282
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 0
-  packages.coru.src.coru.cli._project_ide_settings_path:
-    name: _project_ide_settings_path
-    module: packages.coru.src.coru.cli
-    line: 989
-    cyclomatic_complexity: 5
-    calls_out: 3
-    calls_in: 2
-  packages.mcp2coru.src.mcp2coru.cli.main:
-    name: main
-    module: packages.mcp2coru.src.mcp2coru.cli
-    line: 11
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.cli._cmd_encode:
-    name: _cmd_encode
-    module: packages.dsl2coru.src.dsl2coru.cli
-    line: 114
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codec.validate_payload:
-    name: validate_payload
-    module: packages.dsl2coru.src.dsl2coru.codec
-    line: 15
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 5
-  packages.koruenv.src.koruenv.lane.build_lane_environ:
-    name: build_lane_environ
-    module: packages.koruenv.src.koruenv.lane
-    line: 74
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_repair_run:
-    name: _serialize_repair_run
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 87
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.dsl2koru.src.dsl2koru.codec.validate_payload:
-    name: validate_payload
-    module: packages.dsl2koru.src.dsl2koru.codec
-    line: 15
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 5
-  src.koru.autonomous_runtime.projects_equivalent:
-    name: projects_equivalent
-    module: src.koru.autonomous_runtime
-    line: 107
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 2
-  packages.coru.src.coru.cli._print_terminal_context:
-    name: _print_terminal_context
-    module: packages.coru.src.coru.cli
-    line: 893
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 2
-  packages.uri2coru.src.uri2coru.uri.parse_coru_uri:
-    name: parse_coru_uri
-    module: packages.uri2coru.src.uri2coru.uri
-    line: 41
-    cyclomatic_complexity: 7
-    calls_out: 9
-    calls_in: 1
-  packages.coru.src.coru.cli._setup_environment:
-    name: _setup_environment
-    module: packages.coru.src.coru.cli
-    line: 791
+    line: 1190
     cyclomatic_complexity: 3
     calls_out: 4
-    calls_in: 1
-  packages.dsl2koru.src.dsl2koru.handlers.run_command:
-    name: run_command
-    module: packages.dsl2koru.src.dsl2koru.handlers
-    line: 35
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 3
-  packages.mcp2koru.src.mcp2koru.tools.koru_run_command:
-    name: koru_run_command
-    module: packages.mcp2koru.src.mcp2koru.tools
-    line: 8
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.handlers.query.run_query:
-    name: run_query
-    module: packages.dsl2coru.src.dsl2coru.handlers.query
-    line: 12
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 0
-  packages.coru.src.coru.cli._supervisor_project_choices:
-    name: _supervisor_project_choices
-    module: packages.coru.src.coru.cli
-    line: 344
-    cyclomatic_complexity: 7
-    calls_out: 10
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.schema_registry.schema_for_verb:
-    name: schema_for_verb
-    module: packages.dsl2coru.src.dsl2coru.schema_registry
-    line: 62
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  packages.coru.src.coru.cli._autonomous_startup_chain:
-    name: _autonomous_startup_chain
-    module: packages.coru.src.coru.cli
-    line: 252
-    cyclomatic_complexity: 2
-    calls_out: 8
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.heuristic._resolve_heuristic_action:
-    name: _resolve_heuristic_action
-    module: packages.nlp2coru.src.nlp2coru.heuristic
-    line: 56
-    cyclomatic_complexity: 11
-    calls_out: 9
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.serializer._serialize_calibration:
-    name: _serialize_calibration
-    module: packages.dsl2coru.src.dsl2coru.serializer
-    line: 57
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  packages.nlp2coru.src.nlp2coru.openrouter_config.get_ollama_base_url:
-    name: get_ollama_base_url
-    module: packages.nlp2coru.src.nlp2coru.openrouter_config
-    line: 68
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  packages.uri2koru.src.uri2koru.decode.uri_to_dsl:
-    name: uri_to_dsl
-    module: packages.uri2koru.src.uri2koru.decode
-    line: 8
-    cyclomatic_complexity: 16
-    calls_out: 26
-    calls_in: 0
-  packages.nlp2coru.src.nlp2coru.cli._emit:
-    name: _emit
-    module: packages.nlp2coru.src.nlp2coru.cli
-    line: 15
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 22
-  packages.dsl2koru.src.dsl2koru.schema_registry._load_schemas:
-    name: _load_schemas
-    module: packages.dsl2koru.src.dsl2koru.schema_registry
-    line: 15
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 9
-  packages.coru.src.coru.cli._module_runtime_source_dir:
-    name: _module_runtime_source_dir
-    module: packages.coru.src.coru.cli
-    line: 742
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.schema_registry._load_schemas:
-    name: _load_schemas
-    module: packages.dsl2coru.src.dsl2coru.schema_registry
-    line: 50
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 3
-  packages.dsl2coru.src.dsl2coru.grammar._parse_text:
-    name: _parse_text
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 131
-    cyclomatic_complexity: 8
-    calls_out: 6
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.codegen.build_model_registry:
-    name: build_model_registry
-    module: packages.dsl2coru.src.dsl2coru.codegen
-    line: 31
-    cyclomatic_complexity: 3
-    calls_out: 10
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.pb_codec.decode_protobuf_to_text:
-    name: decode_protobuf_to_text
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 286
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.schema_registry.validate_schemas:
-    name: validate_schemas
-    module: packages.dsl2coru.src.dsl2coru.schema_registry
-    line: 73
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 0
-  packages.coru.src.coru.cli._venv_has_installed_module:
-    name: _venv_has_installed_module
-    module: packages.coru.src.coru.cli
-    line: 621
-    cyclomatic_complexity: 6
-    calls_out: 7
-    calls_in: 2
-  packages.coru.src.coru.cli._agent_lane_from_auto_args:
-    name: _agent_lane_from_auto_args
-    module: packages.coru.src.coru.cli
-    line: 269
-    cyclomatic_complexity: 7
-    calls_out: 7
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.bus.dispatch:
-    name: dispatch
-    module: packages.dsl2coru.src.dsl2coru.bus
-    line: 42
-    cyclomatic_complexity: 14
-    calls_out: 24
-    calls_in: 1
-  packages.dsl2coru.src.dsl2coru.schema_registry.all_verbs:
-    name: all_verbs
-    module: packages.dsl2coru.src.dsl2coru.schema_registry
-    line: 69
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
-  packages.dsl2coru.src.dsl2coru.pb_codec.result_to_pb:
-    name: result_to_pb
-    module: packages.dsl2coru.src.dsl2coru.pb_codec
-    line: 290
-    cyclomatic_complexity: 3
-    calls_out: 3
     calls_in: 1
   packages.coru.src.coru.cli._connected_daemon_from_meta:
     name: _connected_daemon_from_meta
@@ -2574,48 +1986,384 @@ nodes:
     cyclomatic_complexity: 11
     calls_out: 14
     calls_in: 1
-  packages.cli2coru.src.cli2coru.shell.run_shell:
-    name: run_shell
-    module: packages.cli2coru.src.cli2coru.shell
-    line: 8
-    cyclomatic_complexity: 9
-    calls_out: 12
-    calls_in: 0
-  src.koru.autonomous_runtime.normalize_project_root:
-    name: normalize_project_root
-    module: src.koru.autonomous_runtime
-    line: 91
-    cyclomatic_complexity: 7
-    calls_out: 6
-    calls_in: 11
-  packages.dsl2coru.src.dsl2coru.parser._flag:
-    name: _flag
-    module: packages.dsl2coru.src.dsl2coru.parser
-    line: 24
-    cyclomatic_complexity: 7
-    calls_out: 8
-    calls_in: 33
-  packages.nlp2coru.src.nlp2coru.openrouter_config.get_openrouter_headers:
-    name: get_openrouter_headers
-    module: packages.nlp2coru.src.nlp2coru.openrouter_config
-    line: 50
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 3
-  packages.dsl2coru.src.dsl2coru.grammar._parse_doctor:
-    name: _parse_doctor
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 101
-    cyclomatic_complexity: 5
+  packages.dsl2coru.src.dsl2coru.codec.roundtrip_text:
+    name: roundtrip_text
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 52
+    cyclomatic_complexity: 2
     calls_out: 4
     calls_in: 0
-  packages.coru.src.coru.cli._distribution_version:
-    name: _distribution_version
-    module: packages.coru.src.coru.cli
-    line: 220
-    cyclomatic_complexity: 6
+  packages.dsl2coru.src.dsl2coru.schema_registry._load_schemas:
+    name: _load_schemas
+    module: packages.dsl2coru.src.dsl2coru.schema_registry
+    line: 50
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 3
+  packages.dsl2coru.src.dsl2coru.codegen.validate_payload:
+    name: validate_payload
+    module: packages.dsl2coru.src.dsl2coru.codegen
+    line: 45
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.codec.validate_payload:
+    name: validate_payload
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 15
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 5
+  packages.uri2koru.src.uri2koru.uri._encode:
+    name: _encode
+    module: packages.uri2koru.src.uri2koru.uri
+    line: 12
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 4
+  packages.mcp2coru.src.mcp2coru.cli.main:
+    name: main
+    module: packages.mcp2coru.src.mcp2coru.cli
+    line: 11
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.cli._emit:
+    name: _emit
+    module: packages.nlp2coru.src.nlp2coru.cli
+    line: 15
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 22
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_chat:
+    name: _serialize_chat
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 297
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.codegen.render_models_module:
+    name: render_models_module
+    module: packages.dsl2koru.src.dsl2koru.codegen
+    line: 59
+    cyclomatic_complexity: 12
+    calls_out: 22
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.grammar._parse_repair_run:
+    name: _parse_repair_run
+    module: packages.dsl2koru.src.dsl2koru.grammar
+    line: 55
+    cyclomatic_complexity: 7
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.cli._cmd_encode:
+    name: _cmd_encode
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 114
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_lane:
+    name: _serialize_lane
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 38
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.codec.envelope_from_bytes:
+    name: envelope_from_bytes
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 36
+    cyclomatic_complexity: 1
     calls_out: 2
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command:
+    name: append_command
+    module: packages.dsl2koru.src.dsl2koru.events
+    line: 50
+    cyclomatic_complexity: 3
+    calls_out: 33
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.parser._parse_calibration:
+    name: _parse_calibration
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 110
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.parser._parse_ui_type:
+    name: _parse_ui_type
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 168
+    cyclomatic_complexity: 6
+    calls_out: 12
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_doctor:
+    name: _serialize_doctor
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 49
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  packages.coru.src.coru.cli._emit_log:
+    name: _emit_log
+    module: packages.coru.src.coru.cli
+    line: 182
+    cyclomatic_complexity: 8
+    calls_out: 10
+    calls_in: 5
+  packages.koruenv.src.koruenv.lane.build_lane_environ:
+    name: build_lane_environ
+    module: packages.koruenv.src.koruenv.lane
+    line: 74
+    cyclomatic_complexity: 2
+    calls_out: 5
     calls_in: 2
+  project.print:
+    name: print
+    module: project
+    line: 92
+    cyclomatic_complexity: 0
+    calls_out: 0
+    calls_in: 922
+  packages.mcp2koru.src.mcp2koru.tools.koru_to_dsl:
+    name: koru_to_dsl
+    module: packages.mcp2koru.src.mcp2koru.tools
+    line: 27
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  packages.coru.src.coru.cli._integrated_terminal_default_ide:
+    name: _integrated_terminal_default_ide
+    module: packages.coru.src.coru.cli
+    line: 1175
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  packages.dsl2koru.src.dsl2koru.schema_registry.all_verbs:
+    name: all_verbs
+    module: packages.dsl2koru.src.dsl2koru.schema_registry
+    line: 34
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.cli._cmd_decode:
+    name: _cmd_decode
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 129
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.parser._ui_args:
+    name: _ui_args
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 39
+    cyclomatic_complexity: 9
+    calls_out: 8
+    calls_in: 4
+  packages.coru.src.coru.cli_calibration._run_calibration_desktop_preflight:
+    name: _run_calibration_desktop_preflight
+    module: packages.coru.src.coru.cli_calibration
+    line: 267
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 1
+  packages.coru.src.coru.cli._setup_environment:
+    name: _setup_environment
+    module: packages.coru.src.coru.cli
+    line: 791
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  packages.nlpshim.src.nlpshim.client._use_intent_ir:
+    name: _use_intent_ir
+    module: packages.nlpshim.src.nlpshim.client
+    line: 73
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  packages.nlp2coru.src.nlp2coru.heuristic._resolve_heuristic_action:
+    name: _resolve_heuristic_action
+    module: packages.nlp2coru.src.nlp2coru.heuristic
+    line: 56
+    cyclomatic_complexity: 11
+    calls_out: 9
+    calls_in: 1
+  src.koru.integrations.imgl_client.imgl_available:
+    name: imgl_available
+    module: src.koru.integrations.imgl_client
+    line: 38
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 7
+  packages.uri2coru.src.uri2coru.uri.uri_for_cmd:
+    name: uri_for_cmd
+    module: packages.uri2coru.src.uri2coru.uri
+    line: 29
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 4
+  packages.coru.src.coru.cli._project_ide_settings_instance:
+    name: _project_ide_settings_instance
+    module: packages.coru.src.coru.cli
+    line: 1243
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri:
+    name: nlp2uri
+    module: packages.uri2koru.src.uri2koru.nlp2uri
+    line: 28
+    cyclomatic_complexity: 13
+    calls_out: 23
+    calls_in: 1
+  packages.coru.src.coru.cli_calibration._calibration_desktop_template_path:
+    name: _calibration_desktop_template_path
+    module: packages.coru.src.coru.cli_calibration
+    line: 45
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  packages.coru.src.coru.cli._project_ide_settings_path:
+    name: _project_ide_settings_path
+    module: packages.coru.src.coru.cli
+    line: 989
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_nl:
+    name: _parse_ui_nl
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 195
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  packages.coru.src.coru.cli._instance_matches_ide:
+    name: _instance_matches_ide
+    module: packages.coru.src.coru.cli
+    line: 923
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  packages.coru.src.coru.cli._runtime_metadata_roots:
+    name: _runtime_metadata_roots
+    module: packages.coru.src.coru.cli
+    line: 802
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.parser._parse_ui_nl:
+    name: _parse_ui_nl
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 195
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.parser.parse_line:
+    name: parse_line
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 223
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 0
+  packages.coru.src.coru.ecosystem._local_package_paths:
+    name: _local_package_paths
+    module: packages.coru.src.coru.ecosystem
+    line: 45
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.parser._parse_env:
+    name: _parse_env
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 65
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.llm.llm_plan:
+    name: llm_plan
+    module: packages.nlp2coru.src.nlp2coru.llm
+    line: 23
+    cyclomatic_complexity: 9
+    calls_out: 17
+    calls_in: 3
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.__init__:
+    name: __init__
+    module: packages.nlpshim.src.nlpshim.conversation_client
+    line: 23
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._workspace_lane_hint:
+    name: _workspace_lane_hint
+    module: packages.coru.src.coru.cli
+    line: 973
+    cyclomatic_complexity: 8
+    calls_out: 7
+    calls_in: 3
+  packages.dsl2coru.src.dsl2coru.parser._parse_repair_run:
+    name: _parse_repair_run
+    module: packages.dsl2coru.src.dsl2coru.parser
+    line: 148
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 0
+  packages.coru.src.coru.cli._diagnose_lane:
+    name: _diagnose_lane
+    module: packages.coru.src.coru.cli
+    line: 2860
+    cyclomatic_complexity: 10
+    calls_out: 18
+    calls_in: 4
+  packages.coru.src.coru.cli._interactive_select_project_arg:
+    name: _interactive_select_project_arg
+    module: packages.coru.src.coru.cli
+    line: 465
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  packages.coru.src.coru.cli._workspace_default_instance:
+    name: _workspace_default_instance
+    module: packages.coru.src.coru.cli
+    line: 1294
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  packages.nlpshim.src.nlpshim.client.analyze_text_structure:
+    name: analyze_text_structure
+    module: packages.nlpshim.src.nlpshim.client
+    line: 77
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 3
+  packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas:
+    name: validate_schemas
+    module: packages.dsl2koru.src.dsl2koru.schema_registry
+    line: 38
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.handlers.runner.default_runner:
+    name: default_runner
+    module: packages.dsl2coru.src.dsl2coru.handlers.runner
+    line: 33
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 0
+  packages.coru.src.coru.cli._koru_exec_argv:
+    name: _koru_exec_argv
+    module: packages.coru.src.coru.cli
+    line: 2472
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 15
+  packages.coru.src.coru.cli._ide_from_instance:
+    name: _ide_from_instance
+    module: packages.coru.src.coru.cli
+    line: 927
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 8
   packages.dsl2coru.src.dsl2coru.cli.main:
     name: main
     module: packages.dsl2coru.src.dsl2coru.cli
@@ -2623,13 +2371,27 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 2
     calls_in: 0
-  packages.uri2koru.src.uri2koru.uri.parse_koru_uri:
-    name: parse_koru_uri
-    module: packages.uri2koru.src.uri2koru.uri
-    line: 40
+  packages.coru.src.coru.cli_calibration._probe_report_verification:
+    name: _probe_report_verification
+    module: packages.coru.src.coru.cli_calibration
+    line: 400
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 2
+  packages.coru.src.coru.cli._print_terminal_context:
+    name: _print_terminal_context
+    module: packages.coru.src.coru.cli
+    line: 893
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 2
+  packages.coru.src.coru.cli._target_plugin_rows:
+    name: _target_plugin_rows
+    module: packages.coru.src.coru.cli
+    line: 1928
     cyclomatic_complexity: 7
     calls_out: 9
-    calls_in: 1
+    calls_in: 2
   packages.coru.src.coru.cli_calibration._resolve_calibration_lane:
     name: _resolve_calibration_lane
     module: packages.coru.src.coru.cli_calibration
@@ -2637,13 +2399,146 @@ nodes:
     cyclomatic_complexity: 13
     calls_out: 6
     calls_in: 1
-  packages.uri2coru.src.uri2coru.uri._decode:
-    name: _decode
-    module: packages.uri2coru.src.uri2coru.uri
-    line: 16
+  packages.nlp2coru.src.nlp2coru.openrouter_config.load_project_metadata:
+    name: load_project_metadata
+    module: packages.nlp2coru.src.nlp2coru.openrouter_config
+    line: 10
+    cyclomatic_complexity: 7
+    calls_out: 14
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.grammar._parse_chat:
+    name: _parse_chat
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 122
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 0
+  packages.nlpshim.src.nlpshim.client.get_nlp2dsl_client:
+    name: get_nlp2dsl_client
+    module: packages.nlpshim.src.nlpshim.client
+    line: 66
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 2
+  packages.dsl2coru.src.dsl2coru.codec.parse_text:
+    name: parse_text
+    module: packages.dsl2coru.src.dsl2coru.codec
+    line: 24
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  src.koru.autonomous_runtime.projects_equivalent:
+    name: projects_equivalent
+    module: src.koru.autonomous_runtime
+    line: 107
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.codec.parse_text:
+    name: parse_text
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 24
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 5
+  packages.dsl2coru.src.dsl2coru.grammar._parse_ui_type:
+    name: _parse_ui_type
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 168
+    cyclomatic_complexity: 6
+    calls_out: 12
+    calls_in: 0
+  packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf:
+    name: decode_protobuf
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 133
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 3
+  packages.coru.src.coru.cli._terminal_shell_context:
+    name: _terminal_shell_context
+    module: packages.coru.src.coru.cli
+    line: 876
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 11
+  packages.coru.src.coru.cli._lane_subprocess_env:
+    name: _lane_subprocess_env
+    module: packages.coru.src.coru.cli
+    line: 1360
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 5
+  packages.coru.src.coru.cli._python_module_exists:
+    name: _python_module_exists
+    module: packages.coru.src.coru.cli
+    line: 573
     cyclomatic_complexity: 2
     calls_out: 1
     calls_in: 3
+  packages.dsl2coru.src.dsl2coru.cli._run_results:
+    name: _run_results
+    module: packages.dsl2coru.src.dsl2coru.cli
+    line: 19
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 5
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri:
+    name: nlp2uri
+    module: packages.uri2coru.src.uri2coru.nlp2uri
+    line: 28
+    cyclomatic_complexity: 14
+    calls_out: 23
+    calls_in: 4
+  packages.coru.src.coru.cli._repo_root:
+    name: _repo_root
+    module: packages.coru.src.coru.cli
+    line: 816
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 10
+  packages.uri2koru.src.uri2koru.run.run_uri:
+    name: run_uri
+    module: packages.uri2koru.src.uri2koru.run
+    line: 10
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.llm_backend.LitellmBackend.complete:
+    name: complete
+    module: packages.nlp2coru.src.nlp2coru.llm_backend
+    line: 38
+    cyclomatic_complexity: 9
+    calls_out: 10
+    calls_in: 0
+  packages.mcp2koru.src.mcp2koru.tools.koru_run_command:
+    name: koru_run_command
+    module: packages.mcp2koru.src.mcp2koru.tools
+    line: 8
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.rewrite.rewrite_chat_prompt:
+    name: rewrite_chat_prompt
+    module: packages.nlp2coru.src.nlp2coru.rewrite
+    line: 8
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 2
+  packages.coru.src.coru.cli._environment_default_instance:
+    name: _environment_default_instance
+    module: packages.coru.src.coru.cli
+    line: 1267
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 1
+  packages.coru.src.coru.cli._tool_available:
+    name: _tool_available
+    module: packages.coru.src.coru.cli
+    line: 746
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 2
   packages.coru.src.coru.cli._load_project_ide_settings:
     name: _load_project_ide_settings
     module: packages.coru.src.coru.cli
@@ -2651,48 +2546,153 @@ nodes:
     cyclomatic_complexity: 5
     calls_out: 5
     calls_in: 2
-  packages.dsl2coru.src.dsl2coru.grammar._parse_ensure:
-    name: _parse_ensure
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 96
+  packages.mcp2coru.src.mcp2coru.tools.coru_run_dsl:
+    name: coru_run_dsl
+    module: packages.mcp2coru.src.mcp2coru.tools
+    line: 14
     cyclomatic_complexity: 2
-    calls_out: 1
+    calls_out: 2
     calls_in: 0
-  packages.koruenv.src.koruenv.lane.resolve_lane_socket_for_os:
-    name: resolve_lane_socket_for_os
-    module: packages.koruenv.src.koruenv.lane
-    line: 55
+  packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf:
+    name: encode_protobuf
+    module: packages.dsl2koru.src.dsl2koru.pb_codec
+    line: 124
+    cyclomatic_complexity: 1
+    calls_out: 6
+    calls_in: 4
+  packages.dsl2coru.src.dsl2coru.grammar._parse_doctor:
+    name: _parse_doctor
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 101
     cyclomatic_complexity: 5
-    calls_out: 10
-    calls_in: 2
-  packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql:
-    name: _materialize_calibration_desktop_oql
-    module: packages.coru.src.coru.cli_calibration
-    line: 60
-    cyclomatic_complexity: 7
-    calls_out: 22
-    calls_in: 2
-  packages.dsl2coru.src.dsl2coru.grammar._parse_env:
-    name: _parse_env
-    module: packages.dsl2coru.src.dsl2coru.grammar
-    line: 65
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 0
-  packages.coru.src.coru.cli._chain_project_from_plans:
-    name: _chain_project_from_plans
-    module: packages.coru.src.coru.cli
-    line: 88
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  packages.nlp2coru.src.nlp2coru.llm._parse_llm_json:
-    name: _parse_llm_json
-    module: packages.nlp2coru.src.nlp2coru.llm
-    line: 16
-    cyclomatic_complexity: 2
     calls_out: 4
+    calls_in: 0
+  packages.coru.src.coru.ecosystem.sync_ecosystem:
+    name: sync_ecosystem
+    module: packages.coru.src.coru.ecosystem
+    line: 150
+    cyclomatic_complexity: 14
+    calls_out: 13
     calls_in: 1
+  packages.coru.src.coru.cli._project_ide_settings_lane:
+    name: _project_ide_settings_lane
+    module: packages.coru.src.coru.cli
+    line: 1008
+    cyclomatic_complexity: 12
+    calls_out: 16
+    calls_in: 2
+  packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes:
+    name: envelope_from_bytes
+    module: packages.dsl2koru.src.dsl2koru.codec
+    line: 36
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 5
+  packages.dsl2coru.src.dsl2coru.bus.execute_dsl:
+    name: execute_dsl
+    module: packages.dsl2coru.src.dsl2coru.bus
+    line: 117
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  packages.dsl2coru.src.dsl2coru.serializer._serialize_text:
+    name: _serialize_text
+    module: packages.dsl2coru.src.dsl2coru.serializer
+    line: 72
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  packages.mcp2coru.src.mcp2coru.tools.coru_run_command_pb:
+    name: coru_run_command_pb
+    module: packages.mcp2coru.src.mcp2coru.tools
+    line: 20
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._infer_default_instance:
+    name: _infer_default_instance
+    module: packages.coru.src.coru.cli
+    line: 1302
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 3
+  packages.dsl2koru.src.dsl2koru.handlers.run_query:
+    name: run_query
+    module: packages.dsl2koru.src.dsl2koru.handlers
+    line: 22
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 2
+  packages.nlpshim.src.nlpshim.client.NLPBridgeClient.parse_intent:
+    name: parse_intent
+    module: packages.nlpshim.src.nlpshim.client
+    line: 91
+    cyclomatic_complexity: 15
+    calls_out: 20
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.grammar.parse_line:
+    name: parse_line
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 223
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 0
+  packages.nlp2coru.src.nlp2coru.openrouter_config.get_openrouter_headers:
+    name: get_openrouter_headers
+    module: packages.nlp2coru.src.nlp2coru.openrouter_config
+    line: 50
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 4
+  packages.coru.src.coru.supervisor.registry.load_registry:
+    name: load_registry
+    module: packages.coru.src.coru.supervisor.registry
+    line: 41
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 21
+  packages.coru.src.coru.cli._print_troubleshooting_log_locations:
+    name: _print_troubleshooting_log_locations
+    module: packages.coru.src.coru.cli
+    line: 2912
+    cyclomatic_complexity: 4
+    calls_out: 15
+    calls_in: 5
+  packages.dsl2coru.src.dsl2coru.grammar._serialize_auto:
+    name: _serialize_auto
+    module: packages.dsl2coru.src.dsl2coru.grammar
+    line: 264
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 0
+  packages.dsl2coru.src.dsl2coru.handlers.argv.to_cli_args:
+    name: to_cli_args
+    module: packages.dsl2coru.src.dsl2coru.handlers.argv
+    line: 154
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 2
+  packages.coru.src.coru.cli._resolve_defaults:
+    name: _resolve_defaults
+    module: packages.coru.src.coru.cli
+    line: 3026
+    cyclomatic_complexity: 10
+    calls_out: 7
+    calls_in: 8
+  packages.coru.src.coru.ecosystem._default_runner:
+    name: _default_runner
+    module: packages.coru.src.coru.ecosystem
+    line: 78
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  packages.coru.src.coru.cli._instance_from_socket_path:
+    name: _instance_from_socket_path
+    module: packages.coru.src.coru.cli
+    line: 962
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 4
 edges:
 - caller: packages.dsl2koru.src.dsl2koru.bus.dispatch
   callee: packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes
@@ -6031,6 +6031,15 @@ entry_points:
 - src.koru.agent_backend_runtime.OsInjectorBackend.send_chat
 - src.koru.agent_backend_runtime.PluginSocketBackend.send_chat
 - src.koru.agent_backend_runtime.TillmShellBackend.send_chat
+- src.koru.agent_backend_runtime._build_gillm_gui_backend
+- src.koru.agent_backend_runtime._build_imgl_desktop_backend
+- src.koru.agent_backend_runtime._build_mcp_tool_backend
+- src.koru.agent_backend_runtime._build_nlp2uri_desktop_backend
+- src.koru.agent_backend_runtime._build_noop_backend
+- src.koru.agent_backend_runtime._build_os_injector_backend
+- src.koru.agent_backend_runtime._build_plugin_socket_backend
+- src.koru.agent_backend_runtime._build_vdisplay_control_backend
+- src.koru.agent_backend_runtime._build_vendor_agent_cli_backend
 - src.koru.agent_backend_runtime.build_agent_backend
 - src.koru.agent_backends.load_agent_integration_config
 - src.koru.agent_backends.validate_agent_integration_config
@@ -6669,8 +6678,16 @@ entry_points:
 - src.koru.init.InitReport._lane_summary
 - src.koru.init.InitReport.summary
 - src.koru.init.resolve_project_agent_lane
+- src.koru.integrations.autonomy_session.append_session_jsonl
+- src.koru.integrations.autonomy_session.begin_autonomy_session
+- src.koru.integrations.autonomy_session.copy_observe_artifacts_to_session
+- src.koru.integrations.autonomy_session.find_latest_koru_session
+- src.koru.integrations.autonomy_session.persist_autonomy_phase
+- src.koru.integrations.autonomy_session.vql_sidecar_is_stale
 - src.koru.integrations.imgl_client.doctor_capture
 - src.koru.integrations.imgl_client.send_chat
+- src.koru.integrations.vdisplay_client._get_jetbrains_pycharm_chat_center
+- src.koru.integrations.vdisplay_client._get_pycharm_vql_editor_center
 - src.koru.integrations.vdisplay_client.resolve_click_for_frame
 - src.koru.integrations.vdisplay_client.send_chat
 - src.koru.interface_registry.interface_registry_payload
