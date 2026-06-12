@@ -1,0 +1,317 @@
+"""VQL chat-target validation helpers (extracted from vdisplay_client)."""
+
+from __future__ import annotations
+
+from typing import Any
+
+VQL_TERMINAL_LABEL_NOISE = (
+    ".py",
+    ".ts",
+    "session",
+    "metadata",
+    "vdisplay",
+    "automation",
+    "env",
+    "KORU",
+    "DRY_RUN",
+    "PREFER",
+    "LLM",
+    " --source",
+    "po clear",
+    "recznie",
+    "wpisz",
+    "to do",
+    "drive after",
+    "Re-run",
+    "audit",
+    "cursor_positioning",
+    "Explored",
+    "passed",
+    "Clear",
+    "folder",
+    "Gap Analysis",
+    "Monitored",
+    "screenshot",
+    "act/",
+    "ts - Cursor",
+    "File Edit Selection",
+    "Go Run Terminal",
+    "Publish v",
+    "247K",
+    "Path(str(vql_path)",
+    "imgl_path",
+    "sidecar older than",
+    "reasons.append",
+    "You have folder",
+    "faster responses",
+)
+VQL_CHAT_LABEL_HINTS = ("ask", "prompt", "message", "chat", "composer", "type")
+SHELL_POLLUTION_TOKENS = (
+    "KORU_",
+    "DRY_RUN",
+    "PREFER LLM",
+    " --source",
+    "po clear",
+    "recznie",
+    "wpisz",
+    "to do",
+    "drive after",
+    "Re-run",
+    "audit",
+    "cursor_positioning",
+    "Explored",
+    "passed",
+    "Clear",
+    "Gap Analysis",
+    "Monitored",
+    "screenshot",
+    "act/",
+    "ts - Cursor",
+    "File Edit",
+    "Go Run Terminal",
+    "Publish v",
+    "247K",
+    "automation-gap",
+)
+
+
+def _canonical_ide(ide: str) -> str:
+    try:
+        from koruide.ide import canonical_autopilot_ide_id
+
+        return canonical_autopilot_ide_id(ide) or ide.strip().lower()
+    except Exception:
+        return ide.strip().lower()
+
+
+def window_titles_from_vql_meta(meta: dict) -> list[str]:
+    titles: list[str] = []
+    for layer in meta.get("ui_elements") or meta.get("layers") or []:
+        if not isinstance(layer, dict):
+            continue
+        role = str(layer.get("role") or layer.get("kind") or "").lower()
+        if role != "window":
+            continue
+        title = str(layer.get("label") or layer.get("text") or layer.get("title") or "").strip()
+        if title:
+            titles.append(title)
+    if not titles:
+        cv = meta.get("capture_validation") or {}
+        if isinstance(cv, dict):
+            for key in ("window_titles", "title", "capture_title"):
+                val = cv.get(key)
+                if isinstance(val, str) and val.strip():
+                    titles.append(val.strip())
+                elif isinstance(val, list):
+                    titles.extend([str(x).strip() for x in val if str(x).strip()])
+            bod = cv.get("body_ide_mentions") or []
+            if isinstance(bod, list):
+                titles.extend([str(x).strip() for x in bod if str(x).strip()])
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for title in titles:
+        low = title.lower()
+        if low not in seen:
+            seen.add(low)
+            uniq.append(title)
+    return uniq
+
+
+def capture_title_from_meta(meta: dict | None) -> str | None:
+    titles = window_titles_from_vql_meta(meta or {})
+    return titles[0] if titles else None
+
+
+def _coord_warnings_for_bounds(*, bw: int, bh: int) -> list[str]:
+    if bw > 0 and bh > 0 and (bw < 150 or bh < 25):
+        return [f"bounds_{bw}x{bh}_too_small_for_chat_composer"]
+    return []
+
+
+def _coord_warnings_for_label(*, label: str, y: int) -> list[str]:
+    warnings: list[str] = []
+    if label == "background":
+        warnings.append("label_background_not_chat_composer")
+    if any(term in label for term in {".py", ".ts"}):
+        warnings.append(f"label_{label}_looks_like_code_file_not_chat")
+    if label.startswith("session") or label.startswith("metadata"):
+        warnings.append(f"label_{label}_looks_like_terminal_not_chat")
+    if "vdisplay_metadata_dir" in label.replace("_", "").replace("=", "").replace(".", ""):
+        warnings.append(f"label_{label}_looks_like_env_var_not_chat")
+    if any(tok.lower() in label for tok in SHELL_POLLUTION_TOKENS):
+        warnings.append("label_looks_like_terminal_command_history_or_env_pollution")
+    if "pycharm/jb" in label and y < 850:
+        warnings.append("breadcrumb_pycharm_jb_label_but_y_too_high_for_chat_composer")
+    return warnings
+
+
+def _coord_warnings_for_jetbrains(*, x: int, y: int, canon: str, is_code_edit: bool) -> list[str]:
+    if is_code_edit or canon not in {"jetbrains", "pycharm", "idea"}:
+        return []
+    warnings: list[str] = []
+    if y < 850:
+        warnings.append(f"chat_local_y={y}_below_850_likely_editor_not_bottom_right_composer")
+    if x < 1100:
+        warnings.append(f"chat_local_x={x}_below_1100_likely_left_panel_not_chat_corner")
+    return warnings
+
+
+def validate_chat_coords_for_ide(
+    *,
+    x: int,
+    y: int,
+    ide: str,
+    target: dict[str, Any],
+    is_code_edit: bool = False,
+) -> list[str]:
+    """Heuristic warnings when VQL-derived chat coords look wrong for the IDE."""
+    warnings: list[str] = []
+    canon = _canonical_ide(ide)
+    src = str(target.get("source") or "")
+    if src in {"vql-analysis-fallback", ""} or "fallback" in str(target.get("note") or "").lower():
+        warnings.append("target_not_from_live_vql_layers_using_fallback_center")
+    bounds = target.get("bounds") or {}
+    bw = int(bounds.get("w") or bounds.get("width") or 0)
+    bh = int(bounds.get("h") or bounds.get("height") or 0)
+    label = str(target.get("label") or target.get("note") or "").lower()
+    warnings.extend(_coord_warnings_for_bounds(bw=bw, bh=bh))
+    warnings.extend(_coord_warnings_for_label(label=label, y=y))
+    warnings.extend(_coord_warnings_for_jetbrains(x=x, y=y, canon=canon, is_code_edit=is_code_edit))
+    return warnings
+
+
+def _target_geometry(
+    target: dict[str, Any],
+    *,
+    x: int | None,
+    y: int | None,
+) -> tuple[int, int, int, int, int, bool, str]:
+    cc = target.get("click_center") or {}
+    lx = int(x if x is not None else cc.get("x") or 0)
+    ly = int(y if y is not None else cc.get("y") or 0)
+    bounds = target.get("bounds") or {}
+    bw = int(bounds.get("w") or bounds.get("width") or 0)
+    bh = int(bounds.get("h") or bounds.get("height") or 0)
+    has_bounds = bw > 0 and bh > 0
+    label = str(target.get("label") or target.get("note") or "").lower()
+    return lx, ly, bw, bh, bw * bh if has_bounds else 0, has_bounds, label
+
+
+def _label_ok_for_chat(*, label: str, has_bounds: bool, bw: int, bh: int) -> bool:
+    if label == "background":
+        return False
+    if not label:
+        return not has_bounds or (bw >= 200 and bh >= 25)
+    return any(hint in label for hint in VQL_CHAT_LABEL_HINTS)
+
+
+def _collect_vql_validation_errors(
+    *,
+    is_code_edit: bool,
+    is_map: bool,
+    app_match: bool,
+    capture_mismatch: dict[str, Any] | None,
+    method: str,
+    has_bounds: bool,
+    vql_element_size_ok: bool,
+    label: str,
+    area: int,
+    label_ok: bool,
+    target: dict[str, Any],
+    bw: int,
+    bh: int,
+) -> list[str]:
+    if is_code_edit:
+        return []
+    errors: list[str] = []
+    if not app_match:
+        errors.append("vql_invalid_for_chat_capture_mismatch")
+    if is_map and capture_mismatch:
+        errors.append("used_map_because_mismatch_or_bad_element")
+    elif is_map and method == "map_fallback_after_bad_corner":
+        errors.append("used_map_because_mismatch_or_bad_element")
+    elif not is_map:
+        if has_bounds and not vql_element_size_ok:
+            errors.append(f"vql_element_too_small_for_chat_composer_{bw}x{bh}")
+        if label == "background" or (label in {"", "background"} and has_bounds and area < 5000):
+            errors.append("vql_label_background_not_composer")
+        if any(term in label for term in VQL_TERMINAL_LABEL_NOISE):
+            errors.append(f"vql_label_terminal_noise:{label[:40]}")
+        if any(tok.lower() in label for tok in SHELL_POLLUTION_TOKENS):
+            errors.append("vql_label_shell_pollution_from_terminal_text")
+        if not label_ok and has_bounds:
+            errors.append("vql_label_not_chat_composer")
+        confidence = target.get("confidence")
+        if isinstance(confidence, (int, float)) and float(confidence) < 0.25:
+            errors.append("vql_confidence_too_low")
+    return errors
+
+
+def validate_vql_chat_target(
+    target: dict[str, Any],
+    *,
+    ide: str,
+    meta: dict | None = None,
+    capture_mismatch: dict[str, Any] | None = None,
+    selection_method: str | None = None,
+    is_code_edit: bool = False,
+    x: int | None = None,
+    y: int | None = None,
+) -> dict[str, Any]:
+    """Hard validation of a VQL/map chat target before actuation (audit + inference_ok)."""
+    meta = meta or {}
+    method = str(selection_method or target.get("selection_method") or "")
+    is_map = method.startswith("map_") or str(target.get("id") or "").startswith("map:")
+    lx, ly, bw, bh, area, has_bounds, label = _target_geometry(target, x=x, y=y)
+    vql_element_size_ok = (not has_bounds) or (bw >= 200 and bh >= 25)
+    label_ok = _label_ok_for_chat(label=label, has_bounds=has_bounds, bw=bw, bh=bh)
+    app_match = capture_mismatch is None
+    coord_warnings = validate_chat_coords_for_ide(
+        x=lx,
+        y=ly,
+        ide=ide,
+        target=target,
+        is_code_edit=is_code_edit,
+    )
+    validation_errors = _collect_vql_validation_errors(
+        is_code_edit=is_code_edit,
+        is_map=is_map,
+        app_match=app_match,
+        capture_mismatch=capture_mismatch,
+        method=method,
+        has_bounds=has_bounds,
+        vql_element_size_ok=vql_element_size_ok,
+        label=label,
+        area=area,
+        label_ok=label_ok,
+        target=target,
+        bw=bw,
+        bh=bh,
+    )
+    vql_valid = not (not is_code_edit and not is_map and validation_errors)
+    return {
+        "ok": vql_valid and app_match and not coord_warnings,
+        "vql_valid": vql_valid,
+        "vql_element_size_ok": vql_element_size_ok,
+        "app_match": app_match,
+        "capture_title": capture_title_from_meta(meta),
+        "selection_method": method or None,
+        "is_map_target": is_map,
+        "validation_errors": validation_errors,
+        "coord_warnings": coord_warnings,
+        "bounds": {"w": bw, "h": bh} if has_bounds else None,
+        "label": label[:80] if label else None,
+        "used_map_because_mismatch_or_bad_element": is_map
+        and (
+            bool(capture_mismatch)
+            or method in {"map_fallback_after_bad_corner", "map_calibrated_on_mismatch"}
+        ),
+    }
+
+
+__all__ = [
+    "capture_title_from_meta",
+    "validate_chat_coords_for_ide",
+    "validate_vql_chat_target",
+    "window_titles_from_vql_meta",
+]

@@ -2143,7 +2143,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-06-12T13:30:33.895679Z'
+        finished_at: '2026-06-12T13:42:03.844888Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2276,6 +2276,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-12T13:30:34.039948+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-06-12T13:42:04.114104+00:00'
       id: STARTER-274
       inputs:
         api_headers: {}
@@ -2331,7 +2336,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-12T13:30:34.039912+00:00'
+      updated_at: '2026-06-12T13:42:04.113986+00:00'
     STARTER-275:
       blocked_by: []
       blocks: []

@@ -16,7 +16,7 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.335`
+- **version**: `0.1.336`
 - **python_requires**: `>=3.12,<3.14`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/deep/deep-v4-pro`
@@ -36,7 +36,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.335;
+  version: 0.1.336;
 }
 
 dependencies {
@@ -2014,37 +2014,37 @@ tagi>=0.49.0
 
 ## Call Graph
 
-*389 nodes · 500 edges · 69 modules · CC̄=3.7*
+*389 nodes · 500 edges · 69 modules · CC̄=3.8*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
 | `print` *(in project)* | 0 | 923 | 0 | **923** |
-| `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 202 | 9 | **211** |
+| `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 203 | 9 | **212** |
 | `dispatch` *(in packages.dsl2koru.src.dsl2koru.bus)* | 11 ⚠ | 27 | 25 | **52** |
-| `_flag` *(in packages.dsl2coru.src.dsl2coru.grammar)* | 7 | 33 | 8 | **41** |
 | `_flag` *(in packages.dsl2coru.src.dsl2coru.parser)* | 7 | 33 | 8 | **41** |
+| `_flag` *(in packages.dsl2coru.src.dsl2coru.grammar)* | 7 | 33 | 8 | **41** |
 | `append_command` *(in packages.dsl2koru.src.dsl2koru.events.EventStore)* | 3 | 0 | 33 | **33** |
 | `load_registry` *(in packages.coru.src.coru.supervisor.registry)* | 5 | 21 | 11 | **32** |
 | `detect_running_ides` *(in src.koruide.ide)* | 4 | 27 | 4 | **31** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.29s
+# generated in 0.51s
 # nodes: 389 | edges: 500 | modules: 69
-# CC̄=3.7
+# CC̄=3.8
 
 HUBS[20]:
   project.print
     CC=0  in:923  out:0  total:923
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:202  out:9  total:211
+    CC=5  in:203  out:9  total:212
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
-  packages.dsl2coru.src.dsl2coru.grammar._flag
-    CC=7  in:33  out:8  total:41
   packages.dsl2coru.src.dsl2coru.parser._flag
+    CC=7  in:33  out:8  total:41
+  packages.dsl2coru.src.dsl2coru.grammar._flag
     CC=7  in:33  out:8  total:41
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
     CC=3  in:0  out:33  total:33
@@ -2058,12 +2058,12 @@ HUBS[20]:
     CC=3  in:23  out:5  total:28
   packages.coru.src.coru.cli._maybe_reexec_into_project_python
     CC=13  in:1  out:27  total:28
-  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
-    CC=14  in:4  out:23  total:27
-  packages.coru.src.coru.cli_calibration._lane_calibration
-    CC=14  in:2  out:25  total:27
   packages.coru.src.coru.cli._run_default_autonomous
     CC=11  in:2  out:25  total:27
+  packages.coru.src.coru.cli_calibration._lane_calibration
+    CC=14  in:2  out:25  total:27
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
+    CC=14  in:4  out:23  total:27
   packages.nlp2coru.src.nlp2coru.cli._emit
     CC=4  in:22  out:4  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
@@ -2074,8 +2074,8 @@ HUBS[20]:
     CC=1  in:1  out:24  total:25
   packages.dsl2coru.src.dsl2coru.bus.dispatch
     CC=14  in:1  out:24  total:25
-  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri
-    CC=13  in:1  out:23  total:24
+  packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql
+    CC=7  in:2  out:22  total:24
 
 MODULES:
   packages.cli2coru.src.cli2coru.cli  [4 funcs]
@@ -2509,20 +2509,20 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.29s
+# generated in 0.51s
 # nodes: 389 | edges: 500 | modules: 69
-# CC̄=3.7
+# CC̄=3.8
 
 HUBS[20]:
   project.print
     CC=0  in:923  out:0  total:923
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:202  out:9  total:211
+    CC=5  in:203  out:9  total:212
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
-  packages.dsl2coru.src.dsl2coru.grammar._flag
-    CC=7  in:33  out:8  total:41
   packages.dsl2coru.src.dsl2coru.parser._flag
+    CC=7  in:33  out:8  total:41
+  packages.dsl2coru.src.dsl2coru.grammar._flag
     CC=7  in:33  out:8  total:41
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
     CC=3  in:0  out:33  total:33
@@ -2536,12 +2536,12 @@ HUBS[20]:
     CC=3  in:23  out:5  total:28
   packages.coru.src.coru.cli._maybe_reexec_into_project_python
     CC=13  in:1  out:27  total:28
-  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
-    CC=14  in:4  out:23  total:27
-  packages.coru.src.coru.cli_calibration._lane_calibration
-    CC=14  in:2  out:25  total:27
   packages.coru.src.coru.cli._run_default_autonomous
     CC=11  in:2  out:25  total:27
+  packages.coru.src.coru.cli_calibration._lane_calibration
+    CC=14  in:2  out:25  total:27
+  packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
+    CC=14  in:4  out:23  total:27
   packages.nlp2coru.src.nlp2coru.cli._emit
     CC=4  in:22  out:4  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
@@ -2552,8 +2552,8 @@ HUBS[20]:
     CC=1  in:1  out:24  total:25
   packages.dsl2coru.src.dsl2coru.bus.dispatch
     CC=14  in:1  out:24  total:25
-  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri
-    CC=13  in:1  out:23  total:24
+  packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql
+    CC=7  in:2  out:22  total:24
 
 MODULES:
   packages.cli2coru.src.cli2coru.cli  [4 funcs]
@@ -2954,21 +2954,20 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 947f 151911L | python:674,typescript:93,shell:56,json:40,yaml:31,toml:16,yml:10,kotlin:6,txt:5,proto:4,go:2,md:1,javascript:1,rust:1,properties:1,xml:1 | 2026-06-12
-# generated in 0.72s
-# CC̅=3.7 | critical:34/6556 | dups:0 | cycles:0
+# code2llm | 949f 152374L | python:676,typescript:93,shell:56,json:40,yaml:31,toml:16,yml:10,kotlin:6,txt:5,proto:4,go:2,md:1,javascript:1,rust:1,properties:1,xml:1 | 2026-06-12
+# generated in 0.85s
+# CC̅=3.8 | critical:39/6578 | dups:0 | cycles:0
 
 HEALTH[20]:
   🟡 CC    _emit_autopilot_observability_outcome CC=15 (limit:15)
   🟡 CC    _format_entry_details CC=18 (limit:15)
-  🟡 CC    build_user_guidance CC=43 (limit:15)
   🟡 CC    vql_sidecar_is_stale CC=21 (limit:15)
   🟡 CC    _env2llm_lines CC=15 (limit:15)
   🟡 CC    resolve_autopilot_instance CC=20 (limit:15)
   🟡 CC    shouldProbeInput CC=26 (limit:15)
   🟡 CC    main CC=22 (limit:15)
   🟡 CC    main CC=16 (limit:15)
-  🟡 CC    _resolve_vdisplay_source_for_ide CC=29 (limit:15)
+  🟡 CC    build_user_guidance CC=17 (limit:15)
   🟡 CC    _window_titles_from_vql_meta CC=27 (limit:15)
   🟡 CC    validate_vql_chat_target CC=59 (limit:15)
   🟡 CC    _photo_vql_ide_window_warning CC=21 (limit:15)
@@ -2979,11 +2978,12 @@ HEALTH[20]:
   🟡 CC    _normalize_photo_vql_drive_result CC=23 (limit:15)
   🟡 CC    send_chat CC=48 (limit:15)
   🟡 CC    get_vql_chat_target_from_photo CC=42 (limit:15)
+  🟡 CC    _enrich_capture_meta_for_pointer CC=30 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
 
-PIPELINES[2113]:
+PIPELINES[2122]:
   [1] Src [get_files]: get_files
       PURITY: 100% pure
   [2] Src [main]: main → _main_legacy → _run_results → print
@@ -3094,7 +3094,7 @@ LAYERS:
   │ app_bootstrap               34L  0C    2m  CC=1      ←0
   │
   src/                            CC̄=4.1    ←in:0  →out:1
-  │ !! vdisplay_client           4768L  0C  125m  CC=74     ←5
+  │ !! vdisplay_client           4714L  0C  125m  CC=74     ←5
   │ !! scan                      1621L  0C   61m  CC=13     ←7
   │ !! autonomous_cycle          1443L  0C   46m  CC=14     ←1
   │ !! install_manager           1311L  1C   57m  CC=14     ←3
@@ -3104,7 +3104,7 @@ LAYERS:
   │ !! operator_pipeline         1009L  2C   44m  CC=14     ←0
   │ !! autonomous_readiness       969L  3C   43m  CC=12     ←4
   │ !! drive_orchestrator         965L  1C   56m  CC=14     ←0
-  │ !! ide                        960L  2C   56m  CC=13     ←44
+  │ !! ide                        960L  2C   56m  CC=13     ←45
   │ !! handlers_drive             907L  0C   23m  CC=12     ←0
   │ !! ide_reload                 898L  1C   39m  CC=12     ←5
   │ !! autonomous_startup         872L  3C   41m  CC=11     ←5
@@ -3119,11 +3119,11 @@ LAYERS:
   │ !! handlers_ack               677L  0C   24m  CC=13     ←1
   │ !! cli_parser                 677L  0C   17m  CC=1      ←0
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←1
+  │ !! autonomous_runtime         674L  2C   29m  CC=14     ←10
   │ !! init                       659L  3C   18m  CC=12     ←2
   │ !! scan_phase                 655L  0C   25m  CC=11     ←0
   │ !! doctor_reporting_checks    651L  1C   27m  CC=13     ←0
   │ !! autonomous_cycle_chat_activity   634L  0C   20m  CC=11     ←2
-  │ !! autonomous_runtime         631L  2C   27m  CC=14     ←10
   │ !! self_control               625L  3C   27m  CC=12     ←2
   │ !! desktop_uri                613L  0C   26m  CC=13     ←4
   │ !! dashboard_routes           607L  0C   35m  CC=9      ←2
@@ -3201,9 +3201,11 @@ LAYERS:
   │ structured_report          300L  1C    8m  CC=13     ←1
   │ cli_tagi                   298L  0C   16m  CC=7      ←0
   │ ide_control_cli            295L  0C   18m  CC=12     ←1
+  │ !! photo_vql_validation       295L  0C    8m  CC=30     ←0
   │ local_manager_state        292L  4C   21m  CC=14     ←0
-  │ wizard.js                  292L  0C   38m  CC=13     ←102
+  │ wizard.js                  292L  0C   38m  CC=13     ←103
   │ queue_cli_helpers          290L  0C   10m  CC=9      ←1
+  │ !! photo_vql_user_guidance    288L  1C   15m  CC=17     ←1
   │ autonomous_daemon          287L  0C   10m  CC=10     ←3
   │ autonomous_plugin          287L  0C   19m  CC=12     ←4
   │ runners                    286L  0C   12m  CC=12     ←2
@@ -3243,7 +3245,6 @@ LAYERS:
   │ mcp_server_env2llm         231L  0C   10m  CC=3      ←1
   │ obs_websocket              231L  1C   15m  CC=11     ←1
   │ interface_registry         230L  3C   14m  CC=9      ←7
-  │ !! photo_vql_user_guidance    230L  0C    6m  CC=43     ←1
   │ dev_sync                   229L  1C    9m  CC=11     ←0
   │ autonomous_onboarding      227L  1C   10m  CC=10     ←0
   │ gillm_recovery             227L  0C    3m  CC=2      ←4
@@ -3328,6 +3329,7 @@ LAYERS:
   │ cli_events                 121L  0C    3m  CC=7      ←0
   │ application                120L  2C    4m  CC=12     ←0
   │ prompters                  120L  2C    9m  CC=11     ←0
+  │ !! photo_vql_monitor          120L  0C    3m  CC=16     ←0
   │ mcp_server_dispatch        119L  0C    7m  CC=6      ←1
   │ cli_init                   119L  0C    3m  CC=7      ←0
   │ prompts                    119L  1C    2m  CC=10     ←0
@@ -3359,7 +3361,7 @@ LAYERS:
   │ cycle_finalize             104L  0C    1m  CC=4      ←1
   │ web-app.json               104L  0C    0m  CC=0.0    ←0
   │ systemd_cli                103L  0C    4m  CC=6      ←0
-  │ testql_bridge              101L  0C    5m  CC=7      ←1
+  │ testql_bridge              102L  0C    5m  CC=7      ←1
   │ storage                    100L  0C    5m  CC=6      ←2
   │ fallback                   100L  1C    1m  CC=1      ←0
   │ __init__                    97L  0C    2m  CC=2      ←0
@@ -3422,8 +3424,8 @@ LAYERS:
   │ cli_serve                   72L  0C    2m  CC=1      ←0
   │ shell_evidence              72L  0C    2m  CC=7      ←1
   │ autodiag                    71L  0C    6m  CC=7      ←2
-  │ planning_llm_types          71L  5C    5m  CC=1      ←0
   │ policy_engine               71L  1C    2m  CC=6      ←1
+  │ planning_llm_types          71L  5C    5m  CC=1      ←0
   │ transform                   70L  0C    4m  CC=12     ←2
   │ emitter                     70L  1C    5m  CC=6      ←4
   │ event_log_projection        70L  2C    5m  CC=6      ←0
@@ -4068,7 +4070,7 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        project                    src.koruide                  packages.coru                    src.koruapi              packages.dsl2koru  plugins.koru-autopilot-shared                        scripts                 src.koruvision                           koru                src.koruobserve              packages.dsl2coru              packages.nlp2coru                   src.korumesh              packages.uri2coru
-                       src.koru                             ──                            496                            196                              2                             15                              3                             47                             ←1                             20                             25                             10                             ←3                             23                             ←2                             ←1  hub
+                       src.koru                             ──                            496                            197                              2                             15                              3                             47                             ←1                             20                             25                             10                             ←3                             23                             ←2                             ←1  hub
                         project                           ←496                             ──                            ←26                           ←183                            ←17                            ←11                                                           ←74                            ←12                             ←7                            ←22                            ←11                             ←6                             ←7                             ←6  hub
                     src.koruide                             38                             26                             ──                             ←6                            ←27                                                             9                                                                                            7                                                                                                                                                             hub
                   packages.coru                             34                            183                              6                             ──                                                             3                              3                                                            ←1                                                                                                                           4                                                                hub
@@ -4084,41 +4086,41 @@ COUPLING:
                    src.korumesh                              2                              7                                                                                           ←3                                                             2                                                             2                                                             1                                                                                           ──                                 hub
               packages.uri2coru                              1                              6                                                                                                                           1                                                                                                                                                                                                                       ←1                                                            ──  hub
   CYCLES: none
-  HUB: project/ (fan-in=923)
+  HUB: src.imgl/ (fan-in=5)
   HUB: plugins.koru-autopilot-shared/ (fan-in=80)
+  HUB: src.koruobserve/ (fan-in=13)
+  HUB: packages.coru/ (fan-in=5)
   HUB: packages.uri2coru/ (fan-in=11)
-  HUB: src.koruapi/ (fan-in=16)
+  HUB: src.koruide/ (fan-in=230)
   HUB: packages.nlp2coru/ (fan-in=31)
   HUB: packages.dsl2koru/ (fan-in=71)
-  HUB: src.koru/ (fan-in=210)
-  HUB: src.imgl/ (fan-in=5)
-  HUB: packages.coru/ (fan-in=5)
-  HUB: src.koruide/ (fan-in=229)
-  HUB: koru/ (fan-in=36)
-  HUB: packages.koruenv/ (fan-in=9)
+  HUB: packages.nlpshim/ (fan-in=6)
   HUB: src.koruvision/ (fan-in=35)
   HUB: src.korumesh/ (fan-in=12)
-  HUB: packages.nlpshim/ (fan-in=6)
-  HUB: src.koruobserve/ (fan-in=13)
+  HUB: src.koru/ (fan-in=210)
+  HUB: packages.koruenv/ (fan-in=9)
+  HUB: src.koruapi/ (fan-in=16)
   HUB: packages.mcp2coru/ (fan-in=6)
+  HUB: project/ (fan-in=923)
+  HUB: koru/ (fan-in=36)
+  SMELL: packages.nlp2koru/ fan-out=17 → split needed
+  SMELL: src.koruobserve/ fan-out=38 → split needed
+  SMELL: packages.coru/ fan-out=236 → split needed
+  SMELL: packages.dsl2coru/ fan-out=48 → split needed
   SMELL: packages.uri2coru/ fan-out=8 → split needed
-  SMELL: src.koruapi/ fan-out=169 → split needed
-  SMELL: packages.cli2koru/ fan-out=11 → split needed
+  SMELL: src.koruide/ fan-out=85 → split needed
   SMELL: packages.nlp2coru/ fan-out=10 → split needed
   SMELL: packages.dsl2koru/ fan-out=19 → split needed
-  SMELL: src.koru/ fan-out=854 → split needed
-  SMELL: packages.coru/ fan-out=236 → split needed
-  SMELL: packages.cli2coru/ fan-out=12 → split needed
-  SMELL: packages.dsl2coru/ fan-out=48 → split needed
-  SMELL: src.koruide/ fan-out=85 → split needed
   SMELL: packages.uri2koru/ fan-out=16 → split needed
-  SMELL: koru/ fan-out=15 → split needed
-  SMELL: examples/ fan-out=12 → split needed
   SMELL: src.koruvision/ fan-out=29 → split needed
   SMELL: src.korumesh/ fan-out=14 → split needed
-  SMELL: src.koruobserve/ fan-out=38 → split needed
+  SMELL: src.koru/ fan-out=855 → split needed
+  SMELL: src.koruapi/ fan-out=169 → split needed
+  SMELL: packages.cli2coru/ fan-out=12 → split needed
+  SMELL: packages.cli2koru/ fan-out=11 → split needed
   SMELL: scripts/ fan-out=76 → split needed
-  SMELL: packages.nlp2koru/ fan-out=17 → split needed
+  SMELL: examples/ fan-out=12 → split needed
+  SMELL: koru/ fan-out=15 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
@@ -4128,15 +4130,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 234 groups | 651f 118057L | 2026-06-12
+# redup/duplication | 235 groups | 653f 118344L | 2026-06-12
 
 SUMMARY:
-  files_scanned: 651
-  total_lines:   118057
-  dup_groups:    234
-  dup_fragments: 552
-  saved_lines:   2538
-  scan_ms:       3929
+  files_scanned: 653
+  total_lines:   118344
+  dup_groups:    235
+  dup_fragments: 554
+  saved_lines:   2545
+  scan_ms:       4163
 
 HOTSPOTS[7] (files with most duplication):
   packages/dsl2coru/src/dsl2coru/grammar.py  dup=249L  groups=34  frags=40  (0.2%)
@@ -4147,7 +4149,7 @@ HOTSPOTS[7] (files with most duplication):
   packages/dsl2coru/src/dsl2coru/serializer.py  dup=88L  groups=14  frags=18  (0.1%)
   src/koru/ide_adapters/ide_reload.py  dup=87L  groups=4  frags=8  (0.1%)
 
-DUPLICATES[234] (ranked by impact):
+DUPLICATES[235] (ranked by impact):
   [aaa66107e74e8486] ! STRU  _bootstrap_main  L=52 N=2 saved=52 sim=1.00
       src/koru/cli_bootstrap.py:12-63  (_bootstrap_main)
       src/koru/cli_cleaned.py:297-315  (_bootstrap_main)
@@ -4254,9 +4256,9 @@ DUPLICATES[234] (ranked by impact):
       src/koruide/plugin_installer.py:210-216  (_plugin_package_name)
   [feb820655081cb7a]   STRU  ide_mismatch_allowed  L=7 N=4 saved=21 sim=1.00
       src/koru/integrations/photo_vql_guard.py:10-16  (ide_mismatch_allowed)
-      src/koru/integrations/vdisplay_client.py:411-417  (_dry_run)
-      src/koru/integrations/vdisplay_client.py:631-637  (_abort_on_desktop_probe_fail)
-      src/koru/integrations/vdisplay_client.py:1036-1042  (_auto_ide_control_enabled)
+      src/koru/integrations/vdisplay_client.py:418-424  (_dry_run)
+      src/koru/integrations/vdisplay_client.py:577-583  (_abort_on_desktop_probe_fail)
+      src/koru/integrations/vdisplay_client.py:844-850  (_auto_ide_control_enabled)
   [62098847ad4d50c2]   EXAC  _stdio_info  L=5 N=5 saved=20 sim=1.00
       src/koru/autonomous.py:233-237  (_stdio_info)
       src/koru/autonomous_checkpoint.py:16-19  (_stdio_info)
@@ -4322,10 +4324,10 @@ DUPLICATES[234] (ranked by impact):
       src/koru/ide_adapters/ide_reload.py:430-444  (reload_via_reopen_workspace)
       src/koru/ide_adapters/ide_reload.py:447-461  (reload_via_new_window)
   [4604e82ca5f7161c]   STRU  _controls_find  L=5 N=4 saved=15 sim=1.00
-      src/koru/integrations/vdisplay_client.py:2063-2067  (_controls_find)
-      src/koru/integrations/vdisplay_client.py:2070-2074  (_control_focus)
-      src/koru/integrations/vdisplay_client.py:2077-2081  (_control_set_value)
-      src/koru/integrations/vdisplay_client.py:2084-2088  (_control_click)
+      src/koru/integrations/vdisplay_client.py:1871-1875  (_controls_find)
+      src/koru/integrations/vdisplay_client.py:1878-1882  (_control_focus)
+      src/koru/integrations/vdisplay_client.py:1885-1889  (_control_set_value)
+      src/koru/integrations/vdisplay_client.py:1892-1896  (_control_click)
   [3b6ae6de406e66ec]   STRU  tool_env2llm_get_registry  L=5 N=4 saved=15 sim=1.00
       src/koruapi/mcp_server_env2llm.py:164-168  (tool_env2llm_get_registry)
       src/koruapi/mcp_server_env2llm.py:189-193  (tool_env2llm_get_desktop)
@@ -4647,6 +4649,9 @@ DUPLICATES[234] (ranked by impact):
   [ee4f810c8a8578ba]   EXAC  _project_venv_roots  L=7 N=2 saved=7 sim=1.00
       src/koru/autonomous_readiness.py:63-69  (_project_venv_roots)
       src/koru/autonomous_runtime.py:131-137  (_project_venv_roots)
+  [1c0ccc6047c9b667]   EXAC  _canonical_ide  L=7 N=2 saved=7 sim=1.00
+      src/koru/integrations/photo_vql_validation.py:78-84  (_canonical_ide)
+      src/koru/integrations/vdisplay_client.py:138-144  (_canonical_ide)
   [8d303b9fda997ca0]   STRU  as_managed  L=7 N=2 saved=7 sim=1.00
       src/koru/autonomous_process_guard.py:213-219  (as_managed)
       src/koru/autonomous_processes.py:210-216  (_as_managed)
@@ -4654,8 +4659,8 @@ DUPLICATES[234] (ranked by impact):
       src/koru/cli_cleaned.py:289-295  (_context_main)
       src/koru/cli_context.py:18-29  (_context_main)
   [4a38af73dd52fbf7]   STRU  _auto_open_ide_enabled  L=7 N=2 saved=7 sim=1.00
-      src/koru/integrations/vdisplay_client.py:1045-1051  (_auto_open_ide_enabled)
-      src/koru/integrations/vdisplay_client.py:1292-1298  (_raise_alt_tab_enabled)
+      src/koru/integrations/vdisplay_client.py:853-859  (_auto_open_ide_enabled)
+      src/koru/integrations/vdisplay_client.py:1100-1106  (_raise_alt_tab_enabled)
   [0de131b92b4b1418]   STRU  is_shell_agent  L=7 N=2 saved=7 sim=1.00
       src/koru/tillm_bridge.py:38-44  (is_shell_agent)
       src/koru/tillm_bridge.py:47-53  (shell_agent_available)
@@ -4923,8 +4928,8 @@ DUPLICATES[234] (ranked by impact):
       src/koru/autonomous_cycle_skip_conditions.py:42-44  (_auto_llm_ready_enabled)
       src/koru/autonomy/operator_pipeline.py:396-398  (_self_control_autorepair_enabled)
   [4ca8ca904c3b102a]   STRU  _chat_selectors_for  L=3 N=2 saved=3 sim=1.00
-      src/koru/integrations/vdisplay_client.py:2044-2046  (_chat_selectors_for)
-      src/koru/integrations/vdisplay_client.py:2049-2051  (_submit_selectors_for)
+      src/koru/integrations/vdisplay_client.py:1852-1854  (_chat_selectors_for)
+      src/koru/integrations/vdisplay_client.py:1857-1859  (_submit_selectors_for)
   [aba873354115f873]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
       src/koru/redup_integration.py:22-24  (redup_scan_command)
       src/koru/redup_integration.py:27-29  (redup_check_command)
@@ -4935,7 +4940,7 @@ DUPLICATES[234] (ranked by impact):
       src/koruide/ide.py:93-95  (supported_autopilot_ide_ids)
       src/koruide/ide.py:103-105  (vscode_extension_plugin_ide_ids)
 
-REFACTOR[234] (ranked by priority):
+REFACTOR[235] (ranked by priority):
   [1] ◐ extract_module     → src/koru/utils/_bootstrap_main.py
       WHY: 2 occurrences of 52-line block across 2 files — saves 52 lines
       FILES: src/koru/cli_bootstrap.py, src/koru/cli_cleaned.py
@@ -5353,293 +5358,296 @@ REFACTOR[234] (ranked by priority):
   [139] ○ extract_function   → src/koru/utils/_project_venv_roots.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous_readiness.py, src/koru/autonomous_runtime.py
-  [140] ○ extract_function   → src/koru/utils/as_managed.py
+  [140] ○ extract_function   → src/koru/integrations/utils/_canonical_ide.py
+      WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
+      FILES: src/koru/integrations/photo_vql_validation.py, src/koru/integrations/vdisplay_client.py
+  [141] ○ extract_function   → src/koru/utils/as_managed.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous_process_guard.py, src/koru/autonomous_processes.py
-  [141] ○ extract_function   → src/koru/utils/_context_main.py
+  [142] ○ extract_function   → src/koru/utils/_context_main.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/cli_cleaned.py, src/koru/cli_context.py
-  [142] ○ extract_function   → src/koru/integrations/utils/_auto_open_ide_enabled.py
+  [143] ○ extract_function   → src/koru/integrations/utils/_auto_open_ide_enabled.py
       WHY: 2 occurrences of 7-line block across 1 files — saves 7 lines
       FILES: src/koru/integrations/vdisplay_client.py
-  [143] ○ extract_function   → src/koru/utils/is_shell_agent.py
+  [144] ○ extract_function   → src/koru/utils/is_shell_agent.py
       WHY: 2 occurrences of 7-line block across 1 files — saves 7 lines
       FILES: src/koru/tillm_bridge.py
-  [144] ○ extract_function   → src/koru/utils/shell_tool_registry_entries.py
+  [145] ○ extract_function   → src/koru/utils/shell_tool_registry_entries.py
       WHY: 2 occurrences of 7-line block across 1 files — saves 7 lines
       FILES: src/koru/tillm_bridge.py
-  [145] ○ extract_function   → src/koruobserve/utils/cmd_providers_list.py
+  [146] ○ extract_function   → src/koruobserve/utils/cmd_providers_list.py
       WHY: 2 occurrences of 7-line block across 1 files — saves 7 lines
       FILES: src/koruobserve/providers_cli.py
-  [146] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_append_flag.py
+  [147] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_append_flag.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [147] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_doctor.py
+  [148] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_doctor.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [148] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_chat.py
+  [149] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_chat.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [149] ○ extract_function   → packages/utils/_require_fastmcp.py
+  [150] ○ extract_function   → packages/utils/_require_fastmcp.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: packages/mcp2coru/src/mcp2coru/server.py, packages/mcp2koru/src/mcp2koru/server.py
-  [150] ○ extract_function   → src/koru/utils/_path_is_relative_to.py
+  [151] ○ extract_function   → src/koru/utils/_path_is_relative_to.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/autonomous_runtime.py, src/koru/cli_cleaned.py
-  [151] ○ extract_function   → src/koru/cqrs/utils/all_events.py
+  [152] ○ extract_function   → src/koru/cqrs/utils/all_events.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/cqrs/event_store.py
-  [152] ○ extract_function   → src/koru/cqrs/utils/events_for_aggregate.py
+  [153] ○ extract_function   → src/koru/cqrs/utils/events_for_aggregate.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/cqrs/event_store.py
-  [153] ○ extract_function   → src/koruide/ides/utils/plugin.py
+  [154] ○ extract_function   → src/koruide/ides/utils/plugin.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koruide/ides/antigravity.py, src/koruide/ides/windsurf.py
-  [154] ○ extract_function   → packages/coru/src/coru/utils/_coru_readiness_strict.py
+  [155] ○ extract_function   → packages/coru/src/coru/utils/_coru_readiness_strict.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: packages/coru/src/coru/cli.py, packages/coru/src/coru/cli_calibration.py
-  [155] ○ extract_function   → packages/coru/src/coru/repair/utils/_collect_manage_issue_problems.py
+  [156] ○ extract_function   → packages/coru/src/coru/repair/utils/_collect_manage_issue_problems.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: packages/coru/src/coru/repair/diagnostics.py
-  [156] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_extract_status.py
+  [157] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_extract_status.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: packages/dsl2coru/src/dsl2coru/pb_codec.py
-  [157] ○ extract_function   → packages/utils/uri_for_cmd.py
+  [158] ○ extract_function   → packages/utils/uri_for_cmd.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: packages/uri2coru/src/uri2coru/uri.py, packages/uri2koru/src/uri2koru/uri.py
-  [158] ○ extract_function   → src/koru/utils/process_cwd.py
+  [159] ○ extract_function   → src/koru/utils/process_cwd.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/autonomous_process_guard.py, src/koru/autonomous_processes.py
-  [159] ○ extract_function   → src/koru/autonomy/phases/utils/_scan_result_is_create_failed_only.py
+  [160] ○ extract_function   → src/koru/autonomy/phases/utils/_scan_result_is_create_failed_only.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/autonomy/phases/scan_phase.py
-  [160] ○ extract_function   → src/utils/_previous_serve_config.py
+  [161] ○ extract_function   → src/utils/_previous_serve_config.py
       WHY: 3 occurrences of 3-line block across 3 files — saves 6 lines
       FILES: src/koru/configurator.py, src/koru/task_dedupe.py, src/koruapi/dashboard_config.py
-  [161] ○ extract_function   → src/koru/utils/_check_autopilot_chat_control.py
+  [162] ○ extract_function   → src/koru/utils/_check_autopilot_chat_control.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/doctor.py
-  [162] ○ extract_function   → src/koru/utils/chat_control_command_hints.py
+  [163] ○ extract_function   → src/koru/utils/chat_control_command_hints.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/doctor_chat_control.py, src/koru/doctor_reporting_checks.py
-  [163] ○ extract_function   → src/utils/_read_json_file.py
+  [164] ○ extract_function   → src/utils/_read_json_file.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/doctor_plugin_bundle.py, src/koruide/daemon/metadata.py
-  [164] ○ extract_function   → src/koru/utils/set_component_enabled.py
+  [165] ○ extract_function   → src/koru/utils/set_component_enabled.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/topology.py
-  [165] ○ extract_function   → src/koruide/ides/utils/keyboard.py
+  [166] ○ extract_function   → src/koruide/ides/utils/keyboard.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koruide/ides/jetbrains.py, src/koruide/ides/zed.py
-  [166] ○ extract_function   → packages/utils/main.py
+  [167] ○ extract_function   → packages/utils/main.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/cli.py, packages/dsl2koru/src/dsl2koru/cli.py
-  [167] ○ extract_function   → packages/utils/_handle_subcommand.py
+  [168] ○ extract_function   → packages/utils/_handle_subcommand.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/cli.py, packages/dsl2koru/src/dsl2koru/cli.py
-  [168] ○ extract_function   → packages/utils/envelope_from_json.py
+  [169] ○ extract_function   → packages/utils/envelope_from_json.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/codec.py, packages/dsl2koru/src/dsl2koru/codec.py
-  [169] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_split_command.py
+  [170] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_split_command.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/parser.py
-  [170] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_ui_key.py
+  [171] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_ui_key.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/parser.py
-  [171] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_auto.py
+  [172] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_auto.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [172] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_calibration.py
+  [173] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_calibration.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [173] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_repair_run.py
+  [174] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_repair_run.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [174] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_ui_type.py
+  [175] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_ui_type.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [175] ○ extract_function   → packages/utils/get_backend.py
+  [176] ○ extract_function   → packages/utils/get_backend.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/nlp2coru/src/nlp2coru/llm_backend.py, packages/nlp2koru/src/nlp2koru/llm_backend.py
-  [176] ○ extract_function   → src/koruvision/utils/png_dimensions.py
+  [177] ○ extract_function   → src/koruvision/utils/png_dimensions.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koruvision/capture_mss.py, src/koruvision/providers/base.py
-  [177] ○ extract_function   → packages/utils/parse_text.py
+  [178] ○ extract_function   → packages/utils/parse_text.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/codec.py, packages/dsl2koru/src/dsl2koru/codec.py
-  [178] ○ extract_function   → packages/utils/encode_text_to_protobuf.py
+  [179] ○ extract_function   → packages/utils/encode_text_to_protobuf.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/dsl2coru/src/dsl2coru/pb_codec.py, packages/dsl2koru/src/dsl2koru/pb_codec.py
-  [179] ○ extract_function   → packages/dsl2koru/src/dsl2koru/utils/_parse_query_lane_status.py
+  [180] ○ extract_function   → packages/dsl2koru/src/dsl2koru/utils/_parse_query_lane_status.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: packages/dsl2koru/src/dsl2koru/grammar.py
-  [180] ○ extract_function   → packages/utils/coru_run_command_pb.py
+  [181] ○ extract_function   → packages/utils/coru_run_command_pb.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: packages/mcp2coru/src/mcp2coru/tools.py, packages/mcp2koru/src/mcp2koru/tools.py
-  [181] ○ extract_function   → packages/uri2coru/src/uri2coru/utils/_cmd_repair_history.py
+  [182] ○ extract_function   → packages/uri2coru/src/uri2coru/utils/_cmd_repair_history.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: packages/uri2coru/src/uri2coru/decode.py
-  [182] ○ extract_function   → src/koru/utils/_blocked_interface_items.py
+  [183] ○ extract_function   → src/koru/utils/_blocked_interface_items.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/autonomous_loop_runner.py, src/koru/doctor_autopilot_checks.py
-  [183] ○ extract_function   → src/utils/_socket_inode.py
+  [184] ○ extract_function   → src/utils/_socket_inode.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/autonomous_readiness.py, src/koruide/daemon/metadata.py
-  [184] ○ extract_function   → src/koru/autonomy/utils/_build_trace_decisions_action.py
+  [185] ○ extract_function   → src/koru/autonomy/utils/_build_trace_decisions_action.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koru/autonomy/replay_parser.py
-  [185] ○ extract_function   → src/koru/utils/_package_version.py
+  [186] ○ extract_function   → src/koru/utils/_package_version.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/autopilot/install_manager.py, src/koru/self_control.py
-  [186] ○ extract_function   → src/koru/utils/_dispatch_flag_action.py
+  [187] ○ extract_function   → src/koru/utils/_dispatch_flag_action.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/cli.py, src/koru/cli_cleaned.py
-  [187] ○ extract_function   → src/koru/utils/_command_value.py
+  [188] ○ extract_function   → src/koru/utils/_command_value.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/cli_cleaned.py, src/koru/cli_parser.py
-  [188] ○ extract_function   → src/koru/cqrs/utils/runtime_for_project.py
+  [189] ○ extract_function   → src/koru/cqrs/utils/runtime_for_project.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koru/cqrs/__init__.py
-  [189] ○ extract_function   → src/koru/utils/_check_autonomous_service_stream.py
+  [190] ○ extract_function   → src/koru/utils/_check_autonomous_service_stream.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koru/doctor.py
-  [190] ○ extract_function   → src/koru/utils/_check_autopilot_debug_log.py
+  [191] ○ extract_function   → src/koru/utils/_check_autopilot_debug_log.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koru/doctor.py
-  [191] ○ extract_function   → src/koru/utils/windsurf_line_mentions_chat_open_command.py
+  [192] ○ extract_function   → src/koru/utils/windsurf_line_mentions_chat_open_command.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/doctor_chat_control.py, src/koru/doctor_reporting_checks.py
-  [192] ○ extract_function   → src/koru/utils/_koru_version.py
+  [193] ○ extract_function   → src/koru/utils/_koru_version.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/local_manager_client.py, src/koru/local_manager_state.py
-  [193] ○ extract_function   → src/utils/planfile_dir.py
+  [194] ○ extract_function   → src/utils/planfile_dir.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/runtime.py, src/koruapi/dashboard_serve_utils.py
-  [194] ○ extract_function   → src/korudsl/utils/_handle_error.py
+  [195] ○ extract_function   → src/korudsl/utils/_handle_error.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/korudsl/library.py
-  [195] ○ extract_function   → src/koruide/ides/utils/detection.py
+  [196] ○ extract_function   → src/koruide/ides/utils/detection.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koruide/ides/vscode.py, src/koruide/ides/windsurf.py
-  [196] ○ extract_function   → src/koruide/ides/utils/aliases.py
+  [197] ○ extract_function   → src/koruide/ides/utils/aliases.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koruide/ides/vscode.py, src/koruide/ides/vscodium.py
-  [197] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_truthy.py
+  [198] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_truthy.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/parser.py
-  [198] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_env.py
+  [199] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_env.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/parser.py
-  [199] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_query.py
+  [200] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_query.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/parser.py
-  [200] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_lane.py
+  [201] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_lane.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [201] ○ extract_function   → packages/utils/decode_protobuf.py
+  [202] ○ extract_function   → packages/utils/decode_protobuf.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/dsl2coru/src/dsl2coru/pb_codec.py, packages/dsl2koru/src/dsl2koru/pb_codec.py
-  [202] ○ extract_function   → packages/utils/__post_init__.py
+  [203] ○ extract_function   → packages/utils/__post_init__.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/mcp2coru/src/mcp2coru/server.py, packages/mcp2koru/src/mcp2koru/server.py
-  [203] ○ extract_function   → src/koru/utils/_cycle_attr.py
+  [204] ○ extract_function   → src/koru/utils/_cycle_attr.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous_cycle_chat_activity.py, src/koru/autonomous_cycle_drive_retry.py
-  [204] ○ extract_function   → src/koru/utils/_terminal_host_ide_id.py
+  [205] ○ extract_function   → src/koru/utils/_terminal_host_ide_id.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous_plugin_wait.py, src/koru/ide_adapters/ide_reload.py
-  [205] ○ extract_function   → packages/utils/_handle_exec.py
+  [206] ○ extract_function   → packages/utils/_handle_exec.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/cli2coru/src/cli2coru/cli.py, packages/cli2koru/src/cli2koru/cli.py
-  [206] ○ extract_function   → packages/coru/src/coru/utils/_terminal_ide_hint.py
+  [207] ○ extract_function   → packages/coru/src/coru/utils/_terminal_ide_hint.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/coru/src/coru/cli.py, packages/coru/src/coru/ide_detection.py
-  [207] ○ extract_function   → packages/utils/coru_run_command.py
+  [208] ○ extract_function   → packages/utils/coru_run_command.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/mcp2coru/src/mcp2coru/tools.py, packages/mcp2koru/src/mcp2koru/tools.py
-  [208] ○ extract_function   → packages/utils/coru_run_dsl.py
+  [209] ○ extract_function   → packages/utils/coru_run_dsl.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: packages/mcp2coru/src/mcp2coru/tools.py, packages/mcp2koru/src/mcp2koru/tools.py
-  [209] ○ extract_function   → src/koru/utils/status_in_skip_list.py
+  [210] ○ extract_function   → src/koru/utils/status_in_skip_list.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous_checkpoint.py, src/koru/autonomous_cycle_common.py
-  [210] ○ extract_function   → src/koru/utils/_build_queue_command.py
+  [211] ○ extract_function   → src/koru/utils/_build_queue_command.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous_cycle.py, src/koru/autonomy/phases/queue_phase.py
-  [211] ○ extract_function   → src/utils/_looks_like_autonomous_up_command.py
+  [212] ○ extract_function   → src/utils/_looks_like_autonomous_up_command.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous_processes.py, src/koruobserve/providers_cli.py
-  [212] ○ extract_function   → packages/utils/envelope_from_bytes.py
+  [213] ○ extract_function   → packages/utils/envelope_from_bytes.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: packages/dsl2coru/src/dsl2coru/codec.py, packages/dsl2koru/src/dsl2koru/codec.py
-  [213] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_sync.py
+  [214] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_parse_sync.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/parser.py
-  [214] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_env.py
+  [215] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_serialize_env.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: packages/dsl2coru/src/dsl2coru/grammar.py, packages/dsl2coru/src/dsl2coru/serializer.py
-  [215] ○ extract_function   → packages/utils/should_use_ollama_fallback.py
+  [216] ○ extract_function   → packages/utils/should_use_ollama_fallback.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: packages/nlp2coru/src/nlp2coru/openrouter_config.py, packages/nlp2koru/src/nlp2koru/openrouter_config.py
-  [216] ○ extract_function   → packages/utils/validate_all.py
+  [217] ○ extract_function   → packages/utils/validate_all.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: packages/rest2coru/src/rest2coru/app.py, packages/rest2koru/src/rest2koru/app.py
-  [217] ○ extract_function   → src/koru/deployment_events/utils/to_json.py
+  [218] ○ extract_function   → src/koru/deployment_events/utils/to_json.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/deployment_events/batch.py, src/koru/deployment_events/models.py
-  [218] ○ extract_function   → src/koru/utils/__init__.py
+  [219] ○ extract_function   → src/koru/utils/__init__.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/local_manager_state.py
-  [219] ○ extract_function   → src/utils/_bound_port.py
+  [220] ○ extract_function   → src/utils/_bound_port.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/local_service.py, src/koruapi/dashboard_serve_utils.py
-  [220] ○ extract_function   → src/koruvision/providers/utils/capture_one.py
+  [221] ○ extract_function   → src/koruvision/providers/utils/capture_one.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koruvision/providers/cli_tools.py, src/koruvision/providers/obs_websocket.py
-  [221] ○ extract_function   → packages/coru/src/coru/utils/_ide_from_vscode_pid.py
+  [222] ○ extract_function   → packages/coru/src/coru/utils/_ide_from_vscode_pid.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: packages/coru/src/coru/cli.py
-  [222] ○ extract_function   → packages/utils/envelope_to_bytes.py
+  [223] ○ extract_function   → packages/utils/envelope_to_bytes.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: packages/dsl2coru/src/dsl2coru/codec.py, packages/dsl2koru/src/dsl2koru/codec.py
-  [223] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_set_env.py
+  [224] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_set_env.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: packages/dsl2coru/src/dsl2coru/pb_codec.py
-  [224] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_extract_env.py
+  [225] ○ extract_function   → packages/dsl2coru/src/dsl2coru/utils/_extract_env.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: packages/dsl2coru/src/dsl2coru/pb_codec.py
-  [225] ○ extract_function   → packages/dsl2koru/src/dsl2koru/utils/_set_query_lane_status.py
+  [226] ○ extract_function   → packages/dsl2koru/src/dsl2koru/utils/_set_query_lane_status.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: packages/dsl2koru/src/dsl2koru/pb_codec.py
-  [226] ○ extract_function   → packages/dsl2koru/src/dsl2koru/utils/_extract_query_lane_status.py
+  [227] ○ extract_function   → packages/dsl2koru/src/dsl2koru/utils/_extract_query_lane_status.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: packages/dsl2koru/src/dsl2koru/pb_codec.py
-  [227] ○ extract_function   → src/koru/utils/_normalize_autonomous_argv.py
+  [228] ○ extract_function   → src/koru/utils/_normalize_autonomous_argv.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autonomous.py, src/koru/wizard/cli.py
-  [228] ○ extract_function   → src/koru/utils/_apply_auto_pipeline_flags.py
+  [229] ○ extract_function   → src/koru/utils/_apply_auto_pipeline_flags.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/autonomous.py
-  [229] ○ extract_function   → src/koru/utils/llm_needs_input_ticket_queue_name.py
+  [230] ○ extract_function   → src/koru/utils/llm_needs_input_ticket_queue_name.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/autonomous_cycle_chat_activity_config.py
-  [230] ○ extract_function   → src/koru/utils/_auto_llm_ready_enabled.py
+  [231] ○ extract_function   → src/koru/utils/_auto_llm_ready_enabled.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autonomous_cycle_skip_conditions.py, src/koru/autonomy/operator_pipeline.py
-  [231] ○ extract_function   → src/koru/integrations/utils/_chat_selectors_for.py
+  [232] ○ extract_function   → src/koru/integrations/utils/_chat_selectors_for.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/integrations/vdisplay_client.py
-  [232] ○ extract_function   → src/koru/utils/redup_scan_command.py
+  [233] ○ extract_function   → src/koru/utils/redup_scan_command.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/redup_integration.py
-  [233] ○ extract_function   → src/koruapi/utils/build_dashboard_handler.py
+  [234] ○ extract_function   → src/koruapi/utils/build_dashboard_handler.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koruapi/dashboard_routes.py, src/koruapi/dashboard_serve.py
-  [234] ○ extract_function   → src/koruide/utils/supported_autopilot_ide_ids.py
+  [235] ○ extract_function   → src/koruide/utils/supported_autopilot_ide_ids.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koruide/ide.py
 
-QUICK_WINS[161] (low risk, high savings — do first):
+QUICK_WINS[162] (low risk, high savings — do first):
   [2] extract_function   saved=52L  → src/koru/utils/_scan_pyqual_report.py
       FILES: scan.py
   [4] extract_function   saved=42L  → src/koru/autopilot/utils/_add_calibrate_parser.py
@@ -5666,7 +5674,7 @@ DEPENDENCY_RISK[1] (duplicates spanning multiple packages):
       packages/coru/src/coru/supervisor/systemd_unit.py
       src/koru/autopilot/systemd_cli.py
 
-EFFORT_ESTIMATE (total ≈ 89.2h):
+EFFORT_ESTIMATE (total ≈ 89.4h):
   hard   _bootstrap_main                     saved=52L  ~156min
   hard   _scan_pyqual_report                 saved=52L  ~104min
   hard   complete                            saved=48L  ~144min
@@ -5677,23 +5685,23 @@ EFFORT_ESTIMATE (total ≈ 89.2h):
   hard   run_command                         saved=33L  ~99min
   medium activity_enabled                    saved=33L  ~66min
   hard   build_chat_control_detail_bits      saved=33L  ~99min
-  ... +224 more (~4276min)
+  ... +225 more (~4290min)
 
 METRICS-TARGET:
-  dup_groups:  234 → 0
-  saved_lines: 2538 lines recoverable
+  dup_groups:  235 → 0
+  saved_lines: 2545 lines recoverable
 ```
 
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 6425 func | 632f | 2026-06-12
-# generated in 0.02s
+# code2llm/evolution | 6447 func | 634f | 2026-06-12
+# generated in 0.03s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 4768L, 0 classes, max CC=74
-      EFFORT: ~4h  IMPACT: 352832
+      WHY: 4714L, 0 classes, max CC=74
+      EFFORT: ~4h  IMPACT: 348836
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3994L, 3 classes, max CC=13
@@ -5741,7 +5749,7 @@ METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
   max-CC:      74 → ≤20
   god-modules: 49 → 0
-  high-CC(≥15): 32 → ≤16
+  high-CC(≥15): 37 → ≤18
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -5769,7 +5777,7 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.4 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=3.8
 ```
 
 ## Intent

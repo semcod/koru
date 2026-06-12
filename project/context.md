@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.03s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 674, typescript: 93, shell: 56, json: 40, yaml: 31
+- **Languages**: python: 677, typescript: 93, shell: 56, json: 40, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 6556
-- **Total Classes**: 485
-- **Modules**: 947
-- **Entry Points**: 2646
+- **Total Functions**: 6585
+- **Total Classes**: 486
+- **Modules**: 950
+- **Entry Points**: 2657
 
 ## Architecture by Module
 
@@ -20,7 +20,7 @@
 - **File**: `cli.py`
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 125
+- **Functions**: 124
 - **File**: `vdisplay_client.py`
 
 ### plugins.koru-autopilot-shared.src.bridge-submit
@@ -110,10 +110,6 @@
 ## Key Entry Points
 
 Main execution flows into the system:
-
-### src.koru.integrations.vdisplay_client.send_chat
-> Semantic IDE chat drive via vdisplay control plane.
-- **Calls**: src.koru.integrations.vdisplay_client._photo_vql_code_edit_enabled, src.koru.integrations.vdisplay_client._send_chat_preflight, src.koru.integrations.vdisplay_client._send_chat_try_photo_vql, src.koru.integrations.vdisplay_client._send_chat_dry_run, src.koru.integrations.vdisplay_client._send_chat_try_os_injector, src.koru.integrations.vdisplay_client._send_chat_try_ide_prompt_fallback, src.koru.integrations.vdisplay_client._ide_hints, src.koru.integrations.vdisplay_client._find_first_selector
 
 ### scripts.e2e_envmap_koru.main
 - **Calls**: scripts.e2e_envmap_koru._section, project.print, project.print, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section, env2llm_registry.env2llm_available, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section
@@ -231,21 +227,14 @@ Args:
 ### src.koru.autonomous_runtime.setup_autonomous_session
 - **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, src.koru.autonomous_runtime._log_runtime_readiness_gate
 
+### packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
+- **Calls**: result_pb2.DslEvent, pb.command.CopyFrom, DslResult, pb.result.CopyFrom, pb.SerializeToString, packages.dsl2coru.src.dsl2coru.pb_codec.dict_to_envelope, packages.dsl2koru.src.dsl2koru.pb_codec.result_to_pb, self.path.with_suffix
+
 ## Process Flows
 
 Key execution flows identified:
 
-### Flow 1: send_chat
-```
-send_chat [src.koru.integrations.vdisplay_client]
-  └─> _photo_vql_code_edit_enabled
-  └─> _send_chat_preflight
-      └─> _photo_vql_ide_capture_mismatch
-          └─> _photo_vql_ide_window_warning
-      └─> _finalize_send_chat
-```
-
-### Flow 2: main
+### Flow 1: main
 ```
 main [scripts.e2e_envmap_koru]
   └─> _section
@@ -255,7 +244,7 @@ main [scripts.e2e_envmap_koru]
   └─ →> print
 ```
 
-### Flow 3: _select_auto_pipeline_profile
+### Flow 2: _select_auto_pipeline_profile
 ```
 _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
   └─> _auto_pipeline_stage
@@ -263,7 +252,7 @@ _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
           └─ →> parse_autopilot_status
 ```
 
-### Flow 4: action_snapshot
+### Flow 3: action_snapshot
 ```
 action_snapshot [src.koru.autopilot.cli_snapshot]
   └─> _decision_lines
@@ -273,18 +262,18 @@ action_snapshot [src.koru.autopilot.cli_snapshot]
       └─> normalize_ide_id
 ```
 
-### Flow 5: from_env
+### Flow 4: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
 ```
 
-### Flow 6: create_app
+### Flow 5: create_app
 ```
 create_app [packages.rest2koru.src.rest2koru.app]
 ```
 
-### Flow 7: run_api_request
+### Flow 6: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
   └─ →> api_command
@@ -293,13 +282,13 @@ run_api_request [src.koru.queue.runners]
       └─> control_command
 ```
 
-### Flow 8: register
+### Flow 7: register
 ```
 register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 9: action_trace
+### Flow 8: action_trace
 ```
 action_trace [src.koru.autopilot.cli_trace]
   └─> _print_observability_dsl_trace
@@ -312,11 +301,18 @@ action_trace [src.koru.autopilot.cli_trace]
       └─> decision_trace_path
 ```
 
-### Flow 10: _diagnose_bridge_after_drive_failure
+### Flow 9: _diagnose_bridge_after_drive_failure
 ```
 _diagnose_bridge_after_drive_failure [src.koru.autopilot.commands.drive]
   └─ →> runtime_for_project
       └─ →> project_event_store_path
+```
+
+### Flow 10: copy_observe_artifacts_to_session
+```
+copy_observe_artifacts_to_session [src.koru.integrations.autonomy_session]
+  └─> session_observe_paths
+      └─> active_session_dir
 ```
 
 ## Key Classes
@@ -573,23 +569,21 @@ Functions exposed as public API (no underscore prefix):
 
 - `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 123 calls
 - `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 95 calls
-- `src.koru.integrations.vdisplay_client.send_chat` - 77 calls
-- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 77 calls
 - `scripts.e2e_envmap_koru.main` - 73 calls
 - `src.koru.integrations.vdisplay_client.ensure_vdisplay_ide_control` - 72 calls
 - `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 66 calls
 - `src.koru.integrations.vdisplay_client.load_vql_metadata` - 55 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
+- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 50 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
-- `src.koru.integrations.vdisplay_client.validate_vql_chat_target` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
 - `src.koru.integrations.vdisplay_client.move_mouse_to_vql_target_and_focus_keyboard` - 40 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
-- `src.koru.integrations.photo_vql_user_guidance.build_user_guidance` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
+- `src.koru.integrations.photo_vql_validation.window_titles_from_vql_meta` - 37 calls
 - `src.koru.integrations.autonomy_session.copy_observe_artifacts_to_session` - 35 calls
 - `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 34 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
@@ -611,6 +605,8 @@ Functions exposed as public API (no underscore prefix):
 - `koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koru.doctor_render.render_text` - 27 calls
+- `src.koru.cli_tagi.deploy` - 27 calls
+- `src.koru.autonomous_runtime.setup_autonomous_session` - 27 calls
 
 ## System Interactions
 
@@ -618,11 +614,6 @@ How components interact:
 
 ```mermaid
 graph TD
-    send_chat --> _photo_vql_code_edit
-    send_chat --> _send_chat_preflight
-    send_chat --> _send_chat_try_photo
-    send_chat --> _send_chat_dry_run
-    send_chat --> _send_chat_try_os_in
     main --> _section
     main --> print
     _select_auto_pipelin --> _auto_pipeline_stage
@@ -648,6 +639,11 @@ graph TD
     run_api_request --> Request
     register --> utc_now
     register --> str
+    register --> get
+    register --> _reconcile_locked
+    action_trace --> resolve
+    action_trace --> load_recent_decision
+    action_trace --> print
 ```
 
 ## Reverse Engineering Guidelines

@@ -1,10 +1,10 @@
-# code2llm/evolution | 6425 func | 632f | 2026-06-12
-# generated in 0.02s
+# code2llm/evolution | 6454 func | 635f | 2026-06-12
+# generated in 0.04s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 4768L, 0 classes, max CC=74
-      EFFORT: ~4h  IMPACT: 352832
+      WHY: 4488L, 0 classes, max CC=74
+      EFFORT: ~4h  IMPACT: 332112
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3994L, 3 classes, max CC=13
@@ -14,37 +14,37 @@ NEXT[10] (ranked by impact):
       WHY: CC=74 exceeds 15
       EFFORT: ~1h  IMPACT: 3700
 
-  [4] !! SPLIT-FUNC      send_chat  CC=48  fan=43
-      WHY: CC=48 exceeds 15
-      EFFORT: ~1h  IMPACT: 2064
-
-  [5] !! SPLIT-FUNC      prepare_photo_vql_for_drive  CC=45  fan=44
+  [4] !! SPLIT-FUNC      prepare_photo_vql_for_drive  CC=45  fan=44
       WHY: CC=45 exceeds 15
       EFFORT: ~1h  IMPACT: 1980
 
-  [6] !! SPLIT-FUNC      ensure_vdisplay_ide_control  CC=47  fan=40
+  [5] !! SPLIT-FUNC      ensure_vdisplay_ide_control  CC=47  fan=40
       WHY: CC=47 exceeds 15
       EFFORT: ~1h  IMPACT: 1880
 
-  [7] !! SPLIT-FUNC      _type_text_at_vql_coords  CC=41  fan=36
+  [6] !! SPLIT-FUNC      _type_text_at_vql_coords  CC=41  fan=36
       WHY: CC=41 exceeds 15
       EFFORT: ~1h  IMPACT: 1476
 
-  [8] !! SPLIT-FUNC      get_vql_chat_target_from_photo  CC=42  fan=33
-      WHY: CC=42 exceeds 15
-      EFFORT: ~1h  IMPACT: 1386
-
-  [9] !! SPLIT-FUNC      load_vql_metadata  CC=48  fan=26
+  [7] !! SPLIT-FUNC      load_vql_metadata  CC=48  fan=26
       WHY: CC=48 exceeds 15
       EFFORT: ~1h  IMPACT: 1248
 
-  [10] !! SPLIT-FUNC      _resolve_photo_vql_llm_coords  CC=31  fan=39
+  [8] !! SPLIT-FUNC      _resolve_photo_vql_llm_coords  CC=31  fan=39
       WHY: CC=31 exceeds 15
       EFFORT: ~1h  IMPACT: 1209
 
+  [9] !! SPLIT-FUNC      _map_chat_target_capture_local  CC=41  fan=18
+      WHY: CC=41 exceeds 15
+      EFFORT: ~1h  IMPACT: 738
+
+  [10] !! SPLIT-FUNC      _build_vql_command_plan  CC=37  fan=19
+      WHY: CC=37 exceeds 15
+      EFFORT: ~1h  IMPACT: 703
+
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 125 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 124 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 217 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
@@ -52,7 +52,7 @@ METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
   max-CC:      74 → ≤20
   god-modules: 49 → 0
-  high-CC(≥15): 32 → ≤16
+  high-CC(≥15): 33 → ≤16
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.4 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=3.8

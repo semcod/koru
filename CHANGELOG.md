@@ -73,6 +73,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.337] - 2026-06-12
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update .zed/settings.json
+- Update app.doql.less
+- Update package-lock.json
+- Update plugins/koru-autopilot-antigravity/package.json
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- ... and 18 more files
+
 ## [0.1.336] - 2026-06-12
 
 ### Docs

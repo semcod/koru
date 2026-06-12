@@ -1,9 +1,9 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.335', 'python').
+project_metadata('koru', '0.1.336', 'python').
 
 % ── Project Files ────────────────────────────────────────
-project_file('.nlp2dsl/environment.doql.less', 1035, 'less').
-project_file('.nlp2dsl/registry/environment.doql.less', 1035, 'less').
+project_file('.nlp2dsl/environment.doql.less', 1116, 'less').
+project_file('.nlp2dsl/registry/environment.doql.less', 1116, 'less').
 project_file('app.doql.less', 1019, 'less').
 project_file('check_dups.py', 28, 'python').
 project_file('docker/capture/entrypoint-x11.sh', 36, 'shell').
@@ -809,7 +809,7 @@ project_file('src/koru/autonomous_process_guard.py', 272, 'python').
 project_file('src/koru/autonomous_processes.py', 356, 'python').
 project_file('src/koru/autonomous_readiness.py', 970, 'python').
 project_file('src/koru/autonomous_resources.py', 90, 'python').
-project_file('src/koru/autonomous_runtime.py', 634, 'python').
+project_file('src/koru/autonomous_runtime.py', 675, 'python').
 project_file('src/koru/autonomous_startup.py', 873, 'python').
 project_file('src/koru/autonomous_submit_strategy.py', 123, 'python').
 project_file('src/koru/autonomous_up.py', 235, 'python').
@@ -1063,8 +1063,11 @@ project_file('src/koru/integrations/imgl_client.py', 340, 'python').
 project_file('src/koru/integrations/photo_vql_config.py', 68, 'python').
 project_file('src/koru/integrations/photo_vql_drive.py', 139, 'python').
 project_file('src/koru/integrations/photo_vql_guard.py', 180, 'python').
-project_file('src/koru/integrations/photo_vql_user_guidance.py', 231, 'python').
-project_file('src/koru/integrations/vdisplay_client.py', 4769, 'python').
+project_file('src/koru/integrations/photo_vql_monitor.py', 123, 'python').
+project_file('src/koru/integrations/photo_vql_target.py', 133, 'python').
+project_file('src/koru/integrations/photo_vql_user_guidance.py', 289, 'python').
+project_file('src/koru/integrations/photo_vql_validation.py', 318, 'python').
+project_file('src/koru/integrations/vdisplay_client.py', 4491, 'python').
 project_file('src/koru/interface_registry.py', 231, 'python').
 project_file('src/koru/llm_reflect.py', 174, 'python').
 project_file('src/koru/local_manager_client.py', 252, 'python').
@@ -3369,9 +3372,11 @@ python_function('src/koru/autonomous_runtime.py', 'maybe_sync_project_koru_packa
 python_function('src/koru/autonomous_runtime.py', 'project_venv_reexec_env', 1, 5, 6).
 python_function('src/koru/autonomous_runtime.py', 'project_venv_warning_lines', 1, 4, 5).
 python_function('src/koru/autonomous_runtime.py', 'default_autopilot_instance_for_ide', 1, 7, 2).
+python_function('src/koru/autonomous_runtime.py', '_instance_from_socket_path', 1, 5, 6).
+python_function('src/koru/autonomous_runtime.py', '_socket_path_for_lane', 2, 4, 4).
 python_function('src/koru/autonomous_runtime.py', '_resolve_autopilot_lane', 1, 9, 5).
 python_function('src/koru/autonomous_runtime.py', '_autopilot_socket_source', 1, 5, 0).
-python_function('src/koru/autonomous_runtime.py', '_decide_autopilot_socket', 1, 4, 7).
+python_function('src/koru/autonomous_runtime.py', '_decide_autopilot_socket', 1, 7, 11).
 python_function('src/koru/autonomous_runtime.py', '_log_autopilot_socket_decision', 2, 1, 3).
 python_function('src/koru/autonomous_runtime.py', 'setup_autopilot_daemon', 2, 2, 4).
 python_function('src/koru/autonomous_runtime.py', '_log_runtime_readiness_gate', 2, 2, 6).
@@ -4814,12 +4819,40 @@ python_function('src/koru/integrations/photo_vql_guard.py', 'ide_mismatch_allowe
 python_function('src/koru/integrations/photo_vql_guard.py', 'allow_actuation_on_capture_mismatch', 0, 2, 4).
 python_function('src/koru/integrations/photo_vql_guard.py', 'competing_ide_label_from_warning', 1, 11, 6).
 python_function('src/koru/integrations/photo_vql_guard.py', 'drive_blocked_on_capture_mismatch', 0, 5, 4).
+python_function('src/koru/integrations/photo_vql_monitor.py', '_monitor_candidate_order', 0, 16, 5).
+python_function('src/koru/integrations/photo_vql_monitor.py', '_finalize_resolved_probe', 1, 6, 4).
+python_function('src/koru/integrations/photo_vql_monitor.py', 'resolve_vdisplay_source_for_ide', 1, 10, 8).
+python_function('src/koru/integrations/photo_vql_target.py', 'vql_candidates_polluted', 1, 6, 6).
+python_function('src/koru/integrations/photo_vql_target.py', 'score_photo_vql_chat_input', 1, 39, 7).
+python_function('src/koru/integrations/photo_vql_target.py', 'photo_vql_chat_input_candidates', 1, 11, 7).
+python_function('src/koru/integrations/photo_vql_target.py', 'jetbrains_corner_rejected', 1, 18, 5).
+python_function('src/koru/integrations/photo_vql_target.py', 'jetbrains_chat_corner_target_from_layers', 1, 5, 3).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', '_truthy', 2, 2, 3).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'preflight_repo_paths', 0, 7, 5).
-python_function('src/koru/integrations/photo_vql_user_guidance.py', 'build_user_guidance', 0, 43, 12).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_drive_retry_cmd', 0, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_audit_cmd', 0, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_success', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_missing_repo', 1, 3, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_monitor_not_connected', 1, 9, 4).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_ide_mismatch', 1, 7, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_empty_vql', 1, 3, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_prepare_failed', 1, 6, 2).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', '_guidance_drive_failed', 1, 2, 1).
+python_function('src/koru/integrations/photo_vql_user_guidance.py', 'build_user_guidance', 0, 17, 11).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'format_user_guidance', 1, 2, 2).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'speak_user_guidance', 1, 10, 5).
 python_function('src/koru/integrations/photo_vql_user_guidance.py', 'emit_user_guidance', 0, 2, 4).
+python_function('src/koru/integrations/photo_vql_validation.py', '_canonical_ide', 1, 3, 3).
+python_function('src/koru/integrations/photo_vql_validation.py', 'window_titles_from_vql_meta', 1, 27, 9).
+python_function('src/koru/integrations/photo_vql_validation.py', 'capture_title_from_meta', 1, 3, 1).
+python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_bounds', 0, 5, 0).
+python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_label', 0, 11, 5).
+python_function('src/koru/integrations/photo_vql_validation.py', '_coord_warnings_for_jetbrains', 0, 5, 1).
+python_function('src/koru/integrations/photo_vql_validation.py', 'validate_chat_coords_for_ide', 0, 12, 10).
+python_function('src/koru/integrations/photo_vql_validation.py', '_target_geometry', 1, 15, 4).
+python_function('src/koru/integrations/photo_vql_validation.py', '_label_ok_for_chat', 0, 6, 1).
+python_function('src/koru/integrations/photo_vql_validation.py', '_collect_vql_validation_errors', 0, 22, 6).
+python_function('src/koru/integrations/photo_vql_validation.py', 'validate_vql_chat_target', 1, 17, 9).
 python_function('src/koru/integrations/vdisplay_client.py', '_real_vdisplay_src', 0, 5, 9).
 python_function('src/koru/integrations/vdisplay_client.py', '_ensure_real_vdisplay_on_path', 0, 6, 9).
 python_function('src/koru/integrations/vdisplay_client.py', '_load_vdisplay_control', 0, 4, 1).
@@ -4839,18 +4872,15 @@ python_function('src/koru/integrations/vdisplay_client.py', 'simplified_control_
 python_function('src/koru/integrations/vdisplay_client.py', 'vdisplay_fallback_enabled', 0, 7, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_dry_run', 0, 1, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_code_edit_enabled', 0, 1, 3).
-python_function('src/koru/integrations/vdisplay_client.py', '_prefer_photo_vql_chat', 0, 6, 6).
+python_function('src/koru/integrations/vdisplay_client.py', '_prefer_photo_vql_chat', 0, 5, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_matches_requested_ide', 1, 2, 4).
 python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_source', 0, 2, 2).
 python_function('src/koru/integrations/vdisplay_client.py', '_probe_ide_processes', 1, 8, 11).
 python_function('src/koru/integrations/vdisplay_client.py', '_desktop_probe', 0, 11, 7).
-python_function('src/koru/integrations/vdisplay_client.py', '_resolve_vdisplay_source_for_ide', 1, 29, 11).
+python_function('src/koru/integrations/vdisplay_client.py', '_resolve_vdisplay_source_for_ide', 1, 1, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_abort_on_desktop_probe_fail', 0, 1, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_vdisplay_source_for_ide', 1, 2, 3).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_metadata_root', 0, 1, 3).
-python_function('src/koru/integrations/vdisplay_client.py', '_window_titles_from_vql_meta', 1, 27, 9).
-python_function('src/koru/integrations/vdisplay_client.py', '_capture_title_from_meta', 1, 3, 1).
-python_function('src/koru/integrations/vdisplay_client.py', 'validate_vql_chat_target', 1, 59, 12).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_validation_from_meta', 1, 6, 2).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_confirmed_from_meta', 0, 5, 6).
 python_function('src/koru/integrations/vdisplay_client.py', '_capture_provenance', 0, 9, 7).
@@ -4909,24 +4939,26 @@ python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_try_phot
 python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_dry_run', 1, 3, 5).
 python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_try_os_injector', 1, 7, 4).
 python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_try_ide_prompt_fallback', 1, 3, 3).
-python_function('src/koru/integrations/vdisplay_client.py', 'send_chat', 1, 48, 33).
+python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_semantic_vdisplay', 1, 5, 10).
+python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_photo_vql_mouse_focus', 1, 9, 10).
+python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_resolve_chat_selector', 0, 6, 4).
+python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_type_at_selector', 1, 16, 4).
+python_function('src/koru/integrations/vdisplay_client.py', '_send_chat_submit_if_requested', 0, 9, 8).
+python_function('src/koru/integrations/vdisplay_client.py', 'send_chat', 1, 10, 14).
 python_function('src/koru/integrations/vdisplay_client.py', '_resolve_vql_chat_target', 2, 4, 2).
 python_function('src/koru/integrations/vdisplay_client.py', '_find_vql_chat_target', 1, 3, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_extract_vql_click_from_target', 1, 1, 1).
 python_function('src/koru/integrations/vdisplay_client.py', '_get_pycharm_vql_editor_center', 0, 1, 0).
 python_function('src/koru/integrations/vdisplay_client.py', '_get_jetbrains_pycharm_chat_center', 0, 1, 0).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_elements', 0, 3, 2).
-python_function('src/koru/integrations/vdisplay_client.py', 'get_vql_chat_target_from_photo', 0, 42, 26).
+python_function('src/koru/integrations/vdisplay_client.py', 'get_vql_chat_target_from_photo', 0, 20, 23).
 python_function('src/koru/integrations/vdisplay_client.py', 'get_vql_editor_target_from_photo', 0, 2, 3).
 python_function('src/koru/integrations/vdisplay_client.py', 'click_editor_via_photo_vql', 2, 1, 2).
 python_function('src/koru/integrations/vdisplay_client.py', '_photo_capture_meta_for_source', 1, 9, 12).
 python_function('src/koru/integrations/vdisplay_client.py', '_enrich_capture_meta_for_pointer', 2, 30, 13).
 python_function('src/koru/integrations/vdisplay_client.py', '_map_chat_target_capture_local', 0, 41, 13).
-python_function('src/koru/integrations/vdisplay_client.py', '_photo_vql_chat_input_candidates', 1, 41, 9).
-python_function('src/koru/integrations/vdisplay_client.py', '_validate_chat_coords_for_ide', 0, 30, 9).
 python_function('src/koru/integrations/vdisplay_client.py', '_global_coords_from_vql_local', 0, 2, 6).
 python_function('src/koru/integrations/vdisplay_client.py', '_build_vql_command_plan', 0, 37, 17).
-python_function('src/koru/integrations/vdisplay_client.py', '_jetbrains_chat_corner_target_from_layers', 1, 21, 6).
 python_function('src/koru/integrations/vdisplay_client.py', '_log_vql_cursor_positioning_at_command', 1, 16, 16).
 python_function('src/koru/integrations/vdisplay_client.py', '_ydotool_click_capture_local', 0, 2, 10).
 python_function('src/koru/integrations/vdisplay_client.py', '_type_text_at_vql_coords', 1, 41, 27).
@@ -9215,6 +9247,7 @@ python_method('PhotoVqlDrive', 'run', 1, 8, 7).
 python_class('src/koru/integrations/photo_vql_guard.py', 'CaptureGuard').
 python_method('CaptureGuard', 'from_observe', 1, 14, 6).
 python_method('CaptureGuard', 'apply_to_prepare_out', 1, 12, 1).
+python_class('src/koru/integrations/photo_vql_user_guidance.py', '_GuidanceContext').
 python_class('src/koru/interface_registry.py', 'InterfaceVerification').
 python_class('src/koru/interface_registry.py', 'InterfaceDescriptor').
 python_class('src/koru/interface_registry.py', 'InterfaceRegistry').

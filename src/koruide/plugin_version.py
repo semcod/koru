@@ -20,7 +20,7 @@ EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
     "vscode": "0.2.6",
     "vscodium": "0.2.28",
     "windsurf": "0.2.10",
-    "antigravity": "0.2.15",
+    "antigravity": "0.2.16",
 }
 
 # Legacy alias: points at the VS Code-only umbrella plugin.

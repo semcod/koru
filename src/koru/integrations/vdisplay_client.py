@@ -21,6 +21,18 @@ logger = logging.getLogger(__name__)
 
 from koru.integrations.autonomy_session import begin_autonomy_session
 from koru.integrations import autonomy_session as _autonomy_session
+from koru.integrations.photo_vql_monitor import resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_impl
+from koru.integrations.photo_vql_target import (
+    jetbrains_chat_corner_target_from_layers as _jetbrains_chat_corner_target_from_layers,
+    photo_vql_chat_input_candidates as _photo_vql_chat_input_candidates,
+    vql_candidates_polluted as _vql_candidates_polluted,
+)
+from koru.integrations.photo_vql_validation import (
+    capture_title_from_meta as _capture_title_from_meta,
+    validate_chat_coords_for_ide as _validate_chat_coords_for_ide,
+    validate_vql_chat_target,
+    window_titles_from_vql_meta as _window_titles_from_vql_meta,
+)
 from koru.integrations.photo_vql_guard import (
     CaptureGuard,
     allow_actuation_on_capture_mismatch as _allow_actuation_on_capture_mismatch,
@@ -437,8 +449,6 @@ def _prefer_photo_vql_chat(*, ide: str = "auto") -> bool:
     if raw == "auto":
         canon = _canonical_ide(ide)
         if canon in {"jetbrains", "pycharm", "idea"}:
-            if _session_type() == "wayland":
-                return True
             return _capture_matches_requested_ide(ide)
         return True
     return False
@@ -559,73 +569,13 @@ def _resolve_vdisplay_source_for_ide(
     *,
     probe: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    """Pick capture monitor: explicit env > IDE default > DP-* > primary > first connected."""
-    explicit = os.environ.get("KORU_VDISPLAY_SOURCE", "").strip()
-    canon = _canonical_ide(ide)
-    preferred = explicit or _IDE_DEFAULT_SOURCE.get(canon, "DP-1")
-    if probe is None:
-        probe = _desktop_probe(ide=ide, source=preferred)
-    names = set(probe.get("monitor_names") or [])
-
-    if explicit and explicit not in names and names:
-        failed_probe = {
-            **probe,
-            "requested_source": explicit,
-            "resolved_source": explicit,
-            "source_available": False,
-            "ok": False,
-            "error": (
-                f"requested monitor {explicit!r} not connected "
-                f"(available: {sorted(names)})"
-            ),
-        }
-        return explicit, failed_probe
-
-    candidates: list[str] = []
-    for value in (explicit, preferred):
-        if value and value not in candidates:
-            candidates.append(value)
-    for monitor in probe.get("monitors") or []:
-        name = str(monitor.get("name") or "")
-        if name.startswith("DP-") and name not in candidates:
-            candidates.append(name)
-    for monitor in probe.get("monitors") or []:
-        if monitor.get("primary") and monitor.get("name"):
-            name = str(monitor["name"])
-            if name not in candidates:
-                candidates.append(name)
-    for name in sorted(names):
-        if name not in candidates:
-            candidates.append(name)
-
-    chosen = preferred
-    for candidate in candidates:
-        if candidate in names:
-            chosen = candidate
-            break
-
-    resolved_probe = {
-        **probe,
-        "requested_source": preferred,
-        "resolved_source": chosen,
-        "source_available": chosen in names if names else None,
-    }
-    if names and chosen not in names:
-        resolved_probe["ok"] = False
-        resolved_probe["error"] = (
-            f"no connected monitor for {preferred!r} "
-            f"(available: {sorted(names)})"
-        )
-    elif chosen != preferred:
-        resolved_probe["source_auto_resolved"] = True
-        resolved_probe["source_was"] = preferred
-        resolved_probe["ok"] = True
-        resolved_probe["source_available"] = True
-        resolved_probe.pop("error", None)
-    else:
-        resolved_probe["ok"] = bool(resolved_probe.get("ok", True))
-        resolved_probe["source_available"] = chosen in names if names else None
-    return chosen, resolved_probe
+    return _resolve_vdisplay_source_impl(
+        ide,
+        canonical_ide=_canonical_ide,
+        desktop_probe=_desktop_probe,
+        probe=probe,
+        ide_default_source=_IDE_DEFAULT_SOURCE,
+    )
 
 
 def _abort_on_desktop_probe_fail() -> bool:
@@ -672,144 +622,6 @@ _COMPETING_IDE_WINDOW_TOKENS: dict[str, tuple[str, ...]] = {
     "windsurf": ("pycharm", "intellij", "jetbrains"),
     "vscode": ("pycharm", "intellij", "jetbrains", "cursor"),
 }
-
-
-def _window_titles_from_vql_meta(meta: dict) -> list[str]:
-    titles: list[str] = []
-    for layer in meta.get("ui_elements") or meta.get("layers") or []:
-        if not isinstance(layer, dict):
-            continue
-        role = str(layer.get("role") or layer.get("kind") or "").lower()
-        if role != "window":
-            continue
-        title = str(layer.get("label") or layer.get("text") or layer.get("title") or "").strip()
-        if title:
-            titles.append(title)
-    if not titles:
-        # When structural layers empty (no imgl / no window role), still try to recover title
-        # from capture_validation (vdisplay side) only. Avoid polluting titles list with full
-        # nl/img2nl paragraphs (those can contain cross-IDE mentions from prior sessions and
-        # cause false competing detection in tests or mixed .vdisplay dirs).
-        # body_ide_mentions + explicit window_titles in cv are short and safe.
-        cv = meta.get("capture_validation") or {}
-        if isinstance(cv, dict):
-            for k in ("window_titles", "title", "capture_title"):
-                val = cv.get(k)
-                if isinstance(val, str) and val.strip():
-                    titles.append(val.strip())
-                elif isinstance(val, list):
-                    titles.extend([str(x).strip() for x in val if str(x).strip()])
-            bod = cv.get("body_ide_mentions") or []
-            if isinstance(bod, list):
-                titles.extend([str(x).strip() for x in bod if str(x).strip()])
-        # Do NOT inject raw nl here; the vdisplay-side capture_validation + its reasons are
-        # authoritative for "confirmed" when layers==0. Koru mismatch logic + empty_layers
-        # guard in get_vql already force map for jetbrains on empty.
-    # de-dup preserve order
-    seen = set()
-    uniq = []
-    for t in titles:
-        lt = t.lower()
-        if lt not in seen:
-            seen.add(lt)
-            uniq.append(t)
-    return uniq
-
-
-def _capture_title_from_meta(meta: dict | None) -> str | None:
-    titles = _window_titles_from_vql_meta(meta or {})
-    return titles[0] if titles else None
-
-
-_VQL_TERMINAL_LABEL_NOISE = (".py", ".ts", "session", "metadata", "vdisplay", "automation", "env", "KORU", "DRY_RUN", "PREFER", "LLM", " --source", "po clear", "recznie", "wpisz", "to do", "drive after", "Re-run", "audit", "cursor_positioning", "Explored", "passed", "Clear", "folder", "Gap Analysis", "Monitored", "screenshot", "act/", "ts - Cursor", "File Edit Selection", "Go Run Terminal", "Publish v", "247K", "Path(str(vql_path)", "imgl_path", "sidecar older than", "reasons.append", "You have folder", "faster responses")
-_VQL_CHAT_LABEL_HINTS = ("ask", "prompt", "message", "chat", "composer", "type")
-
-
-def validate_vql_chat_target(
-    target: dict[str, Any],
-    *,
-    ide: str,
-    meta: dict | None = None,
-    capture_mismatch: dict[str, Any] | None = None,
-    selection_method: str | None = None,
-    is_code_edit: bool = False,
-    x: int | None = None,
-    y: int | None = None,
-) -> dict[str, Any]:
-    """Hard validation of a VQL/map chat target before actuation (audit + inference_ok)."""
-    meta = meta or {}
-    method = str(selection_method or target.get("selection_method") or "")
-    is_map = method.startswith("map_") or str(target.get("id") or "").startswith("map:")
-    cc = target.get("click_center") or {}
-    lx = int(x if x is not None else cc.get("x") or 0)
-    ly = int(y if y is not None else cc.get("y") or 0)
-    capture_title = _capture_title_from_meta(meta)
-    app_match = capture_mismatch is None
-    bounds = target.get("bounds") or {}
-    bw = int(bounds.get("w") or bounds.get("width") or 0)
-    bh = int(bounds.get("h") or bounds.get("height") or 0)
-    label = str(target.get("label") or target.get("note") or "").lower()
-    area = bw * bh if bw > 0 and bh > 0 else 0
-    has_bounds = bw > 0 and bh > 0
-    vql_element_size_ok = (not has_bounds) or (bw >= 200 and bh >= 25)
-    if label == "background":
-        label_ok = False
-    elif not label:
-        label_ok = not has_bounds or (bw >= 200 and bh >= 25)
-    else:
-        label_ok = any(h in label for h in _VQL_CHAT_LABEL_HINTS)
-
-    validation_errors: list[str] = []
-    coord_warnings = _validate_chat_coords_for_ide(
-        x=lx, y=ly, ide=ide, target=target, is_code_edit=is_code_edit
-    )
-
-    if not is_code_edit:
-        if not app_match:
-            validation_errors.append("vql_invalid_for_chat_capture_mismatch")
-        if is_map and capture_mismatch:
-            validation_errors.append("used_map_because_mismatch_or_bad_element")
-        elif is_map and method == "map_fallback_after_bad_corner":
-            validation_errors.append("used_map_because_mismatch_or_bad_element")
-        elif not is_map:
-            if has_bounds and not vql_element_size_ok:
-                validation_errors.append(f"vql_element_too_small_for_chat_composer_{bw}x{bh}")
-            if label == "background" or (label in {"", "background"} and has_bounds and area < 5000):
-                validation_errors.append("vql_label_background_not_composer")
-            if any(term in label for term in _VQL_TERMINAL_LABEL_NOISE):
-                validation_errors.append(f"vql_label_terminal_noise:{label[:40]}")
-            shell_pollution_tokens = ("KORU_", "DRY_RUN", "PREFER LLM", " --source", "po clear", "recznie", "wpisz", "to do", "drive after", "Re-run", "audit", "cursor_positioning", "Explored", "passed", "Clear", "Gap Analysis", "Monitored", "screenshot", "act/", "ts - Cursor", "File Edit", "Go Run Terminal", "Publish v", "247K", "automation-gap")
-            if any(tok.lower() in label for tok in shell_pollution_tokens):
-                validation_errors.append("vql_label_shell_pollution_from_terminal_text")
-            if not label_ok and has_bounds:
-                validation_errors.append("vql_label_not_chat_composer")
-            confidence = target.get("confidence")
-            if isinstance(confidence, (int, float)) and float(confidence) < 0.25:
-                validation_errors.append("vql_confidence_too_low")
-
-    vql_valid = True
-    if not is_code_edit and not is_map:
-        if validation_errors:
-            vql_valid = False
-
-    return {
-        "ok": vql_valid and app_match and not coord_warnings,
-        "vql_valid": vql_valid,
-        "vql_element_size_ok": vql_element_size_ok,
-        "app_match": app_match,
-        "capture_title": capture_title,
-        "selection_method": method or None,
-        "is_map_target": is_map,
-        "validation_errors": validation_errors,
-        "coord_warnings": coord_warnings,
-        "bounds": {"w": bw, "h": bh} if has_bounds else None,
-        "label": label[:80] if label else None,
-        "used_map_because_mismatch_or_bad_element": is_map
-        and (
-            bool(capture_mismatch)
-            or method in {"map_fallback_after_bad_corner", "map_calibrated_on_mismatch"}
-        ),
-    }
 
 
 def _capture_validation_from_meta(meta: dict | None) -> dict[str, Any] | None:
@@ -2576,6 +2388,254 @@ def _send_chat_try_ide_prompt_fallback(
     return None
 
 
+def _send_chat_semantic_vdisplay(
+    prompt: str,
+    *,
+    ide: str,
+    submit: bool,
+) -> dict[str, Any]:
+    """VQL photo chat focus + selector/set_value typing path."""
+    hints = _ide_hints(ide)
+    focus_error: str | None = None
+    photo_vql_target: dict[str, Any] | None = None
+
+    if not _dry_run() and os.environ.get("KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS", "1").strip().lower() not in {
+        "0",
+        "false",
+        "no",
+        "off",
+    }:
+        photo_vql_target, focus_error = _send_chat_photo_vql_mouse_focus(prompt, ide=ide)
+
+    selector, found, selector_error = _send_chat_resolve_chat_selector(
+        ide=ide,
+        hints=hints,
+        photo_vql_target=photo_vql_target,
+        focus_error=focus_error,
+    )
+    if selector_error is not None:
+        return selector_error
+
+    typed, click_point, type_error = _send_chat_type_at_selector(
+        prompt,
+        ide=ide,
+        hints=hints,
+        selector=selector,
+        found=found,
+        focus_error=focus_error,
+    )
+    if type_error is not None:
+        return type_error
+
+    submitted, submit_result = _send_chat_submit_if_requested(ide=ide, hints=hints, submit=submit)
+    return _finalize_send_chat(
+        {
+            "ok": True,
+            "backend": "vdisplay",
+            "message": "typed via vdisplay semantic control (with VQL photo mouse focus)",
+            "type": "drive",
+            "fallback_from": "plugin",
+            "ide": ide,
+            "selector": selector,
+            "focus_error": focus_error,
+            "typed": typed,
+            "submitted": submitted,
+            "submit_result": submit_result,
+            "vql_mouse_focus": True,
+        },
+        prompt=prompt,
+        ide=ide,
+        submit=submit,
+    )
+
+
+def _send_chat_photo_vql_mouse_focus(
+    prompt: str,
+    *,
+    ide: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    focus_error: str | None = None
+    photo_vql_target: dict[str, Any] | None = None
+    try:
+        photo_vql_target = get_vql_chat_target_from_photo()
+        use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if use_llm_vision:
+            image_path = _resolve_photo_png_path_from_vql(source=_vdisplay_source())
+            if image_path and os.path.exists(str(image_path)):
+                try:
+                    rx, ry, rdec = _resolve_photo_vql_llm_coords(
+                        prompt=prompt,
+                        target=photo_vql_target,
+                        source=_vdisplay_source(),
+                        image_path=image_path,
+                    )
+                    if rdec:
+                        photo_vql_target = {
+                            **photo_vql_target,
+                            "click_center": {
+                                "x": rx,
+                                "y": ry,
+                                "note": f"LLM refined from foto: {rdec.get('reason', '')[:60]}",
+                            },
+                            "llm_refined": True,
+                            "llm_decision": rdec,
+                        }
+                except Exception:
+                    pass
+        mf = move_mouse_to_vql_target_and_focus_keyboard(photo_vql_target, ide=ide)
+        if not mf.get("ok"):
+            focus_error = mf.get("error") or mf.get("message")
+    except Exception as exc:
+        focus_error = str(exc)
+        photo_vql_target = get_vql_chat_target_from_photo()
+    return photo_vql_target, focus_error
+
+
+def _send_chat_resolve_chat_selector(
+    *,
+    ide: str,
+    hints: dict[str, str],
+    photo_vql_target: dict[str, Any] | None,
+    focus_error: str | None,
+) -> tuple[dict[str, str] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    selector, found = _find_first_selector(ide=ide, selectors=_chat_selectors_for(ide))
+    if selector is not None:
+        return selector, found, None
+
+    found = _resolve_vql_chat_target(ide, hints)
+    if found:
+        return {"role": "input", "name_contains": "Chat"}, found, None
+
+    if photo_vql_target and photo_vql_target.get("click_center"):
+        click_center = photo_vql_target["click_center"]
+        return (
+            {"role": photo_vql_target.get("role", "panel")},
+            {
+                "ok": True,
+                "count": 1,
+                "selected": {
+                    "id": photo_vql_target.get("id", "vql-photo-chat"),
+                    "backend": "vql",
+                    "role": photo_vql_target.get("role", "panel"),
+                    "click_point": click_center,
+                    "note": "photo VQL fallback for cursor chat after focus move",
+                },
+            },
+            None,
+        )
+
+    return None, found, {
+        "ok": False,
+        "backend": "vdisplay",
+        "message": (
+            f"no chat input matched for ide={ide} "
+            f"(app={hints.get('app')!r}); focus_error={focus_error or '-'}"
+        ),
+        "type": "error",
+        "fallback_from": "plugin",
+        "diagnostics": found,
+        "vql_mouse_focus_error": focus_error,
+    }
+
+
+def _send_chat_type_at_selector(
+    prompt: str,
+    *,
+    ide: str,
+    hints: dict[str, str],
+    selector: dict[str, str] | None,
+    found: dict[str, Any] | None,
+    focus_error: str | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    selected = (found or {}).get("selected") if isinstance(found, dict) else None
+    click_point = None
+    if isinstance(selected, dict):
+        click_point = selected.get("click_point") or selected.get("click_center")
+        if isinstance(click_point, dict) and not selector:
+            selector = {"role": "input", "name_contains": "vql"}
+
+    write_kwargs: dict[str, Any] = {
+        "backend": "auto",
+        "app": hints.get("app"),
+        "window_title": hints.get("window_title_contains"),
+        "value": prompt,
+        **(selector or {}),
+    }
+    if isinstance(selected, dict) and selected.get("id"):
+        write_kwargs["provider_ref"] = selected["id"]
+    if click_point and isinstance(click_point, dict):
+        write_kwargs["x"] = click_point.get("x")
+        write_kwargs["y"] = click_point.get("y")
+        write_kwargs["backend"] = "vision"
+
+    try:
+        typed = _control_set_value(**write_kwargs)
+    except Exception as exc:
+        return None, click_point, {
+            "ok": False,
+            "backend": "vdisplay",
+            "message": str(exc),
+            "type": "error",
+            "fallback_from": "plugin",
+            "selector": selector,
+            "focus_error": focus_error,
+            "vql_click_point": click_point,
+        }
+
+    if not typed.get("ok", True):
+        return None, click_point, {
+            "ok": False,
+            "backend": "vdisplay",
+            "message": str(typed.get("error") or typed.get("message") or "set_value failed"),
+            "type": "error",
+            "fallback_from": "plugin",
+            "selector": selector,
+            "result": typed,
+            "focus_error": focus_error,
+        }
+    return typed, click_point, None
+
+
+def _send_chat_submit_if_requested(
+    *,
+    ide: str,
+    hints: dict[str, str],
+    submit: bool,
+) -> tuple[bool, dict[str, Any] | None]:
+    if not submit:
+        return False, None
+    submitted = False
+    submit_result: dict[str, Any] | None = None
+    submit_selector, submit_found = _find_first_selector(
+        ide=ide,
+        selectors=_submit_selectors_for(ide),
+    )
+    if submit_selector is not None:
+        click_kwargs = {
+            "backend": "auto",
+            "app": hints.get("app"),
+            "window_title": hints.get("window_title_contains"),
+            **submit_selector,
+        }
+        selected_submit = (submit_found or {}).get("selected")
+        if isinstance(selected_submit, dict) and selected_submit.get("id"):
+            click_kwargs["provider_ref"] = selected_submit["id"]
+        try:
+            submit_result = _control_click(**click_kwargs)
+            submitted = bool(submit_result.get("ok", True))
+        except Exception as exc:
+            submit_result = {"ok": False, "error": str(exc)}
+    if not submitted:
+        submit_result = _submit_via_keyboard(ide=ide, submit=submit)
+        submitted = bool(submit_result and submit_result.get("ok"))
+    return submitted, submit_result
+
+
 def send_chat(
     prompt: str,
     *,
@@ -2623,184 +2683,7 @@ def send_chat(
     if result is not None:
         return result
 
-    # === send_chat semantic vdisplay body (VQL photo chat focus + selector/set_value) ===
-    hints = _ide_hints(ide)
-    focus_error: str | None = None
-    photo_vql_target = None
-
-    # NEW (user request): based on foto screen VQL (koru-cont-dp1-*.png 31 elems etc),
-    # locate okno chat/panel, move mouse to its click_center from the photo, click to focus keyboard.
-    # Only in the pure vdisplay semantic control path (after ide_prompt/os_injector prefs).
-    # IDE independent (same VQL photo works for jetbrains, cursor, ...).
-    # Always resolve photo target so we can fall back to its click_center for point-based set_value
-    # even if no perfect "chat input" selector (panels from detection often don't have role=input).
-    if not _dry_run() and os.environ.get("KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS", "1").strip().lower() not in {"0", "false", "no", "off"}:
-        try:
-            photo_vql_target = get_vql_chat_target_from_photo()
-            # Apply LLM OpenRouter vision analysis on the current screenshot + VQL target (if flag set).
-            # This fulfills "na podstawie rzutu ekranu i analizy llm openrouter" for precise chat input location
-            # (refines the coarse panel center from foto VQL to the actual prompt/composer field).
-            use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {"1", "true", "yes", "on"}
-            if use_llm_vision:
-                image_path = _resolve_photo_png_path_from_vql(source=_vdisplay_source())
-                if image_path and os.path.exists(str(image_path)):
-                    try:
-                        rx, ry, rdec = _resolve_photo_vql_llm_coords(
-                            prompt=prompt, target=photo_vql_target, source=_vdisplay_source(), image_path=image_path
-                        )
-                        if rdec:
-                            photo_vql_target = {
-                                **photo_vql_target,
-                                "click_center": {"x": rx, "y": ry, "note": f"LLM refined from foto: {rdec.get('reason', '')[:60]}"},
-                                "llm_refined": True,
-                                "llm_decision": rdec,
-                            }
-                    except Exception:
-                        pass
-            mf = move_mouse_to_vql_target_and_focus_keyboard(photo_vql_target, ide=ide)
-            if mf.get("ok"):
-                focus_error = None
-            else:
-                focus_error = mf.get("error") or mf.get("message")
-        except Exception as exc:
-            focus_error = str(exc)
-            photo_vql_target = get_vql_chat_target_from_photo()  # ensure we have it for fallback
-
-    # Do NOT short-circuit here: after foto VQL (+ optional LLM) locate + mouse move + kb focus,
-    # fall through so the prompt text gets typed at the (LLM-refined) click_point via vision backend.
-    # This makes "wpisywanie" (insert prompt into JetBrains/Cursor chat) work based on screenshot + OpenRouter LLM.
-    # The later click_point injection + _control_set_value(backend=vision, x=..., y=...) does the actual typing at the point.
-
-    selector, found = _find_first_selector(ide=ide, selectors=_chat_selectors_for(ide))
-    if selector is None:
-        found = _resolve_vql_chat_target(ide, hints)
-        if found:
-            selector = {"role": "input", "name_contains": "Chat"}
-        elif photo_vql_target and photo_vql_target.get("click_center"):
-            # Fallback to photo VQL center from the focus we just performed.
-            # This allows precise point-based set_value at the foto-derived chat area coords
-            # (the move already focused the panel; typing at the center targets the input).
-            cc = photo_vql_target["click_center"]
-            found = {
-                "ok": True,
-                "count": 1,
-                "selected": {
-                    "id": photo_vql_target.get("id", "vql-photo-chat"),
-                    "backend": "vql",
-                    "role": photo_vql_target.get("role", "panel"),
-                    "click_point": cc,
-                    "note": "photo VQL fallback for cursor chat after focus move"
-                }
-            }
-            selector = {"role": photo_vql_target.get("role", "panel")}
-        else:
-            return {
-                "ok": False,
-                "backend": "vdisplay",
-                "message": (
-                    f"no chat input matched for ide={ide} "
-                    f"(app={hints.get('app')!r}); focus_error={focus_error or '-'}"
-                ),
-                "type": "error",
-                "fallback_from": "plugin",
-                "diagnostics": found,
-                "vql_mouse_focus_error": focus_error,
-            }
-
-    # If VQL provided a click_point (from photo layers), prefer coord-based action for robustness
-    # (works even if AT-SPI/selector name match fails for custom IDE themes).
-    selected = (found or {}).get("selected") if isinstance(found, dict) else None
-    click_point = None
-    if isinstance(selected, dict):
-        click_point = selected.get("click_point") or selected.get("click_center")
-        if isinstance(click_point, dict) and not selector:
-            selector = {"role": "input", "name_contains": "vql"}
-
-    write_kwargs: dict[str, Any] = {
-        "backend": "auto",
-        "app": hints.get("app"),
-        "window_title": hints.get("window_title_contains"),
-        "value": prompt,
-        **(selector or {}),
-    }
-    if isinstance(selected, dict) and selected.get("id"):
-        write_kwargs["provider_ref"] = selected["id"]
-    if click_point and isinstance(click_point, dict):
-        write_kwargs["x"] = click_point.get("x")
-        write_kwargs["y"] = click_point.get("y")
-        write_kwargs["backend"] = "vision"
-
-    try:
-        typed = _control_set_value(**write_kwargs)
-    except Exception as exc:
-        return {
-            "ok": False,
-            "backend": "vdisplay",
-            "message": str(exc),
-            "type": "error",
-            "fallback_from": "plugin",
-            "selector": selector,
-            "focus_error": focus_error,
-            "vql_click_point": click_point,
-        }
-
-    if not typed.get("ok", True):
-        return {
-            "ok": False,
-            "backend": "vdisplay",
-            "message": str(typed.get("error") or typed.get("message") or "set_value failed"),
-            "type": "error",
-            "fallback_from": "plugin",
-            "selector": selector,
-            "result": typed,
-            "focus_error": focus_error,
-        }
-
-    submitted = False
-    submit_result: dict[str, Any] | None = None
-    if submit:
-        submit_selector, submit_found = _find_first_selector(
-            ide=ide,
-            selectors=_submit_selectors_for(ide),
-        )
-        if submit_selector is not None:
-            click_kwargs = {
-                "backend": "auto",
-                "app": hints.get("app"),
-                "window_title": hints.get("window_title_contains"),
-                **submit_selector,
-            }
-            selected_submit = (submit_found or {}).get("selected")
-            if isinstance(selected_submit, dict) and selected_submit.get("id"):
-                click_kwargs["provider_ref"] = selected_submit["id"]
-            try:
-                submit_result = _control_click(**click_kwargs)
-                submitted = bool(submit_result.get("ok", True))
-            except Exception as exc:
-                submit_result = {"ok": False, "error": str(exc)}
-        if not submitted:
-            submit_result = _submit_via_keyboard(ide=ide, submit=submit)
-            submitted = bool(submit_result and submit_result.get("ok"))
-
-    return _finalize_send_chat(
-        {
-            "ok": True,
-            "backend": "vdisplay",
-            "message": "typed via vdisplay semantic control (with VQL photo mouse focus)",
-            "type": "drive",
-            "fallback_from": "plugin",
-            "ide": ide,
-            "selector": selector,
-            "focus_error": focus_error,
-            "typed": typed,
-            "submitted": submitted,
-            "submit_result": submit_result,
-            "vql_mouse_focus": True,
-        },
-        prompt=prompt,
-        ide=ide,
-        submit=submit,
-    )
+    return _send_chat_semantic_vdisplay(prompt, ide=ide, submit=submit)
 
 
 def _resolve_vql_chat_target(ide: str, hints: dict) -> dict | None:
@@ -2860,13 +2743,7 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
     # Detect terminal pollution in VQL (common on DP-2 when control terminal text is visible in screenshot).
     # If many candidates look like shell/env/command history (from the log's fake "PREFER LLM", "KORU_*", "po clear" etc.),
     # treat as polluted and force map for jetbrains (VQL is unreliable).
-    polluted_count = 0
-    pollution_tokens = ("KORU_", "DRY_RUN", "PREFER LLM", "po clear", "recznie", "wpisz", "to do", "drive after", "Re-run", "audit", "cursor_positioning", "Explored", "You have folder", "faster responses", "Path(str(vql_path)", "imgl_path", "sidecar older", "reasons.append")
-    for c in candidates:
-        lab = str(c.get("label") or "").lower()
-        if any(tok.lower() in lab for tok in pollution_tokens):
-            polluted_count += 1
-    is_polluted = len(candidates) > 0 and polluted_count >= max(1, len(candidates) // 2)
+    is_polluted = _vql_candidates_polluted(candidates)
 
     logger.info(
         "VQL_CHAT_TARGET_CANDIDATES ide=%s source=%s vql_file=%s layer_count=%d candidates=%s polluted=%s",
@@ -2946,31 +2823,6 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
                 return map_target
         corner = _jetbrains_chat_corner_target_from_layers(els, source=src)
         if corner:
-            # Additional post-heuristic validation: even if corner picked, if the element is too small or bad label,
-            # it may still be chrome from wrong app VQL. In that case, prefer map.
-            cc = corner.get("click_center") or {}
-            bounds = corner.get("bounds") or {}
-            bw = int(bounds.get("w") or bounds.get("width") or 0)
-            bh = int(bounds.get("h") or bounds.get("height") or 0)
-            label = str(corner.get("label") or "").lower()
-            if (
-                (bw > 0 and bh > 0 and (bw < 200 or bh < 25))
-                or label == "background"
-                or any(term in label for term in _VQL_TERMINAL_LABEL_NOISE)
-            ):
-                map_target = _map_chat_target_capture_local(ide=canon, source=src_name)
-                if map_target:
-                    map_target = _finalize(map_target, method="map_fallback_after_bad_corner")
-                    _log_vql_cursor_positioning_at_command(
-                        map_target,
-                        stage="vql_target_selection_jetbrains_map_fallback_bad_vql",
-                        ide=canon,
-                        source=src_name,
-                        final_local=map_target.get("click_center", {}),
-                        final_global=map_target.get("map_global"),
-                        vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-                    )
-                    return map_target
             corner = _finalize(corner, method="jetbrains_corner_heuristic")
             _log_vql_cursor_positioning_at_command(
                 corner,
@@ -3208,102 +3060,6 @@ def _map_chat_target_capture_local(*, ide: str, source: str) -> dict[str, Any] |
         return None
 
 
-def _photo_vql_chat_input_candidates(layers: list[dict[str, Any]], *, limit: int = 8) -> list[dict[str, Any]]:
-    cands: list[tuple[float, dict[str, Any]]] = []
-    for layer in layers:
-        if str(layer.get("role") or "").lower() != "input":
-            continue
-        cc = layer.get("click_center") or {}
-        if not isinstance(cc, dict) or "x" not in cc or "y" not in cc:
-            continue
-        cx = int(cc.get("x") or 0)
-        cy = int(cc.get("y") or 0)
-        label = str(layer.get("label") or layer.get("text") or "").lower()
-        bounds = layer.get("bounds") or layer.get("bbox") or {}
-        bw = int(bounds.get("w") or bounds.get("width") or 0)
-        bh = int(bounds.get("h") or bounds.get("height") or 0)
-        area = bw * bh if bw > 0 and bh > 0 else 0
-        # base corner score
-        score = float(cy) + (400.0 if cx > 1400 else 0.0) + (200.0 if cx > 1100 else 0.0)
-        if cy < 700:
-            score -= 800.0
-        # prefer larger reasonable composer inputs (chat fields are wide/tall enough, not tiny chrome)
-        if area > 0:
-            if bw >= 250 and bh >= 28:
-                score += 500.0
-            elif bw >= 200 and bh >= 25:
-                score += 300.0
-            elif bw < 180 or bh < 22:
-                score -= 900.0
-            elif bw < 200 or bh < 25:
-                score -= 500.0
-        # penalize generic UI chrome / terminal inputs
-        if label in {"background", ""} and area > 0 and (bw < 200 or bh < 25):
-            score -= 900.0
-        if any(term in label for term in _VQL_TERMINAL_LABEL_NOISE):
-            score -= 1200.0
-        # extra heavy penalty for labels that look like the control terminal text / command history / env vars
-        # (common when the screenshot captures the user's terminal running the drive commands)
-        shell_pollution_tokens = ("KORU_", "DRY_RUN", "PREFER LLM", " --source", "po clear", "recznie vdisplay", "wpisz", "to do", "drive after", "Re-run", "audit-last", "cursor_positioning", "Explored", "passed", "Clear", "Gap Analysis", "Monitored", "screenshot", "act/", "ts - Cursor", "File Edit", "Go Run Terminal", "Publish v", "247K", "automation-gap", "Path(str(vql_path)", "imgl_path", "sidecar older", "reasons.append", "You have folder", "faster responses")
-        if any(tok.lower() in label for tok in shell_pollution_tokens):
-            score -= 1500.0
-        cands.append(
-            (
-                score,
-                {
-                    "id": layer.get("id"),
-                    "role": layer.get("role"),
-                    "label": label[:80],
-                    "click_center": {"x": cx, "y": cy},
-                    "bounds": bounds,
-                },
-            )
-        )
-    cands.sort(key=lambda item: -item[0])
-    return [item[1] for item in cands[:limit]]
-
-
-def _validate_chat_coords_for_ide(
-    *,
-    x: int,
-    y: int,
-    ide: str,
-    target: dict[str, Any],
-    is_code_edit: bool = False,
-) -> list[str]:
-    """Heuristic warnings when VQL-derived chat coords look like editor/toolbar, not composer."""
-    warnings: list[str] = []
-    canon = _canonical_ide(ide)
-    src = str(target.get("source") or "")
-    if src in {"vql-analysis-fallback", ""} or "fallback" in str(target.get("note") or "").lower():
-        warnings.append("target_not_from_live_vql_layers_using_fallback_center")
-    bounds = target.get("bounds") or {}
-    bw = int(bounds.get("w") or bounds.get("width") or 0)
-    bh = int(bounds.get("h") or bounds.get("height") or 0)
-    if bw > 0 and bh > 0 and (bw < 150 or bh < 25):
-        warnings.append(f"bounds_{bw}x{bh}_too_small_for_chat_composer")
-    label = str(target.get("label") or target.get("note") or "").lower()
-    if label == "background":
-        warnings.append("label_background_not_chat_composer")
-    if any(term in label for term in {".py", ".ts"}):
-        warnings.append(f"label_{label}_looks_like_code_file_not_chat")
-    if label.startswith("session") or label.startswith("metadata"):
-        warnings.append(f"label_{label}_looks_like_terminal_not_chat")
-    if "vdisplay_metadata_dir" in label.replace("_", "").replace("=", "").replace(".", ""):
-        warnings.append(f"label_{label}_looks_like_env_var_not_chat")
-    shell_pollution_tokens = ("KORU_", "DRY_RUN", "PREFER LLM", " --source", "po clear", "recznie", "wpisz", "to do", "drive after", "Re-run", "audit", "cursor_positioning", "Explored", "passed", "Clear", "Gap Analysis", "Monitored", "screenshot", "act/", "ts - Cursor", "File Edit", "Go Run Terminal", "Publish v", "247K", "automation-gap")
-    if any(tok.lower() in label for tok in shell_pollution_tokens):
-        warnings.append("label_looks_like_terminal_command_history_or_env_pollution")
-    if not is_code_edit and canon in {"jetbrains", "pycharm", "idea"}:
-        if y < 850:
-            warnings.append(f"chat_local_y={y}_below_850_likely_editor_not_bottom_right_composer")
-        if x < 1100:
-            warnings.append(f"chat_local_x={x}_below_1100_likely_left_panel_not_chat_corner")
-    if "pycharm/jb" in label and y < 850:
-        warnings.append("breadcrumb_pycharm_jb_label_but_y_too_high_for_chat_composer")
-    return warnings
-
-
 def _global_coords_from_vql_local(*, x: int, y: int, source: str) -> tuple[int | None, int | None, dict[str, Any]]:
     """Map capture-local VQL coords to global pointer space (for command generation audit)."""
     try:
@@ -3444,42 +3200,6 @@ def _build_vql_command_plan(
             "used_map_because_mismatch_or_bad_element"
         ),
         "capture_provenance": capture_provenance,
-    }
-
-
-def _jetbrains_chat_corner_target_from_layers(
-    layers: list[dict[str, Any]],
-    *,
-    source: str | None = None,
-) -> dict[str, Any] | None:
-    """Prefer bottom-right composer inputs for JetBrains AI chat on rotated DP-2."""
-    cands = _photo_vql_chat_input_candidates(layers, limit=1)
-    if not cands:
-        return None
-    best = cands[0]
-    cc = best.get("click_center") or {}
-    if int(cc.get("y") or 0) < 850:
-        return None
-    bounds = best.get("bounds") or {}
-    bw = int(bounds.get("w") or bounds.get("width") or 0)
-    bh = int(bounds.get("h") or bounds.get("height") or 0)
-    if bw > 0 and bh > 0 and (bw < 200 or bh < 25):
-        return None
-    label = str(best.get("label") or "").lower()
-    if label == "background":
-        return None
-    if any(term in label for term in _VQL_TERMINAL_LABEL_NOISE):
-        return None
-    shell_pollution_tokens = ("KORU_", "DRY_RUN", "PREFER LLM", " --source", "po clear", "recznie", "wpisz", "to do", "drive after", "Re-run", "audit", "cursor_positioning", "Explored", "passed", "Clear", "Gap Analysis", "Monitored", "screenshot", "act/", "ts - Cursor", "File Edit", "Go Run Terminal", "Publish v", "247K", "automation-gap")
-    if any(tok.lower() in label for tok in shell_pollution_tokens):
-        return None
-    return {
-        "click_center": cc,
-        "id": best.get("id"),
-        "role": best.get("role") or "input",
-        "bounds": best.get("bounds"),
-        "note": f"JetBrains chat corner heuristic (bottom-right input; {source})",
-        "source": source,
     }
 
 
