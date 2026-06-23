@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
 PACKAGE_JSON = ROOT / "package.json"
+UV_LOCK = ROOT / "uv.lock"
 
 
 def read_version() -> str:
@@ -61,6 +62,38 @@ def update_package_json(new_version: str, dry_run: bool) -> None:
     print(f"  {'[dry-run] ' if dry_run else ''}package.json   → {new_version}")
 
 
+def update_uv_lock(new_version: str, dry_run: bool) -> None:
+    """Keep uv.lock's editable koru package version in sync with pyproject.
+
+    Avoids version drift that breaks test_uv_lock_koru_metadata_matches_pyproject
+    after a release bump (bump used to touch only pyproject.toml/package.json).
+    """
+    if not UV_LOCK.is_file():
+        return
+    text = UV_LOCK.read_text(encoding="utf-8")
+    # Update the version line inside the [[package]] block whose name is "koru".
+    blocks = text.split("[[package]]")
+    changed = False
+    for index, block in enumerate(blocks):
+        if re.search(r'^name = "koru"$', block, re.MULTILINE):
+            new_block, count = re.subn(
+                r'^version = "[^"]+"',
+                f'version = "{new_version}"',
+                block,
+                count=1,
+                flags=re.MULTILINE,
+            )
+            if count:
+                blocks[index] = new_block
+                changed = True
+            break
+    if not changed:
+        return
+    if not dry_run:
+        UV_LOCK.write_text("[[package]]".join(blocks), encoding="utf-8")
+    print(f"  {'[dry-run] ' if dry_run else ''}uv.lock        → {new_version}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Semantic version bump for koru")
     parser.add_argument("part", nargs="?", choices=["major", "minor", "patch"])
@@ -80,6 +113,7 @@ def main() -> None:
     print(f"Bumping koru {current} → {new_version} ({args.part})")
     update_pyproject(new_version, args.dry_run)
     update_package_json(new_version, args.dry_run)
+    update_uv_lock(new_version, args.dry_run)
     if args.dry_run:
         print("[dry-run] No files modified.")
     else:

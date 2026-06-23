@@ -1301,6 +1301,13 @@ def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "TERM_PROGRAM_VERSION",
         "WINDSURF_CASCADE_TERMINAL",
         "GIO_LAUNCHED_DESKTOP_FILE",
+        # JetBrains integrated-terminal markers (host may run from a JediTerm
+        # shell); detect_terminal_host_ide_id() short-circuits to jetbrains on
+        # these before the VS Code checks.
+        "TERMINAL_EMULATOR",
+        "IDEA_INITIAL_DIRECTORY",
+        "PYCHARM_HOSTED",
+        "JETBRAINS_IDE",
     ):
         monkeypatch.delenv(key, raising=False)
 

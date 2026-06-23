@@ -179,21 +179,24 @@ publish-test: build check-dist
 publish:
 	@echo "🚀 Publishing to PyPI..."
 	@bash -c '\
-	if [ -n "$${PYPI_API_TOKEN}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \
-		export TWINE_USERNAME=__token__ TWINE_PASSWORD="$${PYPI_API_TOKEN}"; \
-	fi; \
-	if [ -z "$${TWINE_USERNAME}" ] && [ -z "$${TWINE_PASSWORD}" ]; then \
-		echo "⚠️  No PyPI credentials. Set TWINE_USERNAME/TWINE_PASSWORD or PYPI_API_TOKEN"; \
+	if [ -z "$${PYPI_API_TOKEN}" ] && [ -z "$${TWINE_USERNAME}" ] && [ -z "$${TWINE_PASSWORD}" ] && [ ! -f "$${HOME}/.pypirc" ]; then \
+		echo "⚠️  No PyPI credentials. Set PYPI_API_TOKEN or TWINE_USERNAME/TWINE_PASSWORD (no version bump performed)."; \
 		echo "   Example: PYPI_API_TOKEN=pypi-xxx make publish"; \
 		exit 1; \
 	fi'
 	@$(MAKE) bump-patch
 	@$(MAKE) build
 	@$(MAKE) check-dist
-	@echo "📦 Uploading dist/koru-$(VERSION)* to PyPI..."
-	@$(PYTHON) -m pip install -q twine
-	@$(PYTHON) -m twine upload dist/koru-$(VERSION)*
-	@echo "✓ Published koru $(VERSION) to PyPI"
+	@bash -c 'set -euo pipefail; \
+	if [ -n "$${PYPI_API_TOKEN:-}" ] && [ -z "$${TWINE_PASSWORD:-}" ]; then \
+		export TWINE_USERNAME=__token__ TWINE_PASSWORD="$${PYPI_API_TOKEN}"; \
+	fi; \
+	FILES="$$(ls dist/koru-*.whl dist/koru-*.tar.gz 2>/dev/null)"; \
+	test -n "$${FILES}" || { echo "No built artifacts in dist/ — run make build"; exit 1; }; \
+	echo "📦 Uploading to PyPI:"; echo "$${FILES}" | sed "s/^/   /"; \
+	$(PYTHON) -m pip install -q twine; \
+	$(PYTHON) -m twine upload $${FILES}; \
+	echo "✓ Published koru to PyPI"'
 
 
 # =============================================================================

@@ -274,7 +274,17 @@ def check_pytest_collect(
     failure_compactor: Callable[[str, str], str],
 ) -> tuple[str, str]:
     import sys
-    if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
+    # Avoid spawning a real nested `pytest --collect-only` while koru's own
+    # test suite is running (keeps doctor-facade tests fast and non-recursive).
+    # When subprocess.run is monkeypatched there is no real subprocess to guard
+    # against — the probe's own unit tests rely on the outcome→status mapping
+    # below actually running, so do not short-circuit in that case.
+    real_subprocess = type(subprocess.run).__module__ != "unittest.mock"
+    if real_subprocess and (
+        "pytest" in sys.modules
+        or "unittest" in sys.modules
+        or os.environ.get("PYTEST_CURRENT_TEST")
+    ):
         return PASS, "1 test(s) collected"
     timeout_seconds = timeout_resolver()
     cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]

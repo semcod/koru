@@ -388,6 +388,26 @@ def _monitor_geometry_for_source(source: str) -> dict[str, int] | None:
     }
 
 
+def _capture_region_geometry(*, source: str, capture_meta: dict[str, Any]) -> dict[str, int] | None:
+    """Monitor geometry as described by the capture itself (authoritative for this frame)."""
+    region = capture_meta.get("region") if isinstance(capture_meta.get("region"), dict) else None
+    if not isinstance(region, dict):
+        return None
+    meta_source = str(capture_meta.get("source") or capture_meta.get("monitor_name") or "").strip()
+    if meta_source and source and meta_source != source:
+        return None
+    width = int(region.get("width") or 0)
+    height = int(region.get("height") or 0)
+    if width <= 0 or height <= 0:
+        return None
+    return {
+        "x": int(region.get("x") or 0),
+        "y": int(region.get("y") or 0),
+        "width": width,
+        "height": height,
+    }
+
+
 def _clamp_rect_to_monitor(
     x: int,
     y: int,
@@ -449,6 +469,20 @@ def _global_to_capture_local_for_source(
 ) -> tuple[int, int] | None:
     """Map desktop coords into capture PNG space for a named monitor stream."""
     png_w, png_h = _capture_png_dimensions(capture_meta)
+    # Prefer the capture's own region (authoritative for this frame). Only the
+    # unrotated case is handled here; rotated captures fall through to vdisplay.
+    rotation = str(capture_meta.get("rotation") or "").strip().lower()
+    if rotation in ("", "normal", "none", "0"):
+        region_geom = _capture_region_geometry(source=source, capture_meta=capture_meta)
+        if region_geom is not None:
+            rx, ry = region_geom["x"], region_geom["y"]
+            rw, rh = region_geom["width"], region_geom["height"]
+            clamp_x = min(max(global_x, rx), rx + rw - 1)
+            clamp_y = min(max(global_y, ry), ry + rh - 1)
+            lx = int((clamp_x - rx) * png_w / rw)
+            ly = int((clamp_y - ry) * png_h / rh)
+            if 0 <= lx < png_w and 0 <= ly < png_h:
+                return lx, ly
     try:
         from vdisplay.application.services.discovery import list_monitors_local
 
@@ -514,7 +548,12 @@ def jetbrains_chat_target_from_surface(
     if w < 240 or h < 320:
         return None
 
-    monitor = _monitor_geometry_for_source(source)
+    # The capture's own region is authoritative for this screenshot: live
+    # monitor geometry can differ from when the frame was taken (output moved,
+    # reconnected, or a virtual/rotated region). Prefer it; fall back to live.
+    monitor = _capture_region_geometry(source=source, capture_meta=capture_meta)
+    if monitor is None:
+        monitor = _monitor_geometry_for_source(source)
     if monitor is None:
         region = capture_meta.get("region") if isinstance(capture_meta.get("region"), dict) else {}
         monitor = {

@@ -222,7 +222,11 @@ git:
     prefix: v
     format: '{prefix}{version}'
 publishing:
-  enabled: true
+  # Releases are done deliberately via `make publish` (PyPI). Keeping goal's
+  # auto-publish on made every `goal -a` run bump + upload (and fail when no
+  # registry credentials were present), churning the version and marking the
+  # run FAILED. goal -a is a local deps+diagnose+test+commit loop.
+  enabled: false
   registries:
   - pypi
   dry_run: false
@@ -253,7 +257,10 @@ strategies:
     test: npm test
     build: npm run build
     publish: npm publish
-    publish_enabled: true
+    # Root workspace package is private (package.json "private": true) and goal's
+    # root-level `npm publish` cannot publish the non-private plugin workspaces
+    # anyway. Leaving this enabled made `goal -a` fail with ENEEDAUTH on every run.
+    publish_enabled: false
     dependencies:
       file: package-lock.json
       lock: npm install

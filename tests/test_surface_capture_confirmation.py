@@ -45,7 +45,7 @@ def test_apply_surface_capture_confirmation_clears_mismatch_block() -> None:
     assert "ide_window_warning" not in out
 
 
-def test_apply_surface_capture_confirmation_allows_prepare_without_png() -> None:
+def test_apply_surface_capture_confirmation_flags_surface_only_on_capture_error() -> None:
     probe = {
         "ide_surface_best": {
             "display_name": "PyCharm",
@@ -67,10 +67,16 @@ def test_apply_surface_capture_confirmation_allows_prepare_without_png() -> None
         desktop_probe=probe,
         capture_error=True,
     )
-    assert out["capture_confirmed"] is True
+    # On capture error the surface probe confirms the IDE window but NOT a usable
+    # capture: it only flags surface_only_fallback. Whether actuation is allowed
+    # is decided by CaptureGuard with an explicit opt-in (see
+    # test_capture_guard_allows_surface_only_fallback_on_capture_error).
     assert out["surface_only_fallback"] is True
-    assert out["ok"] is True
-    assert "error" not in out
+    assert out["surface_probe_confirmed"] is True
+    assert out["capture_confirmed"] is False
+    assert out["capture_confirmation_source"] == "ide_surface_best_surface_only"
+    assert out["ok"] is False
+    assert "error" in out
 
 
 def test_capture_guard_allows_surface_only_fallback_on_capture_error(
@@ -110,6 +116,10 @@ def test_sync_prepare_capture_flags_sets_source(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_surface_target_can_clear_capture_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Clearing the mismatch on a surface-bounds target now requires the explicit
+    # surface-only-fallback opt-ins, not just CAPTURE_MATCHES_IDE.
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR", "1")
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION", "1")
     monkeypatch.setenv("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", "1")
     target = {"selection_method": "jetbrains_surface_bounds", "id": "surface:chat"}
     assert vc._surface_target_can_clear_capture_mismatch(target=target, ide="jetbrains")

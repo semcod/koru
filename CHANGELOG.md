@@ -73,6 +73,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.348] - 2026-06-23
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_surface_capture_confirmation.py
+
+### Other
+- Update Makefile
+- Update VERSION
+- Update package-lock.json
+- Update scripts/bump_version.py
+- Update uv.lock
+
 ## [0.1.341] - 2026-06-23
 
 ### Docs
