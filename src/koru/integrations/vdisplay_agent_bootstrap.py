@@ -15,6 +15,11 @@ _KEEPER_START_HINT = (
     "Run once in a local GNOME terminal (same session as the agent): "
     "vdisplay agent screencast start --force  # choose All Screens or the IDE monitor"
 )
+_ELECTRON_BRIDGE_HINT = (
+    "Use orchestrated stack: koru autopilot vdisplay-up --ide jetbrains "
+    "(opens browser bridge; in Chrome/Chromium click Share screen, select the IDE monitor, "
+    "keep the tab open); manual: vdisplay electron-share start"
+)
 
 
 def _fetch(url: str, *, timeout: float = 0.35) -> tuple[int, bytes]:
@@ -43,6 +48,15 @@ def _keeper_ready(status: dict[str, Any]) -> bool:
     if status.get("keeper_managed"):
         return bool(status.get("keeper_socket_path") or status.get("keeper_pid"))
     return bool(str(status.get("keeper_socket_path") or "").strip())
+
+
+def _browser_bridge_ready(status: dict[str, Any]) -> bool:
+    if status.get("capture_ready") and status.get("keeper_mode") == "browser_bridge":
+        return True
+    bridge = status.get("browser_bridge")
+    if isinstance(bridge, dict) and bridge.get("capture_ready"):
+        return True
+    return False
 
 
 def _wayland_session() -> bool:
@@ -145,6 +159,17 @@ def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]
         return {"ok": False, "skipped": True, "reason": "no vdisplay-agent URL"}
 
     status = _fetch_screencast_status(base) or {}
+    if _browser_bridge_ready(status):
+        return {
+            "ok": True,
+            "already_active": True,
+            "keeper_managed": False,
+            "browser_bridge": True,
+            "keeper_mode": status.get("keeper_mode") or "browser_bridge",
+            "agent_url": base,
+            "status": status,
+            "hint": "Electron browser bridge is capture_ready — no PipeWire keeper required",
+        }
     if _keeper_ready(status):
         return {
             "ok": True,
@@ -155,6 +180,23 @@ def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]
         }
 
     if status.get("active"):
+        bridge = status.get("browser_bridge")
+        if isinstance(bridge, dict) and bridge.get("registered"):
+            return {
+                "ok": False,
+                "already_active": True,
+                "keeper_managed": False,
+                "browser_bridge_pending": True,
+                "agent_url": base,
+                "status": status,
+                "reason": "browser_bridge_pending_share",
+                "hint": (
+                    "Electron browser bridge is registered but not capture_ready yet. "
+                    "Open the browser bridge, click Share screen, select the IDE monitor, "
+                    "keep the tab open, then run vdisplay services status --source HDMI-1 "
+                    "(check vdisplay electron-share health if it stays pending)"
+                ),
+            }
         return {
             "ok": False,
             "already_active": True,
@@ -165,7 +207,8 @@ def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]
             "hint": (
                 "ScreenCast is active in vdisplay-agent but the keeper is not running "
                 "(PipeWire capture will time out). "
-                f"{_KEEPER_START_HINT} "
+                f"{_ELECTRON_BRIDGE_HINT} "
+                f"Or: {_KEEPER_START_HINT} "
                 "Then: vdisplay agent screencast probe --via-agent --source HDMI-1"
             ),
         }
@@ -177,7 +220,7 @@ def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]
             "keeper_managed": False,
             "agent_url": base,
             "reason": "wayland_requires_keeper_cli",
-            "hint": _KEEPER_START_HINT,
+            "hint": f"{_KEEPER_START_HINT} Alternatively: {_ELECTRON_BRIDGE_HINT}",
         }
 
     body = json.dumps({"interactive": False, "timeout_s": 30}).encode("utf-8")

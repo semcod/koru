@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.340"
+version = "0.1.341"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -68,7 +68,7 @@ browser = [
     "playwright>=1.40,<2.0",
 ]
 vdisplay = [
-    "vdisplay>=0.1.8",
+    "vdisplay>=0.1.35",
 ]
 dev = [
     "gillm>=0.1.9",
@@ -174,7 +174,7 @@ all = [
     "nlp2uri[envmap]>=0.4.7",
     "playwright>=1.40,<2.0",
     "testql>=1.2.55",
-    "vdisplay>=0.1.8",
+    "vdisplay>=0.1.35",
 ]
 
 [project.scripts]

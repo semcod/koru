@@ -1,18 +1,18 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.37s
+# generated in 0.98s
 # nodes: 389 | edges: 500 | modules: 69
 # CC̄=3.8
 
 HUBS[20]:
   project.print
-    CC=0  in:939  out:0  total:939
+    CC=0  in:941  out:0  total:941
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:206  out:9  total:215
+    CC=5  in:207  out:9  total:216
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
-  packages.dsl2coru.src.dsl2coru.grammar._flag
-    CC=7  in:33  out:8  total:41
   packages.dsl2coru.src.dsl2coru.parser._flag
+    CC=7  in:33  out:8  total:41
+  packages.dsl2coru.src.dsl2coru.grammar._flag
     CC=7  in:33  out:8  total:41
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
     CC=3  in:0  out:33  total:33
@@ -32,12 +32,12 @@ HUBS[20]:
     CC=14  in:4  out:23  total:27
   packages.coru.src.coru.cli_calibration._lane_calibration
     CC=14  in:2  out:25  total:27
-  packages.nlp2coru.src.nlp2coru.cli._emit
-    CC=4  in:22  out:4  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
     CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
     CC=3  in:0  out:26  total:26
+  packages.nlp2coru.src.nlp2coru.cli._emit
+    CC=4  in:22  out:4  total:26
   packages.dsl2coru.src.dsl2coru.bus.dispatch
     CC=14  in:1  out:24  total:25
   packages.dsl2koru.src.dsl2koru.cli._main_subcommand

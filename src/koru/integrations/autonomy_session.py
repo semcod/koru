@@ -298,9 +298,13 @@ def _append_sidecar_order_reason(
     png_mtime: float,
     vql_mtime: float,
 ) -> None:
-    # Sidecar is written after screenshot — VQL mtime may be newer than PNG by seconds.
-    # Stale only when VQL is older than PNG (sidecar not regenerated for this capture).
-    if vql_mtime + 2.0 < png_mtime:
+    # Depending on the capture backend, the VQL sidecar can be flushed before
+    # the final PNG write. Treat small deltas as one capture transaction.
+    try:
+        write_grace_s = max(2.0, float(os.environ.get("KORU_VDISPLAY_SIDECAR_WRITE_GRACE_S", "30") or "30"))
+    except ValueError:
+        write_grace_s = 30.0
+    if vql_mtime + write_grace_s < png_mtime:
         reasons.append("vql_sidecar_older_than_png")
     elif png_mtime > vql_mtime + 600.0:
         reasons.append("png_newer_than_vql_by_600s")

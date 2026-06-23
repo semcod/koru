@@ -52,6 +52,7 @@ def build_autopilot_parser() -> argparse.ArgumentParser:
     _add_drive_parser(sub)
     _add_calibrate_parser(sub)
     _add_prepare_vdisplay_parser(sub)
+    _add_vdisplay_up_parser(sub)
     _add_diagnose_vdisplay_parser(sub)
     _add_session_start_parser(sub)
     _add_status_parser(sub)
@@ -256,6 +257,53 @@ def _add_prepare_vdisplay_parser(sub: argparse._SubParsersAction) -> None:
         metavar="IDE",
         help="Target IDE (jetbrains, windsurf, cursor, …). Default: auto.",
     )
+
+
+def _add_vdisplay_up_parser(sub: argparse._SubParsersAction) -> None:
+    up = sub.add_parser(
+        "vdisplay-up",
+        help="Start vdisplay services stack for photo-VQL capture.",
+    )
+    up.add_argument(
+        "--ide",
+        default="jetbrains",
+        metavar="IDE",
+        help="Target IDE (default: jetbrains).",
+    )
+    up.add_argument(
+        "--source",
+        default=None,
+        metavar="MONITOR",
+        help="Capture monitor name (default: auto from IDE surface / KORU_VDISPLAY_SOURCE).",
+    )
+    up.add_argument(
+        "--agent-url",
+        default=None,
+        help="vdisplay-agent URL (default: VDISPLAY_AGENT_URL or http://127.0.0.1:8766).",
+    )
+    up.add_argument("--port", type=int, default=8799, help="Electron HTTP port (default: 8799).")
+    up.add_argument(
+        "--capture-timeout-s",
+        type=float,
+        default=120.0,
+        help="Seconds to wait for capture_ready after Electron starts.",
+    )
+    up.add_argument(
+        "--no-wait-capture",
+        action="store_true",
+        help="Exit after Electron starts without waiting for capture_ready.",
+    )
+    up.add_argument(
+        "--no-start-agent",
+        action="store_true",
+        help="Fail if vdisplay-agent is not already running.",
+    )
+    up.add_argument(
+        "--no-open-browser-bridge",
+        action="store_true",
+        help="Do not open the Chrome/Chromium browser bridge page automatically.",
+    )
+    up.add_argument("--install", action="store_true", help="Run npm install before Electron start.")
 
 
 def _add_diagnose_vdisplay_parser(sub: argparse._SubParsersAction) -> None:

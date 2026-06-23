@@ -1,12 +1,12 @@
-# redup/duplication | 236 groups | 659f 121933L | 2026-06-12
+# redup/duplication | 236 groups | 660f 122843L | 2026-06-23
 
 SUMMARY:
-  files_scanned: 659
-  total_lines:   121933
+  files_scanned: 660
+  total_lines:   122843
   dup_groups:    236
-  dup_fragments: 558
-  saved_lines:   2569
-  scan_ms:       5278
+  dup_fragments: 559
+  saved_lines:   2576
+  scan_ms:       7767
 
 HOTSPOTS[7] (files with most duplication):
   packages/dsl2coru/src/dsl2coru/grammar.py  dup=249L  groups=34  frags=40  (0.2%)
@@ -29,8 +29,8 @@ DUPLICATES[236] (ranked by impact):
       packages/nlp2coru/src/nlp2coru/llm_backend.py:38-85  (complete)
       packages/nlp2koru/src/nlp2koru/llm_backend.py:40-87  (complete)
   [3e6656800e695838] ! STRU  _add_calibrate_parser  L=42 N=2 saved=42 sim=1.00
-      src/koru/autopilot/cli_parser.py:204-245  (_add_calibrate_parser)
-      src/koru/autopilot/cli_parser.py:280-317  (_add_session_start_parser)
+      src/koru/autopilot/cli_parser.py:205-246  (_add_calibrate_parser)
+      src/koru/autopilot/cli_parser.py:328-365  (_add_session_start_parser)
   [6de599a6b460d10e] ! STRU  reuse_window_reload_enabled  L=14 N=4 saved=42 sim=1.00
       src/koru/ide_adapters/ide_reload.py:91-104  (reuse_window_reload_enabled)
       src/koru/ide_adapters/ide_reload.py:107-118  (command_palette_reload_enabled)
@@ -47,6 +47,13 @@ DUPLICATES[236] (ranked by impact):
       src/koru/observability_events.py:73-78  (emit_verify)
       src/koru/observability_events.py:95-100  (emit_blocker)
       src/koru/observability_events.py:103-108  (emit_next)
+  [feb820655081cb7a] ! STRU  _allow_surface_only_actuation  L=7 N=6 saved=35 sim=1.00
+      src/koru/integrations/photo_vql_drive.py:67-73  (_allow_surface_only_actuation)
+      src/koru/integrations/photo_vql_guard.py:10-16  (ide_mismatch_allowed)
+      src/koru/integrations/vdisplay_client.py:515-521  (_dry_run)
+      src/koru/integrations/vdisplay_client.py:985-991  (_abort_on_desktop_probe_fail)
+      src/koru/integrations/vdisplay_client.py:1320-1326  (_auto_ide_control_enabled)
+      src/koru/integrations/vdisplay_client.py:4961-4967  (_map_source_mismatch_actuation_allowed)
   [8978e2dc2a88827c] ! STRU  run_command  L=33 N=2 saved=33 sim=1.00
       packages/dsl2coru/src/dsl2coru/handlers/command.py:12-44  (run_command)
       packages/dsl2coru/src/dsl2coru/handlers/query.py:12-44  (run_query)
@@ -86,12 +93,6 @@ DUPLICATES[236] (ranked by impact):
   [29fcba90a55ca71d]   STRU  chat_control_result  L=29 N=2 saved=29 sim=1.00
       src/koru/doctor_chat_control.py:288-316  (chat_control_result)
       src/koru/doctor_reporting_checks.py:166-194  (_chat_control_result)
-  [feb820655081cb7a]   STRU  _allow_surface_only_actuation  L=7 N=5 saved=28 sim=1.00
-      src/koru/integrations/photo_vql_drive.py:67-73  (_allow_surface_only_actuation)
-      src/koru/integrations/photo_vql_guard.py:10-16  (ide_mismatch_allowed)
-      src/koru/integrations/vdisplay_client.py:511-517  (_dry_run)
-      src/koru/integrations/vdisplay_client.py:861-867  (_abort_on_desktop_probe_fail)
-      src/koru/integrations/vdisplay_client.py:1135-1141  (_auto_ide_control_enabled)
   [d6d4400f55dfca93]   STRU  main  L=26 N=2 saved=26 sim=1.00
       packages/cli2coru/src/cli2coru/cli.py:53-78  (main)
       packages/cli2koru/src/cli2koru/cli.py:53-78  (main)
@@ -193,10 +194,10 @@ DUPLICATES[236] (ranked by impact):
       src/koru/ide_adapters/ide_reload.py:430-444  (reload_via_reopen_workspace)
       src/koru/ide_adapters/ide_reload.py:447-461  (reload_via_new_window)
   [4604e82ca5f7161c]   STRU  _controls_find  L=5 N=4 saved=15 sim=1.00
-      src/koru/integrations/vdisplay_client.py:2346-2350  (_controls_find)
-      src/koru/integrations/vdisplay_client.py:2353-2357  (_control_focus)
-      src/koru/integrations/vdisplay_client.py:2360-2364  (_control_set_value)
-      src/koru/integrations/vdisplay_client.py:2367-2371  (_control_click)
+      src/koru/integrations/vdisplay_client.py:2705-2709  (_controls_find)
+      src/koru/integrations/vdisplay_client.py:2712-2716  (_control_focus)
+      src/koru/integrations/vdisplay_client.py:2719-2723  (_control_set_value)
+      src/koru/integrations/vdisplay_client.py:2726-2730  (_control_click)
   [3b6ae6de406e66ec]   STRU  tool_env2llm_get_registry  L=5 N=4 saved=15 sim=1.00
       src/koruapi/mcp_server_env2llm.py:164-168  (tool_env2llm_get_registry)
       src/koruapi/mcp_server_env2llm.py:189-193  (tool_env2llm_get_desktop)
@@ -209,9 +210,9 @@ DUPLICATES[236] (ranked by impact):
       packages/dsl2coru/src/dsl2coru/grammar.py:374-387  (to_text)
       packages/dsl2coru/src/dsl2coru/serializer.py:141-154  (to_text)
   [1c0ccc6047c9b667]   EXAC  _canonical_ide  L=7 N=3 saved=14 sim=1.00
-      src/koru/integrations/photo_vql_target.py:65-71  (_canonical_ide)
+      src/koru/integrations/photo_vql_target.py:77-83  (_canonical_ide)
       src/koru/integrations/photo_vql_validation.py:82-88  (_canonical_ide)
-      src/koru/integrations/vdisplay_client.py:171-177  (_canonical_ide)
+      src/koru/integrations/vdisplay_client.py:175-181  (_canonical_ide)
   [52d0f2e451c7e06b]   STRU  update_plugin_version_source  L=14 N=2 saved=14 sim=1.00
       scripts/sync-vscode-plugin-version.py:43-56  (update_plugin_version_source)
       scripts/sync-vscode-plugin-version.py:59-68  (update_package_json)
@@ -219,9 +220,9 @@ DUPLICATES[236] (ranked by impact):
       src/koru/autonomy/phases/scan_phase.py:167-180  (_should_skip_repeated_create_failed_scan)
       src/koru/autonomy/phases/scan_phase.py:183-194  (_should_skip_repeated_duplicate_scan)
   [a548921494239b98]   STRU  _action_install_plugin  L=7 N=3 saved=14 sim=1.00
-      src/koru/autopilot/cli_command.py:279-285  (_action_install_plugin)
-      src/koru/autopilot/cli_command.py:288-294  (_action_install_plugin_jetbrains)
-      src/koru/autopilot/cli_command.py:313-319  (_action_install_unit)
+      src/koru/autopilot/cli_command.py:284-290  (_action_install_plugin)
+      src/koru/autopilot/cli_command.py:293-299  (_action_install_plugin_jetbrains)
+      src/koru/autopilot/cli_command.py:318-324  (_action_install_unit)
   [457bd73359bd4bcc]   STRU  _open_new_ide_window_for_plugin_build_action  L=14 N=2 saved=14 sim=1.00
       src/koru/autopilot/install_manager.py:824-837  (_open_new_ide_window_for_plugin_build_action)
       src/koru/autopilot/install_manager.py:876-889  (_restart_ide_for_plugin_build_action)
@@ -437,8 +438,8 @@ DUPLICATES[236] (ranked by impact):
       src/koru/autonomy/code2llm_discovery.py:102-110  (_default_runner)
       src/koru/self_control.py:113-121  (_run)
   [087cc37be81c7aa2]   STRU  _action_drive  L=9 N=2 saved=9 sim=1.00
-      src/koru/autopilot/cli_command.py:211-219  (_action_drive)
-      src/koru/autopilot/cli_command.py:226-234  (_action_status)
+      src/koru/autopilot/cli_command.py:216-224  (_action_drive)
+      src/koru/autopilot/cli_command.py:231-239  (_action_status)
   [1359dc36e2736e4b]   STRU  _add_queue_args  L=9 N=2 saved=9 sim=1.00
       src/koru/cli_cleaned.py:97-105  (_add_queue_args)
       src/koru/cli_parser.py:45-97  (_add_queue_arguments)
@@ -532,8 +533,8 @@ DUPLICATES[236] (ranked by impact):
       src/koru/cli_cleaned.py:289-295  (_context_main)
       src/koru/cli_context.py:18-29  (_context_main)
   [4a38af73dd52fbf7]   STRU  _auto_open_ide_enabled  L=7 N=2 saved=7 sim=1.00
-      src/koru/integrations/vdisplay_client.py:1144-1150  (_auto_open_ide_enabled)
-      src/koru/integrations/vdisplay_client.py:1412-1418  (_raise_alt_tab_enabled)
+      src/koru/integrations/vdisplay_client.py:1329-1335  (_auto_open_ide_enabled)
+      src/koru/integrations/vdisplay_client.py:1623-1629  (_raise_alt_tab_enabled)
   [0de131b92b4b1418]   STRU  is_shell_agent  L=7 N=2 saved=7 sim=1.00
       src/koru/tillm_bridge.py:38-44  (is_shell_agent)
       src/koru/tillm_bridge.py:47-53  (shell_agent_available)
@@ -801,8 +802,8 @@ DUPLICATES[236] (ranked by impact):
       src/koru/autonomous_cycle_skip_conditions.py:42-44  (_auto_llm_ready_enabled)
       src/koru/autonomy/operator_pipeline.py:408-410  (_self_control_autorepair_enabled)
   [4ca8ca904c3b102a]   STRU  _chat_selectors_for  L=3 N=2 saved=3 sim=1.00
-      src/koru/integrations/vdisplay_client.py:2327-2329  (_chat_selectors_for)
-      src/koru/integrations/vdisplay_client.py:2332-2334  (_submit_selectors_for)
+      src/koru/integrations/vdisplay_client.py:2686-2688  (_chat_selectors_for)
+      src/koru/integrations/vdisplay_client.py:2691-2693  (_submit_selectors_for)
   [aba873354115f873]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
       src/koru/redup_integration.py:22-24  (redup_scan_command)
       src/koru/redup_integration.py:27-29  (redup_check_command)
@@ -835,30 +836,30 @@ REFACTOR[236] (ranked by priority):
   [7] ○ extract_function   → src/koru/utils/emit_intent.py
       WHY: 7 occurrences of 6-line block across 1 files — saves 36 lines
       FILES: src/koru/observability_events.py
-  [8] ◐ extract_function   → packages/dsl2coru/src/dsl2coru/handlers/utils/run_command.py
+  [8] ○ extract_function   → src/koru/integrations/utils/_allow_surface_only_actuation.py
+      WHY: 6 occurrences of 7-line block across 3 files — saves 35 lines
+      FILES: src/koru/integrations/photo_vql_drive.py, src/koru/integrations/photo_vql_guard.py, src/koru/integrations/vdisplay_client.py
+  [9] ◐ extract_function   → packages/dsl2coru/src/dsl2coru/handlers/utils/run_command.py
       WHY: 2 occurrences of 33-line block across 2 files — saves 33 lines
       FILES: packages/dsl2coru/src/dsl2coru/handlers/command.py, packages/dsl2coru/src/dsl2coru/handlers/query.py
-  [9] ○ extract_function   → src/utils/activity_enabled.py
+  [10] ○ extract_function   → src/utils/activity_enabled.py
       WHY: 12 occurrences of 3-line block across 9 files — saves 33 lines
       FILES: src/koru/activity_log.py, src/koru/autonomous_cycle_chat_activity_config.py, src/koru/autonomous_operator.py, src/koru/autonomy/operator_pipeline.py, src/koru/autonomy/planning_llm_runtime.py +4 more
-  [10] ◐ extract_function   → src/koru/utils/build_chat_control_detail_bits.py
+  [11] ◐ extract_function   → src/koru/utils/build_chat_control_detail_bits.py
       WHY: 2 occurrences of 33-line block across 2 files — saves 33 lines
       FILES: src/koru/doctor_chat_control.py, src/koru/doctor_reporting_checks.py
-  [11] ○ extract_function   → src/koru/utils/_dsl_main.py
+  [12] ○ extract_function   → src/koru/utils/_dsl_main.py
       WHY: 9 occurrences of 4-line block across 4 files — saves 32 lines
       FILES: src/koru/cli.py, src/koru/cli_cleaned.py, src/koru/cli_local_serve.py, src/koru/cli_serve.py
-  [12] ○ extract_function   → src/koru/utils/provision_cursor.py
+  [13] ○ extract_function   → src/koru/utils/provision_cursor.py
       WHY: 3 occurrences of 15-line block across 1 files — saves 30 lines
       FILES: src/koru/mcp_provision.py
-  [13] ○ extract_function   → src/utils/_build_local_serve_parser.py
+  [14] ○ extract_function   → src/utils/_build_local_serve_parser.py
       WHY: 2 occurrences of 29-line block across 2 files — saves 29 lines
       FILES: src/koru/cli_local_serve.py, src/koruapi/local.py
-  [14] ○ extract_function   → src/koru/utils/chat_control_result.py
+  [15] ○ extract_function   → src/koru/utils/chat_control_result.py
       WHY: 2 occurrences of 29-line block across 2 files — saves 29 lines
       FILES: src/koru/doctor_chat_control.py, src/koru/doctor_reporting_checks.py
-  [15] ○ extract_function   → src/koru/integrations/utils/_allow_surface_only_actuation.py
-      WHY: 5 occurrences of 7-line block across 3 files — saves 28 lines
-      FILES: src/koru/integrations/photo_vql_drive.py, src/koru/integrations/photo_vql_guard.py, src/koru/integrations/vdisplay_client.py
   [16] ○ extract_function   → packages/utils/main.py
       WHY: 2 occurrences of 26-line block across 2 files — saves 26 lines
       FILES: packages/cli2coru/src/cli2coru/cli.py, packages/cli2koru/src/cli2koru/cli.py
@@ -1534,23 +1535,23 @@ QUICK_WINS[163] (low risk, high savings — do first):
       FILES: install_checks.py
   [7] extract_function   saved=36L  → src/koru/utils/emit_intent.py
       FILES: observability_events.py
-  [9] extract_function   saved=33L  → src/utils/activity_enabled.py
+  [8] extract_function   saved=35L  → src/koru/integrations/utils/_allow_surface_only_actuation.py
+      FILES: photo_vql_drive.py, photo_vql_guard.py, vdisplay_client.py
+  [10] extract_function   saved=33L  → src/utils/activity_enabled.py
       FILES: activity_log.py, autonomous_cycle_chat_activity_config.py, autonomous_operator.py +6
-  [11] extract_function   saved=32L  → src/koru/utils/_dsl_main.py
+  [12] extract_function   saved=32L  → src/koru/utils/_dsl_main.py
       FILES: cli.py, cli_cleaned.py, cli_local_serve.py +1
-  [12] extract_function   saved=30L  → src/koru/utils/provision_cursor.py
+  [13] extract_function   saved=30L  → src/koru/utils/provision_cursor.py
       FILES: mcp_provision.py
-  [13] extract_function   saved=29L  → src/utils/_build_local_serve_parser.py
+  [14] extract_function   saved=29L  → src/utils/_build_local_serve_parser.py
       FILES: cli_local_serve.py, local.py
-  [14] extract_function   saved=29L  → src/koru/utils/chat_control_result.py
-      FILES: doctor_chat_control.py, doctor_reporting_checks.py
 
 DEPENDENCY_RISK[1] (duplicates spanning multiple packages):
   resolve_coru_bin  packages=2  files=2
       packages/coru/src/coru/supervisor/systemd_unit.py
       src/koru/autopilot/systemd_cli.py
 
-EFFORT_ESTIMATE (total ≈ 90.2h):
+EFFORT_ESTIMATE (total ≈ 90.4h):
   hard   _bootstrap_main                     saved=52L  ~156min
   hard   _scan_pyqual_report                 saved=52L  ~104min
   hard   complete                            saved=48L  ~144min
@@ -1558,11 +1559,11 @@ EFFORT_ESTIMATE (total ≈ 90.2h):
   medium reuse_window_reload_enabled         saved=42L  ~84min
   hard   check_plugin_version_mismatch_issue saved=41L  ~123min
   medium emit_intent                         saved=36L  ~72min
+  medium _allow_surface_only_actuation       saved=35L  ~70min
   hard   run_command                         saved=33L  ~99min
   medium activity_enabled                    saved=33L  ~66min
-  hard   build_chat_control_detail_bits      saved=33L  ~99min
-  ... +226 more (~4338min)
+  ... +226 more (~4381min)
 
 METRICS-TARGET:
   dup_groups:  236 → 0
-  saved_lines: 2569 lines recoverable
+  saved_lines: 2576 lines recoverable

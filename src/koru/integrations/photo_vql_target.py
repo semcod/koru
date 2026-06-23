@@ -30,6 +30,18 @@ VSCODE_STATUS_BAR_HINTS = (
     " spaces",
     "koru)",
 )
+VDISPLAY_OVERLAY_STRONG_TOKENS = (
+    "choose monitor",
+    "screen recording settings",
+    "vdisplay share manager",
+)
+VDISPLAY_OVERLAY_TOKENS = (
+    "vdisplay share",
+    "vdisplay screen",
+    "screen recording",
+    "choose monitor",
+    "share manager",
+)
 
 
 @dataclass(frozen=True)
@@ -108,6 +120,18 @@ def vql_candidates_polluted(candidates: list[dict[str, Any]]) -> bool:
     return len(candidates) > 0 and polluted_count >= max(1, len(candidates) // 2)
 
 
+def vql_layers_show_vdisplay_overlay(layers: list[dict[str, Any]]) -> bool:
+    """True when the screenshot includes the vdisplay Electron share manager UI."""
+    hits = 0
+    for layer in layers:
+        label = _layer_label(layer)
+        if _has_any(label, VDISPLAY_OVERLAY_STRONG_TOKENS):
+            return True
+        if _has_any(label, VDISPLAY_OVERLAY_TOKENS):
+            hits += 1
+    return hits >= 2
+
+
 def score_photo_vql_chat_input(layer: dict[str, Any], *, ide: str = "auto") -> float | None:
     metrics = _input_metrics(layer)
     if metrics is None:
@@ -128,6 +152,8 @@ def _jetbrains_position_score(metrics: _InputMetrics) -> float:
     score = float(metrics.cy)
     score += 400.0 if metrics.cx > 1400 else 0.0
     score += 200.0 if metrics.cx > 1100 else 0.0
+    if metrics.cx < 900:
+        score -= 1500.0
     return score - 800.0 if metrics.cy < 700 else score
 
 
@@ -280,8 +306,10 @@ def jetbrains_corner_rejected(corner: dict[str, Any]) -> bool:
     click_center = corner.get("click_center") or {}
     bounds = _target_bounds(corner)
     label = str(corner.get("label") or "").lower()
+    cx = int(click_center.get("x") or 0)
     return (
-        int(click_center.get("y") or 0) < 850
+        cx < 900
+        or int(click_center.get("y") or 0) < 850
         or _target_bounds_too_small(bounds)
         or label == "background"
         or _terminal_or_shell_noise(label)

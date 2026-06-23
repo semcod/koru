@@ -73,6 +73,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.341] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update SUMR.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autonomous_vdisplay_defaults.py
+- Update tests/test_photo_vql_drive.py
+- Update tests/test_photo_vql_orchestrator.py
+- Update tests/test_vdisplay_agent_bootstrap.py
+
+### Other
+- Update package-lock.json
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- ... and 12 more files
+
 ## [0.1.340] - 2026-06-12
 
 ### Docs

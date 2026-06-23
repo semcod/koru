@@ -1,23 +1,23 @@
-# koru | 6776 func | 668f | 155810L | python | 2026-06-12
+# koru | 6797 func | 669f | 156741L | python | 2026-06-23
 # generated in 0.01s
 
 HEALTH:
-  CC̄=3.8  critical=446 (limit:10)  dup=21  cycles=0
+  CC̄=3.8  critical=455 (limit:10)  dup=21  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      perform_photo_vql_focus_and_edit = 70 (limit:15)
-  !!! cc_exceeded      prepare_photo_vql_for_drive = 61 (limit:15)
-  !!! cc_exceeded      _type_text_at_vql_coords = 58 (limit:15)
+  !!! cc_exceeded      perform_photo_vql_focus_and_edit = 84 (limit:15)
+  !!! cc_exceeded      prepare_photo_vql_for_drive = 69 (limit:15)
+  !!! cc_exceeded      _normalize_photo_vql_drive_result = 60 (limit:15)
+  !!! cc_exceeded      _type_text_at_vql_coords = 60 (limit:15)
+  !!! high_fan_out     perform_photo_vql_focus_and_edit = 59 (limit:10)
+  !!! high_fan_out     prepare_photo_vql_for_drive = 55 (limit:10)
   !!! cc_exceeded      ensure_vdisplay_ide_control = 54 (limit:15)
-  !!! high_fan_out     perform_photo_vql_focus_and_edit = 54 (limit:10)
-  !!! cc_exceeded      _normalize_photo_vql_drive_result = 52 (limit:15)
-  !!! high_fan_out     prepare_photo_vql_for_drive = 50 (limit:10)
-  !!! high_fan_out     get_vql_chat_target_from_photo = 49 (limit:10)
+  !!! high_fan_out     get_vql_chat_target_from_photo = 50 (limit:10)
   !!! cc_exceeded      load_vql_metadata = 48 (limit:15)
-  !!! cc_exceeded      _map_chat_target_capture_local = 46 (limit:15)
+  !!! cc_exceeded      _enrich_capture_meta_for_pointer = 47 (limit:15)
 
-MODULES[956] (top by size):
-  M[src/koru/integrations/vdisplay_client.py] 5493L C:0 F:155 CC↑70 D:7 (python)
+MODULES[958] (top by size):
+  M[src/koru/integrations/vdisplay_client.py] 6039L C:0 F:168 CC↑84 D:7 (python)
   M[packages/coru/src/coru/cli.py] 3994L C:3 F:217 CC↑13 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[ui.vql.json] 1756L C:0 F:0 CC↑0 D:0 (json)
@@ -32,21 +32,21 @@ MODULES[956] (top by size):
   M[packages/coru/src/coru/repair/pipeline.py] 1039L C:2 F:42 CC↑9 D:0 (python)
   M[src/koruide/daemon/handlers_drive.py] 1024L C:0 F:26 CC↑20 D:0 (python)
   M[plugins/koru-autopilot-shared/src/bridge-submit.ts] 992L C:1 F:72 CC↑13 D:1 (typescript)
-  LANGS: python:683/typescript:93/shell:57/json:40/yaml:31/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
+  LANGS: python:684/typescript:93/shell:57/json:41/yaml:31/toml:16/yml:10/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
 
 HOTSPOTS[10]:
-  ★ perform_photo_vql_focus_and_edit fan=54  // Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus
-  ★ prepare_photo_vql_for_drive fan=50  // Observe (if needed) + pin sidecar before koru drive / send_chat.
-  ★ get_vql_chat_target_from_photo fan=49  // Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.target
-  ★ _type_text_at_vql_coords fan=43  // Click caret at VQL capture coords, then type/paste via resolved pointer input.
+  ★ perform_photo_vql_focus_and_edit fan=59  // Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus
+  ★ prepare_photo_vql_for_drive fan=55  // Observe (if needed) + pin sidecar before koru drive / send_chat.
+  ★ get_vql_chat_target_from_photo fan=50  // Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.target
+  ★ _type_text_at_vql_coords fan=45  // Click caret at VQL capture coords, then type/paste via resolved pointer input.
   ★ ensure_vdisplay_ide_control fan=41  // Automatically open/focus IDE window and click interior targets via vdisplay cont
 
 REFACTOR[15]:
   [1] H/L Split SharedAutopilotBridgePaste.shouldProbeInput (CC=26)
   [2] H/L Split jetbrains_chat_target_from_surface (CC=31)
   [3] H/L Split ensure_vdisplay_ide_control (CC=54)
-  [4] H/L Split prepare_photo_vql_for_drive (CC=61)
-  [5] H/L Split _normalize_photo_vql_drive_result (CC=52)
+  [4] H/L Split refresh_photo_vql_sidecar (CC=33)
+  [5] H/L Split prepare_photo_vql_for_drive (CC=69)
 
 EVOLUTION:
-  2026-06-12 CC̄=3.8 crit=446 155810L // Automated analysis
+  2026-06-23 CC̄=3.8 crit=455 156741L // Automated analysis

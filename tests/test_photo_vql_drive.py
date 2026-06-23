@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -32,6 +33,7 @@ def _clear_autonomy_session_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "KORU_VDISPLAY_SOURCE",
         "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH",
         "KORU_VDISPLAY_ALLOW_IDE_MISMATCH",
+        "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR",
         "KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION",
         "KORU_VDISPLAY_PREFER_PHOTO_VQL",
         "KORU_VDISPLAY_LLM_VISION_DECISION",
@@ -298,6 +300,220 @@ def test_load_vql_metadata_skips_stale_global_sidecar(tmp_path, monkeypatch: pyt
     assert meta.get("stale_skipped")
 
 
+def test_load_vql_metadata_parses_vdisplay_dict_bbox_elements(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    png = tmp_path / "capture.png"
+    vql = tmp_path / "capture.png.vql.json"
+    png.write_bytes(b"png")
+    vql.write_text(
+        json.dumps(
+            {
+                "elements": [
+                    {
+                        "id": "window_0",
+                        "kind": "window",
+                        "bbox": {"x": 86, "y": 79, "w": 1918, "h": 1174},
+                        "click_center": {"x": 1045, "y": 666},
+                    }
+                ],
+                "layers": [
+                    {
+                        "id": "window_0",
+                        "kind": "window",
+                        "bbox": {"x": 86, "y": 79, "w": 1918, "h": 1174},
+                        "click_center": {"x": 1045, "y": 666},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_VDISPLAY_VQL_PATH", str(vql))
+
+    meta = vc.load_vql_metadata()
+
+    assert meta["_source"] == str(vql)
+    assert meta["element_count"] == 1
+    assert meta["ui_elements"][0]["role"] == "window"
+    assert meta["ui_elements"][0]["bounds"]["width"] == 1918
+    assert meta["ui_elements"][0]["click_center"]["x"] == 1045
+
+
+def test_vql_sidecar_staleness_allows_backend_write_grace(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import time
+
+    monkeypatch.setenv("KORU_VDISPLAY_SIDECAR_WRITE_GRACE_S", "30")
+    png = tmp_path / "capture.png"
+    vql = tmp_path / "capture.png.vql.json"
+    png.write_bytes(b"png")
+    vql.write_text(json.dumps({"elements": [{"id": "e", "bbox": [0, 0, 10, 10]}]}), encoding="utf-8")
+    now = time.time()
+    os.utime(vql, (now - 10, now - 10))
+    os.utime(png, (now, now))
+
+    stale, info = vc._autonomy_session.vql_sidecar_is_stale(vql, png, layer_count=1)
+
+    assert stale is False
+    assert "vql_sidecar_older_than_png" not in info["reasons"]
+
+
+def test_surface_confirmation_clears_missing_title_staleness() -> None:
+    out = {
+        "ok": True,
+        "png": "/tmp/capture.png",
+        "elements": 128,
+        "main_vql_layers": 128,
+        "capture_confirmed": False,
+        "capture_matches_ide": False,
+        "sidecar_stale": True,
+        "ide_window_warning": {"reason": "missing_window_title"},
+        "freshness": {
+            "stale": True,
+            "reasons": ["ide_window_mismatch", "missing_window_title", "missing_canvas_size"],
+            "ide_window_warning": {"reason": "missing_window_title"},
+        },
+    }
+    vc._apply_surface_capture_confirmation(
+        out,
+        ide="jetbrains",
+        source="HDMI-1",
+        desktop_probe={
+            "ide_surface_best": {
+                "display_name": "PyCharm",
+                "monitor_name": "HDMI-1",
+                "stack": "jetbrains_xwayland",
+                "pid": 123,
+            }
+        },
+    )
+
+    assert out["capture_confirmed"] is True
+    assert out["capture_matches_ide"] is True
+    assert out["sidecar_stale"] is False
+    assert out["freshness"]["surface_confirmation_override"] is True
+    assert out["freshness"]["reasons"] == []
+
+
+def test_photo_vql_ide_window_warning_detects_screen_share_overlay() -> None:
+    meta = {
+        "capture_validation": {"capture_confirmed": True, "expected_ide": "jetbrains"},
+        "ui_elements": [
+            {"role": "label", "label": "org.chromium.Chromium"},
+            {"role": "label", "label": "wants to share your screen"},
+            {"role": "button", "label": "Share Screen"},
+        ],
+    }
+
+    warn = vc._photo_vql_ide_window_warning(ide="jetbrains", meta=meta)
+
+    assert warn is not None
+    assert warn["system_overlay"] is True
+    assert warn["reason"] == "screen_share_overlay"
+    assert vc._capture_confirmed_from_meta(ide="jetbrains", meta=meta) is False
+
+
+def test_surface_confirmation_does_not_override_screen_share_overlay() -> None:
+    out = {
+        "ok": True,
+        "png": "/tmp/capture.png",
+        "elements": 128,
+        "main_vql_layers": 128,
+        "capture_confirmed": False,
+        "capture_matches_ide": False,
+        "capture_ready": True,
+        "ide_window_warning": {"system_overlay": True, "reason": "screen_share_overlay"},
+    }
+    vc._apply_surface_capture_confirmation(
+        out,
+        ide="jetbrains",
+        source="HDMI-1",
+        desktop_probe={
+            "ide_surface_best": {
+                "display_name": "PyCharm",
+                "monitor_name": "HDMI-1",
+                "stack": "jetbrains_xwayland",
+                "pid": 123,
+            }
+        },
+    )
+
+    assert out["capture_confirmed"] is False
+    assert out["capture_matches_ide"] is False
+    assert out["capture_ready"] is False
+    assert out.get("capture_confirmation_source") != "ide_surface_best"
+
+
+def test_surface_confirmation_persists_to_vql_metadata(tmp_path) -> None:
+    png = tmp_path / "capture.png"
+    vql = tmp_path / "capture.png.vql.json"
+    png.write_bytes(b"png")
+    vql.write_text(
+        json.dumps(
+            {
+                "elements": [
+                    {
+                        "id": "window_0",
+                        "kind": "window",
+                        "bbox": {"x": 0, "y": 0, "w": 100, "h": 80},
+                        "click_center": {"x": 50, "y": 40},
+                    }
+                ],
+                "metadata": {
+                    "capture_validation": {
+                        "expected_ide": "jetbrains",
+                        "capture_confirmed": False,
+                        "reasons": ["missing_window_title"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = {
+        "vql": str(vql),
+        "capture_confirmation_source": "ide_surface_best",
+        "capture_provenance": {
+            "ide_surface_best": {
+                "display_name": "PyCharm",
+                "monitor_name": "HDMI-1",
+                "stack": "jetbrains_xwayland",
+            }
+        },
+    }
+
+    vc._persist_surface_capture_confirmation_to_vql(out, ide="jetbrains")
+    meta = vc.load_vql_metadata(str(vql), allow_stale=True)
+
+    cv = meta["capture_validation"]
+    assert out["vql_surface_confirmation_persisted"] is True
+    assert cv["capture_confirmed"] is True
+    assert cv["ok_for_capture"] is True
+    assert cv["ok_for_drive"] is False
+    assert cv["confirmation_source"] == "ide_surface_best"
+    assert cv["original_capture_validation"]["capture_confirmed"] is False
+    assert vc._photo_vql_ide_window_warning(ide="jetbrains", meta=meta) is None
+
+
+def test_prepare_drive_readiness_blocks_map_capture_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", raising=False)
+    out = {
+        "ok": True,
+        "capture_confirmed": True,
+        "elements": 128,
+        "main_vql_layers": 128,
+        "map_capture_mismatch": {
+            "map_source": "DP-2",
+            "capture_source": "HDMI-1",
+            "message": "map calibrated for DP-2",
+        },
+    }
+
+    vc._annotate_prepare_drive_readiness(out)
+
+    assert out["drive_ready"] is False
+    assert out["drive_blocked_reason"] == "map_capture_mismatch"
+    assert out["map_actuation_ready"] is False
+
+
 def test_resolve_photo_png_path_from_vql_sidecar(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("VDISPLAY_METADATA_DIR", str(tmp_path))
     png = tmp_path / "koru-cont-dp2.png"
@@ -386,6 +602,7 @@ def test_perform_photo_vql_llm_coords_before_focus(monkeypatch: pytest.MonkeyPat
     monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
     monkeypatch.setenv("KORU_VDISPLAY_LLM_VISION_DECISION", "1")
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
 
     out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
     assert out["ok"] is True
@@ -414,6 +631,7 @@ def test_perform_photo_vql_map_fallback_when_type_fails(monkeypatch: pytest.Monk
     monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
     monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
     # Note: this test does not exercise LLM (no VISION_DECISION), it tests map paste fallback when focus+type fail
 
     out = vc.perform_photo_vql_focus_and_edit("fallback text", ide="jetbrains", source="DP-2")
@@ -608,6 +826,7 @@ def test_perform_photo_vql_verify_failure_blocks_ok(monkeypatch: pytest.MonkeyPa
         lambda *a, **k: {"ok": False, "verified": False, "mode": "ocr_contains", "error": "text not found"},
     )
     monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
     monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
 
     out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
@@ -643,6 +862,24 @@ def test_normalize_drive_result_blocks_false_ok_on_inference_fail() -> None:
     out = vc._normalize_photo_vql_drive_result(photo, ide="jetbrains", submit=False)
     assert out["ok"] is False
     assert out["capture_confirmed"] is False
+
+
+def test_normalize_drive_result_blocks_map_source_mismatch() -> None:
+    photo = {
+        "ok": True,
+        "backend": "vdisplay+photo-vql",
+        "edit": {"ok": True, "method": "ydotool-paste"},
+        "capture_confirmed": True,
+        "vql_command_plan": {"inference_ok": True},
+        "map_capture_mismatch": {
+            "map_source": "DP-2",
+            "capture_source": "HDMI-1",
+            "message": "map calibrated for DP-2",
+        },
+    }
+    out = vc._normalize_photo_vql_drive_result(photo, ide="jetbrains", submit=False)
+    assert out["ok"] is False
+    assert out["map_capture_mismatch"]["map_source"] == "DP-2"
 
 
 def test_prepare_syncs_ide_control_capture_confirmed_from_observe(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -742,6 +979,9 @@ def test_prepare_does_not_surface_confirm_when_vql_refresh_fails(
     assert "vdisplay host capture failed" in out["error"]
     assert "dbus" in out["hint"].lower()
     assert "Screen Recording" in out["hint"]
+    assert out["png"] is None
+    assert out["png_exists"] is False
+    assert out["requested_png_path"] == "/tmp/capture.png"
     assert out.get("capture_confirmation_source") != "ide_surface_best"
 
 
@@ -763,6 +1003,39 @@ def test_photo_vql_chat_input_candidates_penalizes_terminal_background() -> None
     cands = vc._photo_vql_chat_input_candidates(layers, limit=2, ide="jetbrains")
     assert cands[0]["label"] == "ask"
     assert cands[1]["label"] == "background"
+
+
+def test_jetbrains_corner_rejects_vdisplay_overlay_input() -> None:
+    from koru.integrations.photo_vql_target import (
+        jetbrains_chat_corner_target_from_layers,
+        jetbrains_corner_rejected,
+        vql_layers_show_vdisplay_overlay,
+    )
+
+    overlay_input = {
+        "role": "input",
+        "label": "",
+        "click_center": {"x": 343, "y": 1087},
+        "bounds": {"w": 260, "h": 25},
+    }
+    assert jetbrains_corner_rejected(overlay_input) is True
+    layers = [
+        {"kind": "label", "text": "vdisplay share manager"},
+        {"kind": "label", "text": "Screen Recording settings"},
+        overlay_input,
+        {
+            "role": "input",
+            "label": "Ask",
+            "click_center": {"x": 1985, "y": 1049},
+            "bounds": {"w": 280, "h": 32},
+        },
+    ]
+    assert vql_layers_show_vdisplay_overlay(layers) is True
+    cands = vc._photo_vql_chat_input_candidates(layers, limit=2, ide="jetbrains")
+    assert cands[0]["click_center"]["x"] == 1985
+    target = jetbrains_chat_corner_target_from_layers(layers)
+    assert target is not None
+    assert target["click_center"]["x"] == 1985
 
 
 def test_windsurf_chat_input_candidates_prefer_top_composer() -> None:
@@ -841,6 +1114,7 @@ def test_perform_photo_vql_submit_after_paste(monkeypatch: pytest.MonkeyPatch) -
         lambda **kwargs: {"ok": True, "method": "ydotool-key", "submit_key": "ctrl+Return"},
     )
     monkeypatch.setattr(vc, "vdisplay_available", lambda: True)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
     monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
 
     out = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2", submit=True)
@@ -894,6 +1168,7 @@ def test_perform_photo_vql_blocks_invalid_chat_target_before_actuation(
     monkeypatch.delenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", raising=False)
     monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
     monkeypatch.setattr(
         vc,
         "get_vql_chat_target_from_photo",
@@ -940,6 +1215,7 @@ def test_perform_photo_vql_blocks_suspicious_surface_target_before_actuation(
     monkeypatch.delenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", raising=False)
     monkeypatch.delenv("KORU_VDISPLAY_DRY_RUN", raising=False)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
     monkeypatch.setattr(
         vc,
         "get_vql_chat_target_from_photo",
@@ -1094,6 +1370,29 @@ def test_map_capture_monitor_mismatch(tmp_path: Path) -> None:
     assert map_capture_monitor_mismatch(str(map_path), source="DP-2") is None
 
 
+def test_map_capture_monitor_mismatch_prefers_top_level_monitor(tmp_path: Path) -> None:
+    from koru.integrations.photo_vql_monitor import map_capture_monitor_mismatch
+
+    map_path = tmp_path / "pycharm-chat.json"
+    map_path.write_text(
+        json.dumps(
+            {
+                "monitor": "DP-2",
+                "rotation": "left",
+                "capture_meta": {"source": "HDMI-1", "rotation": "normal"},
+                "elements": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    mismatch = map_capture_monitor_mismatch(str(map_path), source="HDMI-1")
+
+    assert mismatch is not None
+    assert mismatch["map_source"] == "DP-2"
+    assert mismatch["capture_source"] == "HDMI-1"
+
+
 def test_format_wayland_vdisplay_operator_hint(monkeypatch: pytest.MonkeyPatch) -> None:
     from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
 
@@ -1105,9 +1404,8 @@ def test_format_wayland_vdisplay_operator_hint(monkeypatch: pytest.MonkeyPatch) 
     )
     hint = format_wayland_vdisplay_operator_hint(ide="jetbrains")
     assert "HDMI-1" in hint
-    assert "vdisplay-agent serve" in hint
-    assert "screencast start --force" in hint
-    assert "screencast probe --via-agent" in hint
+    assert "vdisplay services up" in hint
+    assert "vdisplay-up" in hint
     assert "prepare-vdisplay" in hint
 
 
@@ -1255,6 +1553,8 @@ def test_perform_map_path_allowed_with_explicit_ide_mismatch(monkeypatch: pytest
     monkeypatch.setattr(vc, "_observe_vql_sidecar_path", lambda **k: "/tmp/capture.png.vql.json")
     monkeypatch.setattr(vc, "move_mouse_to_vql_target_and_focus_keyboard", lambda *a, **k: {"ok": True})
     monkeypatch.setattr(vc, "_type_text_at_vql_coords", lambda *a, **k: {"ok": True, "method": "paste"})
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_target", lambda **k: None)
     monkeypatch.setenv("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", "1")
 
     res = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="DP-2")
@@ -1262,6 +1562,96 @@ def test_perform_map_path_allowed_with_explicit_ide_mismatch(monkeypatch: pytest
     assert plan.get("selection_method") == "map_calibrated_on_mismatch"
     assert plan.get("inference_ok") is True
     assert res.get("ok") is True
+
+
+def test_perform_blocks_map_target_from_different_monitor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_confirmed_observe_meta(monkeypatch)
+    map_path = tmp_path / "pycharm-chat.json"
+    map_path.write_text(
+        json.dumps({"capture_meta": {"source": "DP-2", "rotation": "left"}, "elements": {}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(
+        vc,
+        "get_vql_chat_target_from_photo",
+        lambda **k: {
+            "id": "map:prompt",
+            "click_center": {"x": 1900, "y": 1629},
+            "selection_method": "map_calibrated_on_empty_vql",
+            "source": str(map_path),
+            "vql_validation": {"ok": True, "app_match": True},
+        },
+    )
+
+    res = vc.perform_photo_vql_focus_and_edit("hello", ide="jetbrains", source="HDMI-1")
+
+    assert res["ok"] is False
+    assert res["map_capture_mismatch"]["map_source"] == "DP-2"
+    assert res["map_capture_mismatch"]["capture_source"] == "HDMI-1"
+
+
+def test_perform_blocks_ide_map_source_mismatch_before_surface_or_editor_actuation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_confirmed_observe_meta(monkeypatch)
+    calls = {"editor": 0, "focus": 0, "type": 0, "submit": 0}
+    map_path = tmp_path / "pycharm-chat.json"
+    map_path.write_text(
+        json.dumps(
+            {
+                "monitor": "DP-2",
+                "rotation": "left",
+                "capture_meta": {"source": "HDMI-1", "rotation": "normal"},
+                "elements": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: str(map_path))
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
+    monkeypatch.setenv("KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION", "1")
+    monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", raising=False)
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
+    monkeypatch.setattr(
+        vc,
+        "get_vql_editor_target_from_photo",
+        lambda **k: calls.__setitem__("editor", calls["editor"] + 1) or {"click_center": {"x": 1024, "y": 640}},
+    )
+    monkeypatch.setattr(
+        vc,
+        "move_mouse_to_vql_target_and_focus_keyboard",
+        lambda *a, **k: calls.__setitem__("focus", calls["focus"] + 1) or {"ok": True},
+    )
+    monkeypatch.setattr(
+        vc,
+        "_type_text_at_vql_coords",
+        lambda *a, **k: calls.__setitem__("type", calls["type"] + 1) or {"ok": True},
+    )
+    monkeypatch.setattr(
+        vc,
+        "_photo_vql_submit_chat",
+        lambda **k: calls.__setitem__("submit", calls["submit"] + 1) or {"ok": True},
+    )
+
+    res = vc.perform_photo_vql_focus_and_edit(
+        "hello",
+        ide="jetbrains",
+        source="HDMI-1",
+        is_code_edit=True,
+        submit=True,
+    )
+
+    assert res["ok"] is False
+    assert res["map_capture_mismatch"]["map_source"] == "DP-2"
+    assert res["map_capture_mismatch"]["capture_source"] == "HDMI-1"
+    assert calls == {"editor": 0, "focus": 0, "type": 0, "submit": 0}
 
 
 def test_raise_alt_tab_default_on_for_jetbrains(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1436,6 +1826,51 @@ def test_vdisplay_subprocess_env_puts_imgl_first(monkeypatch: pytest.MonkeyPatch
     first = (env.get("PYTHONPATH") or "").split(":")[0]
     assert "imgl" in first
     assert env.get("VDISPLAY_CAPTURE_VALIDATE_IDE") == "jetbrains"
+
+
+def test_refresh_vql_sidecar_via_vdisplay_observe_uses_vdisplay_env(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    calls: list[dict] = []
+
+    class Proc:
+        returncode = 0
+        stdout = '{"ok": true}'
+        stderr = ""
+
+    def fake_run(cmd, **kwargs):
+        calls.append({"cmd": cmd, **kwargs})
+        return Proc()
+
+    python = tmp_path / "python"
+    python.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setenv("VDISPLAY_OBSERVE_PYTHON", str(python))
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(vc, "_main_vql_layer_count", lambda path: 12)
+
+    out = vc._refresh_vql_sidecar_via_vdisplay_observe(
+        png=tmp_path / "capture.png",
+        vql=tmp_path / "capture.png.vql.json",
+        source="HDMI-1",
+        ide="jetbrains",
+    )
+
+    assert out["ok"] is True
+    assert out["main_vql_layers"] == 12
+    assert calls
+    cmd = calls[0]["cmd"]
+    assert cmd[:4] == [str(python), "-c", cmd[2], str(tmp_path / "capture.png")]
+    assert "observe_screen" in cmd[2]
+    assert "HDMI-1" in cmd
+    assert str(tmp_path / "capture.png.vql.json") in cmd
+    env = calls[0]["env"]
+    assert env["VDISPLAY_IMGL"] == "1"
+    assert env["VDISPLAY_OBSERVE"] == "1"
+    assert env["VDISPLAY_OBSERVE_VQL"] == "1"
+    assert env["VDISPLAY_OBSERVE_SIDECAR"] == "1"
+    assert env["VDISPLAY_OBSERVE_CACHE"] == "0"
+    assert env["VDISPLAY_CAPTURE_VALIDATE_IDE"] == "jetbrains"
 
 
 def test_send_chat_persists_drive_result(monkeypatch: pytest.MonkeyPatch) -> None:

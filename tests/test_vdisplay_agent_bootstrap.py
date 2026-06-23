@@ -50,6 +50,35 @@ def test_apply_vdisplay_agent_env_sets_url(monkeypatch: pytest.MonkeyPatch) -> N
     assert "VDISPLAY_AGENT_URL=http://127.0.0.1:8766" in applied["applied"]
 
 
+def test_ensure_screencast_session_accepts_browser_bridge(monkeypatch: pytest.MonkeyPatch) -> None:
+    status = {
+        "ok": True,
+        "data": {
+            "active": True,
+            "ready": True,
+            "capture_ready": True,
+            "keeper_mode": "browser_bridge",
+            "browser_bridge": {
+                "registered": True,
+                "sharing": True,
+                "capture_ready": True,
+                "last_frame_age_ms": 120,
+            },
+        },
+    }
+
+    def fake_fetch(url: str, *, timeout: float = 0.35) -> tuple[int, bytes]:
+        if url.endswith("/session/screencast/status"):
+            return 200, json.dumps(status).encode()
+        raise AssertionError(f"unexpected fetch: {url}")
+
+    monkeypatch.setattr(boot, "_fetch", fake_fetch)
+    out = boot.ensure_screencast_session(agent_url="http://127.0.0.1:8766")
+    assert out["ok"] is True
+    assert out["browser_bridge"] is True
+    assert out["keeper_mode"] == "browser_bridge"
+
+
 def test_ensure_screencast_session_accepts_keeper_managed(monkeypatch: pytest.MonkeyPatch) -> None:
     status = {
         "ok": True,
@@ -70,6 +99,35 @@ def test_ensure_screencast_session_accepts_keeper_managed(monkeypatch: pytest.Mo
     out = boot.ensure_screencast_session(agent_url="http://127.0.0.1:8766")
     assert out["ok"] is True
     assert out["keeper_managed"] is True
+
+
+def test_ensure_screencast_session_pending_browser_bridge(monkeypatch: pytest.MonkeyPatch) -> None:
+    status = {
+        "ok": True,
+        "data": {
+            "active": True,
+            "ready": True,
+            "capture_ready": False,
+            "keeper_managed": False,
+            "browser_bridge": {
+                "registered": True,
+                "sharing": False,
+                "capture_ready": False,
+            },
+        },
+    }
+
+    def fake_fetch(url: str, *, timeout: float = 0.35) -> tuple[int, bytes]:
+        if url.endswith("/session/screencast/status"):
+            return 200, json.dumps(status).encode()
+        raise AssertionError(f"unexpected fetch: {url}")
+
+    monkeypatch.setattr(boot, "_fetch", fake_fetch)
+    out = boot.ensure_screencast_session(agent_url="http://127.0.0.1:8766")
+    assert out["ok"] is False
+    assert out["reason"] == "browser_bridge_pending_share"
+    assert out["browser_bridge_pending"] is True
+    assert "electron-share health" in out["hint"].lower()
 
 
 def test_ensure_screencast_session_rejects_active_without_keeper(
@@ -113,3 +171,4 @@ def test_ensure_screencast_session_skips_rest_start_on_wayland(
     assert out["ok"] is False
     assert out["reason"] == "wayland_requires_keeper_cli"
     assert "screencast start --force" in out["hint"]
+    assert "electron-share" in out["hint"]

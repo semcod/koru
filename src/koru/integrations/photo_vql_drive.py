@@ -121,6 +121,14 @@ class PhotoVqlDrive:
         observe: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         observe = observe or {}
+        from koru.integrations.vdisplay_client import _photo_vql_code_edit_enabled
+
+        if _photo_vql_code_edit_enabled() and not dry_run:
+            if not observe.get("capture_confirmed"):
+                from koru.integrations.vdisplay_client import clear_stale_observe_session_env
+
+                clear_stale_observe_session_env()
+            return self._send_chat(prompt, submit=submit, dry_run=dry_run)
         if observe.get("surface_only_fallback") and observe.get("capture_confirmed") and not dry_run:
             if not _allow_surface_only_actuation():
                 return self._surface_only_blocked(observe=observe)
@@ -282,11 +290,54 @@ class PhotoVqlDrive:
             submit=submit,
             dry_run=False,
         )
-        if ide_prompt is None or not ide_prompt.get("ok"):
-            return None
-        ide_prompt.setdefault("map_only_fallback", True)
-        ide_prompt.setdefault("photo_vql_observe", observe)
-        return ide_prompt
+        if ide_prompt is not None and ide_prompt.get("ok"):
+            ide_prompt.setdefault("map_only_fallback", True)
+            ide_prompt.setdefault("photo_vql_observe", observe)
+            return ide_prompt
+        if observe.get("ide_control", {}).get("map_actuation_ok"):
+            from koru.integrations.vdisplay_client import (
+                _ide_prompt_app_id,
+                _resolve_ide_prompt_map,
+                _type_text_via_ide_map_fallback,
+            )
+
+            app_id = _ide_prompt_app_id(self.ide)
+            map_path = _resolve_ide_prompt_map(app_id)
+            if map_path:
+                fallback = _type_text_via_ide_map_fallback(
+                    prompt,
+                    map_path=map_path,
+                    app_id=app_id,
+                    ide=self.ide,
+                )
+                if fallback.get("ok"):
+                    out = {
+                        "ok": True,
+                        "backend": "vdisplay+ide-prompt",
+                        "message": "typed via prepare-confirmed map click+paste",
+                        "type": "drive",
+                        "fallback_from": "plugin",
+                        "ide": self.ide,
+                        "app_id": app_id,
+                        "map_path": map_path,
+                        "typed": fallback,
+                        "map_only_fallback": True,
+                        "photo_vql_observe": observe,
+                        "submitted": False,
+                        "submit_result": None,
+                    }
+                    if submit:
+                        from koru.integrations.vdisplay_client import _submit_via_keyboard
+
+                        sub = _submit_via_keyboard(ide=self.ide, submit=True)
+                        out["submitted"] = bool(sub.get("ok"))
+                        out["submit_result"] = sub
+                    return out
+        if ide_prompt is not None:
+            ide_prompt.setdefault("map_only_fallback", True)
+            ide_prompt.setdefault("photo_vql_observe", observe)
+            return ide_prompt
+        return None
 
     def _send_chat(self, prompt: str, *, submit: bool, dry_run: bool) -> dict[str, Any]:
         from koru.integrations.vdisplay_client import send_chat
@@ -310,6 +361,10 @@ class PhotoVqlDrive:
 
     @staticmethod
     def _observe_allows_act(observe: dict[str, Any]) -> bool:
+        from koru.integrations.vdisplay_client import _photo_vql_code_edit_enabled
+
+        if _photo_vql_code_edit_enabled():
+            return True
         return (
             bool(observe.get("ok"))
             or bool(observe.get("map_only_fallback"))

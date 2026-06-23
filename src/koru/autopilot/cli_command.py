@@ -22,6 +22,7 @@ from koru.autopilot import (
     prepare_vdisplay_cli,
     systemd_cli,
     tail_cli,
+    vdisplay_up_cli,
 )
 from koru.autopilot import diagnose_vdisplay_cli
 from koru.autopilot.cli_direct_drive import (
@@ -92,6 +93,10 @@ def _action_calibrate(args: argparse.Namespace) -> int:
 
 def _action_prepare_vdisplay(args: argparse.Namespace) -> int:
     return prepare_vdisplay_cli.action_prepare_vdisplay(args)
+
+
+def _action_vdisplay_up(args: argparse.Namespace) -> int:
+    return vdisplay_up_cli.action_vdisplay_up(args)
 
 
 def _action_diagnose_vdisplay(args: argparse.Namespace) -> int:
@@ -324,6 +329,7 @@ _ACTIONS = {
     "drive": _action_drive,
     "calibrate": _action_calibrate,
     "prepare-vdisplay": _action_prepare_vdisplay,
+    "vdisplay-up": _action_vdisplay_up,
     "diagnose-vdisplay": _action_diagnose_vdisplay,
     "session-start": _action_session_start,
     "status": _action_status,

@@ -248,6 +248,10 @@ def validate_chat_coords_for_ide(
     is_code_edit: bool = False,
 ) -> list[str]:
     """Heuristic warnings when VQL-derived chat coords look wrong for the IDE."""
+    role = str(target.get("role") or "").lower()
+    tid = str(target.get("id") or "").lower()
+    if is_code_edit or role == "editor" or "editor" in tid:
+        return []
     warnings: list[str] = []
     canon = _canonical_ide(ide)
     if _target_uses_fallback_center(target):
@@ -265,6 +269,9 @@ def validate_chat_coords_for_ide(
 
 
 def _target_uses_fallback_center(target: dict[str, Any]) -> bool:
+    tid = str(target.get("id") or "")
+    if tid.startswith("map:"):
+        return False
     src = str(target.get("source") or "")
     note = str(target.get("note") or "").lower()
     return src in {"vql-analysis-fallback", ""} or "fallback" in note

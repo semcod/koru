@@ -16,12 +16,20 @@ def test_apply_vdisplay_defaults_jetbrains_wayland(monkeypatch: pytest.MonkeyPat
         "KORU_VDISPLAY_SOURCE",
         "KORU_VDISPLAY_PREFER_PHOTO_VQL",
         "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS",
+        "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH",
+        "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR",
         "KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION",
     ):
         monkeypatch.delenv(key, raising=False)
     applied = apply_vdisplay_drive_defaults(ide="jetbrains")
     assert "KORU_VDISPLAY_CONTROL_FALLBACK=1" in applied
     assert "KORU_VDISPLAY_SOURCE" not in os.environ
+    assert not any(item.startswith("KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS=") for item in applied)
+    assert "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS" not in os.environ
+    assert not any(item.startswith("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH=") for item in applied)
+    assert "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH" not in os.environ
+    assert not any(item.startswith("KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR=") for item in applied)
+    assert "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR" not in os.environ
     assert not any(item.startswith("KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION=") for item in applied)
     assert "KORU_VDISPLAY_ALLOW_SURFACE_ONLY_ACTUATION" not in os.environ
 
@@ -48,7 +56,10 @@ def test_apply_vdisplay_defaults_windsurf_wayland(monkeypatch: pytest.MonkeyPatc
         "KORU_VDISPLAY_PREFER_PHOTO_VQL",
         "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS",
         "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH",
+        "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR",
     ):
         monkeypatch.delenv(key, raising=False)
     applied = apply_vdisplay_drive_defaults(ide="windsurf")
     assert "KORU_VDISPLAY_CONTROL_FALLBACK=1" in applied
+    assert "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH" not in os.environ
+    assert "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR" not in os.environ

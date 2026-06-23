@@ -603,6 +603,8 @@ def test_perform_photo_vql_skips_stale_abort_when_map_mismatch_allowed(
         lambda *a, **k: {"error": "no fresh vql found", "stale_skipped": True},
     )
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_ide", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_capture_mismatch_for_target", lambda **k: None)
     monkeypatch.setattr(
         vc,
         "get_vql_chat_target_from_photo",

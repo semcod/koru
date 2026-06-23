@@ -28,10 +28,8 @@ def apply_vdisplay_drive_defaults(*, ide: str) -> list[str]:
     defaults = {
         "KORU_VDISPLAY_CONTROL_FALLBACK": "1",
         "KORU_VDISPLAY_PREFER_PHOTO_VQL": "auto",
-        "KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS": "1",
-        "KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH": "1",
-        "KORU_VDISPLAY_ALLOW_SURFACE_ON_CAPTURE_ERROR": "1",
         "KORU_VDISPLAY_LLM_VISION_DECISION": "1",
+        "KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS": "300",
         "VDISPLAY_VISION_LLM_ENABLED": "1",
         "VDISPLAY_VISION_LLM_MODE": "both",
         "VDISPLAY_VISION_CHAT_DETECT": "1",

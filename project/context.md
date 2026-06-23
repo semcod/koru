@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.05s -->
+<!-- generated in 0.04s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 682, typescript: 93, shell: 57, json: 40, yaml: 31
+- **Languages**: python: 683, typescript: 93, shell: 57, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 6776
+- **Total Functions**: 6797
 - **Total Classes**: 487
-- **Modules**: 956
-- **Entry Points**: 2676
+- **Modules**: 958
+- **Entry Points**: 2678
 
 ## Architecture by Module
 
@@ -20,7 +20,7 @@
 - **File**: `cli.py`
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 155
+- **Functions**: 168
 - **File**: `vdisplay_client.py`
 
 ### plugins.koru-autopilot-shared.src.bridge-submit
@@ -129,12 +129,18 @@ Main execution flows into the system:
 > Estimate JetBrains AI chat composer from correlated IDE surface bounds (Wayland/native).
 - **Calls**: None.strip, None.lower, surface.get, int, int, int, int, src.koru.integrations.photo_vql_target._monitor_geometry_for_source
 
+### src.koru.autopilot.vdisplay_up_cli.action_vdisplay_up
+- **Calls**: None.lower, src.koru.autonomous_vdisplay_defaults.apply_vdisplay_drive_defaults, int, project.print, getattr, src.koru.autopilot.vdisplay_up_cli._resolve_bridge_source, getattr, None.environ.get
+
 ### packages.rest2koru.src.rest2koru.app.create_app
 - **Calls**: FastAPI, app.get, app.get, app.get, app.post, app.post, app.get, app.get
 
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, str, urlparse, src.koru.control_commands.api_command, urllib.request.Request, float, str, str
+
+### src.koru.ide_client.LegacyAutopilotClientAdapter.drive
+- **Calls**: src.koru.activity_log.activity, self.client.drive, reply.get, bool, reply.get, src.koru.activity_log.activity, reply.get, isinstance
 
 ### src.koru.local_manager_state.WorkerRegistry.register
 - **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
@@ -143,14 +149,11 @@ Main execution flows into the system:
 > Print the structured ``DecisionRecord`` ring buffer.
 - **Calls**: args.project.resolve, src.koru.autonomy.decision_trace.load_recent_decisions, project.print, src.koru.autopilot.cli_trace._print_observability_dsl_trace, src.koru.autopilot.cli_trace._print_drive_dsl_trace, project.print, project.print, project.print
 
-### src.koru.autopilot.commands.drive._diagnose_bridge_after_drive_failure
-- **Calls**: bool, None.resolve, str, src.koru.cqrs.runtime_for_project, RepairCommandService, RepairQueryService, src.koru.autopilot.commands.drive._bridge_hypotheses_payload, src.koru.autopilot.commands.drive._bridge_subject
-
-### src.koru.ide_client.LegacyAutopilotClientAdapter.drive
-- **Calls**: src.koru.activity_log.activity, self.client.drive, reply.get, bool, reply.get, src.koru.activity_log.activity, reply.get, isinstance
-
 ### src.koru.autopilot.daemon_cli.run_daemon_command
 - **Calls**: src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.dotenv_loader.load_dotenv, None.lower, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat
+
+### src.koru.autopilot.commands.drive._diagnose_bridge_after_drive_failure
+- **Calls**: bool, None.resolve, str, src.koru.cqrs.runtime_for_project, RepairCommandService, RepairQueryService, src.koru.autopilot.commands.drive._bridge_hypotheses_payload, src.koru.autopilot.commands.drive._bridge_subject
 
 ### packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
 - **Calls**: StoredEvent, self.path.parent.mkdir, uuid.uuid4, result_pb2.DslEvent, pb.command.ParseFromString, DslResult, pb.result.CopyFrom, pb.SerializeToString
@@ -227,9 +230,6 @@ Args:
 > Deploy changes using Tagi's intelligent prioritization.
 - **Calls**: tagi.command, click.argument, click.option, click.option, None.resolve, click.echo, TagiIntegration, tagi.get_deployment_plan
 
-### src.koru.autonomous_runtime.setup_autonomous_session
-- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, src.koru.autonomous_runtime._log_runtime_readiness_gate
-
 ## Process Flows
 
 Key execution flows identified:
@@ -273,12 +273,22 @@ from_env [src.koru.autonomy.config.AutonomyConfig]
 jetbrains_chat_target_from_surface [src.koru.integrations.photo_vql_target]
 ```
 
-### Flow 6: create_app
+### Flow 6: action_vdisplay_up
+```
+action_vdisplay_up [src.koru.autopilot.vdisplay_up_cli]
+  └─ →> apply_vdisplay_drive_defaults
+      └─> _session_type
+      └─ →> apply_vdisplay_agent_env
+          └─> resolve_vdisplay_agent_url
+  └─ →> print
+```
+
+### Flow 7: create_app
 ```
 create_app [packages.rest2koru.src.rest2koru.app]
 ```
 
-### Flow 7: run_api_request
+### Flow 8: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
   └─ →> api_command
@@ -287,30 +297,19 @@ run_api_request [src.koru.queue.runners]
       └─> control_command
 ```
 
-### Flow 8: register
+### Flow 9: drive
+```
+drive [src.koru.ide_client.LegacyAutopilotClientAdapter]
+  └─ →> activity
+      └─> _out_stream
+      └─> _color_category
+          └─> _ansi
+```
+
+### Flow 10: register
 ```
 register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
-```
-
-### Flow 9: action_trace
-```
-action_trace [src.koru.autopilot.cli_trace]
-  └─> _print_observability_dsl_trace
-      └─ →> print
-      └─ →> observability_event_store_path
-          └─ →> project_event_store_path
-  └─> _print_drive_dsl_trace
-      └─ →> print
-  └─ →> load_recent_decisions
-      └─> decision_trace_path
-```
-
-### Flow 10: _diagnose_bridge_after_drive_failure
-```
-_diagnose_bridge_after_drive_failure [src.koru.autopilot.commands.drive]
-  └─ →> runtime_for_project
-      └─ →> project_event_store_path
 ```
 
 ## Key Classes
@@ -566,30 +565,31 @@ Key functions that process and transform data:
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 113 calls
-- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 113 calls
-- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 103 calls
+- `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 132 calls
+- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 126 calls
+- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 104 calls
+- `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 83 calls
 - `src.koru.integrations.vdisplay_client.ensure_vdisplay_ide_control` - 74 calls
 - `scripts.e2e_envmap_koru.main` - 73 calls
-- `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 69 calls
 - `src.koru.integrations.vdisplay_client.load_vql_metadata` - 55 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.integrations.photo_vql_target.jetbrains_chat_target_from_surface` - 42 calls
+- `src.koru.autopilot.vdisplay_up_cli.action_vdisplay_up` - 42 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
 - `src.koru.integrations.vdisplay_client.move_mouse_to_vql_target_and_focus_keyboard` - 40 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
+- `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
-- `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
 - `src.koru.autopilot.daemon_cli.run_daemon_command` - 37 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
+- `src.koru.integrations.vdisplay_client.sync_prepare_capture_flags_to_env` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
-- `src.koru.integrations.vdisplay_client.sync_prepare_capture_flags_to_env` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
@@ -605,7 +605,6 @@ Functions exposed as public API (no underscore prefix):
 - `koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koruapi.desktop_uri.desktop_uri_handle` - 27 calls
-- `src.koru.doctor_render.render_text` - 27 calls
 
 ## System Interactions
 
@@ -632,17 +631,17 @@ graph TD
     jetbrains_chat_targe --> lower
     jetbrains_chat_targe --> get
     jetbrains_chat_targe --> int
+    action_vdisplay_up --> lower
+    action_vdisplay_up --> apply_vdisplay_drive
+    action_vdisplay_up --> int
+    action_vdisplay_up --> print
+    action_vdisplay_up --> getattr
     create_app --> FastAPI
     create_app --> get
     create_app --> post
     run_api_request --> get
     run_api_request --> str
     run_api_request --> urlparse
-    run_api_request --> api_command
-    run_api_request --> Request
-    register --> utc_now
-    register --> str
-    register --> get
 ```
 
 ## Reverse Engineering Guidelines

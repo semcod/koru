@@ -116,10 +116,24 @@ def map_capture_monitor_mismatch(
             "message": f"could not load GUI map {map_path!r} to verify capture source",
         }
     meta = pack.capture_meta if isinstance(pack.capture_meta, dict) else {}
-    map_source = str(meta.get("source") or meta.get("monitor_name") or "").strip()
+    # The top-level map monitor is the calibration contract.  capture_meta can
+    # be overwritten by a failed/partial refresh capture and must not silently
+    # re-authorize actuation on another monitor.
+    map_source = str(
+        getattr(pack, "monitor", None)
+        or meta.get("source")
+        or meta.get("monitor_name")
+        or meta.get("monitor")
+        or ""
+    ).strip()
     if not map_source or map_source == source:
         return None
-    rotation = meta.get("rotation")
+    if _monitor_sources_equivalent(map_source, source):
+        return None
+    connected = _connected_monitor_names()
+    if map_source not in connected and source in connected:
+        return None
+    rotation = getattr(pack, "rotation", None) or meta.get("rotation")
     return {
         "map_path": map_path,
         "map_source": map_source,
@@ -132,6 +146,58 @@ def map_capture_monitor_mismatch(
             f"Recalibrate the map or set KORU_VDISPLAY_SOURCE={map_source!r}."
         ),
     }
+
+
+def _connected_monitor_names() -> set[str]:
+    try:
+        from vdisplay.application.services.discovery import list_monitors_local
+    except ImportError:
+        return set()
+    try:
+        payload = list_monitors_local()
+    except Exception:
+        return set()
+    names: set[str] = set()
+    for item in payload.get("monitors") or []:
+        if item.get("connected") is False:
+            continue
+        name = str(item.get("name") or "").strip()
+        if name:
+            names.add(name)
+    return names
+
+
+def _monitor_sources_equivalent(left: str, right: str) -> bool:
+    """Treat renamed/reconnected outputs as equivalent when geometry matches."""
+    if not left or not right or left == right:
+        return left == right
+    try:
+        from vdisplay.application.services.discovery import list_monitors_local
+    except ImportError:
+        return False
+    try:
+        payload = list_monitors_local()
+    except Exception:
+        return False
+    monitors = payload.get("monitors") or []
+    by_name = {
+        str(item.get("name") or "").strip(): item
+        for item in monitors
+        if item.get("connected") is not False and str(item.get("name") or "").strip()
+    }
+    left_meta = by_name.get(left)
+    right_meta = by_name.get(right)
+    if not left_meta or not right_meta:
+        return False
+    keys = ("x", "y", "width_px", "height_px", "width", "height")
+    for key in keys:
+        left_val = left_meta.get(key)
+        right_val = right_meta.get(key)
+        if left_val is None or right_val is None:
+            continue
+        if int(left_val) != int(right_val):
+            return False
+    return True
 
 
 def resolve_vdisplay_source_for_ide(
@@ -190,7 +256,7 @@ def resolve_vdisplay_source_for_ide(
 
 
 def format_wayland_vdisplay_operator_hint(*, ide: str) -> str:
-    """Short operator hint for coru auto / bridge (monitor + screencast + prepare)."""
+    """Short operator hint for koru auto / bridge (monitor + screencast + prepare)."""
     monitor: str | None = None
     try:
         from koru.integrations.vdisplay_client import _desktop_probe
@@ -203,8 +269,10 @@ def format_wayland_vdisplay_operator_hint(*, ide: str) -> str:
         pass
     if monitor:
         mon = f"koru auto-resolves capture to {monitor!r} (IDE surface)"
+        bridge_source = monitor
     else:
         mon = "set KORU_VDISPLAY_SOURCE to the monitor where the IDE window lives"
+        bridge_source = "HDMI-1"
     port_note = ""
     try:
         from koru.integrations.vdisplay_agent_bootstrap import is_koru_dashboard_on_port
@@ -214,11 +282,15 @@ def format_wayland_vdisplay_operator_hint(*, ide: str) -> str:
     except ImportError:
         pass
     return (
-        f"Wayland vdisplay/photo-VQL: vdisplay-agent serve{port_note}; "
-        "vdisplay agent preflight; "
-        "vdisplay agent screencast start --force (choose All Screens/the IDE monitor); "
-        "vdisplay agent screencast probe --via-agent --source <monitor>; "
+        f"Wayland vdisplay/photo-VQL: koru autopilot vdisplay-up --ide {ide}{port_note} "
+        "(starts agent + manager + opens browser bridge; in Chrome/Chromium click Share screen, "
+        f"select {bridge_source}, keep the tab open); "
+        f"lower-level: vdisplay services up --instance {ide} --source {bridge_source} --open-browser-bridge; "
+        f"vdisplay services status --source {bridge_source}; "
         f"{mon}; koru autopilot prepare-vdisplay --ide {ide}; "
+        "manual stack: vdisplay-agent serve; vdisplay electron-share start; browser bridge page; "
+        "fallback keeper: vdisplay agent screencast start --force, then verify with "
+        f"vdisplay agent screencast probe --via-agent --source {bridge_source}; "
         "blind OS-injector is blocked unless KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1"
     )
 

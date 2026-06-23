@@ -180,10 +180,12 @@ def _guidance_screencast(ctx: _GuidanceContext) -> list[str] | None:
     ):
         return None
     return [
-        "Wayland capture wymaga persistent screencast + keeper:",
-        "  vdisplay-agent serve",
-        "  vdisplay agent preflight",
-        "  vdisplay agent screencast start --force  # wybierz All Screens albo monitor IDE",
+        "Wayland capture wymaga świeżych klatek z browser bridge albo keepera:",
+        f"  koru autopilot vdisplay-up --ide {ctx.ide}",
+        f"  # w otwartej karcie Chrome/Chromium: Share screen → wybierz {ctx.resolved} → zostaw kartę otwartą",
+        f"  vdisplay services status --source {ctx.resolved}",
+        "  # fallback keeper, jeśli browser bridge nie jest dostępny:",
+        "  vdisplay agent screencast start --force",
         f"  vdisplay agent screencast probe --via-agent --source {ctx.resolved}",
         f"koru autopilot prepare-vdisplay --ide {ctx.ide}",
         ctx.retry_cmd,

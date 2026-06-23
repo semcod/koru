@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 1.52s
+%% generated in 1.85s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__nlp2uri_testql_browser["examples.nlp2uri-testql-browser<br/>3 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
@@ -43,7 +43,7 @@ flowchart TD
     services__healing_webhook["services.healing-webhook<br/>39 funcs"]
     src__env2llm["src.env2llm<br/>13 funcs"]
     src__imgl["src.imgl<br/>14 funcs"]
-    src__koru["src.koru<br/>3261 funcs"]
+    src__koru["src.koru<br/>3282 funcs"]
     src__koruapi["src.koruapi<br/>354 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
     src__koruide["src.koruide<br/>469 funcs"]
@@ -52,7 +52,7 @@ flowchart TD
     src__koruobserve["src.koruobserve<br/>57 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
     src__nlp2imgl["src.nlp2imgl<br/>5 funcs"]
-    src__koru ==>|512| project
+    src__koru ==>|514| project
     src__koru ==>|198| src__koruide
     packages__coru ==>|183| project
     src__koruapi ==>|97| src__koru
@@ -168,6 +168,7 @@ flowchart TD
     src__korumesh -->|1| src__koruobserve
     src__nlp2imgl -->|1| src__imgl
     src__koruide -->|1| plugins__koru_autopilot_antigravity
+    src__koruide -->|1| src__koruobserve
     src__koru -->|1| packages__mcp2coru
     koru__ticket_evidence -->|1| src__koru
     koru__observability_events -->|1| src__koru
@@ -180,4 +181,3 @@ flowchart TD
     scripts__sync_plugin_version -->|1| src__koru
     scripts___koru_autodiag_filter_tickets -->|1| project
     scripts__e2e_envmap_koru -->|1| src__koruapi
-    src__koruide -->|1| src__koruobserve

@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.340-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$29.02-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-155.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.341-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$30.00-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-156.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $29.0216 (446 commits)
-- 👤 **Human dev:** ~$15510 (155.1h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $30.0040 (448 commits)
+- 👤 **Human dev:** ~$15669 (156.7h @ $100/h, 30min dedup)
 
-Generated on 2026-06-12 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
+Generated on 2026-06-23 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 
@@ -201,14 +201,17 @@ prepare (screenshot + IDE title guard) → decide (VQL/LLM target) → act (past
 **One-shot chat drive** (recommended for manual testing):
 
 ```bash
-cd ~/github/wronai/vdisplay
+cd ~/github/semcod/koru
 source .venv/bin/activate
-export VDISPLAY_AGENT_URL=http://127.0.0.1:8765   # vdisplay-agent serve in another terminal
+export PATH="$HOME/github/semcod/koru/.venv/bin:$PATH"
+
+koru autopilot vdisplay-up --ide jetbrains --install
+# Browser bridge opens: Share screen → choose the IDE monitor → keep the tab open
 
 unset KORU_VDISPLAY_DRY_RUN
 KORU_SRC=~/github/semcod/koru/src IMGL_SRC=~/github/semcod/imgl \
   bash examples/dev-workflow/koru-drive-photo-vql.sh \
-  --ide jetbrains --source DP-1 --prompt "your task" --submit
+  --ide jetbrains --source HDMI-1 --prompt "your task" --submit
 
 bash examples/dev-workflow/koru-audit-last-session.sh --ide jetbrains
 ```
