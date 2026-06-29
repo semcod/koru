@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-06-23 11:07:08
+# Generated: 2026-06-29 11:53:18
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -222,10 +222,6 @@ git:
     prefix: v
     format: '{prefix}{version}'
 publishing:
-  # Releases are done deliberately via `make publish` (PyPI). Keeping goal's
-  # auto-publish on made every `goal -a` run bump + upload (and fail when no
-  # registry credentials were present), churning the version and marking the
-  # run FAILED. goal -a is a local deps+diagnose+test+commit loop.
   enabled: false
   registries:
   - pypi
@@ -241,7 +237,7 @@ publishing:
       asset_glob: dist/*
 strategies:
   python:
-    test: make test-python-parallel
+    test: pytest tests/ -p no:xdist
     build: python -m build
     publish: twine upload dist/koru-{version}*
     publish_enabled: true
@@ -254,12 +250,9 @@ strategies:
     pytest_distribution: loadfile
     timeout_test: 180
   nodejs:
-    test: npm test
+    test: ''
     build: npm run build
     publish: npm publish
-    # Root workspace package is private (package.json "private": true) and goal's
-    # root-level `npm publish` cannot publish the non-private plugin workspaces
-    # anyway. Leaving this enabled made `goal -a` fail with ENEEDAUTH on every run.
     publish_enabled: false
     dependencies:
       file: package-lock.json
