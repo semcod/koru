@@ -1,5 +1,4 @@
 source: code2llm
-# generated in 3.16s
 schema: code2llm.planfile_tickets.v1
 project_root: /home/tom/github/semcod/koru
 tickets:
@@ -31248,5 +31247,1157 @@ tickets:
   - src/koruide/plugin_installer.py
   dedupe_key: 'code2llm:smell:god_function:src/koruide/plugin_installer.py:1:God Module:
     src.koruide.plugin_installer'
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_observability_dsl.test_plugin_wait_trace_replaces_legacy_reload_lines'
+  description: 'Test `tests.test_observability_dsl.test_plugin_wait_trace_replaces_legacy_reload_lines`
+    took 34.51s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_observability_dsl.py
+  dedupe_key: test-optimization:tests.test_observability_dsl:test_plugin_wait_trace_replaces_legacy_reload_lines
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_does_not_retry_semantic_required_as_focus_error'
+  description: 'Test `tests.test_autonomous.test_run_cycle_does_not_retry_semantic_required_as_focus_error`
+    took 31.94s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_does_not_retry_semantic_required_as_focus_error
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure'
+  description: 'Test `tests.test_autonomous.test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure`
+    took 20.67s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_imgl_integration.test_drive_retry_prefers_imgl_before_gillm'
+  description: 'Test `tests.test_imgl_integration.test_drive_retry_prefers_imgl_before_gillm`
+    took 19.57s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_imgl_integration.py
+  dedupe_key: test-optimization:tests.test_imgl_integration:test_drive_retry_prefers_imgl_before_gillm
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous_gillm_fallback.test_run_cycle_autopilot_uses_gillm_fallback_before_os_injector'
+  description: 'Test `tests.test_autonomous_gillm_fallback.test_run_cycle_autopilot_uses_gillm_fallback_before_os_injector`
+    took 19.46s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous_gillm_fallback.py
+  dedupe_key: test-optimization:tests.test_autonomous_gillm_fallback:test_run_cycle_autopilot_uses_gillm_fallback_before_os_injector
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_get_vql_chat_map_on_mismatch'
+  description: 'Test `tests.test_photo_vql_drive.test_get_vql_chat_map_on_mismatch`
+    took 17.61s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_get_vql_chat_map_on_mismatch
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_skips_drive_when_required_plugin_missing'
+  description: 'Test `tests.test_autonomous.test_run_cycle_skips_drive_when_required_plugin_missing`
+    took 12.06s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_skips_drive_when_required_plugin_missing
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_observability_dsl.test_plugin_gate_skip_emits_semantic_observability_trace'
+  description: 'Test `tests.test_observability_dsl.test_plugin_gate_skip_emits_semantic_observability_trace`
+    took 12.01s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_observability_dsl.py
+  dedupe_key: test-optimization:tests.test_observability_dsl:test_plugin_gate_skip_emits_semantic_observability_trace
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_observability_dsl.test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace'
+  description: 'Test `tests.test_observability_dsl.test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace`
+    took 12.01s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_observability_dsl.py
+  dedupe_key: test-optimization:tests.test_observability_dsl:test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_visible_typing_does_not_require_plugin'
+  description: 'Test `tests.test_autonomous.test_run_cycle_visible_typing_does_not_require_plugin`
+    took 11.37s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_visible_typing_does_not_require_plugin
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_jetbrains_does_not_require_plugin_by_default'
+  description: 'Test `tests.test_autonomous.test_run_cycle_jetbrains_does_not_require_plugin_by_default`
+    took 10.89s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_jetbrains_does_not_require_plugin_by_default
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_message_sent_from_other_plugin_does_not_complete_pending_drive'
+  description: 'Test `tests.test_autopilot_daemon.test_message_sent_from_other_plugin_does_not_complete_pending_drive`
+    took 10.86s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_message_sent_from_other_plugin_does_not_complete_pending_drive
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_imgl_integration.test_drive_retry_prefers_imgl_before_daemon_for_jetbrains'
+  description: 'Test `tests.test_imgl_integration.test_drive_retry_prefers_imgl_before_daemon_for_jetbrains`
+    took 9.87s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_imgl_integration.py
+  dedupe_key: test-optimization:tests.test_imgl_integration:test_drive_retry_prefers_imgl_before_daemon_for_jetbrains
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous_nlp2uri_drive.test_invoke_drive_falls_back_to_client_when_nlp2uri_fails'
+  description: 'Test `tests.test_autonomous_nlp2uri_drive.test_invoke_drive_falls_back_to_client_when_nlp2uri_fails`
+    took 9.67s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous_nlp2uri_drive.py
+  dedupe_key: test-optimization:tests.test_autonomous_nlp2uri_drive:test_invoke_drive_falls_back_to_client_when_nlp2uri_fails
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_up_single_cycle_queue_only_no_autopilot'
+  description: 'Test `tests.test_autonomous.test_up_single_cycle_queue_only_no_autopilot`
+    took 9.43s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_up_single_cycle_queue_only_no_autopilot
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_safe_up_uses_queue_diagnostics_without_autopilot'
+  description: 'Test `tests.test_autonomous.test_safe_up_uses_queue_diagnostics_without_autopilot`
+    took 9.36s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_safe_up_uses_queue_diagnostics_without_autopilot
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_up_single_cycle_all_sources_runs_scan'
+  description: 'Test `tests.test_autonomous.test_up_single_cycle_all_sources_runs_scan`
+    took 9.14s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_up_single_cycle_all_sources_runs_scan
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_drive_falls_back_to_injector_when_no_plugin'
+  description: 'Test `tests.test_autopilot_daemon.test_drive_falls_back_to_injector_when_no_plugin`
+    took 9.01s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_drive_falls_back_to_injector_when_no_plugin
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_autonomous_main_prepends_up_for_flags'
+  description: 'Test `tests.test_autonomous.test_autonomous_main_prepends_up_for_flags`
+    took 8.89s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_autonomous_main_prepends_up_for_flags
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_ticket_sources_env_overrides_cli_queue_to_scan'
+  description: 'Test `tests.test_autonomous.test_ticket_sources_env_overrides_cli_queue_to_scan`
+    took 8.76s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_ticket_sources_env_overrides_cli_queue_to_scan
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_stdio_autonomous_jsonl.test_jsonl_session_emits_versioned_envelope'
+  description: 'Test `tests.test_stdio_autonomous_jsonl.test_jsonl_session_emits_versioned_envelope`
+    took 8.72s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_stdio_autonomous_jsonl.py
+  dedupe_key: test-optimization:tests.test_stdio_autonomous_jsonl:test_jsonl_session_emits_versioned_envelope
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_up_keeps_running_on_waiting_input_by_default'
+  description: 'Test `tests.test_autonomous.test_up_keeps_running_on_waiting_input_by_default`
+    took 8.71s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_up_keeps_running_on_waiting_input_by_default
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_up_restarts_autopilot_when_socket_disappears_between_cycles'
+  description: 'Test `tests.test_autonomous.test_up_restarts_autopilot_when_socket_disappears_between_cycles`
+    took 8.71s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_up_restarts_autopilot_when_socket_disappears_between_cycles
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_autonomous_jsonl_keyboard_interrupt_emits_reason'
+  description: 'Test `tests.test_autonomous.test_autonomous_jsonl_keyboard_interrupt_emits_reason`
+    took 8.69s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_autonomous_jsonl_keyboard_interrupt_emits_reason
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_up_stops_on_waiting_input_when_flag_set'
+  description: 'Test `tests.test_autonomous.test_up_stops_on_waiting_input_when_flag_set`
+    took 8.69s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_up_stops_on_waiting_input_when_flag_set
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_ticket_sources_env_invalid_keeps_cli_queue'
+  description: 'Test `tests.test_autonomous.test_ticket_sources_env_invalid_keeps_cli_queue`
+    took 8.68s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_ticket_sources_env_invalid_keeps_cli_queue
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous_startup.test_format_post_startup_operator_hints_for_zed_uses_keyboard_path'
+  description: 'Test `tests.test_autonomous_startup.test_format_post_startup_operator_hints_for_zed_uses_keyboard_path`
+    took 8.66s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous_startup.py
+  dedupe_key: test-optimization:tests.test_autonomous_startup:test_format_post_startup_operator_hints_for_zed_uses_keyboard_path
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_vdisplay_control_fallback.test_get_vql_chat_target_prefers_panel_over_send_chat_ocr'
+  description: 'Test `tests.test_vdisplay_control_fallback.test_get_vql_chat_target_prefers_panel_over_send_chat_ocr`
+    took 8.59s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_vdisplay_control_fallback.py
+  dedupe_key: test-optimization:tests.test_vdisplay_control_fallback:test_get_vql_chat_target_prefers_panel_over_send_chat_ocr
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_vdisplay_control_fallback.test_send_chat_routes_code_edit_to_photo_vql'
+  description: 'Test `tests.test_vdisplay_control_fallback.test_send_chat_routes_code_edit_to_photo_vql`
+    took 8.57s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_vdisplay_control_fallback.py
+  dedupe_key: test-optimization:tests.test_vdisplay_control_fallback:test_send_chat_routes_code_edit_to_photo_vql
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_ide_adapters.test_evaluate_bridge_jetbrains_uses_keyboard_lane_not_unsupported'
+  description: 'Test `tests.test_ide_adapters.test_evaluate_bridge_jetbrains_uses_keyboard_lane_not_unsupported`
+    took 8.54s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_ide_adapters.py
+  dedupe_key: test-optimization:tests.test_ide_adapters:test_evaluate_bridge_jetbrains_uses_keyboard_lane_not_unsupported
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_vdisplay_control_fallback.test_send_chat_via_ide_prompt_map_fallback'
+  description: 'Test `tests.test_vdisplay_control_fallback.test_send_chat_via_ide_prompt_map_fallback`
+    took 8.54s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_vdisplay_control_fallback.py
+  dedupe_key: test-optimization:tests.test_vdisplay_control_fallback:test_send_chat_via_ide_prompt_map_fallback
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_desktop_probe_missing_source_errors'
+  description: 'Test `tests.test_photo_vql_drive.test_desktop_probe_missing_source_errors`
+    took 8.54s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_desktop_probe_missing_source_errors
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_drive_reports_injector_failure'
+  description: 'Test `tests.test_autopilot_daemon.test_drive_reports_injector_failure`
+    took 8.51s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_drive_reports_injector_failure
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_vdisplay_control_fallback.test_send_chat_prefers_photo_vql_when_flag_set'
+  description: 'Test `tests.test_vdisplay_control_fallback.test_send_chat_prefers_photo_vql_when_flag_set`
+    took 8.51s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_vdisplay_control_fallback.py
+  dedupe_key: test-optimization:tests.test_vdisplay_control_fallback:test_send_chat_prefers_photo_vql_when_flag_set
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous_startup.test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps'
+  description: 'Test `tests.test_autonomous_startup.test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps`
+    took 8.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous_startup.py
+  dedupe_key: test-optimization:tests.test_autonomous_startup:test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_send_chat_persists_drive_result'
+  description: 'Test `tests.test_photo_vql_drive.test_send_chat_persists_drive_result`
+    took 8.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_send_chat_persists_drive_result
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_drive_os_injector_failure_falls_back_to_keyboard'
+  description: 'Test `tests.test_autopilot_daemon.test_drive_os_injector_failure_falls_back_to_keyboard`
+    took 8.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_drive_os_injector_failure_falls_back_to_keyboard
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_ide_client.test_legacy_adapter_emits_operator_guidance_for_semantic_required'
+  description: 'Test `tests.test_ide_client.test_legacy_adapter_emits_operator_guidance_for_semantic_required`
+    took 8.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_ide_client.py
+  dedupe_key: test-optimization:tests.test_ide_client:test_legacy_adapter_emits_operator_guidance_for_semantic_required
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous_startup.test_format_post_startup_operator_hints_for_jetbrains_suffixed_lane'
+  description: 'Test `tests.test_autonomous_startup.test_format_post_startup_operator_hints_for_jetbrains_suffixed_lane`
+    took 8.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous_startup.py
+  dedupe_key: test-optimization:tests.test_autonomous_startup:test_format_post_startup_operator_hints_for_jetbrains_suffixed_lane
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_commands_drive.test_action_drive_refuses_direct_when_daemon_blocks_semantic'
+  description: 'Test `tests.test_autopilot_commands_drive.test_action_drive_refuses_direct_when_daemon_blocks_semantic`
+    took 8.49s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_commands_drive.py
+  dedupe_key: test-optimization:tests.test_autopilot_commands_drive:test_action_drive_refuses_direct_when_daemon_blocks_semantic
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_vdisplay_source_for_ide_defaults'
+  description: 'Test `tests.test_photo_vql_drive.test_vdisplay_source_for_ide_defaults`
+    took 8.49s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_vdisplay_source_for_ide_defaults
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_message_sent_event_does_not_complete_strict_ack_drive'
+  description: 'Test `tests.test_autopilot_daemon.test_message_sent_event_does_not_complete_strict_ack_drive`
+    took 8.25s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_message_sent_event_does_not_complete_strict_ack_drive
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_install_manager.test_repair_installation_returns_refreshed_report_after_plugin_fix'
+  description: 'Test `tests.test_install_manager.test_repair_installation_returns_refreshed_report_after_plugin_fix`
+    took 8.01s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_install_manager.py
+  dedupe_key: test-optimization:tests.test_install_manager:test_repair_installation_returns_refreshed_report_after_plugin_fix
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_ensure_vdisplay_ide_control_clicks_map_interior'
+  description: 'Test `tests.test_photo_vql_drive.test_ensure_vdisplay_ide_control_clicks_map_interior`
+    took 6.18s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_ensure_vdisplay_ide_control_clicks_map_interior
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_plugin_hello_then_drive_forwards'
+  description: 'Test `tests.test_autopilot_daemon.test_plugin_hello_then_drive_forwards`
+    took 5.58s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_plugin_hello_then_drive_forwards
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_strict_plugin_hello_rejects_stale_without_evicting_current'
+  description: 'Test `tests.test_autopilot_daemon.test_strict_plugin_hello_rejects_stale_without_evicting_current`
+    took 5.38s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_strict_plugin_hello_rejects_stale_without_evicting_current
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_plugin_drive_routes_alias_to_canonical_plugin'
+  description: 'Test `tests.test_autopilot_daemon.test_plugin_drive_routes_alias_to_canonical_plugin`
+    took 5.08s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_plugin_drive_routes_alias_to_canonical_plugin
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide'
+  description: 'Test `tests.test_autopilot_daemon.test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide`
+    took 5.06s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_overlapping_plugin_drive_is_rejected_without_overwriting_pending'
+  description: 'Test `tests.test_autopilot_daemon.test_overlapping_plugin_drive_is_rejected_without_overwriting_pending`
+    took 5.03s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_overlapping_plugin_drive_is_rejected_without_overwriting_pending
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_protocol_policy_allows_stale_plugin_with_compatible_protocol'
+  description: 'Test `tests.test_autopilot_daemon.test_protocol_policy_allows_stale_plugin_with_compatible_protocol`
+    took 5.00s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_protocol_policy_allows_stale_plugin_with_compatible_protocol
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_plugin_ack_failure_skips_os_fallback_if_require_plugin'
+  description: 'Test `tests.test_autopilot_daemon.test_plugin_ack_failure_skips_os_fallback_if_require_plugin`
+    took 4.82s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_plugin_ack_failure_skips_os_fallback_if_require_plugin
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_newer_plugin_connection_replaces_stale_same_ide_client'
+  description: 'Test `tests.test_autopilot_daemon.test_newer_plugin_connection_replaces_stale_same_ide_client`
+    took 4.81s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_newer_plugin_connection_replaces_stale_same_ide_client
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_message_sent_event_completes_pending_drive_without_plugin_ack'
+  description: 'Test `tests.test_autopilot_daemon.test_message_sent_event_completes_pending_drive_without_plugin_ack`
+    took 4.36s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_message_sent_event_completes_pending_drive_without_plugin_ack
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_vscodium_message_sent_event_completes_after_submit_unverified_ack_grace'
+  description: 'Test `tests.test_autopilot_daemon.test_vscodium_message_sent_event_completes_after_submit_unverified_ack_grace`
+    took 4.20s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_vscodium_message_sent_event_completes_after_submit_unverified_ack_grace
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_calibrate_auto_ide_resolves_from_running_processes'
+  description: 'Test `tests.test_autopilot_cli.test_calibrate_auto_ide_resolves_from_running_processes`
+    took 2.92s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_calibrate_auto_ide_resolves_from_running_processes
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_prepare_map_fallback_requires_allow_flag'
+  description: 'Test `tests.test_photo_vql_drive.test_prepare_map_fallback_requires_allow_flag`
+    took 2.35s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_prepare_map_fallback_requires_allow_flag
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_dry_run_direct'
+  description: 'Test `tests.test_autopilot_cli.test_drive_dry_run_direct` took 2.24s
+    to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_dry_run_direct
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_photo_vql_drive.test_prepare_syncs_ide_control_capture_confirmed_from_observe'
+  description: 'Test `tests.test_photo_vql_drive.test_prepare_syncs_ide_control_capture_confirmed_from_observe`
+    took 2.24s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_photo_vql_drive.py
+  dedupe_key: test-optimization:tests.test_photo_vql_drive:test_prepare_syncs_ide_control_capture_confirmed_from_observe
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_direct_prefers_os_injector_profile'
+  description: 'Test `tests.test_autopilot_cli.test_drive_direct_prefers_os_injector_profile`
+    took 1.85s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_direct_prefers_os_injector_profile
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_direct_falls_back_when_os_injector_fails'
+  description: 'Test `tests.test_autopilot_cli.test_drive_direct_falls_back_when_os_injector_fails`
+    took 1.76s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_direct_falls_back_when_os_injector_fails
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_daemon.test_accept_rejects_foreign_peer_uid'
+  description: 'Test `tests.test_autopilot_daemon.test_accept_rejects_foreign_peer_uid`
+    took 1.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_daemon.py
+  dedupe_key: test-optimization:tests.test_autopilot_daemon:test_accept_rejects_foreign_peer_uid
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_prompt_flag'
+  description: 'Test `tests.test_autopilot_cli.test_drive_prompt_flag` took 1.21s
+    to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_prompt_flag
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_direct_honors_os_profile_override'
+  description: 'Test `tests.test_autopilot_cli.test_drive_direct_honors_os_profile_override`
+    took 1.16s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_direct_honors_os_profile_override
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_direct_os_profile_os_injector_error_no_fallback'
+  description: 'Test `tests.test_autopilot_cli.test_drive_direct_os_profile_os_injector_error_no_fallback`
+    took 1.12s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_direct_os_profile_os_injector_error_no_fallback
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_without_daemon_errors'
+  description: 'Test `tests.test_autopilot_cli.test_drive_without_daemon_errors` took
+    1.11s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_without_daemon_errors
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autopilot_cli.test_drive_direct_os_profile_requires_os_injector_when_not_available'
+  description: 'Test `tests.test_autopilot_cli.test_drive_direct_os_profile_requires_os_injector_when_not_available`
+    took 1.10s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autopilot_cli.py
+  dedupe_key: test-optimization:tests.test_autopilot_cli:test_drive_direct_os_profile_requires_os_injector_when_not_available
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_runtime.TestRunIdGenerator.test_run_ids_sort_chronologically'
+  description: 'Test `tests.test_runtime.TestRunIdGenerator.test_run_ids_sort_chronologically`
+    took 1.05s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_runtime.py
+  dedupe_key: test-optimization:tests.test_runtime.TestRunIdGenerator:test_run_ids_sort_chronologically
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_wizard_env_e2e.test_e2e_quick_repeated_creates_second_ticket'
+  description: 'Test `tests.test_wizard_env_e2e.test_e2e_quick_repeated_creates_second_ticket`
+    took 1.04s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_wizard_env_e2e.py
+  dedupe_key: test-optimization:tests.test_wizard_env_e2e:test_e2e_quick_repeated_creates_second_ticket
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_repair_text_applies_safe_actions'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_repair_text_applies_safe_actions`
+    took 1.03s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_repair_text_applies_safe_actions
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_install_manager.test_repair_proceeds_when_a_matching_workspace_plugin_exists'
+  description: 'Test `tests.test_install_manager.test_repair_proceeds_when_a_matching_workspace_plugin_exists`
+    took 1.01s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_install_manager.py
+  dedupe_key: test-optimization:tests.test_install_manager:test_repair_proceeds_when_a_matching_workspace_plugin_exists
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_serve.TestServe.test_api_handoff_returns_markdown'
+  description: 'Test `tests.test_serve.TestServe.test_api_handoff_returns_markdown`
+    took 1.00s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_serve.py
+  dedupe_key: test-optimization:tests.test_serve.TestServe:test_api_handoff_returns_markdown
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_serve.TestServe.test_api_context_returns_brief'
+  description: 'Test `tests.test_serve.TestServe.test_api_context_returns_brief` took
+    1.00s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_serve.py
+  dedupe_key: test-optimization:tests.test_serve.TestServe:test_api_context_returns_brief
 applied: []
 skipped: []
