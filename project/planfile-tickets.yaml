@@ -32591,5 +32591,117 @@ tickets:
   files:
   - tests/test_scan.py
   dedupe_key: test-optimization:tests.test_scan.TestRunScan:test_apply_surfaces_runtime_create_failure_detail_without_custom_runner
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous_readiness.test_runtime_consistency_warns_when_package_differs_from_pyproject'
+  description: 'Test `tests.test_autonomous_readiness.test_runtime_consistency_warns_when_package_differs_from_pyproject`
+    took 1.50s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous_readiness.py
+  dedupe_key: test-optimization:tests.test_autonomous_readiness:test_runtime_consistency_warns_when_package_differs_from_pyproject
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_install_manager.test_repair_proceeds_when_plugin_workspace_unknown'
+  description: 'Test `tests.test_install_manager.test_repair_proceeds_when_plugin_workspace_unknown`
+    took 1.31s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_install_manager.py
+  dedupe_key: test-optimization:tests.test_install_manager:test_repair_proceeds_when_plugin_workspace_unknown
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_wizard_env_e2e.test_e2e_gui_serves_state_api'
+  description: 'Test `tests.test_wizard_env_e2e.test_e2e_gui_serves_state_api` took
+    1.25s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_wizard_env_e2e.py
+  dedupe_key: test-optimization:tests.test_wizard_env_e2e:test_e2e_gui_serves_state_api
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list'
+  description: 'Test `tests.test_autonomous.test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list`
+    took 1.15s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping'
+  description: 'Test `tests.test_autonomous.test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping`
+    took 1.12s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip'
+  description: 'Test `tests.test_autonomous.test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip`
+    took 1.09s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_self_control.test_repair_self_control_requires_yes'
+  description: 'Test `tests.test_self_control.test_repair_self_control_requires_yes`
+    took 1.00s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_self_control.py
+  dedupe_key: test-optimization:tests.test_self_control:test_repair_self_control_requires_yes
 applied: []
 skipped: []
