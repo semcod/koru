@@ -15,8 +15,8 @@ import yaml
 
 from koru import autonomous as autonomous_mod
 from koru import autonomous_cycle as autonomous_cycle_mod
-from koru import autonomous_cycle_orchestrator as cycle_orchestrator_mod
 from koru import autonomous_cycle_drive_retry as drive_retry_mod
+from koru import autonomous_cycle_orchestrator as cycle_orchestrator_mod
 from koru import autonomous_cycle_skip_conditions as skip_conditions_mod
 from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_processes as autonomous_processes_mod
@@ -1177,6 +1177,7 @@ def test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive(monkeypatc
     )
 
     from koru.autonomy.env import autopilot_terminal_conflict_reason
+
     reason = autopilot_terminal_conflict_reason("vscode")
 
     assert reason is not None
@@ -1191,6 +1192,7 @@ def test_autopilot_terminal_conflict_can_be_explicitly_allowed(monkeypatch) -> N
     )
 
     from koru.autonomy.env import autopilot_terminal_conflict_reason
+
     assert autopilot_terminal_conflict_reason("vscode") is None
 
 
@@ -1202,6 +1204,7 @@ def test_autopilot_terminal_conflict_allows_connected_target_plugin(monkeypatch)
     )
 
     from koru.autonomy.env import autopilot_terminal_conflict_reason
+
     assert (
         autopilot_terminal_conflict_reason(
             "vscodium",
@@ -1279,7 +1282,9 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
         "_find_existing_autonomous_processes",
         lambda project, any_project=False: existing if any_project else [],
     )
-    monkeypatch.setattr(autonomous_processes_mod, "_find_existing_wup_processes", lambda project: [])
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_wup_processes", lambda project: []
+    )
     monkeypatch.setattr(
         autonomous_processes_mod,
         "_terminate_existing_processes",
@@ -1356,8 +1361,12 @@ def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
         ),
     ]
     stopped: list[int] = []
-    monkeypatch.setattr(autonomous_processes_mod, "_find_existing_autonomous_processes", lambda project: [])
-    monkeypatch.setattr(autonomous_processes_mod, "_find_existing_wup_processes", lambda project: wup)
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_autonomous_processes", lambda project: []
+    )
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_wup_processes", lambda project: wup
+    )
     monkeypatch.setattr(
         autonomous_processes_mod,
         "_terminate_existing_processes",
@@ -1984,7 +1993,9 @@ def test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload(
     )
     monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda _r: "already")
     monkeypatch.setattr(autonomous_mod, "_wait_for_autopilot_plugin", _wait)
-    monkeypatch.setattr(autonomous_mod, "_stdio_info", lambda message, **_kwargs: messages.append(message))
+    monkeypatch.setattr(
+        autonomous_mod, "_stdio_info", lambda message, **_kwargs: messages.append(message)
+    )
     monkeypatch.setattr(
         "koru.autonomous_operator._extension_active_in_latest_session",
         lambda _ide: False,
@@ -2057,7 +2068,9 @@ def test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again(
     )
     monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda _r: "already")
     monkeypatch.setattr(autonomous_mod, "_wait_for_autopilot_plugin", _wait)
-    monkeypatch.setattr(autonomous_mod, "_stdio_info", lambda message, **_kwargs: messages.append(message))
+    monkeypatch.setattr(
+        autonomous_mod, "_stdio_info", lambda message, **_kwargs: messages.append(message)
+    )
     monkeypatch.setattr(
         "koru.autonomous_operator._extension_active_in_latest_session",
         lambda _ide: True,
@@ -2207,7 +2220,9 @@ def test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol(m
     )
 
 
-def test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy(monkeypatch) -> None:
+def test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy(
+    monkeypatch,
+) -> None:
     monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
     monkeypatch.setattr(
         autonomous_mod.DriveOrchestrator,
@@ -2655,7 +2670,9 @@ def test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip(
 ) -> None:
     """llm-ready tickets should be driven by IDE autopilot even when human queue waits."""
     # Clear chat activity state to avoid test isolation failures
-    monkeypatch.setattr(autonomous_cycle_mod, "_skip_due_to_recent_chat_activity", lambda *args, **kwargs: False)
+    monkeypatch.setattr(
+        autonomous_cycle_mod, "_skip_due_to_recent_chat_activity", lambda *args, **kwargs: False
+    )
     sprint_dir = tmp_path / ".planfile" / "sprints"
     sprint_dir.mkdir(parents=True)
     (sprint_dir / "current.yaml").write_text(
@@ -3280,9 +3297,7 @@ def test_phase4_advisory_strategy_tuning_emits_event(monkeypatch, tmp_path) -> N
     assert isinstance(cycle_telemetry.get("llm_strategy_tuning"), dict)
 
 
-def test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket(
-    tmp_path, monkeypatch
-) -> None:
+def test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket(tmp_path, monkeypatch) -> None:
     """llm-ready tickets keep cooldown even when message.received is missing."""
     sprint_dir = tmp_path / ".planfile" / "sprints"
     sprint_dir.mkdir(parents=True)
@@ -3380,9 +3395,7 @@ sprint:
     assert any("no_change after drive" in line for line in logs)
 
 
-def test_skip_chat_activity_blocks_repeated_no_response_redrive(
-    tmp_path, monkeypatch
-) -> None:
+def test_skip_chat_activity_blocks_repeated_no_response_redrive(tmp_path, monkeypatch) -> None:
     sprint_dir = tmp_path / ".planfile" / "sprints"
     sprint_dir.mkdir(parents=True)
     (sprint_dir / "current.yaml").write_text(
@@ -3474,9 +3487,7 @@ def test_skip_chat_activity_allows_redrive_when_sent_without_received(
     assert any("redrive allowed" in line for line in logs)
 
 
-def test_skip_chat_activity_upserts_external_chat_intake_ticket(
-    tmp_path, monkeypatch
-) -> None:
+def test_skip_chat_activity_upserts_external_chat_intake_ticket(tmp_path, monkeypatch) -> None:
     """External IDE chat intake should create/reuse an operator ticket."""
     sprint_dir = tmp_path / ".planfile" / "sprints"
     sprint_dir.mkdir(parents=True)
@@ -3794,9 +3805,7 @@ sprint:
     assert not any("redrive allowed" in line for line in logs)
 
 
-def test_skip_chat_activity_does_not_ticket_self_driven_message(
-    tmp_path, monkeypatch
-) -> None:
+def test_skip_chat_activity_does_not_ticket_self_driven_message(tmp_path, monkeypatch) -> None:
     """Recent message.sent matching last driven prompt should not create intake ticket."""
     sprint_dir = tmp_path / ".planfile" / "sprints"
     sprint_dir.mkdir(parents=True)
@@ -3931,10 +3940,7 @@ def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
 
     # Negative cases: success ack and unrelated failure must NOT match.
     assert (
-        autonomous_cycle_mod._reply_chat_input_busy(
-            {"ok": True, "verification": "strict"}
-        )
-        is False
+        autonomous_cycle_mod._reply_chat_input_busy({"ok": True, "verification": "strict"}) is False
     )
     assert (
         autonomous_cycle_mod._reply_chat_input_busy(
@@ -3946,7 +3952,9 @@ def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
 
 def test_submit_unverified_drive_failure_is_not_retryable(monkeypatch) -> None:
     sleeps: list[int] = []
-    monkeypatch.setattr("koru.autonomous_drive_retry_policy.time.sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(
+        "koru.autonomous_drive_retry_policy.time.sleep", lambda seconds: sleeps.append(seconds)
+    )
 
     should_retry = drive_retry_mod._handle_failed_drive_attempt(
         {
@@ -4203,7 +4211,9 @@ def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(
         last_message="Wydziel commands/queries/events",
     )
     state = autonomous_mod.AutoloopState(
-        last_llm_reflection_summary="Commands i queries zostały rozdzielone; teraz dodaj event-store i event-bus.",
+        last_llm_reflection_summary=(
+            "Commands i queries zostały rozdzielone; teraz dodaj event-store i event-bus."
+        ),
         last_llm_reflection_ts=autonomous_cycle_mod.time.time(),
     )
 
@@ -4330,7 +4340,9 @@ def test_autopilot_idle_without_open_ticket_does_not_drive(
     assert kind == "idle_no_ticket"
     assert any("idle_no_ticket" in message for message in messages)
     assert any("/llm/action/create-ticket-for-project" in message for message in messages)
-    assert not any("open the dashboard at http://127.0.0.1:8765/" in message for message in messages)
+    assert not any(
+        "open the dashboard at http://127.0.0.1:8765/" in message for message in messages
+    )
 
 
 def test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telemetry(
@@ -4523,6 +4535,7 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
     capsys,
 ) -> None:
     import time
+
     calls = []
 
     class FocusErrorClient:
@@ -4538,7 +4551,12 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
                     "appName": "VSCodium",
                     "logPath": "/tmp/koru-plugin-debug.log",
                     "focusOpenCandidates": ["workbench.action.chat.open"],
-                    "rejected": [{"cmd": "workbench.action.chat.open", "reason": "probe rejected focus snapshot"}],
+                    "rejected": [
+                        {
+                            "cmd": "workbench.action.chat.open",
+                            "reason": "probe rejected focus snapshot",
+                        }
+                    ],
                 },
             }
 
@@ -4728,7 +4746,9 @@ def test_run_cycle_does_not_retry_semantic_required_as_focus_error(
     monkeypatch.setattr(time, "sleep", lambda _x: None)
     monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
     monkeypatch.setattr(autonomous_mod, "_try_nlp2uri_ide_control", lambda *args, **kwargs: None)
-    monkeypatch.setattr(autonomous_mod, "_try_vdisplay_control_fallback", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        autonomous_mod, "_try_vdisplay_control_fallback", lambda *args, **kwargs: None
+    )
     monkeypatch.setattr(autonomous_mod, "_try_imgl_gui_fallback", lambda *args, **kwargs: None)
     monkeypatch.setattr(
         autonomous_mod,
@@ -4986,7 +5006,9 @@ def test_run_cycle_jetbrains_does_not_require_plugin_by_default(
     monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
     monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
     monkeypatch.setattr(autonomous_mod, "_try_nlp2uri_ide_control", lambda *args, **kwargs: None)
-    monkeypatch.setattr(autonomous_mod, "_try_vdisplay_control_fallback", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        autonomous_mod, "_try_vdisplay_control_fallback", lambda *args, **kwargs: None
+    )
     monkeypatch.setattr(autonomous_mod, "_try_imgl_gui_fallback", lambda *args, **kwargs: None)
     monkeypatch.setattr(
         autonomous_mod,
@@ -5420,6 +5442,40 @@ def test_wup_subprocess_env_loads_project_wup_env(tmp_path, monkeypatch) -> None
     assert env["WUP_BASE_URL"] == "http://localhost:8100"
 
 
+def test_wup_subprocess_env_pins_planfile_command(tmp_path, monkeypatch) -> None:
+    (tmp_path / ".wup.env").write_text(
+        "KORU_PLANFILE_CMD=.venv/bin/python -m planfile.cli\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("KORU_PLANFILE_CMD", raising=False)
+    monkeypatch.delenv("WUP_PLANFILE_COMMAND", raising=False)
+    monkeypatch.setattr(
+        autonomous_wup_mod,
+        "resolve_planfile_base_command",
+        lambda _project: ["/opt/planfile/bin/planfile"],
+    )
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+
+    env = autonomous_wup_mod._wup_subprocess_env(config)
+
+    assert env["KORU_PLANFILE_CMD"] == "/opt/planfile/bin/planfile"
+    assert env["WUP_PLANFILE_COMMAND"] == "/opt/planfile/bin/planfile"
+    assert env["PATH"].split(":")[0] == "/opt/planfile/bin"
+
+
 def test_start_wup_watch_passes_playwright_env(tmp_path, monkeypatch) -> None:
     (tmp_path / "wup.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
     (tmp_path / ".wup.env").write_text(
@@ -5549,8 +5605,7 @@ monitoring:
 
 def test_wup_compose_ps_accepts_json_lines() -> None:
     items = autonomous_wup_mod._parse_compose_ps_json(
-        '{"State":"running","Health":"healthy"}\n'
-        '{"State":"running","Health":"healthy"}\n',
+        '{"State":"running","Health":"healthy"}\n{"State":"running","Health":"healthy"}\n',
     )
 
     assert autonomous_wup_mod._compose_service_ready(items)
@@ -5709,7 +5764,9 @@ def test_read_wup_health_ignores_stale_services_not_in_wup_yaml(tmp_path) -> Non
     assert not (diag_dir / "wup-koru-core.failed").exists()
     pruned = json.loads((health_dir / "service-health.json").read_text(encoding="utf-8"))
     assert set(pruned) == {"koru-shell"}
-    sprint = yaml.safe_load((tmp_path / ".planfile/sprints/current.yaml").read_text(encoding="utf-8"))
+    sprint = yaml.safe_load(
+        (tmp_path / ".planfile/sprints/current.yaml").read_text(encoding="utf-8")
+    )
     ticket = sprint["sprint"]["tickets"][stale_ticket.ticket_id]
     assert ticket["status"] == "done"
     assert ticket["execution"]["state"] == "done"

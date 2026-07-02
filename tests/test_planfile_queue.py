@@ -37,9 +37,12 @@ class TestPlanfileCommand(unittest.TestCase):
                 calls.append(list(command))
                 return _ok()
 
-            with patch("koru.queue.ticket.find_spec", return_value=object()), patch(
-                "koru.queue.ticket.shutil.which",
-                return_value="/tmp/other-venv/bin/planfile",
+            with (
+                patch("koru.queue.ticket.find_spec", return_value=object()),
+                patch(
+                    "koru.queue.ticket.shutil.which",
+                    return_value="/tmp/other-venv/bin/planfile",
+                ),
             ):
                 planfile_command(project, ["ticket", "list"], runner=runner)
 
@@ -64,9 +67,12 @@ class TestPlanfileCommand(unittest.TestCase):
                     raise ModuleNotFoundError("No module named 'planfile'")
                 return None
 
-            with patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec), patch(
-                "koru.queue.ticket.shutil.which",
-                return_value="/tmp/other-venv/bin/planfile",
+            with (
+                patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec),
+                patch(
+                    "koru.queue.ticket.shutil.which",
+                    return_value="/tmp/other-venv/bin/planfile",
+                ),
             ):
                 planfile_command(project, ["ticket", "list"], runner=runner)
 
@@ -86,16 +92,54 @@ class TestPlanfileCommand(unittest.TestCase):
                 calls.append(list(command))
                 return _ok()
 
-            with patch(
-                "koru.queue.ticket._planfile_supports_structured_queue_json",
-                return_value=False,
-            ), patch("koru.queue.ticket.find_spec", return_value=None), patch(
-                "koru.queue.ticket.shutil.which",
-                return_value="/usr/bin/planfile",
+            with (
+                patch(
+                    "koru.queue.ticket._planfile_executable_candidates",
+                    return_value=(old_local,),
+                ),
+                patch(
+                    "koru.queue.ticket._planfile_supports_structured_queue_json",
+                    side_effect=lambda executable: executable == "/usr/bin/planfile",
+                ),
+                patch("koru.queue.ticket._module_cli_command_for_project", return_value=None),
+                patch(
+                    "koru.queue.ticket.shutil.which",
+                    return_value="/usr/bin/planfile",
+                ),
             ):
                 planfile_command(project, ["ticket", "list"], runner=runner)
 
-            self.assertEqual(calls[0], ["planfile", "ticket", "list"])
+            self.assertEqual(calls[0], ["/usr/bin/planfile", "ticket", "list"])
+
+    def test_prefers_planfile_checkout_near_koru_source_for_external_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            project = root / "maskservice" / "c2004"
+            checkout_root = root / "semcod"
+            local = checkout_root / "planfile" / "venv" / "bin" / "planfile"
+            local.parent.mkdir(parents=True)
+            local.write_text("#!/bin/sh\n", encoding="utf-8")
+            local.chmod(0o755)
+            calls: list[list[str]] = []
+
+            def runner(command, _project):
+                calls.append(list(command))
+                return _ok()
+
+            with (
+                patch(
+                    "koru.queue.ticket._source_planfile_search_roots",
+                    return_value=(checkout_root,),
+                ),
+                patch("koru.queue.ticket.find_spec", return_value=None),
+                patch(
+                    "koru.queue.ticket.shutil.which",
+                    return_value="/tmp/old/bin/planfile",
+                ),
+            ):
+                planfile_command(project, ["ticket", "done", "PLF-1"], runner=runner)
+
+            self.assertEqual(calls[0], [str(local), "ticket", "done", "PLF-1"])
 
     def test_prefers_project_venv_python_before_sys_executable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -110,12 +154,20 @@ class TestPlanfileCommand(unittest.TestCase):
                 calls.append(list(command))
                 return _ok()
 
-            with patch(
-                "koru.queue.ticket._python_has_planfile_cli",
-                side_effect=lambda python: python == str(venv_python),
-            ), patch("koru.queue.ticket._has_planfile_cli_module", return_value=True), patch(
-                "koru.queue.ticket.shutil.which",
-                return_value=None,
+            with (
+                patch(
+                    "koru.queue.ticket._python_has_planfile_cli",
+                    side_effect=lambda python: python == str(venv_python),
+                ),
+                patch("koru.queue.ticket._local_planfile_executable", return_value=None),
+                patch(
+                    "koru.queue.ticket._has_planfile_cli_module",
+                    return_value=True,
+                ),
+                patch(
+                    "koru.queue.ticket.shutil.which",
+                    return_value=None,
+                ),
             ):
                 planfile_command(project, ["ticket", "list"], runner=runner)
 
@@ -138,13 +190,48 @@ class TestPlanfileCommand(unittest.TestCase):
                 return object()
             return None
 
-        with patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec), patch(
-            "koru.queue.ticket.shutil.which",
-            return_value="/usr/bin/planfile",
+        with (
+            patch("koru.queue.ticket._local_planfile_executable", return_value=None),
+            patch(
+                "koru.queue.ticket._module_cli_command_for_project",
+                return_value=None,
+            ),
+            patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec),
+            patch(
+                "koru.queue.ticket.shutil.which",
+                return_value="/usr/bin/planfile",
+            ),
         ):
             planfile_command(Path("/tmp"), ["ticket", "list"], runner=runner)
 
-        self.assertEqual(calls[0], ["planfile", "ticket", "list"])
+        self.assertEqual(calls[0], ["/usr/bin/planfile", "ticket", "list"])
+
+    def test_retries_planfile_file_lock_timeout(self) -> None:
+        calls: list[list[str]] = []
+
+        def runner(command, _project):
+            calls.append(list(command))
+            if len(calls) < 3:
+                return SimpleNamespace(
+                    returncode=1,
+                    stdout="",
+                    stderr=(
+                        "Timeout: The file lock "
+                        "'/repo/.planfile/sprints/current.yaml.lock' could not be acquired."
+                    ),
+                )
+            return _ok("[]")
+
+        with (
+            patch.dict(os.environ, {"KORU_PLANFILE_CMD": "/good/planfile"}),
+            patch("koru.queue.ticket.time.sleep") as sleep,
+        ):
+            result = planfile_command(Path("/tmp"), ["ticket", "list"], runner=runner)
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(calls[0], ["/good/planfile", "ticket", "list"])
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [0.25, 0.5])
 
     def test_module_cli_probe_treats_missing_parent_as_missing(self) -> None:
         calls: list[list[str]] = []
@@ -158,13 +245,21 @@ class TestPlanfileCommand(unittest.TestCase):
                 raise ModuleNotFoundError("No module named 'planfile'")
             return None
 
-        with patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec), patch(
-            "koru.queue.ticket.shutil.which",
-            return_value="/usr/bin/planfile",
+        with (
+            patch("koru.queue.ticket._local_planfile_executable", return_value=None),
+            patch(
+                "koru.queue.ticket._module_cli_command_for_project",
+                return_value=None,
+            ),
+            patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec),
+            patch(
+                "koru.queue.ticket.shutil.which",
+                return_value="/usr/bin/planfile",
+            ),
         ):
             planfile_command(Path("/tmp"), ["ticket", "list"], runner=runner)
 
-        self.assertEqual(calls[0], ["planfile", "ticket", "list"])
+        self.assertEqual(calls[0], ["/usr/bin/planfile", "ticket", "list"])
 
 
 class TestPlanfileQueue(unittest.TestCase):

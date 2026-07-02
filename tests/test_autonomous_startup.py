@@ -103,7 +103,9 @@ def test_resolve_agent_lane_focus_maps_to_project_lane_suffix(
         lane, source = startup.resolve_agent_lane_id(
             tmp_path,
             "auto",
-            resolve_project_lane=lambda _p, lane_id: "cursor-main" if lane_id == "cursor" else lane_id,
+            resolve_project_lane=lambda _p, lane_id: (
+                "cursor-main" if lane_id == "cursor" else lane_id
+            ),
         )
 
     assert lane == "cursor-main"
@@ -702,7 +704,8 @@ def test_format_post_startup_operator_hints_warns_when_vscode_selected_with_vsco
 
     assert "wybrano ide=vscode, ale działa też VSCodium" in text
     assert "--agent-lane vscodium --autopilot-ide vscodium" in text
-    assert "~/.config/Code/User/settings.json" in text
+    assert "~/.config/Code/User/settings.json" not in text
+    assert "Command Palette" not in text
 
 
 def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -> None:
@@ -848,10 +851,10 @@ def test_format_post_startup_operator_hints_for_antigravity_uses_plugin_path() -
         xdg_runtime_dir="/run/user/1000",
     )
     text = "\n".join(
-        startup.format_post_startup_operator_hints(probe, plugin_connected=True),
+        startup.format_post_startup_operator_hints(probe, plugin_connected=False),
     )
 
-    assert "[ok] plugin połączony (ide=antigravity)" in text
+    assert "brak zgodnego pluginu" in text
     assert "~/.config/Antigravity/User/settings.json" in text
     assert "koru: Connect autopilot daemon" in text
     assert "--ide antigravity --require-plugin 'probe test'" in text

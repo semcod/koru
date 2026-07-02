@@ -1,6 +1,5 @@
 """Ticket parsing and command building for the planfile queue."""
 
-
 import json
 import os
 import re
@@ -8,6 +7,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from collections.abc import Callable, Sequence
 from functools import lru_cache
 from importlib.util import find_spec
@@ -202,6 +202,8 @@ def _module_cli_command_for_project(project: Path) -> list[str] | None:
 
 
 _MIN_STRUCTURED_QUEUE_PLANFILE_VERSION = (0, 1, 100)
+_PLANFILE_LOCK_RETRY_ATTEMPTS = 3
+_PLANFILE_LOCK_RETRY_SLEEP_SECONDS = 0.25
 
 
 def _parse_version_tuple(text: str) -> tuple[int, int, int] | None:
@@ -229,16 +231,40 @@ def _planfile_supports_structured_queue_json(executable: str) -> bool:
     return version >= _MIN_STRUCTURED_QUEUE_PLANFILE_VERSION
 
 
-def _local_planfile_executable(project: Path) -> Path | None:
-    """Return a nearby Planfile CLI before falling back to an unrelated active venv."""
+def _planfile_executable_candidates(project: Path) -> tuple[Path, ...]:
     project = project.resolve()
-    candidates = (
+    candidates = [
         project.parent / "planfile" / ".venv" / "bin" / "planfile",
         project.parent / "planfile" / "venv" / "bin" / "planfile",
         project / ".venv" / "bin" / "planfile",
         project / "venv" / "bin" / "planfile",
-    )
+    ]
+    for root in _source_planfile_search_roots():
+        candidates.extend(
+            [
+                root / "planfile" / ".venv" / "bin" / "planfile",
+                root / "planfile" / "venv" / "bin" / "planfile",
+            ]
+        )
+
+    deduped: list[Path] = []
+    seen: set[str] = set()
     for candidate in candidates:
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(candidate)
+    return tuple(deduped)
+
+
+def _source_planfile_search_roots() -> tuple[Path, ...]:
+    return tuple(Path(__file__).resolve().parents)
+
+
+def _local_planfile_executable(project: Path) -> Path | None:
+    """Return a nearby Planfile CLI before falling back to an unrelated active venv."""
+    for candidate in _planfile_executable_candidates(project):
         if (
             candidate.is_file()
             and os.access(candidate, os.X_OK)
@@ -248,24 +274,50 @@ def _local_planfile_executable(project: Path) -> Path | None:
     return None
 
 
+def resolve_planfile_base_command(project: Path) -> list[str]:
+    """Resolve the Planfile command Koru should use for a project."""
+    configured = os.getenv("KORU_PLANFILE_CMD")
+    if configured:
+        return shlex.split(configured)
+    if local_planfile := _local_planfile_executable(project):
+        return [str(local_planfile)]
+    if module_cmd := _module_cli_command_for_project(project):
+        return module_cmd
+    if path_planfile := shutil.which("planfile"):
+        if _planfile_supports_structured_queue_json(path_planfile):
+            return [path_planfile]
+    return ["planfile"]
+
+
+def _planfile_lock_timeout(result: CommandResult) -> bool:
+    if result.returncode == 0:
+        return False
+    stdout = getattr(result, "stdout", "") or ""
+    stderr = getattr(result, "stderr", "") or ""
+    text = f"{stdout}\n{stderr}".lower()
+    return (
+        "file lock" in text
+        and "could not be acquired" in text
+        or "timeout:" in text
+        and ".lock" in text
+        and "could not be acquired" in text
+    )
+
+
 def planfile_command(
     project: Path,
     args: Sequence[str],
     runner: Callable[[Sequence[str], Path], CommandResult],
 ) -> CommandResult:
     """Execute a planfile CLI command."""
-    configured = os.getenv("KORU_PLANFILE_CMD")
-    if configured:
-        base_command = shlex.split(configured)
-    elif local_planfile := _local_planfile_executable(project):
-        base_command = [str(local_planfile)]
-    elif module_cmd := _module_cli_command_for_project(project):
-        base_command = module_cmd
-    elif shutil.which("planfile"):
-        base_command = ["planfile"]
-    else:
-        base_command = ["planfile"]
-    return runner([*base_command, *args], project)
+    command = [*resolve_planfile_base_command(project), *args]
+    result = runner(command, project)
+    for attempt in range(1, _PLANFILE_LOCK_RETRY_ATTEMPTS):
+        if not _planfile_lock_timeout(result):
+            return result
+        time.sleep(_PLANFILE_LOCK_RETRY_SLEEP_SECONDS * attempt)
+        result = runner(command, project)
+    return result
 
 
 def result_json(result: CommandResult) -> str:

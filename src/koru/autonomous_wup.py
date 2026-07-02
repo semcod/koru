@@ -1,9 +1,9 @@
 """WUP ``wup watch`` subprocess and health helpers for ``koru autonomous``."""
 
-
 import argparse
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -17,6 +17,7 @@ from typing import Protocol
 import yaml
 
 from koru.autonomous_diag_markers import diagnostic_marker_path
+from koru.queue.ticket import resolve_planfile_base_command
 from koru.topology import is_component_enabled, is_pipeline_enabled
 
 
@@ -187,6 +188,18 @@ def _load_project_env(project: Path) -> dict[str, str]:
 
 def _wup_subprocess_env(config: WupWatchConfig) -> dict[str, str]:
     env = _load_project_env(config.project)
+    planfile_command = resolve_planfile_base_command(config.project)
+    planfile_command_text = shlex.join(planfile_command)
+    if not os.environ.get("KORU_PLANFILE_CMD", "").strip():
+        env["KORU_PLANFILE_CMD"] = planfile_command_text
+    if not os.environ.get("WUP_PLANFILE_COMMAND", "").strip():
+        env["WUP_PLANFILE_COMMAND"] = planfile_command_text
+    if len(planfile_command) == 1:
+        planfile_path = Path(planfile_command[0])
+        if planfile_path.is_absolute():
+            env["PATH"] = os.pathsep.join([str(planfile_path.parent), env.get("PATH", "")]).rstrip(
+                os.pathsep
+            )
     browsers_path = env.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
     if not browsers_path:
         local_browsers = config.project / ".playwright-browsers"
@@ -609,7 +622,10 @@ def _process_stale_ticket_batch(
     failing_check_ids: set[str],
     state_dir: Path,
 ) -> bool:
-    """Resolve open diagnostic tickets whose check is no longer failing. Returns True if any changed."""
+    """Resolve open diagnostic tickets whose check is no longer failing.
+
+    Returns True if any changed.
+    """
     changed = False
     for ticket in tickets.values():
         if not isinstance(ticket, dict):
@@ -652,7 +668,9 @@ def _resolve_stale_wup_diagnostic_tickets(
     if changed:
         try:
             sprint_path.write_text(
-                yaml.safe_dump(payload, sort_keys=False, default_flow_style=False, allow_unicode=True),
+                yaml.safe_dump(
+                    payload, sort_keys=False, default_flow_style=False, allow_unicode=True
+                ),
                 encoding="utf-8",
             )
         except OSError:
@@ -804,5 +822,9 @@ def _read_wup_health(
 
     event_count, new_events = _count_wup_events(events_path, state.wup_seen_events)
     state.wup_seen_events = max(state.wup_seen_events, event_count)
-    status = "failed" if failing else ("interrupted" if interrupted else ("changed" if new_events else "ok"))
+    status = (
+        "failed"
+        if failing
+        else ("interrupted" if interrupted else ("changed" if new_events else "ok"))
+    )
     return WupHealthResult(status=status, failing_services=failing, new_events=new_events)
