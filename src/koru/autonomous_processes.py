@@ -31,6 +31,23 @@ class ExistingManagedProcess:
     cwd: Path | None = None
 
 
+@dataclass
+class AutonomousStartLock:
+    path: Path | None
+    fd: int | None
+
+    def release(self) -> None:
+        if self.fd is None:
+            return
+        try:
+            import fcntl
+
+            fcntl.flock(self.fd, fcntl.LOCK_UN)
+        finally:
+            os.close(self.fd)
+            self.fd = None
+
+
 @dataclass(frozen=True)
 class _PsRow:
     pid: int
@@ -216,6 +233,40 @@ def _as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
     )
 
 
+def autonomous_start_lock_wanted() -> bool:
+    raw = os.environ.get("KORU_AUTONOMOUS_START_LOCK", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def try_acquire_autonomous_start_lock(project: Path) -> AutonomousStartLock | None:
+    """Try to serialize the whole autonomous loop for one project.
+
+    Process scans are advisory and race when two IDEs start ``koru -a`` at the
+    same time. This lock is the atomic gate; keep the fd open until the loop
+    exits.
+    """
+    if not autonomous_start_lock_wanted() or os.name != "posix":
+        return AutonomousStartLock(path=None, fd=None)
+
+    import fcntl
+
+    lock_dir = project.resolve() / ".planfile" / ".koru"
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = lock_dir / "autonomous-loop.lock"
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o644)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return None
+    try:
+        os.ftruncate(fd, 0)
+        os.write(fd, f"pid={os.getpid()}\ncwd={Path.cwd().resolve()}\n".encode("utf-8"))
+    except OSError:
+        pass
+    return AutonomousStartLock(path=lock_path, fd=fd)
+
+
 def _stdio_info(msg: str, *, fmt: str) -> None:
     """Human-oriented status; jsonl mode routes to stderr so stdout stays NDJSON-only."""
     from koru.activity_log import activity_info
@@ -346,8 +397,11 @@ def guard_existing_autonomous_processes(args: argparse.Namespace, project: Path)
 __all__ = [
     "ExistingAutonomousProcess",
     "ExistingManagedProcess",
+    "AutonomousStartLock",
     "stop_prior_autonomous_for_auto_start",
     "guard_existing_autonomous_processes",
+    "autonomous_start_lock_wanted",
+    "try_acquire_autonomous_start_lock",
     "_find_existing_autonomous_processes",
     "_find_existing_wup_processes",
     "_as_managed",

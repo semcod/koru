@@ -7,6 +7,7 @@ from koru.autonomous import (
     autonomous_main,
     stop_prior_autonomous_for_auto_start,
 )
+from koru.autonomous_processes import try_acquire_autonomous_start_lock
 
 _MAINTENANCE_ACTIONS = {"doctor", "self-heal", "status"}
 _GLOBAL_OPTIONS_WITH_VALUE = {"--socket"}
@@ -135,5 +136,24 @@ def _auto_main(argv: list[str]) -> int:
             stop_prior_autonomous_for_auto_start,
         )
         stop_prior(project, stdio_format=stdio)
+        acquire_lock = _legacy_attr(
+            "try_acquire_autonomous_start_lock",
+            try_acquire_autonomous_start_lock,
+        )
+        start_lock = acquire_lock(project)
+        if start_lock is None:
+            print(
+                "koru auto: another autonomous loop is already starting/running for "
+                f"{project}; use --allow-duplicate only if you intentionally want "
+                "multiple IDE drivers.",
+                file=sys.stderr,
+            )
+            return 2
+    else:
+        start_lock = None
     run_autonomous = _legacy_attr("autonomous_main", autonomous_main)
-    return run_autonomous(start_argv, invoked_as_auto=True)
+    try:
+        return run_autonomous(start_argv, invoked_as_auto=True)
+    finally:
+        if start_lock is not None:
+            start_lock.release()

@@ -1294,6 +1294,23 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
     assert stopped == [99]
 
 
+def test_try_acquire_autonomous_start_lock_blocks_second_owner(tmp_path) -> None:
+    if os.name != "posix":
+        pytest.skip("flock lock is POSIX-only")
+
+    first = autonomous_processes_mod.try_acquire_autonomous_start_lock(tmp_path)
+    assert first is not None
+    try:
+        second = autonomous_processes_mod.try_acquire_autonomous_start_lock(tmp_path)
+        assert second is None
+    finally:
+        first.release()
+
+    third = autonomous_processes_mod.try_acquire_autonomous_start_lock(tmp_path)
+    assert third is not None
+    third.release()
+
+
 def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(
         autonomous_processes_mod,

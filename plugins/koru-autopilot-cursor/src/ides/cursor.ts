@@ -96,8 +96,7 @@ function acceptFocusInputCommand(command: string): boolean {
     return false;
   }
   return (
-    normalized === "workbench.action.chat.open"
-    || normalized.includes("glass.focusinput")
+    normalized.includes("glass.focusinput")
     || normalized.includes("focusinput")
     || normalized.includes("chat.action.focus")
     || normalized.includes("focuslastfocused")
@@ -259,9 +258,6 @@ function focusOpenCommandsDefaults(): string[] {
   // Legacy ``composer.openComposer`` / ``cursor.composer.open`` are
   // kept at the tail for older Cursor builds that still expose them.
   return [
-    "workbench.action.chat.open",
-    "workbench.action.chat.openagent",
-    "workbench.action.openChat",
     "composer.openComposer",
     "cursor.composer.open",
     "cursor.composer.focus",
@@ -278,6 +274,9 @@ function trustFocusOpenCommand(command: string): boolean {
   const n = command.toLowerCase();
   if (
     n === "aichat.newchataction"
+    || n === "workbench.action.chat.open"
+    || n === "workbench.action.openchat"
+    || n === "workbench.action.chat.openagent"
     || n === "workbench.panel.chat"
     || n.includes("panel.chat.view")
     || n.includes("panel.aichat.view")
@@ -291,8 +290,7 @@ function trustFocusOpenCommand(command: string): boolean {
   return (
     n.startsWith("composer.open")
     || n.includes("cursor.composer.open")
-    || n.startsWith("workbench.action.chat.open")
-    || n === "workbench.action.openchat"
+    || n.startsWith("workbench.action.chat.focus")
   );
 }
 

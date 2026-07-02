@@ -258,18 +258,6 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
   }
 
   protected async cursorRecoverGlassChatFocus(route: string): Promise<{ ok: boolean; command?: string; reason?: string }> {
-    for (const opener of ["workbench.action.chat.open", "workbench.action.chat.openagent"]) {
-      if (await this.runCommand(opener)) {
-        await this.sleep(this.probeFocusDelayMs());
-        this.traceOperation({
-          op: "focus_open",
-          route: `${route}:glass-recover`,
-          ok: true,
-          command: opener,
-        });
-        break;
-      }
-    }
     for (const cmd of this.cursorEssentialFocusInputCommands()) {
       const result = await this._tryFocusInputCommand(cmd);
       if (result.ok) {
@@ -282,7 +270,10 @@ export abstract class SharedAutopilotBridgeFocusStrategy extends SharedAutopilot
         return result;
       }
     }
-    return { ok: false, reason: "glass/chat focus recovery exhausted" };
+    return {
+      ok: false,
+      reason: "glass/chat focus recovery exhausted without opening a new Cursor chat tab",
+    };
   }
 
   protected sanitizeFocusInputCacheWinner(

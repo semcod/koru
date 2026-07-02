@@ -37,6 +37,9 @@ const UNSAFE_ANTIGRAVITY_FOCUS_OPEN_COMMANDS = new Set([
 ]);
 
 const UNSAFE_CURSOR_FOCUS_OPEN_COMMANDS = new Set([
+  "workbench.action.chat.open",
+  "workbench.action.openchat",
+  "workbench.action.chat.openagent",
   "workbench.panel.chat",
   "composer.openaspane",
   "composer.openchataseditor",

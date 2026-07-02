@@ -214,12 +214,31 @@ def test_cursor_focus_open_rejects_panel_chat_toggle(tmp_path) -> None:
                 "workbench.panel.chat",
                 "composer.openAsPane",
                 "workbench.action.chat.open",
+                "workbench.action.openChat",
+                "composer.openComposer",
             ],
         },
         telemetry=CommandTelemetry(tmp_path),
     )
 
-    assert order["focus_open"] == ["workbench.action.chat.open"]
+    assert order["focus_open"] == ["composer.openComposer"]
+
+
+def test_cursor_focus_open_omits_key_when_only_tab_openers_remain(tmp_path) -> None:
+    order = pick_command_order(
+        ide="cursor",
+        plugin_version="0.2.12",
+        catalog={
+            "focus_open": [
+                "workbench.action.chat.open",
+                "workbench.action.openChat",
+                "workbench.action.chat.openagent",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+
+    assert "focus_open" not in order
 
 
 def test_windsurf_focus_open_prefers_existing_panel_over_new_window(tmp_path) -> None:

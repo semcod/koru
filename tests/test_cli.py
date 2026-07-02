@@ -513,6 +513,58 @@ class TestAutoMain(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertNotIn("--replace-existing", calls[0])
 
+    def test_auto_main_blocks_when_autonomous_start_lock_is_busy(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                return_value=None,
+            ) as stop,
+            mock.patch(
+                "koru._legacy_cli_impl.try_acquire_autonomous_start_lock",
+                return_value=None,
+                create=True,
+            ),
+            mock.patch(
+                "koru._legacy_cli_impl.autonomous_main",
+                side_effect=AssertionError("autonomous loop should not start"),
+            ),
+            mock.patch("sys.stderr", new=io.StringIO()) as stderr,
+        ):
+            code = _auto_main(["--project", "/tmp/x"])
+
+        self.assertEqual(code, 2)
+        stop.assert_called_once()
+        self.assertIn("already starting/running", stderr.getvalue())
+
+    def test_auto_main_releases_autonomous_start_lock_after_loop(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        class FakeLock:
+            released = False
+
+            def release(self) -> None:
+                self.released = True
+
+        lock = FakeLock()
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                return_value=None,
+            ),
+            mock.patch(
+                "koru._legacy_cli_impl.try_acquire_autonomous_start_lock",
+                return_value=lock,
+                create=True,
+            ),
+            mock.patch("koru._legacy_cli_impl.autonomous_main", return_value=0),
+        ):
+            code = _auto_main(["--project", "/tmp/x"])
+
+        self.assertEqual(code, 0)
+        self.assertTrue(lock.released)
+
     def test_subcommand_auto_routes_to_auto_main(self) -> None:
         with mock.patch("koru.cli_auto._auto_main", return_value=7) as auto_main:
             with mock.patch("sys.argv", ["koru", "auto", "--project", "/tmp/p"]):

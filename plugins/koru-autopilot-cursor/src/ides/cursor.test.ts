@@ -330,13 +330,24 @@ function testFocusOpenDefaultsExcludeNewChatTab(): void {
         "(opens Composer menu chrome, not the chat input)",
     );
   }
-  // Cursor 1.x: the modern primary focus_open command is
-  // ``workbench.action.chat.open``. Legacy ``composer.openComposer``
-  // stays as a tail fallback for older builds.
-  if (defaults[0] !== "workbench.action.chat.open") {
+  if (defaults.includes("workbench.action.chat.open")) {
     throw new Error(
-      "Cursor focus_open defaults[0] must be workbench.action.chat.open " +
-        "(Cursor 1.x removed the composer.* namespace)",
+      "Cursor focus_open defaults must NOT include workbench.action.chat.open " +
+        "(opens editor Chat tabs on current Cursor builds)",
+    );
+  }
+  if (defaults.includes("workbench.action.openChat")) {
+    throw new Error(
+      "Cursor focus_open defaults must NOT include workbench.action.openChat " +
+        "(opens editor Chat tabs on current Cursor builds)",
+    );
+  }
+  // Cursor auto-drive should focus an existing input first. Legacy
+  // ``composer.openComposer`` stays as a tail fallback for older builds.
+  if (defaults[0] !== "composer.openComposer") {
+    throw new Error(
+      "Cursor focus_open defaults[0] must be composer.openComposer " +
+        "(do not auto-open new editor Chat tabs)",
     );
   }
 }
@@ -347,10 +358,10 @@ function testRejectsComposerContextMenuAsFocusOpen(): void {
     "composer.openAddContextMenu must not be accepted as Cursor focus_open",
   );
   const filtered = filterUnsafeFocusOpenForIde(
-    ["composer.openAddContextMenu", "workbench.action.chat.open"],
+    ["composer.openAddContextMenu", "composer.openComposer"],
     "cursor",
   );
-  eq(filtered.join(","), "workbench.action.chat.open", "unsafe context menu focus_open must be filtered");
+  eq(filtered.join(","), "composer.openComposer", "unsafe context menu focus_open must be filtered");
 }
 
 function testRejectsOpenBrowserTabAsFocusOpen(): void {
@@ -359,12 +370,12 @@ function testRejectsOpenBrowserTabAsFocusOpen(): void {
     "composer.openBrowserTab must not be trusted (browser tab, not Glass input)",
   );
   const filtered = filterUnsafeFocusOpenForIde(
-    ["composer.openBrowserTab", "workbench.action.chat.open"],
+    ["composer.openBrowserTab", "composer.openComposer"],
     "cursor",
   );
   eq(
     filtered.join(","),
-    "workbench.action.chat.open",
+    "composer.openComposer",
     "openBrowserTab must be filtered from Cursor focus_open ladder",
   );
   const entry = { focusOpen: "composer.openBrowserTab" } as import("../probe-ladder").ProbeCacheEntry;
@@ -378,17 +389,33 @@ function testRejectsOpenChatAsEditorAsFocusOpen(): void {
     "composer.openChatAsEditor must not be trusted (editor tab, not Glass input)",
   );
   const filtered = filterUnsafeFocusOpenForIde(
-    ["composer.openChatAsEditor", "workbench.action.chat.open"],
+    ["composer.openChatAsEditor", "composer.openComposer"],
     "cursor",
   );
   eq(
     filtered.join(","),
-    "workbench.action.chat.open",
+    "composer.openComposer",
     "openChatAsEditor must be filtered from Cursor focus_open ladder",
   );
   const entry = { focusOpen: "composer.openChatAsEditor" } as import("../probe-ladder").ProbeCacheEntry;
   cursorStrategy.sanitizeProbeCache?.(entry, { isWayland: true });
   eq(entry.focusOpen, undefined, "cached openChatAsEditor focus_open must be cleared");
+}
+
+function testRejectsWorkbenchChatOpenAsFocusOpen(): void {
+  assert(
+    cursorStrategy.trustFocusOpenCommand?.("workbench.action.chat.open") === false,
+    "workbench.action.chat.open must not be trusted (opens editor Chat tabs on Cursor)",
+  );
+  const filtered = filterUnsafeFocusOpenForIde(
+    ["workbench.action.chat.open", "workbench.action.openChat", "composer.openComposer"],
+    "cursor",
+  );
+  eq(
+    filtered.join(","),
+    "composer.openComposer",
+    "workbench chat open commands must be filtered from Cursor focus_open ladder",
+  );
 }
 
 function run(): void {
@@ -405,6 +432,7 @@ function run(): void {
   testRejectsComposerContextMenuAsFocusOpen();
   testRejectsOpenBrowserTabAsFocusOpen();
   testRejectsOpenChatAsEditorAsFocusOpen();
+  testRejectsWorkbenchChatOpenAsFocusOpen();
   console.log("cursor-strategy tests: ok");
 }
 

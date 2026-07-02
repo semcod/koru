@@ -73,6 +73,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.359] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_parser_detection.py
+- Update tests/test_cli.py
+- Update tests/test_command_picker.py
+
+### Other
+- Update plugins/koru-autopilot-cursor/package.json
+- Update plugins/koru-autopilot-cursor/src/bridge-submit-focus.test.ts
+- Update plugins/koru-autopilot-cursor/src/ides/cursor.test.ts
+- Update plugins/koru-autopilot-cursor/src/ides/cursor.ts
+- Update plugins/koru-autopilot-shared/src/bridge-focus-strategy.ts
+- Update plugins/koru-autopilot-shared/src/bridge-helpers.ts
+
 ## [0.1.358] - 2026-07-02
 
 ### Docs

@@ -355,7 +355,6 @@ async function testRegisteredSubmitAllowsProbeConfirmedCursorInput(): Promise<vo
   assert.strictEqual(result?.ok, true);
   assert.strictEqual(result?.command, "workbench.action.chat.submit");
   assert.deepStrictEqual(runCommands, [
-    "workbench.action.chat.open",
     "glass.focusInput",
     "workbench.action.chat.submit",
   ]);

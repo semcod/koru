@@ -77,8 +77,13 @@ _CURSOR_PASTE_REJECT = {
     "workbench.action.terminal.paste",
 }
 _CURSOR_FOCUS_OPEN_REJECT = {
+    "workbench.action.chat.open",
+    "workbench.action.chat.openagent",
+    "workbench.action.openchat",
     "workbench.panel.chat",
     "composer.openaspane",
+    "composer.openchataseditor",
+    "composer.openbrowsertab",
     "aichat.newchataction",
     "workbench.action.toggleauxiliarybar",
     "workbench.view.chat.toggle",
@@ -175,14 +180,7 @@ def _is_cursor_focus_open_candidate(command: str) -> bool:
 
 def _sanitize_cursor_focus_open(commands: list[str]) -> list[str]:
     filtered = [command for command in commands if _is_cursor_focus_open_candidate(command)]
-    if filtered:
-        return filtered
-    return [
-        "workbench.action.chat.open",
-        "workbench.action.chat.openagent",
-        "workbench.action.openChat",
-        "workbench.panel.chat.view.copilot.focus",
-    ]
+    return filtered
 
 
 def _sanitize_windsurf_focus_open(commands: list[str]) -> list[str]:
