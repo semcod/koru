@@ -3103,6 +3103,61 @@ sprint:
     assert any("no_change after drive" in line for line in logs)
 
 
+def test_skip_chat_activity_blocks_repeated_no_response_redrive(
+    tmp_path, monkeypatch
+) -> None:
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-1951:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-1951"],
+        last_status="waiting_input",
+        last_message="wup-backend needs attention",
+    )
+    now = autonomous_cycle_mod.time.time()
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": now - 30.0,
+                "type": "message.sent",
+                "ide": "vscodium",
+                "chat": "default",
+                "text": "[AUTO-DIAG] wup-backend needs attention",
+            },
+        ],
+        last_drive_verdict={"outcome": "no_change", "confidence": 0.0},
+        drive_count_for_ticket=1,
+        last_driven_ticket_for_count="PLF-1951",
+    )
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert telemetry.get("autopilot_skipped_no_response_redrive_limit") is True
+    assert any("no_response_redrive_limit" in line for line in logs)
+    assert not any("redrive allowed" in line for line in logs)
+
+
 def test_skip_chat_activity_allows_redrive_when_sent_without_received(
     tmp_path, monkeypatch
 ) -> None:

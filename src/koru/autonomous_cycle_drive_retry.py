@@ -261,6 +261,7 @@ def _resolve_autopilot_drive_decision(
     *,
     drive_prompt: str,
     autopilot_action: str,
+    queue_name: str | None = None,
 ) -> tuple[Any, str | None]:
     waiting_ticket_id = _resolve_waiting_ticket_id(queue_result)
     effective_drive_prompt = drive_prompt
@@ -274,6 +275,7 @@ def _resolve_autopilot_drive_decision(
             project,
             drive_prompt=drive_prompt,
             runner=_cycle_attr("_run_process", _run_process),
+            queue_name=queue_name,
         )
     if (
         queue_result.last_status == "waiting_input"
@@ -711,6 +713,7 @@ def _execute_autopilot_drive(
     submit: bool,
     autopilot_action: str,
     _hp: Callable[..., Any],
+    queue_name: str | None = None,
 ) -> tuple[dict[str, Any], bool, str, str | None]:
     """Execute autopilot drive and return (reply, ok, decision_kind, idle_prompt_kind)."""
     decision, idle_prompt_kind = _resolve_autopilot_drive_decision(
@@ -719,6 +722,7 @@ def _execute_autopilot_drive(
         queue_result,
         drive_prompt=drive_prompt,
         autopilot_action=autopilot_action,
+        queue_name=queue_name,
     )
     if decision.skip:
         return _waiting_ticket_closed_skip_result(

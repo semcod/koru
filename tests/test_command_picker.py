@@ -348,3 +348,20 @@ def test_vscodium_focus_open_override_rejects_settings(monkeypatch, tmp_path) ->
         telemetry=CommandTelemetry(tmp_path),
     )
     assert order.get("focus_open", []) == []
+
+
+def test_vscodium_focus_open_override_rejects_new_chat_to_side(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN", "1")
+    order = pick_command_order(
+        ide="vscodium",
+        plugin_version="0.2.29",
+        catalog={
+            "focus_open": [
+                "workbench.action.chat.openNewChatToTheSide",
+                "workbench.action.chat.openInNewWindow",
+                "chatgpt.sidebarView.open",
+            ],
+        },
+        telemetry=CommandTelemetry(tmp_path),
+    )
+    assert order["focus_open"] == ["chatgpt.sidebarView.open"]

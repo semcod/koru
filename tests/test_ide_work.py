@@ -44,6 +44,37 @@ class TestIdeWork(unittest.TestCase):
             assert ticket is not None
             self.assertEqual(ticket["id"], "PLF-1")
 
+    def test_fetch_next_open_ticket_respects_queue_name_before_priority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+
+            def runner(cmd, _proj) -> SimpleNamespace:
+                self.assertEqual(cmd[:5], ["planfile", "ticket", "list", "--status", "open"])
+                return _ok(
+                    json.dumps(
+                        [
+                            {
+                                "id": "PLF-OP",
+                                "status": "open",
+                                "priority": "critical",
+                                "name": "operator task",
+                                "execution": {"queue": "operator"},
+                            },
+                            {
+                                "id": "PLF-DEF",
+                                "status": "open",
+                                "priority": "normal",
+                                "name": "default task",
+                                "execution": {"queue": "default"},
+                            },
+                        ],
+                    ),
+                )
+
+            ticket = fetch_next_open_ticket(project, runner=runner, queue_name="default")
+            assert ticket is not None
+            self.assertEqual(ticket["id"], "PLF-DEF")
+
     def test_resolve_idle_drive_prompt_uses_ticket_when_open(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
@@ -71,6 +102,42 @@ class TestIdeWork(unittest.TestCase):
             self.assertEqual(kind, "idle_ticket_prompt")
             self.assertIn("PLF-99", prompt)
             self.assertIn("koru_run_ticket", prompt)
+
+    def test_resolve_idle_drive_prompt_respects_queue_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+
+            def runner(cmd, _proj) -> SimpleNamespace:
+                return _ok(
+                    json.dumps(
+                        [
+                            {
+                                "id": "PLF-OP",
+                                "status": "open",
+                                "priority": "critical",
+                                "name": "Operator calibration",
+                                "execution": {"queue": "operator"},
+                            },
+                            {
+                                "id": "PLF-SMOKE",
+                                "status": "open",
+                                "priority": "normal",
+                                "name": "Smoke ticket",
+                                "execution": {"queue": "default"},
+                            },
+                        ],
+                    ),
+                )
+
+            prompt, kind = resolve_idle_drive_prompt(
+                project,
+                drive_prompt="continue",
+                runner=runner,
+                queue_name="default",
+            )
+            self.assertEqual(kind, "idle_ticket_prompt")
+            self.assertIn("PLF-SMOKE", prompt)
+            self.assertNotIn("PLF-OP", prompt)
 
     def test_resolve_idle_drive_prompt_skips_drive_when_no_open_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

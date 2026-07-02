@@ -264,6 +264,7 @@ def _finalize_ticket(
 def _next_ticket_or_result(
     project: Path,
     planfile_runner: Callable[[list[str], Path], CommandResult],
+    queue_name: str | None = None,
 ) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
     next_result = planfile_command(
         project,
@@ -279,7 +280,7 @@ def _next_ticket_or_result(
             stderr=next_result.stderr,
         )
 
-    ticket = parse_next_ticket(next_result.stdout)
+    ticket = parse_next_ticket(next_result.stdout, queue_name=queue_name)
     if ticket is None:
         return None, QueueRunResult(status="idle", message="No runnable ticket found")
     return ticket, None
@@ -368,7 +369,11 @@ def _run_next_planfile_task_impl(
     project = project.resolve()
 
     with queue_runner_lock(project):
-        ticket, early_result = _next_ticket_or_result(project, planfile_runner)
+        ticket, early_result = _next_ticket_or_result(
+            project,
+            planfile_runner,
+            queue_name=queue_name,
+        )
         if early_result is not None:
             return early_result
         assert ticket is not None

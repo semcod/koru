@@ -7,11 +7,13 @@
 
 ## AI Cost Tracking
 
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$176.72-red) ![AI Model](https://img.shields.io/badge/AI%20Model-openrouter%2Fdeep%2Fdeep-v4-pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.351-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$30.77-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-161.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-This project uses AI-generated code. Total cost: **$176.7239** with **451** AI commits.
+- 🤖 **LLM usage:** $30.7715 (454 commits)
+- 👤 **Human dev:** ~$16193 (161.9h @ $100/h, 30min dedup)
 
-Generated on 2026-06-29 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/models/openrouter/deep/deep-v4-pro)
+Generated on 2026-07-02 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 

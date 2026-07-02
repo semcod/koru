@@ -3,10 +3,13 @@
 
 import json
 import os
+import re
 import shlex
 import shutil
+import subprocess
 import sys
 from collections.abc import Callable, Sequence
+from functools import lru_cache
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
@@ -14,7 +17,57 @@ from typing import Any
 from koru.queue.types import CommandResult
 
 
-def parse_next_ticket(stdout: str) -> dict | None:
+def _explicit_queue_value(ticket: dict[str, Any]) -> str | None:
+    execution = ticket.get("execution")
+    if isinstance(execution, dict):
+        queue = execution.get("queue")
+        if queue:
+            return str(queue)
+    queue = ticket.get("queue_name") or ticket.get("queue")
+    if queue:
+        return str(queue)
+    return None
+
+
+def ticket_queue_name(ticket: dict[str, Any]) -> str:
+    return _explicit_queue_value(ticket) or "default"
+
+
+def ticket_has_explicit_queue(ticket: dict[str, Any]) -> bool:
+    return _explicit_queue_value(ticket) is not None
+
+
+def _source_tool(ticket: dict[str, Any]) -> str:
+    source = ticket.get("source")
+    if isinstance(source, dict):
+        return str(source.get("tool") or "").lower()
+    return str(source or "").lower()
+
+
+def ticket_is_implicit_diagnostic(ticket: dict[str, Any]) -> bool:
+    labels = ticket.get("labels") or []
+    label_set = {str(label).lower() for label in labels if label is not None}
+    title = str(ticket.get("name") or ticket.get("title") or ticket.get("description") or "")
+    return (
+        _source_tool(ticket) == "wup"
+        or "auto-diag" in label_set
+        or title.lstrip().startswith("[AUTO-DIAG]")
+    )
+
+
+def ticket_matches_queue(ticket: dict[str, Any], queue_name: str | None) -> bool:
+    if not queue_name:
+        return True
+    if (
+        queue_name == "default"
+        and not ticket_has_explicit_queue(ticket)
+        and ticket_is_implicit_diagnostic(ticket)
+    ):
+        return False
+    return ticket_queue_name(ticket) == queue_name
+
+
+def parse_next_ticket(stdout: str, *, queue_name: str | None = None) -> dict | None:
     """Pick the first runnable ticket from planfile output.
 
     Accepts both a single-object payload (legacy ``ticket next``) and
@@ -29,7 +82,7 @@ def parse_next_ticket(stdout: str) -> dict | None:
     except json.JSONDecodeError:
         payload = json.loads(stripped, strict=False)
     if isinstance(payload, dict):
-        return payload
+        return payload if ticket_matches_queue(payload, queue_name) else None
     if isinstance(payload, list):
         # planfile ticket list returns oldest-first; sort by priority
         # then treat the first entry whose status is open / ready / todo as runnable.
@@ -40,7 +93,9 @@ def parse_next_ticket(stdout: str) -> dict | None:
         runnable_tickets = [
             entry
             for entry in payload
-            if isinstance(entry, dict) and entry.get("status") in runnable_states
+            if isinstance(entry, dict)
+            and entry.get("status") in runnable_states
+            and ticket_matches_queue(entry, queue_name)
         ]
 
         if not runnable_tickets:
@@ -113,6 +168,34 @@ def _has_planfile_cli_module() -> bool:
         return False
 
 
+_MIN_STRUCTURED_QUEUE_PLANFILE_VERSION = (0, 1, 100)
+
+
+def _parse_version_tuple(text: str) -> tuple[int, int, int] | None:
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
+    if not match:
+        return None
+    return tuple(int(part) for part in match.groups())
+
+
+@lru_cache(maxsize=32)
+def _planfile_supports_structured_queue_json(executable: str) -> bool:
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return True
+    version = _parse_version_tuple(f"{result.stdout}\n{result.stderr}")
+    if version is None:
+        return True
+    return version >= _MIN_STRUCTURED_QUEUE_PLANFILE_VERSION
+
+
 def _local_planfile_executable(project: Path) -> Path | None:
     """Return a nearby Planfile CLI before falling back to an unrelated active venv."""
     project = project.resolve()
@@ -123,7 +206,11 @@ def _local_planfile_executable(project: Path) -> Path | None:
         project / "venv" / "bin" / "planfile",
     )
     for candidate in candidates:
-        if candidate.is_file() and os.access(candidate, os.X_OK):
+        if (
+            candidate.is_file()
+            and os.access(candidate, os.X_OK)
+            and _planfile_supports_structured_queue_json(str(candidate))
+        ):
             return candidate
     return None
 

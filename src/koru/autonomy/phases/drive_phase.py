@@ -42,6 +42,7 @@ def run_drive_phase(
         inputs.cycle_telemetry,
         context.callbacks.hp,
         context.callbacks.emit,
+        queue_name=config.queue_name,
     )
     return DrivePhaseResult(status=status, backend=backend, drive_kind=drive_kind)
 

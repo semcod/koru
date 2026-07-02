@@ -13,6 +13,7 @@ from koru.queue.types import CommandResult
 @dataclass(frozen=True)
 class LoadNextRunnableTicketQuery:
     project: Path
+    queue_name: str | None = None
     planfile_runner: Callable[[list[str], Path], CommandResult] = run_process
 
 

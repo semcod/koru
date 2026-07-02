@@ -106,7 +106,7 @@ class PlanfileQueueQueryService(CqrsService):
         )
         if result.returncode != 0:
             return None
-        ticket = parse_next_ticket(result.stdout)
+        ticket = parse_next_ticket(result.stdout, queue_name=query.queue_name)
         return dict(ticket) if isinstance(ticket, dict) else None
 
     def history(self, query: LoadPlanfileQueueHistoryQuery) -> list[EventLogEntry]:

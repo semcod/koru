@@ -14,6 +14,7 @@ import yaml
 
 from koru.autonomy.planfile_handoff import planfile_status_handoff_lines
 from koru.project_pipeline import load_koru_project_pipeline
+from koru.queue.ticket import ticket_matches_queue
 from koru.tasks import create_nl_task
 
 _PRIORITY_RANK = {"critical": 0, "high": 1, "normal": 2, "low": 3}
@@ -54,7 +55,7 @@ def extract_ticket_id_from_text(text: str) -> str | None:
     return match.group(1).upper()
 
 
-def _parse_open_tickets(stdout: str) -> list[dict[str, Any]]:
+def _parse_open_tickets(stdout: str, *, queue_name: str | None = None) -> list[dict[str, Any]]:
     try:
         payload = json.loads((stdout or "").strip() or "[]")
     except json.JSONDecodeError:
@@ -67,7 +68,7 @@ def _parse_open_tickets(stdout: str) -> list[dict[str, Any]]:
         if not isinstance(entry, dict):
             continue
         status = str(entry.get("status") or "").lower()
-        if status in open_statuses:
+        if status in open_statuses and ticket_matches_queue(entry, queue_name):
             tickets.append(entry)
     tickets.sort(
         key=lambda t: (
@@ -82,6 +83,7 @@ def fetch_next_open_ticket(
     project: Path,
     *,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
+    queue_name: str | None = None,
 ) -> dict[str, Any] | None:
     """Return the highest-priority open ticket, if any."""
     try:
@@ -93,7 +95,7 @@ def fetch_next_open_ticket(
         return None
     if result.returncode != 0:
         return None
-    tickets = _parse_open_tickets(result.stdout or "")
+    tickets = _parse_open_tickets(result.stdout or "", queue_name=queue_name)
     return tickets[0] if tickets else None
 
 
@@ -281,6 +283,7 @@ def resolve_idle_drive_prompt(
     *,
     drive_prompt: str,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
+    queue_name: str | None = None,
     include_mcp_hint: bool = True,
 ) -> tuple[str, str]:
     """When the queue is idle, prefer a ticket-specific IDE prompt if work exists.
@@ -290,7 +293,7 @@ def resolve_idle_drive_prompt(
     broad project discovery is handled locally by the idle scan/diagnostics
     phases rather than pasted into the IDE chat.
     """
-    ticket = fetch_next_open_ticket(project, runner=runner)
+    ticket = fetch_next_open_ticket(project, runner=runner, queue_name=queue_name)
     if ticket is None:
         return drive_prompt, "idle_no_ticket"
     return (

@@ -49,6 +49,7 @@ class _AutopilotDriveContext:
     drive_prompt: str
     submit: bool
     autopilot_action: str
+    queue_name: str | None
     cycle: int
     cycle_telemetry: dict[str, Any]
     human_log: Callable[..., Any]
@@ -122,6 +123,7 @@ def _handle_autopilot_phase(
     cycle_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
+    queue_name: str | None = None,
 ) -> tuple[str, str | None, str | None]:
     autopilot_status = "skipped"
     autopilot_backend: str | None = None
@@ -172,6 +174,7 @@ def _handle_autopilot_phase(
             drive_prompt=drive_prompt,
             submit=submit,
             autopilot_action=autopilot_action,
+            queue_name=queue_name,
             cycle=cycle,
             cycle_telemetry=cycle_telemetry,
             human_log=_hp,
@@ -382,6 +385,7 @@ def _run_autopilot_drive_attempt(ctx: _AutopilotDriveContext) -> _AutopilotDrive
         ctx.submit,
         ctx.autopilot_action,
         ctx.human_log,
+        queue_name=ctx.queue_name,
     )
     status = _drive_result_autopilot_status(
         queue_result=ctx.queue_result,

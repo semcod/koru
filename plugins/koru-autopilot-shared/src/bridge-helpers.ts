@@ -18,6 +18,8 @@ const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.openchat",
   "workbench.action.openquickchat",
   "workbench.action.chat.open",
+  "workbench.action.chat.opennewchat",
+  "workbench.action.chat.opennewchattotheside",
   "workbench.action.chat.openchatemptystatesettings",
   "workbench.action.chat.focusinput",
   "workbench.action.chat.openinnewwindow",

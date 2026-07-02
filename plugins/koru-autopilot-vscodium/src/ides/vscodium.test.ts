@@ -84,6 +84,7 @@ function testFocusOpenFiltersQuickChatCommands() {
     [
       "workbench.action.openQuickChat",
       "workbench.action.quickchat.openInChatView",
+      "workbench.action.chat.openNewChatToTheSide",
       "workbench.action.chat.openInNewWindow",
       "workbench.action.chat.openChatEmptyStateSettings",
       "workbench.action.chat.focusInput",
@@ -94,7 +95,7 @@ function testFocusOpenFiltersQuickChatCommands() {
   );
   assert(
     cmds.join(",") === "chatgpt.sidebarView.open,workbench.panel.chat",
-    "vscodium must only keep real chat open commands",
+    "vscodium must only keep reusable chat open/focus commands",
   );
 }
 

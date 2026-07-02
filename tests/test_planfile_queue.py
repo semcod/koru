@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from koru.cqrs.event_store import JsonlEventStore
 from koru.queue import run_next_planfile_task
-from koru.queue.ticket import planfile_command
+from koru.queue.ticket import parse_next_ticket, planfile_command
 
 
 def _ok(stdout: str = "") -> SimpleNamespace:
@@ -72,6 +72,31 @@ class TestPlanfileCommand(unittest.TestCase):
 
             self.assertEqual(calls[0], [str(local), "ticket", "list"])
 
+    def test_skips_local_planfile_too_old_for_structured_queue_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            project = root / "koru"
+            old_local = project / "venv" / "bin" / "planfile"
+            old_local.parent.mkdir(parents=True)
+            old_local.write_text("#!/bin/sh\n", encoding="utf-8")
+            old_local.chmod(0o755)
+            calls: list[list[str]] = []
+
+            def runner(command, _project):
+                calls.append(list(command))
+                return _ok()
+
+            with patch(
+                "koru.queue.ticket._planfile_supports_structured_queue_json",
+                return_value=False,
+            ), patch("koru.queue.ticket.find_spec", return_value=None), patch(
+                "koru.queue.ticket.shutil.which",
+                return_value="/usr/bin/planfile",
+            ):
+                planfile_command(project, ["ticket", "list"], runner=runner)
+
+            self.assertEqual(calls[0], ["planfile", "ticket", "list"])
+
     def test_falls_back_to_path_cli_when_module_cli_missing(self) -> None:
         calls: list[list[str]] = []
 
@@ -123,7 +148,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "id": "PLF-001",
                 "name": "Run bootstrap",
                 "executor": {"kind": "shell", "handler": "echo ok"},
-                "execution": {"state": "ready"},
+                "execution": {"queue": "c2004-refactor", "state": "ready"},
             }
             planfile_calls: list[list[str]] = []
 
@@ -281,6 +306,118 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.status, "waiting_input")
             self.assertEqual(result.ticket_id, "PLF-002")
             self.assertEqual(result.message, "Provide OPENROUTER_API_KEY")
+
+    def test_queue_name_filters_open_tickets_before_priority_sort(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            tickets = [
+                {
+                    "id": "PLF-OP",
+                    "name": "Operator calibration",
+                    "status": "open",
+                    "priority": "critical",
+                    "executor": {"kind": "human"},
+                    "execution": {"queue": "operator", "state": "ready"},
+                    "inputs": {"prompt": "Do operator work"},
+                },
+                {
+                    "id": "PLF-DEF",
+                    "name": "Default queue shell",
+                    "status": "open",
+                    "priority": "normal",
+                    "executor": {"kind": "shell", "handler": "echo ok"},
+                    "execution": {"queue": "default", "state": "ready"},
+                },
+            ]
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(tickets))
+                return _ok()
+
+            def shell_runner(command: str, _project: Path) -> SimpleNamespace:
+                self.assertEqual(command, "echo ok")
+                return SimpleNamespace(returncode=0, stdout="ok\n", stderr="")
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+                queue_name="default",
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.ticket_id, "PLF-DEF")
+
+    def test_queue_name_returns_idle_when_no_ticket_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            tickets = [
+                {
+                    "id": "PLF-OP",
+                    "name": "Operator calibration",
+                    "status": "open",
+                    "priority": "critical",
+                    "executor": {"kind": "human"},
+                    "execution": {"queue": "operator", "state": "ready"},
+                    "inputs": {"prompt": "Do operator work"},
+                }
+            ]
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(tickets))
+                return _ok()
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                queue_name="default",
+            )
+
+            self.assertEqual(result.status, "idle")
+            self.assertIsNone(result.ticket_id)
+
+    def test_default_queue_skips_implicit_wup_auto_diag_ticket(self) -> None:
+        tickets = [
+            {
+                "id": "PLF-WUP",
+                "name": "[AUTO-DIAG] wup-frontend visual down",
+                "status": "open",
+                "priority": "critical",
+                "labels": ["wup", "auto-diag", "llm-ready"],
+                "source": {"tool": "wup"},
+            },
+            {
+                "id": "PLF-DEF",
+                "name": "Default queue shell",
+                "status": "open",
+                "priority": "normal",
+                "executor": {"kind": "shell", "handler": "echo ok"},
+                "execution": {"queue": "default", "state": "ready"},
+            },
+        ]
+
+        ticket = parse_next_ticket(json.dumps(tickets), queue_name="default")
+
+        self.assertIsNotNone(ticket)
+        self.assertEqual(ticket["id"], "PLF-DEF")
+
+    def test_default_queue_accepts_explicit_wup_auto_diag_ticket(self) -> None:
+        ticket = {
+            "id": "PLF-WUP",
+            "name": "[AUTO-DIAG] wup-frontend visual down",
+            "status": "open",
+            "priority": "critical",
+            "labels": ["wup", "auto-diag", "llm-ready"],
+            "source": {"tool": "wup"},
+            "execution": {"queue": "default", "state": "ready"},
+        }
+
+        picked = parse_next_ticket(json.dumps(ticket), queue_name="default")
+
+        self.assertIsNotNone(picked)
+        self.assertEqual(picked["id"], "PLF-WUP")
 
     def test_missing_executor_kind_defaults_to_human_waiting_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
