@@ -4677,6 +4677,10 @@ def test_run_cycle_does_not_retry_semantic_required_as_focus_error(
             }
 
     monkeypatch.setattr(time, "sleep", lambda _x: None)
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
+    monkeypatch.setattr(autonomous_mod, "_try_nlp2uri_ide_control", lambda *args, **kwargs: None)
+    monkeypatch.setattr(autonomous_mod, "_try_vdisplay_control_fallback", lambda *args, **kwargs: None)
+    monkeypatch.setattr(autonomous_mod, "_try_imgl_gui_fallback", lambda *args, **kwargs: None)
     monkeypatch.setattr(
         autonomous_mod,
         "run_planfile_queue_loop",
@@ -4932,6 +4936,9 @@ def test_run_cycle_jetbrains_does_not_require_plugin_by_default(
     monkeypatch.delenv("KORU_AUTOPILOT_PREFER_KEYBOARD", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
     monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
+    monkeypatch.setattr(autonomous_mod, "_try_nlp2uri_ide_control", lambda *args, **kwargs: None)
+    monkeypatch.setattr(autonomous_mod, "_try_vdisplay_control_fallback", lambda *args, **kwargs: None)
+    monkeypatch.setattr(autonomous_mod, "_try_imgl_gui_fallback", lambda *args, **kwargs: None)
     monkeypatch.setattr(
         autonomous_mod,
         "run_planfile_queue_loop",
