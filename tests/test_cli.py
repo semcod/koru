@@ -605,6 +605,17 @@ class TestAutoMain(unittest.TestCase):
         stop.assert_not_called()
         autonomous.assert_called_once_with(["--help"], invoked_as_auto=True)
 
+    def test_auto_main_up_help_preserves_up_subcommand(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        with mock.patch("koru.cli_auto.autonomous_main", return_value=0) as autonomous:
+            with mock.patch("koru.cli_auto.stop_prior_autonomous_for_auto_start") as stop:
+                code = _auto_main(["up", "--help"])
+
+        self.assertEqual(code, 0)
+        stop.assert_not_called()
+        autonomous.assert_called_once_with(["up", "--help"], invoked_as_auto=True)
+
     def test_auto_main_maintenance_action_does_not_stop_existing_loop(self) -> None:
         from koru.cli_auto import _auto_main
 

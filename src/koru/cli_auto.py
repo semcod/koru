@@ -87,14 +87,17 @@ def _auto_main(argv: list[str]) -> int:
     instead of blindly entering the autonomous loop with an empty backlog.
     """
     from koru.cli import _peek_project_from_argv, _should_suggest_wizard
+    help_requested = any(arg in {"-h", "--help"} for arg in argv)
     # ``koru auto up`` is equivalent to ``koru auto``; argv normalization injects
     # the ``up`` subcommand once — a redundant token here becomes a duplicate.
-    if argv and argv[0] == "up":
+    # Preserve it for ``koru auto up --help`` so argparse shows the subcommand
+    # options instead of the generic autonomous help.
+    if argv and argv[0] == "up" and not help_requested:
         argv = argv[1:]
     if _is_maintenance_action(argv):
         run_autonomous = _legacy_attr("autonomous_main", autonomous_main)
         return run_autonomous(argv, invoked_as_auto=False)
-    if any(arg in {"-h", "--help"} for arg in argv):
+    if help_requested:
         return autonomous_main(argv, invoked_as_auto=True)
     start_argv = _auto_start_argv(argv)
     _parse_autonomous_args(start_argv, invoked_as_auto=True)
