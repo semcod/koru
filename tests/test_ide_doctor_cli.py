@@ -79,6 +79,74 @@ def test_ide_doctor_json_reports_plugin_not_connected(
     assert "Developer: Reload Window" in payload["hypotheses"][0]["remediation"]["summary"]
 
 
+def test_ide_doctor_fix_refreshes_settings_mismatch_status(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    project = tmp_path / "project"
+    settings = project / ".cursor" / "settings.json"
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    stale_socket = tmp_path / "koru-autopilot-cursor.sock"
+    expected_socket = tmp_path / "koru-autopilot-cursor-main.sock"
+    settings.write_text(
+        json.dumps(
+            {
+                "koruAutopilot.autoConnect": True,
+                "koruAutopilot.socketPath": str(stale_socket),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class FakeAutopilotClient:
+        def __init__(self, *, socket_path: Path, timeout: float) -> None:
+            self.socket_path = socket_path
+            self.timeout = timeout
+
+        def is_running(self) -> bool:
+            return True
+
+        def status(self) -> dict[str, object]:
+            return {"plugins": []}
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setattr(bridge_mod, "AutopilotClient", FakeAutopilotClient)
+    _write_extensions_json(
+        tmp_path / ".cursor" / "extensions" / "extensions.json",
+        [shared.extension_id_for_ide("cursor")],
+    )
+
+    rc = ide_main(
+        [
+            "doctor",
+            "--ide",
+            "cursor",
+            "--project",
+            str(project),
+            "--socket",
+            str(expected_socket),
+            "--fix",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert rc == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["settings"]["workspace_socket"] == str(expected_socket)
+    assert payload["settings"]["mismatch"] is False
+    assert payload["hypotheses"][0]["id"] == "cursor.plugin.not_connected"
+    assert all(
+        item["id"] != "settings.socket.workspace_mismatch"
+        for item in payload["hypotheses"]
+    )
+    assert json.loads(settings.read_text(encoding="utf-8"))[
+        "koruAutopilot.socketPath"
+    ] == str(expected_socket)
+
+
 def test_ide_doctor_json_prioritizes_stale_rejected_plugin(
     tmp_path: Path,
     monkeypatch,

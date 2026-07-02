@@ -266,13 +266,13 @@ def resolve_plugin_editor_bin(ide: str) -> str:
         )
     if ide not in PLUGIN_IDE_CLI:
         raise RuntimeError(f"unsupported editor for plugin install: {ide}")
-    running = _running_editor_bin_for_ide(ide)
-    if running is not None:
-        return running
     for candidate in PLUGIN_IDE_CLI[ide]:
         resolved = _which_cli_safe_editor(candidate)
         if resolved:
             return resolved
+    running = _running_editor_bin_for_ide(ide)
+    if running is not None:
+        return running
     for resolved in _fallback_cli_editor_bins(ide):
         return resolved
     choices = "|".join(PLUGIN_IDE_CLI[ide])
@@ -306,7 +306,6 @@ def _running_editor_bin_for_ide(ide: str) -> str | None:
         if resolved:
             path_bin = resolved
             break
-    best_exe: str | None = None
     for row in detect_running_ides():
         if row.id != ide:
             continue
@@ -320,6 +319,7 @@ def _running_editor_bin_for_ide(ide: str) -> str | None:
                     return path_bin
             except OSError:
                 pass
+            continue
         return resolved
     return None
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 # Each per-IDE plugin tracks its own version. When you bump a plugin,
 # bump only the matching entry — do NOT lockstep all IDEs.
 EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
-    "cursor": "0.2.38",
+    "cursor": "0.2.39",
     "vscode": "0.2.7",
     "vscodium": "0.2.31",
     "windsurf": "0.2.10",

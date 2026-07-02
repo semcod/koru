@@ -2,7 +2,7 @@
   "name": "koru-autopilot-cursor",
   "displayName": "koru autopilot (Cursor)",
   "description": "Bridge between Cursor and the koru autopilot daemon. Standalone VSIX dedicated to Cursor IDE; sibling VSIX packages cover VS Code, VSCodium, Windsurf and Antigravity so a regression in this plugin cannot leak into another IDE's runtime.",
-  "version": "0.2.38",
+  "version": "0.2.39",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -183,6 +183,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "eaef5ba38487909d"
+    "sha": "282c66dbf88822cc"
   }
 }

@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from koru.autopilot import install_plugin_cli
 from koru.autopilot import plugin_installer
 from koruide.plugin_version import expected_plugin_version_for_ide
 
@@ -117,6 +118,24 @@ def test_install_plugin_dry_run_builds_editor_command(
 
     assert result.status == "dry_run"
     assert result.command == ["/usr/bin/cursor", "--install-extension", str(vsix)]
+
+
+def test_resolve_plugin_editor_bin_prefers_path_cli_over_running_app(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(install_plugin_cli.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "_editor_bin_usable_for_cli_install",
+        lambda _exe: True,
+    )
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "detect_running_ides",
+        lambda: [SimpleNamespace(id="cursor", exe="/usr/share/cursor/cursor")],
+    )
+
+    assert install_plugin_cli.resolve_plugin_editor_bin("cursor") == "/usr/bin/cursor"
 
 
 def test_resolve_extension_vsix_finds_repo_plugin_package(tmp_path: Path, monkeypatch) -> None:

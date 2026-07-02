@@ -73,6 +73,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.361] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_ide_doctor_cli.py
+
+### Other
+- Update plugins/koru-autopilot-cursor/package.json
+
 ## [0.1.360] - 2026-07-02
 
 ### Docs

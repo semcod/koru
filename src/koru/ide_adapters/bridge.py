@@ -378,15 +378,21 @@ def apply_bridge_fixes(
     adapter = get_adapter(status.ide)
     if adapter is None or not fix:
         return status
-    status.fixes_applied.extend(
-        adapter.apply_safe_fixes(
-            project=project,
-            expected_socket=status.socket_path,
-            fix=fix,
-            ide_running=_ide_is_running(status.ide),
-        ),
+    fixes = adapter.apply_safe_fixes(
+        project=project,
+        expected_socket=status.socket_path,
+        fix=fix,
+        ide_running=_ide_is_running(status.ide),
     )
-    return status
+    if not fixes:
+        return status
+    refreshed = evaluate_bridge(
+        ide=status.ide,
+        socket_path=status.socket_path,
+        project=project,
+    )
+    refreshed.fixes_applied = [*status.fixes_applied, *fixes]
+    return refreshed
 
 
 def gc_stale_sockets_for_lane(socket_path: Path) -> list[str]:
