@@ -111,6 +111,24 @@ def test_project_venv_reexec_env_aligns_virtual_env_and_path(
     assert str(other_bin) in env["PATH"].split(os.pathsep)
 
 
+def test_project_venv_reexec_env_uses_selected_venv_when_dotvenv_missing(
+    tmp_path: Path,
+) -> None:
+    local_bin = tmp_path / "venv" / "bin"
+    local_bin.mkdir(parents=True)
+    local_koru = local_bin / "koru"
+    local_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    local_koru.chmod(0o755)
+
+    env = autonomous_runtime.project_venv_reexec_env(
+        tmp_path,
+        base_env={"PATH": "/usr/bin"},
+    )
+
+    assert env["VIRTUAL_ENV"] == str((tmp_path / "venv").resolve())
+    assert env["PATH"].split(os.pathsep)[0] == str(local_bin.resolve())
+
+
 def test_project_venv_reexec_argv_uses_current_project_when_no_project_arg(
     tmp_path: Path,
     monkeypatch,
@@ -146,6 +164,64 @@ def test_project_venv_reexec_argv_skips_when_disabled(
     monkeypatch.setenv("KORU_AUTO_REEXEC", "0")
 
     assert autonomous_runtime.project_venv_reexec_argv(tmp_path) is None
+
+
+def test_project_venv_reexec_argv_skips_when_no_reexec_truthy(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    local_bin = tmp_path / ".venv" / "bin"
+    local_bin.mkdir(parents=True)
+    (local_bin / "koru").write_text("#!/bin/sh\n", encoding="utf-8")
+    other_python = tmp_path / "other" / ".venv" / "bin" / "python"
+    other_python.parent.mkdir(parents=True)
+    other_python.write_text("", encoding="utf-8")
+    monkeypatch.setattr(autonomous_runtime.sys, "executable", str(other_python))
+    monkeypatch.setenv("KORU_CLI_NO_REEXEC", "1")
+
+    assert autonomous_runtime.project_venv_reexec_argv(tmp_path) is None
+
+
+def test_project_venv_reexec_argv_does_not_treat_no_reexec_zero_as_disabled(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    local_bin = tmp_path / ".venv" / "bin"
+    local_bin.mkdir(parents=True)
+    local_koru = local_bin / "koru"
+    local_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    local_koru.chmod(0o755)
+    other_python = tmp_path / "other" / ".venv" / "bin" / "python"
+    other_python.parent.mkdir(parents=True)
+    other_python.write_text("", encoding="utf-8")
+    monkeypatch.setattr(autonomous_runtime.sys, "executable", str(other_python))
+    monkeypatch.setattr(autonomous_runtime.sys, "argv", ["koru", "doctor"])
+    monkeypatch.setenv("KORU_CLI_NO_REEXEC", "0")
+
+    assert autonomous_runtime.project_venv_reexec_argv(tmp_path) == [str(local_koru), "doctor"]
+
+
+def test_maybe_sync_project_koru_package_skips_non_koru_project(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        "[project]\nname = 'c2004-workspace'\nversion = '1.0.41'\n",
+        encoding="utf-8",
+    )
+    pip = tmp_path / ".venv" / "bin" / "pip"
+    pip.parent.mkdir(parents=True)
+    pip.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setattr(autonomous_runtime, "running_outside_project_venv", lambda _project: False)
+    monkeypatch.setattr(autonomous_runtime, "_installed_koru_version", lambda: "0.1.350")
+
+    def fail_run(*_args, **_kwargs):
+        raise AssertionError("pip install must not run for non-koru projects")
+
+    monkeypatch.setattr(autonomous_runtime.subprocess, "run", fail_run)
+
+    assert autonomous_runtime.maybe_sync_project_koru_package(tmp_path) is None
 
 
 def test_setup_autopilot_daemon_keeps_lane_and_socket_in_sync(

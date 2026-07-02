@@ -8,6 +8,44 @@ from koru.autopilot import install_manager
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 
+def test_source_version_ignores_non_koru_pyproject(tmp_path: Path) -> None:
+    app = tmp_path / "app"
+    app.mkdir()
+    (app / "pyproject.toml").write_text(
+        "[project]\nname = 'c2004-workspace'\nversion = '1.0.41'\n",
+        encoding="utf-8",
+    )
+
+    assert install_manager._source_version(app) is None
+
+
+def test_resolve_source_root_prefers_editable_koru_source_when_cwd_is_workspace(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    app = tmp_path / "app"
+    app.mkdir()
+    (app / "pyproject.toml").write_text(
+        "[project]\nname = 'c2004-workspace'\nversion = '1.0.41'\n",
+        encoding="utf-8",
+    )
+    koru_root = tmp_path / "koru"
+    koru_root.mkdir()
+    (koru_root / "pyproject.toml").write_text(
+        "[project]\nname = 'koru'\nversion = '0.1.350'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(app)
+    monkeypatch.setattr(install_manager.sys, "prefix", str(app / ".venv"))
+    monkeypatch.setattr(
+        install_manager,
+        "_installed_editable_source_root",
+        lambda: koru_root.resolve(),
+    )
+
+    assert install_manager._resolve_source_root(None) == koru_root.resolve()
+
+
 def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
     monkeypatch,
     tmp_path: Path,

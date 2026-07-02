@@ -83,7 +83,7 @@ def run_daemon_command(
         return 0
     from koru.autonomous_runtime import normalize_project_root
 
-    raw_project = args.project.resolve() if args.handoff else None
+    raw_project = args.project.resolve()
     project = normalize_project_root(raw_project) if raw_project is not None else None
     load_dotenv(Path.cwd())
     if project is not None:
@@ -112,6 +112,7 @@ def run_daemon_command(
         socket_path=socket_path,
         log=print,
         project=project,
+        enable_project_handoff=args.handoff,
         handoff_cooldown=args.handoff_cooldown,
         audit=audit,
     )

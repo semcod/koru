@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.activity_log import activity, configure_nfo_activity_log
-from koru.doctor_runtime_checks import _installed_koru_version, _read_project_version
+from koru.doctor_runtime_checks import _installed_koru_version, _read_koru_source_version
 from koru.env_flags import env_disabled as _env_disabled, env_truthy as _env_truthy
 
 
@@ -145,6 +145,16 @@ def _local_project_koru(project: Path) -> Path | None:
     return None
 
 
+def _local_project_venv(project: Path, *, require_executable: bool = True) -> Path | None:
+    for venv_root in _project_venv_roots(project):
+        local_koru = (venv_root / "bin" / "koru").resolve()
+        if local_koru.is_file() and (
+            not require_executable or os.access(local_koru, os.X_OK)
+        ):
+            return venv_root.resolve()
+    return None
+
+
 def running_outside_project_venv(project: Path) -> bool:
     """True when this Python was not launched from a repo-local virtualenv."""
     local_venvs = _project_venv_roots(project)
@@ -160,7 +170,7 @@ def running_outside_project_venv(project: Path) -> bool:
 
 def cli_should_reexec(raw_args: list[str]) -> bool:
     """Whether the CLI should prefer the repo-local ``.venv/bin/koru`` entrypoint."""
-    if _env_disabled("KORU_CLI_NO_REEXEC") or _env_disabled("KORU_AUTO_REEXEC"):
+    if _env_truthy("KORU_CLI_NO_REEXEC") or _env_disabled("KORU_AUTO_REEXEC"):
         return False
     if not raw_args:
         return True
@@ -173,7 +183,7 @@ def project_venv_reexec_argv(project: Path) -> list[str] | None:
     """Return argv for re-execing inside the repo-local venv when outside it."""
     if os.environ.get("KORU_CLI_REEXECED") or os.environ.get("KORU_AUTONOMOUS_REEXECED"):
         return None
-    if _env_disabled("KORU_CLI_NO_REEXEC") or _env_disabled("KORU_AUTO_REEXEC"):
+    if _env_truthy("KORU_CLI_NO_REEXEC") or _env_disabled("KORU_AUTO_REEXEC"):
         return None
     local_koru = _local_project_koru(project)
     if local_koru is None or not running_outside_project_venv(project):
@@ -190,11 +200,12 @@ def maybe_sync_project_koru_package(project: Path) -> str | None:
     pyproject = project / "pyproject.toml"
     if not pyproject.is_file():
         return None
-    source_version = _read_project_version(pyproject)
+    source_version = _read_koru_source_version(pyproject)
     installed_version = _installed_koru_version()
     if not source_version or not installed_version or source_version == installed_version:
         return None
-    pip = project / ".venv" / "bin" / "pip"
+    local_venv = _local_project_venv(project) or (project / ".venv").resolve()
+    pip = local_venv / "bin" / "pip"
     if not pip.is_file():
         return None
     os.environ["KORU_CLI_SYNC_DONE"] = "1"
@@ -223,7 +234,7 @@ def project_venv_reexec_env(
 ) -> dict[str, str]:
     """Return an env aligned with the repo-local virtualenv for ``execvpe``."""
     env = dict(os.environ if base_env is None else base_env)
-    local_venv = (project / ".venv").resolve()
+    local_venv = _local_project_venv(project) or (project / ".venv").resolve()
     local_bin = local_venv / "bin"
     old_path = env.get("PATH", "")
     parts = [part for part in old_path.split(os.pathsep) if part and part != str(local_bin)]
@@ -234,9 +245,8 @@ def project_venv_reexec_env(
 
 def project_venv_warning_lines(project: Path) -> list[str]:
     """Warn when ``koru auto`` is running outside the repo-local virtualenv."""
-    local_venv = (project / ".venv").resolve()
-    local_koru = local_venv / "bin" / "koru"
-    if not local_koru.exists():
+    local_venv = _local_project_venv(project, require_executable=False)
+    if local_venv is None:
         return []
 
     executable = Path(sys.executable).expanduser()

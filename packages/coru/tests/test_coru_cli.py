@@ -586,6 +586,8 @@ def test_maybe_reexec_into_project_python_executes(monkeypatch, tmp_path) -> Non
     assert captured["argv"][0] == str(target)
     assert "status" in captured["argv"]
     assert captured["env"]["CORU_REEXEC_DONE"] == "1"
+    assert captured["env"]["VIRTUAL_ENV"] == str(target.parent.parent.resolve())
+    assert captured["env"]["PATH"].split(os.pathsep)[0] == str(target.parent.resolve())
 
 
 def test_project_venv_python_prefers_venv_with_coru_installed(monkeypatch, tmp_path) -> None:

@@ -46,7 +46,8 @@ def test_interface_registry_prefers_project_docs_override(
     )
     monkeypatch.chdir(tmp_path)
     assert interface_registry_path() == registry_file
-    assert load_interface_registry().interfaces == ()
+    assert len(load_interface_registry().interfaces) >= 10
+    assert load_interface_registry(registry_file).interfaces == ()
 
 
 def test_interface_registry_contains_antigravity_and_mcp() -> None:

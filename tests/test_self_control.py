@@ -51,6 +51,32 @@ def test_run_self_control_reports_package_mismatch(
     assert data["update_plan"][0]["repair"] == "pip install -e ."
 
 
+def test_run_self_control_ignores_non_koru_project_version(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        "[project]\nname = 'c2004-workspace'\nversion = '1.0.41'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(self_control, "_installed_version", lambda: "0.1.350")
+    monkeypatch.setattr(
+        self_control,
+        "_install_manager_checks",
+        lambda *_args, **_kwargs: [
+            self_control.SelfCheck("autopilot_install_manager", "ok", "ok")
+        ],
+    )
+    monkeypatch.setattr(self_control, "_ecosystem_components", lambda *_args, **_kwargs: [])
+
+    report = self_control.run_self_control(tmp_path, ide="vscodium")
+
+    package = next(check for check in report.checks if check.name == "package_identity")
+    assert package.status == "ok"
+    assert "source=-" in package.detail
+    assert "version_mismatch=true" not in package.detail
+
+
 def test_repair_self_control_requires_yes(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text(
         "[project]\nname = 'koru'\nversion = '9.9.9'\n",

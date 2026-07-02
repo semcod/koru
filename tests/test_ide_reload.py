@@ -665,6 +665,18 @@ def test_spawn_detached_ide_reload_spawns_koru_cli(
     assert call["kwargs"]["env"][ide_reload._DETACHED_RUNNER_MARKER] == "1"
 
 
+def test_resolve_koru_cli_argv_uses_current_python(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ide_reload.sys, "executable", "/tmp/project/.venv/bin/python")
+
+    assert ide_reload._resolve_koru_cli_argv() == [
+        "/tmp/project/.venv/bin/python",
+        "-m",
+        "koru",
+    ]
+
+
 def test_spawn_detached_ide_reload_with_connect_only(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

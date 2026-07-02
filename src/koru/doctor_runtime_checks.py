@@ -12,16 +12,27 @@ from pathlib import Path
 from koru.doctor_constants import PASS, WARN
 
 
-def _read_project_version(path: Path) -> str | None:
+def _read_project_metadata(path: Path) -> tuple[str | None, str | None]:
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except (OSError, tomllib.TOMLDecodeError):
-        return None
+        return None, None
     project = data.get("project")
     if not isinstance(project, dict):
-        return None
+        return None, None
+    name = project.get("name")
     version = project.get("version")
-    return str(version) if version else None
+    return str(name) if name else None, str(version) if version else None
+
+
+def _read_project_version(path: Path) -> str | None:
+    _name, version = _read_project_metadata(path)
+    return version
+
+
+def _read_koru_source_version(path: Path) -> str | None:
+    name, version = _read_project_metadata(path)
+    return version if name == "koru" else None
 
 
 def _installed_koru_version() -> str | None:
@@ -133,7 +144,7 @@ def _koru_path_version_issues(
 
 def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
     package_version = _installed_koru_version()
-    source_version = _read_project_version(project / "pyproject.toml")
+    source_version = _read_koru_source_version(project / "pyproject.toml")
     path_koru = shutil.which("koru")
     project_koru: Path | None = None
     for venv_name in (".venv", "venv"):

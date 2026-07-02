@@ -125,15 +125,19 @@ class InstallManagerReport:
 def _resolve_source_root(project: Path | None = None) -> Path:
     from koru.autonomous_runtime import normalize_project_root
 
+    candidates: list[Path] = []
     if project is not None:
         normalized = normalize_project_root(project)
-        if normalized is not None:
-            return normalized
-        return project.expanduser().resolve()
-    for candidate in (Path.cwd(), Path(sys.prefix)):
+        candidates.append(normalized if normalized is not None else project.expanduser().resolve())
+    else:
+        candidates.extend([Path.cwd(), Path(sys.prefix)])
+    for candidate in candidates:
         normalized = normalize_project_root(candidate)
-        if normalized is not None and (normalized / "pyproject.toml").is_file():
+        if normalized is not None and _is_koru_source_root(normalized):
             return normalized
+    editable = _installed_editable_source_root()
+    if editable is not None and _is_koru_source_root(editable):
+        return editable
     fallback = normalize_project_root(Path(__file__).resolve().parents[3])
     return fallback if fallback is not None else Path(__file__).resolve().parents[3]
 
@@ -146,10 +150,23 @@ def _source_version(root: Path) -> str | None:
     try:
         raw = (root / "pyproject.toml").read_bytes()
         data = tomllib.loads(raw.decode("utf-8"))
-        version = data.get("project", {}).get("version")
+        project = data.get("project", {})
+        if not isinstance(project, dict) or project.get("name") != "koru":
+            return None
+        version = project.get("version")
         return str(version) if version else None
     except (OSError, tomllib.TOMLDecodeError):
         return None
+
+
+def _is_koru_source_root(root: Path) -> bool:
+    try:
+        raw = (root / "pyproject.toml").read_bytes()
+        data = tomllib.loads(raw.decode("utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return False
+    project = data.get("project", {})
+    return isinstance(project, dict) and project.get("name") == "koru"
 
 
 def _package_version() -> str | None:

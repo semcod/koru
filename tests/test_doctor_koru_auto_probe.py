@@ -57,3 +57,32 @@ def test_runtime_identity_warns_when_auto_unsupported(
     assert status == "warn"
     assert "koru_auto_unsupported=true" in detail
     assert "path_mismatch=true" in detail
+
+
+def test_runtime_identity_ignores_non_koru_project_version(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = tmp_path / "proj"
+    venv_bin = project / ".venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    project_koru = venv_bin / "koru"
+    project_koru.write_text("#!/bin/sh\necho ok\n", encoding="utf-8")
+    project_koru.chmod(0o755)
+    (project / "pyproject.toml").write_text(
+        "[project]\nname = 'c2004-workspace'\nversion = '1.0.41'\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("koru.doctor_runtime_checks._installed_koru_version", lambda: "0.1.350")
+    monkeypatch.setattr("koru.doctor_runtime_checks.shutil.which", lambda _name: str(project_koru))
+    monkeypatch.setattr(
+        "koru.doctor_runtime_checks._path_koru_supports_auto_subcommand",
+        lambda _p: True,
+    )
+
+    status, detail = _check_koru_runtime_identity(project)
+
+    assert status == "pass"
+    assert "source_pyproject=-" in detail
+    assert "version_mismatch=true" not in detail

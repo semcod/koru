@@ -68,6 +68,46 @@ def process_stream_summary(
     return rows
 
 
+def _process_pid(proc: object) -> int:
+    try:
+        return int(getattr(proc, "pid", 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _sorted_processes(processes: list[object]) -> list[object]:
+    return sorted(processes, key=_process_pid)
+
+
+def _pid_csv(processes: list[object]) -> str:
+    return ",".join(str(_process_pid(proc)) for proc in _sorted_processes(processes))
+
+
+def process_recovery_summary(
+    project: Path,
+    *,
+    auto_loops: list[object],
+    wup_watchers: list[object],
+    issues: list[str],
+) -> list[str]:
+    rows: list[str] = []
+    if "multiple_autonomous_loops" in issues:
+        ordered = _sorted_processes(auto_loops)
+        rows.append(f"auto_keep_pid={_process_pid(ordered[0])}")
+        rows.append(f"auto_stop_pids={_pid_csv(ordered[1:])}")
+    if "multiple_wup_watchers" in issues:
+        ordered = _sorted_processes(wup_watchers)
+        rows.append(f"wup_keep_pid={_process_pid(ordered[0])}")
+        rows.append(f"wup_stop_pids={_pid_csv(ordered[1:])}")
+    elif "orphan_wup_watcher" in issues and wup_watchers:
+        rows.append(f"orphan_wup_pids={_pid_csv(wup_watchers)}")
+    if rows:
+        rows.append(f"recovery=koru autonomous up --project {project} --replace-existing")
+    elif issues:
+        rows.append("recovery=stop duplicate koru auto/WUP services or gc stale sockets")
+    return rows
+
+
 def drop_non_service_autonomous_matches(processes: list[object]) -> list[object]:
     filtered = []
     for proc in processes:
@@ -136,7 +176,14 @@ def check_autonomous_service_stream(
     detail_bits.extend(process_stream_summary(wup_watchers, label="wup"))
     if issues:
         detail_bits.append(f"issues={','.join(issues)}")
-        detail_bits.append("recovery=stop duplicate koru auto/WUP services or gc stale sockets")
+        detail_bits.extend(
+            process_recovery_summary(
+                project,
+                auto_loops=auto_loops,
+                wup_watchers=wup_watchers,
+                issues=issues,
+            )
+        )
         return WARN, "; ".join(detail_bits)
     detail_bits.append("stream=single_or_idle")
     return PASS, "; ".join(detail_bits)

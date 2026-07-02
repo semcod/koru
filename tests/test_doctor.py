@@ -180,6 +180,29 @@ class TestAutonomousServiceStreamProbe(unittest.TestCase):
             self.assertIn("multiple_wup_watchers", check.detail)
             self.assertIn("multiple_autopilot_socket_listeners", check.detail)
             self.assertIn("pid=111", check.detail)
+            self.assertIn("auto_keep_pid=111", check.detail)
+            self.assertIn("auto_stop_pids=222", check.detail)
+            self.assertIn("wup_keep_pid=333", check.detail)
+            self.assertIn("wup_stop_pids=444", check.detail)
+            self.assertIn("koru autonomous up --project", check.detail)
+            self.assertIn("--replace-existing", check.detail)
+
+    def test_autonomous_service_stream_reports_orphan_wup_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            wup = [SimpleNamespace(pid=555, command=f"wup watch {project}")]
+            with (
+                patch("koru.autonomous_processes._find_existing_autonomous_processes", return_value=[]),
+                patch("koru.autonomous_processes._find_existing_wup_processes", return_value=wup),
+                patch("koru.doctor._autopilot_stream_socket_summary", return_value=([], 0, 0)),
+            ):
+                report = _run(project)
+            check = _named(report, "autonomous_service_stream")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("orphan_wup_watcher", check.detail)
+            self.assertIn("orphan_wup_pids=555", check.detail)
+            self.assertIn("--replace-existing", check.detail)
 
 
 class TestPlanfileCliVersionProbe(unittest.TestCase):

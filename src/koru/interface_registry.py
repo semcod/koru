@@ -116,8 +116,7 @@ def _parse_descriptor(raw: object) -> InterfaceDescriptor | None:
     )
 
 
-def load_interface_registry(path: Path | None = None) -> InterfaceRegistry:
-    registry_path = path or interface_registry_path()
+def _load_interface_registry_file(registry_path: Path) -> InterfaceRegistry:
     payload = yaml.safe_load(registry_path.read_text(encoding="utf-8")) or {}
     if not isinstance(payload, dict):
         raise ValueError("interface registry must be a mapping")
@@ -134,6 +133,16 @@ def load_interface_registry(path: Path | None = None) -> InterfaceRegistry:
             raise ValueError(f"invalid interface descriptor: {item!r}")
         parsed.append(descriptor)
     return InterfaceRegistry(schema=schema, interfaces=tuple(parsed))
+
+
+def load_interface_registry(path: Path | None = None) -> InterfaceRegistry:
+    registry_path = path or interface_registry_path()
+    registry = _load_interface_registry_file(registry_path)
+    if path is None and not registry.interfaces:
+        bundled = _bundled_registry_path()
+        if bundled.is_file() and bundled != registry_path:
+            return _load_interface_registry_file(bundled)
+    return registry
 
 
 def iter_interfaces() -> tuple[InterfaceDescriptor, ...]:

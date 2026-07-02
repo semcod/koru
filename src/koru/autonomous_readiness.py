@@ -19,7 +19,7 @@ from koru.doctor_runtime_checks import (
     _check_python_venv_alignment,
     _installed_koru_version,
     _koru_path_version_issues,
-    _read_project_version,
+    _read_koru_source_version,
 )
 from koruide.daemon.metadata import daemon_metadata_path, read_daemon_metadata
 from koruide.ide import canonical_autopilot_ide_id, detect_terminal_host_ide_id, normalize_ide_id
@@ -240,7 +240,7 @@ def check_runtime_consistency(
     project_koru = _project_venv_koru(project)
     launcher = Path(launcher_executable or sys.executable)
     package_version = _installed_koru_version()
-    source_version = _read_project_version(project / "pyproject.toml")
+    source_version = _read_koru_source_version(project / "pyproject.toml")
     path_koru = shutil.which("koru")
 
     _append_issue(

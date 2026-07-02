@@ -700,10 +700,12 @@ def restore_reuse_window_reload(previous: str | None, changed: bool = True) -> N
 
 
 def _resolve_koru_cli_argv() -> list[str]:
-    """Return argv prefix for invoking the koru CLI (PATH binary or module)."""
-    koru_bin = shutil.which("koru")
-    if koru_bin:
-        return [koru_bin]
+    """Return argv prefix for invoking the same Koru runtime.
+
+    Detached reload often runs from projects that have their own virtualenv.
+    Prefer the current interpreter so the child uses the already-selected Koru
+    package instead of a stale ``koru`` wrapper found earlier on ``PATH``.
+    """
     return [sys.executable, "-m", "koru"]
 
 

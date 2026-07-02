@@ -681,6 +681,11 @@ def _maybe_reexec_into_project_python(argv: Sequence[str]) -> bool:
     source_dir = _module_runtime_source_dir("coru.cli")
     env = dict(os.environ)
     env["CORU_REEXEC_DONE"] = "1"
+    target_bin = target_venv / "bin"
+    old_path = env.get("PATH", "")
+    path_parts = [part for part in old_path.split(os.pathsep) if part and part != str(target_bin)]
+    env["VIRTUAL_ENV"] = str(target_venv)
+    env["PATH"] = os.pathsep.join([str(target_bin), *path_parts])
 
     if source_dir is not None:
         runner = (

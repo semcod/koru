@@ -126,7 +126,10 @@ def _source_version(project: Path) -> str | None:
         data = tomllib.loads((project / "pyproject.toml").read_text(encoding="utf-8"))
     except (OSError, tomllib.TOMLDecodeError):
         return None
-    version = data.get("project", {}).get("version")
+    project_data = data.get("project", {})
+    if not isinstance(project_data, dict) or project_data.get("name") != "koru":
+        return None
+    version = project_data.get("version")
     return str(version) if version else None
 
 
