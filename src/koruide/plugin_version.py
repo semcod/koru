@@ -17,8 +17,8 @@ from __future__ import annotations
 # bump only the matching entry — do NOT lockstep all IDEs.
 EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
     "cursor": "0.2.37",
-    "vscode": "0.2.6",
-    "vscodium": "0.2.30",
+    "vscode": "0.2.7",
+    "vscodium": "0.2.31",
     "windsurf": "0.2.10",
     "antigravity": "0.2.16",
 }

@@ -12,6 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from koru.autopilot import plugin_installer
+from koruide.plugin_version import expected_plugin_version_for_ide
 
 
 def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -151,6 +152,25 @@ def test_resolve_extension_vsix_prefers_package_version(tmp_path: Path, monkeypa
     monkeypatch.chdir(tmp_path)
 
     assert plugin_installer.resolve_extension_vsix() == current.resolve()
+
+
+def test_bundled_vscodium_vsix_matches_expected_version() -> None:
+    root = Path(__file__).resolve().parents[1]
+    expected = expected_plugin_version_for_ide("vscodium")
+    asset = (
+        root
+        / "src"
+        / "koru"
+        / "assets"
+        / "koru-autopilot-vscodium"
+        / f"koru-autopilot-vscodium-{expected}.vsix"
+    )
+    package_json = root / "plugins" / "koru-autopilot-vscodium" / "package.json"
+    pyproject = root / "pyproject.toml"
+
+    assert json.loads(package_json.read_text(encoding="utf-8"))["version"] == expected
+    assert asset.is_file()
+    assert '"assets/koru-autopilot-vscodium/*.vsix"' in pyproject.read_text(encoding="utf-8")
 
 
 def test_install_plugin_configures_socket_path(

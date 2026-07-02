@@ -12,6 +12,9 @@ const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
 const GLOBALLY_UNSAFE_FOCUS_OPEN_MARKERS = [
   "settings",
   "preferences",
+  "newchat",
+  "newwindow",
+  "totheside",
 ];
 
 const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
@@ -25,6 +28,7 @@ const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
   "workbench.action.chat.openinnewwindow",
   "workbench.action.chat.opensessioninnewwindow",
   "workbench.action.quickchat.openinchatview",
+  "aichat.newchataction",
 ]);
 
 const UNSAFE_ANTIGRAVITY_FOCUS_OPEN_COMMANDS = new Set([

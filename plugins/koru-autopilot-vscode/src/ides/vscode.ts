@@ -47,9 +47,16 @@ function sanitizeProbeCache(_entry: ProbeCacheEntry, _opts: { isWayland: boolean
     "workbench.panel.aichat.view.copilot.focus",
     "workbench.action.chat.openagent",
     "workbench.action.chat.openask",
+    "aichat.newchataction",
   ]);
   const focusOpen = String(_entry.focusOpen || "").trim().toLowerCase();
-  if (focusOpen && unsafeFocusOpen.has(focusOpen)) {
+  if (
+    focusOpen &&
+    (unsafeFocusOpen.has(focusOpen) ||
+      focusOpen.includes("newchat") ||
+      focusOpen.includes("newwindow") ||
+      focusOpen.includes("totheside"))
+  ) {
     _entry.focusOpen = undefined;
   }
 }

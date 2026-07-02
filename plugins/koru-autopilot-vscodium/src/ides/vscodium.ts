@@ -63,6 +63,7 @@ function isUnsafeVSCodiumFocusOpen(command: string): boolean {
     normalized.includes("settings") ||
     normalized.includes("preferences") ||
     normalized.includes("focusinput") ||
+    normalized.includes("newchataction") ||
     normalized.includes("opennewchat") ||
     normalized.includes("newchat") ||
     normalized.includes("openinnewwindow") ||

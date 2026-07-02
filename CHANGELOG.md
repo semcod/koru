@@ -73,6 +73,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.354] - 2026-07-02
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autopilot_plugin_installer.py
+
+### Other
+- Update package-lock.json
+- Update plugins/koru-autopilot-shared/src/bridge-helpers.ts
+- Update plugins/koru-autopilot-vscode/package-lock.json
+- Update plugins/koru-autopilot-vscode/package.json
+- Update plugins/koru-autopilot-vscode/src/ides/vscode.ts
+- Update plugins/koru-autopilot-vscode/src/probe-ladder.test.ts
+- Update plugins/koru-autopilot-vscodium/package.json
+- Update plugins/koru-autopilot-vscodium/src/ides/vscodium.test.ts
+- Update plugins/koru-autopilot-vscodium/src/ides/vscodium.ts
+- Update scripts/write-ide-plugin-tests.py
+- ... and 2 more files
+
 ## [0.1.353] - 2026-07-02
 
 ### Docs

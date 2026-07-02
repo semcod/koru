@@ -73,6 +73,20 @@ function testSanitizeVscodeDropsUnsafeFocusOpenCache(): void {
   assert(sanitized?.focusInput === "workbench.action.chat.focusInput", "safe focus-input preserved");
 }
 
+function testSanitizeVscodeDropsNewChatFocusOpenCache(): void {
+  const poisoned = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "vscode",
+    appName: "Visual Studio Code",
+    updatedAt: "2026-05-24T20:00:00Z",
+    focusOpen: "aichat.newchataction",
+    focusInput: "workbench.action.chat.focusInput",
+  };
+  const sanitized = sanitizeProbeCacheForIde(poisoned, "vscode");
+  assert(sanitized?.focusOpen === undefined, "new-chat focus-open cache dropped");
+  assert(sanitized?.focusInput === "workbench.action.chat.focusInput", "safe focus-input preserved");
+}
+
 function testHostKeyOrderVscodeKeepsPlainReturnFirst(): void {
   const cands = buildHostKeySubmitCandidates("vscode", "auto", WAYLAND_ENV);
   assert(!firstKey(cands).includes("ctrl"), "VS Code keeps Return-first ordering");
@@ -89,5 +103,6 @@ testPasteLandedInEditor();
 testMergeUnique();
 testBuildFocusOpenVscode();
 testSanitizeVscodeDropsUnsafeFocusOpenCache();
+testSanitizeVscodeDropsNewChatFocusOpenCache();
 testHostKeyOrderVscodeKeepsPlainReturnFirst();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();

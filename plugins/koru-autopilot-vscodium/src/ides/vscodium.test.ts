@@ -61,6 +61,20 @@ function testFocusOpenSanitizeRejectsSettings() {
   assert(entry?.focusOpen === undefined, "settings focus_open cache must be cleared");
 }
 
+function testFocusOpenSanitizeRejectsNewChat() {
+  const entry = sanitizeProbeCacheForIde(
+    {
+      version: PROBE_CACHE_VERSION,
+      ide: "vscodium",
+      appName: "VSCodium",
+      focusOpen: "aichat.newchataction",
+      updatedAt: "",
+    },
+    "vscodium",
+  );
+  assert(entry?.focusOpen === undefined, "new-chat focus_open cache must be cleared");
+}
+
 function testTrustFocusOpen() {
   const file = { hasEditor: true, scheme: "file", isFileLike: true, text: "code" };
   assert(!verifyFocusAfterOpen(file, file, "vscodium"), "vscodium does not trust unchanged focus snapshot");
@@ -105,6 +119,7 @@ function run() {
   testPreferCtrlSubmit();
   testSubmitSanitize();
   testFocusOpenSanitizeRejectsSettings();
+  testFocusOpenSanitizeRejectsNewChat();
   testTrustFocusOpen();
   testSubmitCommandsTryRegisteredSubmitFirst();
   testFocusOpenAvoidsPanelOpenCommands();
