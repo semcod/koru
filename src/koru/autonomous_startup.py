@@ -833,6 +833,9 @@ def format_post_startup_operator_hints(
             f"repair: koru ide doctor --ide {ide} --fix --explain",
         ]
 
+    if plugin_supported and plugin_connected is True:
+        return [status_line, *mismatch_warnings]
+
     lines: list[str] = [
         "",
         "koru autonomous: --- co zrobić teraz (operator IDE) ---",

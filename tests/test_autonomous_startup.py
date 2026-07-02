@@ -571,6 +571,36 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
     assert "drive jest wstrzymany" in text
 
 
+def test_format_post_startup_operator_hints_short_when_plugin_connected(
+    tmp_path: Path,
+) -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=tmp_path,
+        agent_lane_cli="vscodium",
+        autopilot_ide_cli="vscodium",
+        resolved_lane="vscodium",
+        lane_source="cli:vscodium",
+        resolved_autopilot_ide="vscodium",
+        autopilot_ide_source="cli:vscodium",
+        running_ides=("VSCodium (pid=1)",),
+        terminal_lane="vscodium",
+        socket_path="/run/user/1000/koru-autopilot-vscodium.sock",
+        session="wayland",
+        term_program="vscode",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+
+    lines = startup.format_post_startup_operator_hints(probe, plugin_connected=True)
+    text = "\n".join(lines)
+
+    assert "co zrobić teraz" not in text
+    assert "plugin połączony" in text
+    assert "Command Palette" not in text
+
+
 def test_format_post_startup_operator_hints_compact_for_disconnected_plugin(
     tmp_path: Path,
 ) -> None:

@@ -168,6 +168,39 @@ def _has_planfile_cli_module() -> bool:
         return False
 
 
+def _python_has_planfile_cli(python: str) -> bool:
+    try:
+        proc = subprocess.run(
+            [
+                python,
+                "-c",
+                (
+                    "import importlib.util, sys; "
+                    "sys.exit(0 if importlib.util.find_spec('planfile.cli') else 1)"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return proc.returncode == 0
+
+
+def _module_cli_command_for_project(project: Path) -> list[str] | None:
+    """Prefer the project venv Python for planfile before the active interpreter."""
+    from koru.utils.subprocess_runner import get_python_cmd
+
+    for python in get_python_cmd(project):
+        if _python_has_planfile_cli(python):
+            return [python, "-m", "planfile.cli"]
+    if _has_planfile_cli_module():
+        return [sys.executable, "-m", "planfile.cli"]
+    return None
+
+
 _MIN_STRUCTURED_QUEUE_PLANFILE_VERSION = (0, 1, 100)
 
 
@@ -226,8 +259,8 @@ def planfile_command(
         base_command = shlex.split(configured)
     elif local_planfile := _local_planfile_executable(project):
         base_command = [str(local_planfile)]
-    elif _has_planfile_cli_module():
-        base_command = [sys.executable, "-m", "planfile.cli"]
+    elif module_cmd := _module_cli_command_for_project(project):
+        base_command = module_cmd
     elif shutil.which("planfile"):
         base_command = ["planfile"]
     else:

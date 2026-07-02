@@ -97,6 +97,33 @@ class TestPlanfileCommand(unittest.TestCase):
 
             self.assertEqual(calls[0], ["planfile", "ticket", "list"])
 
+    def test_prefers_project_venv_python_before_sys_executable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            venv_python = project / ".venv" / "bin" / "python"
+            venv_python.parent.mkdir(parents=True)
+            venv_python.write_text("#!/bin/sh\n", encoding="utf-8")
+            venv_python.chmod(0o755)
+            calls: list[list[str]] = []
+
+            def runner(command, _project):
+                calls.append(list(command))
+                return _ok()
+
+            with patch(
+                "koru.queue.ticket._python_has_planfile_cli",
+                side_effect=lambda python: python == str(venv_python),
+            ), patch("koru.queue.ticket._has_planfile_cli_module", return_value=True), patch(
+                "koru.queue.ticket.shutil.which",
+                return_value=None,
+            ):
+                planfile_command(project, ["ticket", "list"], runner=runner)
+
+            self.assertEqual(
+                calls[0],
+                [str(venv_python), "-m", "planfile.cli", "ticket", "list"],
+            )
+
     def test_falls_back_to_path_cli_when_module_cli_missing(self) -> None:
         calls: list[list[str]] = []
 

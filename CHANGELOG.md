@@ -73,6 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.357] - 2026-07-02
+
+### Fixed
+- Planfile CLI prefers project ``.venv/bin/python`` over the active interpreter
+  (fixes lock/timeouts when ``koru -a`` runs from conda base).
+- Operator checklist is short when the autopilot plugin is already connected.
+
 ## [0.1.356] - 2026-07-02
 
 ### Fixed
