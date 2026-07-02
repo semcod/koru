@@ -21,8 +21,10 @@ from koru import autonomous_cycle_skip_conditions as skip_conditions_mod
 from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_processes as autonomous_processes_mod
 from koru import autonomous_wup as autonomous_wup_mod
+from koru.autonomous_cli_config import normalize_autonomous_argv
 from koru.autonomous_parser import looks_like_autonomous_up_command
 from koru.autonomous_processes import ExistingAutonomousProcess, ExistingManagedProcess
+from koru.autonomy.environment import EnvironmentReport, SocketHealth
 from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
 
@@ -594,6 +596,91 @@ def test_looks_like_autonomous_matches_koru_autonomous_regex() -> None:
     assert looks_like_autonomous_up_command(
         "python3 -m koru.cli autonomous up --project /tmp",
     )
+
+
+def test_autonomous_normalize_preserves_maintenance_subcommands() -> None:
+    assert normalize_autonomous_argv(["doctor"]) == ["doctor"]
+    assert normalize_autonomous_argv(["--socket", "/tmp/s", "self-heal"]) == [
+        "--socket",
+        "/tmp/s",
+        "self-heal",
+    ]
+    assert normalize_autonomous_argv(["--socket", "/tmp/s", "--project", "/tmp/p"]) == [
+        "--socket",
+        "/tmp/s",
+        "up",
+        "--project",
+        "/tmp/p",
+    ]
+
+
+def test_autonomous_doctor_subcommand_reports_environment(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    report = EnvironmentReport(
+        headless=False,
+        can_use_plugin_socket=False,
+        can_use_mcp=False,
+        notes=["probe note"],
+    )
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        lambda project, autopilot_socket=None: report,
+    )
+
+    rc = autonomous_mod.autonomous_main(["doctor", "--project", str(tmp_path)])
+
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "koru autonomous doctor" in out
+    assert "note: probe note" in out
+
+
+def test_autonomous_self_heal_subcommand_dry_run_stale_socket(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    socket = tmp_path / "koru.sock"
+    report = EnvironmentReport(
+        headless=False,
+        autopilot_socket=SocketHealth(
+            path=socket,
+            exists=True,
+            listening=False,
+            stale=True,
+        ),
+    )
+    seen: dict[str, Path | None] = {}
+
+    def fake_probe_environment(project, autopilot_socket=None):
+        seen["project"] = project
+        seen["socket"] = autopilot_socket
+        return report
+
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        fake_probe_environment,
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "--socket",
+            str(socket),
+            "self-heal",
+            "--project",
+            str(tmp_path),
+            "--dry-run",
+        ],
+    )
+
+    assert rc == 0
+    assert seen == {"project": tmp_path.resolve(), "socket": socket}
+    out = capsys.readouterr().out
+    assert "self-heal: dry_run=1" in out
+    assert f"would unlink {socket}" in out
 
 
 def test_auto_main_argv_injects_replace_existing(tmp_path: Path) -> None:

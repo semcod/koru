@@ -7,6 +7,23 @@ from typing import Any
 
 from koru.env_flags import parse_boolish
 
+_MAINTENANCE_ACTIONS = {"doctor", "self-heal"}
+_GLOBAL_OPTIONS_WITH_VALUE = {"--socket"}
+
+
+def _first_action_token(argv: list[str]) -> tuple[str | None, int]:
+    idx = 0
+    while idx < len(argv):
+        token = argv[idx]
+        if token in _GLOBAL_OPTIONS_WITH_VALUE:
+            idx += 2
+            continue
+        if any(token.startswith(f"{option}=") for option in _GLOBAL_OPTIONS_WITH_VALUE):
+            idx += 1
+            continue
+        return token, idx
+    return None, idx
+
 
 def _truthy_strategy_value(value: Any, default: bool) -> bool:
     return parse_boolish(value, default=default)
@@ -103,8 +120,12 @@ def normalize_autonomous_argv(argv: list[str]) -> list[str]:
     """Normalize command line arguments for autonomous mode."""
     if not argv:
         return ["up"]
-    if argv[0] == "safe-up":
+    action, action_idx = _first_action_token(argv)
+    if action in _MAINTENANCE_ACTIONS:
+        return argv
+    if action == "safe-up":
         return [
+            *argv[:action_idx],
             "up",
             "--ticket-sources",
             "queue",
@@ -117,10 +138,10 @@ def normalize_autonomous_argv(argv: list[str]) -> list[str]:
             "--max-cycles",
             "1",
             "--no-semcod-artifacts",
-            *argv[1:],
+            *argv[action_idx + 1 :],
         ]
-    if argv[0] != "up" and argv[0] not in ("-h", "--help"):
-        return ["up", *argv]
+    if action not in {"up", "-h", "--help"}:
+        return [*argv[:action_idx], "up", *argv[action_idx:]]
     return argv
 
 

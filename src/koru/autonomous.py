@@ -1003,6 +1003,58 @@ def _action_up(args: argparse.Namespace) -> int:
     )
 
 
+def _format_autonomous_doctor_report(report: Any) -> list[str]:
+    installed = ", ".join(report.installed_ides) or "none"
+    mcp_enabled = ", ".join(report.mcp_enabled_ides) or "none"
+    socket = report.autopilot_socket
+    if socket is None:
+        socket_line = "autopilot socket: not configured"
+    else:
+        socket_line = (
+            f"autopilot socket: {socket.path} "
+            f"exists={socket.exists} listening={socket.listening} stale={socket.stale}"
+        )
+
+    lines = [
+        "koru autonomous doctor",
+        f"headless: {report.headless}",
+        f"installed IDEs: {installed}",
+        f"MCP enabled IDEs: {mcp_enabled}",
+        socket_line,
+        f"plugin socket usable: {report.can_use_plugin_socket}",
+        f"MCP usable: {report.can_use_mcp}",
+    ]
+    for issue in report.fixable_issues:
+        lines.append(f"fixable: {issue}")
+    for note in report.notes:
+        lines.append(f"note: {note}")
+    return lines
+
+
+def _action_doctor(args: argparse.Namespace) -> int:
+    from koru.autonomy.environment import probe_environment
+
+    project = args.project.resolve()
+    report = probe_environment(project, autopilot_socket=args.socket)
+    for line in _format_autonomous_doctor_report(report):
+        print(line)
+    return 0
+
+
+def _action_self_heal(args: argparse.Namespace) -> int:
+    from koru.autonomy.environment import probe_environment
+    from koru.autonomy.heal import heal_environment, summarise
+
+    project = args.project.resolve()
+    report = probe_environment(project, autopilot_socket=args.socket)
+    results = heal_environment(report, dry_run=args.dry_run)
+    print(summarise(results))
+    for result in results:
+        detail = f": {result.detail}" if result.detail else ""
+        print(f"{result.action}: {result.status}{detail}")
+    return 1 if any(result.status == "failed" for result in results) else 0
+
+
 def _normalize_autonomous_argv(argv: list[str]) -> list[str]:
     """Normalize command line arguments for autonomous mode."""
     return _autonomous_cli_config.normalize_autonomous_argv(argv)
@@ -1052,6 +1104,10 @@ def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
     args = _parse_autonomous_args(argv, invoked_as_auto=invoked_as_auto)
     if args.action == "up":
         return _action_up(args)
+    if args.action == "doctor":
+        return _action_doctor(args)
+    if args.action == "self-heal":
+        return _action_self_heal(args)
     return 2
 
 

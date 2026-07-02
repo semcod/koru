@@ -405,7 +405,7 @@ wheels = [
 
 [[package]]
 name = "costs"
-version = "0.1.51"
+version = "0.1.53"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anthropic" },
@@ -418,9 +418,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/92/2c/d9f9a9c0acd33bc40788aaeef792fe045efd42368cde2ad00a0e15eeb625/costs-0.1.51.tar.gz", hash = "sha256:727f5f14874c41731e2485cc309ec4cc87c447288c8be4c0ddb38f72391d49cc", size = 30777, upload-time = "2026-05-12T08:33:20.439Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/02/126b813e063a47c7e7efef481ac144747f94fd05ae39ee9d5c3c6253a09f/costs-0.1.53.tar.gz", hash = "sha256:9f9f76a9e523e899b72a658c574e33145f0f25b97554c15f70dc714206d3d8ca", size = 30980, upload-time = "2026-07-02T14:11:25.407Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/15/4490e3afc8e0e903a984582db06a34ec9feeddf52ef99902d456a2e15da5/costs-0.1.51-py3-none-any.whl", hash = "sha256:15e2ebf518fec04e5883612d96dd2673f56cbeaf58408e448eb0837c01a2dc85", size = 35771, upload-time = "2026-05-12T08:33:19.271Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/0e/a6c82f642985c19f6b42a86e5aaf54086fab4ab3771d54e932ec78a7d577/costs-0.1.53-py3-none-any.whl", hash = "sha256:2795668c83a5974c66b1fb6d7831248a481e1bb009f68c4b345d74d357205b88", size = 35990, upload-time = "2026-07-02T14:11:24.146Z" },
 ]
 
 [[package]]
@@ -835,7 +835,7 @@ wheels = [
 
 [[package]]
 name = "goal"
-version = "2.1.261"
+version = "2.1.264"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -845,9 +845,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/27/27f2b2c453b3c0c77d3b3b37f2d5a2a9dfaaec2eee1f90b4fc53b2c7c7d5/goal-2.1.261.tar.gz", hash = "sha256:cc72d7ae9c2f8b6fc86b0aba10c4f723df3d167117b252c23019f5f25d6e9a8d", size = 302506, upload-time = "2026-06-22T13:53:34.882Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/1d/dc29f74552943df82916bbcbb247c1e0e6d8659c2d3eae5836f1b74aadaa/goal-2.1.264.tar.gz", hash = "sha256:6f176237147e7e4375b509c4a3808c2978786b5414298e2fab269b14b47d7bfa", size = 304051, upload-time = "2026-07-02T14:31:19.074Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/66/a2823f9a67f8ccda8e416991b56a88354f7223eba4943b5f34198de5dbca/goal-2.1.261-py3-none-any.whl", hash = "sha256:75f67d1e502eda2a092c5926448b2c32895525a94e9eec62f12a156e892225d7", size = 290072, upload-time = "2026-06-22T13:53:32.983Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/26/9d73a7d7e1737058f95115a1402fb5e6994f12c227b76f685a721dc176f2/goal-2.1.264-py3-none-any.whl", hash = "sha256:f87fdf50641255c72f5712f587cecd75b4efd36c0ffafd0ba852b1d9092ba0fc", size = 290733, upload-time = "2026-07-02T14:31:17.225Z" },
 ]
 
 [[package]]
@@ -1394,7 +1394,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.351"
+version = "0.1.352"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1588,8 +1588,8 @@ requires-dist = [
     { name = "apscheduler", marker = "extra == 'queue'", specifier = ">=3.10,<4.0" },
     { name = "arq", marker = "extra == 'all'", specifier = ">=0.26,<1.0" },
     { name = "arq", marker = "extra == 'queue'", specifier = ">=0.26,<1.0" },
-    { name = "costs", marker = "extra == 'all'", specifier = ">=0.1.20" },
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "costs", marker = "extra == 'all'", specifier = ">=0.1.53" },
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.53" },
     { name = "curllm", extras = ["mcp"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "curllm", extras = ["mcp"], marker = "extra == 'browser'", specifier = ">=1.0.0" },
     { name = "curllm", extras = ["mcp"], marker = "extra == 'curllm'", specifier = ">=1.0.0" },
@@ -1604,8 +1604,8 @@ requires-dist = [
     { name = "gillm", specifier = ">=0.1.9" },
     { name = "gillm", marker = "extra == 'all'", specifier = ">=0.1.9" },
     { name = "gillm", marker = "extra == 'dev'", specifier = ">=0.1.9" },
-    { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.0" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.264" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.264" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27,<1.0" },
     { name = "httpx", marker = "extra == 'api'", specifier = ">=0.27,<1.0" },
     { name = "httpx", marker = "extra == 'imgl'", specifier = ">=0.27,<1.0" },
@@ -1706,9 +1706,9 @@ control = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
 dev = [
-    { name = "costs", specifier = ">=0.1.20" },
+    { name = "costs", specifier = ">=0.1.53" },
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "goal", specifier = ">=2.1.0" },
+    { name = "goal", specifier = ">=2.1.264" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "hypothesis", specifier = ">=6.112,<7.0" },
     { name = "jsonschema", specifier = ">=4.0" },
