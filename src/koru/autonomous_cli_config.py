@@ -7,7 +7,7 @@ from typing import Any
 
 from koru.env_flags import parse_boolish
 
-_MAINTENANCE_ACTIONS = {"doctor", "self-heal"}
+_MAINTENANCE_ACTIONS = {"doctor", "self-heal", "status"}
 _GLOBAL_OPTIONS_WITH_VALUE = {"--socket"}
 
 

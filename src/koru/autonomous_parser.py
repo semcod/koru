@@ -23,6 +23,24 @@ def _add_maintenance_subcommands(sub: argparse._SubParsersAction[argparse.Argume
         help="Probe autodetect: IDE / MCP / autopilot socket. Read-only.",
     )
     doctor.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    doctor.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format.",
+    )
+
+    status = sub.add_parser(
+        "status",
+        help="Print a read-only autonomous readiness/status snapshot.",
+    )
+    status.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    status.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format.",
+    )
 
     heal = sub.add_parser(
         "self-heal",
@@ -33,6 +51,12 @@ def _add_maintenance_subcommands(sub: argparse._SubParsersAction[argparse.Argume
         "--dry-run",
         action="store_true",
         help="Only print what would be repaired; do not mutate state.",
+    )
+    heal.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format.",
     )
 
 

@@ -600,6 +600,11 @@ def test_looks_like_autonomous_matches_koru_autonomous_regex() -> None:
 
 def test_autonomous_normalize_preserves_maintenance_subcommands() -> None:
     assert normalize_autonomous_argv(["doctor"]) == ["doctor"]
+    assert normalize_autonomous_argv(["status", "--format", "json"]) == [
+        "status",
+        "--format",
+        "json",
+    ]
     assert normalize_autonomous_argv(["--socket", "/tmp/s", "self-heal"]) == [
         "--socket",
         "/tmp/s",
@@ -636,6 +641,68 @@ def test_autonomous_doctor_subcommand_reports_environment(
     out = capsys.readouterr().out
     assert "koru autonomous doctor" in out
     assert "note: probe note" in out
+
+
+def test_autonomous_doctor_subcommand_json_reports_environment(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    socket = tmp_path / "koru.sock"
+    report = EnvironmentReport(
+        headless=False,
+        autopilot_socket=SocketHealth(
+            path=socket,
+            exists=True,
+            listening=True,
+            stale=False,
+        ),
+        can_use_plugin_socket=True,
+        can_use_mcp=False,
+        notes=["probe note"],
+    )
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        lambda project, autopilot_socket=None: report,
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        ["doctor", "--project", str(tmp_path), "--format", "json"],
+    )
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["action"] == "doctor"
+    assert payload["project"] == str(tmp_path.resolve())
+    assert payload["autopilot_socket"]["healthy"] is True
+    assert payload["ready"] is True
+    assert payload["notes"] == ["probe note"]
+
+
+def test_autonomous_status_subcommand_uses_status_action(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    report = EnvironmentReport(
+        headless=False,
+        can_use_plugin_socket=False,
+        can_use_mcp=True,
+    )
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        lambda project, autopilot_socket=None: report,
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        ["status", "--project", str(tmp_path), "--format", "json"],
+    )
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["action"] == "status"
+    assert payload["ready"] is True
+    assert payload["can_use_mcp"] is True
 
 
 def test_autonomous_self_heal_subcommand_dry_run_stale_socket(
@@ -681,6 +748,48 @@ def test_autonomous_self_heal_subcommand_dry_run_stale_socket(
     out = capsys.readouterr().out
     assert "self-heal: dry_run=1" in out
     assert f"would unlink {socket}" in out
+
+
+def test_autonomous_self_heal_subcommand_json(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    socket = tmp_path / "koru.sock"
+    report = EnvironmentReport(
+        headless=False,
+        autopilot_socket=SocketHealth(
+            path=socket,
+            exists=True,
+            listening=False,
+            stale=True,
+        ),
+    )
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        lambda project, autopilot_socket=None: report,
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "--socket",
+            str(socket),
+            "self-heal",
+            "--project",
+            str(tmp_path),
+            "--dry-run",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["action"] == "self-heal"
+    assert payload["dry_run"] is True
+    assert payload["ok"] is True
+    assert payload["results"][0]["status"] == "dry_run"
+    assert payload["results"][0]["detail"] == f"would unlink {socket}"
 
 
 def test_auto_main_argv_injects_replace_existing(tmp_path: Path) -> None:
