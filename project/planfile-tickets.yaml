@@ -32399,5 +32399,197 @@ tickets:
   files:
   - tests/test_serve.py
   dedupe_key: test-optimization:tests.test_serve.TestServe:test_api_context_returns_brief
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_autonomous.test_up_auto_installs_plugin_before_autopilot_loop'
+  description: 'Test `tests.test_autonomous.test_up_auto_installs_plugin_before_autopilot_loop`
+    took 39.77s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_autonomous.py
+  dedupe_key: test-optimization:tests.test_autonomous:test_up_auto_installs_plugin_before_autopilot_loop
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_subcommand_catalog_json'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_subcommand_catalog_json`
+    took 1.67s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_subcommand_catalog_json
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_scan.TestRunScan.test_apply_creates_human_executor_tickets_without_custom_runner'
+  description: 'Test `tests.test_scan.TestRunScan.test_apply_creates_human_executor_tickets_without_custom_runner`
+    took 1.66s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_scan.py
+  dedupe_key: test-optimization:tests.test_scan.TestRunScan:test_apply_creates_human_executor_tickets_without_custom_runner
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_fix_text_is_guidance_only'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_fix_text_is_guidance_only`
+    took 1.61s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_fix_text_is_guidance_only
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_exit_0_on_no_failures'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_exit_0_on_no_failures`
+    took 1.56s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_exit_0_on_no_failures
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_default_is_text'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_default_is_text`
+    took 1.53s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_default_is_text
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_fix_json'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_fix_json` took
+    1.53s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_fix_json
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_subcommand_text'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_subcommand_text`
+    took 1.52s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_subcommand_text
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_cli.TestDoctorDispatch.test_doctor_json'
+  description: 'Test `tests.test_cli.TestDoctorDispatch.test_doctor_json` took 1.52s
+    to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_cli.py
+  dedupe_key: test-optimization:tests.test_cli.TestDoctorDispatch:test_doctor_json
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_scan.TestRunScan.test_apply_surfaces_runtime_create_failure_class_when_message_empty'
+  description: 'Test `tests.test_scan.TestRunScan.test_apply_surfaces_runtime_create_failure_class_when_message_empty`
+    took 1.08s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_scan.py
+  dedupe_key: test-optimization:tests.test_scan.TestRunScan:test_apply_surfaces_runtime_create_failure_class_when_message_empty
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_scan.TestRunScan.test_apply_uses_stable_title_and_deduplicates_by_signal'
+  description: 'Test `tests.test_scan.TestRunScan.test_apply_uses_stable_title_and_deduplicates_by_signal`
+    took 1.04s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_scan.py
+  dedupe_key: test-optimization:tests.test_scan.TestRunScan:test_apply_uses_stable_title_and_deduplicates_by_signal
+- signal: slow_test_warning
+  title: 'Address slow test: tests.test_scan.TestRunScan.test_apply_surfaces_runtime_create_failure_detail_without_custom_runner'
+  description: 'Test `tests.test_scan.TestRunScan.test_apply_surfaces_runtime_create_failure_detail_without_custom_runner`
+    took 1.04s to run.
+
+
+    Optimize its setup, mock slow external dependencies, or refactor its logic to
+    reduce overall test suite execution time.'
+  priority: medium
+  labels:
+  - llm-ready
+  - test-optimization
+  - slow-test
+  files:
+  - tests/test_scan.py
+  dedupe_key: test-optimization:tests.test_scan.TestRunScan:test_apply_surfaces_runtime_create_failure_detail_without_custom_runner
 applied: []
 skipped: []
