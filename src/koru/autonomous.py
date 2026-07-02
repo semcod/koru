@@ -1076,11 +1076,21 @@ def _format_autonomous_report_text(
     return lines
 
 
+def _resolve_autonomous_report_socket(explicit: Path | None) -> Path:
+    """Resolve autopilot socket for doctor/status/self-heal probes."""
+    if explicit is not None:
+        return explicit.expanduser().resolve()
+    from koruide.socket import default_socket_path
+
+    return default_socket_path()
+
+
 def _print_autonomous_report(args: argparse.Namespace, *, action: str) -> int:
     from koru.autonomy.environment import probe_environment
 
     project = args.project.resolve()
-    report = probe_environment(project, autopilot_socket=args.socket)
+    socket_path = _resolve_autonomous_report_socket(args.socket)
+    report = probe_environment(project, autopilot_socket=socket_path)
     if args.format == "json":
         print(json.dumps(_autonomous_report_payload(project, report, action=action)))
         return 0
@@ -1113,7 +1123,8 @@ def _action_self_heal(args: argparse.Namespace) -> int:
     from koru.autonomy.heal import heal_environment, summarise
 
     project = args.project.resolve()
-    report = probe_environment(project, autopilot_socket=args.socket)
+    socket_path = _resolve_autonomous_report_socket(args.socket)
+    report = probe_environment(project, autopilot_socket=socket_path)
     results = heal_environment(report, dry_run=args.dry_run)
     failed = any(result.status == "failed" for result in results)
     if args.format == "json":

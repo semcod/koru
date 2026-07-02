@@ -705,6 +705,38 @@ def test_autonomous_status_subcommand_uses_status_action(
     assert payload["can_use_mcp"] is True
 
 
+def test_autonomous_status_resolves_default_socket_from_instance_env(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    expected = tmp_path / "koru-autopilot-vscodium.sock"
+    seen: dict[str, Path | None] = {}
+
+    def fake_probe_environment(project, autopilot_socket=None):
+        seen["socket"] = autopilot_socket
+        return EnvironmentReport(headless=False, can_use_mcp=True)
+
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
+    monkeypatch.setattr(
+        "koruide.socket.default_socket_path",
+        lambda: expected,
+    )
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        fake_probe_environment,
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        ["status", "--project", str(tmp_path), "--format", "json"],
+    )
+
+    assert rc == 0
+    assert seen["socket"] == expected
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["action"] == "status"
+
+
 def test_autonomous_self_heal_subcommand_dry_run_stale_socket(
     tmp_path,
     monkeypatch,
@@ -4590,6 +4622,7 @@ def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(
             }
 
     monkeypatch.setattr(time, "sleep", lambda _x: None)
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
     monkeypatch.setattr(
         autonomous_mod,
         "run_planfile_queue_loop",
@@ -4898,6 +4931,7 @@ def test_run_cycle_jetbrains_does_not_require_plugin_by_default(
     monkeypatch.delenv("KORU_AUTOPILOT_VISIBLE_TYPING", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_PREFER_KEYBOARD", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
     monkeypatch.setattr(
         autonomous_mod,
         "run_planfile_queue_loop",

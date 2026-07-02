@@ -73,6 +73,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.355] - 2026-07-02
+
+### Fixed
+- Autonomous status socket resolution, VSCodium `codium` binary detection, and
+  `can_use_plugin_socket` semantics (plugin must be connected).
+
 ## [0.1.354] - 2026-07-02
 
 ### Docs

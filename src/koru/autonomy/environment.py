@@ -25,6 +25,22 @@ from koru.ide_router import is_headless_environment
 
 KNOWN_IDES = ("cursor", "windsurf", "vscode", "code", "code-oss", "vscodium", "zed")
 
+# Host binaries often differ from canonical IDE ids (e.g. VSCodium → ``codium``).
+_IDE_BINARY_CANDIDATES: dict[str, tuple[str, ...]] = {
+    "vscodium": ("vscodium", "codium"),
+    "vscode": ("code", "vscode"),
+    "code": ("code",),
+    "code-oss": ("code-oss", "code"),
+}
+
+
+def _resolve_ide_binary(ide: str, *, path: str | None) -> str | None:
+    for name in _IDE_BINARY_CANDIDATES.get(ide, (ide,)):
+        found = shutil.which(name, path=path)
+        if found:
+            return found
+    return None
+
 
 @dataclass(frozen=True)
 class IDEPresence:
@@ -126,7 +142,7 @@ def probe_ide_presence(
             except (OSError, ValueError):
                 continue
 
-        binary = shutil.which(ide, path=env.get("PATH"))
+        binary = _resolve_ide_binary(ide, path=env.get("PATH"))
         out.append(
             IDEPresence(
                 ide=ide,
@@ -176,15 +192,40 @@ def _check_socket_health(autopilot_socket: Path | None) -> SocketHealth | None:
     return None
 
 
+def _probe_autopilot_plugin_connected(socket_path: Path, *, timeout: float = 1.0) -> bool:
+    """True when the daemon answers and at least one IDE plugin is connected."""
+    if not probe_socket_health(socket_path).listening:
+        return False
+    try:
+        from koru.autopilot.client import AutopilotClient
+
+        client = AutopilotClient(socket_path=socket_path, timeout=timeout)
+        if not client.is_running():
+            return False
+        status = client.status()
+        plugins = status.get("plugins")
+        return isinstance(plugins, list) and len(plugins) > 0
+    except Exception:
+        return False
+
+
 def _build_fixable_issues(
     socket_health: SocketHealth | None,
     ides: list[IDEPresence],
+    *,
+    plugin_connected: bool = False,
 ) -> list[str]:
     """Build list of fixable environment issues."""
     fixable: list[str] = []
     if socket_health and socket_health.stale:
         fixable.append(
             f"stale autopilot socket at {socket_health.path}: remove + restart daemon",
+        )
+    if socket_health and socket_health.listening and not plugin_connected:
+        fixable.append(
+            f"autopilot daemon listening at {socket_health.path} but no IDE plugin connected: "
+            "run `koru: Connect autopilot daemon` in your IDE "
+            "(and set KORU_AUTOPILOT_INSTANCE to match the daemon lane)",
         )
     installed = [p.ide for p in ides if p.installed]
     mcp_on = [p.ide for p in ides if p.mcp_has_koru]
@@ -222,10 +263,15 @@ def probe_environment(
     ides = probe_ide_presence(project, environ=env)
 
     socket_health = _check_socket_health(autopilot_socket)
-    can_plugin = bool(socket_health and socket_health.listening)
+    plugin_connected = (
+        _probe_autopilot_plugin_connected(autopilot_socket)
+        if autopilot_socket is not None
+        else False
+    )
+    can_plugin = plugin_connected
     can_mcp = any(p.mcp_has_koru for p in ides)
 
-    fixable = _build_fixable_issues(socket_health, ides)
+    fixable = _build_fixable_issues(socket_health, ides, plugin_connected=plugin_connected)
     notes = _build_notes(headless, ides)
 
     return EnvironmentReport(
@@ -247,4 +293,5 @@ __all__ = [
     "probe_environment",
     "probe_ide_presence",
     "probe_socket_health",
+    "_probe_autopilot_plugin_connected",
 ]

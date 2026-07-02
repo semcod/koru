@@ -83,6 +83,19 @@ def test_probe_ide_presence_detects_installed_binary(tmp_path: Path) -> None:
     assert cursor.binary_path.endswith("/cursor")
 
 
+def test_probe_ide_presence_detects_vscodium_via_codium_binary(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "codium").write_text("#!/bin/sh\nexit 0\n")
+    (bin_dir / "codium").chmod(0o755)
+
+    presences = probe_ide_presence(tmp_path, environ={"PATH": str(bin_dir)})
+    vscodium = next(p for p in presences if p.ide == "vscodium")
+    assert vscodium.installed is True
+    assert vscodium.binary_path is not None
+    assert vscodium.binary_path.endswith("/codium")
+
+
 def test_probe_ide_presence_detects_koru_in_cursor_mcp(tmp_path: Path) -> None:
     """When project has .cursor/mcp.json with koru entry, mcp_has_koru is True."""
     cfg_dir = tmp_path / ".cursor"
@@ -130,6 +143,25 @@ def test_probe_environment_flags_stale_socket(tmp_path: Path) -> None:
     assert report.autopilot_socket is not None
     assert report.autopilot_socket.stale is True
     assert any("stale autopilot socket" in issue for issue in report.fixable_issues)
+
+
+def test_probe_environment_daemon_without_plugin_is_not_usable(tmp_path: Path) -> None:
+    live = tmp_path / "live.sock"
+    srv = _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM)
+    srv.bind(str(live))
+    srv.listen(1)
+    try:
+        with patch(
+            "koru.autonomy.environment._probe_autopilot_plugin_connected",
+            return_value=False,
+        ):
+            report = probe_environment(tmp_path, autopilot_socket=live, environ={"PATH": ""})
+        assert report.autopilot_socket is not None
+        assert report.autopilot_socket.listening is True
+        assert report.can_use_plugin_socket is False
+        assert any("no IDE plugin connected" in issue for issue in report.fixable_issues)
+    finally:
+        srv.close()
 
 
 def test_probe_environment_flags_missing_mcp_when_ide_installed(tmp_path: Path) -> None:
