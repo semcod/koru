@@ -5,6 +5,16 @@ import re
 from pathlib import Path
 
 
+def _positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer >= 1") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be >= 1")
+    return parsed
+
+
 def _add_socket_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--socket",
@@ -107,7 +117,7 @@ def _add_up_core_args(up: argparse.ArgumentParser) -> None:
     )
     up.add_argument(
         "--max-iterations",
-        type=int,
+        type=_positive_int,
         default=50,
         help="Max queue tickets per cycle (default: 50).",
     )

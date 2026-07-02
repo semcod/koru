@@ -73,6 +73,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.356] - 2026-07-02
+
+### Fixed
+- `--no-operator-pipeline` no longer prints the full IDE operator checklist.
+- Autonomous doctor/status/self-heal resolve the lane socket via project context.
+
+### Added
+- Top-level CLI aliases: `-a`, `-auto`, `--auto` → `koru auto`.
+- `--max-iterations` rejects values below 1.
+
 ## [0.1.355] - 2026-07-02
 
 ### Fixed

@@ -1,7 +1,59 @@
 from __future__ import annotations
 
-from koru.autonomous_operator import _plugin_blocker_line
+from types import SimpleNamespace
+
+from koru.autonomous_operator import _plugin_blocker_line, run_operator_pipeline
 from koru.autonomous_plugin import plugin_skip_code, plugin_status_decision
+
+
+def test_run_operator_pipeline_skips_hints_when_disabled() -> None:
+  hints = ["koru autonomous: --- co zrobić teraz (operator IDE) ---"]
+  emitted: list[str] = []
+
+  run_operator_pipeline(
+      SimpleNamespace(operator_pipeline=False, emit_events="text"),
+      project=SimpleNamespace(),
+      startup_probe=SimpleNamespace(),
+      plugin_connected=True,
+      mcp_provision_ran=False,
+      correlation_id="test",
+      format_hints=lambda *_a, **_k: hints,
+      run_pipeline=lambda **_kw: (_ for _ in ()).throw(AssertionError("pipeline ran")),
+      stdio_info=lambda msg, **_kw: emitted.append(msg),
+  )
+
+  assert emitted == []
+
+
+def test_run_operator_pipeline_emits_hints_when_enabled() -> None:
+  hints = ["line-one", "line-two"]
+  emitted: list[str] = []
+  pipeline_ran = False
+
+  def _run_pipeline(**_kwargs):
+      nonlocal pipeline_ran
+      pipeline_ran = True
+
+  run_operator_pipeline(
+      SimpleNamespace(
+          operator_pipeline=True,
+          emit_events="text",
+          operator_tickets=False,
+          operator_ticket_queue="operator",
+          operator_ticket_priority="normal",
+      ),
+      project=SimpleNamespace(),
+      startup_probe=SimpleNamespace(),
+      plugin_connected=True,
+      mcp_provision_ran=False,
+      correlation_id="test",
+      format_hints=lambda *_a, **_k: hints,
+      run_pipeline=_run_pipeline,
+      stdio_info=lambda msg, **_kw: emitted.append(msg),
+  )
+
+  assert emitted == hints
+  assert pipeline_ran is True
 
 
 def test_plugin_skip_code_classifies_version_mismatch() -> None:

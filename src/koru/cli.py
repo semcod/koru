@@ -268,6 +268,15 @@ def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int 
     return None
 
 
+def _normalize_top_level_aliases(raw_args: list[str]) -> list[str]:
+    """Expand human-friendly top-level aliases before argparse sees them."""
+    if not raw_args:
+        return raw_args
+    if raw_args[0] in {"-a", "-auto", "--auto"}:
+        return ["auto", *raw_args[1:]]
+    return raw_args
+
+
 def _suggest_subcommand(token: str) -> str:
     """Return the closest known subcommand for typo-friendly hints."""
     import difflib
@@ -334,7 +343,7 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
 
 
 def main() -> int:
-    raw_args = sys.argv[1:]
+    raw_args = _normalize_top_level_aliases(sys.argv[1:])
     _maybe_reexec_for_project_venv(raw_args)
     if (auto_rc := _dispatch_auto_alias(raw_args)) is not None:
         return auto_rc

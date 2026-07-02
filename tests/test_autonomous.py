@@ -718,8 +718,9 @@ def test_autonomous_status_resolves_default_socket_from_instance_env(
         return EnvironmentReport(headless=False, can_use_mcp=True)
 
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
     monkeypatch.setattr(
-        "koruide.socket.default_socket_path",
+        "koru.autopilot.lane_context.default_socket_path",
         lambda: expected,
     )
     monkeypatch.setattr(
@@ -732,6 +733,44 @@ def test_autonomous_status_resolves_default_socket_from_instance_env(
     )
 
     assert rc == 0
+    assert seen["socket"] == expected
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["action"] == "status"
+
+
+def test_autonomous_status_resolves_socket_from_auto_lane_context(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    expected = tmp_path / "koru-autopilot-vscodium.sock"
+    seen: dict[str, Path | None] = {}
+
+    def fake_probe_environment(project, autopilot_socket=None):
+        seen["socket"] = autopilot_socket
+        return EnvironmentReport(headless=False, can_use_mcp=True)
+
+    def fake_resolve_client_socket_path(args, *, project=None):
+        seen["project"] = project
+        assert args.ide == "auto"
+        return expected
+
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.setattr(
+        "koru.autopilot.lane_context.resolve_client_socket_path",
+        fake_resolve_client_socket_path,
+    )
+    monkeypatch.setattr(
+        "koru.autonomy.environment.probe_environment",
+        fake_probe_environment,
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        ["status", "--project", str(tmp_path), "--format", "json"],
+    )
+
+    assert rc == 0
+    assert seen["project"] == tmp_path.resolve()
     assert seen["socket"] == expected
     payload = json.loads(capsys.readouterr().out)
     assert payload["action"] == "status"
@@ -870,6 +909,16 @@ def test_auto_invocation_uses_full_autonomous_defaults(tmp_path: Path, monkeypat
     assert args.operator_tickets is True
     assert args.enable_autopilot is True
     assert args.autopilot_action == "drive"
+
+
+def test_autonomous_up_rejects_non_positive_max_iterations(tmp_path: Path, capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        autonomous_mod.autonomous_main(
+            ["up", "--project", str(tmp_path), "--max-iterations", "0"],
+        )
+
+    assert exc.value.code == 2
+    assert "must be >= 1" in capsys.readouterr().err
 
 
 def test_auto_invocation_can_disable_after_idle_intake(tmp_path: Path, monkeypatch) -> None:

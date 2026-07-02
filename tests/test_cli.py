@@ -520,6 +520,28 @@ class TestAutoMain(unittest.TestCase):
         auto_main.assert_called_once_with(["--project", "/tmp/p"])
         self.assertEqual(code, 7)
 
+    def test_top_level_auto_alias_flags_route_to_auto_main(self) -> None:
+        for alias in ("-a", "-auto", "--auto"):
+            with self.subTest(alias=alias):
+                with (
+                    mock.patch("koru.cli._maybe_reexec_for_project_venv"),
+                    mock.patch("koru.cli_auto._auto_main", return_value=7) as auto_main,
+                    mock.patch("sys.argv", ["koru", alias, "--project", "/tmp/p"]),
+                ):
+                    code = main()
+                auto_main.assert_called_once_with(["--project", "/tmp/p"])
+                self.assertEqual(code, 7)
+
+    def test_top_level_auto_alias_flags_preserve_maintenance_action(self) -> None:
+        with (
+            mock.patch("koru.cli._maybe_reexec_for_project_venv"),
+            mock.patch("koru.cli_auto._auto_main", return_value=7) as auto_main,
+            mock.patch("sys.argv", ["koru", "-a", "status", "--project", "/tmp/p"]),
+        ):
+            code = main()
+        auto_main.assert_called_once_with(["status", "--project", "/tmp/p"])
+        self.assertEqual(code, 7)
+
     def test_auto_main_help_does_not_stop_existing_loop(self) -> None:
         from koru.cli_auto import _auto_main
 
@@ -530,6 +552,37 @@ class TestAutoMain(unittest.TestCase):
         self.assertEqual(code, 0)
         stop.assert_not_called()
         autonomous.assert_called_once_with(["--help"], invoked_as_auto=True)
+
+    def test_auto_main_maintenance_action_does_not_stop_existing_loop(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        argv = ["--socket", "/tmp/koru.sock", "status", "--project", "/tmp/p", "--format", "json"]
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                side_effect=AssertionError("stop should not run"),
+            ),
+            mock.patch("koru._legacy_cli_impl.autonomous_main", return_value=0) as autonomous,
+        ):
+            code = _auto_main(argv)
+
+        self.assertEqual(code, 0)
+        autonomous.assert_called_once_with(argv, invoked_as_auto=False)
+
+    def test_auto_main_invalid_args_do_not_stop_existing_loop(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                side_effect=AssertionError("stop should not run"),
+            ),
+            mock.patch("sys.stderr", new=io.StringIO()),
+        ):
+            with self.assertRaises(SystemExit) as raised:
+                _auto_main(["--max-iterations", "0"])
+
+        self.assertEqual(raised.exception.code, 2)
 
     def test_auto_main_strips_redundant_up_subcommand(self) -> None:
         from koru.cli_auto import _auto_main

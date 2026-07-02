@@ -319,10 +319,10 @@ def run_operator_pipeline(
     stdio_info: Any,
 ) -> None:
     """Run operator pipeline if enabled."""
-    for hint in format_hints(startup_probe, plugin_connected=plugin_connected):
-        stdio_info(hint, fmt=args.emit_events)
-
     if args.operator_pipeline:
+        for hint in format_hints(startup_probe, plugin_connected=plugin_connected):
+            stdio_info(hint, fmt=args.emit_events)
+
         run_pipeline(
             project=project,
             probe=startup_probe,

@@ -2,7 +2,14 @@ import os
 import sys
 from pathlib import Path
 
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
+from koru.autonomous import (
+    _parse_autonomous_args,
+    autonomous_main,
+    stop_prior_autonomous_for_auto_start,
+)
+
+_MAINTENANCE_ACTIONS = {"doctor", "self-heal", "status"}
+_GLOBAL_OPTIONS_WITH_VALUE = {"--socket"}
 
 
 def _legacy_attr(name: str, fallback):
@@ -27,6 +34,30 @@ def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
     if not (sys.stdin.isatty() and sys.stdout.isatty()):
         return False
     return not (project / ".planfile").exists() and not (project / ".koru").exists()
+
+
+def _first_action_token(argv: list[str]) -> str | None:
+    idx = 0
+    while idx < len(argv):
+        token = argv[idx]
+        if token in _GLOBAL_OPTIONS_WITH_VALUE:
+            idx += 2
+            continue
+        if any(token.startswith(f"{option}=") for option in _GLOBAL_OPTIONS_WITH_VALUE):
+            idx += 1
+            continue
+        return token
+    return None
+
+
+def _is_maintenance_action(argv: list[str]) -> bool:
+    return _first_action_token(argv) in _MAINTENANCE_ACTIONS
+
+
+def _auto_start_argv(argv: list[str]) -> list[str]:
+    if "--replace-existing" in argv or "--allow-duplicate" in argv:
+        return list(argv)
+    return ["--replace-existing", *argv]
 
 
 def _enable_auto_reload_reuse_window_for_auto() -> None:
@@ -59,8 +90,13 @@ def _auto_main(argv: list[str]) -> int:
     # the ``up`` subcommand once — a redundant token here becomes a duplicate.
     if argv and argv[0] == "up":
         argv = argv[1:]
+    if _is_maintenance_action(argv):
+        run_autonomous = _legacy_attr("autonomous_main", autonomous_main)
+        return run_autonomous(argv, invoked_as_auto=False)
     if any(arg in {"-h", "--help"} for arg in argv):
         return autonomous_main(argv, invoked_as_auto=True)
+    start_argv = _auto_start_argv(argv)
+    _parse_autonomous_args(start_argv, invoked_as_auto=True)
     _enable_auto_reload_reuse_window_for_auto()
     project = _peek_project_from_argv(argv)
     if _should_suggest_wizard(argv, project):
@@ -99,7 +135,5 @@ def _auto_main(argv: list[str]) -> int:
             stop_prior_autonomous_for_auto_start,
         )
         stop_prior(project, stdio_format=stdio)
-    if "--replace-existing" not in argv and "--allow-duplicate" not in argv:
-        argv = ["--replace-existing", *argv]
     run_autonomous = _legacy_attr("autonomous_main", autonomous_main)
-    return run_autonomous(argv, invoked_as_auto=True)
+    return run_autonomous(start_argv, invoked_as_auto=True)
