@@ -162,6 +162,22 @@ def load_strategy_tree(project: Path) -> StrategyTree:
     return load_tree(source)
 
 
+def _onboarding_max_questions() -> int | None:
+    """Question budget for auto-onboarding (default 1; deeper levels auto-pick).
+
+    ``KORU_ONBOARDING_MAX_QUESTIONS`` accepts an integer; ``all`` (or a
+    negative value) restores the full interview.
+    """
+    raw = (os.environ.get("KORU_ONBOARDING_MAX_QUESTIONS") or "").strip().lower()
+    if raw in ("all", "full"):
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return 1
+    return None if value < 0 else value
+
+
 def run_interactive_onboarding(
     args: argparse.Namespace,
     *,
@@ -175,6 +191,7 @@ def run_interactive_onboarding(
     strategies_path = _resolve_strategies_path(project)
     use_llx = _env_truthy("KORU_ONBOARDING_LLX", default=True) and llx_available()
     create_ticket = _env_truthy("KORU_ONBOARDING_CREATE_TICKET", default=True)
+    max_questions = _onboarding_max_questions()
 
     stdio_info("koru auto onboarding: start (wizard)")
     result = run_wizard(
@@ -183,6 +200,7 @@ def run_interactive_onboarding(
         project_override=project,
         create=create_ticket,
         use_llx=use_llx,
+        max_questions=max_questions,
     )
 
     changed_args = False

@@ -2153,7 +2153,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-06-12T13:42:03.844888Z'
+        finished_at: '2026-07-03T17:32:04.938213Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2291,6 +2291,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-12T13:42:04.114104+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-03T17:32:05.101194+00:00'
       id: STARTER-274
       inputs:
         api_headers: {}
@@ -2346,7 +2351,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-12T13:42:04.113986+00:00'
+      updated_at: '2026-07-03T17:32:05.101154+00:00'
     STARTER-275:
       blocked_by: []
       blocks: []
@@ -25695,9 +25700,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/cli.py:1:God
         Module: packages.coru.src.coru.cli'
+      execution:
+        attempt: 0
+        finished_at: '2026-07-03T17:33:13.231790Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - packages/coru/src/coru/cli.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-03T17:33:13.404344+00:00'
       id: STARTER-508
       labels:
       - llm-ready
@@ -25705,375 +25727,18 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Module: packages.coru.src.coru.cli'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-06-03T09:55:53.182480Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-06-03T09:55:53.194474Z'
-    STARTER-509:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:55.067311Z'
-      description: 'code2llm reports `Shotgun Surgery: _` in `src/koru/autonomy/replay_parser.py:24`.
-
-
-        Mutation of variable ''_'' spans 12 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomy/replay_parser.py:24:Shotgun
-        Surgery: _'
-      files:
-      - src/koru/autonomy/replay_parser.py
-      history: []
-      id: STARTER-509
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: _'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:55.055626Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:55:55.067317Z'
-    STARTER-510:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:56.797963Z'
-      description: 'code2llm reports `Shotgun Surgery: actions` in `src/koru/autonomous_readiness.py:419`.
-
-
-        Mutation of variable ''actions'' spans 7 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomous_readiness.py:419:Shotgun
-        Surgery: actions'
-      files:
-      - src/koru/autonomous_readiness.py
-      history: []
-      id: STARTER-510
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: actions'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:56.786656Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:55:56.797971Z'
-    STARTER-511:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:58.467729Z'
-      description: 'code2llm reports `Shotgun Surgery: actual` in `src/koru/autonomous_daemon.py:54`.
-
-
-        Mutation of variable ''actual'' spans 6 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomous_daemon.py:54:Shotgun
-        Surgery: actual'
-      files:
-      - src/koru/autonomous_daemon.py
-      history: []
-      id: STARTER-511
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: actual'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:58.456195Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:55:58.467734Z'
-    STARTER-512:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:00.152643Z'
-      description: 'code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
-
-
-        Mutation of variable ''analysis'' spans 9 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koruapi/invoke_handlers.py:322:Shotgun
-        Surgery: analysis'
-      files:
-      - src/koruapi/invoke_handlers.py
-      history: []
-      id: STARTER-512
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: analysis'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:00.141243Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:00.152647Z'
-    STARTER-513:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:01.857028Z'
-      description: 'code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
-
-
-        Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/wizard/gui/app.py:227:Shotgun
-        Surgery: app'
-      files:
-      - src/koru/wizard/gui/app.py
-      history: []
-      id: STARTER-513
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: app'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:01.854436Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:01.857034Z'
-    STARTER-514:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:03.464642Z'
-      description: 'code2llm reports `Shotgun Surgery: args` in `src/koru/configurator.py:525`.
-
-
-        Mutation of variable ''args'' spans 69 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/configurator.py:525:Shotgun
-        Surgery: args'
-      files:
-      - src/koru/configurator.py
-      history: []
-      id: STARTER-514
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: args'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:03.460835Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:03.464645Z'
-    STARTER-515:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:05.186883Z'
-      description: 'code2llm reports `Shotgun Surgery: argv` in `src/koru/doctor_project_health.py:71`.
-
-
-        Mutation of variable ''argv'' spans 16 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/doctor_project_health.py:71:Shotgun
-        Surgery: argv'
-      files:
-      - src/koru/doctor_project_health.py
-      history: []
-      id: STARTER-515
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: argv'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:05.184290Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:05.186889Z'
-    STARTER-516:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:06.899018Z'
-      description: 'code2llm reports `Shotgun Surgery: autopilot_ide` in `src/koru/autonomous_runtime.py:184`.
-
-
-        Mutation of variable ''autopilot_ide'' spans 5 functions. Changing this logic
-        requires work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomous_runtime.py:184:Shotgun
-        Surgery: autopilot_ide'
-      files:
-      - src/koru/autonomous_runtime.py
-      history: []
-      id: STARTER-516
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: autopilot_ide'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:06.887611Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:06.899023Z'
-    STARTER-517:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:08.558442Z'
-      description: 'code2llm reports `Shotgun Surgery: base` in `packages/coru/src/coru/supervisor/socket_path.py:22`.
-
-
-        Mutation of variable ''base'' spans 21 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:packages/coru/src/coru/supervisor/socket_path.py:22:Shotgun
-        Surgery: base'
-      files:
-      - packages/coru/src/coru/supervisor/socket_path.py
-      history: []
-      id: STARTER-517
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: base'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:08.547313Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:08.558452Z'
-    STARTER-518:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:56:10.226660Z'
-      description: 'code2llm reports `Shotgun Surgery: block` in `src/koru/init.py:640`.
-
-
-        Mutation of variable ''block'' spans 7 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/init.py:640:Shotgun
-        Surgery: block'
-      files:
-      - src/koru/init.py
-      history: []
-      id: STARTER-518
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: block'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:56:10.220603Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:56:10.226663Z'
+      updated_at: '2026-07-03T17:33:13.404306+00:00'
     STARTER-519:
       acceptance_criteria: []
       blocked_by: []
@@ -26516,551 +26181,6 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-07-03T09:19:10.604756+00:00'
-    STARTER-527:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:20.054560Z'
-      description: 'code2llm reports `God Module: packages.coru.src.coru.cli` in `packages/coru/src/coru/cli.py:1`.
-
-
-        Module ''packages.coru.src.coru.cli'' is too large (157 functions, 3 classes).
-        Consider splitting into sub-modules.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/cli.py:1:God
-        Module: packages.coru.src.coru.cli'
-      files:
-      - packages/coru/src/coru/cli.py
-      history: []
-      id: STARTER-527
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Module: packages.coru.src.coru.cli'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:20.050307Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:20.054565Z'
-    STARTER-528:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:21.774945Z'
-      description: 'code2llm reports `Shotgun Surgery: _` in `src/koru/autonomous_cycle_drive_retry.py:317`.
-
-
-        Mutation of variable ''_'' spans 12 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomous_cycle_drive_retry.py:317:Shotgun
-        Surgery: _'
-      files:
-      - src/koru/autonomous_cycle_drive_retry.py
-      history: []
-      id: STARTER-528
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: _'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:21.765158Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:21.774950Z'
-    STARTER-529:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:23.458818Z'
-      description: 'code2llm reports `Shotgun Surgery: actions` in `src/koru/bounded_contexts/repairs/read_model.py:17`.
-
-
-        Mutation of variable ''actions'' spans 7 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/bounded_contexts/repairs/read_model.py:17:Shotgun
-        Surgery: actions'
-      files:
-      - src/koru/bounded_contexts/repairs/read_model.py
-      history: []
-      id: STARTER-529
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: actions'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:23.447278Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:23.458822Z'
-    STARTER-530:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:25.209471Z'
-      description: 'code2llm reports `Shotgun Surgery: actual` in `src/koru/local_service.py:334`.
-
-
-        Mutation of variable ''actual'' spans 6 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/local_service.py:334:Shotgun
-        Surgery: actual'
-      files:
-      - src/koru/local_service.py
-      history: []
-      id: STARTER-530
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: actual'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:25.205094Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:25.209475Z'
-    STARTER-531:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:26.945098Z'
-      description: 'code2llm reports `Shotgun Surgery: analysis` in `src/koru/autonomy/code2llm_discovery.py:154`.
-
-
-        Mutation of variable ''analysis'' spans 9 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomy/code2llm_discovery.py:154:Shotgun
-        Surgery: analysis'
-      files:
-      - src/koru/autonomy/code2llm_discovery.py
-      history: []
-      id: STARTER-531
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: analysis'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:26.933865Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:26.945102Z'
-    STARTER-532:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:28.658078Z'
-      description: 'code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:282`.
-
-
-        Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/wizard/gui/app.py:282:Shotgun
-        Surgery: app'
-      files:
-      - src/koru/wizard/gui/app.py
-      history: []
-      id: STARTER-532
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: app'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:28.646308Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:28.658085Z'
-    STARTER-533:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:30.396957Z'
-      description: 'code2llm reports `Shotgun Surgery: args` in `src/koru/git_cli.py:268`.
-
-
-        Mutation of variable ''args'' spans 69 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/git_cli.py:268:Shotgun
-        Surgery: args'
-      files:
-      - src/koru/git_cli.py
-      history: []
-      id: STARTER-533
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: args'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:30.393944Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:30.396963Z'
-    STARTER-534:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:32.109886Z'
-      description: 'code2llm reports `Shotgun Surgery: argv` in `src/koruapi/cli.py:146`.
-
-
-        Mutation of variable ''argv'' spans 16 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koruapi/cli.py:146:Shotgun
-        Surgery: argv'
-      files:
-      - src/koruapi/cli.py
-      history: []
-      id: STARTER-534
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: argv'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:32.107486Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:32.109889Z'
-    STARTER-535:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:33.797513Z'
-      description: 'code2llm reports `Shotgun Surgery: autopilot_ide` in `src/koru/autonomous_runtime.py:184`.
-
-
-        Mutation of variable ''autopilot_ide'' spans 5 functions. Changing this logic
-        requires work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomous_runtime.py:184:Shotgun
-        Surgery: autopilot_ide'
-      files:
-      - src/koru/autonomous_runtime.py
-      history: []
-      id: STARTER-535
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: autopilot_ide'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:33.792610Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:33.797517Z'
-    STARTER-536:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:35.475920Z'
-      description: 'code2llm reports `Shotgun Surgery: base` in `src/koruide/socket.py:26`.
-
-
-        Mutation of variable ''base'' spans 21 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koruide/socket.py:26:Shotgun
-        Surgery: base'
-      files:
-      - src/koruide/socket.py
-      history: []
-      id: STARTER-536
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: base'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:35.464527Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:35.475924Z'
-    STARTER-537:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:37.159349Z'
-      description: 'code2llm reports `Shotgun Surgery: block` in `src/koru/context.py:780`.
-
-
-        Mutation of variable ''block'' spans 7 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/context.py:780:Shotgun
-        Surgery: block'
-      files:
-      - src/koru/context.py
-      history: []
-      id: STARTER-537
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: block'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:37.155293Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:37.159358Z'
-    STARTER-538:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:38.850900Z'
-      description: 'code2llm reports `Shotgun Surgery: blocker` in `src/koru/autonomous_plugin_runtime.py:105`.
-
-
-        Mutation of variable ''blocker'' spans 7 functions. Changing this logic requires
-        work in many places.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:shotgun_surgery:src/koru/autonomous_plugin_runtime.py:105:Shotgun
-        Surgery: blocker'
-      files:
-      - src/koru/autonomous_plugin_runtime.py
-      history: []
-      id: STARTER-538
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - shotgun-surgery
-      name: 'Address code smell: Shotgun Surgery: blocker'
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:38.839328Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-03T09:59:38.850907Z'
-    STARTER-539:
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-04T13:18:14.718032+00:00'
-      description: '[OPERATOR] intake from IDE chat
-
-
-        A new external chat message was sent in IDE while the queue is blocked in
-        waiting_input.
-
-        Create/update a dedicated operator task from this intake instead of re-driving
-        the old prompt.
-
-
-        Origin waiting ticket: STARTER-472
-
-        Incoming intake:
-
-        code2llm reports `God Function: _manual_send_required_skip_result` in `src/koru/autonomous_cycle_skip_conditions.py:506`.
-        Function ''_manual_send_required_skip_result'' is oversized: CC=13, fan-out=18,'
-      execution:
-        attempt: 0
-        max_attempts: 1
-        queue: operator
-        state: ready
-      executor:
-        kind: human
-        mode: interactive
-      files: []
-      history:
-      - action: created
-        message: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-472
-
-          Incoming intake:
-
-          code2llm reports `God Function: _manual_send_required_skip_result` in `src/koru/autonomous_cycle_skip_conditions.py:506`.
-          Function ''_manual_send_required_skip_result'' is oversized: CC=13, fan-out=18,'
-        source: koru task
-        timestamp: '2026-06-04T13:18:14.718032+00:00'
-      id: STARTER-539
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-472
-
-          Incoming intake:
-
-          code2llm reports `God Function: _manual_send_required_skip_result` in `src/koru/autonomous_cycle_skip_conditions.py:506`.
-          Function ''_manual_send_required_skip_result'' is oversized: CC=13, fan-out=18,'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - autopilot-chat-intake
-      name: '[OPERATOR] intake from IDE chat'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context:
-          dedupe_key: autopilot:chat-intake:ef41368b22f618ab
-          input: '[OPERATOR] intake from IDE chat
-
-
-            A new external chat message was sent in IDE while the queue is blocked
-            in waiting_input.
-
-            Create/update a dedicated operator task from this intake instead of re-driving
-            the old prompt.
-
-
-            Origin waiting ticket: STARTER-472
-
-            Incoming intake:
-
-            code2llm reports `God Function: _manual_send_required_skip_result` in
-            `src/koru/autonomous_cycle_skip_conditions.py:506`. Function ''_manual_send_required_skip_result''
-            is oversized: CC=13, fan-out=18,'
-          intake_preview: 'code2llm reports `God Function: _manual_send_required_skip_result`
-            in `src/koru/autonomous_cycle_skip_conditions.py:506`. Function ''_manual_send_required_skip_result''
-            is oversized: CC=13, fan-out=18,'
-          origin_waiting_ticket: STARTER-472
-          signal: chat_intake_message_sent
-        timestamp: '2026-06-04T13:18:14.718032+00:00'
-        tool: koru-autonomous-chat-intake
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-06-04T13:18:14.718032+00:00'
     STARTER-540:
       blocked_by: []
       blocks: []
@@ -27409,6 +26529,7 @@ sprint:
       id: STARTER-549
       labels:
       - refactor
+      - llm-ready
       name: 'R-F1.1: Consolidate autonomous_* modules into koru/autonomy package'
       priority: high
       source:
@@ -27709,3 +26830,311 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-07-03T16:51:00.364513+00:00'
+    STARTER-559:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T17:54:28.740391+00:00'
+      description: '[OPERATOR] intake from IDE chat
+
+
+        A new external chat message was sent in IDE while the queue is blocked in
+        waiting_input.
+
+        Create/update a dedicated operator task from this intake instead of re-driving
+        the old prompt.
+
+
+        Origin waiting ticket: STARTER-514
+
+        Incoming intake:
+
+        code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
+        Mutation of variable ''analysis'' spans 9 functions. Changing this logic requires
+        work in many places. Make the sm'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-514
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
+          Mutation of variable ''analysis'' spans 9 functions. Changing this logic
+          requires work in many places. Make the sm'
+        source: koru task
+        timestamp: '2026-07-03T17:54:28.740391+00:00'
+      id: STARTER-559
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-514
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
+          Mutation of variable ''analysis'' spans 9 functions. Changing this logic
+          requires work in many places. Make the sm'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-chat-intake
+      name: '[OPERATOR] intake from IDE chat'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: autopilot:chat-intake:e90ce95c417ccfd9
+          input: '[OPERATOR] intake from IDE chat
+
+
+            A new external chat message was sent in IDE while the queue is blocked
+            in waiting_input.
+
+            Create/update a dedicated operator task from this intake instead of re-driving
+            the old prompt.
+
+
+            Origin waiting ticket: STARTER-514
+
+            Incoming intake:
+
+            code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
+            Mutation of variable ''analysis'' spans 9 functions. Changing this logic
+            requires work in many places. Make the sm'
+          intake_preview: 'code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
+            Mutation of variable ''analysis'' spans 9 functions. Changing this logic
+            requires work in many places. Make the sm'
+          origin_waiting_ticket: STARTER-514
+          signal: chat_intake_message_sent
+        timestamp: '2026-07-03T17:54:28.740391+00:00'
+        tool: koru-autonomous-chat-intake
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T17:54:28.740391+00:00'
+    STARTER-560:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T18:03:27.713219+00:00'
+      description: '[OPERATOR] intake from IDE chat
+
+
+        A new external chat message was sent in IDE while the queue is blocked in
+        waiting_input.
+
+        Create/update a dedicated operator task from this intake instead of re-driving
+        the old prompt.
+
+
+        Origin waiting ticket: STARTER-515
+
+        Incoming intake:
+
+        code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
+        Mutation of variable ''app'' spans 5 functions. Changing this logic requires
+        work in many places. Make the smallest refacto'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-515
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
+          Mutation of variable ''app'' spans 5 functions. Changing this logic requires
+          work in many places. Make the smallest refacto'
+        source: koru task
+        timestamp: '2026-07-03T18:03:27.713219+00:00'
+      id: STARTER-560
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-515
+
+          Incoming intake:
+
+          code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
+          Mutation of variable ''app'' spans 5 functions. Changing this logic requires
+          work in many places. Make the smallest refacto'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-chat-intake
+      name: '[OPERATOR] intake from IDE chat'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: autopilot:chat-intake:2cff7a98ef0df5fd
+          input: '[OPERATOR] intake from IDE chat
+
+
+            A new external chat message was sent in IDE while the queue is blocked
+            in waiting_input.
+
+            Create/update a dedicated operator task from this intake instead of re-driving
+            the old prompt.
+
+
+            Origin waiting ticket: STARTER-515
+
+            Incoming intake:
+
+            code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
+            Mutation of variable ''app'' spans 5 functions. Changing this logic requires
+            work in many places. Make the smallest refacto'
+          intake_preview: 'code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
+            Mutation of variable ''app'' spans 5 functions. Changing this logic requires
+            work in many places. Make the smallest refacto'
+          origin_waiting_ticket: STARTER-515
+          signal: chat_intake_message_sent
+        timestamp: '2026-07-03T18:03:27.713219+00:00'
+        tool: koru-autonomous-chat-intake
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T18:03:27.713219+00:00'
+    STARTER-561:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T18:07:25.107256Z'
+      description: 'Per docs/boundary-refactoring-proposal.md §2: move failure classification
+        (gillm_recovery._classify_failure clusters) into gillm.recovery and the input
+        strategy chain from vdisplay_client._type_text_* into gillm.injection.strategies.
+        Keep koru-side re-export shims for one release; koru keeps operator-guidance
+        and ticket mapping.'
+      files: []
+      history: []
+      id: STARTER-561
+      labels:
+      - refactor
+      - boundary
+      name: Move gillm recovery/actuation into gillm (boundary step 4)
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T18:07:25.095898Z'
+        tool: claude-session
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T18:07:25.107262Z'
+    STARTER-562:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T18:07:26.945704Z'
+      description: 'Per docs/boundary-refactoring-proposal.md §1: relocate vdisplay_client
+        VQL sidecar parsing (_vql_*), pointer math (_enrich_capture_meta_for_pointer,
+        _map_chat_target_capture_local), photo_vql_target geometry and photo_vql_monitor
+        topology into vdisplay.vql/geometry/monitors. Expected to clear most of the
+        remaining ~34 module-MI hard violations. Keep re-export shims.'
+      files: []
+      history: []
+      id: STARTER-562
+      labels:
+      - refactor
+      - boundary
+      name: Move VQL parsing/geometry/monitors into vdisplay (boundary step 5)
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T18:07:26.934085Z'
+        tool: claude-session
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T18:07:26.945710Z'
+    STARTER-563:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T18:07:28.904826Z'
+      description: 'Boundary proposal §4 remainder: split koruide out of the koru
+        wheel into a separate PyPI package; koru depends on it. Alias/binary/window
+        maps already consolidated there.'
+      files: []
+      history: []
+      id: STARTER-563
+      labels:
+      - packaging
+      - boundary
+      name: Publish koruide as its own distribution
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-07-03T18:07:28.891032Z'
+        tool: claude-session
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T18:07:28.904832Z'

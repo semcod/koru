@@ -8,6 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **One-question onboarding** — `koru auto` on a fresh project asks a single
+  strategy question and auto-picks a sensible leaf ticket; budget configurable
+  via `KORU_ONBOARDING_MAX_QUESTIONS` (`0` none, `all` full interview).
+  `run_wizard(max_questions=…)` in `koru.wizard`.
+- **Shell-lane autonomy** — `--ide auto` on editor-less hosts auto-selects the
+  first vendor CLI on PATH (`KORU_AUTO_SHELL_CLIENT=0` opts out); shell-client
+  tokens abort loudly when tillm is unavailable instead of silently driving an
+  editor lane; cross-lane rescue routes a failed tillm drive through the GUI
+  chain when an editor is running (`shell_client_rescued_from` marker).
+- **Doctor `lane_dependencies` probe** — verifies the selected lane's deps
+  (tillm + client CLI for shell lanes, gillm for GUI fallbacks); the
+  `planfile_binary` probe now actually executes a pinned `KORU_PLANFILE_CMD`.
+- **tillm as core dependency** (`tillm>=0.1.35`) + registry contract tests
+  (`tests/test_tillm_registry_contract.py`) guarding `--ide` choices and
+  offline fallback token lists against registry drift (added `cline`).
+- Dashboard lane picker lists detected vendor CLIs (`· CLI` entries) next to
+  editors; PATH-fallback shell-agent detection when tillm is missing.
+
+### Fixed
+- **`KORU_PLANFILE_CMD` fallback** — a pinned command whose environment lacks
+  the planfile module no longer kills every queue tick: warn-once + automatic
+  fallback to auto-resolution (c2004 field incident).
+- gillm imports in `koru.agent_backend_runtime` and `koruide` degrade softly
+  on hosts without gillm (actuation returns `ok=False` instead of an import
+  crash).
+- `packages/coru` CLI split regressions repaired (19 red tests → green):
+  restored `_repo_root()` call graph, readiness gate ordering, `apply_nl`
+  fallback to the plan chain.
+
+### Changed
+- **Module splits (MI gates)** — `autopilot/cli_snapshot` → `cli_snapshot_lines`;
+  `autonomous_loop_runner` (1245 L, MI 4.9) → 4 `autonomous_loop_*` modules +
+  facade (MI 33–55); `autonomous_cycle` (1519 L, MI 5.8) → 4 `autonomy/cycle_*`
+  modules + 717-line facade (MI 32.9); dsl2coru `grammar.py` deduplicated
+  (−310 lines) and `bus.dispatch` CC 14→9. Zero functions above CC 15
+  repo-wide after four vdisplay_client refactor waves (peak was CC 84).
+- IDE identity maps consolidated into `koruide` (`ide_binary_candidates`,
+  `ide_window_name`); `KNOWN_IDES` now covers jetbrains/antigravity.
+  Migration plan status: `docs/boundary-refactoring-proposal.md`.
+
+### Added
 - **imgl vision integration** — vision-guided UI fallback for Koru:
   `koru/integrations/imgl_client.py` (nlp2imgl / rest2imgl :8219),
   `ImglDesktopBackend`, `try_imgl_gui_fallback()` in autonomous drive chain,

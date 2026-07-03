@@ -103,6 +103,7 @@ def run_wizard(
     quick: bool = False,
     quick_strategy: str | None = None,
     bilingual_separator: str = " · ",
+    max_questions: int | None = None,
 ) -> WizardResult:
     """Programmatic entrypoint kept compatible with pre-refactor patch points."""
     use_legacy_patch_points = any(
@@ -125,6 +126,7 @@ def run_wizard(
             quick=quick,
             quick_strategy=quick_strategy,
             bilingual_separator=bilingual_separator,
+            max_questions=max_questions,
         )
 
     previous_discover = _orchestrator.discover_installed_ides
@@ -146,6 +148,7 @@ def run_wizard(
             quick=quick,
             quick_strategy=quick_strategy,
             bilingual_separator=bilingual_separator,
+            max_questions=max_questions,
         )
     finally:
         _orchestrator.discover_installed_ides = previous_discover

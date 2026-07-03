@@ -144,18 +144,32 @@ def _maybe_extend_node_with_llx(
     )
 
 
+def _auto_pick_option(options):
+    """Best default once the question budget is spent: first leaf, else first."""
+    for opt in options:
+        if opt.ticket:
+            return opt
+    return options[0]
+
+
 def _walk_with_llx(
     tree: StrategyTree,
     prompter: Prompter,
     project: Path,
     *,
     use_llx: bool,
+    max_questions: int | None = None,
 ) -> tuple[list[str], TicketTemplate]:
     path: list[str] = []
     current = tree.root()
+    asked = 0
     while True:
-        current = _maybe_extend_node_with_llx(tree, project, current, use_llx=use_llx)
-        choice = prompter.ask_choice(current.prompt, current.options)
+        if max_questions is None or asked < max_questions:
+            current = _maybe_extend_node_with_llx(tree, project, current, use_llx=use_llx)
+            choice = prompter.ask_choice(current.prompt, current.options)
+            asked += 1
+        else:
+            choice = _auto_pick_option(current.options)
         path.append(choice.id)
         if choice.ticket:
             return path, tree.ticket(choice.ticket)
@@ -330,8 +344,14 @@ def run_wizard(
     quick: bool = False,
     quick_strategy: str | None = None,
     bilingual_separator: str = " · ",
+    max_questions: int | None = None,
 ) -> WizardResult:
-    """Programmatic entrypoint used by both the CLI and tests."""
+    """Programmatic entrypoint used by both the CLI and tests.
+
+    ``max_questions`` caps how many strategy questions the user is asked;
+    deeper levels auto-pick a sensible default (first leaf option). ``None``
+    keeps the full interview.
+    """
     tree = load_tree(
         strategies_path, language=language, bilingual_separator=bilingual_separator
     )
@@ -352,7 +372,9 @@ def run_wizard(
         ides=ides,
         chosen_ide=chosen_ide,
     )
-    path, template = _walk_with_llx(tree, prompter, project, use_llx=use_llx)
+    path, template = _walk_with_llx(
+        tree, prompter, project, use_llx=use_llx, max_questions=max_questions
+    )
     ticket_id, body = _finalise_ticket(template, project, create=create)
     return _wizard_result(
         chosen_ide=chosen_ide,
