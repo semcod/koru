@@ -5,10 +5,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from koru.autonomy.cycle.cycle_common import DiagnosticResult
-from koru.autonomous_wup import WupHealthResult
+if TYPE_CHECKING:
+    # Annotation-only: an eager import creates a cycle (this module is
+    # imported by koru.autonomy.cycle.cycle via the cycle package __init__).
+    from koru.autonomy.cycle.cycle_common import DiagnosticResult
+
+from koru.autonomy.operator.operator_wup import WupHealthResult
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.scan import ScanResult
