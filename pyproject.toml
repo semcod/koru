@@ -252,6 +252,7 @@ koru = [
     "wizard/templates/*.json",
     "wizard/gui/templates/*.html",
     "wizard/gui/static/*",
+    "*.proto",
 ]
 koruapi = ["dashboard_template.html"]
 korumesh = ["*.html"]
@@ -310,3 +311,37 @@ max_commits = 500
 
 # Cost thresholds for badge colors (USD)
 badge_color_thresholds = { low = 1.0, medium = 5.0, high = 10.0, critical = 50.0 }
+
+[tool.importlinter]
+root_packages = ["koru", "koruide", "korumesh", "koruapi"]
+
+# Aspirational (currently violated, tracked in STARTER-549/551):
+# koruide must stop importing koru.autonomous_* / koru.autonomy_strategy
+# (3 sites: daemon/metadata.py, daemon/handlers_drive.py, command_picker.py).
+
+[[tool.importlinter.contracts]]
+name = "koru.queue is a lower layer: no autonomy or daemon imports"
+type = "forbidden"
+source_modules = ["koru.queue"]
+forbidden_modules = [
+    "koru.autonomy",
+    "koru.autonomy_strategy",
+    "koru.autonomous_cycle",
+    "koruide",
+]
+
+[[tool.importlinter.contracts]]
+name = "korumesh does not depend on the IDE daemon layer"
+type = "forbidden"
+source_modules = ["korumesh"]
+forbidden_modules = ["koruide"]
+# Direct imports only: the one indirect chain (korumesh.cli_commands ->
+# koru.configurator -> koruide.ide) is koru.configurator's dependency,
+# tracked under the STARTER-549 layering cleanup.
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "koruide daemon protocol stays self-contained"
+type = "forbidden"
+source_modules = ["koruide.daemon.protocol"]
+forbidden_modules = ["koruide.daemon.handlers", "koru"]

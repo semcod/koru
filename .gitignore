@@ -251,3 +251,6 @@ plugins/**/src/_shared/
 
 # coru runtime event artifacts
 packages/coru/src/.coru/
+
+# coru runtime event artifacts inside the source tree
+packages/coru/src/coru/.koru/
