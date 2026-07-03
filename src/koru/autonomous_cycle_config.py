@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from collections.abc import Mapping
 from typing import Any
@@ -35,6 +36,45 @@ def resolve_agent_lane_from_environ(
     return apply_agent_lane_environ(project, args.agent_lane)
 
 
+def _autodetect_shell_client_for_auto(
+    autopilot_ide: str,
+    lane: str | None,
+    *,
+    tillm_available: Any,
+    detect_running_ides_fn: Any = None,
+    detect_shell_client_fn: Any = None,
+) -> str | None:
+    """Resolve ``--ide auto`` to a shell client on editor-less hosts.
+
+    Only engages when no target was named, no lane points at an editor, and no
+    editor IDE process is running — i.e. a headless/CI host where the plugin
+    lane can never connect. Returns the first tillm client found on PATH.
+    """
+    token = (autopilot_ide or "").strip().lower()
+    if token not in ("", "auto"):
+        return None
+    if lane not in (None, "", "auto"):
+        return None
+    if (os.environ.get("KORU_AUTO_SHELL_CLIENT") or "").strip().lower() in (
+        "0",
+        "false",
+        "no",
+        "off",
+    ):
+        return None
+    if not tillm_available():
+        return None
+    if detect_running_ides_fn is None:
+        from koruide.ide import detect_running_ides as detect_running_ides_fn
+    if detect_running_ides_fn():
+        return None
+    if detect_shell_client_fn is None:
+        from koru.tillm_bridge import (
+            detect_available_shell_client as detect_shell_client_fn,
+        )
+    return detect_shell_client_fn()
+
+
 def configure_loop_state(
     args: Any,
     project: Path,
@@ -60,9 +100,32 @@ def configure_loop_state(
     # Shell client targets (claude-code, aider, codex, …) bypass IDE-route
     # resolution: the drive step talks to the vendor CLI via tillm instead of
     # the autopilot daemon.
-    from koru.tillm_bridge import shell_drive_client_id
+    from koru.tillm_bridge import (
+        looks_like_shell_client,
+        shell_drive_client_id,
+        tillm_available,
+    )
 
     shell_client = shell_drive_client_id(args.autopilot_ide)
+    if not shell_client and looks_like_shell_client(args.autopilot_ide):
+        # The token names a shell client but tillm could not resolve it —
+        # routing it to the IDE plugin lane would silently drive the wrong
+        # backend, so abort with an actionable message instead.
+        raise SystemExit(
+            f"[koru] --ide {args.autopilot_ide} names a shell LLM client but the "
+            "tillm package is unavailable in this environment. Install tillm "
+            "(pip install tillm) or pick an editor IDE (e.g. --ide vscode)."
+        )
+    if not shell_client:
+        shell_client = _autodetect_shell_client_for_auto(
+            args.autopilot_ide, lane, tillm_available=tillm_available
+        )
+        if shell_client:
+            print(
+                f"[koru] no editor IDE detected; auto-selected shell client "
+                f"'{shell_client}' (tillm). Pass --ide to override.",
+                file=sys.stderr,
+            )
     if shell_client:
         selected_ide = shell_client
         os.environ["KORU_TILLM_CLIENT"] = shell_client

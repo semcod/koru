@@ -2337,26 +2337,10 @@ print(json.dumps({
     }
 
 
-def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
-    """Observe (if needed) + pin sidecar before koru drive / send_chat."""
-    import time
-
-    bootstrap: dict[str, Any] = {}
-    try:
-        from koru.integrations.vdisplay_agent_bootstrap import bootstrap_vdisplay_capture
-
-        bootstrap = bootstrap_vdisplay_capture()
-    except ImportError:
-        pass
-
-    src, desktop_probe = _resolve_vdisplay_source_for_ide(ide)
-    if bootstrap:
-        desktop_probe = {**desktop_probe, "vdisplay_bootstrap": bootstrap}
-    os.environ.setdefault("KORU_VDISPLAY_CONTROL_FALLBACK", "1")
-    os.environ["KORU_VDISPLAY_SOURCE"] = src
-    os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
-
-    map_path = _resolve_ide_prompt_map(_ide_prompt_app_id(ide))
+def _prepare_photo_vql_map_mismatch(
+    *, map_path: str | None, src: str, desktop_probe: dict[str, Any]
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Detect GUI-map vs capture-source monitor mismatch: (map_mismatch, desktop_probe)."""
     map_mismatch = None
     if map_path:
         from koru.integrations.photo_vql_monitor import map_capture_monitor_mismatch
@@ -2364,28 +2348,45 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
         map_mismatch = map_capture_monitor_mismatch(map_path, source=src)
         if map_mismatch:
             desktop_probe = {**desktop_probe, "map_capture_mismatch": map_mismatch}
+    return map_mismatch, desktop_probe
 
-    session_dir = _autonomy_session.begin_autonomy_session(ide=ide, source=src)
-    _autonomy_session.persist_autonomy_phase(session_dir, "decide", "desktop_probe", desktop_probe)
 
-    if not desktop_probe.get("ok") and _abort_on_desktop_probe_fail():
-        out: dict[str, Any] = {
-            "ok": False,
-            "source": src,
-            "session_dir": str(session_dir),
-            "desktop_probe": desktop_probe,
-            "error": desktop_probe.get("error") or "desktop probe failed",
-            "hint": (
-                "Run `vdisplay monitors` and pass --source with a connected monitor, "
-                "or set KORU_VDISPLAY_ABORT_ON_PROBE_FAIL=0 to skip."
-            ),
-        }
-        _autonomy_session.persist_autonomy_phase(session_dir, "observe", "prepare", out)
-        return out
+def _prepare_photo_vql_probe_abort(
+    *, src: str, session_dir, desktop_probe: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Abort out dict when the desktop probe failed and abort-on-fail is set, else None."""
+    if desktop_probe.get("ok") or not _abort_on_desktop_probe_fail():
+        return None
+    out: dict[str, Any] = {
+        "ok": False,
+        "source": src,
+        "session_dir": str(session_dir),
+        "desktop_probe": desktop_probe,
+        "error": desktop_probe.get("error") or "desktop probe failed",
+        "hint": (
+            "Run `vdisplay monitors` and pass --source with a connected monitor, "
+            "or set KORU_VDISPLAY_ABORT_ON_PROBE_FAIL=0 to skip."
+        ),
+    }
+    _autonomy_session.persist_autonomy_phase(session_dir, "observe", "prepare", out)
+    return out
 
-    retries = max(1, int(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3") or "3"))
-    ide_control: dict[str, Any] | None = None
-    out = {"ok": False, "source": src, "session_dir": str(session_dir), "desktop_probe": desktop_probe}
+
+def _prepare_photo_vql_out_skeleton(
+    *,
+    src: str,
+    session_dir,
+    desktop_probe: dict[str, Any],
+    map_mismatch: dict[str, Any] | None,
+    bootstrap: dict[str, Any],
+) -> dict[str, Any]:
+    """Initial prepare_photo_vql_for_drive out dict with bootstrap/map hints."""
+    out: dict[str, Any] = {
+        "ok": False,
+        "source": src,
+        "session_dir": str(session_dir),
+        "desktop_probe": desktop_probe,
+    }
     if map_mismatch:
         out["map_capture_mismatch"] = map_mismatch
         out["hint"] = (
@@ -2409,95 +2410,119 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
             if isinstance(screencast_boot.get("status"), dict)
             else screencast_boot.get("keeper_mode"),
         }
-    loop_attempts = 0
+    return out
 
-    for attempt in range(retries):
-        loop_attempts = attempt + 1
-        force_refresh = False
-        if _auto_ide_control_enabled():
-            ide_control = ensure_vdisplay_ide_control(ide=ide, source=src)
-            if ide_control.get("map_actuation_ok") or ide_control.get("interior_focused"):
-                import time
 
-                force_refresh = True
-                time.sleep(
-                    float(os.environ.get("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0.8"))
-                )
-        if force_refresh or photo_vql_sidecar_needs_refresh(source=src, ide=ide):
-            out = refresh_photo_vql_sidecar(source=src, ide=ide)
-        else:
-            png = _resolve_photo_png_path(src)
-            vql = png.with_suffix(png.suffix + ".vql.json")
-            meta = load_vql_metadata(str(vql))
-            out = {
-                "ok": True,
-                "source": src,
-                "png": str(png),
-                "vql": str(vql),
-                "elements": len(meta.get("ui_elements") or meta.get("layers") or []),
-                "main_vql_layers": _main_vql_layer_count(vql),
-                "vql_source": meta.get("_source"),
-                "reused_fresh_sidecar": True,
-                "session_dir": str(session_dir),
-            }
-        if not out.get("ok"):
-            break
-        warn = out.get("ide_window_warning") or _photo_vql_ide_window_warning(
-            ide=ide,
-            meta=load_vql_metadata(str(out.get("vql") or "")),
-        )
-        if warn:
-            out["ide_window_warning"] = warn
-            out["capture_matches_ide"] = False
-            os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
-            cv = out.get("capture_validation") or {}
-            if isinstance(cv, dict) and cv.get("body_false_positive"):
-                out["body_false_positive"] = True
-            if (
-                not _allow_prepare_map_on_mismatch()
-                and not out.get("_focus_recovery_tried")
-                and _raise_alt_tab_enabled(ide=ide)
-            ):
-                out["_focus_recovery_tried"] = True
-                recovered = _attempt_focus_recovery_capture(ide=ide, source=src)
-                if recovered.get("ok"):
-                    out = recovered
-                    os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
-                    if _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
-                        os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
-                    break
-                out["focus_recovery"] = recovered.get("focus_recovery")
-            if not _allow_prepare_map_on_mismatch():
-                break
-        elif _capture_matches_requested_ide(ide):
+def _prepare_photo_vql_ide_control_attempt(
+    *, ide: str, src: str, ide_control: dict[str, Any] | None
+) -> tuple[dict[str, Any] | None, bool]:
+    """One auto-IDE-control attempt in the prepare retry loop: (ide_control, force_refresh)."""
+    force_refresh = False
+    if _auto_ide_control_enabled():
+        ide_control = ensure_vdisplay_ide_control(ide=ide, source=src)
+        if ide_control.get("map_actuation_ok") or ide_control.get("interior_focused"):
+            import time
+
+            force_refresh = True
+            time.sleep(
+                float(os.environ.get("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0.8"))
+            )
+    return ide_control, force_refresh
+
+
+def _prepare_photo_vql_refresh_or_reuse(
+    *, src: str, ide: str, session_dir, force_refresh: bool
+) -> dict[str, Any]:
+    """Refresh the photo VQL sidecar, or reuse the fresh one already on disk."""
+    if force_refresh or photo_vql_sidecar_needs_refresh(source=src, ide=ide):
+        return refresh_photo_vql_sidecar(source=src, ide=ide)
+    png = _resolve_photo_png_path(src)
+    vql = png.with_suffix(png.suffix + ".vql.json")
+    meta = load_vql_metadata(str(vql))
+    return {
+        "ok": True,
+        "source": src,
+        "png": str(png),
+        "vql": str(vql),
+        "elements": len(meta.get("ui_elements") or meta.get("layers") or []),
+        "main_vql_layers": _main_vql_layer_count(vql),
+        "vql_source": meta.get("_source"),
+        "reused_fresh_sidecar": True,
+        "session_dir": str(session_dir),
+    }
+
+
+def _prepare_photo_vql_handle_window_warning(
+    out: dict[str, Any], *, warn: dict[str, Any], ide: str, src: str
+) -> tuple[dict[str, Any], str | None]:
+    """Handle an ide_window_warning inside the prepare retry loop: (out, "break" | None)."""
+    out["ide_window_warning"] = warn
+    out["capture_matches_ide"] = False
+    os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
+    cv = out.get("capture_validation") or {}
+    if isinstance(cv, dict) and cv.get("body_false_positive"):
+        out["body_false_positive"] = True
+    if (
+        not _allow_prepare_map_on_mismatch()
+        and not out.get("_focus_recovery_tried")
+        and _raise_alt_tab_enabled(ide=ide)
+    ):
+        out["_focus_recovery_tried"] = True
+        recovered = _attempt_focus_recovery_capture(ide=ide, source=src)
+        if recovered.get("ok"):
+            out = recovered
             os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
-            out["capture_matches_ide"] = True
             if _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
                 os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
-            break
-        out["capture_matches_ide"] = False
-        # On mismatch for JetBrains etc, do extra focus via map when map-only fallback is allowed,
-        # then re-capture to get correct VQL for the target IDE on the source.
-        if _allow_prepare_map_on_mismatch():
-            mp = None
-            if ide_control:
-                mp = ide_control.get("map_path")
-            if not mp:
-                mp = map_path or _resolve_ide_prompt_map(_ide_prompt_app_id(ide))
-            if map_mismatch:
-                out.setdefault("map_skipped", True)
-            elif _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"} and mp:
-                try:
-                    for t in _map_interior_targets_for_ide(_ide_prompt_app_id(ide), mp)[:1]:
-                        _control_click(backend="vision", map_path=mp, map_target=t, source=src)
-                    import time
-                    time.sleep(0.4)
-                    out = refresh_photo_vql_sidecar(source=src, ide=ide)
-                except Exception:
-                    pass
-        if attempt + 1 < retries:
-            time.sleep(float(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRY_DELAY_S", "0.6")))
+            return out, "break"
+        out["focus_recovery"] = recovered.get("focus_recovery")
+    if not _allow_prepare_map_on_mismatch():
+        return out, "break"
+    return out, None
 
+
+def _prepare_photo_vql_map_focus_fallback(
+    out: dict[str, Any],
+    *,
+    ide: str,
+    src: str,
+    ide_control: dict[str, Any] | None,
+    map_path: str | None,
+    map_mismatch: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """On mismatch for JetBrains etc, do extra focus via map when map-only fallback is allowed,
+    then re-capture to get correct VQL for the target IDE on the source."""
+    if not _allow_prepare_map_on_mismatch():
+        return out
+    mp = None
+    if ide_control:
+        mp = ide_control.get("map_path")
+    if not mp:
+        mp = map_path or _resolve_ide_prompt_map(_ide_prompt_app_id(ide))
+    if map_mismatch:
+        out.setdefault("map_skipped", True)
+    elif _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"} and mp:
+        try:
+            for t in _map_interior_targets_for_ide(_ide_prompt_app_id(ide), mp)[:1]:
+                _control_click(backend="vision", map_path=mp, map_target=t, source=src)
+            import time
+            time.sleep(0.4)
+            out = refresh_photo_vql_sidecar(source=src, ide=ide)
+        except Exception:
+            pass
+    return out
+
+
+def _prepare_photo_vql_finalize_out(
+    out: dict[str, Any],
+    *,
+    ide: str,
+    ide_control: dict[str, Any] | None,
+    map_mismatch: dict[str, Any] | None,
+    loop_attempts: int,
+    session_dir,
+) -> dict[str, Any]:
+    """Merge ide_control/map-mismatch/provenance into the prepare out after the retry loop."""
     if ide_control is not None:
         out["ide_control"] = ide_control
     if map_mismatch:
@@ -2525,6 +2550,18 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
                 out["capture_confirmed"] = out["capture_provenance"].get("capture_confirmed")
         except Exception:
             pass
+    return out
+
+
+def _prepare_photo_vql_apply_capture_guard(
+    out: dict[str, Any],
+    *,
+    ide: str,
+    src: str,
+    desktop_probe: dict[str, Any],
+    ide_control: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Apply surface capture confirmation + CaptureGuard/readiness to the prepare out."""
     capture_error = (
         out.get("ok") is False
         or bool(out.get("error"))
@@ -2552,6 +2589,100 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
     out = guard.apply_to_prepare_out(out, ide_control=ide_control, capture_error=capture_error)
     out = _annotate_png_artifact_state(out)
     _annotate_prepare_drive_readiness(out)
+    return out
+
+
+def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
+    """Observe (if needed) + pin sidecar before koru drive / send_chat."""
+    import time
+
+    bootstrap: dict[str, Any] = {}
+    try:
+        from koru.integrations.vdisplay_agent_bootstrap import bootstrap_vdisplay_capture
+
+        bootstrap = bootstrap_vdisplay_capture()
+    except ImportError:
+        pass
+
+    src, desktop_probe = _resolve_vdisplay_source_for_ide(ide)
+    if bootstrap:
+        desktop_probe = {**desktop_probe, "vdisplay_bootstrap": bootstrap}
+    os.environ.setdefault("KORU_VDISPLAY_CONTROL_FALLBACK", "1")
+    os.environ["KORU_VDISPLAY_SOURCE"] = src
+    os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
+
+    map_path = _resolve_ide_prompt_map(_ide_prompt_app_id(ide))
+    map_mismatch, desktop_probe = _prepare_photo_vql_map_mismatch(
+        map_path=map_path, src=src, desktop_probe=desktop_probe
+    )
+
+    session_dir = _autonomy_session.begin_autonomy_session(ide=ide, source=src)
+    _autonomy_session.persist_autonomy_phase(session_dir, "decide", "desktop_probe", desktop_probe)
+
+    aborted = _prepare_photo_vql_probe_abort(
+        src=src, session_dir=session_dir, desktop_probe=desktop_probe
+    )
+    if aborted is not None:
+        return aborted
+
+    retries = max(1, int(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3") or "3"))
+    ide_control: dict[str, Any] | None = None
+    out = _prepare_photo_vql_out_skeleton(
+        src=src,
+        session_dir=session_dir,
+        desktop_probe=desktop_probe,
+        map_mismatch=map_mismatch,
+        bootstrap=bootstrap,
+    )
+    loop_attempts = 0
+
+    for attempt in range(retries):
+        loop_attempts = attempt + 1
+        ide_control, force_refresh = _prepare_photo_vql_ide_control_attempt(
+            ide=ide, src=src, ide_control=ide_control
+        )
+        out = _prepare_photo_vql_refresh_or_reuse(
+            src=src, ide=ide, session_dir=session_dir, force_refresh=force_refresh
+        )
+        if not out.get("ok"):
+            break
+        warn = out.get("ide_window_warning") or _photo_vql_ide_window_warning(
+            ide=ide,
+            meta=load_vql_metadata(str(out.get("vql") or "")),
+        )
+        if warn:
+            out, action = _prepare_photo_vql_handle_window_warning(out, warn=warn, ide=ide, src=src)
+            if action == "break":
+                break
+        elif _capture_matches_requested_ide(ide):
+            os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
+            out["capture_matches_ide"] = True
+            if _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
+                os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
+            break
+        out["capture_matches_ide"] = False
+        out = _prepare_photo_vql_map_focus_fallback(
+            out,
+            ide=ide,
+            src=src,
+            ide_control=ide_control,
+            map_path=map_path,
+            map_mismatch=map_mismatch,
+        )
+        if attempt + 1 < retries:
+            time.sleep(float(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRY_DELAY_S", "0.6")))
+
+    out = _prepare_photo_vql_finalize_out(
+        out,
+        ide=ide,
+        ide_control=ide_control,
+        map_mismatch=map_mismatch,
+        loop_attempts=loop_attempts,
+        session_dir=session_dir,
+    )
+    out = _prepare_photo_vql_apply_capture_guard(
+        out, ide=ide, src=src, desktop_probe=desktop_probe, ide_control=ide_control
+    )
     out["desktop_probe"] = desktop_probe
     _autonomy_session.persist_autonomy_phase(session_dir, "observe", "prepare", out)
     return out
@@ -4437,174 +4568,247 @@ def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, An
         return {"ok": False, "method": "ydotool-click", "error": str(exc)}
 
 
-def _type_text_at_vql_coords(
+def _type_text_plan_validation_warnings(
+    *,
+    target_for_log: dict[str, Any],
+    command_plan: dict[str, Any] | None,
+) -> list[str]:
+    """Warnings coming from the command plan + VQL validation payloads."""
+    warnings: list[str] = []
+    plan_warnings = (command_plan or {}).get("warnings") if isinstance(command_plan, dict) else None
+    if isinstance(plan_warnings, list):
+        warnings.extend(str(item) for item in plan_warnings)
+    validation = None
+    if isinstance(command_plan, dict):
+        validation = command_plan.get("vql_validation")
+    if not isinstance(validation, dict) and isinstance(target_for_log, dict):
+        validation = target_for_log.get("vql_validation")
+    if isinstance(validation, dict):
+        warnings.extend(str(item) for item in validation.get("coord_warnings") or [])
+        warnings.extend(str(item) for item in validation.get("validation_errors") or [])
+    return warnings
+
+
+def _type_text_blocking_warnings(
+    *,
+    x: int,
+    y: int,
+    ide: str,
+    target_for_log: dict[str, Any],
+    command_plan: dict[str, Any] | None,
+) -> list[str]:
+    """Collect blocking warnings (coord validation + plan + VQL validation) before typing."""
+    blocking_warnings: list[str] = []
+    if _dry_run():
+        return blocking_warnings
+    is_code_edit = _photo_vql_code_edit_enabled() or str(target_for_log.get("role") or "").lower() == "editor"
+    blocking_warnings.extend(
+        _validate_chat_coords_for_ide(
+            x=int(x),
+            y=int(y),
+            ide=ide,
+            target=target_for_log,
+            is_code_edit=is_code_edit,
+        )
+    )
+    blocking_warnings.extend(
+        _type_text_plan_validation_warnings(
+            target_for_log=target_for_log, command_plan=command_plan
+        )
+    )
+    return list(dict.fromkeys(w for w in blocking_warnings if w))
+
+
+def _type_text_blocked_result(
+    result: dict[str, Any],
+    *,
+    blocking_warnings: list[str],
+    target_for_log: dict[str, Any],
+    command_plan: dict[str, Any] | None,
+    ide: str,
+    x: int,
+    y: int,
+) -> dict[str, Any]:
+    """Refusal result when suspicious VQL chat coords were detected."""
+    result.update(
+        {
+            "ok": False,
+            "error": "refusing to type at suspicious VQL chat coords",
+            "warnings": blocking_warnings,
+            "vql_target": target_for_log,
+        }
+    )
+    if command_plan is not None:
+        result["vql_command_plan"] = command_plan
+    logger.warning(
+        "VQL_CHAT_WRITE_BLOCKED_SUSPICIOUS_COORDS ide=%s local=(%s,%s) warnings=%s",
+        ide,
+        x,
+        y,
+        blocking_warnings,
+    )
+    return result
+
+
+def _type_text_dry_run_result(
+    result: dict[str, Any],
     value: str,
     *,
     x: int,
     y: int,
-    source: str,
     ide: str,
-    focus_ok: bool = False,
-    focus_res: dict[str, Any] | None = None,
-    force_point_click: bool = False,
-    vql_target: dict[str, Any] | None = None,
-    command_plan: dict[str, Any] | None = None,
+    source: str,
+    target_for_log: dict[str, Any],
+    command_plan: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Click caret at VQL capture coords, then type/paste via resolved pointer input."""
-    hints = _ide_hints(ide) if ide and ide != "auto" else {}
-    result: dict[str, Any] = {"ok": False, "coords": {"x": x, "y": y}}
-    jetbrains = _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
-    must_click = force_point_click or jetbrains or not focus_ok
-    target_for_log = vql_target or (focus_res or {}).get("vql_target") or {
-        "click_center": {"x": x, "y": y},
-        "note": "pre-type chat write",
-    }
-    blocking_warnings: list[str] = []
-    if not _dry_run():
-        is_code_edit = _photo_vql_code_edit_enabled() or str(target_for_log.get("role") or "").lower() == "editor"
-        blocking_warnings.extend(
-            _validate_chat_coords_for_ide(
-                x=int(x),
-                y=int(y),
-                ide=ide,
-                target=target_for_log,
-                is_code_edit=is_code_edit,
-            )
-        )
-        plan_warnings = (command_plan or {}).get("warnings") if isinstance(command_plan, dict) else None
-        if isinstance(plan_warnings, list):
-            blocking_warnings.extend(str(item) for item in plan_warnings)
-        validation = None
-        if isinstance(command_plan, dict):
-            validation = command_plan.get("vql_validation")
-        if not isinstance(validation, dict) and isinstance(target_for_log, dict):
-            validation = target_for_log.get("vql_validation")
-        if isinstance(validation, dict):
-            blocking_warnings.extend(str(item) for item in validation.get("coord_warnings") or [])
-            blocking_warnings.extend(str(item) for item in validation.get("validation_errors") or [])
-        blocking_warnings = list(dict.fromkeys(w for w in blocking_warnings if w))
-    if blocking_warnings:
-        result.update(
-            {
-                "ok": False,
-                "error": "refusing to type at suspicious VQL chat coords",
-                "warnings": blocking_warnings,
-                "vql_target": target_for_log,
-            }
-        )
-        if command_plan is not None:
-            result["vql_command_plan"] = command_plan
-        logger.warning(
-            "VQL_CHAT_WRITE_BLOCKED_SUSPICIOUS_COORDS ide=%s local=(%s,%s) warnings=%s",
-            ide,
-            x,
-            y,
-            blocking_warnings,
-        )
-        return result
+    """Dry-run / no-vdisplay early return with cursor-positioning intent log."""
+    pos_log = _log_vql_cursor_positioning_at_command(
+        target_for_log,
+        stage="type_text_dry_run",
+        ide=ide,
+        source=source,
+        final_local={"x": x, "y": y},
+        command_plan=command_plan,
+    )
+    result.update(
+        {
+            "ok": True,
+            "dry_run": True,
+            "message": f"DRY type at VQL coords ({x},{y})",
+            "value": value,
+            "cursor_positioning": pos_log,
+        }
+    )
+    return result
 
-    if _dry_run() or not vdisplay_available():
-        pos_log = _log_vql_cursor_positioning_at_command(
-            target_for_log,
-            stage="type_text_dry_run",
-            ide=ide,
-            source=source,
-            final_local={"x": x, "y": y},
-            command_plan=command_plan,
-        )
-        result.update(
-            {
-                "ok": True,
-                "dry_run": True,
-                "message": f"DRY type at VQL coords ({x},{y})",
-                "value": value,
-                "cursor_positioning": pos_log,
-            }
-        )
-        return result
 
-    # After AT-SPI window focus, try set_value on the focused element first (GNOME Wayland).
+def _type_text_try_atspi_set_value(
+    result: dict[str, Any],
+    value: str,
+    *,
+    hints: dict[str, Any],
+    focus_ok: bool,
+    focus_res: dict[str, Any] | None,
+) -> bool:
+    """Try AT-SPI set_value on the focused element first (GNOME Wayland); True when handled."""
     click_target = (focus_res or {}).get("click_res") or {}
     element_id = click_target.get("element_id")
     target_caps = ((click_target.get("target") or {}).get("capabilities") or {})
-    if focus_ok and element_id and target_caps.get("text_write"):
-        try:
-            atspi_res = _control_set_value(
-                provider_ref=element_id,
-                value=value,
-                backend="atspi",
-                app=hints.get("app"),
-                window_title=hints.get("window_title_contains"),
-            )
-            result["atspi_set_value"] = atspi_res
-            if isinstance(atspi_res, dict) and atspi_res.get("ok", True):
-                result.update({"ok": True, "method": "atspi-set_value", "value": value, "element_id": element_id})
-                return result
-        except Exception as exc:
-            result["atspi_error"] = str(exc)
-
-    click_res = None
-    if must_click:
-        vql_file_for_log = target_for_log.get("source")
-        if isinstance(vql_file_for_log, str) and not vql_file_for_log.endswith(".vql.json"):
-            vql_file_for_log = None
-        pos_log = _log_vql_cursor_positioning_at_command(
-            target_for_log,
-            stage="type_text_at_vql_coords_must_click_for_chat",
-            ide=ide,
-            source=source,
-            final_local={"x": x, "y": y},
-            vql_file=vql_file_for_log if isinstance(vql_file_for_log, str) else None,
-            command_plan=command_plan,
+    if not (focus_ok and element_id and target_caps.get("text_write")):
+        return False
+    try:
+        atspi_res = _control_set_value(
+            provider_ref=element_id,
+            value=value,
+            backend="atspi",
+            app=hints.get("app"),
+            window_title=hints.get("window_title_contains"),
         )
-        result["cursor_positioning"] = pos_log
-        ydotool_click = _ydotool_click_capture_local(x=x, y=y, source=source)
-        result["ydotool_click"] = ydotool_click
-        if ydotool_click.get("ok"):
-            click_res = ydotool_click
-            result["click_res"] = click_res
-            logger.info(
-                "VQL_CHAT_WRITE_CLICK_OK local=(%s,%s) global=(%s,%s) method=%s",
-                x,
-                y,
-                ydotool_click.get("x"),
-                ydotool_click.get("y"),
-                ydotool_click.get("method"),
-            )
-        else:
-            logger.warning(
-                "VQL_CHAT_WRITE_CLICK_FAILED local=(%s,%s) error=%s",
-                x,
-                y,
-                ydotool_click.get("error"),
-            )
-    if click_res is None and not focus_ok:
-        for payload in (
-            {
-                "backend": "vision",
-                "x": x,
-                "y": y,
-                "source": source,
-                "app": hints.get("app"),
-                "window_title": hints.get("window_title_contains"),
-            },
-            {
-                "backend": "auto",
-                "x": x,
-                "y": y,
-                "source": source,
-                "app": hints.get("app"),
-                "window_title": hints.get("window_title_contains"),
-            },
-        ):
-            try:
-                click_res = _control_click(**payload)
-                result["click_res"] = click_res
-                if isinstance(click_res, dict) and click_res.get("ok", True):
-                    break
-            except Exception as exc:
-                result["click_error"] = str(exc)
+        result["atspi_set_value"] = atspi_res
+        if isinstance(atspi_res, dict) and atspi_res.get("ok", True):
+            result.update({"ok": True, "method": "atspi-set_value", "value": value, "element_id": element_id})
+            return True
+    except Exception as exc:
+        result["atspi_error"] = str(exc)
+    return False
 
+
+def _type_text_must_click(
+    result: dict[str, Any],
+    *,
+    x: int,
+    y: int,
+    ide: str,
+    source: str,
+    target_for_log: dict[str, Any],
+    command_plan: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """ydotool move+click at capture-local coords; returns click_res on success, else None."""
+    vql_file_for_log = target_for_log.get("source")
+    if isinstance(vql_file_for_log, str) and not vql_file_for_log.endswith(".vql.json"):
+        vql_file_for_log = None
+    pos_log = _log_vql_cursor_positioning_at_command(
+        target_for_log,
+        stage="type_text_at_vql_coords_must_click_for_chat",
+        ide=ide,
+        source=source,
+        final_local={"x": x, "y": y},
+        vql_file=vql_file_for_log if isinstance(vql_file_for_log, str) else None,
+        command_plan=command_plan,
+    )
+    result["cursor_positioning"] = pos_log
+    ydotool_click = _ydotool_click_capture_local(x=x, y=y, source=source)
+    result["ydotool_click"] = ydotool_click
+    if ydotool_click.get("ok"):
+        result["click_res"] = ydotool_click
+        logger.info(
+            "VQL_CHAT_WRITE_CLICK_OK local=(%s,%s) global=(%s,%s) method=%s",
+            x,
+            y,
+            ydotool_click.get("x"),
+            ydotool_click.get("y"),
+            ydotool_click.get("method"),
+        )
+        return ydotool_click
+    logger.warning(
+        "VQL_CHAT_WRITE_CLICK_FAILED local=(%s,%s) error=%s",
+        x,
+        y,
+        ydotool_click.get("error"),
+    )
+    return None
+
+
+def _type_text_fallback_click(
+    result: dict[str, Any],
+    *,
+    x: int,
+    y: int,
+    source: str,
+    hints: dict[str, Any],
+) -> dict[str, Any] | None:
+    """vision -> auto _control_click fallback loop; returns the last click_res (or None)."""
+    click_res = None
+    for payload in (
+        {
+            "backend": "vision",
+            "x": x,
+            "y": y,
+            "source": source,
+            "app": hints.get("app"),
+            "window_title": hints.get("window_title_contains"),
+        },
+        {
+            "backend": "auto",
+            "x": x,
+            "y": y,
+            "source": source,
+            "app": hints.get("app"),
+            "window_title": hints.get("window_title_contains"),
+        },
+    ):
+        try:
+            click_res = _control_click(**payload)
+            result["click_res"] = click_res
+            if isinstance(click_res, dict) and click_res.get("ok", True):
+                break
+        except Exception as exc:
+            result["click_error"] = str(exc)
+    return click_res
+
+
+def _type_text_paste_or_type(
+    result: dict[str, Any],
+    value: str,
+    *,
+    x: int,
+    y: int,
+    ide: str,
+    source: str,
+    target_for_log: dict[str, Any],
+    command_plan: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Resolve pointer input, then paste (clipboard + ctrl+v) or type the value."""
     try:
         import shutil
         import subprocess
@@ -4684,6 +4888,85 @@ def _type_text_at_vql_coords(
     except Exception as exc:
         result["error"] = str(exc)
     return result
+
+
+def _type_text_at_vql_coords(
+    value: str,
+    *,
+    x: int,
+    y: int,
+    source: str,
+    ide: str,
+    focus_ok: bool = False,
+    focus_res: dict[str, Any] | None = None,
+    force_point_click: bool = False,
+    vql_target: dict[str, Any] | None = None,
+    command_plan: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Click caret at VQL capture coords, then type/paste via resolved pointer input."""
+    hints = _ide_hints(ide) if ide and ide != "auto" else {}
+    result: dict[str, Any] = {"ok": False, "coords": {"x": x, "y": y}}
+    jetbrains = _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
+    must_click = force_point_click or jetbrains or not focus_ok
+    target_for_log = vql_target or (focus_res or {}).get("vql_target") or {
+        "click_center": {"x": x, "y": y},
+        "note": "pre-type chat write",
+    }
+    blocking_warnings = _type_text_blocking_warnings(
+        x=x, y=y, ide=ide, target_for_log=target_for_log, command_plan=command_plan
+    )
+    if blocking_warnings:
+        return _type_text_blocked_result(
+            result,
+            blocking_warnings=blocking_warnings,
+            target_for_log=target_for_log,
+            command_plan=command_plan,
+            ide=ide,
+            x=x,
+            y=y,
+        )
+
+    if _dry_run() or not vdisplay_available():
+        return _type_text_dry_run_result(
+            result,
+            value,
+            x=x,
+            y=y,
+            ide=ide,
+            source=source,
+            target_for_log=target_for_log,
+            command_plan=command_plan,
+        )
+
+    if _type_text_try_atspi_set_value(
+        result, value, hints=hints, focus_ok=focus_ok, focus_res=focus_res
+    ):
+        return result
+
+    click_res = None
+    if must_click:
+        click_res = _type_text_must_click(
+            result,
+            x=x,
+            y=y,
+            ide=ide,
+            source=source,
+            target_for_log=target_for_log,
+            command_plan=command_plan,
+        )
+    if click_res is None and not focus_ok:
+        _type_text_fallback_click(result, x=x, y=y, source=source, hints=hints)
+
+    return _type_text_paste_or_type(
+        result,
+        value,
+        x=x,
+        y=y,
+        ide=ide,
+        source=source,
+        target_for_log=target_for_log,
+        command_plan=command_plan,
+    )
 
 
 def _resolve_photo_vql_llm_coords(
@@ -5155,118 +5438,104 @@ def _photo_vql_edit_result(
     return edit_res
 
 
-def perform_photo_vql_focus_and_edit(
-    prompt: str,
-    *,
-    ide: str = "auto",
-    source: str = "DP-1",
-    is_code_edit: bool = False,
-    submit: bool = False,
-    image_path: str | None = None,
-) -> dict:
-    """Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus keyboard na click_center z foto,
-    potem wykonaj precyzyjny edit/typ via coords (set_value at the VQL center).
+def _photo_vql_stale_gate_override_ok(*, canon_probe: str, is_code_edit: bool) -> bool:
+    """Whether map/surface fallbacks allow proceeding despite stale/errored VQL metadata."""
+    map_mismatch_ok = (
+        not is_code_edit
+        and canon_probe in {"jetbrains", "pycharm", "idea"}
+        and _allow_prepare_map_on_mismatch()
+    )
+    surface_mismatch_ok = (
+        not is_code_edit
+        and canon_probe in {"jetbrains", "pycharm", "idea"}
+        and _surface_only_fallback_active()
+        and _allow_prepare_surface_on_capture_error()
+    )
+    code_edit_map_ok = (
+        is_code_edit
+        and canon_probe in {"jetbrains", "pycharm", "idea"}
+        and _allow_prepare_map_on_mismatch()
+    )
+    return map_mismatch_ok or surface_mismatch_ok or code_edit_map_ok
 
-    To realizuje "użyć VQL do 'zobaczenia' otwartego pliku w edytorze i precyzyjnego edit via coords" (następny task z analizy).
-    Dla is_code_edit=True używa editor target (np. window_0 lub main panel z foto VQL).
-    Dla chat (default) używa chat panel.
 
-    Optional LLM vision layer (enable with KORU_VDISPLAY_LLM_VISION_DECISION=1):
-    If .env has OPENROUTER_API_KEY and LLM_MODEL (vision model e.g. openrouter/google/gemini-3.1-flash-image-preview),
-    we send base64(image_path) + VQL target excerpt + the prompt to the model.
-    LLM should return JSON: {"click_center": {"x": int, "y": int}, "strategy": str, "confidence": float, "reason": str}.
-    If successful and confidence reasonable, the LLM's click_center (and strategy) overrides the pure VQL one for this call.
-    This adds "LLM decides exact coords/strategy on top of photo VQL" as additional layer.
-    Always falls back to the VQL-derived coords if no key, no image_path, call fails, or low confidence.
-    IDE independent (dane z foto, nie z pluginu).
-    """
-    mismatch = _photo_vql_ide_capture_mismatch(ide=ide) if ide and ide != "auto" else None
-    use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {"1", "true", "yes", "on"}
-
+def _photo_vql_stale_metadata_gate(*, ide: str, is_code_edit: bool) -> dict | None:
+    """Abort dict when VQL metadata is stale/errored and no fallback allows it, else None."""
     meta_probe = load_vql_metadata()
-    if meta_probe.get("error") and not _dry_run():
-        stale_only = bool(meta_probe.get("stale_skipped"))
-        session_active = _autonomy_session.active_session_dir() is not None
-        canon_probe = _canonical_ide(ide)
-        map_mismatch_ok = (
-            not is_code_edit
-            and canon_probe in {"jetbrains", "pycharm", "idea"}
-            and _allow_prepare_map_on_mismatch()
-        )
-        surface_mismatch_ok = (
-            not is_code_edit
-            and canon_probe in {"jetbrains", "pycharm", "idea"}
-            and _surface_only_fallback_active()
-            and _allow_prepare_surface_on_capture_error()
-        )
-        code_edit_map_ok = (
-            is_code_edit
-            and canon_probe in {"jetbrains", "pycharm", "idea"}
-            and _allow_prepare_map_on_mismatch()
-        )
-        if (
-            (stale_only or session_active)
-            and not map_mismatch_ok
-            and not surface_mismatch_ok
-            and not code_edit_map_ok
-        ):
-            err = {
-                "ok": False,
-                "backend": "vdisplay+photo-vql",
-                "error": str(meta_probe.get("error")),
-                "stale_skipped": meta_probe.get("stale_skipped"),
-                "ide": ide,
-                "is_code_edit": is_code_edit,
-                "hint": "run prepare_photo_vql_for_drive() first — observe must be fresh in .vdisplay/YYYY-MM-DD/.../observe/",
-            }
-            session = _autonomy_session.active_session_dir()
-            if session is not None:
-                _autonomy_session.persist_autonomy_phase(session, "decide", "stale_abort", err)
-            return err
+    if not meta_probe.get("error") or _dry_run():
+        return None
+    stale_only = bool(meta_probe.get("stale_skipped"))
+    session_active = _autonomy_session.active_session_dir() is not None
+    canon_probe = _canonical_ide(ide)
+    override_ok = _photo_vql_stale_gate_override_ok(
+        canon_probe=canon_probe, is_code_edit=is_code_edit
+    )
+    if not (stale_only or session_active) or override_ok:
+        return None
+    err = {
+        "ok": False,
+        "backend": "vdisplay+photo-vql",
+        "error": str(meta_probe.get("error")),
+        "stale_skipped": meta_probe.get("stale_skipped"),
+        "ide": ide,
+        "is_code_edit": is_code_edit,
+        "hint": "run prepare_photo_vql_for_drive() first — observe must be fresh in .vdisplay/YYYY-MM-DD/.../observe/",
+    }
+    session = _autonomy_session.active_session_dir()
+    if session is not None:
+        _autonomy_session.persist_autonomy_phase(session, "decide", "stale_abort", err)
+    return err
 
-    # Strict match mainly for is_code_edit (precise editor file edits need correct capture of the open file).
-    # Chat on JetBrains also requires a matching capture unless explicitly overridden — LLM vision cannot
-    # reliably locate PyCharm chat when the screenshot shows Cursor (wrong window layer / VQL inputs).
-    if _photo_vql_capture_mismatch_blocks(
+
+def _photo_vql_capture_mismatch_gate(
+    *, mismatch: dict[str, Any] | None, ide: str, is_code_edit: bool
+) -> dict | None:
+    """Abort dict when the IDE/capture mismatch blocks actuation, else None."""
+    if not _photo_vql_capture_mismatch_blocks(
         mismatch=mismatch,
         ide=ide,
         is_code_edit=is_code_edit,
     ):
-        err = _photo_vql_capture_mismatch_error(
-            mismatch=mismatch or {},
-            ide=ide,
-            is_code_edit=is_code_edit,
-        )
-        session = _autonomy_session.active_session_dir()
-        if session is not None:
-            _autonomy_session.persist_autonomy_phase(session, "decide", "ide_capture_blocked", err)
-        return err
+        return None
+    err = _photo_vql_capture_mismatch_error(
+        mismatch=mismatch or {},
+        ide=ide,
+        is_code_edit=is_code_edit,
+    )
+    session = _autonomy_session.active_session_dir()
+    if session is not None:
+        _autonomy_session.persist_autonomy_phase(session, "decide", "ide_capture_blocked", err)
+    return err
 
+
+def _photo_vql_map_source_preflight_gate(
+    *, ide: str, source: str, is_code_edit: bool
+) -> dict | None:
+    """Abort dict when the IDE prompt-map monitor mismatches the capture source, else None."""
     ide_map_source_mismatch = _map_capture_mismatch_for_ide(ide=ide, source=source)
-    if ide_map_source_mismatch and not _map_source_mismatch_actuation_allowed():
-        blocked = _photo_vql_map_source_mismatch_error(
-            map_mismatch=ide_map_source_mismatch,
-            target={
-                "id": "map:ide-prompt",
-                "source": ide_map_source_mismatch.get("map_path"),
-                "selection_method": "map_source_preflight",
-            },
-            ide=ide,
-            source=source,
-            is_code_edit=is_code_edit,
-        )
-        session = _autonomy_session.active_session_dir()
-        if session is not None:
-            _autonomy_session.persist_autonomy_phase(session, "act", "map_source_mismatch_preflight_blocked", blocked)
-        return blocked
+    if not ide_map_source_mismatch or _map_source_mismatch_actuation_allowed():
+        return None
+    blocked = _photo_vql_map_source_mismatch_error(
+        map_mismatch=ide_map_source_mismatch,
+        target={
+            "id": "map:ide-prompt",
+            "source": ide_map_source_mismatch.get("map_path"),
+            "selection_method": "map_source_preflight",
+        },
+        ide=ide,
+        source=source,
+        is_code_edit=is_code_edit,
+    )
+    session = _autonomy_session.active_session_dir()
+    if session is not None:
+        _autonomy_session.persist_autonomy_phase(session, "act", "map_source_mismatch_preflight_blocked", blocked)
+    return blocked
 
-    if is_code_edit:
-        t = get_vql_editor_target_from_photo()
-        target_desc = "editor/open-file"
-    else:
-        t = get_vql_chat_target_from_photo(ide=ide)
-        target_desc = "chat"
 
+def _photo_vql_target_map_mismatch_gate(
+    t: dict[str, Any], *, ide: str, source: str, is_code_edit: bool
+) -> tuple[dict | None, dict[str, Any] | None]:
+    """Per-target map/capture mismatch gate: (abort dict | None, map_source_mismatch)."""
     map_source_mismatch = _map_capture_mismatch_for_target(target=t, ide=ide, source=source)
     if map_source_mismatch and not _map_source_mismatch_actuation_allowed():
         blocked = _photo_vql_map_source_mismatch_error(
@@ -5279,10 +5548,16 @@ def perform_photo_vql_focus_and_edit(
         session = _autonomy_session.active_session_dir()
         if session is not None:
             _autonomy_session.persist_autonomy_phase(session, "act", "map_source_mismatch_blocked", blocked)
-        return blocked
+        return blocked, map_source_mismatch
     if map_source_mismatch:
         t["map_capture_mismatch"] = map_source_mismatch
+    return None, map_source_mismatch
 
+
+def _photo_vql_maybe_clear_mismatch(
+    t: dict[str, Any], *, ide: str, mismatch: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    """Clear the observe-level mismatch when a trusted map/surface target allows actuation."""
     # For JetBrains on DP-2 (rotated, often empty VQL layers or title mismatch from observe),
     # get_vql... deliberately returns a calibrated map target (e.g. "prompt" or "ai-chat-input").
     # The map is the trusted source for this IDE+monitor. Clear the observe-level mismatch
@@ -5295,10 +5570,13 @@ def perform_photo_vql_focus_and_edit(
     elif _surface_target_can_clear_capture_mismatch(target=t, ide=ide):
         mismatch = None
         t["_surface_cleared_mismatch_for_actuation"] = True
+    return mismatch
 
-    if image_path is None:
-        image_path = _resolve_photo_png_path_from_vql(source=source)
 
+def _photo_vql_refined_target(
+    *, prompt: str, t: dict[str, Any], source: str, image_path: str | None, ide: str
+) -> tuple[dict[str, Any], int, int, dict[str, Any] | None]:
+    """Resolve (possibly LLM-refined) coords and annotate the target: (t, x, y, llm_decision)."""
     x, y, llm_decision = _resolve_photo_vql_llm_coords(
         prompt=prompt,
         target=t,
@@ -5328,7 +5606,22 @@ def perform_photo_vql_focus_and_edit(
                 "llm_coord_refine",
                 {"llm_decision": llm_decision, "final_local": {"x": x, "y": y}, "vql_target_before": t},
             )
+    return t, x, y, llm_decision
 
+
+def _photo_vql_command_plan_pre_act(
+    *,
+    t: dict[str, Any],
+    x: int,
+    y: int,
+    source: str,
+    ide: str,
+    prompt: str,
+    llm_decision: dict[str, Any] | None,
+    is_code_edit: bool,
+    mismatch: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Build, log and persist the pre-act command plan for perform_photo_vql_focus_and_edit."""
     command_plan = _build_vql_command_plan(
         target=t,
         x=int(x),
@@ -5364,51 +5657,67 @@ def perform_photo_vql_focus_and_edit(
         _autonomy_session.persist_autonomy_phase(
             session, "act", "command_plan_perform_photo_vql_pre_act", command_plan
         )
+    return command_plan
 
+
+def _photo_vql_unverified_chat_gate(
+    *,
+    command_plan: dict[str, Any],
+    t: dict[str, Any],
+    target_desc: str,
+    x: int,
+    y: int,
+    ide: str,
+    mismatch: dict[str, Any] | None,
+    is_code_edit: bool,
+) -> dict | None:
+    """Abort dict when unverified chat actuation must be blocked, else None."""
     map_mismatch_allowed = _map_mismatch_allowed_for_target(target=t, ide=ide)
     surface_mismatch_allowed = _surface_mismatch_allowed_for_target(target=t, ide=ide)
-    if _photo_vql_should_block_unverified_chat(
+    if not _photo_vql_should_block_unverified_chat(
         command_plan=command_plan,
         is_code_edit=is_code_edit,
         map_mismatch_allowed=map_mismatch_allowed,
         surface_mismatch_allowed=surface_mismatch_allowed,
     ):
-        blocked = _photo_vql_unverified_chat_blocked(
-            command_plan=command_plan,
-            target_desc=target_desc,
-            target=t,
-            x=x,
-            y=y,
-            ide=ide,
-            mismatch=mismatch,
-        )
-        if session is not None:
-            _autonomy_session.persist_autonomy_phase(session, "act", "chat_actuation_blocked", blocked)
-        return blocked
-
-    focus_res = _photo_vql_focus_target(
+        return None
+    blocked = _photo_vql_unverified_chat_blocked(
+        command_plan=command_plan,
+        target_desc=target_desc,
         target=t,
-        ide=ide,
-        source=source,
-        is_code_edit=is_code_edit,
-        llm_decision=llm_decision,
-    )
-    edit_res = _photo_vql_edit_result(
-        prompt,
         x=x,
         y=y,
-        target_desc=target_desc,
-        source=source,
         ide=ide,
-        focus_res=focus_res,
-        target=t,
-        command_plan=command_plan,
+        mismatch=mismatch,
     )
+    session = _autonomy_session.active_session_dir()
+    if session is not None:
+        _autonomy_session.persist_autonomy_phase(session, "act", "chat_actuation_blocked", blocked)
+    return blocked
 
-    combined_ok = bool(edit_res.get("ok", False))
+
+def _photo_vql_edit_mismatch_allowances(*, t: dict[str, Any], ide: str) -> tuple[bool, bool]:
+    """(map_mismatch_allowed, surface_mismatch_allowed) for combined_ok re-derivation."""
     is_jetbrains_map = str((t or {}).get("id") or "").startswith("map:") and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
     map_mismatch_allowed = is_jetbrains_map and _ide_mismatch_allowed()
     surface_mismatch_allowed = _surface_mismatch_allowed_for_target(target=t, ide=ide)
+    return map_mismatch_allowed, surface_mismatch_allowed
+
+
+def _photo_vql_combined_ok_after_edit(
+    *,
+    edit_res: dict[str, Any],
+    t: dict[str, Any],
+    ide: str,
+    mismatch: dict[str, Any] | None,
+    command_plan: dict[str, Any],
+    is_code_edit: bool,
+) -> bool:
+    """Re-derive combined_ok from the edit result + mismatch/inference policy."""
+    combined_ok = bool(edit_res.get("ok", False))
+    map_mismatch_allowed, surface_mismatch_allowed = _photo_vql_edit_mismatch_allowances(
+        t=t, ide=ide
+    )
     if mismatch and not _ide_mismatch_allowed() and not map_mismatch_allowed and not surface_mismatch_allowed:
         combined_ok = False
     if (
@@ -5423,7 +5732,50 @@ def perform_photo_vql_focus_and_edit(
 
     if is_code_edit and edit_res.get("ok"):
         combined_ok = True
+    return combined_ok
 
+
+def _photo_vql_run_paste_verification(
+    *,
+    prompt: str,
+    t: dict[str, Any],
+    command_plan: dict[str, Any],
+    ide: str,
+    x: int,
+    y: int,
+) -> dict[str, Any]:
+    """Run verify_chat_text_visible via map path or global/local coords."""
+    global_coords = command_plan.get("final_global") or {}
+    gx = global_coords.get("x")
+    gy = global_coords.get("y")
+    map_path = None
+    if str(t.get("id") or "").startswith("map:"):
+        src = t.get("source")
+        if isinstance(src, str) and src.endswith(".json"):
+            map_path = src
+    if map_path:
+        return verify_chat_text_visible(prompt, ide=ide, map_path=map_path)
+    return verify_chat_text_visible(
+        prompt,
+        ide=ide,
+        chat_x=int(gx) if gx is not None else int(x),
+        chat_y=int(gy) if gy is not None else int(y),
+    )
+
+
+def _photo_vql_post_paste_verification(
+    *,
+    prompt: str,
+    t: dict[str, Any],
+    command_plan: dict[str, Any],
+    combined_ok: bool,
+    edit_res: dict[str, Any],
+    is_code_edit: bool,
+    ide: str,
+    x: int,
+    y: int,
+) -> tuple[dict[str, Any] | None, bool]:
+    """Optional OCR verification after paste: (verification | None, combined_ok)."""
     verification: dict[str, Any] | None = None
     verify_after_paste = os.environ.get("KORU_VDISPLAY_VERIFY_AFTER_PASTE", "1").strip().lower() in {
         "1",
@@ -5439,26 +5791,18 @@ def perform_photo_vql_focus_and_edit(
         and bool(edit_res.get("ok"))
         and not _surface_bounds_target_safe_for_actuation(target=t, command_plan=command_plan)
     ):
-        global_coords = command_plan.get("final_global") or {}
-        gx = global_coords.get("x")
-        gy = global_coords.get("y")
-        map_path = None
-        if str(t.get("id") or "").startswith("map:"):
-            src = t.get("source")
-            if isinstance(src, str) and src.endswith(".json"):
-                map_path = src
-        if map_path:
-            verification = verify_chat_text_visible(prompt, ide=ide, map_path=map_path)
-        else:
-            verification = verify_chat_text_visible(
-                prompt,
-                ide=ide,
-                chat_x=int(gx) if gx is not None else int(x),
-                chat_y=int(gy) if gy is not None else int(y),
-            )
+        verification = _photo_vql_run_paste_verification(
+            prompt=prompt, t=t, command_plan=command_plan, ide=ide, x=x, y=y
+        )
         if verification.get("verified") is False:
             combined_ok = False
+    return verification, combined_ok
 
+
+def _photo_vql_submit_step(
+    *, submit: bool, combined_ok: bool, edit_res: dict[str, Any], ide: str, source: str
+) -> tuple[bool, dict[str, Any] | None, bool]:
+    """Optional chat submit after a successful edit: (submitted, submit_result, combined_ok)."""
     submitted = False
     submit_result: dict[str, Any] | None = None
     if submit and combined_ok and not _dry_run():
@@ -5471,7 +5815,30 @@ def perform_photo_vql_focus_and_edit(
             combined_ok = bool(edit_res.get("ok"))
         else:
             combined_ok = True
+    return submitted, submit_result, combined_ok
 
+
+def _photo_vql_assemble_combined(
+    *,
+    combined_ok: bool,
+    target_desc: str,
+    t: dict[str, Any],
+    focus_res: dict[str, Any],
+    edit_res: dict[str, Any],
+    x: int,
+    y: int,
+    prompt: str,
+    ide: str,
+    is_code_edit: bool,
+    llm_decision: dict[str, Any] | None,
+    submitted: bool,
+    command_plan: dict[str, Any],
+    verification: dict[str, Any] | None,
+    submit_result: dict[str, Any] | None,
+    mismatch: dict[str, Any] | None,
+    map_source_mismatch: dict[str, Any] | None,
+) -> dict:
+    """Assemble the combined result dict for perform_photo_vql_focus_and_edit."""
     combined = {
         "ok": combined_ok,
         "backend": "vdisplay+photo-vql",
@@ -5500,7 +5867,20 @@ def perform_photo_vql_focus_and_edit(
         combined["ide_window_warning"] = mismatch
     if map_source_mismatch:
         combined["map_capture_mismatch"] = map_source_mismatch
+    return combined
 
+
+def _photo_vql_persist_drive_result(
+    combined: dict,
+    *,
+    t: dict[str, Any],
+    llm_decision: dict[str, Any] | None,
+    mismatch: dict[str, Any] | None,
+    verification: dict[str, Any] | None,
+    ide: str,
+    prompt: str,
+) -> None:
+    """Persist decide/act/verify phases + the drive step record for the combined result."""
     session = _autonomy_session.active_session_dir()
     if session is not None:
         _autonomy_session.persist_autonomy_phase(
@@ -5517,6 +5897,169 @@ def perform_photo_vql_focus_and_edit(
         except Exception:
             pass
 
+
+def perform_photo_vql_focus_and_edit(
+    prompt: str,
+    *,
+    ide: str = "auto",
+    source: str = "DP-1",
+    is_code_edit: bool = False,
+    submit: bool = False,
+    image_path: str | None = None,
+) -> dict:
+    """Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus keyboard na click_center z foto,
+    potem wykonaj precyzyjny edit/typ via coords (set_value at the VQL center).
+
+    To realizuje "użyć VQL do 'zobaczenia' otwartego pliku w edytorze i precyzyjnego edit via coords" (następny task z analizy).
+    Dla is_code_edit=True używa editor target (np. window_0 lub main panel z foto VQL).
+    Dla chat (default) używa chat panel.
+
+    Optional LLM vision layer (enable with KORU_VDISPLAY_LLM_VISION_DECISION=1):
+    If .env has OPENROUTER_API_KEY and LLM_MODEL (vision model e.g. openrouter/google/gemini-3.1-flash-image-preview),
+    we send base64(image_path) + VQL target excerpt + the prompt to the model.
+    LLM should return JSON: {"click_center": {"x": int, "y": int}, "strategy": str, "confidence": float, "reason": str}.
+    If successful and confidence reasonable, the LLM's click_center (and strategy) overrides the pure VQL one for this call.
+    This adds "LLM decides exact coords/strategy on top of photo VQL" as additional layer.
+    Always falls back to the VQL-derived coords if no key, no image_path, call fails, or low confidence.
+    IDE independent (dane z foto, nie z pluginu).
+    """
+    mismatch = _photo_vql_ide_capture_mismatch(ide=ide) if ide and ide != "auto" else None
+    use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {"1", "true", "yes", "on"}
+
+    err = _photo_vql_stale_metadata_gate(ide=ide, is_code_edit=is_code_edit)
+    if err is not None:
+        return err
+
+    # Strict match mainly for is_code_edit (precise editor file edits need correct capture of the open file).
+    # Chat on JetBrains also requires a matching capture unless explicitly overridden — LLM vision cannot
+    # reliably locate PyCharm chat when the screenshot shows Cursor (wrong window layer / VQL inputs).
+    err = _photo_vql_capture_mismatch_gate(mismatch=mismatch, ide=ide, is_code_edit=is_code_edit)
+    if err is not None:
+        return err
+
+    blocked = _photo_vql_map_source_preflight_gate(
+        ide=ide, source=source, is_code_edit=is_code_edit
+    )
+    if blocked is not None:
+        return blocked
+
+    if is_code_edit:
+        t = get_vql_editor_target_from_photo()
+        target_desc = "editor/open-file"
+    else:
+        t = get_vql_chat_target_from_photo(ide=ide)
+        target_desc = "chat"
+
+    blocked, map_source_mismatch = _photo_vql_target_map_mismatch_gate(
+        t, ide=ide, source=source, is_code_edit=is_code_edit
+    )
+    if blocked is not None:
+        return blocked
+
+    mismatch = _photo_vql_maybe_clear_mismatch(t, ide=ide, mismatch=mismatch)
+
+    if image_path is None:
+        image_path = _resolve_photo_png_path_from_vql(source=source)
+
+    t, x, y, llm_decision = _photo_vql_refined_target(
+        prompt=prompt, t=t, source=source, image_path=image_path, ide=ide
+    )
+
+    command_plan = _photo_vql_command_plan_pre_act(
+        t=t,
+        x=x,
+        y=y,
+        source=source,
+        ide=ide,
+        prompt=prompt,
+        llm_decision=llm_decision,
+        is_code_edit=is_code_edit,
+        mismatch=mismatch,
+    )
+
+    blocked = _photo_vql_unverified_chat_gate(
+        command_plan=command_plan,
+        t=t,
+        target_desc=target_desc,
+        x=x,
+        y=y,
+        ide=ide,
+        mismatch=mismatch,
+        is_code_edit=is_code_edit,
+    )
+    if blocked is not None:
+        return blocked
+
+    focus_res = _photo_vql_focus_target(
+        target=t,
+        ide=ide,
+        source=source,
+        is_code_edit=is_code_edit,
+        llm_decision=llm_decision,
+    )
+    edit_res = _photo_vql_edit_result(
+        prompt,
+        x=x,
+        y=y,
+        target_desc=target_desc,
+        source=source,
+        ide=ide,
+        focus_res=focus_res,
+        target=t,
+        command_plan=command_plan,
+    )
+
+    combined_ok = _photo_vql_combined_ok_after_edit(
+        edit_res=edit_res,
+        t=t,
+        ide=ide,
+        mismatch=mismatch,
+        command_plan=command_plan,
+        is_code_edit=is_code_edit,
+    )
+    verification, combined_ok = _photo_vql_post_paste_verification(
+        prompt=prompt,
+        t=t,
+        command_plan=command_plan,
+        combined_ok=combined_ok,
+        edit_res=edit_res,
+        is_code_edit=is_code_edit,
+        ide=ide,
+        x=x,
+        y=y,
+    )
+    submitted, submit_result, combined_ok = _photo_vql_submit_step(
+        submit=submit, combined_ok=combined_ok, edit_res=edit_res, ide=ide, source=source
+    )
+
+    combined = _photo_vql_assemble_combined(
+        combined_ok=combined_ok,
+        target_desc=target_desc,
+        t=t,
+        focus_res=focus_res,
+        edit_res=edit_res,
+        x=x,
+        y=y,
+        prompt=prompt,
+        ide=ide,
+        is_code_edit=is_code_edit,
+        llm_decision=llm_decision,
+        submitted=submitted,
+        command_plan=command_plan,
+        verification=verification,
+        submit_result=submit_result,
+        mismatch=mismatch,
+        map_source_mismatch=map_source_mismatch,
+    )
+    _photo_vql_persist_drive_result(
+        combined,
+        t=t,
+        llm_decision=llm_decision,
+        mismatch=mismatch,
+        verification=verification,
+        ide=ide,
+        prompt=prompt,
+    )
     return combined
 
 

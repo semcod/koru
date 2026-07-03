@@ -23,7 +23,28 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
+try:
+    from gillm.injection.os_injector import (
+        OsInjectorError,
+        inject_with_profile,
+        load_profile,
+    )
+except ImportError:  # gillm optional — OsInjectorBackend degrades to a soft error
+
+    class OsInjectorError(Exception):  # type: ignore[no-redef]
+        """Raised when gillm's OS injector is unavailable on this host."""
+
+    def load_profile(profile_id: str, config_path: Any = None) -> Any:  # type: ignore[misc]
+        raise OsInjectorError(
+            "gillm is not installed; os_injector backend unavailable "
+            "(pip install gillm)"
+        )
+
+    def inject_with_profile(*, profile: Any, text: str, submit: bool, dry_run: bool = False) -> Any:  # type: ignore[misc]
+        raise OsInjectorError(
+            "gillm is not installed; os_injector backend unavailable "
+            "(pip install gillm)"
+        )
 
 from koru.agent_backends import normalize_agent_backend_id
 from koru.ide_adapters.gillm_client import GillmIDEControlClient, build_gillm_ide_client

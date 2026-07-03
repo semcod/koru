@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Iterable
 from pathlib import Path
@@ -9,12 +10,23 @@ from typing import Any
 
 
 def ensure_local_tillm_path() -> None:
-    """Make sibling ``semcod/tillm`` importable in source checkouts."""
-    candidate = Path(__file__).resolve().parents[3] / "tillm" / "src"
-    if candidate.is_dir():
-        value = str(candidate)
-        if value not in sys.path:
-            sys.path.insert(0, value)
+    """Make a local ``tillm`` checkout importable.
+
+    Candidates, in order: ``KORU_TILLM_PATH`` (explicit override for installed
+    koru packages running outside the semcod tree), then the sibling
+    ``semcod/tillm/src`` of a source checkout.
+    """
+    candidates: list[Path] = []
+    env_path = (os.environ.get("KORU_TILLM_PATH") or "").strip()
+    if env_path:
+        candidates.append(Path(env_path).expanduser())
+    candidates.append(Path(__file__).resolve().parents[3] / "tillm" / "src")
+    for candidate in candidates:
+        if candidate.is_dir():
+            value = str(candidate)
+            if value not in sys.path:
+                sys.path.insert(0, value)
+            return
 
 
 def detect_shell_agent_rows(*, project_hint_ids: Iterable[str] = ()) -> list[dict[str, Any]]:
@@ -44,6 +56,52 @@ def shell_drive_client_id(agent_id: str) -> str | None:
         return None
     spec = get_client_spec(normalize_client_id(agent_id))
     return spec.id if spec is not None else None
+
+
+# Tokens the autonomous CLI accepts as shell-client targets. Used only to
+# recognize *intent* when the tillm package itself cannot be imported, so the
+# caller can fail loudly instead of silently routing a shell-client target to
+# the IDE plugin lane. Keep in sync with tillm's registry ids.
+_FALLBACK_SHELL_CLIENT_TOKENS = frozenset(
+    {
+        "aider",
+        "claude",
+        "claude-code",
+        "codex",
+        "devin",
+        "gemini-cli",
+        "opencode",
+        "qwen-code",
+    }
+)
+
+
+def tillm_available() -> bool:
+    """True when the tillm package is importable (bundled sibling or installed)."""
+    ensure_local_tillm_path()
+    try:
+        import tillm  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def looks_like_shell_client(agent_id: str) -> bool:
+    """True when ``agent_id`` names a shell LLM client, even if tillm is missing."""
+    token = (agent_id or "").strip().lower()
+    if not token:
+        return False
+    if shell_drive_client_id(token):
+        return True
+    return token in _FALLBACK_SHELL_CLIENT_TOKENS
+
+
+def detect_available_shell_client() -> str | None:
+    """Canonical id of the first shell client whose CLI is on PATH, else None."""
+    for row in detect_shell_agent_rows():
+        if row.get("launchable"):
+            return str(row["id"])
+    return None
 
 
 def is_shell_agent(agent_id: str) -> bool:
@@ -149,16 +207,19 @@ def tillm_cli_main(argv: list[str]) -> int:
 
 __all__ = [
     "autopilot_backend_for_shell_agent",
+    "detect_available_shell_client",
     "detect_shell_agent_rows",
     "drive_shell_chat",
     "ensure_local_tillm_path",
     "is_shell_agent",
     "launch_shell_agent",
+    "looks_like_shell_client",
     "shell_agent_backend_aliases",
     "shell_agent_backend_profiles",
     "shell_agent_available",
     "shell_agent_process_patterns",
     "shell_drive_client_id",
     "shell_tool_registry_entries",
+    "tillm_available",
     "tillm_cli_main",
 ]

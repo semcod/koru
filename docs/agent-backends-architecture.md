@@ -74,6 +74,30 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
    (autopilot ``drive``); real `send_chat` from :mod:`koru.autonomous` should
    converge on these types as more backends land.
 
+## Autonomous lane selection & cross-lane recovery
+
+`koru autonomous` resolves the drive lane from the `--ide` token, with three
+autonomy guarantees (see `koru.autonomous_cycle_config` and
+`koru.autonomous_cycle_drive_retry`):
+
+1. **Loud misroute guard** — a shell-client token (`claude`, `aider`,
+   `codex`, …) with no importable `tillm` aborts startup with an actionable
+   error instead of silently routing to the IDE plugin lane.
+2. **Headless auto-selection** — `--ide auto` with no lane, no running
+   editor, and tillm importable auto-selects the first vendor CLI found on
+   PATH, so the loop is autonomous on editor-less hosts (CI, servers).
+   Opt out with `KORU_AUTO_SHELL_CLIENT=0`.
+3. **Cross-lane rescue** — when a tillm drive fails because the client is
+   genuinely unavailable (tillm missing or CLI not on PATH) *and* an editor
+   IDE is running, the drive is retried through the GUI fallback chain
+   (`vdisplay → imgl → gillm → nlp2uri_focus → os_injector`) targeting that
+   editor; the reply carries `shell_client_rescued_from`. Execution errors
+   from a working CLI are never masked.
+
+`gillm` imports in `koru.agent_backend_runtime` and `koruide` degrade softly:
+on hosts without gillm the modules still import and GUI actuation returns
+`ok=False` with an install hint instead of crashing the loop.
+
 ## Project config
 
 `koru.yaml` may declare the durable IDE / LLM lane map under

@@ -141,14 +141,62 @@ def _build_agent_option_from_mapping(row: Mapping[str, Any]) -> AgentOption:
     )
 
 
+# PATH-based fallback when the tillm package is unavailable in the running
+# process (e.g. an installed koru without the sibling tillm checkout). Keeps
+# shell LLM lanes visible in `koru agents` / the dashboard on any host.
+# (agent_id, label, binary candidates) — ids match tillm's registry.
+_FALLBACK_SHELL_CLIENTS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ("claude-code", "Claude Code", ("claude",)),
+    ("aider", "aider", ("aider",)),
+    ("codex", "Codex CLI", ("codex",)),
+    ("gemini-cli", "Gemini CLI", ("gemini",)),
+    ("opencode", "OpenCode", ("opencode",)),
+    ("qwen-code", "Qwen Code", ("qwen",)),
+)
+
+
+def _fallback_shell_agent_options() -> list[AgentOption]:
+    """Detect shell LLM clients via PATH lookup when tillm rows are empty."""
+    options: list[AgentOption] = []
+    for agent_id, label, binaries in _FALLBACK_SHELL_CLIENTS:
+        cmd = next((path for b in binaries if (path := _which(b))), None)
+        options.append(
+            AgentOption(
+                id=agent_id,
+                label=label,
+                available=bool(cmd),
+                launchable=bool(cmd),
+                command=cmd,
+                autopilot_backend=autopilot_backend_for_agent_id(agent_id),
+                reason=(
+                    f"{label} CLI detected in PATH (fallback detection; "
+                    "tillm unavailable)."
+                    if cmd
+                    else f"{label} CLI is not in PATH."
+                ),
+            )
+        )
+    return options
+
+
+def _shell_agent_options() -> list[AgentOption]:
+    """Shell LLM client rows: tillm registry first, PATH fallback otherwise."""
+    rows = [
+        _build_agent_option_from_mapping(row) for row in detect_shell_agent_rows()
+    ]
+    return rows or _fallback_shell_agent_options()
+
+
+def shell_agent_lane_rows() -> list[dict[str, Any]]:
+    """Launchable shell-client lanes for lane pickers (dashboard, CLIs)."""
+    return [opt.to_dict() for opt in _shell_agent_options() if opt.launchable]
+
+
 def detect_agent_options(project: Path) -> list[AgentOption]:
     """Return known LLM/IDE lanes ordered by koru preference."""
     project = project.resolve()
     commands = _detect_gui_agent_commands()
-    shell_agents = [
-        _build_agent_option_from_mapping(row)
-        for row in detect_shell_agent_rows()
-    ]
+    shell_agents = _shell_agent_options()
 
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
     antigravity_home = Path.home() / ".gemini" / "antigravity"

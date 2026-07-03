@@ -482,6 +482,47 @@ def _drive_shell_client(
     return reply, bool(reply.get("ok"))
 
 
+def _shell_drive_editor_rescue(
+    reply: dict[str, Any],
+    *,
+    client_id: str,
+    prompt: str,
+    submit: bool,
+    project: Path | None,
+) -> tuple[dict[str, Any], bool] | None:
+    """Cross-lane rescue: the tillm CLI cannot run but an editor IDE is open.
+
+    Engages only when the shell client is genuinely unavailable (tillm missing
+    or the vendor CLI not on PATH) — real execution errors from a working CLI
+    are never masked — and only when a running editor gives the GUI fallback
+    chain something to target.
+    """
+    from koru.tillm_bridge import shell_agent_available
+
+    if shell_agent_available(client_id):
+        return None
+    try:
+        from koruide.ide import detect_running_ides
+
+        running = detect_running_ides()
+    except Exception:
+        return None
+    if not running:
+        return None
+    result = _post_drive_fallback_chain(
+        prompt=prompt,
+        submit=submit,
+        autopilot_ide=running[0].id,
+        reply=reply,
+        project=project,
+    )
+    if result is None:
+        return None
+    rescued, ok = result
+    rescued.setdefault("shell_client_rescued_from", client_id)
+    return rescued, ok
+
+
 def _invoke_client_autopilot_drive(
     client: Any,
     *,
@@ -496,7 +537,19 @@ def _invoke_client_autopilot_drive(
 
     shell_client = shell_drive_client_id(autopilot_ide)
     if shell_client:
-        return _drive_shell_client(shell_client, prompt=prompt, project=project)
+        reply, ok = _drive_shell_client(shell_client, prompt=prompt, project=project)
+        if ok:
+            return reply, ok
+        rescue = _shell_drive_editor_rescue(
+            reply,
+            client_id=shell_client,
+            prompt=prompt,
+            submit=submit,
+            project=project,
+        )
+        if rescue is not None:
+            return rescue
+        return reply, ok
 
     drive_kwargs = _build_drive_kwargs(
         submit=submit,

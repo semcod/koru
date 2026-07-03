@@ -7,6 +7,7 @@ import socket
 from pathlib import Path
 from typing import Any
 
+from koru.agents import shell_agent_lane_rows
 from koruapi.dashboard_projects import (
   dashboard_workspace,
   discover_dashboard_projects,
@@ -76,6 +77,20 @@ def dashboard_ide_rows() -> tuple[list[dict[str, Any]], dict[str, list[dict[str,
         "pid": detected.pid if detected else None,
         "exe": detected.exe if detected else None,
         "projects": by_ide.get(ide_id, []),
+      }
+    )
+  seen_ids = {row["id"] for row in rows}
+  for lane in shell_agent_lane_rows():
+    if lane["id"] in seen_ids:
+      continue
+    rows.append(
+      {
+        "id": lane["id"],
+        "label": f"{lane['label']} · CLI",
+        "running": False,
+        "kind": "shell",
+        "command": lane.get("command"),
+        "projects": [],
       }
     )
   return rows, by_ide
