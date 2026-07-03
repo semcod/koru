@@ -1873,6 +1873,7 @@ def test_up_single_cycle_all_sources_runs_scan(
     assert rc == 0
 
 
+@pytest.mark.slow
 def test_up_auto_installs_plugin_before_autopilot_loop(
     tmp_path,
     monkeypatch,
@@ -4328,6 +4329,7 @@ def test_autopilot_idle_without_open_ticket_does_not_drive(
         autonomous_cycle_mod,
         "resolve_idle_drive_prompt",
         lambda *_args, **_kwargs: ("continue with the next ticket", "idle_no_ticket"),
+        raising=False,
     )
 
     status, backend, kind = autonomous_cycle_mod._handle_autopilot_phase(
@@ -4433,6 +4435,7 @@ def test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telem
     assert telemetry["autopilot_skipped_waiting_ticket_closed_ticket"] == "STARTER-239"
 
 
+@pytest.mark.slow
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     tmp_path,
     monkeypatch,

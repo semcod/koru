@@ -20,6 +20,9 @@ from koruvision.capture import VisionFrame
 
 websockets = pytest.importorskip("websockets")
 
+# Full mesh E2E round-trips take minutes; run via `-m slow` / koru-pytest --all.
+pytestmark = pytest.mark.slow
+
 
 def _run_main(*argv: str) -> tuple[int, str, str]:
     out = io.StringIO()

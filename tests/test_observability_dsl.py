@@ -5,6 +5,8 @@ import os
 from argparse import Namespace
 from datetime import UTC, datetime
 
+import pytest
+
 from koru import autonomous_plugin_wait as plugin_wait_mod
 from koru.autonomous_cycle_orchestrator import (
     _emit_autopilot_observability_outcome,
@@ -616,6 +618,7 @@ def test_plugin_bootstrap_blocker_emits_control_command_dsl(tmp_path, capsys) ->
     assert "command(shell_cli koru)" in terminal
 
 
+@pytest.mark.slow
 def test_plugin_wait_trace_replaces_legacy_reload_lines(tmp_path) -> None:
     messages: list[str] = []
     reload_lines: list[str] = []

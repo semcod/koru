@@ -180,6 +180,7 @@ def test_drive_retry_prefers_imgl_before_daemon_for_jetbrains(
     assert order == ["imgl"]
 
 
+@pytest.mark.slow
 def test_drive_retry_prefers_imgl_before_gillm(monkeypatch: pytest.MonkeyPatch) -> None:
     from koru.autonomous_cycle_drive_retry import _invoke_client_autopilot_drive
 

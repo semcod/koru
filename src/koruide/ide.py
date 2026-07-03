@@ -293,6 +293,22 @@ def _in_test_mode() -> bool:
     )
 
 
+_NON_IDE_SHELLS = {"bash", "sh", "zsh", "dash", "fish"}
+
+
+def _is_non_ide_helper(comm: str, cmdline: str) -> bool:
+    """True for processes that carry an IDE path in argv but are not the IDE.
+
+    Covers orphaned crash reporters (chrome_crashpad_handler keeps the app
+    path after the IDE exits) and shell wrappers whose command line merely
+    references an IDE-named directory.
+    """
+    comm_l = comm.lower()
+    if comm_l in _NON_IDE_SHELLS:
+        return True
+    return "crashpad" in comm_l or "crashpad" in cmdline.lower()
+
+
 def _collect_best_ide_per_pid(
     pids: list[int],
 ) -> dict[str, tuple[RunningIDE, int]]:
@@ -302,6 +318,8 @@ def _collect_best_ide_per_pid(
         cmdline = _read_cmdline(pid)
         exe_link = _read_exe(pid)
         if not comm and not cmdline:
+            continue
+        if _is_non_ide_helper(comm, cmdline):
             continue
         for ide_id, (patterns, label) in _IDE_SIGNATURES.items():
             if _matches(comm, cmdline, patterns):
@@ -368,6 +386,8 @@ def _ide_id_from_process(pid: int) -> str | None:
     comm = _read_comm(pid)
     cmdline = _read_cmdline(pid)
     if not comm and not cmdline:
+        return None
+    if _is_non_ide_helper(comm, cmdline):
         return None
     for ide_id, (patterns, _label) in _IDE_SIGNATURES.items():
         if _matches(comm, cmdline, patterns):

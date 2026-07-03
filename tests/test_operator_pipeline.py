@@ -21,6 +21,11 @@ def _ticket_args(command: list[str]) -> list[str]:
     return command[ticket_index:]
 
 
+def _ticket_calls(calls: list[list[str]]) -> list[list[str]]:
+    """Ticket subcommands only; the pipeline also runs probes like --version."""
+    return [_ticket_args(call) for call in calls if "ticket" in call]
+
+
 @pytest.fixture
 def probe(tmp_path: Path) -> AutonomousStartupProbe:
     return AutonomousStartupProbe(
@@ -581,7 +586,7 @@ sprint:
     assert plugin_step.ticket_id != "PLF-1280"
     assert plugin_step.task_command == "koru ide doctor --ide vscode --fix --gc-sockets"
     assert marker.read_text(encoding="utf-8") == plugin_step.ticket_id
-    assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
+    assert _ticket_calls(calls) == [["ticket", "done", "PLF-1280"]]
 
 
 def test_run_startup_operator_pipeline_keeps_plugin_ticket_with_matching_dedupe_key(
@@ -703,7 +708,7 @@ sprint:
         create_tickets=True,
     )
 
-    assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
+    assert _ticket_calls(calls) == [["ticket", "done", "PLF-1280"]]
     assert not marker.exists()
     plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
     assert plugin_step.status == "ok"
@@ -920,7 +925,7 @@ sprint:
         create_tickets=True,
     )
 
-    assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
+    assert _ticket_calls(calls) == [["ticket", "done", "PLF-1280"]]
     assert not marker.exists()
     plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
     assert plugin_step.status == "skipped"

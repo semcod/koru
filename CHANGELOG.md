@@ -73,6 +73,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.363] - 2026-07-03
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_imgl_integration.py
+- Update tests/test_observability_dsl.py
+- Update tests/test_observation_mesh_e2e.py
+- Update tests/test_operator_pipeline.py
+- Update tests/test_photo_vql_drive.py
+
 ## [0.1.362] - 2026-07-03
 
 ### Docs

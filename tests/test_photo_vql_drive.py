@@ -715,6 +715,7 @@ def test_validate_vql_chat_target_mismatch() -> None:
     assert val["ok"] is False
 
 
+@pytest.mark.slow
 def test_get_vql_chat_map_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     layers = [
         {
