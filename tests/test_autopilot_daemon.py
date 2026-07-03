@@ -764,10 +764,12 @@ def test_plugin_drive_routes_alias_to_canonical_plugin(
     """Direct daemon clients can use IDE aliases and still hit the plugin lane."""
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="code", pid=42)
-        plugin.settimeout(6.0)
+        # Generous timeouts: under a saturated full-suite xdist run the daemon
+        # thread can take several seconds to route the first message.
+        plugin.settimeout(15.0)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(6.0)
+        cli.settimeout(15.0)
         cli.connect(str(h.sock_path))
         cli_reader = _LineReader(cli)
         cli.sendall(

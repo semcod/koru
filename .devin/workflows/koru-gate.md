@@ -106,23 +106,19 @@ test -f plugins/koru-autopilot-vscode/package.json && (
   Immediately record a follow-up in planfile with a stable finding key,
   then continue the flow.
 
-Real-time capture contract for each red gate:
+Real-time capture is handled entirely by
+`scripts/koru-gate-capture.py` (already invoked with
+`--update-existing` in steps 2–5). It builds the finding key
+(sha1 of gate + normalized failing line), dedupes against existing
+`koru-gate` tickets, appends a `still failing` note when the key is
+already tracked, and creates a ticket with the exact failing line,
+command, and next step otherwise.
 
-1. Build `finding_key` from gate + normalized failing line, e.g.
-   `[gate-finding:regix|cc>10|src/koru/init.py]`.
-2. Check existing `koru-gate` tickets for the same `finding_key`.
-3. If key exists: append a `still failing` note (timestamp + latest line),
-   do NOT create a duplicate problem ticket.
-4. If key does not exist: create a new planfile ticket with:
-   - exact failing line,
-   - command that produced it,
-   - shortest next action to fix.
-
-Use:
-
-```bash
-planfile ticket create "[gate-finding:<finding_key>] <gate> gate failure" --source koru-gate --description "<exact line + command + next step>"
-```
+Do NOT run `planfile ticket create` by hand for gate findings — and
+never with template placeholders like `<finding_key>` or `<gate>`.
+If a capture invocation itself fails, re-run it with `--dry-run` to
+inspect what it would create, then report the error to the user
+instead of creating the ticket manually.
 
 After capture, continue with remaining gates so the user sees full
 problem set in one pass.
