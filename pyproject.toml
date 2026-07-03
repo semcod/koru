@@ -217,6 +217,9 @@ dev = [
     "fastapi>=0.115",
     "httpx>=0.27",
     "mcp>=1.0",
+    # uv sync prunes ad-hoc pip installs; the queue needs planfile in the
+    # default-synced group or every sync reintroduces planfile_error.
+    "planfile>=0.1.100",
 ]
 control = [
     "jsonschema>=4.0",
