@@ -254,3 +254,6 @@ packages/coru/src/.coru/
 
 # coru runtime event artifacts inside the source tree
 packages/coru/src/coru/.koru/
+
+# planfile JSON fast-mirrors (derived from sprint YAMLs)
+.planfile/sprints/*.fast.json
