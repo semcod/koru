@@ -190,10 +190,22 @@ def tillm_setup_main(argv: list[str] | None = None) -> int:
     ):
         return 2
 
-    # Model select-list; Enter keeps the current one.
+    # Model select-list; Enter keeps the current one. Models come live from
+    # the provider API (curated fallback) so the list is never stale.
+    from tillm.providers import list_provider_models
+
     current_model = provider_default_model(spec.id)
-    if spec.models:
-        model = _pick_from_list(_, _("model.label", id=spec.id), list(spec.models), current_model)
+    listing = list_provider_models(spec.id)
+    source_note = (
+        _("models.live") if listing.source == "live" else _("models.curated")
+    )
+    options = list(listing.models[:20])
+    if current_model and current_model not in options:
+        options.insert(0, current_model)
+    if options:
+        model = _pick_from_list(
+            _, _("model.label", id=spec.id) + f" ({source_note})", options, current_model
+        )
     else:
         raw = input(
             _("model.freeform", id=spec.id, current=current_model or _("model.provider_default"))
@@ -213,13 +225,20 @@ def tillm_setup_main(argv: list[str] | None = None) -> int:
             set_default_provider(spec.id)
             print(_c(_("default.set", id=spec.id), "green"))
 
-    result = probe_provider(spec.id)
-    mark = _c("✓", "green") if result.ok else _c("✗", "red")
-    print(f"{mark} {_('probe.label', detail=result.detail)}")
-    if result.ok:
+    from tillm.providers import diagnose_provider
+
+    diagnosis = diagnose_provider(spec.id)
+    print(_c(f"\n{_('diag.title')}", "bold"))
+    marks = {"ok": _c("✓", "green"), "warn": _c("⚠", "yellow"), "fail": _c("✗", "red")}
+    for item in diagnosis.items:
+        print(f"  {marks[item.level]} {item.message}")
+        if item.fix:
+            print(_c(f"     fix: {item.fix}", "dim"))
+    result = probe_provider(spec.id, model=provider_default_model(spec.id))
+    if diagnosis.ok:
         primary = next(iter(spec.compatible_clients()), None)
         print(_c(f"\n{_('usage.title')}", "bold"))
         print(f"  tillm drive --client {primary} --provider {spec.id} --prompt '...' --execute")
         if primary:
             print(f"  export KORU_TILLM_CLIENT={primary}   {_('usage.autonomy')}")
-    return 0 if result.ok else 1
+    return 0 if diagnosis.ok else 1
