@@ -71,6 +71,10 @@ def _api_main(argv: list[str]) -> int:
 
 def _tillm_main(argv: list[str]) -> int:
     try:
+        if not argv or argv[0] == "setup":
+            from koru.cli_tillm_setup import tillm_setup_main
+
+            return tillm_setup_main(argv[1:] if argv else [])
         from koru.tillm_bridge import tillm_cli_main
         return tillm_cli_main(argv)
     except ImportError as exc:
