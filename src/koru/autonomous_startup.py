@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.autopilot import default_socket_path
-from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
 from koru.ide_router import is_headless_environment, resolve_ide_route
+from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
 from koruide.ide import (
     RunningIDE,
     canonical_autopilot_ide_id,

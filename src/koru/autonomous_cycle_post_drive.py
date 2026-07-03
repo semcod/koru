@@ -6,7 +6,11 @@ from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.decision_arbiter import ArbiterSignals, decide
 from koru.autonomy.planning_llm import (
     evaluate_drive_result as _llm_evaluate_drive_result,
+)
+from koru.autonomy.planning_llm import (
     generate_better_prompt as _llm_generate_better_prompt,
+)
+from koru.autonomy.planning_llm import (
     get_budget_tracker as _get_planning_budget,
 )
 from koru.autonomy.state import AutoloopState

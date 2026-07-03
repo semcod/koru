@@ -1,6 +1,6 @@
 import threading
-from typing import Any
 from datetime import datetime
+from typing import Any
 
 _console_logs_lock = threading.Lock()
 _console_logs: list[dict[str, Any]] = []

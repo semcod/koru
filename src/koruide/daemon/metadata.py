@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -56,7 +56,7 @@ def build_daemon_metadata(
         "project": str(normalized.resolve()) if normalized is not None else None,
         "socket": str(socket_path),
         "socket_inode": _inode(socket_path),
-        "started_at": datetime.fromtimestamp(started_at, timezone.utc).isoformat(),
+        "started_at": datetime.fromtimestamp(started_at, UTC).isoformat(),
         "uptime_seconds": max(0.0, time.time() - started_at),
         "env": {
             "KORU_AUTOPILOT_INSTANCE": os.environ.get("KORU_AUTOPILOT_INSTANCE", ""),

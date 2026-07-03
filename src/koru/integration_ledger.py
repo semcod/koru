@@ -10,7 +10,6 @@ from typing import Any
 
 from koru.activity_log import activity
 
-
 DSL_VERSION = "koru.integration.v1"
 
 

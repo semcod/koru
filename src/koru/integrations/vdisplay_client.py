@@ -19,27 +19,47 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from koru.integrations.photo_vql_config import llm_vision_enabled
 from koru.integrations import autonomy_session as _autonomy_session
-from koru.integrations.photo_vql_monitor import resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_impl
+from koru.integrations.photo_vql_config import llm_vision_enabled
+from koru.integrations.photo_vql_monitor import (
+    resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_impl,
+)
 
 begin_autonomy_session = _autonomy_session.begin_autonomy_session
 
 try:
     from koru.integrations.photo_vql_target import (
         VSCODE_FAMILY_TOP_CHAT_IDES,
+    )
+    from koru.integrations.photo_vql_target import (
         jetbrains_chat_corner_target_from_layers as _jetbrains_chat_corner_target_from_layers,
+    )
+    from koru.integrations.photo_vql_target import (
         jetbrains_chat_target_from_surface as _jetbrains_chat_target_from_surface,
+    )
+    from koru.integrations.photo_vql_target import (
         photo_vql_chat_input_candidates as _photo_vql_chat_input_candidates,
+    )
+    from koru.integrations.photo_vql_target import (
         vql_candidates_polluted as _vql_candidates_polluted,
+    )
+    from koru.integrations.photo_vql_target import (
         vql_layers_show_vdisplay_overlay as _vql_layers_show_vdisplay_overlay,
+    )
+    from koru.integrations.photo_vql_target import (
         vscode_family_chat_target_from_layers as _vscode_family_chat_target_from_layers,
     )
 except ImportError:
     from koru.integrations.photo_vql_target import (
         jetbrains_chat_corner_target_from_layers as _jetbrains_chat_corner_target_from_layers,
+    )
+    from koru.integrations.photo_vql_target import (
         jetbrains_chat_target_from_surface as _jetbrains_chat_target_from_surface,
+    )
+    from koru.integrations.photo_vql_target import (
         photo_vql_chat_input_candidates as _photo_vql_chat_input_candidates,
+    )
+    from koru.integrations.photo_vql_target import (
         vql_candidates_polluted as _vql_candidates_polluted,
     )
     from koru.integrations.photo_vql_validation import (
@@ -57,20 +77,38 @@ except ImportError:
     ) -> dict[str, Any] | None:
         del ide, source
         return None
-from koru.integrations.photo_vql_validation import (
-    capture_title_from_meta as _capture_title_from_meta,
-    validate_chat_coords_for_ide as _validate_chat_coords_for_ide,
-    validate_vql_chat_target,
-    window_titles_from_vql_meta as _window_titles_from_vql_meta,
-)
 from koru.integrations.photo_vql_guard import (
     CaptureGuard,
+)
+from koru.integrations.photo_vql_guard import (
     allow_actuation_on_capture_mismatch as _allow_actuation_on_capture_mismatch,
+)
+from koru.integrations.photo_vql_guard import (
     allow_prepare_map_on_mismatch as _allow_prepare_map_on_mismatch,
+)
+from koru.integrations.photo_vql_guard import (
     allow_prepare_surface_on_capture_error as _allow_prepare_surface_on_capture_error,
+)
+from koru.integrations.photo_vql_guard import (
     competing_ide_label_from_warning as _competing_ide_label_from_warning,
+)
+from koru.integrations.photo_vql_guard import (
     drive_blocked_on_capture_mismatch as _drive_blocked_on_capture_mismatch,
+)
+from koru.integrations.photo_vql_guard import (
     ide_mismatch_allowed as _ide_mismatch_allowed,
+)
+from koru.integrations.photo_vql_validation import (
+    capture_title_from_meta as _capture_title_from_meta,
+)
+from koru.integrations.photo_vql_validation import (
+    validate_chat_coords_for_ide as _validate_chat_coords_for_ide,
+)
+from koru.integrations.photo_vql_validation import (
+    validate_vql_chat_target,
+)
+from koru.integrations.photo_vql_validation import (
+    window_titles_from_vql_meta as _window_titles_from_vql_meta,
 )
 
 
@@ -186,7 +224,10 @@ def _agent_url() -> str | None:
     if explicit:
         return explicit.rstrip("/")
     try:
-        from koru.integrations.vdisplay_agent_bootstrap import apply_vdisplay_agent_env, resolve_vdisplay_agent_url
+        from koru.integrations.vdisplay_agent_bootstrap import (
+            apply_vdisplay_agent_env,
+            resolve_vdisplay_agent_url,
+        )
 
         applied = apply_vdisplay_agent_env()
         url = applied.get("agent_url") or resolve_vdisplay_agent_url()
@@ -317,9 +358,9 @@ def verify_chat_text_visible(
 
 
 def _capture_for_verify(chat_x, chat_y, map_path, ide):
+    from vdisplay.control.gui_map import load_gui_map
     from vdisplay.control.models import ControlBounds, ControlNode, ControlRole
     from vdisplay.control.screenshot_verify import capture_control_screenshot
-    from vdisplay.control.gui_map import load_gui_map
     from vdisplay.input.coords import global_pointer_coords
 
     bounds = None
@@ -350,8 +391,11 @@ def _capture_for_verify(chat_x, chat_y, map_path, ide):
 
 
 def _ocr_verify(png, capture_meta, bounds, expected, ide, chat_x, chat_y):
+    from vdisplay.control.screenshot_verify import (
+        global_point_in_stream_bounds,
+        stream_bounds_from_meta,
+    )
     from vdisplay.control.vision_ocr import ocr_png
-    from vdisplay.control.screenshot_verify import global_point_in_stream_bounds, stream_bounds_from_meta
 
     screenshot_path = str(capture_meta["path"]) if isinstance(capture_meta, dict) and capture_meta.get("path") else None
 
@@ -396,7 +440,10 @@ def record_koru_drive_step(
         return None
     try:
         from vdisplay.application.models import ArtifactRef, CommandRequest, CommandResult
-        from vdisplay.application.session_recorder import record_execution, session_recording_enabled
+        from vdisplay.application.session_recorder import (
+            record_execution,
+            session_recording_enabled,
+        )
         from vdisplay.application.verbs import CommandVerb
     except ImportError:
         return None
@@ -2136,11 +2183,11 @@ def _import_imgl_targets(name: str):
     actuation_mod = _load_light_module("imgl.export.actuation_layers", actuation_path)
     if actuation_mod is None:
         return None
-    setattr(export_pkg, "actuation_layers", actuation_mod)
+    export_pkg.actuation_layers = actuation_mod
     targets_mod = _load_light_module("imgl.targets", targets_path)
     if targets_mod is None:
         return None
-    setattr(pkg, "targets", targets_mod)
+    pkg.targets = targets_mod
     if hasattr(targets_mod, name):
         return getattr(targets_mod, name)
     return None

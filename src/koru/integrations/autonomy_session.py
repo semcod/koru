@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -51,7 +51,7 @@ def begin_autonomy_session(*, ide: str, source: str) -> Path:
     if existing is not None:
         return existing
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     date_dir = metadata_root() / now.strftime("%Y-%m-%d")
     ts = now.strftime("%Y-%m-%dT%H-%M-%SZ")
     slug = (ide or "auto").strip().lower().replace(" ", "-")[:32] or "auto"
@@ -100,7 +100,7 @@ def _pin_session_env(*, session_dir: Path, slug: str, png: Path, vql: Path) -> N
 
 def append_session_index(session_dir: Path, *, phase: str, name: str, ok: bool | None) -> None:
     entry = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "phase": phase,
         "name": name,
         "ok": ok,
@@ -155,7 +155,7 @@ def append_session_jsonl(session_dir: Path, rel_path: str, entry: dict[str, Any]
     """Append one JSON line under the session (e.g. act/cursor_positioning.jsonl)."""
     path = session_dir / rel_path
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {**entry, "ts": datetime.now(timezone.utc).isoformat()}
+    payload = {**entry, "ts": datetime.now(UTC).isoformat()}
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
     return path
@@ -175,7 +175,7 @@ def persist_autonomy_phase(
     return path
 
 
-def _vql_load_capture_validation(vql_path: "Path") -> "dict[str, Any] | None":
+def _vql_load_capture_validation(vql_path: Path) -> dict[str, Any] | None:
     """Load capture_validation from VQL file metadata, or None on failure."""
     try:
         import json

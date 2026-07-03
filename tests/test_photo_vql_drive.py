@@ -9,7 +9,6 @@ import pytest
 
 from koru.integrations import vdisplay_client as vc
 
-
 _VALID_JB_CHAT_TARGET = {
     "click_center": {"x": 1985, "y": 1049},
     "id": "window_0-input-46",

@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from koru import autonomous_plugin_runtime as _plugin_runtime
+from koru import autonomous_plugin_wait as _plugin_wait
 from koru.autonomous_plugin_lifecycle import (
     PluginLifecycleHooks,
     setup_autopilot_plugin_lifecycle,
 )
-from koru import autonomous_plugin_wait as _plugin_wait
 
 _VSCODE_FAMILY_PLUGIN_IDES = _plugin_runtime.VSCODE_FAMILY_PLUGIN_IDES
 

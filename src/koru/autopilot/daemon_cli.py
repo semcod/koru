@@ -9,8 +9,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from koru.dotenv_loader import load_dotenv
-
 from koru.autopilot import default_socket_path
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
@@ -21,6 +19,7 @@ from koru.autopilot.local_manager import (
     start_autopilot_manager_heartbeat,
 )
 from koru.autopilot.utils.client_helpers import call_daemon_method
+from koru.dotenv_loader import load_dotenv
 from koruide.audit import AuditLog
 
 

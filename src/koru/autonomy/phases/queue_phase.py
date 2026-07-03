@@ -6,6 +6,10 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.autonomy.ide_work import (
+    release_stale_in_progress_tickets,
+    resolve_in_progress_stale_minutes,
+)
 from koru.autonomy.phases.utils import is_topology_enabled
 from koru.autonomy.post_run_verify import verify_completed_tickets
 from koru.autonomy.state import AutoloopState
@@ -15,7 +19,6 @@ from koru.queue import run_api_request as _run_api_request
 from koru.queue import run_llm_request as _run_llm_request
 from koru.queue import run_process as _run_process
 from koru.queue import run_shell_command as _run_shell_command
-from koru.autonomy.ide_work import release_stale_in_progress_tickets, resolve_in_progress_stale_minutes
 
 
 def handle_queue_hygiene(

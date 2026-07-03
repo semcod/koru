@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from koru.decision_engine import build_decision_engine
-from koru.ide_adapters.gillm_recovery import enrich_drive_reply_with_recovery, recovery_hints_from_drive_reply
+from koru.ide_adapters.gillm_recovery import (
+    enrich_drive_reply_with_recovery,
+    recovery_hints_from_drive_reply,
+)
 
 
 def test_recovery_hints_from_plugin_missing() -> None:

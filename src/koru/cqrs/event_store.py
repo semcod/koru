@@ -9,8 +9,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol
-from typing import Any
+from typing import Any, Protocol
 
 
 def _utc_now() -> str:

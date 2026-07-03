@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from koruide.ides.base import IdeStrategy
 
-_REGISTRY: dict[str, "IdeStrategy"] = {}
+_REGISTRY: dict[str, IdeStrategy] = {}
 
 
-def register_strategy(strategy: "IdeStrategy", *, override: bool = False) -> None:
+def register_strategy(strategy: IdeStrategy, *, override: bool = False) -> None:
     """Register ``strategy`` under its canonical id.
 
     ``override=True`` is reserved for tests.
@@ -30,14 +30,14 @@ def register_strategy(strategy: "IdeStrategy", *, override: bool = False) -> Non
     _REGISTRY[ide_id] = strategy
 
 
-def get_strategy(ide_id: str | None) -> "IdeStrategy | None":
+def get_strategy(ide_id: str | None) -> IdeStrategy | None:
     """Return the registered strategy for ``ide_id`` (or ``None``)."""
     if not ide_id:
         return None
     return _REGISTRY.get(ide_id.strip().lower())
 
 
-def all_strategies() -> tuple["IdeStrategy", ...]:
+def all_strategies() -> tuple[IdeStrategy, ...]:
     return tuple(_REGISTRY.values())
 
 

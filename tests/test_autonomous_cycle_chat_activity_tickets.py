@@ -1,12 +1,11 @@
 """Unit tests for autonomous_cycle_chat_activity_tickets.py (R7a)."""
 from __future__ import annotations
 
+import time
 from typing import Any
 from unittest import mock
 
 import pytest
-
-import time
 
 from koru.autonomous_cycle_chat_activity_tickets import (
     _external_message_sent_text,
@@ -377,11 +376,21 @@ def test_upsert_chat_intake_creates_ticket(monkeypatch: pytest.MonkeyPatch, tmp_
 def test_backward_compat_reexports_from_main_module() -> None:
     from koru.autonomous_cycle_chat_activity import (
         _llm_needs_input_operator_payload as legacy_payload,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         _llm_needs_input_summary as legacy_summary,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         _llm_needs_input_waiting_ticket as legacy_waiting,
-        _upsert_llm_needs_input_operator_ticket as legacy_upsert,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         _recent_llm_reflection_summary as legacy_reflection,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         _upsert_chat_intake_operator_ticket as legacy_intake,
+    )
+    from koru.autonomous_cycle_chat_activity import (
+        _upsert_llm_needs_input_operator_ticket as legacy_upsert,
     )
 
     assert legacy_payload is _llm_needs_input_operator_payload

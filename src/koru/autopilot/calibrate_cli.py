@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import gillm.injection.os_injector as oi
+
 from koru.autopilot.ide import detect_running_ides, resolve_drive_target
 
 

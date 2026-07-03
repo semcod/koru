@@ -18,6 +18,7 @@ from typing import Any
 
 from gillm.injection.errors import InjectorError
 from gillm.injection.injector import Injector
+
 from koru.control_commands import desktop_gui_command
 
 
@@ -53,7 +54,7 @@ def _record_direct_drive_audit(
 
 def _resolve_verify_coords(
     payload: dict[str, Any],
-) -> tuple["int | None", "int | None"]:
+) -> tuple[int | None, int | None]:
     """Extract (chat_x, chat_y) from payload, falling back to typed target coords."""
     chat_x = payload.get("chat_x")
     chat_y = payload.get("chat_y")
@@ -374,8 +375,9 @@ def _run_direct_drive(
     # ``cli_command`` module so that existing tests which monkeypatch
     # ``cli_command.Injector`` / ``cli_command.resolve_drive_target``
     # keep affecting this code path after the R5 extraction.
-    from koru.autopilot import cli_command
     import gillm.injection.os_injector as oi
+
+    from koru.autopilot import cli_command
 
     injector = cli_command.Injector()
     target_id, profile_id, selection = cli_command.resolve_drive_target(

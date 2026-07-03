@@ -15,10 +15,10 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from koru.interface_registry import InterfaceDescriptor, get_interface_descriptor
-from koruide.ides.registry import get_strategy
 from koru.autopilot.ide import detect_running_ides, detect_terminal_host_ide_id, normalize_ide_id
+from koru.interface_registry import InterfaceDescriptor, get_interface_descriptor
 from koruide.ide import detect_focused_ide_id
+from koruide.ides.registry import get_strategy
 
 
 @dataclass(frozen=True)

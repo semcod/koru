@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+
 @pytest.fixture(autouse=True)
 def _clear_antigravity_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for key in (

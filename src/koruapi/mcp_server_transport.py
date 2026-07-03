@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Any, Callable, TextIO
+from collections.abc import Callable
+from typing import Any, TextIO
 
 
 def write_json(payload: dict[str, Any], *, stdout: TextIO = sys.stdout) -> None:

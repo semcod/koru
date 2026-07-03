@@ -73,6 +73,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.364] - 2026-07-03
+
+### Docs
+- Update README.md
+- Update docs/boundary-refactoring-proposal.md
+
+### Test
+- Update tests/conftest.py
+- Update tests/test_autonomous_cycle_chat_activity_analyzer.py
+- Update tests/test_autonomous_cycle_chat_activity_config.py
+- Update tests/test_autonomous_cycle_chat_activity_text.py
+- Update tests/test_autonomous_cycle_chat_activity_tickets.py
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_cli_direct_drive.py
+- Update tests/test_autopilot_commands_shutdown.py
+- Update tests/test_autopilot_commands_status.py
+- Update tests/test_autopilot_daemon.py
+- ... and 27 more files
+
+### Other
+- Update uv.lock
+
 ## [0.1.363] - 2026-07-03
 
 ### Docs

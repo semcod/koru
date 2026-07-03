@@ -4,19 +4,25 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
-from koru.events import emit_management_event
-from koru.tasks import create_nl_task
-from koru.tools import build_tool_task_scaffold, detect_tools, find_tool_entry, load_tool_registry, render_tools_detect_text
-from koru.serve import DEFAULT_HOST, DEFAULT_PORT
+
 from koru.agents import detect_agent_options
-from koru.context import build_context, render_markdown_handoff
 from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from koru.bootstrap import import_flat_pipeline
+from koru.context import build_context, render_markdown_handoff
+from koru.events import emit_management_event
+from koru.serve import DEFAULT_HOST, DEFAULT_PORT
+from koru.tasks import create_nl_task
+from koru.tools import (
+    build_tool_task_scaffold,
+    detect_tools,
+    find_tool_entry,
+    load_tool_registry,
+    render_tools_detect_text,
+)
 
 
 def ide_router_main(argv: list[str]) -> int:
     """CLI: ``koru ide-router`` — print resolved IDE / headless routing."""
-    import argparse
     import json
 
     from koru.ide_router import resolve_ide_route

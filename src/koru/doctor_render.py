@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.doctor_constants import FAIL, PASS, SKIP, WARN, _PROBLEM_CATALOG
+from koru.doctor_constants import _PROBLEM_CATALOG, FAIL, PASS, SKIP, WARN
 
 _STATUS_GLYPH = {PASS: "OK ", WARN: "WARN", FAIL: "FAIL", SKIP: "SKIP"}
 

@@ -21,7 +21,6 @@ from koru.autonomous_cycle_chat_activity_config import (
     llm_reflection_summary_max_age_seconds,
 )
 
-
 # ---------------------------------------------------------------------------
 # autopilot_redrive_cooldown_seconds
 # ---------------------------------------------------------------------------

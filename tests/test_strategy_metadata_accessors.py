@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from gillm.focus.darwin import DarwinStrategy
+from gillm.focus.wayland import WaylandLinuxStrategy
+from gillm.focus.windows import WindowsStrategy
+from gillm.focus.x11 import X11LinuxStrategy
+
 from koruide.ides.antigravity import AntigravityStrategy
 from koruide.ides.cursor import CursorStrategy
 from koruide.ides.jetbrains import JetbrainsStrategy
@@ -12,10 +17,6 @@ from korullm.strategies.codex import CodexStrategy
 from korullm.strategies.gpt import GptStrategy
 from korullm.strategies.ide_chat import IdeChatStrategy
 from korullm.strategies.ollama import OllamaStrategy
-from gillm.focus.darwin import DarwinStrategy
-from gillm.focus.wayland import WaylandLinuxStrategy
-from gillm.focus.windows import WindowsStrategy
-from gillm.focus.x11 import X11LinuxStrategy
 
 
 def test_ide_metadata_accessors_stable() -> None:

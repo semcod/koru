@@ -14,13 +14,14 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from gillm.injection.errors import InjectorError
+
+from koru.integration_ledger import record_integration_action
+from koru.observability_events import emit_failure, emit_verify
 from koruide.daemon.protocol import _Client, _daemon_package_version
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import normalize_ide_id
-from gillm.injection.errors import InjectorError
-from koruide.protocol import Message, ack, MIN_PLUGIN_PROTOCOL_VERSION
-from koru.integration_ledger import record_integration_action
-from koru.observability_events import emit_failure, emit_verify
+from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION, Message, ack
 
 
 def _persist_recent_dsl(daemon: Any) -> None:
@@ -425,7 +426,7 @@ def _relay_plugin_ack_to_cli(
     info: dict[str, Any],
     plugin_ok: bool,
 ) -> None:
-    from koruide.daemon.handlers import _cli_client_still_connected, _cap_ack_info_for_cli
+    from koruide.daemon.handlers import _cap_ack_info_for_cli, _cli_client_still_connected
 
     if not _cli_client_still_connected(daemon, cli_client):
         daemon.log(

@@ -55,7 +55,7 @@ def _status_plugin_labels(info: dict) -> list[str]:
 def _handle_systemmap_output(
     args: argparse.Namespace,
     info: dict,
-    client: "AutopilotClient",
+    client: AutopilotClient,
     normalize_ide_fn: callable,
 ) -> int:
     """Print systemmap format and return exit code."""
@@ -90,7 +90,7 @@ def _handle_systemmap_output(
         action="export_systemmap",
         result="ok" if payload.get("ok", True) else "failed",
         rc=0 if payload.get("ok", True) else 1,
-        entry_count=len((payload.get("entries") or {})),
+        entry_count=len(payload.get("entries") or {}),
     )
     return 0 if payload.get("ok", True) else 1
 

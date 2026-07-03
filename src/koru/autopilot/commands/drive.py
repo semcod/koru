@@ -120,11 +120,11 @@ def _run_direct_fallback(
     *,
     run_direct_drive_fn: callable,
 ) -> int:
-    from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
     from koru.autonomy.ide_operator_guidance import (
         classify_drive_failure_guidance,
         emit_operator_guidance,
     )
+    from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
 
     if daemon_reply_blocks_direct_fallback(reply):
         print(

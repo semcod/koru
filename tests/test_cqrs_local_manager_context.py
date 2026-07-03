@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from koru.cqrs import EventSourcingRuntime
 from koru.bounded_contexts.local_manager.application import (
     LocalManagerCommandService,
     LocalManagerQueryService,
@@ -20,8 +19,9 @@ from koru.bounded_contexts.local_manager.events import (
     WORKER_HEARTBEATED,
     WORKER_REGISTERED,
 )
-from koru.bounded_contexts.local_manager.read_model import LocalManagerEventLogProjection
 from koru.bounded_contexts.local_manager.queries import HealthSnapshotQuery
+from koru.bounded_contexts.local_manager.read_model import LocalManagerEventLogProjection
+from koru.cqrs import EventSourcingRuntime
 from koru.local_manager_state import ServiceState
 
 

@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+
 def agent_backends_main(argv: list[str]) -> int:
     """List or describe IDE agent backend profiles (``agent_backends``)."""
     from dataclasses import asdict

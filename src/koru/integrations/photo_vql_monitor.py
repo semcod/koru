@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 from typing import Any
 
-
 _IDE_DEFAULT_SOURCE: dict[str, str] = {
     "cursor": "DP-1",
     "windsurf": "DP-1",

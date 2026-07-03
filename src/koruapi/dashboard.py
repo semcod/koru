@@ -7,11 +7,9 @@ import os
 import sys
 from pathlib import Path
 
+from koru.env_flags import env_truthy as _env_truthy
 from koru.events import emit_management_event
 from koruapi.dashboard_serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
-
-
-from koru.env_flags import env_truthy as _env_truthy
 
 
 def _argv_has_flag(argv: list[str], *names: str) -> bool:
@@ -80,8 +78,8 @@ def _resolve_serve_config(
     args: argparse.Namespace,
     raw_argv: list[str],
     saved: dict,
-    project: "Path",
-) -> "ServeConfig":
+    project: Path,
+) -> ServeConfig:
     saved_serve = saved.get("serve") if isinstance(saved.get("serve"), dict) else {}
     lan = _resolve_serve_lan(args, raw_argv, saved_serve)
     host = _resolve_serve_host(args, raw_argv, saved_serve, lan=lan)

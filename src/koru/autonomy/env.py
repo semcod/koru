@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Final
 
 from koru.env_flags import parse_boolish
-
 from koruide.ide import (
     canonical_autopilot_ide_id,
     detect_terminal_host_ide_id,

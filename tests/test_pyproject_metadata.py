@@ -22,6 +22,9 @@ def test_base_runtime_dependencies_stay_small() -> None:
         "gillm>=0.1.9",
         "pyyaml>=6.0,<7.0",
         "rich>=14.3.4",
+        # Zero-dep shell-client registry/driver; core so `--ide claude` can
+        # never silently fall through to an editor lane.
+        "tillm>=0.1.35",
     ]
 
 

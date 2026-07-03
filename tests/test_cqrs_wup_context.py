@@ -4,14 +4,13 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from koru.cqrs import EventSourcingRuntime
 from koru.autonomous_wup import WupHealthResult
 from koru.bounded_contexts.wup.application import WupCommandService, WupQueryService
 from koru.bounded_contexts.wup.commands import EvaluateWupHealthCommand
-from koru.bounded_contexts.wup.events import WUP_CONTEXT, WUP_HEALTH_FAILED
-from koru.bounded_contexts.wup.events import WUP_HEALTH_INTERRUPTED
+from koru.bounded_contexts.wup.events import WUP_CONTEXT, WUP_HEALTH_FAILED, WUP_HEALTH_INTERRUPTED
 from koru.bounded_contexts.wup.queries import LoadWupHealthSnapshotQuery
 from koru.bounded_contexts.wup.read_model import WupEventLogProjection
+from koru.cqrs import EventSourcingRuntime
 
 
 @dataclass

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from koru.cqrs import EventSourcingRuntime, runtime_for_project
 from koru.bounded_contexts.topology.application import TopologyCommandService, TopologyQueryService
 from koru.bounded_contexts.topology.commands import (
     PersistTopologyCommand,
@@ -15,8 +14,9 @@ from koru.bounded_contexts.topology.events import (
     TOPOLOGY_PIPELINE_TOGGLED,
     TOPOLOGY_SAVED,
 )
-from koru.bounded_contexts.topology.read_model import TopologyEventLogProjection
 from koru.bounded_contexts.topology.queries import LoadTopologyQuery
+from koru.bounded_contexts.topology.read_model import TopologyEventLogProjection
+from koru.cqrs import EventSourcingRuntime, runtime_for_project
 from koru.cqrs.event_store import JsonlEventStore
 
 

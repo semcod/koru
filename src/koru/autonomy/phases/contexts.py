@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from koru.autonomous_cycle_common import DiagnosticResult
 from koru.autonomous_wup import WupHealthResult
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.scan import ScanResult
-
 
 PhaseCallback = Callable[..., Any]
 

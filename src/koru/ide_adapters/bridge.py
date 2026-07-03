@@ -136,7 +136,7 @@ def _build_mismatch_hypothesis(
     plugin: dict,
     project_path: str,
     expected_socket: str,
-) -> "Hypothesis":
+) -> Hypothesis:
     expected = DriveOrchestrator.expected_plugin_build_sha(ide) or "-"
     connected = str(plugin.get("buildSha") or "-")
     return Hypothesis(
@@ -409,7 +409,7 @@ def gc_stale_sockets_for_lane(socket_path: Path) -> list[str]:
     return removed
 
 
-def _append_diagnostics(lines: list, status: "BridgeStatus", explain: bool) -> None:
+def _append_diagnostics(lines: list, status: BridgeStatus, explain: bool) -> None:
     if explain or status.hypotheses:
         lines.append("diagnostics:")
         for hyp in status.hypotheses[:5]:

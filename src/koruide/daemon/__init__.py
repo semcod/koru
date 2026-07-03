@@ -5,8 +5,8 @@ the legacy single-file ``koruide/daemon.py`` (deleted) into:
 
 * :mod:`koruide.daemon.server` — :class:`AutopilotDaemon`, selector loop, I/O
 * :mod:`koruide.daemon.handlers` — per-message-type handlers (drive, hello, …)
-* :mod:`koruide.daemon.protocol` — ``_Client``, ``_PluginEventHandoff``,
-  ``_peer_uid``, ``_daemon_package_version``
+* :mod:`koruide.daemon.protocol` — ``_Client``, ``_peer_uid``,
+  ``_daemon_package_version``
 * :mod:`koruide.daemon.storage` — thread-safe in-memory console-log + session
   ring, with 10 KB-per-session clamping
 
@@ -23,9 +23,8 @@ from __future__ import annotations
 import os
 import time
 
-from koruide.ide import detect_running_ides_cached as detect_running_ides
-from koruide.daemon.protocol import _peer_uid
 from koruide.daemon.handlers import _default_handoff
+from koruide.daemon.protocol import _peer_uid
 from koruide.daemon.server import AutopilotDaemon, _env_truthy, _verbose_io
 from koruide.daemon.storage import (
     add_console_log,
@@ -33,6 +32,7 @@ from koruide.daemon.storage import (
     get_console_logs,
     start_new_log_session,
 )
+from koruide.ide import detect_running_ides_cached as detect_running_ides
 
 __all__ = [
     "AutopilotDaemon",

@@ -13,7 +13,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
+from gillm.injection.injector import Injector
+
 from koruide.audit import AuditLog
+from koruide.command_catalog_store import CommandCatalogStore
+from koruide.command_telemetry import CommandTelemetry
 from koruide.daemon.handlers import _default_handoff
 from koruide.daemon.metadata import (
     build_daemon_metadata,
@@ -22,9 +26,6 @@ from koruide.daemon.metadata import (
     write_daemon_metadata,
 )
 from koruide.daemon.protocol import _Client, _peer_uid
-from gillm.injection.injector import Injector
-from koruide.command_catalog_store import CommandCatalogStore
-from koruide.command_telemetry import CommandTelemetry
 from koruide.plugin_router import PluginRouter
 from koruide.protocol import (
     MAX_LINE_BYTES,

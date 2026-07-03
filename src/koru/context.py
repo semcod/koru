@@ -34,24 +34,54 @@ from koru.agents import detect_agent_environment
 from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
 from koru.context_render import (
     _compact_ticket_error,
+    render_markdown_handoff,
 )
 from koru.context_render import (
     render_active_ticket as _render_active_ticket,
+)
+from koru.context_render import (
     render_agent_lanes as _render_agent_lanes,
+)
+from koru.context_render import (
     render_ai_tool_support_2026 as _render_ai_tool_support_2026,
+)
+from koru.context_render import (
     render_autonomous_mode as _render_autonomous_mode,
+)
+from koru.context_render import (
     render_autonomy_loop_brief as _render_autonomy_loop_brief,
+)
+from koru.context_render import (
     render_dashboard as _render_dashboard,
+)
+from koru.context_render import (
     render_environment as _render_environment,
+)
+from koru.context_render import (
     render_gates as _render_gates,
+)
+from koru.context_render import (
     render_header as _render_header,
-    render_markdown_handoff,
+)
+from koru.context_render import (
     render_no_active_ticket as _render_no_active_ticket,
+)
+from koru.context_render import (
     render_policy as _render_policy,
+)
+from koru.context_render import (
     render_project_pipeline as _render_project_pipeline,
+)
+from koru.context_render import (
     render_rules as _render_rules,
+)
+from koru.context_render import (
     render_self_service as _render_self_service,
+)
+from koru.context_render import (
     render_semcod_tools as _render_semcod_tools,
+)
+from koru.context_render import (
     render_setup_required as _render_setup_required,
 )
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl

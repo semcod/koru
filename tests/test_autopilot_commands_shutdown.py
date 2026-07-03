@@ -5,6 +5,8 @@ import argparse
 import json
 from unittest import mock
 
+import pytest
+
 from koru.autopilot.commands.shutdown import action_shutdown
 
 
@@ -46,15 +48,12 @@ def test_action_shutdown_propagates_exception() -> None:
     
     mock_shutdown_fn = mock.Mock(side_effect=OSError("Shutdown failed"))
     
-    try:
+    with pytest.raises(OSError, match="Shutdown failed"):
         action_shutdown(
             args,
             client_fn=mock.Mock(),
             daemon_shutdown_fn=mock_shutdown_fn,
         )
-        assert False, "Should have raised OSError"
-    except OSError as e:
-        assert str(e) == "Shutdown failed"
 
 
 def test_action_shutdown_emits_jsonl_contract(capsys) -> None:

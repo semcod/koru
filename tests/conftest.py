@@ -24,7 +24,26 @@ _VOLATILE_ENV_KEYS = (
     "KORU_COMMAND_PICKER",
     "KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN",
     "OPENROUTER_API_KEY",
+    # configure_loop_state() writes these straight into os.environ when it
+    # routes --ide auto to a shell client; without cleanup they leak the
+    # selected client into every later test in the same worker.
+    "KORU_TILLM_CLIENT",
+    "KORU_TILLM_MODEL",
+    "KORU_TILLM_EXECUTE_PROFILE",
+    "KORU_AUTOPILOT_SOCKET",
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_real_shell_clients(monkeypatch: pytest.MonkeyPatch):
+    """Keep unit tests from executing a real vendor CLI (claude-code, aider, …).
+
+    On a developer host with tillm + a shell client installed, ``--ide auto``
+    autodetection would otherwise drive the real CLI headlessly — slow
+    (minutes per call), nondeterministic, and billed. Tests that exercise
+    autodetection itself opt back in with ``monkeypatch.delenv``.
+    """
+    monkeypatch.setenv("KORU_AUTO_SHELL_CLIENT", "0")
 
 
 @pytest.fixture(autouse=True)

@@ -168,7 +168,7 @@ def _iter_proc_pids() -> list[int]:
 
 def _read_comm(pid: int) -> str:
     try:
-        with open(f"/proc/{pid}/comm", "r", encoding="utf-8", errors="replace") as f:
+        with open(f"/proc/{pid}/comm", encoding="utf-8", errors="replace") as f:
             return f.read().strip()
     except OSError:
         return ""

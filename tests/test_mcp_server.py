@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
+
 from koru import mcp_server
 
 # These tests use subprocess and are slow; skip by default

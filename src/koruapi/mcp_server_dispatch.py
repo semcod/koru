@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import traceback
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 def jsonrpc_response(req_id: Any, result: Any) -> dict[str, Any]:

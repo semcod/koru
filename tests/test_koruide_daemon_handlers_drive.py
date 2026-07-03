@@ -240,7 +240,8 @@ def test_backward_compat_reexports_from_handlers() -> None:
     from koruide.daemon import handlers
     from koruide.daemon.handlers_drive import (
         _drive_via_keyboard,
-        _drive_via_plugin,
+    )
+    from koruide.daemon.handlers_drive import (
         handle_drive as hd,
     )
 

@@ -13,15 +13,15 @@ from koru.autonomous_cycle_drive_retry import (
 from koru.autonomous_cycle_skip_conditions import _check_autopilot_skip_conditions
 from koru.autonomous_plugin import plugin_skip_code
 from koru.autonomous_plugin_runtime import plugin_reason_requires_reload
+from koru.autonomy.autopilot_status import parse_autopilot_status
+from koru.autonomy.drive_result import DriveAttemptResult
 from koru.autonomy.env import (
     autopilot_terminal_conflict_reason as _autopilot_terminal_conflict_reason,
 )
 from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
-from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
-from koru.autonomy.drive_result import DriveAttemptResult
 from koru.autonomy.policy_engine import AutopilotPolicyContext, decide_autopilot_policy
 from koru.autonomy.state import AutoloopState
 from koru.observability_events import (
@@ -33,7 +33,6 @@ from koru.observability_events import (
 )
 from koru.observability_writer import emit_terminal_observability_path
 from koru.queue import QueueLoopResult
-
 
 _PLUGIN_GATE_RECOVERY_COOLDOWN_SECONDS = 60.0
 _PLUGIN_GATE_RECOVERY_LAST_TS: dict[tuple[str, str, str], float] = {}

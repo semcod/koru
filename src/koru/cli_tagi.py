@@ -1,8 +1,9 @@
 """CLI commands for Tagi integration in Koru."""
 
-import click
 from pathlib import Path
 from typing import Optional
+
+import click
 
 from .tagi_integration import (
     TagiChangeAnalysis,
@@ -75,7 +76,7 @@ def _render_status_snapshot(priorities: TagiChangeAnalysis) -> None:
     click.echo(f"📊 {len(priorities.changes)} changes detected")
     click.echo(f"📋 {len(priorities.groups)} groups found")
     if priorities.recommendations:
-        click.echo(f"\n💡 Quick recommendations:")
+        click.echo("\n💡 Quick recommendations:")
         for rec in priorities.recommendations[:3]:
             click.echo(f"  • {rec}")
 
@@ -136,7 +137,7 @@ def deploy(project_path: str, dry_run: bool, format: str):
         _render_deployment_plan_table(priorities, deployment_plan.get("deployment_groups", []))
 
     if dry_run:
-        click.echo(f"\n🔍 DRY RUN - No deployment actions taken")
+        click.echo("\n🔍 DRY RUN - No deployment actions taken")
         return
 
     # Execute deployment
@@ -146,14 +147,14 @@ def deploy(project_path: str, dry_run: bool, format: str):
 
     success, deployed_groups = _execute_deployment_plan(tagi, deployment_plan)
     if success:
-        click.echo(f"\n✅ Deployment completed successfully")
+        click.echo("\n✅ Deployment completed successfully")
         click.echo(f"Deployed groups: {', '.join(deployed_groups)}")
     else:
-        click.echo(f"\n❌ Deployment failed")
+        click.echo("\n❌ Deployment failed")
 
 
 def _render_deployment_plan_table(priorities: TagiChangeAnalysis, deployment_groups: list):
-    click.echo(f"\n📊 Deployment Analysis:")
+    click.echo("\n📊 Deployment Analysis:")
     click.echo(f"Total changes: {len(priorities.changes)}")
     click.echo(f"Total groups: {len(priorities.groups)}")
     _render_priority_order(priorities, label="Deployment Order")
@@ -173,7 +174,7 @@ def _render_priority_order(priorities: TagiChangeAnalysis, label: str = "Priorit
 def _render_deployment_groups(deployment_groups: list):
     if not deployment_groups:
         return
-    click.echo(f"\n🚀 Deployment Groups:")
+    click.echo("\n🚀 Deployment Groups:")
     for group in deployment_groups:
         click.echo(f"\n  {group['name'].upper()} (Priority: {group['priority']})")
         click.echo(f"  Strategy: {group['deployment_strategy']}")
@@ -184,13 +185,13 @@ def _render_deployment_groups(deployment_groups: list):
 def _render_recommendations(recommendations: list):
     if not recommendations:
         return
-    click.echo(f"\n💡 Recommendations:")
+    click.echo("\n💡 Recommendations:")
     for rec in recommendations:
         click.echo(f"  • {rec}")
 
 
 def _execute_deployment_plan(tagi: TagiIntegration, deployment_plan: dict) -> tuple[bool, list[str]]:
-    click.echo(f"\n🚀 Starting deployment...")
+    click.echo("\n🚀 Starting deployment...")
     deployed_groups = []
     for group in deployment_plan.get("deployment_groups", []):
         group_name = group.get("name", "")
@@ -210,7 +211,7 @@ def _execute_deployment_plan(tagi: TagiIntegration, deployment_plan: dict) -> tu
 @click.option("--message", help="Commit message")
 @click.option("--dry-run", is_flag=True, help="Preview without committing")
 @click.option("--format", type=click.Choice(["json", "table"]), default="table", help="Output format")
-def auto(project_path: str, message: Optional[str], dry_run: bool, format: str):
+def auto(project_path: str, message: str | None, dry_run: bool, format: str):
     """Auto-commit all changes using Tagi's auto-ordering."""
     project = Path(project_path).resolve()
 
@@ -241,7 +242,7 @@ def auto(project_path: str, message: Optional[str], dry_run: bool, format: str):
                 order_label="Commit Order",
             )
 
-        click.echo(f"\n🔍 DRY RUN - No commits made")
+        click.echo("\n🔍 DRY RUN - No commits made")
         return
 
     # Execute auto-commit
@@ -255,16 +256,16 @@ def auto(project_path: str, message: Optional[str], dry_run: bool, format: str):
     success = auto_commit_all_changes(project, message)
 
     if success:
-        click.echo(f"\n✅ Auto-commit completed")
+        click.echo("\n✅ Auto-commit completed")
         click.echo(f"Message: {message}")
     else:
-        click.echo(f"\n❌ Auto-commit failed")
+        click.echo("\n❌ Auto-commit failed")
 
 
 @tagi.command()
 @click.argument("project_path", type=click.Path(exists=True), default=".")
 @click.option("--message", help="Commit message")
-def safe(project_path: str, message: Optional[str]):
+def safe(project_path: str, message: str | None):
     """Commit only safe changes using Tagi."""
     project = Path(project_path).resolve()
 
@@ -276,10 +277,10 @@ def safe(project_path: str, message: Optional[str]):
     success = commit_safe_changes(project, message)
 
     if success:
-        click.echo(f"\n✅ Safe changes committed")
+        click.echo("\n✅ Safe changes committed")
         click.echo(f"Message: {message}")
     else:
-        click.echo(f"\n❌ Failed to commit safe changes")
+        click.echo("\n❌ Failed to commit safe changes")
 
 
 @tagi.command()
@@ -291,8 +292,8 @@ def status(project_path: str):
     tagi = TagiIntegration(project)
 
     if tagi.is_available():
-        click.echo(f"✅ Tagi integration available")
+        click.echo("✅ Tagi integration available")
         _render_status_snapshot(_load_priorities(tagi))
     else:
-        click.echo(f"❌ Tagi integration not available")
-        click.echo(f"Install tagi: pip install tagi")
+        click.echo("❌ Tagi integration not available")
+        click.echo("Install tagi: pip install tagi")

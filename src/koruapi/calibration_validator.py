@@ -14,7 +14,7 @@ Detects common calibration mistakes:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -157,8 +157,8 @@ def _stale_calibration_issue(ide: str, calibrated_at_raw: Any) -> dict[str, Any]
     except (ValueError, TypeError):
         return None
     if calibrated_at.tzinfo is None:
-        calibrated_at = calibrated_at.replace(tzinfo=timezone.utc)
-    age_hours = (datetime.now(timezone.utc) - calibrated_at).total_seconds() / 3600
+        calibrated_at = calibrated_at.replace(tzinfo=UTC)
+    age_hours = (datetime.now(UTC) - calibrated_at).total_seconds() / 3600
     if age_hours <= STALE_HOURS:
         return None
     return {

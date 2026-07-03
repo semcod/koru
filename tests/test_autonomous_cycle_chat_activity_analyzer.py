@@ -23,7 +23,6 @@ from koru.autonomous_cycle_chat_activity_analyzer import (
     explain_skip,
 )
 
-
 # ---------------------------------------------------------------------------
 # _event_timestamp
 # ---------------------------------------------------------------------------
@@ -358,18 +357,15 @@ def test_explain_skip_empty_decision() -> None:
 # ---------------------------------------------------------------------------
 
 def test_age_seconds_from_label_parses_seconds() -> None:
-    from koru.autonomous_cycle_chat_activity_analyzer import _age_seconds_from_label
     assert _age_seconds_from_label("42s") == 42.0
     assert _age_seconds_from_label("0s") == 0.0
 
 
 def test_age_seconds_from_label_non_seconds_label() -> None:
-    from koru.autonomous_cycle_chat_activity_analyzer import _age_seconds_from_label
     assert _age_seconds_from_label("bad") == 0.0
 
 
 def test_age_seconds_from_label_invalid_number() -> None:
-    from koru.autonomous_cycle_chat_activity_analyzer import _age_seconds_from_label
     assert _age_seconds_from_label("xs") == 0.0
 
 
@@ -381,8 +377,14 @@ def test_backward_compat_imports_from_main_module() -> None:
     """classify_chat_event etc. must still be importable from the original module."""
     from koru.autonomous_cycle_chat_activity import (
         classify_chat_event as cc,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         decide_intake_ticket as di,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         decide_redrive_cooldown as dr,
+    )
+    from koru.autonomous_cycle_chat_activity import (
         explain_skip as es,
     )
     assert cc is classify_chat_event

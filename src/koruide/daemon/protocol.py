@@ -53,10 +53,3 @@ class _Client:
     awaiting_plugin: tuple[_Client, str, bool, str | None, str, bool] | None = None
     awaiting_plugin_info: dict[str, Any] | None = None
     awaiting_plugin_timer: Any | None = None
-
-
-@dataclass(frozen=True)
-class _PluginEventHandoff:
-    ack_info: dict[str, Any]
-    chat: str
-    reason: str

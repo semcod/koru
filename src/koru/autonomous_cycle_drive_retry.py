@@ -7,6 +7,11 @@ from typing import Any
 from koru.autonomous_cycle_chat_activity import _inject_reflection_summary_into_prompt
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomous_drive_retry_policy import _handle_failed_drive_attempt
+from koru.autonomy.drive_strategies import (
+    DriveStrategy,
+    DriveStrategyContext,
+    execute_drive_strategies,
+)
 from koru.autonomy.env import (
     allow_gillm_autopilot_fallback as _allow_gillm_autopilot_fallback,
 )
@@ -23,11 +28,6 @@ from koru.autonomy.env import (
     prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
 )
 from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_drive_prompt
-from koru.autonomy.drive_strategies import (
-    DriveStrategy,
-    DriveStrategyContext,
-    execute_drive_strategies,
-)
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import PromptDecision, build_prompt
 from koru.autonomy.state import AutoloopState

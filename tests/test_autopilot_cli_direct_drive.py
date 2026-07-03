@@ -175,8 +175,9 @@ def test_run_direct_drive_emits_desktop_gui_control_command(
     tmp_path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import cli_command
     import gillm.injection.os_injector as oi
+
+    from koru.autopilot import cli_command
 
     class _DummyInjector:
         session = "wayland"
@@ -228,8 +229,9 @@ def test_run_direct_drive_prefers_calibrated_jetbrains_profile(
     tmp_path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import cli_command
     import gillm.injection.os_injector as oi
+
+    from koru.autopilot import cli_command
 
     class _DummyInjector:
         session = "wayland"

@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.agents import agent_lane_environment, format_agent_lane_exports
-from koru.autopilot import default_socket_path
 from koru.autonomous_startup import resolve_agent_lane_id
+from koru.autopilot import default_socket_path
 from koru.ide_adapters.shared import SOCKET_SETTING_KEY, user_settings_path
 from koru.init import resolve_project_agent_lane
 from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
@@ -107,9 +107,9 @@ def _pid_alive(pid: int) -> bool:
 
 def _instance_from_payload(
     payload: dict,
-    path: "Path",
-    ide: "str | None",
-) -> "tuple[str, str, float] | None":
+    path: Path,
+    ide: str | None,
+) -> tuple[str, str, float] | None:
     """Return (instance, source, uptime) from a valid daemon payload, or None."""
     pid = payload.get("pid")
     if not isinstance(pid, int) or not _pid_alive(pid):
@@ -160,8 +160,8 @@ def _instance_matches_ide(instance: str, ide: str) -> bool:
 
 def _resolve_from_requested_ide(
     requested: str,
-    project_root: "Path",
-) -> "tuple[str | None, str] | None":
+    project_root: Path,
+) -> tuple[str | None, str] | None:
     """Try to resolve instance for a specific (non-auto) IDE. Returns (instance, source) or None."""
     from_settings = instance_from_socket_path(
         socket_path_from_ide_settings(requested, project=project_root),

@@ -6,8 +6,12 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from korullm.strategies.base import DriveFailureAssessment, LlmCapabilities, LlmStrategy
-from korullm.strategies.base import StaticLlmIdentityMixin
+from korullm.strategies.base import (
+    DriveFailureAssessment,
+    LlmCapabilities,
+    LlmStrategy,
+    StaticLlmIdentityMixin,
+)
 from korullm.strategies.ide_chat import IdeChatStrategy
 from korullm.strategies.registry import register_llm_strategy
 

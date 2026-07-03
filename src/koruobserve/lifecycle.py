@@ -20,7 +20,6 @@ from koruobserve.bootstrap import ensure_mesh_key, ensure_observe_config
 from koruobserve.paths import logfile, pidfile, runtime_dir, state_file
 from koruvision.capture_probe import resolve_observe_python
 
-
 _PROCESSES: tuple[str, ...] = ("relay", "vision", "dashboard")
 
 

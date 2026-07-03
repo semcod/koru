@@ -10,14 +10,14 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from koruide.daemon.protocol import _Client, _daemon_package_version
 from koruide.command_catalog_store import (
     command_catalog_enabled,
     parse_hello_command_catalog,
 )
+from koruide.daemon.protocol import _Client, _daemon_package_version
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import normalize_ide_id
-from koruide.protocol import Message, ack, error, MIN_PLUGIN_PROTOCOL_VERSION
+from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION, Message, ack, error
 
 
 def _extract_hello_metadata(

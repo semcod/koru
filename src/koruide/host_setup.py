@@ -17,8 +17,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from koruide.ide import detect_focused_ide_id, detect_running_ides
 from gillm.injection.injector import Injector
+
+from koruide.ide import detect_focused_ide_id, detect_running_ides
 
 YDOTOOLD_UNIT_NAME = "ydotoold.service"
 YDOTOOLD_UNIT_TEMPLATE = """[Unit]

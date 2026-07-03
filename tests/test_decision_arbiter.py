@@ -8,13 +8,12 @@ from koru.autonomy.decision_arbiter import (
     decide,
 )
 from koru.autonomy.verification_engine import (
+    ChatEvidence,
     Evidence,
     GitEvidence,
     TestEvidence,
-    ChatEvidence,
     Verdict,
 )
-
 
 # ---------------------------------------------------------------------------
 # Heuristic vetoes

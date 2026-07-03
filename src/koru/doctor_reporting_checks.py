@@ -1,8 +1,8 @@
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 from koru.doctor_constants import PASS, SKIP, WARN
 

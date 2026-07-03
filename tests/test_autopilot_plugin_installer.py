@@ -11,8 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from koru.autopilot import install_plugin_cli
-from koru.autopilot import plugin_installer
+from koru.autopilot import install_plugin_cli, plugin_installer
 from koruide.plugin_version import expected_plugin_version_for_ide
 
 

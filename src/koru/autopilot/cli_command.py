@@ -13,10 +13,14 @@ import sys
 import time
 from pathlib import Path
 
+from gillm.injection.errors import InjectorError
+from gillm.injection.injector import Injector
+
 from koru.agents import agent_lane_environment
 from koru.autopilot import (
     calibrate_cli,
     daemon_cli,
+    diagnose_vdisplay_cli,
     doctor_cli,
     install_plugin_cli,
     prepare_vdisplay_cli,
@@ -24,7 +28,6 @@ from koru.autopilot import (
     tail_cli,
     vdisplay_up_cli,
 )
-from koru.autopilot import diagnose_vdisplay_cli
 from koru.autopilot.cli_direct_drive import (
     _auto_direct_fallback_enabled as _auto_direct_fallback_enabled,
 )
@@ -56,15 +59,15 @@ from koru.autopilot.cli_direct_drive import (
     _type_text_direct_drive as _type_text_direct_drive,
 )
 from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
-from koru.autopilot.commands.drive import action_drive as _drive_action_impl
+from koru.autopilot.cli_snapshot import action_snapshot as _action_snapshot_impl
+from koru.autopilot.cli_trace import action_trace as _action_trace
+from koru.autopilot.client import AutopilotClient
 from koru.autopilot.commands.drive import _drive_command_argv
+from koru.autopilot.commands.drive import action_drive as _drive_action_impl
 from koru.autopilot.commands.handoff import action_handoff as _handoff_action_impl
 from koru.autopilot.commands.manage import action_manage as _manage_action_impl
 from koru.autopilot.commands.shutdown import action_shutdown as _shutdown_action_impl
 from koru.autopilot.commands.status import action_status as _status_action_impl
-from koru.autopilot.cli_snapshot import action_snapshot as _action_snapshot_impl
-from koru.autopilot.cli_trace import action_trace as _action_trace
-from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
     detect_focused_ide_id,
     detect_running_ides,
@@ -78,8 +81,6 @@ from koru.autopilot.lane_context import (
     resolve_client_socket_path,
     resolve_lane_context,
 )
-from gillm.injection.errors import InjectorError
-from gillm.injection.injector import Injector
 from koru.control_commands import shell_command
 
 

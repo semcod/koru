@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 
 from koruide.daemon.handlers_plugin_event import (
-    _PluginEventHandoff,
+    _ack_plugin_event_without_handoff,
     _append_event,
     _check_handoff_cooldown,
     _event_path,
@@ -14,7 +14,7 @@ from koruide.daemon.handlers_plugin_event import (
     _forward_handoff_to_plugin,
     _handle_plugin_event_basic,
     _plugin_event_should_handoff,
-    _ack_plugin_event_without_handoff,
+    _PluginEventHandoff,
     handle_plugin_event,
 )
 from koruide.protocol import Message

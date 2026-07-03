@@ -6,6 +6,8 @@ from typing import Any
 
 from koruvision.providers.base import MonitorSpec, ProviderAvailability
 from koruvision.providers.env import portal_possible
+
+
 class PortalScreenshotProvider:
     name = "portal_screenshot"
     streams = False

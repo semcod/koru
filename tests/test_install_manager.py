@@ -1204,7 +1204,7 @@ def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_pat
     assert report.plugin["supported"] is True
 
 
-def _mismatch_report(tmp_path: Path, *, plugins: list[dict]) -> "install_manager.InstallManagerReport":
+def _mismatch_report(tmp_path: Path, *, plugins: list[dict]) -> install_manager.InstallManagerReport:
     project = tmp_path / "koru"
     project.mkdir(exist_ok=True)
     return install_manager.InstallManagerReport(

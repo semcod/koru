@@ -13,14 +13,13 @@ from koru.autonomy.verification_engine import (
     Snapshot,
     TestEvidence,
     Verdict,
+    _extract_leading_int,
     assess_verdict,
     collect_chat_evidence,
     collect_git_evidence,
     collect_test_evidence,
     take_snapshot,
-    _extract_leading_int,
 )
-
 
 # ---------------------------------------------------------------------------
 # _extract_leading_int

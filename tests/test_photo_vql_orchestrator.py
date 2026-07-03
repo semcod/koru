@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from koru.integrations import photo_vql_guard as guard
 from koru.integrations import photo_vql_drive as drive_mod
+from koru.integrations import photo_vql_guard as guard
 from koru.integrations import vdisplay_client as vc
 
 
@@ -246,7 +246,7 @@ def test_preflight_repo_paths_detects_missing_koru(tmp_path: Path, monkeypatch: 
 
 
 def test_emit_user_guidance_includes_success_audit(tmp_path: Path) -> None:
-    from koru.integrations.photo_vql_user_guidance import format_user_guidance, build_user_guidance
+    from koru.integrations.photo_vql_user_guidance import build_user_guidance, format_user_guidance
 
     steps = build_user_guidance(
         ide="jetbrains",

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.env import env_get
-
 
 _PLUGIN_RECONNECT_BLOCKERS = frozenset(
     {

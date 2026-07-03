@@ -6,24 +6,6 @@ from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_cycle_chat_activity_text import (
-    compact_question_text as _compact_question_text,
-    extract_needs_input_question as _extract_needs_input_question,
-    latest_received_text as _latest_received_text,
-    looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,
-    looks_like_explicit_intake_text as _looks_like_explicit_intake_text,
-    normalize_prompt_text as _normalize_prompt_text,
-)
-from koru.autonomous_cycle_chat_activity_config import (
-    autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
-    autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,
-    chat_intake_ticket_enabled as _chat_intake_ticket_enabled,
-    llm_needs_input_heuristic_enabled as _llm_needs_input_heuristic_enabled,
-    llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,
-    llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,
-    llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,
-    llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,
-)
 from koru.autonomous_cycle_chat_activity_analyzer import (
     _CHAT_ACTIVITY_TYPES,
     _age_seconds_from_label,
@@ -44,6 +26,48 @@ from koru.autonomous_cycle_chat_activity_analyzer import (
     decide_intake_ticket,
     decide_redrive_cooldown,
     explain_skip,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    chat_intake_ticket_enabled as _chat_intake_ticket_enabled,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    llm_needs_input_heuristic_enabled as _llm_needs_input_heuristic_enabled,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,
+)
+from koru.autonomous_cycle_chat_activity_config import (
+    llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,
+)
+from koru.autonomous_cycle_chat_activity_text import (
+    compact_question_text as _compact_question_text,
+)
+from koru.autonomous_cycle_chat_activity_text import (
+    extract_needs_input_question as _extract_needs_input_question,
+)
+from koru.autonomous_cycle_chat_activity_text import (
+    latest_received_text as _latest_received_text,
+)
+from koru.autonomous_cycle_chat_activity_text import (
+    looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,
+)
+from koru.autonomous_cycle_chat_activity_text import (
+    looks_like_explicit_intake_text as _looks_like_explicit_intake_text,
+)
+from koru.autonomous_cycle_chat_activity_text import (
+    normalize_prompt_text as _normalize_prompt_text,
 )
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.prompts import PromptDecision
@@ -294,7 +318,8 @@ def _reflect_with_llx(
     reflection_events: list[Any],
 ) -> Any | None:
     try:
-        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat as _llx_reflect
+        from koru.llm_reflect import llm_reflect_enabled
+        from koru.llm_reflect import reflect_on_chat as _llx_reflect
     except ImportError:
         return None
     if not llm_reflect_enabled():

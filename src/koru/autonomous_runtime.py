@@ -12,7 +12,8 @@ from typing import Any
 
 from koru.activity_log import activity, configure_nfo_activity_log
 from koru.doctor_runtime_checks import _installed_koru_version, _read_koru_source_version
-from koru.env_flags import env_disabled as _env_disabled, env_truthy as _env_truthy
+from koru.env_flags import env_disabled as _env_disabled
+from koru.env_flags import env_truthy as _env_truthy
 
 
 def setup_autonomous_session(

@@ -13,7 +13,6 @@ from typing import Any, TextIO
 
 from koruide.ide import autopilot_ide_choices, normalize_ide_id
 
-
 CONFIG_SCHEMA_V1 = "koru.config/v1"
 CONFIG_SCHEMA_V2 = "koru.config/v2"
 CONFIG_SCHEMA = CONFIG_SCHEMA_V1

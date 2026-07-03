@@ -11,9 +11,9 @@ import pytest
 
 from koru.autopilot import cli_command, doctor_cli, install_plugin_cli, systemd_cli
 from koru.autopilot.cli_command import autopilot_main
-from koru.autopilot.commands import handoff
 from koru.autopilot.cli_parser import build_autopilot_parser
 from koru.autopilot.cli_trace import action_trace
+from koru.autopilot.commands import handoff
 
 
 def _json_payload_from_stdout(text: str) -> dict:
@@ -412,8 +412,7 @@ def test_drive_direct_falls_back_when_os_injector_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import gillm.injection.os_injector as oi_mod
-    from gillm.injection import InjectionResult
-    from gillm.injection import OsInjectorError
+    from gillm.injection import InjectionResult, OsInjectorError
 
     class _Inj:
         session = "wayland"
@@ -443,8 +442,9 @@ def test_calibrate_auto_ide_resolves_from_running_processes(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from koru.autopilot import ide as ide_mod
     import gillm.injection.os_injector as oi_mod
+
+    from koru.autopilot import ide as ide_mod
     from koru.autopilot.ide import RunningIDE
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)

@@ -8,9 +8,9 @@ backend APIs yet.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal, Mapping
-
+from typing import Any, Literal
 
 DriveStatus = Literal["ok", "failed", "skipped"]
 
@@ -45,7 +45,7 @@ class DriveAttemptResult:
         reply: Mapping[str, Any] | None,
         *,
         ok: bool | None = None,
-    ) -> "DriveAttemptResult":
+    ) -> DriveAttemptResult:
         """Build a normalized attempt from a legacy backend reply dict."""
         raw = dict(reply or {})
         resolved_ok = bool(raw.get("ok", True) if ok is None else ok)

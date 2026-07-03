@@ -272,7 +272,7 @@ def action_ide_control_list_uris(args: argparse.Namespace) -> int:
         instance = (args.instance or os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
         hint = (
             "hint: no IDE plugin on this socket — try "
-            f"KORU_AUTOPILOT_INSTANCE=cursor-main koru ide control list-uris "
+            "KORU_AUTOPILOT_INSTANCE=cursor-main koru ide control list-uris "
             "or koru ide doctor --fix"
         )
         if instance:

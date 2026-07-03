@@ -1394,12 +1394,13 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.363"
+version = "0.1.364"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "tillm" },
 ]
 
 [package.optional-dependencies]
@@ -1682,6 +1683,7 @@ requires-dist = [
     { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.55" },
     { name = "tiktoken", marker = "extra == 'agent'", specifier = ">=0.8,<1.0" },
     { name = "tiktoken", marker = "extra == 'all'", specifier = ">=0.8,<1.0" },
+    { name = "tillm", editable = "../tillm" },
     { name = "tillm", marker = "extra == 'all'", editable = "../tillm" },
     { name = "tillm", marker = "extra == 'tillm'", editable = "../tillm" },
     { name = "types-pyyaml", marker = "extra == 'all'", specifier = ">=6.0,<7.0" },

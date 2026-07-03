@@ -6,18 +6,17 @@ import os
 import shlex
 import sys
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from koru.autonomy.phases.contexts import SleepBackoffContext
 from koru.autonomy.phases.sleep_phase import finish_cycle_with_sleep
-from urllib.parse import parse_qs, urlparse
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
-from koru.autonomy.structured_report import emit_structured_cycle_report
-from koru.autonomy.replay_actions import quick_action_to_replay
 from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.config import structured_cycle_report_enabled
-
+from koru.autonomy.replay_actions import quick_action_to_replay
+from koru.autonomy.structured_report import emit_structured_cycle_report
 
 
 def _blocked_by_from_autopilot_status(autopilot_status: str) -> str:

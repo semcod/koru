@@ -16,14 +16,16 @@ from koru.wizard.cli import (
     ScriptedPrompter,
     StdinPrompter,
 )
+from koru.wizard.ide import DetectedIDE, _merge_running, _scan_installed, discover_installed_ides
 from koru.wizard.ide_install import (
     _available_install_managers,
     _build_install_method_options,
     _format_command,
     _run_install_command,
+)
+from koru.wizard.ide_install import (
     offer_ide_install as _offer_ide_install,
 )
-from koru.wizard.ide import DetectedIDE, _merge_running, _scan_installed, discover_installed_ides
 from koru.wizard.project import (
     ProjectCandidate,
     _candidates_from_running_ide,

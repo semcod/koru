@@ -261,7 +261,7 @@ def try_acquire_autonomous_start_lock(project: Path) -> AutonomousStartLock | No
         return None
     try:
         os.ftruncate(fd, 0)
-        os.write(fd, f"pid={os.getpid()}\ncwd={Path.cwd().resolve()}\n".encode("utf-8"))
+        os.write(fd, f"pid={os.getpid()}\ncwd={Path.cwd().resolve()}\n".encode())
     except OSError:
         pass
     return AutonomousStartLock(path=lock_path, fd=fd)

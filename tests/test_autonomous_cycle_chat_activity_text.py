@@ -19,7 +19,6 @@ from koru.autonomous_cycle_chat_activity_text import (
     normalize_prompt_text,
 )
 
-
 # ---------------------------------------------------------------------------
 # normalize_prompt_text
 # ---------------------------------------------------------------------------

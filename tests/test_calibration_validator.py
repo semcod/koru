@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
@@ -17,7 +17,6 @@ from koruapi.calibration_validator import (
     validate_calibrations,
     validate_single_calibration,
 )
-
 
 # ── Fixtures ───────────────────────────────────────────────────────────
 
@@ -64,7 +63,7 @@ def _make_calibration(
     calibrated_at: str | None = None,
 ) -> dict:
     if calibrated_at is None:
-        calibrated_at = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        calibrated_at = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
     return {
         "ide": ide,
         "chat_x": chat_x,

@@ -9,8 +9,8 @@ from unittest import mock
 import pytest
 
 from koru.autopilot.commands.status import (
-    _print_status_json,
     _print_status_explain_summary,
+    _print_status_json,
     action_status,
 )
 

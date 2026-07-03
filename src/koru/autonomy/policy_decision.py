@@ -30,7 +30,7 @@ class AutopilotPolicyDecision:
     action_hint: str = ""
 
     @classmethod
-    def proceed(cls) -> "AutopilotPolicyDecision":
+    def proceed(cls) -> AutopilotPolicyDecision:
         return cls(should_skip=False)
 
     @classmethod
@@ -40,7 +40,7 @@ class AutopilotPolicyDecision:
         *,
         because: str = "",
         action_hint: str = "",
-    ) -> "AutopilotPolicyDecision":
+    ) -> AutopilotPolicyDecision:
         code = str(reason_code or "unknown").strip() or "unknown"
         return cls(
             should_skip=True,

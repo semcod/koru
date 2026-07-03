@@ -10,6 +10,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from gillm.injection.errors import InjectorError
+
 from koru.control_commands import plugin_socket_command
 from koru.integration_ledger import record_integration_action
 from koru.observability_events import (
@@ -23,7 +25,6 @@ from koru.observability_events import (
 from koruide.daemon.protocol import (
     _Client,
     _daemon_package_version,
-    _PluginEventHandoff,
 )
 from koruide.daemon.storage import (
     add_console_log,
@@ -33,7 +34,6 @@ from koruide.daemon.storage import (
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
-from gillm.injection.errors import InjectorError
 from koruide.protocol import (
     MIN_PLUGIN_PROTOCOL_VERSION,
     Message,
@@ -75,8 +75,6 @@ def _cap_ack_info_for_cli(info: dict[str, Any]) -> dict[str, Any]:
 
 
 from koru.env_flags import env_truthy as _env_truthy
-
-
 from koruide.daemon.handlers_drive import (
     _drive_via_keyboard,
     _drive_via_keyboard_backend,
@@ -145,7 +143,6 @@ from koruide.daemon.handlers_hello import (
 )
 
 
-
 def handle_status(daemon: Any, client: _Client, msg: Message) -> None:
     if client.role == "unknown":
         client.role = "cli"
@@ -193,8 +190,6 @@ def handle_status(daemon: Any, client: _Client, msg: Message) -> None:
 
 def _cli_client_still_connected(daemon: Any, cli_client: _Client) -> bool:
     """Check if CLI client socket is still connected."""
-    import select
-    import socket
 
     fd = cli_client.sock.fileno()
     if fd < 0:
@@ -234,13 +229,10 @@ from koruide.daemon.handlers_ack import (
     handle_ack,
 )
 
-
-
-
 # Plugin event handlers extracted to handlers_plugin_event.py (R6)
 # Re-exported for backward compatibility
 from koruide.daemon.handlers_plugin_event import (
-    _PluginEventHandoff,
+    _ack_plugin_event_without_handoff,
     _append_event,
     _check_handoff_cooldown,
     _event_path,
@@ -248,10 +240,9 @@ from koruide.daemon.handlers_plugin_event import (
     _forward_handoff_to_plugin,
     _handle_plugin_event_basic,
     _plugin_event_should_handoff,
-    _ack_plugin_event_without_handoff,
+    _PluginEventHandoff,
     handle_plugin_event,
 )
-
 
 
 def handle_shutdown(daemon: Any, client: _Client, msg: Message) -> None:

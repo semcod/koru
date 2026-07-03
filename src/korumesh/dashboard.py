@@ -59,15 +59,15 @@ def mesh_diagnostics_payload(project: Path | None = None) -> dict[str, object]:
 
 
 def _serve_grid(handler: object, _project: Path | None) -> None:
-    getattr(handler, "_send")(200, grid_html().encode("utf-8"), "text/html; charset=utf-8")
+    handler._send(200, grid_html().encode("utf-8"), "text/html; charset=utf-8")
 
 
 def _serve_frames(handler: object, _project: Path | None) -> None:
-    getattr(handler, "_send_json")(mesh_frames_payload())
+    handler._send_json(mesh_frames_payload())
 
 
 def _serve_diagnostics(handler: object, project: Path | None) -> None:
-    getattr(handler, "_send_json")(mesh_diagnostics_payload(project))
+    handler._send_json(mesh_diagnostics_payload(project))
 
 
 _MESH_ROUTES = {

@@ -218,6 +218,7 @@ def _handle_lane_plan(project: Path, method: str, payload: dict[str, Any]) -> di
     sync_todo = payload.get("sync_todo", False)
     sync_planfile = payload.get("sync_planfile", False)
     export_yaml = payload.get("export_yaml", False)
+    koru_aware = payload.get("koru_aware", False)
 
     cmd = ["lane", "tickets", str(project)]
 

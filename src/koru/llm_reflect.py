@@ -27,8 +27,8 @@ import os
 import shutil
 import subprocess
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from koruide.chat_history import ChatEvent, read_events
 
@@ -45,7 +45,7 @@ class ReflectionResult:
     raw: str
 
     @classmethod
-    def from_json(cls, raw: str) -> "ReflectionResult | None":
+    def from_json(cls, raw: str) -> ReflectionResult | None:
         try:
             payload = json.loads(raw)
         except json.JSONDecodeError:

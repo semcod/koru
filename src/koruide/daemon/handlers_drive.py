@@ -786,7 +786,10 @@ def _drive_via_vdisplay_backend(
 ) -> bool:
     """Photo-VQL / semantic chat drive via vdisplay before blind keyboard coords."""
     from koru.integrations.photo_vql_drive import PhotoVqlDrive
-    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled, vdisplay_missing_message
+    from koru.integrations.vdisplay_client import (
+        vdisplay_fallback_enabled,
+        vdisplay_missing_message,
+    )
 
     target_id = (ide_pref or "auto").strip().lower()
     _apply_vdisplay_drive_env(daemon, target_id)

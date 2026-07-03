@@ -291,10 +291,13 @@ def tool_ide_commands(arguments: dict[str, Any]) -> dict[str, Any]:
 
 
 def tool_ide_list_uris(arguments: dict[str, Any]) -> dict[str, Any]:
+    from koruapi.desktop_uri import (
+        desktop_uri_list_koru_ide_uris,
+        nlp2uri_available,
+        nlp2uri_missing_message,
+    )
     from koruide.client import AutopilotClient
     from koruide.socket import default_socket_path
-
-    from koruapi.desktop_uri import desktop_uri_list_koru_ide_uris, nlp2uri_available, nlp2uri_missing_message
 
     if not nlp2uri_available():
         return {"ok": False, "error": nlp2uri_missing_message()}
@@ -314,7 +317,11 @@ def tool_ide_list_uris(arguments: dict[str, Any]) -> dict[str, Any]:
 
 
 def tool_ide_control_plan(arguments: dict[str, Any]) -> dict[str, Any]:
-    from koruapi.desktop_uri import desktop_uri_control_plan, nlp2uri_available, nlp2uri_missing_message
+    from koruapi.desktop_uri import (
+        desktop_uri_control_plan,
+        nlp2uri_available,
+        nlp2uri_missing_message,
+    )
 
     if not nlp2uri_available():
         return {"ok": False, "error": nlp2uri_missing_message()}
@@ -326,7 +333,11 @@ def tool_ide_control_plan(arguments: dict[str, Any]) -> dict[str, Any]:
 
 
 def tool_ide_control_execute(arguments: dict[str, Any]) -> dict[str, Any]:
-    from koruapi.desktop_uri import desktop_uri_control_execute, nlp2uri_available, nlp2uri_missing_message
+    from koruapi.desktop_uri import (
+        desktop_uri_control_execute,
+        nlp2uri_available,
+        nlp2uri_missing_message,
+    )
 
     if not nlp2uri_available():
         return {"ok": False, "error": nlp2uri_missing_message()}

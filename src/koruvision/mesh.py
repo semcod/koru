@@ -12,10 +12,10 @@ import socket
 from pathlib import Path
 
 from koru.configurator import load_project_config
-from koruvision.capture import VisionFrame
-from korumesh.keys import load_mesh_key
 from korumesh.envelope import sign_envelope
+from korumesh.keys import load_mesh_key
 from korumesh.transport import publish_envelope
+from koruvision.capture import VisionFrame
 
 
 def default_peer_id() -> str:

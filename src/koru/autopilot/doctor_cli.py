@@ -7,9 +7,10 @@ import json
 from collections.abc import Callable
 from typing import Any
 
+from gillm.injection.injector import Injector
+
 from koru.autopilot import host_setup
 from koru.autopilot.ide import detect_focused_ide_id, detect_running_ides
-from gillm.injection.injector import Injector
 
 
 def doctor_fix_payload() -> dict[str, object]:

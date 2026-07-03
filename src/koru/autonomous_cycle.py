@@ -39,7 +39,9 @@ from koru.autonomy.cycle_trace import (
 from koru.autonomy.cycle_trace import (
     record_decision_trace as _record_decision_trace_impl,
 )
+from koru.autonomy.decision_trace import load_recent_decisions
 from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
+from koru.autonomy.phases import queue_phase as _queue_phase
 from koru.autonomy.phases.contexts import (
     CyclePhaseContext,
     DrivePhaseConfig,
@@ -50,30 +52,32 @@ from koru.autonomy.phases.contexts import (
 )
 from koru.autonomy.phases.drive_phase import (
     run_drive_phase as _run_drive_phase,
+)
+from koru.autonomy.phases.drive_phase import (
     run_post_drive_phase as _run_post_drive_phase,
 )
-from koru.autonomy.phases import queue_phase as _queue_phase
 from koru.autonomy.phases.verify_phase import (
     handle_post_run_verify_ide as _handle_post_run_verify_ide,
+)
+from koru.autonomy.planning_llm import (
+    prioritize_tickets as _llm_prioritize_tickets,
+)
+from koru.autonomy.planning_llm import (
+    propose_strategy_tuning as _llm_propose_strategy_tuning,
 )
 from koru.autonomy.post_run_verify import (
     verify_completed_tickets,
 )
 from koru.autonomy.state import AutoloopState
-from koru.autonomy.planning_llm import (
-    prioritize_tickets as _llm_prioritize_tickets,
-    propose_strategy_tuning as _llm_propose_strategy_tuning,
-)
-from koru.autonomy.decision_trace import load_recent_decisions
 from koru.autonomy_strategy.config import load_autonomy_strategy
 from koru.environment_profile import environment_profile_payload
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
-from koru.queue.ticket import planfile_command
 from koru.queue import default_human_prompt as _default_human_prompt
 from koru.queue import run_api_request as _run_api_request
 from koru.queue import run_llm_request as _run_llm_request
 from koru.queue import run_process as _run_process
 from koru.queue import run_shell_command as _run_shell_command
+from koru.queue.ticket import planfile_command
 from koru.scan import ScanResult, run_scan
 from koru.stdio_events import write_stdio_event
 from koru.tasks import create_nl_task
@@ -526,10 +530,10 @@ def _attach_environment_profile(
 def _heal_stale_socket() -> None:
     """Auto-heal: remove only orphan socket files (not the active daemon's socket)."""
     try:
+        import sys
+
         from koru.autopilot import default_socket_path
         from koru.ide_adapters.bridge import gc_stale_sockets_for_lane
-
-        import sys
         target = default_socket_path()
         for removed in gc_stale_sockets_for_lane(target):
             print(f"koru autonomous: auto-healed stale socket {removed}", file=sys.stderr)

@@ -10,6 +10,7 @@ koru repo itself.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import socket
@@ -17,7 +18,6 @@ import subprocess
 import sys
 import time
 import urllib.request
-import importlib.util
 from pathlib import Path
 
 import pytest

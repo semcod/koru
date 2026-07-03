@@ -20,6 +20,7 @@ SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 PUBLISHER_ID = "semcod"
 _ANSI_YELLOW = "\033[33m"
 import tempfile
+
 _ANSI_RESET = "\033[0m"
 
 # Legacy fallbacks for unknown IDE ids only — all supported autopilot IDEs

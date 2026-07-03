@@ -227,18 +227,26 @@ def _print_clean_queue_report(report: Any, output_format: str) -> None:
 
 
 def queue_run_main(args: argparse.Namespace) -> int:
+    from koru.queue import (
+        default_human_prompt as _queue_default_human_prompt,
+    )
+    from koru.queue import (
+        run_api_request as _queue_run_api_request,
+    )
+    from koru.queue import (
+        run_llm_request as _queue_run_llm_request,
+    )
+    from koru.queue import (
+        run_process as _queue_run_process,
+    )
+    from koru.queue import (
+        run_shell_command as _queue_run_shell_command,
+    )
     from koru.queue_cli_helpers import (
         emit_queue_run_started,
         open_queue_run_log,
         run_queue_loop_mode,
         run_queue_single_mode,
-    )
-    from koru.queue import (
-        run_process as _queue_run_process,
-        run_shell_command as _queue_run_shell_command,
-        run_api_request as _queue_run_api_request,
-        run_llm_request as _queue_run_llm_request,
-        default_human_prompt as _queue_default_human_prompt,
     )
 
     emit_queue_run_started(args)

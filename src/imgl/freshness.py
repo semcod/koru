@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
-import time
 
 
 def mark_capture_fresh(path: Path | str) -> None:

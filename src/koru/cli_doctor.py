@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import subprocess
 import sys
 import time
-import shlex
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +17,8 @@ from koru.autopilot.ide import detect_terminal_host_ide_id, normalize_ide_id
 from koru.autopilot.install_manager import repair_installation
 from koru.doctor import detected_problems as doctor_detected_problems
 from koru.doctor import problem_catalog as doctor_problem_catalog
-from koru.doctor import render_problem_catalog_text
+from koru.doctor import render_problem_catalog_text, run_diagnostics
 from koru.doctor import render_text as render_doctor_text
-from koru.doctor import run_diagnostics
 from koru.events import emit_management_event
 
 

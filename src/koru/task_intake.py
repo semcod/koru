@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.task_dedupe import _maybe_reuse_existing_task
-from koru.task_io import _read_sprint, _write_yaml, _read_config
+from koru.task_io import _read_config, _read_sprint, _write_yaml
 from koru.task_models import CreatedTask
 from koru.task_ticket import _build_nl_task_record, _title_from_text
 

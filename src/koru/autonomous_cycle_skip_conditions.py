@@ -15,19 +15,18 @@ from koru.autonomous_submit_strategy import (
     should_block_manual_send,
     submit_alt_attempt_limit,
 )
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.ide_operator_guidance import (
     emit_operator_guidance,
     ide_label,
     manual_send_operator_steps,
 )
-from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.topology import is_component_enabled, is_pipeline_enabled
 from koruide.ide import normalize_ide_id
-
 
 _MANUAL_SEND_REQUIRED_TELEMETRY_REASON = (
     "previous drive pasted text but submit was not verified; "

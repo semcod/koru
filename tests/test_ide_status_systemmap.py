@@ -4,7 +4,6 @@ import pytest
 
 from koru.ide_status_systemmap import format_autopilot_status_systemmap
 
-
 SAMPLE_STATUS = {
     "plugins": [
         {

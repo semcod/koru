@@ -46,14 +46,6 @@ from typing import Any
 
 import yaml
 
-from koru.scan_types import (
-    CreateTicketResult,
-    ScanResult,
-    Suggestion,
-)
-from koru.scan_types import (
-    format_create_exception as _format_create_exception,
-)
 from koru.scan_collection import collect_suggestions as _collect_suggestions_impl
 from koru.scan_dedupe_policy import (
     SCAN_DEDUP_SKIP_STATUSES as _SCAN_DEDUP_SKIP_STATUSES_IMPL,
@@ -97,6 +89,14 @@ from koru.scan_ticket_emission import (
 )
 from koru.scan_ticket_emission import (
     normalize_create_detail as _normalize_create_detail_impl,
+)
+from koru.scan_types import (
+    CreateTicketResult,
+    ScanResult,
+    Suggestion,
+)
+from koru.scan_types import (
+    format_create_exception as _format_create_exception,
 )
 from koru.semcod_tools import detect_semcod_tools
 from koru.tasks import create_nl_task

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 from typing import Any
 
@@ -38,12 +39,7 @@ def collect_testql_catalog(project_dir: Path | str | None = None) -> dict[str, A
 
     playwright = False
     if testql_available():
-        try:
-            import playwright  # noqa: F401
-
-            playwright = True
-        except ImportError:
-            playwright = False
+        playwright = importlib.util.find_spec("playwright") is not None
 
     return {
         "available": testql_available(),

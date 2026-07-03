@@ -16,15 +16,29 @@ from typing import Any
 
 from koru.autonomous_cycle_chat_activity_config import (
     chat_intake_ticket_enabled as _chat_intake_ticket_enabled,
+)
+from koru.autonomous_cycle_chat_activity_config import (
     llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,
+)
+from koru.autonomous_cycle_chat_activity_config import (
     llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,
+)
+from koru.autonomous_cycle_chat_activity_config import (
     llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,
+)
+from koru.autonomous_cycle_chat_activity_config import (
     llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,
 )
 from koru.autonomous_cycle_chat_activity_text import (
     extract_needs_input_question as _extract_needs_input_question,
+)
+from koru.autonomous_cycle_chat_activity_text import (
     looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,
+)
+from koru.autonomous_cycle_chat_activity_text import (
     looks_like_explicit_intake_text as _looks_like_explicit_intake_text,
+)
+from koru.autonomous_cycle_chat_activity_text import (
     normalize_prompt_text as _normalize_prompt_text,
 )
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label

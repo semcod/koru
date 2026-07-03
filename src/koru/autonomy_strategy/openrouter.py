@@ -13,7 +13,7 @@ from pathlib import Path
 shared_config_path = Path(__file__).parent.parent.parent.parent.parent / "shared" / "openrouter_config.py"
 if shared_config_path.exists():
     sys.path.insert(0, str(shared_config_path.parent))
-    from openrouter_config import get_openrouter_headers, should_use_fallback, get_llm_config
+    from openrouter_config import get_llm_config, get_openrouter_headers, should_use_fallback
 else:
     # Fallback if shared config is not available
     def get_openrouter_headers():

@@ -19,8 +19,8 @@ from koru.bounded_contexts.env_config.commands import (
 from koru.bounded_contexts.env_config.queries import LoadEnvConfigQuery
 from koru.domain.env import (
     ENV_FILENAME,
-    EnvKey,
     KORU_ENV_KEYS,
+    EnvKey,
     _build_env_payload,
     _format_env_value,
     _write_env_file,

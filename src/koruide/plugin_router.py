@@ -10,7 +10,6 @@ from typing import Any, Protocol
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
 
-
 _VSCODE_FAMILY_EQUIVALENT_IDS = frozenset({"vscode", "vscodium"})
 
 

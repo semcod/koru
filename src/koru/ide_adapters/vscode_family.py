@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from koru.ide_adapters.base import ActivationReport, Hypothesis, Remediation, SettingsReport
 from koru.ide_adapters import shared
+from koru.ide_adapters.base import ActivationReport, Hypothesis, Remediation, SettingsReport
 
 
 @dataclass

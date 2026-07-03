@@ -6,13 +6,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from koru.autonomy.state import AutoloopState
-from koru.autonomy.verification_engine import Snapshot
 from koru.autonomous_cycle import (
     _handle_post_drive_verification,
     _take_pre_drive_snapshot,
 )
 from koru.autonomous_wup import WupHealthResult
+from koru.autonomy.state import AutoloopState
+from koru.autonomy.verification_engine import Snapshot
 from koru.queue import QueueLoopResult
 
 # These tests use subprocess and are slow; skip by default

@@ -5,9 +5,9 @@ from koruvision.providers.detector import (
     capture_all_with_providers,
     capture_one_with_providers,
     list_provider_status,
+    probe_capture_providers,
     provider_diagnostics_rows,
     rank_providers,
-    probe_capture_providers,
 )
 
 __all__ = [

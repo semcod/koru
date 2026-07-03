@@ -7,8 +7,8 @@ import pytest
 from koru.interface_registry import (
     blocker_interface_payload,
     get_interface_descriptor,
-    interface_registry_payload,
     interface_registry_path,
+    interface_registry_payload,
     list_interface_ids,
     load_interface_registry,
     summarize_interfaces_by_family,
