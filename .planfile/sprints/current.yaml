@@ -27395,3 +27395,255 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-06-12T11:57:14.306793Z'
+    STARTER-549:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:35.137689Z'
+      description: 'Move the remaining ~40 src/koru/autonomous_*.py files into koru/autonomy/
+        submodules (orchestrator, cycle, drive, readiness, checkpoint, config, operator).
+        Keep re-export shims one release, then delete them (removes ~288 F401 / ~49
+        E402). Gate: full pytest suite green after each module move.'
+      files: []
+      history: []
+      id: STARTER-549
+      labels:
+      - refactor
+      name: 'R-F1.1: Consolidate autonomous_* modules into koru/autonomy package'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:35.123573Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:35.137695Z'
+    STARTER-550:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:36.941123Z'
+      description: 24 os.environ writes in autonomous modules (KORU_TILLM_CLIENT,
+        lane exports, socket) leak process-global state. Introduce an AutonomousContext
+        passed down the call chain; set env only at subprocess boundaries (env= argument).
+      files: []
+      history: []
+      id: STARTER-550
+      labels:
+      - refactor
+      name: 'R-F1.2: Replace os.environ writes in autonomy with explicit AutonomousContext'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:36.929739Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:36.941127Z'
+    STARTER-551:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:38.744322Z'
+      description: Two parallel fallback-chain mechanisms (~920 and ~965 lines) duplicate
+        strategy logic. Extract a shared strategy registry; one pipeline consumed
+        by both autonomy and the daemon.
+      files: []
+      history: []
+      id: STARTER-551
+      labels:
+      - refactor
+      name: 'R-F1.3: Unify drive pipelines (autonomous_cycle_drive_retry vs koruide/drive_orchestrator)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:38.732416Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:38.744327Z'
+    STARTER-552:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:40.532566Z'
+      description: import-linter is already a dev dep but has no contracts. Enforce
+        layers koru -> koruide -> gillm/tillm, forbid upward imports, forbid duplicate
+        class definitions across daemon/protocol vs handlers_* (see _PluginEventHandoff
+        incident).
+      files: []
+      history: []
+      id: STARTER-552
+      labels:
+      - quality
+      name: 'R-F1.4: Add import-linter layer contracts'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:40.527783Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:40.532571Z'
+    STARTER-553:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:42.361178Z'
+      description: Either raise tool.ruff line-length to 120 or reformat. Then make
+        ruff check src tests a hard CI gate (ci.yml already runs it but is red).
+      files: []
+      history: []
+      id: STARTER-553
+      labels:
+      - quality
+      name: 'R-F2.1: Decide and clear E501 debt (476 long lines)'
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:42.349543Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:42.361183Z'
+    STARTER-554:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:44.234224Z'
+      description: src/koru/integrations/vdisplay_client.py is the biggest God module
+        with ~45 except-Exception-pass sites. Split by concern (session, capture,
+        gui-map, drive recording) and apply the warn-on-swallow pattern from Phase
+        0.
+      files: []
+      history: []
+      id: STARTER-554
+      labels:
+      - refactor
+      name: 'R-F2.2: Split vdisplay_client.py (7k lines, 45 silent excepts)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:44.228324Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:44.234228Z'
+    STARTER-555:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:46.105846Z'
+      description: Add a test that builds the wheel and asserts every non-.py file
+        under src/*/ ships in it (class of the korumesh capture_host.html incident).
+        Mirror in other semcod repos.
+      files: []
+      history: []
+      id: STARTER-555
+      labels:
+      - quality
+      name: 'R-F2.3: Wheel-content packaging guard test'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:46.101148Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:46.105850Z'
+    STARTER-556:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:48.162299Z'
+      description: goal bumps VERSION+pyproject+__init__+uv.lock in lockstep; drift
+        causes failed publishes (tillm 0.1.36 incident). Switch semcod packages to
+        dynamic = [version] reading VERSION, eliminating the sync class entirely.
+      files: []
+      history: []
+      id: STARTER-556
+      labels:
+      - release
+      name: 'R-F3.1: Single-source versioning via setuptools dynamic version'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:48.150658Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:48.162305Z'
+    STARTER-557:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:50.031396Z'
+      description: Autonomous drive defaults KORU_TILLM_EXECUTE_PROFILE=automation
+        letting the vendor CLI edit files. Add per-project consent/dry-run levels
+        and audit logging of executed profiles.
+      files: []
+      history: []
+      id: STARTER-557
+      labels:
+      - safety
+      name: 'R-F3.2: Safety rails for tillm execute_profile=automation'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:50.019425Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:47:50.031401Z'
+    STARTER-558:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-03T16:47:51.863595Z'
+      description: Three koru autopilot daemon processes run from this repo despite
+        --idempotent. Diagnose why idempotency does not reap older daemons and add
+        a doctor/readiness check flagging duplicates per socket/instance.
+      files: []
+      history:
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-03T16:51:00.364553+00:00'
+      id: STARTER-558
+      labels:
+      - reliability
+      name: 'R-F3.3: Doctor check for duplicate autopilot daemons'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Diagnosis 2026-07-03: two daemons listened on instance ''vscodium'' — pid
+          2516221 (project c2004, started Jul 2 17:46) held an UNLINKED socket fd
+          while pid 4083428 (project semcod/koru, Jul 2 23:28) owned the on-disk socket
+          file. Result: c2004 clients resolving koru-autopilot-vscodium.sock reached
+          a daemon bound to a DIFFERENT project. Root cause: daemon startup rebinds
+          the socket path (unlink+bind) without reaping the previous owner; --idempotent
+          only prevents same-invocation duplicates. Fix directions: (1) on startup,
+          if socket is live and owned by another pid, either adopt or shut it down
+          via protocol before rebinding; (2) readiness/doctor check: for each koru-autopilot*.sock
+          compare on-disk inode owner vs all listening processes (ss -xlp), flag orphans;
+          (3) verify daemon_project_mismatch check fires for cross-project sockets.
+          Orphan pid 2516221 left running (operator decision needed): kill 2516221'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-07-03T16:47:51.856596Z'
+        tool: human
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-03T16:51:00.364513+00:00'
