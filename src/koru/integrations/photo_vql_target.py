@@ -460,29 +460,30 @@ def _capture_local_rect_for_global_rect(
     return tlx, tly, win_w, win_h
 
 
-def _global_to_capture_local_for_source(
+def _local_via_capture_region(
     global_x: int,
     global_y: int,
     *,
     source: str,
     capture_meta: dict[str, Any],
+    png_w: int,
+    png_h: int,
 ) -> tuple[int, int] | None:
-    """Map desktop coords into capture PNG space for a named monitor stream."""
-    png_w, png_h = _capture_png_dimensions(capture_meta)
-    # Prefer the capture's own region (authoritative for this frame). Only the
-    # unrotated case is handled here; rotated captures fall through to vdisplay.
-    rotation = str(capture_meta.get("rotation") or "").strip().lower()
-    if rotation in ("", "normal", "none", "0"):
-        region_geom = _capture_region_geometry(source=source, capture_meta=capture_meta)
-        if region_geom is not None:
-            rx, ry = region_geom["x"], region_geom["y"]
-            rw, rh = region_geom["width"], region_geom["height"]
-            clamp_x = min(max(global_x, rx), rx + rw - 1)
-            clamp_y = min(max(global_y, ry), ry + rh - 1)
-            lx = int((clamp_x - rx) * png_w / rw)
-            ly = int((clamp_y - ry) * png_h / rh)
-            if 0 <= lx < png_w and 0 <= ly < png_h:
-                return lx, ly
+    region_geom = _capture_region_geometry(source=source, capture_meta=capture_meta)
+    if region_geom is None:
+        return None
+    rx, ry = region_geom["x"], region_geom["y"]
+    rw, rh = region_geom["width"], region_geom["height"]
+    clamp_x = min(max(global_x, rx), rx + rw - 1)
+    clamp_y = min(max(global_y, ry), ry + rh - 1)
+    lx = int((clamp_x - rx) * png_w / rw)
+    ly = int((clamp_y - ry) * png_h / rh)
+    if 0 <= lx < png_w and 0 <= ly < png_h:
+        return lx, ly
+    return None
+
+
+def _monitor_row_for_source(source: str) -> dict[str, Any] | None:
     try:
         from vdisplay.application.services.discovery import list_monitors_local
 
@@ -496,22 +497,70 @@ def _global_to_capture_local_for_source(
         )
     except Exception:
         monitor = None
-    if isinstance(monitor, dict):
-        mx = int(monitor.get("x") or 0)
-        my = int(monitor.get("y") or 0)
-        mw = int(monitor.get("width") or 0)
-        mh = int(monitor.get("height") or 0)
-        if mw > 0 and mh > 0 and mx <= global_x < mx + mw and my <= global_y < my + mh:
-            rel_x = global_x - mx
-            rel_y = global_y - my
-            return int(rel_x * png_w / mw), int(rel_y * png_h / mh)
-        if mw > 0 and mh > 0:
-            clamp_x = min(max(global_x, mx), mx + mw - 1)
-            clamp_y = min(max(global_y, my), my + mh - 1)
-            if clamp_x != global_x or clamp_y != global_y:
-                rel_x = clamp_x - mx
-                rel_y = clamp_y - my
-                return int(rel_x * png_w / mw), int(rel_y * png_h / mh)
+    return monitor if isinstance(monitor, dict) else None
+
+
+def _clamped_local_in_monitor(
+    global_x: int,
+    global_y: int,
+    *,
+    mx: int,
+    my: int,
+    mw: int,
+    mh: int,
+    png_w: int,
+    png_h: int,
+) -> tuple[int, int] | None:
+    clamp_x = min(max(global_x, mx), mx + mw - 1)
+    clamp_y = min(max(global_y, my), my + mh - 1)
+    if clamp_x != global_x or clamp_y != global_y:
+        rel_x = clamp_x - mx
+        rel_y = clamp_y - my
+        return int(rel_x * png_w / mw), int(rel_y * png_h / mh)
+    return None
+
+
+def _local_via_monitor_geometry(
+    global_x: int,
+    global_y: int,
+    *,
+    source: str,
+    png_w: int,
+    png_h: int,
+) -> tuple[int, int] | None:
+    monitor = _monitor_row_for_source(source)
+    if monitor is None:
+        return None
+    mx = int(monitor.get("x") or 0)
+    my = int(monitor.get("y") or 0)
+    mw = int(monitor.get("width") or 0)
+    mh = int(monitor.get("height") or 0)
+    if mw > 0 and mh > 0 and mx <= global_x < mx + mw and my <= global_y < my + mh:
+        rel_x = global_x - mx
+        rel_y = global_y - my
+        return int(rel_x * png_w / mw), int(rel_y * png_h / mh)
+    if mw > 0 and mh > 0:
+        return _clamped_local_in_monitor(
+            global_x,
+            global_y,
+            mx=mx,
+            my=my,
+            mw=mw,
+            mh=mh,
+            png_w=png_w,
+            png_h=png_h,
+        )
+    return None
+
+
+def _local_via_vdisplay_coords(
+    global_x: int,
+    global_y: int,
+    *,
+    capture_meta: dict[str, Any],
+    png_w: int,
+    png_h: int,
+) -> tuple[int, int] | None:
     try:
         from vdisplay.input.coords import global_point_to_capture_local
 
@@ -523,15 +572,43 @@ def _global_to_capture_local_for_source(
     return None
 
 
-def jetbrains_chat_target_from_surface(
-    surface: dict[str, Any],
+def _global_to_capture_local_for_source(
+    global_x: int,
+    global_y: int,
     *,
-    capture_meta: dict[str, Any],
     source: str,
-) -> dict[str, Any] | None:
-    """Estimate JetBrains AI chat composer from correlated IDE surface bounds (Wayland/native)."""
-    if not isinstance(surface, dict):
-        return None
+    capture_meta: dict[str, Any],
+) -> tuple[int, int] | None:
+    """Map desktop coords into capture PNG space for a named monitor stream."""
+    png_w, png_h = _capture_png_dimensions(capture_meta)
+    # Prefer the capture's own region (authoritative for this frame). Only the
+    # unrotated case is handled here; rotated captures fall through to vdisplay.
+    rotation = str(capture_meta.get("rotation") or "").strip().lower()
+    if rotation in ("", "normal", "none", "0"):
+        local = _local_via_capture_region(
+            global_x,
+            global_y,
+            source=source,
+            capture_meta=capture_meta,
+            png_w=png_w,
+            png_h=png_h,
+        )
+        if local is not None:
+            return local
+    local = _local_via_monitor_geometry(global_x, global_y, source=source, png_w=png_w, png_h=png_h)
+    if local is not None:
+        return local
+    return _local_via_vdisplay_coords(
+        global_x,
+        global_y,
+        capture_meta=capture_meta,
+        png_w=png_w,
+        png_h=png_h,
+    )
+
+
+def _surface_window_rect(surface: dict[str, Any], source: str) -> tuple[int, int, int, int] | None:
+    """Validated window rect from a correlated IDE surface (None when unusable)."""
     monitor_name = str(surface.get("monitor_name") or "").strip()
     if monitor_name and monitor_name != source:
         return None
@@ -547,7 +624,10 @@ def jetbrains_chat_target_from_surface(
     h = int(bounds.get("height") or 0)
     if w < 240 or h < 320:
         return None
+    return x, y, w, h
 
+
+def _monitor_for_capture(*, source: str, capture_meta: dict[str, Any]) -> dict[str, int]:
     # The capture's own region is authoritative for this screenshot: live
     # monitor geometry can differ from when the frame was taken (output moved,
     # reconnected, or a virtual/rotated region). Prefer it; fall back to live.
@@ -562,14 +642,20 @@ def jetbrains_chat_target_from_surface(
             "width": int(region.get("width") or 0),
             "height": int(region.get("height") or 0),
         }
-    clamped = _clamp_rect_to_monitor(x, y, w, h, monitor)
-    if clamped is None:
-        return None
-    win_x, win_y, win_w, win_h = clamped
+    return monitor
 
-    # AI assistant panel sits on the right; composer is near the bottom of the IDE frame.
-    gx = win_x + win_w - max(48, int(win_w * 0.10))
-    gy = win_y + win_h - max(40, int(win_h * 0.05))
+
+def _composer_capture_point(
+    *,
+    win_x: int,
+    win_y: int,
+    win_w: int,
+    win_h: int,
+    gx: int,
+    gy: int,
+    source: str,
+    capture_meta: dict[str, Any],
+) -> tuple[int, int, tuple[int, int, int, int] | None] | None:
     local_rect = _capture_local_rect_for_global_rect(
         win_x,
         win_y,
@@ -587,10 +673,20 @@ def jetbrains_chat_target_from_surface(
         tlx, tly, rect_w, rect_h = local_rect
         lx_i = tlx + int(rect_w * 0.82)
         ly_i = tly + rect_h - max(32, int(rect_h * 0.05))
+    return lx_i, ly_i, local_rect
 
-    png_w, png_h = _capture_png_dimensions(capture_meta)
-    if lx_i < 0 or ly_i < 0 or lx_i >= png_w or ly_i >= png_h:
-        return None
+
+def _surface_target_payload(
+    *,
+    surface: dict[str, Any],
+    source: str,
+    lx_i: int,
+    ly_i: int,
+    gx: int,
+    gy: int,
+    local_rect: tuple[int, int, int, int] | None,
+) -> dict[str, Any]:
+    monitor_name = str(surface.get("monitor_name") or "").strip()
     out: dict[str, Any] = {
         "click_center": {"x": lx_i, "y": ly_i},
         "id": "surface:jetbrains-chat",
@@ -611,6 +707,57 @@ def jetbrains_chat_target_from_surface(
             "h": rect_h,
         }
     return out
+
+
+def jetbrains_chat_target_from_surface(
+    surface: dict[str, Any],
+    *,
+    capture_meta: dict[str, Any],
+    source: str,
+) -> dict[str, Any] | None:
+    """Estimate JetBrains AI chat composer from correlated IDE surface bounds (Wayland/native)."""
+    if not isinstance(surface, dict):
+        return None
+    rect = _surface_window_rect(surface, source)
+    if rect is None:
+        return None
+    x, y, w, h = rect
+
+    monitor = _monitor_for_capture(source=source, capture_meta=capture_meta)
+    clamped = _clamp_rect_to_monitor(x, y, w, h, monitor)
+    if clamped is None:
+        return None
+    win_x, win_y, win_w, win_h = clamped
+
+    # AI assistant panel sits on the right; composer is near the bottom of the IDE frame.
+    gx = win_x + win_w - max(48, int(win_w * 0.10))
+    gy = win_y + win_h - max(40, int(win_h * 0.05))
+    point = _composer_capture_point(
+        win_x=win_x,
+        win_y=win_y,
+        win_w=win_w,
+        win_h=win_h,
+        gx=gx,
+        gy=gy,
+        source=source,
+        capture_meta=capture_meta,
+    )
+    if point is None:
+        return None
+    lx_i, ly_i, local_rect = point
+
+    png_w, png_h = _capture_png_dimensions(capture_meta)
+    if lx_i < 0 or ly_i < 0 or lx_i >= png_w or ly_i >= png_h:
+        return None
+    return _surface_target_payload(
+        surface=surface,
+        source=source,
+        lx_i=lx_i,
+        ly_i=ly_i,
+        gx=gx,
+        gy=gy,
+        local_rect=local_rect,
+    )
 
 
 def _target_from_candidate(

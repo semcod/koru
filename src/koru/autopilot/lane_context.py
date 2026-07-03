@@ -182,6 +182,40 @@ def _resolve_from_requested_ide(
 
 
 
+def _env_instance_override() -> tuple[str, str] | None:
+    """Explicit ``KORU_AUTOPILOT_INSTANCE`` wins over any resolution."""
+    env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    if env_instance and env_instance.lower() not in {"", "auto"}:
+        return env_instance, "env:KORU_AUTOPILOT_INSTANCE"
+    return None
+
+
+def _lane_result_for_requested(
+    lane: str | None,
+    lane_source: str,
+    requested: str,
+) -> tuple[str, str] | None:
+    """Accept the resolved agent lane when it fits the requested IDE."""
+    if not lane or lane == "auto":
+        return None
+    if requested == "auto" or _instance_matches_ide(lane, requested):
+        return lane, f"agent-lane:{lane_source}"
+    return None
+
+
+def _fallback_after_lane(
+    lane: str | None,
+    lane_source: str,
+    requested: str,
+) -> tuple[str | None, str]:
+    """Last-resort result when neither settings nor lane matched cleanly."""
+    if requested != "auto":
+        return requested, f"cli-fallback:{requested}"
+    if lane and lane != "auto":
+        return lane, f"agent-lane:{lane_source}"
+    return None, "unresolved"
+
+
 def resolve_autopilot_instance(
     *,
     requested_ide: str | None,
@@ -190,36 +224,30 @@ def resolve_autopilot_instance(
     """Return ``(instance_slug, source_label)`` for CLI socket selection."""
     project_root = (project or Path.cwd()).resolve()
 
-    env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-    if env_instance and env_instance.lower() not in {"", "auto"}:
-        return env_instance, "env:KORU_AUTOPILOT_INSTANCE"
+    env_override = _env_instance_override()
+    if env_override is not None:
+        return env_override
 
     requested = normalize_ide_id(requested_ide) or "auto"
 
-    if requested and requested not in {"auto", *_CANONICAL_IDES}:
+    if requested not in {"auto", *_CANONICAL_IDES}:
         return requested, f"cli:{requested}"
 
-    if requested and requested != "auto":
+    if requested != "auto":
         resolved = _resolve_from_requested_ide(requested, project_root)
         if resolved is not None:
             return resolved
 
     lane, lane_source = resolve_agent_lane_id(
         project_root,
-        requested if requested != "auto" else "auto",
+        requested,
         resolve_project_lane=resolve_project_agent_lane,
     )
-    if lane and lane != "auto":
-        if requested == "auto" or _instance_matches_ide(lane, requested):
-            return lane, f"agent-lane:{lane_source}"
+    lane_result = _lane_result_for_requested(lane, lane_source, requested)
+    if lane_result is not None:
+        return lane_result
 
-    if requested and requested != "auto":
-        return requested, f"cli-fallback:{requested}"
-
-    if lane and lane != "auto":
-        return lane, f"agent-lane:{lane_source}"
-
-    return None, "unresolved"
+    return _fallback_after_lane(lane, lane_source, requested)
 
 
 def resolve_lane_context(

@@ -152,13 +152,8 @@ def _fetch_screencast_status(base: str) -> dict[str, Any] | None:
     return _screencast_status_data(_parse_health(raw))
 
 
-def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]:
-    """Check keeper-managed ScreenCast; never start portal capture from koru on Wayland."""
-    base = (agent_url or resolve_vdisplay_agent_url() or "").rstrip("/")
-    if not base:
-        return {"ok": False, "skipped": True, "reason": "no vdisplay-agent URL"}
-
-    status = _fetch_screencast_status(base) or {}
+def _screencast_ready_result(base: str, status: dict[str, Any]) -> dict[str, Any] | None:
+    """Result for an already-ready browser bridge or keeper; ``None`` when not ready."""
     if _browser_bridge_ready(status):
         return {
             "ok": True,
@@ -178,40 +173,58 @@ def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]
             "agent_url": base,
             "status": status,
         }
+    return None
 
-    if status.get("active"):
-        bridge = status.get("browser_bridge")
-        if isinstance(bridge, dict) and bridge.get("registered"):
-            return {
-                "ok": False,
-                "already_active": True,
-                "keeper_managed": False,
-                "browser_bridge_pending": True,
-                "agent_url": base,
-                "status": status,
-                "reason": "browser_bridge_pending_share",
-                "hint": (
-                    "Electron browser bridge is registered but not capture_ready yet. "
-                    "Open the browser bridge, click Share screen, select the IDE monitor, "
-                    "keep the tab open, then run vdisplay services status --source HDMI-1 "
-                    "(check vdisplay electron-share health if it stays pending)"
-                ),
-            }
+
+def _screencast_active_without_keeper_result(base: str, status: dict[str, Any]) -> dict[str, Any]:
+    """Result when ScreenCast is active but neither keeper nor bridge is ready."""
+    bridge = status.get("browser_bridge")
+    if isinstance(bridge, dict) and bridge.get("registered"):
         return {
             "ok": False,
             "already_active": True,
             "keeper_managed": False,
+            "browser_bridge_pending": True,
             "agent_url": base,
             "status": status,
-            "reason": "screencast_active_without_keeper",
+            "reason": "browser_bridge_pending_share",
             "hint": (
-                "ScreenCast is active in vdisplay-agent but the keeper is not running "
-                "(PipeWire capture will time out). "
-                f"{_ELECTRON_BRIDGE_HINT} "
-                f"Or: {_KEEPER_START_HINT} "
-                "Then: vdisplay agent screencast probe --via-agent --source HDMI-1"
+                "Electron browser bridge is registered but not capture_ready yet. "
+                "Open the browser bridge, click Share screen, select the IDE monitor, "
+                "keep the tab open, then run vdisplay services status --source HDMI-1 "
+                "(check vdisplay electron-share health if it stays pending)"
             ),
         }
+    return {
+        "ok": False,
+        "already_active": True,
+        "keeper_managed": False,
+        "agent_url": base,
+        "status": status,
+        "reason": "screencast_active_without_keeper",
+        "hint": (
+            "ScreenCast is active in vdisplay-agent but the keeper is not running "
+            "(PipeWire capture will time out). "
+            f"{_ELECTRON_BRIDGE_HINT} "
+            f"Or: {_KEEPER_START_HINT} "
+            "Then: vdisplay agent screencast probe --via-agent --source HDMI-1"
+        ),
+    }
+
+
+def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]:
+    """Check keeper-managed ScreenCast; never start portal capture from koru on Wayland."""
+    base = (agent_url or resolve_vdisplay_agent_url() or "").rstrip("/")
+    if not base:
+        return {"ok": False, "skipped": True, "reason": "no vdisplay-agent URL"}
+
+    status = _fetch_screencast_status(base) or {}
+    ready = _screencast_ready_result(base, status)
+    if ready is not None:
+        return ready
+
+    if status.get("active"):
+        return _screencast_active_without_keeper_result(base, status)
 
     if _wayland_session():
         return {
@@ -223,6 +236,11 @@ def ensure_screencast_session(*, agent_url: str | None = None) -> dict[str, Any]
             "hint": f"{_KEEPER_START_HINT} Alternatively: {_ELECTRON_BRIDGE_HINT}",
         }
 
+    return _start_screencast_via_agent(base)
+
+
+def _start_screencast_via_agent(base: str) -> dict[str, Any]:
+    """POST ``/session/screencast/start`` and shape the bootstrap result."""
     body = json.dumps({"interactive": False, "timeout_s": 30}).encode("utf-8")
     req = urllib.request.Request(
         f"{base}/session/screencast/start",

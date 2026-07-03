@@ -79,6 +79,63 @@ def _enable_auto_reload_reuse_window_for_auto() -> None:
     os.environ.setdefault("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
 
 
+def _print_wizard_suggestion() -> None:
+    print(
+        "koru auto: no .planfile detected — recommended first step is "
+        "`koru wizard` to pick a strategy and seed the first ticket.",
+        file=sys.stderr,
+    )
+    if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+        print(
+            "  GUI: `koru wizard --gui` opens a browser wizard "
+            "(requires pip install 'koru[api]').",
+            file=sys.stderr,
+        )
+    print(
+        "(skip with KORU_AUTO_SKIP_WIZARD=1 or run `koru auto --allow-duplicate`)",
+        file=sys.stderr,
+    )
+
+
+def _ensure_strategy_config(project: Path) -> None:
+    try:
+        from koru.autonomy_strategy import ensure_autonomy_strategy_config
+
+        strategy_result = ensure_autonomy_strategy_config(project)
+        if strategy_result.created_koru_yaml or strategy_result.added_strategy:
+            print(
+                "koru auto: wrote default autonomy.strategy to "
+                f"{strategy_result.path}; strategy={strategy_result.strategy_id}. "
+                "Review/tune with `koru strategy --prompt`.",
+                file=sys.stderr,
+            )
+    except Exception as exc:  # noqa: BLE001 - advisory setup must not block auto
+        print(f"koru auto: autonomy.strategy ensure skipped: {exc}", file=sys.stderr)
+
+
+def _stop_prior_and_acquire_start_lock(project: Path):
+    """Stop prior loops and take the start lock; ``None`` means already running."""
+    stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
+    stop_prior = _legacy_attr(
+        "stop_prior_autonomous_for_auto_start",
+        stop_prior_autonomous_for_auto_start,
+    )
+    stop_prior(project, stdio_format=stdio)
+    acquire_lock = _legacy_attr(
+        "try_acquire_autonomous_start_lock",
+        try_acquire_autonomous_start_lock,
+    )
+    start_lock = acquire_lock(project)
+    if start_lock is None:
+        print(
+            "koru auto: another autonomous loop is already starting/running for "
+            f"{project}; use --allow-duplicate only if you intentionally want "
+            "multiple IDE drivers.",
+            file=sys.stderr,
+        )
+    return start_lock
+
+
 def _auto_main(argv: list[str]) -> int:
     """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``.
 
@@ -104,56 +161,13 @@ def _auto_main(argv: list[str]) -> int:
     _enable_auto_reload_reuse_window_for_auto()
     project = _peek_project_from_argv(argv)
     if _should_suggest_wizard(argv, project):
-        print(
-            "koru auto: no .planfile detected — recommended first step is "
-            "`koru wizard` to pick a strategy and seed the first ticket.",
-            file=sys.stderr,
-        )
-        if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
-            print(
-                "  GUI: `koru wizard --gui` opens a browser wizard "
-                "(requires pip install 'koru[api]').",
-                file=sys.stderr,
-            )
-        print(
-            "(skip with KORU_AUTO_SKIP_WIZARD=1 or run `koru auto --allow-duplicate`)",
-            file=sys.stderr,
-        )
-    try:
-        from koru.autonomy_strategy import ensure_autonomy_strategy_config
-
-        strategy_result = ensure_autonomy_strategy_config(project)
-        if strategy_result.created_koru_yaml or strategy_result.added_strategy:
-            print(
-                "koru auto: wrote default autonomy.strategy to "
-                f"{strategy_result.path}; strategy={strategy_result.strategy_id}. "
-                "Review/tune with `koru strategy --prompt`.",
-                file=sys.stderr,
-            )
-    except Exception as exc:  # noqa: BLE001 - advisory setup must not block auto
-        print(f"koru auto: autonomy.strategy ensure skipped: {exc}", file=sys.stderr)
+        _print_wizard_suggestion()
+    _ensure_strategy_config(project)
+    start_lock = None
     if "--allow-duplicate" not in argv:
-        stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
-        stop_prior = _legacy_attr(
-            "stop_prior_autonomous_for_auto_start",
-            stop_prior_autonomous_for_auto_start,
-        )
-        stop_prior(project, stdio_format=stdio)
-        acquire_lock = _legacy_attr(
-            "try_acquire_autonomous_start_lock",
-            try_acquire_autonomous_start_lock,
-        )
-        start_lock = acquire_lock(project)
+        start_lock = _stop_prior_and_acquire_start_lock(project)
         if start_lock is None:
-            print(
-                "koru auto: another autonomous loop is already starting/running for "
-                f"{project}; use --allow-duplicate only if you intentionally want "
-                "multiple IDE drivers.",
-                file=sys.stderr,
-            )
             return 2
-    else:
-        start_lock = None
     run_autonomous = _legacy_attr("autonomous_main", autonomous_main)
     try:
         return run_autonomous(start_argv, invoked_as_auto=True)

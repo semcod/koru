@@ -672,6 +672,73 @@ def _probe_ide_processes(ide: str) -> list[dict[str, Any]]:
     return found
 
 
+def _desktop_probe_ide_hints(ide: str) -> set[str]:
+    """IDE hint tokens used to filter correlated surfaces in _desktop_probe."""
+    canon = _canonical_ide(ide)
+    ide_hints = {canon}
+    if canon in {"jetbrains", "pycharm", "idea"}:
+        ide_hints.add("jetbrains")
+    if canon in {"vscode", "vscodium"}:
+        ide_hints.add("vscode")
+    return ide_hints
+
+
+def _desktop_probe_ide_surface_rank(row: dict[str, Any]) -> float:
+    """Rank a correlated IDE surface for _desktop_probe best-surface selection."""
+    score = float(row.get("confidence") or 0)
+    name = str(row.get("display_name") or "").lower()
+    if "toolbox" in name:
+        score -= 0.45
+    stack = str(row.get("stack") or "")
+    if stack == "wayland_native":
+        score += 0.25
+    elif stack == "xwayland":
+        score += 0.1
+    proc = ((row.get("sources") or {}).get("process")) or {}
+    comm = str(proc.get("comm") or "").lower()
+    if comm in {"pycharm", "idea", "webstorm", "goland", "clion", "rider"}:
+        score += 0.35
+    elif comm == "java" and "pycharm" in str(proc.get("cmdline") or "").lower():
+        score += 0.3
+    return score
+
+
+def _desktop_probe_windows(out: dict[str, Any], *, ide: str, list_windows_local: Any) -> None:
+    """Populate window/surface correlation fields on the _desktop_probe payload."""
+    try:
+        win_payload = list_windows_local(apps_only=True, correlate=True)
+        out["windows"] = win_payload.get("windows") or []
+        out["window_count"] = win_payload.get("window_count")
+        out["window_hint"] = win_payload.get("hint")
+        out["correlated"] = bool(win_payload.get("correlated"))
+        out["surfaces"] = win_payload.get("surfaces") or []
+        out["surface_count"] = win_payload.get("surface_count", 0)
+        out["gnome_window_count"] = win_payload.get("gnome_window_count", 0)
+        out["atspi_application_count"] = win_payload.get("atspi_application_count", 0)
+        out["correlation_sources"] = win_payload.get("correlation_sources") or {}
+        out["correlation_process_count"] = win_payload.get("correlation_process_count", 0)
+        ide_hints = _desktop_probe_ide_hints(ide)
+        ide_surfaces = [
+            row
+            for row in out["surfaces"]
+            if isinstance(row, dict) and row.get("ide_hint") in ide_hints
+        ]
+        out["ide_surfaces"] = ide_surfaces
+        if ide_surfaces:
+            best = max(ide_surfaces, key=_desktop_probe_ide_surface_rank)
+            out["ide_surface_best"] = {
+                "display_name": best.get("display_name"),
+                "pid": best.get("pid"),
+                "stack": best.get("stack"),
+                "monitor_name": best.get("monitor_name"),
+                "bounds": best.get("bounds"),
+                "confidence": best.get("confidence"),
+                "match_reasons": best.get("match_reasons"),
+            }
+    except Exception as exc:
+        out["windows_error"] = str(exc)
+
+
 def _desktop_probe(*, ide: str, source: str | None = None) -> dict[str, Any]:
     """Preflight: monitors, X11 windows, correlated surfaces, target IDE processes."""
     out: dict[str, Any] = {"ok": True, "ide": ide, "requested_source": source}
@@ -684,61 +751,7 @@ def _desktop_probe(*, ide: str, source: str | None = None) -> dict[str, Any]:
         out["monitors"] = monitors
         out["monitor_names"] = monitor_names
         out["monitor_count"] = mon_payload.get("monitor_count")
-        try:
-            win_payload = list_windows_local(apps_only=True, correlate=True)
-            out["windows"] = win_payload.get("windows") or []
-            out["window_count"] = win_payload.get("window_count")
-            out["window_hint"] = win_payload.get("hint")
-            out["correlated"] = bool(win_payload.get("correlated"))
-            out["surfaces"] = win_payload.get("surfaces") or []
-            out["surface_count"] = win_payload.get("surface_count", 0)
-            out["gnome_window_count"] = win_payload.get("gnome_window_count", 0)
-            out["atspi_application_count"] = win_payload.get("atspi_application_count", 0)
-            out["correlation_sources"] = win_payload.get("correlation_sources") or {}
-            out["correlation_process_count"] = win_payload.get("correlation_process_count", 0)
-            canon = _canonical_ide(ide)
-            ide_hints = {canon}
-            if canon in {"jetbrains", "pycharm", "idea"}:
-                ide_hints.add("jetbrains")
-            if canon in {"vscode", "vscodium"}:
-                ide_hints.add("vscode")
-            ide_surfaces = [
-                row
-                for row in out["surfaces"]
-                if isinstance(row, dict) and row.get("ide_hint") in ide_hints
-            ]
-            out["ide_surfaces"] = ide_surfaces
-            if ide_surfaces:
-                def _ide_surface_rank(row: dict[str, Any]) -> float:
-                    score = float(row.get("confidence") or 0)
-                    name = str(row.get("display_name") or "").lower()
-                    if "toolbox" in name:
-                        score -= 0.45
-                    stack = str(row.get("stack") or "")
-                    if stack == "wayland_native":
-                        score += 0.25
-                    elif stack == "xwayland":
-                        score += 0.1
-                    proc = ((row.get("sources") or {}).get("process")) or {}
-                    comm = str(proc.get("comm") or "").lower()
-                    if comm in {"pycharm", "idea", "webstorm", "goland", "clion", "rider"}:
-                        score += 0.35
-                    elif comm == "java" and "pycharm" in str(proc.get("cmdline") or "").lower():
-                        score += 0.3
-                    return score
-
-                best = max(ide_surfaces, key=_ide_surface_rank)
-                out["ide_surface_best"] = {
-                    "display_name": best.get("display_name"),
-                    "pid": best.get("pid"),
-                    "stack": best.get("stack"),
-                    "monitor_name": best.get("monitor_name"),
-                    "bounds": best.get("bounds"),
-                    "confidence": best.get("confidence"),
-                    "match_reasons": best.get("match_reasons"),
-                }
-        except Exception as exc:
-            out["windows_error"] = str(exc)
+        _desktop_probe_windows(out, ide=ide, list_windows_local=list_windows_local)
     except Exception as exc:
         out["ok"] = False
         out["discovery_error"] = str(exc)
@@ -782,6 +795,44 @@ def _surface_confirms_ide_capture(
     return stack in {"jetbrains_xwayland", "wayland_native", "x11", "xwayland"}
 
 
+def _apply_surface_capture_error_fallback(out: dict[str, Any], best_prov: dict[str, Any]) -> None:
+    """Surface-only confirmation when the capture itself errored (no confirmed pixels)."""
+    out["capture_confirmed"] = False
+    out["capture_matches_ide"] = False
+    out["capture_confirmation_source"] = "ide_surface_best_surface_only"
+    out["surface_probe_confirmed"] = True
+    out["surface_only_fallback"] = True
+    prov = dict(out.get("capture_provenance") or {})
+    prov["capture_confirmed"] = False
+    prov["surface_confirmed"] = True
+    prov["surface_probe_confirmed"] = True
+    if best_prov:
+        prov["ide_surface_best"] = best_prov
+    out["capture_provenance"] = prov
+    out["capture_ready"] = False
+    os.environ["KORU_VDISPLAY_SURFACE_ONLY_FALLBACK"] = "1"
+    os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
+
+
+def _apply_surface_capture_confirmed(out: dict[str, Any], best_prov: dict[str, Any]) -> None:
+    """Mark the capture as surface-confirmed for the requested IDE."""
+    out["capture_confirmed"] = True
+    out["capture_matches_ide"] = True
+    out["capture_confirmation_source"] = "ide_surface_best"
+    prov = dict(out.get("capture_provenance") or {})
+    prov["capture_confirmed"] = True
+    prov["surface_confirmed"] = True
+    if best_prov:
+        prov["ide_surface_best"] = best_prov
+    out["capture_provenance"] = prov
+    out.pop("ide_window_warning", None)
+    os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
+    if out.get("png"):
+        out["ok"] = True
+        out.pop("error", None)
+    _clear_surface_overridden_vql_staleness(out)
+
+
 def _apply_surface_capture_confirmation(
     out: dict[str, Any],
     *,
@@ -817,37 +868,9 @@ def _apply_surface_capture_confirmation(
         else {}
     )
     if capture_error:
-        out["capture_confirmed"] = False
-        out["capture_matches_ide"] = False
-        out["capture_confirmation_source"] = "ide_surface_best_surface_only"
-        out["surface_probe_confirmed"] = True
-        out["surface_only_fallback"] = True
-        prov = dict(out.get("capture_provenance") or {})
-        prov["capture_confirmed"] = False
-        prov["surface_confirmed"] = True
-        prov["surface_probe_confirmed"] = True
-        if best_prov:
-            prov["ide_surface_best"] = best_prov
-        out["capture_provenance"] = prov
-        out["capture_ready"] = False
-        os.environ["KORU_VDISPLAY_SURFACE_ONLY_FALLBACK"] = "1"
-        os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
+        _apply_surface_capture_error_fallback(out, best_prov)
         return
-    out["capture_confirmed"] = True
-    out["capture_matches_ide"] = True
-    out["capture_confirmation_source"] = "ide_surface_best"
-    prov = dict(out.get("capture_provenance") or {})
-    prov["capture_confirmed"] = True
-    prov["surface_confirmed"] = True
-    if best_prov:
-        prov["ide_surface_best"] = best_prov
-    out["capture_provenance"] = prov
-    out.pop("ide_window_warning", None)
-    os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
-    if out.get("png"):
-        out["ok"] = True
-        out.pop("error", None)
-    _clear_surface_overridden_vql_staleness(out)
+    _apply_surface_capture_confirmed(out, best_prov)
 
 
 def _clear_surface_overridden_vql_staleness(out: dict[str, Any]) -> None:
@@ -887,44 +910,51 @@ def _persist_surface_capture_confirmation_to_vql(out: dict[str, Any], *, ide: st
     if not vql_path or not os.path.isfile(vql_path):
         return
     try:
-        with open(vql_path, encoding="utf-8") as fh:
-            data = json.load(fh)
-        if not isinstance(data, dict):
-            return
-        metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
-        original = metadata.get("capture_validation") if isinstance(metadata.get("capture_validation"), dict) else None
-        provenance = out.get("capture_provenance") if isinstance(out.get("capture_provenance"), dict) else {}
-        surface = provenance.get("ide_surface_best") if isinstance(provenance.get("ide_surface_best"), dict) else {}
-        validation: dict[str, Any] = {
-            "expected_ide": _canonical_ide(ide),
-            "capture_confirmed": True,
-            # Surface registry proves that the captured monitor contains the IDE,
-            # but it does not prove that VQL found a safe chat/editor target.
-            # Keep drive readiness tied to the original visual validation.
-            "ok_for_capture": True,
-            "ok_for_drive": bool((original or {}).get("ok_for_drive")),
-            "reasons": [],
-            "window_titles": list((original or {}).get("window_titles") or provenance.get("window_titles") or []),
-            "surface_confirmed": True,
-            "confirmation_source": "ide_surface_best",
-            "ide_surface_best": surface,
-        }
-        if original:
-            validation["original_capture_validation"] = original
-        metadata["capture_validation"] = validation
-        metadata["surface_capture_confirmation"] = {
-            "confirmed": True,
-            "source": "ide_surface_best",
-            "ide": _canonical_ide(ide),
-            "ide_surface_best": surface,
-        }
-        data["metadata"] = metadata
-        with open(vql_path, "w", encoding="utf-8") as fh:
-            json.dump(data, fh, ensure_ascii=False, indent=2)
-        out["capture_validation"] = validation
-        out["vql_surface_confirmation_persisted"] = True
+        _write_surface_capture_confirmation_sidecar(out, ide=ide, vql_path=vql_path)
     except Exception as exc:
         out["vql_surface_confirmation_persist_error"] = str(exc)
+
+
+def _write_surface_capture_confirmation_sidecar(
+    out: dict[str, Any], *, ide: str, vql_path: str
+) -> None:
+    """Rewrite the VQL sidecar metadata with the surface-confirmed capture validation."""
+    with open(vql_path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    if not isinstance(data, dict):
+        return
+    metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+    original = metadata.get("capture_validation") if isinstance(metadata.get("capture_validation"), dict) else None
+    provenance = out.get("capture_provenance") if isinstance(out.get("capture_provenance"), dict) else {}
+    surface = provenance.get("ide_surface_best") if isinstance(provenance.get("ide_surface_best"), dict) else {}
+    validation: dict[str, Any] = {
+        "expected_ide": _canonical_ide(ide),
+        "capture_confirmed": True,
+        # Surface registry proves that the captured monitor contains the IDE,
+        # but it does not prove that VQL found a safe chat/editor target.
+        # Keep drive readiness tied to the original visual validation.
+        "ok_for_capture": True,
+        "ok_for_drive": bool((original or {}).get("ok_for_drive")),
+        "reasons": [],
+        "window_titles": list((original or {}).get("window_titles") or provenance.get("window_titles") or []),
+        "surface_confirmed": True,
+        "confirmation_source": "ide_surface_best",
+        "ide_surface_best": surface,
+    }
+    if original:
+        validation["original_capture_validation"] = original
+    metadata["capture_validation"] = validation
+    metadata["surface_capture_confirmation"] = {
+        "confirmed": True,
+        "source": "ide_surface_best",
+        "ide": _canonical_ide(ide),
+        "ide_surface_best": surface,
+    }
+    data["metadata"] = metadata
+    with open(vql_path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=2)
+    out["capture_validation"] = validation
+    out["vql_surface_confirmation_persisted"] = True
 
 
 def _annotate_prepare_drive_readiness(out: dict[str, Any]) -> None:
@@ -1090,55 +1120,42 @@ def _capture_provenance(
     return prov
 
 
-def _photo_vql_ide_window_warning(*, ide: str, meta: dict) -> dict[str, Any] | None:
-    """Warn when the captured **foreground window title** does not match the requested IDE.
+def _photo_vql_capture_validation_failed_warning(
+    cv: dict[str, Any], *, ide: str, meta: dict
+) -> dict[str, Any]:
+    """Warning dict for an embedded capture_validation that reported failure."""
+    reasons = list(cv.get("reasons") or [])
+    structure = cv.get("structure") if isinstance(cv.get("structure"), dict) else {}
+    for item in structure.get("reasons") or []:
+        if item not in reasons:
+            reasons.append(item)
+    return {
+        "ide": _canonical_ide(ide),
+        "expected_tokens": list(_IDE_WINDOW_TITLE_TOKENS.get(_canonical_ide(ide), ())),
+        "window_titles": list(cv.get("window_titles") or _window_titles_from_vql_meta(meta)),
+        "capture_validation_failed": True,
+        "reasons": reasons,
+        "message": (
+            f"Photo VQL capture not confirmed for {_canonical_ide(ide)}: "
+            f"validation reasons={reasons!r}. Focus the target IDE and refresh observe."
+        ),
+    }
 
-    Uses the window layer only (not breadcrumb labels like ``PyCharm/JB`` inside another IDE).
-    Prefers ``capture_validation`` embedded at VQL write time when present.
-    """
-    overlay = _photo_vql_system_overlay_warning(meta=meta)
-    if overlay:
-        return overlay
 
-    cv = _capture_validation_from_meta(meta)
-    if isinstance(cv, dict):
-        if cv.get("capture_confirmed") is True:
-            return None
-        embedded = cv.get("ide_window_warning")
-        if isinstance(embedded, dict):
-            return embedded
-        if cv.get("capture_confirmed") is False:
-            reasons = list(cv.get("reasons") or [])
-            structure = cv.get("structure") if isinstance(cv.get("structure"), dict) else {}
-            for item in structure.get("reasons") or []:
-                if item not in reasons:
-                    reasons.append(item)
-            return {
-                "ide": _canonical_ide(ide),
-                "expected_tokens": list(_IDE_WINDOW_TITLE_TOKENS.get(_canonical_ide(ide), ())),
-                "window_titles": list(cv.get("window_titles") or _window_titles_from_vql_meta(meta)),
-                "capture_validation_failed": True,
-                "reasons": reasons,
-                "message": (
-                    f"Photo VQL capture not confirmed for {_canonical_ide(ide)}: "
-                    f"validation reasons={reasons!r}. Focus the target IDE and refresh observe."
-                ),
-            }
-
-    canon = _canonical_ide(ide)
-    if canon in {"", "auto"}:
-        return None
+def _photo_vql_expected_title_tokens(canon: str) -> tuple[str, ...]:
+    """Expected window-title tokens for a canonical IDE (hints fallback)."""
     tokens = _IDE_WINDOW_TITLE_TOKENS.get(canon)
     if not tokens:
         hints = _ide_hints(canon)
         needle = str(hints.get("window_title_contains") or "").strip().lower()
         tokens = (needle,) if needle else ()
-    if not tokens:
-        return None
-    titles = _window_titles_from_vql_meta(meta)
-    if not titles:
-        return None
+    return tokens
 
+
+def _photo_vql_title_mismatch_warning(
+    canon: str, tokens: tuple[str, ...], titles: list[str]
+) -> dict[str, Any] | None:
+    """Compare capture window titles against expected/competing IDE tokens."""
     joined_titles = " | ".join(titles).lower()
     competing = _COMPETING_IDE_WINDOW_TOKENS.get(canon, ())
     if any(comp in joined_titles for comp in competing):
@@ -1165,8 +1182,40 @@ def _photo_vql_ide_window_warning(*, ide: str, meta: dict) -> dict[str, Any] | N
     }
 
 
-def _photo_vql_system_overlay_warning(*, meta: dict) -> dict[str, Any] | None:
-    """Detect modal OS/browser share prompts that obscure the automation target."""
+def _photo_vql_ide_window_warning(*, ide: str, meta: dict) -> dict[str, Any] | None:
+    """Warn when the captured **foreground window title** does not match the requested IDE.
+
+    Uses the window layer only (not breadcrumb labels like ``PyCharm/JB`` inside another IDE).
+    Prefers ``capture_validation`` embedded at VQL write time when present.
+    """
+    overlay = _photo_vql_system_overlay_warning(meta=meta)
+    if overlay:
+        return overlay
+
+    cv = _capture_validation_from_meta(meta)
+    if isinstance(cv, dict):
+        if cv.get("capture_confirmed") is True:
+            return None
+        embedded = cv.get("ide_window_warning")
+        if isinstance(embedded, dict):
+            return embedded
+        if cv.get("capture_confirmed") is False:
+            return _photo_vql_capture_validation_failed_warning(cv, ide=ide, meta=meta)
+
+    canon = _canonical_ide(ide)
+    if canon in {"", "auto"}:
+        return None
+    tokens = _photo_vql_expected_title_tokens(canon)
+    if not tokens:
+        return None
+    titles = _window_titles_from_vql_meta(meta)
+    if not titles:
+        return None
+    return _photo_vql_title_mismatch_warning(canon, tokens, titles)
+
+
+def _photo_vql_overlay_labels(meta: dict) -> list[str]:
+    """Collect layer label/text/id strings for overlay detection."""
     labels: list[str] = []
     for layer in (meta.get("ui_elements") or meta.get("layers") or []):
         if not isinstance(layer, dict):
@@ -1175,19 +1224,35 @@ def _photo_vql_system_overlay_warning(*, meta: dict) -> dict[str, Any] | None:
             value = str(layer.get(key) or "").strip()
             if value:
                 labels.append(value)
-    joined = " ".join(labels).lower()
-    if not joined:
-        return None
-    share_prompt = (
+    return labels
+
+
+def _photo_vql_share_prompt_detected(joined: str) -> bool:
+    """True when capture labels look like a screen-share permission prompt."""
+    return (
         "share screen" in joined
         or "share your screen" in joined
         or ("wants" in joined and "share" in joined and "screen" in joined)
     )
-    portal_actor = (
+
+
+def _photo_vql_portal_actor_detected(joined: str) -> bool:
+    """True when a portal/browser share actor is visible in capture labels."""
+    return (
         "org.chromium.chromium" in joined
         or ("gnome" in joined and "share" in joined)
         or ("choose what" in joined and "share" in joined)
     )
+
+
+def _photo_vql_system_overlay_warning(*, meta: dict) -> dict[str, Any] | None:
+    """Detect modal OS/browser share prompts that obscure the automation target."""
+    labels = _photo_vql_overlay_labels(meta)
+    joined = " ".join(labels).lower()
+    if not joined:
+        return None
+    share_prompt = _photo_vql_share_prompt_detected(joined)
+    portal_actor = _photo_vql_portal_actor_detected(joined)
     if not (share_prompt and portal_actor):
         return None
     return {
@@ -1240,32 +1305,26 @@ def _annotate_png_artifact_state(out: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _resolve_photo_png_path_from_vql(
-    *,
-    vql_path: str | None = None,
-    source: str | None = None,
-) -> str | None:
-    """Resolve the screenshot PNG paired with a photo-VQL sidecar (for LLM vision)."""
+def _photo_png_from_vql_sidecar_path(cand_vql: str) -> str | None:
+    """Derive the PNG path from a VQL sidecar filename (with metadata-root fallback)."""
     from pathlib import Path
 
-    explicit = os.environ.get("KORU_VDISPLAY_PHOTO_PATH", "").strip()
-    if explicit and os.path.isfile(explicit):
-        return explicit
+    if cand_vql.endswith(".png.vql.json"):
+        png = cand_vql[: -len(".vql.json")]
+    elif cand_vql.endswith(".vql.json"):
+        png = cand_vql[: -len(".vql.json")]
+    else:
+        png = cand_vql
+    if os.path.isfile(png):
+        return png
+    rooted = _photo_vql_metadata_root() / Path(png).name
+    if rooted.is_file():
+        return str(rooted)
+    return None
 
-    cand_vql = (vql_path or os.environ.get("KORU_VDISPLAY_VQL_PATH", "")).strip()
-    if cand_vql:
-        if cand_vql.endswith(".png.vql.json"):
-            png = cand_vql[: -len(".vql.json")]
-        elif cand_vql.endswith(".vql.json"):
-            png = cand_vql[: -len(".vql.json")]
-        else:
-            png = cand_vql
-        if os.path.isfile(png):
-            return png
-        rooted = _photo_vql_metadata_root() / Path(png).name
-        if rooted.is_file():
-            return str(rooted)
 
+def _photo_png_from_vql_metadata(cand_vql: str) -> str | None:
+    """Resolve the PNG path from VQL metadata data_locations / scene URL."""
     try:
         meta = load_vql_metadata(cand_vql or None)
         dl = meta.get("data_locations") if isinstance(meta.get("data_locations"), dict) else {}
@@ -1278,6 +1337,28 @@ def _resolve_photo_png_path_from_vql(
             return url[7:]
     except Exception:
         pass
+    return None
+
+
+def _resolve_photo_png_path_from_vql(
+    *,
+    vql_path: str | None = None,
+    source: str | None = None,
+) -> str | None:
+    """Resolve the screenshot PNG paired with a photo-VQL sidecar (for LLM vision)."""
+    explicit = os.environ.get("KORU_VDISPLAY_PHOTO_PATH", "").strip()
+    if explicit and os.path.isfile(explicit):
+        return explicit
+
+    cand_vql = (vql_path or os.environ.get("KORU_VDISPLAY_VQL_PATH", "")).strip()
+    if cand_vql:
+        png = _photo_png_from_vql_sidecar_path(cand_vql)
+        if png:
+            return png
+
+    png_from_meta = _photo_png_from_vql_metadata(cand_vql)
+    if png_from_meta:
+        return png_from_meta
 
     src = source or _vdisplay_source()
     png_path = _resolve_photo_png_path(src)
@@ -1770,6 +1851,184 @@ def _dismiss_gnome_overview(*, reason: str = "recover") -> dict[str, Any]:
         return {"ok": False, "error": str(exc), "reason": reason}
 
 
+def _ide_control_resolve_map(result: dict[str, Any], app_id: str, src: str) -> tuple[str | None, dict[str, Any] | None]:
+    """Resolve calibrated IDE map path and its monitor mismatch (if any) into result."""
+    map_path = _resolve_ide_prompt_map(app_id)
+    result["map_path"] = map_path
+    map_mismatch = None
+    if map_path:
+        from koru.integrations.photo_vql_monitor import map_capture_monitor_mismatch
+
+        map_mismatch = map_capture_monitor_mismatch(map_path, source=src)
+        if map_mismatch:
+            result["map_capture_mismatch"] = map_mismatch
+    return map_path, map_mismatch
+
+
+def _ide_control_open_ide(result: dict[str, Any], app_id: str, ide: str) -> None:
+    """Auto-open the IDE desktop app when enabled, recording the step."""
+    if not _auto_open_ide_enabled(ide=ide):
+        return
+    try:
+        from vdisplay.ide_prompt import open_desktop_app
+
+        opened = open_desktop_app(app_id, wait_seconds=2.0)
+        result["steps"].append({"open": opened})
+    except Exception as exc:
+        result["steps"].append({"open": {"ok": False, "error": str(exc)}})
+
+
+def _ide_control_raise_window(result: dict[str, Any], ide: str) -> None:
+    """Raise the IDE window via gnome-shell, falling back to xdotool."""
+    gnome_focus = _focus_window_gnome_shell_for_ide(ide=ide)
+    result["steps"].append({"gnome_raise": gnome_focus})
+    if not gnome_focus.get("ok"):
+        xdotool_focus = _focus_window_xdotool_for_ide(ide=ide)
+        if not xdotool_focus.get("skipped"):
+            result["steps"].append({"xdotool_raise": xdotool_focus})
+
+
+def _ide_control_region_raise(
+    result: dict[str, Any], map_path: str | None, map_mismatch: dict[str, Any] | None, src: str
+) -> None:
+    """Click the calibrated map region center to raise the window (skipped on mismatch)."""
+    if map_path and not map_mismatch:
+        region_click = _click_map_region_center(map_path, source=src)
+        result["steps"].append({"region_raise": region_click})
+    elif map_mismatch:
+        result["steps"].append({"region_raise": {"ok": False, "skipped": True, **map_mismatch}})
+
+
+def _ide_control_alt_tab(result: dict[str, Any], ide: str) -> None:
+    """Cycle alt-tab to bring the IDE window forward, recording the step unless skipped."""
+    alt_tab = _alt_tab_window_cycle(
+        cycles=int(os.environ.get("KORU_VDISPLAY_RAISE_ALT_TAB_CYCLES", "2")),
+        ide=ide,
+    )
+    if not alt_tab.get("skipped"):
+        result["steps"].append({"alt_tab": alt_tab})
+
+
+def _ide_control_window_focus(result: dict[str, Any], hints: dict[str, str]) -> None:
+    """Focus the IDE window via the control plane, recording the step."""
+    try:
+        focus_res = _control_focus(
+            backend="auto",
+            app=hints.get("app"),
+            window_title=hints.get("window_title_contains"),
+            role="window",
+        )
+        result["steps"].append({"window_focus": focus_res})
+    except Exception as exc:
+        result["steps"].append({"window_focus": {"ok": False, "error": str(exc)}})
+
+
+def _ide_control_focus_fallback(
+    result: dict[str, Any],
+    app_id: str,
+    map_path: str | None,
+    map_mismatch: dict[str, Any] | None,
+    src: str,
+) -> bool:
+    """Click map raise targets when strict window focus failed; True when a click landed."""
+    interior_ok = False
+    if map_path and not map_mismatch and not any(
+        isinstance(s.get("window_focus"), dict) and s["window_focus"].get("ok")
+        for s in result["steps"] if "window_focus" in s
+    ):
+        try:
+            fb_targets = _map_raise_targets_for_ide(app_id, map_path) or ("prompt", "analyzing")
+            for t in fb_targets[:2]:
+                fb_click = _control_click(backend="vision", map_path=map_path, map_target=t, source=src)
+                result["steps"].append({"window_focus_fallback": {"target": t, "click": fb_click}})
+                if isinstance(fb_click, dict) and fb_click.get("ok", True):
+                    interior_ok = True
+                    break
+        except Exception as exc:
+            result["steps"].append({"window_focus_fallback": {"ok": False, "error": str(exc)}})
+    return interior_ok
+
+
+def _ide_control_focus_interior(result: dict[str, Any], app_id: str, map_path: str, src: str) -> bool:
+    """Click interior map targets to focus the chat area; True when a click landed."""
+    import time
+
+    from vdisplay.control.timing import control_focus_type_seconds
+
+    interior_ok = False
+    interior_steps: list[dict[str, Any]] = []
+    for target in _map_interior_targets_for_ide(app_id, map_path)[:1]:
+        try:
+            click = _control_click(
+                backend="vision",
+                map_path=map_path,
+                map_target=target,
+                source=src,
+            )
+            step = {"target": target, "click": click}
+            interior_steps.append(step)
+            if isinstance(click, dict) and click.get("ok", True):
+                interior_ok = True
+        except Exception as exc:
+            interior_steps.append({"target": target, "click": {"ok": False, "error": str(exc)}})
+    result["steps"].append({"interior": interior_steps})
+    focus_s = control_focus_type_seconds()
+    if focus_s:
+        time.sleep(focus_s)
+    return interior_ok
+
+
+def _ide_control_outcome_flags(result: dict[str, Any]) -> tuple[bool, bool, bool]:
+    """Derive (window_ok, open_ok, fallback_ok) from recorded control steps."""
+    window_ok = any(
+        isinstance(step.get("window_focus"), dict) and step["window_focus"].get("ok", True)
+        for step in result["steps"]
+        if "window_focus" in step
+    )
+    open_ok = any(
+        isinstance(step.get("open"), dict) and step["open"].get("ok")
+        for step in result["steps"]
+        if "open" in step
+    )
+    fallback_ok = any(
+        isinstance(step.get("window_focus_fallback"), dict) and step["window_focus_fallback"].get("ok", True)
+        for step in result["steps"]
+        if "window_focus_fallback" in step
+    )
+    return window_ok, open_ok, fallback_ok
+
+
+def _ide_control_finalize_result(
+    result: dict[str, Any],
+    *,
+    ide: str,
+    map_path: str | None,
+    map_mismatch: dict[str, Any] | None,
+    focus_interior: bool,
+    interior_ok: bool,
+) -> None:
+    """Fill ok/focus flags and confirmation-bias guard fields on the control result."""
+    window_ok, open_ok, fallback_ok = _ide_control_outcome_flags(result)
+    # For JetBrains on rotated monitors (DP-2 etc), successful map/region/interior clicks bring the window forward
+    # and focus the chat area (as seen in real DP-2 tests with ydotool + rotation mapping succeeding even when
+    # strict window selector fails). Count as window_focused for better reporting and downstream logic.
+    if not window_ok and (interior_ok or fallback_ok) and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
+        window_ok = True
+    result["ok"] = interior_ok or window_ok or open_ok or (
+        bool(map_path and focus_interior) and not map_mismatch
+    )
+    result["interior_focused"] = interior_ok
+    result["window_focused"] = window_ok
+    result["fallback_used"] = fallback_ok
+    # Map/ydotool success does not prove the observe capture shows the target IDE (confirmation-bias guard).
+    result["capture_confirmed"] = None
+    if interior_ok or fallback_ok:
+        result["map_actuation_ok"] = True
+        result["visual_guard_note"] = (
+            "Map clicks succeeded but capture IDE match is verified only after observe refresh in prepare."
+        )
+
+
 def ensure_vdisplay_ide_control(
     *,
     ide: str,
@@ -1800,132 +2059,29 @@ def ensure_vdisplay_ide_control(
     result["steps"].append({"dismiss_overview": _dismiss_gnome_overview(reason="pre-control")})
 
     hints = _ide_hints(ide)
-    map_path = _resolve_ide_prompt_map(app_id)
-    result["map_path"] = map_path
-    map_mismatch = None
-    if map_path:
-        from koru.integrations.photo_vql_monitor import map_capture_monitor_mismatch
+    map_path, map_mismatch = _ide_control_resolve_map(result, app_id, src)
 
-        map_mismatch = map_capture_monitor_mismatch(map_path, source=src)
-        if map_mismatch:
-            result["map_capture_mismatch"] = map_mismatch
+    _ide_control_open_ide(result, app_id, ide)
+    _ide_control_raise_window(result, ide)
+    _ide_control_region_raise(result, map_path, map_mismatch, src)
+    _ide_control_alt_tab(result, ide)
+    _ide_control_window_focus(result, hints)
 
-    if _auto_open_ide_enabled(ide=ide):
-        try:
-            from vdisplay.ide_prompt import open_desktop_app
-
-            opened = open_desktop_app(app_id, wait_seconds=2.0)
-            result["steps"].append({"open": opened})
-        except Exception as exc:
-            result["steps"].append({"open": {"ok": False, "error": str(exc)}})
-
-    gnome_focus = _focus_window_gnome_shell_for_ide(ide=ide)
-    result["steps"].append({"gnome_raise": gnome_focus})
-    if not gnome_focus.get("ok"):
-        xdotool_focus = _focus_window_xdotool_for_ide(ide=ide)
-        if not xdotool_focus.get("skipped"):
-            result["steps"].append({"xdotool_raise": xdotool_focus})
-
-    if map_path and not map_mismatch:
-        region_click = _click_map_region_center(map_path, source=src)
-        result["steps"].append({"region_raise": region_click})
-    elif map_mismatch:
-        result["steps"].append({"region_raise": {"ok": False, "skipped": True, **map_mismatch}})
-
-    alt_tab = _alt_tab_window_cycle(
-        cycles=int(os.environ.get("KORU_VDISPLAY_RAISE_ALT_TAB_CYCLES", "2")),
-        ide=ide,
-    )
-    if not alt_tab.get("skipped"):
-        result["steps"].append({"alt_tab": alt_tab})
-
-    try:
-        focus_res = _control_focus(
-            backend="auto",
-            app=hints.get("app"),
-            window_title=hints.get("window_title_contains"),
-            role="window",
-        )
-        result["steps"].append({"window_focus": focus_res})
-    except Exception as exc:
-        result["steps"].append({"window_focus": {"ok": False, "error": str(exc)}})
-
-    interior_ok = False
-    if map_path and not map_mismatch and not any(
-        isinstance(s.get("window_focus"), dict) and s["window_focus"].get("ok")
-        for s in result["steps"] if "window_focus" in s
-    ):
-        try:
-            fb_targets = _map_raise_targets_for_ide(app_id, map_path) or ("prompt", "analyzing")
-            for t in fb_targets[:2]:
-                fb_click = _control_click(backend="vision", map_path=map_path, map_target=t, source=src)
-                result["steps"].append({"window_focus_fallback": {"target": t, "click": fb_click}})
-                if isinstance(fb_click, dict) and fb_click.get("ok", True):
-                    interior_ok = True
-                    break
-        except Exception as exc:
-            result["steps"].append({"window_focus_fallback": {"ok": False, "error": str(exc)}})
+    interior_ok = _ide_control_focus_fallback(result, app_id, map_path, map_mismatch, src)
 
     if focus_interior and map_path and not map_mismatch:
-        import time
-
-        from vdisplay.control.timing import control_focus_type_seconds
-
-        interior_steps: list[dict[str, Any]] = []
-        for target in _map_interior_targets_for_ide(app_id, map_path)[:1]:
-            try:
-                click = _control_click(
-                    backend="vision",
-                    map_path=map_path,
-                    map_target=target,
-                    source=src,
-                )
-                step = {"target": target, "click": click}
-                interior_steps.append(step)
-                if isinstance(click, dict) and click.get("ok", True):
-                    interior_ok = True
-            except Exception as exc:
-                interior_steps.append({"target": target, "click": {"ok": False, "error": str(exc)}})
-        result["steps"].append({"interior": interior_steps})
-        focus_s = control_focus_type_seconds()
-        if focus_s:
-            time.sleep(focus_s)
+        interior_ok = _ide_control_focus_interior(result, app_id, map_path, src) or interior_ok
 
     result["steps"].append({"dismiss_overview": _dismiss_gnome_overview(reason="post-control")})
 
-    window_ok = any(
-        isinstance(step.get("window_focus"), dict) and step["window_focus"].get("ok", True)
-        for step in result["steps"]
-        if "window_focus" in step
+    _ide_control_finalize_result(
+        result,
+        ide=ide,
+        map_path=map_path,
+        map_mismatch=map_mismatch,
+        focus_interior=focus_interior,
+        interior_ok=interior_ok,
     )
-    open_ok = any(
-        isinstance(step.get("open"), dict) and step["open"].get("ok")
-        for step in result["steps"]
-        if "open" in step
-    )
-    fallback_ok = any(
-        isinstance(step.get("window_focus_fallback"), dict) and step["window_focus_fallback"].get("ok", True)
-        for step in result["steps"]
-        if "window_focus_fallback" in step
-    )
-    # For JetBrains on rotated monitors (DP-2 etc), successful map/region/interior clicks bring the window forward
-    # and focus the chat area (as seen in real DP-2 tests with ydotool + rotation mapping succeeding even when
-    # strict window selector fails). Count as window_focused for better reporting and downstream logic.
-    if not window_ok and (interior_ok or fallback_ok) and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
-        window_ok = True
-    result["ok"] = interior_ok or window_ok or open_ok or (
-        bool(map_path and focus_interior) and not map_mismatch
-    )
-    result["interior_focused"] = interior_ok
-    result["window_focused"] = window_ok
-    result["fallback_used"] = fallback_ok
-    # Map/ydotool success does not prove the observe capture shows the target IDE (confirmation-bias guard).
-    result["capture_confirmed"] = None
-    if interior_ok or fallback_ok:
-        result["map_actuation_ok"] = True
-        result["visual_guard_note"] = (
-            "Map clicks succeeded but capture IDE match is verified only after observe refresh in prepare."
-        )
     return result
 
 
@@ -2069,30 +2225,27 @@ def photo_vql_sidecar_needs_refresh(*, source: str | None = None, ide: str = "au
     return stale
 
 
-def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -> dict[str, Any]:
-    """Capture fresh screenshot + VQL sidecar for photo-VQL drive (observe via vdisplay CLI/agent)."""
+def _photo_vql_refresh_dry_run_out(
+    src: str, png: Path, vql: Path, session: Path | None
+) -> dict[str, Any]:
+    """Dry-run result for refresh_photo_vql_sidecar (no capture performed)."""
+    os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql)
+    out = {
+        "ok": True,
+        "dry_run": True,
+        "source": src,
+        "png": str(png),
+        "vql": str(vql),
+        "elements": 0,
+    }
+    if session is not None:
+        out["session_dir"] = str(session)
+    return out
+
+
+def _photo_vql_refresh_screenshot(src: str, png: Path, ide: str) -> dict[str, Any] | None:
+    """Run the vdisplay screenshot CLI; return an error dict on failure, None on success."""
     import subprocess
-
-    src = source or _vdisplay_source_for_ide(ide)
-    os.environ["KORU_VDISPLAY_SOURCE"] = src
-    session = _autonomy_session.active_session_dir()
-    png = _resolve_photo_png_path(src)
-    vql = png.with_suffix(png.suffix + ".vql.json")
-    png.parent.mkdir(parents=True, exist_ok=True)
-
-    if _dry_run():
-        os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql)
-        out = {
-            "ok": True,
-            "dry_run": True,
-            "source": src,
-            "png": str(png),
-            "vql": str(vql),
-            "elements": 0,
-        }
-        if session is not None:
-            out["session_dir"] = str(session)
-        return out
 
     cmd = [
         _vdisplay_cli_path(),
@@ -2125,77 +2278,89 @@ def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -
             "png": str(png),
             "returncode": proc.returncode,
         })
+    return None
 
-    os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql)
+
+def _photo_vql_reload_sidecar_meta(vql: Path) -> tuple[dict[str, Any], list, int]:
+    """(meta, elements, main_layer_count) freshly loaded from the VQL sidecar."""
     meta = load_vql_metadata(str(vql), allow_stale=True)
     elements = meta.get("ui_elements") or meta.get("layers") or []
     main_layers = _main_vql_layer_count(vql)
-    if main_layers == 0 and png.is_file():
-        observe_subprocess = _refresh_vql_sidecar_via_vdisplay_observe(
-            png=png,
-            vql=vql,
-            source=src,
-            ide=ide,
-        )
-        if observe_subprocess.get("ok"):
-            meta = load_vql_metadata(str(vql), allow_stale=True)
-            elements = meta.get("ui_elements") or meta.get("layers") or []
-            main_layers = _main_vql_layer_count(vql)
-        try:
-            if main_layers == 0:
-                _ensure_real_imgl_on_path()
-                from vdisplay.integrations.pipeline import observe_screen
+    return meta, elements, main_layers
 
-                observe_screen(
-                    image_path=png,
-                    capture_meta={"path": str(png.resolve()), "source": src},
-                    write_sidecar=True,
-                )
-                meta = load_vql_metadata(str(vql), allow_stale=True)
-                elements = meta.get("ui_elements") or meta.get("layers") or []
-                main_layers = _main_vql_layer_count(vql)
-        except Exception as exc:
-            out = {
-                "ok": True,
-                "source": src,
-                "png": str(png.resolve()),
-                "vql": str(vql.resolve()) if vql.is_file() else str(vql),
-                "elements": len(elements),
-                "main_vql_layers": main_layers,
-                "observe_subprocess": observe_subprocess,
-                "observe_fallback_error": str(exc),
-            }
-            if session is not None:
-                out["session_dir"] = str(session)
-            return out
 
-    stale, freshness = _autonomy_session.vql_sidecar_is_stale(
-        vql,
-        png,
+def _photo_vql_observe_when_empty(
+    *,
+    png: Path,
+    vql: Path,
+    src: str,
+    ide: str,
+    session: Path | None,
+    meta: dict[str, Any],
+    elements: list,
+    main_layers: int,
+) -> tuple[dict[str, Any], list, int, dict[str, Any], dict[str, Any] | None]:
+    """Re-observe an empty sidecar; returns (meta, elements, main_layers, observe_subprocess, early_out)."""
+    observe_subprocess = _refresh_vql_sidecar_via_vdisplay_observe(
+        png=png,
+        vql=vql,
+        source=src,
         ide=ide,
-        layer_count=len(elements),
-        window_mismatch=_photo_vql_ide_window_warning(ide=ide, meta=meta),
-        capture_validation=meta.get("capture_validation"),
     )
-    out: dict[str, Any] = {
-        "ok": True,
-        "source": src,
-        "png": str(png.resolve()) if png.is_file() else str(png),
-        "vql": str(vql.resolve()) if vql.is_file() else str(vql),
-        "elements": len(elements),
-        "main_vql_layers": main_layers,
-        "vql_source": meta.get("_source"),
-        "freshness": freshness,
-        "sidecar_stale": stale,
-    }
-    if main_layers > 0 and "observe_subprocess" in locals() and observe_subprocess.get("ok"):
+    if observe_subprocess.get("ok"):
+        meta, elements, main_layers = _photo_vql_reload_sidecar_meta(vql)
+    try:
+        if main_layers == 0:
+            _ensure_real_imgl_on_path()
+            from vdisplay.integrations.pipeline import observe_screen
+
+            observe_screen(
+                image_path=png,
+                capture_meta={"path": str(png.resolve()), "source": src},
+                write_sidecar=True,
+            )
+            meta, elements, main_layers = _photo_vql_reload_sidecar_meta(vql)
+    except Exception as exc:
+        out = {
+            "ok": True,
+            "source": src,
+            "png": str(png.resolve()),
+            "vql": str(vql.resolve()) if vql.is_file() else str(vql),
+            "elements": len(elements),
+            "main_vql_layers": main_layers,
+            "observe_subprocess": observe_subprocess,
+            "observe_fallback_error": str(exc),
+        }
+        if session is not None:
+            out["session_dir"] = str(session)
+        return meta, elements, main_layers, observe_subprocess, out
+    return meta, elements, main_layers, observe_subprocess, None
+
+
+def _photo_vql_refresh_annotate_observe(
+    out: dict[str, Any], main_layers: int, observe_subprocess: dict[str, Any] | None
+) -> None:
+    """Attach the observe-subprocess summary to the refresh result."""
+    if main_layers > 0 and observe_subprocess is not None and observe_subprocess.get("ok"):
         out["observe_subprocess"] = {
             "ok": True,
             "method": observe_subprocess.get("method"),
             "returncode": observe_subprocess.get("returncode"),
         }
-    elif main_layers == 0 and "observe_subprocess" in locals():
+    elif main_layers == 0 and observe_subprocess is not None:
         out["observe_subprocess"] = observe_subprocess
+
+
+def _photo_vql_refresh_finalize_out(
+    out: dict[str, Any],
+    *,
+    ide: str,
+    meta: dict[str, Any],
+    png: Path,
+    vql: Path,
+    session: Path | None,
+) -> dict[str, Any]:
+    """Warnings, provenance and session artifact copies for the refresh result."""
     warn = _photo_vql_ide_window_warning(ide=ide, meta=meta)
     if warn:
         out["ide_window_warning"] = warn
@@ -2217,6 +2382,62 @@ def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -
             out["png"] = copied["png"]
             out["vql"] = copied["vql"]
     return out
+
+
+def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -> dict[str, Any]:
+    """Capture fresh screenshot + VQL sidecar for photo-VQL drive (observe via vdisplay CLI/agent)."""
+    src = source or _vdisplay_source_for_ide(ide)
+    os.environ["KORU_VDISPLAY_SOURCE"] = src
+    session = _autonomy_session.active_session_dir()
+    png = _resolve_photo_png_path(src)
+    vql = png.with_suffix(png.suffix + ".vql.json")
+    png.parent.mkdir(parents=True, exist_ok=True)
+
+    if _dry_run():
+        return _photo_vql_refresh_dry_run_out(src, png, vql, session)
+
+    capture_error = _photo_vql_refresh_screenshot(src, png, ide)
+    if capture_error is not None:
+        return capture_error
+
+    os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql)
+    meta, elements, main_layers = _photo_vql_reload_sidecar_meta(vql)
+    observe_subprocess: dict[str, Any] | None = None
+    if main_layers == 0 and png.is_file():
+        meta, elements, main_layers, observe_subprocess, early_out = _photo_vql_observe_when_empty(
+            png=png,
+            vql=vql,
+            src=src,
+            ide=ide,
+            session=session,
+            meta=meta,
+            elements=elements,
+            main_layers=main_layers,
+        )
+        if early_out is not None:
+            return early_out
+
+    stale, freshness = _autonomy_session.vql_sidecar_is_stale(
+        vql,
+        png,
+        ide=ide,
+        layer_count=len(elements),
+        window_mismatch=_photo_vql_ide_window_warning(ide=ide, meta=meta),
+        capture_validation=meta.get("capture_validation"),
+    )
+    out: dict[str, Any] = {
+        "ok": True,
+        "source": src,
+        "png": str(png.resolve()) if png.is_file() else str(png),
+        "vql": str(vql.resolve()) if vql.is_file() else str(vql),
+        "elements": len(elements),
+        "main_vql_layers": main_layers,
+        "vql_source": meta.get("_source"),
+        "freshness": freshness,
+        "sidecar_stale": stale,
+    }
+    _photo_vql_refresh_annotate_observe(out, main_layers, observe_subprocess)
+    return _photo_vql_refresh_finalize_out(out, ide=ide, meta=meta, png=png, vql=vql, session=session)
 
 
 def _vdisplay_capture_failure_hint(error: str) -> str | None:
@@ -2688,13 +2909,13 @@ def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
     return out
 
 
-def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, submit: bool) -> dict[str, Any]:
-    """Map perform_photo_vql_focus_and_edit output to send_chat response shape."""
+def _photo_vql_drive_out_base(photo_res: dict[str, Any], *, ide: str, submit: bool) -> dict[str, Any]:
+    """Build the base send_chat-shaped result dict for a photo-VQL drive outcome."""
     edit = photo_res.get("edit") or {}
     edit_message = edit.get("message")
     if not edit_message and edit.get("method"):
         edit_message = f"typed via {edit['method']}"
-    out = {
+    return {
         "ok": bool(photo_res.get("ok")),
         "backend": photo_res.get("backend", "vdisplay+photo-vql"),
         "message": (
@@ -2711,39 +2932,38 @@ def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, su
         "target": photo_res.get("target"),
         "is_code_edit": photo_res.get("is_code_edit", True),
     }
-    if photo_res.get("llm_used"):
-        out["llm_used"] = True
-        out["llm_decision"] = photo_res.get("llm_decision")
-    if photo_res.get("vql_command_plan"):
-        out["vql_command_plan"] = photo_res.get("vql_command_plan")
-    if photo_res.get("ide_window_warning"):
-        out["ide_window_warning"] = photo_res.get("ide_window_warning")
-        if not _allow_actuation_on_capture_mismatch():
-            out["ok"] = False
-            out["capture_confirmed"] = False
-    if photo_res.get("verified") is False and not (
+
+
+def _photo_vql_drive_map_target_id(photo_res: dict[str, Any]) -> str:
+    """Best-effort target id from drive result (vql_target or nested photo_vql.vql_target)."""
+    return str((photo_res.get("vql_target") or photo_res.get("photo_vql", {}).get("vql_target") or {}).get("id") or "")
+
+
+def _photo_vql_drive_surface_trusted(photo_res: dict[str, Any]) -> bool:
+    """Surface-bounds trust check for the drive result's vql_target/command plan."""
+    return _surface_bounds_target_safe_for_actuation(
+        target=photo_res.get("vql_target") if isinstance(photo_res.get("vql_target"), dict) else None,
+        method=str((photo_res.get("vql_command_plan") or {}).get("selection_method") or ""),
+        command_plan=photo_res.get("vql_command_plan") if isinstance(photo_res.get("vql_command_plan"), dict) else None,
+    )
+
+
+def _photo_vql_drive_verified_false_blocks(photo_res: dict[str, Any]) -> bool:
+    """True when verified=False must force ok=False (no trusted-target override applies)."""
+    return photo_res.get("verified") is False and not (
         (photo_res.get("edit") or {}).get("ok")
         and (
-            _trusted_visual_target_id(
-                str((photo_res.get("vql_target") or photo_res.get("photo_vql", {}).get("vql_target") or {}).get("id") or "")
-            )
-            or _surface_bounds_target_safe_for_actuation(
-                target=photo_res.get("vql_target") if isinstance(photo_res.get("vql_target"), dict) else None,
-                method=str((photo_res.get("vql_command_plan") or {}).get("selection_method") or ""),
-                command_plan=photo_res.get("vql_command_plan") if isinstance(photo_res.get("vql_command_plan"), dict) else None,
-            )
+            _trusted_visual_target_id(_photo_vql_drive_map_target_id(photo_res))
+            or _photo_vql_drive_surface_trusted(photo_res)
         )
-        and (_allow_actuation_on_capture_mismatch() or _surface_bounds_target_safe_for_actuation(
-            target=photo_res.get("vql_target") if isinstance(photo_res.get("vql_target"), dict) else None,
-            method=str((photo_res.get("vql_command_plan") or {}).get("selection_method") or ""),
-            command_plan=photo_res.get("vql_command_plan") if isinstance(photo_res.get("vql_command_plan"), dict) else None,
-        ))
-    ):
-        out["ok"] = False
+        and (_allow_actuation_on_capture_mismatch() or _photo_vql_drive_surface_trusted(photo_res))
+    )
+
+
+def _apply_photo_vql_capture_confirmed(out: dict[str, Any], photo_res: dict[str, Any]) -> None:
+    """Propagate capture_confirmed from the drive result, gating ok on unconfirmed captures."""
     if photo_res.get("capture_confirmed") is False:
-        map_id = str(
-            (photo_res.get("vql_target") or photo_res.get("photo_vql", {}).get("vql_target") or {}).get("id") or ""
-        )
+        map_id = _photo_vql_drive_map_target_id(photo_res)
         edit_ok = bool((photo_res.get("edit") or {}).get("ok"))
         if not (_trusted_visual_target_id(map_id) and edit_ok and _allow_actuation_on_capture_mismatch()):
             out["ok"] = False
@@ -2752,6 +2972,10 @@ def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, su
             out["capture_confirmed"] = False
     elif photo_res.get("capture_confirmed") is True:
         out["capture_confirmed"] = True
+
+
+def _apply_photo_vql_plan_inference_gate(out: dict[str, Any], photo_res: dict[str, Any]) -> None:
+    """Force ok=False when the command plan's inference failed without a trusted override."""
     plan = photo_res.get("vql_command_plan") or {}
     surface_trusted = _surface_bounds_target_safe_for_actuation(
         target=photo_res.get("vql_target") if isinstance(photo_res.get("vql_target"), dict) else None,
@@ -2764,6 +2988,11 @@ def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, su
         and not (surface_trusted and bool((photo_res.get("edit") or {}).get("ok")))
     ):
         out["ok"] = False
+
+
+def _apply_photo_vql_map_mismatch_gate(out: dict[str, Any], photo_res: dict[str, Any]) -> None:
+    """Force ok=False and surface the mismatch when the map targets a different monitor."""
+    plan = photo_res.get("vql_command_plan") or {}
     map_source_mismatch = photo_res.get("map_capture_mismatch") or plan.get("map_capture_mismatch")
     if map_source_mismatch and not _map_source_mismatch_actuation_allowed():
         out["ok"] = False
@@ -2772,6 +3001,10 @@ def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, su
             (map_source_mismatch or {}).get("message")
             or "photo-VQL map is calibrated for a different monitor"
         )
+
+
+def _apply_photo_vql_provenance_and_verification(out: dict[str, Any], photo_res: dict[str, Any]) -> None:
+    """Copy capture provenance and verification fields into the normalized result."""
     if photo_res.get("capture_provenance"):
         out["capture_provenance"] = photo_res.get("capture_provenance")
         if out.get("capture_confirmed") is None:
@@ -2779,12 +3012,38 @@ def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, su
     if photo_res.get("verification"):
         out["verification"] = photo_res.get("verification")
         out["verified"] = photo_res.get("verified")
+
+
+def _apply_photo_vql_submit_fields(out: dict[str, Any], photo_res: dict[str, Any], submit: bool) -> None:
+    """Copy submitted/submit_result fields and annotate the message on submit."""
     out["submitted"] = bool(photo_res.get("submitted"))
     submit_result = photo_res.get("submit")
     if submit_result is not None:
         out["submit_result"] = submit_result
     if submit and out.get("submitted"):
         out["message"] = f"{out['message']} (submitted)"
+
+
+def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, submit: bool) -> dict[str, Any]:
+    """Map perform_photo_vql_focus_and_edit output to send_chat response shape."""
+    out = _photo_vql_drive_out_base(photo_res, ide=ide, submit=submit)
+    if photo_res.get("llm_used"):
+        out["llm_used"] = True
+        out["llm_decision"] = photo_res.get("llm_decision")
+    if photo_res.get("vql_command_plan"):
+        out["vql_command_plan"] = photo_res.get("vql_command_plan")
+    if photo_res.get("ide_window_warning"):
+        out["ide_window_warning"] = photo_res.get("ide_window_warning")
+        if not _allow_actuation_on_capture_mismatch():
+            out["ok"] = False
+            out["capture_confirmed"] = False
+    if _photo_vql_drive_verified_false_blocks(photo_res):
+        out["ok"] = False
+    _apply_photo_vql_capture_confirmed(out, photo_res)
+    _apply_photo_vql_plan_inference_gate(out, photo_res)
+    _apply_photo_vql_map_mismatch_gate(out, photo_res)
+    _apply_photo_vql_provenance_and_verification(out, photo_res)
+    _apply_photo_vql_submit_fields(out, photo_res, submit)
     if photo_res.get("is_code_edit") and (photo_res.get("edit") or {}).get("ok"):
         out["ok"] = True
     return out
@@ -3197,6 +3456,54 @@ def send_chat_via_ide_prompt(
     }
 
 
+def _send_chat_preflight_ide_prompt(
+    prompt: str,
+    *,
+    ide: str,
+    submit: bool,
+    effective_dry: bool,
+    mismatch: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Preferred IDE-prompt path in _send_chat_preflight (real drive or dry-run intent)."""
+    if not effective_dry and vdisplay_available():
+        ide_prompt = send_chat_via_ide_prompt(
+            prompt, ide=ide, submit=submit, dry_run=False,
+        )
+        if ide_prompt is not None and ide_prompt.get("ok"):
+            if mismatch:
+                ide_prompt["ide_window_warning"] = mismatch
+                ide_prompt["photo_vql_skipped"] = True
+            return _finalize_send_chat(ide_prompt, prompt=prompt, ide=ide, submit=submit)
+    if effective_dry:
+        app_id = _ide_prompt_app_id(ide)
+        map_path = _resolve_ide_prompt_map(app_id)
+        out = {
+            "ok": True,
+            "backend": "vdisplay+ide-prompt",
+            "dry_run": True,
+            "ide": ide,
+            "app_id": app_id,
+            "map_path": map_path,
+            "chars": len(prompt),
+            "submit": submit,
+            "photo_vql_skipped": True,
+        }
+        if mismatch:
+            out["ide_window_warning"] = mismatch
+        return _finalize_send_chat(out, prompt=prompt, ide=ide, submit=submit)
+    return None
+
+
+def _send_chat_preflight_capture_blocked(
+    blocked: dict[str, Any], *, prompt: str, ide: str, submit: bool
+) -> dict[str, Any]:
+    """Persist and finalize a capture-mismatch drive block."""
+    session = _autonomy_session.active_session_dir()
+    if session is not None:
+        _autonomy_session.persist_autonomy_phase(session, "decide", "capture_blocked", blocked)
+    return _finalize_send_chat(blocked, prompt=prompt, ide=ide, submit=submit)
+
+
 def _send_chat_preflight(
     prompt: str,
     *,
@@ -3217,39 +3524,13 @@ def _send_chat_preflight(
         mismatch and _surface_only_fallback_active() and _allow_prepare_surface_on_capture_error()
     )
     if prefer_ide_prompt and (blocked is None or map_on_mismatch_allowed or surface_on_capture_error):
-        if not effective_dry and vdisplay_available():
-            ide_prompt = send_chat_via_ide_prompt(
-                prompt, ide=ide, submit=submit, dry_run=False,
-            )
-            if ide_prompt is not None and ide_prompt.get("ok"):
-                if mismatch:
-                    ide_prompt["ide_window_warning"] = mismatch
-                    ide_prompt["photo_vql_skipped"] = True
-                return _finalize_send_chat(ide_prompt, prompt=prompt, ide=ide, submit=submit)
-        if effective_dry:
-            app_id = _ide_prompt_app_id(ide)
-            map_path = _resolve_ide_prompt_map(app_id)
-            out = {
-                "ok": True,
-                "backend": "vdisplay+ide-prompt",
-                "dry_run": True,
-                "ide": ide,
-                "app_id": app_id,
-                "map_path": map_path,
-                "chars": len(prompt),
-                "submit": submit,
-                "photo_vql_skipped": True,
-            }
-            if mismatch:
-                out["ide_window_warning"] = mismatch
-            return _finalize_send_chat(out, prompt=prompt, ide=ide, submit=submit)
+        result = _send_chat_preflight_ide_prompt(
+            prompt, ide=ide, submit=submit, effective_dry=effective_dry, mismatch=mismatch
+        )
+        if result is not None:
+            return result
     if blocked is not None and not map_on_mismatch_allowed and not surface_on_capture_error:
-        session = _autonomy_session.active_session_dir()
-        if session is not None:
-            _autonomy_session.persist_autonomy_phase(session, "decide", "capture_blocked", blocked)
-        return _finalize_send_chat(blocked, prompt=prompt, ide=ide, submit=submit)
-    if not prefer_ide_prompt:
-        return None
+        return _send_chat_preflight_capture_blocked(blocked, prompt=prompt, ide=ide, submit=submit)
     return None
 
 
@@ -3516,22 +3797,29 @@ def _send_chat_resolve_chat_selector(
     }
 
 
-def _send_chat_type_at_selector(
-    prompt: str,
-    *,
-    ide: str,
-    hints: dict[str, str],
-    selector: dict[str, str] | None,
+def _send_chat_selector_click_point(
     found: dict[str, Any] | None,
-    focus_error: str | None,
-) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    selector: dict[str, str] | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, str] | None]:
+    """Resolve (selected, click_point, selector) from a found selector payload."""
     selected = (found or {}).get("selected") if isinstance(found, dict) else None
     click_point = None
     if isinstance(selected, dict):
         click_point = selected.get("click_point") or selected.get("click_center")
         if isinstance(click_point, dict) and not selector:
             selector = {"role": "input", "name_contains": "vql"}
+    return selected, click_point, selector
 
+
+def _send_chat_selector_write_kwargs(
+    prompt: str,
+    *,
+    hints: dict[str, str],
+    selector: dict[str, str] | None,
+    selected: dict[str, Any] | None,
+    click_point: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Build _control_set_value kwargs for the chat selector typing path."""
     write_kwargs: dict[str, Any] = {
         "backend": "auto",
         "app": hints.get("app"),
@@ -3545,6 +3833,22 @@ def _send_chat_type_at_selector(
         write_kwargs["x"] = click_point.get("x")
         write_kwargs["y"] = click_point.get("y")
         write_kwargs["backend"] = "vision"
+    return write_kwargs
+
+
+def _send_chat_type_at_selector(
+    prompt: str,
+    *,
+    ide: str,
+    hints: dict[str, str],
+    selector: dict[str, str] | None,
+    found: dict[str, Any] | None,
+    focus_error: str | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    selected, click_point, selector = _send_chat_selector_click_point(found, selector)
+    write_kwargs = _send_chat_selector_write_kwargs(
+        prompt, hints=hints, selector=selector, selected=selected, click_point=click_point
+    )
 
     try:
         typed = _control_set_value(**write_kwargs)
@@ -3704,9 +4008,8 @@ def _photo_vql_elements() -> tuple[list[dict], str | None]:
     return els, vql.get("_source")
 
 
-def _live_surface_capture_meta(source: str) -> dict[str, Any]:
-    """Fresh capture metadata for surface-based pointer math (ignore stale PNG sidecars)."""
-    meta: dict[str, Any] = {"source": source, "monitor_name": source}
+def _live_surface_monitor_lookup(source: str) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """Locate the monitor row matching source among local monitors (best effort)."""
     monitors: list[dict[str, Any]] = []
     monitor: dict[str, Any] | None = None
     try:
@@ -3716,8 +4019,15 @@ def _live_surface_capture_meta(source: str) -> dict[str, Any]:
         monitor = next((row for row in monitors if str(row.get("name") or "") == source), None)
     except Exception:
         pass
-    if isinstance(monitor, dict):
-        meta["rotation"] = monitor.get("rotation") or "normal"
+    return monitors, monitor
+
+
+def _live_surface_screencast_region(
+    meta: dict[str, Any],
+    monitor: dict[str, Any] | None,
+    monitors: list[dict[str, Any]],
+) -> None:
+    """Fill meta region from an active portal screencast stream (best effort)."""
     try:
         from vdisplay.capture.portal_screencast import get_active_screencast
         from vdisplay.capture.screencast_crop import _resolve_multi_stream_region
@@ -3739,27 +4049,41 @@ def _live_surface_capture_meta(source: str) -> dict[str, Any]:
                 meta["screencast_stream_index"] = stream_idx
     except Exception:
         pass
-    if "region" not in meta:
-        try:
-            from vdisplay.application.services.discovery import list_monitors_local
 
-            monitor = next(
-                (
-                    row
-                    for row in (list_monitors_local().get("monitors") or [])
-                    if str(row.get("name") or "") == source
-                ),
-                None,
-            )
-            if isinstance(monitor, dict):
-                meta["region"] = {
-                    "x": int(monitor.get("x") or 0),
-                    "y": int(monitor.get("y") or 0),
-                    "width": int(monitor.get("width") or monitor.get("width_px") or 0),
-                    "height": int(monitor.get("height") or monitor.get("height_px") or 0),
-                }
-        except Exception:
-            pass
+
+def _live_surface_monitor_region_fallback(meta: dict[str, Any], source: str) -> None:
+    """Fill meta region from monitor geometry when no screencast region resolved."""
+    try:
+        from vdisplay.application.services.discovery import list_monitors_local
+
+        monitor = next(
+            (
+                row
+                for row in (list_monitors_local().get("monitors") or [])
+                if str(row.get("name") or "") == source
+            ),
+            None,
+        )
+        if isinstance(monitor, dict):
+            meta["region"] = {
+                "x": int(monitor.get("x") or 0),
+                "y": int(monitor.get("y") or 0),
+                "width": int(monitor.get("width") or monitor.get("width_px") or 0),
+                "height": int(monitor.get("height") or monitor.get("height_px") or 0),
+            }
+    except Exception:
+        pass
+
+
+def _live_surface_capture_meta(source: str) -> dict[str, Any]:
+    """Fresh capture metadata for surface-based pointer math (ignore stale PNG sidecars)."""
+    meta: dict[str, Any] = {"source": source, "monitor_name": source}
+    monitors, monitor = _live_surface_monitor_lookup(source)
+    if isinstance(monitor, dict):
+        meta["rotation"] = monitor.get("rotation") or "normal"
+    _live_surface_screencast_region(meta, monitor, monitors)
+    if "region" not in meta:
+        _live_surface_monitor_region_fallback(meta, source)
     meta.setdefault("width", 2048)
     meta.setdefault("height", 1280)
     return meta
@@ -3811,6 +4135,142 @@ def _chat_target_validation_accepts(target: dict[str, Any]) -> bool:
     if validation.get("ok") is False:
         return False
     return True
+
+
+def _vql_file_for_positioning(src: Any) -> str | None:
+    """VQL sidecar path for cursor-positioning logs (None for non-sidecar sources)."""
+    return src if isinstance(src, str) and str(src).endswith(".vql.json") else None
+
+
+def _photo_vql_jetbrains_chat_flow(
+    *,
+    canon: str,
+    src_name: str,
+    src: Any,
+    els: list,
+    empty_layers: bool,
+    mismatch: dict[str, Any] | None,
+    is_polluted: bool,
+    finalize: Any,
+    try_llm: Any,
+) -> dict[str, Any] | None:
+    """JetBrains chat-target selection cascade (LLM vision, surface bounds, map, corner)."""
+    if _photo_vql_needs_vision_or_map(
+        mismatch=mismatch,
+        empty_layers=empty_layers,
+        polluted=is_polluted,
+    ):
+        map_hint = _map_chat_target_capture_local(ide=canon, source=src_name)
+        llm_target = try_llm(map_hint=map_hint)
+        if llm_target:
+            llm_target = finalize(llm_target, method="llm_vision_detect")
+            _log_vql_cursor_positioning_at_command(
+                llm_target,
+                stage="vql_target_selection_llm_vision",
+                ide=canon,
+                source=src_name,
+                final_local=llm_target.get("click_center", {}),
+                vql_file=_vql_file_for_positioning(src),
+            )
+            return llm_target
+        surface_target = _jetbrains_surface_chat_target(ide=canon, source=src_name)
+        if surface_target:
+            surface_target = finalize(surface_target, method="jetbrains_surface_bounds")
+            if _chat_target_validation_accepts(surface_target):
+                _log_vql_cursor_positioning_at_command(
+                    surface_target,
+                    stage="vql_target_selection_jetbrains_surface",
+                    ide=canon,
+                    source=src_name,
+                    final_local=surface_target.get("click_center", {}),
+                    final_global=surface_target.get("map_global"),
+                    vql_file=_vql_file_for_positioning(src),
+                )
+                return surface_target
+            logger.warning(
+                "VQL_CHAT_TARGET_REJECTED ide=%s method=jetbrains_surface_bounds validation=%s",
+                canon,
+                surface_target.get("vql_validation"),
+            )
+        # Distrust VQL layers; prefer calibrated map when LLM unavailable.
+        map_target = map_hint
+        if map_target:
+            method = _jetbrains_map_selection_method(empty_layers=empty_layers)
+            stage = _jetbrains_map_selection_stage(empty_layers=empty_layers)
+            map_target = finalize(map_target, method=method)
+            _log_vql_cursor_positioning_at_command(
+                map_target,
+                stage=stage,
+                ide=canon,
+                source=src_name,
+                final_local=map_target.get("click_center", {}),
+                final_global=map_target.get("map_global"),
+                vql_file=_vql_file_for_positioning(src),
+            )
+            return map_target
+    corner = _jetbrains_chat_corner_target_from_layers(els, source=src)
+    if corner:
+        corner = finalize(corner, method="jetbrains_corner_heuristic")
+        _log_vql_cursor_positioning_at_command(
+            corner,
+            stage="vql_target_selection_jetbrains_corner",
+            ide=canon,
+            source=src_name,
+            final_local=corner.get("click_center", {}),
+            vql_file=_vql_file_for_positioning(src),
+        )
+        return corner
+    map_target = _map_chat_target_capture_local(ide=canon, source=src_name)
+    if map_target:
+        map_target = finalize(map_target, method="map_calibrated")
+        _log_vql_cursor_positioning_at_command(
+            map_target,
+            stage="vql_target_selection_jetbrains_map",
+            ide=canon,
+            source=src_name,
+            final_local=map_target.get("click_center", {}),
+            final_global=map_target.get("map_global"),
+            vql_file=_vql_file_for_positioning(src),
+        )
+        return map_target
+    return None
+
+
+def _photo_vql_vscode_chat_flow(
+    *,
+    canon: str,
+    src_name: str,
+    src: Any,
+    els: list,
+    empty_layers: bool,
+    mismatch: dict[str, Any] | None,
+    is_polluted: bool,
+    finalize: Any,
+    try_llm: Any,
+) -> dict[str, Any] | None:
+    """VSCode-family chat-target selection (LLM vision on mismatch, then top-chat heuristic)."""
+    if _photo_vql_needs_vision_or_map(
+        mismatch=mismatch,
+        empty_layers=empty_layers,
+        polluted=is_polluted,
+    ):
+        llm_target = try_llm()
+        if llm_target:
+            llm_target = finalize(llm_target, method="llm_vision_detect")
+            return llm_target
+    top_chat = _vscode_family_chat_target_from_layers(els, ide=canon, source=src)
+    if top_chat:
+        top_chat = finalize(top_chat, method="vscode_top_chat_heuristic")
+        _log_vql_cursor_positioning_at_command(
+            top_chat,
+            stage="vql_target_selection_vscode_top_chat",
+            ide=canon,
+            source=src_name,
+            final_local=top_chat.get("click_center", {}),
+            vql_file=_vql_file_for_positioning(src),
+        )
+        return top_chat
+    return None
 
 
 def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: str = "auto") -> dict:
@@ -3928,106 +4388,33 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
         )
 
     if canon in {"jetbrains", "pycharm", "idea"}:
-        if _photo_vql_needs_vision_or_map(
-            mismatch=mismatch,
+        jb_target = _photo_vql_jetbrains_chat_flow(
+            canon=canon,
+            src_name=src_name,
+            src=src,
+            els=els,
             empty_layers=empty_layers,
-            polluted=is_polluted,
-        ):
-            map_hint = _map_chat_target_capture_local(ide=canon, source=src_name)
-            llm_target = _try_llm_chat_detect(map_hint=map_hint)
-            if llm_target:
-                llm_target = _finalize(llm_target, method="llm_vision_detect")
-                _log_vql_cursor_positioning_at_command(
-                    llm_target,
-                    stage="vql_target_selection_llm_vision",
-                    ide=canon,
-                    source=src_name,
-                    final_local=llm_target.get("click_center", {}),
-                    vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-                )
-                return llm_target
-            surface_target = _jetbrains_surface_chat_target(ide=canon, source=src_name)
-            if surface_target:
-                surface_target = _finalize(surface_target, method="jetbrains_surface_bounds")
-                if _chat_target_validation_accepts(surface_target):
-                    _log_vql_cursor_positioning_at_command(
-                        surface_target,
-                        stage="vql_target_selection_jetbrains_surface",
-                        ide=canon,
-                        source=src_name,
-                        final_local=surface_target.get("click_center", {}),
-                        final_global=surface_target.get("map_global"),
-                        vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-                    )
-                    return surface_target
-                logger.warning(
-                    "VQL_CHAT_TARGET_REJECTED ide=%s method=jetbrains_surface_bounds validation=%s",
-                    canon,
-                    surface_target.get("vql_validation"),
-                )
-            # Distrust VQL layers; prefer calibrated map when LLM unavailable.
-            map_target = map_hint
-            if map_target:
-                method = _jetbrains_map_selection_method(empty_layers=empty_layers)
-                stage = _jetbrains_map_selection_stage(empty_layers=empty_layers)
-                map_target = _finalize(map_target, method=method)
-                _log_vql_cursor_positioning_at_command(
-                    map_target,
-                    stage=stage,
-                    ide=canon,
-                    source=src_name,
-                    final_local=map_target.get("click_center", {}),
-                    final_global=map_target.get("map_global"),
-                    vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-                )
-                return map_target
-        corner = _jetbrains_chat_corner_target_from_layers(els, source=src)
-        if corner:
-            corner = _finalize(corner, method="jetbrains_corner_heuristic")
-            _log_vql_cursor_positioning_at_command(
-                corner,
-                stage="vql_target_selection_jetbrains_corner",
-                ide=canon,
-                source=src_name,
-                final_local=corner.get("click_center", {}),
-                vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-            )
-            return corner
-        map_target = _map_chat_target_capture_local(ide=canon, source=src_name)
-        if map_target:
-            map_target = _finalize(map_target, method="map_calibrated")
-            _log_vql_cursor_positioning_at_command(
-                map_target,
-                stage="vql_target_selection_jetbrains_map",
-                ide=canon,
-                source=src_name,
-                final_local=map_target.get("click_center", {}),
-                final_global=map_target.get("map_global"),
-                vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-            )
-            return map_target
+            mismatch=mismatch,
+            is_polluted=is_polluted,
+            finalize=_finalize,
+            try_llm=_try_llm_chat_detect,
+        )
+        if jb_target is not None:
+            return jb_target
     if canon in VSCODE_FAMILY_TOP_CHAT_IDES:
-        if _photo_vql_needs_vision_or_map(
-            mismatch=mismatch,
+        vscode_target = _photo_vql_vscode_chat_flow(
+            canon=canon,
+            src_name=src_name,
+            src=src,
+            els=els,
             empty_layers=empty_layers,
-            polluted=is_polluted,
-        ):
-            llm_target = _try_llm_chat_detect()
-            if llm_target:
-                llm_target = _finalize(llm_target, method="llm_vision_detect")
-                return llm_target
-        top_chat = _vscode_family_chat_target_from_layers(els, ide=canon, source=src)
-        if top_chat:
-            top_chat = _finalize(top_chat, method="vscode_top_chat_heuristic")
-            _log_vql_cursor_positioning_at_command(
-                top_chat,
-                stage="vql_target_selection_vscode_top_chat",
-                ide=canon,
-                source=src_name,
-                final_local=top_chat.get("click_center", {}),
-                vql_file=src if isinstance(src, str) and str(src).endswith(".vql.json") else None,
-            )
-            return top_chat
+            mismatch=mismatch,
+            is_polluted=is_polluted,
+            finalize=_finalize,
+            try_llm=_try_llm_chat_detect,
+        )
+        if vscode_target is not None:
+            return vscode_target
     resolve_chat_target = _import_imgl_targets("resolve_chat_target")
     if resolve_chat_target is not None:
         resolved = resolve_chat_target(els, source=src)
@@ -4121,9 +4508,8 @@ def _photo_capture_meta_for_source(source: str) -> dict[str, Any]:
     return _enrich_capture_meta_for_pointer(meta, source)
 
 
-def _enrich_capture_meta_for_pointer(meta: dict[str, Any], source: str) -> dict[str, Any]:
-    """Fill portal stream region/rotation when screenshot sidecar only has a 0,0 crop."""
-    enriched = dict(meta or {})
+def _enrich_stream_meta_via_vdisplay(enriched: dict[str, Any]) -> dict[str, Any]:
+    """Best-effort screencast stream-meta enrichment via vdisplay (either import path)."""
     try:
         from vdisplay.capture.screencast_stream_meta import enrich_screencast_stream_meta
 
@@ -4135,68 +4521,197 @@ def _enrich_capture_meta_for_pointer(meta: dict[str, Any], source: str) -> dict[
             enriched = enrich_screencast_stream_meta(enriched)
         except Exception:
             pass
+    return enriched
 
+
+def _region_origin(enriched: dict[str, Any]) -> tuple[int, int]:
+    """Return the (x, y) origin of the capture region (0, 0 when absent)."""
     region = enriched.get("region") if isinstance(enriched.get("region"), dict) else {}
-    origin_x = int(region.get("x") or 0)
-    origin_y = int(region.get("y") or 0)
-    if origin_x == 0 and origin_y == 0:
-        display_bounds = enriched.get("display_bounds")
-        if isinstance(display_bounds, dict) and display_bounds.get("width") and display_bounds.get("height"):
-            enriched["region"] = {
-                "x": int(display_bounds.get("x") or 0),
-                "y": int(display_bounds.get("y") or 0),
-                "width": int(display_bounds.get("width") or 0),
-                "height": int(display_bounds.get("height") or 0),
-            }
-            region = enriched["region"]
-            origin_x = int(region.get("x") or 0)
-            origin_y = int(region.get("y") or 0)
-    if origin_x == 0 and origin_y == 0:
-        app_id = _ide_prompt_app_id(source if source in {"pycharm", "jetbrains", "idea"} else "pycharm")
-        map_path = _resolve_ide_prompt_map(app_id)
-        if map_path and os.path.isfile(map_path):
-            try:
-                with open(map_path) as f:
-                    map_data = json.load(f)
-                mcap = map_data.get("capture_meta") if isinstance(map_data.get("capture_meta"), dict) else {}
-                if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, "", "DP-2"}:
-                    for key in (
-                        "region",
-                        "rotation",
-                        "screencast_stream",
-                        "screencast_full_frame",
-                        "width",
-                        "height",
-                        "display_bounds",
-                    ):
-                        if mcap.get(key) is not None:
-                            enriched[key] = mcap[key]
-                    db = mcap.get("display_bounds")
-                    if isinstance(db, dict) and not enriched.get("region"):
-                        enriched["region"] = {
-                            "x": int(db.get("x") or 0),
-                            "y": int(db.get("y") or 0),
-                            "width": int(db.get("width") or 0),
-                            "height": int(db.get("height") or 0),
-                        }
-            except Exception:
-                pass
-        try:
-            from vdisplay.input.coords import _monitor_by_name
+    return int(region.get("x") or 0), int(region.get("y") or 0)
 
-            mon = _monitor_by_name(enriched.get("display"), source)
-            if isinstance(mon, dict):
-                enriched.setdefault("rotation", mon.get("rotation"))
-                if origin_x == 0 and origin_y == 0 and not enriched.get("region"):
-                    enriched["region"] = {
-                        "x": int(mon.get("x") or 0),
-                        "y": int(mon.get("y") or 0),
-                        "width": int(mon.get("width") or enriched.get("width") or 0),
-                        "height": int(mon.get("height") or enriched.get("height") or 0),
-                    }
+
+def _region_dict_from_bounds(db: dict[str, Any]) -> dict[str, int]:
+    """Build a region dict from a bounds-like dict (x/y/width/height)."""
+    return {
+        "x": int(db.get("x") or 0),
+        "y": int(db.get("y") or 0),
+        "width": int(db.get("width") or 0),
+        "height": int(db.get("height") or 0),
+    }
+
+
+def _enrich_region_from_display_bounds(enriched: dict[str, Any]) -> None:
+    """Derive the capture region from embedded display_bounds when usable."""
+    display_bounds = enriched.get("display_bounds")
+    if isinstance(display_bounds, dict) and display_bounds.get("width") and display_bounds.get("height"):
+        enriched["region"] = _region_dict_from_bounds(display_bounds)
+
+
+def _enrich_region_from_ide_map(enriched: dict[str, Any], source: str) -> None:
+    """Copy region/rotation/stream fields from a matching calibrated IDE map's capture_meta."""
+    app_id = _ide_prompt_app_id(source if source in {"pycharm", "jetbrains", "idea"} else "pycharm")
+    map_path = _resolve_ide_prompt_map(app_id)
+    if map_path and os.path.isfile(map_path):
+        try:
+            with open(map_path) as f:
+                map_data = json.load(f)
+            mcap = map_data.get("capture_meta") if isinstance(map_data.get("capture_meta"), dict) else {}
+            if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, "", "DP-2"}:
+                for key in (
+                    "region",
+                    "rotation",
+                    "screencast_stream",
+                    "screencast_full_frame",
+                    "width",
+                    "height",
+                    "display_bounds",
+                ):
+                    if mcap.get(key) is not None:
+                        enriched[key] = mcap[key]
+                db = mcap.get("display_bounds")
+                if isinstance(db, dict) and not enriched.get("region"):
+                    enriched["region"] = _region_dict_from_bounds(db)
         except Exception:
             pass
+
+
+def _enrich_region_from_monitor(enriched: dict[str, Any], source: str, origin_x: int, origin_y: int) -> None:
+    """Fill rotation/region from the vdisplay monitor layout as a last resort."""
+    try:
+        from vdisplay.input.coords import _monitor_by_name
+
+        mon = _monitor_by_name(enriched.get("display"), source)
+        if isinstance(mon, dict):
+            enriched.setdefault("rotation", mon.get("rotation"))
+            if origin_x == 0 and origin_y == 0 and not enriched.get("region"):
+                enriched["region"] = {
+                    "x": int(mon.get("x") or 0),
+                    "y": int(mon.get("y") or 0),
+                    "width": int(mon.get("width") or enriched.get("width") or 0),
+                    "height": int(mon.get("height") or enriched.get("height") or 0),
+                }
+    except Exception:
+        pass
+
+
+def _enrich_capture_meta_for_pointer(meta: dict[str, Any], source: str) -> dict[str, Any]:
+    """Fill portal stream region/rotation when screenshot sidecar only has a 0,0 crop."""
+    enriched = _enrich_stream_meta_via_vdisplay(dict(meta or {}))
+    origin_x, origin_y = _region_origin(enriched)
+    if origin_x == 0 and origin_y == 0:
+        _enrich_region_from_display_bounds(enriched)
+        origin_x, origin_y = _region_origin(enriched)
+    if origin_x == 0 and origin_y == 0:
+        _enrich_region_from_ide_map(enriched, source)
+        _enrich_region_from_monitor(enriched, source, origin_x, origin_y)
     return enriched
+
+
+def _map_chat_input_candidate_keys(app_id: str) -> list[str]:
+    """Ordered map element keys to try for the chat composer click point."""
+    # Preferred order: prompt (known good in ide_control for DP-2), then chat specific, then fallbacks.
+    candidates: list[str] = []
+    try:
+        from vdisplay.desktop_apps import map_input_target_candidates
+        cands = map_input_target_candidates(app_id) or []
+        for c in cands:
+            if c not in candidates:
+                candidates.append(c)
+    except Exception:
+        pass
+    for fb in ("prompt", "ai-chat-input", "chat-input", "message", "input"):
+        if fb not in candidates:
+            candidates.append(fb)
+    return candidates
+
+
+def _map_chat_pointer_meta(source: str) -> dict[str, Any]:
+    """Enriched capture meta used to map global map points to capture-local coords."""
+    meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
+    region = (meta or {}).get("region") or {}
+    cap_w = int(region.get("width") or 2048)
+    cap_h = int(region.get("height") or 1280)
+    return meta
+
+
+def _map_chat_element_local_point(
+    element: dict[str, Any], meta: dict[str, Any]
+) -> tuple[int, int, int, int] | None:
+    """Map an element's global click_point to capture-local ints; None if unusable."""
+    from vdisplay.input.coords import global_point_to_capture_local
+    click = element.get("click_point") or {}
+    gx = int(click.get("x") or 0)
+    gy = int(click.get("y") or 0)
+    if gx <= 0 or gy <= 0:
+        return None
+    lx, ly = global_point_to_capture_local(gx, gy, meta)
+    return gx, gy, int(lx), int(ly)
+
+
+def _map_chat_target_entry(
+    key: str,
+    element: dict[str, Any],
+    lx_i: int,
+    ly_i: int,
+    gx: int,
+    gy: int,
+    map_path: str,
+) -> dict[str, Any]:
+    """Map-calibrated chat target dict for a resolved element/coords pair."""
+    return {
+        "click_center": {"x": lx_i, "y": ly_i},
+        "id": f"map:{key}",
+        "role": "input",
+        "bounds": element.get("action_bounds") or element.get("raw_bounds"),
+        "note": f"map-calibrated JetBrains chat input ({key} from {map_path})",
+        "source": map_path,
+        "map_global": {"x": gx, "y": gy},
+        "map_element_key": key,
+    }
+
+
+def _map_chat_bottom_right_target(
+    candidates: list[str],
+    elems: Any,
+    meta: dict[str, Any],
+    map_path: str,
+) -> dict[str, Any] | None:
+    """First candidate whose local point lands in the bottom-right composer area."""
+    for key in candidates:
+        element = elems.get(key) if isinstance(elems, dict) else None
+        if not isinstance(element, dict):
+            continue
+        point = _map_chat_element_local_point(element, meta)
+        if point is None:
+            continue
+        gx, gy, lx_i, ly_i = point
+        # Accept bottom-right composer area; skip top-of-screen/editor coords from stale maps.
+        if ly_i >= 700 and lx_i >= 900:
+            return _map_chat_target_entry(key, element, lx_i, ly_i, gx, gy, map_path)
+    return None
+
+
+def _map_chat_nonnegative_target(
+    candidates: list[str],
+    elems: Any,
+    meta: dict[str, Any],
+    map_path: str,
+) -> dict[str, Any] | None:
+    """Last resort: first candidate with a non-negative local point."""
+    # Last resort: take the first valid element even if y low (will get coord warning later)
+    # But still refuse to return a negative local y (safer than feeding garbage coords to ydotool plan).
+    for key in candidates:
+        element = elems.get(key) if isinstance(elems, dict) else None
+        if not isinstance(element, dict):
+            continue
+        point = _map_chat_element_local_point(element, meta)
+        if point is None:
+            continue
+        gx, gy, lx_i, ly_i = point
+        if ly_i < 0 or lx_i < 0:
+            continue
+        return _map_chat_target_entry(key, element, lx_i, ly_i, gx, gy, map_path)
+    return None
 
 
 def _map_chat_target_capture_local(*, ide: str, source: str) -> dict[str, Any] | None:
@@ -4218,74 +4733,12 @@ def _map_chat_target_capture_local(*, ide: str, source: str) -> dict[str, Any] |
         if map_source and map_source != source:
             return None
         elems = (map_data.get("elements") or {})
-        # Preferred order: prompt (known good in ide_control for DP-2), then chat specific, then fallbacks.
-        candidates: list[str] = []
-        try:
-            from vdisplay.desktop_apps import map_input_target_candidates
-            cands = map_input_target_candidates(app_id) or []
-            for c in cands:
-                if c not in candidates:
-                    candidates.append(c)
-        except Exception:
-            pass
-        for fb in ("prompt", "ai-chat-input", "chat-input", "message", "input"):
-            if fb not in candidates:
-                candidates.append(fb)
-        from vdisplay.input.coords import global_point_to_capture_local
-        meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
-        region = (meta or {}).get("region") or {}
-        cap_w = int(region.get("width") or 2048)
-        cap_h = int(region.get("height") or 1280)
-        for key in candidates:
-            element = elems.get(key) if isinstance(elems, dict) else None
-            if not isinstance(element, dict):
-                continue
-            click = element.get("click_point") or {}
-            gx = int(click.get("x") or 0)
-            gy = int(click.get("y") or 0)
-            if gx <= 0 or gy <= 0:
-                continue
-            lx, ly = global_point_to_capture_local(gx, gy, meta)
-            lx_i = int(lx)
-            ly_i = int(ly)
-            # Accept bottom-right composer area; skip top-of-screen/editor coords from stale maps.
-            if ly_i >= 700 and lx_i >= 900:
-                return {
-                    "click_center": {"x": lx_i, "y": ly_i},
-                    "id": f"map:{key}",
-                    "role": "input",
-                    "bounds": element.get("action_bounds") or element.get("raw_bounds"),
-                    "note": f"map-calibrated JetBrains chat input ({key} from {map_path})",
-                    "source": map_path,
-                    "map_global": {"x": gx, "y": gy},
-                    "map_element_key": key,
-                }
-        # Last resort: take the first valid element even if y low (will get coord warning later)
-        # But still refuse to return a negative local y (safer than feeding garbage coords to ydotool plan).
-        for key in candidates:
-            element = elems.get(key) if isinstance(elems, dict) else None
-            if not isinstance(element, dict):
-                continue
-            click = element.get("click_point") or {}
-            gx = int(click.get("x") or 0)
-            gy = int(click.get("y") or 0)
-            if gx <= 0 or gy <= 0:
-                continue
-            lx, ly = global_point_to_capture_local(gx, gy, meta)
-            lx_i, ly_i = int(lx), int(ly)
-            if ly_i < 0 or lx_i < 0:
-                continue
-            return {
-                "click_center": {"x": lx_i, "y": ly_i},
-                "id": f"map:{key}",
-                "role": "input",
-                "bounds": element.get("action_bounds") or element.get("raw_bounds"),
-                "note": f"map-calibrated JetBrains chat input ({key} from {map_path})",
-                "source": map_path,
-                "map_global": {"x": gx, "y": gy},
-                "map_element_key": key,
-            }
-        return None
+        candidates = _map_chat_input_candidate_keys(app_id)
+        meta = _map_chat_pointer_meta(source)
+        target = _map_chat_bottom_right_target(candidates, elems, meta, map_path)
+        if target is not None:
+            return target
+        return _map_chat_nonnegative_target(candidates, elems, meta, map_path)
     except Exception:
         return None
 
@@ -4304,6 +4757,115 @@ def _global_coords_from_vql_local(*, x: int, y: int, source: str) -> tuple[int |
         }
     except Exception as exc:
         return None, None, {"mapping_error": str(exc)}
+
+
+def _vql_plan_warnings(
+    validation: dict[str, Any],
+    capture_mismatch: dict[str, Any] | None,
+    target: dict[str, Any],
+    llm_decision: dict[str, Any] | None,
+) -> tuple[list[Any], list[Any]]:
+    """Warnings + validation errors for a VQL command plan."""
+    warnings = list(validation.get("coord_warnings") or [])
+    validation_errors = list(validation.get("validation_errors") or [])
+    if validation_errors:
+        warnings.extend(validation_errors)
+    if capture_mismatch and not _surface_bounds_target_trusted(target=target):
+        warnings.append("capture_ide_mismatch")
+        if llm_decision:
+            warnings.append("llm_refined_on_unconfirmed_ide_capture")
+    return warnings, validation_errors
+
+
+def _vql_plan_data_mtime(vql_file: Any) -> str | None:
+    """ISO mtime of the plan's VQL data file (best effort)."""
+    vql_mtime: str | None = None
+    if isinstance(vql_file, str) and os.path.isfile(vql_file):
+        try:
+            vql_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(vql_file)).isoformat()
+        except Exception:
+            pass
+    return vql_mtime
+
+
+def _vql_plan_selection_method(
+    target: dict[str, Any],
+    vql_file: Any,
+    llm_decision: dict[str, Any] | None,
+) -> str:
+    """Selection method for the plan; heuristics when target carries none."""
+    selection = str(target.get("selection_method") or "unknown")
+    if selection == "unknown":
+        note = str(target.get("note") or "")
+        if "corner heuristic" in note:
+            selection = "jetbrains_corner_heuristic"
+        elif target.get("id") == "map:ai-chat-input" or str(target.get("id", "")).startswith("map:"):
+            selection = "map_calibrated"
+        elif target.get("llm_refined") or llm_decision:
+            selection = "llm_vision_refined"
+        elif isinstance(vql_file, str) and "vql.json" in vql_file:
+            selection = "vql_layers"
+    return selection
+
+
+def _vql_plan_capture_flags(
+    validation: dict[str, Any],
+    capture_provenance: dict[str, Any] | None,
+    capture_mismatch: dict[str, Any] | None,
+    target: dict[str, Any],
+    selection: str,
+) -> tuple[Any, dict[str, Any] | None, bool]:
+    """(capture_title, effective mismatch, capture_confirmed) for the plan."""
+    capture_title = validation.get("capture_title") or (capture_provenance or {}).get("capture_title")
+    surface_trusted = _surface_bounds_target_trusted(target=target, method=selection)
+    eff_mismatch = None if surface_trusted else capture_mismatch
+    capture_confirmed = bool((capture_provenance or {}).get("capture_confirmed")) or (
+        surface_trusted and _surface_only_fallback_active()
+    )
+    return capture_title, eff_mismatch, capture_confirmed
+
+
+def _vql_plan_commands(
+    *,
+    ide: str,
+    x: int,
+    y: int,
+    gx: int | None,
+    gy: int | None,
+    prompt: str,
+) -> list[dict[str, Any]]:
+    """Ordered actuation command steps for the VQL chat plan."""
+    return [
+        {
+            "step": 1,
+            "verb": "CONTROL_FOCUS",
+            "backend": "auto",
+            "app": (_ide_hints(ide).get("app") if ide and ide != "auto" else None),
+            "purpose": "raise IDE window before chat click",
+        },
+        {
+            "step": 2,
+            "verb": "POINTER_MOVE",
+            "backend": "ydotool",
+            "local": {"x": x, "y": y},
+            "global": {"x": gx, "y": gy} if gx is not None else None,
+            "purpose": "position cursor inside chat composer from VQL click_center",
+        },
+        {
+            "step": 3,
+            "verb": "POINTER_CLICK",
+            "backend": "ydotool",
+            "button": 1,
+            "purpose": "focus keyboard caret in chat input before paste",
+        },
+        {
+            "step": 4,
+            "verb": "CLIPBOARD_PASTE",
+            "backend": "ydotool/wtype",
+            "text_preview": prompt[:80] + ("..." if len(prompt) > 80 else ""),
+            "purpose": "insert user sentence into chat composer",
+        },
+    ]
 
 
 def _build_vql_command_plan(
@@ -4335,71 +4897,16 @@ def _build_vql_command_plan(
         x=x,
         y=y,
     )
-    warnings = list(validation.get("coord_warnings") or [])
-    validation_errors = list(validation.get("validation_errors") or [])
-    if validation_errors:
-        warnings.extend(validation_errors)
-    if capture_mismatch and not _surface_bounds_target_trusted(target=target):
-        warnings.append("capture_ide_mismatch")
-        if llm_decision:
-            warnings.append("llm_refined_on_unconfirmed_ide_capture")
+    warnings, validation_errors = _vql_plan_warnings(validation, capture_mismatch, target, llm_decision)
     vql_file = target.get("source")
-    vql_mtime: str | None = None
-    if isinstance(vql_file, str) and os.path.isfile(vql_file):
-        try:
-            vql_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(vql_file)).isoformat()
-        except Exception:
-            pass
+    vql_mtime = _vql_plan_data_mtime(vql_file)
 
-    selection = str(target.get("selection_method") or "unknown")
-    if selection == "unknown":
-        note = str(target.get("note") or "")
-        if "corner heuristic" in note:
-            selection = "jetbrains_corner_heuristic"
-        elif target.get("id") == "map:ai-chat-input" or str(target.get("id", "")).startswith("map:"):
-            selection = "map_calibrated"
-        elif target.get("llm_refined") or llm_decision:
-            selection = "llm_vision_refined"
-        elif isinstance(vql_file, str) and "vql.json" in vql_file:
-            selection = "vql_layers"
-    capture_title = validation.get("capture_title") or (capture_provenance or {}).get("capture_title")
-    surface_trusted = _surface_bounds_target_trusted(target=target, method=selection)
-    eff_mismatch = None if surface_trusted else capture_mismatch
-    capture_confirmed = bool((capture_provenance or {}).get("capture_confirmed")) or (
-        surface_trusted and _surface_only_fallback_active()
+    selection = _vql_plan_selection_method(target, vql_file, llm_decision)
+    capture_title, eff_mismatch, capture_confirmed = _vql_plan_capture_flags(
+        validation, capture_provenance, capture_mismatch, target, selection
     )
 
-    commands: list[dict[str, Any]] = [
-        {
-            "step": 1,
-            "verb": "CONTROL_FOCUS",
-            "backend": "auto",
-            "app": (_ide_hints(ide).get("app") if ide and ide != "auto" else None),
-            "purpose": "raise IDE window before chat click",
-        },
-        {
-            "step": 2,
-            "verb": "POINTER_MOVE",
-            "backend": "ydotool",
-            "local": {"x": x, "y": y},
-            "global": {"x": gx, "y": gy} if gx is not None else None,
-            "purpose": "position cursor inside chat composer from VQL click_center",
-        },
-        {
-            "step": 3,
-            "verb": "POINTER_CLICK",
-            "backend": "ydotool",
-            "button": 1,
-            "purpose": "focus keyboard caret in chat input before paste",
-        },
-        {
-            "step": 4,
-            "verb": "CLIPBOARD_PASTE",
-            "backend": "ydotool/wtype",
-            "text_preview": prompt[:80] + ("..." if len(prompt) > 80 else ""),
-            "purpose": "insert user sentence into chat composer",
-        },
-    ]
+    commands: list[dict[str, Any]] = _vql_plan_commands(ide=ide, x=x, y=y, gx=gx, gy=gy, prompt=prompt)
 
     return {
         "stage": stage,
@@ -4436,6 +4943,31 @@ def _build_vql_command_plan(
         ),
         "capture_provenance": capture_provenance,
     }
+
+
+def _cursor_record_vql_validation(
+    record: dict[str, Any],
+    *,
+    command_plan: dict[str, Any] | None,
+    target: dict[str, Any],
+) -> None:
+    """Copy VQL validation / command-plan fields into a cursor positioning record."""
+    vql_validation = (command_plan or {}).get("vql_validation") or target.get("vql_validation")
+    if isinstance(vql_validation, dict):
+        record["capture_title"] = vql_validation.get("capture_title")
+        record["vql_element_size_ok"] = vql_validation.get("vql_element_size_ok")
+        record["app_match"] = vql_validation.get("app_match")
+        record["validation_errors"] = vql_validation.get("validation_errors")
+        record["used_map_because_mismatch_or_bad_element"] = vql_validation.get(
+            "used_map_because_mismatch_or_bad_element"
+        )
+    elif command_plan is not None:
+        record["capture_title"] = command_plan.get("capture_title")
+        record["vql_element_size_ok"] = command_plan.get("vql_element_size_ok")
+        record["app_match"] = command_plan.get("app_match")
+        record["validation_errors"] = command_plan.get("validation_errors")
+    if command_plan is not None:
+        record["vql_command_plan"] = command_plan
 
 
 def _log_vql_cursor_positioning_at_command(
@@ -4488,22 +5020,7 @@ def _log_vql_cursor_positioning_at_command(
             target=target,
         ),
     }
-    vql_validation = (command_plan or {}).get("vql_validation") or target.get("vql_validation")
-    if isinstance(vql_validation, dict):
-        record["capture_title"] = vql_validation.get("capture_title")
-        record["vql_element_size_ok"] = vql_validation.get("vql_element_size_ok")
-        record["app_match"] = vql_validation.get("app_match")
-        record["validation_errors"] = vql_validation.get("validation_errors")
-        record["used_map_because_mismatch_or_bad_element"] = vql_validation.get(
-            "used_map_because_mismatch_or_bad_element"
-        )
-    elif command_plan is not None:
-        record["capture_title"] = command_plan.get("capture_title")
-        record["vql_element_size_ok"] = command_plan.get("vql_element_size_ok")
-        record["app_match"] = command_plan.get("app_match")
-        record["validation_errors"] = command_plan.get("validation_errors")
-    if command_plan is not None:
-        record["vql_command_plan"] = command_plan
+    _cursor_record_vql_validation(record, command_plan=command_plan, target=target)
     if extra:
         record.update(extra)
 
@@ -6113,6 +6630,31 @@ def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, i
     # The coords come from the capture frame (e.g. DP-1 portal stream local 0-2048x1280).
     # We try a few payload shapes because raw point clicks on multi-stream portal captures can be sensitive to backend/source.
     # We always also ensure window-level focus for keyboard.
+    click_res, focus_res, last_err = _move_mouse_attempt_focus_and_click(
+        result, hints=hints, x=x, y=y, source=source
+    )
+    return _move_mouse_click_outcome(
+        result,
+        click_res=click_res,
+        focus_res=focus_res,
+        last_err=last_err,
+        x=x,
+        y=y,
+        target=target,
+        ide=ide,
+        source=source,
+    )
+
+
+def _move_mouse_attempt_focus_and_click(
+    result: dict[str, Any],
+    *,
+    hints: dict[str, str],
+    x: int,
+    y: int,
+    source: str,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, Exception | None]:
+    """Window focus + point-click payload variants for move_mouse_to_vql_target_and_focus_keyboard."""
     click_res = None
     focus_res = None
     last_err = None
@@ -6166,6 +6708,22 @@ def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, i
             last_err = exc
             continue
 
+    return click_res, focus_res, last_err
+
+
+def _move_mouse_click_outcome(
+    result: dict[str, Any],
+    *,
+    click_res: dict[str, Any] | None,
+    focus_res: dict[str, Any] | None,
+    last_err: Exception | None,
+    x: int,
+    y: int,
+    target: dict,
+    ide: str,
+    source: str,
+) -> dict:
+    """Fold focus/click attempt results into the move-mouse result payload."""
     if click_res is not None or focus_res is not None:
         click_ok = bool(click_res.get("ok", True)) if isinstance(click_res, dict) else (click_res is not None)
         focus_ok = isinstance(focus_res, dict) and focus_res.get("ok", True)
@@ -6226,6 +6784,34 @@ def _layers_from_imgl_sidecar_file(vql_path: str) -> tuple[list[dict], str | Non
     return _layers_from_vdisplay_sidecar({"layers": built, "metadata": {"render_intent": {"layers": built}}}), imgl_path
 
 
+def _vql_sidecar_layer_center(layer: dict, bbox: Any) -> dict:
+    """Click-center for a vdisplay sidecar layer (bbox midpoint fallback)."""
+    center = layer.get("click_center") or layer.get("center") or {}
+    if not center and isinstance(bbox, dict):
+        w = int(bbox.get("w") or bbox.get("width") or 0)
+        h = int(bbox.get("h") or bbox.get("height") or 0)
+        if w > 0 and h > 0:
+            center = {
+                "x": int(bbox.get("x") or 0) + w // 2,
+                "y": int(bbox.get("y") or 0) + h // 2,
+            }
+    return center
+
+
+def _vql_sidecar_layer_entry(layer: dict) -> dict:
+    """Normalize a single vdisplay sidecar layer into a ui-element dict."""
+    bbox = layer.get("bbox") or {}
+    center = _vql_sidecar_layer_center(layer, bbox)
+    return {
+        "id": layer.get("id"),
+        "role": layer.get("kind") or layer.get("role"),
+        "label": layer.get("text") or layer.get("label"),
+        "bounds": bbox,
+        "click_center": center,
+        "metadata": {k: layer.get(k) for k in ("confidence", "location") if k in layer},
+    }
+
+
 def _layers_from_vdisplay_sidecar(data: dict) -> list[dict]:
     """Extract IMGL/VQL layers from vdisplay ``.png.vql.json`` sidecar."""
     metadata = data.get("metadata") or {}
@@ -6237,26 +6823,7 @@ def _layers_from_vdisplay_sidecar(data: dict) -> list[dict]:
     for layer in layers:
         if not isinstance(layer, dict):
             continue
-        bbox = layer.get("bbox") or {}
-        center = layer.get("click_center") or layer.get("center") or {}
-        if not center and isinstance(bbox, dict):
-            w = int(bbox.get("w") or bbox.get("width") or 0)
-            h = int(bbox.get("h") or bbox.get("height") or 0)
-            if w > 0 and h > 0:
-                center = {
-                    "x": int(bbox.get("x") or 0) + w // 2,
-                    "y": int(bbox.get("y") or 0) + h // 2,
-                }
-        ui.append(
-            {
-                "id": layer.get("id"),
-                "role": layer.get("kind") or layer.get("role"),
-                "label": layer.get("text") or layer.get("label"),
-                "bounds": bbox,
-                "click_center": center,
-                "metadata": {k: layer.get(k) for k in ("confidence", "location") if k in layer},
-            }
-        )
+        ui.append(_vql_sidecar_layer_entry(layer))
     return ui
 
 
@@ -6272,6 +6839,153 @@ def _with_embedded_capture_validation(meta: dict, raw: dict | None = None) -> di
     return meta
 
 
+def _vql_candidate_is_stale(cand: str, png_path: Path | None, stale_tried: list[dict[str, Any]]) -> bool:
+    """Check sidecar staleness, recording skipped candidates into stale_tried."""
+    stale, freshness = _autonomy_session.vql_sidecar_is_stale(
+        Path(cand),
+        png_path,
+        layer_count=_main_vql_layer_count(cand),
+    )
+    if stale:
+        stale_tried.append({"path": cand, **freshness})
+    return stale
+
+
+def _vql_from_ui_elements(data: dict, cand: str, png_path: Path | None) -> dict:
+    """Normalize a sidecar that already carries ui_elements (analysis-style VQL)."""
+    data["_source"] = cand
+    if png_path and png_path.is_file():
+        data["_png"] = str(png_path)
+        data["_freshness"] = {"age_s": round(__import__("time").time() - png_path.stat().st_mtime, 2)}
+    if "layers" not in data:
+        data["layers"] = data["ui_elements"]
+    return _with_embedded_capture_validation(data, data)
+
+
+def _vql_from_fresh_elements(data: dict, cand: str, png_path: Path | None) -> dict:
+    """Normalize a fresh-capture sidecar carrying raw elements."""
+    res = _parse_fresh_vql_elements(data, cand)
+    if png_path and png_path.is_file():
+        res["_png"] = str(png_path)
+    return _with_embedded_capture_validation(res, data)
+
+
+def _vql_imgl_fallback_layers(
+    cand: str, *, allow_stale: bool, stale_tried: list[dict[str, Any]]
+) -> tuple[list[dict], str]:
+    """Fall back to imgl sidecar layers for cand; returns (layers, effective_cand)."""
+    imgl_layers, imgl_source = _layers_from_imgl_sidecar_file(cand)
+    if imgl_layers:
+        imgl_path = Path(imgl_source or cand)
+        png_for_imgl = _png_path_for_vql_sidecar(str(cand))
+        if not allow_stale and png_for_imgl and imgl_path.is_file():
+            imgl_stale, _ = _autonomy_session.vql_sidecar_is_stale(
+                imgl_path,
+                png_for_imgl,
+                layer_count=len(imgl_layers),
+            )
+            if imgl_stale:
+                stale_tried.append({"path": str(imgl_path), "reasons": ["stale_imgl_fallback"]})
+                imgl_layers = []
+        if imgl_layers:
+            return imgl_layers, (imgl_source or cand)
+    return [], cand
+
+
+def _vql_from_sidecar_layers(data: dict, cand: str, sidecar_layers: list[dict], png_path: Path | None) -> dict:
+    """Normalize vdisplay/imgl sidecar layers into the metadata dict shape."""
+    out = {
+        "ui_elements": sidecar_layers,
+        "layers": sidecar_layers,
+        "metadata": data.get("metadata") or {},
+        "environment": (data.get("metadata") or {}).get("environment") or data.get("environment") or {},
+        "_source": cand,
+    }
+    if png_path and png_path.is_file():
+        out["_png"] = str(png_path)
+    return _with_embedded_capture_validation(out, data)
+
+
+def _vql_from_program_wrapper(data: dict, cand: str) -> dict | None:
+    """Unwrap a nested vql.program dict when present; None to keep dispatching."""
+    if "vql" in data and isinstance(data.get("vql"), dict):
+        prog = data["vql"].get("program", data["vql"])
+        if isinstance(prog, dict):
+            prog["_source"] = cand
+            if "layers" not in prog and "ui_elements" in prog:
+                prog["layers"] = prog["ui_elements"]
+            return prog
+    return None
+
+
+def _vql_from_screen_context(data: dict, cand: str) -> dict:
+    """Normalize a screen_context/metadata-only sidecar into the metadata dict shape."""
+    meta = data.get("metadata") or data.get("screen_context") or {}
+    layers = _layers_from_vdisplay_sidecar({"metadata": meta})
+    return _with_embedded_capture_validation(
+        {
+            "ui_elements": layers,
+            "layers": layers,
+            "metadata": meta,
+            "environment": meta.get("environment") or data.get("environment") or {},
+            "_source": cand,
+        },
+        data,
+    )
+
+
+def _vql_metadata_default(data: dict, cand: str) -> dict:
+    """Fallback normalization: tag source and mirror ui_elements into layers."""
+    if isinstance(data.get("program"), (str, dict)) and "elements" not in data:
+        data["_source"] = cand
+        if "layers" not in data:
+            data["layers"] = data.get("ui_elements", [])
+        return data
+    data["_source"] = cand
+    if "layers" not in data:
+        data["layers"] = data.get("ui_elements", [])
+    return data
+
+
+def _parse_vql_candidate_data(
+    data: dict, cand: str, png_path: Path | None, *, allow_stale: bool, stale_tried: list[dict[str, Any]]
+) -> dict:
+    """Normalize various VQL structures (analysis, fresh capture from screenshot, imgl, etc.)."""
+    if "ui_elements" in data and data.get("ui_elements"):
+        return _vql_from_ui_elements(data, cand, png_path)
+    if "elements" in data and isinstance(data.get("elements"), list) and data["elements"]:
+        return _vql_from_fresh_elements(data, cand, png_path)
+    sidecar_layers = _layers_from_vdisplay_sidecar(data)
+    if not sidecar_layers:
+        sidecar_layers, cand = _vql_imgl_fallback_layers(cand, allow_stale=allow_stale, stale_tried=stale_tried)
+    if sidecar_layers:
+        return _vql_from_sidecar_layers(data, cand, sidecar_layers, png_path)
+    prog = _vql_from_program_wrapper(data, cand)
+    if prog is not None:
+        return prog
+    if "screen_context" in data or "metadata" in data:
+        return _vql_from_screen_context(data, cand)
+    return _vql_metadata_default(data, cand)
+
+
+def _load_vql_candidate_metadata(
+    cand: str, *, allow_stale: bool, stale_tried: list[dict[str, Any]]
+) -> dict | None:
+    """Resolve, freshness-check, load and normalize a single VQL candidate; None to skip."""
+    resolved = _resolve_vql_candidate(cand)
+    if not resolved:
+        return None
+    cand = resolved
+    if not os.path.exists(cand):
+        return None
+    png_path = _png_path_for_vql_sidecar(cand)
+    if not allow_stale and _vql_candidate_is_stale(cand, png_path, stale_tried):
+        return None
+    with open(cand) as f:
+        data = json.load(f)
+    return _parse_vql_candidate_data(data, cand, png_path, allow_stale=allow_stale, stale_tried=stale_tried)
+
+
 def load_vql_metadata(path: str | None = None, *, allow_stale: bool = False) -> dict:
     """Load VQL metadata for decide/act. Skips stale sidecars unless ``allow_stale=True``.
 
@@ -6281,98 +6995,11 @@ def load_vql_metadata(path: str | None = None, *, allow_stale: bool = False) -> 
     stale_tried: list[dict[str, Any]] = []
     for cand in candidates:
         try:
-            resolved = _resolve_vql_candidate(cand)
-            if not resolved:
-                continue
-            cand = resolved
-            if not os.path.exists(cand):
-                continue
-            png_path = _png_path_for_vql_sidecar(cand)
-            if not allow_stale:
-                stale, freshness = _autonomy_session.vql_sidecar_is_stale(
-                    Path(cand),
-                    png_path,
-                    layer_count=_main_vql_layer_count(cand),
-                )
-                if stale:
-                    stale_tried.append({"path": cand, **freshness})
-                    continue
-            with open(cand) as f:
-                data = json.load(f)
-            # Normalize various VQL structures (analysis, fresh capture from screenshot, imgl, etc.)
-            if "ui_elements" in data and data.get("ui_elements"):
-                data["_source"] = cand
-                if png_path and png_path.is_file():
-                    data["_png"] = str(png_path)
-                    data["_freshness"] = {"age_s": round(__import__("time").time() - png_path.stat().st_mtime, 2)}
-                if "layers" not in data:
-                    data["layers"] = data["ui_elements"]
-                return _with_embedded_capture_validation(data, data)
-            if "elements" in data and isinstance(data.get("elements"), list) and data["elements"]:
-                res = _parse_fresh_vql_elements(data, cand)
-                if png_path and png_path.is_file():
-                    res["_png"] = str(png_path)
-                return _with_embedded_capture_validation(res, data)
-            sidecar_layers = _layers_from_vdisplay_sidecar(data)
-            if not sidecar_layers:
-                imgl_layers, imgl_source = _layers_from_imgl_sidecar_file(cand)
-                if imgl_layers:
-                    imgl_path = Path(imgl_source or cand)
-                    png_for_imgl = _png_path_for_vql_sidecar(str(cand))
-                    if not allow_stale and png_for_imgl and imgl_path.is_file():
-                        imgl_stale, _ = _autonomy_session.vql_sidecar_is_stale(
-                            imgl_path,
-                            png_for_imgl,
-                            layer_count=len(imgl_layers),
-                        )
-                        if imgl_stale:
-                            stale_tried.append({"path": str(imgl_path), "reasons": ["stale_imgl_fallback"]})
-                            imgl_layers = []
-                    if imgl_layers:
-                        sidecar_layers = imgl_layers
-                        cand = imgl_source or cand
-            if sidecar_layers:
-                out = {
-                    "ui_elements": sidecar_layers,
-                    "layers": sidecar_layers,
-                    "metadata": data.get("metadata") or {},
-                    "environment": (data.get("metadata") or {}).get("environment") or data.get("environment") or {},
-                    "_source": cand,
-                }
-                if png_path and png_path.is_file():
-                    out["_png"] = str(png_path)
-                return _with_embedded_capture_validation(out, data)
-            if "vql" in data and isinstance(data.get("vql"), dict):
-                prog = data["vql"].get("program", data["vql"])
-                if isinstance(prog, dict):
-                    prog["_source"] = cand
-                    if "layers" not in prog and "ui_elements" in prog:
-                        prog["layers"] = prog["ui_elements"]
-                    return prog
-            if "screen_context" in data or "metadata" in data:
-                meta = data.get("metadata") or data.get("screen_context") or {}
-                layers = _layers_from_vdisplay_sidecar({"metadata": meta})
-                return _with_embedded_capture_validation(
-                    {
-                        "ui_elements": layers,
-                        "layers": layers,
-                        "metadata": meta,
-                        "environment": meta.get("environment") or data.get("environment") or {},
-                        "_source": cand,
-                    },
-                    data,
-                )
-            if isinstance(data.get("program"), (str, dict)) and "elements" not in data:
-                data["_source"] = cand
-                if "layers" not in data:
-                    data["layers"] = data.get("ui_elements", [])
-                return data
-            data["_source"] = cand
-            if "layers" not in data:
-                data["layers"] = data.get("ui_elements", [])
-            return data
+            parsed = _load_vql_candidate_metadata(cand, allow_stale=allow_stale, stale_tried=stale_tried)
         except Exception:
             continue
+        if parsed is not None:
+            return parsed
     return {
         "error": "no fresh vql found",
         "tried": candidates,
@@ -6428,6 +7055,16 @@ def _get_vql_candidates(path: str | None) -> list:
         "/tmp/koru-cont-dp1.png.vql.json",
         "/tmp/koru-cont-dp1-*.png.vql.json",
     ])
+    best = _freshest_populated_vql_candidate()
+    if best:
+        if best in candidates:
+            candidates.remove(best)
+        candidates.insert(0, best)
+    return candidates
+
+
+def _freshest_populated_vql_candidate() -> str | None:
+    """Newest non-stale koru-cont VQL sidecar with a meaningful element count."""
     import glob
     best = None
     best_mt = 0
@@ -6449,55 +7086,68 @@ def _get_vql_candidates(path: str | None) -> list:
                     best = p
         except Exception:
             pass
-    if best:
-        if best in candidates:
-            candidates.remove(best)
-        candidates.insert(0, best)
-    return candidates
+    return best
+
+
+def _fresh_vql_bbox_xy(bbox: dict) -> tuple[int, int]:
+    """Top-left corner of a dict-shaped fresh-VQL bbox."""
+    bx = int(bbox.get("x") or bbox.get("left") or 0)
+    by = int(bbox.get("y") or bbox.get("top") or 0)
+    return bx, by
+
+
+def _fresh_vql_bbox_wh(bbox: dict, bx: int, by: int) -> tuple[int, int]:
+    """Width/height of a dict-shaped fresh-VQL bbox, deriving from right/bottom when needed."""
+    bw = int(bbox.get("w") or bbox.get("width") or 0)
+    bh = int(bbox.get("h") or bbox.get("height") or 0)
+    if not bw and bbox.get("right") is not None:
+        bw = max(0, int(bbox.get("right") or 0) - bx)
+    if not bh and bbox.get("bottom") is not None:
+        bh = max(0, int(bbox.get("bottom") or 0) - by)
+    return bw, bh
+
+
+def _fresh_vql_center(center: Any, bx: int, by: int, bw: int, bh: int) -> tuple[int, int]:
+    """Click center from a fresh-VQL element's center field, defaulting to bbox center."""
+    if isinstance(center, dict) and center:
+        cx = int(center.get("x") or bx + bw // 2)
+        cy = int(center.get("y") or by + bh // 2)
+    elif isinstance(center, (list, tuple)) and len(center) >= 2:
+        cx, cy = int(center[0]), int(center[1])
+    else:
+        cx, cy = bx + bw // 2, by + bh // 2
+    return cx, cy
+
+
+def _fresh_vql_bbox_center(e: dict) -> tuple[int, int, int, int, Any, Any]:
+    """Resolve (bx, by, bw, bh, cx, cy) for a fresh-VQL element across bbox shapes."""
+    bbox = e.get("bbox") or [0, 0, 0, 0]
+    center = e.get("click_center") or e.get("center") or {}
+    if isinstance(bbox, dict):
+        bx, by = _fresh_vql_bbox_xy(bbox)
+        bw, bh = _fresh_vql_bbox_wh(bbox, bx, by)
+        cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
+    elif isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
+        bx, by = int(bbox[0]), int(bbox[1])
+        bw = max(0, int(bbox[2]) - bx)
+        bh = max(0, int(bbox[3]) - by)
+        cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
+    else:
+        bx, by, bw, bh = 0, 0, 0, 0
+        if isinstance(center, dict) and center:
+            cx = int(center.get("x") or 1024)
+            cy = int(center.get("y") or 640)
+        else:
+            c = center or [1024, 640]
+            cx, cy = (c if isinstance(c, (list, tuple)) else [1024, 640])[:2]
+    return bx, by, bw, bh, cx, cy
 
 
 def _parse_fresh_vql_elements(data: dict, cand: str) -> dict:
     """Helper extracted to reduce CC in load_vql_metadata (autonomous refactor for high-CC split)."""
     ui_els = []
     for e in data["elements"]:
-        bbox = e.get("bbox") or [0, 0, 0, 0]
-        center = e.get("click_center") or e.get("center") or {}
-        if isinstance(bbox, dict):
-            bx = int(bbox.get("x") or bbox.get("left") or 0)
-            by = int(bbox.get("y") or bbox.get("top") or 0)
-            bw = int(bbox.get("w") or bbox.get("width") or 0)
-            bh = int(bbox.get("h") or bbox.get("height") or 0)
-            if not bw and bbox.get("right") is not None:
-                bw = max(0, int(bbox.get("right") or 0) - bx)
-            if not bh and bbox.get("bottom") is not None:
-                bh = max(0, int(bbox.get("bottom") or 0) - by)
-            if isinstance(center, dict) and center:
-                cx = int(center.get("x") or bx + bw // 2)
-                cy = int(center.get("y") or by + bh // 2)
-            elif isinstance(center, (list, tuple)) and len(center) >= 2:
-                cx, cy = int(center[0]), int(center[1])
-            else:
-                cx, cy = bx + bw // 2, by + bh // 2
-        elif isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
-            bx, by = int(bbox[0]), int(bbox[1])
-            bw = max(0, int(bbox[2]) - bx)
-            bh = max(0, int(bbox[3]) - by)
-            if isinstance(center, dict) and center:
-                cx = int(center.get("x") or bx + bw // 2)
-                cy = int(center.get("y") or by + bh // 2)
-            elif isinstance(center, (list, tuple)) and len(center) >= 2:
-                cx, cy = int(center[0]), int(center[1])
-            else:
-                cx = bx + bw // 2
-                cy = by + bh // 2
-        else:
-            bx, by, bw, bh = 0, 0, 0, 0
-            if isinstance(center, dict) and center:
-                cx = int(center.get("x") or 1024)
-                cy = int(center.get("y") or 640)
-            else:
-                c = center or [1024, 640]
-                cx, cy = (c if isinstance(c, (list, tuple)) else [1024, 640])[:2]
+        bx, by, bw, bh, cx, cy = _fresh_vql_bbox_center(e)
         ui_els.append({
             "id": str(e.get("id", f"elem-{len(ui_els)}")),
             "role": e.get("role") or e.get("kind") or "unknown",

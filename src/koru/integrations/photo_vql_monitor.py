@@ -17,6 +17,22 @@ _IDE_DEFAULT_SOURCE: dict[str, str] = {
 }
 
 
+def _dp_monitor_names(probe: dict[str, Any]) -> list[str]:
+    return [
+        str(monitor.get("name") or "")
+        for monitor in probe.get("monitors") or []
+        if str(monitor.get("name") or "").startswith("DP-")
+    ]
+
+
+def _primary_monitor_names(probe: dict[str, Any]) -> list[str]:
+    return [
+        str(monitor["name"])
+        for monitor in probe.get("monitors") or []
+        if monitor.get("primary") and monitor.get("name")
+    ]
+
+
 def _monitor_candidate_order(
     *,
     explicit: str,
@@ -25,18 +41,14 @@ def _monitor_candidate_order(
     names: set[str],
 ) -> list[str]:
     candidates: list[str] = []
-    for value in (explicit, preferred):
+    for value in (
+        explicit,
+        preferred,
+        *_dp_monitor_names(probe),
+        *_primary_monitor_names(probe),
+    ):
         if value and value not in candidates:
             candidates.append(value)
-    for monitor in probe.get("monitors") or []:
-        name = str(monitor.get("name") or "")
-        if name.startswith("DP-") and name not in candidates:
-            candidates.append(name)
-    for monitor in probe.get("monitors") or []:
-        if monitor.get("primary") and monitor.get("name"):
-            name = str(monitor["name"])
-            if name not in candidates:
-                candidates.append(name)
     for name in sorted(names):
         if name not in candidates:
             candidates.append(name)
@@ -167,28 +179,26 @@ def _connected_monitor_names() -> set[str]:
     return names
 
 
-def _monitor_sources_equivalent(left: str, right: str) -> bool:
-    """Treat renamed/reconnected outputs as equivalent when geometry matches."""
-    if not left or not right or left == right:
-        return left == right
+def _connected_monitors_by_name() -> dict[str, Any] | None:
+    """Connected monitors keyed by name; ``None`` when discovery is unavailable."""
     try:
         from vdisplay.application.services.discovery import list_monitors_local
     except ImportError:
-        return False
+        return None
     try:
         payload = list_monitors_local()
     except Exception:
-        return False
+        return None
     monitors = payload.get("monitors") or []
-    by_name = {
+    return {
         str(item.get("name") or "").strip(): item
         for item in monitors
         if item.get("connected") is not False and str(item.get("name") or "").strip()
     }
-    left_meta = by_name.get(left)
-    right_meta = by_name.get(right)
-    if not left_meta or not right_meta:
-        return False
+
+
+def _monitor_geometry_matches(left_meta: dict[str, Any], right_meta: dict[str, Any]) -> bool:
+    """True when every geometry key present on both monitors has an equal value."""
     keys = ("x", "y", "width_px", "height_px", "width", "height")
     for key in keys:
         left_val = left_meta.get(key)
@@ -198,6 +208,20 @@ def _monitor_sources_equivalent(left: str, right: str) -> bool:
         if int(left_val) != int(right_val):
             return False
     return True
+
+
+def _monitor_sources_equivalent(left: str, right: str) -> bool:
+    """Treat renamed/reconnected outputs as equivalent when geometry matches."""
+    if not left or not right or left == right:
+        return left == right
+    by_name = _connected_monitors_by_name()
+    if by_name is None:
+        return False
+    left_meta = by_name.get(left)
+    right_meta = by_name.get(right)
+    if not left_meta or not right_meta:
+        return False
+    return _monitor_geometry_matches(left_meta, right_meta)
 
 
 def resolve_vdisplay_source_for_ide(

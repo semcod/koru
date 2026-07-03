@@ -14,41 +14,61 @@ class RepairEventLogProjection(EventLogProjection):
         super().__init__(context=REPAIR_CONTEXT)
 
 
+def _format_status_lines(payload: dict) -> list[str]:
+    status = payload.get("status")
+    if not isinstance(status, dict):
+        return []
+    lines: list[str] = []
+    ready = status.get("ready")
+    if ready is not None:
+        lines.append(f"  ready: {ready}")
+    for key in ("daemon_running", "plugins_connected", "plugins_compatible"):
+        if key in status:
+            lines.append(f"  {key}: {status[key]}")
+    return lines
+
+
+def _format_hypothesis_lines(hypothesis: dict) -> list[str]:
+    hid = hypothesis.get("id") or "unknown"
+    confidence = hypothesis.get("confidence")
+    evidence = str(hypothesis.get("evidence") or "").strip()
+    remediation = str(hypothesis.get("remediation") or "").strip()
+    first = f"    - {hid}"
+    if confidence is not None:
+        first += f" ({confidence}%)"
+    lines = [first]
+    if evidence:
+        lines.append(f"      evidence: {evidence}")
+    if remediation:
+        lines.append(f"      remediation: {remediation}")
+    return lines
+
+
+def _format_hypotheses_lines(payload: dict) -> list[str]:
+    hypotheses = payload.get("hypotheses")
+    if not (isinstance(hypotheses, list) and hypotheses):
+        return []
+    lines = ["  hypotheses:"]
+    for hypothesis in hypotheses[:5]:
+        if isinstance(hypothesis, dict):
+            lines.extend(_format_hypothesis_lines(hypothesis))
+    return lines
+
+
+def _format_action_lines(payload: dict) -> list[str]:
+    actions = payload.get("actions")
+    if not (isinstance(actions, list) and actions):
+        return []
+    return ["  actions:", *(f"    - {action}" for action in actions[:10])]
+
+
 def _format_entry_details(payload: dict) -> list[str]:
     """Extract status/hypotheses/actions lines from a repair event payload."""
-    lines: list[str] = []
-    status = payload.get("status")
-    if isinstance(status, dict):
-        ready = status.get("ready")
-        if ready is not None:
-            lines.append(f"  ready: {ready}")
-        for key in ("daemon_running", "plugins_connected", "plugins_compatible"):
-            if key in status:
-                lines.append(f"  {key}: {status[key]}")
-    hypotheses = payload.get("hypotheses")
-    if isinstance(hypotheses, list) and hypotheses:
-        lines.append("  hypotheses:")
-        for hypothesis in hypotheses[:5]:
-            if not isinstance(hypothesis, dict):
-                continue
-            hid = hypothesis.get("id") or "unknown"
-            confidence = hypothesis.get("confidence")
-            evidence = str(hypothesis.get("evidence") or "").strip()
-            remediation = str(hypothesis.get("remediation") or "").strip()
-            first = f"    - {hid}"
-            if confidence is not None:
-                first += f" ({confidence}%)"
-            lines.append(first)
-            if evidence:
-                lines.append(f"      evidence: {evidence}")
-            if remediation:
-                lines.append(f"      remediation: {remediation}")
-    actions = payload.get("actions")
-    if isinstance(actions, list) and actions:
-        lines.append("  actions:")
-        for action in actions[:10]:
-            lines.append(f"    - {action}")
-    return lines
+    return [
+        *_format_status_lines(payload),
+        *_format_hypotheses_lines(payload),
+        *_format_action_lines(payload),
+    ]
 
 
 def format_repair_history_for_llm(entries: list[EventLogEntry]) -> str:

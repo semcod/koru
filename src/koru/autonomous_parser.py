@@ -539,37 +539,38 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
     return _build_parser_impl(default_stdio_format=default_stdio_format)
 
 
+_AUTO_LOOP_TOKENS = frozenset({"auto", "-a", "-auto", "--auto"})
+
+
+def _is_auto_or_autonomous_up(parts: list[str], idx: int) -> bool:
+    """True when ``parts[idx:]`` starts an auto / autonomous-up invocation."""
+    if idx >= len(parts):
+        return False
+    token = parts[idx]
+    if token in _AUTO_LOOP_TOKENS:
+        return True
+    if token != "autonomous":
+        return False
+    action = (
+        parts[idx + 1]
+        if idx + 1 < len(parts) and not parts[idx + 1].startswith("-")
+        else "up"
+    )
+    return action == "up"
+
+
 def _match_koru_auto_parts(parts: list[str]) -> bool:
     """Check if command parts indicate an autonomous/auto loop."""
     for idx, part in enumerate(parts):
-        if Path(part).name == "koru":
-            if idx + 1 < len(parts) and parts[idx + 1] in {
-                "auto",
-                "-a",
-                "-auto",
-                "--auto",
-            }:
-                return True
-            if idx + 1 < len(parts) and parts[idx + 1] == "autonomous":
-                action = (
-                    parts[idx + 2]
-                    if idx + 2 < len(parts) and not parts[idx + 2].startswith("-")
-                    else "up"
-                )
-                if action == "up":
-                    return True
-        if part == "-m" and idx + 2 < len(parts) and parts[idx + 1] == "koru.cli":
-            sub = parts[idx + 2]
-            if sub in {"auto", "-a", "-auto", "--auto"}:
-                return True
-            if sub == "autonomous":
-                action = (
-                    parts[idx + 3]
-                    if idx + 3 < len(parts) and not parts[idx + 3].startswith("-")
-                    else "up"
-                )
-                if action == "up":
-                    return True
+        if Path(part).name == "koru" and _is_auto_or_autonomous_up(parts, idx + 1):
+            return True
+        if (
+            part == "-m"
+            and idx + 2 < len(parts)
+            and parts[idx + 1] == "koru.cli"
+            and _is_auto_or_autonomous_up(parts, idx + 2)
+        ):
+            return True
     return False
 
 

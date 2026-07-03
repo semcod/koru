@@ -69,26 +69,23 @@ except ImportError:
             "Developer: Reload Window after installing a new VSIX",
         ]
 
-    def _classify_failure(
-        *,
-        ok: bool,
-        reason: str = "",
-        message: str = "",
-        backend: str | None = None,
-    ) -> str:
-        if ok:
-            return "ok"
-        blob = f"{reason} {message}".lower()
+    def _classify_plugin_failure(blob: str) -> str | None:
         if "no connected autopilot plugin" in blob:
             return "plugin_unavailable"
         if "version mismatch" in blob or "build mismatch" in blob:
             return "plugin_version_mismatch"
+        return None
+
+    def _classify_input_failure(blob: str) -> str | None:
         if "submit" in blob and ("unverified" in blob or "could not be verified" in blob):
             return "submit_unverified"
         if "input_busy" in blob or "chat_input_not_empty" in blob or "unrelated draft" in blob:
             return "input_busy"
         if "focus" in blob and ("failed" in blob or "not focused" in blob):
             return "focus_failed"
+        return None
+
+    def _classify_environment_failure(blob: str, backend: str | None) -> str:
         if (
             "brak kalibracji" in blob
             or "no calibrated profile" in blob
@@ -102,6 +99,23 @@ except ImportError:
         if backend and "wayland" in blob:
             return "wayland_injection_blocked"
         return "unknown"
+
+    def _classify_failure(
+        *,
+        ok: bool,
+        reason: str = "",
+        message: str = "",
+        backend: str | None = None,
+    ) -> str:
+        if ok:
+            return "ok"
+        blob = f"{reason} {message}".lower()
+        kind = _classify_plugin_failure(blob)
+        if kind is None:
+            kind = _classify_input_failure(blob)
+        if kind is None:
+            kind = _classify_environment_failure(blob, backend)
+        return kind
 
     def _dedupe(items: list[str]) -> list[str]:
         seen: set[str] = set()

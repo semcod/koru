@@ -114,34 +114,37 @@ except ImportError:
             },
         }
 
-    def drive_payload_to_action_plan(payload: dict[str, Any]) -> ActionPlan:
-        target_raw = payload.get("target") if isinstance(payload.get("target"), dict) else {}
-        input_raw = payload.get("input") if isinstance(payload.get("input"), dict) else {}
-        strategy_raw = payload.get("strategy") if isinstance(payload.get("strategy"), dict) else {}
-        validation = (
-            payload.get("validation")
-            if isinstance(payload.get("validation"), dict)
-            else {}
-        )
+    def _payload_section(payload: dict[str, Any], key: str) -> dict[str, Any]:
+        return payload.get(key) if isinstance(payload.get(key), dict) else {}
+
+    def _window_target_from_raw(target_raw: dict[str, Any]) -> WindowTarget:
         tool_id = str(target_raw.get("ide") or target_raw.get("tool_id") or "default")
         hints = target_raw.get("window_hints") or target_raw.get("hints") or (tool_id,)
         if isinstance(hints, str):
             hints = (hints,)
+        return WindowTarget(
+            hints=tuple(str(h) for h in hints),
+            tool_id=tool_id,
+            profile_id=(
+                str(target_raw.get("profile") or target_raw.get("profile_id"))
+                if target_raw.get("profile") or target_raw.get("profile_id")
+                else None
+            ),
+        )
+
+    def drive_payload_to_action_plan(payload: dict[str, Any]) -> ActionPlan:
+        target_raw = _payload_section(payload, "target")
+        input_raw = _payload_section(payload, "input")
+        strategy_raw = _payload_section(payload, "strategy")
+        validation = _payload_section(payload, "validation")
+        target = _window_target_from_raw(target_raw)
         text = str(input_raw.get("text") or payload.get("text") or "")
         submit = bool(input_raw.get("submit", payload.get("submit", True)))
         prefer = strategy_raw.get("prefer") or DEFAULT_STRATEGY
-        steps = _steps_from_prefer(prefer, text=text, submit=submit, tool_id=tool_id)
+        steps = _steps_from_prefer(prefer, text=text, submit=submit, tool_id=target.tool_id)
         return ActionPlan(
             intent=str(payload.get("intent") or "gui.chat.inject_and_submit"),
-            target=WindowTarget(
-                hints=tuple(str(h) for h in hints),
-                tool_id=tool_id,
-                profile_id=(
-                    str(target_raw.get("profile") or target_raw.get("profile_id"))
-                    if target_raw.get("profile") or target_raw.get("profile_id")
-                    else None
-                ),
-            ),
+            target=target,
             steps=steps,
             validation=validation,
         )

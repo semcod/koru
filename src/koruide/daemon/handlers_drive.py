@@ -709,61 +709,44 @@ def _try_os_injector_drive(
     return result
 
 
-def _drive_via_vdisplay_backend(
-    *,
-    daemon: Any,
-    client: _Client,
-    msg: Message,
-    ide_pref: str | None,
-    text: str,
-    submit: bool,
-) -> bool:
-    """Photo-VQL / semantic chat drive via vdisplay before blind keyboard coords."""
+def _apply_vdisplay_drive_env(daemon: Any, target_id: str) -> None:
+    """Seed vdisplay drive defaults and project-scoped env vars."""
     from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
-    from koru.integrations.photo_vql_drive import PhotoVqlDrive
-    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled, vdisplay_missing_message
 
-    target_id = (ide_pref or "auto").strip().lower()
     apply_vdisplay_drive_defaults(ide=target_id)
     if getattr(daemon, "project", None) is not None:
         meta = Path(daemon.project).resolve() / ".vdisplay"
         os.environ.setdefault("VDISPLAY_METADATA_DIR", str(meta))
         os.environ.setdefault("KORU_PROJECT_ROOT", str(Path(daemon.project).resolve()))
-    if not vdisplay_fallback_enabled(ide=target_id, plugin_connected=False):
-        decline = vdisplay_missing_message() or "vdisplay fallback disabled or agent unavailable"
-        _remember_semantic_drive_decline(decline)
-        daemon.log(f"drive → vdisplay/{target_id} skipped: {decline}")
-        return False
-    os.environ.setdefault("VDISPLAY_SESSION", "1")
-    preview = text.replace("\n", " ")[:100]
+
+
+def _log_vdisplay_drive_decline(daemon: Any, target_id: str, result: dict[str, Any]) -> None:
+    """Record and log a photo-VQL decline before falling back to imgl/keyboard."""
+    prepare = result.get("photo_vql_observe") or {}
+    reason = result.get("message") or result.get("error") or prepare.get("error") or "unknown"
+    hint = result.get("hint") or prepare.get("hint")
+    _remember_semantic_drive_decline(str(reason), hint=str(hint) if hint else None)
+    log_detail = str(reason)
+    if hint and str(hint) not in log_detail:
+        log_detail = f"{log_detail}; hint: {hint}"
     daemon.log(
-        f"drive → vdisplay/{target_id}: photo-vql semantic chat "
-        f"({len(text)} zn) «{preview}» submit={submit}"
+        f"drive → vdisplay/{target_id} declined: "
+        f"{log_detail}; "
+        "falling back to imgl/keyboard"
     )
-    try:
-        result = PhotoVqlDrive(ide=target_id).run(
-            text,
-            submit=submit,
-            reuse_prepare=True,
-        )
-    except Exception as exc:
-        _remember_semantic_drive_decline(str(exc))
-        daemon.log(f"drive → vdisplay/{target_id} failed: {exc}; falling back to imgl/keyboard")
-        return False
-    if not result.get("ok"):
-        prepare = result.get("photo_vql_observe") or {}
-        reason = result.get("message") or result.get("error") or prepare.get("error") or "unknown"
-        hint = result.get("hint") or prepare.get("hint")
-        _remember_semantic_drive_decline(str(reason), hint=str(hint) if hint else None)
-        log_detail = str(reason)
-        if hint and str(hint) not in log_detail:
-            log_detail = f"{log_detail}; hint: {hint}"
-        daemon.log(
-            f"drive → vdisplay/{target_id} declined: "
-            f"{log_detail}; "
-            "falling back to imgl/keyboard"
-        )
-        return False
+
+
+def _ack_vdisplay_drive_success(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    target_id: str,
+    text: str,
+    submit: bool,
+    result: dict[str, Any],
+) -> None:
+    """Ack, log, and audit a successful vdisplay/photo-VQL drive."""
     backend = str(result.get("backend") or "vdisplay")
     info: dict[str, Any] = {
         "backend": backend,
@@ -789,6 +772,56 @@ def _drive_via_vdisplay_backend(
         chars=len(text),
         submit=submit,
         ok=True,
+    )
+
+
+def _drive_via_vdisplay_backend(
+    *,
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide_pref: str | None,
+    text: str,
+    submit: bool,
+) -> bool:
+    """Photo-VQL / semantic chat drive via vdisplay before blind keyboard coords."""
+    from koru.integrations.photo_vql_drive import PhotoVqlDrive
+    from koru.integrations.vdisplay_client import vdisplay_fallback_enabled, vdisplay_missing_message
+
+    target_id = (ide_pref or "auto").strip().lower()
+    _apply_vdisplay_drive_env(daemon, target_id)
+    if not vdisplay_fallback_enabled(ide=target_id, plugin_connected=False):
+        decline = vdisplay_missing_message() or "vdisplay fallback disabled or agent unavailable"
+        _remember_semantic_drive_decline(decline)
+        daemon.log(f"drive → vdisplay/{target_id} skipped: {decline}")
+        return False
+    os.environ.setdefault("VDISPLAY_SESSION", "1")
+    preview = text.replace("\n", " ")[:100]
+    daemon.log(
+        f"drive → vdisplay/{target_id}: photo-vql semantic chat "
+        f"({len(text)} zn) «{preview}» submit={submit}"
+    )
+    try:
+        result = PhotoVqlDrive(ide=target_id).run(
+            text,
+            submit=submit,
+            reuse_prepare=True,
+        )
+    except Exception as exc:
+        _remember_semantic_drive_decline(str(exc))
+        daemon.log(f"drive → vdisplay/{target_id} failed: {exc}; falling back to imgl/keyboard")
+        return False
+    if not result.get("ok"):
+        _log_vdisplay_drive_decline(daemon, target_id, result)
+        return False
+    _ack_vdisplay_drive_success(
+        daemon=daemon,
+        client=client,
+        msg=msg,
+        target_id=target_id,
+        text=text,
+        submit=submit,
+        result=result,
     )
     return True
 

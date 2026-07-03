@@ -102,6 +102,105 @@ def drive_blocked_on_capture_mismatch(
     }
 
 
+def _resolve_map_fallback(
+    *,
+    confirmed: bool,
+    map_only_fallback: bool,
+    ide_control: dict[str, Any] | None,
+    allow_map: bool,
+) -> bool:
+    map_fallback = bool(map_only_fallback)
+    if (
+        not confirmed
+        and ide_control is not None
+        and (ide_control.get("map_actuation_ok") or ide_control.get("interior_focused"))
+        and allow_map
+    ):
+        map_fallback = True
+    return map_fallback
+
+
+def _resolve_surface_fallback(
+    *,
+    surface_only_fallback: bool,
+    allow_surface: bool,
+    capture_error: bool,
+    confirmed: bool,
+) -> bool:
+    surface_fallback = bool(surface_only_fallback)
+    if (
+        not surface_fallback
+        and allow_surface
+        and capture_error
+        and confirmed
+    ):
+        surface_fallback = True
+    return surface_fallback
+
+
+def _blocked_for_observe(
+    *,
+    confirmed: bool,
+    map_fallback: bool,
+    surface_ready: bool,
+    ide: str,
+    ide_window_warning: dict[str, Any] | None,
+    dry_run: bool,
+) -> dict[str, Any] | None:
+    if not confirmed and not map_fallback and not surface_ready:
+        mismatch = ide_window_warning or {"message": "capture does not match requested IDE"}
+        return drive_blocked_on_capture_mismatch(ide=ide, mismatch=mismatch, dry_run=dry_run)
+    return None
+
+
+def _apply_guard_flags(guard: CaptureGuard, out: dict[str, Any]) -> None:
+    out["capture_confirmed"] = guard.confirmed
+    out["capture_ready"] = guard.ready
+    if guard.body_false_positive:
+        out["body_false_positive"] = True
+    if guard.map_only_fallback:
+        out["map_only_fallback"] = True
+        if out.get("ide_window_warning"):
+            out["ide_window_warning_map_fallback"] = out["ide_window_warning"]
+    if guard.surface_only_fallback:
+        out["surface_only_fallback"] = True
+        if out.get("ide_window_warning"):
+            out["ide_window_warning_surface_fallback"] = out["ide_window_warning"]
+    if guard.competing_ide:
+        out["competing_ide"] = guard.competing_ide
+
+
+def _apply_guard_ide_control(guard: CaptureGuard, ide_control: dict[str, Any]) -> None:
+    if guard.mismatch:
+        ide_control["capture_confirmed"] = False
+        ide_control["visual_guard_failed"] = True
+        if ide_control.get("map_actuation_ok") or ide_control.get("interior_focused"):
+            ide_control["confirmation_bias_risk"] = (
+                "Map/interior actuation succeeded but observe capture still shows a different IDE."
+            )
+    elif not guard.confirmed and (ide_control.get("map_actuation_ok") or ide_control.get("interior_focused")):
+        ide_control["capture_confirmed"] = False
+        ide_control["visual_guard_failed"] = True
+        ide_control["confirmation_bias_risk"] = (
+            "Map/interior actuation succeeded but observe capture was not confirmed."
+        )
+    else:
+        ide_control["capture_confirmed"] = guard.confirmed
+        ide_control["visual_guard_failed"] = False
+
+
+def _apply_guard_blocked(guard: CaptureGuard, out: dict[str, Any], *, capture_error: bool) -> None:
+    if guard.blocked:
+        out["ok"] = False
+        out["capture_ready"] = False
+        if not capture_error or not out.get("error"):
+            out["error"] = guard.blocked.get("error")
+        if not capture_error or not out.get("hint"):
+            out["hint"] = guard.blocked.get("hint")
+    elif guard.ready:
+        out["ok"] = True
+
+
 @dataclass
 class CaptureGuard:
     confirmed: bool
@@ -133,30 +232,29 @@ class CaptureGuard:
 
         allow_map = allow_prepare_map_on_mismatch()
         allow_surface = allow_prepare_surface_on_capture_error()
-        map_fallback = bool(map_only_fallback)
-        if (
-            not confirmed
-            and ide_control is not None
-            and (ide_control.get("map_actuation_ok") or ide_control.get("interior_focused"))
-            and allow_map
-        ):
-            map_fallback = True
-
-        surface_fallback = bool(surface_only_fallback)
-        if (
-            not surface_fallback
-            and allow_surface
-            and capture_error
-            and confirmed
-        ):
-            surface_fallback = True
+        map_fallback = _resolve_map_fallback(
+            confirmed=confirmed,
+            map_only_fallback=map_only_fallback,
+            ide_control=ide_control,
+            allow_map=allow_map,
+        )
+        surface_fallback = _resolve_surface_fallback(
+            surface_only_fallback=surface_only_fallback,
+            allow_surface=allow_surface,
+            capture_error=capture_error,
+            confirmed=confirmed,
+        )
 
         surface_ready = surface_fallback and allow_surface_only_actuation()
         ready = bool(confirmed) or map_fallback or surface_ready
-        blocked: dict[str, Any] | None = None
-        if not confirmed and not map_fallback and not surface_ready:
-            mismatch = ide_window_warning or {"message": "capture does not match requested IDE"}
-            blocked = drive_blocked_on_capture_mismatch(ide=ide, mismatch=mismatch, dry_run=dry_run)
+        blocked = _blocked_for_observe(
+            confirmed=confirmed,
+            map_fallback=map_fallback,
+            surface_ready=surface_ready,
+            ide=ide,
+            ide_window_warning=ide_window_warning,
+            dry_run=dry_run,
+        )
 
         competing = None
         if ide_window_warning:
@@ -181,48 +279,12 @@ class CaptureGuard:
         ide_control: dict[str, Any] | None,
         capture_error: bool = False,
     ) -> dict[str, Any]:
-        out["capture_confirmed"] = self.confirmed
-        out["capture_ready"] = self.ready
-        if self.body_false_positive:
-            out["body_false_positive"] = True
-        if self.map_only_fallback:
-            out["map_only_fallback"] = True
-            if out.get("ide_window_warning"):
-                out["ide_window_warning_map_fallback"] = out["ide_window_warning"]
-        if self.surface_only_fallback:
-            out["surface_only_fallback"] = True
-            if out.get("ide_window_warning"):
-                out["ide_window_warning_surface_fallback"] = out["ide_window_warning"]
-        if self.competing_ide:
-            out["competing_ide"] = self.competing_ide
+        _apply_guard_flags(self, out)
 
         if ide_control is not None:
-            if self.mismatch:
-                ide_control["capture_confirmed"] = False
-                ide_control["visual_guard_failed"] = True
-                if ide_control.get("map_actuation_ok") or ide_control.get("interior_focused"):
-                    ide_control["confirmation_bias_risk"] = (
-                        "Map/interior actuation succeeded but observe capture still shows a different IDE."
-                    )
-            elif not self.confirmed and (ide_control.get("map_actuation_ok") or ide_control.get("interior_focused")):
-                ide_control["capture_confirmed"] = False
-                ide_control["visual_guard_failed"] = True
-                ide_control["confirmation_bias_risk"] = (
-                    "Map/interior actuation succeeded but observe capture was not confirmed."
-                )
-            else:
-                ide_control["capture_confirmed"] = self.confirmed
-                ide_control["visual_guard_failed"] = False
+            _apply_guard_ide_control(self, ide_control)
 
-        if self.blocked:
-            out["ok"] = False
-            out["capture_ready"] = False
-            if not capture_error or not out.get("error"):
-                out["error"] = self.blocked.get("error")
-            if not capture_error or not out.get("hint"):
-                out["hint"] = self.blocked.get("hint")
-        elif self.ready:
-            out["ok"] = True
+        _apply_guard_blocked(self, out, capture_error=capture_error)
         return out
 
 

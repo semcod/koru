@@ -108,6 +108,40 @@ def lane_mismatch_operator_steps(
     return steps
 
 
+_PASTE_PROBE_TOKENS = (
+    "probe inconclusive",
+    "sentinel unchanged",
+    "terminal-risk",
+    "paste command failed",
+    "clipboard unreadable",
+)
+
+
+def _blind_fallback_blocked_guidance(ide: str | None) -> list[str]:
+    target = (ide or "jetbrains").strip().lower()
+    from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
+
+    return [
+        f"Wayland {target} drive requires verified photo-VQL (vdisplay + LLM vision), "
+        "not blind OS-injector clicks.",
+        format_wayland_vdisplay_operator_hint(ide=target),
+        f"Run: koru autopilot prepare-vdisplay --ide {target}",
+        f"Run: ./scripts/diagnose-vdisplay-llm.sh {target}  (expect \"ok\": true)",
+        "Unsafe override: KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1",
+    ]
+
+
+def _is_focus_failure(combined: str, reply: dict[str, Any]) -> bool:
+    return "not focused" in combined or "focus_open" in combined and not reply.get("opened")
+
+
+def _is_submit_failure(verification: str, reply: dict[str, Any]) -> bool:
+    return bool(
+        verification in {"submit_unverified", "submit_failed"}
+        or (reply.get("submitted") is False and reply.get("delivered"))
+    )
+
+
 def classify_drive_failure_guidance(
     reply: dict[str, Any],
     *,
@@ -117,38 +151,17 @@ def classify_drive_failure_guidance(
     from koru.autopilot.drive_repair_policy import daemon_reply_blocks_direct_fallback
 
     if daemon_reply_blocks_direct_fallback(reply):
-        target = (ide or "jetbrains").strip().lower()
-        from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
-
-        return [
-            f"Wayland {target} drive requires verified photo-VQL (vdisplay + LLM vision), "
-            "not blind OS-injector clicks.",
-            format_wayland_vdisplay_operator_hint(ide=target),
-            f"Run: koru autopilot prepare-vdisplay --ide {target}",
-            f"Run: ./scripts/diagnose-vdisplay-llm.sh {target}  (expect \"ok\": true)",
-            "Unsafe override: KORU_ALLOW_BLIND_KEYBOARD_FALLBACK=1",
-        ]
+        return _blind_fallback_blocked_guidance(ide)
     message = str(reply.get("message") or "").lower()
     paste_reason = str(reply.get("paste_failure_reason") or reply.get("reason") or "").lower()
     verification = str(reply.get("verification") or "").lower()
     combined = f"{message} {paste_reason}"
 
-    if "not focused" in combined or "focus_open" in combined and not reply.get("opened"):
+    if _is_focus_failure(combined, reply):
         return chat_focus_operator_steps(ide, context="focus")
-    if any(
-        token in combined
-        for token in (
-            "probe inconclusive",
-            "sentinel unchanged",
-            "terminal-risk",
-            "paste command failed",
-            "clipboard unreadable",
-        )
-    ):
+    if any(token in combined for token in _PASTE_PROBE_TOKENS):
         return chat_focus_operator_steps(ide, context="paste_probe")
-    if verification in {"submit_unverified", "submit_failed"} or (
-        reply.get("submitted") is False and reply.get("delivered")
-    ):
+    if _is_submit_failure(verification, reply):
         return manual_send_operator_steps(ide)
     if verification == "input_busy":
         return [
