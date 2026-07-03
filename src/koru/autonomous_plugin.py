@@ -80,6 +80,8 @@ def plugin_skip_code(reason: str) -> str:
         return "plugin_version_mismatch"
     if "daemon status unavailable" in text:
         return "plugin_status_unavailable"
+    if "workspacefolders" in text or "workspace mismatch" in text:
+        return "plugin_workspace_mismatch"
     if (
         "plugin list is empty" in text
         or "no plugin row matched" in text

@@ -87,6 +87,9 @@ def _no_real_planfile_ticket_probes(monkeypatch: pytest.MonkeyPatch):
     them and change prompt behaviour depending on the machine. Tests that
     exercise the guard itself re-patch `_waiting_ticket_is_missing`.
     """
-    import koru.autonomous_cycle_drive_retry as _drv
+    try:
+        import koru.autonomy.cycle.cycle_drive_retry as _drv
+    except ImportError:  # pre-migration layout
+        import koru.autonomous_cycle_drive_retry as _drv
 
     monkeypatch.setattr(_drv, "_waiting_ticket_is_missing", lambda _p, _t: False)

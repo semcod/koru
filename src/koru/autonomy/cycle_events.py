@@ -1,7 +1,7 @@
 """Autopilot event-drain and socket helpers for the autonomous cycle.
 
-Extracted verbatim from ``koru.autonomous_cycle`` (STARTER-545). The legacy
-``_underscored`` names remain importable from ``koru.autonomous_cycle`` via
+Extracted verbatim from ``koru.autonomy.cycle.cycle`` (STARTER-545). The legacy
+``_underscored`` names remain importable from ``koru.autonomy.cycle.cycle`` via
 ``import as`` re-exports so existing tests/callers keep working unchanged.
 """
 

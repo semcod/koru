@@ -1,20 +1,18 @@
-"""Compatibility bridge for the autonomous cycle module."""
+"""
+Backward compatibility shim for koru.autonomy.cycle.cycle_bridge module migration.
 
-from __future__ import annotations
+This module maintains backward compatibility by re-exporting from the new
+autonomy.cycle.cycle_bridge submodule. Remove this shim after one release.
+"""
 
-from typing import Any
+# Re-export everything from the new module location
+from koru.autonomy.cycle.cycle_bridge import *  # noqa: F401, F403
 
-
-def run_cycle_with_compat(
-    kwargs: dict[str, Any],
-    *,
-    cycle_module: Any,
-    dependencies: dict[str, Any],
-) -> Any:
-    """Forward facade-level monkeypatch points into ``koru.autonomous_cycle``."""
-    for name, value in dependencies.items():
-        setattr(cycle_module, name, value)
-    return cycle_module.run_cycle(**kwargs)
-
-
-__all__ = ["run_cycle_with_compat"]
+# Also expose the module for test monkeypatching and private function access
+from koru.autonomy.cycle import cycle_bridge as _module_impl  # noqa: F401
+import sys
+_current_module = sys.modules[__name__]
+for attr in dir(_module_impl):
+    if not attr.startswith("__"):
+        if not hasattr(_current_module, attr):
+            setattr(_current_module, attr, getattr(_module_impl, attr))

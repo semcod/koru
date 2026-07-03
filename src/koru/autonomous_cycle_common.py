@@ -1,20 +1,18 @@
-from dataclasses import dataclass
+"""
+Backward compatibility shim for koru.autonomy.cycle.cycle_common module migration.
 
-from koru.queue import QueueLoopResult
+This module maintains backward compatibility by re-exporting from the new
+autonomy.cycle.cycle_common submodule. Remove this shim after one release.
+"""
 
+# Re-export everything from the new module location
+from koru.autonomy.cycle.cycle_common import *  # noqa: F401, F403
 
-@dataclass(frozen=True)
-class DiagnosticResult:
-    status: str
-    failed: list[str]
-
-
-def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:
-    waiting = getattr(queue_result, "waiting", None) or []
-    return waiting[-1] if waiting else "-"
-
-
-def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
-    return status.lower() in {
-        item.strip().lower() for item in skip_statuses.split(",") if item.strip()
-    }
+# Also expose the module for test monkeypatching and private function access
+from koru.autonomy.cycle import cycle_common as _module_impl  # noqa: F401
+import sys
+_current_module = sys.modules[__name__]
+for attr in dir(_module_impl):
+    if not attr.startswith("__"):
+        if not hasattr(_current_module, attr):
+            setattr(_current_module, attr, getattr(_module_impl, attr))

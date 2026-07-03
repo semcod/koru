@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_cycle_common import DiagnosticResult
-from koru.autonomous_cycle_skip_conditions import _check_autopilot_skip_conditions
+from koru.autonomy.cycle.cycle_common import DiagnosticResult
+from koru.autonomy.cycle.cycle_skip_conditions import _check_autopilot_skip_conditions
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult

@@ -2,7 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
+from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
 from koru.autonomous_wup import WupHealthResult
 from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.decision_trace import (

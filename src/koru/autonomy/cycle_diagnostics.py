@@ -1,7 +1,7 @@
 """Idle-diagnostics helpers for the autonomous cycle.
 
-Extracted verbatim from ``koru.autonomous_cycle`` (STARTER-545). The legacy
-``_underscored`` names remain importable from ``koru.autonomous_cycle`` via
+Extracted verbatim from ``koru.autonomy.cycle.cycle`` (STARTER-545). The legacy
+``_underscored`` names remain importable from ``koru.autonomy.cycle.cycle`` via
 ``import as`` re-exports so existing tests/callers keep working unchanged.
 
 Cross-module calls to names that tests (or ``run_cycle_with_compat``)
@@ -15,8 +15,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_cycle_common import DiagnosticResult
-from koru.autonomous_cycle_skip_conditions import _is_topology_enabled
+from koru.autonomy.cycle.cycle_common import DiagnosticResult
+from koru.autonomy.cycle.cycle_skip_conditions import _is_topology_enabled
 from koru.autonomous_wup import WupHealthResult
 from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
 from koru.autonomy.state import AutoloopState

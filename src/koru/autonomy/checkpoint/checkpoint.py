@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from koru.autonomous_cycle import AutoloopState
+    from koru.autonomy.cycle.cycle import AutoloopState
     from koru.queue import QueueLoopResult
 
 

@@ -61,8 +61,8 @@ from koru.autonomous_checkpoint import (
 from koru.autonomous_checkpoint import (
     save_loop_checkpoint as _save_loop_checkpoint,
 )
+from koru.autonomy.state import AutoloopState
 from koru.autonomous_cycle import (
-    AutoloopState,
     DiagnosticResult,
 )
 from koru.autonomous_cycle_bridge import run_cycle_with_compat as _run_cycle_with_compat

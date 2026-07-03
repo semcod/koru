@@ -99,7 +99,14 @@ planned `tillm-core` split was unnecessary. Implemented instead:
     (`antigravity→vscode`), normalization via koruide;
   - `autopilot/install_plugin_cli.py`: `PLUGIN_IDE_CLI` derives from
     koruide; redundant `PLUGIN_INSTALL_IDE_ALIASES` deleted.
-- Still open: publish `koruide` as its own distribution (packaging decision).
+- **Phase 2 DONE (2026-07-03)**: `import koruide` is standalone-safe — hard
+  koru/gillm edges inverted (`koruide/host_hooks.py` registry wired from
+  `koru/koruide_bridge.py` at daemon start; `env_truthy` inlined; lazy
+  `.daemon`/`.config`/`.host_setup` exports; plugin-installer cycle killed
+  with bidirectional patch-binding shims). Smoke-tested with koru and gillm
+  imports blocked (`tests/test_koruide_standalone_import.py`).
+- Still open (STARTER-563 phases 1,3-5): move to `packages/koruide/`,
+  publish 0.1.0, koru dep bump + de-bundling — full plan in the ticket.
 
 ### 5. planfile invocation hardening
 

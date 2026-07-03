@@ -5928,7 +5928,10 @@ class TestGhostWaitingTicketGuard:
     """A waiting ticket id that planfile does not know must not reach prompts."""
 
     def _decision(self, monkeypatch, tmp_path, *, missing: bool):
-        import koru.autonomous_cycle_drive_retry as drv
+        try:
+            import koru.autonomy.cycle.cycle_drive_retry as drv
+        except ImportError:  # pre-migration layout
+            import koru.autonomous_cycle_drive_retry as drv
 
         monkeypatch.setattr(
             drv, "_waiting_ticket_is_missing", lambda _p, _t: missing

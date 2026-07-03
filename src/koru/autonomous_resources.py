@@ -8,7 +8,7 @@ from typing import Any
 from koru import autonomous_cycle_config as _autonomous_cycle_config
 from koru.autonomous_auto_pipeline import AutoPipelineState
 from koru.autonomous_checkpoint import load_loop_checkpoint
-from koru.autonomous_cycle import AutoloopState
+from koru.autonomy.state import AutoloopState
 from koru.autonomous_cycle_gate import apply_agent_lane_environ
 from koru.autonomous_env import effective_ticket_source_flags
 from koru.autonomous_startup import resolve_autopilot_ide_for_autonomous
