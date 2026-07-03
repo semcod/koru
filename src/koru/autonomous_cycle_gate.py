@@ -299,8 +299,10 @@ def try_vdisplay_control_fallback(
         # Record to vdisplay session for audit trail (P1)
         try:
             record_koru_drive_step(reply, profile_id=ide, text=prompt)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 — audit must not block the drive
+            import sys
+
+            print(f"[koru] drive audit-trail record failed: {exc}", file=sys.stderr)
         # If the drive used vdisplay, autonomy can now use the coords from VQL
         # (e.g. resolve_click_for_frame or the centers from fresh 31-elem captures)
         # instead of blind keyboard.

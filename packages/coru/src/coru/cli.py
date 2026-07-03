@@ -19,6 +19,28 @@ from typing import Any
 
 from coru import ide_detection, repair_registry
 from coru.repair import RecordDiagnosisCommand, RepairHistoryQuery, RepairService
+from coru.cli_checks import (
+    _coru_normalize_project,
+    _coru_projects_equivalent,
+    _coru_readiness_strict,
+    _status_failure_ok_to_continue,
+    _status_has_keyboard_backend,
+    _status_has_plugin_for_ide,
+    _status_has_target_plugin,
+    _trace,
+    _trace_enabled,
+)
+from coru.cli_parser import (
+    _add_lane_identifiers,
+    _add_shell_argument,
+    _build_parser,
+    _register_doctor_command,
+    _register_interaction_commands,
+    _register_lane_commands,
+    _register_operational_commands,
+    _register_repair_command,
+    _register_sync_command,
+)
 
 _LANE_ENV_KEYS = ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET")
 _STRICT_PLUGIN_ENV_KEYS = (
@@ -93,38 +115,6 @@ def _chain_project_from_plans(plans: Sequence[Plan]) -> str | None:
     return None
 
 
-def _coru_normalize_project(path: Path | str | None) -> Path | None:
-    if path is None:
-        return None
-    try:
-        from koru.autonomous_runtime import normalize_project_root
-
-        return normalize_project_root(path)
-    except Exception:
-        pass
-    try:
-        current = Path(path).expanduser().resolve()
-    except OSError:
-        return None
-    for candidate in (current, *current.parents):
-        if (candidate / "pyproject.toml").is_file() and (candidate / ".git").exists():
-            return candidate
-    return current
-
-
-def _coru_projects_equivalent(left: Path | str | None, right: Path | str | None) -> bool:
-    try:
-        from koru.autonomous_runtime import projects_equivalent
-
-        return projects_equivalent(left, right)
-    except Exception:
-        left_norm = _coru_normalize_project(left)
-        right_norm = _coru_normalize_project(right)
-        if left_norm is None or right_norm is None:
-            return False
-        return left_norm == right_norm
-
-
 def _active_project_root() -> Path | None:
     ctx = _CHAIN_CONTEXT
     if ctx is not None and ctx.project:
@@ -145,24 +135,6 @@ _BLOCKING_PLUGIN_MANAGE_CODES = frozenset(
         "plugin_version_mismatch",
     }
 )
-
-
-def _trace_enabled() -> bool:
-    return os.environ.get("CORU_TRACE", "").strip().lower() in {"1", "true", "yes", "oql"}
-
-
-def _trace(step: str, **kv: Any) -> None:
-    """Emit an OQL-style RESOLVE trace line to stderr.
-
-    Format:  RESOLVE step  key=value key=value ...
-    Enabled by CORU_TRACE=1 (or CORU_TRACE=oql).
-    """
-    if not _trace_enabled():
-        return
-    parts = [f"RESOLVE {step}"]
-    for k, v in kv.items():
-        parts.append(f"{k}={v}")
-    print(" ".join(parts), file=sys.stderr)
 
 
 def _normalize_log_format(raw: str | None) -> str:
@@ -895,6 +867,15 @@ def _terminal_host_kind() -> str:
     return ide_detection.terminal_host_kind()
 
 
+def _terminal_shell_context_fallback() -> tuple[str | None, str, bool]:
+    """Provider-first shell context detection (brand name before generic vscode)."""
+    return ide_detection._terminal_shell_context_fallback(
+        ide_from_vscode_pid=_ide_from_vscode_pid,
+        vscode_family_env_hint=_vscode_family_env_hint,
+        windsurf_terminal_marker=_windsurf_terminal_marker,
+    )
+
+
 def _print_terminal_context(*, prefix: str = "[coru]") -> None:
     from koru.autonomy.ide_operator_guidance import terminal_kind_label
 
@@ -914,15 +895,6 @@ def _print_terminal_context(*, prefix: str = "[coru]") -> None:
             f"use `coru {ide} auto` unless another IDE lane is intentional",
             file=sys.stderr,
         )
-
-
-def _terminal_shell_context_fallback() -> tuple[str | None, str, bool]:
-    """Provider-first shell context detection (brand name before generic vscode)."""
-    return ide_detection._terminal_shell_context_fallback(
-        ide_from_vscode_pid=_ide_from_vscode_pid,
-        vscode_family_env_hint=_vscode_family_env_hint,
-        windsurf_terminal_marker=_windsurf_terminal_marker,
-    )
 
 
 def _instance_matches_ide(instance: str, ide: str) -> bool:
@@ -1894,30 +1866,6 @@ def _run_lane_repair(
     return plan
 
 
-def _status_has_target_plugin(status: dict[str, Any], *, ide: str, project: Path) -> bool:
-    plugins = status.get("plugins")
-    if not isinstance(plugins, list):
-        return False
-    project_resolved = str(project.resolve())
-    for plugin in plugins:
-        if not isinstance(plugin, dict):
-            continue
-        plugin_ide = str(plugin.get("ide") or "").strip().lower()
-        if plugin_ide != ide:
-            continue
-        folders = plugin.get("workspaceFolders")
-        if not isinstance(folders, list):
-            return True
-        for folder in folders:
-            try:
-                if str(Path(str(folder)).expanduser().resolve()) == project_resolved:
-                    return True
-            except Exception:
-                if str(folder) == str(project):
-                    return True
-    return False
-
-
 def _running_ide_summary() -> str:
     try:
         from koruide.ide import detect_running_ides
@@ -2414,20 +2362,6 @@ def _restart_stale_lane_daemon(
     return _lane_status_payload(ide, instance, payload=payload)
 
 
-def _status_has_plugin_for_ide(status: Mapping[str, Any], ide: str) -> bool:
-    plugins = status.get("plugins")
-    if not isinstance(plugins, list):
-        return False
-    wanted = ide.strip().lower()
-    for plugin in plugins:
-        if not isinstance(plugin, Mapping):
-            continue
-        plugin_ide = str(plugin.get("ide") or "").strip().lower()
-        if wanted in {"", "auto"} or plugin_ide == wanted:
-            return True
-    return False
-
-
 def _manage_report_plugin_blocker(
     report: Mapping[str, Any] | None,
 ) -> tuple[str, str, str | None] | None:
@@ -2447,15 +2381,6 @@ def _manage_report_plugin_blocker(
         fix = issue.get("fix")
         return code, message, str(fix) if fix else None
     return None
-
-
-def _status_has_keyboard_backend(status: Mapping[str, Any]) -> bool:
-    if str(status.get("selected_backend") or "").strip():
-        return True
-    backends = status.get("backends")
-    if not isinstance(backends, list):
-        return False
-    return any(isinstance(item, Mapping) and bool(item.get("available")) for item in backends)
 
 
 def _auto_readiness_can_continue_without_plugin(readiness: AutoReadiness) -> bool:
@@ -2729,14 +2654,6 @@ def _import_koru_readiness_module() -> Any | None:
         return readiness
     except ImportError:
         return None
-
-
-def _coru_readiness_strict() -> bool:
-    return os.environ.get("CORU_READINESS_STRICT", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-    }
 
 
 def _diagnose_readiness_alignment(
@@ -3200,11 +3117,6 @@ def _build_plan_chain(prompt: str, *, use_llm: bool = False, single_action: bool
     return [first]
 
 
-def _status_failure_ok_to_continue(plans: Sequence[Plan], index: int) -> bool:
-    """Allow auto/setup chains to proceed when daemon is down; koru auto starts it."""
-    return any(p.action == "auto" for p in plans[index + 1 :])
-
-
 def _preflight_failure_ok_to_continue(plans: Sequence[Plan], index: int) -> bool:
     """Allow manage/diagnose preflights to continue into auto when they still report issues."""
     plan = plans[index]
@@ -3476,95 +3388,6 @@ def _chat_loop(
             _chat_handle_drive(line, ctx, use_llm=use_llm, require_plugin=require_plugin, verbose=verbose)
 
 
-def _add_lane_identifiers(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("ide", nargs="?")
-    parser.add_argument("instance", nargs="?")
-
-
-def _add_shell_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--shell", choices=("bash", "sh", "zsh", "powershell"), default="bash")
-
-
-def _register_lane_commands(sub: Any) -> None:
-    p_lane = sub.add_parser("lane", help="emit lane environment exports")
-    _add_lane_identifiers(p_lane)
-    _add_shell_argument(p_lane)
-    p_lane.add_argument("--print-env", action="store_true", help="deprecated alias; env is always printed")
-
-    p_status = sub.add_parser("lane-status", help="show lane status")
-    _add_lane_identifiers(p_status)
-
-    p_status_alias = sub.add_parser("status", help="orchestrated lane diagnostics (env, daemon, status)")
-    _add_lane_identifiers(p_status_alias)
-    p_status_alias.add_argument("--probe", action="store_true", help="run plugin-required drive probe")
-
-    p_env_alias = sub.add_parser("env", help="alias for lane")
-    _add_lane_identifiers(p_env_alias)
-    _add_shell_argument(p_env_alias)
-
-
-def _register_operational_commands(sub: Any) -> None:
-    p_auto = sub.add_parser("auto", help="run koru auto in a lane")
-    _add_lane_identifiers(p_auto)
-    p_auto.add_argument("rest", nargs=argparse.REMAINDER)
-
-    p_daemon = sub.add_parser("daemon", help="run autopilot daemon in foreground for current lane")
-    _add_lane_identifiers(p_daemon)
-    p_daemon.add_argument(
-        "--allow-integrated-shell",
-        action="store_true",
-        help="allow running daemon from IDE integrated terminal",
-    )
-
-    p_supervisor = sub.add_parser("supervisor", help="background lane registry and daemon supervisor")
-    p_supervisor.add_argument("supervisor_args", nargs=argparse.REMAINDER)
-
-
-def _register_interaction_commands(sub: Any) -> None:
-    p_text = sub.add_parser("text", help="natural language command")
-    p_text.add_argument("prompt")
-    p_text.add_argument("--llm", action="store_true", help="use litellm planner first")
-    _add_shell_argument(p_text)
-    p_text.add_argument("--single-action", action="store_true", help="execute only one mapped action")
-
-    p_chat = sub.add_parser("chat", help="interactive chat-first mode")
-    p_chat.add_argument("--llm", action="store_true", help="use litellm planner first")
-    _add_shell_argument(p_chat)
-    p_chat.add_argument("--single-action", action="store_true", help="execute only one mapped action")
-    p_chat.add_argument(
-        "--require-plugin",
-        action="store_true",
-        default=True,
-        help="require connected IDE plugin transport (disable keyboard fallback)",
-    )
-    p_chat.add_argument(
-        "--allow-keyboard-fallback",
-        dest="require_plugin",
-        action="store_false",
-        help="allow OS keyboard injection fallback when plugin transport is unavailable",
-    )
-
-
-def _register_repair_command(sub: Any) -> None:
-    p_repair = sub.add_parser("repair", help="bridge autorepair with event-sourced history")
-    repair_sub = p_repair.add_subparsers(dest="repair_command", required=True)
-
-    p_history = repair_sub.add_parser("history", help="show repair case history for LLM/operators")
-    p_history.add_argument("--limit", type=int, default=20)
-    p_history.add_argument("--code", default=None, help="filter sessions that included this problem code")
-    p_history.add_argument(
-        "--format",
-        choices=("llm", "json"),
-        default="llm",
-        help="llm: markdown brief for agents; json: structured case rows",
-    )
-    _add_lane_identifiers(p_history)
-
-    p_run = repair_sub.add_parser("run", help="detect problems and run registry repair pipeline")
-    p_run.add_argument("--fix", action="store_true", help="alias; repair always runs when problems exist")
-    _add_lane_identifiers(p_run)
-
-
 def _cmd_repair_history(args: argparse.Namespace) -> int:
     ide, instance = _default_lane(args.ide, args.instance)
     root = _project_repo_root()
@@ -3620,60 +3443,6 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     else:
         print(format_sync_report(report))
     return 0 if report.ok else 1
-
-
-def _register_sync_command(sub: Any) -> None:
-    p_sync = sub.add_parser(
-        "sync",
-        help="auto-update koru ecosystem (python packages + VSIX plugins + repair)",
-    )
-    _add_lane_identifiers(p_sync)
-    p_sync.add_argument(
-        "--all-ides",
-        action="store_true",
-        help=(
-            "sync plugins/repair for running VS Code-family IDEs "
-            "(skips Antigravity unless selected with --ide antigravity)"
-        ),
-    )
-    p_sync.add_argument("--skip-python", action="store_true", help="skip pip install -U")
-    p_sync.add_argument("--skip-plugins", action="store_true", help="skip VSIX install-plugin")
-    p_sync.add_argument("--skip-repair", action="store_true", help="skip manage --fix and self repair")
-    p_sync.add_argument("--format", choices=("human", "json"), default="human")
-
-
-def _register_doctor_command(sub: Any) -> None:
-    p_doctor = sub.add_parser("doctor", help="orchestrated diagnostics (status/fix/probe) for current lane")
-    _add_lane_identifiers(p_doctor)
-    p_doctor.add_argument("--fix", action="store_true", help="run `koru ide doctor --fix --gc-sockets`")
-    p_doctor.add_argument("--probe", action="store_true", help="run plugin-required drive probe")
-    p_doctor.add_argument("--probe-prompt", default="test", help="prompt used by --probe")
-    p_doctor.add_argument(
-        "--allow-integrated-shell",
-        action="store_true",
-        help="allow running diagnostics from IDE integrated terminal",
-    )
-
-
-def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="coru")
-    sub = p.add_subparsers(dest="command", required=False)
-
-    p_ensure = sub.add_parser("ensure", help="check/install koruenv + koru + coru")
-    p_ensure.add_argument("--install", action="store_true")
-
-    sub.add_parser("setup", help="prepare preferred repo-local environment")
-
-    _register_sync_command(sub)
-
-    _register_lane_commands(sub)
-    _register_operational_commands(sub)
-    _register_interaction_commands(sub)
-    _register_calibration_command(sub)
-    _register_doctor_command(sub)
-    _register_repair_command(sub)
-
-    return p
 
 
 def _restore_log_format(previous_log_format: str | None) -> None:

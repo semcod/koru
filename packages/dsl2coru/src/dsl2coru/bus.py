@@ -39,6 +39,67 @@ def _dispatch_koru(
     )
 
 
+def _normalize_command(
+    command: str | dict[str, Any] | bytes,
+    ctx: str | None,
+) -> tuple[dict[str, Any], str, DslResult | None]:
+    """Normalize bytes/dict/str input to (payload, raw_line, early_result)."""
+    if isinstance(command, bytes):
+        payload = envelope_from_bytes(command)
+        return payload, json.dumps(payload, ensure_ascii=False), None
+    if isinstance(command, dict):
+        payload = validate_payload(command)
+        return payload, to_text(payload), None
+    raw_line = command.strip()
+    delegated = _dispatch_koru(raw_line, default_file=ctx)
+    if delegated is not None:
+        return {}, raw_line, delegated
+    payload = parse_text(raw_line, default_file=ctx)
+    if not payload:
+        return {}, raw_line, DslResult(ok=True, command=raw_line, action="noop")
+    return payload, raw_line, None
+
+
+def _route_payload(
+    payload: dict[str, Any],
+    verb: str,
+    raw_line: str,
+    ctx: str | None,
+    runner: Runner | None,
+) -> DslResult:
+    """Route a validated payload to the query / UI / command handler."""
+    if verb in QUERY_VERBS:
+        from dsl2coru.handlers import run_query
+
+        return run_query(payload, line=raw_line, runner=runner)
+
+    if verb in UI_VERBS:
+        from dsl2coru.handlers.ui import run_ui_command
+
+        return run_ui_command(payload, line=raw_line)
+
+    if verb in COMMAND_VERBS:
+        from dsl2coru.handlers import run_command
+
+        result = run_command(payload, line=raw_line, runner=runner)
+        event_id = None
+        if result.ok:
+            store = EventStore.for_default(ctx)
+            event_id = store.append_command(payload, result.to_dict())
+        return DslResult(
+            ok=result.ok,
+            verb=verb,
+            command=raw_line,
+            action=result.action,
+            output=result.output,
+            data=result.data,
+            error=result.error,
+            event_id=event_id,
+        )
+
+    return DslResult(ok=False, verb=verb, command=raw_line, error=f"unsupported verb: {verb}")
+
+
 def dispatch(
     command: str | dict[str, Any] | bytes,
     *,
@@ -49,20 +110,9 @@ def dispatch(
     raw_line = ""
     ctx = default_file if default_file is not None else default_project
     try:
-        if isinstance(command, bytes):
-            payload = envelope_from_bytes(command)
-            raw_line = json.dumps(payload, ensure_ascii=False)
-        elif isinstance(command, dict):
-            payload = validate_payload(command)
-            raw_line = to_text(payload)
-        else:
-            raw_line = command.strip()
-            delegated = _dispatch_koru(raw_line, default_file=ctx)
-            if delegated is not None:
-                return delegated
-            payload = parse_text(raw_line, default_file=ctx)
-            if not payload:
-                return DslResult(ok=True, command=raw_line, action="noop")
+        payload, raw_line, early = _normalize_command(command, ctx)
+        if early is not None:
+            return early
 
         verb = str(payload["verb"]).upper()
         if verb in KORU_DELEGATE_VERBS:
@@ -70,37 +120,10 @@ def dispatch(
             if delegated is not None:
                 return delegated
 
-        if verb in QUERY_VERBS:
-            from dsl2coru.handlers import run_query
-
-            return run_query(payload, line=raw_line, runner=runner)
-
-        if verb in UI_VERBS:
-            from dsl2coru.handlers.ui import run_ui_command
-
-            return run_ui_command(payload, line=raw_line)
-
-        if verb in COMMAND_VERBS:
-            from dsl2coru.handlers import run_command
-
-            result = run_command(payload, line=raw_line, runner=runner)
-            event_id = None
-            if result.ok:
-                store = EventStore.for_default(ctx)
-                event_id = store.append_command(payload, result.to_dict())
-            return DslResult(
-                ok=result.ok,
-                verb=verb,
-                command=raw_line,
-                action=result.action,
-                output=result.output,
-                data=result.data,
-                error=result.error,
-                event_id=event_id,
-            )
-
-        return DslResult(ok=False, verb=verb, command=raw_line, error=f"unsupported verb: {verb}")
+        return _route_payload(payload, verb, raw_line, ctx, runner)
     except Exception as exc:
+        if not raw_line and isinstance(command, str):
+            raw_line = command.strip()
         return DslResult(ok=False, command=raw_line or str(command), error=str(exc))
 
 

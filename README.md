@@ -176,6 +176,7 @@ pip install "koru[desktop]"  # desktop automation stack (nlp2uri, env2llm, testq
 pip install "koru[imgl]"     # IMGL HTTP client integration
 pip install "koru[envmap]"   # environment mapping probes (nlp2uri, env2llm)
 pip install "koru[testql]"   # TestQL GUI/DOM scenario runner
+pip install "koru[planfile]" # planfile ticket queue backend (koru auto queue)
 pip install "koru[curllm]"   # curllm MCP shell bridge
 pip install "koru[browser]"  # browser automation (testql + playwright + curllm)
 pip install "koru[vdisplay]" # vdisplay remote desktop agent

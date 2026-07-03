@@ -280,6 +280,12 @@ _PLANFILE_MODULE_MISSING_MARKERS = (
 )
 
 
+def planfile_module_missing(text: str) -> bool:
+    """True when command output carries the planfile module-missing signature."""
+    lowered = text.lower()
+    return any(marker in lowered for marker in _PLANFILE_MODULE_MISSING_MARKERS)
+
+
 @lru_cache(maxsize=8)
 def _configured_planfile_cmd_usable(configured: str) -> bool:
     """Cheaply verify a pinned ``KORU_PLANFILE_CMD`` can actually run.

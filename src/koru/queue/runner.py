@@ -173,7 +173,7 @@ def _execute_action(
 
             activity("QUEUE", f"shell {ticket_id}: {action}")
         except Exception:
-            pass
+            pass  # best-effort progress logging — must never break the queue
         result = shell_runner(str(action), project)
         action_label = str(action)
     return result, action_label
@@ -272,9 +272,18 @@ def _next_ticket_or_result(
         runner=planfile_runner,
     )
     if next_result.returncode != 0:
+        from koru.queue.ticket import planfile_module_missing
+
+        message = "planfile ticket list failed"
+        if planfile_module_missing(f"{next_result.stdout}\n{next_result.stderr}"):
+            message += (
+                " — planfile module missing in the resolved environment; "
+                "fix: pip install planfile into the project venv "
+                "(or pip install 'koru[planfile]')"
+            )
         return None, QueueRunResult(
             status="planfile_error",
-            message="planfile ticket list failed",
+            message=message,
             exit_code=next_result.returncode,
             stdout=next_result.stdout,
             stderr=next_result.stderr,
@@ -297,7 +306,7 @@ def _log_queue_ticket_start(ticket: dict[str, Any], ticket_id: str) -> None:
             f"{(ticket.get('executor') or {}).get('kind', 'human')}",
         )
     except Exception:
-        pass
+        pass  # best-effort progress logging — must never break the queue
 
 
 def _resolve_action_or_result(

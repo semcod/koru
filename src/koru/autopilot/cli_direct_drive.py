@@ -48,8 +48,8 @@ def _record_direct_drive_audit(
         from koru.integrations.vdisplay_client import record_koru_drive_step
 
         record_koru_drive_step(payload, profile_id=profile_id, text=text)
-    except Exception:
-        pass
+    except Exception as exc:  # noqa: BLE001 — audit must not block the drive
+        print(f"[koru] drive audit-trail record failed: {exc}", file=sys.stderr)
 
 
 def _chat_coords_from_map(

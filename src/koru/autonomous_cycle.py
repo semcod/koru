@@ -537,8 +537,8 @@ def _heal_stale_socket() -> None:
         target = default_socket_path()
         for removed in gc_stale_sockets_for_lane(target):
             print(f"koru autonomous: auto-healed stale socket {removed}", file=sys.stderr)
-    except Exception:
-        pass
+    except Exception as exc:  # noqa: BLE001 — healing is best-effort, but say it failed
+        print(f"koru autonomous: stale-socket GC failed: {exc}", file=sys.stderr)
 
 
 def _handle_autopilot_events(
@@ -831,6 +831,77 @@ def _update_stagnation_state(
     else:
         state.stagnation_streak = 0
     state.previous_signature = signature
+
+
+# Queue statuses that mean "misconfiguration", not "waiting for work/human".
+_QUEUE_ERROR_STATUSES = frozenset({"planfile_error", "unsupported_executor", "claim_failed"})
+
+
+def _error_stagnation_threshold() -> int:
+    raw = os.environ.get("KORU_ERROR_STAGNATION_DIAG_THRESHOLD", "").strip()
+    try:
+        return max(1, int(raw)) if raw else 3
+    except ValueError:
+        return 3
+
+
+def _escalate_error_stagnation(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    """Diagnose instead of sleeping when the same error repeats cycle after cycle.
+
+    2026-07-03 incident: ``planfile_error`` repeated for 17 cycles (over four
+    hours of 900 s sleeps) without a single diagnostic run. When an error-class
+    queue status persists ``threshold`` cycles, run the runtime readiness
+    checks and surface every issue with its fix command; re-alert every 10
+    cycles after that instead of every cycle to avoid log spam.
+    """
+    if queue_result.last_status not in _QUEUE_ERROR_STATUSES:
+        return
+    threshold = _error_stagnation_threshold()
+    streak = state.stagnation_streak
+    if streak < threshold or (streak > threshold and (streak - threshold) % 10 != 0):
+        return
+    _hp(
+        f"  stagnation: {queue_result.last_status} repeated {streak + 1} cycles — "
+        "running runtime diagnostics",
+    )
+    if queue_result.last_message:
+        _hp(f"  stagnation: last error: {queue_result.last_message}")
+    try:
+        from koru.autonomous_readiness import check_runtime_consistency
+
+        readiness = check_runtime_consistency(project)
+        issues = list(readiness.issues)
+    except Exception as exc:  # noqa: BLE001 — diagnostics must never kill the loop
+        _hp(f"  stagnation: readiness diagnostics failed: {exc}")
+        issues = []
+    for issue in issues:
+        _hp(f"  stagnation: [{issue.severity.upper()}] {issue.code}: {issue.message}")
+        if issue.fix_command:
+            _hp(f"  stagnation: fix → {issue.fix_command}")
+    if not issues:
+        _hp(
+            "  stagnation: runtime checks passed — the error is likely in "
+            "project/planfile state; inspect the queue stderr above",
+        )
+    _emit(
+        "ErrorStagnationEscalated",
+        {
+            "cycle": cycle,
+            "status": queue_result.last_status,
+            "streak": streak,
+            "issues": [
+                {"code": i.code, "severity": i.severity, "fix": i.fix_command}
+                for i in issues
+            ],
+        },
+    )
 
 
 def _take_pre_drive_snapshot(
@@ -1160,6 +1231,7 @@ def _run_pre_drive_cycle_phases(
     if idle_scan_result is not None:
         scan_result = idle_scan_result
     _update_stagnation_state(state, queue_result)
+    _escalate_error_stagnation(project, state, cycle, queue_result, hp, emit)
     diag_result, wup_health = _handle_diagnostics(
         project,
         state,

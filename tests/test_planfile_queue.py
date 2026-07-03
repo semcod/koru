@@ -1636,3 +1636,22 @@ class TestAppendShellEvidenceNote(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_planfile_error_message_actionable_on_module_missing(tmp_path: Path) -> None:
+    """Module-missing failures must tell the operator how to fix them."""
+    from types import SimpleNamespace
+
+    from koru.queue.runner import run_next_planfile_task
+
+    def planfile_runner(_command: list[str], _project: Path) -> SimpleNamespace:
+        return SimpleNamespace(
+            returncode=1,
+            stdout="",
+            stderr="/x/.venv/bin/python: Error while finding module specification for 'planfile.cli' (ModuleNotFoundError: No module named 'planfile')",
+        )
+
+    result = run_next_planfile_task(project=tmp_path, planfile_runner=planfile_runner)
+
+    assert result.status == "planfile_error"
+    assert "pip install planfile" in result.message

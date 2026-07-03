@@ -1249,7 +1249,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-06-04T12:31:44.614909Z'
+        finished_at: '2026-07-03T15:41:46.267571Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1365,6 +1365,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-06-04T12:31:44.770988+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-03T15:41:46.434158+00:00'
       id: STARTER-266
       inputs:
         api_headers: {}
@@ -1419,7 +1424,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-06-04T12:31:44.770948+00:00'
+      updated_at: '2026-07-03T15:41:46.434112+00:00'
     STARTER-267:
       blocked_by: []
       blocks: []

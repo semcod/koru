@@ -314,3 +314,45 @@ def test_queue_runner_contention_warns_when_lock_held(
         fcntl.flock(fd, fcntl.LOCK_UN)
         os.close(fd)
     assert any(i.code == "queue_runner_lock_held" for i in result.issues)
+
+
+def test_planfile_availability_issue_on_module_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Module-missing planfile must surface as a readiness issue with a pip fix."""
+    from koru import autonomous_readiness as ar
+
+    monkeypatch.setattr(
+        "koru.queue.ticket.resolve_planfile_base_command",
+        lambda _p: [".venv/bin/python", "-m", "planfile.cli"],
+    )
+    monkeypatch.setattr(
+        ar,
+        "_probe_planfile_version",
+        lambda _cmd, _cwd: (1, "No module named 'planfile'"),
+    )
+    issue = ar._planfile_availability_issue(tmp_path, strict=True)
+    assert issue is not None
+    assert issue.code == "planfile_unavailable"
+    assert issue.severity == "fail"
+    assert "planfile_error" in issue.message
+    assert "install planfile" in issue.fix_command
+
+
+def test_planfile_availability_passes_when_probe_ok(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koru import autonomous_readiness as ar
+
+    monkeypatch.setattr(
+        "koru.queue.ticket.resolve_planfile_base_command",
+        lambda _p: ["planfile"],
+    )
+    monkeypatch.setattr(
+        ar,
+        "_probe_planfile_version",
+        lambda _cmd, _cwd: (0, "Planfile CLI version: 0.1.104"),
+    )
+    assert ar._planfile_availability_issue(tmp_path, strict=False) is None

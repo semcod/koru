@@ -168,6 +168,11 @@ def handle_queue_loop_phase(
         _hp(f"+ {qcmd}")
         queue_result = run_queue_loop(project, actor, queue_name, max_iterations)
         _hp(f"  queue: {queue_result.summary()}")
+        if (
+            queue_result.last_status in ("planfile_error", "unsupported_executor", "claim_failed")
+            and queue_result.last_message
+        ):
+            _hp(f"  queue: {queue_result.last_message}")
         emit_queue_iteration_event(queue_result, cycle, queue_name, actor, qcmd, _emit)
         handle_post_run_verify(project, state, cycle, queue_result, verify_config, _hp, _emit)
     return queue_result, verify_config

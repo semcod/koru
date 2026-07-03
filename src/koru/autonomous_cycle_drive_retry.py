@@ -505,7 +505,13 @@ def _shell_drive_editor_rescue(
         from koruide.ide import detect_running_ides
 
         running = detect_running_ides()
-    except Exception:
+    except Exception as exc:  # noqa: BLE001 — rescue is optional, but say why it was skipped
+        import sys
+
+        print(
+            f"[koru] editor-rescue skipped: IDE detection failed: {exc}",
+            file=sys.stderr,
+        )
         return None
     if not running:
         return None

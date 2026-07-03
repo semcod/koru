@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import shutil
 import sys
@@ -144,6 +145,71 @@ def _python_executable_mismatch_issue(
     )
 
 
+@functools.lru_cache(maxsize=16)
+def _probe_planfile_version(cmd: tuple[str, ...], cwd: str) -> tuple[int | None, str]:
+    """Run ``<cmd> --version``; returns (returncode-or-None, combined output/error)."""
+    import subprocess
+
+    try:
+        proc = subprocess.run(
+            [*cmd, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+            cwd=cwd,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, str(exc)
+    return proc.returncode, f"{proc.stdout}\n{proc.stderr}"
+
+
+def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIssue | None:
+    """Fail fast when the resolved planfile command cannot run.
+
+    Without this the queue silently dies with ``planfile_error`` on every
+    cycle (2026-07-03: 17 stagnant cycles before anyone noticed).
+    """
+    from koru.queue.ticket import planfile_module_missing, resolve_planfile_base_command
+
+    cmd = resolve_planfile_base_command(project)
+    pip = project / ".venv" / "bin" / "pip"
+    fix = (
+        f"{pip} install planfile"
+        if pip.is_file()
+        else "pip install planfile  # or: pip install 'koru[planfile]'"
+    )
+    returncode, output = _probe_planfile_version(tuple(cmd), str(project))
+    if returncode == 0:
+        return None
+    if returncode is None:
+        return ReadinessIssue(
+            code="planfile_unavailable",
+            severity=_runtime_issue_severity(strict),
+            message=f"planfile command not runnable ({' '.join(cmd)}): {output}",
+            fix_command=fix,
+        )
+    if planfile_module_missing(output):
+        return ReadinessIssue(
+            code="planfile_unavailable",
+            severity=_runtime_issue_severity(strict),
+            message=(
+                f"planfile module missing for resolved command ({' '.join(cmd)}); "
+                "the queue would fail every cycle with planfile_error"
+            ),
+            fix_command=fix,
+        )
+    return ReadinessIssue(
+        code="planfile_unavailable",
+        severity="warn",
+        message=(
+            f"planfile probe exited {returncode} ({' '.join(cmd)}): "
+            f"{output.strip().splitlines()[-1] if output.strip() else 'no output'}"
+        ),
+        fix_command=fix,
+    )
+
+
 def _venv_alignment_fix(project: Path) -> str | None:
     if not (project / ".venv").exists():
         return None
@@ -253,6 +319,7 @@ def check_runtime_consistency(
         ),
     )
     _append_issue(issues, _venv_alignment_issue(project, strict=strict))
+    _append_issue(issues, _planfile_availability_issue(project, strict=strict))
     _append_issue(
         issues,
         _koru_runtime_identity_issue(

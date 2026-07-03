@@ -5859,3 +5859,66 @@ def test_read_wup_health_treats_aborted_as_interrupted_not_failure(tmp_path) -> 
     normalized = json.loads((health_dir / "service-health.json").read_text(encoding="utf-8"))
     assert normalized["koru-shell"]["status"] == "interrupted"
     assert normalized["koru-shell"]["interrupted"] is True
+
+
+class TestErrorStagnationEscalation:
+    """planfile_error repeating for N cycles must trigger diagnostics, not silence."""
+
+    def _run(self, monkeypatch, streak, status="planfile_error", message=""):
+        import koru.autonomous_cycle as cyc
+
+        state = cyc.AutoloopState()
+        state.stagnation_streak = streak
+        queue_result = cyc.QueueLoopResult(
+            iterations=1, completed=[], failed=[], waiting=[],
+            last_status=status, last_message=message,
+        )
+        lines: list[str] = []
+        events: list[tuple[str, dict]] = []
+        monkeypatch.setattr(
+            "koru.autonomous_readiness.check_runtime_consistency",
+            lambda _p: SimpleNamespace(
+                ok=False,
+                issues=(
+                    SimpleNamespace(
+                        code="planfile_unavailable",
+                        severity="fail",
+                        message="planfile module missing",
+                        fix_command="pip install planfile",
+                    ),
+                ),
+                primary_fix="pip install planfile",
+            ),
+        )
+        cyc._escalate_error_stagnation(
+            Path("/tmp"), state, cycle=9, queue_result=queue_result,
+            _hp=lines.append, _emit=lambda name, payload: events.append((name, payload)),
+        )
+        return lines, events
+
+    def test_escalates_at_threshold(self, monkeypatch):
+        lines, events = self._run(monkeypatch, streak=3, message="planfile ticket list failed")
+        assert any("running runtime diagnostics" in ln for ln in lines)
+        assert any("fix → pip install planfile" in ln for ln in lines)
+        assert any("planfile ticket list failed" in ln for ln in lines)
+        assert events and events[0][0] == "ErrorStagnationEscalated"
+
+    def test_quiet_below_threshold(self, monkeypatch):
+        lines, events = self._run(monkeypatch, streak=1)
+        assert lines == []
+        assert events == []
+
+    def test_quiet_between_realert_intervals(self, monkeypatch):
+        lines, events = self._run(monkeypatch, streak=5)
+        assert lines == []
+        assert events == []
+
+    def test_realerts_every_ten_cycles(self, monkeypatch):
+        lines, events = self._run(monkeypatch, streak=13)
+        assert any("running runtime diagnostics" in ln for ln in lines)
+        assert events
+
+    def test_ignores_non_error_statuses(self, monkeypatch):
+        lines, events = self._run(monkeypatch, streak=20, status="waiting_input")
+        assert lines == []
+        assert events == []
