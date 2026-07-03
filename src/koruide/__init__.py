@@ -48,13 +48,6 @@ except ImportError:  # degraded host: keep koruide importable; actuation soft-fa
 
 from .audit import AuditLog, default_log_path
 from .client import KoruIDEClient, build_client
-from .config import AutopilotConfig, cached_config, clear_config_cache, load_config
-from .daemon import AutopilotDaemon
-from .host_setup import (
-    build_setup_host_report,
-    install_ydotoold_user_service,
-    run_host_setup,
-)
 from .ide import RunningIDE, detect_focused_ide_id, detect_running_ides, pick_target
 from .plugin_installer import (
     PluginInstallResult,
@@ -88,6 +81,40 @@ def _koru_activity_warn_bridge(message: str, *, hint: str | None = None, **kwarg
 
 if _os_injector is not None:
     _os_injector.emit_activity_warn = _koru_activity_warn_bridge
+
+
+# Lazy exports (STARTER-563): ``.daemon``, ``.config`` and ``.host_setup``
+# import gillm (and the daemon hooks back into koru via
+# ``koruide.host_hooks``) at module level, so they are resolved on first
+# attribute access to keep ``import koruide`` working on standalone hosts
+# without gillm/koru installed.
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "AutopilotDaemon": (".daemon", "AutopilotDaemon"),
+    "AutopilotConfig": (".config", "AutopilotConfig"),
+    "cached_config": (".config", "cached_config"),
+    "clear_config_cache": (".config", "clear_config_cache"),
+    "load_config": (".config", "load_config"),
+    "build_setup_host_report": (".host_setup", "build_setup_host_report"),
+    "install_ydotoold_user_service": (".host_setup", "install_ydotoold_user_service"),
+    "run_host_setup": (".host_setup", "run_host_setup"),
+}
+
+
+def __getattr__(name: str):
+    spec = _LAZY_EXPORTS.get(name)
+    if spec is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name, attr = spec
+    from importlib import import_module
+
+    value = getattr(import_module(module_name, __name__), attr)
+    globals()[name] = value  # cache: later access bypasses __getattr__
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
+
 
 __all__ = [
     "AuditLog",

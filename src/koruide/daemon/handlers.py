@@ -12,16 +12,6 @@ from typing import Any
 
 from gillm.injection.errors import InjectorError
 
-from koru.control_commands import plugin_socket_command
-from koru.integration_ledger import record_integration_action
-from koru.observability_events import (
-    emit_action,
-    emit_decision,
-    emit_failure,
-    emit_intent,
-    emit_phase,
-    emit_verify,
-)
 from koruide.daemon.protocol import (
     _Client,
     _daemon_package_version,
@@ -74,7 +64,7 @@ def _cap_ack_info_for_cli(info: dict[str, Any]) -> dict[str, Any]:
     return trimmed
 
 
-from koru.env_flags import env_truthy as _env_truthy
+from koruide.utils import env_truthy as _env_truthy
 from koruide.daemon.handlers_drive import (
     _drive_via_keyboard,
     _drive_via_keyboard_backend,

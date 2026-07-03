@@ -41,7 +41,7 @@ HandoffBuilder = Callable[[dict[str, Any]], str]
 _FRAME_HEADER = struct.Struct(">I")
 
 
-from koru.env_flags import env_truthy as _env_truthy
+from koruide.utils import env_truthy as _env_truthy
 
 
 def _verbose_io() -> bool:

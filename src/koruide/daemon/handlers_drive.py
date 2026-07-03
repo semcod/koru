@@ -16,14 +16,7 @@ from typing import Any
 
 from gillm.injection.errors import InjectorError
 
-from koru.control_commands import plugin_socket_command
-from koru.integration_ledger import record_integration_action
-from koru.observability_events import (
-    emit_action,
-    emit_decision,
-    emit_intent,
-    emit_phase,
-)
+from koruide import host_hooks as _host_hooks
 from koruide.command_catalog_store import command_picker_enabled
 from koruide.command_picker import pick_command_order
 from koruide.daemon.protocol import _Client
@@ -31,6 +24,36 @@ from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
 from koruide.protocol import Message, ack, chat_send, error
+
+# Host-integration seams (observability, ledger, control commands) resolve
+# late through ``koruide.host_hooks`` so koru's wiring — installed at daemon
+# startup — takes effect, while standalone koruide hosts soft no-op. The
+# module-level wrappers keep existing monkeypatch targets
+# (``koruide.daemon.handlers_drive.<name>``) binding.
+
+
+def record_integration_action(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.record_integration_action(*args, **kwargs)
+
+
+def plugin_socket_command(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.plugin_socket_command(*args, **kwargs)
+
+
+def emit_action(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.emit_action(*args, **kwargs)
+
+
+def emit_decision(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.emit_decision(*args, **kwargs)
+
+
+def emit_intent(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.emit_intent(*args, **kwargs)
+
+
+def emit_phase(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.emit_phase(*args, **kwargs)
 
 
 def _prefer_keyboard_drive() -> bool:

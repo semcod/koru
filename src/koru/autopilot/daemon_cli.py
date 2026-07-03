@@ -73,6 +73,12 @@ def run_daemon_command(
     *,
     default_socket_fn: Callable[[], Path] = default_socket_path,
 ) -> int:
+    # Pin koru's real implementations onto koruide's late-bound host hooks
+    # (observability, integration ledger, control commands) before the
+    # daemon serves anything: hooks must be installed before any handler runs.
+    from koru.koruide_bridge import install_koruide_host_hooks
+
+    install_koruide_host_hooks()
     socket_path = args.socket or default_socket_fn()
     from koru.ide_adapters.bridge import gc_stale_sockets_for_lane
 

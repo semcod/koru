@@ -16,12 +16,27 @@ from typing import Any
 
 from gillm.injection.errors import InjectorError
 
-from koru.integration_ledger import record_integration_action
-from koru.observability_events import emit_failure, emit_verify
+from koruide import host_hooks as _host_hooks
 from koruide.daemon.protocol import _Client, _daemon_package_version
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import normalize_ide_id
 from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION, Message, ack
+
+# Host-integration seams resolve late through ``koruide.host_hooks`` (see
+# handlers_drive). Module-level wrappers keep existing monkeypatch targets
+# (``koruide.daemon.handlers_ack.<name>``) binding.
+
+
+def record_integration_action(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.record_integration_action(*args, **kwargs)
+
+
+def emit_failure(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.emit_failure(*args, **kwargs)
+
+
+def emit_verify(*args: Any, **kwargs: Any) -> Any:
+    return _host_hooks.emit_verify(*args, **kwargs)
 
 
 def _persist_recent_dsl(daemon: Any) -> None:

@@ -24,6 +24,7 @@ from koruide.ide import (
     detect_focused_ide_id,
     detect_running_ides,
     detect_terminal_host_ide_id,
+    ide_binary_candidates,
     normalize_ide_id,
     supported_autopilot_ide_ids,
     vscode_extension_plugin_ide_ids,
@@ -65,6 +66,151 @@ _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
     "vscode": ("code", "code-insiders"),
     "vscodium": ("codium", "vscodium", "code-oss"),
 }
+
+# IDE ids whose plugin installs via a vendor CLI; binary names come from
+# koruide.ide (single source for binary aliases like codium/code-oss).
+# Moved here from ``koru.autopilot.install_plugin_cli`` (which re-exports
+# them) so koruide has no hard dependency on koru.
+_PLUGIN_CLI_IDES = ("antigravity", "windsurf", "cursor", "vscode", "vscodium")
+PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
+    ide: ide_binary_candidates(ide) for ide in _PLUGIN_CLI_IDES
+}
+
+# System installs that share extension dirs with AppImage/snap runtimes but
+# can spawn ``--install-extension`` without zygote/sandbox failures.
+IDE_CLI_FALLBACKS: dict[str, tuple[str, ...]] = {
+    "cursor": (
+        "/usr/share/cursor/bin/cursor",
+        "/usr/local/bin/cursor",
+    ),
+    "vscode": (
+        "/usr/share/code/bin/code",
+        "/usr/bin/code",
+    ),
+    "vscodium": (
+        "/usr/share/codium/bin/codium",
+        "/usr/bin/codium",
+        "/usr/bin/vscodium",
+    ),
+}
+
+
+def _cli_override(name: str, default: Any) -> Any:
+    """Prefer an attribute from ``koru.autopilot.install_plugin_cli`` when loaded.
+
+    The editor-bin helpers below used to live on that koru-side module and
+    koru's test-suite monkeypatches them there. Dispatching through the
+    loaded module keeps those patch targets binding; on standalone koruide
+    hosts (koru absent) the local *default* is used.
+    """
+    cli = sys.modules.get("koru.autopilot.install_plugin_cli")
+    if cli is None:
+        return default
+    return getattr(cli, name, default)
+
+
+def _editor_bin_usable_for_cli_install(exe: str) -> bool:
+    """Return False for binaries that crash when spawned from an external shell.
+
+    Cursor AppImage mounts under ``/.mount_*`` cannot start a second instance for
+    ``--install-extension`` (zygote/sandbox failure). Those installs share
+    ``~/.cursor/extensions`` with the apt/snap CLI, so PATH ``cursor`` is enough.
+    """
+    normalized = exe.replace("\\", "/")
+    if "/.mount_" in normalized:
+        return False
+    if normalized.startswith("/snap/") and not normalized.startswith("/snap/bin/"):
+        return False
+    return Path(exe).is_file()
+
+
+def _which_cli_safe_editor(name: str) -> str | None:
+    usable = _cli_override(
+        "_editor_bin_usable_for_cli_install", _editor_bin_usable_for_cli_install
+    )
+    resolved = shutil.which(name)
+    if resolved and usable(resolved):
+        return resolved
+    return None
+
+
+def _fallback_cli_editor_bins(ide: str) -> list[str]:
+    usable = _cli_override(
+        "_editor_bin_usable_for_cli_install", _editor_bin_usable_for_cli_install
+    )
+    fallbacks = _cli_override("IDE_CLI_FALLBACKS", IDE_CLI_FALLBACKS)
+    out: list[str] = []
+    seen: set[str] = set()
+    for candidate in fallbacks.get(ide, ()):
+        path = Path(candidate)
+        if not path.is_file() or not usable(candidate):
+            continue
+        resolved = str(path.resolve())
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        out.append(resolved)
+    return out
+
+
+def _running_editor_bin_for_ide(ide: str) -> str | None:
+    """Prefer a live, CLI-safe IDE binary when it differs from a stale PATH shim."""
+    try:
+        from koruide.ide import detect_running_ides as _detect_running_ides
+    except Exception:  # noqa: BLE001 - optional import during packaging
+        return None
+    usable = _cli_override(
+        "_editor_bin_usable_for_cli_install", _editor_bin_usable_for_cli_install
+    )
+    path_bin: str | None = None
+    for candidate in PLUGIN_IDE_CLI.get(ide, ()):
+        resolved = shutil.which(candidate)
+        if resolved:
+            path_bin = resolved
+            break
+    for row in _detect_running_ides():
+        if row.id != ide:
+            continue
+        exe = (row.exe or "").strip()
+        if not exe or not usable(exe):
+            continue
+        resolved = str(Path(exe).resolve())
+        if path_bin:
+            try:
+                if os.path.samefile(resolved, path_bin):
+                    return path_bin
+            except OSError:
+                pass
+            continue
+        return resolved
+    return None
+
+
+def resolve_plugin_editor_bin(ide: str) -> str:
+    if ide == "jetbrains":
+        raise RuntimeError(
+            "jetbrains plugin install is not supported via `koru autopilot install-plugin`; "
+            "build/install the IntelliJ plugin from `plugins/koru-autopilot-jetbrains` "
+            "(see README.md)"
+        )
+    if ide == "zed":
+        raise RuntimeError(
+            "zed does not support the VS Code VSIX plugin; use `koru init-ide --ide zed` "
+            "for MCP and `koru autopilot drive --ide zed` for keyboard/OS injection"
+        )
+    if ide not in PLUGIN_IDE_CLI:
+        raise RuntimeError(f"unsupported editor for plugin install: {ide}")
+    for candidate in PLUGIN_IDE_CLI[ide]:
+        resolved = _which_cli_safe_editor(candidate)
+        if resolved:
+            return resolved
+    running = _running_editor_bin_for_ide(ide)
+    if running is not None:
+        return running
+    for resolved in _fallback_cli_editor_bins(ide):
+        return resolved
+    choices = "|".join(PLUGIN_IDE_CLI[ide])
+    raise RuntimeError(f"could not find editor CLI in PATH for {ide} (tried: {choices})")
 
 
 def extension_id_for_ide(ide_id: str | None) -> str:
@@ -230,21 +376,31 @@ def _versioned_vsix_candidates(plugin_dir: Path) -> list[Path]:
 
 
 def _bundled_vsix_candidates(plugin_dir_name: str = "koru-autopilot-vscode") -> list[Path]:
-    try:
-        root = resources.files("koru").joinpath("assets", plugin_dir_name)
-    except (ModuleNotFoundError, AttributeError):
-        return []
-    try:
-        candidates = [
-            Path(str(candidate)) for candidate in root.iterdir() if candidate.name.endswith(".vsix")
-        ]
-    except (FileNotFoundError, NotADirectoryError, OSError):
-        return []
-    return sorted(
-        [candidate for candidate in candidates if candidate.is_file()],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
+    # Prefer assets bundled with koruide itself; fall back to the koru
+    # distribution so wheels that only ship assets under ``koru`` keep
+    # working. Neither package is required at import time.
+    for package in ("koruide", "koru"):
+        try:
+            root = resources.files(package).joinpath("assets", plugin_dir_name)
+            candidates = [
+                Path(str(candidate))
+                for candidate in root.iterdir()
+                if candidate.name.endswith(".vsix")
+            ]
+        except (ModuleNotFoundError, AttributeError):
+            continue
+        except (FileNotFoundError, NotADirectoryError, OSError):
+            continue
+        matches = sorted(
+            [candidate for candidate in candidates if candidate.is_file()],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if matches:
+            return matches
+    # Soft-fail: no bundled VSIX in either package; callers fall back to
+    # repo/plugin-dir candidates (see ``_fallback_vsix_candidates``).
+    return []
 
 
 def _fallback_vsix_candidates(
@@ -405,22 +561,22 @@ def _newest_existing_vsix(candidates: Iterable[Path]) -> Path | None:
 
 
 def _resolve_ide_command(ide: str) -> str | None:
+    resolver = _cli_override("resolve_plugin_editor_bin", resolve_plugin_editor_bin)
     try:
-        from koru.autopilot.install_plugin_cli import resolve_plugin_editor_bin
-
-        return resolve_plugin_editor_bin(ide)
+        return resolver(ide)
     except RuntimeError:
         return None
-    except Exception:  # noqa: BLE001 - install path may run without full koru tree
+    except Exception:  # noqa: BLE001 - keep legacy PATH-scan fallback
         pass
+    usable = _cli_override(
+        "_editor_bin_usable_for_cli_install", _editor_bin_usable_for_cli_install
+    )
     for name in _IDE_COMMANDS.get(ide, ()):
         resolved = shutil.which(name)
         if not resolved:
             continue
         try:
-            from koru.autopilot.install_plugin_cli import _editor_bin_usable_for_cli_install
-
-            if _editor_bin_usable_for_cli_install(resolved):
+            if usable(resolved):
                 return resolved
         except Exception:  # noqa: BLE001
             return resolved

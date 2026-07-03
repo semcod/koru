@@ -5,11 +5,43 @@ from __future__ import annotations
 import json
 import os
 import time
+import warnings
 from dataclasses import dataclass, field
+from types import SimpleNamespace
+from typing import Any
 
-from koru.autonomy_strategy.openrouter import call_openrouter_json
 from koruide.command_catalog import GENERIC_VSCODE_FAMILY, IDE_ROWS
 from koruide.command_telemetry import CommandTelemetry
+
+_OPENROUTER_MISSING_WARNED = False
+
+
+def call_openrouter_json(*args: Any, **kwargs: Any) -> Any:
+    """Lazily forward to ``koru.autonomy_strategy.openrouter.call_openrouter_json``.
+
+    ``koruide`` must stay importable without the ``koru`` distribution, so the
+    OpenRouter dependency is resolved at call time. When koru is absent this
+    soft-fails with a one-time warning and an ``ok=False`` response, which
+    makes the pickers fall back to heuristic ordering.
+    """
+    global _OPENROUTER_MISSING_WARNED
+    try:
+        from koru.autonomy_strategy.openrouter import call_openrouter_json as _impl
+    except ImportError:
+        if not _OPENROUTER_MISSING_WARNED:
+            _OPENROUTER_MISSING_WARNED = True
+            warnings.warn(
+                "koru is not installed; OpenRouter command picking is "
+                "unavailable — falling back to heuristic command ordering",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        return SimpleNamespace(
+            ok=False,
+            content="",
+            error="koru not installed: OpenRouter command picker unavailable",
+        )
+    return _impl(*args, **kwargs)
 
 _LADDER_SEED: dict[str, list[str]] = {}
 
