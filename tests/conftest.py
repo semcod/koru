@@ -76,3 +76,17 @@ def pytest_runtest_teardown(item, nextitem):
         os.environ.pop(key, None)
     command_picker._LLM_CACHE.clear()
     clear_config_cache()
+
+
+@pytest.fixture(autouse=True)
+def _no_real_planfile_ticket_probes(monkeypatch: pytest.MonkeyPatch):
+    """Keep the ghost-ticket guard from probing real planfile in unit tests.
+
+    Fixture ticket ids (PLF-001, T-1, …) do not exist in any real planfile;
+    on hosts with a planfile binary on PATH the guard would (correctly) drop
+    them and change prompt behaviour depending on the machine. Tests that
+    exercise the guard itself re-patch `_waiting_ticket_is_missing`.
+    """
+    import koru.autonomous_cycle_drive_retry as _drv
+
+    monkeypatch.setattr(_drv, "_waiting_ticket_is_missing", lambda _p, _t: False)
