@@ -19,7 +19,7 @@ EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
     "cursor": "0.2.39",
     "vscode": "0.2.8",
     "vscodium": "0.2.31",
-    "windsurf": "0.2.10",
+    "windsurf": "0.2.11",
     "antigravity": "0.2.16",
 }
 

@@ -51,20 +51,28 @@ def _daemon_status_version(status: Mapping[str, Any] | None) -> str | None:
     return None
 
 
+def _version_compatibility_check(
+    expected: str | None,
+    actual: str | None,
+) -> tuple[bool, str]:
+    """Check if actual version matches expected version, return (ok, reason)."""
+    if expected is None:
+        return True, "current koru package version unknown"
+    if actual is None:
+        return False, f"daemon did not report version; expected {expected}"
+    if actual != expected:
+        return False, f"daemon version {actual} != current koru {expected}"
+    return True, f"daemon version {actual}"
+
+
 def daemon_status_compatible(
     status: Mapping[str, Any] | None,
     *,
     current_version: Callable[[], str | None] = _current_koru_version,
 ) -> tuple[bool, str]:
     expected = current_version()
-    daemon_version = _daemon_status_version(status)
-    if expected is None:
-        return True, "current koru package version unknown"
-    if daemon_version is None:
-        return False, f"daemon did not report version; expected {expected}"
-    if daemon_version != expected:
-        return False, f"daemon version {daemon_version} != current koru {expected}"
-    return True, f"daemon version {daemon_version}"
+    actual = _daemon_status_version(status)
+    return _version_compatibility_check(expected, actual)
 
 
 def daemon_status_log_summary(

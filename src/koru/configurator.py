@@ -37,6 +37,54 @@ class _ConfigureValues:
     auto_port: bool
 
 
+@dataclass(frozen=True)
+class _ConfigureArgs:
+    """Extracted configuration from argparse.Namespace to avoid Shotgun Surgery."""
+    project: Path
+    format: str
+    migrate: bool
+    enable: str
+    disable: str
+    workspace: str
+    ide: str
+    queue_name: str
+    host: str
+    port: int
+    lan: bool
+    auto_port: bool
+    non_interactive: bool
+
+    @classmethod
+    def from_namespace(cls, args: argparse.Namespace) -> _ConfigureArgs:
+        """Create config from parsed arguments."""
+        return cls(
+            project=args.project,
+            format=args.format,
+            migrate=args.migrate,
+            enable=args.enable,
+            disable=args.disable,
+            workspace=args.workspace,
+            ide=args.ide,
+            queue_name=args.queue_name,
+            host=args.host,
+            port=args.port,
+            lan=args.lan,
+            auto_port=args.auto_port,
+            non_interactive=args.non_interactive,
+        )
+
+
+@dataclass(frozen=True)
+class _ConfigureValues:
+    workspace: str
+    ide: str
+    queue_name: str
+    host: str
+    port: int
+    lan: bool
+    auto_port: bool
+
+
 class ShellPrompter:
     """Small stdin/stdout prompter used by ``koru configure``."""
 
@@ -474,22 +522,22 @@ def _emit_configure_output(result: ConfigureResult, fmt: str, *, text: str | Non
     print(text or render_text_summary(result))
 
 
-def _configure_migrate(args: argparse.Namespace) -> int:
+def _configure_migrate(cfg: _ConfigureArgs) -> int:
     try:
-        result = migrate_project_config(args.project)
+        result = migrate_project_config(cfg.project)
     except ValueError as exc:
         print(f"koru configure: {exc}", file=sys.stderr)
         return 2
     summary = f"koru configure: migrated {result.path} -> {CONFIG_SCHEMA_V2}"
-    _emit_configure_output(result, args.format, text=summary)
+    _emit_configure_output(result, cfg.format, text=summary)
     return 0
 
 
-def _configure_toggle(args: argparse.Namespace) -> int:
-    enable = _split_feature_list(args.enable)
-    disable = _split_feature_list(args.disable)
+def _configure_toggle(cfg: _ConfigureArgs) -> int:
+    enable = _split_feature_list(cfg.enable)
+    disable = _split_feature_list(cfg.disable)
     try:
-        result = toggle_feature_sections(args.project, enable=enable, disable=disable)
+        result = toggle_feature_sections(cfg.project, enable=enable, disable=disable)
     except ValueError as exc:
         print(f"koru configure: {exc}", file=sys.stderr)
         return 2
@@ -497,37 +545,38 @@ def _configure_toggle(args: argparse.Namespace) -> int:
         f"+{name}" for name in enable
     ) + (", " if enable and disable else "") + ", ".join(f"-{name}" for name in disable)
     summary = f"koru configure: features {changed} in {result.path}"
-    _emit_configure_output(result, args.format, text=summary)
+    _emit_configure_output(result, cfg.format, text=summary)
     return 0
 
 
-def _configure_write(args: argparse.Namespace) -> int:
+def _configure_write(cfg: _ConfigureArgs) -> int:
     try:
         result = configure_project(
-            project=args.project,
-            workspace=args.workspace,
-            ide=args.ide,
-            queue_name=args.queue_name,
-            host=args.host,
-            port=args.port,
-            lan=args.lan,
-            auto_port=args.auto_port,
-            interactive=not args.non_interactive,
+            project=cfg.project,
+            workspace=cfg.workspace,
+            ide=cfg.ide,
+            queue_name=cfg.queue_name,
+            host=cfg.host,
+            port=cfg.port,
+            lan=cfg.lan,
+            auto_port=cfg.auto_port,
+            interactive=not cfg.non_interactive,
         )
     except (EOFError, ValueError) as exc:
         print(f"koru configure: {exc}", file=sys.stderr)
         return 2
-    _emit_configure_output(result, args.format)
+    _emit_configure_output(result, cfg.format)
     return 0
 
 
 def configure_main(argv: list[str] | None = None) -> int:
     args = build_configure_parser().parse_args(argv)
-    if args.migrate:
-        return _configure_migrate(args)
-    if args.enable or args.disable:
-        return _configure_toggle(args)
-    return _configure_write(args)
+    cfg = _ConfigureArgs.from_namespace(args)
+    if cfg.migrate:
+        return _configure_migrate(cfg)
+    if cfg.enable or cfg.disable:
+        return _configure_toggle(cfg)
+    return _configure_write(cfg)
 
 
 __all__ = [

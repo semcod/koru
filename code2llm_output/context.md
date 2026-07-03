@@ -2,7 +2,7 @@
 
 ## Overview
 
-- **Project**: /home/tom/github/semcod/koru/packages/coru/src/coru/cli.py
+- **Project**: /home/tom/github/semcod/koru/src/koru/wizard/gui/app.py
 - **Primary Language**: unknown
 - **Languages**: 
 - **Analysis Mode**: static

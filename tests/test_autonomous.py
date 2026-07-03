@@ -5922,3 +5922,48 @@ class TestErrorStagnationEscalation:
         lines, events = self._run(monkeypatch, streak=20, status="waiting_input")
         assert lines == []
         assert events == []
+
+
+class TestGhostWaitingTicketGuard:
+    """A waiting ticket id that planfile does not know must not reach prompts."""
+
+    def _decision(self, monkeypatch, tmp_path, *, missing: bool):
+        import koru.autonomous_cycle_drive_retry as drv
+
+        monkeypatch.setattr(
+            drv, "_waiting_ticket_is_missing", lambda _p, _t: missing
+        )
+        monkeypatch.setattr(drv, "_skip_closed_waiting_ticket_enabled", lambda: False)
+        state = SimpleNamespace(stagnation_streak=6, autopilot_events=[])
+        queue_result = SimpleNamespace(
+            last_status="waiting_input",
+            last_message="",
+            last_ticket_id="PLF-001",
+            waiting=["PLF-001"],
+        )
+        monkeypatch.setattr(
+            drv, "_queue_loop_waiting_ticket_label", lambda _q: "PLF-001"
+        )
+        monkeypatch.setattr(
+            drv,
+            "_inject_reflection_summary_into_prompt",
+            lambda _s, _q, decision: decision,
+        )
+        decision, _ = drv._resolve_autopilot_drive_decision(
+            tmp_path,
+            state,
+            queue_result,
+            drive_prompt="continue",
+            autopilot_action="drive",
+        )
+        return decision
+
+    def test_ghost_ticket_never_named_in_prompt(self, monkeypatch, tmp_path, capsys):
+        decision = self._decision(monkeypatch, tmp_path, missing=True)
+        assert "PLF-001" not in decision.prompt
+        assert "ghost id" in capsys.readouterr().err
+
+    def test_existing_ticket_still_escalates(self, monkeypatch, tmp_path):
+        decision = self._decision(monkeypatch, tmp_path, missing=False)
+        assert decision.kind == "escalation_prompt"
+        assert "PLF-001" in decision.prompt

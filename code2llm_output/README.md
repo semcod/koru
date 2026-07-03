@@ -18,6 +18,7 @@ When you run `code2llm ./ -f all`, the following files are created:
 | File | Format | Purpose | Use Case |
 |------|--------|---------|----------|
 | `context.md` | **Markdown** | **📖 LLM narrative** - Architecture summary | Paste into ChatGPT/Claude for code analysis |
+| `analysis.json` | **JSON** | **🔧 API format** - Programmatic access | For integration with other tools |
 
 
 ## 🚀 Quick Start Commands

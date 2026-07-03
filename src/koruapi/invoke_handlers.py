@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shlex
 from collections.abc import Callable
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,37 @@ class InvokeError(RuntimeError):
 
 
 IntegrationHandler = Callable[[Path, str, dict[str, Any]], dict[str, Any]]
+
+
+def _analysis_to_dict(analysis: Any) -> dict[str, Any]:
+    """Convert analysis object to dict representation."""
+    return {
+        "changes": len(analysis.changes),
+        "groups": len(analysis.groups),
+        "priority_order": analysis.priority_order,
+        "recommendations": analysis.recommendations
+    }
+
+
+def _wrap_handler_errors(handler: Callable) -> IntegrationHandler:
+    """Wrap handler to catch ImportError and Exception, return standard error dicts."""
+    @wraps(handler)
+    def wrapper(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            return handler(project, method, payload)
+        except ImportError as e:
+            module = str(e).split("'")[1] if "'" in str(e) else "module"
+            return {
+                "ok": False,
+                "error": f"{module} not available",
+                "message": f"Install {module}: pip install {module}"
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": str(e)
+            }
+    return wrapper
 
 
 def _handle_context_build(project: Path, _method: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -246,119 +278,79 @@ def _handle_lane_plan(project: Path, method: str, payload: dict[str, Any]) -> di
     }
 
 
+@_wrap_handler_errors
 def _handle_tagi_analyze(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Handle tagi.analyze integration - analyze changes using Tagi."""
-    try:
-        from koru.tagi_integration import analyze_project_changes
-        return analyze_project_changes(project)
-    except ImportError:
-        return {
-            "ok": False,
-            "error": "Tagi integration not available",
-            "message": "Install tagi: pip install tagi"
-        }
-    except Exception as e:
-        return {
-            "ok": False,
-            "error": str(e)
-        }
+    from koru.tagi_integration import analyze_project_changes
+    return analyze_project_changes(project)
 
 
+@_wrap_handler_errors
 def _handle_tagi_deploy(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Handle tagi.deploy integration - deploy changes using Tagi."""
-    try:
-        from koru.tagi_integration import TagiIntegration
-        tagi = TagiIntegration(project)
-        
-        if not tagi.is_available():
-            return {
-                "ok": False,
-                "error": "Tagi not available",
-                "message": "Install tagi: pip install tagi"
-            }
-        
-        dry_run = payload.get("dry_run", False)
-        deployment_plan = tagi.get_deployment_plan()
-        
-        if dry_run:
-            return {
-                "ok": True,
-                "dry_run": True,
-                "deployment_plan": deployment_plan
-            }
-        
-        # Execute deployment
-        success = True
-        deployed_groups = []
-        
-        for group in deployment_plan.get("deployment_groups", []):
-            group_name = group.get("name", "")
-            if group_name:
-                group_success = tagi.commit_changes(group_name)
-                if group_success:
-                    deployed_groups.append(group_name)
-                else:
-                    success = False
-                    break
-        
+    from koru.tagi_integration import TagiIntegration
+    tagi = TagiIntegration(project)
+    
+    if not tagi.is_available():
         return {
-            "ok": success,
-            "deployed_groups": deployed_groups,
+            "ok": False,
+            "error": "Tagi not available",
+            "message": "Install tagi: pip install tagi"
+        }
+    
+    dry_run = payload.get("dry_run", False)
+    deployment_plan = tagi.get_deployment_plan()
+    
+    if dry_run:
+        return {
+            "ok": True,
+            "dry_run": True,
             "deployment_plan": deployment_plan
         }
-        
-    except ImportError:
-        return {
-            "ok": False,
-            "error": "Tagi integration not available",
-            "message": "Install tagi: pip install tagi"
-        }
-    except Exception as e:
-        return {
-            "ok": False,
-            "error": str(e)
-        }
+    
+    # Execute deployment
+    success = True
+    deployed_groups = []
+    
+    for group in deployment_plan.get("deployment_groups", []):
+        group_name = group.get("name", "")
+        if group_name:
+            group_success = tagi.commit_changes(group_name)
+            if group_success:
+                deployed_groups.append(group_name)
+            else:
+                success = False
+                break
+    
+    return {
+        "ok": success,
+        "deployed_groups": deployed_groups,
+        "deployment_plan": deployment_plan
+    }
 
 
+@_wrap_handler_errors
 def _handle_tagi_auto(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Handle tagi.auto integration - auto-commit changes using Tagi."""
-    try:
-        from koru.tagi_integration import auto_commit_all_changes
-        message = payload.get("message", "Auto-commit changes via Koru")
-        dry_run = payload.get("dry_run", False)
-        
-        if dry_run:
-            from koru.tagi_integration import TagiIntegration
-            tagi = TagiIntegration(project)
-            analysis = tagi.analyze_priorities()
-            return {
-                "ok": True,
-                "dry_run": True,
-                "analysis": {
-                    "changes": len(analysis.changes),
-                    "groups": len(analysis.groups),
-                    "priority_order": analysis.priority_order,
-                    "recommendations": analysis.recommendations
-                }
-            }
-        
-        success = auto_commit_all_changes(project, message)
+    from koru.tagi_integration import auto_commit_all_changes, TagiIntegration
+    
+    message = payload.get("message", "Auto-commit changes via Koru")
+    dry_run = payload.get("dry_run", False)
+    
+    if dry_run:
+        tagi = TagiIntegration(project)
+        analysis = tagi.analyze_priorities()
         return {
-            "ok": success,
-            "message": message
+            "ok": True,
+            "dry_run": True,
+            "analysis": _analysis_to_dict(analysis)
         }
-        
-    except ImportError:
-        return {
-            "ok": False,
-            "error": "Tagi integration not available",
-            "message": "Install tagi: pip install tagi"
-        }
-    except Exception as e:
-        return {
-            "ok": False,
-            "error": str(e)
-        }
+    
+    success = auto_commit_all_changes(project, message)
+    return {
+        "ok": success,
+        "message": message
+    }
 
 
 INTEGRATION_HANDLERS: dict[str, IntegrationHandler] = {

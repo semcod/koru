@@ -254,6 +254,28 @@ def _waiting_ticket_is_closed(project: Path, ticket_id: str) -> bool:
     return bool(status and status in _CLOSED_TICKET_STATUSES)
 
 
+def _waiting_ticket_is_missing(project: Path, ticket_id: str) -> bool:
+    """True only when planfile definitively says the ticket does not exist.
+
+    Probe failures (planfile unavailable, timeout) return False — a transient
+    outage must not drop a legitimate ticket id from prompts.
+    """
+    ticket = ticket_id.strip()
+    if not ticket:
+        return False
+    try:
+        proc = _run_process(
+            ["planfile", "ticket", "show", ticket, "--format", "json"],
+            project,
+        )
+    except (OSError, TimeoutError, RuntimeError):
+        return False
+    if proc.returncode == 0:
+        return False
+    output = f"{proc.stdout}\n{proc.stderr}".lower()
+    return "not found" in output
+
+
 def _resolve_autopilot_drive_decision(
     project: Path,
     state: AutoloopState,
@@ -264,6 +286,18 @@ def _resolve_autopilot_drive_decision(
     queue_name: str | None = None,
 ) -> tuple[Any, str | None]:
     waiting_ticket_id = _resolve_waiting_ticket_id(queue_result)
+    # A ghost id (2026-07-03: escalation named nonexistent PLF-001) poisons
+    # every downstream prompt — the driven LLM is told to implement and close
+    # a ticket that does not exist. Drop it loudly.
+    if waiting_ticket_id and _waiting_ticket_is_missing(project, waiting_ticket_id):
+        import sys as _sys
+
+        print(
+            f"[koru] waiting ticket {waiting_ticket_id!r} not found in planfile — "
+            "dropping ghost id from autopilot prompts",
+            file=_sys.stderr,
+        )
+        waiting_ticket_id = ""
     effective_drive_prompt = drive_prompt
     idle_prompt_kind: str | None = None
     if queue_result.last_status == "idle":

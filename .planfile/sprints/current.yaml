@@ -26830,238 +26830,6 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-07-03T16:51:00.364513+00:00'
-    STARTER-559:
-      blocked_by: []
-      blocks: []
-      created_at: '2026-07-03T17:54:28.740391+00:00'
-      description: '[OPERATOR] intake from IDE chat
-
-
-        A new external chat message was sent in IDE while the queue is blocked in
-        waiting_input.
-
-        Create/update a dedicated operator task from this intake instead of re-driving
-        the old prompt.
-
-
-        Origin waiting ticket: STARTER-514
-
-        Incoming intake:
-
-        code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
-        Mutation of variable ''analysis'' spans 9 functions. Changing this logic requires
-        work in many places. Make the sm'
-      execution:
-        attempt: 0
-        max_attempts: 1
-        queue: operator
-        state: ready
-      executor:
-        kind: human
-        mode: interactive
-      files: []
-      history:
-      - action: created
-        message: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-514
-
-          Incoming intake:
-
-          code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
-          Mutation of variable ''analysis'' spans 9 functions. Changing this logic
-          requires work in many places. Make the sm'
-        source: koru task
-        timestamp: '2026-07-03T17:54:28.740391+00:00'
-      id: STARTER-559
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-514
-
-          Incoming intake:
-
-          code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
-          Mutation of variable ''analysis'' spans 9 functions. Changing this logic
-          requires work in many places. Make the sm'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - autopilot-chat-intake
-      name: '[OPERATOR] intake from IDE chat'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context:
-          dedupe_key: autopilot:chat-intake:e90ce95c417ccfd9
-          input: '[OPERATOR] intake from IDE chat
-
-
-            A new external chat message was sent in IDE while the queue is blocked
-            in waiting_input.
-
-            Create/update a dedicated operator task from this intake instead of re-driving
-            the old prompt.
-
-
-            Origin waiting ticket: STARTER-514
-
-            Incoming intake:
-
-            code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
-            Mutation of variable ''analysis'' spans 9 functions. Changing this logic
-            requires work in many places. Make the sm'
-          intake_preview: 'code2llm reports `Shotgun Surgery: analysis` in `src/koruapi/invoke_handlers.py:322`.
-            Mutation of variable ''analysis'' spans 9 functions. Changing this logic
-            requires work in many places. Make the sm'
-          origin_waiting_ticket: STARTER-514
-          signal: chat_intake_message_sent
-        timestamp: '2026-07-03T17:54:28.740391+00:00'
-        tool: koru-autonomous-chat-intake
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-07-03T17:54:28.740391+00:00'
-    STARTER-560:
-      blocked_by: []
-      blocks: []
-      created_at: '2026-07-03T18:03:27.713219+00:00'
-      description: '[OPERATOR] intake from IDE chat
-
-
-        A new external chat message was sent in IDE while the queue is blocked in
-        waiting_input.
-
-        Create/update a dedicated operator task from this intake instead of re-driving
-        the old prompt.
-
-
-        Origin waiting ticket: STARTER-515
-
-        Incoming intake:
-
-        code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
-        Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-        work in many places. Make the smallest refacto'
-      execution:
-        attempt: 0
-        max_attempts: 1
-        queue: operator
-        state: ready
-      executor:
-        kind: human
-        mode: interactive
-      files: []
-      history:
-      - action: created
-        message: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-515
-
-          Incoming intake:
-
-          code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
-          Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-          work in many places. Make the smallest refacto'
-        source: koru task
-        timestamp: '2026-07-03T18:03:27.713219+00:00'
-      id: STARTER-560
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-515
-
-          Incoming intake:
-
-          code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
-          Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-          work in many places. Make the smallest refacto'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - autopilot-chat-intake
-      name: '[OPERATOR] intake from IDE chat'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context:
-          dedupe_key: autopilot:chat-intake:2cff7a98ef0df5fd
-          input: '[OPERATOR] intake from IDE chat
-
-
-            A new external chat message was sent in IDE while the queue is blocked
-            in waiting_input.
-
-            Create/update a dedicated operator task from this intake instead of re-driving
-            the old prompt.
-
-
-            Origin waiting ticket: STARTER-515
-
-            Incoming intake:
-
-            code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
-            Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-            work in many places. Make the smallest refacto'
-          intake_preview: 'code2llm reports `Shotgun Surgery: app` in `src/koru/wizard/gui/app.py:227`.
-            Mutation of variable ''app'' spans 5 functions. Changing this logic requires
-            work in many places. Make the smallest refacto'
-          origin_waiting_ticket: STARTER-515
-          signal: chat_intake_message_sent
-        timestamp: '2026-07-03T18:03:27.713219+00:00'
-        tool: koru-autonomous-chat-intake
-      sprint: current
-      status: open
-      sync: {}
-      updated_at: '2026-07-03T18:03:27.713219+00:00'
     STARTER-561:
       acceptance_criteria: []
       blocked_by: []
@@ -27073,12 +26841,26 @@ sprint:
         Keep koru-side re-export shims for one release; koru keeps operator-guidance
         and ticket mapping.'
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-03T18:14:17.839213+00:00'
       id: STARTER-561
       labels:
       - refactor
       - boundary
       name: Move gillm recovery/actuation into gillm (boundary step 4)
+      outputs:
+        artifacts: []
+        notes:
+        - 'Part A done: classify_{plugin,input,environment}_failure moved into gillm.recovery.diagnose
+          (exports added, 6 new gillm tests, 115 gillm + 35 koru tests green); koru
+          keeps shims + intentional fallback copies for gillm-absent degradation.
+          Found gillm-internal drift: diagnose_drive_reply embedded-recovery path
+          treats no_calibrated_profile as retryable, normal path does not — fix with
+          part B. Part B (input-strategy chain from vdisplay_client) blocked on R-F2.2/STARTER-554.'
       priority: normal
       source:
         context: {}
@@ -27087,7 +26869,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-07-03T18:07:25.107262Z'
+      updated_at: '2026-07-03T18:14:17.839175+00:00'
     STARTER-562:
       acceptance_criteria: []
       blocked_by: []

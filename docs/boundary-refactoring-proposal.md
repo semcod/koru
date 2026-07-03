@@ -50,7 +50,13 @@ into `_`-prefixed helper clusters — the move is now mostly mechanical.
 Expected effect: `vdisplay_client.py` shrinks ~60-70%, killing most of the
 36 MI hard violations.
 
-### 2. gillm owns GUI actuation & recovery
+### 2. gillm owns GUI actuation & recovery — recovery half DONE (2026-07-03)
+
+Failure classification (`classify_plugin/input/environment_failure`) now lives
+in `gillm.recovery.diagnose`; koru's `ide_adapters/gillm_recovery.py` keeps
+re-export shims plus its gillm-absent fallback copies (that block *is* the
+§6 soft-degradation path). Remaining: the input-strategy chain move (blocked
+on the vdisplay_client split, STARTER-554/562). Tracked as STARTER-561.
 
 - Input strategy chain from `_type_text_at_vql_coords` (AT-SPI set_value →
   ydotool click → vision click → wl-copy/xclip paste → type → forced) is

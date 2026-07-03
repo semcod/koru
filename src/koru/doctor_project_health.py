@@ -131,12 +131,8 @@ def check_koru_package_version(_project: Path) -> tuple[str, str]:
     return PASS, f"koru {ver}"
 
 
-def check_planfile_cli_version(
-    project: Path,
-    *,
-    argv_resolver: Callable[[], list[str] | None],
-) -> tuple[str, str]:
-    argv = argv_resolver()
+def check_planfile_cli_version(project: Path) -> tuple[str, str]:
+    argv = planfile_version_argv()
     if not argv:
         return SKIP, "no planfile executable"
     try:

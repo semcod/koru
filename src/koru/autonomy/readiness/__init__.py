@@ -1,13 +1,9 @@
-"""Backward compatibility shim for autonomous_readiness module.
-
-This module re-exports from koru.autonomy.readiness and will be removed in a future release.
-Migrate to: from koru.autonomy.readiness import ...
-"""
+"""Preflight gates for autonomous / coru runs: runtime, daemon, plugin, socket."""
 
 from __future__ import annotations
 
-# Re-export all items for backward compatibility (will be removed in next release)
-from koru.autonomy.readiness import (  # noqa: F401
+# Re-export all items from readiness module (including private functions for monkeypatch support)
+from koru.autonomy.readiness.readiness import (  # noqa: F401
     ReadinessIssue,
     ReadinessResult,
     _TerminalLaneContext,
@@ -64,5 +60,7 @@ from koru.autonomy.readiness import (  # noqa: F401
     run_plugin_reconnect_pipeline,
     warn_pre_drive_queue_without_plugin,
 )
+
+
 
 

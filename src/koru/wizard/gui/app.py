@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -177,8 +178,17 @@ def _ensure_session(request: Any, runtime: WizardGuiRuntime) -> WizardGuiSession
     return session
 
 
-def _select_ide(session: WizardGuiSession, body: dict[str, Any]) -> None:
-    _check_csrf(session, body.get("csrf"), HTTPException)
+def _wrap_session_action(action_fn: Callable) -> Callable:
+    """Wrap session action to enforce CSRF check and auto-touch session."""
+    def wrapper(session: WizardGuiSession, body: dict[str, Any]) -> None:
+        _check_csrf(session, body.get("csrf"), HTTPException)
+        action_fn(session, body)
+        session.touch()
+    return wrapper
+
+
+def _select_ide_impl(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    """Select IDE (session.touch() called by wrapper)."""
     ide_id = str(body.get("ide_id") or "").strip()
     if ide_id and ide_id != "__none":
         if not any(i.id == ide_id for i in session.ides):
@@ -190,11 +200,10 @@ def _select_ide(session: WizardGuiSession, body: dict[str, Any]) -> None:
         session.chosen_ide_id = None
         session.project_candidates = propose_projects(session.ides)
     session.step = "project"
-    session.touch()
 
 
-def _select_project(session: WizardGuiSession, body: dict[str, Any]) -> None:
-    _check_csrf(session, body.get("csrf"), HTTPException)
+def _select_project_impl(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    """Select project (session.touch() called by wrapper)."""
     raw = str(body.get("project_path") or "").strip()
     project = session.fallback_cwd if raw == "__cwd" else Path(raw).expanduser().resolve()
     permitted_project_paths = _allowed_project_paths(session)
@@ -205,11 +214,10 @@ def _select_project(session: WizardGuiSession, body: dict[str, Any]) -> None:
     session.strategy_path = []
     session.pending_ticket = None
     session.step = "strategy"
-    session.touch()
 
 
-def _select_strategy(session: WizardGuiSession, body: dict[str, Any]) -> None:
-    _check_csrf(session, body.get("csrf"), HTTPException)
+def _select_strategy_impl(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    """Select strategy (session.touch() called by wrapper)."""
     if session.project_path is None:
         raise HTTPException(status_code=400, detail="project not selected")
     option_id = str(body.get("option_id") or "").strip()
@@ -225,11 +233,10 @@ def _select_strategy(session: WizardGuiSession, body: dict[str, Any]) -> None:
         session.current_node_id = matched.next_node
     else:
         raise HTTPException(status_code=500, detail="option has no ticket or next node")
-    session.touch()
 
 
-def _confirm_ticket(session: WizardGuiSession, body: dict[str, Any]) -> None:
-    _check_csrf(session, body.get("csrf"), HTTPException)
+def _confirm_ticket_impl(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    """Confirm ticket (session.touch() called by wrapper)."""
     if session.pending_ticket is None or session.project_path is None:
         raise HTTPException(status_code=400, detail="nothing to confirm")
     template = session.pending_ticket
@@ -240,7 +247,13 @@ def _confirm_ticket(session: WizardGuiSession, body: dict[str, Any]) -> None:
     session.next_steps = session.tree.effective_next_steps(template.id)
     session.pending_ticket = None
     session.step = "done"
-    session.touch()
+
+
+# Wrapped public versions
+_select_ide = _wrap_session_action(_select_ide_impl)
+_select_project = _wrap_session_action(_select_project_impl)
+_select_strategy = _wrap_session_action(_select_strategy_impl)
+_confirm_ticket = _wrap_session_action(_confirm_ticket_impl)
 
 
 def _register_routes(runtime: WizardGuiRuntime) -> None:

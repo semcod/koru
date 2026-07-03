@@ -8,6 +8,12 @@ from typing import Any
 
 try:
     from gillm.recovery import diagnose_drive_reply, probe_environment, recovery_hints_for_reload
+    from gillm.recovery import (
+        classify_environment_failure as _classify_environment_failure,
+        classify_failure as _classify_failure,
+        classify_input_failure as _classify_input_failure,
+        classify_plugin_failure as _classify_plugin_failure,
+    )
 except ImportError:
     @dataclass(frozen=True)
     class EnvironmentDiagnostics:
@@ -85,7 +91,7 @@ except ImportError:
             return "focus_failed"
         return None
 
-    def _classify_environment_failure(blob: str, backend: str | None) -> str:
+    def _classify_environment_failure(blob: str, backend: str | None = None) -> str:
         if (
             "brak kalibracji" in blob
             or "no calibrated profile" in blob

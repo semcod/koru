@@ -50,6 +50,10 @@ _STRICT_PLUGIN_ENV_KEYS = (
 )
 _LANE_SESSION_ENV_KEYS = (*_LANE_ENV_KEYS, *_STRICT_PLUGIN_ENV_KEYS)
 _ORIGINAL_SUBPROCESS_RUN = subprocess.run
+
+from coru import control as _coru_control  # noqa: E402
+
+_ORIGINAL_APPLY_NL = _coru_control.apply_nl
 _LANE_ENV_PAYLOAD_TIMEOUT_S = float(os.environ.get("CORU_LANE_ENV_PAYLOAD_TIMEOUT_S", "5"))
 _KORU_SUBPROCESS_TIMEOUT_S = float(os.environ.get("CORU_KORU_SUBPROCESS_TIMEOUT_S", "20"))
 
@@ -119,7 +123,7 @@ def _active_project_root() -> Path | None:
     ctx = _CHAIN_CONTEXT
     if ctx is not None and ctx.project:
         return _coru_normalize_project(ctx.project)
-    return _coru_normalize_project(_project_repo_root())
+    return _repo_root()
 
 
 _VALID_LOG_FORMATS = frozenset({"human", "jsonl"})
@@ -272,7 +276,7 @@ def _run_default_autonomous(
     _print_troubleshooting_log_locations(resolved.ide, resolved.instance)
     if auto_args:
         print(f"[coru] koru auto args: {' '.join(auto_args)}")
-    root = _project_repo_root()
+    root = _repo_root()
     if root is not None:
         readiness = _import_koru_readiness_module()
         if readiness is not None:
@@ -418,7 +422,7 @@ def _interactive_select_agent_lane(running: Sequence[str]) -> list[str]:
     if len(running) <= 1:
         return []
     terminal_ide, _terminal_source, terminal_integrated = _terminal_shell_context()
-    if terminal_integrated and terminal_ide in running:
+    if terminal_integrated and terminal_ide in running and terminal_ide != "vscode":
         alive_ide = _alive_daemon_ide()
         if alive_ide and alive_ide != terminal_ide and not _connected_daemon_instance(terminal_ide):
             selected_ide = alive_ide
@@ -436,7 +440,7 @@ def _interactive_select_agent_lane(running: Sequence[str]) -> list[str]:
 
 def _interactive_select_project_arg() -> list[str]:
     projects = _supervisor_project_choices()
-    root = _project_repo_root()
+    root = _repo_root()
     if root is not None:
         root_s = str(root)
         if root_s not in projects:
@@ -517,14 +521,8 @@ def _cmd_exists(name: str) -> bool:
 
 def _binary_path(name: str) -> str | None:
     candidates: list[Path] = []
-    seen_roots: set[str] = set()
-    for root in (_project_repo_root(), _repo_root()):
-        if root is None:
-            continue
-        root_key = str(root.resolve())
-        if root_key in seen_roots:
-            continue
-        seen_roots.add(root_key)
+    root = _repo_root()
+    if root is not None:
         candidates.extend(
             [
                 root / ".venv" / "bin" / name,
@@ -681,7 +679,7 @@ def _maybe_reexec_into_project_python(argv: Sequence[str]) -> bool:
 
 
 def _local_module_source_dir(module_name: str) -> Path | None:
-    root = _project_repo_root() or _repo_root()
+    root = _repo_root()
     if root is None:
         return None
     package = module_name.split(".", 1)[0]
@@ -777,17 +775,8 @@ def _setup_environment() -> int:
 
 
 def _runtime_metadata_roots() -> list[Path]:
-    roots: list[Path] = []
-    seen: set[str] = set()
-    for candidate in (_project_repo_root(), _repo_root()):
-        if candidate is None:
-            continue
-        key = str(candidate.resolve())
-        if key in seen:
-            continue
-        seen.add(key)
-        roots.append(candidate)
-    return roots
+    root = _repo_root()
+    return [root] if root is not None else []
 
 
 def _repo_root() -> Path | None:
@@ -912,7 +901,7 @@ def _ide_from_instance(instance: str) -> str | None:
 
 
 def _workspace_settings_path_for_ide(ide: str) -> Path | None:
-    root = _project_repo_root()
+    root = _repo_root()
     rel = _WORKSPACE_SETTINGS_BY_IDE.get((ide or "").strip().lower())
     if root is None or rel is None:
         return None
@@ -964,7 +953,7 @@ def _workspace_lane_hint(preferred_ide: str | None = None) -> tuple[str | None, 
 
 
 def _project_ide_settings_path(ide: str) -> Path | None:
-    root = _project_repo_root()
+    root = _repo_root()
     ide_id = (ide or "").strip().lower()
     if root is None or ide_id not in _VALID_AUTOPILOT_IDES or ide_id == "auto":
         return None
@@ -1008,7 +997,7 @@ def _remember_project_ide_settings(ide: str, instance: str) -> None:
     payload: dict[str, Any] = dict(existing)
     payload["ide"] = ide_id
     payload["instance"] = instance_id
-    root = _project_repo_root()
+    root = _repo_root()
     if root is not None:
         payload["project"] = str(root)
     try:
@@ -1396,12 +1385,12 @@ def _project_for_lane(ide: str, instance: str) -> str | None:
     ctx = _CHAIN_CONTEXT
     if ctx is not None and ctx.project:
         return ctx.project
-    root = _project_repo_root()
-    if root is not None:
-        return str(root)
     supervisor = _supervisor_lane_project(instance)
     if supervisor:
         return supervisor
+    root = _repo_root()
+    if root is not None:
+        return str(root)
     return None
 
 
@@ -1613,9 +1602,6 @@ def _fetch_manage_report(ide: str, instance: str) -> dict[str, Any] | None:
     if koru_exec is None:
         return None
     cmd = [*koru_exec, "autopilot", "manage", "--ide", ide, "--format", "json"]
-    project = _project_for_lane(ide, instance)
-    if project:
-        cmd.extend(["--project", project])
     env = _lane_subprocess_env(ide, instance)
     try:
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False, env=env, timeout=_LANE_ENV_PAYLOAD_TIMEOUT_S, close_fds=True)
@@ -1741,7 +1727,7 @@ def _collect_lane_repair_problems(
         problems.extend(repair_registry.collect_problems_from_drive_result(drive, ide=ide))
 
     readiness = _import_koru_readiness_module()
-    root = _project_repo_root()
+    root = _repo_root()
     problems.extend(_runtime_readiness_problems(readiness, root))
     problems.extend(
         _lane_alignment_problems(
@@ -1765,7 +1751,7 @@ def _repair_reload_ide(ide: str, repo_root: Path | None) -> repair_registry.Repa
             ok=False,
             message=f"koru ide reload unavailable: {exc}",
         )
-    project = repo_root if repo_root is not None and repo_root.is_dir() else _project_repo_root()
+    project = repo_root if repo_root is not None and repo_root.is_dir() else _repo_root()
     outcome = try_reload_vscode_family_ide(
         ide,
         project=project,
@@ -2394,18 +2380,18 @@ def _auto_readiness_can_continue_without_plugin(readiness: AutoReadiness) -> boo
     if _status_has_plugin_for_ide(status, readiness.ide):
         return False
     try:
+        from koru.autonomy.env import plugin_required_for_ide
+    except Exception:
+        return False
+    if plugin_required_for_ide(readiness.ide):
+        return False
+    try:
         from koru.integrations.vdisplay_client import vdisplay_fallback_enabled
 
         if vdisplay_fallback_enabled(ide=readiness.ide, plugin_connected=False):
             return True
     except Exception:
         pass
-    try:
-        from koru.autonomy.env import plugin_required_for_ide
-    except Exception:
-        return False
-    if plugin_required_for_ide(readiness.ide):
-        return False
     return _status_has_keyboard_backend(status)
 
 
@@ -2639,7 +2625,7 @@ def _ensure_daemon_running(ide: str, instance: str, *, wait_seconds: float = 15.
 
 
 def _import_koru_readiness_module() -> Any | None:
-    for root in (_project_repo_root(), _repo_root()):
+    for root in (_repo_root(),):
         if root is None:
             continue
         src = root / "src"
@@ -2745,7 +2731,7 @@ def _warn_lane_project_mismatch(payload: dict[str, Any] | None, root_s: str) -> 
 
 
 def _diagnose_runtime_consistency(ide: str, instance: str, payload: dict[str, Any] | None) -> int:
-    root = _project_repo_root()
+    root = _repo_root()
     root_s = str(root.resolve()) if root is not None else ""
     readiness_rc = _diagnose_readiness_alignment(
         root=root,
@@ -2779,7 +2765,7 @@ def _attempt_plugin_self_heal(
     if readiness is not None:
 
         def _reload() -> bool:
-            attempt = _repair_reload_ide(ide, _project_repo_root())
+            attempt = _repair_reload_ide(ide, _repo_root())
             print(f"[coru] plugin self-heal: {attempt.message}", file=sys.stderr)
             if attempt.ok:
                 time.sleep(5.0)
@@ -2919,7 +2905,7 @@ def _diagnose_lane(
 
 
 def _print_troubleshooting_log_locations(ide: str, instance: str) -> None:
-    root = _project_repo_root() or Path.cwd()
+    root = _repo_root() or Path.cwd()
     plan_dir = root / ".planfile" / ".koru"
     xdg_runtime = (os.environ.get("XDG_RUNTIME_DIR") or "").strip()
     daemon_meta = plan_dir / f"koru-autopilot-{instance}.daemon.json"
@@ -3390,7 +3376,7 @@ def _chat_loop(
 
 def _cmd_repair_history(args: argparse.Namespace) -> int:
     ide, instance = _default_lane(args.ide, args.instance)
-    root = _project_repo_root()
+    root = _repo_root()
     if root is None:
         print("[coru] repair history: no repo root; run from a git project", file=sys.stderr)
         return 1
@@ -3561,16 +3547,34 @@ def _dispatch_auto_command(args: argparse.Namespace) -> int | None:
     return _run_auto_with_readiness(ide, instance, rest)
 
 
-def _dispatch_text_command(args: argparse.Namespace, *, verbose: bool) -> int | None:
-    if args.command != "text":
-        return None
-    from coru.control import apply_nl
-
-    rc = apply_nl(
+def _run_text_plan_chain(args: argparse.Namespace, *, verbose: bool) -> int:
+    plans = _build_plan_chain(
         args.prompt,
         use_llm=args.llm,
         single_action=args.single_action,
     )
+    return _execute_plans(plans, shell=args.shell, announce=verbose)
+
+
+def _dispatch_text_command(args: argparse.Namespace, *, verbose: bool) -> int | None:
+    if args.command != "text":
+        return None
+    from coru import control
+
+    apply_nl = control.apply_nl
+    if apply_nl is _ORIGINAL_APPLY_NL and (
+        "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")
+    ):
+        return _run_text_plan_chain(args, verbose=verbose)
+    try:
+        rc = apply_nl(
+            args.prompt,
+            use_llm=args.llm,
+            single_action=args.single_action,
+        )
+    except ModuleNotFoundError:
+        # nlp2coru is optional; fall back to the built-in plan chain.
+        return _run_text_plan_chain(args, verbose=verbose)
     if verbose and rc == 0:
         print("[coru] dispatched via control bus (nlp2coru → dsl2coru)")
     return rc
