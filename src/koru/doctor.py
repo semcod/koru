@@ -414,6 +414,7 @@ def _check_ide_console_log(_project: Path) -> tuple[str, str]:
 _check_git_repo = _project_health.check_git_repo
 _check_planfile_binary = _project_health.check_planfile_binary
 _check_lane_dependencies = _project_health.check_lane_dependencies
+_check_ecosystem_versions = _project_health.check_ecosystem_versions
 _check_koru_package_version = _project_health.check_koru_package_version
 _check_planfile_cli_version = _project_health.check_planfile_cli_version
 

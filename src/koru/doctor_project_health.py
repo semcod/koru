@@ -110,6 +110,52 @@ def check_lane_dependencies(_project: Path) -> tuple[str, str]:
     return PASS, "; ".join(parts)
 
 
+def _installed_version(package: str) -> str | None:
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return version(package)
+    except Exception:
+        return None
+
+
+_VERSION_RE = re.compile(r"(\d+\.\d+\.\d+)")
+
+
+def check_ecosystem_versions(project: Path) -> tuple[str, str]:
+    """Report toolchain versions and flag PATH-vs-import skew.
+
+    Field trap (2026-07-03): a published planfile wheel in the active venv
+    shadowed an editable checkout on PATH — the CLI ran different code than
+    ``import planfile``. Automation here publishes fast; version skew between
+    what imports and what executes must be visible in one doctor line.
+    """
+    parts: list[str] = []
+    warns: list[str] = []
+    for package in ("tillm", "gillm", "planfile", "koruide"):
+        ver = _installed_version(package)
+        parts.append(f"{package}={ver or 'bundled/none'}")
+
+    import_ver = _installed_version("planfile")
+    argv = planfile_version_argv()
+    if argv and import_ver:
+        try:
+            proc = subprocess.run(argv, capture_output=True, text=True, timeout=5)
+            match = _VERSION_RE.search(f"{proc.stdout}\n{proc.stderr}")
+            cli_ver = match.group(1) if match else None
+        except (OSError, subprocess.SubprocessError):
+            cli_ver = None
+        if cli_ver and cli_ver != import_ver:
+            warns.append(
+                f"planfile CLI on PATH is {cli_ver} but `import planfile` gives "
+                f"{import_ver} — a shadowing install runs different code"
+            )
+    detail = "; ".join(parts)
+    if warns:
+        return WARN, f"{detail} — {'; '.join(warns)}"
+    return PASS, detail
+
+
 def planfile_version_argv() -> list[str] | None:
     explicit = os.environ.get("KORU_PLANFILE_CMD", "").strip()
     if explicit:
