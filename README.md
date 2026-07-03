@@ -400,6 +400,7 @@ brief / etc.).
 | `koru ide-router` | Route ticket events to specific IDE lanes. |
 | `koru task` / `koru agent` | Planfile task creation and LLM agent management. |
 | `koru tools` | Inspect / dispatch the AI tool registry. |
+| `koru tillm` | Interactive picker for shell LLM tools + API providers (claude-code via Anthropic or z.ai, aider via OpenRouter, …): choose from the list, paste a token, live-verify. Other args forward to tillm CLI (`koru tillm providers`, `koru tillm provider set z.ai`, `koru tillm drive --provider z.ai …`). |
 | `koru gate` / `koru queue` / `koru scan` | Run individual stages of the closed loop in isolation. |
 | `koru gc` | Garbage-collect old planfile tickets / artifacts (see [Queue GC](#queue-garbage-collection--koru-gc)). |
 | `koru tagi` | Run tagi-backed change analysis / safe commit orchestration. |
