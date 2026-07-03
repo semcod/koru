@@ -89,13 +89,19 @@ def test_every_late_bound_attribute_exists_on_its_facade() -> None:
     )
 
 
-@pytest.mark.parametrize(
-    "facade",
-    [
-        "koru.autonomous_cycle",
-        "koru.autonomous_loop_runner",
-        "koru.autonomous_readiness",
-    ],
-)
-def test_known_facades_importable(facade: str) -> None:
+def _all_autonomous_shim_modules() -> list[str]:
+    """Every koru.autonomous_* top-level module (shims + facades)."""
+    return sorted(
+        f"koru.{path.stem}"
+        for path in (SRC / "koru").glob("autonomous*.py")
+    )
+
+
+@pytest.mark.parametrize("facade", _all_autonomous_shim_modules())
+def test_autonomous_shims_importable(facade: str) -> None:
+    """The operator/cycle consolidation must never leave a dead shim.
+
+    2026-07-03: a circular import (operator → phases.contexts → cycle
+    package → contexts) killed every ``koru.autonomous_*`` import at once.
+    """
     importlib.import_module(facade)
