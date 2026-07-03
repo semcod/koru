@@ -32,6 +32,7 @@ critical_tests=(
   tests/test_gillm_ide_client.py
   tests/test_gillm_recovery.py
   tests/test_autonomous_gillm_fallback.py
+  tests/test_facade_late_binding_contract.py
   tests/test_ide_client.py
   tests/test_ide_reload.py
   tests/test_package_deduplication.py::test_autopilot_config_is_gillm_canonical
