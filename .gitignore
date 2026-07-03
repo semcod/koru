@@ -248,3 +248,6 @@ testql-deps.json
 plugins/**/src/_shared
 plugins/**/src/_shared/
 .aider*
+
+# coru runtime event artifacts
+packages/coru/src/.coru/
