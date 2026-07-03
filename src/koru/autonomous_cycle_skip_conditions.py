@@ -531,6 +531,21 @@ def _manual_send_required_skip_result(
 ) -> AutopilotPolicyDecision | None:
     if not _previous_drive_needs_manual_send(state):
         return None
+    return _resolve_manual_send_follow_up(
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+
+
+def _resolve_manual_send_follow_up(
+    *,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> AutopilotPolicyDecision | None:
     waiting_ticket = _waiting_ticket_id(queue_result)
     previous_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
     if _clear_manual_send_for_new_ticket(

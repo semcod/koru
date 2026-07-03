@@ -451,6 +451,37 @@ def _post_drive_fallback_chain(
     )
 
 
+def _drive_shell_client(
+    client_id: str,
+    *,
+    prompt: str,
+    project: Path | None,
+) -> tuple[dict[str, Any], bool]:
+    """Drive a vendor CLI (claude-code, aider, codex, …) headlessly via tillm."""
+    from koru.tillm_bridge import drive_shell_chat
+
+    try:
+        reply = drive_shell_chat(
+            client_id=client_id,
+            project=project or Path.cwd(),
+            prompt=prompt,
+            execute=True,
+            model=os.environ.get("KORU_TILLM_MODEL", "").strip() or None,
+            execute_profile=os.environ.get("KORU_TILLM_EXECUTE_PROFILE", "").strip()
+            or "default",
+        )
+    except Exception as exc:
+        reply = {
+            "ok": False,
+            "backend": "tillm_shell",
+            "client_id": client_id,
+            "message": str(exc),
+            "type": "error",
+        }
+    reply.setdefault("prompt", prompt)
+    return reply, bool(reply.get("ok"))
+
+
 def _invoke_client_autopilot_drive(
     client: Any,
     *,
@@ -461,6 +492,12 @@ def _invoke_client_autopilot_drive(
     strategy_hint: str | None = None,
     project: Path | None = None,
 ) -> tuple[dict[str, Any], bool]:
+    from koru.tillm_bridge import shell_drive_client_id
+
+    shell_client = shell_drive_client_id(autopilot_ide)
+    if shell_client:
+        return _drive_shell_client(shell_client, prompt=prompt, project=project)
+
     drive_kwargs = _build_drive_kwargs(
         submit=submit,
         autopilot_ide=autopilot_ide,

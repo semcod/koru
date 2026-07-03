@@ -1,19 +1,19 @@
 {
-  "ts": "2026-06-08T16:51:15.201669+00:00",
+  "ts": "2026-07-03T07:26:33.483329+00:00",
   "phase": "finish",
-  "client_id": "aider",
-  "execute": false,
-  "dry_run": true,
-  "prompt_chars": 4,
-  "prompt_preview": "ping",
-  "prompt_path": "/home/tom/github/semcod/koru/.koru/tillm/prompts/prompt-20260608-185115-1af1dd84f8e4.md",
+  "client_id": "claude-code",
+  "execute": true,
+  "dry_run": false,
+  "prompt_chars": 50,
+  "prompt_preview": "Reply with exactly: KORU-MODEL-OK and nothing else",
+  "prompt_path": "/home/tom/github/semcod/koru/.koru/tillm/prompts/prompt-20260703-092630-4ce8128c84d6.md",
   "command": [
-    "/home/tom/.pyenv/shims/aider",
-    "--no-show-model-warnings",
-    "--yes-always",
-    "--message-file",
-    "/home/tom/github/semcod/koru/.koru/tillm/prompts/prompt-20260608-185115-1af1dd84f8e4.md"
+    "/home/tom/.local/bin/claude",
+    "-p",
+    "--model",
+    "claude-sonnet-5"
   ],
   "ok": true,
-  "message": "dry-run: command planned but not executed"
+  "exit_code": 0,
+  "message": "completed"
 }

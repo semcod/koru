@@ -792,8 +792,13 @@ def check_lane_terminal_socket_alignment(
 ) -> ReadinessResult:
     """Warn when terminal host, lane instance, and socket target diverge."""
     from koru.autonomy.env import allow_cross_ide_autopilot
+    from koru.tillm_bridge import shell_drive_client_id
 
     if allow_cross_ide_autopilot():
+        return ReadinessResult(ok=True, issues=())
+    # Shell clients (claude-code, aider, codex, …) are driven headlessly via
+    # tillm; terminal/lane/socket alignment only matters for IDE plugin drive.
+    if shell_drive_client_id(autopilot_ide):
         return ReadinessResult(ok=True, issues=())
 
     ctx = _terminal_lane_context(

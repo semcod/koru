@@ -11,6 +11,15 @@ from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
 
 
+_VSCODE_FAMILY_EQUIVALENT_IDS = frozenset({"vscode", "vscodium"})
+
+
+def _ide_ids_equivalent(left: str, right: str) -> bool:
+    if left == right:
+        return True
+    return left in _VSCODE_FAMILY_EQUIVALENT_IDS and right in _VSCODE_FAMILY_EQUIVALENT_IDS
+
+
 class PluginClient(Protocol):
     role: str
     ide: str | None
@@ -98,7 +107,7 @@ class PluginRouter:
             return True
         target = canonical_autopilot_ide_id(target_ide or "")
         client_ide = canonical_autopilot_ide_id(client.ide or "")
-        return client_ide == target
+        return _ide_ids_equivalent(client_ide, target)
 
     def _match_project_plugin(
         self,
@@ -188,7 +197,10 @@ class PluginRouter:
             for other in self._clients.values()
             if other is not current
             and other.role == "plugin"
-            and canonical_autopilot_ide_id(normalize_ide_id(other.ide) or other.ide or "") == target_ide
+            and _ide_ids_equivalent(
+                canonical_autopilot_ide_id(normalize_ide_id(other.ide) or other.ide or ""),
+                target_ide,
+            )
             and other.awaiting_plugin is None
             and (
                 not other.workspace_folders

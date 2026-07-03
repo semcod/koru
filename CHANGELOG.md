@@ -73,6 +73,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.362] - 2026-07-03
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous_cycle_drive_retry.py
+- Update tests/test_plugin_router.py
+
+### Other
+- Update .koru/project.json
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update .planfile/sprints/current.yaml.lock
+- Update .tillm/logs/drive-20260702.jsonl
+- Update .tillm/logs/drive-20260703.jsonl
+- Update .tillm/logs/latest.json
+- Update plugins/koru-autopilot-vscode/package.json
+
 ## [0.1.361] - 2026-07-02
 
 ### Docs

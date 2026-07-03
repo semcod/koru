@@ -157,5 +157,54 @@ class ExecuteDriveDedupTests(unittest.TestCase):
         self.assertEqual(attempts, 2)
 
 
+class ShellClientDriveTests(unittest.TestCase):
+    """--ide claude/claude-code/aider/… routes the drive through tillm."""
+
+    def test_shell_client_target_bypasses_autopilot_client(self) -> None:
+        from pathlib import Path
+
+        from koru.autonomous_cycle_drive_retry import _invoke_client_autopilot_drive
+
+        captured: dict[str, Any] = {}
+
+        def fake_drive_shell_chat(**kwargs: Any) -> dict[str, Any]:
+            captured.update(kwargs)
+            return {"ok": True, "backend": "tillm_shell", "client_id": kwargs["client_id"]}
+
+        with mock.patch(
+            "koru.tillm_bridge.drive_shell_chat", side_effect=fake_drive_shell_chat
+        ), mock.patch.dict(os.environ, {"KORU_TILLM_MODEL": "sonnet-5"}):
+            reply, ok = _invoke_client_autopilot_drive(
+                None,
+                prompt="continue with the next ticket",
+                submit=True,
+                autopilot_ide="claude",
+                require_plugin=False,
+                project=Path("/tmp"),
+            )
+
+        self.assertTrue(ok)
+        self.assertEqual(captured["client_id"], "claude-code")
+        self.assertEqual(captured["model"], "sonnet-5")
+        self.assertTrue(captured["execute"])
+        self.assertEqual(reply["prompt"], "continue with the next ticket")
+
+    def test_ide_target_is_not_intercepted(self) -> None:
+        from koru.autonomous_cycle_drive_retry import _invoke_client_autopilot_drive
+
+        client = mock.Mock()
+        client.drive.return_value = {"ok": True}
+        reply, ok = _invoke_client_autopilot_drive(
+            client,
+            prompt="hi",
+            submit=True,
+            autopilot_ide="cursor",
+            require_plugin=True,
+        )
+        self.assertTrue(ok)
+        client.drive.assert_called_once()
+        self.assertEqual(reply, {"ok": True})
+
+
 if __name__ == "__main__":
     unittest.main()

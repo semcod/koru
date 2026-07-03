@@ -57,12 +57,28 @@ def configure_loop_state(
         apply_agent_lane_environ=apply_agent_lane_environ,
         environ=os.environ,
     )
-    # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
-    selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
-        args.autopilot_ide,
-        lane,
-        resolve_ide_route_fn=resolve_ide_route_fn,
-    )
+    # Shell client targets (claude-code, aider, codex, …) bypass IDE-route
+    # resolution: the drive step talks to the vendor CLI via tillm instead of
+    # the autopilot daemon.
+    from koru.tillm_bridge import shell_drive_client_id
+
+    shell_client = shell_drive_client_id(args.autopilot_ide)
+    if shell_client:
+        selected_ide = shell_client
+        os.environ["KORU_TILLM_CLIENT"] = shell_client
+        llm_model = (getattr(args, "llm_model", None) or "").strip()
+        if llm_model:
+            os.environ["KORU_TILLM_MODEL"] = llm_model
+        # Autonomous drive needs the client to apply edits and run checks;
+        # the conservative default profile would leave it read-only.
+        os.environ.setdefault("KORU_TILLM_EXECUTE_PROFILE", "automation")
+    else:
+        # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
+        selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
+            args.autopilot_ide,
+            lane,
+            resolve_ide_route_fn=resolve_ide_route_fn,
+        )
     loop_state = state_factory()
     checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
     restored_cycle = load_checkpoint(

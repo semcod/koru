@@ -408,6 +408,16 @@ def wait_for_plugin_connection(
     retry_after_reload: Any = retry_plugin_wait_after_reload,
     emit_reload_lines: Any = plugin_runtime.emit_reload_required_lines,
 ) -> bool:
+    from koru.tillm_bridge import shell_drive_client_id
+
+    if shell_drive_client_id(autopilot_ide):
+        stdio_info(
+            "koru autonomous: plugin wait skipped — "
+            f"{autopilot_ide} is a shell client driven via tillm (no IDE plugin)",
+            fmt=args.emit_events,
+        )
+        return True
+
     wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
     if reload_after_install is not None and reload_after_install.ok:
         wait_seconds = max(wait_seconds, 30.0)

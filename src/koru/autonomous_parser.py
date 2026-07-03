@@ -138,6 +138,8 @@ def _add_up_core_args(up: argparse.ArgumentParser) -> None:
 def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
     up.add_argument(
         "--autopilot-ide",
+        "--ide",
+        dest="autopilot_ide",
         default="auto",
         choices=(
             "auto",
@@ -148,8 +150,32 @@ def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
             "cursor",
             "jetbrains",
             "zed",
+            "claude",
+            "claude-code",
+            "aider",
+            "codex",
+            "gemini-cli",
+            "opencode",
+            "qwen-code",
+            "devin",
         ),
-        help="IDE target for autopilot drive (default: auto).",
+        help=(
+            "Drive target (default: auto). IDE ids drive the editor chat via the "
+            "autopilot daemon; shell client ids (claude, claude-code, aider, codex, "
+            "gemini-cli, opencode, qwen-code, devin) drive the vendor CLI headlessly "
+            "via tillm."
+        ),
+    )
+    up.add_argument(
+        "--llm",
+        "--model",
+        dest="llm_model",
+        default=None,
+        metavar="MODEL",
+        help=(
+            "Force the LLM model for shell-client drive targets "
+            "(e.g. --llm sonnet-5 with --ide claude). Ignored for IDE targets."
+        ),
     )
     up.add_argument(
         "--autopilot-plugin-wait-seconds",

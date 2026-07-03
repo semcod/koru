@@ -35,6 +35,17 @@ def autopilot_backend_for_shell_agent(agent_id: str) -> str | None:
     return autopilot_backend_for_client(agent_id)
 
 
+def shell_drive_client_id(agent_id: str) -> str | None:
+    """Canonical tillm client id when ``agent_id`` names a shell client, else None."""
+    ensure_local_tillm_path()
+    try:
+        from tillm.registry import get_client_spec, normalize_client_id
+    except ImportError:
+        return None
+    spec = get_client_spec(normalize_client_id(agent_id))
+    return spec.id if spec is not None else None
+
+
 def is_shell_agent(agent_id: str) -> bool:
     ensure_local_tillm_path()
     try:
@@ -113,6 +124,8 @@ def drive_shell_chat(
     project: Path,
     prompt: str,
     execute: bool,
+    model: str | None = None,
+    execute_profile: str = "default",
 ) -> dict[str, object]:
     ensure_local_tillm_path()
     from tillm.compat import drive_koru_chat
@@ -122,6 +135,8 @@ def drive_shell_chat(
         project=project,
         prompt=prompt,
         execute=execute,
+        model=model,
+        execute_profile=execute_profile,
     )
 
 
@@ -143,6 +158,7 @@ __all__ = [
     "shell_agent_backend_profiles",
     "shell_agent_available",
     "shell_agent_process_patterns",
+    "shell_drive_client_id",
     "shell_tool_registry_entries",
     "tillm_cli_main",
 ]
