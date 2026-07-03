@@ -181,7 +181,8 @@ def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIss
         if pip.is_file()
         else "pip install planfile  # or: pip install 'koru[planfile]'"
     )
-    returncode, output = _probe_planfile_version(tuple(cmd), str(project))
+    from koru import autonomous_readiness as _readiness_facade
+    returncode, output = _readiness_facade._probe_planfile_version(tuple(cmd), str(project))
     if returncode == 0:
         return None
     if returncode is None:
@@ -363,7 +364,11 @@ def check_runtime_consistency(
 
 
 def _check_daemon_version_issue(status: Mapping[str, Any] | None) -> ReadinessIssue | None:
-    compatible, reason = daemon_status_compatible(status)
+    # Late-bind through the legacy facade so existing monkeypatches on
+    # koru.autonomous_readiness.daemon_status_compatible keep working.
+    from koru import autonomous_readiness as _readiness_facade
+
+    compatible, reason = _readiness_facade.daemon_status_compatible(status)
     if compatible:
         return None
     fix_command = (
@@ -653,7 +658,8 @@ def check_workspace_socket_ownership(
 ) -> ReadinessResult:
     """Detect stale sockets, dead daemon PIDs, and workspace mismatches."""
     project = project.resolve()
-    socket_health = probe_socket_health(socket_path)
+    from koru import autonomous_readiness as _readiness_facade
+    socket_health = _readiness_facade.probe_socket_health(socket_path)
     status_available = isinstance(status, Mapping)
 
     issues: list[ReadinessIssue] = []
@@ -683,7 +689,8 @@ def apply_socket_ownership_repairs(
     actions: list[str] = []
     codes = {i.code for i in readiness.issues}
     if codes.intersection({"socket_stale", "socket_inode_drift", "daemon_pid_dead"}):
-        health = probe_socket_health(socket_path)
+        from koru import autonomous_readiness as _readiness_facade
+        health = _readiness_facade.probe_socket_health(socket_path)
         if health.stale or "socket_inode_drift" in codes or "daemon_pid_dead" in codes:
             result = remove_stale_socket(health, dry_run=dry_run)
             actions.append(f"{result.action}:{result.status}:{result.detail}")
