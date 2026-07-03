@@ -27474,21 +27474,52 @@ sprint:
         layers koru -> koruide -> gillm/tillm, forbid upward imports, forbid duplicate
         class definitions across daemon/protocol vs handlers_* (see _PluginEventHandoff
         incident).
+      execution:
+        attempt: 0
+        finished_at: '2026-07-03T17:10:14.429300Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-07-03T17:05:11.050822Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-03T17:05:11.206518+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-03T17:10:14.583578+00:00'
       id: STARTER-552
       labels:
       - quality
       name: 'R-F1.4: Add import-linter layer contracts'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-07-03T16:47:40.527783Z'
         tool: human
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-03T16:47:40.532571Z'
+      updated_at: '2026-07-03T17:10:14.583542+00:00'
     STARTER-553:
       acceptance_criteria: []
       blocked_by: []
@@ -27543,21 +27574,52 @@ sprint:
       description: Add a test that builds the wheel and asserts every non-.py file
         under src/*/ ships in it (class of the korumesh capture_host.html incident).
         Mirror in other semcod repos.
+      execution:
+        attempt: 0
+        finished_at: '2026-07-03T17:10:12.507071Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-07-03T17:05:09.129072Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-03T17:05:09.279100+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-03T17:10:12.660937+00:00'
       id: STARTER-555
       labels:
       - quality
       name: 'R-F2.3: Wheel-content packaging guard test'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-07-03T16:47:46.101148Z'
         tool: human
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-03T16:47:46.105850Z'
+      updated_at: '2026-07-03T17:10:12.660892+00:00'
     STARTER-556:
       acceptance_criteria: []
       blocked_by: []
