@@ -52,6 +52,25 @@ def _record_direct_drive_audit(
         pass
 
 
+def _chat_coords_from_map(
+    typed: dict[str, Any],
+    map_path: Any,
+    click: dict[str, Any],
+) -> tuple[int | None, int | None] | None:
+    """Global (x, y) for the click point via the GUI map, or None on failure."""
+    try:
+        from vdisplay.control.gui_map import load_gui_map
+        from vdisplay.input.coords import global_pointer_coords
+
+        pack = load_gui_map(str(map_path))
+        element = pack.elements.get(str(typed.get("map_target") or "ai-chat-input"))
+        meta = (element.capture_meta if element else None) or pack.capture_meta or {}
+        chat_x, chat_y, _ = global_pointer_coords(int(click["x"]), int(click["y"]), meta)
+    except Exception:
+        return None
+    return chat_x, chat_y
+
+
 def _resolve_verify_coords(
     payload: dict[str, Any],
 ) -> tuple[int | None, int | None]:
@@ -66,16 +85,9 @@ def _resolve_verify_coords(
     state = target.get("state") if isinstance(target.get("state"), dict) else {}
     click = state.get("click_point") if isinstance(state.get("click_point"), dict) else {}
     if click.get("x") is not None and map_path:
-        try:
-            from vdisplay.control.gui_map import load_gui_map
-            from vdisplay.input.coords import global_pointer_coords
-
-            pack = load_gui_map(str(map_path))
-            element = pack.elements.get(str(typed.get("map_target") or "ai-chat-input"))
-            meta = (element.capture_meta if element else None) or pack.capture_meta or {}
-            chat_x, chat_y, _ = global_pointer_coords(int(click["x"]), int(click["y"]), meta)
-        except Exception:
-            pass
+        mapped = _chat_coords_from_map(typed, map_path, click)
+        if mapped is not None:
+            chat_x, chat_y = mapped
     return chat_x, chat_y
 
 
@@ -99,6 +111,14 @@ def _apply_drive_verification(
         chat_y=int(chat_y) if chat_y is not None else None,
         map_path=str(map_path) if map_path else None,
     )
+    return _attach_verification(payload, verification)
+
+
+def _attach_verification(
+    payload: dict[str, Any],
+    verification: dict[str, Any],
+) -> tuple[dict[str, Any], int]:
+    """Merge verification results into payload; rc 1 when verify failed."""
     payload["verification"] = verification
     payload["verified"] = verification.get("verified")
     payload["verify_mode"] = verification.get("mode")

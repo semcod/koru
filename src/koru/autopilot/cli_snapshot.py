@@ -33,6 +33,24 @@ def _bridge_line(*, ide: str, socket_path: str, project: Path, plugins: list) ->
     ])
 
 
+def _plugin_labels(plugins: list) -> list[str]:
+    """Human-readable label per plugin row (ide, id, or ``?``)."""
+    return [
+        str(row.get("ide") or row.get("id") or "?")
+        for row in plugins
+        if isinstance(row, dict)
+    ]
+
+
+def _daemon_detail(daemon: dict[str, Any], info: dict[str, Any]) -> str:
+    """pid/version/sha detail string for the daemon health line."""
+    return (
+        f"pid={daemon.get('pid') or info.get('daemon_pid') or '-'} "
+        f"version={daemon.get('version') or info.get('daemon_version') or '-'} "
+        f"sha={daemon.get('git_sha') or '-'}"
+    )
+
+
 def _runtime_lines(
     *,
     project: Path,
@@ -42,16 +60,8 @@ def _runtime_lines(
 ) -> list[str]:
     daemon = info.get("daemon") if isinstance(info.get("daemon"), dict) else {}
     plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
-    plugin_labels = [
-        str(row.get("ide") or row.get("id") or "?")
-        for row in plugins
-        if isinstance(row, dict)
-    ]
-    detail = (
-        f"pid={daemon.get('pid') or info.get('daemon_pid') or '-'} "
-        f"version={daemon.get('version') or info.get('daemon_version') or '-'} "
-        f"sha={daemon.get('git_sha') or '-'}"
-    )
+    plugin_labels = _plugin_labels(plugins)
+    detail = _daemon_detail(daemon, info)
     plugin_reason = f"plugins={len(plugins)} labels={','.join(plugin_labels) or '-'}"
     lines = [
         " ".join([
@@ -125,6 +135,21 @@ def _observe_path_line(project: Path, *, ticket: str | None, limit: int) -> list
     return [f"#005 act=obs intent=\"semantic path\" route=observe ok=true path={_dsl_quote(path, max_len=500)}"]
 
 
+def _filter_drive_lines(raw_lines: list) -> list[str]:
+    """Non-empty drive DSL lines, excluding operator-analysis acts."""
+    skip_acts = {"diagnose", "next", "replay", "validate"}
+    return [
+        str(line)
+        for line in raw_lines
+        if str(line).strip()
+        and not any(
+            token.startswith(f"act={act}")
+            for act in skip_acts
+            for token in str(line).split()
+        )
+    ]
+
+
 def _drive_dsl_lines(project: Path, *, limit: int) -> list[str]:
     path = project / ".planfile" / ".koru" / "dsl_recent.json"
     try:
@@ -140,17 +165,7 @@ def _drive_dsl_lines(project: Path, *, limit: int) -> list[str]:
             '#006 act=drive intent="last plugin drive trace" route=dsl_recent ok=false '
             'reason="drive DSL file is empty"'
         ]
-    skip_acts = {"diagnose", "next", "replay", "validate"}
-    lines = [
-        str(line)
-        for line in raw_lines
-        if str(line).strip()
-        and not any(
-            token.startswith(f"act={act}")
-            for act in skip_acts
-            for token in str(line).split()
-        )
-    ]
+    lines = _filter_drive_lines(raw_lines)
     if limit > 0:
         lines = lines[-limit:]
     out = ['#006 act=drive intent="last plugin drive trace" route=dsl_recent ok=true']
@@ -189,24 +204,17 @@ def _calibration_line(idx: int, row: dict) -> str:
     ])
 
 
-def _env2llm_lines(project: Path) -> list[str]:
-    try:
-        from koruapi.env2llm_registry import env2llm_get_desktop
-    except ImportError:
-        return []
-    payload = env2llm_get_desktop(project_dir=str(project), refresh=True)
-    desktop = payload.get("desktop") if isinstance(payload, dict) else None
-    route = "registry"
-    if not isinstance(desktop, dict):
-        desktop = _live_desktop_probe(project)
-        route = "probe"
-    if not isinstance(desktop, dict):
-        error = (
-            payload.get("error")
-            if isinstance(payload, dict) and payload.get("error")
-            else "desktop unavailable (pip install env2llm; ENV2LLM_DESKTOP_PROBE=1 env2llm . --probe-desktop)"
-        )
-        return [_env2llm_error_line(error)]
+def _env2llm_unavailable_error(payload: Any) -> str:
+    """Error text when neither registry nor live probe produced a desktop."""
+    return (
+        payload.get("error")
+        if isinstance(payload, dict) and payload.get("error")
+        else "desktop unavailable (pip install env2llm; ENV2LLM_DESKTOP_PROBE=1 env2llm . --probe-desktop)"
+    )
+
+
+def _env2llm_desktop_lines(route: str, desktop: dict[str, Any]) -> list[str]:
+    """Summary line plus up to three IDE calibration lines for the desktop."""
     pointer = desktop.get("pointer") if isinstance(desktop.get("pointer"), dict) else {}
     calibrations = desktop.get("ide_calibrations") if isinstance(desktop.get("ide_calibrations"), list) else []
     lines = [
@@ -224,6 +232,22 @@ def _env2llm_lines(project: Path) -> list[str]:
         if isinstance(row, dict):
             lines.append(_calibration_line(idx, row))
     return lines
+
+
+def _env2llm_lines(project: Path) -> list[str]:
+    try:
+        from koruapi.env2llm_registry import env2llm_get_desktop
+    except ImportError:
+        return []
+    payload = env2llm_get_desktop(project_dir=str(project), refresh=True)
+    desktop = payload.get("desktop") if isinstance(payload, dict) else None
+    route = "registry"
+    if not isinstance(desktop, dict):
+        desktop = _live_desktop_probe(project)
+        route = "probe"
+    if not isinstance(desktop, dict):
+        return [_env2llm_error_line(_env2llm_unavailable_error(payload))]
+    return _env2llm_desktop_lines(route, desktop)
 
 
 def _lane_shell_env(*, project: Path, ide: str, socket_path: str) -> str:
@@ -290,31 +314,15 @@ def _operator_lines(
     ]
 
 
-def action_snapshot(
-    args: argparse.Namespace,
+def _snapshot_runtime_block(
+    client: Any,
     *,
-    client_fn: Any | None = None,
-) -> int:
-    """Print a unified shell OQL/DSL snapshot with replay/validate commands."""
-    project = Path(args.project).resolve()
-    ide = canonical_autopilot_ide_id(normalize_ide_id(str(args.ide)))
-    if client_fn is None:
-        from koru.autopilot.client import AutopilotClient
-
-        client = AutopilotClient(
-            socket_path=getattr(args, "socket", None),
-            project=project,
-            ide=ide,
-        )
-    else:
-        client = client_fn(args)
-    limit = max(0, int(args.limit or 12))
-    ticket = str(args.ticket).strip() if getattr(args, "ticket", None) else None
-
+    project: Path,
+    ide: str,
+) -> tuple[list[str], dict[str, Any]]:
+    """Daemon health/plugin/bridge lines plus the fetched status payload."""
     lines: list[str] = []
-    skip_code = "unknown"
     info: dict[str, Any] = {}
-
     if not client.is_running():
         lines.extend(
             [
@@ -339,13 +347,45 @@ def action_snapshot(
                     info=info,
                 )
             )
+    return lines, info
 
-    decision_lines = _decision_lines(project, limit=1)
-    lines.extend(decision_lines)
+
+def _skip_code_from_decision_lines(decision_lines: list[str]) -> str:
+    """Extract ``code=`` token from the first decision line, or ``unknown``."""
+    skip_code = "unknown"
     if decision_lines:
         for token in decision_lines[0].split():
             if token.startswith("code="):
                 skip_code = token.split("=", 1)[1]
+    return skip_code
+
+
+def action_snapshot(
+    args: argparse.Namespace,
+    *,
+    client_fn: Any | None = None,
+) -> int:
+    """Print a unified shell OQL/DSL snapshot with replay/validate commands."""
+    project = Path(args.project).resolve()
+    ide = canonical_autopilot_ide_id(normalize_ide_id(str(args.ide)))
+    if client_fn is None:
+        from koru.autopilot.client import AutopilotClient
+
+        client = AutopilotClient(
+            socket_path=getattr(args, "socket", None),
+            project=project,
+            ide=ide,
+        )
+    else:
+        client = client_fn(args)
+    limit = max(0, int(args.limit or 12))
+    ticket = str(args.ticket).strip() if getattr(args, "ticket", None) else None
+
+    lines, info = _snapshot_runtime_block(client, project=project, ide=ide)
+
+    decision_lines = _decision_lines(project, limit=1)
+    lines.extend(decision_lines)
+    skip_code = _skip_code_from_decision_lines(decision_lines)
 
     lines.extend(_observe_path_line(project, ticket=ticket, limit=limit))
     lines.extend(_drive_dsl_lines(project, limit=limit))

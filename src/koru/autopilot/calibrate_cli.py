@@ -20,11 +20,16 @@ def _resolve_calibration_project_dir(args: argparse.Namespace) -> Path:
     return Path(raw).resolve() if raw else Path.cwd().resolve()
 
 
+def _calibration_issues_for(issues: list, ide: str, severity: str) -> list:
+    """Validation issues matching the given IDE and severity."""
+    return [i for i in issues if i.get("severity") == severity and i.get("ide") == ide]
+
+
 def _print_calibration_issues(validation: dict, ide: str) -> None:
     """Print calibration errors/warnings from registry sync validation."""
     issues = validation.get("issues") or []
-    errors = [i for i in issues if i.get("severity") == "error" and i.get("ide") == ide]
-    warnings = [i for i in issues if i.get("severity") == "warning" and i.get("ide") == ide]
+    errors = _calibration_issues_for(issues, ide, "error")
+    warnings = _calibration_issues_for(issues, ide, "warning")
     if errors:
         import sys
         for e in errors:
@@ -33,6 +38,31 @@ def _print_calibration_issues(validation: dict, ide: str) -> None:
         import sys
         for w in warnings:
             print(f"\u26a0 CALIBRATION WARNING [{ide}]: {w.get('message', '')}", file=sys.stderr)
+
+
+def _calibration_sync_payload(
+    result: dict,
+    *,
+    ide: str,
+    chat_x: int,
+    chat_y: int,
+    config_path: Path,
+) -> dict[str, object]:
+    """Successful registry-sync payload with matched display coordinates."""
+    calibrations = result.get("ide_calibrations") or []
+    matched = next((row for row in calibrations if row.get("ide") == ide), None)
+    return {
+        "ok": True,
+        "registry_path": result.get("registry_path"),
+        "ide_calibration_count": result.get("ide_calibration_count"),
+        "ide": ide,
+        "chat_x": chat_x,
+        "chat_y": chat_y,
+        "config_path": str(config_path),
+        "display_id": (matched or {}).get("display_id"),
+        "display_x": (matched or {}).get("display_x"),
+        "display_y": (matched or {}).get("display_y"),
+    }
 
 
 def _sync_calibration_registry(
@@ -68,20 +98,13 @@ def _sync_calibration_registry(
             "error": result.get("error", "env2llm registry sync failed"),
         }
 
-    calibrations = result.get("ide_calibrations") or []
-    matched = next((row for row in calibrations if row.get("ide") == ide), None)
-    sync_result: dict[str, object] = {
-        "ok": True,
-        "registry_path": result.get("registry_path"),
-        "ide_calibration_count": result.get("ide_calibration_count"),
-        "ide": ide,
-        "chat_x": chat_x,
-        "chat_y": chat_y,
-        "config_path": str(config_path),
-        "display_id": (matched or {}).get("display_id"),
-        "display_x": (matched or {}).get("display_x"),
-        "display_y": (matched or {}).get("display_y"),
-    }
+    sync_result = _calibration_sync_payload(
+        result,
+        ide=ide,
+        chat_x=chat_x,
+        chat_y=chat_y,
+        config_path=config_path,
+    )
 
     validation = result.get("validation")
     if validation:

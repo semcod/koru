@@ -105,6 +105,18 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+def _payload_instance_name(payload: dict, path: Path) -> str:
+    """Instance name from payload env, socket path, or metadata file stem."""
+    env = payload.get("env") if isinstance(payload.get("env"), dict) else {}
+    instance = str(env.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    if not instance:
+        instance = instance_from_socket_path(str(payload.get("socket") or "")) or ""
+    if not instance:
+        stem = path.name.removeprefix("koru-autopilot-").removesuffix(".daemon.json")
+        instance = stem.strip()
+    return instance
+
+
 def _instance_from_payload(
     payload: dict,
     path: Path,
@@ -114,13 +126,7 @@ def _instance_from_payload(
     pid = payload.get("pid")
     if not isinstance(pid, int) or not _pid_alive(pid):
         return None
-    env = payload.get("env") if isinstance(payload.get("env"), dict) else {}
-    instance = str(env.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-    if not instance:
-        instance = instance_from_socket_path(str(payload.get("socket") or "")) or ""
-    if not instance:
-        stem = path.name.removeprefix("koru-autopilot-").removesuffix(".daemon.json")
-        instance = stem.strip()
+    instance = _payload_instance_name(payload, path)
     if not instance:
         return None
     if ide:

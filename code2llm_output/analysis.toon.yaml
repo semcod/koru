@@ -1,106 +1,16 @@
-# code2llm | 12f 2367L | python:12 | 2026-06-12
+# code2llm | 0f 0L | unknown | 2026-07-03
 # generated in 0.00s
-# CC̅=3.9 | critical:0/102 | dups:0 | cycles:0
+# CC̅=0.0 | critical:0/0 | dups:0 | cycles:0
 
 HEALTH[0]: ok
 
 REFACTOR[0]: none needed
 
-PIPELINES[33]:
-  [1] Src [run_lane_repair]: run_lane_repair
-      PURITY: 100% pure
-  [2] Src [for_project]: for_project
-      PURITY: 100% pure
-  [3] Src [append]: append
-      PURITY: 100% pure
-  [4] Src [append_many]: append_many
-      PURITY: 100% pure
-  [5] Src [read_all]: read_all
-      PURITY: 100% pure
-  [6] Src [read_recent]: read_recent
-      PURITY: 100% pure
-  [7] Src [for_project]: for_project
-      PURITY: 100% pure
-  [8] Src [cases]: cases → project_repair_cases → _project_one_session → _extract_problem_codes
-      PURITY: 100% pure
-  [9] Src [cases_for_lane]: cases_for_lane → aggregate_id_for
-      PURITY: 100% pure
-  [10] Src [cases_matching_code]: cases_matching_code
-      PURITY: 100% pure
-  [11] Src [format_llm]: format_llm → format_history_llm → format_case_llm
-      PURITY: 100% pure
-  [12] Src [format_json]: format_json
-      PURITY: 100% pure
-  [13] Src [problems_to_payload]: problems_to_payload
-      PURITY: 100% pure
-  [14] Src [from_dict]: from_dict
-      PURITY: 100% pure
-  [15] Src [dedupe_problems]: dedupe_problems → _dedupe_problems
-      PURITY: 100% pure
-  [16] Src [collect_problems_from_manage_report]: collect_problems_from_manage_report → _collect_manage_issue_problems → _problem_from_manage_issue
-      PURITY: 100% pure
-  [17] Src [collect_problems_from_status]: collect_problems_from_status → _rejected_plugin_problems
-      PURITY: 100% pure
-  [18] Src [collect_problems_from_drive_result]: collect_problems_from_drive_result → _dedupe_problems
-      PURITY: 100% pure
-  [19] Src [collect_problems_from_console_logs]: collect_problems_from_console_logs → _dedupe_problems
-      PURITY: 100% pure
-  [20] Src [_exec_ensure_daemon]: _exec_ensure_daemon
-      PURITY: 100% pure
-  [21] Src [_exec_manage_fix]: _exec_manage_fix
-      PURITY: 100% pure
-  [22] Src [_exec_manual_vsix_unpack]: _exec_manual_vsix_unpack → manual_vsix_unpack → _vsix_unpack_layout
-      PURITY: 100% pure
-  [23] Src [_exec_plugin_upgrade_and_reload]: _exec_plugin_upgrade_and_reload → manual_vsix_unpack → _vsix_unpack_layout
-      PURITY: 100% pure
-  [24] Src [_exec_strict_handshake_cycle]: _exec_strict_handshake_cycle → _poll_plugin_ready → plugin_build_aligned → _plugin_row_for_ide
-      PURITY: 100% pure
-  [25] Src [_exec_reload_and_connect]: _exec_reload_and_connect → _run_reload_and_connect → _poll_plugin_ready → plugin_build_aligned → ...(1 more)
-      PURITY: 100% pure
-  [26] Src [_exec_cross_ide_guidance]: _exec_cross_ide_guidance
-      PURITY: 100% pure
-  [27] Src [_exec_submit_unverified_guidance]: _exec_submit_unverified_guidance → registry_step
-      PURITY: 100% pure
-  [28] Src [_exec_default]: _exec_default
-      PURITY: 100% pure
-  [29] Src [format_repair_lines]: format_repair_lines
-      PURITY: 100% pure
-  [30] Src [for_project]: for_project
-      PURITY: 100% pure
-  [31] Src [record_diagnosis]: record_diagnosis → aggregate_id_for
-      PURITY: 100% pure
-  [32] Src [run_session]: run_session → aggregate_id_for
-      PURITY: 100% pure
-  [33] Src [run_repair_with_events]: run_repair_with_events → run_repair_pipeline → _emit_session_started → _emit
-      PURITY: 100% pure
+PIPELINES[0]: none detected
 
 LAYERS:
-  ./                              CC̄=3.9    ←in:0  →out:0
-  │ !! pipeline                  1039L  2C   42m  CC=9      ←1
-  │ !! diagnostics                504L  0C   27m  CC=14     ←1
-  │ registry                   177L  0C    3m  CC=5      ←2
-  │ service                    164L  1C    5m  CC=3      ←0
-  │ projector                  115L  0C    7m  CC=9      ←1
-  │ query                       80L  1C    8m  CC=5      ←0
-  │ domain                      64L  5C    0m  CC=0.0    ←0
-  │ store                       55L  1C    6m  CC=6      ←0
-  │ events                      54L  1C    3m  CC=7      ←2
-  │ __init__                    54L  0C    0m  CC=0.0    ←0
-  │ commands                    38L  3C    0m  CC=0.0    ←0
-  │ runtime                     23L  0C    1m  CC=1      ←0
-  │
 
-COUPLING:
-                  pipeline  diagnostics    projector        query      service       events     registry
-     pipeline           ──            5                                     ←2                         2
-  diagnostics           ←5           ──                                                                   hub
-    projector                                     ──           ←3                                      1
-        query                                      3           ──                         1             
-      service            2                                                  ──            2             
-       events                                                  ←1           ←2           ──             
-     registry           ←2                        ←1                                                  ──
-  CYCLES: none
-  HUB: diagnostics/ (fan-in=5)
+COUPLING: no cross-package imports detected
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

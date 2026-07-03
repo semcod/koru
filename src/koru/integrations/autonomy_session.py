@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -110,8 +110,8 @@ def append_session_index(session_dir: Path, *, phase: str, name: str, ok: bool |
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None) -> Path | None:
-    """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime."""
+def _session_search_bases(root: Path | None) -> list[Path]:
+    """Candidate ``.vdisplay`` roots to scan for koru session directories."""
     bases: list[Path] = []
     if root is not None:
         bases.append(root)
@@ -127,8 +127,11 @@ def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None
             bases.append(cwd_root)
         if not bases:
             bases.append(metadata_root())
-    slug = (ide or "jetbrains").strip().lower().replace(" ", "-")[:32]
-    pattern = f"*__koru-{slug}"
+    return bases
+
+
+def _collect_session_candidates(bases: list[Path], pattern: str) -> list[Path]:
+    """Unique resolved session dirs matching ``pattern`` under date dirs in ``bases``."""
     candidates: list[Path] = []
     seen: set[Path] = set()
     for base in bases:
@@ -145,6 +148,15 @@ def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None
                     continue
                 seen.add(resolved)
                 candidates.append(resolved)
+    return candidates
+
+
+def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None) -> Path | None:
+    """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime."""
+    bases = _session_search_bases(root)
+    slug = (ide or "jetbrains").strip().lower().replace(" ", "-")[:32]
+    pattern = f"*__koru-{slug}"
+    candidates = _collect_session_candidates(bases, pattern)
     if not candidates:
         return None
     candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
