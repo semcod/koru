@@ -274,11 +274,63 @@ def _local_planfile_executable(project: Path) -> Path | None:
     return None
 
 
+_PLANFILE_MODULE_MISSING_MARKERS = (
+    "no module named 'planfile",
+    "error while finding module specification for 'planfile",
+)
+
+
+@lru_cache(maxsize=8)
+def _configured_planfile_cmd_usable(configured: str) -> bool:
+    """Cheaply verify a pinned ``KORU_PLANFILE_CMD`` can actually run.
+
+    A pinned command like ``.venv/bin/python -m planfile.cli`` silently breaks
+    the whole queue when planfile is not installed in that env. Only that
+    specific module-missing signature bypasses the operator's pin — any other
+    state (including a probe we cannot run) keeps the pin authoritative;
+    ``koru doctor`` reports non-executable pins separately.
+    """
+    parts = shlex.split(configured)
+    if not parts:
+        return True
+    try:
+        proc = subprocess.run(
+            [*parts, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return True
+    if proc.returncode == 0:
+        return True
+    text = f"{proc.stdout}\n{proc.stderr}".lower()
+    return not any(marker in text for marker in _PLANFILE_MODULE_MISSING_MARKERS)
+
+
+_warned_planfile_cmd_fallbacks: set[str] = set()
+
+
+def _warn_planfile_cmd_fallback_once(configured: str) -> None:
+    if configured in _warned_planfile_cmd_fallbacks:
+        return
+    _warned_planfile_cmd_fallbacks.add(configured)
+    print(
+        f"[koru] KORU_PLANFILE_CMD={configured!r} cannot run planfile "
+        "(module missing in that environment); falling back to auto-resolution. "
+        "Install planfile into that env or unset KORU_PLANFILE_CMD.",
+        file=sys.stderr,
+    )
+
+
 def resolve_planfile_base_command(project: Path) -> list[str]:
     """Resolve the Planfile command Koru should use for a project."""
     configured = os.getenv("KORU_PLANFILE_CMD")
     if configured:
-        return shlex.split(configured)
+        if _configured_planfile_cmd_usable(configured):
+            return shlex.split(configured)
+        _warn_planfile_cmd_fallback_once(configured)
     if local_planfile := _local_planfile_executable(project):
         return [str(local_planfile)]
     if module_cmd := _module_cli_command_for_project(project):

@@ -148,7 +148,9 @@ def _build_agent_option_from_mapping(row: Mapping[str, Any]) -> AgentOption:
 _FALLBACK_SHELL_CLIENTS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("claude-code", "Claude Code", ("claude",)),
     ("aider", "aider", ("aider",)),
+    ("cline", "Cline", ("cline",)),
     ("codex", "Codex CLI", ("codex",)),
+    ("devin", "Devin CLI", ("devin",)),
     ("gemini-cli", "Gemini CLI", ("gemini",)),
     ("opencode", "OpenCode", ("opencode",)),
     ("qwen-code", "Qwen Code", ("qwen",)),

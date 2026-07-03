@@ -19,6 +19,9 @@ dependencies = [
     "gillm>=0.1.9",
     "pyyaml>=6.0,<7.0",
     "rich>=14.3.4",
+    # Zero-dep shell-client registry/driver; core so `--ide claude` can never
+    # silently fall through to an editor lane (see docs/boundary-refactoring-proposal.md).
+    "tillm>=0.1.35",
 ]
 license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
@@ -240,7 +243,7 @@ koru = [
     "wizard/gui/static/*",
 ]
 koruapi = ["dashboard_template.html"]
-korumesh = ["grid_template.html"]
+korumesh = ["*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

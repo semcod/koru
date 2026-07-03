@@ -38,13 +38,76 @@ def check_planfile_binary(_project: Path) -> tuple[str, str]:
     if explicit:
         first = shlex.split(explicit)[0] if explicit.strip() else ""
         resolved = shutil.which(first) if first else None
-        if resolved or (first and Path(first).is_file()):
-            return PASS, f"KORU_PLANFILE_CMD={explicit}"
-        return FAIL, f"KORU_PLANFILE_CMD set but not executable: {explicit}"
+        if not (resolved or (first and Path(first).is_file())):
+            return FAIL, f"KORU_PLANFILE_CMD set but not executable: {explicit}"
+        from koru.queue.ticket import _configured_planfile_cmd_usable
+
+        if not _configured_planfile_cmd_usable(explicit):
+            return FAIL, (
+                f"KORU_PLANFILE_CMD={explicit} cannot run planfile "
+                "(module missing in that env?) — install planfile there "
+                "or unset KORU_PLANFILE_CMD"
+            )
+        return PASS, f"KORU_PLANFILE_CMD={explicit}"
     on_path = shutil.which("planfile")
     if on_path:
         return PASS, on_path
     return FAIL, "`planfile` not on PATH and KORU_PLANFILE_CMD unset"
+
+
+def check_lane_dependencies(_project: Path) -> tuple[str, str]:
+    """Verify the drive lane koru would use has its dependencies installed.
+
+    Catches the field failure where ``--ide claude`` silently drove an editor
+    lane because tillm was missing in the running environment.
+    """
+    from koru.tillm_bridge import (
+        looks_like_shell_client,
+        shell_agent_available,
+        tillm_available,
+    )
+
+    requested = (
+        os.environ.get("KORU_TILLM_CLIENT")
+        or os.environ.get("KORU_AUTOPILOT_IDE")
+        or ""
+    ).strip().lower()
+
+    if requested and looks_like_shell_client(requested):
+        if not tillm_available():
+            return FAIL, (
+                f"lane '{requested}' needs the tillm package; "
+                "pip install tillm (or set KORU_TILLM_PATH to a checkout)"
+            )
+        if not shell_agent_available(requested):
+            return FAIL, f"tillm present but client CLI for '{requested}' is not on PATH"
+        return PASS, f"shell lane '{requested}': tillm + CLI available"
+
+    try:
+        import gillm  # noqa: F401
+
+        gillm_ok = True
+    except ImportError:
+        gillm_ok = False
+
+    parts = [
+        f"tillm={'yes' if tillm_available() else 'no'}",
+        f"gillm={'yes' if gillm_ok else 'no'}",
+    ]
+    if requested:
+        parts.insert(0, f"lane '{requested}' (editor)")
+        if not gillm_ok:
+            return WARN, (
+                f"{'; '.join(parts)} — GUI fallbacks unavailable without gillm "
+                "(plugin socket lane still works)"
+            )
+        return PASS, "; ".join(parts)
+    if not gillm_ok and not tillm_available():
+        return WARN, (
+            f"{'; '.join(parts)} — no shell or GUI driver installed; "
+            "only the plugin-socket lane can drive an IDE"
+        )
+    return PASS, "; ".join(parts)
 
 
 def planfile_version_argv() -> list[str] | None:

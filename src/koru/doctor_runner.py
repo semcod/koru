@@ -16,6 +16,7 @@ _BASE_PROBES: tuple[tuple[str, str], ...] = (
     ("detected_configuration", "_check_detected_configuration"),
     ("git_repo", "_check_git_repo"),
     ("planfile_binary", "_check_planfile_binary"),
+    ("lane_dependencies", "_check_lane_dependencies"),
     ("koru_package_version", "_check_koru_package_version"),
     ("planfile_cli_version", "_check_planfile_cli_version"),
     ("planfile_config", "_check_planfile_config"),

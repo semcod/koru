@@ -67,6 +67,7 @@ _FALLBACK_SHELL_CLIENT_TOKENS = frozenset(
         "aider",
         "claude",
         "claude-code",
+        "cline",
         "codex",
         "devin",
         "gemini-cli",

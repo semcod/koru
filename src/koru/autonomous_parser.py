@@ -153,6 +153,7 @@ def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
             "claude",
             "claude-code",
             "aider",
+            "cline",
             "codex",
             "gemini-cli",
             "opencode",
