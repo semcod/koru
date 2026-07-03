@@ -73,6 +73,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.365] - 2026-07-03
+
+### Docs
+- Update README.md
+- Update docs/boundary-refactoring-proposal.md
+
+### Test
+- Update tests/test_ide_map_consolidation.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update uv.lock
+
 ## [0.1.364] - 2026-07-03
 
 ### Docs

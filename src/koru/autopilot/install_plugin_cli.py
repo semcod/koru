@@ -18,17 +18,13 @@ from koru.autopilot.ide import (
     detect_terminal_host_ide_id,
     normalize_ide_id,
 )
+from koruide.ide import ide_binary_candidates
 
+# IDE ids whose plugin installs via a vendor CLI; binary names come from
+# koruide (single source for binary aliases like codium/code-oss).
+_PLUGIN_CLI_IDES = ("antigravity", "windsurf", "cursor", "vscode", "vscodium")
 PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
-    "antigravity": ("antigravity",),
-    "windsurf": ("windsurf",),
-    "cursor": ("cursor",),
-    "vscode": ("code", "code-insiders"),
-    "vscodium": ("vscodium", "codium", "code-oss"),
-}
-
-PLUGIN_INSTALL_IDE_ALIASES: dict[str, str] = {
-    "pycharm": "jetbrains",
+    ide: ide_binary_candidates(ide) for ide in _PLUGIN_CLI_IDES
 }
 
 PLUGIN_INSTALL_IDES = frozenset(
@@ -206,7 +202,7 @@ def ide_from_terminal_env() -> str | None:
 
 
 def resolve_plugin_target_ide(raw_ide: str) -> str:
-    requested = PLUGIN_INSTALL_IDE_ALIASES.get(raw_ide, normalize_ide_id(raw_ide) or raw_ide)
+    requested = normalize_ide_id(raw_ide) or raw_ide
     if requested != "auto":
         return requested
     env_guess = ide_from_terminal_env()

@@ -22,20 +22,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from koru.ide_router import is_headless_environment
+from koruide.ide import autopilot_ide_choices, ide_binary_candidates
 
-KNOWN_IDES = ("cursor", "windsurf", "vscode", "code", "code-oss", "vscodium", "zed")
-
-# Host binaries often differ from canonical IDE ids (e.g. VSCodium → ``codium``).
-_IDE_BINARY_CANDIDATES: dict[str, tuple[str, ...]] = {
-    "vscodium": ("vscodium", "codium"),
-    "vscode": ("code", "vscode"),
-    "code": ("code",),
-    "code-oss": ("code-oss", "code"),
-}
+# Canonical IDE ids from koruide (single source); binary aliases such as
+# ``code``/``code-oss`` are handled by ``ide_binary_candidates``.
+KNOWN_IDES = tuple(ide for ide in autopilot_ide_choices() if ide != "auto")
 
 
 def _resolve_ide_binary(ide: str, *, path: str | None) -> str | None:
-    for name in _IDE_BINARY_CANDIDATES.get(ide, (ide,)):
+    for name in ide_binary_candidates(ide):
         found = shutil.which(name, path=path)
         if found:
             return found
@@ -122,8 +117,8 @@ def probe_ide_presence(
 
     out: list[IDEPresence] = []
     for ide in KNOWN_IDES:
-        # `code-oss`/`vscodium` share VS Code's mcp config slot
-        cfg_key = "vscode" if ide in ("code", "code-oss", "vscodium") else ide
+        # VS Code forks (`vscodium`, `antigravity`) share VS Code's mcp config slot
+        cfg_key = "vscode" if ide in ("vscodium", "antigravity") else ide
         cfg_path = mcp_paths.get(cfg_key)
         mcp_has_koru = False
         chosen_path: Path | None = None

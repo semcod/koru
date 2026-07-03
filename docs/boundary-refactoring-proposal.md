@@ -79,13 +79,21 @@ planned `tillm-core` split was unnecessary. Implemented instead:
 - `ensure_local_tillm_path()` / `KORU_TILLM_PATH` remain as dev-checkout
   escape hatches only.
 
-### 4. koruide is the single IDE truth
+### 4. koruide is the single IDE truth — map consolidation DONE (2026-07-03)
 
-- Publish `koruide` as its own distribution (it is already a separate
-  top-level package in this repo).
-- Consolidate into it the four alias/window/binary maps:
-  `mcp_provision` aliases, `autonomy/environment.KNOWN_IDES` (+ jetbrains,
-  antigravity gaps), `agent_backend_runtime` window-name map.
+- Consolidated (guarded by `tests/test_ide_map_consolidation.py`):
+  - `koruide.ide` gained `ide_binary_candidates()` and `ide_window_name()`
+    as the single source next to the existing alias map;
+  - `autonomy/environment.py`: `KNOWN_IDES` now derives from
+    `autopilot_ide_choices()` (jetbrains + antigravity gaps closed; bogus
+    `code`/`code-oss` pseudo-ids dropped), binary probe uses koruide;
+  - `agent_backend_runtime.py`: window-name map replaced by
+    `ide_window_name()`;
+  - `mcp_provision.py`: alias dict reduced to a provisioner-compat map
+    (`antigravity→vscode`), normalization via koruide;
+  - `autopilot/install_plugin_cli.py`: `PLUGIN_IDE_CLI` derives from
+    koruide; redundant `PLUGIN_INSTALL_IDE_ALIASES` deleted.
+- Still open: publish `koruide` as its own distribution (packaging decision).
 
 ### 5. planfile invocation hardening
 
@@ -117,7 +125,8 @@ makes it preventive).
    `doctor` probes `planfile_binary` hardened and new `lane_dependencies`).
 2. ~~tillm registry as single source~~ — **DONE 2026-07-03** (core dep +
    contract tests instead of a package split; see §3).
-3. koruide → own distribution; alias-map consolidation.
+3. ~~koruide alias-map consolidation~~ — **DONE 2026-07-03** (see §4);
+   publishing koruide as its own distribution remains open.
 4. gillm recovery/strategies move.
 5. vdisplay VQL/geometry/monitors move (largest; after 1-4 the remaining
    `vdisplay_client.py` is orchestration-only).

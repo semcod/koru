@@ -72,6 +72,41 @@ _IDE_ALIASES: dict[str, str] = {
     "zed-preview": "zed",
 }
 
+# Host binaries often differ from canonical IDE ids (VSCodium → ``codium``);
+# single source for PATH-based install probes across koru surfaces.
+_IDE_BINARY_CANDIDATES: dict[str, tuple[str, ...]] = {
+    "antigravity": ("antigravity",),
+    "windsurf": ("windsurf",),
+    "vscode": ("code", "code-insiders"),
+    "vscodium": ("vscodium", "codium", "code-oss"),
+    "cursor": ("cursor",),
+    "jetbrains": ("idea", "pycharm", "webstorm", "phpstorm", "goland", "clion", "rubymine"),
+    "zed": ("zed",),
+}
+
+# Window titles wmctrl/xdotool can find (``desktop-window://focus``).
+_IDE_WINDOW_NAMES: dict[str, str] = {
+    "antigravity": "antigravity",
+    "vscode": "Visual Studio Code",
+    "vscodium": "VSCodium",
+    "cursor": "Cursor",
+    "windsurf": "Windsurf",
+    "jetbrains": "JetBrains",
+    "zed": "Zed",
+}
+
+
+def ide_binary_candidates(ide: str) -> tuple[str, ...]:
+    """Executable names that may provide ``ide`` on PATH."""
+    normalized = normalize_ide_id(ide) or (ide or "").strip().lower()
+    return _IDE_BINARY_CANDIDATES.get(normalized, (normalized,) if normalized else ())
+
+
+def ide_window_name(ide: str) -> str:
+    """Window title token for desktop window managers (wmctrl/xdotool)."""
+    normalized = normalize_ide_id(ide) or ide
+    return _IDE_WINDOW_NAMES.get(normalized, ide)
+
 
 def normalize_ide_id(raw: str | None) -> str | None:
     """Return Koru's canonical IDE id for common executable/config aliases."""

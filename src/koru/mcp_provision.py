@@ -410,13 +410,11 @@ _PROVISIONERS: dict[str, Any] = {
     "zed": provision_zed,
 }
 
-_IDE_ALIASES: dict[str, str] = {
-    "code": "vscode",
-    "vs-code": "vscode",
+# Canonical-id aliasing lives in koruide.normalize_ide_id; this map only
+# covers ids that have no dedicated provisioner but share another IDE's
+# config layout.
+_PROVISIONER_COMPAT: dict[str, str] = {
     "antigravity": "vscode",  # VSCode-fork, same config layout
-    "codium": "vscodium",
-    "code-oss": "vscodium",
-    "zed-editor": "zed",
 }
 
 
@@ -427,7 +425,7 @@ def _resolve_targets(ide: str) -> list[str]:
     if ide == "all":
         return list(_PROVISIONERS.keys())
     normalized = normalize_ide_id(ide) or ide
-    return [_IDE_ALIASES.get(ide, normalized)]
+    return [_PROVISIONER_COMPAT.get(normalized, normalized)]
 
 
 def _removal_paths_for_ide(ide: str, project: Path) -> list[Path]:

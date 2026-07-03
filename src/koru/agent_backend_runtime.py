@@ -422,17 +422,9 @@ def _nlp2uri_desktop_send(
             "type": "error",
         }
 
-    # Map koru IDE ids to window names that wmctrl/xdotool can find.
-    _IDE_WINDOW_NAMES: dict[str, str] = {
-        "antigravity": "antigravity",
-        "vscode": "Visual Studio Code",
-        "vscodium": "VSCodium",
-        "cursor": "Cursor",
-        "windsurf": "Windsurf",
-        "jetbrains": "JetBrains",
-        "zed": "Zed",
-    }
-    window_name = _IDE_WINDOW_NAMES.get(ide, ide)
+    from koruide.ide import ide_window_name
+
+    window_name = ide_window_name(ide)
     focus_uri = f"desktop-window://focus?name={window_name}"
 
     if dry_run:
