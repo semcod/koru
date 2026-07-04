@@ -2858,6 +2858,20 @@ def _prepare_photo_vql_apply_capture_guard(
     )
     _persist_surface_capture_confirmation_to_vql(out, ide=ide)
     confirmed = out.get("capture_confirmed")
+    if os.environ.get("KORU_VDISPLAY_DEBUG_CAPTURE", "").strip() in {"1", "true", "yes", "on"}:
+        import sys as _sys
+
+        cv = out.get("capture_validation") if isinstance(out.get("capture_validation"), dict) else {}
+        print(
+            f"[capture-debug] ide={ide} src={src} confirmed={confirmed!r} "
+            f"capture_error={capture_error} warn={bool(out.get('ide_window_warning'))} "
+            f"cv.confirmed={cv.get('capture_confirmed')!r} "
+            f"cv.vision_deferred={cv.get('vision_deferred_window_mismatch')!r} "
+            f"vision_env={os.environ.get('KORU_VDISPLAY_LLM_VISION_DECISION')!r}/"
+            f"{os.environ.get('VDISPLAY_VISION_CHAT_DETECT')!r}",
+            file=_sys.stderr,
+            flush=True,
+        )
     guard = CaptureGuard.from_observe(
         ide=ide,
         confirmed=confirmed if confirmed is not None else None,
@@ -4929,6 +4943,22 @@ def _vql_plan_commands(
     ]
 
 
+def _llm_target_verified(llm_decision: dict[str, Any] | None) -> float | bool:
+    """True when a vision-LLM refinement located the chat input with enough
+    confidence to stand in for VQL element validation (only under vision decision)."""
+    if not llm_decision:
+        return False
+    from koru.integrations.photo_vql_guard import llm_vision_decision_enabled
+
+    if not llm_vision_decision_enabled():
+        return False
+    try:
+        confidence = float(llm_decision.get("confidence") or 0.0)
+    except (TypeError, ValueError):
+        return False
+    return confidence >= 0.5
+
+
 def _build_vql_command_plan(
     *,
     target: dict[str, Any],
@@ -4989,12 +5019,16 @@ def _build_vql_command_plan(
         "warnings": warnings,
         "validation_errors": validation_errors,
         "commands": commands,
-        "inference_ok": bool(validation.get("ok"))
+        # A vision-LLM-refined click center (high confidence) is its own
+        # verification: the detector located the chat input on the raw
+        # screenshot, so the underlying VQL element's suspicious bounds (a tiny
+        # OCR label on a multi-panel monitor) must not veto it.
+        "inference_ok": (bool(validation.get("ok")) or _llm_target_verified(llm_decision))
         and eff_mismatch is None
         and capture_confirmed,
         "capture_confirmed": capture_confirmed
         and eff_mismatch is None
-        and bool(validation.get("ok")),
+        and (bool(validation.get("ok")) or _llm_target_verified(llm_decision)),
         "capture_title": capture_title,
         "vql_element_size_ok": validation.get("vql_element_size_ok"),
         "app_match": validation.get("app_match"),
@@ -5859,12 +5893,19 @@ def _map_mismatch_allowed_for_target(*, target: dict[str, Any], ide: str) -> boo
 
 
 def _map_source_mismatch_actuation_allowed() -> bool:
-    return os.environ.get("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", "").strip().lower() in {
+    if os.environ.get("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", "").strip().lower() in {
         "1",
         "true",
         "yes",
         "on",
-    }
+    }:
+        return True
+    # Vision LLM locates the chat input from the raw screenshot, not the stored
+    # GUI map — so a map calibrated for a different monitor is irrelevant when
+    # vision decides the click coords.
+    from koru.integrations.photo_vql_guard import llm_vision_decision_enabled
+
+    return llm_vision_decision_enabled()
 
 
 def _map_capture_mismatch_for_target(

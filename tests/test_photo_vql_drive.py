@@ -1504,6 +1504,20 @@ def test_prepare_aborts_after_single_attempt_on_mismatch(monkeypatch: pytest.Mon
     monkeypatch.setattr(vc, "ensure_vdisplay_ide_control", _ide_control)
     monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
     monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
+    # Hermetic: the capture-match / surface-confirmation probes read the live
+    # desktop; on a host where the real IDE is running they would confirm the
+    # capture and mask the mocked competing-IDE mismatch. Pin them to the
+    # competing mismatch this test exercises.
+    _mismatch = {
+        "message": "wrong IDE",
+        "window_titles": ["proj - Cursor"],
+        "competing_detected": ["cursor"],
+    }
+    monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: _mismatch)
+    monkeypatch.setattr(vc, "_surface_confirms_ide_capture", lambda **k: False)
+    # finalize reads the (hardcoded /tmp) VQL sidecar to derive capture_confirmed;
+    # pin it so a stale on-disk sidecar can never confirm the competing capture.
+    monkeypatch.setattr(vc, "_capture_confirmed_from_meta", lambda **k: False)
     monkeypatch.setenv("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3")
     monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
     monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: False)
