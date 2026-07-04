@@ -897,6 +897,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "dev",
             "events",
             "self",
+            "shell",
         },
     )
 

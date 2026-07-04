@@ -147,6 +147,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
         argv,
     ),
     "configure": lambda argv: _lazy_module_main("koru.configurator", "configure_main", argv),
+    "shell": lambda argv: _lazy_module_main("koru.cli_shell", "shell_main", argv),
     "mesh": lambda argv: _lazy_module_main("korumesh.cli", "mesh_main", argv),
     "vision": lambda argv: _lazy_module_main("koruvision.cli", "vision_main", argv),
     "observe": lambda argv: _lazy_module_main("koruobserve.cli", "observe_main", argv),
