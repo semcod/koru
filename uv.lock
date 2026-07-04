@@ -1418,7 +1418,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.378"
+version = "0.1.379"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -4115,7 +4115,7 @@ wheels = [
 
 [[package]]
 name = "vdisplay"
-version = "0.1.45"
+version = "0.1.49"
 source = { editable = "../../wronai/vdisplay" }
 
 [package.metadata]
@@ -4125,6 +4125,7 @@ requires-dist = [
     { name = "dsl2vdisplay", marker = "extra == 'auto'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
     { name = "dsl2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
     { name = "dsl2vdisplay", marker = "extra == 'dev'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
+    { name = "evdev", marker = "extra == 'uinput'", specifier = ">=1.6" },
     { name = "fastapi", marker = "extra == 'agent'", specifier = ">=0.110" },
     { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.110" },
     { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
@@ -4169,7 +4170,7 @@ requires-dist = [
     { name = "vql", marker = "extra == 'vql'", editable = "../../oqlos/vql" },
     { name = "wcwidth", marker = "extra == 'terminal'", specifier = ">=0.2.13" },
 ]
-provides-extras = ["linux", "windows", "macos", "pillow", "sampler", "dev", "core", "control", "auto", "browser", "e2e", "vision", "terminal", "agent", "img2nl", "imgl", "vql", "observe"]
+provides-extras = ["linux", "windows", "macos", "pillow", "sampler", "dev", "core", "control", "auto", "browser", "e2e", "vision", "terminal", "uinput", "agent", "img2nl", "imgl", "vql", "observe"]
 
 [package.metadata.requires-dev]
 dev = [
