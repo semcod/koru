@@ -270,21 +270,7 @@ def resolve_lane_context(
         return LaneContext(instance="", ide="", socket_path=path, source=source)
 
     ide = canonical_autopilot_ide_id(instance) or instance
-    previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
-    previous_socket = os.environ.get("KORU_AUTOPILOT_SOCKET")
-    try:
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
-        os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
-        path = default_socket_path()
-    finally:
-        if previous_instance is None:
-            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
-        else:
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
-        if previous_socket is None:
-            os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
-        else:
-            os.environ["KORU_AUTOPILOT_SOCKET"] = previous_socket
+    path = default_socket_path(instance)
     return LaneContext(instance=instance, ide=ide, socket_path=path, source=source)
 
 

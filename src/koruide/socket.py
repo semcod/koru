@@ -8,9 +8,11 @@ import tempfile
 from pathlib import Path
 
 
-def _autopilot_socket_basename() -> str:
+def _autopilot_socket_basename(instance: str | None = None) -> str:
     """File name (with ``.sock``) under ``$XDG_RUNTIME_DIR`` or ``/tmp``."""
-    instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
+    if instance is None:
+        instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "")
+    instance = instance.strip()
     if not instance or instance.lower() == "auto":
         return "koru-autopilot.sock"
     slug_chars: list[str] = []
@@ -23,13 +25,18 @@ def _autopilot_socket_basename() -> str:
     return f"koru-autopilot-{slug}.sock"
 
 
-def default_socket_path() -> Path:
-    """Return the canonical unix-socket location for the control daemon."""
-    explicit = os.environ.get("KORU_AUTOPILOT_SOCKET", "").strip()
-    if explicit:
-        return Path(explicit).expanduser().resolve()
+def default_socket_path(instance: str | None = None) -> Path:
+    """Return the canonical unix-socket location for the control daemon.
 
-    name = _autopilot_socket_basename()
+    With ``instance`` given, return the path that lane would use, ignoring
+    ``KORU_AUTOPILOT_SOCKET`` / ``KORU_AUTOPILOT_INSTANCE`` overrides.
+    """
+    if instance is None:
+        explicit = os.environ.get("KORU_AUTOPILOT_SOCKET", "").strip()
+        if explicit:
+            return Path(explicit).expanduser().resolve()
+
+    name = _autopilot_socket_basename(instance)
     runtime = os.environ.get("XDG_RUNTIME_DIR")
     if runtime:
         path = Path(runtime) / name

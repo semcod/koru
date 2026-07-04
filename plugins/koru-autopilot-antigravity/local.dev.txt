@@ -1,0 +1,8 @@
+# local.dev.txt — locally developed dependencies of this project (generated 2026-07-04)
+# by ~/github/local.dev.sh — DO NOT EDIT; see ~/github/local.dev.md
+# project: koru-autopilot-antigravity 0.2.16 (js) at /home/tom/github/semcod/koru/plugins/koru-autopilot-antigravity
+# deps declared: 4 | with local source: 0
+
+## LOCAL DEPS: none — all dependencies are external
+
+## EXTERNAL DEPS (no local source, 4): @types/node, @types/vscode, @vscode/vsce, typescript

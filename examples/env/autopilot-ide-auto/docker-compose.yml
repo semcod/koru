@@ -1,0 +1,9 @@
+services:
+  e2e:
+    build:
+      context: ../../..
+      dockerfile: examples/docker/koru-e2e.Dockerfile
+      args:
+        E2E_SCRIPT: examples/env/autopilot-ide-auto/e2e.sh
+    environment:
+      KORU_AUTOPILOT_IDE: auto

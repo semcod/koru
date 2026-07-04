@@ -860,7 +860,21 @@ def _socket_lane_mismatch_issue(
     if socket_path is None or not ctx.lane:
         return None
     socket_instance = instance_from_socket_path(socket_path) or ""
-    if not socket_instance or socket_instance == ctx.lane.strip().lower():
+    lane = ctx.lane.strip().lower()
+    if not socket_instance or socket_instance == lane:
+        return None
+    # Raw slug equality is not enough: default_socket_path() appends "-<uid>"
+    # in the POSIX /tmp fallback, and a bare IDE id may resolve to its default
+    # lane instance (cursor → cursor-main). Compare against the socket names
+    # those forms actually produce before declaring a mismatch.
+    from koru.autonomy.operator.operator_runtime import default_autopilot_instance_for_ide
+    from koruide.socket import default_socket_path
+
+    expected_names = {
+        default_socket_path(lane).name,
+        default_socket_path(default_autopilot_instance_for_ide(lane) or lane).name,
+    }
+    if socket_path.name in expected_names:
         return None
     return ReadinessIssue(
         code="socket_lane_mismatch",
