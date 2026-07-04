@@ -566,14 +566,22 @@ def _run_drive_and_finalize(
     config: DrivePhaseConfig,
     inputs: DrivePhaseInputs,
 ) -> str:
-    drive_result = _run_drive_phase(
+    # late-bound through the compat facade so legacy-path monkeypatches
+    # (koru.autonomous_cycle._run_drive_phase) keep working
+    from koru import autonomous_cycle as _facade_mod
+
+    run_drive_phase_fn = getattr(_facade_mod, "_run_drive_phase", _run_drive_phase)
+    drive_result = run_drive_phase_fn(
         context,
         config,
         inputs,
         take_pre_drive_snapshot=_take_pre_drive_snapshot,
         handle_autopilot_phase=_handle_autopilot_phase,
     )
-    _run_post_drive_phase(
+    run_post_drive_phase_fn = getattr(
+        _facade_mod, "_run_post_drive_phase", _run_post_drive_phase
+    )
+    run_post_drive_phase_fn(
         context,
         config,
         inputs,

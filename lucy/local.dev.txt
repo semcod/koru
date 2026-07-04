@@ -1,8 +1,0 @@
-# local.dev.txt — locally developed dependencies of this project (generated 2026-07-04)
-# by ~/github/local.dev.sh — DO NOT EDIT; see ~/github/local.dev.md
-# project: lucy ? (go) at /home/tom/github/semcod/koru/lucy
-# deps declared: 6 | with local source: 0
-
-## LOCAL DEPS: none — all dependencies are external
-
-## EXTERNAL DEPS (no local source, 6): github.com/ebitengine/gomobile, github.com/ebitengine/hideconsole, github.com/ebitengine/purego, github.com/jezek/xgb, golang.org/x/sync, golang.org/x/sys

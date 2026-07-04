@@ -555,7 +555,7 @@ def test_plugin_gate_mismatch_attempts_recovery_reload_for_same_workspace(
     monkeypatch.setattr(
         orchestrator,
         "_client_has_usable_plugin",
-        lambda _client, _ide: (False, reason),
+        lambda _client, _ide, _project=None: (False, reason),
     )
     monkeypatch.setattr(ide_reload, "try_reload_vscode_family_ide", _fake_reload)
 

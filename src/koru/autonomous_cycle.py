@@ -28,6 +28,12 @@ for attr in dir(_module_impl):
 from koru.autonomy.cycle.cycle import (  # noqa: E402
     _escalate_error_stagnation as _escalate_error_stagnation,
 )
+from koru.autonomy.cycle.cycle import (
+    _run_drive_phase as _run_drive_phase,
+)
+from koru.autonomy.cycle.cycle import (
+    _run_post_drive_phase as _run_post_drive_phase,
+)
 from koru.autonomy.cycle.cycle import _stdio_info as _stdio_info  # noqa: E402
 from koru.autonomy.cycle.cycle_chat_activity import (  # noqa: E402
     _skip_due_to_recent_chat_activity as _skip_due_to_recent_chat_activity,

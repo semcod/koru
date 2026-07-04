@@ -24,7 +24,8 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir \
         "planfile>=0.1.87" \
         "uvicorn[standard]>=0.27" \
-        "fastapi>=0.110"
+        "fastapi>=0.110" \
+        "wup>=0.2.60"
 
 # Optional cache-bust when iterating on examples without touching src
 ARG CACHE_BUST=0

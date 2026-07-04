@@ -119,16 +119,7 @@ def test_activity_warns_once_when_nfo_fails(
     assert err.count("nfo activity log disabled") == 1
 
 
-def test_activity_module_not_found_warning_includes_install_hint(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    """Regression: missing ``nfo`` module must surface an actionable hint.
-
-    The user-facing autonomous log otherwise prints a cryptic
-    ``ModuleNotFoundError: No module named 'nfo'`` line with no fix.
-    """
+def _force_nfo_module_not_found(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     monkeypatch.delitem(sys.modules, "nfo", raising=False)
 
     import builtins
@@ -145,6 +136,34 @@ def test_activity_module_not_found_warning_includes_install_hint(
     monkeypatch.setattr(al, "_NFO_CONFIGURED_PATH", None)
     monkeypatch.setattr(al, "_NFO_UNAVAILABLE", False)
     monkeypatch.setattr(al, "_NFO_UNAVAILABLE_WARNED", False)
+
+
+def test_activity_module_not_found_is_silent_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Missing optional ``nfo`` must not warn on every process start."""
+    monkeypatch.delenv("KORU_DEBUG", raising=False)
+    _force_nfo_module_not_found(monkeypatch, tmp_path)
+
+    al.activity("CHAT", "trigger", fmt="human")
+
+    assert "nfo activity log disabled" not in capsys.readouterr().err
+
+
+def test_activity_module_not_found_warning_includes_install_hint(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Regression: with KORU_DEBUG the missing-``nfo`` hint must be actionable.
+
+    The user-facing autonomous log otherwise prints a cryptic
+    ``ModuleNotFoundError: No module named 'nfo'`` line with no fix.
+    """
+    monkeypatch.setenv("KORU_DEBUG", "1")
+    _force_nfo_module_not_found(monkeypatch, tmp_path)
 
     al.activity("CHAT", "trigger", fmt="human")
 
