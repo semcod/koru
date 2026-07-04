@@ -802,16 +802,35 @@ wheels = [
 
 [[package]]
 name = "gillm"
-version = "0.1.20"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.22"
+source = { editable = "../gillm" }
 dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/1a/c9c0305c1b395fc080f8edee4be9855e31dd6cfc681656ccbb323c9e9f52/gillm-0.1.20.tar.gz", hash = "sha256:387d2ecf35d366c0f12a139b3e1dec62da848bc0f30a11a8d797d6904742461b", size = 60311, upload-time = "2026-07-04T08:14:42.206Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/a7/4a1723d50ba71869639f4d68d96a701bf501d23e96e0c5576f147628bdfe/gillm-0.1.20-py3-none-any.whl", hash = "sha256:8f295ab3931690b910da7b74058d6624bfd329513b900d7a520cdbc65542c027", size = 59310, upload-time = "2026-07-04T08:14:40.899Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "cli2gillm", marker = "extra == 'control'", editable = "../gillm/packages/cli2gillm" },
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "dsl2gillm", marker = "extra == 'control'", editable = "../gillm/packages/dsl2gillm" },
+    { name = "dsl2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/dsl2gillm" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "mcp2gillm", marker = "extra == 'control'", editable = "../gillm/packages/mcp2gillm" },
+    { name = "mss", marker = "extra == 'capture'", specifier = ">=9.0" },
+    { name = "nlp2gillm", marker = "extra == 'control'", editable = "../gillm/packages/nlp2gillm" },
+    { name = "nlp2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/nlp2gillm" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "rest2gillm", marker = "extra == 'control'", editable = "../gillm/packages/rest2gillm" },
+    { name = "rest2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/rest2gillm" },
+    { name = "rich", specifier = ">=13.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
+    { name = "uri2gillm", marker = "extra == 'control'", editable = "../gillm/packages/uri2gillm" },
+    { name = "uri2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/uri2gillm" },
 ]
+provides-extras = ["capture", "control", "dev"]
 
 [[package]]
 name = "gitdb"
@@ -1399,7 +1418,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.371"
+version = "0.1.372"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1613,9 +1632,9 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115,<1.0" },
     { name = "fullm", marker = "extra == 'all'", specifier = ">=0.1.22" },
     { name = "fullm", marker = "extra == 'fullm'", specifier = ">=0.1.22" },
-    { name = "gillm", specifier = ">=0.1.9" },
-    { name = "gillm", marker = "extra == 'all'", specifier = ">=0.1.9" },
-    { name = "gillm", marker = "extra == 'dev'", specifier = ">=0.1.9" },
+    { name = "gillm", editable = "../gillm" },
+    { name = "gillm", marker = "extra == 'all'", editable = "../gillm" },
+    { name = "gillm", marker = "extra == 'dev'", editable = "../gillm" },
     { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.264" },
     { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.264" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27,<1.0" },
