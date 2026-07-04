@@ -17,3 +17,4 @@ trap cleanup EXIT
 sleep 1
 
 curl -fsS http://127.0.0.1:18888/health
+echo
