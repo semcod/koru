@@ -1599,10 +1599,12 @@ dev = [
     { name = "mcp" },
     { name = "mypy" },
     { name = "pfix" },
+    { name = "pillow" },
     { name = "planfile" },
     { name = "pre-commit" },
     { name = "protobuf" },
     { name = "pyright" },
+    { name = "pytesseract" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-rerunfailures" },
@@ -1611,6 +1613,7 @@ dev = [
     { name = "ruff" },
     { name = "tagi" },
     { name = "types-pyyaml" },
+    { name = "vdisplay" },
 ]
 
 [package.metadata]
@@ -1723,8 +1726,8 @@ requires-dist = [
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30,<1.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30,<1.0" },
-    { name = "vdisplay", marker = "extra == 'all'", specifier = ">=0.1.35" },
-    { name = "vdisplay", marker = "extra == 'vdisplay'", specifier = ">=0.1.35" },
+    { name = "vdisplay", marker = "extra == 'all'", editable = "../../wronai/vdisplay" },
+    { name = "vdisplay", marker = "extra == 'vdisplay'", editable = "../../wronai/vdisplay" },
     { name = "websockets", marker = "extra == 'all'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'mesh'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<17.0" },
@@ -1750,10 +1753,12 @@ dev = [
     { name = "mcp", specifier = ">=1.0" },
     { name = "mypy", specifier = ">=1.11,<3.0" },
     { name = "pfix", specifier = ">=0.1.60" },
+    { name = "pillow", specifier = ">=10.0" },
     { name = "planfile", specifier = ">=0.1.100" },
     { name = "pre-commit", specifier = ">=3.8,<5.0" },
     { name = "protobuf", specifier = ">=5.0" },
     { name = "pyright", specifier = ">=1.1.390,<2.0" },
+    { name = "pytesseract", specifier = ">=0.3.10" },
     { name = "pytest", specifier = ">=8.0,<10.0" },
     { name = "pytest-cov", specifier = ">=5.0,<8.0" },
     { name = "pytest-rerunfailures", specifier = ">=14.0,<17.0" },
@@ -1762,6 +1767,7 @@ dev = [
     { name = "ruff", specifier = ">=0.11,<0.16" },
     { name = "tagi", specifier = ">=0.49.0" },
     { name = "types-pyyaml", specifier = ">=6.0,<7.0" },
+    { name = "vdisplay", editable = "../../wronai/vdisplay" },
 ]
 
 [[package]]
@@ -4109,11 +4115,70 @@ wheels = [
 
 [[package]]
 name = "vdisplay"
-version = "0.1.36"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/af/92/e4febec0e88e7148f6200d4d26376d8f76ec05dafc795ebe3fef602426e5/vdisplay-0.1.36.tar.gz", hash = "sha256:568a9860e85a9c1dcc7221968e576001bfb4af182a5eeca0d8cd068d1f9f561f", size = 454757, upload-time = "2026-06-16T22:23:03.578Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/73/1bd66e48df65f8fbbaa8e5acfd633b8d98e659e0ab289c9f1c83487f8de7/vdisplay-0.1.36-py3-none-any.whl", hash = "sha256:ad0b08db1bf44a61db7036d27daa9600f66d97a03e3c23eb7b044b08030e6c44", size = 436758, upload-time = "2026-06-16T22:23:01.54Z" },
+version = "0.1.44"
+source = { editable = "../../wronai/vdisplay" }
+
+[package.metadata]
+requires-dist = [
+    { name = "comtypes", marker = "extra == 'windows'", specifier = ">=1.4.0" },
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "dsl2vdisplay", marker = "extra == 'auto'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
+    { name = "dsl2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
+    { name = "dsl2vdisplay", marker = "extra == 'dev'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
+    { name = "fastapi", marker = "extra == 'agent'", specifier = ">=0.110" },
+    { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.110" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
+    { name = "img2nl", extras = ["analyze"], marker = "extra == 'img2nl'" },
+    { name = "img2vql", marker = "sys_platform == 'linux' and extra == 'observe'", editable = "../../oqlos/vql/packages/img2vql" },
+    { name = "img2vql", marker = "sys_platform == 'linux' and extra == 'vql'", editable = "../../oqlos/vql/packages/img2vql" },
+    { name = "imgl", marker = "extra == 'auto'", editable = "../imgl" },
+    { name = "imgl", marker = "extra == 'imgl'", editable = "../imgl" },
+    { name = "imgl", marker = "extra == 'observe'", editable = "../imgl" },
+    { name = "nlp2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/nlp2vdisplay" },
+    { name = "opencv-python", marker = "extra == 'vision'", specifier = ">=4.8" },
+    { name = "pexpect", marker = "extra == 'terminal'", specifier = ">=4.9" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "pillow", marker = "extra == 'dev'", specifier = ">=10.0" },
+    { name = "pillow", marker = "extra == 'pillow'", specifier = ">=10.0" },
+    { name = "pillow", marker = "extra == 'sampler'", specifier = ">=10.0" },
+    { name = "pillow", marker = "extra == 'vision'", specifier = ">=10.0" },
+    { name = "planfile", marker = "extra == 'auto'", specifier = ">=0.1.103" },
+    { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.40" },
+    { name = "playwright", marker = "extra == 'e2e'", specifier = ">=1.40" },
+    { name = "pydantic", marker = "extra == 'core'", specifier = ">=2" },
+    { name = "pydantic", marker = "extra == 'dev'", specifier = ">=2" },
+    { name = "pyobjc-framework-applicationservices", marker = "extra == 'macos'", specifier = ">=10.0" },
+    { name = "pyobjc-framework-cocoa", marker = "extra == 'macos'", specifier = ">=10.0" },
+    { name = "pyte", marker = "extra == 'terminal'", specifier = ">=0.8.1" },
+    { name = "pytesseract", marker = "extra == 'vision'", specifier = ">=0.3.10" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest", marker = "extra == 'e2e'", specifier = ">=8.0" },
+    { name = "pyyaml", marker = "extra == 'auto'", specifier = ">=6.0" },
+    { name = "sqlmodel", marker = "extra == 'agent'", specifier = ">=0.0.22" },
+    { name = "sqlmodel", marker = "extra == 'dev'", specifier = ">=0.0.22" },
+    { name = "structlog", marker = "extra == 'core'", specifier = ">=24.0" },
+    { name = "tenacity", marker = "extra == 'core'", specifier = ">=8.0" },
+    { name = "uvicorn", marker = "extra == 'agent'", specifier = ">=0.27" },
+    { name = "uvicorn", marker = "extra == 'dev'", specifier = ">=0.27" },
+    { name = "vdisplay-agent", marker = "extra == 'agent'", editable = "../../wronai/vdisplay/packages/vdisplay-agent" },
+    { name = "vdisplay-agent", marker = "extra == 'dev'", editable = "../../wronai/vdisplay/packages/vdisplay-agent" },
+    { name = "vql", marker = "extra == 'observe'", editable = "../../oqlos/vql" },
+    { name = "vql", marker = "extra == 'vql'", editable = "../../oqlos/vql" },
+    { name = "wcwidth", marker = "extra == 'terminal'", specifier = ">=0.2.13" },
+]
+provides-extras = ["linux", "windows", "macos", "pillow", "sampler", "dev", "core", "control", "auto", "browser", "e2e", "vision", "terminal", "agent", "img2nl", "imgl", "vql", "observe"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "dsl2vdisplay", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
+    { name = "fastapi", specifier = ">=0.110" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "pillow", specifier = ">=10.0" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "sqlmodel", specifier = ">=0.0.22" },
+    { name = "uvicorn", specifier = ">=0.27" },
+    { name = "vdisplay-agent", editable = "../../wronai/vdisplay/packages/vdisplay-agent" },
 ]
 
 [[package]]

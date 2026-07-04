@@ -4348,7 +4348,7 @@ def _photo_vql_vscode_chat_flow(
     return None
 
 
-        def _try_ocr_anchor_chat_target(*, ide: str, source: str) -> dict[str, Any] | None:
+def _try_ocr_anchor_chat_target(*, ide: str, source: str) -> dict[str, Any] | None:
     """Deterministic chat-input target from the OCR placeholder bbox, or None."""
     try:
         from vdisplay.control.vision_chat_detect import ocr_anchor_chat_target
