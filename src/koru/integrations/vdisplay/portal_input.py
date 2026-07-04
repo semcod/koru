@@ -230,9 +230,17 @@ def _blue_ring_center(frame: bytes) -> tuple[int, int, int] | None:
     ys, xs = np.nonzero(mask)
     if xs.size < 300:
         return None
-    # the focus ring is a wide horizontal band; take the densest row cluster
-    cy = int(np.median(ys))
-    near = np.abs(ys - cy) < 60
+    # The composer sits at the BOTTOM of the chat panel; when Qoder is busy it
+    # shows other blue elements higher up (links, a 'Run Ctrl+Enter' button, a
+    # generating spinner). Pick the LOWEST wide blue band (a real input focus
+    # ring spans much of the panel width) so those don't mislead us.
+    fh = a.shape[0]
+    rows = np.bincount(ys, minlength=fh)
+    wide = np.where(rows >= 120)[0]  # rows with a wide blue span = ring borders
+    if wide.size == 0:
+        return None
+    band_y = int(wide.max())  # lowest such row
+    near = np.abs(ys - band_y) < 80
     if near.sum() < 200:
         return None
     fx = int(np.median(xs[near]))
@@ -275,8 +283,24 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
             return None
         return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
 
-    # A manually-calibrated (or previously-seeded) coord is deterministic and
-    # beats the flaky OCR anchor — the composer doesn't move. Prefer it.
+    # Auto-remember (opt-in): if the chat input is currently focused (blue ring),
+    # cache that position. OFF by default — on a busy screen (Qoder + terminal)
+    # blue-ring detection can catch the wrong element and clobber a known-good
+    # calibrated coord; explicit calibrate_input_from_focus() is the reliable way.
+    if (os.environ.get("KORU_VDISPLAY_PORTAL_AUTOREMEMBER") or "").strip().lower() in {"1", "true", "yes", "on"}:
+        try:
+            f0 = p.grab_frame()
+            ring = _blue_ring_center(f0)
+            if ring is not None:
+                fw0, fh0 = _png_size(f0)
+                rsx, rsy = p.frame_to_stream(ring[0], ring[1], frame_w=fw0, frame_h=fh0)
+                _cache_input_xy(ide, (rsx, rsy))
+                logger.info("PORTAL_REMEMBER focused input at stream=(%d,%d)", rsx, rsy)
+        except Exception:
+            pass
+
+    # A remembered/calibrated coord is deterministic and beats the flaky OCR
+    # anchor — the composer doesn't move. Prefer it.
     cached = _cached_input_xy(ide)
     if cached is not None:
         sx, sy = cached

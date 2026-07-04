@@ -1418,7 +1418,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.382"
+version = "0.1.383"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -4115,7 +4115,7 @@ wheels = [
 
 [[package]]
 name = "vdisplay"
-version = "0.1.52"
+version = "0.1.53"
 source = { editable = "../../wronai/vdisplay" }
 
 [package.metadata]
