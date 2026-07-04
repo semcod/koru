@@ -5181,6 +5181,86 @@ def _log_vql_cursor_positioning_at_command(
     return record
 
 
+def _adaptive_pointer_enabled() -> bool:
+    return (os.environ.get("KORU_VDISPLAY_ADAPTIVE_POINTER") or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _adaptive_position_pointer(
+    *, x: int, y: int, source: str, capture_meta: dict[str, Any], ide: str
+) -> dict[str, Any] | None:
+    """Closed-loop adaptive positioning via the coordinate-validation layer.
+
+    Replaces trusting the absolute capture→global mapping (which compounds
+    scale/HiDPI/axis unknowns and can miss by a whole monitor) with measured
+    correction: confirm the cursor is on ``source``, then nudge until the
+    observed cursor is within tolerance of the target capture pixel. Returns a
+    click-result dict, or None to fall back to the open-loop mapping.
+    """
+    try:
+        import tempfile
+        from pathlib import Path as _Path
+
+        from vdisplay.capture.coordinate_validation import (
+            converge_pointer_to_local,
+            which_monitor_has_cursor,
+        )
+        from vdisplay.input.linux_ydotool import LinuxYdotoolInput
+
+        yinput = LinuxYdotoolInput()
+
+        def _move(gx: int, gy: int) -> None:
+            yinput.move(int(gx), int(gy))
+
+        _cap_dir = _Path(tempfile.mkdtemp(prefix="koru-coordval-"))
+
+        def _capture(src: str) -> bytes:
+            shot = _cap_dir / f"{src}.png"
+            err = _photo_vql_refresh_screenshot(src, shot, ide)
+            if err is not None:
+                return b""
+            try:
+                return shot.read_bytes()
+            except OSError:
+                return b""
+
+        # safety: is the pointer actually on the IDE's monitor?
+        from vdisplay.input.coords import global_pointer_coords
+
+        gx, gy, _ = global_pointer_coords(int(x), int(y), capture_meta)
+        mon, _loc = which_monitor_has_cursor((gx, gy), [source], move=_move, capture=_capture)
+        if mon is not None and mon != source:
+            logger.warning(
+                "ADAPTIVE_POINTER off-monitor: cursor on %s not target %s; aborting write", mon, source
+            )
+            return {"ok": False, "method": "adaptive-pointer", "error": f"cursor on {mon}, not {source}"}
+
+        res = converge_pointer_to_local(
+            (int(x), int(y)), capture_meta, source, move=_move, capture=_capture, tolerance_px=15.0
+        )
+        logger.info(
+            "ADAPTIVE_POINTER converge ok=%s iters=%s err=%s landed_global=%s local=(%s,%s)",
+            res.ok, res.iterations, res.final_error_px, res.landed_global, x, y,
+        )
+        if not res.ok or res.landed_global is None:
+            return None  # fall back to open-loop mapping
+        fgx, fgy = res.landed_global
+        yinput.move(int(fgx), int(fgy))
+        yinput.click(1)
+        return {
+            "ok": True,
+            "method": "adaptive-pointer-click",
+            "x": int(fgx),
+            "y": int(fgy),
+            "local_x": int(x),
+            "local_y": int(y),
+            "converge_error_px": res.final_error_px,
+            "iterations": res.iterations,
+        }
+    except Exception as exc:
+        logger.warning("ADAPTIVE_POINTER failed (%s); falling back to open-loop mapping", exc)
+        return None
+
+
 def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, Any]:
     """Direct ydotool move+click when vdisplay vision point click fails."""
     try:
@@ -5188,6 +5268,12 @@ def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, An
         from vdisplay.input.linux_ydotool import LinuxYdotoolInput
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
+        # Closed-loop adaptive positioning (opt-in): measure + correct instead of
+        # trusting the absolute mapping. Falls back to open-loop below on failure.
+        if _adaptive_pointer_enabled():
+            adaptive = _adaptive_position_pointer(x=x, y=y, source=source, capture_meta=capture_meta, ide="auto")
+            if adaptive is not None and adaptive.get("ok"):
+                return adaptive
         gx, gy, details = global_pointer_coords(int(x), int(y), capture_meta)
         # Log the exact mapping used at command generation time (critical for DP-2 rotated monitors)
         logger.info(
