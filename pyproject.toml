@@ -114,7 +114,9 @@ fullm = [
     "fullm>=0.1.22",
 ]
 tillm = [
-    "tillm>=0.1.34",
+    # kept for backwards-compatible `koru[tillm]` installs; tillm is already a
+    # core dependency — keep this floor in sync with [project.dependencies]
+    "tillm>=0.1.35",
 ]
 obs = [
     "nfo>=0.2.22,<1.0",
@@ -167,7 +169,7 @@ all = [
     "redis>=5.1,<8.0",
     "refurb>=2.0,<3.0",
     "ruff>=0.11,<0.16",
-    "tillm>=0.1.34",
+    "tillm>=0.1.35",
     "sentry-sdk>=2.18,<3.0",
     "structlog>=24.4,<26.0",
     "tiktoken>=0.8,<1.0",
@@ -240,6 +242,9 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src", "packages/coru/src"]
+# src/ also holds test-only stubs (imgl, env2llm, nlp2imgl) that shadow real
+# PyPI packages of the same name — they must never ship in the wheel.
+include = ["koru*", "coru*"]
 
 [tool.setuptools.package-data]
 koru = [
