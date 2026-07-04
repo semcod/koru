@@ -1418,7 +1418,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.380"
+version = "0.1.381"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },

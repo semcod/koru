@@ -84,6 +84,51 @@ def _token_cache_path():
     return base / "portal_restore_token"
 
 
+def _focus_ring_appeared(before: bytes, after: bytes, sx: int, sy: int, *, radius: int = 90) -> bool:
+    """True when a blue focus ring appears near the target after the click.
+
+    A focused input (Qoder highlights it blue) is the only reliable proof the
+    click landed on the composer — pointing at the panel isn't enough. We count
+    blue-dominant pixels in a window around the target and require a meaningful
+    increase from before -> after. Coords are stream-space; the frames are the
+    (larger) buffer, so scale the window.
+    """
+    try:
+        import io
+
+        import numpy as np
+        from PIL import Image
+    except ImportError:
+        return True  # can't check -> don't block (numpy absent)
+    try:
+        b = np.asarray(Image.open(io.BytesIO(before)).convert("RGB"), dtype=np.int16)
+        a = np.asarray(Image.open(io.BytesIO(after)).convert("RGB"), dtype=np.int16)
+    except Exception:
+        return True
+    if b.shape != a.shape:
+        return True
+    fh, fw = a.shape[:2]
+    # map stream coord -> frame pixel (frame buffer can be larger than stream)
+    sw, sh = _session.stream_size if _session is not None else (fw, fh)
+    fx = int(sx * fw / sw) if sw else sx
+    fy = int(sy * fh / sh) if sh else sy
+    r = int(radius * fw / sw) if sw else radius
+    y0, y1 = max(0, fy - r), min(fh, fy + r)
+    x0, x1 = max(0, fx - r), min(fw, fx + r)
+
+    def blue_count(img):
+        w = img[y0:y1, x0:x1]
+        if w.size == 0:
+            return 0
+        r_, g_, bl = w[..., 0], w[..., 1], w[..., 2]
+        mask = (bl > 120) & (bl > r_ + 40) & (bl > g_ + 25)
+        return int(mask.sum())
+
+    before_blue = blue_count(b)
+    after_blue = blue_count(a)
+    return after_blue - before_blue > 200  # a focus ring is many blue px
+
+
 def _get_session():
     global _session
     if _session is not None:
@@ -158,13 +203,14 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
     sx, sy = sxy
 
     def _verify(before: bytes, after: bytes) -> bool:
-        # focus guard: after the click, confirm the target is still on the IDE
-        # chat (the anchor still resolves near it) — reject a drifted click so a
-        # keystroke can never leak into the wrong window (e.g. a shell).
-        a2 = _target(after)
-        if a2 is None:
+        # focus guard: the click must have FOCUSED the input — confirmed by the
+        # blue focus ring appearing around it (Qoder highlights the focused
+        # composer). Pointing at Qoder is not enough; only an actual focus change
+        # lets us type, so a keystroke can never leak into the wrong window.
+        if not _focus_ring_appeared(before, after, sx, sy):
             return False
-        return abs(a2[0] - sx) <= 140 and abs(a2[1] - sy) <= 140
+        a2 = _target(after)
+        return a2 is not None and abs(a2[0] - sx) <= 160 and abs(a2[1] - sy) <= 160
 
     typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True)
     logger.info("PORTAL_INPUT typed=%s ide=%s stream=(%d,%d) submit=%s", typed, ide, sx, sy, submit)
