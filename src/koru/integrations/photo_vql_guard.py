@@ -7,25 +7,30 @@ from dataclasses import dataclass
 from typing import Any
 
 
+_TRUTHY = {"1", "true", "yes", "on"}
+
+
 def ide_mismatch_allowed() -> bool:
-    return os.environ.get("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    return os.environ.get("KORU_VDISPLAY_ALLOW_IDE_MISMATCH", "").strip().lower() in _TRUTHY
+
+
+def llm_vision_decision_enabled() -> bool:
+    """Vision LLM will decide the click coords from the screenshot.
+
+    When enabled, the OCR foreground-window-title match is not the authority
+    on whether the capture shows the right chat: the vision layer locates the
+    actual chat input (with its own confidence + geometry guards) regardless
+    of what the window breadcrumb OCRs as. This unblocks right-docked chat
+    panels (Qoder, AI Assistant) whose monitor's dominant title is the editor.
+    """
+    return os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in _TRUTHY
 
 
 def allow_prepare_map_on_mismatch() -> bool:
     """Prepare/focus may use calibrated map clicks to raise the IDE before re-capture."""
     if ide_mismatch_allowed():
         return True
-    return os.environ.get("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    return os.environ.get("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "").strip().lower() in _TRUTHY
 
 
 def allow_prepare_surface_on_capture_error() -> bool:

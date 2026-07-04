@@ -2738,8 +2738,14 @@ def _prepare_photo_vql_handle_window_warning(
     cv = out.get("capture_validation") or {}
     if isinstance(cv, dict) and cv.get("body_false_positive"):
         out["body_false_positive"] = True
+    # Vision LLM will decide the chat coords from the screenshot; a title that
+    # does not affirmatively say "PyCharm" (editor breadcrumb, or a right-docked
+    # Qoder/AI chat panel) is not a prepare-stopping mismatch — but a title that
+    # names a competing IDE still is.
+    vision_soft = _vision_overrides_capture_mismatch(warn, ide=ide)
+    allow_continue = _allow_prepare_map_on_mismatch() or vision_soft
     if (
-        not _allow_prepare_map_on_mismatch()
+        not allow_continue
         and not out.get("_focus_recovery_tried")
         and _raise_alt_tab_enabled(ide=ide)
     ):
@@ -2752,7 +2758,7 @@ def _prepare_photo_vql_handle_window_warning(
                 os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
             return out, "break"
         out["focus_recovery"] = recovered.get("focus_recovery")
-    if not _allow_prepare_map_on_mismatch():
+    if not allow_continue:
         return out, "break"
     return out, None
 
@@ -5675,6 +5681,41 @@ def _photo_vql_map_paste_fallback(
     return _type_text_via_ide_map_fallback(prompt, map_path=map_path, app_id=app_id, ide=ide)
 
 
+def _mismatch_shows_competing_ide(mismatch: dict[str, Any] | None, *, ide: str) -> bool:
+    """True when the capture's window titles name a *different* IDE.
+
+    A plain "does not look like PyCharm" (editor breadcrumb, or a right-docked
+    Qoder/AI chat panel whose title OCRs as "Chat") is safe for the vision
+    layer to override. A title that names Cursor/VSCode/etc. is not — that is a
+    real wrong-IDE capture and must always block, vision or not.
+    """
+    if not mismatch:
+        return False
+    if mismatch.get("competing_detected"):
+        return True
+    competing = _COMPETING_IDE_WINDOW_TOKENS.get(_canonical_ide(ide), ())
+    if not competing:
+        return False
+    haystack = " ".join(
+        [
+            str(mismatch.get("message") or ""),
+            *[str(t) for t in (mismatch.get("window_titles") or [])],
+        ]
+    ).lower()
+    return any(token in haystack for token in competing)
+
+
+def _vision_overrides_capture_mismatch(mismatch: dict[str, Any] | None, *, ide: str) -> bool:
+    """Vision LLM decides the chat coords — a non-competing title mismatch is not
+    a hard block, but a competing-IDE capture always is."""
+    from koru.integrations.photo_vql_guard import llm_vision_decision_enabled
+
+    return (
+        llm_vision_decision_enabled()
+        and not _mismatch_shows_competing_ide(mismatch, ide=ide)
+    )
+
+
 def _photo_vql_capture_mismatch_blocks(
     *,
     mismatch: dict[str, Any] | None,
@@ -5686,6 +5727,10 @@ def _photo_vql_capture_mismatch_blocks(
         and not _dry_run()
         and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
         and not _allow_actuation_on_capture_mismatch()
+        # A confirmed right-docked chat panel (Qoder / AI Assistant) OCRs its
+        # monitor's title as the editor, not "PyCharm"; when vision will decide
+        # the coords, that non-competing mismatch is not a hard block for chat.
+        and not (not is_code_edit and _vision_overrides_capture_mismatch(mismatch, ide=ide))
         and not (not is_code_edit and _allow_prepare_map_on_mismatch())
         and not (
             not is_code_edit
