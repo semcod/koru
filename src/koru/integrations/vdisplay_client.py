@@ -5019,14 +5019,17 @@ def _build_vql_command_plan(
         "warnings": warnings,
         "validation_errors": validation_errors,
         "commands": commands,
-        # A vision-LLM-refined click center (high confidence) is its own
-        # verification: the detector located the chat input on the raw
-        # screenshot, so the underlying VQL element's suspicious bounds (a tiny
-        # OCR label on a multi-panel monitor) must not veto it.
-        "inference_ok": (bool(validation.get("ok")) or _llm_target_verified(llm_decision))
-        and eff_mismatch is None
-        and capture_confirmed,
-        "capture_confirmed": capture_confirmed
+        # A vision-located click center (OCR placeholder anchor or LLM refine
+        # with high confidence) is its own verification: it was taken from the
+        # actual current screenshot, so neither the VQL element's suspicious
+        # bounds nor a missing/stale VQL sidecar (capture_confirmed) veto it.
+        # A competing-IDE mismatch (eff_mismatch) still always blocks.
+        "inference_ok": (
+            (bool(validation.get("ok")) and capture_confirmed)
+            or _llm_target_verified(llm_decision)
+        )
+        and eff_mismatch is None,
+        "capture_confirmed": (capture_confirmed or bool(_llm_target_verified(llm_decision)))
         and eff_mismatch is None
         and (bool(validation.get("ok")) or _llm_target_verified(llm_decision)),
         "capture_title": capture_title,
