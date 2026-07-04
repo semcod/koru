@@ -334,6 +334,7 @@ def _cmd_help(_ctx: "ShellContext", _arg: str) -> None:
         ("/tickets", "list open tickets"),
         ("/drain [n]", "run the OpenRouter queue drain (default n from /config)"),
         ("/ticket <text>", "add a backlog ticket"),
+        ("/bridge [start]", "IDE bridge status; start it from the IDE terminal"),
         ("/doctor", "run koru doctor"),
         ("/exit", "leave the shell"),
     ]
@@ -364,6 +365,8 @@ def _cmd_integration(ctx: "ShellContext", _arg: str) -> None:
             print(f"  {RED}✗{RESET} {key}: {detail}")
             if hints.get(key):
                 print(f"    {DIM}fix: {hints[key]}{RESET}")
+            if key == "qoder_chat":
+                print(f"    {DIM}or: /bridge start (from the IDE's integrated terminal){RESET}")
 
 
 def _cmd_config(ctx: "ShellContext", _arg: str) -> None:
@@ -456,6 +459,45 @@ def _cmd_doctor(ctx: "ShellContext", _arg: str) -> None:
     subprocess.run(["koru", "doctor"], cwd=ctx.project)
 
 
+def _inside_vscode_terminal() -> bool:
+    """True inside a VS Code-family integrated terminal (VS Code, Qoder, ...)."""
+    return os.environ.get("TERM_PROGRAM", "").lower() == "vscode"
+
+
+def _cmd_bridge(ctx: "ShellContext", arg: str) -> None:
+    action = arg.strip().lower()
+    ok, detail = _probe_qoder_chat(ctx.project)
+    mark = f"{GREEN}✓{RESET}" if ok else f"{RED}✗{RESET}"
+    print(f"{mark} qoder/IDE bridge: {detail}")
+    if action != "start":
+        if not ok:
+            print(f"{DIM}start it with: /bridge start (from the IDE's integrated terminal){RESET}")
+        return
+    if ok:
+        print(f"{DIM}bridge already connected — nothing to do{RESET}")
+        return
+    if not _inside_vscode_terminal():
+        print(
+            f"{YELLOW}this shell is not inside a VS Code/Qoder integrated terminal{RESET}\n"
+            f"{DIM}open the IDE's terminal and run `coru vscode auto` (or `koru shell` → /bridge start).\n"
+            f"Cross-IDE start is deliberately not automated here; if you accept the risk, run\n"
+            f"KORU_AUTOPILOT_ALLOW_CROSS_IDE=1 coru vscode auto yourself.{RESET}"
+        )
+        return
+    log_path = ctx.project / ".koru" / "logs" / "bridge.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(log_path, "ab") as log:
+        subprocess.Popen(
+            ["coru", "vscode", "auto"],
+            cwd=ctx.project,
+            stdout=log,
+            stderr=log,
+            start_new_session=True,
+        )
+    print(f"{GREEN}bridge starting{RESET} {DIM}(log: {log_path}){RESET}")
+    print(f"{DIM}check again in a few seconds with /bridge{RESET}")
+
+
 COMMANDS: dict[str, object] = {
     "/help": _cmd_help,
     "/config": _cmd_config,
@@ -466,6 +508,7 @@ COMMANDS: dict[str, object] = {
     "/drain": _cmd_drain,
     "/ticket": _cmd_ticket,
     "/doctor": _cmd_doctor,
+    "/bridge": _cmd_bridge,
 }
 
 
@@ -492,6 +535,25 @@ def _banner(ctx: ShellContext) -> None:
             ],
         ),
     )
+
+
+def _maybe_auto_drain(ctx: ShellContext) -> bool:
+    """Honour the /config auto_drain switch on shell startup.
+
+    Returns True when a drain was triggered.
+    """
+    settings = shell_settings(ctx.config)
+    if not settings.get("auto_drain"):
+        return False
+    if "openrouter" not in enabled_integrations(ctx.config):
+        print(f"{DIM}auto_drain on, but openrouter integration is disabled — skipping{RESET}")
+        return False
+    if not _open_tickets(ctx.project):
+        print(f"{DIM}auto_drain on, queue empty — nothing to do{RESET}")
+        return False
+    print(f"{DIM}auto_drain on — draining the queue…{RESET}")
+    _cmd_drain(ctx, "")
+    return True
 
 
 def _dispatch(ctx: ShellContext, line: str) -> bool:
@@ -529,6 +591,7 @@ def shell_main(argv: list[str]) -> int:
     project = Path(args.project).expanduser().resolve()
     ctx = ShellContext(project=project, config=load_config(project))
     _banner(ctx)
+    _maybe_auto_drain(ctx)
     while True:
         try:
             line = input(f"{CYAN}>{RESET} ").strip()

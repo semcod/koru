@@ -126,3 +126,89 @@ def test_integration_save_reports_probe_results(project: Path, monkeypatch, caps
     assert "✓" in out and "openrouter: detail" in out
     assert "✗" in out and "planfile_queue: detail" in out
     assert "fix: install planfile" in out
+
+
+def test_bridge_status_reports_probe(project: Path, monkeypatch, capsys) -> None:
+    ctx = ShellContext(project=project, config=load_config(project))
+    monkeypatch.setattr(
+        "koru.cli_shell._probe_qoder_chat", lambda _p: (False, "daemon up, IDE bridge NOT connected")
+    )
+    assert _dispatch(ctx, "/bridge") is True
+    out = capsys.readouterr().out
+    assert "NOT connected" in out
+    assert "/bridge start" in out
+
+
+def test_bridge_start_refuses_outside_ide_terminal(project: Path, monkeypatch, capsys) -> None:
+    ctx = ShellContext(project=project, config=load_config(project))
+    monkeypatch.setattr("koru.cli_shell._probe_qoder_chat", lambda _p: (False, "down"))
+    monkeypatch.delenv("TERM_PROGRAM", raising=False)
+    spawned = []
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: spawned.append(a))
+    assert _dispatch(ctx, "/bridge start") is True
+    out = capsys.readouterr().out
+    assert "not inside" in out
+    assert spawned == []
+
+
+def test_bridge_start_spawns_inside_ide_terminal(project: Path, monkeypatch, capsys) -> None:
+    ctx = ShellContext(project=project, config=load_config(project))
+    monkeypatch.setattr("koru.cli_shell._probe_qoder_chat", lambda _p: (False, "down"))
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    spawned = []
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: spawned.append((a, k)) or None)
+    assert _dispatch(ctx, "/bridge start") is True
+    out = capsys.readouterr().out
+    assert "bridge starting" in out
+    assert spawned and spawned[0][0][0] == ["coru", "vscode", "auto"]
+    assert spawned[0][1].get("start_new_session") is True
+
+
+def test_bridge_start_noop_when_connected(project: Path, monkeypatch, capsys) -> None:
+    ctx = ShellContext(project=project, config=load_config(project))
+    monkeypatch.setattr("koru.cli_shell._probe_qoder_chat", lambda _p: (True, "bridge connected"))
+    spawned = []
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: spawned.append(a))
+    assert _dispatch(ctx, "/bridge start") is True
+    assert "nothing to do" in capsys.readouterr().out
+    assert spawned == []
+
+
+def _auto_drain_ctx(project: Path, *, auto: bool) -> ShellContext:
+    config = load_config(project)
+    config[SHELL_SECTION] = {"auto_drain": auto}
+    save_config(project, config)
+    return ShellContext(project=project, config=load_config(project))
+
+
+def test_auto_drain_off_by_default(project: Path, monkeypatch) -> None:
+    from koru.cli_shell import _maybe_auto_drain
+
+    called = []
+    monkeypatch.setattr("koru.cli_shell._cmd_drain", lambda ctx, arg: called.append(arg))
+    ctx = ShellContext(project=project, config=load_config(project))
+    assert _maybe_auto_drain(ctx) is False
+    assert called == []
+
+
+def test_auto_drain_runs_when_enabled_and_queue_nonempty(project: Path, monkeypatch) -> None:
+    from koru.cli_shell import _maybe_auto_drain
+
+    called = []
+    monkeypatch.setattr("koru.cli_shell._cmd_drain", lambda ctx, arg: called.append(arg))
+    monkeypatch.setattr("koru.cli_shell._open_tickets", lambda _p: [{"id": "T-1"}])
+    ctx = _auto_drain_ctx(project, auto=True)
+    assert _maybe_auto_drain(ctx) is True
+    assert called == [""]
+
+
+def test_auto_drain_skips_empty_queue(project: Path, monkeypatch, capsys) -> None:
+    from koru.cli_shell import _maybe_auto_drain
+
+    called = []
+    monkeypatch.setattr("koru.cli_shell._cmd_drain", lambda ctx, arg: called.append(arg))
+    monkeypatch.setattr("koru.cli_shell._open_tickets", lambda _p: [])
+    ctx = _auto_drain_ctx(project, auto=True)
+    assert _maybe_auto_drain(ctx) is False
+    assert called == []
+    assert "queue empty" in capsys.readouterr().out
