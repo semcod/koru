@@ -222,6 +222,10 @@ dev = [
     # uv sync prunes ad-hoc pip installs; the queue needs planfile in the
     # default-synced group or every sync reintroduces planfile_error.
     "planfile>=0.1.100",
+    # photo-VQL / vision chat drive imports vdisplay; without it in the
+    # default-synced group every `uv sync` (i.e. every goal release) drops it
+    # and the daemon's vision path silently disables.
+    "vdisplay>=0.1.44",
 ]
 control = [
     "jsonschema>=4.0",
@@ -239,6 +243,7 @@ tillm = { path = "../tillm", editable = true }
 # keep the sibling checkout editable through uv/goal syncs — a registry
 # install kept resurfacing in .venv and shadowing local gillm changes
 gillm = { path = "../gillm", editable = true }
+vdisplay = { path = "../../wronai/vdisplay", editable = true }
 
 [tool.setuptools]
 package-dir = { "" = "src" }
