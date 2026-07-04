@@ -226,6 +226,9 @@ tasks:
 
 GITIGNORE_MARKER = "# koru runtime artefacts (generated)"
 GITIGNORE_LINE = ".planfile/.koru/"
+# .koru/ holds project.json / history.jsonl / event stores written by
+# ensure_project_state and the CQRS event log — also machine-local
+GITIGNORE_LINES = (GITIGNORE_LINE, ".koru/")
 
 
 @dataclass
@@ -344,6 +347,13 @@ def init_project(
         agent_lane=agent_lane,
         prepare_host_environment=prepare_host_environment,
     )
+
+    # .koru/project.json was previously only written on the first `koru auto`
+    # run, so every freshly initialised project doctor-warned with
+    # koru_project_json=missing until then.
+    from koru.autonomy.operator.operator_onboarding import ensure_project_state
+
+    ensure_project_state(project, source="init")
 
     return InitReport(
         project=project,
@@ -645,8 +655,9 @@ def _ensure_gitignore_entry(project: Path) -> bool:
     """
     path = project / ".gitignore"
     existing = path.read_text(encoding="utf-8") if path.exists() else ""
-    lines = existing.splitlines()
-    if any(stripped == GITIGNORE_LINE for stripped in (line.strip() for line in lines)):
+    stripped_lines = {line.strip() for line in existing.splitlines()}
+    missing = [line for line in GITIGNORE_LINES if line not in stripped_lines]
+    if not missing:
         return False
     block = []
     if existing and not existing.endswith("\n"):
@@ -654,6 +665,6 @@ def _ensure_gitignore_entry(project: Path) -> bool:
     if existing:
         block.append("")  # blank line separator
     block.append(GITIGNORE_MARKER)
-    block.append(GITIGNORE_LINE)
+    block.extend(missing)
     path.write_text(f"{existing}{'\n'.join(block)}\n", encoding="utf-8")
     return True

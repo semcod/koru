@@ -52,6 +52,7 @@ from koru.doctor_autopilot_checks import (
 from koru.doctor_autopilot_checks import (
     _resolve_autopilot_socket_for_doctor,
     _selected_autopilot_ide,
+    _selected_autopilot_ide_for_diagnostics,
 )
 from koru.doctor_constants import (
     _PROBLEM_CATALOG as _PROBLEM_CATALOG,
@@ -248,7 +249,7 @@ _AutopilotDebugContext = _autopilot_debug.AutopilotDebugContext
 
 def _recent_autopilot_debug_context() -> _AutopilotDebugContext:
     return _autopilot_debug.recent_autopilot_debug_context(
-        selected_ide=_selected_autopilot_ide,
+        selected_ide=_selected_autopilot_ide_for_diagnostics,
         debug_log_path=_autopilot_debug_log_path,
         socket_resolver=_resolve_autopilot_socket_for_doctor,
         read_lines=_read_recent_autopilot_debug_lines,
@@ -356,7 +357,7 @@ _plugin_console_logs_empty_result = _autopilot_debug.plugin_console_logs_empty_r
 
 def _check_plugin_console_logs(_project: Path) -> tuple[str, str]:
     return _autopilot_debug.check_plugin_console_logs(
-        selected_autopilot_ide=_selected_autopilot_ide,
+        selected_autopilot_ide=_selected_autopilot_ide_for_diagnostics,
         tail_limit=_doctor_console_log_tail_limit,
         socket_resolver=_resolve_autopilot_socket_for_doctor,
         daemon_logs_reader=_daemon_console_logs_for_doctor,
@@ -407,7 +408,7 @@ _ide_console_build_detail = _ide_console_build_detail_impl
 def _check_ide_console_log(_project: Path) -> tuple[str, str]:
     del _project
     return _check_ide_console_log_impl(
-        selected_autopilot_ide=_selected_autopilot_ide,
+        selected_autopilot_ide=_selected_autopilot_ide_for_diagnostics,
     )
 
 

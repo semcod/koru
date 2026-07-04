@@ -67,6 +67,42 @@ def _has_autopilot_selection() -> bool:
     )
 
 
+def _autopilot_selection_is_explicit() -> bool:
+    return bool(
+        os.environ.get("KORU_AUTOPILOT_IDE")
+        or os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        or os.environ.get("KORU_AUTOPILOT_SOCKET")
+    )
+
+
+def _autopilot_hint_only_idle() -> bool:
+    """Selection comes only from the terminal hint and no daemon socket exists.
+
+    Running `koru --doctor` from an IDE-integrated terminal used to arm every
+    daemon/log check via the hint and produce 7 identical WARNs per project
+    even though autopilot was neither configured (env) nor present (socket).
+    In that state there is nothing to diagnose — checks should SKIP.
+    """
+    if _autopilot_selection_is_explicit():
+        return False
+    if not _selected_autopilot_ide(include_terminal_hint=True):
+        return False
+    return not _resolve_autopilot_socket_for_doctor().exists()
+
+
+_HINT_ONLY_IDLE_DETAIL = (
+    "terminal-hint IDE only; no autopilot env and no daemon socket — "
+    "start with `koru auto` or export KORU_AUTOPILOT_INSTANCE"
+)
+
+
+def _selected_autopilot_ide_for_diagnostics() -> str | None:
+    """Selection for daemon/log checks: a bare terminal hint with no socket is idle."""
+    if _autopilot_hint_only_idle():
+        return None
+    return _selected_autopilot_ide()
+
+
 def _resolve_autopilot_socket_for_doctor() -> Path:
     selected = _selected_autopilot_ide()
     if selected and not os.environ.get("KORU_AUTOPILOT_SOCKET"):
@@ -113,6 +149,8 @@ def _autopilot_env_status(values: dict[str, str]) -> tuple[str, list[str]]:
         return SKIP, ["autopilot_env=unset"]
     if not (values["instance"] or values["ide"] or values["socket_env"]):
         selected = _selected_autopilot_ide(include_terminal_hint=True) or "auto"
+        if _autopilot_hint_only_idle():
+            return SKIP, ["autopilot_env=unset", "terminal_hint_idle=true"]
         return WARN, ["autopilot_env=unset", "using_terminal_hint=true", *_lane_matrix_bits(selected)]
     return PASS, []
 
@@ -138,6 +176,8 @@ def _check_ide_runtime_presence(_project: Path) -> tuple[str, str]:
 def _check_autopilot_socket(_project: Path) -> tuple[str, str]:
     if not _has_autopilot_selection():
         return SKIP, "autopilot env unset"
+    if _autopilot_hint_only_idle():
+        return SKIP, _HINT_ONLY_IDLE_DETAIL
     path = _resolve_autopilot_socket_for_doctor()
     health = probe_socket_health(path)
     detail = (
@@ -154,6 +194,8 @@ def _check_autopilot_socket(_project: Path) -> tuple[str, str]:
 def _check_autopilot_manage(_project: Path) -> tuple[str, str]:
     if not _has_autopilot_selection():
         return SKIP, "autopilot env unset"
+    if _autopilot_hint_only_idle():
+        return SKIP, _HINT_ONLY_IDLE_DETAIL
     selected = _selected_autopilot_ide() or "auto"
     report = collect_install_manager_report(
         ide=selected,
@@ -181,6 +223,8 @@ def _check_autopilot_manage(_project: Path) -> tuple[str, str]:
 def _check_autopilot_runtime_status(_project: Path) -> tuple[str, str]:
     if not _has_autopilot_selection():
         return SKIP, "autopilot env unset"
+    if _autopilot_hint_only_idle():
+        return SKIP, _HINT_ONLY_IDLE_DETAIL
     selected = _selected_autopilot_ide() or "auto"
     report = collect_install_manager_report(
         ide=selected,

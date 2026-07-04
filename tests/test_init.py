@@ -228,13 +228,15 @@ class TestFromExternalPipeline(unittest.TestCase):
 
 class TestRuntimeContract(unittest.TestCase):
     def test_init_does_not_leave_files_outside_planfile(self) -> None:
-        """Koru-owned state lives under .planfile/; root may have .gitignore + koru.yaml."""
+        """Koru-owned state lives under .planfile/ and .koru/; root may have .gitignore + koru.yaml."""
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             init_project(project)
             entries = sorted(p.name for p in project.iterdir())
-            # Allowed at project root: .planfile/, .gitignore, koru.yaml.
-            self.assertEqual(entries, [".gitignore", ".planfile", "koru.yaml"])
+            # Allowed at project root: .koru/ (project.json — gitignored),
+            # .planfile/, .gitignore, koru.yaml.
+            self.assertEqual(entries, [".gitignore", ".koru", ".planfile", "koru.yaml"])
+            self.assertTrue((project / ".koru" / "project.json").is_file())
 
 
 class TestAgentLaneArtifacts(unittest.TestCase):
