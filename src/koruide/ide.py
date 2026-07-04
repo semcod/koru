@@ -27,6 +27,7 @@ _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
     "antigravity": (("antigravity",), "Antigravity"),
     "windsurf": (("windsurf", "devin-desktop"), "Windsurf"),
     "vscode": (("code", "code-insiders"), "VS Code"),
+    "qoder": (("qoder",), "Qoder"),
     "vscodium": (("codium", "vscodium", "code-oss"), "VSCodium"),
     "cursor": (("cursor",), "Cursor"),
     "jetbrains": (
@@ -41,7 +42,7 @@ _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
 _AUTOPILOT_IDE_ORDER = ("auto", *_IDE_SIGNATURES.keys())
 _SUPPORTED_AUTOPILOT_IDES = frozenset(_AUTOPILOT_IDE_ORDER)
 _VSCODE_EXTENSION_PLUGIN_IDES = frozenset(
-    {"antigravity", "windsurf", "vscode", "vscodium", "cursor"}
+    {"antigravity", "windsurf", "vscode", "vscodium", "cursor", "qoder"}
 )
 _IDE_ALIASES: dict[str, str] = {
     "code": "vscode",
@@ -55,6 +56,7 @@ _IDE_ALIASES: dict[str, str] = {
     "code-oss": "vscodium",
     "code oss": "vscodium",
     "cursor": "cursor",
+    "qoder": "qoder",
     "windsurf": "windsurf",
     "devin": "windsurf",
     "devin-desktop": "windsurf",
@@ -80,6 +82,7 @@ _IDE_BINARY_CANDIDATES: dict[str, tuple[str, ...]] = {
     "vscode": ("code", "code-insiders"),
     "vscodium": ("vscodium", "codium", "code-oss"),
     "cursor": ("cursor",),
+    "qoder": ("qoder", "qodercli"),
     "jetbrains": ("idea", "pycharm", "webstorm", "phpstorm", "goland", "clion", "rubymine"),
     "zed": ("zed",),
 }
@@ -90,6 +93,7 @@ _IDE_WINDOW_NAMES: dict[str, str] = {
     "vscode": "Visual Studio Code",
     "vscodium": "VSCodium",
     "cursor": "Cursor",
+    "qoder": "Qoder",
     "windsurf": "Windsurf",
     "jetbrains": "JetBrains",
     "zed": "Zed",
@@ -257,6 +261,7 @@ _CANONICAL_COMM: dict[str, tuple[str, ...]] = {
     "vscode": ("code", "code-insiders"),
     "vscodium": ("codium", "vscodium", "code-oss"),
     "cursor": ("cursor",),
+    "qoder": ("qoder",),
     "zed": ("zed",),
 }
 

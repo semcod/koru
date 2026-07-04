@@ -42,6 +42,8 @@ EXTENSION_ID = "semcod.koru-autopilot-vscode"
 _EXTENSION_IDS: dict[str, str] = {
     "cursor": "semcod.koru-autopilot-cursor",
     "vscode": EXTENSION_ID,
+    # Qoder installs the umbrella VS Code VSIX until a dedicated build exists.
+    "qoder": EXTENSION_ID,
     "vscodium": "semcod.koru-autopilot-vscodium",
     "windsurf": "semcod.koru-autopilot-windsurf",
     "antigravity": "semcod.koru-autopilot-antigravity",
@@ -51,6 +53,7 @@ _EXTENSION_IDS: dict[str, str] = {
 _PLUGIN_DIR_NAMES: dict[str, tuple[str, ...]] = {
     "cursor": ("koru-autopilot-cursor",),
     "vscode": ("koru-autopilot-vscode",),
+    "qoder": ("koru-autopilot-qoder", "koru-autopilot-vscode"),
     "vscodium": ("koru-autopilot-vscodium",),
     "windsurf": ("koru-autopilot-windsurf",),
     "antigravity": ("koru-autopilot-antigravity",),
@@ -65,13 +68,14 @@ _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
     "cursor": ("cursor",),
     "vscode": ("code", "code-insiders"),
     "vscodium": ("codium", "vscodium", "code-oss"),
+    "qoder": ("qoder", "qodercli"),
 }
 
 # IDE ids whose plugin installs via a vendor CLI; binary names come from
 # koruide.ide (single source for binary aliases like codium/code-oss).
 # Moved here from ``koru.autopilot.install_plugin_cli`` (which re-exports
 # them) so koruide has no hard dependency on koru.
-_PLUGIN_CLI_IDES = ("antigravity", "windsurf", "cursor", "vscode", "vscodium")
+_PLUGIN_CLI_IDES = ("antigravity", "windsurf", "cursor", "vscode", "vscodium", "qoder")
 PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
     ide: ide_binary_candidates(ide) for ide in _PLUGIN_CLI_IDES
 }
