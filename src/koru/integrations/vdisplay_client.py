@@ -4348,6 +4348,25 @@ def _photo_vql_vscode_chat_flow(
     return None
 
 
+        def _try_ocr_anchor_chat_target(*, ide: str, source: str) -> dict[str, Any] | None:
+    """Deterministic chat-input target from the OCR placeholder bbox, or None."""
+    try:
+        from vdisplay.control.vision_chat_detect import ocr_anchor_chat_target
+    except ImportError:
+        return None
+    png = _resolve_photo_png_path_from_vql(source=source)
+    if not png:
+        return None
+    try:
+        data = Path(png).read_bytes()
+    except OSError:
+        return None
+    try:
+        return ocr_anchor_chat_target(data, ide=ide)
+    except Exception:
+        return None
+
+
 def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: str = "auto") -> dict:
     """Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.targets)."""
     els, src = _photo_vql_elements()
@@ -4461,6 +4480,15 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
             map_hint=map_hint,
             polluted=is_polluted,
         )
+
+    # Deterministic OCR placeholder anchor first: the input's placeholder text
+    # ("Plan and build autonomously", "Ask anything", …) has an exact tesseract
+    # bbox, so its center is a precise click point with no LLM pixel-precision
+    # risk. Only when the placeholder is absent/unreadable do we fall to the
+    # per-IDE heuristics + vision below.
+    anchor = _try_ocr_anchor_chat_target(ide=canon, source=src_name)
+    if anchor is not None:
+        return _finalize(anchor, method="ocr_anchor_chat_placeholder")
 
     if canon in {"jetbrains", "pycharm", "idea"}:
         jb_target = _photo_vql_jetbrains_chat_flow(

@@ -226,6 +226,11 @@ dev = [
     # default-synced group every `uv sync` (i.e. every goal release) drops it
     # and the daemon's vision path silently disables.
     "vdisplay>=0.1.44",
+    # the OCR placeholder anchor (vdisplay.control.vision_ocr) needs Pillow +
+    # pytesseract; without them ocr_available() is false and the deterministic
+    # anchor silently no-ops, forcing the imprecise full-image LLM path.
+    "Pillow>=10.0",
+    "pytesseract>=0.3.10",
 ]
 control = [
     "jsonschema>=4.0",
