@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-06-29 11:53:18
+# Generated: 2026-07-04 10:35:17
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -24,6 +24,7 @@ versioning:
   - VERSION
   - pyproject.toml:version
   - package.json:version
+  - .venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__
   bump_rules:
     patch: 10
     minor: 50
@@ -221,20 +222,6 @@ git:
     enabled: true
     prefix: v
     format: '{prefix}{version}'
-publishing:
-  enabled: false
-  registries:
-  - pypi
-  dry_run: false
-  fallback:
-    github_release:
-      enabled: true
-      owner: ''
-      repo: ''
-      repo_map: {}
-      token_env: GITHUB_TOKEN
-      skip_pypi_retries_on_block: true
-      asset_glob: dist/*
 strategies:
   python:
     test: KORU_PYTEST_CRITICAL_XDIST=1 bash scripts/koru-pytest.sh --critical --quick
@@ -531,6 +518,20 @@ code_parsers:
     - <!--
     - -->
     entity_pattern: ^#+\s+(.+)$
+publishing:
+  enabled: false
+  registries:
+  - pypi
+  dry_run: false
+  fallback:
+    github_release:
+      enabled: true
+      owner: ''
+      repo: ''
+      repo_map: {}
+      token_env: GITHUB_TOKEN
+      skip_pypi_retries_on_block: true
+      asset_glob: dist/*
 automation:
   tagi_integration:
     enabled: true
