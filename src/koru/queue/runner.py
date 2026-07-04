@@ -18,7 +18,7 @@ from koru.queue.runners import (
     run_process,
     run_shell_command,
 )
-from koru.queue.shell_evidence import format_shell_run_note
+from koru.queue.shell_evidence import LLM_RUN_NOTE_TAG, SHELL_RUN_NOTE_TAG, format_shell_run_note
 from koru.queue.ticket import (
     parse_next_ticket,
     planfile_command,
@@ -184,6 +184,8 @@ def _append_shell_evidence(
     ticket_id: str,
     result: CommandResult,
     planfile_runner: Callable[[list[str], Path], CommandResult],
+    *,
+    tag: str = SHELL_RUN_NOTE_TAG,
 ) -> None:
     run_id = uuid.uuid4().hex[:16]
     note = format_shell_run_note(
@@ -191,6 +193,7 @@ def _append_shell_evidence(
         exit_code=result.returncode,
         stdout=result.stdout,
         stderr=result.stderr,
+        tag=tag,
     )
     up, evidence_kind = append_shell_evidence_note(
         project,
@@ -235,6 +238,12 @@ def _finalize_ticket(
     if result.returncode == 0:
         if executor_kind == "shell":
             _append_shell_evidence(project, ticket_id, result, planfile_runner)
+        elif executor_kind == "llm":
+            # The model answer IS the deliverable — persist it on the ticket
+            # instead of discarding stdout the way pre-0.1.373 releases did.
+            _append_shell_evidence(
+                project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG
+            )
         planfile_command(
             project,
             ["ticket", "done", ticket_id],

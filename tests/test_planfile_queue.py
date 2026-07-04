@@ -1088,6 +1088,50 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             # run-log writer can persist them.
             self.assertIn("Yes", result.stdout)
 
+    def test_llm_answer_persisted_as_ticket_note(self) -> None:
+        """The model answer must land on the ticket, not be discarded."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = self._llm_ticket()
+            calls: list[list[str]] = []
+
+            def planfile_runner(command, _project) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            def llm_runner(_request, _project) -> SimpleNamespace:
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout="Move only reusable code to packages/.",
+                    stderr="",
+                    status_code=200,
+                    model="openai/gpt-4o-mini",
+                    usage={},
+                )
+
+            result = run_next_planfile_task(
+                project=project,
+                actor="koru-llm",
+                planfile_runner=planfile_runner,
+                llm_runner=llm_runner,
+            )
+
+            self.assertEqual(result.status, "completed")
+            notes = [
+                _ticket_args(c)
+                for c in calls
+                if _ticket_args(c)[:3] == ["ticket", "update", "LLM-001"]
+            ]
+            self.assertTrue(notes, "expected a ticket update --note call with the answer")
+            note_text = notes[0][4]
+            self.assertTrue(note_text.startswith("KORU-LLM-RUN"), note_text[:60])
+            self.assertIn("Move only reusable code to packages/.", note_text)
+            # note lands before the ticket is marked done
+            tail = [_ticket_args(c) for c in calls]
+            self.assertLess(tail.index(notes[0]), tail.index(["ticket", "done", "LLM-001"]))
+
     def test_llm_ticket_failure_marks_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)

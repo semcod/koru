@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 
 SHELL_RUN_NOTE_TAG = "KORU-SHELL-RUN"
+LLM_RUN_NOTE_TAG = "KORU-LLM-RUN"
 """Marker prefix on the first line of every shell-evidence note."""
 
 
@@ -35,6 +36,7 @@ def format_shell_run_note(
     stderr: str,
     max_stream_chars: int = 4000,
     max_total_chars: int = 12000,
+    tag: str = SHELL_RUN_NOTE_TAG,
 ) -> str:
     """Build a single planfile ``--note`` string for a finished shell step.
 
@@ -55,7 +57,7 @@ def format_shell_run_note(
         "stdout_chars": len(out_raw),
         "stderr_chars": len(err_raw),
     }
-    header = f"{SHELL_RUN_NOTE_TAG} {json.dumps(meta, sort_keys=True)}"
+    header = f"{tag} {json.dumps(meta, sort_keys=True)}"
     body = (
         f"--- stdout ---\n{out_body if out_body else '(empty)'}\n\n"
         f"--- stderr ---\n{err_body if err_body else '(empty)'}"
@@ -69,4 +71,4 @@ def format_shell_run_note(
     return clipped[:max_total_chars]
 
 
-__all__ = ["SHELL_RUN_NOTE_TAG", "format_shell_run_note"]
+__all__ = ["LLM_RUN_NOTE_TAG", "SHELL_RUN_NOTE_TAG", "format_shell_run_note"]
