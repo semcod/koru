@@ -152,6 +152,24 @@ def _focus_ring_appeared(before: bytes, after: bytes, sx: int, sy: int, *, radiu
     return after_blue - before_blue > 200  # a focus ring is many blue px
 
 
+def _focused_near(after: bytes, sx: int, sy: int, *, tol: int = 160) -> bool:
+    """True when a blue focus ring is PRESENT near the target in the after-click
+    frame (absolute check) — works whether the input was already focused or just
+    got focused. A click that missed leaves no ring near the target -> rejected,
+    so a keystroke never leaks into the wrong window."""
+    hit = _blue_ring_center(after)
+    if hit is None:
+        return False
+    fx, fy, _n = hit
+    p = _session
+    if p is None:
+        return False
+    from PIL import Image  # noqa: F401
+    aw, ah = _png_size(after)
+    rsx, rsy = p.frame_to_stream(fx, fy, frame_w=aw, frame_h=ah)
+    return abs(rsx - sx) <= tol and abs(rsy - sy) <= tol
+
+
 def _get_session():
     global _session
     if _session is not None:
@@ -189,6 +207,58 @@ def _anchor_precise(frame: bytes, ide: str) -> tuple[int, int] | None:
     return (int(cc["x"]), int(cc["y"])) if cc.get("x") is not None else None
 
 
+def _blue_ring_center(frame: bytes) -> tuple[int, int, int] | None:
+    """Center (frame px) + pixel count of the focused input's blue ring, or None.
+
+    Manual calibration: the user clicks the chat input; Qoder draws a blue focus
+    ring around it. The ring is a wide, blue-dominant band — its bbox center is
+    the input. Returns (fx, fy, count).
+    """
+    try:
+        import io
+
+        import numpy as np
+        from PIL import Image
+    except ImportError:
+        return None
+    try:
+        a = np.asarray(Image.open(io.BytesIO(frame)).convert("RGB"), dtype=np.int16)
+    except Exception:
+        return None
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mask = (b > 130) & (b > r + 45) & (b > g + 30)
+    ys, xs = np.nonzero(mask)
+    if xs.size < 300:
+        return None
+    # the focus ring is a wide horizontal band; take the densest row cluster
+    cy = int(np.median(ys))
+    near = np.abs(ys - cy) < 60
+    if near.sum() < 200:
+        return None
+    fx = int(np.median(xs[near]))
+    fy = int(np.median(ys[near]))
+    return fx, fy, int(near.sum())
+
+
+def calibrate_input_from_focus(*, ide: str = "jetbrains") -> dict[str, Any]:
+    """One-time manual calibration: with the chat input CLICKED/focused by the
+    user, detect its blue focus ring and cache the stream coords. Deterministic
+    thereafter — no OCR variance."""
+    p = _get_session()
+    if p is None:
+        return {"ok": False, "error": "portal unavailable"}
+    frame = p.grab_frame()
+    fw, fh = _png_size(frame)
+    hit = _blue_ring_center(frame)
+    if hit is None:
+        return {"ok": False, "error": "no focus ring found — click inside the Qoder input first"}
+    fx, fy, n = hit
+    sx, sy = p.frame_to_stream(fx, fy, frame_w=fw, frame_h=fh)
+    _cache_input_xy(ide, (sx, sy))
+    logger.info("PORTAL_CALIBRATED ide=%s frame=(%d,%d) stream=(%d,%d) ring_px=%d", ide, fx, fy, sx, sy, n)
+    return {"ok": True, "ide": ide, "stream_xy": [sx, sy], "frame_xy": [fx, fy], "ring_px": n}
+
+
 def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool = False) -> dict[str, Any]:
     """Full portal flow: locate the chat input on the portal's own frame and
     type (guarded). Returns a result dict."""
@@ -204,6 +274,23 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         if xy is None:
             return None
         return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
+
+    # A manually-calibrated (or previously-seeded) coord is deterministic and
+    # beats the flaky OCR anchor — the composer doesn't move. Prefer it.
+    cached = _cached_input_xy(ide)
+    if cached is not None:
+        sx, sy = cached
+
+        def _vc(before: bytes, after: bytes) -> bool:
+            return _focused_near(after, sx, sy)
+
+        typed = p.type_into_input_verified(sx, sy, text, verify=_vc, submit=submit, clear_first=True)
+        logger.info("PORTAL_INPUT(cached) typed=%s stream=(%d,%d) submit=%s", typed, sx, sy, submit)
+        return {
+            "ok": bool(typed), "method": "portal-remotedesktop-cached",
+            "stream_xy": [sx, sy], "submitted": bool(submit and typed),
+            "error": None if typed else "click did not focus the chat input (guard rejected)",
+        }
 
     frame = p.grab_frame()
     fw0, fh0 = _png_size(frame)
@@ -241,10 +328,7 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         # blue focus ring appearing around it (Qoder highlights the focused
         # composer). Pointing at Qoder is not enough; only an actual focus change
         # lets us type, so a keystroke can never leak into the wrong window.
-        if not _focus_ring_appeared(before, after, sx, sy):
-            return False
-        a2 = _target(after)
-        return a2 is not None and abs(a2[0] - sx) <= 160 and abs(a2[1] - sy) <= 160
+        return _focused_near(after, sx, sy)
 
     typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True)
     logger.info("PORTAL_INPUT typed=%s ide=%s stream=(%d,%d) submit=%s", typed, ide, sx, sy, submit)
