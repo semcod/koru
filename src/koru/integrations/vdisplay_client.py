@@ -1340,15 +1340,23 @@ def _annotate_png_artifact_state(out: dict[str, Any]) -> dict[str, Any]:
     if not raw:
         out.setdefault("png_exists", False)
         return out
+    # A failed capture/refresh must never inherit a file already sitting at the
+    # requested path — that stale screenshot (e.g. /tmp/capture.png from a prior
+    # session) would false-positive as a fresh confirmation and let koru actuate
+    # on the wrong screen. Distrust the path whenever the step reported failure.
+    capture_failed = bool(out.get("ok") is False or out.get("error") or out.get("returncode"))
     path = Path(raw).expanduser()
     exists = path.is_file()
+    if capture_failed:
+        out["png_exists"] = False
+        out.setdefault("requested_png_path", raw)
+        out["png"] = None
+        return out
     out["png_exists"] = exists
     if exists:
         out["png"] = str(path.resolve())
         return out
     out.setdefault("requested_png_path", raw)
-    if out.get("ok") is False or out.get("error") or out.get("returncode"):
-        out["png"] = None
     return out
 
 

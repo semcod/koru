@@ -1898,3 +1898,34 @@ def test_send_chat_persists_drive_result(monkeypatch: pytest.MonkeyPatch) -> Non
 
     assert out["ok"] is True
     assert ("act", "drive_result", True) in persisted
+
+
+def test_failed_capture_does_not_inherit_stale_png(tmp_path, monkeypatch) -> None:
+    """A failed refresh must null its png even if a file exists at that path.
+
+    Regression: _annotate_png_artifact_state trusted an on-disk file at the
+    requested path regardless of ok/error, so a stale /tmp/capture.png from a
+    prior session false-positived as a fresh capture (confirmation bias).
+    """
+    stale = tmp_path / "capture.png"
+    stale.write_bytes(b"stale-bytes")
+
+    out = vc._annotate_png_artifact_state(
+        {
+            "ok": False,
+            "error": "vdisplay host capture failed",
+            "returncode": 1,
+            "png": str(stale),
+        }
+    )
+    assert out["png"] is None
+    assert out["png_exists"] is False
+    assert out["requested_png_path"] == str(stale)
+
+
+def test_successful_capture_keeps_existing_png(tmp_path) -> None:
+    fresh = tmp_path / "capture.png"
+    fresh.write_bytes(b"fresh")
+    out = vc._annotate_png_artifact_state({"ok": True, "png": str(fresh)})
+    assert out["png_exists"] is True
+    assert out["png"] == str(fresh.resolve())

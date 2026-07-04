@@ -85,28 +85,79 @@ def _finalize_resolved_probe(
     return resolved_probe
 
 
+def _ide_surface_rows(probe: dict[str, Any], *, canon: str) -> list[dict[str, Any]]:
+    """IDE surface rows for ``canon``, excluding the Toolbox launcher window."""
+    rows: list[dict[str, Any]] = []
+    for row in probe.get("ide_surfaces") or []:
+        if not isinstance(row, dict):
+            continue
+        if row.get("ide_hint") != canon and not (
+            canon in {"jetbrains", "pycharm", "idea"} and row.get("ide_hint") == "jetbrains"
+        ):
+            continue
+        if "toolbox" in str(row.get("display_name") or "").lower():
+            continue
+        rows.append(row)
+    return rows
+
+
+def _ide_surface_monitors(probe: dict[str, Any], *, canon: str) -> list[str]:
+    """Distinct monitors that host a surface of the target IDE."""
+    monitors: list[str] = []
+    for row in _ide_surface_rows(probe, canon=canon):
+        name = str(row.get("monitor_name") or "").strip()
+        if name and name not in monitors:
+            monitors.append(name)
+    return monitors
+
+
+def _prefer_secondary_chat_monitor(
+    probe: dict[str, Any],
+    *,
+    canon: str,
+    editor_monitor: str,
+) -> str | None:
+    """When the IDE spans monitors, pick the one likely holding the chat panel.
+
+    JetBrains tool windows (the Qoder / AI chat panel) are commonly dragged to
+    a secondary DP-* monitor while the main editor keeps the primary output.
+    The editor surface ranks highest, so the naive best-surface pick lands on
+    the editor monitor and captures the wrong screen. When the IDE also has a
+    surface on a DP-* monitor other than the editor's, prefer that one.
+    """
+    surface_monitors = _ide_surface_monitors(probe, canon=canon)
+    if len(surface_monitors) < 2:
+        return None
+    primary = set(_primary_monitor_names(probe))
+    for name in surface_monitors:
+        if name == editor_monitor:
+            continue
+        if name.startswith("DP-") and name not in primary:
+            return name
+    return None
+
+
 def _surface_preferred_monitor(probe: dict[str, Any], *, canon: str) -> str | None:
     """Best-effort monitor from correlated IDE surface (e.g. PyCharm on HDMI-1)."""
     best = probe.get("ide_surface_best")
     if not isinstance(best, dict):
-        for row in probe.get("ide_surfaces") or []:
-            if not isinstance(row, dict):
-                continue
-            if row.get("ide_hint") != canon and not (
-                canon in {"jetbrains", "pycharm", "idea"} and row.get("ide_hint") == "jetbrains"
-            ):
-                continue
-            name = str(row.get("display_name") or "").lower()
-            if "toolbox" in name:
-                continue
-            monitor = row.get("monitor_name")
-            if monitor:
-                return str(monitor)
-        return None
+        rows = _ide_surface_rows(probe, canon=canon)
+        editor_monitor = str((rows[0].get("monitor_name") if rows else "") or "")
+        chat_monitor = _prefer_secondary_chat_monitor(
+            probe, canon=canon, editor_monitor=editor_monitor
+        )
+        if chat_monitor:
+            return chat_monitor
+        return editor_monitor or None
     if canon in {"jetbrains", "pycharm", "idea"} and best.get("ide_hint") not in {None, "jetbrains"}:
         return None
-    monitor = best.get("monitor_name")
-    return str(monitor) if monitor else None
+    editor_monitor = str(best.get("monitor_name") or "")
+    chat_monitor = _prefer_secondary_chat_monitor(
+        probe, canon=canon, editor_monitor=editor_monitor
+    )
+    if chat_monitor:
+        return chat_monitor
+    return editor_monitor or None
 
 
 def map_capture_monitor_mismatch(
