@@ -88,7 +88,9 @@ def plugin_status_reason(client: Any, autopilot_ide: str) -> str:
 
         _ready, reason = plugin_status_decision(client.status(), autopilot_ide)
         return reason
-    except (OSError, RuntimeError, TimeoutError) as exc:
+    except (AttributeError, OSError, RuntimeError, TimeoutError) as exc:
+        # AttributeError: client object without a status() probe (e.g. a bare
+        # placeholder client) — same operator answer as an unreachable daemon.
         return f"daemon status unavailable: {exc}"
 
 
