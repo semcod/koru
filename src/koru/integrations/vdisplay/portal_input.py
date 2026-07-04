@@ -267,6 +267,97 @@ def calibrate_input_from_focus(*, ide: str = "jetbrains") -> dict[str, Any]:
     return {"ok": True, "ide": ide, "stream_xy": [sx, sy], "frame_xy": [fx, fy], "ring_px": n}
 
 
+def _pending_action_present(frame: bytes) -> bool:
+    """True when Qoder shows a pending-action confirmation ('Run Ctrl+Enter /
+    Cancel Ctrl+Backspace'). Detected by the distinctive 'Ctrl+Backspace' cancel
+    shortcut inside the chat panel (right half, above the terminal region) so a
+    stray 'ctrl-enter' elsewhere on screen can't trigger a false confirm.
+    """
+    try:
+        from vdisplay.control.vision_ocr import ocr_available, ocr_png
+    except ImportError:
+        return False
+    ok, _ = ocr_available()
+    if not ok:
+        return False
+    try:
+        boxes = ocr_png(frame, min_confidence=35.0)
+    except Exception:
+        return False
+    fw, fh = _png_size(frame)
+    for b in boxes:
+        t = (b.text or "").strip().lower()
+        # 'Backspace' appears only in the 'Cancel Ctrl+Backspace' confirm button;
+        # match it alone (OCR often misreads 'Ctrl' as 'ctri', l->i).
+        if "backspace" in t:
+            # inside the chat panel (right side, not the bottom terminal strip)
+            if b.bounds.x > fw * 0.45 and b.bounds.y < fh * 0.62:
+                return True
+    return False
+
+
+def confirm_pending_via_portal(*, ide: str = "jetbrains") -> dict[str, Any]:
+    """If Qoder is waiting on a 'Run Ctrl+Enter' action, focus the chat and press
+    Ctrl+Enter to confirm it. Returns {confirmed: bool}."""
+    p = _get_session()
+    if p is None:
+        return {"ok": False, "error": "portal unavailable"}
+    frame = p.grab_frame()
+    if not _pending_action_present(frame):
+        return {"ok": True, "confirmed": False, "reason": "no pending action"}
+    cached = _cached_input_xy(ide)
+    if cached is None:
+        return {"ok": False, "error": "not calibrated (run calibrate_input_from_focus)"}
+    import time
+
+    sx, sy = cached
+    p.move_abs(sx, sy); time.sleep(0.3)
+    p.click(); time.sleep(0.4)                   # click the chat panel -> Qoder gets kb focus
+    # light guard: a confirm sends no text, so we don't need the input focus
+    # ring — just verify we're still on Qoder (the pending button is still there,
+    # i.e. the click didn't switch to another app) before the Ctrl+Enter.
+    if not _pending_action_present(p.grab_frame()):
+        return {"ok": False, "confirmed": False, "error": "pending action gone after click (not on Qoder?)"}
+    p.submit(mode="ctrl-enter")                  # Run Ctrl+Enter
+    logger.info("PORTAL_CONFIRM pressed Ctrl+Enter on pending action at (%d,%d)", sx, sy)
+    return {"ok": True, "confirmed": True}
+
+
+def autoconfirm_loop_via_portal(
+    *, ide: str = "jetbrains", duration_s: float = 120.0, poll_s: float = 1.5, idle_polls: int = 40,
+) -> dict[str, Any]:
+    """Drive Qoder's agent: poll continuously and press Ctrl+Enter on each
+    pending 'Run' action as it appears. The button is TRANSIENT (shows only while
+    the agent waits), so keep polling — an empty frame doesn't mean 'done', the
+    agent may be generating the next action. Stops after ``idle_polls`` consecutive
+    empty polls (agent truly idle) or ``duration_s``."""
+    import time
+
+    p = _get_session()  # open once, reuse the session for the whole loop
+    if p is None:
+        return {"ok": False, "error": "portal unavailable"}
+    confirmed = 0
+    empties = 0
+    deadline = None  # set after first grab (Date/monotonic via time.monotonic)
+    start = time.monotonic()
+    while time.monotonic() - start < duration_s and empties < idle_polls:
+        try:
+            present = _pending_action_present(p.grab_frame())
+        except Exception:
+            present = False
+        if present:
+            res = confirm_pending_via_portal(ide=ide)
+            if res.get("confirmed"):
+                confirmed += 1
+                empties = 0
+                time.sleep(poll_s)
+                continue
+        empties += 1
+        time.sleep(poll_s)
+    logger.info("PORTAL_AUTOCONFIRM confirmed %d action(s) over %.0fs", confirmed, time.monotonic() - start)
+    return {"ok": True, "confirmed": confirmed}
+
+
 def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool = False) -> dict[str, Any]:
     """Full portal flow: locate the chat input on the portal's own frame and
     type (guarded). Returns a result dict."""
