@@ -12,6 +12,7 @@ IDE_CHOICES = (
     "antigravity",
     "windsurf",
     "vscode",
+    "qoder",
     "vscodium",
     "cursor",
     "jetbrains",
