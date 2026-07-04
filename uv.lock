@@ -1418,7 +1418,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.377"
+version = "0.1.378"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -4115,7 +4115,7 @@ wheels = [
 
 [[package]]
 name = "vdisplay"
-version = "0.1.44"
+version = "0.1.45"
 source = { editable = "../../wronai/vdisplay" }
 
 [package.metadata]
@@ -4136,6 +4136,8 @@ requires-dist = [
     { name = "imgl", marker = "extra == 'imgl'", editable = "../imgl" },
     { name = "imgl", marker = "extra == 'observe'", editable = "../imgl" },
     { name = "nlp2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/nlp2vdisplay" },
+    { name = "numpy", marker = "extra == 'dev'", specifier = ">=1.24" },
+    { name = "numpy", marker = "extra == 'vision'", specifier = ">=1.24" },
     { name = "opencv-python", marker = "extra == 'vision'", specifier = ">=4.8" },
     { name = "pexpect", marker = "extra == 'terminal'", specifier = ">=4.9" },
     { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
@@ -4174,6 +4176,7 @@ dev = [
     { name = "dsl2vdisplay", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "numpy", specifier = ">=1.24" },
     { name = "pillow", specifier = ">=10.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "sqlmodel", specifier = ">=0.0.22" },

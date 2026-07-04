@@ -114,6 +114,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.378] - 2026-07-04
+
+### Docs
+- Update README.md
+
+### Other
+- Update uv.lock
+
 ## [0.1.377] - 2026-07-04
 
 ### Docs

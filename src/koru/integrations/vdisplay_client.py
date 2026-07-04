@@ -5261,6 +5261,109 @@ def _adaptive_position_pointer(
         return None
 
 
+def _abs_pointer_enabled() -> bool:
+    return (os.environ.get("KORU_VDISPLAY_ABS_POINTER") or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _abs_affine_cache_path(source: str) -> Path:
+    base = Path(os.environ.get("XDG_STATE_HOME") or (Path.home() / ".local" / "state")) / "koru" / "abs_affine"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"{source}.json"
+
+
+def _load_or_calibrate_abs_affine(source: str) -> dict[str, Any] | None:
+    """Cached per-monitor ABS→capture affine; calibrate once, reuse forever.
+
+    The compositor maps our own uinput ABS device with a fixed linear transform,
+    so a single calibration (a handful of captures) makes positioning
+    deterministic. Cached to disk keyed by monitor.
+    """
+    import json
+
+    cache = _abs_affine_cache_path(source)
+    _recal = (os.environ.get("KORU_VDISPLAY_ABS_RECALIBRATE") or "").strip().lower() in {"1", "true", "yes", "on"}
+    if cache.exists() and not _recal:
+        try:
+            return json.loads(cache.read_text())
+        except (OSError, ValueError):
+            pass
+    try:
+        from vdisplay.capture.coordinate_validation import calibrate_pointer_affine
+        from vdisplay.input.linux_uinput_abs import LinuxUinputAbsInput
+    except ImportError:
+        return None
+    ok, _reason = LinuxUinputAbsInput.available()
+    if not ok:
+        logger.warning("ABS pointer unavailable: %s", _reason)
+        return None
+    import subprocess
+
+    shot = _abs_affine_cache_path(source).with_suffix(".cal.png")
+    cli = _vdisplay_cli_path()
+    dev = LinuxUinputAbsInput().open()
+    try:
+        def _move(ax: int, ay: int) -> None:
+            dev.move_abs(ax, ay)
+
+        def _cap(_s: str) -> bytes:
+            # lightweight raw screenshot (no VQL/observe processing) — calibration
+            # only needs the cursor pixel, and the heavy path is ~3x slower
+            try:
+                subprocess.run(
+                    [cli, "screenshot", "-o", str(shot), "--source", source],
+                    capture_output=True, timeout=40, check=False,
+                    env={**os.environ, "VDISPLAY_AGENT_URL": os.environ.get("VDISPLAY_AGENT_URL", "http://127.0.0.1:8765")},
+                )
+                return shot.read_bytes()
+            except (OSError, subprocess.SubprocessError):
+                return b""
+
+        aff = calibrate_pointer_affine(
+            source, move=_move, capture=_cap,
+            probe_grid=(3, 3), global_bounds=(500, 900, 3500, 3100),
+            anchor_corner=None, avoid_live_quadrants=False,
+        )
+    finally:
+        dev.close()
+    if not aff.ok or aff.samples < 3:
+        logger.warning("ABS calibration failed for %s (samples=%s)", source, aff.samples)
+        return None
+    data = aff.to_dict()
+    try:
+        cache.write_text(json.dumps(data))
+    except OSError:
+        pass
+    logger.info("ABS affine calibrated for %s: %s", source, data)
+    return data
+
+
+def _abs_pointer_click(*, x: int, y: int, source: str) -> dict[str, Any] | None:
+    """Deterministic click via the own uinput ABS device + cached affine."""
+    aff = _load_or_calibrate_abs_affine(source)
+    if not aff or not aff.get("ax") or not aff.get("ay"):
+        return None
+    try:
+        from vdisplay.input.linux_uinput_abs import LinuxUinputAbsInput
+    except ImportError:
+        return None
+    ax_cmd = (x - aff["bx"]) / aff["ax"]
+    ay_cmd = (y - aff["by"]) / aff["ay"]
+    dev = LinuxUinputAbsInput().open()
+    try:
+        dev.move_abs_and_click(int(ax_cmd), int(ay_cmd))
+    finally:
+        dev.close()
+    logger.info("ABS_POINTER_CLICK local=(%s,%s) -> ABS(%d,%d) source=%s", x, y, ax_cmd, ay_cmd, source)
+    return {
+        "ok": True,
+        "method": "uinput-abs-click",
+        "abs_x": int(ax_cmd),
+        "abs_y": int(ay_cmd),
+        "local_x": int(x),
+        "local_y": int(y),
+    }
+
+
 def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, Any]:
     """Direct ydotool move+click when vdisplay vision point click fails."""
     try:
@@ -5268,6 +5371,13 @@ def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, An
         from vdisplay.input.linux_ydotool import LinuxYdotoolInput
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
+        # Deterministic own-uinput-ABS positioning (opt-in): a cached per-monitor
+        # affine converts capture pixel -> ABS command. Preferred over ydotool's
+        # opaque space on multi-monitor HiDPI. Falls back below on failure.
+        if _abs_pointer_enabled():
+            abs_res = _abs_pointer_click(x=x, y=y, source=source)
+            if abs_res is not None and abs_res.get("ok"):
+                return abs_res
         # Closed-loop adaptive positioning (opt-in): measure + correct instead of
         # trusting the absolute mapping. Falls back to open-loop below on failure.
         if _adaptive_pointer_enabled():
