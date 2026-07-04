@@ -252,6 +252,12 @@ def validate_chat_coords_for_ide(
     tid = str(target.get("id") or "").lower()
     if is_code_edit or role == "editor" or "editor" in tid:
         return []
+    # A vision-LLM-located/refined target carries its own confidence + geometry
+    # guard: the "bottom-right composer" heuristics below (y>=850, x>=1100,
+    # element size) assume a bottom-docked chat and wrongly flag a right-docked
+    # Qoder / AI Assistant panel whose input sits mid-height. Trust vision.
+    if _target_is_vision_located(target):
+        return []
     warnings: list[str] = []
     canon = _canonical_ide(ide)
     if _target_uses_fallback_center(target):
@@ -266,6 +272,27 @@ def validate_chat_coords_for_ide(
         warnings.extend(_coord_warnings_for_jetbrains(x=x, y=y, canon=canon, is_code_edit=is_code_edit))
     warnings.extend(_coord_warnings_for_vscode_family(x=x, y=y, canon=canon, is_code_edit=is_code_edit))
     return warnings
+
+
+def _target_is_vision_located(target: dict[str, Any]) -> bool:
+    """True when a vision LLM located/refined this target with real confidence.
+
+    Only honoured under the explicit vision-decision opt-in; the vision layer's
+    own confidence + geometry guards replace the VQL bottom-right heuristics.
+    """
+    import os
+
+    truthy = {"1", "true", "yes", "on"}
+    vision_on = any(
+        (os.environ.get(var) or "").strip().lower() in truthy
+        for var in ("KORU_VDISPLAY_LLM_VISION_DECISION", "VDISPLAY_VISION_CHAT_DETECT")
+    )
+    if not vision_on:
+        return False
+    if target.get("llm_refined") or target.get("llm_used"):
+        return True
+    method = str(target.get("selection_method") or "").lower()
+    return "llm_vision" in method or "vision_detect" in method
 
 
 def _target_uses_fallback_center(target: dict[str, Any]) -> bool:

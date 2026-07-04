@@ -90,3 +90,36 @@ def test_jetbrains_chat_target_skips_wrong_monitor() -> None:
         capture_meta={"source": "DP-1", "height": 1280},
         source="DP-1",
     ) is None
+
+
+def test_vision_located_target_skips_bottom_right_coord_warnings(monkeypatch):
+    """A vision-refined right-docked chat target (mid-height, left of corner)
+    must not be flagged by the bottom-right composer heuristics under vision."""
+    import os
+    from koru.integrations.photo_vql_validation import validate_chat_coords_for_ide
+
+    monkeypatch.setenv("KORU_VDISPLAY_LLM_VISION_DECISION", "1")
+    target = {
+        "id": "llm:chat-input",
+        "role": "input",
+        "selection_method": "llm_vision_detect",
+        "llm_refined": True,
+        "click_center": {"x": 820, "y": 546},
+    }
+    warnings = validate_chat_coords_for_ide(x=820, y=546, ide="jetbrains", target=target)
+    assert warnings == []
+
+
+def test_non_vision_target_still_warns_on_bottom_right(monkeypatch):
+    from koru.integrations.photo_vql_validation import validate_chat_coords_for_ide
+
+    monkeypatch.delenv("KORU_VDISPLAY_LLM_VISION_DECISION", raising=False)
+    monkeypatch.delenv("VDISPLAY_VISION_CHAT_DETECT", raising=False)
+    target = {
+        "id": "photo-chat",
+        "role": "input",
+        "selection_method": "imgl_resolve_chat_target",
+        "click_center": {"x": 820, "y": 546},
+    }
+    warnings = validate_chat_coords_for_ide(x=820, y=546, ide="jetbrains", target=target)
+    assert any("below_850" in w for w in warnings)
