@@ -802,17 +802,15 @@ wheels = [
 
 [[package]]
 name = "gillm"
-version = "0.1.16"
+version = "0.1.20"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mss" },
     { name = "pyyaml" },
-    { name = "requests" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/a8/db9363dfe9232d4e36061151f6ebdcfe92b7b5ed7a39cfb08cc6a6002aa1/gillm-0.1.16.tar.gz", hash = "sha256:8095b9502f88c3a08a8ddf9f7bb20d3b7f6e4dac579fcc9903f78109de77a170", size = 59494, upload-time = "2026-07-03T17:06:44.634Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/1a/c9c0305c1b395fc080f8edee4be9855e31dd6cfc681656ccbb323c9e9f52/gillm-0.1.20.tar.gz", hash = "sha256:387d2ecf35d366c0f12a139b3e1dec62da848bc0f30a11a8d797d6904742461b", size = 60311, upload-time = "2026-07-04T08:14:42.206Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/36/7ddb9f46f8e2eed077ddcde2bfa87e6c1f2524947205e55421a9621e7ead/gillm-0.1.16-py3-none-any.whl", hash = "sha256:b6717ef33509c3ea08e4a10441654f4c4c6e2efa7d73f3fb97dc46f2c2ce7bec", size = 59062, upload-time = "2026-07-03T17:06:43.241Z" },
+    { url = "https://files.pythonhosted.org/packages/68/a7/4a1723d50ba71869639f4d68d96a701bf501d23e96e0c5576f147628bdfe/gillm-0.1.20-py3-none-any.whl", hash = "sha256:8f295ab3931690b910da7b74058d6624bfd329513b900d7a520cdbc65542c027", size = 59310, upload-time = "2026-07-04T08:14:40.899Z" },
 ]
 
 [[package]]
@@ -2747,7 +2745,7 @@ wheels = [
 
 [[package]]
 name = "planfile"
-version = "0.1.104"
+version = "0.1.106"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -2761,9 +2759,9 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/7a/b325fd537eb71827c97d84c90d8bd183b2da8bcfdcc5df231567472deda7/planfile-0.1.104.tar.gz", hash = "sha256:1483d3f12d5bad905f55fb367ef55e294d14709dd4a1145cb0a5ba4cda0d5485", size = 217248, upload-time = "2026-06-29T11:00:30.723Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/2b/9f16387387bbb4cad75b5fd3d2de96abb517dcda535ffb28ba3c80893c41/planfile-0.1.106.tar.gz", hash = "sha256:3bd6f5a320c4ad818610f55dc946325a3eaf0d49768d7cb2d4334827db51a304", size = 221405, upload-time = "2026-07-03T20:08:38.184Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/86/a71324318413d78d7c8502421cf3a67982bdc5d4e3bf811fd8d28dacf5f7/planfile-0.1.104-py3-none-any.whl", hash = "sha256:868aad4c80dd0ac41d19089281f911e66fe4e9852c413f50bd02f020520fbf7f", size = 223418, upload-time = "2026-06-29T11:00:28.702Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/9f/c6d65b2c3dd4f4ec3e964f37f0393723e812b90fad9213e4d86b4825aeed/planfile-0.1.106-py3-none-any.whl", hash = "sha256:3ae390bed8a6b5fe25a36211edb6076d0714c66fec2d75fa82407d0c582a3732", size = 225820, upload-time = "2026-07-03T20:08:36.292Z" },
 ]
 
 [[package]]

@@ -30,7 +30,7 @@ and the manual discovery commands documented there.
 | `examples/planfile/queue-cli-dryrun` | `koru --queue --dry-run` + `planfile --version` (no HTTP server) |
 | `examples/planfile/http-api-curl` | `uvicorn planfile.api.server:app` + `curl /health` (skips if API layout missing) |
 | `examples/runtime/koru-serve-health` | `koru serve --no-open` + `curl /health` |
-| `examples/nlp2uri-testql-browser` | nlp2uri NL→URI (native browser) + TestQL Playwright DOM on `TARGET_URL` — **manual/native only** |
+| `examples/nlp2uri-testql-browser` | nlp2uri NL→URI + TestQL scenarios on `TARGET_URL` (Docker runs `--dry-run`; live DOM stays native) |
 
 ## Run all (from repo root)
 
@@ -38,10 +38,10 @@ and the manual discovery commands documented there.
 ./examples/run-e2e.sh
 ```
 
-This runs every example that ships a `run-docker.sh` (all of the above except
-`examples/nlp2uri-testql-browser`, which needs a native browser plus `nlp2uri`
-and `testql` on the host; run its `e2e.sh` directly — it skips with exit 0 when
-those tools are missing).
+This runs every example that ships a `run-docker.sh` — all of the above.
+`examples/nlp2uri-testql-browser` runs its dry-run smoke in Docker; the live
+DOM / native-browser mode still needs a host with `playwright` and a display
+(run its `run.sh` with `DRY_RUN=0` directly).
 
 If `docker` is not installed, the script **exits 0** so optional CI jobs can reuse
 it without failing non-Docker hosts.

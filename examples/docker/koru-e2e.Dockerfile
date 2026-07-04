@@ -27,6 +27,13 @@ RUN pip install --no-cache-dir --upgrade pip \
         "fastapi>=0.110" \
         "wup>=0.2.60"
 
+# Example-specific extra packages (e.g. "nlp2uri>=0.4.7 testql>=1.2.55")
+ARG EXTRA_PIP=""
+RUN if [ -n "$EXTRA_PIP" ]; then pip install --no-cache-dir $EXTRA_PIP; fi
+
+# Examples that ship helper scripts / scenario files need the tree in-image
+COPY examples ./examples/
+
 # Optional cache-bust when iterating on examples without touching src
 ARG CACHE_BUST=0
 RUN echo "$CACHE_BUST" > /tmp/.cache-bust

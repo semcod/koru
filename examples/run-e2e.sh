@@ -12,7 +12,7 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 mapfile -t EXAMPLES < <(
-  find "$ROOT/examples" -mindepth 3 -maxdepth 3 -type f -name run-docker.sh -print \
+  find "$ROOT/examples" -mindepth 2 -maxdepth 3 -type f -name run-docker.sh -print \
     | LC_ALL=C sort
 )
 

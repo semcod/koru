@@ -66,7 +66,9 @@ def test_collector_finds_known_late_bindings() -> None:
     # Sentinels from three real incidents (coru/cli-class, readiness, cycle-slim):
     assert ("koru.autonomous_cycle", "verify_completed_tickets") in flat
     assert ("koru.autonomous_readiness", "daemon_status_compatible") in flat
-    assert any(mod == "koru.autonomous_loop_runner" for mod, _ in flat)
+    # loop-runner late bindings reference the impl path since legacy shims
+    # became sys.modules aliases (2026-07-04)
+    assert any(mod == "koru.autonomy.operator.operator_loop_runner" for mod, _ in flat)
     assert len(flat) >= 25, f"suspiciously few late-bound pairs collected: {len(flat)}"
 
 
