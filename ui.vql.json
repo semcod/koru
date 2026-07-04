@@ -2,10 +2,10 @@
   "version": "1.0",
   "render_target": "svg",
   "scene": {
-    "width": 2048.0,
-    "height": 1280.0,
+    "width": 2560.0,
+    "height": 1600.0,
     "background": "#FFFFFF",
-    "url": "file:///tmp/koru-continue2-1781209086.png",
+    "url": "file:///tmp/capture.png",
     "app": "desktop",
     "layers": [
       {
@@ -17,8 +17,8 @@
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 2048,
-                  "height": 1280
+                  "width": 2560,
+                  "height": 1501
                 }
               }
             ],
@@ -35,8 +35,8 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 1024.0,
-            "center_y": 640.0,
+            "center_x": 1280.0,
+            "center_y": 849.5,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -45,29 +45,29 @@
               "location": "center",
               "bbox": [
                 0,
-                0,
-                2048,
-                1280
+                99,
+                2560,
+                1600
               ],
               "bbox_norm": [
                 0.0,
-                0.0,
+                0.062,
                 1.0,
                 1.0
               ],
-              "confidence": 0.9,
-              "color": "#1C1C1C",
+              "confidence": 0.823,
+              "color": "#202327",
               "source": "img2vql_detect"
             }
           },
           {
-            "id": "button_31",
+            "id": "button_53",
             "primitives": [
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 192,
-                  "height": 70
+                  "width": 208,
+                  "height": 128
                 }
               }
             ],
@@ -84,596 +84,8 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 121.0,
-            "center_y": 278.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-left",
-              "bbox": [
-                25,
-                243,
-                217,
-                313
-              ],
-              "bbox_norm": [
-                0.0122,
-                0.1898,
-                0.106,
-                0.2445
-              ],
-              "confidence": 0.68,
-              "color": "#232324",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_46",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 166,
-                  "height": 51
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1862.0,
-            "center_y": 409.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1779,
-                384,
-                1945,
-                435
-              ],
-              "bbox_norm": [
-                0.8687,
-                0.3,
-                0.9497,
-                0.3398
-              ],
-              "confidence": 0.68,
-              "color": "#323232",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_87",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 109,
-                  "height": 51
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1186.5,
-            "center_y": 1132.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "bottom",
-              "bbox": [
-                1132,
-                1107,
-                1241,
-                1158
-              ],
-              "bbox_norm": [
-                0.5527,
-                0.8648,
-                0.606,
-                0.9047
-              ],
-              "confidence": 0.68,
-              "color": "#262626",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_37",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 128,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1843.0,
-            "center_y": 336.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1779,
-                320,
-                1907,
-                352
-              ],
-              "bbox_norm": [
-                0.8687,
-                0.25,
-                0.9312,
-                0.275
-              ],
-              "confidence": 0.68,
-              "color": "#313131",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_14",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 96,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1558.0,
-            "center_y": 124.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1510,
-                108,
-                1606,
-                140
-              ],
-              "bbox_norm": [
-                0.7373,
-                0.0844,
-                0.7842,
-                0.1094
-              ],
-              "confidence": 0.68,
-              "color": "#2F2F2F",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_71",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 96,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1788.0,
-            "center_y": 732.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "right",
-              "bbox": [
-                1740,
-                716,
-                1836,
-                748
-              ],
-              "bbox_norm": [
-                0.8496,
-                0.5594,
-                0.8965,
-                0.5844
-              ],
-              "confidence": 0.68,
-              "color": "#282828",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_88",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 89,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 831.5,
-            "center_y": 1187.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "bottom",
-              "bbox": [
-                787,
-                1171,
-                876,
-                1203
-              ],
-              "bbox_norm": [
-                0.3843,
-                0.9148,
-                0.4277,
-                0.9398
-              ],
-              "confidence": 0.68,
-              "color": "#232323",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_26",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 96,
-                  "height": 26
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1724.0,
-            "center_y": 217.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1676,
-                204,
-                1772,
-                230
-              ],
-              "bbox_norm": [
-                0.8184,
-                0.1594,
-                0.8652,
-                0.1797
-              ],
-              "confidence": 0.68,
-              "color": "#353535",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_38",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 77,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1945.5,
-            "center_y": 336.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1907,
-                320,
-                1984,
-                352
-              ],
-              "bbox_norm": [
-                0.9312,
-                0.25,
-                0.9688,
-                0.275
-              ],
-              "confidence": 0.68,
-              "color": "#262626",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_77",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 77,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 652.5,
-            "center_y": 835.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "left",
-              "bbox": [
-                614,
-                819,
-                691,
-                851
-              ],
-              "bbox_norm": [
-                0.2998,
-                0.6398,
-                0.3374,
-                0.6648
-              ],
-              "confidence": 0.68,
-              "color": "#272828",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_15",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 64,
-                  "height": 38
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 57.0,
-            "center_y": 147.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-left",
-              "bbox": [
-                25,
-                128,
-                89,
-                166
-              ],
-              "bbox_norm": [
-                0.0122,
-                0.1,
-                0.0435,
-                0.1297
-              ],
-              "confidence": 0.68,
-              "color": "#222222",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_69",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 96,
-                  "height": 25
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 412.0,
-            "center_y": 703.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "left",
-              "bbox": [
-                364,
-                691,
-                460,
-                716
-              ],
-              "bbox_norm": [
-                0.1777,
-                0.5398,
-                0.2246,
-                0.5594
-              ],
-              "confidence": 0.68,
-              "color": "#3F3F3F",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_78",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 71,
-                  "height": 32
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 943.5,
-            "center_y": 835.0,
+            "center_x": 1016.0,
+            "center_y": 576.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -681,19 +93,509 @@
               "label": "button",
               "location": "center",
               "bbox": [
-                908,
-                819,
-                979,
-                851
+                912,
+                512,
+                1120,
+                640
               ],
               "bbox_norm": [
-                0.4434,
-                0.6398,
-                0.478,
-                0.6648
+                0.3563,
+                0.32,
+                0.4375,
+                0.4
               ],
               "confidence": 0.68,
-              "color": "#272827",
+              "color": "#394E61",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_41",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 232,
+                  "height": 104
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 236.0,
+            "center_y": 428.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "top-left",
+              "bbox": [
+                120,
+                376,
+                352,
+                480
+              ],
+              "bbox_norm": [
+                0.0469,
+                0.235,
+                0.1375,
+                0.3
+              ],
+              "confidence": 0.68,
+              "color": "#2D2F33",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_44",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 112,
+                  "height": 56
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1056.0,
+            "center_y": 420.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "top",
+              "bbox": [
+                1000,
+                392,
+                1112,
+                448
+              ],
+              "bbox_norm": [
+                0.3906,
+                0.245,
+                0.4344,
+                0.28
+              ],
+              "confidence": 0.68,
+              "color": "#333B45",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_84",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 120,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 764.0,
+            "center_y": 872.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "left",
+              "bbox": [
+                704,
+                856,
+                824,
+                888
+              ],
+              "bbox_norm": [
+                0.275,
+                0.535,
+                0.3219,
+                0.555
+              ],
+              "confidence": 0.68,
+              "color": "#2A2B2D",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_113",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 120,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1324.0,
+            "center_y": 1168.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "bottom",
+              "bbox": [
+                1264,
+                1152,
+                1384,
+                1184
+              ],
+              "bbox_norm": [
+                0.4938,
+                0.72,
+                0.5406,
+                0.74
+              ],
+              "confidence": 0.68,
+              "color": "#27282A",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_6",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 88,
+                  "height": 40
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 100.0,
+            "center_y": 76.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "top-left",
+              "bbox": [
+                56,
+                56,
+                144,
+                96
+              ],
+              "bbox_norm": [
+                0.0219,
+                0.035,
+                0.0563,
+                0.06
+              ],
+              "confidence": 0.68,
+              "color": "#27282A",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_20",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 104,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 556.0,
+            "center_y": 176.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "top-left",
+              "bbox": [
+                504,
+                160,
+                608,
+                192
+              ],
+              "bbox_norm": [
+                0.1969,
+                0.1,
+                0.2375,
+                0.12
+              ],
+              "confidence": 0.68,
+              "color": "#2B2C2D",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_68",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 104,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 124.0,
+            "center_y": 728.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "left",
+              "bbox": [
+                72,
+                712,
+                176,
+                744
+              ],
+              "bbox_norm": [
+                0.0281,
+                0.445,
+                0.0688,
+                0.465
+              ],
+              "confidence": 0.68,
+              "color": "#32456B",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_99",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 104,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1892.0,
+            "center_y": 1056.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "right",
+              "bbox": [
+                1840,
+                1040,
+                1944,
+                1072
+              ],
+              "bbox_norm": [
+                0.7188,
+                0.65,
+                0.7594,
+                0.67
+              ],
+              "confidence": 0.68,
+              "color": "#26272A",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_112",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 96,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1232.0,
+            "center_y": 1168.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "bottom",
+              "bbox": [
+                1184,
+                1152,
+                1280,
+                1184
+              ],
+              "bbox_norm": [
+                0.4625,
+                0.72,
+                0.5,
+                0.74
+              ],
+              "confidence": 0.68,
+              "color": "#28292C",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_139",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 96,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 104.0,
+            "center_y": 1392.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "bottom-left",
+              "bbox": [
+                56,
+                1376,
+                152,
+                1408
+              ],
+              "bbox_norm": [
+                0.0219,
+                0.86,
+                0.0594,
+                0.88
+              ],
+              "confidence": 0.68,
+              "color": "#2A2B2D",
               "source": "img2vql_detect"
             }
           },
@@ -703,154 +605,7 @@
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 90,
-                  "height": 25
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1395.0,
-            "center_y": 108.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1350,
-                96,
-                1440,
-                121
-              ],
-              "bbox_norm": [
-                0.6592,
-                0.075,
-                0.7031,
-                0.0945
-              ],
-              "confidence": 0.68,
-              "color": "#2C2C2C",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_12",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 89,
-                  "height": 25
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 447.5,
-            "center_y": 108.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-left",
-              "bbox": [
-                403,
-                96,
-                492,
-                121
-              ],
-              "bbox_norm": [
-                0.1968,
-                0.075,
-                0.2402,
-                0.0945
-              ],
-              "confidence": 0.68,
-              "color": "#343434",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_79",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 84,
-                  "height": 26
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 566.0,
-            "center_y": 838.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "left",
-              "bbox": [
-                524,
-                825,
-                608,
-                851
-              ],
-              "bbox_norm": [
-                0.2559,
-                0.6445,
-                0.2969,
-                0.6648
-              ],
-              "confidence": 0.68,
-              "color": "#232424",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_50",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 64,
+                  "width": 88,
                   "height": 32
                 }
               }
@@ -868,8 +623,57 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 492.0,
-            "center_y": 572.0,
+            "center_x": 2340.0,
+            "center_y": 128.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "top-right",
+              "bbox": [
+                2296,
+                112,
+                2384,
+                144
+              ],
+              "bbox_norm": [
+                0.8969,
+                0.07,
+                0.9313,
+                0.09
+              ],
+              "confidence": 0.68,
+              "color": "#2A2C2E",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_60",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 88,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 100.0,
+            "center_y": 664.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -877,19 +681,117 @@
               "label": "button",
               "location": "left",
               "bbox": [
-                460,
-                556,
-                524,
-                588
+                56,
+                648,
+                144,
+                680
               ],
               "bbox_norm": [
-                0.2246,
-                0.4344,
-                0.2559,
-                0.4594
+                0.0219,
+                0.405,
+                0.0563,
+                0.425
               ],
               "confidence": 0.68,
-              "color": "#323232",
+              "color": "#2C2D30",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_97",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 88,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 556.0,
+            "center_y": 1008.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "left",
+              "bbox": [
+                512,
+                992,
+                600,
+                1024
+              ],
+              "bbox_norm": [
+                0.2,
+                0.62,
+                0.2344,
+                0.64
+              ],
+              "confidence": 0.68,
+              "color": "#2C2D30",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_56",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 80,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 112.0,
+            "center_y": 608.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "left",
+              "bbox": [
+                72,
+                592,
+                152,
+                624
+              ],
+              "bbox_norm": [
+                0.0281,
+                0.37,
+                0.0594,
+                0.39
+              ],
+              "confidence": 0.68,
+              "color": "#28292C",
               "source": "img2vql_detect"
             }
           },
@@ -899,7 +801,7 @@
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 64,
+                  "width": 80,
                   "height": 32
                 }
               }
@@ -917,8 +819,8 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 1248.0,
-            "center_y": 636.0,
+            "center_x": 912.0,
+            "center_y": 664.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -926,30 +828,30 @@
               "label": "button",
               "location": "center",
               "bbox": [
-                1216,
-                620,
-                1280,
-                652
+                872,
+                648,
+                952,
+                680
               ],
               "bbox_norm": [
-                0.5938,
-                0.4844,
-                0.625,
-                0.5094
+                0.3406,
+                0.405,
+                0.3719,
+                0.425
               ],
               "confidence": 0.68,
-              "color": "#252525",
+              "color": "#28292C",
               "source": "img2vql_detect"
             }
           },
           {
-            "id": "button_19",
+            "id": "button_78",
             "primitives": [
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 77,
-                  "height": 26
+                  "width": 64,
+                  "height": 40
                 }
               }
             ],
@@ -966,39 +868,39 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 1561.5,
-            "center_y": 179.0,
+            "center_x": 152.0,
+            "center_y": 780.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
               "role": "button",
               "label": "button",
-              "location": "top-right",
+              "location": "left",
               "bbox": [
-                1523,
-                166,
-                1600,
-                192
+                120,
+                760,
+                184,
+                800
               ],
               "bbox_norm": [
-                0.7437,
-                0.1297,
-                0.7812,
-                0.15
+                0.0469,
+                0.475,
+                0.0719,
+                0.5
               ],
               "confidence": 0.68,
-              "color": "#2C2C2C",
+              "color": "#272829",
               "source": "img2vql_detect"
             }
           },
           {
-            "id": "button_80",
+            "id": "button_93",
             "primitives": [
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 77,
-                  "height": 26
+                  "width": 80,
+                  "height": 32
                 }
               }
             ],
@@ -1015,8 +917,106 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 729.5,
-            "center_y": 838.0,
+            "center_x": 248.0,
+            "center_y": 920.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "left",
+              "bbox": [
+                208,
+                904,
+                288,
+                936
+              ],
+              "bbox_norm": [
+                0.0813,
+                0.565,
+                0.1125,
+                0.585
+              ],
+              "confidence": 0.68,
+              "color": "#262729",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_111",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 80,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1120.0,
+            "center_y": 1168.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "bottom",
+              "bbox": [
+                1080,
+                1152,
+                1160,
+                1184
+              ],
+              "bbox_norm": [
+                0.4219,
+                0.72,
+                0.4531,
+                0.74
+              ],
+              "confidence": 0.68,
+              "color": "#27282A",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_62",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 72,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1028.0,
+            "center_y": 664.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -1024,30 +1024,30 @@
               "label": "button",
               "location": "center",
               "bbox": [
-                691,
-                825,
-                768,
-                851
+                992,
+                648,
+                1064,
+                680
               ],
               "bbox_norm": [
-                0.3374,
-                0.6445,
-                0.375,
-                0.6648
+                0.3875,
+                0.405,
+                0.4156,
+                0.425
               ],
               "confidence": 0.68,
-              "color": "#282828",
+              "color": "#292B2D",
               "source": "img2vql_detect"
             }
           },
           {
-            "id": "button_40",
+            "id": "button_77",
             "primitives": [
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 77,
-                  "height": 25
+                  "width": 96,
+                  "height": 24
                 }
               }
             ],
@@ -1064,106 +1064,8 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 863.5,
-            "center_y": 383.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top",
-              "bbox": [
-                825,
-                371,
-                902,
-                396
-              ],
-              "bbox_norm": [
-                0.4028,
-                0.2898,
-                0.4404,
-                0.3094
-              ],
-              "confidence": 0.68,
-              "color": "#262626",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_47",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 77,
-                  "height": 25
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 2002.5,
-            "center_y": 396.5,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "button",
-              "label": "button",
-              "location": "top-right",
-              "bbox": [
-                1964,
-                384,
-                2041,
-                409
-              ],
-              "bbox_norm": [
-                0.959,
-                0.3,
-                0.9966,
-                0.3195
-              ],
-              "confidence": 0.68,
-              "color": "#2E2E2E",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "button_75",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 71,
-                  "height": 26
-                }
-              }
-            ],
-            "style": {
-              "color": "#FF6B6B",
-              "fill": true,
-              "stroke_width": 1.0,
-              "opacity": 0.55
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 1564.5,
-            "center_y": 806.0,
+            "center_x": 2368.0,
+            "center_y": 724.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -1171,30 +1073,30 @@
               "label": "button",
               "location": "right",
               "bbox": [
-                1529,
-                793,
-                1600,
-                819
+                2320,
+                712,
+                2416,
+                736
               ],
               "bbox_norm": [
-                0.7466,
-                0.6195,
-                0.7812,
-                0.6398
+                0.9062,
+                0.445,
+                0.9437,
+                0.46
               ],
               "confidence": 0.68,
-              "color": "#282828",
+              "color": "#2D426D",
               "source": "img2vql_detect"
             }
           },
           {
-            "id": "button_33",
+            "id": "button_131",
             "primitives": [
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 57,
-                  "height": 32
+                  "width": 96,
+                  "height": 24
                 }
               }
             ],
@@ -1211,8 +1113,57 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 207.5,
-            "center_y": 297.0,
+            "center_x": 2032.0,
+            "center_y": 1300.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "bottom-right",
+              "bbox": [
+                1984,
+                1288,
+                2080,
+                1312
+              ],
+              "bbox_norm": [
+                0.775,
+                0.805,
+                0.8125,
+                0.82
+              ],
+              "confidence": 0.68,
+              "color": "#2E3032",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_14",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 88,
+                  "height": 24
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 788.0,
+            "center_y": 132.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
@@ -1220,19 +1171,68 @@
               "label": "button",
               "location": "top-left",
               "bbox": [
-                179,
-                281,
-                236,
-                313
+                744,
+                120,
+                832,
+                144
               ],
               "bbox_norm": [
-                0.0874,
-                0.2195,
-                0.1152,
-                0.2445
+                0.2906,
+                0.075,
+                0.325,
+                0.09
               ],
               "confidence": 0.68,
-              "color": "#1F2225",
+              "color": "#393B3F",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "button_54",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 88,
+                  "height": 24
+                }
+              }
+            ],
+            "style": {
+              "color": "#FF6B6B",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.55
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 116.0,
+            "center_y": 548.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "button",
+              "label": "button",
+              "location": "left",
+              "bbox": [
+                72,
+                536,
+                160,
+                560
+              ],
+              "bbox_norm": [
+                0.0281,
+                0.335,
+                0.0625,
+                0.35
+              ],
+              "confidence": 0.68,
+              "color": "#2D2E30",
               "source": "img2vql_detect"
             }
           },
@@ -1242,56 +1242,7 @@
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 894,
-                  "height": 240
-                }
-              }
-            ],
-            "style": {
-              "color": "#7B68EE",
-              "fill": false,
-              "stroke_width": 1.5,
-              "opacity": 0.85
-            },
-            "transform": {
-              "translate_x": 0.0,
-              "translate_y": 0.0,
-              "scale_x": 1.0,
-              "scale_y": 1.0,
-              "rotate_deg": 0.0
-            },
-            "center_x": 789.0,
-            "center_y": 866.0,
-            "anchors": [],
-            "constraints": [],
-            "metadata": {
-              "role": "panel",
-              "label": "panel region 2",
-              "location": "bottom",
-              "bbox": [
-                342,
-                746,
-                1236,
-                986
-              ],
-              "bbox_norm": [
-                0.167,
-                0.583,
-                0.604,
-                0.771
-              ],
-              "confidence": 0.556,
-              "color": "#252525",
-              "source": "img2vql_detect"
-            }
-          },
-          {
-            "id": "panel_2",
-            "primitives": [
-              {
-                "shape_type": "rectangle",
-                "params": {
-                  "width": 894,
+                  "width": 2240,
                   "height": 267
                 }
               }
@@ -1309,39 +1260,88 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 789.0,
-            "center_y": 1146.5,
+            "center_x": 1386.0,
+            "center_y": 899.5,
             "anchors": [],
             "constraints": [],
             "metadata": {
               "role": "panel",
-              "label": "panel region 3",
-              "location": "bottom",
+              "label": "panel region 2",
+              "location": "center",
               "bbox": [
-                342,
-                1013,
-                1236,
-                1280
+                266,
+                766,
+                2506,
+                1033
               ],
               "bbox_norm": [
-                0.167,
-                0.792,
-                0.604,
-                1.0
+                0.104,
+                0.479,
+                0.979,
+                0.646
               ],
-              "confidence": 0.546,
-              "color": "#242526",
+              "confidence": 0.607,
+              "color": "#1B1C1E",
               "source": "img2vql_detect"
             }
           },
           {
-            "id": "panel_3",
+            "id": "toolbar_0",
             "primitives": [
               {
                 "shape_type": "rectangle",
                 "params": {
-                  "width": 556,
-                  "height": 240
+                  "width": 304,
+                  "height": 32
+                }
+              }
+            ],
+            "style": {
+              "color": "#20B2AA",
+              "fill": false,
+              "stroke_width": 1.5,
+              "opacity": 0.8
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1232.0,
+            "center_y": 1168.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "toolbar",
+              "label": "toolbar (3 controls)",
+              "location": "bottom",
+              "bbox": [
+                1080,
+                1152,
+                1384,
+                1184
+              ],
+              "bbox_norm": [
+                0.4219,
+                0.72,
+                0.5406,
+                0.74
+              ],
+              "confidence": 0.6,
+              "color": "#888888",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "panel_2",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 1385,
+                  "height": 299
                 }
               }
             ],
@@ -1358,28 +1358,224 @@
               "scale_y": 1.0,
               "rotate_deg": 0.0
             },
-            "center_x": 1770.0,
-            "center_y": 386.0,
+            "center_x": 1813.5,
+            "center_y": 216.5,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "panel",
+              "label": "panel region 3",
+              "location": "top-right",
+              "bbox": [
+                1121,
+                67,
+                2506,
+                366
+              ],
+              "bbox_norm": [
+                0.438,
+                0.042,
+                0.979,
+                0.229
+              ],
+              "confidence": 0.592,
+              "color": "#191A1C",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "panel_3",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 2079,
+                  "height": 168
+                }
+              }
+            ],
+            "style": {
+              "color": "#7B68EE",
+              "fill": false,
+              "stroke_width": 1.5,
+              "opacity": 0.85
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1466.5,
+            "center_y": 1383.0,
             "anchors": [],
             "constraints": [],
             "metadata": {
               "role": "panel",
               "label": "panel region 4",
-              "location": "top-right",
+              "location": "bottom",
               "bbox": [
-                1492,
-                266,
-                2048,
-                506
+                427,
+                1299,
+                2506,
+                1467
               ],
               "bbox_norm": [
-                0.729,
-                0.208,
-                1.0,
-                0.396
+                0.167,
+                0.812,
+                0.979,
+                0.917
               ],
-              "confidence": 0.533,
-              "color": "#242424",
+              "confidence": 0.564,
+              "color": "#1B1C1E",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "panel_4",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 2402,
+                  "height": 200
+                }
+              }
+            ],
+            "style": {
+              "color": "#7B68EE",
+              "fill": false,
+              "stroke_width": 1.5,
+              "opacity": 0.85
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1359.0,
+            "center_y": 100.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "panel",
+              "label": "panel region 5",
+              "location": "top",
+              "bbox": [
+                158,
+                0,
+                2560,
+                200
+              ],
+              "bbox_norm": [
+                0.062,
+                0.0,
+                1.0,
+                0.125
+              ],
+              "confidence": 0.557,
+              "color": "#212224",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "panel_5",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 1385,
+                  "height": 200
+                }
+              }
+            ],
+            "style": {
+              "color": "#7B68EE",
+              "fill": false,
+              "stroke_width": 1.5,
+              "opacity": 0.85
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1813.5,
+            "center_y": 567.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "panel",
+              "label": "panel region 6",
+              "location": "right",
+              "bbox": [
+                1121,
+                467,
+                2506,
+                667
+              ],
+              "bbox_norm": [
+                0.438,
+                0.292,
+                0.979,
+                0.417
+              ],
+              "confidence": 0.556,
+              "color": "#1A1B1D",
+              "source": "img2vql_detect"
+            }
+          },
+          {
+            "id": "titlebar_0",
+            "primitives": [
+              {
+                "shape_type": "rectangle",
+                "params": {
+                  "width": 2560,
+                  "height": 72
+                }
+              }
+            ],
+            "style": {
+              "color": "#FFD700",
+              "fill": true,
+              "stroke_width": 1.0,
+              "opacity": 0.35
+            },
+            "transform": {
+              "translate_x": 0.0,
+              "translate_y": 0.0,
+              "scale_x": 1.0,
+              "scale_y": 1.0,
+              "rotate_deg": 0.0
+            },
+            "center_x": 1280.0,
+            "center_y": 36.0,
+            "anchors": [],
+            "constraints": [],
+            "metadata": {
+              "role": "titlebar",
+              "label": "window title bar",
+              "location": "top",
+              "bbox": [
+                0,
+                0,
+                2560,
+                72
+              ],
+              "bbox_norm": [
+                0.0,
+                0.0,
+                1.0,
+                0.045
+              ],
+              "confidence": 0.55,
+              "color": "#2A2A29",
               "source": "img2vql_detect"
             }
           }
@@ -1391,7 +1587,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_31",
+        "target": "button_53",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1400,7 +1596,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_46",
+        "target": "button_41",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1409,7 +1605,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_87",
+        "target": "button_44",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1418,7 +1614,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_37",
+        "target": "button_84",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1427,7 +1623,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_14",
+        "target": "button_113",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1436,7 +1632,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_71",
+        "target": "button_20",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1445,7 +1641,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_88",
+        "target": "button_68",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1454,7 +1650,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_26",
+        "target": "button_99",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1463,7 +1659,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_38",
+        "target": "button_112",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1472,34 +1668,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_77",
-        "args": {
-          "parent_role": "window",
-          "child_role": "button"
-        }
-      },
-      {
-        "kind": "contains",
-        "source": "window_0",
-        "target": "button_15",
-        "args": {
-          "parent_role": "window",
-          "child_role": "button"
-        }
-      },
-      {
-        "kind": "contains",
-        "source": "window_0",
-        "target": "button_69",
-        "args": {
-          "parent_role": "window",
-          "child_role": "button"
-        }
-      },
-      {
-        "kind": "contains",
-        "source": "window_0",
-        "target": "button_78",
+        "target": "button_139",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1517,7 +1686,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_12",
+        "target": "button_60",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1526,7 +1695,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_79",
+        "target": "button_97",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1535,7 +1704,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_50",
+        "target": "button_56",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1553,7 +1722,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_19",
+        "target": "button_78",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1562,7 +1731,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_80",
+        "target": "button_93",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1571,7 +1740,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_40",
+        "target": "button_111",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1580,7 +1749,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_47",
+        "target": "button_62",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1589,7 +1758,7 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_75",
+        "target": "button_77",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1598,7 +1767,25 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "button_33",
+        "target": "button_131",
+        "args": {
+          "parent_role": "window",
+          "child_role": "button"
+        }
+      },
+      {
+        "kind": "contains",
+        "source": "window_0",
+        "target": "button_14",
+        "args": {
+          "parent_role": "window",
+          "child_role": "button"
+        }
+      },
+      {
+        "kind": "contains",
+        "source": "window_0",
+        "target": "button_54",
         "args": {
           "parent_role": "window",
           "child_role": "button"
@@ -1616,10 +1803,10 @@
       {
         "kind": "contains",
         "source": "window_0",
-        "target": "panel_2",
+        "target": "toolbar_0",
         "args": {
           "parent_role": "window",
-          "child_role": "panel"
+          "child_role": "toolbar"
         }
       },
       {
@@ -1633,8 +1820,17 @@
       },
       {
         "kind": "contains",
+        "source": "window_0",
+        "target": "panel_5",
+        "args": {
+          "parent_role": "window",
+          "child_role": "panel"
+        }
+      },
+      {
+        "kind": "contains",
         "source": "panel_1",
-        "target": "button_77",
+        "target": "button_84",
         "args": {
           "parent_role": "panel",
           "child_role": "button"
@@ -1643,7 +1839,7 @@
       {
         "kind": "contains",
         "source": "panel_1",
-        "target": "button_78",
+        "target": "button_97",
         "args": {
           "parent_role": "panel",
           "child_role": "button"
@@ -1651,26 +1847,35 @@
       },
       {
         "kind": "contains",
-        "source": "panel_1",
-        "target": "button_79",
+        "source": "toolbar_0",
+        "target": "button_113",
         "args": {
-          "parent_role": "panel",
+          "parent_role": "toolbar",
           "child_role": "button"
         }
       },
       {
         "kind": "contains",
-        "source": "panel_1",
-        "target": "button_80",
+        "source": "toolbar_0",
+        "target": "button_112",
         "args": {
-          "parent_role": "panel",
+          "parent_role": "toolbar",
+          "child_role": "button"
+        }
+      },
+      {
+        "kind": "contains",
+        "source": "toolbar_0",
+        "target": "button_111",
+        "args": {
+          "parent_role": "toolbar",
           "child_role": "button"
         }
       },
       {
         "kind": "contains",
         "source": "panel_2",
-        "target": "button_88",
+        "target": "button_13",
         "args": {
           "parent_role": "panel",
           "child_role": "button"
@@ -1678,8 +1883,8 @@
       },
       {
         "kind": "contains",
-        "source": "panel_3",
-        "target": "button_46",
+        "source": "panel_4",
+        "target": "button_20",
         "args": {
           "parent_role": "panel",
           "child_role": "button"
@@ -1687,8 +1892,8 @@
       },
       {
         "kind": "contains",
-        "source": "panel_3",
-        "target": "button_37",
+        "source": "panel_4",
+        "target": "button_13",
         "args": {
           "parent_role": "panel",
           "child_role": "button"
@@ -1696,17 +1901,8 @@
       },
       {
         "kind": "contains",
-        "source": "panel_3",
-        "target": "button_38",
-        "args": {
-          "parent_role": "panel",
-          "child_role": "button"
-        }
-      },
-      {
-        "kind": "contains",
-        "source": "panel_3",
-        "target": "button_47",
+        "source": "panel_4",
+        "target": "button_14",
         "args": {
           "parent_role": "panel",
           "child_role": "button"
@@ -1717,14 +1913,16 @@
   "validation": null,
   "metadata": {
     "source": "img2vql_detect",
-    "element_count": 28,
+    "element_count": 32,
     "by_role": {
       "window": 1,
       "button": 24,
-      "panel": 3
+      "panel": 5,
+      "toolbar": 1,
+      "titlebar": 1
     },
-    "img2nl_text": "Obraz 2048×1280 px. Widocznych ~392 kolorów w próbce. Dominują: #181818, #141414, #171717. Jasność 13–171 (zakres dynamiki 238). Widoczny szum lub drobna tekstura. Wykryto 4 dużych regionów/obiektów. Regularne wzorce: pasy poziome. Scena: interfejs z tekstem. Wykryte elementy: button, window, panel.",
-    "scene_class": "ui_with_text",
+    "img2nl_text": "Obraz 2560×1600 px. Widocznych ~670 kolorów w próbce. Dominują: #191A1C, #18191B, #26282C. Jasność 22–120 (zakres dynamiki 255). Widoczny szum lub drobna tekstura. Wykryto 6 dużych regionów/obiektów. Wykryte elementy: button, window, panel, titlebar, icon.",
+    "scene_class": "general",
     "llm_hint": {
       "send_to_llm": true,
       "confidence": 1.0,
@@ -1732,25 +1930,17 @@
         "rich_palette",
         "textured_noise",
         "large_regions",
-        "multiple_regions",
-        "regular_pattern",
-        "text_likelihood"
+        "multiple_regions"
       ],
       "recommendation": "send"
     },
     "special_hits": {
       "has_qr": false,
-      "has_text": true,
+      "has_text": false,
       "barcode_count": 0,
-      "ocr_preview": "@ File Edit Selection View"
+      "ocr_preview": ""
     },
-    "fingerprint": {
-      "available": true,
-      "phash": "c53fff52330a0385",
-      "dhash": "1826e6cec6c2c2c2",
-      "whash": "ce833b037b787078"
-    },
-    "analyzed_at": "2026-06-11T20:18:39.264413+00:00",
-    "image": "/tmp/koru-continue2-1781209086.png"
+    "analyzed_at": "2026-07-04T11:38:16.912501+00:00",
+    "image": "/tmp/capture.png"
   }
 }
