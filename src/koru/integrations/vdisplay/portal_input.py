@@ -76,6 +76,29 @@ def _ocr_anchor_xy(frame: bytes, ide: str) -> tuple[int, int] | None:
     return _landmark_input_xy(frame)
 
 
+def _coord_cache_path(ide: str):
+    from pathlib import Path
+
+    base = Path(os.environ.get("XDG_STATE_HOME") or (Path.home() / ".local" / "state")) / "koru"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"portal_input_xy_{ide}"
+
+
+def _cache_input_xy(ide: str, xy: tuple[int, int]) -> None:
+    try:
+        _coord_cache_path(ide).write_text(f"{int(xy[0])},{int(xy[1])}")
+    except OSError:
+        pass
+
+
+def _cached_input_xy(ide: str) -> tuple[int, int] | None:
+    try:
+        x, y = _coord_cache_path(ide).read_text().strip().split(",")
+        return int(x), int(y)
+    except (OSError, ValueError):
+        return None
+
+
 def _token_cache_path():
     from pathlib import Path
 
@@ -183,24 +206,35 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
 
     frame = p.grab_frame()
-    precise = _anchor_precise(frame, ide)  # empty input -> exact placeholder bbox
+    fw0, fh0 = _png_size(frame)
+    precise_fx = _anchor_precise(frame, ide)  # empty input -> exact placeholder bbox
+    precise = None
+    if precise_fx is not None:
+        precise = p.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=fw0, frame_h=fh0)
+        _cache_input_xy(ide, precise)  # seed: the input doesn't move
 
     # Two-pass when the input already holds text (no placeholder): a rough
     # landmark click focuses + clears it, the placeholder reappears, then we
     # re-anchor precisely on the now-empty input before typing.
     if precise is None:
-        rough = _target(frame)
+        # input has text (no placeholder): prefer a cached known-good position
+        # (the composer doesn't move) over the flaky landmark; either way clear
+        # it, then re-anchor precisely on the now-empty input.
+        rough = _cached_input_xy(ide) or _target(frame)
         if rough is None:
-            return {"ok": False, "method": "portal", "error": "chat input not found on portal frame"}
+            return {"ok": False, "method": "portal", "error": "chat input not found (no anchor/landmark/cache)"}
         p.move_abs(*rough); time.sleep(0.35)
         p.click(); time.sleep(0.4)
         p.clear_input(200); time.sleep(0.4)
         frame = p.grab_frame()  # placeholder should be back now
+        fw0, fh0 = _png_size(frame)
+        re = _anchor_precise(frame, ide)
+        precise = p.frame_to_stream(re[0], re[1], frame_w=fw0, frame_h=fh0) if re else _cached_input_xy(ide)
 
-    sxy = _target(frame)
-    if sxy is None:
+    sx_sy = precise or _target(frame)
+    if sx_sy is None:
         return {"ok": False, "method": "portal", "error": "chat input not found after clear"}
-    sx, sy = sxy
+    sx, sy = sx_sy
 
     def _verify(before: bytes, after: bytes) -> bool:
         # focus guard: the click must have FOCUSED the input — confirmed by the
