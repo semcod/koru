@@ -61,6 +61,7 @@ def build_autopilot_parser() -> argparse.ArgumentParser:
     sub.add_parser("shutdown", help="Ask a running daemon to stop.")
     _add_trace_parser(sub)
     sub.add_parser("ide-list", help="List currently running IDEs (process scan).")
+    _add_route_parser(sub)
     _add_doctor_parser(sub)
     _add_setup_host_parser(sub)
     _add_manage_parser(sub)
@@ -484,6 +485,26 @@ def _add_trace_parser(sub: argparse._SubParsersAction) -> None:
         type=int,
         default=10,
         help="How many of the most-recent records to show (default: 10).",
+    )
+
+
+def _add_route_parser(sub: argparse._SubParsersAction) -> None:
+    route = sub.add_parser(
+        "route",
+        help="Show gillm's control-route plan for this environment + IDE.",
+    )
+    route.add_argument(
+        "--ide",
+        default="auto",
+        help="Target IDE id (default: auto — resolved like drive).",
+    )
+    route.add_argument("--project", help="Project directory for lane resolution.")
+    route.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
     )
 
 

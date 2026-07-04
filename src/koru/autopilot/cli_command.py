@@ -325,9 +325,16 @@ def _action_install_unit(args: argparse.Namespace) -> int:
     )
 
 
+def _action_route(args: argparse.Namespace) -> int:
+    from koru.autopilot.commands.route import action_route
+
+    return action_route(args, client_factory=_client)
+
+
 _ACTIONS = {
     "daemon": _action_daemon,
     "drive": _action_drive,
+    "route": _action_route,
     "calibrate": _action_calibrate,
     "prepare-vdisplay": _action_prepare_vdisplay,
     "vdisplay-up": _action_vdisplay_up,

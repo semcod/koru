@@ -404,6 +404,38 @@ def _cycle_callbacks(
     return emit, hp
 
 
+def _emit_pre_drive_control_route(
+    *,
+    autopilot_ide: str,
+    plugin_connected: bool,
+    cycle_telemetry: dict[str, Any],
+    hp: callable,
+) -> None:
+    """One line + telemetry: which control route gillm would pick, and why.
+
+    Best-effort — older gillm without gillm.routing (<0.1.22) is skipped.
+    """
+    try:
+        from gillm.routing import route_for
+
+        plan = route_for(autopilot_ide, plugin_connected=plugin_connected)
+    except Exception:
+        return
+    selected = plan.selected
+    if selected is not None:
+        line = (
+            f"- pre-drive: control route → {selected.solution_id} "
+            f"({selected.confidence}): {selected.reason}"
+        )
+    else:
+        blockers = "; ".join(
+            f"{s.solution_id}: {s.reason}" for s in plan.solutions if not s.viable
+        )
+        line = f"- pre-drive: no viable control route — {blockers}"
+    hp(line)
+    cycle_telemetry["control_route"] = plan.to_dict()
+
+
 def _apply_pre_drive_plugin_readiness(
     *,
     project: Path,
@@ -446,10 +478,22 @@ def _apply_pre_drive_plugin_readiness(
     plugin_required = _plugin_required_for_ide(autopilot_ide)
     if not plugin_required or client is None:
         state.autopilot_plugin_ready = True
+        _emit_pre_drive_control_route(
+            autopilot_ide=autopilot_ide,
+            plugin_connected=False,
+            cycle_telemetry=cycle_telemetry,
+            hp=hp,
+        )
         return
     plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
     state.autopilot_plugin_ready = plugin_ok
     cycle_telemetry["autopilot_plugin_ready"] = plugin_ok
+    _emit_pre_drive_control_route(
+        autopilot_ide=autopilot_ide,
+        plugin_connected=bool(plugin_ok),
+        cycle_telemetry=cycle_telemetry,
+        hp=hp,
+    )
     if plugin_reason:
         cycle_telemetry["autopilot_plugin_ready_reason"] = plugin_reason
     warning = warn_pre_drive_queue_without_plugin(
