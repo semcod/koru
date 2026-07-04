@@ -1,63 +1,48 @@
 # System Architecture Analysis
-<!-- generated in 0.04s -->
+<!-- generated in 0.05s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 683, typescript: 93, shell: 57, json: 41, yaml: 31
+- **Languages**: python: 753, md: 119, shell: 59, json: 34, yaml: 30
 - **Analysis Mode**: static
-- **Total Functions**: 6797
-- **Total Classes**: 487
-- **Modules**: 958
-- **Entry Points**: 2678
+- **Total Functions**: 5857
+- **Total Classes**: 445
+- **Modules**: 1040
+- **Entry Points**: 1769
 
 ## Architecture by Module
 
+### src.koru.integrations.vdisplay_client
+- **Functions**: 291
+- **File**: `vdisplay_client.py`
+
 ### packages.coru.src.coru.cli
-- **Functions**: 217
+- **Functions**: 200
 - **Classes**: 3
 - **File**: `cli.py`
 
-### src.koru.integrations.vdisplay_client
-- **Functions**: 168
-- **File**: `vdisplay_client.py`
-
-### plugins.koru-autopilot-shared.src.bridge-submit
-- **Functions**: 102
-- **Classes**: 1
-- **File**: `bridge-submit.ts`
-
-### plugins.koru-autopilot-shared.src.bridge-paste
-- **Functions**: 93
-- **Classes**: 1
-- **File**: `bridge-paste.ts`
-
-### plugins.koru-autopilot-shared.src.bridge-network
-- **Functions**: 73
-- **Classes**: 1
-- **File**: `bridge-network.ts`
-
 ### src.koru.autonomous
-- **Functions**: 66
+- **Functions**: 76
 - **File**: `autonomous.py`
 
-### plugins.koru-autopilot-shared.src.bridge-focus-strategy
+### src.koruide.plugin_installer
 - **Functions**: 64
-- **Classes**: 1
-- **File**: `bridge-focus-strategy.ts`
+- **Classes**: 3
+- **File**: `plugin_installer.py`
 
 ### src.koru.scan
 - **Functions**: 61
 - **File**: `scan.py`
 
-### src.koruide.plugin_installer
-- **Functions**: 58
-- **Classes**: 3
-- **File**: `plugin_installer.py`
+### src.koruide.ide
+- **Functions**: 59
+- **Classes**: 2
+- **File**: `ide.py`
 
 ### src.koru.autopilot.install_manager
-- **Functions**: 57
+- **Functions**: 58
 - **Classes**: 1
 - **File**: `install_manager.py`
 
@@ -66,46 +51,61 @@
 - **Classes**: 1
 - **File**: `drive_orchestrator.py`
 
-### src.koruide.ide
-- **Functions**: 56
-- **Classes**: 2
-- **File**: `ide.py`
-
-### src.koru.autonomous_loop_runner
-- **Functions**: 56
-- **Classes**: 1
-- **File**: `autonomous_loop_runner.py`
-
-### plugins.koru-autopilot-shared.src.bridge-fastpath
-- **Functions**: 54
-- **Classes**: 1
-- **File**: `bridge-fastpath.ts`
-
-### plugins.koru-autopilot-antigravity.src.probe-ladder
-- **Functions**: 53
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
-
-### plugins.koru-autopilot-vscodium.src.probe-ladder
-- **Functions**: 53
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
-
-### plugins.koru-autopilot-cursor.src.chat-history-watcher.test
-- **Functions**: 51
-- **File**: `chat-history-watcher.test.ts`
-
-### plugins.koru-autopilot-cursor.src.probe-ladder.test
-- **Functions**: 50
-- **File**: `probe-ladder.test.ts`
-
 ### src.koru.wizard.gui.static.wizard
 - **Functions**: 47
 - **File**: `wizard.js`
 
-### src.koru.autonomous_cycle
+### src.koru.autonomy.readiness.readiness
+- **Functions**: 47
+- **Classes**: 3
+- **File**: `readiness.py`
+
+### src.koru.autonomy.operator_pipeline
 - **Functions**: 46
-- **File**: `autonomous_cycle.py`
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
+
+### src.koru.integrations.photo_vql_target
+- **Functions**: 45
+- **Classes**: 1
+- **File**: `photo_vql_target.py`
+
+### packages.coru.src.coru.repair.pipeline
+- **Functions**: 42
+- **Classes**: 2
+- **File**: `pipeline.py`
+
+### src.koru.autonomy.configuration.config_startup
+- **Functions**: 42
+- **Classes**: 3
+- **File**: `config_startup.py`
+
+### src.koru.autonomy.cycle.cycle_drive_retry
+- **Functions**: 40
+- **File**: `cycle_drive_retry.py`
+
+### src.koru.ide_adapters.ide_reload
+- **Functions**: 39
+- **Classes**: 1
+- **File**: `ide_reload.py`
+
+### src.koru.autonomy.operator.operator_wup
+- **Functions**: 39
+- **Classes**: 3
+- **File**: `operator_wup.py`
+
+### src.koruapi.dashboard_routes
+- **Functions**: 35
+- **File**: `dashboard_routes.py`
+
+### koru.observability_dsl
+- **Functions**: 35
+- **Classes**: 1
+- **File**: `observability_dsl.py`
+
+### src.koruide.daemon.handlers_drive
+- **Functions**: 35
+- **File**: `handlers_drive.py`
 
 ## Key Entry Points
 
@@ -114,23 +114,24 @@ Main execution flows into the system:
 ### scripts.e2e_envmap_koru.main
 - **Calls**: scripts.e2e_envmap_koru._section, project.print, project.print, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section, env2llm_registry.env2llm_available, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section
 
-### src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
-- **Calls**: src.koru.autonomous_auto_pipeline._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomous_auto_pipeline._auto_value
-
-### src.koru.autopilot.cli_snapshot.action_snapshot
-> Print a unified shell OQL/DSL snapshot with replay/validate commands.
-- **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._decision_lines, lines.extend, lines.extend, lines.extend, src.koru.autopilot.cli_snapshot._lane_shell_env
+### src.koru.autonomy.orchestrator.orchestrator._select_auto_pipeline_profile
+- **Calls**: src.koru.autonomy.orchestrator.orchestrator._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomy.orchestrator.orchestrator._auto_value
 
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
 - **Calls**: max, cls, src.koru.env_flags.env_int, int, Path, src.koruvision.providers.env.env_truthy, src.koru.env_flags.env_int, src.koru.env_flags.env_int
 
-### src.koru.integrations.photo_vql_target.jetbrains_chat_target_from_surface
-> Estimate JetBrains AI chat composer from correlated IDE surface bounds (Wayland/native).
-- **Calls**: None.strip, None.lower, surface.get, int, int, int, int, src.koru.integrations.photo_vql_target._monitor_geometry_for_source
+### src.koru.autopilot.cli_snapshot.action_snapshot
+> Print a unified shell OQL/DSL snapshot with replay/validate commands.
+- **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._snapshot_runtime_block, src.koru.autopilot.cli_snapshot_lines._decision_lines, lines.extend, src.koru.autopilot.cli_snapshot_lines._skip_code_from_decision_lines, lines.extend
+
+### src.koru.integrations.vdisplay.portal_input.type_into_chat_via_portal
+> Full portal flow: locate the chat input on the portal's own frame and
+type (guarded). Returns a result dict.
+- **Calls**: src.koru.integrations.vdisplay.portal_input._get_session, src.koru.integrations.vdisplay.portal_input._cached_input_xy, p.grab_frame, src.koru.integrations.vdisplay.portal_input._png_size, src.koru.integrations.vdisplay.portal_input._anchor_precise, p.type_into_input_verified, logger.info, src.koru.integrations.vdisplay.portal_input._png_size
 
 ### src.koru.autopilot.vdisplay_up_cli.action_vdisplay_up
-- **Calls**: None.lower, src.koru.autonomous_vdisplay_defaults.apply_vdisplay_drive_defaults, int, project.print, getattr, src.koru.autopilot.vdisplay_up_cli._resolve_bridge_source, getattr, None.environ.get
+- **Calls**: None.lower, src.koru.autonomy.operator.operator_vdisplay_defaults.apply_vdisplay_drive_defaults, int, project.print, getattr, src.koru.autopilot.vdisplay_up_cli._resolve_bridge_source, getattr, None.environ.get
 
 ### packages.rest2koru.src.rest2koru.app.create_app
 - **Calls**: FastAPI, app.get, app.get, app.get, app.post, app.post, app.get, app.get
@@ -138,6 +139,9 @@ Main execution flows into the system:
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, str, urlparse, src.koru.control_commands.api_command, urllib.request.Request, float, str, str
+
+### src.koru.autopilot.daemon_cli.run_daemon_command
+- **Calls**: src.koru.koruide_bridge.install_koruide_host_hooks, src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, args.project.resolve, src.koru.dotenv_loader.load_dotenv, None.lower, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog
 
 ### src.koru.ide_client.LegacyAutopilotClientAdapter.drive
 - **Calls**: src.koru.activity_log.activity, self.client.drive, reply.get, bool, reply.get, src.koru.activity_log.activity, reply.get, isinstance
@@ -148,9 +152,6 @@ Main execution flows into the system:
 ### src.koru.autopilot.cli_trace.action_trace
 > Print the structured ``DecisionRecord`` ring buffer.
 - **Calls**: args.project.resolve, src.koru.autonomy.decision_trace.load_recent_decisions, project.print, src.koru.autopilot.cli_trace._print_observability_dsl_trace, src.koru.autopilot.cli_trace._print_drive_dsl_trace, project.print, project.print, project.print
-
-### src.koru.autopilot.daemon_cli.run_daemon_command
-- **Calls**: src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.dotenv_loader.load_dotenv, None.lower, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat
 
 ### src.koru.autopilot.commands.drive._diagnose_bridge_after_drive_failure
 - **Calls**: bool, None.resolve, str, src.koru.cqrs.runtime_for_project, RepairCommandService, RepairQueryService, src.koru.autopilot.commands.drive._bridge_hypotheses_payload, src.koru.autopilot.commands.drive._bridge_subject
@@ -179,12 +180,12 @@ Args:
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
 
-### src.koruide.daemon.handlers.handle_status
-- **Calls**: daemon._plugin_router.drop_version_mismatch_plugins, src.koruide.daemon.protocol._daemon_package_version, daemon._send, daemon.log, row.to_dict, hasattr, daemon.daemon_metadata, str
-
 ### src.koru.deployment_events.models.DeploymentEvent.from_dict
 > Create event from dictionary.
 - **Calls**: data.get, cls, Component, data.get, data.get, DeploymentEventType, EventSource, Severity
+
+### src.koruide.daemon.handlers.handle_status
+- **Calls**: daemon._plugin_router.drop_version_mismatch_plugins, src.koruide.daemon.protocol._daemon_package_version, daemon._send, daemon.log, row.to_dict, hasattr, daemon.daemon_metadata, str
 
 ### src.koru.autopilot.commands.drive.action_drive
 > Execute ``koru autopilot drive`` command.
@@ -201,10 +202,6 @@ Args:
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
 
-### src.koru.integrations.autonomy_session.find_latest_koru_session
-> Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime.
-- **Calls**: set, candidates.sort, bases.append, None.strip, None.strip, None.replace, base.iterdir, bases.append
-
 ### packages.uri2coru.src.uri2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, dec.add_argument, dec.add_argument, sub.add_parser, run.add_argument, run.add_argument
 
@@ -215,12 +212,12 @@ Args:
 > Return a structured, non-executing replay plan for a control command.
 - **Calls**: src.koru.control_commands._require_control_command, dict, str, str, data.get, data.get, bool, plan.update
 
-### src.koru.autonomous_cycle_skip_conditions._check_autopilot_skip_conditions
-> Check if autopilot should be skipped and return (should_skip, skip_reason).
-- **Calls**: src.koru.autonomous_cycle_skip_conditions._diagnostics_fail_skip_result, src.koru.autonomous_cycle_skip_conditions._manual_send_required_skip_result, src.koru.autonomous_cycle_skip_conditions._should_skip_for_idle_streak, src.koru.autonomous_cycle_skip_conditions._is_waiting_llm_ready_ticket, src.koru.autonomous_cycle_skip_conditions._is_stuck_status_skip_candidate, None.as_skip_tuple, src.koru.autonomous_cycle_skip_conditions._is_topology_enabled, _hp
-
 ### src.koru.autonomy.phases.scan_phase.handle_scan_phase
 - **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
+
+### src.koru.autonomy.cycle.cycle_skip_conditions._check_autopilot_skip_conditions
+> Check if autopilot should be skipped and return (should_skip, skip_reason).
+- **Calls**: src.koru.autonomy.cycle.cycle_skip_conditions._diagnostics_fail_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._manual_send_required_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._should_skip_for_idle_streak, src.koru.autonomy.cycle.cycle_skip_conditions._is_waiting_llm_ready_ticket, src.koru.autonomy.cycle.cycle_skip_conditions._is_stuck_status_skip_candidate, None.as_skip_tuple, src.koru.autonomy.cycle.cycle_skip_conditions._is_topology_enabled, _hp
 
 ### src.koru.doctor_render.render_text
 > Human-readable rendering — fixed-width status column.
@@ -229,6 +226,9 @@ Args:
 ### src.koru.cli_tagi.deploy
 > Deploy changes using Tagi's intelligent prioritization.
 - **Calls**: tagi.command, click.argument, click.option, click.option, None.resolve, click.echo, TagiIntegration, tagi.get_deployment_plan
+
+### src.koru.autonomy.operator.operator_runtime.setup_autonomous_session
+- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomy.operator.operator_runtime.project_venv_warning_lines, src.koru.autonomy.operator.operator_runtime._log_runtime_readiness_gate
 
 ## Process Flows
 
@@ -246,31 +246,34 @@ main [scripts.e2e_envmap_koru]
 
 ### Flow 2: _select_auto_pipeline_profile
 ```
-_select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
+_select_auto_pipeline_profile [src.koru.autonomy.orchestrator.orchestrator]
   └─> _auto_pipeline_stage
       └─> _auto_pipeline_has_pressure
           └─ →> parse_autopilot_status
 ```
 
-### Flow 3: action_snapshot
-```
-action_snapshot [src.koru.autopilot.cli_snapshot]
-  └─> _decision_lines
-      └─ →> load_recent_decisions
-          └─> decision_trace_path
-  └─ →> canonical_autopilot_ide_id
-      └─> normalize_ide_id
-```
-
-### Flow 4: from_env
+### Flow 3: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
 ```
 
-### Flow 5: jetbrains_chat_target_from_surface
+### Flow 4: action_snapshot
 ```
-jetbrains_chat_target_from_surface [src.koru.integrations.photo_vql_target]
+action_snapshot [src.koru.autopilot.cli_snapshot]
+  └─> _snapshot_runtime_block
+  └─ →> canonical_autopilot_ide_id
+      └─> normalize_ide_id
+  └─ →> _decision_lines
+      └─ →> load_recent_decisions
+          └─> decision_trace_path
+```
+
+### Flow 5: type_into_chat_via_portal
+```
+type_into_chat_via_portal [src.koru.integrations.vdisplay.portal_input]
+  └─> _get_session
+  └─> _cached_input_xy
 ```
 
 ### Flow 6: action_vdisplay_up
@@ -297,7 +300,16 @@ run_api_request [src.koru.queue.runners]
       └─> control_command
 ```
 
-### Flow 9: drive
+### Flow 9: run_daemon_command
+```
+run_daemon_command [src.koru.autopilot.daemon_cli]
+  └─> _daemon_already_running
+      └─ →> print
+  └─ →> install_koruide_host_hooks
+  └─ →> gc_stale_sockets_for_lane
+```
+
+### Flow 10: drive
 ```
 drive [src.koru.ide_client.LegacyAutopilotClientAdapter]
   └─ →> activity
@@ -306,73 +318,17 @@ drive [src.koru.ide_client.LegacyAutopilotClientAdapter]
           └─> _ansi
 ```
 
-### Flow 10: register
-```
-register [src.koru.local_manager_state.WorkerRegistry]
-  └─ →> utc_now
-```
-
 ## Key Classes
-
-### plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit
-- **Methods**: 102
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.refocus, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.submitResult, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.submitResult, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.koruStepConfig, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.cfg, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.legacyVerify, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.verifySubmit, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.postSubmitVerifyEnabled, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.discardCachedSubmitWinner, plugins.koru-autopilot-shared.src.bridge-submit.SharedAutopilotBridgeSubmit.current
-
-### plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste
-- **Methods**: 93
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.isSubmitRequestedForCurrentDrive, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.trace, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.step, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.submit, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.directPasteMayImplicitlySubmit, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.lower, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.cursorComposerPromptPasteCommand, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.trimmedObs, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.trimmedPast, plugins.koru-autopilot-shared.src.bridge-paste.SharedAutopilotBridgePaste.trimmedObs
-
-### plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork
-- **Methods**: 73
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.openChatPanel, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.injectChat, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.detectIde, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.app, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.socketPath, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.cfg, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.override, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.connect, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.cfg, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.override
-
-### plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy
-- **Methods**: 64
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.focusChat, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.primary, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.context, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.alreadyFocused, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.inputOnly, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.result, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy._buildFocusChatContext, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.ide, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.existing, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.cache
 
 ### src.koruide.drive_orchestrator.DriveOrchestrator
 > Pure helpers used by the autopilot daemon.
 - **Methods**: 56
 - **Key Methods**: src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, src.koruide.drive_orchestrator.DriveOrchestrator.drive_intent_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._deliver_prompt_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._submit_evidence_is_untrusted, src.koruide.drive_orchestrator.DriveOrchestrator._untrusted_submit_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._strict_submit_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._submit_failure_reason
 
-### plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath
-- **Methods**: 54
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.koruStepConfig, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.safeLog, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.hasCommand, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.safeLog, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.safeLog, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.safeLog, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.safeLog, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.safeLog, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.maybeKeepWindsurfChatPanelVisible, plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath.cfg
-
-### plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore
-- **Methods**: 37
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.sleep, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.runCommand, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.result, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.probeLadderEnabled, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.probeFocusDelayMs, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.probePasteDelayMs, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.waitForCommand, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.deadline, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.existing, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.editorSnapshot
-
-### plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge
-- **Methods**: 22
-- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.super, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.injectChat, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.text, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.submit, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previous, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previousHost, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.message, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
-
-### plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
-- **Methods**: 17
-- **Key Methods**: plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
-
-### plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands
-- **Methods**: 17
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.injectChat, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.calibrateProbe, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.ide, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.prep, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.focus, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.pasted, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.cache, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.captureSubmitClickPosition, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.res, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.match
-
-### plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter
-- **Methods**: 16
-- **Key Methods**: plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
-
 ### src.koru.integrations.photo_vql_drive.PhotoVqlDrive
 > One-shot photo-VQL drive: prepare (observe) then send_chat (decide/act/verify).
 - **Methods**: 16
 - **Key Methods**: src.koru.integrations.photo_vql_drive.PhotoVqlDrive.__init__, src.koru.integrations.photo_vql_drive.PhotoVqlDrive.prepare, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._set_source_env, src.koru.integrations.photo_vql_drive.PhotoVqlDrive.act, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._surface_only_blocked, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._act_surface_only, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._act_map_only_with_photo_vql, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._observe_png, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._photo_vql_attempt_succeeded, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._mark_llm_backend_if_used
-
-### src.koruide.plugin_router.PluginRouter
-> Select, enumerate and deduplicate connected plugin sessions.
-- **Methods**: 15
-- **Key Methods**: src.koruide.plugin_router.PluginRouter.__init__, src.koruide.plugin_router.PluginRouter.plugin_for, src.koruide.plugin_router.PluginRouter._plugin_candidates, src.koruide.plugin_router.PluginRouter._matches_plugin_target, src.koruide.plugin_router.PluginRouter._match_project_plugin, src.koruide.plugin_router.PluginRouter._first_workspace_match, src.koruide.plugin_router.PluginRouter._has_workspace_aware_candidates, src.koruide.plugin_router.PluginRouter._project_mismatch_blocks_fallback, src.koruide.plugin_router.PluginRouter._log_project_match, src.koruide.plugin_router.PluginRouter._log_workspace_mismatches
-
-### src.koruide.daemon.server.AutopilotDaemon
-> Selector-based unix-socket broker.
-- **Methods**: 15
-- **Key Methods**: src.koruide.daemon.server.AutopilotDaemon.__init__, src.koruide.daemon.server.AutopilotDaemon.start, src.koruide.daemon.server.AutopilotDaemon.daemon_metadata, src.koruide.daemon.server.AutopilotDaemon.serve_forever, src.koruide.daemon.server.AutopilotDaemon.stop, src.koruide.daemon.server.AutopilotDaemon._shutdown, src.koruide.daemon.server.AutopilotDaemon._accept, src.koruide.daemon.server.AutopilotDaemon._on_readable, src.koruide.daemon.server.AutopilotDaemon._dispatch, src.koruide.daemon.server.AutopilotDaemon._send
 
 ### src.koruide.ides.base.IdeStrategy
 > Per-IDE knowledge object.
@@ -383,17 +339,24 @@ no
 - **Key Methods**: src.koruide.ides.base.IdeStrategy.id, src.koruide.ides.base.IdeStrategy.label, src.koruide.ides.base.IdeStrategy.detection, src.koruide.ides.base.IdeStrategy.terminal, src.koruide.ides.base.IdeStrategy.aliases, src.koruide.ides.base.IdeStrategy.config_home, src.koruide.ides.base.IdeStrategy.user_settings_path, src.koruide.ides.base.IdeStrategy.workspace_settings_path, src.koruide.ides.base.IdeStrategy.state_vscdb_path, src.koruide.ides.base.IdeStrategy.extensions_metadata_path
 - **Inherits**: ABC
 
-### plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher
+### src.koruide.daemon.server.AutopilotDaemon
+> Selector-based unix-socket broker.
 - **Methods**: 15
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.sleep, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.anchor, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.adapter, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.cfg, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.timeoutMs, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.deadline, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.attempts, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog
+- **Key Methods**: src.koruide.daemon.server.AutopilotDaemon.__init__, src.koruide.daemon.server.AutopilotDaemon.start, src.koruide.daemon.server.AutopilotDaemon.daemon_metadata, src.koruide.daemon.server.AutopilotDaemon.serve_forever, src.koruide.daemon.server.AutopilotDaemon.stop, src.koruide.daemon.server.AutopilotDaemon._shutdown, src.koruide.daemon.server.AutopilotDaemon._accept, src.koruide.daemon.server.AutopilotDaemon._on_readable, src.koruide.daemon.server.AutopilotDaemon._dispatch, src.koruide.daemon.server.AutopilotDaemon._send
 
-### plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck
-- **Methods**: 14
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.sendFocusFailureAck, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.details, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.candidates, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.reason, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.ide, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.debugLog, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck._isInputOnlyFocusToken, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.discardToxicFocusOpenCache, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.cache, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.cached
+### src.koruide.plugin_router.PluginRouter
+> Select, enumerate and deduplicate connected plugin sessions.
+- **Methods**: 15
+- **Key Methods**: src.koruide.plugin_router.PluginRouter.__init__, src.koruide.plugin_router.PluginRouter.plugin_for, src.koruide.plugin_router.PluginRouter._plugin_candidates, src.koruide.plugin_router.PluginRouter._matches_plugin_target, src.koruide.plugin_router.PluginRouter._match_project_plugin, src.koruide.plugin_router.PluginRouter._first_workspace_match, src.koruide.plugin_router.PluginRouter._has_workspace_aware_candidates, src.koruide.plugin_router.PluginRouter._project_mismatch_blocks_fallback, src.koruide.plugin_router.PluginRouter._log_project_match, src.koruide.plugin_router.PluginRouter._log_workspace_mismatches
 
 ### packages.coru.src.coru.supervisor.service.SupervisorService
 - **Methods**: 12
 - **Key Methods**: packages.coru.src.coru.supervisor.service.SupervisorService.__init__, packages.coru.src.coru.supervisor.service.SupervisorService.url, packages.coru.src.coru.supervisor.service.SupervisorService._record_for, packages.coru.src.coru.supervisor.service.SupervisorService.refresh_lane_health, packages.coru.src.coru.supervisor.service.SupervisorService.refresh_all_health, packages.coru.src.coru.supervisor.service.SupervisorService.start_lane_daemon, packages.coru.src.coru.supervisor.service.SupervisorService.stop_lane_daemon, packages.coru.src.coru.supervisor.service.SupervisorService.reconnect_lane, packages.coru.src.coru.supervisor.service.SupervisorService.ensure_http, packages.coru.src.coru.supervisor.service.SupervisorService.write_pid_file
+
+### src.koru.deployment_events.analyzer.DeploymentEventAnalyzer
+> Analyzer for deployment event history with reflection capabilities.
+- **Methods**: 12
+- **Key Methods**: src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
 
 ### src.korullm.strategies.base.LlmStrategy
 > Per-LLM knowledge object.
@@ -401,10 +364,62 @@ no
 - **Key Methods**: src.korullm.strategies.base.LlmStrategy.id, src.korullm.strategies.base.LlmStrategy.label, src.korullm.strategies.base.LlmStrategy.matches_environment, src.korullm.strategies.base.LlmStrategy.capabilities, src.korullm.strategies.base.LlmStrategy.assess_drive_failure, src.korullm.strategies.base.LlmStrategy.idle_marker_patterns, src.korullm.strategies.base.LlmStrategy.prompt_envelope, src.korullm.strategies.base.LlmStrategy._reply_message, src.korullm.strategies.base.LlmStrategy._reply_verification, src.korullm.strategies.base.LlmStrategy._reply_reason
 - **Inherits**: ABC
 
-### src.koru.deployment_events.analyzer.DeploymentEventAnalyzer
-> Analyzer for deployment event history with reflection capabilities.
-- **Methods**: 12
-- **Key Methods**: src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
+### src.koru.tagi_integration.TagiIntegration
+> Integration with Tagi for change analysis and prioritization.
+- **Methods**: 10
+- **Key Methods**: src.koru.tagi_integration.TagiIntegration.__init__, src.koru.tagi_integration.TagiIntegration._run_tagi_command, src.koru.tagi_integration.TagiIntegration.scan_changes, src.koru.tagi_integration.TagiIntegration.analyze_priorities, src.koru.tagi_integration.TagiIntegration.get_deployment_plan, src.koru.tagi_integration.TagiIntegration._get_deployment_strategy, src.koru.tagi_integration.TagiIntegration.commit_changes, src.koru.tagi_integration.TagiIntegration.auto_commit_all, src.koru.tagi_integration.TagiIntegration._parse_text_scan_output, src.koru.tagi_integration.TagiIntegration.is_available
+
+### src.koru.decision_engine.EnvironmentDecisionEngine
+> Resolve environment-scoped decisions from the three strategy axes.
+- **Methods**: 10
+- **Key Methods**: src.koru.decision_engine.EnvironmentDecisionEngine.__init__, src.koru.decision_engine.EnvironmentDecisionEngine.decision_key, src.koru.decision_engine.EnvironmentDecisionEngine.focus_ide_window, src.koru.decision_engine.EnvironmentDecisionEngine.assess_drive_failure, src.koru.decision_engine.EnvironmentDecisionEngine._submit_retry_is_known_unsafe, src.koru.decision_engine.EnvironmentDecisionEngine.detect_stale_extension_host, src.koru.decision_engine.EnvironmentDecisionEngine.reload_capability_detail, src.koru.decision_engine.EnvironmentDecisionEngine.recovery_hints_for_drive_reply, src.koru.decision_engine.EnvironmentDecisionEngine._window_name_hints, src.koru.decision_engine.EnvironmentDecisionEngine._ide_accepts_integrated_terminal
+
+### src.env2llm.service.registry_service.RegistryService
+- **Methods**: 9
+- **Key Methods**: src.env2llm.service.registry_service.RegistryService.__init__, src.env2llm.service.registry_service.RegistryService.to_dict, src.env2llm.service.registry_service.RegistryService.render, src.env2llm.service.registry_service.RegistryService.refresh, src.env2llm.service.registry_service.RegistryService.registry_path, src.env2llm.service.registry_service.RegistryService.desktop_payload, src.env2llm.service.registry_service.RegistryService.commands_payload, src.env2llm.service.registry_service.RegistryService.uris_payload, src.env2llm.service.registry_service.RegistryService.mqtt_status
+
+### src.koruide.client.KoruIDEClient
+> Connect, send one message, read one reply, disconnect.
+- **Methods**: 9
+- **Key Methods**: src.koruide.client.KoruIDEClient.__init__, src.koruide.client.KoruIDEClient._drive_timeout, src.koruide.client.KoruIDEClient._connect, src.koruide.client.KoruIDEClient.request, src.koruide.client.KoruIDEClient._extract_reply, src.koruide.client.KoruIDEClient.is_running, src.koruide.client.KoruIDEClient.drive, src.koruide.client.KoruIDEClient.status, src.koruide.client.KoruIDEClient.shutdown
+
+### src.koruide.command_telemetry.CommandTelemetry
+> Tracks attempts/ok per (ide, plugin_version, capability, command).
+- **Methods**: 9
+- **Key Methods**: src.koruide.command_telemetry.CommandTelemetry.__init__, src.koruide.command_telemetry.CommandTelemetry.record, src.koruide.command_telemetry.CommandTelemetry.success_rate, src.koruide.command_telemetry.CommandTelemetry.attempts, src.koruide.command_telemetry.CommandTelemetry.rows_for, src.koruide.command_telemetry.CommandTelemetry.record_from_ack, src.koruide.command_telemetry.CommandTelemetry._trim, src.koruide.command_telemetry.CommandTelemetry._persist, src.koruide.command_telemetry.CommandTelemetry._load
+
+### packages.dsl2coru.src.dsl2coru.events.EventStore
+- **Methods**: 8
+- **Key Methods**: packages.dsl2coru.src.dsl2coru.events.EventStore.__init__, packages.dsl2coru.src.dsl2coru.events.EventStore.for_default, packages.dsl2coru.src.dsl2coru.events.EventStore.append_command, packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb, packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl, packages.dsl2coru.src.dsl2coru.events.EventStore.read_all, packages.dsl2coru.src.dsl2coru.events.EventStore.replay_pb, packages.dsl2coru.src.dsl2coru.events.EventStore.replay
+
+### packages.coru.src.coru.repair.query.RepairHistoryQuery
+- **Methods**: 8
+- **Key Methods**: packages.coru.src.coru.repair.query.RepairHistoryQuery.__init__, packages.coru.src.coru.repair.query.RepairHistoryQuery.for_project, packages.coru.src.coru.repair.query.RepairHistoryQuery.store_path, packages.coru.src.coru.repair.query.RepairHistoryQuery.cases, packages.coru.src.coru.repair.query.RepairHistoryQuery.cases_for_lane, packages.coru.src.coru.repair.query.RepairHistoryQuery.cases_matching_code, packages.coru.src.coru.repair.query.RepairHistoryQuery.format_llm, packages.coru.src.coru.repair.query.RepairHistoryQuery.format_json
+
+### koruide.command_catalog_store.CommandCatalogStore
+> In-memory catalog per IDE with optional on-disk persistence.
+- **Methods**: 8
+- **Key Methods**: koruide.command_catalog_store.CommandCatalogStore.__init__, koruide.command_catalog_store.CommandCatalogStore.update, koruide.command_catalog_store.CommandCatalogStore.get, koruide.command_catalog_store.CommandCatalogStore.catalog_for, koruide.command_catalog_store.CommandCatalogStore.unknown_chat_commands_for, koruide.command_catalog_store.CommandCatalogStore.all_ides, koruide.command_catalog_store.CommandCatalogStore._persist, koruide.command_catalog_store.CommandCatalogStore._load_from_disk
+
+### src.koruide.ides.cursor.CursorStrategy
+> Strategy for Cursor (VS Code-fork by Anysphere).
+- **Methods**: 8
+- **Key Methods**: src.koruide.ides.cursor.CursorStrategy.workspace_settings_folder_name, src.koruide.ides.cursor.CursorStrategy.detection, src.koruide.ides.cursor.CursorStrategy.terminal, src.koruide.ides.cursor.CursorStrategy.aliases, src.koruide.ides.cursor.CursorStrategy.extensions_metadata_path, src.koruide.ides.cursor.CursorStrategy.plugin, src.koruide.ides.cursor.CursorStrategy.editor_cli_candidates, src.koruide.ides.cursor.CursorStrategy.window_name_hints
+- **Inherits**: StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy
+
+### packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient
+> Thin wrapper for TestQL-style multi-turn tests against nlp2dsl.
+- **Methods**: 7
+- **Key Methods**: packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.__init__, packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.state, packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.start, packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message, packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.run_dsl, packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.export_trace, packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient._record
+
+### packages.coru.src.coru.repair.store.RepairEventStore
+- **Methods**: 7
+- **Key Methods**: packages.coru.src.coru.repair.store.RepairEventStore.__init__, packages.coru.src.coru.repair.store.RepairEventStore.path, packages.coru.src.coru.repair.store.RepairEventStore.for_project, packages.coru.src.coru.repair.store.RepairEventStore.append, packages.coru.src.coru.repair.store.RepairEventStore.append_many, packages.coru.src.coru.repair.store.RepairEventStore.read_all, packages.coru.src.coru.repair.store.RepairEventStore.read_recent
+
+### src.koruide.ides.antigravity.AntigravityStrategy
+- **Methods**: 7
+- **Key Methods**: src.koruide.ides.antigravity.AntigravityStrategy.detection, src.koruide.ides.antigravity.AntigravityStrategy.terminal, src.koruide.ides.antigravity.AntigravityStrategy.aliases, src.koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, src.koruide.ides.antigravity.AntigravityStrategy.plugin, src.koruide.ides.antigravity.AntigravityStrategy.editor_cli_candidates, src.koruide.ides.antigravity.AntigravityStrategy.window_name_hints
+- **Inherits**: StaticIdeIdentityMixin, StaticVscodeFolderMixin, VscodeFamilyStrategy
 
 ## Data Transformation Functions
 
@@ -491,11 +506,6 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: packages.nlpshim.src.nlpshim.control.to_dsl
 
-### recursion_main
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
-
 ### recursion_create_ticket_from_dashboard
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -511,10 +521,20 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.reorder_ticket_from_dashboard
 
+### recursion_enabled_components_for_pipeline
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
+
 ### recursion__sum_structured_counts
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.scan._sum_structured_counts
+
+### recursion_main
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: packages.coru.src.coru.cli.main
 
 ### recursion_send_chat
 - **Type**: recursion
@@ -525,11 +545,6 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.agent_backend_runtime.VdisplayControlBackend.send_chat
-
-### recursion_enabled_components_for_pipeline
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
 ### recursion__capture_for_verify
 - **Type**: recursion
@@ -556,35 +571,26 @@ Key functions that process and transform data:
 - **Confidence**: 0.70
 - **Functions**: src.koru.local_manager_state.WorkerRegistry.__init__, src.koru.local_manager_state.WorkerRegistry.register, src.koru.local_manager_state.WorkerRegistry.heartbeat, src.koru.local_manager_state.WorkerRegistry._reconcile_locked, src.koru.local_manager_state.WorkerRegistry._reply_locked
 
-### state_machine_SharedAutopilotBridgeNetwork
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.openChatPanel, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.injectChat, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.detectIde, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.app, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.socketPath
-
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 132 calls
-- `src.koru.integrations.vdisplay_client.perform_photo_vql_focus_and_edit` - 126 calls
-- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 104 calls
-- `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 83 calls
-- `src.koru.integrations.vdisplay_client.ensure_vdisplay_ide_control` - 74 calls
 - `scripts.e2e_envmap_koru.main` - 73 calls
-- `src.koru.integrations.vdisplay_client.load_vql_metadata` - 55 calls
-- `src.koru.autopilot.cli_snapshot.action_snapshot` - 52 calls
+- `src.koru.cli_tillm_setup.tillm_setup_main` - 70 calls
+- `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 54 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
-- `src.koru.integrations.photo_vql_target.jetbrains_chat_target_from_surface` - 42 calls
+- `src.koru.autopilot.cli_snapshot.action_snapshot` - 43 calls
+- `src.koru.integrations.vdisplay.portal_input.type_into_chat_via_portal` - 43 calls
 - `src.koru.autopilot.vdisplay_up_cli.action_vdisplay_up` - 42 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
-- `src.koru.integrations.vdisplay_client.move_mouse_to_vql_target_and_focus_keyboard` - 40 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
+- `src.koru.autopilot.daemon_cli.run_daemon_command` - 38 calls
 - `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
-- `src.koru.autopilot.daemon_cli.run_daemon_command` - 37 calls
+- `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 34 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
@@ -592,19 +598,23 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
-- `src.koruide.daemon.handlers.handle_status` - 30 calls
 - `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
+- `src.koruide.daemon.handlers.handle_status` - 30 calls
 - `src.koru.autopilot.commands.drive.action_drive` - 30 calls
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
 - `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `src.koru.integrations.autonomy_session.find_latest_koru_session` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
-- `koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
+- `src.koru.cli_queue.render_clean_report_text` - 28 calls
+- `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 28 calls
 - `src.koruapi.desktop_uri.desktop_uri_handle` - 27 calls
+- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
+- `src.koru.doctor_render.render_text` - 27 calls
+- `src.koru.cli_tagi.deploy` - 27 calls
+- `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 27 calls
 
 ## System Interactions
 
@@ -617,20 +627,21 @@ graph TD
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
-    action_snapshot --> resolve
-    action_snapshot --> canonical_autopilot_
-    action_snapshot --> max
-    action_snapshot --> _decision_lines
-    action_snapshot --> extend
     from_env --> max
     from_env --> cls
     from_env --> env_int
     from_env --> int
     from_env --> Path
-    jetbrains_chat_targe --> strip
-    jetbrains_chat_targe --> lower
-    jetbrains_chat_targe --> get
-    jetbrains_chat_targe --> int
+    action_snapshot --> resolve
+    action_snapshot --> canonical_autopilot_
+    action_snapshot --> max
+    action_snapshot --> _snapshot_runtime_bl
+    action_snapshot --> _decision_lines
+    type_into_chat_via_p --> _get_session
+    type_into_chat_via_p --> _cached_input_xy
+    type_into_chat_via_p --> grab_frame
+    type_into_chat_via_p --> _png_size
+    type_into_chat_via_p --> _anchor_precise
     action_vdisplay_up --> lower
     action_vdisplay_up --> apply_vdisplay_drive
     action_vdisplay_up --> int
@@ -641,7 +652,6 @@ graph TD
     create_app --> post
     run_api_request --> get
     run_api_request --> str
-    run_api_request --> urlparse
 ```
 
 ## Reverse Engineering Guidelines

@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 1.85s
+%% generated in 2.58s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
@@ -17,15 +17,10 @@ flowchart TD
         packages__cli2coru__src__cli2coru__cli___handle_exec["_handle_exec"]
         packages__cli2coru__src__cli2coru__cli__main["main"]
         packages__cli2coru__src__cli2coru__shell__run_shell["run_shell"]
-        koru__cli_queue__build_queue_parser["build_queue_parser"]
-        koru__cli_queue__render_clean_report_text["render_clean_report_text"]
-        koru__cli_queue__queue_main["queue_main"]
-        ...["+4 more"]
     end
 
     subgraph Core
         check_dups__get_files["get_files"]
-        packages__dsl2koru__src__dsl2koru__bus__dispatch("dispatch CC=11")
         packages__dsl2koru__src__dsl2koru__cli___run_results["_run_results"]
         packages__dsl2koru__src__dsl2koru__cli__main["main"]
         packages__dsl2koru__src__dsl2koru__cli___main_subcommand["_main_subcommand"]
@@ -39,7 +34,8 @@ flowchart TD
         packages__dsl2koru__src__dsl2koru__cli___handle_subcommand["_handle_subcommand"]
         packages__dsl2koru__src__dsl2koru__events__EventStore__for_project["for_project"]
         packages__dsl2koru__src__dsl2koru__events__EventStore__append_command["append_command"]
-        ...["+3393 more"]
+        packages__dsl2koru__src__dsl2koru__events__EventStore__read_all["read_all"]
+        ...["+2603 more"]
     end
 
     subgraph Exporters
