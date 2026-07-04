@@ -16,7 +16,7 @@ from typing import Protocol
 
 import yaml
 
-from koru.autonomous_diag_markers import diagnostic_marker_path
+from koru.autonomy.operator.operator_diag_markers import diagnostic_marker_path
 from koru.queue.ticket import resolve_planfile_base_command
 from koru.topology import is_component_enabled, is_pipeline_enabled
 

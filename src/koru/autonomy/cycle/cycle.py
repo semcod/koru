@@ -28,46 +28,6 @@ from koru.autonomy.cycle.cycle_post_drive import (
 from koru.autonomy.cycle.cycle_skip_conditions import (
     _is_topology_enabled,
 )
-from koru.autonomous_wup import WupHealthResult
-from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
-from koru.autonomy.cycle_finalize import (
-    emit_cycle_completion_events as _emit_cycle_completion_events_impl,
-)
-from koru.autonomy.cycle_trace import (
-    decision_next_step_hint as _decision_next_step_hint_impl,
-)
-from koru.autonomy.cycle_trace import (
-    record_decision_trace as _record_decision_trace_impl,
-)
-from koru.autonomy.decision_trace import load_recent_decisions
-from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
-from koru.autonomy.phases import queue_phase as _queue_phase
-from koru.autonomy.phases.contexts import (
-    CyclePhaseContext,
-    DrivePhaseConfig,
-    DrivePhaseInputs,
-    PhaseCallbacks,
-    PreDrivePhaseResult,
-    QueueScanPhaseConfig,
-)
-from koru.autonomy.phases.drive_phase import (
-    run_drive_phase as _run_drive_phase,
-)
-from koru.autonomy.phases.drive_phase import (
-    run_post_drive_phase as _run_post_drive_phase,
-)
-from koru.autonomy.phases.verify_phase import (
-    handle_post_run_verify_ide as _handle_post_run_verify_ide,
-)
-from koru.autonomy.planning_llm import (
-    prioritize_tickets as _llm_prioritize_tickets,
-)
-from koru.autonomy.planning_llm import (
-    propose_strategy_tuning as _llm_propose_strategy_tuning,
-)
-from koru.autonomy.post_run_verify import (
-    verify_completed_tickets,
-)
 from koru.autonomy.cycle_diagnostics import _clear_diagnostic_marker as _clear_diagnostic_marker
 from koru.autonomy.cycle_diagnostics import _create_diagnostic_ticket as _create_diagnostic_ticket
 from koru.autonomy.cycle_diagnostics import _current_head as _current_head
@@ -81,6 +41,9 @@ from koru.autonomy.cycle_events import _cycle_socket_path as _cycle_socket_path
 from koru.autonomy.cycle_events import _drain_autopilot_events as _drain_autopilot_events
 from koru.autonomy.cycle_events import _handle_autopilot_events as _handle_autopilot_events
 from koru.autonomy.cycle_events import _heal_stale_socket as _heal_stale_socket
+from koru.autonomy.cycle_finalize import (
+    emit_cycle_completion_events as _emit_cycle_completion_events_impl,
+)
 from koru.autonomy.cycle_planning import (
     _attach_environment_profile as _attach_environment_profile,
 )
@@ -122,6 +85,43 @@ from koru.autonomy.cycle_queue_scan import (
 )
 from koru.autonomy.cycle_queue_scan import _run_queue_loop as _run_queue_loop
 from koru.autonomy.cycle_queue_scan import _update_stagnation_state as _update_stagnation_state
+from koru.autonomy.cycle_trace import (
+    decision_next_step_hint as _decision_next_step_hint_impl,
+)
+from koru.autonomy.cycle_trace import (
+    record_decision_trace as _record_decision_trace_impl,
+)
+from koru.autonomy.decision_trace import load_recent_decisions
+from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
+from koru.autonomy.operator.operator_wup import WupHealthResult
+from koru.autonomy.operator.operator_wup import _read_wup_health as _read_wup_health_impl
+from koru.autonomy.phases import queue_phase as _queue_phase
+from koru.autonomy.phases.contexts import (
+    CyclePhaseContext,
+    DrivePhaseConfig,
+    DrivePhaseInputs,
+    PhaseCallbacks,
+    PreDrivePhaseResult,
+    QueueScanPhaseConfig,
+)
+from koru.autonomy.phases.drive_phase import (
+    run_drive_phase as _run_drive_phase,
+)
+from koru.autonomy.phases.drive_phase import (
+    run_post_drive_phase as _run_post_drive_phase,
+)
+from koru.autonomy.phases.verify_phase import (
+    handle_post_run_verify_ide as _handle_post_run_verify_ide,
+)
+from koru.autonomy.planning_llm import (
+    prioritize_tickets as _llm_prioritize_tickets,
+)
+from koru.autonomy.planning_llm import (
+    propose_strategy_tuning as _llm_propose_strategy_tuning,
+)
+from koru.autonomy.post_run_verify import (
+    verify_completed_tickets,
+)
 from koru.autonomy.state import AutoloopState
 from koru.autonomy_strategy.config import load_autonomy_strategy
 from koru.env_flags import env_truthy as _env_truthy
@@ -417,13 +417,13 @@ def _apply_pre_drive_plugin_readiness(
 ) -> None:
     import os
 
-    from koru.autonomy.cycle.cycle_drive_retry import _client_has_usable_plugin
     from koru.autonomous_readiness import (
         check_lane_terminal_socket_alignment,
         check_queue_runner_contention,
         format_readiness_lines,
         warn_pre_drive_queue_without_plugin,
     )
+    from koru.autonomy.cycle.cycle_drive_retry import _client_has_usable_plugin
 
     lane_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip() or None
     for line in format_readiness_lines(

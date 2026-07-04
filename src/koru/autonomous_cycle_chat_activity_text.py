@@ -6,11 +6,12 @@ autonomy.cycle.cycle_chat_activity_text submodule. Remove this shim after one re
 """
 
 # Re-export everything from the new module location
-from koru.autonomy.cycle.cycle_chat_activity_text import *  # noqa: F401, F403
+import sys
 
 # Also expose the module for test monkeypatching and private function access
 from koru.autonomy.cycle import cycle_chat_activity_text as _module_impl  # noqa: F401
-import sys
+from koru.autonomy.cycle.cycle_chat_activity_text import *  # noqa: F401, F403
+
 _current_module = sys.modules[__name__]
 for attr in dir(_module_impl):
     if not attr.startswith("__"):

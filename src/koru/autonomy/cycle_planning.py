@@ -17,9 +17,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+from koru.autonomy.state import AutoloopState
 from koru.env_flags import env_truthy as _env_truthy
 from koru.environment_profile import environment_profile_payload
-from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.queue.ticket import planfile_command
 

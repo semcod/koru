@@ -12,10 +12,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-# Import daemon_status_compatible and re-export it for tests
-from koru.autonomous_daemon import daemon_status_compatible  # noqa: F401
 from koru.autonomy.environment import probe_socket_health  # noqa: F401
 from koru.autonomy.heal import remove_stale_socket  # noqa: F401
+
+# Import daemon_status_compatible and re-export it for tests
+from koru.autonomy.operator.operator_daemon import daemon_status_compatible  # noqa: F401
 from koru.autopilot.lane_context import instance_from_socket_path
 from koru.doctor_runtime_checks import (
     _check_python_venv_alignment,  # noqa: F401
@@ -396,7 +397,7 @@ def _check_daemon_meta_project_python_issues(
         return issues
     meta_project = str(meta.get("project") or "").strip()
     if meta_project:
-        from koru.autonomous_runtime import projects_equivalent
+        from koru.autonomy.operator.operator_runtime import projects_equivalent
 
         try:
             if not projects_equivalent(meta_project, project):

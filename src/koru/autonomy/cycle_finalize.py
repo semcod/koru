@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 from koru.autonomy.cycle.cycle_common import DiagnosticResult
-from koru.autonomous_wup import WupHealthResult
 from koru.autonomy.cycle_trace import record_decision_trace
+from koru.autonomy.operator.operator_wup import WupHealthResult
 from koru.autonomy.state import AutoloopState
 from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.queue import QueueLoopResult

@@ -8,7 +8,7 @@ from typing import Any
 
 from koru import autonomous_plugin_runtime as _plugin_runtime
 from koru import autonomous_plugin_wait as _plugin_wait
-from koru.autonomous_plugin_lifecycle import (
+from koru.autonomy.operator.operator_plugin_lifecycle import (
     PluginLifecycleHooks,
     setup_autopilot_plugin_lifecycle,
 )

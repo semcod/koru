@@ -1,16 +1,12 @@
-"""Flat filesystem paths for autonomous diagnostic ticket markers."""
+"""Backward compatibility shim for koru.autonomy.operator.operator_diag_markers module migration."""
 
-from __future__ import annotations
+import sys
 
-from pathlib import Path
+from koru.autonomy.operator import operator_diag_markers as _module_impl  # noqa: F401
+from koru.autonomy.operator.operator_diag_markers import *  # noqa: F401, F403
 
-
-def diagnostic_marker_path(state_dir: Path, check_id: str) -> Path:
-    """Map a logical check_id to a flat marker file under *state_dir*.
-
-    WUP service names may contain path separators (e.g. ``src/koru``). Using
-    them raw in ``{check_id}.failed`` would treat slashes as directories and
-    crash on ``write_text`` when parents were never created.
-    """
-    safe = check_id.replace("/", "_").replace("\\", "_")
-    return state_dir / f"{safe}.failed"
+_current_module = sys.modules[__name__]
+for attr in dir(_module_impl):
+    if not attr.startswith("__"):
+        if not hasattr(_current_module, attr):
+            setattr(_current_module, attr, getattr(_module_impl, attr))

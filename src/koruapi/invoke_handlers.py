@@ -332,7 +332,7 @@ def _handle_tagi_deploy(project: Path, method: str, payload: dict[str, Any]) -> 
 @_wrap_handler_errors
 def _handle_tagi_auto(project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Handle tagi.auto integration - auto-commit changes using Tagi."""
-    from koru.tagi_integration import auto_commit_all_changes, TagiIntegration
+    from koru.tagi_integration import TagiIntegration, auto_commit_all_changes
     
     message = payload.get("message", "Auto-commit changes via Koru")
     dry_run = payload.get("dry_run", False)

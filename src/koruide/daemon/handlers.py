@@ -64,7 +64,6 @@ def _cap_ack_info_for_cli(info: dict[str, Any]) -> dict[str, Any]:
     return trimmed
 
 
-from koruide.utils import env_truthy as _env_truthy
 from koruide.daemon.handlers_drive import (
     _drive_via_keyboard,
     _drive_via_keyboard_backend,
@@ -75,6 +74,7 @@ from koruide.daemon.handlers_drive import (
     _try_os_injector_drive,
     handle_drive,
 )
+from koruide.utils import env_truthy as _env_truthy
 
 
 def _plugin_rejection_log_interval_seconds() -> float:

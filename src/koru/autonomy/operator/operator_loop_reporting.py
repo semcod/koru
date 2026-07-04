@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.autonomous_loop_interfaces import (
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_by_from_autopilot_status,
     _is_plugin_blocker,
     _safe_dashboard_action_urls,

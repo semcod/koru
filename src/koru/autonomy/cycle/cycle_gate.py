@@ -10,7 +10,7 @@ from typing import Any
 from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 from koru.agents import agent_lane_environment
-from koru.autonomous_startup import resolve_agent_lane_id
+from koru.autonomy.configuration.config_startup import resolve_agent_lane_id
 from koru.autonomy.env import allow_gillm_autopilot_fallback, env_truthy
 from koru.ide_router import resolve_ide_route
 from koru.init import resolve_project_agent_lane

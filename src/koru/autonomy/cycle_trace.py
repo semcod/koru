@@ -2,14 +2,14 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
-from koru.autonomous_wup import WupHealthResult
 from koru.autonomy.autopilot_status import parse_autopilot_status
+from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
 from koru.autonomy.decision_trace import (
     append_decision_record,
     build_decision_record,
     human_skip_reason,
 )
+from koru.autonomy.operator.operator_wup import WupHealthResult
 from koru.queue import QueueLoopResult
 
 _TELEMETRY_NEXT_STEP_HINTS: tuple[tuple[str, str], ...] = (

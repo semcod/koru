@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from koru.autonomous_parser import looks_like_autonomous_up_command
+from koru.autonomy.operator.operator_parser import looks_like_autonomous_up_command
 
 
 @dataclass(frozen=True)

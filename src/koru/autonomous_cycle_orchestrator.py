@@ -6,11 +6,12 @@ autonomy.cycle.cycle_orchestrator submodule. Remove this shim after one release.
 """
 
 # Re-export everything from the new module location
-from koru.autonomy.cycle.cycle_orchestrator import *  # noqa: F401, F403
+import sys
 
 # Also expose the module for test monkeypatching and private function access
 from koru.autonomy.cycle import cycle_orchestrator as _module_impl  # noqa: F401
-import sys
+from koru.autonomy.cycle.cycle_orchestrator import *  # noqa: F401, F403
+
 _current_module = sys.modules[__name__]
 for attr in dir(_module_impl):
     if not attr.startswith("__"):

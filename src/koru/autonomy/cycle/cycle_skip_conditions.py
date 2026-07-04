@@ -5,17 +5,17 @@ from typing import Any
 
 import yaml
 
+from koru.autonomous_submit_strategy import (
+    should_block_manual_send,
+    submit_alt_attempt_limit,
+)
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.cycle.cycle_chat_activity import _skip_due_to_recent_chat_activity
 from koru.autonomy.cycle.cycle_common import (
     DiagnosticResult,
     _queue_loop_waiting_ticket_label,
     _status_in_skip_list,
 )
-from koru.autonomous_submit_strategy import (
-    should_block_manual_send,
-    submit_alt_attempt_limit,
-)
-from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.ide_operator_guidance import (
     emit_operator_guidance,
     ide_label,

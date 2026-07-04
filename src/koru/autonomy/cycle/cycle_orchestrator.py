@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
 from koru.autonomy.cycle.cycle_drive_outcome import apply_autopilot_drive_outcome
 from koru.autonomy.cycle.cycle_drive_retry import (
@@ -11,9 +12,6 @@ from koru.autonomy.cycle.cycle_drive_retry import (
     _execute_autopilot_drive,
 )
 from koru.autonomy.cycle.cycle_skip_conditions import _check_autopilot_skip_conditions
-from koru.autonomous_plugin import plugin_skip_code
-from koru.autonomous_plugin_runtime import plugin_reason_requires_reload
-from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.drive_result import DriveAttemptResult
 from koru.autonomy.env import (
     autopilot_terminal_conflict_reason as _autopilot_terminal_conflict_reason,
@@ -21,6 +19,8 @@ from koru.autonomy.env import (
 from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
+from koru.autonomy.operator.operator_plugin import plugin_skip_code
+from koru.autonomy.operator.operator_plugin_runtime import plugin_reason_requires_reload
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.policy_engine import AutopilotPolicyContext, decide_autopilot_policy
 from koru.autonomy.state import AutoloopState
@@ -258,12 +258,12 @@ def _attempt_plugin_gate_recovery(
         return False
     _PLUGIN_GATE_RECOVERY_LAST_TS[key] = now
 
-    from koru.autonomous_plugin_wait import (
+    from koru.autonomous_readiness import attempt_plugin_gate_recovery
+    from koru.autonomy.operator.operator_plugin_wait import (
         _restore_reuse_window_reload,
         _temporary_reuse_window_reload_if_same_workspace,
         _terminal_host_ide_id,
     )
-    from koru.autonomous_readiness import attempt_plugin_gate_recovery
     from koru.ide_adapters.ide_reload import (
         detached_reload_enabled,
         spawn_detached_ide_reload,

@@ -1,25 +1,12 @@
-"""Environment-driven defaults for ``koru autonomous up``.
+"""Backward compatibility shim for koru.autonomy.configuration.config_env module migration."""
 
-Re-exports :mod:`koru.autonomy.env` so existing imports keep working.
-"""
+import sys
 
+from koru.autonomy.configuration import config_env as _module_impl  # noqa: F401
+from koru.autonomy.configuration.config_env import *  # noqa: F401, F403
 
-import argparse
-
-from koru.autonomy.env import (
-    apply_autoloop_env_to_args,
-    autonomous_environ_doctor_probe,
-    effective_ticket_source_flags,
-)
-
-
-def apply_autonomous_env_overrides(args: argparse.Namespace) -> None:
-    """Mutate ``args`` with environment defaults (shell-autoloop parity)."""
-    apply_autoloop_env_to_args(args)
-
-
-__all__ = [
-    "apply_autonomous_env_overrides",
-    "autonomous_environ_doctor_probe",
-    "effective_ticket_source_flags",
-]
+_current_module = sys.modules[__name__]
+for attr in dir(_module_impl):
+    if not attr.startswith("__"):
+        if not hasattr(_current_module, attr):
+            setattr(_current_module, attr, getattr(_module_impl, attr))

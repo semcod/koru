@@ -61,7 +61,6 @@ from koru.autonomous_checkpoint import (
 from koru.autonomous_checkpoint import (
     save_loop_checkpoint as _save_loop_checkpoint,
 )
-from koru.autonomy.state import AutoloopState
 from koru.autonomous_cycle import (
     DiagnosticResult,
 )
@@ -111,6 +110,7 @@ from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_dri
 from koru.autonomy.operator_pipeline import run_startup_operator_pipeline
 from koru.autonomy.phases.startup_phase import prepare_startup_context
 from koru.autonomy.prompts import build_prompt
+from koru.autonomy.state import AutoloopState
 from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.autopilot import default_socket_path
 from koru.autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide

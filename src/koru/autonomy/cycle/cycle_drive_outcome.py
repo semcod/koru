@@ -7,14 +7,14 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.autonomous_submit_strategy import record_submit_drive_outcome, risky_paste_winner
+from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.cycle.cycle_drive_retry import (
     _drive_failure_signature,
     _log_autopilot_result,
     _update_autopilot_state,
 )
-from koru.autonomous_submit_strategy import record_submit_drive_outcome, risky_paste_winner
-from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 

@@ -4,9 +4,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.autonomous_drive_retry_policy import _handle_failed_drive_attempt
 from koru.autonomy.cycle.cycle_chat_activity import _inject_reflection_summary_into_prompt
 from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
-from koru.autonomous_drive_retry_policy import _handle_failed_drive_attempt
 from koru.autonomy.drive_strategies import (
     DriveStrategy,
     DriveStrategyContext,
@@ -122,7 +122,7 @@ def _client_has_usable_plugin(
     prompts into a foreign chat (2026-07-03 cross-project incident). Override
     with KORU_AUTOPILOT_ALLOW_WORKSPACE_MISMATCH=1.
     """
-    from koru.autonomous_plugin import plugin_status_decision
+    from koru.autonomy.operator.operator_plugin import plugin_status_decision
 
     status_fn = getattr(client, "status", None)
     if not callable(status_fn):
@@ -140,17 +140,59 @@ def _client_has_usable_plugin(
     if not ok:
         return ok, reason
     if project is not None and not _workspace_mismatch_override():
-        from koru.autonomous_readiness import plugin_workspace_covers_project
-
-        ws_ok, ws_reason = plugin_workspace_covers_project(status, autopilot_ide, project)
-        if not ws_ok:
+        conflict = _plugin_workspace_conflict(status, autopilot_ide, project)
+        if conflict:
             return False, (
-                f"workspace mismatch: {ws_reason} — prompts would land in a "
+                f"workspace mismatch: {conflict} — prompts would land in a "
                 "foreign IDE window; open the project in the IDE and run "
                 "'koru: Connect autopilot daemon' "
                 "(override: KORU_AUTOPILOT_ALLOW_WORKSPACE_MISMATCH=1)"
             )
     return True, ""
+
+
+def _plugin_workspace_conflict(
+    status: Any,
+    autopilot_ide: str,
+    project: Path,
+) -> str | None:
+    """A *positive* workspace conflict: folders reported and none covers project.
+
+    Plugins that do not report ``workspaceFolders`` (older builds, test fakes)
+    are not treated as conflicting — readiness separately surfaces the missing
+    info; the drive gate only blocks when we know prompts would land in a
+    window with a different project open (2026-07-03 cross-project incident).
+    """
+    plugins = status.get("plugins") if isinstance(status, dict) else None
+    if not isinstance(plugins, list):
+        return None
+    wanted = (autopilot_ide or "").strip().lower()
+    project_path = str(project.resolve()).rstrip("/")
+    seen_folders: list[str] = []
+    for row in plugins:
+        if not isinstance(row, dict):
+            continue
+        ide = str(row.get("ide") or "").strip().lower()
+        if wanted not in ("", "auto") and ide != wanted:
+            continue
+        folders = row.get("workspaceFolders")
+        if not isinstance(folders, list) or not folders:
+            continue  # unknown workspace — not a conflict
+        normalized = [str(folder).rstrip("/") for folder in folders if str(folder).strip()]
+        for folder in normalized:
+            if (
+                folder == project_path
+                or project_path.startswith(folder + "/")
+                or folder.startswith(project_path + "/")
+            ):
+                return None  # covered
+        seen_folders = normalized
+    if seen_folders:
+        return (
+            f"plugin workspaceFolders {seen_folders!r} do not include "
+            f"project root ({project_path})"
+        )
+    return None
 
 
 def _try_imgl_gui_fallback(

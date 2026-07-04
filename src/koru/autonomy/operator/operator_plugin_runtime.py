@@ -84,7 +84,7 @@ def detect_stale_extension_host(
 
 def plugin_status_reason(client: Any, autopilot_ide: str) -> str:
     try:
-        from koru.autonomous_plugin import plugin_status_decision
+        from koru.autonomy.operator.operator_plugin import plugin_status_decision
 
         _ready, reason = plugin_status_decision(client.status(), autopilot_ide)
         return reason
@@ -110,7 +110,7 @@ def plugin_reason_requires_reload(reason: str) -> bool:
 
 
 def plugin_blocker_line(reason: str, autopilot_ide: str) -> str:
-    from koru.autonomous_plugin import plugin_skip_code
+    from koru.autonomy.operator.operator_plugin import plugin_skip_code
 
     blocker = plugin_skip_code(reason)
     recovery_actions = {

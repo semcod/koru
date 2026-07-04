@@ -6,12 +6,12 @@ import shlex
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from koru.autonomous_loop_interfaces import (
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_by_from_autopilot_status,
     _is_plugin_blocker,
     _safe_dashboard_action_urls,
 )
-from koru.autonomous_loop_reporting import _slug
+from koru.autonomy.operator.operator_loop_reporting import _slug
 from koru.autonomy.replay_actions import quick_action_to_replay
 
 

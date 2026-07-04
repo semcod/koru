@@ -17,8 +17,8 @@ from typing import Any
 
 from koru.autonomy.cycle.cycle_common import DiagnosticResult
 from koru.autonomy.cycle.cycle_skip_conditions import _is_topology_enabled
-from koru.autonomous_wup import WupHealthResult
-from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
+from koru.autonomy.operator.operator_wup import WupHealthResult
+from koru.autonomy.operator.operator_wup import _read_wup_health as _read_wup_health_impl
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 

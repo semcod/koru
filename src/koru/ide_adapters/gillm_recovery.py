@@ -7,13 +7,19 @@ from dataclasses import dataclass, field
 from typing import Any
 
 try:
-    from gillm.recovery import diagnose_drive_reply, probe_environment, recovery_hints_for_reload
     from gillm.recovery import (
         classify_environment_failure as _classify_environment_failure,
+    )
+    from gillm.recovery import (
         classify_failure as _classify_failure,
+    )
+    from gillm.recovery import (
         classify_input_failure as _classify_input_failure,
+    )
+    from gillm.recovery import (
         classify_plugin_failure as _classify_plugin_failure,
     )
+    from gillm.recovery import diagnose_drive_reply, probe_environment, recovery_hints_for_reload
 except ImportError:
     @dataclass(frozen=True)
     class EnvironmentDiagnostics:

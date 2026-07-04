@@ -99,7 +99,7 @@ def _ancestor_pids(pid: int) -> set[int]:
 
 
 def _looks_like_autonomous_up_command(command: str) -> bool:
-    from koru.autonomous_parser import looks_like_autonomous_up_command
+    from koru.autonomy.operator.operator_parser import looks_like_autonomous_up_command
 
     return looks_like_autonomous_up_command(command)
 

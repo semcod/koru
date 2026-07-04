@@ -9,8 +9,8 @@ import argparse
 from dataclasses import dataclass
 from typing import Any
 
-from koru.autonomy.cycle.cycle import DiagnosticResult
 from koru.autonomy.autopilot_status import parse_autopilot_status
+from koru.autonomy.cycle.cycle import DiagnosticResult
 from koru.queue import QueueLoopResult
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})

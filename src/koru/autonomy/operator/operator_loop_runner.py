@@ -11,59 +11,139 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-from koru.autonomous_loop_interfaces import (
+from koru.autonomy.config import structured_cycle_report_enabled
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_by_from_autopilot_status as _blocked_by_from_autopilot_status,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_interface_action_lines as _blocked_interface_action_lines,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_interface_detail_suffix as _blocked_interface_detail_suffix,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_interface_items as _blocked_interface_items,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _blocked_interface_recovery_suffix as _blocked_interface_recovery_suffix,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _dashboard_action_urls as _dashboard_action_urls,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _default_dashboard_action_urls as _default_dashboard_action_urls,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _format_blocked_interface_line as _format_blocked_interface_line,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _interface_matches_ide as _interface_matches_ide,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _is_plugin_blocker as _is_plugin_blocker,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _safe_dashboard_action_urls as _safe_dashboard_action_urls,
+)
+from koru.autonomy.operator.operator_loop_interfaces import (
     _select_blocked_interface_items as _select_blocked_interface_items,
 )
-from koru.autonomous_loop_narration import (
+from koru.autonomy.operator.operator_loop_narration import (
     AutonomyNextStepNarrator as AutonomyNextStepNarrator,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _handle_default_steps as _handle_default_steps,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _handle_status_completed_or_failed as _handle_status_completed_or_failed,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _handle_status_idle as _handle_status_idle,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _handle_status_waiting_input as _handle_status_waiting_input,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _handle_stop_reason_max_cycles as _handle_stop_reason_max_cycles,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _handle_stop_reason_waiting_input as _handle_stop_reason_waiting_input,
+)
+from koru.autonomy.operator.operator_loop_narration import (
     _operator_next_steps as _operator_next_steps,
 )
-from koru.autonomous_loop_quick_actions import (
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _autopilot_quick_action_lines as _autopilot_quick_action_lines,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _backtick_command as _backtick_command,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _base_quick_action_lines as _base_quick_action_lines,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _curl_url as _curl_url,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _diagnostics_quick_action_lines as _diagnostics_quick_action_lines,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _emit_quick_action_line as _emit_quick_action_line,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _is_create_ticket_action as _is_create_ticket_action,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _queue_quick_action_lines as _queue_quick_action_lines,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _quick_action_lines as _quick_action_lines,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _record_backtick_command as _record_backtick_command,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _record_quick_action_control_command as _record_quick_action_control_command,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _record_quick_action_control_commands as _record_quick_action_control_commands,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _record_reconnect_plugin_command as _record_reconnect_plugin_command,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _record_replay_sidecar_command as _record_replay_sidecar_command,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _record_url_command as _record_url_command,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _replay_quick_action_lines as _replay_quick_action_lines,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _split_quick_action as _split_quick_action,
+)
+from koru.autonomy.operator.operator_loop_quick_actions import (
     _url_origin as _url_origin,
 )
-from koru.autonomous_loop_reporting import (
+from koru.autonomy.operator.operator_loop_reporting import (
     _current_mission_lines as _current_mission_lines,
+)
+from koru.autonomy.operator.operator_loop_reporting import (
     _emit_idle_no_ticket_warning as _emit_idle_no_ticket_warning,
+)
+from koru.autonomy.operator.operator_loop_reporting import (
     _idle_no_ticket_warning as _idle_no_ticket_warning,
+)
+from koru.autonomy.operator.operator_loop_reporting import (
     _log_operator_next_steps as _log_operator_next_steps,
+)
+from koru.autonomy.operator.operator_loop_reporting import (
     _should_warn_idle_no_ticket as _should_warn_idle_no_ticket,
+)
+from koru.autonomy.operator.operator_loop_reporting import (
     _slug as _slug,
 )
-from koru.autonomy.config import structured_cycle_report_enabled
 from koru.autonomy.phases.contexts import SleepBackoffContext
 from koru.autonomy.phases.sleep_phase import finish_cycle_with_sleep
 from koru.autonomy.structured_report import emit_structured_cycle_report

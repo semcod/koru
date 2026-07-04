@@ -20,7 +20,7 @@ from typing import Any, Literal, TextIO
 
 import yaml
 
-from koru.autonomous_startup import AutonomousStartupProbe, supports_autopilot_plugin_ide
+from koru.autonomy.configuration.config_startup import AutonomousStartupProbe, supports_autopilot_plugin_ide
 from koru.tasks import CreatedTask, create_nl_task
 
 StepStatus = Literal["ok", "pending", "skipped"]

@@ -6,8 +6,8 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_diag_markers import diagnostic_marker_path
-from koru.autonomous_wup import WupHealthResult
+from koru.autonomy.operator.operator_diag_markers import diagnostic_marker_path
+from koru.autonomy.operator.operator_wup import WupHealthResult
 from koru.bounded_contexts.wup.application import WupCommandService
 from koru.bounded_contexts.wup.commands import EvaluateWupHealthCommand
 from koru.redup_integration import redup_changed_scan_runner_command, redup_scan_command
