@@ -414,7 +414,7 @@ def resolve_autopilot_ide(cli_value: str) -> str:
 
 def apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
-    from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+    from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
 
     lane, _source = resolve_agent_lane_id(
         project,

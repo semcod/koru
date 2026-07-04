@@ -12,7 +12,7 @@ import koru.autonomous as _autonomous
 import koru.cli_parser as _cli_parser
 from koru.agents import detect_agent_options  # noqa: F401 - legacy CLI monkeypatch hook
 from koru.autoloop_cli import autoloop_main
-from koru.autonomous_runtime import (
+from koru.autonomy.operator.operator_runtime import (
     cli_should_reexec,
     maybe_sync_project_koru_package,
     project_venv_reexec_argv,

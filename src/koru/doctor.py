@@ -19,7 +19,7 @@ from koru import doctor_project_health as _project_health
 from koru import doctor_registry_checks as _registry_checks
 from koru import doctor_reporting_checks as _reporting_checks
 from koru import doctor_runner as _runner
-from koru.autonomous_env import (
+from koru.autonomy.configuration.config_env import (
     autonomous_environ_doctor_probe as autonomous_environ_doctor_probe,
 )
 from koru.doctor_autopilot_checks import (

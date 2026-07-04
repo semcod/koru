@@ -33,7 +33,7 @@ def _autopilot_quick_action_lines(
 ) -> list[str]:
     # Late-bind through the runner facade so tests patching
     # ``autonomous_loop_runner._blocked_interface_action_lines`` still take effect.
-    from koru import autonomous_loop_runner as _runner_mod
+    from koru.autonomy.operator import operator_loop_runner as _runner_mod
 
     autopilot_actions = _runner_mod._blocked_interface_action_lines(
         blocked_by, autopilot_ide=autopilot_ide

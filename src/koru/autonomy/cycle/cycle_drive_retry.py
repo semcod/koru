@@ -737,7 +737,7 @@ def _idle_no_ticket_skip_result(
     idle_prompt_kind: str | None,
     _hp: Callable[..., Any],
 ) -> tuple[dict[str, Any], bool, str, str | None]:
-    from koru.autonomous_loop_runner import _dashboard_action_urls
+    from koru.autonomy.operator.operator_loop_runner import _dashboard_action_urls
     from koru.autonomy.ide_work import sprint_ticket_status_summary
 
     decision = AutopilotPolicyDecision.skip(

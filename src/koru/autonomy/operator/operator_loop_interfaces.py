@@ -135,7 +135,7 @@ def _safe_dashboard_action_urls(project: Any | None) -> dict[str, str]:
     try:
         # Late-bind through the runner facade so tests patching
         # ``autonomous_loop_runner._dashboard_action_urls`` still take effect.
-        from koru import autonomous_loop_runner as _runner_mod
+        from koru.autonomy.operator import operator_loop_runner as _runner_mod
 
         return _runner_mod._dashboard_action_urls(project)
     except Exception:

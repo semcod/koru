@@ -123,7 +123,7 @@ class InstallManagerReport:
 
 
 def _resolve_source_root(project: Path | None = None) -> Path:
-    from koru.autonomous_runtime import normalize_project_root
+    from koru.autonomy.operator.operator_runtime import normalize_project_root
 
     candidates: list[Path] = []
     if project is not None:

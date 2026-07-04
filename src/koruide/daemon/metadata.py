@@ -25,7 +25,7 @@ def _normalized_project(project: Path | None) -> Path | None:
     if project is None:
         return None
     try:
-        from koru.autonomous_runtime import normalize_project_root
+        from koru.autonomy.operator.operator_runtime import normalize_project_root
 
         return normalize_project_root(project)
     except Exception:

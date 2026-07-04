@@ -61,7 +61,7 @@ def _session_label() -> str:
 
 def _startup_facade():
     """Legacy patch surface: tests monkeypatch koru.autonomous_startup.*."""
-    from koru import autonomous_startup as _facade
+    from koru.autonomy.configuration import config_startup as _facade
 
     return _facade
 
@@ -470,7 +470,7 @@ def _normalized_cli_value(raw: str | None) -> str:
 def _autopilot_socket_path_for_probe(ide_id: str) -> str:
     if not ide_id or ide_id == "auto":
         return str(default_socket_path())
-    from koru.autonomous_runtime import default_autopilot_instance_for_ide
+    from koru.autonomy.operator.operator_runtime import default_autopilot_instance_for_ide
 
     previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
     previous_socket = os.environ.get("KORU_AUTOPILOT_SOCKET")

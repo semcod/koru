@@ -58,7 +58,7 @@ def _handle_status_waiting_input(
 def _handle_status_idle(args: Any, project: Any, sleep_text: str, **kwargs: Any) -> list[str]:
     # Late-bind through the runner facade so tests patching
     # ``autonomous_loop_runner._dashboard_action_urls`` still take effect.
-    from koru import autonomous_loop_runner as _runner_mod
+    from koru.autonomy.operator import operator_loop_runner as _runner_mod
 
     urls = _runner_mod._dashboard_action_urls(project) if project is not None else {
         "dashboard": "http://127.0.0.1:8765/",
@@ -185,7 +185,7 @@ def _operator_next_steps(
     """Human-readable plan for the next outer-loop moves."""
     # Late-bind the narrator through the runner facade so tests patching
     # ``autonomous_loop_runner.AutonomyNextStepNarrator`` still take effect.
-    from koru import autonomous_loop_runner as _runner_mod
+    from koru.autonomy.operator import operator_loop_runner as _runner_mod
 
     narrator = _runner_mod.AutonomyNextStepNarrator(
         args=args,

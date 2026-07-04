@@ -7,7 +7,7 @@ from koru.autonomous import (
     autonomous_main,
     stop_prior_autonomous_for_auto_start,
 )
-from koru.autonomous_processes import try_acquire_autonomous_start_lock
+from koru.autonomy.operator.operator_processes import try_acquire_autonomous_start_lock
 
 _MAINTENANCE_ACTIONS = {"doctor", "self-heal", "status"}
 _GLOBAL_OPTIONS_WITH_VALUE = {"--socket"}

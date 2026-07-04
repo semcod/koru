@@ -734,7 +734,7 @@ def _try_os_injector_drive(
 
 def _apply_vdisplay_drive_env(daemon: Any, target_id: str) -> None:
     """Seed vdisplay drive defaults and project-scoped env vars."""
-    from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+    from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
 
     apply_vdisplay_drive_defaults(ide=target_id)
     if getattr(daemon, "project", None) is not None:

@@ -64,7 +64,7 @@ def _create_diagnostic_ticket(
     state_dir: Path,
 ) -> None:
     from koru import autonomous_cycle as _cycle_mod
-    from koru.autonomous_diag_markers import diagnostic_marker_path
+    from koru.autonomy.operator.operator_diag_markers import diagnostic_marker_path
 
     state_dir.mkdir(parents=True, exist_ok=True)
     marker = diagnostic_marker_path(state_dir, check_id)
@@ -91,7 +91,7 @@ def _create_diagnostic_ticket(
 
 
 def _clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
-    from koru.autonomous_diag_markers import diagnostic_marker_path
+    from koru.autonomy.operator.operator_diag_markers import diagnostic_marker_path
 
     diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
 
@@ -130,7 +130,7 @@ def _run_idle_diagnostics(
     topology_integration: bool,
 ) -> DiagnosticResult:
     from koru import autonomous_cycle as _cycle_mod
-    from koru import autonomous_diagnostics as diag
+    from koru.autonomy.operator import operator_diagnostics as diag
 
     def create_ticket(**kwargs: Any) -> None:
         _cycle_mod._create_diagnostic_ticket(stdio_format=stdio_format, **kwargs)

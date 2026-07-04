@@ -134,7 +134,7 @@ def _log_operator_next_steps(
     # Late-bind every helper through the runner facade so tests patching
     # ``autonomous_loop_runner._current_mission_lines`` / ``_operator_next_steps``
     # / ``_quick_action_lines`` / ``_emit_quick_action_line`` still take effect.
-    from koru import autonomous_loop_runner as _runner_mod
+    from koru.autonomy.operator import operator_loop_runner as _runner_mod
 
     for line in _runner_mod._current_mission_lines(
         queue_result=queue_result,

@@ -10,7 +10,7 @@ from typing import Any
 
 def action_prepare_vdisplay(args: argparse.Namespace) -> int:
     ide = str(getattr(args, "ide", "auto") or "auto").strip().lower()
-    from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+    from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
 
     applied = apply_vdisplay_drive_defaults(ide=ide)
     if applied:

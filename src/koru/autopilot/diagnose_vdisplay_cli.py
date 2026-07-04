@@ -18,7 +18,7 @@ def _latest_jetbrains_capture(root: Path) -> Path | None:
 
 
 def action_diagnose_vdisplay(args: argparse.Namespace) -> int:
-    from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+    from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
 
     ide = (args.ide or "jetbrains").strip().lower()
     applied = apply_vdisplay_drive_defaults(ide=ide)

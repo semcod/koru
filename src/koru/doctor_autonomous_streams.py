@@ -148,7 +148,7 @@ def check_autonomous_service_stream(
     *,
     socket_summary: Callable[[], tuple[list[str], int, int]],
 ) -> tuple[str, str]:
-    from koru.autonomous_processes import (
+    from koru.autonomy.operator.operator_processes import (
         _find_existing_autonomous_processes,
         _find_existing_wup_processes,
     )

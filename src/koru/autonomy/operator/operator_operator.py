@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.autonomy.operator import operator_plugin_runtime as _plugin_runtime
-from koru import autonomous_plugin_wait as _plugin_wait
+from koru.autonomy.operator import operator_plugin_wait as _plugin_wait
 from koru.autonomy.operator.operator_plugin_lifecycle import (
     PluginLifecycleHooks,
     setup_autopilot_plugin_lifecycle,

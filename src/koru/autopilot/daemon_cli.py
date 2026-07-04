@@ -86,7 +86,7 @@ def run_daemon_command(
         print(f"koru autopilot daemon: removed stale socket {path}")
     if _daemon_already_running(args, socket_path):
         return 0
-    from koru.autonomous_runtime import normalize_project_root
+    from koru.autonomy.operator.operator_runtime import normalize_project_root
 
     raw_project = args.project.resolve()
     project = normalize_project_root(raw_project) if raw_project is not None else None
@@ -97,7 +97,7 @@ def run_daemon_command(
         os.environ.setdefault("KORU_PROJECT_ROOT", str(project.resolve()))
     instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip().lower()
     if instance:
-        from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+        from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
 
         applied = apply_vdisplay_drive_defaults(ide=instance)
         if applied:

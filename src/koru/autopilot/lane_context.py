@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.agents import agent_lane_environment, format_agent_lane_exports
-from koru.autonomous_startup import resolve_agent_lane_id
+from koru.autonomy.configuration.config_startup import resolve_agent_lane_id
 from koru.autopilot import default_socket_path
 from koru.ide_adapters.shared import SOCKET_SETTING_KEY, user_settings_path
 from koru.init import resolve_project_agent_lane

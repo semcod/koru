@@ -29,7 +29,7 @@ def _resolve_bridge_source(ide: str) -> str:
 
 def action_vdisplay_up(args: argparse.Namespace) -> int:
     ide = str(getattr(args, "ide", "jetbrains") or "jetbrains").strip().lower()
-    from koru.autonomous_vdisplay_defaults import apply_vdisplay_drive_defaults
+    from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
 
     applied = apply_vdisplay_drive_defaults(ide=ide)
     if applied:

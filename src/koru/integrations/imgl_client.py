@@ -246,7 +246,7 @@ def _rest_doctor(image: str, *, locale: str) -> dict[str, Any]:
 def _submit_key_for_ide(ide: str, submit: bool) -> str:
     if not submit:
         return ""
-    from koru.autonomous_cycle_gate import effective_ide_control_submit
+    from koru.autonomy.cycle.cycle_gate import effective_ide_control_submit
 
     if not effective_ide_control_submit(submit=submit, ide=ide):
         return ""

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from koru import autonomous_cycle_config as _autonomous_cycle_config
+from koru.autonomy.cycle import cycle_config as _autonomous_cycle_config
 from koru.autonomous_checkpoint import load_loop_checkpoint
 
 if TYPE_CHECKING:

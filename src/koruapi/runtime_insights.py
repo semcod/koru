@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_process_guard import (
+from koru.autonomy.operator.operator_process_guard import (
     find_existing_autonomous_processes,
     find_existing_wup_processes,
 )
