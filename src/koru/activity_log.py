@@ -98,8 +98,13 @@ def _emit_nfo_activity(
         _NFO_UNAVAILABLE = True
         if not _NFO_UNAVAILABLE_WARNED:
             _NFO_UNAVAILABLE_WARNED = True
+            missing_optional = isinstance(exc, ModuleNotFoundError) and "nfo" in str(exc)
+            if missing_optional and not os.environ.get("KORU_DEBUG"):
+                # expected on installs without the optional nfo extra — stay
+                # quiet instead of warning once per process (KORU_DEBUG=1 shows it)
+                return
             hint = ""
-            if isinstance(exc, ModuleNotFoundError) and "nfo" in str(exc):
+            if missing_optional:
                 hint = (
                     " (optional dependency; install with "
                     "'pip install nfo' or 'pip install \"koru[obs]\"' "

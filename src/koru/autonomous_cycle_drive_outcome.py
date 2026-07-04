@@ -1,19 +1,16 @@
 """
-Backward compatibility shim for koru.autonomy.cycle.cycle_drive_outcome module migration.
+Backward compatibility alias for koru.autonomy.cycle.cycle_drive_outcome.
 
-This module maintains backward compatibility by re-exporting from the new
-autonomy.cycle.cycle_drive_outcome submodule. Remove this shim after one release.
+The old copy-attributes shim desynced monkeypatches: patching
+``koru.autonomous_cycle_drive_outcome.<name>`` mutated the shim's copy while the implementation
+kept calling its own module globals. Registering the implementation module
+under the legacy name keeps both import paths one and the same module
+object, so patches land regardless of which path is used.
+Remove after one release once callers import koru.autonomy.cycle.cycle_drive_outcome.
 """
 
-# Re-export everything from the new module location
 import sys
 
-# Also expose the module for test monkeypatching and private function access
-from koru.autonomy.cycle import cycle_drive_outcome as _module_impl  # noqa: F401
-from koru.autonomy.cycle.cycle_drive_outcome import *  # noqa: F401, F403
+from koru.autonomy.cycle import cycle_drive_outcome as _module_impl
 
-_current_module = sys.modules[__name__]
-for attr in dir(_module_impl):
-    if not attr.startswith("__"):
-        if not hasattr(_current_module, attr):
-            setattr(_current_module, attr, getattr(_module_impl, attr))
+sys.modules[__name__] = _module_impl

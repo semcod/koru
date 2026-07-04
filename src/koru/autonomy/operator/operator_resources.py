@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from koru import autonomous_cycle_config as _autonomous_cycle_config
-from koru.autonomous_auto_pipeline import AutoPipelineState
 from koru.autonomous_checkpoint import load_loop_checkpoint
+
+if TYPE_CHECKING:
+    from koru.autonomy.orchestrator.orchestrator import AutoPipelineState
 from koru.autonomy.cycle.cycle_gate import apply_agent_lane_environ
 from koru.autonomy.configuration.config_env import effective_ticket_source_flags
 from koru.autonomy.configuration.config_startup import resolve_autopilot_ide_for_autonomous
@@ -65,6 +67,10 @@ def setup_autonomous_resources(
         topology_integration=args.topology_integration,
         stdio_format=args.emit_events,
     )
+    # imported lazily: orchestrator → cycle → operator → this module would
+    # otherwise be a circular import at package-init time
+    from koru.autonomy.orchestrator.orchestrator import AutoPipelineState
+
     auto_pipeline_state = (
         AutoPipelineState() if getattr(args, "_auto_pipeline_enabled", False) else None
     )

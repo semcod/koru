@@ -18,7 +18,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
-from koru import autonomous_plugin
+from koru.autonomy.operator import operator_plugin as autonomous_plugin
 from koru.ide_client import IDEControlClient, build_ide_client
 from koruide.daemon import AutopilotDaemon
 

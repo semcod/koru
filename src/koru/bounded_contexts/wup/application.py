@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.autonomous_wup import WupHealthResult, _load_wup_health
-from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
+from koru.autonomy.operator.operator_wup import WupHealthResult, _load_wup_health
+from koru.autonomy.operator.operator_wup import _read_wup_health as _read_wup_health_impl
 from koru.cqrs import CqrsService
 
 from .commands import EvaluateWupHealthCommand

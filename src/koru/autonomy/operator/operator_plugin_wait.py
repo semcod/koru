@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from koru import autonomous_plugin_runtime as plugin_runtime
+from koru.autonomy.operator import operator_plugin_runtime as plugin_runtime
 from koru.control_commands import desktop_gui_command, shell_command
 from koru.observability_events import (
     emit_blocker,
