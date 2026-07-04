@@ -4115,13 +4115,14 @@ wheels = [
 
 [[package]]
 name = "vdisplay"
-version = "0.1.50"
+version = "0.1.52"
 source = { editable = "../../wronai/vdisplay" }
 
 [package.metadata]
 requires-dist = [
     { name = "comtypes", marker = "extra == 'windows'", specifier = ">=1.4.0" },
     { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "dbus-python", marker = "extra == 'portal'", specifier = ">=1.3" },
     { name = "dsl2vdisplay", marker = "extra == 'auto'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
     { name = "dsl2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
     { name = "dsl2vdisplay", marker = "extra == 'dev'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
@@ -4151,6 +4152,7 @@ requires-dist = [
     { name = "playwright", marker = "extra == 'e2e'", specifier = ">=1.40" },
     { name = "pydantic", marker = "extra == 'core'", specifier = ">=2" },
     { name = "pydantic", marker = "extra == 'dev'", specifier = ">=2" },
+    { name = "pygobject", marker = "extra == 'portal'", specifier = ">=3.42" },
     { name = "pyobjc-framework-applicationservices", marker = "extra == 'macos'", specifier = ">=10.0" },
     { name = "pyobjc-framework-cocoa", marker = "extra == 'macos'", specifier = ">=10.0" },
     { name = "pyte", marker = "extra == 'terminal'", specifier = ">=0.8.1" },
@@ -4170,7 +4172,7 @@ requires-dist = [
     { name = "vql", marker = "extra == 'vql'", editable = "../../oqlos/vql" },
     { name = "wcwidth", marker = "extra == 'terminal'", specifier = ">=0.2.13" },
 ]
-provides-extras = ["linux", "windows", "macos", "pillow", "sampler", "dev", "core", "control", "auto", "browser", "e2e", "vision", "terminal", "uinput", "agent", "img2nl", "imgl", "vql", "observe"]
+provides-extras = ["linux", "windows", "macos", "pillow", "sampler", "dev", "core", "control", "auto", "browser", "e2e", "vision", "terminal", "uinput", "portal", "agent", "img2nl", "imgl", "vql", "observe"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -45,17 +45,17 @@ def _landmark_input_xy(frame: bytes) -> tuple[int, int] | None:
         boxes = ocr_png(frame, min_confidence=40.0)
     except Exception:
         return None
-    ctx = auto = None
-    for b in boxes:
-        t = (b.text or "").strip().lower()
-        if ctx is None and "context" in t:
-            ctx = b
-        if auto is None and t in {"auto", "agent"}:
-            auto = b
-    if ctx is None:
+    # the composer footer is at the BOTTOM of the panel; pick the lowest
+    # 'context' match so a stray 'context' word higher up can't mislead us.
+    ctxs = [b for b in boxes if "context" in (b.text or "").strip().lower()]
+    autos = [b for b in boxes if (b.text or "").strip().lower() in {"auto", "agent"}]
+    if not ctxs:
         return None
+    ctx = max(ctxs, key=lambda b: b.bounds.y)
     x = int(ctx.bounds.x + 40)
-    if auto is not None:
+    below = [b for b in autos if b.bounds.y > ctx.bounds.y]
+    if below:
+        auto = min(below, key=lambda b: b.bounds.y)
         y = int((ctx.bounds.y + ctx.bounds.height + auto.bounds.y) / 2)
     else:
         y = int(ctx.bounds.y + ctx.bounds.height + 40)
@@ -76,6 +76,14 @@ def _ocr_anchor_xy(frame: bytes, ide: str) -> tuple[int, int] | None:
     return _landmark_input_xy(frame)
 
 
+def _token_cache_path():
+    from pathlib import Path
+
+    base = Path(os.environ.get("XDG_STATE_HOME") or (Path.home() / ".local" / "state")) / "koru"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / "portal_restore_token"
+
+
 def _get_session():
     global _session
     if _session is not None:
@@ -87,36 +95,76 @@ def _get_session():
         logger.warning("portal input unavailable: %s", reason)
         return None
     tok = os.environ.get("KORU_VDISPLAY_PORTAL_TOKEN") or None
+    if tok is None:
+        try:
+            tok = _token_cache_path().read_text().strip() or None
+        except OSError:
+            tok = None
     _session = RemoteDesktopPortal(restore_token=tok).open(timeout_s=90)
+    # persist the (rotating) restore token so the approval dialog only shows once
     if _session.restore_token:
-        logger.info("portal restore_token acquired (set KORU_VDISPLAY_PORTAL_TOKEN to avoid the dialog)")
+        try:
+            _token_cache_path().write_text(_session.restore_token)
+        except OSError:
+            pass
     return _session
+
+
+def _anchor_precise(frame: bytes, ide: str) -> tuple[int, int] | None:
+    """Precise placeholder anchor only (empty input); None when input has text."""
+    try:
+        from vdisplay.control.vision_chat_detect import ocr_anchor_chat_target
+    except ImportError:
+        return None
+    a = ocr_anchor_chat_target(frame, ide=ide)
+    cc = (a or {}).get("click_center") or {}
+    return (int(cc["x"]), int(cc["y"])) if cc.get("x") is not None else None
 
 
 def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool = False) -> dict[str, Any]:
     """Full portal flow: locate the chat input on the portal's own frame and
     type (guarded). Returns a result dict."""
+    import time
+
     p = _get_session()
     if p is None:
         return {"ok": False, "method": "portal", "error": "portal unavailable"}
+
+    def _target(frame: bytes) -> tuple[int, int] | None:
+        fw, fh = _png_size(frame)
+        xy = _ocr_anchor_xy(frame, ide)  # placeholder anchor, then landmark
+        if xy is None:
+            return None
+        return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
+
     frame = p.grab_frame()
-    fw, fh = _png_size(frame)
-    anchor = _ocr_anchor_xy(frame, ide)
-    if anchor is None:
-        return {"ok": False, "method": "portal", "error": "chat input not found on portal frame"}
-    fx, fy = anchor
-    sx, sy = p.frame_to_stream(fx, fy, frame_w=fw, frame_h=fh)
+    precise = _anchor_precise(frame, ide)  # empty input -> exact placeholder bbox
+
+    # Two-pass when the input already holds text (no placeholder): a rough
+    # landmark click focuses + clears it, the placeholder reappears, then we
+    # re-anchor precisely on the now-empty input before typing.
+    if precise is None:
+        rough = _target(frame)
+        if rough is None:
+            return {"ok": False, "method": "portal", "error": "chat input not found on portal frame"}
+        p.move_abs(*rough); time.sleep(0.35)
+        p.click(); time.sleep(0.4)
+        p.clear_input(200); time.sleep(0.4)
+        frame = p.grab_frame()  # placeholder should be back now
+
+    sxy = _target(frame)
+    if sxy is None:
+        return {"ok": False, "method": "portal", "error": "chat input not found after clear"}
+    sx, sy = sxy
 
     def _verify(before: bytes, after: bytes) -> bool:
-        # focus guard: after the click, confirm the click target is still on the
-        # IDE chat (the OCR anchor still resolves near it) — so a drifted click
-        # onto e.g. a shell is rejected before any keystroke is sent.
-        a2 = _ocr_anchor_xy(after, ide)
+        # focus guard: after the click, confirm the target is still on the IDE
+        # chat (the anchor still resolves near it) — reject a drifted click so a
+        # keystroke can never leak into the wrong window (e.g. a shell).
+        a2 = _target(after)
         if a2 is None:
             return False
-        aw, ah = _png_size(after)
-        s2x, s2y = p.frame_to_stream(a2[0], a2[1], frame_w=aw, frame_h=ah)
-        return abs(s2x - sx) <= 120 and abs(s2y - sy) <= 120
+        return abs(a2[0] - sx) <= 140 and abs(a2[1] - sy) <= 140
 
     typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True)
     logger.info("PORTAL_INPUT typed=%s ide=%s stream=(%d,%d) submit=%s", typed, ide, sx, sy, submit)
