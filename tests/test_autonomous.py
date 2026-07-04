@@ -3971,7 +3971,7 @@ def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
 def test_submit_unverified_drive_failure_is_not_retryable(monkeypatch) -> None:
     sleeps: list[int] = []
     monkeypatch.setattr(
-        "koru.autonomous_drive_retry_policy.time.sleep", lambda seconds: sleeps.append(seconds)
+        "koru.autonomy.drive.drive_retry_policy.time.sleep", lambda seconds: sleeps.append(seconds)
     )
 
     should_retry = drive_retry_mod._handle_failed_drive_attempt(

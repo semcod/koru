@@ -114,7 +114,7 @@ def try_write_observability_event(
             write_dsl_log=write_dsl_log,
             emit_terminal=emit_terminal,
         )
-    except OSError:
+    except Exception:  # noqa: BLE001 — observability must never break delivery
         return None
 
 

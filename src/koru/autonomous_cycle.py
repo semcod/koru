@@ -25,6 +25,9 @@ for attr in dir(_module_impl):
 # tests monkeypatch them here. Removing them breaks cycle_queue_scan /
 # cycle_diagnostics / cycle_planning at runtime (AttributeError) — keep this
 # block until every late-bound call site and test patch target migrates.
+from koru.autonomy.cycle.cycle import (  # noqa: E402
+    _escalate_error_stagnation as _escalate_error_stagnation,
+)
 from koru.autonomy.cycle.cycle import _stdio_info as _stdio_info  # noqa: E402
 from koru.autonomy.cycle.cycle_chat_activity import (  # noqa: E402
     _skip_due_to_recent_chat_activity as _skip_due_to_recent_chat_activity,
@@ -49,6 +52,9 @@ from koru.autonomy.cycle_diagnostics import (  # noqa: E402
 )
 from koru.autonomy.cycle_planning import (  # noqa: E402
     _load_open_tickets_for_planning as _load_open_tickets_for_planning,
+)
+from koru.autonomy.cycle_planning import (
+    _run_phase4_advisory_hooks as _run_phase4_advisory_hooks,
 )
 from koru.autonomy.cycle_queue_scan import (
     _build_queue_command as _build_queue_command,

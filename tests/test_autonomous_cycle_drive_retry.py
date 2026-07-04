@@ -107,7 +107,7 @@ class ExecuteDriveDedupTests(unittest.TestCase):
                 "koru.autonomous_cycle_drive_retry._resolve_drive_plugin_requirement",
                 return_value=True,
             ),
-            mock.patch("koru.autonomous_drive_retry_policy.time.sleep", lambda *_a: None),
+            mock.patch("koru.autonomy.drive.drive_retry_policy.time.sleep", lambda *_a: None),
             mock.patch.dict(os.environ, env or {}, clear=False),
         ):
             _execute_autopilot_drive(
