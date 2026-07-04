@@ -284,7 +284,7 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         def _vc(before: bytes, after: bytes) -> bool:
             return _focused_near(after, sx, sy)
 
-        typed = p.type_into_input_verified(sx, sy, text, verify=_vc, submit=submit, clear_first=True)
+        typed = p.type_into_input_verified(sx, sy, text, verify=_vc, submit=submit, clear_first=True, submit_mode="ctrl-enter")
         logger.info("PORTAL_INPUT(cached) typed=%s stream=(%d,%d) submit=%s", typed, sx, sy, submit)
         return {
             "ok": bool(typed), "method": "portal-remotedesktop-cached",
@@ -330,7 +330,7 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         # lets us type, so a keystroke can never leak into the wrong window.
         return _focused_near(after, sx, sy)
 
-    typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True)
+    typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True, submit_mode="ctrl-enter")
     logger.info("PORTAL_INPUT typed=%s ide=%s stream=(%d,%d) submit=%s", typed, ide, sx, sy, submit)
     return {
         "ok": bool(typed),
