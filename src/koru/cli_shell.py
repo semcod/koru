@@ -53,18 +53,35 @@ class Integration:
     label: str
     description: str
     default: bool = False
+    fix_hint: str = ""
 
 
 INTEGRATION_CATALOG: tuple[Integration, ...] = (
-    Integration("openrouter", "OpenRouter LLM", "executor.kind=llm tickets + shell prompts via API", True),
-    Integration("qoder_chat", "Qoder / IDE chat", "autopilot injects prompts into the IDE chat (vscode lane)"),
-    Integration("planfile_queue", "Planfile queue", "ticket queue drain (koru --queue --loop)", True),
-    Integration("vdisplay", "vdisplay", "screen capture + verified injection for autopilot"),
-    Integration("code2llm", "code2llm scan", "code-smell discovery tickets"),
-    Integration("testql", "TestQL", "on-change quick test gates"),
-    Integration("wup", "wup health", "service health probes feeding cycle decisions"),
-    Integration("goal", "goal", "commit/publish advisory signals"),
-    Integration("costs", "costs", "LLM cost tracking badge"),
+    Integration(
+        "openrouter", "OpenRouter LLM",
+        "executor.kind=llm tickets + shell prompts via API", True,
+        "add OPENROUTER_API_KEY to .env (https://openrouter.ai/keys)",
+    ),
+    Integration(
+        "qoder_chat", "Qoder / IDE chat",
+        "autopilot injects prompts into the IDE chat (vscode lane)", False,
+        "run `coru vscode auto` inside the IDE's integrated terminal",
+    ),
+    Integration(
+        "planfile_queue", "Planfile queue",
+        "ticket queue drain (koru --queue --loop)", True,
+        "install planfile into the project venv",
+    ),
+    Integration(
+        "vdisplay", "vdisplay",
+        "screen capture + verified injection for autopilot", False,
+        "vdisplay-agent serve, then: vdisplay agent screencast start",
+    ),
+    Integration("code2llm", "code2llm scan", "code-smell discovery tickets", False, "pip install code2llm"),
+    Integration("testql", "TestQL", "on-change quick test gates", False, "pip install testql"),
+    Integration("wup", "wup health", "service health probes feeding cycle decisions", False, "pip install wup"),
+    Integration("goal", "goal", "commit/publish advisory signals", False, "pip install goal"),
+    Integration("costs", "costs", "LLM cost tracking badge", False, "pip install costs"),
 )
 
 
@@ -254,6 +271,59 @@ def _ask_llm(project: Path, settings: dict, prompt: str) -> str:
         return f"{RED}LLM call failed: {exc}{RESET}"
 
 
+# ── integration probes ───────────────────────────────────────────────────────
+def _probe_binary(name: str) -> tuple[bool, str]:
+    import shutil
+
+    path = shutil.which(name)
+    return (True, path) if path else (False, f"{name} not on PATH")
+
+
+def _probe_qoder_chat(project: Path) -> tuple[bool, str]:
+    try:
+        proc = subprocess.run(
+            ["koru", "autopilot", "status"],
+            capture_output=True,
+            text=True,
+            cwd=project,
+            timeout=15,
+            env={**os.environ, "KORU_AUTOPILOT_INSTANCE": "vscode"},
+        )
+        payload = json.loads(proc.stdout or "{}")
+    except Exception as exc:
+        return False, f"autopilot daemon unreachable ({exc})"
+    if payload.get("plugins"):
+        return True, "bridge connected"
+    if payload.get("daemon_pid"):
+        return False, "daemon up, IDE bridge NOT connected"
+    return False, "autopilot daemon not running"
+
+
+def _probe_vdisplay(_project: Path) -> tuple[bool, str]:
+    base = os.environ.get("VDISPLAY_AGENT_URL", "http://127.0.0.1:8765").rstrip("/")
+    try:
+        with urllib.request.urlopen(f"{base}/health", timeout=5) as resp:
+            payload = json.loads(resp.read().decode("utf-8", errors="replace"))
+        data = payload.get("data") or {}
+        return True, f"agent ok (v{data.get('version', '?')})"
+    except Exception:
+        return False, f"agent unreachable at {base}"
+
+
+def probe_integration(project: Path, key: str) -> tuple[bool, str]:
+    """Live availability check → (ok, one-line detail)."""
+    if key == "openrouter":
+        return (True, "API key present") if _api_key(project) else (False, "OPENROUTER_API_KEY missing")
+    if key == "qoder_chat":
+        return _probe_qoder_chat(project)
+    if key == "planfile_queue":
+        binary = _planfile_bin(project)
+        return (True, binary) if binary != "planfile" else _probe_binary("planfile")
+    if key == "vdisplay":
+        return _probe_vdisplay(project)
+    return _probe_binary(key)
+
+
 # ── slash commands ───────────────────────────────────────────────────────────
 def _cmd_help(_ctx: "ShellContext", _arg: str) -> None:
     rows = [
@@ -285,6 +355,15 @@ def _cmd_integration(ctx: "ShellContext", _arg: str) -> None:
     ctx.config.setdefault(INTEGRATIONS_SECTION, {})["enabled"] = selected
     save_config(ctx.project, ctx.config)
     print(f"{GREEN}saved:{RESET} {', '.join(selected) or '(none)'}")
+    hints = {item.key: item.fix_hint for item in INTEGRATION_CATALOG}
+    for key in selected:
+        ok, detail = probe_integration(ctx.project, key)
+        if ok:
+            print(f"  {GREEN}✓{RESET} {key}: {detail}")
+        else:
+            print(f"  {RED}✗{RESET} {key}: {detail}")
+            if hints.get(key):
+                print(f"    {DIM}fix: {hints[key]}{RESET}")
 
 
 def _cmd_config(ctx: "ShellContext", _arg: str) -> None:
@@ -323,12 +402,14 @@ def _cmd_status(ctx: "ShellContext", _arg: str) -> None:
         f"project      {ctx.project}",
         f"open tickets {BOLD}{len(tickets)}{RESET}",
         f"llm          {CYAN}{settings['llm_model']}{RESET}",
-        "integrations "
-        + " ".join(
-            (f"{GREEN}☑{RESET}" if item.key in current else "☐") + item.key
-            for item in INTEGRATION_CATALOG
-        ),
     ]
+    for item in INTEGRATION_CATALOG:
+        if item.key not in current:
+            lines.append(f"{DIM}☐ {item.key} (disabled){RESET}")
+            continue
+        ok, detail = probe_integration(ctx.project, item.key)
+        mark = f"{GREEN}✓{RESET}" if ok else f"{RED}✗{RESET}"
+        lines.append(f"{mark} {item.key:<15} {DIM}{detail}{RESET}")
     print(_box(lines))
 
 

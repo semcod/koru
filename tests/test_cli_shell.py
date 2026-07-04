@@ -83,3 +83,46 @@ def test_dispatch_exit_and_unknown(project: Path, capsys) -> None:
 def test_catalog_keys_unique() -> None:
     keys = [item.key for item in INTEGRATION_CATALOG]
     assert len(keys) == len(set(keys))
+
+
+def test_probe_openrouter_missing_key(project: Path, monkeypatch) -> None:
+    from koru.cli_shell import probe_integration
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    ok, detail = probe_integration(project, "openrouter")
+    assert ok is False
+    assert "OPENROUTER_API_KEY" in detail
+
+
+def test_probe_openrouter_key_from_dotenv(project: Path, monkeypatch) -> None:
+    from koru.cli_shell import probe_integration
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    (project / ".env").write_text("OPENROUTER_API_KEY=sk-or-test\n")
+    ok, detail = probe_integration(project, "openrouter")
+    assert ok is True
+
+
+def test_probe_unknown_binary(project: Path) -> None:
+    from koru.cli_shell import probe_integration
+
+    ok, detail = probe_integration(project, "definitely-not-a-binary-xyz")
+    assert ok is False
+    assert "not on PATH" in detail
+
+
+def test_integration_save_reports_probe_results(project: Path, monkeypatch, capsys) -> None:
+    """Enabling a dead integration prints ✗ plus its fix hint."""
+    ctx = ShellContext(project=project, config=load_config(project))
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr("sys.stdin", io.StringIO("\n"))
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False, raising=False)
+    monkeypatch.setattr(
+        "koru.cli_shell.probe_integration",
+        lambda _p, key: (key == "openrouter", "detail"),
+    )
+    assert _dispatch(ctx, "/integration") is True
+    out = capsys.readouterr().out
+    assert "✓" in out and "openrouter: detail" in out
+    assert "✗" in out and "planfile_queue: detail" in out
+    assert "fix: install planfile" in out
