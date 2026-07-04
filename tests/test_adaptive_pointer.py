@@ -89,10 +89,13 @@ def test_abs_pointer_flag_and_precedence(monkeypatch):
 def test_abs_affine_conversion_math(monkeypatch, tmp_path):
     import json
     import koru.integrations.vdisplay_client as vc
+    from koru.integrations.vdisplay import pointer_calibration as pc
 
-    # cache an affine and confirm _abs_pointer_click inverts it correctly
+    # cache an affine and confirm _abs_pointer_click inverts it correctly.
+    # _abs_pointer_click resolves _load_or_calibrate_abs_affine from its own
+    # module namespace, so patch there (not the vc re-export).
     aff = {"ax": 0.625, "bx": 0.0, "ay": 0.625, "by": -400.0}
-    monkeypatch.setattr(vc, "_load_or_calibrate_abs_affine", lambda source: aff)
+    monkeypatch.setattr(pc, "_load_or_calibrate_abs_affine", lambda source: aff)
     moved = {}
 
     class FakeDev:
