@@ -64,7 +64,7 @@ def discover_projects(workspace: Path) -> list[Path]:
     a fully-collected list afterward.
     """
     found: list[Path] = []
-    for dirpath, dirnames, filenames in os.walk(workspace):
+    for dirpath, dirnames, _filenames in os.walk(workspace):
         dirnames[:] = [d for d in dirnames if d not in _JUNK_PATH_SEGMENTS and not d.startswith(".")]
         base = Path(dirpath)
         candidate = base

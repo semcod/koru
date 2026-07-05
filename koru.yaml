@@ -153,6 +153,11 @@ queue:
   post_run_verify:
     enabled: true
     commands:
+      # Lint first (fast): a refactor that leaves an unused import / B007
+      # loop var otherwise passes pytest but breaks the CI ruff step. Running
+      # ruff here makes the autonomous loop reopen such tickets instead of
+      # letting lint regressions reach main.
+      - .venv/bin/python -m ruff check src tests
       - .venv/bin/python -m pytest tests/ -q -x
     on_failure: reopen
     max_output_chars: 1200
