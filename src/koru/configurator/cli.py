@@ -5,13 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-
-from koruide.ide import autopilot_ide_choices
+from pathlib import Path
 
 from koru.configurator.features import migrate_project_config, toggle_feature_sections
 from koru.configurator.prompting import configure_project
 from koru.configurator.render import render_shell_exports, render_text_summary
 from koru.configurator.schema import CONFIG_SCHEMA_V2, ConfigureResult, _ConfigureArgs
+from koruide.ide import autopilot_ide_choices
 
 
 def build_configure_parser() -> argparse.ArgumentParser:
@@ -29,8 +29,19 @@ def build_configure_parser() -> argparse.ArgumentParser:
     lan_group.add_argument("--lan", dest="lan", action="store_true", default=None, help="Expose dashboard on LAN.")
     lan_group.add_argument("--no-lan", dest="lan", action="store_false", help="Keep dashboard local-only.")
     port_group = parser.add_mutually_exclusive_group()
-    port_group.add_argument("--auto-port", dest="auto_port", action="store_true", default=None, help="Auto-pick a free dashboard port.")
-    port_group.add_argument("--no-auto-port", dest="auto_port", action="store_false", help="Fail if dashboard port is busy.")
+    port_group.add_argument(
+        "--auto-port",
+        dest="auto_port",
+        action="store_true",
+        default=None,
+        help="Auto-pick a free dashboard port.",
+    )
+    port_group.add_argument(
+        "--no-auto-port",
+        dest="auto_port",
+        action="store_false",
+        help="Fail if dashboard port is busy.",
+    )
     parser.add_argument("--non-interactive", action="store_true", help="Write defaults/flags without prompting.")
     parser.add_argument(
         "--migrate",

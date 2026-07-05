@@ -7,10 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
 
-from koruide.ide import autopilot_ide_choices, normalize_ide_id
-
 from koru.configurator.schema import CONFIG_SCHEMA, ConfigureResult, _ConfigureValues
 from koru.configurator.store import load_project_config, save_project_config
+from koruide.ide import autopilot_ide_choices, normalize_ide_id
 
 
 class ShellPrompter:
