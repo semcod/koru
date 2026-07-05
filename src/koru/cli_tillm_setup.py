@@ -15,6 +15,7 @@ from __future__ import annotations
 import getpass
 import os
 import sys
+from types import SimpleNamespace
 
 _ANSI = {
     "reset": "\033[0m",
@@ -146,12 +147,15 @@ def _extract_lang(argv: list[str]) -> tuple[str | None, list[str]]:
     return lang, rest
 
 
-def tillm_setup_main(argv: list[str] | None = None) -> int:
+def _load_tillm():
+    """Lazily import tillm; return a bundle of its helpers, or None if missing."""
     try:
         from tillm.i18n import _, save_language, set_language, yes_answers
         from tillm.providers import (
+            diagnose_provider,
             get_default_provider,
             iter_provider_specs,
+            list_provider_models,
             probe_provider,
             provider_default_model,
             resolve_provider_token,
@@ -162,83 +166,127 @@ def tillm_setup_main(argv: list[str] | None = None) -> int:
     except ImportError as exc:
         print(f"koru tillm: tillm package unavailable: {exc}", file=sys.stderr)
         print("Install it with `pip install tillm`.", file=sys.stderr)
-        return 2
-
-    lang, _rest = _extract_lang(list(argv or []))
-    if lang:
-        chosen = set_language(lang)
-        saved = save_language(lang)
-        if saved:
-            print(_c(_("lang.set", lang=chosen), "green"))
-
-    specs = list(iter_provider_specs())
-    available = set(available_client_ids())
-    default_provider = get_default_provider()
-    _print_provider_table(_, specs, resolve_provider_token, available, default_provider)
-
-    if not sys.stdin.isatty():
-        print(_("noninteractive.hint"))
-        return 0
-
-    picked = _pick_index(_, len(specs))
-    if picked is None:
-        return 0
-    spec = specs[picked]
-
-    if not _configure_token(
-        _, spec, resolve_provider_token, lambda pid, token: save_provider_token(pid, token)
-    ):
-        return 2
-
-    # Model select-list; Enter keeps the current one. Models come live from
-    # the provider API (curated fallback) so the list is never stale.
-    from tillm.providers import list_provider_models
-
-    current_model = provider_default_model(spec.id)
-    listing = list_provider_models(spec.id)
-    source_note = (
-        _("models.live") if listing.source == "live" else _("models.curated")
+        return None
+    return SimpleNamespace(
+        _=_,
+        save_language=save_language,
+        set_language=set_language,
+        yes_answers=yes_answers,
+        diagnose_provider=diagnose_provider,
+        get_default_provider=get_default_provider,
+        iter_provider_specs=iter_provider_specs,
+        list_provider_models=list_provider_models,
+        probe_provider=probe_provider,
+        provider_default_model=provider_default_model,
+        resolve_provider_token=resolve_provider_token,
+        save_provider_token=save_provider_token,
+        set_default_provider=set_default_provider,
+        available_client_ids=available_client_ids,
     )
+
+
+def _apply_lang(argv: list[str], t) -> None:
+    """Honour ``--lang``: switch the active language and persist the choice."""
+    lang = _extract_lang(argv)[0]
+    if not lang:
+        return
+    chosen = t.set_language(lang)
+    if t.save_language(lang):
+        print(_c(t._("lang.set", lang=chosen), "green"))
+
+
+def _pick_provider(t, specs):
+    """Return the chosen provider spec, or None to signal an early exit (rc 0).
+
+    Non-interactive shells (no tty) print a hint and exit; an empty or invalid
+    pick also exits without changing anything.
+    """
+    if not sys.stdin.isatty():
+        print(t._("noninteractive.hint"))
+        return None
+    picked = _pick_index(t._, len(specs))
+    if picked is None:
+        return None
+    return specs[picked]
+
+
+def _freeform_model(t, spec, current_model: str | None) -> str | None:
+    raw = input(
+        t._("model.freeform", id=spec.id, current=current_model or t._("model.provider_default"))
+    ).strip()
+    return raw or current_model
+
+
+def _choose_model(t, spec) -> None:
+    """Model select-list; Enter keeps the current one. Models come live from
+    the provider API (curated fallback) so the list is never stale."""
+    current_model = t.provider_default_model(spec.id)
+    listing = t.list_provider_models(spec.id)
+    source_note = t._("models.live") if listing.source == "live" else t._("models.curated")
     options = list(listing.models[:20])
     if current_model and current_model not in options:
         options.insert(0, current_model)
     if options:
         model = _pick_from_list(
-            _, _("model.label", id=spec.id) + f" ({source_note})", options, current_model
+            t._, t._("model.label", id=spec.id) + f" ({source_note})", options, current_model
         )
     else:
-        raw = input(
-            _("model.freeform", id=spec.id, current=current_model or _("model.provider_default"))
-        ).strip()
-        model = raw or current_model
+        model = _freeform_model(t, spec, current_model)
     if model and model != current_model:
-        token_now = resolve_provider_token(spec.id) or ""
-        save_provider_token(spec.id, token_now, model=model)
-        print(_c(_("model.set", model=model), "green"))
+        token_now = t.resolve_provider_token(spec.id) or ""
+        t.save_provider_token(spec.id, token_now, model=model)
+        print(_c(t._("model.set", model=model), "green"))
 
-    # Default provider; Enter keeps the current default.
-    if spec.id != default_provider:
-        answer = input(
-            _("default.question", id=spec.id, current=default_provider or _("default.none"))
-        ).strip().lower()
-        if answer in yes_answers():
-            set_default_provider(spec.id)
-            print(_c(_("default.set", id=spec.id), "green"))
 
-    from tillm.providers import diagnose_provider
+def _maybe_set_default(t, spec, default_provider) -> None:
+    """Offer to make the chosen provider the default; Enter keeps the current."""
+    if spec.id == default_provider:
+        return
+    answer = input(
+        t._("default.question", id=spec.id, current=default_provider or t._("default.none"))
+    ).strip().lower()
+    if answer in t.yes_answers():
+        t.set_default_provider(spec.id)
+        print(_c(t._("default.set", id=spec.id), "green"))
 
-    diagnosis = diagnose_provider(spec.id)
-    print(_c(f"\n{_('diag.title')}", "bold"))
+
+def _run_diagnosis(t, spec) -> int:
+    diagnosis = t.diagnose_provider(spec.id)
+    print(_c(f"\n{t._('diag.title')}", "bold"))
     marks = {"ok": _c("✓", "green"), "warn": _c("⚠", "yellow"), "fail": _c("✗", "red")}
     for item in diagnosis.items:
         print(f"  {marks[item.level]} {item.message}")
         if item.fix:
             print(_c(f"     fix: {item.fix}", "dim"))
-    result = probe_provider(spec.id, model=provider_default_model(spec.id))
+    t.probe_provider(spec.id, model=t.provider_default_model(spec.id))
     if diagnosis.ok:
         primary = next(iter(spec.compatible_clients()), None)
-        print(_c(f"\n{_('usage.title')}", "bold"))
+        print(_c(f"\n{t._('usage.title')}", "bold"))
         print(f"  tillm drive --client {primary} --provider {spec.id} --prompt '...' --execute")
         if primary:
-            print(f"  export KORU_TILLM_CLIENT={primary}   {_('usage.autonomy')}")
+            print(f"  export KORU_TILLM_CLIENT={primary}   {t._('usage.autonomy')}")
     return 0 if diagnosis.ok else 1
+
+
+def tillm_setup_main(argv: list[str] | None = None) -> int:
+    t = _load_tillm()
+    if t is None:
+        return 2
+
+    _apply_lang(list(argv or []), t)
+
+    specs = list(t.iter_provider_specs())
+    available = set(t.available_client_ids())
+    default_provider = t.get_default_provider()
+    _print_provider_table(t._, specs, t.resolve_provider_token, available, default_provider)
+
+    spec = _pick_provider(t, specs)
+    if spec is None:
+        return 0
+
+    if not _configure_token(t._, spec, t.resolve_provider_token, t.save_provider_token):
+        return 2
+
+    _choose_model(t, spec)
+    _maybe_set_default(t, spec, default_provider)
+    return _run_diagnosis(t, spec)
