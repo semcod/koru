@@ -71,7 +71,7 @@ def finalize_shell_drive_ticket(
         return "skipped"
 
     policy = _autodone_policy()
-    from koru.queue.runners import run_process, run_shell_command
+    from koru.queue.runners import run_process
     from koru.queue.ticket import planfile_command
 
     planfile_command(
@@ -109,12 +109,14 @@ def finalize_shell_drive_ticket(
 
     from koru.autonomy.post_run_verify import verify_completed_tickets
 
+    # shell_runner deliberately omitted: the default sanitized runner strips
+    # the loop's KORU_*/TILLM_*/VDISPLAY_* env, which otherwise flips
+    # env-sensitive test branches and bounces finished tickets.
     outcomes = verify_completed_tickets(
         project,
         [ticket_id],
         config=verify_config,
         planfile_runner=run_process,
-        shell_runner=run_shell_command,
     )
     failed = [o for o in outcomes if not o.get("ok")]
     if failed:
