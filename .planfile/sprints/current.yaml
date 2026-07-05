@@ -29175,7 +29175,7 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T12:55:26.503727Z'
+        finished_at: '2026-07-05T15:04:38.259028Z'
         max_attempts: 1
         queue: default
         state: done
@@ -29213,6 +29213,29 @@ sprint:
         source: planfile.store
         status: open
         timestamp: '2026-07-05T12:57:29.970940+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T15:04:07.862251+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T15:04:19.320764+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T15:04:36.854971+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T15:04:38.267172+00:00'
       id: STARTER-569
       inputs:
         api_headers: {}
@@ -29250,6 +29273,15 @@ sprint:
           os.environ["KORU_STRICT_PLUGIN_VERSION"] == "0"         assert os.environ["KORU_STRICT_PLUGIN_ACK"]
           == "1" >       assert messages == ["koru autonomous: strict plugin ack policy
           enabled by default"] E       AssertionError: a...'
+        - 'Stale ticket: smell already removed. _build_vql_command_plan (now vdisplay_client.py:5113)
+          was decomposed into 8 _vql_plan_* helpers in commit 6a2367a (refaktoring,
+          2026-07-05) before this scan ran. Current metrics: CC=1 (branchless body),
+          fan-out=8. 103 tests pass in test_photo_vql_drive.py + test_photo_vql_orchestrator.py.
+          No further refactor applied — re-splitting a clean orchestrator would hurt
+          readability.'
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
       priority: high
       source:
         context:
@@ -29291,9 +29323,9 @@ sprint:
         timestamp: '2026-07-04T21:53:02.155821+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-05T12:57:29.970902+00:00'
+      updated_at: '2026-07-05T15:04:38.267142+00:00'
     STARTER-570:
       blocked_by: []
       blocks: []
@@ -29307,9 +29339,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T15:42:00.080972Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29326,6 +29359,26 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:04.496658+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T15:41:31.473506+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T15:41:58.663931+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T15:42:00.089606+00:00'
       id: STARTER-570
       inputs:
         api_headers: {}
@@ -29349,7 +29402,10 @@ sprint:
       name: 'Address code smell: God Function: _fresh_vql_bbox_center'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
       priority: high
       source:
         context:
@@ -29390,9 +29446,9 @@ sprint:
         timestamp: '2026-07-04T21:53:04.496658+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:04.496658+00:00'
+      updated_at: '2026-07-05T15:42:00.089571+00:00'
     STARTER-571:
       blocked_by: []
       blocks: []

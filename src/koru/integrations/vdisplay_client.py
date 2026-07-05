@@ -7420,6 +7420,20 @@ def _fresh_vql_center(center: Any, bx: int, by: int, bw: int, bh: int) -> tuple[
     return cx, cy
 
 
+def _fresh_vql_center_only(center: Any) -> tuple[Any, Any]:
+    """Click center when a fresh-VQL element has no usable bbox.
+
+    Falls back to the DP-1 capture-frame center (1024, 640) at every level,
+    mirroring resolve_click_for_frame's hardcoded fallback.
+    """
+    if isinstance(center, dict) and center:
+        return int(center.get("x") or 1024), int(center.get("y") or 640)
+    c = center or [1024, 640]
+    if not isinstance(c, (list, tuple)):
+        c = [1024, 640]
+    return c[0], c[1]
+
+
 def _fresh_vql_bbox_center(e: dict) -> tuple[int, int, int, int, Any, Any]:
     """Resolve (bx, by, bw, bh, cx, cy) for a fresh-VQL element across bbox shapes."""
     bbox = e.get("bbox") or [0, 0, 0, 0]
@@ -7434,13 +7448,8 @@ def _fresh_vql_bbox_center(e: dict) -> tuple[int, int, int, int, Any, Any]:
         bh = max(0, int(bbox[3]) - by)
         cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
     else:
+        cx, cy = _fresh_vql_center_only(center)
         bx, by, bw, bh = 0, 0, 0, 0
-        if isinstance(center, dict) and center:
-            cx = int(center.get("x") or 1024)
-            cy = int(center.get("y") or 640)
-        else:
-            c = center or [1024, 640]
-            cx, cy = (c if isinstance(c, (list, tuple)) else [1024, 640])[:2]
     return bx, by, bw, bh, cx, cy
 
 
