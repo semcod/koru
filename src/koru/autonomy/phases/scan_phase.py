@@ -445,6 +445,7 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
         },
     )
     cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
+    discovery: dict[str, Any] | None = None
     if include_semcod_artifacts:
         _hp(
             "  idle strategy: detailed scan is in duplicate cooldown; "
@@ -457,6 +458,9 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
             scope_paths=_scan_paths_for_project(project),
         )
         _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
+    if not (discovery and discovery.get("applied")):
+        nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
+        _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
     return True
 
 
@@ -504,6 +508,7 @@ def _run_scan_after_idle(
         _hp,
         _emit,
     )
+    discovery: dict[str, Any] | None = None
     if include_semcod_artifacts and not idle_scan.applied:
         discovery = _run_code2llm_discovery_after_idle(
             project,
@@ -512,6 +517,9 @@ def _run_scan_after_idle(
             scope_paths=scan_paths,
         )
         _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
+    if not idle_scan.applied and not (discovery and discovery.get("applied")):
+        nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
+        _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
     return idle_scan
 
 
@@ -568,6 +576,45 @@ def _record_code2llm_discovery_telemetry(
         cycle_telemetry["code2llm_discovery_follow_up_workflow"] = str(
             discovery.get("follow_up_workflow") or "",
         ).strip() or "standardized_project_discovery"
+
+
+def _run_nxdo_discovery_after_idle(
+    project: Path,
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> dict[str, Any] | None:
+    """Generate fresh tickets via ``nxdo`` when scan + code2llm found nothing."""
+    try:
+        from koru.autonomy.nxdo_discovery import (
+            format_nxdo_summary,
+            run_nxdo_discovery,
+        )
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"- nxdo discovery unavailable: {exc}")
+        return None
+
+    outcome = run_nxdo_discovery(project)
+    _hp(f"  {format_nxdo_summary(outcome)}")
+    payload = outcome.to_dict()
+    _emit("NxdoDiscoveryCompleted", payload)
+    return payload
+
+
+def _record_nxdo_discovery_telemetry(
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    discovery: dict[str, Any] | None,
+) -> None:
+    if discovery is None:
+        return
+    applied_count = len(discovery.get("applied", []))
+    state.telemetry_scan_after_idle_tickets_applied += applied_count
+    cycle_telemetry["nxdo_discovery_run"] = bool(discovery.get("ran"))
+    cycle_telemetry["nxdo_discovery_applied"] = applied_count
+    cycle_telemetry["nxdo_discovery_skipped"] = len(discovery.get("skipped", []))
+    target_repo = str(discovery.get("target_repo") or "").strip()
+    if target_repo:
+        cycle_telemetry["nxdo_discovery_repo"] = target_repo
 
 
 def _run_code2llm_discovery_after_idle(

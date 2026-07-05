@@ -48,7 +48,10 @@ function sanitizeProbeCache(_entry: ProbeCacheEntry, _opts: { isWayland: boolean
 }
 
 function focusOpenCommandsDefaults(): string[] {
-  return ["workbench.action.chat.open"];
+  // `aicoding.openAgentsWindow` is Qoder's own chat/agents panel command
+  // (probe-ladder-verified winner); the generic chat.open stays as a
+  // fallback for Qoder builds that align with upstream VS Code.
+  return ["aicoding.openAgentsWindow", "workbench.action.chat.open"];
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {
