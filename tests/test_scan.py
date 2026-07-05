@@ -437,6 +437,27 @@ class TestScanMissingGates(unittest.TestCase):
                 self.assertNotIn("wup", s.title)
                 self.assertNotIn("regix", s.title)
 
+    def test_skips_workspace_root_with_many_subprojects(self) -> None:
+        # A monorepo root (no own pyproject, several sub-projects that each
+        # self-gate) must not get root gate-bootstrap tickets. STARTER-005/006/007.
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            for name in ("proj_a", "proj_b", "proj_c"):
+                sub = project / name
+                sub.mkdir()
+                (sub / "pyproject.toml").write_text(f"[project]\nname='{name}'\n")
+            self.assertEqual(scan_missing_gates(project), [])
+
+    def test_single_package_root_still_scanned(self) -> None:
+        # A real package root (has its own pyproject) is NOT a workspace, so
+        # gate suggestions still apply when the tool is installed and unconfigured.
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "pyproject.toml").write_text("[project]\nname='pkg'\n")
+            # No exception raised; suggestions (if any) are well-formed gates.
+            for s in scan_missing_gates(project):
+                self.assertEqual(s.signal, "missing_gate")
+
 
 class TestScanMissingTools(unittest.TestCase):
     def test_no_pyproject_returns_empty(self) -> None:
