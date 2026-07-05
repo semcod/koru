@@ -44,3 +44,66 @@ def test_landmark_none_without_context(monkeypatch):
     monkeypatch.setattr("vdisplay.control.vision_ocr.ocr_available", lambda: (True, "ok"))
     monkeypatch.setattr("vdisplay.control.vision_ocr.ocr_png", lambda d, **k: [])
     assert pi._landmark_input_xy(b"frame") is None
+
+
+class _FakePortalSession:
+    """Hermetic stand-in for the portal RemoteDesktop session."""
+
+    def __init__(self):
+        self.cleared = False
+        self.clicked = 0
+        self.typed = 0
+
+    def grab_frame(self):
+        return _png_bytes(100, 100)
+
+    def frame_to_stream(self, x, y, frame_w, frame_h):
+        return (x, y)
+
+    def move_abs(self, x, y):
+        pass
+
+    def click(self):
+        self.clicked += 1
+
+    def clear_input(self, n):
+        self.cleared = True
+
+    def type_into_input_verified(self, sx, sy, text, **kw):
+        self.typed += 1
+        return True
+
+
+def _wire_two_pass(monkeypatch, session, *, focused: bool):
+    """Route type_into_chat_via_portal into the two-pass clear branch."""
+    monkeypatch.delenv("KORU_VDISPLAY_PORTAL_AUTOREMEMBER", raising=False)
+    monkeypatch.setattr(pi, "_get_session", lambda: session)
+    monkeypatch.setattr(pi, "_cached_input_xy", lambda ide: None)
+    # No placeholder anchor -> "input already holds text" branch.
+    monkeypatch.setattr(pi, "_anchor_precise", lambda frame, ide: None)
+    # Flaky OCR landmark resolves to a rough point.
+    monkeypatch.setattr(pi, "_ocr_anchor_xy", lambda frame, ide: (50, 50))
+    monkeypatch.setattr(pi, "_focused_near", lambda after, sx, sy, **kw: focused)
+
+
+def test_two_pass_clear_aborts_when_click_missed_focus(monkeypatch):
+    """Regression: clear_input(200) must never fire on an unverified click.
+
+    A mis-located landmark click (editor/terminal pane) used to trigger up
+    to 200 deletes in whatever pane got focused, before any guard ran.
+    """
+    session = _FakePortalSession()
+    _wire_two_pass(monkeypatch, session, focused=False)
+    result = pi.type_into_chat_via_portal("hello", ide="qoder", submit=False)
+    assert result["ok"] is False
+    assert "before clear" in (result["error"] or "")
+    assert session.cleared is False
+    assert session.typed == 0
+
+
+def test_two_pass_clear_proceeds_when_click_focused(monkeypatch):
+    session = _FakePortalSession()
+    _wire_two_pass(monkeypatch, session, focused=True)
+    result = pi.type_into_chat_via_portal("hello", ide="qoder", submit=False)
+    assert session.cleared is True
+    assert result["ok"] is True

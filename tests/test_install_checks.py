@@ -12,6 +12,7 @@ from koru.autopilot.install_checks import (
     ManagerIssue,
     check_daemon_issues,
     check_koru_path_issues,
+    check_plugin_build_mismatch_issue,
     check_plugin_installed_ok_but_not_connected_issue,
     check_plugin_installed_version_mismatch_issue,
     check_plugin_live_host_stale_issue,
@@ -217,6 +218,40 @@ def test_check_plugin_version_mismatch_issue_flags_connected_mismatch() -> None:
         "vscode",
     )
     assert [i.code for i in issues] == ["plugin_version_mismatch"]
+
+
+def test_build_mismatch_not_suppressed_by_version_env(monkeypatch) -> None:
+    """Regression: the build-SHA gate must NOT share the version-mismatch env key.
+
+    Tolerating a version skew (same code, different tag) must not silently
+    downgrade a build-SHA mismatch (same tag, different code) to a warning.
+    """
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH", "1")
+    monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_PLUGIN_BUILD_MISMATCH", raising=False)
+    issues = check_plugin_build_mismatch_issue(
+        {"running": True},
+        {
+            "connected": True,
+            "connected_build_sha": "old-build",
+            "expected_build_sha": "new-build",
+        },
+        "vscode",
+    )
+    assert [(i.code, i.severity) for i in issues] == [("plugin_build_mismatch", "error")]
+
+
+def test_build_mismatch_downgraded_by_build_env(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_PLUGIN_BUILD_MISMATCH", "1")
+    issues = check_plugin_build_mismatch_issue(
+        {"running": True},
+        {
+            "connected": True,
+            "connected_build_sha": "old-build",
+            "expected_build_sha": "new-build",
+        },
+        "vscode",
+    )
+    assert [(i.code, i.severity) for i in issues] == [("plugin_build_mismatch", "warning")]
 
 
 def test_check_plugin_not_connected_issue_when_daemon_running_without_plugin() -> None:

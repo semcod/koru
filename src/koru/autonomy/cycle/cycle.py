@@ -416,6 +416,25 @@ def _emit_pre_drive_control_route(
     Best-effort — older gillm without gillm.routing (<0.1.22) is skipped.
     """
     try:
+        from koru.tillm_bridge import shell_drive_client_id
+
+        shell_client = shell_drive_client_id(autopilot_ide)
+    except Exception:
+        shell_client = None
+    if shell_client:
+        # Shell clients (claude-code, codex, aider, …) never use IDE routes;
+        # probing gillm here used to print a misleading "no viable control
+        # route" even though the drive goes through tillm just fine.
+        hp(
+            f"- pre-drive: control route → tillm_shell (verified): "
+            f"{shell_client} is driven headlessly via tillm, no IDE route needed"
+        )
+        cycle_telemetry["control_route"] = {
+            "selected": "tillm_shell",
+            "client": shell_client,
+        }
+        return
+    try:
         from gillm.routing import route_for
 
         plan = route_for(autopilot_ide, plugin_connected=plugin_connected)

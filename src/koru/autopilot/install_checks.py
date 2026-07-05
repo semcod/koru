@@ -449,7 +449,7 @@ def check_plugin_build_mismatch_issue(
     and expected_build
     and connected_build != expected_build
   ):
-    if os.environ.get("KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH", "").strip().lower() in (
+    if os.environ.get("KORU_AUTOPILOT_ALLOW_PLUGIN_BUILD_MISMATCH", "").strip().lower() in (
       "1", "true", "yes",
     ):
       return [
@@ -460,7 +460,7 @@ def check_plugin_build_mismatch_issue(
             f"Connected {ide} plugin build is {connected_build}, "
             f"but the source VSIX/package build is {expected_build}."
           ),
-          "Mismatch allowed by KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH=1.",
+          "Mismatch allowed by KORU_AUTOPILOT_ALLOW_PLUGIN_BUILD_MISMATCH=1.",
         ),
       ]
     return [

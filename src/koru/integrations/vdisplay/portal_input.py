@@ -425,8 +425,18 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         rough = _cached_input_xy(ide) or _target(frame)
         if rough is None:
             return {"ok": False, "method": "portal", "error": "chat input not found (no anchor/landmark/cache)"}
-        p.move_abs(*rough); time.sleep(0.35)
+        rx, ry = rough
+        p.move_abs(rx, ry); time.sleep(0.35)
         p.click(); time.sleep(0.4)
+        # Focus guard BEFORE the destructive clear: clear_input() fires up to
+        # 200 deletes, so a mis-located landmark click (editor / terminal pane)
+        # must abort here — same ring check every typing path already uses.
+        if not _focused_near(p.grab_frame(), rx, ry):
+            return {
+                "ok": False,
+                "method": "portal",
+                "error": "click did not focus the chat input (guard rejected before clear)",
+            }
         p.clear_input(200); time.sleep(0.4)
         frame = p.grab_frame()  # placeholder should be back now
         fw0, fh0 = _png_size(frame)
