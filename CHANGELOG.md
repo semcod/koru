@@ -136,6 +136,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.387] - 2026-07-05
+
+### Docs
+- Update README.md
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update packages/.coru/events/dsl.events.pb
+
 ## [0.1.386] - 2026-07-05
 
 ### Docs
