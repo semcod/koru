@@ -169,6 +169,10 @@ activemq-data/
 .venv
 env/
 !examples/env/
+# koru.domain.env is a Python package, not a virtualenv — without this
+# negation the `env/` rule silently untracks it and CI fails with
+# ModuleNotFoundError: koru.domain (2026-07-05).
+!src/koru/domain/env/
 venv/
 ENV/
 env.bak/
