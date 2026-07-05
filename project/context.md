@@ -1,16 +1,15 @@
 # System Architecture Analysis
-<!-- generated in 0.05s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 753, md: 119, shell: 59, json: 34, yaml: 30
+- **Languages**: python: 759, md: 120, shell: 64, json: 34, yaml: 32
 - **Analysis Mode**: static
-- **Total Functions**: 5857
-- **Total Classes**: 445
-- **Modules**: 1040
-- **Entry Points**: 1769
+- **Total Functions**: 5947
+- **Total Classes**: 449
+- **Modules**: 1054
+- **Entry Points**: 1812
 
 ## Architecture by Module
 
@@ -51,14 +50,14 @@
 - **Classes**: 1
 - **File**: `drive_orchestrator.py`
 
-### src.koru.wizard.gui.static.wizard
-- **Functions**: 47
-- **File**: `wizard.js`
-
 ### src.koru.autonomy.readiness.readiness
 - **Functions**: 47
 - **Classes**: 3
 - **File**: `readiness.py`
+
+### src.koru.wizard.gui.static.wizard
+- **Functions**: 47
+- **File**: `wizard.js`
 
 ### src.koru.autonomy.operator_pipeline
 - **Functions**: 46
@@ -84,28 +83,28 @@
 - **Functions**: 40
 - **File**: `cycle_drive_retry.py`
 
-### src.koru.ide_adapters.ide_reload
-- **Functions**: 39
-- **Classes**: 1
-- **File**: `ide_reload.py`
-
 ### src.koru.autonomy.operator.operator_wup
 - **Functions**: 39
 - **Classes**: 3
 - **File**: `operator_wup.py`
 
+### src.koru.ide_adapters.ide_reload
+- **Functions**: 39
+- **Classes**: 1
+- **File**: `ide_reload.py`
+
 ### src.koruapi.dashboard_routes
 - **Functions**: 35
 - **File**: `dashboard_routes.py`
 
-### koru.observability_dsl
-- **Functions**: 35
-- **Classes**: 1
-- **File**: `observability_dsl.py`
-
 ### src.koruide.daemon.handlers_drive
 - **Functions**: 35
 - **File**: `handlers_drive.py`
+
+### src.koru.observability_dsl
+- **Functions**: 35
+- **Classes**: 1
+- **File**: `observability_dsl.py`
 
 ## Key Entry Points
 
@@ -121,14 +120,14 @@ Main execution flows into the system:
 > Create config from environment variables (shell compatibility).
 - **Calls**: max, cls, src.koru.env_flags.env_int, int, Path, src.koruvision.providers.env.env_truthy, src.koru.env_flags.env_int, src.koru.env_flags.env_int
 
-### src.koru.autopilot.cli_snapshot.action_snapshot
-> Print a unified shell OQL/DSL snapshot with replay/validate commands.
-- **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._snapshot_runtime_block, src.koru.autopilot.cli_snapshot_lines._decision_lines, lines.extend, src.koru.autopilot.cli_snapshot_lines._skip_code_from_decision_lines, lines.extend
-
 ### src.koru.integrations.vdisplay.portal_input.type_into_chat_via_portal
 > Full portal flow: locate the chat input on the portal's own frame and
 type (guarded). Returns a result dict.
 - **Calls**: src.koru.integrations.vdisplay.portal_input._get_session, src.koru.integrations.vdisplay.portal_input._cached_input_xy, p.grab_frame, src.koru.integrations.vdisplay.portal_input._png_size, src.koru.integrations.vdisplay.portal_input._anchor_precise, p.type_into_input_verified, logger.info, src.koru.integrations.vdisplay.portal_input._png_size
+
+### src.koru.autopilot.cli_snapshot.action_snapshot
+> Print a unified shell OQL/DSL snapshot with replay/validate commands.
+- **Calls**: None.resolve, src.koruide.ide.canonical_autopilot_ide_id, max, src.koru.autopilot.cli_snapshot._snapshot_runtime_block, src.koru.autopilot.cli_snapshot_lines._decision_lines, lines.extend, src.koru.autopilot.cli_snapshot_lines._skip_code_from_decision_lines, lines.extend
 
 ### src.koru.autopilot.vdisplay_up_cli.action_vdisplay_up
 - **Calls**: None.lower, src.koru.autonomy.operator.operator_vdisplay_defaults.apply_vdisplay_drive_defaults, int, project.print, getattr, src.koru.autopilot.vdisplay_up_cli._resolve_bridge_source, getattr, None.environ.get
@@ -180,12 +179,12 @@ Args:
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
 
+### src.koruide.daemon.handlers.handle_status
+- **Calls**: daemon._plugin_router.drop_version_mismatch_plugins, src.koruide.daemon.protocol._daemon_package_version, daemon._send, daemon.log, row.to_dict, hasattr, daemon.daemon_metadata, str
+
 ### src.koru.deployment_events.models.DeploymentEvent.from_dict
 > Create event from dictionary.
 - **Calls**: data.get, cls, Component, data.get, data.get, DeploymentEventType, EventSource, Severity
-
-### src.koruide.daemon.handlers.handle_status
-- **Calls**: daemon._plugin_router.drop_version_mismatch_plugins, src.koruide.daemon.protocol._daemon_package_version, daemon._send, daemon.log, row.to_dict, hasattr, daemon.daemon_metadata, str
 
 ### src.koru.autopilot.commands.drive.action_drive
 > Execute ``koru autopilot drive`` command.
@@ -212,12 +211,12 @@ Args:
 > Return a structured, non-executing replay plan for a control command.
 - **Calls**: src.koru.control_commands._require_control_command, dict, str, str, data.get, data.get, bool, plan.update
 
-### src.koru.autonomy.phases.scan_phase.handle_scan_phase
-- **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
-
 ### src.koru.autonomy.cycle.cycle_skip_conditions._check_autopilot_skip_conditions
 > Check if autopilot should be skipped and return (should_skip, skip_reason).
 - **Calls**: src.koru.autonomy.cycle.cycle_skip_conditions._diagnostics_fail_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._manual_send_required_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._should_skip_for_idle_streak, src.koru.autonomy.cycle.cycle_skip_conditions._is_waiting_llm_ready_ticket, src.koru.autonomy.cycle.cycle_skip_conditions._is_stuck_status_skip_candidate, None.as_skip_tuple, src.koru.autonomy.cycle.cycle_skip_conditions._is_topology_enabled, _hp
+
+### src.koru.autonomy.phases.scan_phase.handle_scan_phase
+- **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
 
 ### src.koru.doctor_render.render_text
 > Human-readable rendering — fixed-width status column.
@@ -258,7 +257,14 @@ from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
 ```
 
-### Flow 4: action_snapshot
+### Flow 4: type_into_chat_via_portal
+```
+type_into_chat_via_portal [src.koru.integrations.vdisplay.portal_input]
+  └─> _get_session
+  └─> _cached_input_xy
+```
+
+### Flow 5: action_snapshot
 ```
 action_snapshot [src.koru.autopilot.cli_snapshot]
   └─> _snapshot_runtime_block
@@ -267,13 +273,6 @@ action_snapshot [src.koru.autopilot.cli_snapshot]
   └─ →> _decision_lines
       └─ →> load_recent_decisions
           └─> decision_trace_path
-```
-
-### Flow 5: type_into_chat_via_portal
-```
-type_into_chat_via_portal [src.koru.integrations.vdisplay.portal_input]
-  └─> _get_session
-  └─> _cached_input_xy
 ```
 
 ### Flow 6: action_vdisplay_up
@@ -330,6 +329,16 @@ drive [src.koru.ide_client.LegacyAutopilotClientAdapter]
 - **Methods**: 16
 - **Key Methods**: src.koru.integrations.photo_vql_drive.PhotoVqlDrive.__init__, src.koru.integrations.photo_vql_drive.PhotoVqlDrive.prepare, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._set_source_env, src.koru.integrations.photo_vql_drive.PhotoVqlDrive.act, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._surface_only_blocked, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._act_surface_only, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._act_map_only_with_photo_vql, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._observe_png, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._photo_vql_attempt_succeeded, src.koru.integrations.photo_vql_drive.PhotoVqlDrive._mark_llm_backend_if_used
 
+### src.koruide.plugin_router.PluginRouter
+> Select, enumerate and deduplicate connected plugin sessions.
+- **Methods**: 15
+- **Key Methods**: src.koruide.plugin_router.PluginRouter.__init__, src.koruide.plugin_router.PluginRouter.plugin_for, src.koruide.plugin_router.PluginRouter._plugin_candidates, src.koruide.plugin_router.PluginRouter._matches_plugin_target, src.koruide.plugin_router.PluginRouter._match_project_plugin, src.koruide.plugin_router.PluginRouter._first_workspace_match, src.koruide.plugin_router.PluginRouter._has_workspace_aware_candidates, src.koruide.plugin_router.PluginRouter._project_mismatch_blocks_fallback, src.koruide.plugin_router.PluginRouter._log_project_match, src.koruide.plugin_router.PluginRouter._log_workspace_mismatches
+
+### src.koruide.daemon.server.AutopilotDaemon
+> Selector-based unix-socket broker.
+- **Methods**: 15
+- **Key Methods**: src.koruide.daemon.server.AutopilotDaemon.__init__, src.koruide.daemon.server.AutopilotDaemon.start, src.koruide.daemon.server.AutopilotDaemon.daemon_metadata, src.koruide.daemon.server.AutopilotDaemon.serve_forever, src.koruide.daemon.server.AutopilotDaemon.stop, src.koruide.daemon.server.AutopilotDaemon._shutdown, src.koruide.daemon.server.AutopilotDaemon._accept, src.koruide.daemon.server.AutopilotDaemon._on_readable, src.koruide.daemon.server.AutopilotDaemon._dispatch, src.koruide.daemon.server.AutopilotDaemon._send
+
 ### src.koruide.ides.base.IdeStrategy
 > Per-IDE knowledge object.
 
@@ -339,24 +348,9 @@ no
 - **Key Methods**: src.koruide.ides.base.IdeStrategy.id, src.koruide.ides.base.IdeStrategy.label, src.koruide.ides.base.IdeStrategy.detection, src.koruide.ides.base.IdeStrategy.terminal, src.koruide.ides.base.IdeStrategy.aliases, src.koruide.ides.base.IdeStrategy.config_home, src.koruide.ides.base.IdeStrategy.user_settings_path, src.koruide.ides.base.IdeStrategy.workspace_settings_path, src.koruide.ides.base.IdeStrategy.state_vscdb_path, src.koruide.ides.base.IdeStrategy.extensions_metadata_path
 - **Inherits**: ABC
 
-### src.koruide.daemon.server.AutopilotDaemon
-> Selector-based unix-socket broker.
-- **Methods**: 15
-- **Key Methods**: src.koruide.daemon.server.AutopilotDaemon.__init__, src.koruide.daemon.server.AutopilotDaemon.start, src.koruide.daemon.server.AutopilotDaemon.daemon_metadata, src.koruide.daemon.server.AutopilotDaemon.serve_forever, src.koruide.daemon.server.AutopilotDaemon.stop, src.koruide.daemon.server.AutopilotDaemon._shutdown, src.koruide.daemon.server.AutopilotDaemon._accept, src.koruide.daemon.server.AutopilotDaemon._on_readable, src.koruide.daemon.server.AutopilotDaemon._dispatch, src.koruide.daemon.server.AutopilotDaemon._send
-
-### src.koruide.plugin_router.PluginRouter
-> Select, enumerate and deduplicate connected plugin sessions.
-- **Methods**: 15
-- **Key Methods**: src.koruide.plugin_router.PluginRouter.__init__, src.koruide.plugin_router.PluginRouter.plugin_for, src.koruide.plugin_router.PluginRouter._plugin_candidates, src.koruide.plugin_router.PluginRouter._matches_plugin_target, src.koruide.plugin_router.PluginRouter._match_project_plugin, src.koruide.plugin_router.PluginRouter._first_workspace_match, src.koruide.plugin_router.PluginRouter._has_workspace_aware_candidates, src.koruide.plugin_router.PluginRouter._project_mismatch_blocks_fallback, src.koruide.plugin_router.PluginRouter._log_project_match, src.koruide.plugin_router.PluginRouter._log_workspace_mismatches
-
 ### packages.coru.src.coru.supervisor.service.SupervisorService
 - **Methods**: 12
 - **Key Methods**: packages.coru.src.coru.supervisor.service.SupervisorService.__init__, packages.coru.src.coru.supervisor.service.SupervisorService.url, packages.coru.src.coru.supervisor.service.SupervisorService._record_for, packages.coru.src.coru.supervisor.service.SupervisorService.refresh_lane_health, packages.coru.src.coru.supervisor.service.SupervisorService.refresh_all_health, packages.coru.src.coru.supervisor.service.SupervisorService.start_lane_daemon, packages.coru.src.coru.supervisor.service.SupervisorService.stop_lane_daemon, packages.coru.src.coru.supervisor.service.SupervisorService.reconnect_lane, packages.coru.src.coru.supervisor.service.SupervisorService.ensure_http, packages.coru.src.coru.supervisor.service.SupervisorService.write_pid_file
-
-### src.koru.deployment_events.analyzer.DeploymentEventAnalyzer
-> Analyzer for deployment event history with reflection capabilities.
-- **Methods**: 12
-- **Key Methods**: src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
 
 ### src.korullm.strategies.base.LlmStrategy
 > Per-LLM knowledge object.
@@ -364,15 +358,20 @@ no
 - **Key Methods**: src.korullm.strategies.base.LlmStrategy.id, src.korullm.strategies.base.LlmStrategy.label, src.korullm.strategies.base.LlmStrategy.matches_environment, src.korullm.strategies.base.LlmStrategy.capabilities, src.korullm.strategies.base.LlmStrategy.assess_drive_failure, src.korullm.strategies.base.LlmStrategy.idle_marker_patterns, src.korullm.strategies.base.LlmStrategy.prompt_envelope, src.korullm.strategies.base.LlmStrategy._reply_message, src.korullm.strategies.base.LlmStrategy._reply_verification, src.korullm.strategies.base.LlmStrategy._reply_reason
 - **Inherits**: ABC
 
-### src.koru.tagi_integration.TagiIntegration
-> Integration with Tagi for change analysis and prioritization.
-- **Methods**: 10
-- **Key Methods**: src.koru.tagi_integration.TagiIntegration.__init__, src.koru.tagi_integration.TagiIntegration._run_tagi_command, src.koru.tagi_integration.TagiIntegration.scan_changes, src.koru.tagi_integration.TagiIntegration.analyze_priorities, src.koru.tagi_integration.TagiIntegration.get_deployment_plan, src.koru.tagi_integration.TagiIntegration._get_deployment_strategy, src.koru.tagi_integration.TagiIntegration.commit_changes, src.koru.tagi_integration.TagiIntegration.auto_commit_all, src.koru.tagi_integration.TagiIntegration._parse_text_scan_output, src.koru.tagi_integration.TagiIntegration.is_available
+### src.koru.deployment_events.analyzer.DeploymentEventAnalyzer
+> Analyzer for deployment event history with reflection capabilities.
+- **Methods**: 12
+- **Key Methods**: src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
 
 ### src.koru.decision_engine.EnvironmentDecisionEngine
 > Resolve environment-scoped decisions from the three strategy axes.
 - **Methods**: 10
 - **Key Methods**: src.koru.decision_engine.EnvironmentDecisionEngine.__init__, src.koru.decision_engine.EnvironmentDecisionEngine.decision_key, src.koru.decision_engine.EnvironmentDecisionEngine.focus_ide_window, src.koru.decision_engine.EnvironmentDecisionEngine.assess_drive_failure, src.koru.decision_engine.EnvironmentDecisionEngine._submit_retry_is_known_unsafe, src.koru.decision_engine.EnvironmentDecisionEngine.detect_stale_extension_host, src.koru.decision_engine.EnvironmentDecisionEngine.reload_capability_detail, src.koru.decision_engine.EnvironmentDecisionEngine.recovery_hints_for_drive_reply, src.koru.decision_engine.EnvironmentDecisionEngine._window_name_hints, src.koru.decision_engine.EnvironmentDecisionEngine._ide_accepts_integrated_terminal
+
+### src.koru.tagi_integration.TagiIntegration
+> Integration with Tagi for change analysis and prioritization.
+- **Methods**: 10
+- **Key Methods**: src.koru.tagi_integration.TagiIntegration.__init__, src.koru.tagi_integration.TagiIntegration._run_tagi_command, src.koru.tagi_integration.TagiIntegration.scan_changes, src.koru.tagi_integration.TagiIntegration.analyze_priorities, src.koru.tagi_integration.TagiIntegration.get_deployment_plan, src.koru.tagi_integration.TagiIntegration._get_deployment_strategy, src.koru.tagi_integration.TagiIntegration.commit_changes, src.koru.tagi_integration.TagiIntegration.auto_commit_all, src.koru.tagi_integration.TagiIntegration._parse_text_scan_output, src.koru.tagi_integration.TagiIntegration.is_available
 
 ### src.env2llm.service.registry_service.RegistryService
 - **Methods**: 9
@@ -396,10 +395,10 @@ no
 - **Methods**: 8
 - **Key Methods**: packages.coru.src.coru.repair.query.RepairHistoryQuery.__init__, packages.coru.src.coru.repair.query.RepairHistoryQuery.for_project, packages.coru.src.coru.repair.query.RepairHistoryQuery.store_path, packages.coru.src.coru.repair.query.RepairHistoryQuery.cases, packages.coru.src.coru.repair.query.RepairHistoryQuery.cases_for_lane, packages.coru.src.coru.repair.query.RepairHistoryQuery.cases_matching_code, packages.coru.src.coru.repair.query.RepairHistoryQuery.format_llm, packages.coru.src.coru.repair.query.RepairHistoryQuery.format_json
 
-### koruide.command_catalog_store.CommandCatalogStore
+### src.koruide.command_catalog_store.CommandCatalogStore
 > In-memory catalog per IDE with optional on-disk persistence.
 - **Methods**: 8
-- **Key Methods**: koruide.command_catalog_store.CommandCatalogStore.__init__, koruide.command_catalog_store.CommandCatalogStore.update, koruide.command_catalog_store.CommandCatalogStore.get, koruide.command_catalog_store.CommandCatalogStore.catalog_for, koruide.command_catalog_store.CommandCatalogStore.unknown_chat_commands_for, koruide.command_catalog_store.CommandCatalogStore.all_ides, koruide.command_catalog_store.CommandCatalogStore._persist, koruide.command_catalog_store.CommandCatalogStore._load_from_disk
+- **Key Methods**: src.koruide.command_catalog_store.CommandCatalogStore.__init__, src.koruide.command_catalog_store.CommandCatalogStore.update, src.koruide.command_catalog_store.CommandCatalogStore.get, src.koruide.command_catalog_store.CommandCatalogStore.catalog_for, src.koruide.command_catalog_store.CommandCatalogStore.unknown_chat_commands_for, src.koruide.command_catalog_store.CommandCatalogStore.all_ides, src.koruide.command_catalog_store.CommandCatalogStore._persist, src.koruide.command_catalog_store.CommandCatalogStore._load_from_disk
 
 ### src.koruide.ides.cursor.CursorStrategy
 > Strategy for Cursor (VS Code-fork by Anysphere).
@@ -424,41 +423,6 @@ no
 ## Data Transformation Functions
 
 Key functions that process and transform data:
-
-### packages.dsl2koru.src.dsl2koru.cli._cmd_validate_schema
-- **Output to**: packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas, project.print, project.print
-
-### packages.dsl2koru.src.dsl2koru.cli._cmd_encode
-- **Output to**: packages.dsl2koru.src.dsl2koru.codec.parse_text, packages.dsl2koru.src.dsl2koru.codec.envelope_to_json, packages.dsl2koru.src.dsl2koru.codec.envelope_to_bytes, None.write_bytes, sys.stdout.buffer.write
-
-### packages.dsl2koru.src.dsl2koru.cli._cmd_decode
-- **Output to**: None.read_bytes, project.print, packages.dsl2koru.src.dsl2koru.codec.envelope_from_json, packages.dsl2koru.src.dsl2koru.codec.envelope_from_bytes, json.dumps
-
-### packages.dsl2koru.src.dsl2koru.pb_codec._set_validate_lane
-- **Output to**: str, str, cmd.get, cmd.get
-
-### packages.dsl2koru.src.dsl2koru.pb_codec._extract_validate_lane
-
-### packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf
-- **Output to**: command_pb2.DslEnvelope, None.upper, packages.dsl2koru.src.dsl2koru.pb_codec._set_body, envelope.SerializeToString, str
-
-### packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf
-- **Output to**: command_pb2.DslEnvelope, envelope.ParseFromString, packages.dsl2koru.src.dsl2koru.pb_codec.envelope_to_dict
-
-### packages.dsl2koru.src.dsl2koru.pb_codec.encode_text_to_protobuf
-- **Output to**: packages.dsl2koru.src.dsl2koru.grammar.parse_line, packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf, ValueError
-
-### packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf_to_text
-- **Output to**: packages.dsl2koru.src.dsl2koru.grammar.to_text, packages.dsl2koru.src.dsl2koru.pb_codec.decode_protobuf
-
-### packages.dsl2koru.src.dsl2koru.pb_codec.encode_result_protobuf
-- **Output to**: None.SerializeToString, packages.dsl2koru.src.dsl2koru.pb_codec.result_to_pb
-
-### packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas
-- **Output to**: None.items, None.get, packages.dsl2koru.src.dsl2koru.schema_registry._load_schemas, errors.append, None.get
-
-### packages.dsl2koru.src.dsl2koru.codegen.validate_payload
-- **Output to**: None.upper, packages.dsl2koru.src.dsl2koru.codegen.build_model_registry, models.get, model.model_validate, KeyError
 
 ### packages.dsl2koru.src.dsl2koru.grammar._parse_query_repair_history
 - **Output to**: packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag, packages.dsl2koru.src.dsl2koru.grammar._flag, int
@@ -493,11 +457,47 @@ Key functions that process and transform data:
 ### packages.dsl2koru.src.dsl2koru.grammar._serialize_repair_run
 - **Output to**: payload.get, payload.get, payload.get
 
-### packages.dsl2koru.src.dsl2koru.codec.validate_payload
-- **Output to**: None.upper, packages.dsl2koru.src.dsl2koru.schema_registry.schema_for_verb, jsonschema.validate, ValueError, str
+### packages.dsl2koru.src.dsl2koru.schema_registry.validate_schemas
+- **Output to**: None.items, None.get, packages.dsl2koru.src.dsl2koru.schema_registry._load_schemas, errors.append, None.get
 
-### packages.dsl2koru.src.dsl2koru.codec.parse_text
-- **Output to**: packages.dsl2koru.src.dsl2koru.grammar.parse_line, packages.dsl2koru.src.dsl2koru.codec.validate_payload
+### packages.uri2coru.src.uri2coru.decode._cmd_validate_lane
+- **Output to**: params.get, params.get
+
+### packages.uri2coru.src.uri2coru.uri._encode
+- **Output to**: quote
+
+### packages.uri2coru.src.uri2coru.uri._decode
+- **Output to**: unquote
+
+### packages.uri2coru.src.uri2coru.uri.parse_coru_uri
+- **Output to**: urlparse, packages.uri2coru.src.uri2coru.uri._decode, packages.uri2coru.src.uri2coru.uri.is_coru_uri, ValueError, packages.uri2coru.src.uri2coru.uri._decode
+
+### packages.koruenv.src.koruenv.lane.validate_ide
+- **Output to**: None.lower, None.join, ValueError, None.strip, sorted
+
+### packages.koruenv.src.koruenv.lane.validate_instance
+- **Output to**: None.strip, _INSTANCE_RE.fullmatch, ValueError, str
+
+### packages.koruenv.src.koruenv.cli._normalize_log_format
+- **Output to**: None.lower, None.strip
+
+### packages.koruenv.src.koruenv.cli._build_parser
+- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, p_env.add_argument
+
+### packages.dsl2koru.src.dsl2koru.codegen.validate_payload
+- **Output to**: None.upper, packages.dsl2koru.src.dsl2koru.codegen.build_model_registry, models.get, model.model_validate, KeyError
+
+### packages.nlpshim.src.nlpshim.client.NLPBridgeClient.parse_intent
+> Parse natural language command into structured workflow steps.
+- **Output to**: packages.nlpshim.src.nlpshim.client.analyze_text_structure, packages.nlpshim.src.nlpshim.client._workflow_steps_from_client, packages.nlpshim.src.nlpshim.client._intent_ir_steps
+
+### packages.dsl2koru.src.dsl2koru.pb_codec._set_validate_lane
+- **Output to**: str, str, cmd.get, cmd.get
+
+### packages.dsl2koru.src.dsl2koru.pb_codec._extract_validate_lane
+
+### packages.dsl2koru.src.dsl2koru.pb_codec.encode_protobuf
+- **Output to**: command_pb2.DslEnvelope, None.upper, packages.dsl2koru.src.dsl2koru.pb_codec._set_body, envelope.SerializeToString, str
 
 ## Behavioral Patterns
 
@@ -521,20 +521,20 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.reorder_ticket_from_dashboard
 
-### recursion_enabled_components_for_pipeline
+### recursion_main
 - **Type**: recursion
 - **Confidence**: 0.90
-- **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
+- **Functions**: packages.coru.src.coru.cli.main
 
 ### recursion__sum_structured_counts
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.scan._sum_structured_counts
 
-### recursion_main
+### recursion_enabled_components_for_pipeline
 - **Type**: recursion
 - **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
+- **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
 ### recursion_send_chat
 - **Type**: recursion
@@ -576,12 +576,11 @@ Key functions that process and transform data:
 Functions exposed as public API (no underscore prefix):
 
 - `scripts.e2e_envmap_koru.main` - 73 calls
-- `src.koru.cli_tillm_setup.tillm_setup_main` - 70 calls
 - `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 54 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
+- `src.koru.integrations.vdisplay.portal_input.type_into_chat_via_portal` - 45 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.autopilot.cli_snapshot.action_snapshot` - 43 calls
-- `src.koru.integrations.vdisplay.portal_input.type_into_chat_via_portal` - 43 calls
 - `src.koru.autopilot.vdisplay_up_cli.action_vdisplay_up` - 42 calls
 - `packages.rest2koru.src.rest2koru.app.create_app` - 41 calls
 - `packages.rest2coru.src.rest2coru.app.create_app` - 40 calls
@@ -598,22 +597,23 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
-- `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
+- `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
 - `src.koru.autopilot.commands.drive.action_drive` - 30 calls
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
-- `koru.observability_dsl.parse_observability_dsl` - 29 calls
+- `src.koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
-- `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
+- `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 28 calls
 - `src.koruapi.desktop_uri.desktop_uri_handle` - 27 calls
-- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls
+- `src.koru.autonomy.nxdo_discovery.run_nxdo_discovery` - 27 calls
+- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 - `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 27 calls
 
 ## System Interactions
@@ -632,16 +632,16 @@ graph TD
     from_env --> env_int
     from_env --> int
     from_env --> Path
-    action_snapshot --> resolve
-    action_snapshot --> canonical_autopilot_
-    action_snapshot --> max
-    action_snapshot --> _snapshot_runtime_bl
-    action_snapshot --> _decision_lines
     type_into_chat_via_p --> _get_session
     type_into_chat_via_p --> _cached_input_xy
     type_into_chat_via_p --> grab_frame
     type_into_chat_via_p --> _png_size
     type_into_chat_via_p --> _anchor_precise
+    action_snapshot --> resolve
+    action_snapshot --> canonical_autopilot_
+    action_snapshot --> max
+    action_snapshot --> _snapshot_runtime_bl
+    action_snapshot --> _decision_lines
     action_vdisplay_up --> lower
     action_vdisplay_up --> apply_vdisplay_drive
     action_vdisplay_up --> int

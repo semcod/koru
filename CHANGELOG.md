@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-07-05
+
+### Fixed
+- Fix unused-imports issues (ticket-7379859a)
+- Fix string-concat issues (ticket-706f74be)
+- Fix wildcard-imports issues (ticket-e4076af4)
+- Fix unused-imports issues (ticket-c58b5f6e)
+- Fix wildcard-imports issues (ticket-db32be2c)
+- Fix wildcard-imports issues (ticket-15fa8a9f)
+- Fix unused-imports issues (ticket-a0a11851)
+- Fix wildcard-imports issues (ticket-7e65702d)
+- Fix unused-imports issues (ticket-51c747ff)
+- Fix unused-imports issues (ticket-2739fb0a)
+- Fix wildcard-imports issues (ticket-81357646)
+- Fix unused-imports issues (ticket-294c3529)
+- Fix string-concat issues (ticket-f70f5ba2)
+- Fix unused-imports issues (ticket-73e7a543)
+- Fix string-concat issues (ticket-e49d0d05)
+- Fix unused-imports issues (ticket-7925a9fa)
+- Fix string-concat issues (ticket-c0c50856)
+- Fix unused-imports issues (ticket-8c747b8c)
+
 ## [Unreleased]
 
 ### Added

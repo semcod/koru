@@ -1,38 +1,38 @@
-# koru | 5857 func | 598f | 176663L | python | 2026-07-04
-# generated in 0.00s
+# koru | 7834 func | 755f | 171032L | python | 2026-07-05
+# generated in 0.01s
 
 HEALTH:
-  CC̄=4.0  critical=437 (limit:10)  dup=13  cycles=0
+  CC̄=3.7  critical=487 (limit:10)  dup=27  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     get_vql_chat_target_from_photo = 37 (limit:10)
   !!! high_fan_out     tillm_setup_main = 32 (limit:10)
   !!! high_fan_out     prepare_photo_vql_for_drive = 29 (limit:10)
   !!! high_fan_out     action_snapshot = 28 (limit:10)
+  !!! cc_exceeded      SharedAutopilotBridgePaste.shouldProbeInput = 26 (limit:15)
   !!! high_fan_out     create_app = 26 (limit:10)
   !!! high_fan_out     create_app = 26 (limit:10)
   !!! high_fan_out     run_daemon_command = 26 (limit:10)
   !!! cc_exceeded      tillm_setup_main = 25 (limit:15)
   !!! high_fan_out     main = 25 (limit:10)
-  !!! high_fan_out     run_api_request = 24 (limit:10)
 
-MODULES[1040] (top by size):
-  M[CHANGELOG.md] 7457L C:0 F:0 CC↑0 D:0 (md)
-  M[src/koru/integrations/vdisplay_client.py] 7429L C:0 F:291 CC↑15 D:8 (python)
-  M[packages/coru/src/coru/cli.py] 3772L C:3 F:200 CC↑16 D:2 (python)
+MODULES[1123] (top by size):
+  M[src/koru/integrations/vdisplay_client.py] 7433L C:0 F:291 CC↑15 D:8 (python)
+  M[packages/coru/src/coru/cli.py] 3772L C:3 F:200 CC↑16 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[ui.vql.json] 1946L C:0 F:0 CC↑0 D:0 (json)
   M[src/koru/scan.py] 1621L C:0 F:61 CC↑13 D:7 (python)
-  M[README.md] 1435L C:0 F:0 CC↑0 D:0 (md)
   M[planfile.yaml] 1403L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koruide/plugin_installer.py] 1364L C:3 F:64 CC↑13 D:11 (python)
+  M[src/koruide/plugin_installer.py] 1368L C:3 F:64 CC↑13 D:10 (python)
   M[src/koru/autopilot/install_manager.py] 1328L C:1 F:58 CC↑14 D:3 (python)
-  M[src/koru/autonomous.py] 1220L C:0 F:76 CC↑7 D:2 (python)
+  M[src/koru/autonomous.py] 1220L C:0 F:76 CC↑7 D:3 (python)
   M[src/koru/autonomy/readiness/readiness.py] 1093L C:3 F:47 CC↑12 D:4 (python)
-  M[src/koruide/daemon/handlers_drive.py] 1083L C:0 F:35 CC↑12 D:1 (python)
+  M[src/koruide/daemon/handlers_drive.py] 1083L C:0 F:35 CC↑12 D:3 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1046L C:2 F:46 CC↑14 D:0 (python)
   M[packages/coru/src/coru/repair/pipeline.py] 1039L C:2 F:42 CC↑9 D:0 (python)
-  LANGS: python:754/md:119/shell:59/json:34/yaml:30/toml:16/yml:11/txt:5/other:4/proto:4/go:2/javascript:1/rust:1
+  M[src/koru/autonomy/cycle/cycle_drive_retry.py] 1035L C:0 F:40 CC↑18 D:3 (python)
+  M[src/koruide/ide.py] 1020L C:2 F:59 CC↑13 D:46 (python)
+  LANGS: python:748/typescript:184/shell:58/json:45/yaml:35/toml:16/yml:11/kotlin:6/txt:5/other:4/proto:4/go:2/javascript:1/rust:1/md:1/properties:1/xml:1
 
 HOTSPOTS[10]:
   ★ get_vql_chat_target_from_photo fan=37  // Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.target
@@ -43,10 +43,10 @@ HOTSPOTS[10]:
 
 REFACTOR[15]:
   [1] H/L Split tillm_setup_main (CC=25)
-  [2] H/H Split god module src/koru/autonomy/cycle/cycle_drive_retry.py (1035L, 0 classes)
-  [3] H/H Split god module packages/coru/src/coru/cli.py (3772L, 3 classes)
-  [4] H/H Split god module src/koru/autonomy/cycle/cycle_orchestrator.py (550L, 2 classes)
-  [5] H/H Split god module src/koru/autonomy/operator/operator_runtime.py (686L, 2 classes)
+  [2] H/L Split SharedAutopilotBridgePaste.shouldProbeInput (CC=26)
+  [3] H/H Split god module plugins/koru-autopilot-shared/src/bridge-paste.ts (757L, 1 classes)
+  [4] H/H Split god module src/koru/cli_shell.py (606L, 2 classes)
+  [5] H/H Split god module src/koru/autonomy/cycle/cycle_drive_retry.py (1035L, 0 classes)
 
 EVOLUTION:
-  2026-07-04 CC̄=4.0 crit=437 176663L // Automated analysis
+  2026-07-05 CC̄=3.7 crit=487 171032L // Automated analysis

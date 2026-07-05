@@ -16,6 +16,241 @@ sprints:
   duration: 2 weeks
   objectives:
   - Fix code quality issues
+  task_patterns:
+  - id: ticket-7379859a
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/__init__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/__init__.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-706f74be
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/activity_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/activity_log.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e4076af4
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in src/koru/autonomous_auto_pipeline.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_auto_pipeline.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c58b5f6e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autonomous_auto_pipeline.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_auto_pipeline.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-db32be2c
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in src/koru/autonomous_checkpoint.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_checkpoint.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-15fa8a9f
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in src/koru/autonomous_cycle.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_cycle.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a0a11851
+    name: Fix unused-imports issues
+    description: Resolve 12 unused-imports issues in src/koru/autonomous_cycle.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - src/koru/autonomous_cycle.py
+    rule_id: unused-imports
+    count: 12
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7e65702d
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in src/koru/autonomous_drive_retry_policy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_drive_retry_policy.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-51c747ff
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autonomous_drive_retry_policy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_drive_retry_policy.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2739fb0a
+    name: Fix unused-imports issues
+    description: Resolve 50 unused-imports issues in src/koru/autonomous_readiness.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - src/koru/autonomous_readiness.py
+    rule_id: unused-imports
+    count: 50
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-81357646
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in src/koru/autonomous_submit_strategy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_submit_strategy.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-294c3529
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autonomous_submit_strategy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomous_submit_strategy.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f70f5ba2
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autonomy/autopilot_status.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/autopilot_status.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-73e7a543
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autonomy/autopilot_status.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/autopilot_status.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e49d0d05
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autonomy/checkpoint/checkpoint.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/checkpoint/checkpoint.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7925a9fa
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autonomy/checkpoint/checkpoint.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/checkpoint/checkpoint.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c0c50856
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autonomy/code2llm_discovery.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/code2llm_discovery.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8c747b8c
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autonomy/code2llm_discovery.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/code2llm_discovery.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
 - id: sprint-2
   name: Koru Auto Onboarding Iteration 1
   duration: 3 weeks
@@ -458,45 +693,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-5d4bc4ce
-    name: Fix string-concat issues
-    description: Resolve 9 string-concat issues in src/koru/autonomous_parser.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - src/koru/autonomous_parser.py
-    rule_id: string-concat
-    count: 9
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-45a43753
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_parser.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_parser.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e3fb4dfc
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in src/koru/autonomous_process_guard.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_process_guard.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-f0d4bfb2
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/autonomy/env.py
@@ -506,19 +702,6 @@ sprints:
     files:
     - src/koru/autonomy/env.py
     rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b3d48613
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in src/koru/autonomous_wup.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_wup.py
-    rule_id: string-concat
     count: 2
     model_hints:
       planning: balanced
@@ -1108,45 +1291,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-ac3e3e72
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_cli_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_cli_config.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-0be99f9a
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_cycle_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_cycle_config.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-460d377a
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in src/koru/autonomous_checkpoint.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_checkpoint.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-86efd68a
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/autonomous_checkpoint.py
@@ -1155,162 +1299,6 @@ sprints:
     estimate: 1d
     files:
     - src/koru/autonomous_checkpoint.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c1addf51
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_cycle_gate.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_cycle_gate.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1e8e27bb
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in src/koru/autonomous_daemon.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_daemon.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b862d3bb
-    name: Fix unused-imports issues
-    description: Resolve 6 unused-imports issues in src/koru/autonomous_daemon.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - src/koru/autonomous_daemon.py
-    rule_id: unused-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-57eac975
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_operator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_operator.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c05efabe
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in src/koru/autonomous_onboarding.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_onboarding.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-42a69c3b
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_onboarding.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_onboarding.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ccb7e1ba
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in src/koru/autonomous_plugin.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_plugin.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-de661919
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_plugin.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_plugin.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-7ffe0d43
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_resources.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_resources.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-58b20284
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in src/koru/autonomous_processes.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_processes.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-c2b3c217
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_processes.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_processes.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-93937f67
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in src/koru/autonomous_runtime.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomous_runtime.py
     rule_id: unused-imports
     count: 2
     model_hints:
