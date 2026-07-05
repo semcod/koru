@@ -55,15 +55,37 @@ class _PsRow:
     command: str
 
 
-def _command_project(command: str) -> Path | None:
-    """Best-effort parse of ``--project`` from a process command line."""
+def _command_project(command: str, *, relative_to: Path | None = None) -> Path | None:
+    """Best-effort parse of ``--project`` from a process command line.
+
+    A relative ``--project`` value (most commonly ``.``, e.g. ``koru
+    autonomous up --project . --replace-existing``) must be resolved
+    relative to *that process's own* working directory (``relative_to``,
+    from ``_process_cwd(pid)``) — not the cwd of whichever process happens
+    to be running this check. Resolving against the checker's own cwd
+    (``Path(value).resolve()``) made two *different* projects' relative
+    ``--project .`` collapse onto the same absolute path whenever the
+    checking process's cwd happened to match, causing
+    ``--replace-existing`` to kill an unrelated project's autonomous loop
+    (reproduced 2026-07-05: a `koru fleet` child for project A killed a
+    long-running, unrelated instance for project B this way).
+    """
     parts = command.split()
+    raw: str | None = None
     for idx, part in enumerate(parts):
         if part == "--project" and idx + 1 < len(parts):
-            return Path(parts[idx + 1]).expanduser().resolve()
+            raw = parts[idx + 1]
+            break
         if part.startswith("--project="):
-            return Path(part.split("=", 1)[1]).expanduser().resolve()
-    return None
+            raw = part.split("=", 1)[1]
+            break
+    if raw is None:
+        return None
+    path = Path(raw).expanduser()
+    if path.is_absolute():
+        return path.resolve()
+    base = relative_to or Path.cwd()
+    return (base / path).resolve()
 
 
 def _process_cwd(pid: int) -> Path | None:
@@ -138,7 +160,7 @@ def _autonomous_process_matches_project(
         return None
 
     cwd = _process_cwd(row.pid)
-    cmd_project = _command_project(row.command)
+    cmd_project = _command_project(row.command, relative_to=cwd)
     if not (any_project or cwd == project or cmd_project == project):
         return None
     return ExistingAutonomousProcess(pid=row.pid, command=row.command, cwd=cwd)

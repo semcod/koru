@@ -187,6 +187,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "autoloop": autoloop_main,
     "autonomous": autonomous_main,
     "auto": lambda argv: _lazy_module_main("koru.cli_auto", "_auto_main", argv),
+    "fleet": lambda argv: _lazy_module_main("koru.cli_fleet", "fleet_main", argv),
     "wizard": lambda argv: _lazy_module_main("koru.wizard.cli", "wizard_main", argv),
     "dsl": _dsl_main,
     "tillm": _tillm_main,

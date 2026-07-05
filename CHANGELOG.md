@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `shell_drive_finalize.finalize_shell_drive_ticket` always ran `ticket done`
+  + `queue.post_run_verify` unconditionally, even when the same ticket had
+  already been resolved (done/canceled) by a concurrent actor — a human, or
+  another koru/agent session working the same planfile queue — while this
+  lane's own vendor-CLI drive (`claude -p ...`, can take minutes) was still
+  in flight. If that redundant verify run then hit *any* unrelated failure
+  (env drift, a transient kill, a slow-suite timeout), the finalize path
+  reopened a ticket that was already correctly finished, producing the
+  confusing "verify FAILED → reopened" churn observed live in this session:
+  the autonomous shell-drive loop and a concurrently-working Claude Code
+  session both had `STARTER-576` open at once. Added
+  `_ticket_already_resolved()` — a cheap `planfile ticket show` status check
+  before touching the ticket at all — so an already-done/canceled ticket is
+  left alone instead of being re-verified and potentially reopened.
+  Best-effort: any lookup failure (timeout, bad JSON, non-zero exit) is
+  treated as "not resolved" so the existing done+verify path still runs
+  unchanged in the common case.
+  Verified: `tests/test_shell_drive_finalize.py` — 2 new tests (skips
+  done+verify when already done; proceeds normally when still open) plus 4
+  existing tests updated for the new `ticket show` call now issued first.
+  All 11 pass.
+
 ### Added
 - Test coverage for `koru.autonomy.cycle.cycle_post_drive` (20 tests:
   `_drive_effect_payload`, `_submitted_but_no_effect`,
