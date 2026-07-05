@@ -96,7 +96,43 @@ def dashboard_ide_rows() -> tuple[list[dict[str, Any]], dict[str, list[dict[str,
   return rows, by_ide
 
 
+# /api/dashboard is polled every ~5s but its payload — running-IDE detection
+# (process scan) plus project discovery (filesystem walk + per-project
+# integration probes) — is expensive (~2-3s) and rarely changes. Cache it with
+# a short TTL so most polls are instant; the ceiling keeps it live-enough.
+_STATE_CACHE: dict[tuple[Any, ...], tuple[float, dict[str, Any]]] = {}
+_STATE_TTL_S = 15.0
+
+
 def dashboard_state(
+  *,
+  project: Path,
+  host: str,
+  port: int,
+  lan: bool,
+  configured_workspace: Path | None,
+  queue_name: str | None,
+) -> dict[str, Any]:
+  import time
+
+  key = (str(project), host, port, lan, str(configured_workspace), queue_name)
+  cached = _STATE_CACHE.get(key)
+  if cached is not None and (time.monotonic() - cached[0]) < _STATE_TTL_S:
+    return cached[1]
+
+  payload = _build_dashboard_state(
+    project=project,
+    host=host,
+    port=port,
+    lan=lan,
+    configured_workspace=configured_workspace,
+    queue_name=queue_name,
+  )
+  _STATE_CACHE[key] = (time.monotonic(), payload)
+  return payload
+
+
+def _build_dashboard_state(
   *,
   project: Path,
   host: str,
