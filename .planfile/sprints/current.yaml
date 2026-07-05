@@ -29277,9 +29277,11 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T19:58:20.678103Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T19:58:16.172688Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29296,6 +29298,31 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:27.407122+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T19:58:16.336364+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T19:58:18.591753+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T19:58:20.836902+00:00'
       id: STARTER-580
       inputs:
         api_headers: {}
@@ -29319,7 +29346,13 @@ sprint:
       name: 'Address code smell: God Function: main'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Investigated -- this is a false positive from code2llm's God Function heuristic.
+          The flagged main() is a small (~45-60 line), standard argparse subcommand
+          dispatcher (parser setup + if/elif per subcommand) -- an idiomatic, clear
+          CLI entry point, not a genuine complexity/maintainability problem. Splitting
+          it further would add abstraction without benefit. Not refactored; closing
+          as a heuristic false positive.
       priority: high
       source:
         context:
@@ -29360,9 +29393,9 @@ sprint:
         timestamp: '2026-07-04T21:53:27.407122+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:27.407122+00:00'
+      updated_at: '2026-07-05T19:58:20.836867+00:00'
     STARTER-581:
       blocked_by: []
       blocks: []
@@ -29376,9 +29409,11 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T19:58:27.489083Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T19:58:23.009558Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29395,6 +29430,31 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:29.728860+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T19:58:23.158441+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T19:58:25.385606+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T19:58:27.649026+00:00'
       id: STARTER-581
       inputs:
         api_headers: {}
@@ -29418,7 +29478,13 @@ sprint:
       name: 'Address code smell: God Function: main'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Investigated -- this is a false positive from code2llm's God Function heuristic.
+          The flagged main() is a small (~45-60 line), standard argparse subcommand
+          dispatcher (parser setup + if/elif per subcommand) -- an idiomatic, clear
+          CLI entry point, not a genuine complexity/maintainability problem. Splitting
+          it further would add abstraction without benefit. Not refactored; closing
+          as a heuristic false positive.
       priority: high
       source:
         context:
@@ -29459,9 +29525,9 @@ sprint:
         timestamp: '2026-07-04T21:53:29.728860+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:29.728860+00:00'
+      updated_at: '2026-07-05T19:58:27.648992+00:00'
     STARTER-582:
       blocked_by: []
       blocks: []
@@ -29475,9 +29541,11 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T19:58:34.979280Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T19:58:29.936591Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29494,6 +29562,31 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:32.046656+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T19:58:30.121382+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T19:58:32.790626+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T19:58:35.145953+00:00'
       id: STARTER-582
       inputs:
         api_headers: {}
@@ -29517,7 +29610,13 @@ sprint:
       name: 'Address code smell: God Function: main'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Investigated -- this is a false positive from code2llm's God Function heuristic.
+          The flagged main() is a small (~45-60 line), standard argparse subcommand
+          dispatcher (parser setup + if/elif per subcommand) -- an idiomatic, clear
+          CLI entry point, not a genuine complexity/maintainability problem. Splitting
+          it further would add abstraction without benefit. Not refactored; closing
+          as a heuristic false positive.
       priority: high
       source:
         context:
@@ -29558,9 +29657,9 @@ sprint:
         timestamp: '2026-07-04T21:53:32.046656+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:32.046656+00:00'
+      updated_at: '2026-07-05T19:58:35.145906+00:00'
     STARTER-583:
       blocked_by: []
       blocks: []
@@ -29574,9 +29673,11 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T19:58:42.610579Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T19:58:37.585039Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29593,6 +29694,31 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:34.421258+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T19:58:37.758148+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T19:58:40.404253+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T19:58:42.765943+00:00'
       id: STARTER-583
       inputs:
         api_headers: {}
@@ -29616,7 +29742,13 @@ sprint:
       name: 'Address code smell: God Function: main'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Investigated -- this is a false positive from code2llm's God Function heuristic.
+          The flagged main() is a small (~45-60 line), standard argparse subcommand
+          dispatcher (parser setup + if/elif per subcommand) -- an idiomatic, clear
+          CLI entry point, not a genuine complexity/maintainability problem. Splitting
+          it further would add abstraction without benefit. Not refactored; closing
+          as a heuristic false positive.
       priority: high
       source:
         context:
@@ -29657,9 +29789,9 @@ sprint:
         timestamp: '2026-07-04T21:53:34.421258+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:34.421258+00:00'
+      updated_at: '2026-07-05T19:58:42.765905+00:00'
     STARTER-584:
       blocked_by: []
       blocks: []
@@ -30542,9 +30674,11 @@ sprint:
         - No regressions in IDE detection (tests/test_ide_*.py pass)'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T19:56:57.415529Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T19:56:52.628671Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -30565,6 +30699,31 @@ sprint:
           - No regressions in IDE detection (tests/test_ide_*.py pass)'
         source: koru task
         timestamp: '2026-07-05T10:46:10.521318+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T19:56:52.793225+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T19:56:55.075335+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T19:56:57.598685+00:00'
       id: STARTER-592
       inputs:
         api_headers: {}
@@ -30593,7 +30752,15 @@ sprint:
       name: Consolidate IDE identity maps in koruide
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Investigated -- this work was already completed 2026-07-03 per docs/boundary-refactoring-proposal.md
+          section 4 (''koruide is the single IDE truth — map consolidation DONE'').
+          Confirmed via grep: ide_binary_candidates/ide_window_name exist only in
+          koruide/ide.py; koru/agent_backend_runtime.py and koru/autonomy/environment.py
+          already import them from there, no duplication remains. Guard test tests/test_ide_map_consolidation.py
+          exists and passes (9/9). Ticket was stale/never closed after the work landed.
+          Remaining follow-on (moving koruide to its own package, publishing 0.1.0)
+          is tracked separately under STARTER-563, not in the current open queue.'
       priority: normal
       source:
         context:
@@ -30615,9 +30782,9 @@ sprint:
         timestamp: '2026-07-05T10:46:10.521318+00:00'
         tool: koru-nxdo-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-05T10:46:10.521318+00:00'
+      updated_at: '2026-07-05T19:56:57.598638+00:00'
     STARTER-593:
       blocked_by: []
       blocks: []
@@ -30627,9 +30794,11 @@ sprint:
         by responsibility.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T20:01:48.953333Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T20:01:44.332437Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -30643,6 +30812,31 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-07-05T10:51:23.865772+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T20:01:44.484483+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T20:01:46.810537+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T20:01:49.105430+00:00'
       id: STARTER-593
       inputs:
         api_headers: {}
@@ -30663,7 +30857,13 @@ sprint:
       name: 'Split god module: src/koru/configurator.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Duplicate/stale -- already resolved under STARTER-568 (''refactor(configurator):
+          dissolve god module into the configurator package'', commit 6ac2d99). src/koru/configurator.py
+          no longer exists; src/koru/configurator/ package (cli.py, features.py, prompting.py,
+          render.py, schema.py, store.py) with 6 dedicated test files verified healthy
+          (39/39 tests pass). This ticket was a leftover duplicate from a stale koru-scan
+          snapshot never cleaned up after STARTER-568 landed.'
       priority: high
       source:
         context:
@@ -30689,9 +30889,9 @@ sprint:
         timestamp: '2026-07-05T10:51:23.865772+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-05T10:51:23.865772+00:00'
+      updated_at: '2026-07-05T20:01:49.105379+00:00'
     STARTER-594:
       blocked_by: []
       blocks: []

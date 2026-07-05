@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.autonomy.cycle.cycle_chat_activity_config import (
     autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
@@ -20,6 +20,21 @@ from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult  # noqa: F401
 
 _CHAT_ACTIVITY_TYPES = ("message.sent", "message.received")
+
+
+class ChatActivityStatus(NamedTuple):
+    """Named view of :func:`classify_chat_event`'s positional 4-tuple result.
+
+    Field order matches ``classify_chat_event``'s documented return
+    ``(has_activity, event_type, age_label, reflection_events)`` so the result
+    can be splatted positionally; use the named fields at call sites instead
+    of unpacking (which avoids positional-index fragility).
+    """
+
+    has_activity: bool
+    last_type: str
+    age_label: str
+    reflection_events: list[Any]
 
 
 def _event_timestamp(payload: dict[str, Any], *, default: float = 0.0) -> float:
@@ -231,13 +246,15 @@ def _determine_chat_activity_status(
     cooldown: float,
     recent_events: list[dict[str, Any]],
     reflection_events: list[Any],
-) -> tuple[bool, str, str, list[Any]]:
-    return classify_chat_event(
-        state=state,
-        ide=ide,
-        cooldown=cooldown,
-        recent_events=recent_events,
-        reflection_events=reflection_events,
+) -> ChatActivityStatus:
+    return ChatActivityStatus(
+        *classify_chat_event(
+            state=state,
+            ide=ide,
+            cooldown=cooldown,
+            recent_events=recent_events,
+            reflection_events=reflection_events,
+        )
     )
 
 
