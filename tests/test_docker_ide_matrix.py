@@ -18,7 +18,15 @@ PLUGIN_REQUIRED_IDES = frozenset({"vscode", "vscodium", "cursor", "windsurf", "a
 
 
 def _vscodium_shared_dir() -> Path:
-    return ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared"
+    # The vscodium plugin's ``src/_shared`` is a gitignored symlink into
+    # ``koru-autopilot-shared/src`` that the npm prebuild (sync-plugin-shared.py)
+    # materialises. A headless CI container has no npm/node and never creates it,
+    # so fall back to the canonical shared source the symlink points at — the
+    # exact same tracked files the plugin bundles.
+    linked = ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared"
+    if (linked / "bridge-submit.ts").is_file():
+        return linked
+    return ROOT / "plugins" / "koru-autopilot-shared" / "src"
 
 
 def _read_vscodium_shared_file(name: str) -> str:
@@ -145,7 +153,7 @@ def test_vscodium_plugin_gates_host_input_fallbacks() -> None:
 
 
 def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> None:
-    shared_dir = ROOT / "plugins" / "koru-autopilot-vscodium" / "src" / "_shared"
+    shared_dir = _vscodium_shared_dir()
     source = ""
     for path in shared_dir.glob("*.ts"):
         source += path.read_text(encoding="utf-8") + "\n"

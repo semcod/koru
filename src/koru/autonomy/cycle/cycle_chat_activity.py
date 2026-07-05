@@ -4,7 +4,7 @@ import os
 import time
 from hashlib import sha1  # noqa: F401
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.autonomy.cycle.cycle_chat_activity_analyzer import (
     _CHAT_ACTIVITY_TYPES,  # noqa: F401
@@ -600,6 +600,152 @@ def _apply_chat_activity_skip_decision(
     return True
 
 
+class _ChatActivityContext(NamedTuple):
+    """Gathered chat-activity signals consumed by the skip decision."""
+
+    ide: str | None
+    waiting_ticket: str
+    recent_events: list[dict[str, Any]]
+    reflection_events: list[Any]
+
+
+def _gather_chat_activity_context(
+    *,
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+    cycle_telemetry: dict[str, Any],
+    cooldown: float,
+) -> _ChatActivityContext:
+    """Collect the IDE-scoped recent chat events used to decide a skip.
+
+    Side-effectful: records the normalised events into ``cycle_telemetry``.
+    """
+    ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+
+    recent_events = _recent_chat_activity_events(
+        state,
+        ide=ide,
+        within_seconds=cooldown,
+    )
+    _record_normalized_chat_activity_events(
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        recent_events=recent_events,
+        waiting_ticket=waiting_ticket,
+    )
+    recent_events = _filter_chat_activity_events_for_waiting_ticket(
+        state,
+        recent_events,
+        waiting_ticket,
+    )
+    reflection_events = _state_events_to_chat_events(recent_events)
+    return _ChatActivityContext(
+        ide=ide,
+        waiting_ticket=waiting_ticket,
+        recent_events=recent_events,
+        reflection_events=reflection_events,
+    )
+
+
+def _evaluate_chat_activity_skip(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    cooldown: float,
+    report_progress: Any,
+    ctx: _ChatActivityContext,
+) -> bool:
+    """Run the ordered skip checks against gathered ``ctx`` and decide.
+
+    Returns True to skip drive, False to proceed. ``ctx`` carries the
+    IDE-scoped recent events (see :func:`_gather_chat_activity_context`).
+    """
+    if _check_recent_drive_ack_skip(
+        state,
+        cooldown,
+        ctx.waiting_ticket,
+        ctx.ide,
+        ctx.recent_events,
+        cycle_telemetry,
+        report_progress,
+    ):
+        return True
+
+    if _check_chat_intake_skip(
+        project,
+        queue_result,
+        state,
+        ctx.recent_events,
+        cycle_telemetry,
+        report_progress,
+    ):
+        return True
+
+    if _check_recent_self_drive_skip(
+        state,
+        cooldown,
+        ctx.waiting_ticket,
+        ctx.recent_events,
+        cycle_telemetry,
+        report_progress,
+    ):
+        return True
+
+    status = _determine_chat_activity_status(
+        state=state,
+        ide=ctx.ide,
+        cooldown=cooldown,
+        recent_events=ctx.recent_events,
+        reflection_events=ctx.reflection_events,
+    )
+    if not status.has_activity:
+        return False
+
+    if _last_drive_verdict_no_change(state) and not _recent_events_have_response(
+        ctx.recent_events
+    ):
+        if _allow_no_response_redrive(
+            state=state,
+            waiting_ticket=ctx.waiting_ticket,
+            report_progress=report_progress,
+            reason="no_change after drive; no message.received",
+            age_label=status.age_label,
+        ):
+            cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+            return False
+        cycle_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
+        return True
+
+    if ctx.recent_events and _recent_message_sent_allows_redrive(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        recent_events=ctx.recent_events,
+        last_type=status.last_type,
+        age_label=status.age_label,
+        waiting_ticket=ctx.waiting_ticket,
+        report_progress=report_progress,
+    ):
+        return False
+
+    return _apply_chat_activity_skip_decision(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        waiting_ticket=ctx.waiting_ticket,
+        ide=ctx.ide,
+        reflection_events=status.reflection_events,
+        last_type=status.last_type,
+        age_label=status.age_label,
+        cooldown=cooldown,
+        report_progress=report_progress,
+    )
+
+
 def _skip_due_to_recent_chat_activity(
     *,
     project: Path,
@@ -628,103 +774,18 @@ def _skip_due_to_recent_chat_activity(
     if cooldown <= 0:
         return False
 
-    ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
-    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-
-    recent_events = _recent_chat_activity_events(
-        state,
-        ide=ide,
-        within_seconds=cooldown,
-    )
-    _record_normalized_chat_activity_events(
+    ctx = _gather_chat_activity_context(
         state=state,
-        cycle_telemetry=cycle_telemetry,
-        recent_events=recent_events,
-        waiting_ticket=waiting_ticket,
-    )
-    recent_events = _filter_chat_activity_events_for_waiting_ticket(
-        state,
-        recent_events,
-        waiting_ticket,
-    )
-    reflection_events = _state_events_to_chat_events(recent_events)
-
-    if _check_recent_drive_ack_skip(
-        state,
-        cooldown,
-        waiting_ticket,
-        ide,
-        recent_events,
-        cycle_telemetry,
-        report_progress,
-    ):
-        return True
-
-    if _check_chat_intake_skip(
-        project,
-        queue_result,
-        state,
-        recent_events,
-        cycle_telemetry,
-        report_progress,
-    ):
-        return True
-
-    if _check_recent_self_drive_skip(
-        state,
-        cooldown,
-        waiting_ticket,
-        recent_events,
-        cycle_telemetry,
-        report_progress,
-    ):
-        return True
-
-    has_activity, last_type, age_label, reflection_events = _determine_chat_activity_status(
-        state=state,
-        ide=ide,
-        cooldown=cooldown,
-        recent_events=recent_events,
-        reflection_events=reflection_events,
-    )
-    if not has_activity:
-        return False
-
-    if _last_drive_verdict_no_change(state) and not _recent_events_have_response(recent_events):
-        if _allow_no_response_redrive(
-            state=state,
-            waiting_ticket=waiting_ticket,
-            report_progress=report_progress,
-            reason="no_change after drive; no message.received",
-            age_label=age_label,
-        ):
-            cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
-            return False
-        cycle_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
-        return True
-
-    if recent_events and _recent_message_sent_allows_redrive(
-        project=project,
         queue_result=queue_result,
-        state=state,
-        recent_events=recent_events,
-        last_type=last_type,
-        age_label=age_label,
-        waiting_ticket=waiting_ticket,
-        report_progress=report_progress,
-    ):
-        return False
-
-    return _apply_chat_activity_skip_decision(
+        cycle_telemetry=cycle_telemetry,
+        cooldown=cooldown,
+    )
+    return _evaluate_chat_activity_skip(
         project=project,
         queue_result=queue_result,
         state=state,
         cycle_telemetry=cycle_telemetry,
-        waiting_ticket=waiting_ticket,
-        ide=ide,
-        reflection_events=reflection_events,
-        last_type=last_type,
-        age_label=age_label,
         cooldown=cooldown,
         report_progress=report_progress,
+        ctx=ctx,
     )

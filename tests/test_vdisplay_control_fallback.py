@@ -49,6 +49,13 @@ def test_vdisplay_fallback_disabled_explicitly(monkeypatch: pytest.MonkeyPatch) 
 def test_send_chat_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("KORU_VDISPLAY_PREFER_PHOTO_VQL", raising=False)
     monkeypatch.delenv("KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT", raising=False)
+    # The dry-run path resolves an IDE prompt map via vdisplay's desktop-app
+    # registry. On a host with no desktop apps installed (headless CI) that
+    # registry is empty and get_desktop_app("windsurf") raises KeyError. On a
+    # dev host the app is known but has no map file, so the resolver returns
+    # None and the backend stays "vdisplay". Pin that None outcome so the test
+    # asserts the same intended behaviour regardless of host.
+    monkeypatch.setattr(vdisplay_client, "_resolve_ide_prompt_map", lambda app_id: None)
     reply = vdisplay_client.send_chat("hello", ide="windsurf", submit=True, dry_run=True)
     assert reply["ok"] is True
     assert reply["backend"] == "vdisplay"

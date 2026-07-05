@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `koru fleet up` / `koru fleet ls` (`koru/cli_fleet.py`): a supervisor that
+  discovers every project with a koru LLM-agent policy
+  (`.planfile/.koru/policy.yaml`) under a workspace root and runs one
+  supervised `koru autonomous up --project <p> --replace-existing` child
+  process per project — a single broker-style service (like an MQTT broker
+  managing many topics) instead of one hand-configured systemd unit per
+  project. Restarts a project's child after `--restart-backoff-seconds` if
+  it exits, and periodically re-discovers newly `koru --init`-ed projects
+  (`--rescan-interval-seconds`) without needing a restart. Process-level
+  isolation is deliberate — one project's crash/resource use can't take
+  down another's loop. 17 new tests (`tests/test_cli_fleet.py`), plus a
+  live smoke test (2 synthetic projects, verified child spawn + clean
+  SIGTERM shutdown of both). Docs + mermaid/ASCII architecture diagrams +
+  deployable systemd unit: [`docs/koru-fleet.md`](docs/koru-fleet.md),
+  [`examples/systemd/koru-fleet.service.example`](examples/systemd/koru-fleet.service.example).
+
+### Fixed
+- **`_command_project()` (`autonomy/operator/operator_processes.py`)
+  resolved a relative `--project` argument (almost always `.` — the common
+  invocation shown by `koru --doctor`'s own recovery hint,
+  `koru autonomous up --project . --replace-existing`) against the
+  *checking* process's own current directory instead of the *target*
+  process's.** Two completely unrelated `koru autonomous up` instances for
+  different projects, each started with `--project .` from their own
+  directory, could resolve to the *same* absolute path whenever the
+  checking process's cwd happened to equal the other instance's original
+  cwd — `--replace-existing` would then kill a perfectly healthy, unrelated
+  project's autonomous loop, believing it was "the same project already
+  running." Reproduced live in this session by a `koru fleet up` child for
+  a synthetic test project killing an unrelated, hours-old, real
+  `koru autonomous up --project . --replace-existing` instance for a
+  different project. This is a strong candidate for at least some of the
+  autonomous loop's observed unreliability ("why doesn't it stay running")
+  — any two relatively-invoked instances anywhere on the machine were at
+  risk, not just deliberately-concurrent ones. Fixed by resolving the
+  relative path against that process's own cwd (`_process_cwd(pid)`,
+  already computed by the caller for exactly this purpose) instead of the
+  checking process's `Path.cwd()`. Verified with 11 new tests
+  (`tests/test_operator_processes_project_matching.py`) — including a
+  direct reproduction of the two-unrelated-instances scenario — plus the 3
+  existing `--replace-existing`/existing-process tests in
+  `tests/test_autonomous.py` still pass. This function had zero prior test
+  coverage.
+- `shell_drive_finalize.finalize_shell_drive_ticket` always ran `ticket done`
+  + `queue.post_run_verify` unconditionally, even when the same ticket had
+  already been resolved (done/canceled) by a concurrent actor — a human, or
+  another koru/agent session working the same planfile queue — while this
+  lane's own vendor-CLI drive (`claude -p ...`, can take minutes) was still
+  in flight. If that redundant verify run then hit *any* unrelated failure
+  (env drift, a transient kill, a slow-suite timeout), the finalize path
+  reopened a ticket that was already correctly finished, producing the
+  confusing "verify FAILED → reopened" churn observed live in this session:
+  the autonomous shell-drive loop and a concurrently-working Claude Code
+  session both had `STARTER-576` open at once. Added
+  `_ticket_already_resolved()` — a cheap `planfile ticket show` status check
+  before touching the ticket at all — so an already-done/canceled ticket is
+  left alone instead of being re-verified and potentially reopened.
+  Best-effort: any lookup failure (timeout, bad JSON, non-zero exit) is
+  treated as "not resolved" so the existing done+verify path still runs
+  unchanged in the common case.
+  Verified: `tests/test_shell_drive_finalize.py` — 2 new tests (skips
+  done+verify when already done; proceeds normally when still open) plus 4
+  existing tests updated for the new `ticket show` call now issued first.
+  All 11 pass.
+
+### Added
+- Test coverage for `koru.autonomy.cycle.cycle_post_drive` (20 tests:
+  `_drive_effect_payload`, `_submitted_but_no_effect`,
+  `_snapshot_before_drive`, `_post_drive_ticket_id`, `_update_drive_count`,
+  `_emit_drive_effect_if_needed`, `_maybe_emit_llm_evaluation` (including
+  exception-swallowing behavior), `_maybe_emit_improved_prompt` gating) and
+  `koru.autonomy.cycle.cycle_orchestrator` (11 tests: `_drive_result_
+  autopilot_status`'s full branch coverage — idle/waiting-ticket-closed
+  decision kinds, ok/manual-focus/submit-unverified/plain-failure reply
+  shapes — and `_plugin_gate_recovery_key`'s dedup-key construction).
+  Both modules previously had zero dedicated tests despite being critical
+  to the autonomous drive loop. The heavier IDE-plugin-reconnect machinery
+  in `cycle_orchestrator` (`_plugin_gate_status`, `_attempt_plugin_gate_
+  recovery`, `_handle_autopilot_phase`) is intentionally not covered here —
+  it requires deep mocking of live IDE/plugin client state with low
+  confidence the mocks reflect real plugin behavior; left for follow-up
+  with real integration fixtures rather than mocked ones that would give
+  false confidence.
+
 ## [0.1.10] - 2026-07-05
 
 ### Fixed
@@ -135,6 +222,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation index:** [`docs/README.md`](./docs/README.md) lists all
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
+
+## [0.1.388] - 2026-07-05
+
+### Docs
+- Update README.md
+
+### Other
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update packages/coru/src/coru/cli.py
+
+## [0.1.387] - 2026-07-05
+
+### Docs
+- Update README.md
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update packages/.coru/events/dsl.events.pb
 
 ## [0.1.386] - 2026-07-05
 

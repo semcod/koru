@@ -69,7 +69,7 @@ def test_skips_failed_drive_and_wrong_kind(tmp_path, planfile):
 def test_verified_without_config_only_notes(tmp_path, planfile, monkeypatch):
     monkeypatch.setattr(verify_mod, "load_post_run_verify_config", lambda p: None)
     assert _finalize(tmp_path) == "noted"
-    assert planfile.commands() == ["ticket update"]
+    assert planfile.commands() == ["ticket show", "ticket update"]
 
 
 def test_verified_green_marks_done(tmp_path, planfile, monkeypatch):
@@ -81,7 +81,7 @@ def test_verified_green_marks_done(tmp_path, planfile, monkeypatch):
         lambda project, ids, **kw: [{"ticket_id": i, "ok": True, "action": "verified"} for i in ids],
     )
     assert _finalize(tmp_path) == "done_verified"
-    assert planfile.commands() == ["ticket update", "ticket done"]
+    assert planfile.commands() == ["ticket show", "ticket update", "ticket done"]
 
 
 def test_verified_red_reports_reopen(tmp_path, planfile, monkeypatch):
@@ -98,13 +98,57 @@ def test_verified_red_reports_reopen(tmp_path, planfile, monkeypatch):
 def test_always_policy_trusts_agent(tmp_path, planfile, monkeypatch):
     monkeypatch.setenv("KORU_SHELL_DRIVE_AUTODONE", "always")
     assert _finalize(tmp_path) == "done"
-    assert planfile.commands() == ["ticket update", "ticket done"]
+    assert planfile.commands() == ["ticket show", "ticket update", "ticket done"]
 
 
 def test_off_policy_only_notes(tmp_path, planfile, monkeypatch):
     monkeypatch.setenv("KORU_SHELL_DRIVE_AUTODONE", "off")
     assert _finalize(tmp_path) == "noted"
-    assert planfile.commands() == ["ticket update"]
+    assert planfile.commands() == ["ticket show", "ticket update"]
+
+
+class _PlanfileWithShowStatus:
+    """Records calls like _PlanfileRecorder, but answers `ticket show` with a
+    fixed status payload -- used to simulate a ticket already resolved by a
+    concurrent actor before this drive's finalize step runs."""
+
+    def __init__(self, show_status: str) -> None:
+        self.calls: list[list[str]] = []
+        self.show_status = show_status
+
+    def __call__(self, project: Path, args, runner=None):
+        self.calls.append(list(args))
+        if args[:2] == ["ticket", "show"]:
+            import json
+
+            return subprocess.CompletedProcess(
+                list(args), 0, stdout=json.dumps({"status": self.show_status}), stderr=""
+            )
+        return subprocess.CompletedProcess(list(args), 0, stdout="", stderr="")
+
+    def commands(self) -> list[str]:
+        return [" ".join(c[:2]) for c in self.calls]
+
+
+def test_skips_done_and_verify_when_already_done_by_another_actor(tmp_path, monkeypatch):
+    rec = _PlanfileWithShowStatus(show_status="done")
+    monkeypatch.setattr(ticket_mod, "planfile_command", rec)
+    monkeypatch.setattr(bridge_mod, "shell_drive_client_id", lambda ide: "claude-code")
+    monkeypatch.delenv("KORU_SHELL_DRIVE_AUTODONE", raising=False)
+
+    assert _finalize(tmp_path) == "already_resolved"
+    # Only the status lookup happened -- no note, no done, no verify.
+    assert rec.commands() == ["ticket show"]
+
+
+def test_proceeds_normally_when_ticket_still_open(tmp_path, monkeypatch):
+    rec = _PlanfileWithShowStatus(show_status="open")
+    monkeypatch.setattr(ticket_mod, "planfile_command", rec)
+    monkeypatch.setattr(bridge_mod, "shell_drive_client_id", lambda ide: "claude-code")
+    monkeypatch.setenv("KORU_SHELL_DRIVE_AUTODONE", "off")
+
+    assert _finalize(tmp_path) == "noted"
+    assert rec.commands() == ["ticket show", "ticket update"]
 
 
 def test_done_failure_reported(tmp_path, monkeypatch):
@@ -119,5 +163,5 @@ def test_bytes_reply_message_survives(tmp_path, planfile, monkeypatch):
     monkeypatch.setenv("KORU_SHELL_DRIVE_AUTODONE", "off")
     result = _finalize(tmp_path, reply={"ok": True, "message": b"\xffraw", "client_id": "codex"})
     assert result == "noted"
-    note = planfile.calls[0][-1]
+    note = planfile.calls[-1][-1]
     assert "raw" in note

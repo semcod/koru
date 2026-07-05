@@ -501,6 +501,85 @@ def _resolve_calibration_lane(
     return ide, instance
 
 
+def _calibration_socket_fix(
+    ide: str,
+    instance: str,
+    diagnose_rc: int,
+    *,
+    skip_fix: bool,
+) -> int:
+    """Align the workspace socket via ``koru ide doctor --fix --gc-sockets`` and refresh lane status."""
+    if skip_fix:
+        return diagnose_rc
+    from coru.cli import _lane_status_raw, _run_koru_lane
+
+    print("[coru] calibration: aligning workspace socket (koru ide doctor --fix --gc-sockets)...")
+    fix_rc = _run_koru_lane(
+        ide,
+        instance,
+        ["ide", "doctor", "--ide", ide, "--fix", "--gc-sockets"],
+    )
+    if fix_rc == 2:
+        print("[coru] calibration: ide doctor failed (invalid lane/adapter)", file=sys.stderr)
+        return fix_rc
+    if fix_rc != 0:
+        print(
+            "[coru] calibration: bridge not ready after socket fix "
+            "(daemon/plugin may still need reconnect — continuing checks)",
+            file=sys.stderr,
+        )
+    return _lane_status_raw(ide, instance)
+
+
+def _calibration_preflight_reports(
+    ide: str,
+    instance: str,
+    *,
+    skip_desktop: bool,
+    skip_bridge: bool,
+) -> None:
+    """Run desktop + bridge preflight scenarios and print their report lines."""
+    from coru.cli import _run_calibration_bridge_preflight, _run_calibration_desktop_preflight
+
+    _, desktop_lines = _run_calibration_desktop_preflight(ide, skip=skip_desktop)
+    for line in desktop_lines:
+        print(line)
+
+    _, bridge_lines = _run_calibration_bridge_preflight(ide, instance, skip=skip_bridge)
+    for line in bridge_lines:
+        print(line)
+
+
+def _calibration_probe_drive(ide: str, instance: str, probe_prompt: str) -> int:
+    """Run the end-to-end probe drive, print its report, and trigger lane repair on failure."""
+    from coru.cli import (
+        _koru_autopilot_env_payload,
+        _lane_drive_capture,
+        _run_lane_repair,
+    )
+
+    print(f"[coru] calibration: probe drive (prompt={probe_prompt!r})...")
+    probe_rc, drive = _lane_drive_capture(
+        ide,
+        instance,
+        probe_prompt,
+        require_plugin=True,
+    )
+    ok, lines = _format_calibration_probe_report(drive)
+    for line in lines:
+        print(line)
+    if ok:
+        print("[coru] calibration: PASS — focus/paste/submit path verified")
+        return 0
+
+    if drive:
+        payload = _koru_autopilot_env_payload(ide, instance) or {}
+        payload = {**payload, "drive": drive}
+        _run_lane_repair(ide, instance, payload=payload, trigger="coru.calibration.probe")
+    print("[coru] calibration: FAIL — fix issues above before `coru auto`", file=sys.stderr)
+    return probe_rc or 1
+
+
 def _lane_calibration(
     ide: str,
     instance: str,
@@ -513,12 +592,8 @@ def _lane_calibration(
     """Preflight bridge, align socket, and run an end-to-end plugin probe drive."""
     from coru.cli import (
         _diagnose_lane,
-        _koru_autopilot_env_payload,
         _lane_status_payload,
-        _lane_status_raw,
         _print_troubleshooting_log_locations,
-        _run_koru_lane,
-        _run_lane_repair,
         _target_plugin_rows,
     )
 
@@ -526,24 +601,7 @@ def _lane_calibration(
     _print_troubleshooting_log_locations(ide, instance)
 
     rc = _diagnose_lane(ide, instance, skip_ensure=False)
-    if not skip_fix:
-        print("[coru] calibration: aligning workspace socket (koru ide doctor --fix --gc-sockets)...")
-        fix_rc = _run_koru_lane(
-            ide,
-            instance,
-            ["ide", "doctor", "--ide", ide, "--fix", "--gc-sockets"],
-        )
-        if fix_rc == 2:
-            print("[coru] calibration: ide doctor failed (invalid lane/adapter)", file=sys.stderr)
-            return fix_rc
-        if fix_rc != 0:
-            print(
-                "[coru] calibration: bridge not ready after socket fix "
-                "(daemon/plugin may still need reconnect — continuing checks)",
-                file=sys.stderr,
-            )
-        rc = _lane_status_raw(ide, instance)
-
+    rc = _calibration_socket_fix(ide, instance, rc, skip_fix=skip_fix)
     if rc != 0:
         print(
             "[coru] calibration: preflight failed — start daemon and connect plugin first",
@@ -568,40 +626,11 @@ def _lane_calibration(
         )
         return 1
 
-    from coru.cli import (
-        _lane_drive_capture,
-        _run_calibration_bridge_preflight,
-        _run_calibration_desktop_preflight,
+    _calibration_preflight_reports(
+        ide, instance, skip_desktop=skip_desktop, skip_bridge=skip_bridge
     )
 
-    _, desktop_lines = _run_calibration_desktop_preflight(ide, skip=skip_desktop)
-    for line in desktop_lines:
-        print(line)
-
-    _, bridge_lines = _run_calibration_bridge_preflight(ide, instance, skip=skip_bridge)
-    for line in bridge_lines:
-        print(line)
-
-    print(f"[coru] calibration: probe drive (prompt={probe_prompt!r})...")
-    probe_rc, drive = _lane_drive_capture(
-        ide,
-        instance,
-        probe_prompt,
-        require_plugin=True,
-    )
-    ok, lines = _format_calibration_probe_report(drive)
-    for line in lines:
-        print(line)
-    if ok:
-        print("[coru] calibration: PASS — focus/paste/submit path verified")
-        return 0
-
-    if drive:
-        payload = _koru_autopilot_env_payload(ide, instance) or {}
-        payload = {**payload, "drive": drive}
-        _run_lane_repair(ide, instance, payload=payload, trigger="coru.calibration.probe")
-    print("[coru] calibration: FAIL — fix issues above before `coru auto`", file=sys.stderr)
-    return probe_rc or 1
+    return _calibration_probe_drive(ide, instance, probe_prompt)
 
 
 def _register_calibration_command(sub: Any) -> None:

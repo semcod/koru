@@ -315,10 +315,13 @@ def run_verify_commands(
 
 
 def _truncate(text: str, limit: int) -> str:
+    """Keep the TAIL of the output — pytest puts FAILURES/short summary at the
+    end, while the head is progress dots; head-truncation produced reopen
+    notes with no failing test name (2026-07-05)."""
     text = text.replace("\n", " ").strip()
     if len(text) <= limit:
         return text
-    return f"{text[:limit - 3]}..."
+    return f"...{text[-(limit - 3):]}"
 
 
 def apply_verify_failure(

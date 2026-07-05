@@ -5,6 +5,10 @@ refactor automation system for multi-repo workspaces.
 
 **Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md)
 
+- **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet up`: one supervisor
+  running a `koru autonomous up` child per koru-managed project on the
+  machine (mermaid + ASCII architecture diagrams, systemd deployment, and
+  the `--replace-existing` cross-project-kill bug it surfaced).
 - **[`roadmap-competition.md`](./roadmap-competition.md)** (PL) — porównanie z Grit, Moderne/OpenRewrite, Gitar, Git AutoReview i kierunek roadmapy.
 - **[`recipes/README.md`](./recipes/README.md)** (PL) — szkic katalogu przepisów koru (propozycje, przykłady YAML).
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).

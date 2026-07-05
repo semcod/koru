@@ -385,6 +385,85 @@ def _handle_os_profile_direct_error(
     return True
 
 
+def _attempt_direct_drive_backends(
+    args: argparse.Namespace,
+    text: str,
+    *,
+    injector: Injector,
+    target_id: str,
+    profile_id: str,
+    corr: str,
+    emit_payload: bool,
+) -> tuple[int, dict[str, Any] | None]:
+    """Try the ordered direct-drive backends, then the keyboard fallback."""
+    profile_first = _prefer_calibrated_os_injector(profile_id, args.project)
+    drive_attempts: tuple[str, ...] = (
+        ("profile", "vdisplay") if profile_first else ("vdisplay", "profile")
+    )
+    for attempt in drive_attempts:
+        if attempt == "vdisplay":
+            handled, rc, payload = _try_vdisplay_ide_prompt_direct(
+                args,
+                text,
+                profile_id,
+                corr=corr,
+                emit_payload=emit_payload,
+            )
+        else:
+            handled, rc, payload = _try_profile_direct_drive(
+                args,
+                text,
+                profile_id,
+                corr=corr,
+                emit_payload=emit_payload,
+            )
+        if handled:
+            return rc, payload
+    fallback_rc, _unused_payload = _handle_os_injector_fallback(args, profile_id, injector)
+    if fallback_rc is not None:
+        return fallback_rc, None
+    return _type_text_direct_drive(
+        args,
+        text,
+        corr=corr,
+        target_id=target_id,
+        injector=injector,
+        emit_payload=emit_payload,
+    )
+
+
+def _recover_from_os_injector_error(
+    args: argparse.Namespace,
+    text: str,
+    exc: Exception,
+    *,
+    injector: Injector,
+    target_id: str,
+    profile_id: str,
+    corr: str,
+    emit_payload: bool,
+) -> tuple[int, dict[str, Any] | None]:
+    """Fall back to the keyboard injector after an OS-injector failure."""
+    if _handle_os_profile_direct_error(args, profile_id, exc):
+        return 1, None
+    print(
+        f"koru autopilot drive: os-injector failed; falling back to keyboard injector: {exc}",
+        file=sys.stderr,
+    )
+    try:
+        return _type_text_direct_drive(
+            args,
+            text,
+            corr=corr,
+            target_id=target_id,
+            injector=injector,
+            emit_payload=emit_payload,
+        )
+    except InjectorError as inner_exc:
+        print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
+        return 1, None
+
+
 def _run_direct_drive(
     args: argparse.Namespace,
     text: str,
@@ -409,59 +488,26 @@ def _run_direct_drive(
     _emit_direct_drive_auto_selection(args, profile_id, selection)
 
     try:
-        profile_first = _prefer_calibrated_os_injector(profile_id, args.project)
-        drive_attempts: tuple[str, ...] = (
-            ("profile", "vdisplay") if profile_first else ("vdisplay", "profile")
-        )
-        for attempt in drive_attempts:
-            if attempt == "vdisplay":
-                handled, rc, payload = _try_vdisplay_ide_prompt_direct(
-                    args,
-                    text,
-                    profile_id,
-                    corr=corr,
-                    emit_payload=emit_payload,
-                )
-            else:
-                handled, rc, payload = _try_profile_direct_drive(
-                    args,
-                    text,
-                    profile_id,
-                    corr=corr,
-                    emit_payload=emit_payload,
-                )
-            if handled:
-                return rc, payload
-        fallback_rc, _unused_payload = _handle_os_injector_fallback(args, profile_id, injector)
-        if fallback_rc is not None:
-            return fallback_rc, None
-        return _type_text_direct_drive(
+        return _attempt_direct_drive_backends(
             args,
             text,
-            corr=corr,
-            target_id=target_id,
             injector=injector,
+            target_id=target_id,
+            profile_id=profile_id,
+            corr=corr,
             emit_payload=emit_payload,
         )
     except oi.OsInjectorError as exc:
-        if _handle_os_profile_direct_error(args, profile_id, exc):
-            return 1, None
-        print(
-            f"koru autopilot drive: os-injector failed; falling back to keyboard injector: {exc}",
-            file=sys.stderr,
+        return _recover_from_os_injector_error(
+            args,
+            text,
+            exc,
+            injector=injector,
+            target_id=target_id,
+            profile_id=profile_id,
+            corr=corr,
+            emit_payload=emit_payload,
         )
-        try:
-            return _type_text_direct_drive(
-                args,
-                text,
-                corr=corr,
-                target_id=target_id,
-                injector=injector,
-                emit_payload=emit_payload,
-            )
-        except InjectorError as inner_exc:
-            print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
-            return 1, None
     except InjectorError as exc:
         print(f"koru autopilot drive: {exc}", file=sys.stderr)
         return 1, None

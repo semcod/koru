@@ -888,6 +888,10 @@ def test_prepare_syncs_ide_control_capture_confirmed_from_observe(monkeypatch: p
     capture_png = Path("/tmp/capture.png")
     monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-1", {"ok": True, "resolved_source": "DP-1"}))  # noqa: E501
     monkeypatch.setattr(vc, "_vdisplay_source_for_ide", lambda ide: "DP-1")
+    # Hermetic: GUI-map resolution reaches vdisplay.desktop_apps, which is empty
+    # in a headless container (no desktop apps registered) and raises KeyError.
+    # This test does not exercise map/monitor mismatch, so pin it to no map.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
     monkeypatch.setattr(
         vc._autonomy_session,
         "begin_autonomy_session",
@@ -1426,6 +1430,10 @@ def test_prepare_aborts_when_probe_fails(monkeypatch: pytest.MonkeyPatch) -> Non
             {"ok": False, "error": "no connected monitor", "monitor_names": ["DP-1"]},
         ),
     )
+    # Hermetic: map resolution (which runs before the probe-abort check) reaches
+    # vdisplay.desktop_apps, empty in a headless container (no desktop apps
+    # registered) and raising KeyError. Pin it to no map.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
     monkeypatch.setattr(
         vc._autonomy_session,
         "begin_autonomy_session",
@@ -1504,6 +1512,10 @@ def test_prepare_aborts_after_single_attempt_on_mismatch(monkeypatch: pytest.Mon
     monkeypatch.setattr(vc, "ensure_vdisplay_ide_control", _ide_control)
     monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
     monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
+    # Hermetic: map resolution reaches vdisplay.desktop_apps, empty in a headless
+    # container (no desktop apps registered) and raising KeyError. This test
+    # exercises IDE-window (competing-IDE) mismatch, not GUI-map mismatch.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
     # Hermetic: the capture-match / surface-confirmation probes read the live
     # desktop; on a host where the real IDE is running they would confirm the
     # capture and mask the mocked competing-IDE mismatch. Pin them to the
@@ -1588,6 +1600,11 @@ def test_perform_blocks_map_target_from_different_monitor(
         json.dumps({"capture_meta": {"source": "DP-2", "rotation": "left"}, "elements": {}}),
         encoding="utf-8",
     )
+    # Hermetic: the IDE-map source-mismatch gate resolves the calibrated map via
+    # vdisplay.desktop_apps, which is empty in a headless container (no desktop
+    # apps registered) and raises KeyError. Pin it to the DP-2-calibrated tmp map
+    # this test wrote so the DP-2-vs-HDMI-1 mismatch is exercised deterministically.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: str(map_path))
     monkeypatch.setenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", "1")
     monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", raising=False)
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda **k: None)
@@ -1702,6 +1719,10 @@ def test_prepare_map_fallback_requires_allow_flag(monkeypatch: pytest.MonkeyPatc
         },
     )
     monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: False)
+    # Hermetic: map resolution reaches vdisplay.desktop_apps, empty in a headless
+    # container (no desktop apps registered) and raising KeyError. This test
+    # exercises the capture-unconfirmed allow-flag gate, not GUI-map mismatch.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
     monkeypatch.delenv("KORU_VDISPLAY_ALLOW_MAP_ON_MISMATCH", raising=False)
 
     out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
@@ -1744,6 +1765,10 @@ def test_prepare_focus_recovery_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: True)
     monkeypatch.setattr(vc, "_raise_alt_tab_enabled", lambda **k: True)
     monkeypatch.setattr(vc, "_attempt_focus_recovery_capture", _recovery)
+    # Hermetic: map resolution reaches vdisplay.desktop_apps, empty in a headless
+    # container (no desktop apps registered) and raising KeyError. This test
+    # exercises focus recovery, not GUI-map mismatch.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
     monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
     monkeypatch.setenv("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3")
 
@@ -1783,6 +1808,10 @@ def test_prepare_force_refresh_after_ide_control(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(vc, "photo_vql_sidecar_needs_refresh", lambda **k: False)
     monkeypatch.setattr(vc, "refresh_photo_vql_sidecar", _refresh)
     monkeypatch.setattr(vc, "_photo_vql_ide_window_warning", lambda **k: None)
+    # Hermetic: map resolution reaches vdisplay.desktop_apps, empty in a headless
+    # container (no desktop apps registered) and raising KeyError. This test
+    # exercises the force-refresh-after-ide-control path, not GUI-map mismatch.
+    monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda app_id: None)
     monkeypatch.setenv("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0")
 
     out = vc.prepare_photo_vql_for_drive(ide="jetbrains")
@@ -1791,10 +1820,21 @@ def test_prepare_force_refresh_after_ide_control(monkeypatch: pytest.MonkeyPatch
     assert out["ok"] is True
 
 
-def test_real_imgl_src_prefers_semco_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("IMGL_SRC", str(Path.home() / "github/semcod/imgl"))
+def test_real_imgl_src_prefers_semco_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Hermetic: _real_imgl_src probes the real filesystem for a semcod imgl
+    # checkout, absent in a headless container. Build a fake imgl checkout and
+    # point IMGL_SRC at it so the explicit-path preference is exercised without
+    # a real semcod tree on disk.
+    imgl_root = tmp_path / "semcod" / "imgl"
+    (imgl_root / "imgl").mkdir(parents=True)
+    (imgl_root / "imgl" / "pipeline.py").write_text("# fake imgl pipeline\n", encoding="utf-8")
+    monkeypatch.setenv("IMGL_SRC", str(imgl_root))
     src = vc._real_imgl_src()
     assert src is not None
+    assert src == str(imgl_root)
     assert (Path(src) / "imgl" / "pipeline.py").is_file()
 
 
@@ -1834,10 +1874,20 @@ def test_import_imgl_targets_clears_cached_stub(monkeypatch: pytest.MonkeyPatch)
     assert str(Path(imgl.__file__).resolve()).startswith(str(Path(imgl_root).resolve()))
 
 
-def test_vdisplay_subprocess_env_puts_imgl_first(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("IMGL_SRC", str(Path.home() / "github/semcod/imgl"))
+def test_vdisplay_subprocess_env_puts_imgl_first(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Hermetic: _real_imgl_src (used to prepend imgl to PYTHONPATH) probes the
+    # real filesystem for a semcod imgl checkout, absent in a headless container.
+    # Build a fake imgl checkout and point IMGL_SRC at it so imgl is resolvable.
+    imgl_root = tmp_path / "semcod" / "imgl"
+    (imgl_root / "imgl").mkdir(parents=True)
+    (imgl_root / "imgl" / "pipeline.py").write_text("# fake imgl pipeline\n", encoding="utf-8")
+    monkeypatch.setenv("IMGL_SRC", str(imgl_root))
     env = vc._vdisplay_subprocess_env(ide="jetbrains")
     first = (env.get("PYTHONPATH") or "").split(":")[0]
+    assert first == str(imgl_root)
     assert "imgl" in first
     assert env.get("VDISPLAY_CAPTURE_VALIDATE_IDE") == "jetbrains"
 

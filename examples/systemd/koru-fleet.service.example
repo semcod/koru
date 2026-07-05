@@ -1,0 +1,34 @@
+# Copy to ~/.config/systemd/user/koru-autonomous.service, adjust paths, then:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now koru-autonomous.service
+#
+# See docs/koru-fleet.md for the full design and troubleshooting.
+
+[Unit]
+Description=Koru fleet — one autonomous refactoring loop per koru-managed project (claude-code shell lane)
+
+[Service]
+Type=simple
+WorkingDirectory=/home/YOUR_USER/github/semcod/koru
+Environment=KORU_AUTONOMOUS_SCAN_WHILE_WAITING=1
+Environment=KORU_TILLM_TIMEOUT_SECONDS=2700
+Environment=KORU_CLI_NO_REEXEC=1
+# Optional: override which root koru fleet discovers projects under
+# (default: ~/github). See `koru fleet ls --workspace <path>` to preview.
+# Environment=KORU_FLEET_WORKSPACE=/home/YOUR_USER/github
+Environment=PATH=/home/YOUR_USER/github/semcod/koru/.venv/bin:/home/YOUR_USER/.local/bin:/usr/local/bin:/usr/bin:/bin
+# koru fleet discovers every project with a koru LLM-agent policy
+# (.planfile/.koru/policy.yaml, written by `koru --init`) under the
+# workspace root and supervises one
+# `koru autonomous up --project <p> --replace-existing` child per project —
+# a single broker-style service for the whole machine instead of one
+# systemd unit per project. --replace-existing is added per-child
+# automatically by `koru fleet up`; do not pass it again here.
+ExecStart=/home/YOUR_USER/github/semcod/koru/.venv/bin/koru fleet up -- --ide claude --ticket-sources all
+Restart=always
+RestartSec=30
+# Each project child manages its own --replace-existing; the fleet
+# supervisor itself just needs restarting after a crash.
+
+[Install]
+WantedBy=default.target

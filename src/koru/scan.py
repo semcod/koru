@@ -238,6 +238,31 @@ def scan_pytest_collect(
 
 
 _MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[: ]")
+
+
+def _count_todo_markers(text: str) -> int:
+    """Count TODO/FIXME/XXX/HACK markers that live in *comments* only.
+
+    A work-marker is a comment convention (``# TODO: ...``). Counting the bare
+    regex across the whole file also matches the words inside string literals
+    and report labels — e.g. redsl, whose domain vocabulary is literally
+    ``"TODO issues before/after"`` — producing false cleanup tickets on every
+    scan. Tokenizing and inspecting only COMMENT tokens removes that noise.
+    Files that fail to tokenize (syntax errors, py2, partial edits) fall back to
+    the whole-text regex so genuine markers are never silently dropped.
+    """
+    import io
+    import tokenize
+
+    try:
+        comments = [
+            tok.string
+            for tok in tokenize.generate_tokens(io.StringIO(text).readline)
+            if tok.type == tokenize.COMMENT
+        ]
+    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        return len(_MARKER_RE.findall(text))
+    return sum(len(_MARKER_RE.findall(c)) for c in comments)
 _DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
     {
         ".git",
@@ -337,7 +362,7 @@ def scan_todo_markers(
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        n = len(_MARKER_RE.findall(text))
+        n = _count_todo_markers(text)
         if n >= min_per_file:
             counts[str(rel_path)] = n
     return [
@@ -368,8 +393,34 @@ _GATE_MARKERS: tuple[tuple[str, str, str], ...] = (
 )
 
 
+def _is_workspace_root(project: Path) -> bool:
+    """True when *project* is a multi-project workspace, not a single package.
+
+    A workspace root has no packaging file of its own (``pyproject.toml`` /
+    ``setup.py`` / ``setup.cfg``) yet contains several sub-projects that each
+    carry one. On-change gates belong in those sub-projects — each self-gates —
+    so a single root ``regix.yaml`` / ``wup.yaml`` would gate all of them at
+    once, which is never what a monorepo wants. Skipping keeps koru from
+    re-suggesting root gate bootstraps every scan (semcod: 66 sub-projects,
+    STARTER-005/006/007).
+    """
+    if any((project / f).exists() for f in ("pyproject.toml", "setup.py", "setup.cfg")):
+        return False
+    child_pkgs = 0
+    for child in project.iterdir():
+        if not child.is_dir() or child.name in _DEFAULT_SCAN_EXCLUDES:
+            continue
+        if (child / "pyproject.toml").exists() or (child / "setup.py").exists():
+            child_pkgs += 1
+            if child_pkgs >= 2:
+                return True
+    return False
+
+
 def scan_missing_gates(project: Path) -> list[Suggestion]:
     """Suggest bootstrap tickets for unconfigured on-change gates."""
+    if _is_workspace_root(project):
+        return []
     suggestions: list[Suggestion] = []
     for tool_id, marker, role in _GATE_MARKERS:
         configured = (project / marker).exists()

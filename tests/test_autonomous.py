@@ -5538,10 +5538,19 @@ def test_start_wup_watch_passes_playwright_env(tmp_path, monkeypatch) -> None:
         lambda *args, **kwargs: None,
     )
 
-    def fake_popen(command, cwd=None, env=None):
+    def fake_popen(command, cwd=None, env=None, **_kwargs):
         popen_calls.append({"command": command, "cwd": cwd, "env": env})
         return DummyProcess()
 
+    # Warm the lru_cached planfile-capability probe BEFORE clobbering the
+    # global subprocess.Popen: _wup_subprocess_env() (evaluated as the env=
+    # argument below) lazily shells `planfile --version` on a cold cache,
+    # which would otherwise route through fake_popen and, with a warm cache
+    # elsewhere in the suite, made this test pass or fail by ordering (red in
+    # CI's ordering, green locally).
+    from koru.queue.ticket import resolve_planfile_base_command
+
+    resolve_planfile_base_command(config.project)
     monkeypatch.setattr(autonomous_wup_mod.subprocess, "Popen", fake_popen)
 
     process = autonomous_wup_mod._start_wup_watch(config, topology_integration=False)
