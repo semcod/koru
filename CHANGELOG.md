@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Test coverage for `koru.autonomy.cycle.cycle_post_drive` (20 tests:
+  `_drive_effect_payload`, `_submitted_but_no_effect`,
+  `_snapshot_before_drive`, `_post_drive_ticket_id`, `_update_drive_count`,
+  `_emit_drive_effect_if_needed`, `_maybe_emit_llm_evaluation` (including
+  exception-swallowing behavior), `_maybe_emit_improved_prompt` gating) and
+  `koru.autonomy.cycle.cycle_orchestrator` (11 tests: `_drive_result_
+  autopilot_status`'s full branch coverage — idle/waiting-ticket-closed
+  decision kinds, ok/manual-focus/submit-unverified/plain-failure reply
+  shapes — and `_plugin_gate_recovery_key`'s dedup-key construction).
+  Both modules previously had zero dedicated tests despite being critical
+  to the autonomous drive loop. The heavier IDE-plugin-reconnect machinery
+  in `cycle_orchestrator` (`_plugin_gate_status`, `_attempt_plugin_gate_
+  recovery`, `_handle_autopilot_phase`) is intentionally not covered here —
+  it requires deep mocking of live IDE/plugin client state with low
+  confidence the mocks reflect real plugin behavior; left for follow-up
+  with real integration fixtures rather than mocked ones that would give
+  false confidence.
+
 ## [0.1.10] - 2026-07-05
 
 ### Fixed

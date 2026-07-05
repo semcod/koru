@@ -216,6 +216,14 @@ def test_os_injector_no_profile_emits_activity_warn(
     """try_drive_with_profile must call activity_warn when no calibration profile exists."""
     import gillm.injection.os_injector as oi
 
+    # try_drive_with_profile first consults _os_injector_skip_reason, which
+    # returns a truthy reason ("xdotool missing" / "wayland without ydotool")
+    # on a headless container that lacks ydotool/xdotool — short-circuiting
+    # with an early ``return None`` before the missing-profile warning under
+    # test is ever emitted. Force "no skip reason" so the profile-missing path
+    # (the actual subject of this test) runs deterministically regardless of
+    # which input binaries the host happens to have.
+    monkeypatch.setattr(oi, "_os_injector_skip_reason", lambda _tool_id: None)
     monkeypatch.setattr(oi, "try_load_profile", lambda *_a, **_kw: None)
     warned: list[tuple] = []
     monkeypatch.setattr(

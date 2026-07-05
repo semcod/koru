@@ -7,6 +7,37 @@ import pytest  # noqa: F401
 import koru.integrations.vdisplay_client as vc
 
 
+def _stub_vdisplay_input_modules(monkeypatch):
+    """Make the optional vdisplay input backends importable in a headless env.
+
+    ``_ydotool_click_capture_local`` opens with ``from vdisplay.input.coords
+    import global_pointer_coords`` / ``from vdisplay.input.linux_ydotool import
+    LinuxYdotoolInput``. On a CI container these submodules are absent, so the
+    import raises and the function's except-branch returns ``ydotool-click``
+    before the abs/adaptive precedence under test is ever exercised. Stubbing
+    both modules lets the import succeed regardless of host.
+    """
+    import sys
+
+    class _FakeY:
+        def move(self, x, y):  # pragma: no cover - not reached in these tests
+            pass
+
+        def click(self, btn):  # pragma: no cover - not reached in these tests
+            pass
+
+    monkeypatch.setitem(
+        sys.modules,
+        "vdisplay.input.coords",
+        types.SimpleNamespace(global_pointer_coords=lambda x, y, meta: (x, y, {})),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "vdisplay.input.linux_ydotool",
+        types.SimpleNamespace(LinuxYdotoolInput=_FakeY),
+    )
+
+
 def test_adaptive_pointer_disabled_by_default(monkeypatch):
     monkeypatch.delenv("KORU_VDISPLAY_ADAPTIVE_POINTER", raising=False)
     assert vc._adaptive_pointer_enabled() is False
@@ -16,6 +47,12 @@ def test_adaptive_pointer_disabled_by_default(monkeypatch):
 
 def test_ydotool_click_uses_adaptive_when_enabled(monkeypatch):
     monkeypatch.setenv("KORU_VDISPLAY_ADAPTIVE_POINTER", "1")
+    # Headless CI lacks the optional vdisplay input backends; without stubbing
+    # them the top-of-function `from vdisplay.input...` imports raise and the
+    # except-branch returns "ydotool-click", never reaching the adaptive seam
+    # under test. Stub the modules so the import succeeds (the fake below
+    # short-circuits before either is actually used).
+    _stub_vdisplay_input_modules(monkeypatch)
     monkeypatch.setattr(vc, "_enrich_capture_meta_for_pointer", lambda meta, source: {"source": source})
     monkeypatch.setattr(vc, "_photo_capture_meta_for_source", lambda source: {"source": source})
     called = {}
@@ -71,6 +108,10 @@ def test_abs_pointer_flag_and_precedence(monkeypatch):
     monkeypatch.setenv("KORU_VDISPLAY_ABS_POINTER", "1")
     assert vc._abs_pointer_enabled() is True
 
+    # Headless CI lacks the optional vdisplay input backends; stub them so the
+    # top-of-function import succeeds and control reaches the ABS precedence
+    # branch (the fake below short-circuits before either module is used).
+    _stub_vdisplay_input_modules(monkeypatch)
     # when enabled and the ABS click succeeds, it wins over ydotool
     monkeypatch.setattr(vc, "_enrich_capture_meta_for_pointer", lambda meta, source: {"source": source})
     monkeypatch.setattr(vc, "_photo_capture_meta_for_source", lambda source: {"source": source})

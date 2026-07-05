@@ -28901,6 +28901,14 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-07-05T20:16:26.142608+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T20:27:30.669340+00:00'
       id: STARTER-576
       inputs:
         api_headers: {}
@@ -28930,6 +28938,21 @@ sprint:
         - '[KORU-SHELL-DRIVE] client=claude-code ok=true
 
           completed'
+        - 'post_run_verify failed (exit -15): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ........................................................................
+          [  7%] ........................................................................
+          [  9%] ........................................................................
+          [ 11%] ........................................................................
+          [ 14%] ........................................................................
+          [ 16%] ........................................................................
+          [ 19%] ........................................................................
+          [ 21%] ........................................................................
+          [ 23%] ........................................................................
+          [ 26%] ........................................................................
+          [ 28%] ........................................................................
+          [ 31%] ........................................................................
+          [ 33%] .............................................'
       priority: high
       source:
         context:
@@ -28972,9 +28995,9 @@ sprint:
         timestamp: '2026-07-04T21:53:18.072846+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: done
+      status: open
       sync: {}
-      updated_at: '2026-07-05T20:16:26.142576+00:00'
+      updated_at: '2026-07-05T20:27:30.669303+00:00'
     STARTER-577:
       blocked_by: []
       blocks: []
@@ -30502,10 +30525,11 @@ sprint:
         - All new tests pass and integrate with existing test suite'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T20:34:00.934796Z'
         max_attempts: 1
         queue: default
         started_at: '2026-07-05T20:24:38.446427Z'
-        state: running
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -30539,6 +30563,21 @@ sprint:
         source: planfile.store
         status: in_progress
         timestamp: '2026-07-05T20:24:38.638083+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T20:33:58.818347+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T20:34:01.091400+00:00'
       id: STARTER-590
       inputs:
         api_headers: {}
@@ -30569,7 +30608,18 @@ sprint:
       name: Add missing test coverage for autonomous_cycle modules
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Added 31 new tests across 2 files: tests/test_cycle_post_drive.py (20 tests,
+          all pure/near-pure helper functions in cycle_post_drive.py) and tests/test_cycle_orchestrator.py
+          (11 tests, focused on _drive_result_autopilot_status full branch coverage
+          + _plugin_gate_recovery_key). Both previously had zero dedicated tests.
+          Deliberately did NOT attempt to cover cycle_orchestrator''s heavier IDE-plugin-reconnect
+          machinery (_plugin_gate_status, _attempt_plugin_gate_recovery) -- that needs
+          real integration fixtures, not mocks that would give false confidence. All
+          31 pass. Note: the live autonomous koru process (running concurrently this
+          whole session) picked up and committed test_cycle_post_drive.py itself as
+          part of its own checkpoint commit (01940fa, co-author Koru Agent) before
+          I could -- did not run git commit myself, per policy.yaml allow_commit:false.'
       priority: high
       source:
         context:
@@ -30594,9 +30644,9 @@ sprint:
         timestamp: '2026-07-05T10:46:05.873438+00:00'
         tool: koru-nxdo-discovery
       sprint: current
-      status: in_progress
+      status: done
       sync: {}
-      updated_at: '2026-07-05T20:24:38.638018+00:00'
+      updated_at: '2026-07-05T20:34:01.091347+00:00'
     STARTER-591:
       blocked_by: []
       blocks: []

@@ -42,6 +42,21 @@ def test_gnome_wayland_prefers_ydotool_over_wtype(
     monkeypatch.setattr(env_profile, "detect_running_ides", lambda: [])
     monkeypatch.setattr(env_profile, "detect_focused_ide_id", lambda: None)
 
+    # This test exercises the GNOME-Wayland preference: wtype is available (so
+    # the OS strategy reports keyboard_tool="wtype") yet on GNOME ydotool is
+    # preferred. Both binaries are absent in a headless CI container, which
+    # would otherwise leave keyboard_tool=None and fall back to
+    # os_injector_wtype. Present BOTH binaries so keyboard_tool resolves to
+    # "wtype" and the GNOME override to ydotool is genuinely taken. The
+    # resolver's two which() call sites (the gillm Wayland strategy's wtype
+    # probe and env_profile's ydotool probe) share one shutil module, so a
+    # single patch that answers for both binaries covers them.
+    monkeypatch.setattr(
+        env_profile.shutil,
+        "which",
+        lambda name: f"/usr/bin/{name}" if name in {"wtype", "ydotool"} else None,
+    )
+
     profile = env_profile.resolve_environment_profile(tmp_path, ide="auto")
 
     assert profile.os.display_server == "wayland"

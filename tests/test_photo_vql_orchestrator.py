@@ -351,6 +351,13 @@ def test_get_vql_chat_target_uses_jetbrains_surface_bounds_on_hdmi1(
     monkeypatch.setattr(vc, "_photo_vql_ide_capture_mismatch", lambda ide: None)
     monkeypatch.setattr(vc, "_vql_candidates_polluted", lambda c: False)
     monkeypatch.setattr(vc, "llm_vision_enabled", lambda: False)
+    # Hermetic: the OCR placeholder anchor reads a live on-disk capture and, on a
+    # host with a real IDE screenshot, wins before the surface-bounds cascade;
+    # the map lookup reaches vdisplay.desktop_apps which is empty in a headless
+    # container (no desktop apps registered) and raises KeyError. Pin both seams
+    # so this test exercises the JetBrains surface-bounds path deterministically.
+    monkeypatch.setattr(vc, "_try_ocr_anchor_chat_target", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_chat_target_capture_local", lambda **k: None)
     monkeypatch.setattr(
         vc,
         "_resolve_vdisplay_source_for_ide",
@@ -464,6 +471,13 @@ def test_get_vql_chat_target_accepts_jetbrains_surface_when_surface_fallback_act
     )
     monkeypatch.setattr(vc, "_vql_candidates_polluted", lambda c: False)
     monkeypatch.setattr(vc, "llm_vision_enabled", lambda: False)
+    # Hermetic: the OCR placeholder anchor reads a live on-disk capture and, on a
+    # host with a real IDE screenshot, wins before the surface-bounds cascade;
+    # the map lookup reaches vdisplay.desktop_apps which is empty in a headless
+    # container (no desktop apps registered) and raises KeyError. Pin both seams
+    # so this test exercises the JetBrains surface-bounds path deterministically.
+    monkeypatch.setattr(vc, "_try_ocr_anchor_chat_target", lambda **k: None)
+    monkeypatch.setattr(vc, "_map_chat_target_capture_local", lambda **k: None)
     monkeypatch.setattr(
         vc,
         "_resolve_vdisplay_source_for_ide",
