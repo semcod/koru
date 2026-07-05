@@ -30724,7 +30724,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide qoder --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T10:18:57.567410Z'
+        finished_at: '2026-07-05T10:51:16.425010Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -30763,6 +30763,11 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-07-05T10:18:57.575019+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T10:51:16.436224+00:00'
       id: STARTER-587
       inputs:
         api_headers: {}
@@ -30824,33 +30829,11 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-07-05T10:18:57.574988+00:00'
+      updated_at: '2026-07-05T10:51:16.436193+00:00'
     STARTER-588:
-      id: STARTER-588
-      name: Fix unused imports across core modules
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-nxdo-discovery
-        timestamp: '2026-07-05T10:46:01.224281+00:00'
-        context:
-          input: 'Remove unused imports from 20+ core modules identified in TODO.md
-            to reduce code clutter and potential import conflicts. This includes modules
-            like koru/__init__.py, autonomous_*.py files, and various autonomy modules.
-            Clean imports improve code readability and prevent subtle import-related
-            bugs.
-
-            Acceptance criteria:
-
-            - All unused imports removed from top 20 modules listed in TODO.md
-
-            - All tests pass after cleanup (pytest tests/)
-
-            - No new mypy errors introduced (mypy src/koru/)'
-          signal: nxdo_plan
-          dedupe_key: nxdo:koru:fix-unused-imports-across-core-modules
-          repo: /home/tom/github/semcod/koru
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T10:46:01.224281+00:00'
       description: 'Remove unused imports from 20+ core modules identified in TODO.md
         to reduce code clutter and potential import conflicts. This includes modules
         like koru/__init__.py, autonomous_*.py files, and various autonomy modules.
@@ -30863,50 +30846,17 @@ sprint:
         - All tests pass after cleanup (pytest tests/)
 
         - No new mypy errors introduced (mypy src/koru/)'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - nxdo
-      - discovery
-      - refactor
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Remove unused imports from 20+ core modules identified in TODO.md
-          to reduce code clutter and potential import conflicts. This includes modules
-          like koru/__init__.py, autonomous_*.py files, and various autonomy modules.
-          Clean imports improve code readability and prevent subtle import-related
-          bugs.
-
-          Acceptance criteria:
-
-          - All unused imports removed from top 20 modules listed in TODO.md
-
-          - All tests pass after cleanup (pytest tests/)
-
-          - No new mypy errors introduced (mypy src/koru/)'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-07-05T10:46:01.224281+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: 'Remove unused imports from 20+ core modules identified in TODO.md
           to reduce code clutter and potential import conflicts. This includes modules
           like koru/__init__.py, autonomous_*.py files, and various autonomy modules.
@@ -30920,33 +30870,67 @@ sprint:
           - All tests pass after cleanup (pytest tests/)
 
           - No new mypy errors introduced (mypy src/koru/)'
-      created_at: '2026-07-05T10:46:01.224281+00:00'
-      updated_at: '2026-07-05T10:46:01.224281+00:00'
-    STARTER-589:
-      id: STARTER-589
-      name: Convert string concatenations to f-strings
-      status: open
+        source: koru task
+        timestamp: '2026-07-05T10:46:01.224281+00:00'
+      id: STARTER-588
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Remove unused imports from 20+ core modules identified in TODO.md
+          to reduce code clutter and potential import conflicts. This includes modules
+          like koru/__init__.py, autonomous_*.py files, and various autonomy modules.
+          Clean imports improve code readability and prevent subtle import-related
+          bugs.
+
+          Acceptance criteria:
+
+          - All unused imports removed from top 20 modules listed in TODO.md
+
+          - All tests pass after cleanup (pytest tests/)
+
+          - No new mypy errors introduced (mypy src/koru/)'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - nxdo
+      - discovery
+      - refactor
+      name: Fix unused imports across core modules
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
-      sprint: current
       source:
-        tool: koru-nxdo-discovery
-        timestamp: '2026-07-05T10:46:03.534330+00:00'
         context:
-          input: 'Refactor 50+ string concatenations to f-strings across core modules
-            (activity_log.py, autonomous_checkpoint.py, autonomous_cycle_chat_activity.py,
-            etc.) for improved readability and performance. This addresses a major
-            category of TODO.md issues and modernizes the codebase.
+          dedupe_key: nxdo:koru:fix-unused-imports-across-core-modules
+          input: 'Remove unused imports from 20+ core modules identified in TODO.md
+            to reduce code clutter and potential import conflicts. This includes modules
+            like koru/__init__.py, autonomous_*.py files, and various autonomy modules.
+            Clean imports improve code readability and prevent subtle import-related
+            bugs.
 
             Acceptance criteria:
 
-            - All string concatenations in TODO.md list converted to f-strings
+            - All unused imports removed from top 20 modules listed in TODO.md
 
-            - No syntax errors (python -m py_compile src/koru/**/*.py)
+            - All tests pass after cleanup (pytest tests/)
 
-            - Tests pass after conversion (pytest tests/test_activity_log.py tests/test_autonomous*.py)'
-          signal: nxdo_plan
-          dedupe_key: nxdo:koru:convert-string-concatenations-to-f-strings
+            - No new mypy errors introduced (mypy src/koru/)'
           repo: /home/tom/github/semcod/koru
+          signal: nxdo_plan
+        timestamp: '2026-07-05T10:46:01.224281+00:00'
+        tool: koru-nxdo-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T10:46:01.224281+00:00'
+    STARTER-589:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T10:46:03.534330+00:00'
       description: 'Refactor 50+ string concatenations to f-strings across core modules
         (activity_log.py, autonomous_checkpoint.py, autonomous_cycle_chat_activity.py,
         etc.) for improved readability and performance. This addresses a major category
@@ -30959,49 +30943,17 @@ sprint:
         - No syntax errors (python -m py_compile src/koru/**/*.py)
 
         - Tests pass after conversion (pytest tests/test_activity_log.py tests/test_autonomous*.py)'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - nxdo
-      - discovery
-      - refactor
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Refactor 50+ string concatenations to f-strings across core modules
-          (activity_log.py, autonomous_checkpoint.py, autonomous_cycle_chat_activity.py,
-          etc.) for improved readability and performance. This addresses a major category
-          of TODO.md issues and modernizes the codebase.
-
-          Acceptance criteria:
-
-          - All string concatenations in TODO.md list converted to f-strings
-
-          - No syntax errors (python -m py_compile src/koru/**/*.py)
-
-          - Tests pass after conversion (pytest tests/test_activity_log.py tests/test_autonomous*.py)'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-07-05T10:46:03.534330+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: 'Refactor 50+ string concatenations to f-strings across core modules
           (activity_log.py, autonomous_checkpoint.py, autonomous_cycle_chat_activity.py,
           etc.) for improved readability and performance. This addresses a major category
@@ -31014,36 +30966,65 @@ sprint:
           - No syntax errors (python -m py_compile src/koru/**/*.py)
 
           - Tests pass after conversion (pytest tests/test_activity_log.py tests/test_autonomous*.py)'
-      created_at: '2026-07-05T10:46:03.534330+00:00'
-      updated_at: '2026-07-05T10:46:03.534330+00:00'
-    STARTER-590:
-      id: STARTER-590
-      name: Add missing test coverage for autonomous_cycle modules
-      status: open
+        source: koru task
+        timestamp: '2026-07-05T10:46:03.534330+00:00'
+      id: STARTER-589
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Refactor 50+ string concatenations to f-strings across core modules
+          (activity_log.py, autonomous_checkpoint.py, autonomous_cycle_chat_activity.py,
+          etc.) for improved readability and performance. This addresses a major category
+          of TODO.md issues and modernizes the codebase.
+
+          Acceptance criteria:
+
+          - All string concatenations in TODO.md list converted to f-strings
+
+          - No syntax errors (python -m py_compile src/koru/**/*.py)
+
+          - Tests pass after conversion (pytest tests/test_activity_log.py tests/test_autonomous*.py)'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - nxdo
+      - discovery
+      - refactor
+      name: Convert string concatenations to f-strings
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
-      sprint: current
       source:
-        tool: koru-nxdo-discovery
-        timestamp: '2026-07-05T10:46:05.873438+00:00'
         context:
-          input: 'Create comprehensive test coverage for autonomous_cycle modules
-            that currently lack tests, specifically autonomous_cycle_orchestrator.py,
-            autonomous_cycle_post_drive.py, and autonomous_cycle_skip_conditions.py.
-            These modules are critical to the autonomous loop but have no dedicated
-            tests.
+          dedupe_key: nxdo:koru:convert-string-concatenations-to-f-strings
+          input: 'Refactor 50+ string concatenations to f-strings across core modules
+            (activity_log.py, autonomous_checkpoint.py, autonomous_cycle_chat_activity.py,
+            etc.) for improved readability and performance. This addresses a major
+            category of TODO.md issues and modernizes the codebase.
 
             Acceptance criteria:
 
-            - Test files created: test_autonomous_cycle_orchestrator.py, test_autonomous_cycle_post_drive.py,
-            test_autonomous_cycle_skip_conditions.py
+            - All string concatenations in TODO.md list converted to f-strings
 
-            - Coverage for these modules > 80% (pytest --cov=koru.autonomous_cycle_*
-            tests/)
+            - No syntax errors (python -m py_compile src/koru/**/*.py)
 
-            - All new tests pass and integrate with existing test suite'
-          signal: nxdo_plan
-          dedupe_key: nxdo:koru:add-missing-test-coverage-for-autonomous-cycle-modules
+            - Tests pass after conversion (pytest tests/test_activity_log.py tests/test_autonomous*.py)'
           repo: /home/tom/github/semcod/koru
+          signal: nxdo_plan
+        timestamp: '2026-07-05T10:46:03.534330+00:00'
+        tool: koru-nxdo-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T10:46:03.534330+00:00'
+    STARTER-590:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T10:46:05.873438+00:00'
       description: 'Create comprehensive test coverage for autonomous_cycle modules
         that currently lack tests, specifically autonomous_cycle_orchestrator.py,
         autonomous_cycle_post_drive.py, and autonomous_cycle_skip_conditions.py. These
@@ -31057,51 +31038,17 @@ sprint:
         - Coverage for these modules > 80% (pytest --cov=koru.autonomous_cycle_* tests/)
 
         - All new tests pass and integrate with existing test suite'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - nxdo
-      - discovery
-      - test
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Create comprehensive test coverage for autonomous_cycle modules that
-          currently lack tests, specifically autonomous_cycle_orchestrator.py, autonomous_cycle_post_drive.py,
-          and autonomous_cycle_skip_conditions.py. These modules are critical to the
-          autonomous loop but have no dedicated tests.
-
-          Acceptance criteria:
-
-          - Test files created: test_autonomous_cycle_orchestrator.py, test_autonomous_cycle_post_drive.py,
-          test_autonomous_cycle_skip_conditions.py
-
-          - Coverage for these modules > 80% (pytest --cov=koru.autonomous_cycle_*
-          tests/)
-
-          - All new tests pass and integrate with existing test suite'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-07-05T10:46:05.873438+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: 'Create comprehensive test coverage for autonomous_cycle modules
           that currently lack tests, specifically autonomous_cycle_orchestrator.py,
           autonomous_cycle_post_drive.py, and autonomous_cycle_skip_conditions.py.
@@ -31117,33 +31064,70 @@ sprint:
           tests/)
 
           - All new tests pass and integrate with existing test suite'
-      created_at: '2026-07-05T10:46:05.873438+00:00'
-      updated_at: '2026-07-05T10:46:05.873438+00:00'
-    STARTER-591:
-      id: STARTER-591
-      name: Fix CLI command fallback regressions
-      status: open
+        source: koru task
+        timestamp: '2026-07-05T10:46:05.873438+00:00'
+      id: STARTER-590
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Create comprehensive test coverage for autonomous_cycle modules that
+          currently lack tests, specifically autonomous_cycle_orchestrator.py, autonomous_cycle_post_drive.py,
+          and autonomous_cycle_skip_conditions.py. These modules are critical to the
+          autonomous loop but have no dedicated tests.
+
+          Acceptance criteria:
+
+          - Test files created: test_autonomous_cycle_orchestrator.py, test_autonomous_cycle_post_drive.py,
+          test_autonomous_cycle_skip_conditions.py
+
+          - Coverage for these modules > 80% (pytest --cov=koru.autonomous_cycle_*
+          tests/)
+
+          - All new tests pass and integrate with existing test suite'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - nxdo
+      - discovery
+      - test
+      name: Add missing test coverage for autonomous_cycle modules
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
-      sprint: current
       source:
-        tool: koru-nxdo-discovery
-        timestamp: '2026-07-05T10:46:08.200160+00:00'
         context:
-          input: 'Address CLI command fallback issues identified in recent incidents
-            where planfile command failures cause queue loop stalls. Implement robust
-            fallback mechanisms and improve error handling in cli_shell.py and queue/runner.py
-            to prevent cascading failures.
+          dedupe_key: nxdo:koru:add-missing-test-coverage-for-autonomous-cycle-modules
+          input: 'Create comprehensive test coverage for autonomous_cycle modules
+            that currently lack tests, specifically autonomous_cycle_orchestrator.py,
+            autonomous_cycle_post_drive.py, and autonomous_cycle_skip_conditions.py.
+            These modules are critical to the autonomous loop but have no dedicated
+            tests.
 
             Acceptance criteria:
 
-            - Reproduce and fix the 17 stagnant cycles incident scenario
+            - Test files created: test_autonomous_cycle_orchestrator.py, test_autonomous_cycle_post_drive.py,
+            test_autonomous_cycle_skip_conditions.py
 
-            - CLI commands gracefully degrade when planfile unavailable
+            - Coverage for these modules > 80% (pytest --cov=koru.autonomous_cycle_*
+            tests/)
 
-            - Tests added for fallback scenarios (tests/test_cli_shell.py, tests/test_planfile_cmd_fallback.py)'
-          signal: nxdo_plan
-          dedupe_key: nxdo:koru:fix-cli-command-fallback-regressions
+            - All new tests pass and integrate with existing test suite'
           repo: /home/tom/github/semcod/koru
+          signal: nxdo_plan
+        timestamp: '2026-07-05T10:46:05.873438+00:00'
+        tool: koru-nxdo-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T10:46:05.873438+00:00'
+    STARTER-591:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T10:46:08.200160+00:00'
       description: 'Address CLI command fallback issues identified in recent incidents
         where planfile command failures cause queue loop stalls. Implement robust
         fallback mechanisms and improve error handling in cli_shell.py and queue/runner.py
@@ -31156,49 +31140,17 @@ sprint:
         - CLI commands gracefully degrade when planfile unavailable
 
         - Tests added for fallback scenarios (tests/test_cli_shell.py, tests/test_planfile_cmd_fallback.py)'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - nxdo
-      - discovery
-      - bug
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Address CLI command fallback issues identified in recent incidents
-          where planfile command failures cause queue loop stalls. Implement robust
-          fallback mechanisms and improve error handling in cli_shell.py and queue/runner.py
-          to prevent cascading failures.
-
-          Acceptance criteria:
-
-          - Reproduce and fix the 17 stagnant cycles incident scenario
-
-          - CLI commands gracefully degrade when planfile unavailable
-
-          - Tests added for fallback scenarios (tests/test_cli_shell.py, tests/test_planfile_cmd_fallback.py)'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-07-05T10:46:08.200160+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: 'Address CLI command fallback issues identified in recent incidents
           where planfile command failures cause queue loop stalls. Implement robust
           fallback mechanisms and improve error handling in cli_shell.py and queue/runner.py
@@ -31211,33 +31163,65 @@ sprint:
           - CLI commands gracefully degrade when planfile unavailable
 
           - Tests added for fallback scenarios (tests/test_cli_shell.py, tests/test_planfile_cmd_fallback.py)'
-      created_at: '2026-07-05T10:46:08.200160+00:00'
-      updated_at: '2026-07-05T10:46:08.200160+00:00'
-    STARTER-592:
-      id: STARTER-592
-      name: Consolidate IDE identity maps in koruide
-      status: open
-      priority: normal
-      sprint: current
+        source: koru task
+        timestamp: '2026-07-05T10:46:08.200160+00:00'
+      id: STARTER-591
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Address CLI command fallback issues identified in recent incidents
+          where planfile command failures cause queue loop stalls. Implement robust
+          fallback mechanisms and improve error handling in cli_shell.py and queue/runner.py
+          to prevent cascading failures.
+
+          Acceptance criteria:
+
+          - Reproduce and fix the 17 stagnant cycles incident scenario
+
+          - CLI commands gracefully degrade when planfile unavailable
+
+          - Tests added for fallback scenarios (tests/test_cli_shell.py, tests/test_planfile_cmd_fallback.py)'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - nxdo
+      - discovery
+      - bug
+      name: Fix CLI command fallback regressions
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
       source:
-        tool: koru-nxdo-discovery
-        timestamp: '2026-07-05T10:46:10.521318+00:00'
         context:
-          input: 'Complete the IDE identity map consolidation migration by moving
-            remaining ide_binary_candidates and ide_window_name mappings fully into
-            koruide module. This reduces duplication between koru and koruide and
-            clarifies the boundary between core and IDE-specific logic.
+          dedupe_key: nxdo:koru:fix-cli-command-fallback-regressions
+          input: 'Address CLI command fallback issues identified in recent incidents
+            where planfile command failures cause queue loop stalls. Implement robust
+            fallback mechanisms and improve error handling in cli_shell.py and queue/runner.py
+            to prevent cascading failures.
 
             Acceptance criteria:
 
-            - All IDE identity mappings moved to koruide/ide.py
+            - Reproduce and fix the 17 stagnant cycles incident scenario
 
-            - Documentation updated in docs/boundary-refactoring-proposal.md
+            - CLI commands gracefully degrade when planfile unavailable
 
-            - No regressions in IDE detection (tests/test_ide_*.py pass)'
-          signal: nxdo_plan
-          dedupe_key: nxdo:koru:consolidate-ide-identity-maps-in-koruide
+            - Tests added for fallback scenarios (tests/test_cli_shell.py, tests/test_planfile_cmd_fallback.py)'
           repo: /home/tom/github/semcod/koru
+          signal: nxdo_plan
+        timestamp: '2026-07-05T10:46:08.200160+00:00'
+        tool: koru-nxdo-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-07-05T10:46:08.200160+00:00'
+    STARTER-592:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-05T10:46:10.521318+00:00'
       description: 'Complete the IDE identity map consolidation migration by moving
         remaining ide_binary_candidates and ide_window_name mappings fully into koruide
         module. This reduces duplication between koru and koruide and clarifies the
@@ -31250,49 +31234,17 @@ sprint:
         - Documentation updated in docs/boundary-refactoring-proposal.md
 
         - No regressions in IDE detection (tests/test_ide_*.py pass)'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - nxdo
-      - discovery
-      - refactor
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Complete the IDE identity map consolidation migration by moving remaining
-          ide_binary_candidates and ide_window_name mappings fully into koruide module.
-          This reduces duplication between koru and koruide and clarifies the boundary
-          between core and IDE-specific logic.
-
-          Acceptance criteria:
-
-          - All IDE identity mappings moved to koruide/ide.py
-
-          - Documentation updated in docs/boundary-refactoring-proposal.md
-
-          - No regressions in IDE detection (tests/test_ide_*.py pass)'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-07-05T10:46:10.521318+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: 'Complete the IDE identity map consolidation migration by moving
           remaining ide_binary_candidates and ide_window_name mappings fully into
           koruide module. This reduces duplication between koru and koruide and clarifies
@@ -31305,5 +31257,132 @@ sprint:
           - Documentation updated in docs/boundary-refactoring-proposal.md
 
           - No regressions in IDE detection (tests/test_ide_*.py pass)'
-      created_at: '2026-07-05T10:46:10.521318+00:00'
+        source: koru task
+        timestamp: '2026-07-05T10:46:10.521318+00:00'
+      id: STARTER-592
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Complete the IDE identity map consolidation migration by moving remaining
+          ide_binary_candidates and ide_window_name mappings fully into koruide module.
+          This reduces duplication between koru and koruide and clarifies the boundary
+          between core and IDE-specific logic.
+
+          Acceptance criteria:
+
+          - All IDE identity mappings moved to koruide/ide.py
+
+          - Documentation updated in docs/boundary-refactoring-proposal.md
+
+          - No regressions in IDE detection (tests/test_ide_*.py pass)'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - nxdo
+      - discovery
+      - refactor
+      name: Consolidate IDE identity maps in koruide
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: nxdo:koru:consolidate-ide-identity-maps-in-koruide
+          input: 'Complete the IDE identity map consolidation migration by moving
+            remaining ide_binary_candidates and ide_window_name mappings fully into
+            koruide module. This reduces duplication between koru and koruide and
+            clarifies the boundary between core and IDE-specific logic.
+
+            Acceptance criteria:
+
+            - All IDE identity mappings moved to koruide/ide.py
+
+            - Documentation updated in docs/boundary-refactoring-proposal.md
+
+            - No regressions in IDE detection (tests/test_ide_*.py pass)'
+          repo: /home/tom/github/semcod/koru
+          signal: nxdo_plan
+        timestamp: '2026-07-05T10:46:10.521318+00:00'
+        tool: koru-nxdo-discovery
+      sprint: current
+      status: open
+      sync: {}
       updated_at: '2026-07-05T10:46:10.521318+00:00'
+    STARTER-593:
+      id: STARTER-593
+      name: 'Split god module: src/koru/configurator.py'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-07-05T10:51:23.865772+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/configurator.py` as
+            a god module (600 lines, 4 classes, 30 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+          dedupe_key: semcod:code2llm:refactor:src/koru/configurator.py
+          evidence:
+            schema: koru.ticket_evidence.v1
+            kind: code2llm_analysis
+            artifact:
+              path: project/analysis.toon.yaml
+              size_bytes: 80467
+              mtime_ns: 1783201952263365001
+              sha256: 78669ab02fe2678b3a21ffcb342a6c44ca2d2ff2ef01188917f416e9e14d2903
+            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
+              --no-chunk --exclude '*.md' --planfile-apply --planfile-source koru-project-discovery
+              --planfile-sprint current --planfile-project /home/tom/github/semcod/koru
+              --planfile-limit 20
+            staleness_check: Regenerate the artifact and compare artifact.sha256 before
+              assuming this ticket still reflects the current code.
+      description: '`project/analysis.toon.yaml` flags `src/koru/configurator.py`
+        as a god module (600 lines, 4 classes, 30 methods). Split into focused submodules
+        by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - src/koru/configurator.py
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/configurator.py` as
+          a god module (600 lines, 4 classes, 30 methods). Split into focused submodules
+          by responsibility.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-07-05T10:51:23.865772+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` flags `src/koru/configurator.py` as
+          a god module (600 lines, 4 classes, 30 methods). Split into focused submodules
+          by responsibility.'
+      created_at: '2026-07-05T10:51:23.865772+00:00'
+      updated_at: '2026-07-05T10:51:23.865772+00:00'
