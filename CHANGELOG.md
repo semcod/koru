@@ -136,6 +136,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guides; top-level [`README.md`](./README.md) Documentation section links into
   `docs/*` by topic.
 
+## [0.1.388] - 2026-07-05
+
+### Docs
+- Update README.md
+
+### Other
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update packages/coru/src/coru/cli.py
+
 ## [0.1.387] - 2026-07-05
 
 ### Docs
