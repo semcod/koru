@@ -44,7 +44,9 @@ def _reply_note(reply: dict[str, Any]) -> str:
     if len(text) > _MAX_NOTE_CHARS:
         text = text[:_MAX_NOTE_CHARS] + " …[truncated]"
     client = str(reply.get("client_id") or reply.get("backend") or "shell")
-    return f"{_NOTE_TAG} client={client} ok=true\n{text}" if text else f"{_NOTE_TAG} client={client} ok=true (no output captured)"
+    if text:
+        return f"{_NOTE_TAG} client={client} ok=true\n{text}"
+    return f"{_NOTE_TAG} client={client} ok=true (no output captured)"
 
 
 def finalize_shell_drive_ticket(
