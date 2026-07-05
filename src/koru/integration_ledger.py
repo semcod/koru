@@ -21,6 +21,18 @@ def integration_ledger_path(project: Path | None = None) -> Path:
     return root / ".planfile" / ".koru" / "integration-actions.jsonl"
 
 
+def _json_default(value: Any) -> str:
+    """Degrade non-JSON values instead of raising.
+
+    Drive replies can carry raw ``bytes`` (vendor CLI stdout) and arbitrary
+    assessment objects; a telemetry ledger must never crash the autonomous
+    loop over an unserializable payload.
+    """
+    if isinstance(value, (bytes, bytearray)):
+        return value.decode("utf-8", errors="replace")
+    return repr(value)
+
+
 def _quote(value: Any) -> str:
     text = str(value)
     if not text:
@@ -118,8 +130,14 @@ def record_integration_action(
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
-    except OSError:
+            fh.write(
+                json.dumps(payload, ensure_ascii=False, sort_keys=True, default=_json_default)
+                + "\n"
+            )
+    except (OSError, TypeError, ValueError):
+        # Best-effort ledger: a circular/unserializable payload must not
+        # take the autonomous loop down (2026-07-05: bytes in a drive reply
+        # killed `koru autonomous up` mid-cycle).
         pass
     if emit_activity:
         activity("INTEGRATION", line, data=payload)
