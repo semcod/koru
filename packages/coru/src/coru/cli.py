@@ -253,6 +253,47 @@ def _agent_lane_from_auto_args(auto_args: Sequence[str]) -> str | None:
     return None
 
 
+def _print_autonomous_banner(resolved: Plan, auto_args: Sequence[str]) -> None:
+    """Print the koru-auto intro: runtime versions, terminal host, lane and log locations."""
+    term_ide, term_source, integrated = _terminal_shell_context()
+    print("coru autonomous mode (koru auto). Press Ctrl+C to stop.")
+    _print_runtime_versions()
+    if integrated and term_ide:
+        print(f"terminal host: integrated ide={term_ide} source={term_source}")
+    else:
+        print("terminal host: system shell (no IDE integrated terminal detected)")
+    print(f"lane: ide={resolved.ide} instance={resolved.instance}")
+    _print_troubleshooting_log_locations(resolved.ide, resolved.instance)
+    if auto_args:
+        print(f"[coru] koru auto args: {' '.join(auto_args)}")
+
+
+def _enforce_runtime_readiness(root: Path | None) -> int | None:
+    """Run the koru runtime-consistency check; return an exit code on fail-fast, else None."""
+    if root is None:
+        return None
+    readiness = _import_koru_readiness_module()
+    if readiness is None:
+        return None
+    strict = os.environ.get("CORU_READINESS_STRICT", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    runtime = readiness.check_runtime_consistency(
+        root,
+        launcher_executable=sys.executable,
+        strict=strict,
+    )
+    for line in readiness.format_readiness_lines(runtime, prefix="[coru]"):
+        print(line, file=sys.stderr)
+    if strict and not runtime.ok:
+        if runtime.primary_fix:
+            print(f"[coru] readiness fail-fast: {runtime.primary_fix}", file=sys.stderr)
+        return 1
+    return None
+
+
 def _run_default_autonomous(
     auto_args: Sequence[str],
     *,
@@ -265,37 +306,10 @@ def _run_default_autonomous(
         ctx.project = chain_project
     selected_lane = _agent_lane_from_auto_args(auto_args)
     resolved = _resolve_defaults(Plan(action="auto", instance=selected_lane), context=ctx)
-    term_ide, term_source, integrated = _terminal_shell_context()
-    print("coru autonomous mode (koru auto). Press Ctrl+C to stop.")
-    _print_runtime_versions()
-    if integrated and term_ide:
-        print(f"terminal host: integrated ide={term_ide} source={term_source}")
-    else:
-        print("terminal host: system shell (no IDE integrated terminal detected)")
-    print(f"lane: ide={resolved.ide} instance={resolved.instance}")
-    _print_troubleshooting_log_locations(resolved.ide, resolved.instance)
-    if auto_args:
-        print(f"[coru] koru auto args: {' '.join(auto_args)}")
-    root = _repo_root()
-    if root is not None:
-        readiness = _import_koru_readiness_module()
-        if readiness is not None:
-            strict = os.environ.get("CORU_READINESS_STRICT", "").strip().lower() in {
-                "1",
-                "true",
-                "yes",
-            }
-            runtime = readiness.check_runtime_consistency(
-                root,
-                launcher_executable=sys.executable,
-                strict=strict,
-            )
-            for line in readiness.format_readiness_lines(runtime, prefix="[coru]"):
-                print(line, file=sys.stderr)
-            if strict and not runtime.ok:
-                if runtime.primary_fix:
-                    print(f"[coru] readiness fail-fast: {runtime.primary_fix}", file=sys.stderr)
-                return 1
+    _print_autonomous_banner(resolved, auto_args)
+    readiness_exit = _enforce_runtime_readiness(_repo_root())
+    if readiness_exit is not None:
+        return readiness_exit
     plans = _autonomous_startup_chain(auto_args, base=resolved)
     return _execute_plans(plans, shell=shell, context=ctx, announce=verbose)
 
