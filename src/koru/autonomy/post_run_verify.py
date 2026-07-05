@@ -291,6 +291,14 @@ def run_verify_commands(
 ) -> tuple[bool, str, int | None]:
     """Run verification commands in order. Returns (ok, detail, last_exit_code)."""
     runner = shell_runner or _run_verify_shell_command
+    # Legacy call sites (queue phase / IDE-drive verify) pass the stock
+    # run_shell_command explicitly, which inherits the loop's env and flips
+    # env-sensitive tests. Swap the stock runner for the sanitized one by
+    # identity; injected test fakes are left untouched.
+    from koru.queue.runners import run_shell_command as _stock_shell_runner
+
+    if runner is _stock_shell_runner:
+        runner = _run_verify_shell_command
     last_code: int | None = None
     for cmd in commands:
         if not cmd.strip():
