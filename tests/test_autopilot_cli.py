@@ -885,6 +885,23 @@ def test_resolve_plugin_editor_bin_skips_appimage_mount_for_cli_install(
 def test_resolve_plugin_editor_bin_skips_snap_app_executable_for_cli_install(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # The PATH ``code`` (``/usr/bin/code``) is injected via a mocked ``which`` but
+    # ``_editor_bin_usable_for_cli_install`` ends in ``Path(exe).is_file()``; a
+    # headless CI container has no real ``code`` binary, so keep the snap/mount
+    # rejection but drop the on-disk existence requirement for this hermetic test.
+    def _usable_ignoring_existence(exe: str) -> bool:
+        normalized = exe.replace("\\", "/")
+        if "/.mount_" in normalized:
+            return False
+        if normalized.startswith("/snap/") and not normalized.startswith("/snap/bin/"):
+            return False
+        return True
+
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "_editor_bin_usable_for_cli_install",
+        _usable_ignoring_existence,
+    )
     monkeypatch.setattr(
         install_plugin_cli.shutil,
         "which",

@@ -189,6 +189,18 @@ def test_extension_activated_uses_latest_session_only(
         "Extension activated success: vscode.git\n",
         encoding="utf-8",
     )
+    # ``latest_ide_exthost_session`` ranks sessions by directory mtime, not by the
+    # timestamp-named folder. On a coarse-granularity CI filesystem the two
+    # sessions can land on the same mtime tick, so the "latest" pick becomes
+    # readdir-order dependent and may return the stale session. Pin mtimes so the
+    # newer-named session is unambiguously newest (this is what wall-clock timing
+    # gives on the dev box).
+    import os
+
+    old_session = config / "logs" / "20260524T100000"
+    new_session = config / "logs" / "20260524T190000"
+    os.utime(old_session, (1_000_000, 1_000_000))
+    os.utime(new_session, (2_000_000, 2_000_000))
     monkeypatch.setattr(shared, "config_home_for_ide", lambda _ide: config)
     assert shared.extension_activated_in_exthost("cursor") is False
 

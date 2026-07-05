@@ -15,6 +15,41 @@ from koru.autopilot import install_plugin_cli, plugin_installer
 from koruide.plugin_version import expected_plugin_version_for_ide
 
 
+def _hermetic_editor_bin_usable(exe: str) -> bool:
+    """Mirror ``_editor_bin_usable_for_cli_install`` minus the on-disk check.
+
+    The production helper ends with ``Path(exe).is_file()`` which makes editor
+    resolution depend on a real IDE binary existing in PATH. In a headless CI
+    container (no ``code``/``codium``/``windsurf`` installed) that returns False
+    and command resolution collapses to ``missing_cli``. This deterministic stub
+    keeps the meaningful snap/AppImage-mount rejection but treats the injected
+    fake ``/usr/bin/<name>`` path as usable, so the tests exercise IDE selection
+    without a host IDE.
+    """
+    normalized = exe.replace("\\", "/")
+    if "/.mount_" in normalized:
+        return False
+    if normalized.startswith("/snap/") and not normalized.startswith("/snap/bin/"):
+        return False
+    return True
+
+
+def _harden_plugin_install_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Remove host dependencies from ``install_plugin_for_ide`` for CI.
+
+    1. Editor-bin resolution no longer requires a real binary on disk.
+    2. The opportunistic local ``npm run package`` VSIX build is disabled; in a
+       fresh checkout without a pre-built ``plugins/*/*.vsix`` it would otherwise
+       shell out to npm and hit the fake runner with an unexpected command.
+    """
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "_editor_bin_usable_for_cli_install",
+        _hermetic_editor_bin_usable,
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_BUILD_LOCAL_VSIX", "0")
+
+
 def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Drop IDE terminal env leaked from the host (Cursor sets VSCODE_* + CURSOR_*)."""
     for key in (
@@ -201,6 +236,7 @@ def test_install_plugin_configures_socket_path(
     config_home = tmp_path / "config"
 
     monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+    _harden_plugin_install_env(monkeypatch)
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
 
@@ -291,6 +327,7 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
     monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
     monkeypatch.setattr(plugin_installer, "detect_terminal_host_ide_id", lambda: "vscodium")
+    _harden_plugin_install_env(monkeypatch)
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
@@ -339,6 +376,7 @@ def test_install_plugin_explicit_vscode_does_not_use_codium_hint(
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
     monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
     monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
+    _harden_plugin_install_env(monkeypatch)
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
@@ -389,6 +427,7 @@ def test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint(
         "koruide.ide.detect_running_ides",
         lambda: [SimpleNamespace(id="vscode", exe="/snap/code/240/usr/share/code/code")],
     )
+    _harden_plugin_install_env(monkeypatch)
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
