@@ -2287,6 +2287,11 @@ def test_autonomous_defaults_to_strict_plugin_policy(monkeypatch) -> None:
 def test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) -> None:
     args = SimpleNamespace(enable_autopilot=True, emit_events="human")
     messages: list[str] = []
+    # Establish a clean baseline so the test does not depend on whatever
+    # KORU_STRICT_PLUGIN_* the surrounding shell already exported.
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_ACK", raising=False)
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "0")
     monkeypatch.setattr(
         autonomous_mod,
