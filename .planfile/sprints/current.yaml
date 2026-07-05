@@ -2021,13 +2021,13 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-25T15:18:52.447431+00:00'
-      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
-        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
-        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
-        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
-        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
-        \                    ^^^^\nNameError: name 'json' is not defined. Did you
-        forget to import 'json'?"
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in\
+        \ collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,\
+        \ resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n\
+        \  File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\"\
+        , line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n\
+        \                     ^^^^\nNameError: name 'json' is not defined. Did you\
+        \ forget to import 'json'?"
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -9532,20 +9532,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-26T17:10:46.322326+00:00'
-      description: "Run a broad project discovery pass because the planfile queue
-        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-        strategy,\nthen create concrete tickets and let the normal queue work through
-        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
-        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
-        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
-        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
-        tests, and architecture seams that block future tickets.\n\n5. When new tickets
-        exist, stop broad discovery and work the tickets one by one.\n    After those
-        tickets are done and the queue is empty again, another discovery pass\n    is
-        allowed."
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy,\nthen create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
+        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
+        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
+        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
+        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
+        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
+        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
+        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
+        \    After those tickets are done and the queue is empty again, another discovery\
+        \ pass\n    is allowed."
       execution:
         attempt: 0
         finished_at: '2026-05-26T17:12:54.689674Z'
@@ -9559,20 +9559,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
         source: koru task
         timestamp: '2026-05-26T17:10:46.322326+00:00'
       - action: update
@@ -9596,20 +9596,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -9633,20 +9633,21 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-05-26T17:10:45.792586+00:00
           generation: '2026-05-26T17:10:45.792586+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is
-            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-            strategy,\nthen create concrete tickets and let the normal queue work
-            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
-            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
-            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
-            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
-            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
-            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
-            high-signal work: failing gates, god modules, duplicated code, high\n
-            \   cyclomatic complexity, missing tests, and architecture seams that
-            block future tickets.\n\n5. When new tickets exist, stop broad discovery
-            and work the tickets one by one.\n    After those tickets are done and
-            the queue is empty again, another discovery pass\n    is allowed."
+          input: "Run a broad project discovery pass because the planfile queue is\
+            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+            \ strategy,\nthen create concrete tickets and let the normal queue work\
+            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
+            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
+            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
+            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
+            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
+            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
+            \ discovery and work the tickets one by one.\n    After those tickets\
+            \ are done and the queue is empty again, another discovery pass\n    is\
+            \ allowed."
           signal: project_discovery
         timestamp: '2026-05-26T17:10:46.322326+00:00'
         tool: koru-project-discovery
@@ -17356,20 +17357,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-06-01T19:04:23.859049+00:00'
-      description: "Run a broad project discovery pass because the planfile queue
-        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-        strategy,\nthen create concrete tickets and let the normal queue work through
-        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
-        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
-        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
-        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
-        tests, and architecture seams that block future tickets.\n\n5. When new tickets
-        exist, stop broad discovery and work the tickets one by one.\n    After those
-        tickets are done and the queue is empty again, another discovery pass\n    is
-        allowed."
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy,\nthen create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
+        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
+        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
+        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
+        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
+        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
+        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
+        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
+        \    After those tickets are done and the queue is empty again, another discovery\
+        \ pass\n    is allowed."
       execution:
         attempt: 0
         finished_at: '2026-06-01T19:07:22.848215Z'
@@ -17383,20 +17384,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
         source: koru task
         timestamp: '2026-06-01T19:04:23.859049+00:00'
       - action: update
@@ -17415,20 +17416,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -17446,20 +17447,21 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-06-01T19:04:23.011167+00:00
           generation: '2026-06-01T19:04:23.011167+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is
-            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-            strategy,\nthen create concrete tickets and let the normal queue work
-            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
-            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
-            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
-            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
-            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
-            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
-            high-signal work: failing gates, god modules, duplicated code, high\n
-            \   cyclomatic complexity, missing tests, and architecture seams that
-            block future tickets.\n\n5. When new tickets exist, stop broad discovery
-            and work the tickets one by one.\n    After those tickets are done and
-            the queue is empty again, another discovery pass\n    is allowed."
+          input: "Run a broad project discovery pass because the planfile queue is\
+            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+            \ strategy,\nthen create concrete tickets and let the normal queue work\
+            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
+            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
+            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
+            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
+            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
+            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
+            \ discovery and work the tickets one by one.\n    After those tickets\
+            \ are done and the queue is empty again, another discovery pass\n    is\
+            \ allowed."
           signal: project_discovery
         timestamp: '2026-06-01T19:04:23.859049+00:00'
         tool: koru-project-discovery
@@ -17471,20 +17473,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-06-01T19:09:11.137599+00:00'
-      description: "Run a broad project discovery pass because the planfile queue
-        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-        strategy,\nthen create concrete tickets and let the normal queue work through
-        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
-        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
-        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
-        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
-        tests, and architecture seams that block future tickets.\n\n5. When new tickets
-        exist, stop broad discovery and work the tickets one by one.\n    After those
-        tickets are done and the queue is empty again, another discovery pass\n    is
-        allowed."
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy,\nthen create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
+        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
+        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
+        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
+        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
+        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
+        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
+        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
+        \    After those tickets are done and the queue is empty again, another discovery\
+        \ pass\n    is allowed."
       execution:
         attempt: 0
         finished_at: '2026-06-01T19:11:24.541161Z'
@@ -17498,20 +17500,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
         source: koru task
         timestamp: '2026-06-01T19:09:11.137599+00:00'
       - action: update
@@ -17530,20 +17532,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -17561,20 +17563,21 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-06-01T19:09:10.284098+00:00
           generation: '2026-06-01T19:09:10.284098+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is
-            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-            strategy,\nthen create concrete tickets and let the normal queue work
-            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
-            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
-            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
-            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
-            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
-            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
-            high-signal work: failing gates, god modules, duplicated code, high\n
-            \   cyclomatic complexity, missing tests, and architecture seams that
-            block future tickets.\n\n5. When new tickets exist, stop broad discovery
-            and work the tickets one by one.\n    After those tickets are done and
-            the queue is empty again, another discovery pass\n    is allowed."
+          input: "Run a broad project discovery pass because the planfile queue is\
+            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+            \ strategy,\nthen create concrete tickets and let the normal queue work\
+            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
+            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
+            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
+            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
+            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
+            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
+            \ discovery and work the tickets one by one.\n    After those tickets\
+            \ are done and the queue is empty again, another discovery pass\n    is\
+            \ allowed."
           signal: project_discovery
         timestamp: '2026-06-01T19:09:11.137599+00:00'
         tool: koru-project-discovery
@@ -17586,20 +17589,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-06-01T19:50:54.292887+00:00'
-      description: "Run a broad project discovery pass because the planfile queue
-        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-        strategy,\nthen create concrete tickets and let the normal queue work through
-        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
-        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
-        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
-        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
-        tests, and architecture seams that block future tickets.\n\n5. When new tickets
-        exist, stop broad discovery and work the tickets one by one.\n    After those
-        tickets are done and the queue is empty again, another discovery pass\n    is
-        allowed."
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy,\nthen create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
+        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
+        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
+        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
+        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
+        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
+        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
+        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
+        \    After those tickets are done and the queue is empty again, another discovery\
+        \ pass\n    is allowed."
       execution:
         attempt: 0
         finished_at: '2026-06-01T20:02:11.523729Z'
@@ -17613,20 +17616,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
         source: koru task
         timestamp: '2026-06-01T19:50:54.292887+00:00'
       - action: update
@@ -17650,20 +17653,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -17687,20 +17690,21 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-06-01T19:50:53.464792+00:00
           generation: '2026-06-01T19:50:53.464792+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is
-            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-            strategy,\nthen create concrete tickets and let the normal queue work
-            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
-            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
-            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
-            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
-            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
-            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
-            high-signal work: failing gates, god modules, duplicated code, high\n
-            \   cyclomatic complexity, missing tests, and architecture seams that
-            block future tickets.\n\n5. When new tickets exist, stop broad discovery
-            and work the tickets one by one.\n    After those tickets are done and
-            the queue is empty again, another discovery pass\n    is allowed."
+          input: "Run a broad project discovery pass because the planfile queue is\
+            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+            \ strategy,\nthen create concrete tickets and let the normal queue work\
+            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
+            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
+            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
+            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
+            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
+            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
+            \ discovery and work the tickets one by one.\n    After those tickets\
+            \ are done and the queue is empty again, another discovery pass\n    is\
+            \ allowed."
           signal: project_discovery
         timestamp: '2026-06-01T19:50:54.292887+00:00'
         tool: koru-project-discovery
@@ -18087,20 +18091,20 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-06-02T09:11:34.139949+00:00'
-      description: "Run a broad project discovery pass because the planfile queue
-        is idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-        strategy,\nthen create concrete tickets and let the normal queue work through
-        them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-        -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-        refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-        do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file edits
-        in this step).\n\n3. Convert findings into tickets:\n    koru scan --apply
-        --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work: failing
-        gates, god modules, duplicated code, high\n    cyclomatic complexity, missing
-        tests, and architecture seams that block future tickets.\n\n5. When new tickets
-        exist, stop broad discovery and work the tickets one by one.\n    After those
-        tickets are done and the queue is empty again, another discovery pass\n    is
-        allowed."
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy,\nthen create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm\
+        \ refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety\
+        \ do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file\
+        \ edits in this step).\n\n3. Convert findings into tickets:\n    koru scan\
+        \ --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:\
+        \ failing gates, god modules, duplicated code, high\n    cyclomatic complexity,\
+        \ missing tests, and architecture seams that block future tickets.\n\n5. When\
+        \ new tickets exist, stop broad discovery and work the tickets one by one.\n\
+        \    After those tickets are done and the queue is empty again, another discovery\
+        \ pass\n    is allowed."
       execution:
         attempt: 0
         finished_at: '2026-06-02T09:52:02.690874Z'
@@ -18114,20 +18118,20 @@ sprint:
       - project/analysis.toon.yaml
       history:
       - action: created
-        message: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
         source: koru task
         timestamp: '2026-06-02T09:11:34.139949+00:00'
       - action: update
@@ -18146,20 +18150,20 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Run a broad project discovery pass because the planfile queue is
-          idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-          strategy,\nthen create concrete tickets and let the normal queue work through
-          them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all
-          -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after the code2llm
-          refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety
-          do planfile.\"\n    Keep the answer ticket-oriented (no broad multi-file
-          edits in this step).\n\n3. Convert findings into tickets:\n    koru scan
-          --apply --semcod-artifacts --source koru-scan\n\n4. Prefer high-signal work:
-          failing gates, god modules, duplicated code, high\n    cyclomatic complexity,
-          missing tests, and architecture seams that block future tickets.\n\n5. When
-          new tickets exist, stop broad discovery and work the tickets one by one.\n
-          \   After those tickets are done and the queue is empty again, another discovery
-          pass\n    is allowed."
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy,\nthen create concrete tickets and let the normal queue work\
+          \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+          \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after\
+          \ the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego\
+          \ nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no\
+          \ broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n\
+          \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+          \ high-signal work: failing gates, god modules, duplicated code, high\n\
+          \    cyclomatic complexity, missing tests, and architecture seams that block\
+          \ future tickets.\n\n5. When new tickets exist, stop broad discovery and\
+          \ work the tickets one by one.\n    After those tickets are done and the\
+          \ queue is empty again, another discovery pass\n    is allowed."
       labels:
       - koru
       - nl-task
@@ -18177,20 +18181,21 @@ sprint:
         context:
           dedupe_key: koru:project-discovery:2026-06-02T09:11:33.240116+00:00
           generation: '2026-06-02T09:11:33.240116+00:00'
-          input: "Run a broad project discovery pass because the planfile queue is
-            idle.\n\nGoal: move Koru from local implementation mode back to whole-project
-            strategy,\nthen create concrete tickets and let the normal queue work
-            through them.\n\n1. Generate fresh whole-project context:\n    code2llm
-            ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM after
-            the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania? zrob z tego
-            nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented (no
-            broad multi-file edits in this step).\n\n3. Convert findings into tickets:\n
-            \   koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer
-            high-signal work: failing gates, god modules, duplicated code, high\n
-            \   cyclomatic complexity, missing tests, and architecture seams that
-            block future tickets.\n\n5. When new tickets exist, stop broad discovery
-            and work the tickets one by one.\n    After those tickets are done and
-            the queue is empty again, another discovery pass\n    is allowed."
+          input: "Run a broad project discovery pass because the planfile queue is\
+            \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+            \ strategy,\nthen create concrete tickets and let the normal queue work\
+            \ through them.\n\n1. Generate fresh whole-project context:\n    code2llm\
+            \ ./ -f all -o ./project --no-chunk --exclude '*.md'\n\n2. Ask IDE LLM\
+            \ after the code2llm refresh:\n    \"Co jeszcze zostalo do wykonania?\
+            \ zrob z tego nastepne tickety do planfile.\"\n    Keep the answer ticket-oriented\
+            \ (no broad multi-file edits in this step).\n\n3. Convert findings into\
+            \ tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+            \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+            \ high\n    cyclomatic complexity, missing tests, and architecture seams\
+            \ that block future tickets.\n\n5. When new tickets exist, stop broad\
+            \ discovery and work the tickets one by one.\n    After those tickets\
+            \ are done and the queue is empty again, another discovery pass\n    is\
+            \ allowed."
           signal: project_discovery
         timestamp: '2026-06-02T09:11:34.139949+00:00'
         tool: koru-project-discovery
@@ -25429,25 +25434,26 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-545.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n```diff\ndiff --git a/packages/fanout/FanoutController.java
-          b/packages/fanout/FanoutController.java\nindex 1a2b3c4..5d6e7f8 100644\n---
-          a/packages/fanout/FanoutController.java\n+++ b/packages/fanout/FanoutController.java\n@@
-          -1,5 +1,7 @@\n package packages.fanout;\n\n+import packages.dsl2coru.control.AutonomousLoopRunner;\n+\n
-          public class FanoutController {\n-    private AutonomousCycle cycle;\n-
-          \   private AutonomousLoopRunner runner;\n+    private final CycleController
-          cycle;\n+    private final LoopRunnerAdapter runner;\n \n-    public FanoutController(AutonomousCycle
-          cycle, AutonomousLoopRunner runner) {\n-        this.cycle = cycle;\n-        this.runner
-          = runner;\n+    public FanoutController(CycleController cycle, LoopRunnerAdapter
-          runner) {\n+        this.cycle = cycle; // stable interface, no fan-out\n+
-          \       this.runner = runner; // stable interface, no fan-out\n     }\n
-          \n     public void run() {\n-        cycle.execute();\n-        runner.startLoop();\n+
-          \       cycle.runCycle();\n+        runner.executeLoop();\n     }\n }\n```\n\n**Rationale**:
-          Replace direct dependencies on volatile `AutonomousCycle` and `AutonomousLoopRunner`
-          with thin adapter interfaces (`CycleController`, `LoopRunnerAdapter`) that
-          isolate fan-out; this splits into a stable *controller layer* and *adapted
-          service layer*, eliminating package-level coupling. The refactor preserves
-          behavioral fidelity while conforming to the Stable Dependencies Principle.\n\n**Test
-          command**: `./gradlew test --tests FanoutControllerTest`"
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n```diff\ndiff --git a/packages/fanout/FanoutController.java\
+          \ b/packages/fanout/FanoutController.java\nindex 1a2b3c4..5d6e7f8 100644\n\
+          --- a/packages/fanout/FanoutController.java\n+++ b/packages/fanout/FanoutController.java\n\
+          @@ -1,5 +1,7 @@\n package packages.fanout;\n\n+import packages.dsl2coru.control.AutonomousLoopRunner;\n\
+          +\n public class FanoutController {\n-    private AutonomousCycle cycle;\n\
+          -    private AutonomousLoopRunner runner;\n+    private final CycleController\
+          \ cycle;\n+    private final LoopRunnerAdapter runner;\n \n-    public FanoutController(AutonomousCycle\
+          \ cycle, AutonomousLoopRunner runner) {\n-        this.cycle = cycle;\n\
+          -        this.runner = runner;\n+    public FanoutController(CycleController\
+          \ cycle, LoopRunnerAdapter runner) {\n+        this.cycle = cycle; // stable\
+          \ interface, no fan-out\n+        this.runner = runner; // stable interface,\
+          \ no fan-out\n     }\n \n     public void run() {\n-        cycle.execute();\n\
+          -        runner.startLoop();\n+        cycle.runCycle();\n+        runner.executeLoop();\n\
+          \     }\n }\n```\n\n**Rationale**: Replace direct dependencies on volatile\
+          \ `AutonomousCycle` and `AutonomousLoopRunner` with thin adapter interfaces\
+          \ (`CycleController`, `LoopRunnerAdapter`) that isolate fan-out; this splits\
+          \ into a stable *controller layer* and *adapted service layer*, eliminating\
+          \ package-level coupling. The refactor preserves behavioral fidelity while\
+          \ conforming to the Stable Dependencies Principle.\n\n**Test command**:\
+          \ `./gradlew test --tests FanoutControllerTest`"
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -25586,69 +25592,73 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-550.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Codebase
-          uses `os.environ` directly in modules: `KORU_TILLM_CLIENT`, `lane_exports`,
-          `socket` (likely `socket.py` or custom wrapper).  \n2. Subprocesses are
-          spawned via `subprocess.Popen`/`run`; `env=` argument is *not* currently
-          used.  \n3. No existing `AutonomousContext` class; must be created.  \n4.
-          All modules are Python 3.8+; `contextvars` available.  \n5. No external
-          dependencies beyond stdlib.\n\n---\n\n### Action Plan\n\n#### 1. Create
-          `AutonomousContext` class  \n**File**: `src/autonomous_context.py`  \n```bash\nmkdir
-          -p src && cat > src/autonomous_context.py << 'EOF'\nfrom contextvars import
-          ContextVar\nfrom typing import Optional, Dict, Any\n\nclass AutonomousContext:\n
-          \   _instance: ContextVar[Optional['AutonomousContext']] = ContextVar('autonomous_context',
-          default=None)\n\n    def __init__(self, env_overrides: Optional[Dict[str,
-          str]] = None):\n        self.env_overrides = env_overrides or {}\n\n    @classmethod\n
-          \   def get_current(cls) -> 'AutonomousContext':\n        ctx = cls._instance.get()\n
-          \       if ctx is None:\n            raise RuntimeError(\"AutonomousContext
-          not set in current context\")\n        return ctx\n\n    @classmethod\n
-          \   def set_current(cls, ctx: 'AutonomousContext') -> None:\n        cls._instance.set(ctx)\n\n
-          \   def apply_to_env(self, env: Dict[str, str]) -> Dict[str, str]:\n        \"\"\"Return
-          a copy of `env` with overrides applied.\"\"\"\n        result = env.copy()\n
-          \       result.update(self.env_overrides)\n        return result\nEOF\n```\n\n####
-          2. Replace direct `os.environ` usage in modules  \n**Pattern**: Replace
-          `os.environ[...]` / `os.environ.get(...)` with `AutonomousContext.get_current().env_overrides.get(...)`
-          or `os.environ[...]` *only* if fallback to process env is acceptable (rare).
-          Prefer explicit context propagation.\n\n**Files to modify** (example edits):\n\n-
-          **`src/koru_tillm_client.py`**  \n```bash\nsed -i 's/^import os$/import
-          os\\nfrom .autonomous_context import AutonomousContext/' src/koru_tillm_client.py\nsed
-          -i 's/os\\.environ\\[\\([^]]*\\)\\]/AutonomousContext.get_current().env_overrides.get(\\1,
-          os.environ.get(\\1))/g' src/koru_tillm_client.py\nsed -i 's/os\\.environ\\.get(\\([^,]*\\),
-          \\([^)]*\\))/AutonomousContext.get_current().env_overrides.get(\\1, \\2)/g'
-          src/koru_tillm_client.py\n```\n> *Note*: Manual review required after `sed`
-          — ensure no false positives (e.g., `os.environ.setdefault`). Prefer manual
-          edits for correctness.\n\n- **`src/lanes/exports.py`** (assuming `lanes/exports.py`)
-          \ \n```bash\nmkdir -p src/lanes && sed -i 's/^import os$/import os\\nfrom
-          ..autonomous_context import AutonomousContext/' src/lanes/exports.py\n#
-          Apply same pattern as above\n```\n\n- **`src/autonomous_socket.py`** (rename
-          if `socket.py` is stdlib shadow)  \n```bash\ncat > src/autonomous_socket.py
-          << 'EOF'\nimport os\nimport socket as _socket\nfrom .autonomous_context
-          import AutonomousContext\n\nclass Socket(_socket.socket):\n    def connect(self,
-          *args, **kwargs):\n        # Example: inject env-based socket options if
-          needed\n        ctx = AutonomousContext.get_current()\n        # ... apply
-          context-specific behavior ...\n        return super().connect(*args, **kwargs)\nEOF\n```\n>
-          Replace all `import socket` → `from .autonomous_socket import Socket` in
-          dependent modules.\n\n#### 3. Introduce `AutonomousContext` at subprocess
-          boundaries  \n**File**: `src/subprocess_utils.py`  \n```bash\ncat > src/subprocess_utils.py
-          << 'EOF'\nimport os\nimport subprocess\nfrom .autonomous_context import
-          AutonomousContext\n\ndef run_with_context(cmd, **kwargs):\n    ctx = AutonomousContext.get_current()\n
-          \   env = kwargs.pop('env', os.environ.copy())\n    env = ctx.apply_to_env(env)\n
-          \   return subprocess.run(cmd, env=env, **kwargs)\n\ndef Popen_with_context(cmd,
-          **kwargs):\n    ctx = AutonomousContext.get_current()\n    env = kwargs.pop('env',
-          os.environ.copy())\n    env = ctx.apply_to_env(env)\n    return subprocess.Popen(cmd,
-          env=env, **kwargs)\nEOF\n```\n\n#### 4. Update entry points to set `AutonomousContext`
-          \ \n**File**: `src/main.py` (or CLI entrypoint)  \n```bash\nsed -i '1i from
-          .autonomous_context import AutonomousContext' src/main.py\nsed -i '/^def
-          main\\(\\):/a\\    AutonomousContext.set_current(AutonomousContext(env_overrides={\"MY_VAR\":
-          \"value\"}))' src/main.py\n```\n> Replace `{\"MY_VAR\": \"value\"}` with
-          actual initial env overrides.\n\n#### 5. Verify no remaining `os.environ`
-          leaks  \n```bash\ngrep -rn 'os\\.environ\\[' src/ --include='*.py' | grep
-          -v 'autonomous_context.py' | grep -v 'subprocess_utils.py'\ngrep -rn 'os\\.environ\\.setdefault\\|os\\.environ\\.update'
-          src/ --include='*.py'\n```\n→ Manually fix any hits.\n\n#### 6. Run tests
-          \ \n```bash\npython -m pytest tests/ -v\n```\n\n---\n\n**Total files created/modified**:
-          \ \n- Created: `src/autonomous_context.py`, `src/subprocess_utils.py`, `src/autonomous_socket.py`
-          \ \n- Modified: `src/koru_tillm_client.py`, `src/lanes/exports.py`, `src/main.py`
-          \ \n- Estimated time: ≤ 2 hours (excluding test fixes)."
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Codebase\
+          \ uses `os.environ` directly in modules: `KORU_TILLM_CLIENT`, `lane_exports`,\
+          \ `socket` (likely `socket.py` or custom wrapper).  \n2. Subprocesses are\
+          \ spawned via `subprocess.Popen`/`run`; `env=` argument is *not* currently\
+          \ used.  \n3. No existing `AutonomousContext` class; must be created.  \n\
+          4. All modules are Python 3.8+; `contextvars` available.  \n5. No external\
+          \ dependencies beyond stdlib.\n\n---\n\n### Action Plan\n\n#### 1. Create\
+          \ `AutonomousContext` class  \n**File**: `src/autonomous_context.py`  \n\
+          ```bash\nmkdir -p src && cat > src/autonomous_context.py << 'EOF'\nfrom\
+          \ contextvars import ContextVar\nfrom typing import Optional, Dict, Any\n\
+          \nclass AutonomousContext:\n    _instance: ContextVar[Optional['AutonomousContext']]\
+          \ = ContextVar('autonomous_context', default=None)\n\n    def __init__(self,\
+          \ env_overrides: Optional[Dict[str, str]] = None):\n        self.env_overrides\
+          \ = env_overrides or {}\n\n    @classmethod\n    def get_current(cls) ->\
+          \ 'AutonomousContext':\n        ctx = cls._instance.get()\n        if ctx\
+          \ is None:\n            raise RuntimeError(\"AutonomousContext not set in\
+          \ current context\")\n        return ctx\n\n    @classmethod\n    def set_current(cls,\
+          \ ctx: 'AutonomousContext') -> None:\n        cls._instance.set(ctx)\n\n\
+          \    def apply_to_env(self, env: Dict[str, str]) -> Dict[str, str]:\n  \
+          \      \"\"\"Return a copy of `env` with overrides applied.\"\"\"\n    \
+          \    result = env.copy()\n        result.update(self.env_overrides)\n  \
+          \      return result\nEOF\n```\n\n#### 2. Replace direct `os.environ` usage\
+          \ in modules  \n**Pattern**: Replace `os.environ[...]` / `os.environ.get(...)`\
+          \ with `AutonomousContext.get_current().env_overrides.get(...)` or `os.environ[...]`\
+          \ *only* if fallback to process env is acceptable (rare). Prefer explicit\
+          \ context propagation.\n\n**Files to modify** (example edits):\n\n- **`src/koru_tillm_client.py`**\
+          \  \n```bash\nsed -i 's/^import os$/import os\\nfrom .autonomous_context\
+          \ import AutonomousContext/' src/koru_tillm_client.py\nsed -i 's/os\\.environ\\\
+          [\\([^]]*\\)\\]/AutonomousContext.get_current().env_overrides.get(\\1, os.environ.get(\\\
+          1))/g' src/koru_tillm_client.py\nsed -i 's/os\\.environ\\.get(\\([^,]*\\\
+          ), \\([^)]*\\))/AutonomousContext.get_current().env_overrides.get(\\1, \\\
+          2)/g' src/koru_tillm_client.py\n```\n> *Note*: Manual review required after\
+          \ `sed` — ensure no false positives (e.g., `os.environ.setdefault`). Prefer\
+          \ manual edits for correctness.\n\n- **`src/lanes/exports.py`** (assuming\
+          \ `lanes/exports.py`)  \n```bash\nmkdir -p src/lanes && sed -i 's/^import\
+          \ os$/import os\\nfrom ..autonomous_context import AutonomousContext/' src/lanes/exports.py\n\
+          # Apply same pattern as above\n```\n\n- **`src/autonomous_socket.py`** (rename\
+          \ if `socket.py` is stdlib shadow)  \n```bash\ncat > src/autonomous_socket.py\
+          \ << 'EOF'\nimport os\nimport socket as _socket\nfrom .autonomous_context\
+          \ import AutonomousContext\n\nclass Socket(_socket.socket):\n    def connect(self,\
+          \ *args, **kwargs):\n        # Example: inject env-based socket options\
+          \ if needed\n        ctx = AutonomousContext.get_current()\n        # ...\
+          \ apply context-specific behavior ...\n        return super().connect(*args,\
+          \ **kwargs)\nEOF\n```\n> Replace all `import socket` → `from .autonomous_socket\
+          \ import Socket` in dependent modules.\n\n#### 3. Introduce `AutonomousContext`\
+          \ at subprocess boundaries  \n**File**: `src/subprocess_utils.py`  \n```bash\n\
+          cat > src/subprocess_utils.py << 'EOF'\nimport os\nimport subprocess\nfrom\
+          \ .autonomous_context import AutonomousContext\n\ndef run_with_context(cmd,\
+          \ **kwargs):\n    ctx = AutonomousContext.get_current()\n    env = kwargs.pop('env',\
+          \ os.environ.copy())\n    env = ctx.apply_to_env(env)\n    return subprocess.run(cmd,\
+          \ env=env, **kwargs)\n\ndef Popen_with_context(cmd, **kwargs):\n    ctx\
+          \ = AutonomousContext.get_current()\n    env = kwargs.pop('env', os.environ.copy())\n\
+          \    env = ctx.apply_to_env(env)\n    return subprocess.Popen(cmd, env=env,\
+          \ **kwargs)\nEOF\n```\n\n#### 4. Update entry points to set `AutonomousContext`\
+          \  \n**File**: `src/main.py` (or CLI entrypoint)  \n```bash\nsed -i '1i\
+          \ from .autonomous_context import AutonomousContext' src/main.py\nsed -i\
+          \ '/^def main\\(\\):/a\\    AutonomousContext.set_current(AutonomousContext(env_overrides={\"\
+          MY_VAR\": \"value\"}))' src/main.py\n```\n> Replace `{\"MY_VAR\": \"value\"\
+          }` with actual initial env overrides.\n\n#### 5. Verify no remaining `os.environ`\
+          \ leaks  \n```bash\ngrep -rn 'os\\.environ\\[' src/ --include='*.py' | grep\
+          \ -v 'autonomous_context.py' | grep -v 'subprocess_utils.py'\ngrep -rn 'os\\\
+          .environ\\.setdefault\\|os\\.environ\\.update' src/ --include='*.py'\n```\n\
+          → Manually fix any hits.\n\n#### 6. Run tests  \n```bash\npython -m pytest\
+          \ tests/ -v\n```\n\n---\n\n**Total files created/modified**:  \n- Created:\
+          \ `src/autonomous_context.py`, `src/subprocess_utils.py`, `src/autonomous_socket.py`\
+          \  \n- Modified: `src/koru_tillm_client.py`, `src/lanes/exports.py`, `src/main.py`\
+          \  \n- Estimated time: ≤ 2 hours (excluding test fixes)."
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -25742,60 +25752,61 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-551.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Codebase
-          is in a Git repo with standard layout: `src/`, `lib/`, or similar.  \n2.
-          Fallback-chain logic resides in two files: `src/autonomy/fallback_chain.py`
-          (~920 lines) and `src/daemon/fallback_chain.py` (~965 lines).  \n3. Strategy
-          logic is encapsulated in functions/classes (e.g., `StrategyA`, `StrategyB`)
-          used by both chains.  \n4. Python project using `pyproject.toml` or `setup.py`;
-          no external registry framework.  \n5. Shared registry will be a singleton
-          `StrategyRegistry` with registration + lookup.\n\n---\n\n### Action Plan
-          (≤15 min)\n\n1. **Create shared registry module**  \n   ```bash\n   mkdir
-          -p src/common/strategy\n   touch src/common/strategy/__init__.py\n   ```\n\n2.
-          **Implement `StrategyRegistry`**  \n   ```bash\n   cat > src/common/strategy/registry.py
-          << 'EOF'\n   class StrategyRegistry:\n       _instance = None\n       _strategies
-          = {}\n\n       def __new__(cls):\n           if cls._instance is None:\n
-          \              cls._instance = super().__new__(cls)\n           return cls._instance\n\n
-          \      @classmethod\n       def register(cls, name: str, strategy_class):\n
-          \          cls._strategies[name] = strategy_class\n\n       @classmethod\n
-          \      def get(cls, name: str):\n           return cls._strategies.get(name)\n\n
-          \      @classmethod\n       def list(cls):\n           return list(cls._strategies.keys())\n
-          \  EOF\n   ```\n\n3. **Extract strategy classes**  \n   - Identify strategy
-          classes in both files (e.g., `FallbackStrategyA`, `FallbackStrategyB`).
-          \ \n   - Move them to `src/common/strategy/strategies.py`:  \n   ```bash\n
-          \  # Example: extract class definitions (adjust names/types)\n   grep -E
-          \"^class Fallback.*Strategy\" src/autonomy/fallback_chain.py src/daemon/fallback_chain.py
-          | cut -d: -f2 | sort -u | while read line; do\n     # Extract class + its
-          body (naive: grab until next class or EOF)\n     # Use sed to extract from
-          `class ...` to next `^class ` or end\n     echo \"TODO: Manually extract
-          strategy classes into strategies.py\"\n   done\n   ```\n   **→ Manual step**:
-          Copy-paste strategy classes into `src/common/strategy/strategies.py`, then
-          register them:  \n   ```bash\n   cat >> src/common/strategy/strategies.py
-          << 'EOF'\n\n   # Register strategies on module load\n   from .registry import
-          StrategyRegistry\n   StrategyRegistry.register(\"alpha\", FallbackStrategyA)\n
-          \  StrategyRegistry.register(\"beta\", FallbackStrategyB)\n   # ... add
-          others\n   EOF\n   ```\n\n4. **Refactor autonomy pipeline**  \n   ```bash\n
-          \  # Backup original\n   cp src/autonomy/fallback_chain.py src/autonomy/fallback_chain.py.bak\n\n
-          \  # Replace strategy instantiations with registry lookups\n   sed -i 's/from.*fallback_chain
-          import FallbackStrategyA/from common.strategy import StrategyRegistry/'
-          src/autonomy/fallback_chain.py\n   sed -i 's/FallbackStrategyA()/StrategyRegistry.get(\"alpha\")()/'
-          src/autonomy/fallback_chain.py\n   # Repeat for other strategies (adjust
-          names)\n   ```\n\n5. **Refactor daemon pipeline**  \n   ```bash\n   cp src/daemon/fallback_chain.py
-          src/daemon/fallback_chain.py.bak\n   sed -i 's/from.*fallback_chain import
-          FallbackStrategyA/from common.strategy import StrategyRegistry/' src/daemon/fallback_chain.py\n
-          \  sed -i 's/FallbackStrategyA()/StrategyRegistry.get(\"alpha\")()/' src/daemon/fallback_chain.py\n
-          \  ```\n\n6. **Verify imports & run tests**  \n   ```bash\n   python -c
-          \"from src.common.strategy import StrategyRegistry; print(StrategyRegistry.list())\"\n
-          \  pytest src/autonomy/test_fallback.py src/daemon/test_fallback.py -v  #
-          or your test command\n   ```\n\n7. **Delete duplicated strategy code**  \n
-          \  ```bash\n   # Remove strategy classes from both original files (keep
-          only pipeline logic)\n   # Example: delete lines 120–250 in autonomy/fallback_chain.py
-          (adjust ranges)\n   sed -i '120,250d' src/autonomy/fallback_chain.py\n   sed
-          -i '130,270d' src/daemon/fallback_chain.py\n   ```\n\n8. **Update `__init__.py`
-          for public API**  \n   ```bash\n   echo \"from .registry import StrategyRegistry\"
-          >> src/common/strategy/__init__.py\n   echo \"from . import strategies\"
-          >> src/common/strategy/__init__.py\n   ```\n\n**Done.** Both autonomy and
-          daemon now consume the same registry; strategy logic is centralized."
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Codebase\
+          \ is in a Git repo with standard layout: `src/`, `lib/`, or similar.  \n\
+          2. Fallback-chain logic resides in two files: `src/autonomy/fallback_chain.py`\
+          \ (~920 lines) and `src/daemon/fallback_chain.py` (~965 lines).  \n3. Strategy\
+          \ logic is encapsulated in functions/classes (e.g., `StrategyA`, `StrategyB`)\
+          \ used by both chains.  \n4. Python project using `pyproject.toml` or `setup.py`;\
+          \ no external registry framework.  \n5. Shared registry will be a singleton\
+          \ `StrategyRegistry` with registration + lookup.\n\n---\n\n### Action Plan\
+          \ (≤15 min)\n\n1. **Create shared registry module**  \n   ```bash\n   mkdir\
+          \ -p src/common/strategy\n   touch src/common/strategy/__init__.py\n   ```\n\
+          \n2. **Implement `StrategyRegistry`**  \n   ```bash\n   cat > src/common/strategy/registry.py\
+          \ << 'EOF'\n   class StrategyRegistry:\n       _instance = None\n      \
+          \ _strategies = {}\n\n       def __new__(cls):\n           if cls._instance\
+          \ is None:\n               cls._instance = super().__new__(cls)\n      \
+          \     return cls._instance\n\n       @classmethod\n       def register(cls,\
+          \ name: str, strategy_class):\n           cls._strategies[name] = strategy_class\n\
+          \n       @classmethod\n       def get(cls, name: str):\n           return\
+          \ cls._strategies.get(name)\n\n       @classmethod\n       def list(cls):\n\
+          \           return list(cls._strategies.keys())\n   EOF\n   ```\n\n3. **Extract\
+          \ strategy classes**  \n   - Identify strategy classes in both files (e.g.,\
+          \ `FallbackStrategyA`, `FallbackStrategyB`).  \n   - Move them to `src/common/strategy/strategies.py`:\
+          \  \n   ```bash\n   # Example: extract class definitions (adjust names/types)\n\
+          \   grep -E \"^class Fallback.*Strategy\" src/autonomy/fallback_chain.py\
+          \ src/daemon/fallback_chain.py | cut -d: -f2 | sort -u | while read line;\
+          \ do\n     # Extract class + its body (naive: grab until next class or EOF)\n\
+          \     # Use sed to extract from `class ...` to next `^class ` or end\n \
+          \    echo \"TODO: Manually extract strategy classes into strategies.py\"\
+          \n   done\n   ```\n   **→ Manual step**: Copy-paste strategy classes into\
+          \ `src/common/strategy/strategies.py`, then register them:  \n   ```bash\n\
+          \   cat >> src/common/strategy/strategies.py << 'EOF'\n\n   # Register strategies\
+          \ on module load\n   from .registry import StrategyRegistry\n   StrategyRegistry.register(\"\
+          alpha\", FallbackStrategyA)\n   StrategyRegistry.register(\"beta\", FallbackStrategyB)\n\
+          \   # ... add others\n   EOF\n   ```\n\n4. **Refactor autonomy pipeline**\
+          \  \n   ```bash\n   # Backup original\n   cp src/autonomy/fallback_chain.py\
+          \ src/autonomy/fallback_chain.py.bak\n\n   # Replace strategy instantiations\
+          \ with registry lookups\n   sed -i 's/from.*fallback_chain import FallbackStrategyA/from\
+          \ common.strategy import StrategyRegistry/' src/autonomy/fallback_chain.py\n\
+          \   sed -i 's/FallbackStrategyA()/StrategyRegistry.get(\"alpha\")()/' src/autonomy/fallback_chain.py\n\
+          \   # Repeat for other strategies (adjust names)\n   ```\n\n5. **Refactor\
+          \ daemon pipeline**  \n   ```bash\n   cp src/daemon/fallback_chain.py src/daemon/fallback_chain.py.bak\n\
+          \   sed -i 's/from.*fallback_chain import FallbackStrategyA/from common.strategy\
+          \ import StrategyRegistry/' src/daemon/fallback_chain.py\n   sed -i 's/FallbackStrategyA()/StrategyRegistry.get(\"\
+          alpha\")()/' src/daemon/fallback_chain.py\n   ```\n\n6. **Verify imports\
+          \ & run tests**  \n   ```bash\n   python -c \"from src.common.strategy import\
+          \ StrategyRegistry; print(StrategyRegistry.list())\"\n   pytest src/autonomy/test_fallback.py\
+          \ src/daemon/test_fallback.py -v  # or your test command\n   ```\n\n7. **Delete\
+          \ duplicated strategy code**  \n   ```bash\n   # Remove strategy classes\
+          \ from both original files (keep only pipeline logic)\n   # Example: delete\
+          \ lines 120–250 in autonomy/fallback_chain.py (adjust ranges)\n   sed -i\
+          \ '120,250d' src/autonomy/fallback_chain.py\n   sed -i '130,270d' src/daemon/fallback_chain.py\n\
+          \   ```\n\n8. **Update `__init__.py` for public API**  \n   ```bash\n  \
+          \ echo \"from .registry import StrategyRegistry\" >> src/common/strategy/__init__.py\n\
+          \   echo \"from . import strategies\" >> src/common/strategy/__init__.py\n\
+          \   ```\n\n**Done.** Both autonomy and daemon now consume the same registry;\
+          \ strategy logic is centralized."
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -26018,73 +26029,76 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-554.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. `src/koru/integrations/vdisplay_client.py`
-          exists and is the target file.  \n2. “warn-on-swallow pattern” = replace
-          `except Exception: pass` with `logger.warning(\"Swallowed exception\", exc_info=True)`
-          (or similar).  \n3. Concern-based splitting:  \n   - `session.py` — session
-          lifecycle (connect, disconnect, keepalive)  \n   - `capture.py` — screen
-          capture logic  \n   - `guimap.py` — GUI element mapping/lookup  \n   - `drive_recording.py`
-          — drive recording (upload, metadata, cleanup)  \n4. `src/koru/integrations/`
-          is the module directory; `src/koru/` is import root.  \n5. A shared logger
-          `logger = logging.getLogger(__name__)` is available in each new module (will
-          be added).  \n\n---\n\n**Action Plan**  \n\n1. **Backup original file**
-          \ \n   ```bash\n   cp src/koru/integrations/vdisplay_client.py src/koru/integrations/vdisplay_client.py.bak\n
-          \  ```\n\n2. **Create new modules with minimal stubs**  \n   ```bash\n   touch
-          src/koru/integrations/session.py\n   touch src/koru/integrations/capture.py\n
-          \  touch src/koru/integrations/guimap.py\n   touch src/koru/integrations/drive_recording.py\n
-          \  ```\n\n3. **Populate `session.py`**  \n   - Extract all session-related
-          `except Exception: pass` sites (e.g., connection, auth, ping).  \n   - Add
-          logger and warn-on-swallow:  \n   ```bash\n   cat > src/koru/integrations/session.py
-          << 'EOF'\n   import logging\n   logger = logging.getLogger(__name__)\n\n
-          \  def connect():\n       try:\n           # original connect logic\n           pass\n
-          \      except Exception:\n           logger.warning(\"Swallowed exception
-          in connect\", exc_info=True)\n\n   def disconnect():\n       try:\n           #
-          original disconnect logic\n           pass\n       except Exception:\n           logger.warning(\"Swallowed
-          exception in disconnect\", exc_info=True)\n\n   def keepalive():\n       try:\n
-          \          # original keepalive logic\n           pass\n       except Exception:\n
-          \          logger.warning(\"Swallowed exception in keepalive\", exc_info=True)\n
-          \  EOF\n   ```\n\n4. **Populate `capture.py`**  \n   - Extract capture-related
-          `except Exception: pass` (e.g., screenshot, region crop, encoding).  \n
-          \  ```bash\n   cat > src/koru/integrations/capture.py << 'EOF'\n   import
-          logging\n   logger = logging.getLogger(__name__)\n\n   def capture_screen():\n
-          \      try:\n           # original capture logic\n           pass\n       except
-          Exception:\n           logger.warning(\"Swallowed exception in capture_screen\",
-          exc_info=True)\n\n   def crop_region():\n       try:\n           # original
-          crop logic\n           pass\n       except Exception:\n           logger.warning(\"Swallowed
-          exception in crop_region\", exc_info=True)\n   EOF\n   ```\n\n5. **Populate
-          `guimap.py`**  \n   - Extract GUI map lookup/translation exceptions.  \n
-          \  ```bash\n   cat > src/koru/integrations/guimap.py << 'EOF'\n   import
-          logging\n   logger = logging.getLogger(__name__)\n\n   def lookup_element():\n
-          \      try:\n           # original lookup logic\n           pass\n       except
-          Exception:\n           logger.warning(\"Swallowed exception in lookup_element\",
-          exc_info=True)\n\n   def map_to_screen():\n       try:\n           # original
-          mapping logic\n           pass\n       except Exception:\n           logger.warning(\"Swallowed
-          exception in map_to_screen\", exc_info=True)\n   EOF\n   ```\n\n6. **Populate
-          `drive_recording.py`**  \n   - Extract drive upload, metadata, cleanup exceptions.
-          \ \n   ```bash\n   cat > src/koru/integrations/drive_recording.py << 'EOF'\n
-          \  import logging\n   logger = logging.getLogger(__name__)\n\n   def upload_recording():\n
-          \      try:\n           # original upload logic\n           pass\n       except
-          Exception:\n           logger.warning(\"Swallowed exception in upload_recording\",
-          exc_info=True)\n\n   def record_metadata():\n       try:\n           # original
-          metadata logic\n           pass\n       except Exception:\n           logger.warning(\"Swallowed
-          exception in record_metadata\", exc_info=True)\n\n   def cleanup_temp():\n
-          \      try:\n           # original cleanup logic\n           pass\n       except
-          Exception:\n           logger.warning(\"Swallowed exception in cleanup_temp\",
-          exc_info=True)\n   EOF\n   ```\n\n7. **Refactor `vdisplay_client.py` to
-          delegate**  \n   - Replace all `except Exception: pass` with calls to new
-          modules.  \n   - Remove duplicated logic; keep only orchestration.  \n   ```bash\n
-          \  cat > src/koru/integrations/vdisplay_client.py << 'EOF'\n   from . import
-          session, capture, guimap, drive_recording\n\n   def run_session():\n       session.connect()\n
-          \      try:\n           screen = capture.capture_screen()\n           element
-          = guimap.lookup_element(screen)\n           drive_recording.upload_recording(element)\n
-          \      finally:\n           session.disconnect()\n   EOF\n   ```\n\n8. **Verify
-          no `except Exception: pass` remains in original file**  \n   ```bash\n   grep
-          -n \"except Exception:\" src/koru/integrations/vdisplay_client.py || echo
-          \"No bare except Exception: pass found\"\n   ```\n\n9. **Run tests**  \n
-          \  ```bash\n   python -m pytest src/koru/integrations/ -v\n   ```\n\n10.
-          **Delete backup if tests pass**  \n    ```bash\n    rm src/koru/integrations/vdisplay_client.py.bak\n
-          \   ```\n\n---  \n**Total files modified/created**: 5 (4 new + 1 refactored).
-          \ \n**Time estimate**: ≤15 minutes."
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. `src/koru/integrations/vdisplay_client.py`\
+          \ exists and is the target file.  \n2. “warn-on-swallow pattern” = replace\
+          \ `except Exception: pass` with `logger.warning(\"Swallowed exception\"\
+          , exc_info=True)` (or similar).  \n3. Concern-based splitting:  \n   - `session.py`\
+          \ — session lifecycle (connect, disconnect, keepalive)  \n   - `capture.py`\
+          \ — screen capture logic  \n   - `guimap.py` — GUI element mapping/lookup\
+          \  \n   - `drive_recording.py` — drive recording (upload, metadata, cleanup)\
+          \  \n4. `src/koru/integrations/` is the module directory; `src/koru/` is\
+          \ import root.  \n5. A shared logger `logger = logging.getLogger(__name__)`\
+          \ is available in each new module (will be added).  \n\n---\n\n**Action\
+          \ Plan**  \n\n1. **Backup original file**  \n   ```bash\n   cp src/koru/integrations/vdisplay_client.py\
+          \ src/koru/integrations/vdisplay_client.py.bak\n   ```\n\n2. **Create new\
+          \ modules with minimal stubs**  \n   ```bash\n   touch src/koru/integrations/session.py\n\
+          \   touch src/koru/integrations/capture.py\n   touch src/koru/integrations/guimap.py\n\
+          \   touch src/koru/integrations/drive_recording.py\n   ```\n\n3. **Populate\
+          \ `session.py`**  \n   - Extract all session-related `except Exception:\
+          \ pass` sites (e.g., connection, auth, ping).  \n   - Add logger and warn-on-swallow:\
+          \  \n   ```bash\n   cat > src/koru/integrations/session.py << 'EOF'\n  \
+          \ import logging\n   logger = logging.getLogger(__name__)\n\n   def connect():\n\
+          \       try:\n           # original connect logic\n           pass\n   \
+          \    except Exception:\n           logger.warning(\"Swallowed exception\
+          \ in connect\", exc_info=True)\n\n   def disconnect():\n       try:\n  \
+          \         # original disconnect logic\n           pass\n       except Exception:\n\
+          \           logger.warning(\"Swallowed exception in disconnect\", exc_info=True)\n\
+          \n   def keepalive():\n       try:\n           # original keepalive logic\n\
+          \           pass\n       except Exception:\n           logger.warning(\"\
+          Swallowed exception in keepalive\", exc_info=True)\n   EOF\n   ```\n\n4.\
+          \ **Populate `capture.py`**  \n   - Extract capture-related `except Exception:\
+          \ pass` (e.g., screenshot, region crop, encoding).  \n   ```bash\n   cat\
+          \ > src/koru/integrations/capture.py << 'EOF'\n   import logging\n   logger\
+          \ = logging.getLogger(__name__)\n\n   def capture_screen():\n       try:\n\
+          \           # original capture logic\n           pass\n       except Exception:\n\
+          \           logger.warning(\"Swallowed exception in capture_screen\", exc_info=True)\n\
+          \n   def crop_region():\n       try:\n           # original crop logic\n\
+          \           pass\n       except Exception:\n           logger.warning(\"\
+          Swallowed exception in crop_region\", exc_info=True)\n   EOF\n   ```\n\n\
+          5. **Populate `guimap.py`**  \n   - Extract GUI map lookup/translation exceptions.\
+          \  \n   ```bash\n   cat > src/koru/integrations/guimap.py << 'EOF'\n   import\
+          \ logging\n   logger = logging.getLogger(__name__)\n\n   def lookup_element():\n\
+          \       try:\n           # original lookup logic\n           pass\n    \
+          \   except Exception:\n           logger.warning(\"Swallowed exception in\
+          \ lookup_element\", exc_info=True)\n\n   def map_to_screen():\n       try:\n\
+          \           # original mapping logic\n           pass\n       except Exception:\n\
+          \           logger.warning(\"Swallowed exception in map_to_screen\", exc_info=True)\n\
+          \   EOF\n   ```\n\n6. **Populate `drive_recording.py`**  \n   - Extract\
+          \ drive upload, metadata, cleanup exceptions.  \n   ```bash\n   cat > src/koru/integrations/drive_recording.py\
+          \ << 'EOF'\n   import logging\n   logger = logging.getLogger(__name__)\n\
+          \n   def upload_recording():\n       try:\n           # original upload\
+          \ logic\n           pass\n       except Exception:\n           logger.warning(\"\
+          Swallowed exception in upload_recording\", exc_info=True)\n\n   def record_metadata():\n\
+          \       try:\n           # original metadata logic\n           pass\n  \
+          \     except Exception:\n           logger.warning(\"Swallowed exception\
+          \ in record_metadata\", exc_info=True)\n\n   def cleanup_temp():\n     \
+          \  try:\n           # original cleanup logic\n           pass\n       except\
+          \ Exception:\n           logger.warning(\"Swallowed exception in cleanup_temp\"\
+          , exc_info=True)\n   EOF\n   ```\n\n7. **Refactor `vdisplay_client.py` to\
+          \ delegate**  \n   - Replace all `except Exception: pass` with calls to\
+          \ new modules.  \n   - Remove duplicated logic; keep only orchestration.\
+          \  \n   ```bash\n   cat > src/koru/integrations/vdisplay_client.py << 'EOF'\n\
+          \   from . import session, capture, guimap, drive_recording\n\n   def run_session():\n\
+          \       session.connect()\n       try:\n           screen = capture.capture_screen()\n\
+          \           element = guimap.lookup_element(screen)\n           drive_recording.upload_recording(element)\n\
+          \       finally:\n           session.disconnect()\n   EOF\n   ```\n\n8.\
+          \ **Verify no `except Exception: pass` remains in original file**  \n  \
+          \ ```bash\n   grep -n \"except Exception:\" src/koru/integrations/vdisplay_client.py\
+          \ || echo \"No bare except Exception: pass found\"\n   ```\n\n9. **Run tests**\
+          \  \n   ```bash\n   python -m pytest src/koru/integrations/ -v\n   ```\n\
+          \n10. **Delete backup if tests pass**  \n    ```bash\n    rm src/koru/integrations/vdisplay_client.py.bak\n\
+          \    ```\n\n---  \n**Total files modified/created**: 5 (4 new + 1 refactored).\
+          \  \n**Time estimate**: ≤15 minutes."
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -26232,58 +26246,60 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-556.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Project uses
-          `semver`-style versioning in a top-level `VERSION` file (e.g., `0.1.36`).
-          \ \n2. `pyproject.toml` currently has `dynamic = [\"version\"]` and a `tool.uv`/`tool.poetry`
-          section referencing `VERSION` manually (or via script).  \n3. `__init__.py`
-          contains a hardcoded `__version__ = \"...\"` (or imports from a `version.py`).
-          \ \n4. `uv.lock` is generated by `uv` and must stay in sync with `pyproject.toml`
-          version.  \n5. Goal: eliminate manual sync (e.g., no `scripts/sync_version.py`
-          or `setuptools-scm`), use `dynamic = [\"version\"]` with `version = { read
-          = \"VERSION\" }` (PEP 621 + uv 0.4+ support).  \n6. All packages are in
-          a monorepo under `src/` (adjust if different).  \n\n---\n\n### Action Plan
-          (≤10 steps, executable)\n\n1. **Ensure `VERSION` file exists and is valid**
-          \ \n   ```bash\n   echo \"0.1.37\" > VERSION  # or verify current version\n
-          \  ```\n\n2. **Update `pyproject.toml`**  \n   Replace any static `version
-          = \"...\"` or `tool.poetry.version` with:  \n   ```toml\n   [project]\n
-          \  dynamic = [\"version\"]\n   \n   [tool.uv]\n   # Optional: if using uv
-          for publishing, ensure it reads VERSION\n   # (uv respects PEP 621 dynamic
-          version via `version.read` as of 0.4.20+)\n   ```\n   Add PEP 621-compliant
-          dynamic version source:  \n   ```toml\n   [project]\n   dynamic = [\"version\"]\n
-          \  \n   [tool.uv]\n   # No extra config needed — uv auto-reads `version.read`
-          from [project]\n   \n   [project]  # if not already present\n   version
-          = { read = \"VERSION\" }\n   ```\n   > ✅ **Critical**: `version = { read
-          = \"VERSION\" }` must be under `[project]`, *not* `[tool.*]`.\n\n3. **Remove
-          hardcoded `__version__` from `__init__.py`**  \n   Replace:  \n   ```python\n
-          \  __version__ = \"0.1.36\"\n   ```  \n   With:  \n   ```python\n   from
-          importlib.metadata import version, PackageNotFoundError\n   try:\n       __version__
-          = version(\"your-package-name\")\n   except PackageNotFoundError:\n       __version__
-          = \"0.0.0\"  # fallback for dev installs\n   ```\n\n4. **Delete any legacy
-          sync scripts or `version.py`**  \n   ```bash\n   rm -f scripts/sync_version.py
-          src/your_package/version.py\n   ```\n\n5. **Regenerate `uv.lock` to embed
-          dynamic version**  \n   ```bash\n   uv lock --no-build-isolation  # ensures
-          lock reflects dynamic version\n   ```\n\n6. **Verify lockfile version matches
-          `VERSION`**  \n   ```bash\n   grep -A1 '\\[metadata\\]' uv.lock | grep 'version'
-          | cut -d'\"' -f2\n   # Should match $(cat VERSION)\n   ```\n\n7. **Test
-          install + version resolution**  \n   ```bash\n   uv pip install -e . &&
-          python -c \"import your_package; print(your_package.__version__)\"\n   #
-          Output must equal $(cat VERSION)\n   ```\n\n8. **Update CI/CD publish step**
-          \ \n   Ensure publish uses `uv publish` (or `twine` *after* `uv build`),
-          *not* manual version injection:  \n   ```yaml\n   # .github/workflows/publish.yml\n
-          \  - run: uv build\n   - run: uv publish --token ${{ secrets.PYPI_TOKEN
-          }}\n   ```\n\n9. **Add pre-commit hook to prevent drift**  \n   ```bash\n
-          \  # .pre-commit-config.yaml\n   repos:\n     - repo: local\n       hooks:\n
-          \        - id: version-sync\n           name: Check VERSION == pyproject.toml
-          version\n           entry: bash -c 'v=$(cat VERSION); p=$(grep -E \"^version
-          = \" pyproject.toml | cut -d\"\\\"\" -f2); [ \"$v\" = \"$p\" ] || { echo
-          \"Drift: VERSION=$v, pyproject=$p\"; exit 1; }'\n           language: system\n
-          \          files: ^VERSION$|^pyproject\\.toml$\n   ```\n\n10. **Document
-          in `CONTRIBUTING.md`**  \n    ```markdown\n    ## Versioning  \n    - Version
-          is defined **only** in `VERSION`.  \n    - `pyproject.toml` uses `version
-          = { read = \"VERSION\" }`.  \n    - `__init__.py` reads version via `importlib.metadata`.
-          \ \n    - Run `uv lock` after changing `VERSION`.\n    ```\n\n---\n\n**Result**:
-          `VERSION` is the single source of truth. `pyproject.toml`, `__init__.py`,
-          and `uv.lock` auto-sync via PEP 621 + uv. No manual sync class needed."
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Project uses\
+          \ `semver`-style versioning in a top-level `VERSION` file (e.g., `0.1.36`).\
+          \  \n2. `pyproject.toml` currently has `dynamic = [\"version\"]` and a `tool.uv`/`tool.poetry`\
+          \ section referencing `VERSION` manually (or via script).  \n3. `__init__.py`\
+          \ contains a hardcoded `__version__ = \"...\"` (or imports from a `version.py`).\
+          \  \n4. `uv.lock` is generated by `uv` and must stay in sync with `pyproject.toml`\
+          \ version.  \n5. Goal: eliminate manual sync (e.g., no `scripts/sync_version.py`\
+          \ or `setuptools-scm`), use `dynamic = [\"version\"]` with `version = {\
+          \ read = \"VERSION\" }` (PEP 621 + uv 0.4+ support).  \n6. All packages\
+          \ are in a monorepo under `src/` (adjust if different).  \n\n---\n\n###\
+          \ Action Plan (≤10 steps, executable)\n\n1. **Ensure `VERSION` file exists\
+          \ and is valid**  \n   ```bash\n   echo \"0.1.37\" > VERSION  # or verify\
+          \ current version\n   ```\n\n2. **Update `pyproject.toml`**  \n   Replace\
+          \ any static `version = \"...\"` or `tool.poetry.version` with:  \n   ```toml\n\
+          \   [project]\n   dynamic = [\"version\"]\n   \n   [tool.uv]\n   # Optional:\
+          \ if using uv for publishing, ensure it reads VERSION\n   # (uv respects\
+          \ PEP 621 dynamic version via `version.read` as of 0.4.20+)\n   ```\n  \
+          \ Add PEP 621-compliant dynamic version source:  \n   ```toml\n   [project]\n\
+          \   dynamic = [\"version\"]\n   \n   [tool.uv]\n   # No extra config needed\
+          \ — uv auto-reads `version.read` from [project]\n   \n   [project]  # if\
+          \ not already present\n   version = { read = \"VERSION\" }\n   ```\n   >\
+          \ ✅ **Critical**: `version = { read = \"VERSION\" }` must be under `[project]`,\
+          \ *not* `[tool.*]`.\n\n3. **Remove hardcoded `__version__` from `__init__.py`**\
+          \  \n   Replace:  \n   ```python\n   __version__ = \"0.1.36\"\n   ```  \n\
+          \   With:  \n   ```python\n   from importlib.metadata import version, PackageNotFoundError\n\
+          \   try:\n       __version__ = version(\"your-package-name\")\n   except\
+          \ PackageNotFoundError:\n       __version__ = \"0.0.0\"  # fallback for\
+          \ dev installs\n   ```\n\n4. **Delete any legacy sync scripts or `version.py`**\
+          \  \n   ```bash\n   rm -f scripts/sync_version.py src/your_package/version.py\n\
+          \   ```\n\n5. **Regenerate `uv.lock` to embed dynamic version**  \n   ```bash\n\
+          \   uv lock --no-build-isolation  # ensures lock reflects dynamic version\n\
+          \   ```\n\n6. **Verify lockfile version matches `VERSION`**  \n   ```bash\n\
+          \   grep -A1 '\\[metadata\\]' uv.lock | grep 'version' | cut -d'\"' -f2\n\
+          \   # Should match $(cat VERSION)\n   ```\n\n7. **Test install + version\
+          \ resolution**  \n   ```bash\n   uv pip install -e . && python -c \"import\
+          \ your_package; print(your_package.__version__)\"\n   # Output must equal\
+          \ $(cat VERSION)\n   ```\n\n8. **Update CI/CD publish step**  \n   Ensure\
+          \ publish uses `uv publish` (or `twine` *after* `uv build`), *not* manual\
+          \ version injection:  \n   ```yaml\n   # .github/workflows/publish.yml\n\
+          \   - run: uv build\n   - run: uv publish --token ${{ secrets.PYPI_TOKEN\
+          \ }}\n   ```\n\n9. **Add pre-commit hook to prevent drift**  \n   ```bash\n\
+          \   # .pre-commit-config.yaml\n   repos:\n     - repo: local\n       hooks:\n\
+          \         - id: version-sync\n           name: Check VERSION == pyproject.toml\
+          \ version\n           entry: bash -c 'v=$(cat VERSION); p=$(grep -E \"^version\
+          \ = \" pyproject.toml | cut -d\"\\\"\" -f2); [ \"$v\" = \"$p\" ] || { echo\
+          \ \"Drift: VERSION=$v, pyproject=$p\"; exit 1; }'\n           language:\
+          \ system\n           files: ^VERSION$|^pyproject\\.toml$\n   ```\n\n10.\
+          \ **Document in `CONTRIBUTING.md`**  \n    ```markdown\n    ## Versioning\
+          \  \n    - Version is defined **only** in `VERSION`.  \n    - `pyproject.toml`\
+          \ uses `version = { read = \"VERSION\" }`.  \n    - `__init__.py` reads\
+          \ version via `importlib.metadata`.  \n    - Run `uv lock` after changing\
+          \ `VERSION`.\n    ```\n\n---\n\n**Result**: `VERSION` is the single source\
+          \ of truth. `pyproject.toml`, `__init__.py`, and `uv.lock` auto-sync via\
+          \ PEP 621 + uv. No manual sync class needed."
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -26377,44 +26393,47 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-557.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Project uses
-          a vendor CLI (e.g., `vendor-cli`) that respects `KORU_TILLM_EXECUTE_PROFILE`.
-          \ \n2. Files are edited in-place by the CLI (e.g., `config.yaml`, `settings.json`).
-          \ \n3. Audit log is a single file: `/var/log/koru_audit.log`.  \n4. Per-project
-          consent/dry-run levels: `none`, `dry-run`, `consent`, `execute`.  \n5. Project
-          root = current working directory; config stored in `.koru/config.json`.
-          \ \n\n---\n\n### Action Plan\n\n1. **Create project config structure**  \n
-          \  ```bash\n   mkdir -p .koru && echo '{\"level\": \"dry-run\"}' > .koru/config.json\n
-          \  ```\n\n2. **Create wrapper script `koru-run` (in `$PATH`, e.g., `/usr/local/bin/koru-run`)**
-          \ \n   ```bash\n   cat > /usr/local/bin/koru-run << 'EOF'\n   #!/bin/bash\n
-          \  set -euo pipefail\n\n   PROJECT_ROOT=\"$(pwd)\"\n   CONFIG_FILE=\"$PROJECT_ROOT/.koru/config.json\"\n
-          \  AUDIT_LOG=\"/var/log/koru_audit.log\"\n\n   # Read consent/dry-run level
-          (default: dry-run)\n   LEVEL=$(jq -r '.level // \"dry-run\"' \"$CONFIG_FILE\"
-          2>/dev/null || echo \"dry-run\")\n\n   # Validate level\n   case \"$LEVEL\"
-          in\n     none|dry-run|consent|execute) ;;\n     *) echo \"ERROR: Invalid
-          level '$LEVEL' in $CONFIG_FILE\"; exit 1 ;;\n   esac\n\n   # Prompt for
-          consent if level=consent\n   if [[ \"$LEVEL\" == \"consent\" ]]; then\n
-          \    echo \"Profile '$KORU_TILLM_EXECUTE_PROFILE' will be executed. Proceed?
-          [y/N]\"\n     read -r ans\n     [[ \"$ans\" =~ ^[Yy]$ ]] || { echo \"Aborted.\";
-          exit 1; }\n   fi\n\n   # Dry-run: simulate only\n   if [[ \"$LEVEL\" ==
-          \"dry-run\" ]]; then\n     echo \"[AUDIT] $(date -Iseconds) DRY-RUN profile=$KORU_TILLM_EXECUTE_PROFILE
-          dir=$PROJECT_ROOT\" >> \"$AUDIT_LOG\"\n     echo \"DRY-RUN: Would run: vendor-cli
-          --profile $KORU_TILLM_EXECUTE_PROFILE\"\n     exit 0\n   fi\n\n   # Execute
-          (level=execute or none)\n   if [[ \"$LEVEL\" == \"execute\" || \"$LEVEL\"
-          == \"none\" ]]; then\n     echo \"[AUDIT] $(date -Iseconds) EXECUTE profile=$KORU_TILLM_EXECUTE_PROFILE
-          dir=$PROJECT_ROOT\" >> \"$AUDIT_LOG\"\n     exec vendor-cli --profile \"$KORU_TILLM_EXECUTE_PROFILE\"\n
-          \  fi\n   EOF\n   chmod +x /usr/local/bin/koru-run\n   ```\n\n3. **Set environment
-          variable (e.g., in `.envrc` or shell profile)**  \n   ```bash\n   echo 'export
-          KORU_TILLM_EXECUTE_PROFILE=automation' >> ~/.bashrc\n   ```\n\n4. **Verify
-          audit log permissions**  \n   ```bash\n   sudo touch /var/log/koru_audit.log
-          && sudo chmod 644 /var/log/koru_audit.log\n   ```\n\n5. **Test dry-run**
-          \ \n   ```bash\n   cd /path/to/project && koru-run\n   # Expected: prints
-          DRY-RUN line, logs to /var/log/koru_audit.log\n   ```\n\n6. **Upgrade to
-          execute (once consented)**  \n   ```bash\n   jq '.level = \"execute\"' .koru/config.json
-          > .koru/config.json.tmp && mv .koru/config.json.tmp .koru/config.json\n
-          \  ```\n\n7. **Run final execution**  \n   ```bash\n   koru-run\n   # Logs
-          execution, runs vendor CLI\n   ```\n\n---  \n**Audit log format**:  \n`[AUDIT]
-          2024-06-15T10:30:00+00:00 DRY-RUN/EXECUTE profile=automation dir=/path/to/project`"
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Project uses\
+          \ a vendor CLI (e.g., `vendor-cli`) that respects `KORU_TILLM_EXECUTE_PROFILE`.\
+          \  \n2. Files are edited in-place by the CLI (e.g., `config.yaml`, `settings.json`).\
+          \  \n3. Audit log is a single file: `/var/log/koru_audit.log`.  \n4. Per-project\
+          \ consent/dry-run levels: `none`, `dry-run`, `consent`, `execute`.  \n5.\
+          \ Project root = current working directory; config stored in `.koru/config.json`.\
+          \  \n\n---\n\n### Action Plan\n\n1. **Create project config structure**\
+          \  \n   ```bash\n   mkdir -p .koru && echo '{\"level\": \"dry-run\"}' >\
+          \ .koru/config.json\n   ```\n\n2. **Create wrapper script `koru-run` (in\
+          \ `$PATH`, e.g., `/usr/local/bin/koru-run`)**  \n   ```bash\n   cat > /usr/local/bin/koru-run\
+          \ << 'EOF'\n   #!/bin/bash\n   set -euo pipefail\n\n   PROJECT_ROOT=\"$(pwd)\"\
+          \n   CONFIG_FILE=\"$PROJECT_ROOT/.koru/config.json\"\n   AUDIT_LOG=\"/var/log/koru_audit.log\"\
+          \n\n   # Read consent/dry-run level (default: dry-run)\n   LEVEL=$(jq -r\
+          \ '.level // \"dry-run\"' \"$CONFIG_FILE\" 2>/dev/null || echo \"dry-run\"\
+          )\n\n   # Validate level\n   case \"$LEVEL\" in\n     none|dry-run|consent|execute)\
+          \ ;;\n     *) echo \"ERROR: Invalid level '$LEVEL' in $CONFIG_FILE\"; exit\
+          \ 1 ;;\n   esac\n\n   # Prompt for consent if level=consent\n   if [[ \"\
+          $LEVEL\" == \"consent\" ]]; then\n     echo \"Profile '$KORU_TILLM_EXECUTE_PROFILE'\
+          \ will be executed. Proceed? [y/N]\"\n     read -r ans\n     [[ \"$ans\"\
+          \ =~ ^[Yy]$ ]] || { echo \"Aborted.\"; exit 1; }\n   fi\n\n   # Dry-run:\
+          \ simulate only\n   if [[ \"$LEVEL\" == \"dry-run\" ]]; then\n     echo\
+          \ \"[AUDIT] $(date -Iseconds) DRY-RUN profile=$KORU_TILLM_EXECUTE_PROFILE\
+          \ dir=$PROJECT_ROOT\" >> \"$AUDIT_LOG\"\n     echo \"DRY-RUN: Would run:\
+          \ vendor-cli --profile $KORU_TILLM_EXECUTE_PROFILE\"\n     exit 0\n   fi\n\
+          \n   # Execute (level=execute or none)\n   if [[ \"$LEVEL\" == \"execute\"\
+          \ || \"$LEVEL\" == \"none\" ]]; then\n     echo \"[AUDIT] $(date -Iseconds)\
+          \ EXECUTE profile=$KORU_TILLM_EXECUTE_PROFILE dir=$PROJECT_ROOT\" >> \"\
+          $AUDIT_LOG\"\n     exec vendor-cli --profile \"$KORU_TILLM_EXECUTE_PROFILE\"\
+          \n   fi\n   EOF\n   chmod +x /usr/local/bin/koru-run\n   ```\n\n3. **Set\
+          \ environment variable (e.g., in `.envrc` or shell profile)**  \n   ```bash\n\
+          \   echo 'export KORU_TILLM_EXECUTE_PROFILE=automation' >> ~/.bashrc\n \
+          \  ```\n\n4. **Verify audit log permissions**  \n   ```bash\n   sudo touch\
+          \ /var/log/koru_audit.log && sudo chmod 644 /var/log/koru_audit.log\n  \
+          \ ```\n\n5. **Test dry-run**  \n   ```bash\n   cd /path/to/project && koru-run\n\
+          \   # Expected: prints DRY-RUN line, logs to /var/log/koru_audit.log\n \
+          \  ```\n\n6. **Upgrade to execute (once consented)**  \n   ```bash\n   jq\
+          \ '.level = \"execute\"' .koru/config.json > .koru/config.json.tmp && mv\
+          \ .koru/config.json.tmp .koru/config.json\n   ```\n\n7. **Run final execution**\
+          \  \n   ```bash\n   koru-run\n   # Logs execution, runs vendor CLI\n   ```\n\
+          \n---  \n**Audit log format**:  \n`[AUDIT] 2024-06-15T10:30:00+00:00 DRY-RUN/EXECUTE\
+          \ profile=automation dir=/path/to/project`"
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -26554,63 +26573,65 @@ sprint:
           the plugin gate are the shim-patch class (tests monkeypatch old koru.autonomous_cycle_orchestrator
           attrs which no longer bind to the migrated implementation) — belongs to
           the STARTER-564 late-binding work.'
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. `--idempotent`
-          is a custom flag in the koru autopilot daemon (e.g., checks for existing
-          PID or socket).  \n2. Daemons are started via a script (e.g., `start.sh`)
-          that *does not* enforce idempotency correctly.  \n3. Each daemon binds to
-          a unique socket (e.g., `/run/koru/daemon-<id>.sock`).  \n4. No external
-          process manager (e.g., systemd) is managing lifecycle.  \n5. `--idempotent`
-          likely checks for *any* running daemon, not *this specific instance*.\n\n---\n\n###
-          **Diagnosis Steps**\n\n1. **Inspect daemon startup script**  \n   ```bash\n
-          \  grep -r \"idempotent\" . --include=\"*.sh\" --include=\"*.py\" --include=\"*.go\"\n
-          \  ```\n   → Look for logic like `if [ -f /run/koru/daemon.pid ]; then exit
-          0; fi`.  \n   → **Root cause likely**: `--idempotent` checks for *any* daemon
-          PID, not per-socket/per-instance.\n\n2. **Check running processes & sockets**
-          \ \n   ```bash\n   ps aux | grep koru | grep -v grep\n   ls -l /run/koru/*.sock
-          2>/dev/null || echo \"No sockets found\"\n   ss -xlnp | grep koru\n   ```\n
-          \  → If multiple daemons run *and* bind to *different* sockets, `--idempotent`
-          is not instance-aware.\n\n3. **Verify socket binding logic**  \n   ```bash\n
-          \  grep -r \"bind.*sock\" . --include=\"*.go\" --include=\"*.py\" --include=\"*.c\"\n
-          \  ```\n   → Confirm each daemon binds to a *unique* socket (e.g., `socket_path
-          = f\"/run/koru/daemon-{id}.sock\"`).\n\n---\n\n### **Fix Plan**\n\n####
-          **A. Patch `--idempotent` to check *per-socket* existence**\n**File**: `src/daemon/main.go`
-          (example; adjust to your language)  \n**Change**: Replace global PID check
-          with socket-specific check.\n\n```go\n// BEFORE (likely):\nif _, err :=
-          os.Stat(\"/run/koru/daemon.pid\"); err == nil {\n    log.Fatal(\"Daemon
-          already running (idempotent)\")\n}\n\n// AFTER:\nsocketPath := fmt.Sprintf(\"/run/koru/daemon-%s.sock\",
-          instanceID)\nif _, err := os.Stat(socketPath); err == nil {\n    // Check
-          if socket is *active* (not stale)\n    conn, err := net.Dial(\"unix\", socketPath)\n
-          \   if err == nil {\n        conn.Close()\n        log.Fatalf(\"Daemon for
-          instance %s already running\", instanceID)\n    }\n    // Stale socket:
-          remove and proceed\n    os.Remove(socketPath)\n}\n```\n\n#### **B. Ensure
-          socket path is instance-unique**\n**File**: `src/daemon/config.go` (or equivalent)
-          \ \n**Add**:\n```go\ninstanceID := os.Getenv(\"KORU_INSTANCE_ID\") // or
-          parse from --id flag\nif instanceID == \"\" {\n    log.Fatal(\"KORU_INSTANCE_ID
-          must be set\")\n}\nsocketPath := fmt.Sprintf(\"/run/koru/daemon-%s.sock\",
-          instanceID)\n```\n\n#### **C. Add doctor/readiness check**\n**File**: `scripts/doctor.sh`
-          (new file)\n```bash\n#!/bin/bash\nset -e\n\nSOCK_DIR=\"/run/koru\"\nDUPLICATES=0\n\nfor
-          sock in \"$SOCK_DIR\"/daemon-*.sock; do\n    [ -e \"$sock\" ] || continue\n
-          \   # Check if socket is bound by a live process\n    if ss -xlnp 2>/dev/null
-          | grep -qF \"$sock\"; then\n        # Count processes bound to this socket\n
-          \       PIDS=$(ss -xlnp 2>/dev/null | awk -v s=\"$sock\" '$4 == s {print
-          $6}' | tr -d '()' | sort -u)\n        if [ $(echo \"$PIDS\" | wc -l) -gt
-          1 ]; then\n            echo \"ERROR: Duplicate daemons on $sock: PIDs $PIDS\"\n
-          \           DUPLICATES=1\n        fi\n    fi\ndone\n\nif [ $DUPLICATES -eq
-          1 ]; then\n    echo \"DOCTOR: FAIL — duplicate daemons detected\"\n    exit
-          1\nelse\n    echo \"DOCTOR: PASS — no duplicates\"\n    exit 0\nfi\n```\n\nMake
-          executable:\n```bash\nchmod +x scripts/doctor.sh\n```\n\n#### **D. Update
-          startup script to enforce uniqueness**\n**File**: `start.sh`  \n**Add**:\n```bash\n#!/bin/bash\nset
-          -e\n\nINSTANCE_ID=\"$1\"\n[ -z \"$INSTANCE_ID\" ] && { echo \"Usage: $0
-          <instance_id>\"; exit 1; }\n\nexport KORU_INSTANCE_ID=\"$INSTANCE_ID\"\n\n#
-          Run doctor check before starting\n./scripts/doctor.sh || { echo \"Refusing
-          to start: duplicates exist\"; exit 1; }\n\n# Start daemon with --idempotent\n./bin/koru-daemon
-          --idempotent --socket \"/run/koru/daemon-${INSTANCE_ID}.sock\"\n```\n\n####
-          **E. Verify fix**\n```bash\n# Start 3 instances\n./start.sh 1 &\n./start.sh
-          2 &\n./start.sh 3 &\n\n# Check for duplicates\n./scripts/doctor.sh\n\n#
-          Confirm only 3 daemons\nps aux | grep koru | grep -v grep | wc -l\n```\n\n---\n\n**Expected
-          outcome**:  \n- `--idempotent` now checks *per-socket*, preventing duplicate
-          *per instance*.  \n- `doctor.sh` flags duplicates per socket.  \n- No stale
-          sockets left behind (cleaned on startup)."
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. `--idempotent`\
+          \ is a custom flag in the koru autopilot daemon (e.g., checks for existing\
+          \ PID or socket).  \n2. Daemons are started via a script (e.g., `start.sh`)\
+          \ that *does not* enforce idempotency correctly.  \n3. Each daemon binds\
+          \ to a unique socket (e.g., `/run/koru/daemon-<id>.sock`).  \n4. No external\
+          \ process manager (e.g., systemd) is managing lifecycle.  \n5. `--idempotent`\
+          \ likely checks for *any* running daemon, not *this specific instance*.\n\
+          \n---\n\n### **Diagnosis Steps**\n\n1. **Inspect daemon startup script**\
+          \  \n   ```bash\n   grep -r \"idempotent\" . --include=\"*.sh\" --include=\"\
+          *.py\" --include=\"*.go\"\n   ```\n   → Look for logic like `if [ -f /run/koru/daemon.pid\
+          \ ]; then exit 0; fi`.  \n   → **Root cause likely**: `--idempotent` checks\
+          \ for *any* daemon PID, not per-socket/per-instance.\n\n2. **Check running\
+          \ processes & sockets**  \n   ```bash\n   ps aux | grep koru | grep -v grep\n\
+          \   ls -l /run/koru/*.sock 2>/dev/null || echo \"No sockets found\"\n  \
+          \ ss -xlnp | grep koru\n   ```\n   → If multiple daemons run *and* bind\
+          \ to *different* sockets, `--idempotent` is not instance-aware.\n\n3. **Verify\
+          \ socket binding logic**  \n   ```bash\n   grep -r \"bind.*sock\" . --include=\"\
+          *.go\" --include=\"*.py\" --include=\"*.c\"\n   ```\n   → Confirm each daemon\
+          \ binds to a *unique* socket (e.g., `socket_path = f\"/run/koru/daemon-{id}.sock\"\
+          `).\n\n---\n\n### **Fix Plan**\n\n#### **A. Patch `--idempotent` to check\
+          \ *per-socket* existence**\n**File**: `src/daemon/main.go` (example; adjust\
+          \ to your language)  \n**Change**: Replace global PID check with socket-specific\
+          \ check.\n\n```go\n// BEFORE (likely):\nif _, err := os.Stat(\"/run/koru/daemon.pid\"\
+          ); err == nil {\n    log.Fatal(\"Daemon already running (idempotent)\")\n\
+          }\n\n// AFTER:\nsocketPath := fmt.Sprintf(\"/run/koru/daemon-%s.sock\",\
+          \ instanceID)\nif _, err := os.Stat(socketPath); err == nil {\n    // Check\
+          \ if socket is *active* (not stale)\n    conn, err := net.Dial(\"unix\"\
+          , socketPath)\n    if err == nil {\n        conn.Close()\n        log.Fatalf(\"\
+          Daemon for instance %s already running\", instanceID)\n    }\n    // Stale\
+          \ socket: remove and proceed\n    os.Remove(socketPath)\n}\n```\n\n####\
+          \ **B. Ensure socket path is instance-unique**\n**File**: `src/daemon/config.go`\
+          \ (or equivalent)  \n**Add**:\n```go\ninstanceID := os.Getenv(\"KORU_INSTANCE_ID\"\
+          ) // or parse from --id flag\nif instanceID == \"\" {\n    log.Fatal(\"\
+          KORU_INSTANCE_ID must be set\")\n}\nsocketPath := fmt.Sprintf(\"/run/koru/daemon-%s.sock\"\
+          , instanceID)\n```\n\n#### **C. Add doctor/readiness check**\n**File**:\
+          \ `scripts/doctor.sh` (new file)\n```bash\n#!/bin/bash\nset -e\n\nSOCK_DIR=\"\
+          /run/koru\"\nDUPLICATES=0\n\nfor sock in \"$SOCK_DIR\"/daemon-*.sock; do\n\
+          \    [ -e \"$sock\" ] || continue\n    # Check if socket is bound by a live\
+          \ process\n    if ss -xlnp 2>/dev/null | grep -qF \"$sock\"; then\n    \
+          \    # Count processes bound to this socket\n        PIDS=$(ss -xlnp 2>/dev/null\
+          \ | awk -v s=\"$sock\" '$4 == s {print $6}' | tr -d '()' | sort -u)\n  \
+          \      if [ $(echo \"$PIDS\" | wc -l) -gt 1 ]; then\n            echo \"\
+          ERROR: Duplicate daemons on $sock: PIDs $PIDS\"\n            DUPLICATES=1\n\
+          \        fi\n    fi\ndone\n\nif [ $DUPLICATES -eq 1 ]; then\n    echo \"\
+          DOCTOR: FAIL — duplicate daemons detected\"\n    exit 1\nelse\n    echo\
+          \ \"DOCTOR: PASS — no duplicates\"\n    exit 0\nfi\n```\n\nMake executable:\n\
+          ```bash\nchmod +x scripts/doctor.sh\n```\n\n#### **D. Update startup script\
+          \ to enforce uniqueness**\n**File**: `start.sh`  \n**Add**:\n```bash\n#!/bin/bash\n\
+          set -e\n\nINSTANCE_ID=\"$1\"\n[ -z \"$INSTANCE_ID\" ] && { echo \"Usage:\
+          \ $0 <instance_id>\"; exit 1; }\n\nexport KORU_INSTANCE_ID=\"$INSTANCE_ID\"\
+          \n\n# Run doctor check before starting\n./scripts/doctor.sh || { echo \"\
+          Refusing to start: duplicates exist\"; exit 1; }\n\n# Start daemon with\
+          \ --idempotent\n./bin/koru-daemon --idempotent --socket \"/run/koru/daemon-${INSTANCE_ID}.sock\"\
+          \n```\n\n#### **E. Verify fix**\n```bash\n# Start 3 instances\n./start.sh\
+          \ 1 &\n./start.sh 2 &\n./start.sh 3 &\n\n# Check for duplicates\n./scripts/doctor.sh\n\
+          \n# Confirm only 3 daemons\nps aux | grep koru | grep -v grep | wc -l\n\
+          ```\n\n---\n\n**Expected outcome**:  \n- `--idempotent` now checks *per-socket*,\
+          \ preventing duplicate *per instance*.  \n- `doctor.sh` flags duplicates\
+          \ per socket.  \n- No stale sockets left behind (cleaned on startup)."
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -26718,82 +26739,84 @@ sprint:
           Found gillm-internal drift: diagnose_drive_reply embedded-recovery path
           treats no_calibrated_profile as retryable, normal path does not — fix with
           part B. Part B (input-strategy chain from vdisplay_client) blocked on R-F2.2/STARTER-554.'
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n```diff\ndiff --git a/gillm/recovery.py
-          b/gillm/recovery.py\nnew file mode 100644\nindex 0000000..e1c1e1a\n--- /dev/null\n+++
-          b/gillm/recovery.py\n@@ -0,0 +1,25 @@\n+\"\"\"Failure classification and
-          recovery strategies.\"\"\"\n+\n+from typing import Literal\n+\n+FailureType
-          = Literal[\"timeout\", \"rate_limit\", \"auth_error\", \"unknown\"]\n+\n+\n+def
-          _classify_failure(error: Exception) -> FailureType:\n+    \"\"\"Classify
-          an exception into a failure type for recovery decisions.\"\"\"\n+    msg
-          = str(error).lower()\n+    if \"timeout\" in msg or isinstance(error, TimeoutError):\n+
-          \       return \"timeout\"\n+    if \"rate limit\" in msg or isinstance(error,
-          TooManyRequests):\n+        return \"rate_limit\"\n+    if \"auth\" in msg
-          or isinstance(error, (Unauthorized, PermissionError)):\n+        return
-          \"auth_error\"\n+    return \"unknown\"\n+\n+\n+class TooManyRequests(Exception):\n+
-          \   \"\"\"HTTP 429 equivalent.\"\"\"\n+    pass\n+\n+\n+class Unauthorized(Exception):\n+
-          \   \"\"\"HTTP 401/403 equivalent.\"\"\"\n+    pass\ndiff --git a/gillm/injection/strategies.py
-          b/gillm/injection/strategies.py\nnew file mode 100644\nindex 0000000..a3b8c3d\n---
-          /dev/null\n+++ b/gillm/injection/strategies.py\n@@ -0,0 +1,30 @@\n+\"\"\"Input
-          injection strategies for text-based interactions.\"\"\"\n+\n+from typing
-          import Callable, List, Tuple\n+\n+\n+class Strategy:\n+    \"\"\"Base class
-          for injection strategies.\"\"\"\n+    def apply(self, text: str) -> str:\n+
-          \       raise NotImplementedError\n+\n+\n+class TypoStrategy(Strategy):\n+
-          \   \"\"\"Injects realistic typos into input.\"\"\"\n+    def __init__(self,
-          rate: float = 0.05):\n+        self.rate = rate\n+\n+    def apply(self,
-          text: str) -> str:\n+        # simplified placeholder\n+        return text
-          \ # pragma: no cover\n+\n+\n+class DelayStrategy(Strategy):\n+    \"\"\"Adds
-          realistic typing delays.\"\"\"\n+    def __init__(self, base_ms: int = 50,
-          jitter_ms: int = 30):\n+        self.base_ms = base_ms\n+        self.jitter_ms
-          = jitter_ms\n+\n+    def apply(self, text: str) -> str:\n+        # delay
-          logic handled elsewhere; this is metadata-only\n+        return text\n+\n+\n+def
-          build_strategy_chain(steps: List[Tuple[str, dict]]) -> Callable[[str], str]:\n+
-          \   \"\"\"Build a composed strategy from a list of (name, config) tuples.\"\"\"\n+
-          \   strategies: List[Strategy] = []\n+    for name, cfg in steps:\n+        if
-          name == \"typo\":\n+            strategies.append(TypoStrategy(**cfg))\n+
-          \       elif name == \"delay\":\n+            strategies.append(DelayStrategy(**cfg))\n+
-          \       else:\n+            raise ValueError(f\"Unknown strategy: {name}\")\n+\n+
-          \   def chain(text: str) -> str:\n+        for s in strategies:\n+            text
-          = s.apply(text)\n+        return text\n+    return chain\ndiff --git a/gillm/__init__.py
-          b/gillm/__init__.py\nindex abc1234..def4567 100644\n--- a/gillm/__init__.py\n+++
-          b/gillm/__init__.py\n@@ -1,3 +1,5 @@\n from . import client\n+from . import
-          recovery\n+from . import injection\n+\n __all__ = [\"client\", \"recovery\",
-          \"injection\"]\ndiff --git a/gillm/injection/__init__.py b/gillm/injection/__init__.py\nnew
-          file mode 100644\nindex 0000000..e1c1e1a\n--- /dev/null\n+++ b/gillm/injection/__init__.py\n@@
-          -0,0 +1,2 @@\n+from . import strategies\n+\n+__all__ = [\"strategies\"]\ndiff
-          --git a/gillm/client.py b/gillm/client.py\nindex 7890123..4567890 100644\n---
-          a/gillm/client.py\n+++ b/gillm/client.py\n@@ -1,5 +1,6 @@\n \"\"\"Core client
-          logic.\"\"\"\n \n+from . import recovery\n from . import utils\n \n \n@@
-          -10,10 +11,10 @@ class VDisplayClient:\n         self._session = None\n
-          \n     def _type_text(self, text: str) -> None:\n-        # previously:
-          vdisplay_client._type_text_* logic moved here\n-        # now: use injection
-          strategies\n-        from .injection.strategies import build_strategy_chain\n-
-          \       chain = build_strategy_chain([(\"typo\", {\"rate\": 0.02}), (\"delay\",
-          {})])\n+        # use injected strategy chain\n+        from .injection
-          import strategies\n+        chain = strategies.build_strategy_chain(\n+
-          \           [(\"typo\", {\"rate\": 0.02}), (\"delay\", {})])\n         processed
-          = chain(text)\n         self._session.type_text(processed)\n \n     def
-          _handle_error(self, exc: Exception) -> None:\n-        # previously: gillm_recovery._classify_failure\n-
-          \       from gillm_recovery import _classify_failure\n-        failure_type
-          = _classify_failure(exc)\n+        # use recovery classification\n+        failure_type
-          = recovery._classify_failure(exc)\n         if failure_type == \"timeout\":\n
-          \            self._session.reconnect()\n         elif failure_type == \"rate_limit\":\ndiff
-          --git a/gillm_recovery/__init__.py b/gillm_recovery/__init__.py\nindex 1234567..2345678
-          100644\n--- a/gillm_recovery/__init__.py\n+++ b/gillm_recovery/__init__.py\n@@
-          -1,5 +1,10 @@\n \"\"\"Koru-side re-export shim (to be removed in next release).\"\"\"\n
-          \n-from . import _classify_failure\n+from gillm.recovery import _classify_failure,
-          FailureType, TooManyRequests, Unauthorized\n+\n+__all__ = [\"_classify_failure\",
-          \"FailureType\", \"TooManyRequests\", \"Unauthorized\"]\n+\n+# Deprecated:
-          use gillm.recovery directly\n+def _classify_failure_deprecated(*args, **kwargs):\n+
-          \   import warnings\n+    warnings.warn(\"gillm_recovery._classify_failure
-          is deprecated; use gillm.recovery._classify_failure\", DeprecationWarning,
-          stacklevel=2)\n+    return _classify_failure(*args, **kwargs)\n```\n\n**Rationale:**
-          Moves failure classification and input strategy chain logic into canonical
-          modules (`gillm.recovery`, `gillm.injection.strategies`) as specified, while
-          preserving koru’s operator-guidance/ticket mapping via a deprecation shim
-          in `gillm_recovery`. The refactor is minimal: new modules, one import update
-          in `client.py`, and a single backward-compatibility layer.\n\n**Test command:**
-          \ \n```bash\npython -c \"from gillm.recovery import _classify_failure; from
-          gillm.injection.strategies import build_strategy_chain; print('OK')\"\n```"
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n```diff\ndiff --git a/gillm/recovery.py\
+          \ b/gillm/recovery.py\nnew file mode 100644\nindex 0000000..e1c1e1a\n---\
+          \ /dev/null\n+++ b/gillm/recovery.py\n@@ -0,0 +1,25 @@\n+\"\"\"Failure classification\
+          \ and recovery strategies.\"\"\"\n+\n+from typing import Literal\n+\n+FailureType\
+          \ = Literal[\"timeout\", \"rate_limit\", \"auth_error\", \"unknown\"]\n\
+          +\n+\n+def _classify_failure(error: Exception) -> FailureType:\n+    \"\"\
+          \"Classify an exception into a failure type for recovery decisions.\"\"\"\
+          \n+    msg = str(error).lower()\n+    if \"timeout\" in msg or isinstance(error,\
+          \ TimeoutError):\n+        return \"timeout\"\n+    if \"rate limit\" in\
+          \ msg or isinstance(error, TooManyRequests):\n+        return \"rate_limit\"\
+          \n+    if \"auth\" in msg or isinstance(error, (Unauthorized, PermissionError)):\n\
+          +        return \"auth_error\"\n+    return \"unknown\"\n+\n+\n+class TooManyRequests(Exception):\n\
+          +    \"\"\"HTTP 429 equivalent.\"\"\"\n+    pass\n+\n+\n+class Unauthorized(Exception):\n\
+          +    \"\"\"HTTP 401/403 equivalent.\"\"\"\n+    pass\ndiff --git a/gillm/injection/strategies.py\
+          \ b/gillm/injection/strategies.py\nnew file mode 100644\nindex 0000000..a3b8c3d\n\
+          --- /dev/null\n+++ b/gillm/injection/strategies.py\n@@ -0,0 +1,30 @@\n+\"\
+          \"\"Input injection strategies for text-based interactions.\"\"\"\n+\n+from\
+          \ typing import Callable, List, Tuple\n+\n+\n+class Strategy:\n+    \"\"\
+          \"Base class for injection strategies.\"\"\"\n+    def apply(self, text:\
+          \ str) -> str:\n+        raise NotImplementedError\n+\n+\n+class TypoStrategy(Strategy):\n\
+          +    \"\"\"Injects realistic typos into input.\"\"\"\n+    def __init__(self,\
+          \ rate: float = 0.05):\n+        self.rate = rate\n+\n+    def apply(self,\
+          \ text: str) -> str:\n+        # simplified placeholder\n+        return\
+          \ text  # pragma: no cover\n+\n+\n+class DelayStrategy(Strategy):\n+   \
+          \ \"\"\"Adds realistic typing delays.\"\"\"\n+    def __init__(self, base_ms:\
+          \ int = 50, jitter_ms: int = 30):\n+        self.base_ms = base_ms\n+  \
+          \      self.jitter_ms = jitter_ms\n+\n+    def apply(self, text: str) ->\
+          \ str:\n+        # delay logic handled elsewhere; this is metadata-only\n\
+          +        return text\n+\n+\n+def build_strategy_chain(steps: List[Tuple[str,\
+          \ dict]]) -> Callable[[str], str]:\n+    \"\"\"Build a composed strategy\
+          \ from a list of (name, config) tuples.\"\"\"\n+    strategies: List[Strategy]\
+          \ = []\n+    for name, cfg in steps:\n+        if name == \"typo\":\n+ \
+          \           strategies.append(TypoStrategy(**cfg))\n+        elif name ==\
+          \ \"delay\":\n+            strategies.append(DelayStrategy(**cfg))\n+  \
+          \      else:\n+            raise ValueError(f\"Unknown strategy: {name}\"\
+          )\n+\n+    def chain(text: str) -> str:\n+        for s in strategies:\n\
+          +            text = s.apply(text)\n+        return text\n+    return chain\n\
+          diff --git a/gillm/__init__.py b/gillm/__init__.py\nindex abc1234..def4567\
+          \ 100644\n--- a/gillm/__init__.py\n+++ b/gillm/__init__.py\n@@ -1,3 +1,5\
+          \ @@\n from . import client\n+from . import recovery\n+from . import injection\n\
+          +\n __all__ = [\"client\", \"recovery\", \"injection\"]\ndiff --git a/gillm/injection/__init__.py\
+          \ b/gillm/injection/__init__.py\nnew file mode 100644\nindex 0000000..e1c1e1a\n\
+          --- /dev/null\n+++ b/gillm/injection/__init__.py\n@@ -0,0 +1,2 @@\n+from\
+          \ . import strategies\n+\n+__all__ = [\"strategies\"]\ndiff --git a/gillm/client.py\
+          \ b/gillm/client.py\nindex 7890123..4567890 100644\n--- a/gillm/client.py\n\
+          +++ b/gillm/client.py\n@@ -1,5 +1,6 @@\n \"\"\"Core client logic.\"\"\"\n\
+          \ \n+from . import recovery\n from . import utils\n \n \n@@ -10,10 +11,10\
+          \ @@ class VDisplayClient:\n         self._session = None\n \n     def _type_text(self,\
+          \ text: str) -> None:\n-        # previously: vdisplay_client._type_text_*\
+          \ logic moved here\n-        # now: use injection strategies\n-        from\
+          \ .injection.strategies import build_strategy_chain\n-        chain = build_strategy_chain([(\"\
+          typo\", {\"rate\": 0.02}), (\"delay\", {})])\n+        # use injected strategy\
+          \ chain\n+        from .injection import strategies\n+        chain = strategies.build_strategy_chain(\n\
+          +            [(\"typo\", {\"rate\": 0.02}), (\"delay\", {})])\n        \
+          \ processed = chain(text)\n         self._session.type_text(processed)\n\
+          \ \n     def _handle_error(self, exc: Exception) -> None:\n-        # previously:\
+          \ gillm_recovery._classify_failure\n-        from gillm_recovery import\
+          \ _classify_failure\n-        failure_type = _classify_failure(exc)\n+ \
+          \       # use recovery classification\n+        failure_type = recovery._classify_failure(exc)\n\
+          \         if failure_type == \"timeout\":\n             self._session.reconnect()\n\
+          \         elif failure_type == \"rate_limit\":\ndiff --git a/gillm_recovery/__init__.py\
+          \ b/gillm_recovery/__init__.py\nindex 1234567..2345678 100644\n--- a/gillm_recovery/__init__.py\n\
+          +++ b/gillm_recovery/__init__.py\n@@ -1,5 +1,10 @@\n \"\"\"Koru-side re-export\
+          \ shim (to be removed in next release).\"\"\"\n \n-from . import _classify_failure\n\
+          +from gillm.recovery import _classify_failure, FailureType, TooManyRequests,\
+          \ Unauthorized\n+\n+__all__ = [\"_classify_failure\", \"FailureType\", \"\
+          TooManyRequests\", \"Unauthorized\"]\n+\n+# Deprecated: use gillm.recovery\
+          \ directly\n+def _classify_failure_deprecated(*args, **kwargs):\n+    import\
+          \ warnings\n+    warnings.warn(\"gillm_recovery._classify_failure is deprecated;\
+          \ use gillm.recovery._classify_failure\", DeprecationWarning, stacklevel=2)\n\
+          +    return _classify_failure(*args, **kwargs)\n```\n\n**Rationale:** Moves\
+          \ failure classification and input strategy chain logic into canonical modules\
+          \ (`gillm.recovery`, `gillm.injection.strategies`) as specified, while preserving\
+          \ koru’s operator-guidance/ticket mapping via a deprecation shim in `gillm_recovery`.\
+          \ The refactor is minimal: new modules, one import update in `client.py`,\
+          \ and a single backward-compatibility layer.\n\n**Test command:**  \n```bash\n\
+          python -c \"from gillm.recovery import _classify_failure; from gillm.injection.strategies\
+          \ import build_strategy_chain; print('OK')\"\n```"
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -26890,80 +26913,80 @@ sprint:
         artifacts:
         - .planfile/artifacts/openrouter/STARTER-562.md
         notes:
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n```diff\ndiff --git a/src/vdisplay/client.rs
-          b/src/vdisplay/client.rs\nindex 1234567..abcdefg 100644\n--- a/src/vdisplay/client.rs\n+++
-          b/src/vdisplay/client.rs\n@@ -1,5 +1,8 @@\n-use crate::vdisplay::vql::parse::{_vql_parse,
-          _vql_parse_error};\n-use crate::vdisplay::vql::pointer::{_enrich_capture_meta_for_pointer,
-          _map_chat_target_capture_local};\n+use crate::vdisplay::vql::geometry::{_vql_parse,
-          _vql_parse_error, _enrich_capture_meta_for_pointer, _map_chat_target_capture_local};\n+use
-          crate::vdisplay::vql::monitors::photo_vql_target;\n+use crate::vdisplay::vql::monitors::photo_vql_monitor;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n
-          use crate::vdisplay::vql::topology::photo_vql_"
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n```diff\ndiff --git a/src/vdisplay/client.rs\
+          \ b/src/vdisplay/client.rs\nindex 1234567..abcdefg 100644\n--- a/src/vdisplay/client.rs\n\
+          +++ b/src/vdisplay/client.rs\n@@ -1,5 +1,8 @@\n-use crate::vdisplay::vql::parse::{_vql_parse,\
+          \ _vql_parse_error};\n-use crate::vdisplay::vql::pointer::{_enrich_capture_meta_for_pointer,\
+          \ _map_chat_target_capture_local};\n+use crate::vdisplay::vql::geometry::{_vql_parse,\
+          \ _vql_parse_error, _enrich_capture_meta_for_pointer, _map_chat_target_capture_local};\n\
+          +use crate::vdisplay::vql::monitors::photo_vql_target;\n+use crate::vdisplay::vql::monitors::photo_vql_monitor;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_monitor;\n+use crate::vdisplay::vql::geometry::photo_vql_target;\n\
+          \ use crate::vdisplay::vql::topology::photo_vql_"
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -27147,64 +27170,65 @@ sprint:
           — collector + facade-exposure assertion + sentinel self-checks; negative
           test confirmed it flags a dropped export precisely. Part 3 (audit that call
           sites of test-patched names route through facades) remains.'
-        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Project uses
-          `src/` as source root, `tests/` as test root.  \n2. Late-bound facade attributes
-          follow pattern: `_cycle_mod`, `_runner_mod`, `_readiness_facade`, etc. (i.e.,
-          underscore-prefixed, `_mod`/`_facade` suffix).  \n3. Facades are defined
-          in `src/tillm/registry/facades.py` (adjust if different; default assumed).
-          \ \n4. Tests use `pytest`; monkeypatches are via `monkeypatch` fixture.
-          \ \n5. `coru/cli 19`, `readiness`, `autonomous_cycle` are concrete modules
-          in `src/`.  \n\n---\n\n### Action Plan (≤15 min execution)\n\n#### 1. Create
-          contract test template  \n```bash\nmkdir -p tests\ncat > tests/test_tillm_registry_contract.py
-          << 'EOF'\n\"\"\"Contract test: late-bound facade attributes must be exposed
-          and resolvable.\"\"\"\nimport ast\nimport os\nfrom pathlib import Path\nfrom
-          types import ModuleType\n\nimport pytest\n\nSRC_ROOT = Path(\"src\")\nFACADE_PATH
-          = SRC_ROOT / \"tillm\" / \"registry\" / \"facades.py\"\nFACADE_MODULE_NAME
-          = \"tillm.registry.facades\"\n\n\ndef _collect_late_bound_refs() -> set[str]:\n
-          \   \"\"\"Find all `_cycle_mod`, `_runner_mod`, `_readiness_facade`-style
-          refs in src/.\"\"\"\n    pattern = \"_*_(mod|facade)$\"\n    refs = set()\n
-          \   for path in SRC_ROOT.rglob(\"*.py\"):\n        if \"test\" in str(path)
-          or \"__pycache__\" in str(path):\n            continue\n        tree = ast.parse(path.read_text(),
-          filename=str(path))\n        for node in ast.walk(tree):\n            if
-          isinstance(node, ast.Attribute):\n                if isinstance(node.value,
-          ast.Name) and node.attr.startswith(\"_\"):\n                    if node.attr.endswith(\"_mod\")
-          or node.attr.endswith(\"_facade\"):\n                        refs.add(node.attr)\n
-          \   return refs\n\n\ndef _collect_monkeypatch_targets() -> set[tuple[str,
-          str]]:\n    \"\"\"Find all `monkeypatch.setattr(facade, name, ...)` in tests/.\"\"\"\n
-          \   targets = set()\n    for path in Path(\"tests\").rglob(\"*.py\"):\n
-          \       tree = ast.parse(path.read_text(), filename=str(path))\n        for
-          node in ast.walk(tree):\n            if (\n                isinstance(node,
-          ast.Call)\n                and isinstance(node.func, ast.Attribute)\n                and
-          node.func.attr == \"setattr\"\n                and len(node.args) >= 2\n
-          \           ):\n                # Expect: monkeypatch.setattr(facade_module,
-          \"attr_name\", ...)\n                if isinstance(node.args[0], ast.Attribute):\n
-          \                   mod_name = ast.unparse(node.args[0].value)\n                    attr_name
-          = node.args[0].attr\n                elif isinstance(node.args[0], ast.Name):\n
-          \                   mod_name = node.args[0].id\n                    attr_name
-          = node.args[1].value if isinstance(node.args[1], ast.Constant) else None\n
-          \               else:\n                    continue\n                if
-          mod_name == FACADE_MODULE_NAME and attr_name:\n                    targets.add((mod_name,
-          attr_name))\n    return targets\n\n\ndef _load_facade_module() -> ModuleType:\n
-          \   import importlib\n    return importlib.import_module(FACADE_MODULE_NAME)\n\n\ndef
-          test_facade_exposes_all_late_bound_refs():\n    \"\"\"Assert facade module
-          exposes every late-bound attribute found in src/.\"\"\"\n    refs = _collect_late_bound_refs()\n
-          \   facade = _load_facade_module()\n    missing = [r for r in refs if not
-          hasattr(facade, r)]\n    assert not missing, f\"Facade missing late-bound
-          attrs: {missing}\"\n\n\ndef test_monkeypatch_targets_resolve_through_facade():\n
-          \   \"\"\"Assert every monkeypatch target in tests/ resolves via the facade.\"\"\"\n
-          \   targets = _collect_monkeypatch_targets()\n    facade = _load_facade_module()\n
-          \   unresolved = []\n    for mod_name, attr in targets:\n        if not
-          hasattr(facade, attr):\n            unresolved.append(f\"{mod_name}.{attr}\")\n
-          \   assert not unresolved, f\"Monkeypatch targets not exposed by facade:
-          {unresolved}\"\nEOF\n```\n\n\n#### 2. Run test to confirm it fails (red)
-          on current codebase  \n```bash\npytest tests/test_tillm_registry_contract.py
-          -v\n# Expected: FAIL (missing late-bound attrs)\n```\n\n\n#### 3. Fix the
-          facade (if needed)  \n- Edit `src/tillm/registry/facades.py` to expose all
-          missing attributes (e.g., `from coru.cli import _cycle_mod as _cycle_mod`).
-          \ \n- Re-run test until green:  \n```bash\npytest tests/test_tillm_registry_contract.py
-          -v\n```\n\n\n#### 4. Commit test + fix  \n```bash\ngit add tests/test_tillm_registry_contract.py
-          src/tillm/registry/facades.py\ngit commit -m \"test: add contract test for
-          late-bound facade attributes\"\n```"
+        - "OPENROUTER-LLM qwen/qwen3-coder-next\n\n**Assumptions**  \n1. Project uses\
+          \ `src/` as source root, `tests/` as test root.  \n2. Late-bound facade\
+          \ attributes follow pattern: `_cycle_mod`, `_runner_mod`, `_readiness_facade`,\
+          \ etc. (i.e., underscore-prefixed, `_mod`/`_facade` suffix).  \n3. Facades\
+          \ are defined in `src/tillm/registry/facades.py` (adjust if different; default\
+          \ assumed).  \n4. Tests use `pytest`; monkeypatches are via `monkeypatch`\
+          \ fixture.  \n5. `coru/cli 19`, `readiness`, `autonomous_cycle` are concrete\
+          \ modules in `src/`.  \n\n---\n\n### Action Plan (≤15 min execution)\n\n\
+          #### 1. Create contract test template  \n```bash\nmkdir -p tests\ncat >\
+          \ tests/test_tillm_registry_contract.py << 'EOF'\n\"\"\"Contract test: late-bound\
+          \ facade attributes must be exposed and resolvable.\"\"\"\nimport ast\n\
+          import os\nfrom pathlib import Path\nfrom types import ModuleType\n\nimport\
+          \ pytest\n\nSRC_ROOT = Path(\"src\")\nFACADE_PATH = SRC_ROOT / \"tillm\"\
+          \ / \"registry\" / \"facades.py\"\nFACADE_MODULE_NAME = \"tillm.registry.facades\"\
+          \n\n\ndef _collect_late_bound_refs() -> set[str]:\n    \"\"\"Find all `_cycle_mod`,\
+          \ `_runner_mod`, `_readiness_facade`-style refs in src/.\"\"\"\n    pattern\
+          \ = \"_*_(mod|facade)$\"\n    refs = set()\n    for path in SRC_ROOT.rglob(\"\
+          *.py\"):\n        if \"test\" in str(path) or \"__pycache__\" in str(path):\n\
+          \            continue\n        tree = ast.parse(path.read_text(), filename=str(path))\n\
+          \        for node in ast.walk(tree):\n            if isinstance(node, ast.Attribute):\n\
+          \                if isinstance(node.value, ast.Name) and node.attr.startswith(\"\
+          _\"):\n                    if node.attr.endswith(\"_mod\") or node.attr.endswith(\"\
+          _facade\"):\n                        refs.add(node.attr)\n    return refs\n\
+          \n\ndef _collect_monkeypatch_targets() -> set[tuple[str, str]]:\n    \"\"\
+          \"Find all `monkeypatch.setattr(facade, name, ...)` in tests/.\"\"\"\n \
+          \   targets = set()\n    for path in Path(\"tests\").rglob(\"*.py\"):\n\
+          \        tree = ast.parse(path.read_text(), filename=str(path))\n      \
+          \  for node in ast.walk(tree):\n            if (\n                isinstance(node,\
+          \ ast.Call)\n                and isinstance(node.func, ast.Attribute)\n\
+          \                and node.func.attr == \"setattr\"\n                and\
+          \ len(node.args) >= 2\n            ):\n                # Expect: monkeypatch.setattr(facade_module,\
+          \ \"attr_name\", ...)\n                if isinstance(node.args[0], ast.Attribute):\n\
+          \                    mod_name = ast.unparse(node.args[0].value)\n      \
+          \              attr_name = node.args[0].attr\n                elif isinstance(node.args[0],\
+          \ ast.Name):\n                    mod_name = node.args[0].id\n         \
+          \           attr_name = node.args[1].value if isinstance(node.args[1], ast.Constant)\
+          \ else None\n                else:\n                    continue\n     \
+          \           if mod_name == FACADE_MODULE_NAME and attr_name:\n         \
+          \           targets.add((mod_name, attr_name))\n    return targets\n\n\n\
+          def _load_facade_module() -> ModuleType:\n    import importlib\n    return\
+          \ importlib.import_module(FACADE_MODULE_NAME)\n\n\ndef test_facade_exposes_all_late_bound_refs():\n\
+          \    \"\"\"Assert facade module exposes every late-bound attribute found\
+          \ in src/.\"\"\"\n    refs = _collect_late_bound_refs()\n    facade = _load_facade_module()\n\
+          \    missing = [r for r in refs if not hasattr(facade, r)]\n    assert not\
+          \ missing, f\"Facade missing late-bound attrs: {missing}\"\n\n\ndef test_monkeypatch_targets_resolve_through_facade():\n\
+          \    \"\"\"Assert every monkeypatch target in tests/ resolves via the facade.\"\
+          \"\"\n    targets = _collect_monkeypatch_targets()\n    facade = _load_facade_module()\n\
+          \    unresolved = []\n    for mod_name, attr in targets:\n        if not\
+          \ hasattr(facade, attr):\n            unresolved.append(f\"{mod_name}.{attr}\"\
+          )\n    assert not unresolved, f\"Monkeypatch targets not exposed by facade:\
+          \ {unresolved}\"\nEOF\n```\n\n\n#### 2. Run test to confirm it fails (red)\
+          \ on current codebase  \n```bash\npytest tests/test_tillm_registry_contract.py\
+          \ -v\n# Expected: FAIL (missing late-bound attrs)\n```\n\n\n#### 3. Fix\
+          \ the facade (if needed)  \n- Edit `src/tillm/registry/facades.py` to expose\
+          \ all missing attributes (e.g., `from coru.cli import _cycle_mod as _cycle_mod`).\
+          \  \n- Re-run test until green:  \n```bash\npytest tests/test_tillm_registry_contract.py\
+          \ -v\n```\n\n\n#### 4. Commit test + fix  \n```bash\ngit add tests/test_tillm_registry_contract.py\
+          \ src/tillm/registry/facades.py\ngit commit -m \"test: add contract test\
+          \ for late-bound facade attributes\"\n```"
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -30632,7 +30656,7 @@ sprint:
       outputs:
         artifacts: []
         notes: []
-      priority: high
+      priority: critical
       source:
         context:
           dedupe_key: nxdo:koru:fix-cli-command-fallback-regressions
