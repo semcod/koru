@@ -39,42 +39,55 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _main_subcommand(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="dsl2coru")
-    sub = parser.add_subparsers(dest="cmd", required=True)
-
-    sub.add_parser("validate-schema")
-
-    enc = sub.add_parser("encode")
-    enc.add_argument("line")
-    enc.add_argument("--file", default="")
-    enc.add_argument("--format", choices=["protobuf", "json"], default="protobuf")
-    enc.add_argument("--output")
-
-    dec = sub.add_parser("decode")
-    dec.add_argument("--input", required=True)
-    dec.add_argument("--format", choices=["protobuf", "json"], default="protobuf")
-
-    rt = sub.add_parser("roundtrip")
-    rt.add_argument("line")
-    rt.add_argument("--file", default="")
-
-    rep = sub.add_parser("replay")
-    rep.add_argument("--file", default=".")
-    rep.add_argument("--format", choices=["jsonl", "protobuf", "auto"], default="auto")
-
-    run = sub.add_parser("run")
-    run.add_argument("script", nargs="?")
-    run.add_argument("-c", "--command")
-    run.add_argument("--file", default="")
-    run.add_argument("--json", action="store_true")
-
-    exe = sub.add_parser("exec", help="Execute one DSL line (alias for run -c)")
-    exe.add_argument("command")
-    exe.add_argument("--file", default="")
-    exe.add_argument("--json", action="store_true")
-
+    parser = _build_subcommand_parser()
     args = parser.parse_args(argv)
     return _handle_subcommand(args)
+
+
+# Declarative subcommand spec: (name, help, [(add_argument args, kwargs), ...]).
+# Positionals are a single-element name tuple; optionals carry their flags.
+_SUBCOMMAND_SPECS: list[tuple[str, str | None, list[tuple[tuple[str, ...], dict]]]] = [
+    ("validate-schema", None, []),
+    ("encode", None, [
+        (("line",), {}),
+        (("--file",), {"default": ""}),
+        (("--format",), {"choices": ["protobuf", "json"], "default": "protobuf"}),
+        (("--output",), {}),
+    ]),
+    ("decode", None, [
+        (("--input",), {"required": True}),
+        (("--format",), {"choices": ["protobuf", "json"], "default": "protobuf"}),
+    ]),
+    ("roundtrip", None, [
+        (("line",), {}),
+        (("--file",), {"default": ""}),
+    ]),
+    ("replay", None, [
+        (("--file",), {"default": "."}),
+        (("--format",), {"choices": ["jsonl", "protobuf", "auto"], "default": "auto"}),
+    ]),
+    ("run", None, [
+        (("script",), {"nargs": "?"}),
+        (("-c", "--command"), {}),
+        (("--file",), {"default": ""}),
+        (("--json",), {"action": "store_true"}),
+    ]),
+    ("exec", "Execute one DSL line (alias for run -c)", [
+        (("command",), {}),
+        (("--file",), {"default": ""}),
+        (("--json",), {"action": "store_true"}),
+    ]),
+]
+
+
+def _build_subcommand_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="dsl2coru")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    for name, help_text, arg_specs in _SUBCOMMAND_SPECS:
+        sub_parser = sub.add_parser(name, help=help_text)
+        for addargs, kwargs in arg_specs:
+            sub_parser.add_argument(*addargs, **kwargs)
+    return parser
 
 
 def _main_legacy(argv: list[str]) -> int:

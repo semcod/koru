@@ -4378,256 +4378,6 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-26T11:29:39.034230+00:00'
-    STARTER-298:
-      blocked_by: []
-      blocks: []
-      created_at: '2026-05-25T20:37:37.711345+00:00'
-      description: 'code2llm reports `God Function: _check_autopilot_chat_control`
-        in `src/koru/doctor.py:921`.
-
-
-        Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
-        mutations=32.
-
-
-        Make the smallest refactor that removes the smell and run local tests.'
-      execution:
-        attempt: 0
-        finished_at: '2026-05-26T11:37:57.369626Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      executor:
-        kind: human
-        mode: interactive
-      files:
-      - src/koru/doctor.py
-      history:
-      - action: created
-        message: 'code2llm reports `God Function: _check_autopilot_chat_control` in
-          `src/koru/doctor.py:921`.
-
-
-          Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
-          mutations=32.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
-        source: koru task
-        timestamp: '2026-05-25T20:37:37.711345+00:00'
-      - action: update
-        changes:
-        - outputs
-        source: planfile.store
-        timestamp: '2026-05-26T11:37:56.715158+00:00'
-      - action: update
-        changes:
-        - execution
-        - status
-        execution_state: done
-        previous_execution_state: ready
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-05-26T11:37:57.390403+00:00'
-      id: STARTER-298
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: 'code2llm reports `God Function: _check_autopilot_chat_control` in
-          `src/koru/doctor.py:921`.
-
-
-          Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
-          mutations=32.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: _check_autopilot_chat_control'
-      outputs:
-        artifacts: []
-        notes:
-        - 'Validated current src/koru/doctor.py instead of stale 2026-05-25 code2llm
-          source. Current _check_autopilot_chat_control is already split into helper
-          functions (40 lines at src/koru/doctor.py:704). Fresh command: code2llm
-          src/koru/doctor.py -f toon -o .tmp/code2llm-starter-298 --no-chunk --force
-          -> HEALTH[0]: ok / REFACTOR[0]: none needed. Local tests: PYTHONPATH=src
-          pytest -q tests/test_doctor.py -k autopilot_chat_control -> 4 passed.'
-      priority: high
-      source:
-        context:
-          dedupe_key: 'code2llm:smell:god_function:src/koru/doctor.py:704:God Function:
-            _check_autopilot_chat_control'
-          evidence:
-            artifact:
-              mtime_ns: 1779801970389636707
-              path: project/analysis.toon.yaml
-              sha256: 096cb751cc90d1bf0908b9d54a4a1cf42576375adea3d78acf6187f832320669
-              size_bytes: 54235
-            files:
-            - mtime_ns: 1779778736124897715
-              path: src/koru/doctor.py
-              sha256: bccd76b3c8bbed9e77dd002fcdb0c80f48cc045698764e89d7dfb7654d6fba7b
-              size_bytes: 60964
-            kind: code2llm_discovery
-            planfile_tickets:
-              mtime_ns: 1779801971742386805
-              path: project/planfile-tickets.yaml
-              sha256: fb4a2f5b8bc915a6f0135b282cd5fb2cee6e34c2de931530a97e0e1b52e41b4f
-              size_bytes: 637894
-            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
-              --no-chunk --exclude *.md --exclude plugins --planfile-apply --planfile-source
-              koru-project-discovery --planfile-sprint current --planfile-project
-              /home/tom/github/semcod/koru --planfile-limit 20
-            schema: koru.ticket_evidence.v1
-            staleness_check: Regenerate artifacts and compare artifact.sha256 / files[].sha256
-              before assuming this ticket is still current.
-          input: 'code2llm reports `God Function: _check_autopilot_chat_control` in
-            `src/koru/doctor.py:921`.
-
-
-            Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
-            mutations=32.
-
-
-            Make the smallest refactor that removes the smell and run local tests.'
-          signal: code2llm_smell_god_function
-        timestamp: '2026-05-25T20:37:37.711345+00:00'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-05-26T11:37:57.390368+00:00'
-    STARTER-299:
-      blocked_by: []
-      blocks: []
-      created_at: '2026-05-25T20:37:38.161069+00:00'
-      description: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
-
-
-        Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
-
-
-        Make the smallest refactor that removes the smell and run local tests.'
-      execution:
-        attempt: 0
-        finished_at: '2026-05-26T11:51:25.088775Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      executor:
-        kind: human
-        mode: interactive
-      files:
-      - src/koru/tasks.py
-      history:
-      - action: created
-        message: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
-
-
-          Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
-        source: koru task
-        timestamp: '2026-05-25T20:37:38.161069+00:00'
-      - action: update
-        changes:
-        - outputs
-        source: planfile.store
-        timestamp: '2026-05-26T11:51:24.419639+00:00'
-      - action: update
-        changes:
-        - execution
-        - status
-        execution_state: done
-        previous_execution_state: ready
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-05-26T11:51:25.111230+00:00'
-      id: STARTER-299
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
-
-
-          Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
-
-
-          Make the smallest refactor that removes the smell and run local tests.'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: _create_nl_task_impl'
-      outputs:
-        artifacts: []
-        notes:
-        - 'Validated current src/koru/tasks.py instead of stale 2026-05-25 code2llm
-          source. Current _create_nl_task_impl is already split into helper functions
-          (36 lines at src/koru/tasks.py:100). Fresh command: code2llm src/koru/tasks.py
-          -f toon -o .tmp/code2llm-starter-299 --no-chunk --force -> HEALTH[0]: ok
-          / REFACTOR[0]: none needed. Local tests: PYTHONPATH=src pytest -q tests/test_tasks.py
-          tests/test_cqrs_tasks_context.py -> 9 passed.'
-      priority: high
-      source:
-        context:
-          dedupe_key: 'code2llm:smell:god_function:src/koru/tasks.py:100:God Function:
-            _create_nl_task_impl'
-          evidence:
-            artifact:
-              mtime_ns: 1779801970389636707
-              path: project/analysis.toon.yaml
-              sha256: 096cb751cc90d1bf0908b9d54a4a1cf42576375adea3d78acf6187f832320669
-              size_bytes: 54235
-            files:
-            - mtime_ns: 1779778736124897715
-              path: src/koru/tasks.py
-              sha256: 901e5e874c6c3415e75949a8bb40e756ca07a5362ecf73554274ac42fb991717
-              size_bytes: 12586
-            kind: code2llm_discovery
-            planfile_tickets:
-              mtime_ns: 1779801971742386805
-              path: project/planfile-tickets.yaml
-              sha256: fb4a2f5b8bc915a6f0135b282cd5fb2cee6e34c2de931530a97e0e1b52e41b4f
-              size_bytes: 637894
-            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
-              --no-chunk --exclude *.md --exclude plugins --planfile-apply --planfile-source
-              koru-project-discovery --planfile-sprint current --planfile-project
-              /home/tom/github/semcod/koru --planfile-limit 20
-            schema: koru.ticket_evidence.v1
-            staleness_check: Regenerate artifacts and compare artifact.sha256 / files[].sha256
-              before assuming this ticket is still current.
-          input: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
-
-
-            Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
-
-
-            Make the smallest refactor that removes the smell and run local tests.'
-          signal: code2llm_smell_god_function
-        timestamp: '2026-05-25T20:37:38.161069+00:00'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-05-26T11:51:25.111195+00:00'
     STARTER-300:
       blocked_by: []
       blocks: []
@@ -25375,996 +25125,6 @@ sprint:
       status: skipped
       sync: {}
       updated_at: '2026-06-03T09:55:36.223057Z'
-    STARTER-501:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:38.059950Z'
-      description: 'code2llm reports `packages.coru.src.coru.repair.pipeline.run_repair_pipeline`
-        at `packages/coru/src/coru/repair/pipeline.py:464` with cyclomatic complexity
-        33 (limit 15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:packages/coru/src/coru/repair/pipeline.py:packages.coru.src.coru.repair.pipeline.run_repair_pipeline'
-      execution:
-        attempt: 0
-        finished_at: '2026-06-12T13:34:38.783454Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - packages/coru/src/coru/repair/pipeline.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-06-12T13:34:38.943716+00:00'
-      id: STARTER-501
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: packages.coru.src.coru.repair.pipeline.run_repair_pipeline
-        (CC=33)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:38.055943Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-06-12T13:34:38.943680+00:00'
-    STARTER-502:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:40.014219Z'
-      description: 'code2llm reports `src.koru.autonomous_readiness.check_lane_terminal_socket_alignment`
-        at `src/koru/autonomous_readiness.py:469` with cyclomatic complexity 32 (limit
-        15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_lane_terminal_socket_alignment'
-      execution:
-        attempt: 1
-        finished_at: '2026-06-12T14:05:09.487980Z'
-        last_error: <short failure reason>
-        max_attempts: 1
-        queue: default
-        state: failed
-      files:
-      - src/koru/autonomous_readiness.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-06-12T14:05:04.911478+00:00'
-      - action: update
-        changes:
-        - execution
-        - inputs
-        - outputs
-        execution_state: waiting_input
-        previous_execution_state: done
-        source: planfile.store
-        timestamp: '2026-06-12T14:05:07.201245+00:00'
-      - action: update
-        changes:
-        - execution
-        execution_state: failed
-        previous_execution_state: waiting_input
-        source: planfile.store
-        timestamp: '2026-06-12T14:05:09.664480+00:00'
-      id: STARTER-502
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: <exact input needed>
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_lane_terminal_socket_alignment
-        (CC=32)'
-      outputs:
-        artifacts: []
-        notes:
-        - <what you verified>
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:40.009274Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-06-12T14:05:09.664445+00:00'
-    STARTER-503:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:41.854441Z'
-      description: 'code2llm reports `src.koru.autonomous_readiness.check_runtime_consistency`
-        at `src/koru/autonomous_readiness.py:73` with cyclomatic complexity 27 (limit
-        15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_runtime_consistency'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T08:40:54.765340Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_readiness.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T08:40:54.910051+00:00'
-      id: STARTER-503
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_runtime_consistency
-        (CC=27)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:41.850953Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T08:40:54.910015+00:00'
-    STARTER-504:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:43.631238Z'
-      description: 'code2llm reports `src.koruide.command_picker._sanitize_candidates`
-        at `src/koruide/command_picker.py:71` with cyclomatic complexity 25 (limit
-        15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:src/koruide/command_picker.py:src.koruide.command_picker._sanitize_candidates'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:48.341535Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koruide/command_picker.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:48.496109+00:00'
-      id: STARTER-504
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: src.koruide.command_picker._sanitize_candidates
-        (CC=25)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:43.619753Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:48.496074+00:00'
-    STARTER-505:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:45.422619Z'
-      description: 'code2llm reports `God Function: _drive_autopilot_once` in `src/koru/autonomous_cycle_orchestrator.py:321`.
-
-
-        Function ''_drive_autopilot_once'' is oversized: CC=8, fan-out=14, mutations=23.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_orchestrator.py:321:God
-        Function: _drive_autopilot_once'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:50.234782Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_cycle_orchestrator.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:50.383194+00:00'
-      id: STARTER-505
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: _drive_autopilot_once'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:45.418066Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:50.383161+00:00'
-    STARTER-506:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:47.887249Z'
-      description: 'code2llm reports `God Function: _manual_send_required_skip_result`
-        in `src/koru/autonomous_cycle_skip_conditions.py:506`.
-
-
-        Function ''_manual_send_required_skip_result'' is oversized: CC=13, fan-out=18,
-        mutations=17.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_skip_conditions.py:506:God
-        Function: _manual_send_required_skip_result'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:52.139463Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_cycle_skip_conditions.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:52.287933+00:00'
-      id: STARTER-506
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: _manual_send_required_skip_result'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:55:47.868907Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:52.287897+00:00'
-    STARTER-507:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:51.070901Z'
-      description: 'code2llm reports `God Function: manual_vsix_unpack` in `packages/coru/src/coru/repair/pipeline.py:74`.
-
-
-        Function ''manual_vsix_unpack'' is oversized: CC=14, fan-out=23, mutations=18.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/repair/pipeline.py:74:God
-        Function: manual_vsix_unpack'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:54.032322Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - packages/coru/src/coru/repair/pipeline.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:54.181864+00:00'
-      id: STARTER-507
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: manual_vsix_unpack'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context:
-          dedupe_key: 'code2llm:smell:god_function:packages/coru/src/coru/repair/pipeline.py:191:God
-            Function: manual_vsix_unpack'
-          evidence:
-            artifact:
-              mtime_ns: 1783201952263365001
-              path: project/analysis.toon.yaml
-              sha256: 78669ab02fe2678b3a21ffcb342a6c44ca2d2ff2ef01188917f416e9e14d2903
-              size_bytes: 80467
-            files:
-            - mtime_ns: 1781177374241649544
-              path: packages/coru/src/coru/repair/pipeline.py
-              sha256: e03def4cdc6df1ca7879b014f255235a0fd0e9e177d6902a6d1651144f87ba0a
-              size_bytes: 30640
-            kind: code2llm_discovery
-            planfile_tickets:
-              mtime_ns: 1783201954506103207
-              path: project/planfile-tickets.yaml
-              sha256: c34438ae0a8d344b15ef49044363903546656ef42558b766487ee1156bca9020
-              size_bytes: 1096067
-            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
-              --no-chunk --exclude *.md --exclude plugins --planfile-apply --planfile-source
-              koru-project-discovery --planfile-sprint current --planfile-project
-              /home/tom/github/semcod/koru --planfile-limit 20
-            schema: koru.ticket_evidence.v1
-            staleness_check: Regenerate artifacts and compare artifact.sha256 / files[].sha256
-              before assuming this ticket is still current.
-          signal: code2llm_smell_god_function
-        timestamp: '2026-06-03T09:55:51.065089Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:54.181829+00:00'
-    STARTER-508:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:55:53.194467Z'
-      description: 'code2llm reports `God Module: packages.coru.src.coru.cli` in `packages/coru/src/coru/cli.py:1`.
-
-
-        Module ''packages.coru.src.coru.cli'' is too large (157 functions, 3 classes).
-        Consider splitting into sub-modules.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/cli.py:1:God
-        Module: packages.coru.src.coru.cli'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T17:33:13.231790Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - packages/coru/src/coru/cli.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T17:33:13.404344+00:00'
-      id: STARTER-508
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Module: packages.coru.src.coru.cli'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context:
-          dedupe_key: 'code2llm:smell:god_function:packages/coru/src/coru/cli.py:1:God
-            Module: packages.coru.src.coru.cli'
-          evidence:
-            artifact:
-              mtime_ns: 1783201952263365001
-              path: project/analysis.toon.yaml
-              sha256: 78669ab02fe2678b3a21ffcb342a6c44ca2d2ff2ef01188917f416e9e14d2903
-              size_bytes: 80467
-            files:
-            - mtime_ns: 1783098326683561511
-              path: packages/coru/src/coru/cli.py
-              sha256: b893c0b92e3fc8f470051745c0e5d8a942c63a62ed873b957f7057f18d3b38e5
-              size_bytes: 126979
-            kind: code2llm_discovery
-            planfile_tickets:
-              mtime_ns: 1783201954506103207
-              path: project/planfile-tickets.yaml
-              sha256: c34438ae0a8d344b15ef49044363903546656ef42558b766487ee1156bca9020
-              size_bytes: 1096067
-            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
-              --no-chunk --exclude *.md --exclude plugins --planfile-apply --planfile-source
-              koru-project-discovery --planfile-sprint current --planfile-project
-              /home/tom/github/semcod/koru --planfile-limit 20
-            schema: koru.ticket_evidence.v1
-            staleness_check: Regenerate artifacts and compare artifact.sha256 / files[].sha256
-              before assuming this ticket is still current.
-          signal: code2llm_smell_god_function
-        timestamp: '2026-06-03T09:55:53.182480Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T17:33:13.404306+00:00'
-    STARTER-519:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:06.596918Z'
-      description: 'code2llm reports `packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report`
-        at `packages/coru/src/coru/repair/diagnostics.py:83` with cyclomatic complexity
-        25 (limit 15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:packages/coru/src/coru/repair/diagnostics.py:packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:55.919201Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - packages/coru/src/coru/repair/diagnostics.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:56.070514+00:00'
-      id: STARTER-519
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: packages.coru.src.coru.repair.diagnostics.collect_problems_from_manage_report
-        (CC=25)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:06.594009Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:56.070466+00:00'
-    STARTER-520:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:08.268525Z'
-      description: 'code2llm reports `packages.coru.src.coru.repair.pipeline.run_repair_pipeline`
-        at `packages/coru/src/coru/repair/pipeline.py:464` with cyclomatic complexity
-        33 (limit 15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:packages/coru/src/coru/repair/pipeline.py:packages.coru.src.coru.repair.pipeline.run_repair_pipeline'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:57.794170Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - packages/coru/src/coru/repair/pipeline.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:57.956993+00:00'
-      id: STARTER-520
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: packages.coru.src.coru.repair.pipeline.run_repair_pipeline
-        (CC=33)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:08.258912Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:57.956960+00:00'
-    STARTER-521:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:09.917681Z'
-      description: 'code2llm reports `src.koru.autonomous_readiness.check_lane_terminal_socket_alignment`
-        at `src/koru/autonomous_readiness.py:469` with cyclomatic complexity 32 (limit
-        15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_lane_terminal_socket_alignment'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:18:59.666217Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_readiness.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:18:59.812701+00:00'
-      id: STARTER-521
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_lane_terminal_socket_alignment
-        (CC=32)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:09.912794Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:18:59.812665+00:00'
-    STARTER-522:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:11.571783Z'
-      description: 'code2llm reports `src.koru.autonomous_readiness.check_runtime_consistency`
-        at `src/koru/autonomous_readiness.py:73` with cyclomatic complexity 27 (limit
-        15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:src/koru/autonomous_readiness.py:src.koru.autonomous_readiness.check_runtime_consistency'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:19:01.542784Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_readiness.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:19:01.691645+00:00'
-      id: STARTER-522
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: src.koru.autonomous_readiness.check_runtime_consistency
-        (CC=27)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:11.560569Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:19:01.691607+00:00'
-    STARTER-523:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:13.327231Z'
-      description: 'code2llm reports `src.koruide.command_picker._sanitize_candidates`
-        at `src/koruide/command_picker.py:71` with cyclomatic complexity 25 (limit
-        15).
-
-
-        Extract smaller functions, flatten conditionals, or split strategy branches.
-        Re-run code2llm after the change and keep tests green.
-
-
-        code2llm-dedupe: code2llm:cc:src/koruide/command_picker.py:src.koruide.command_picker._sanitize_candidates'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:19:03.405378Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koruide/command_picker.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:19:03.549472+00:00'
-      id: STARTER-523
-      labels:
-      - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      name: 'Reduce cyclomatic complexity: src.koruide.command_picker._sanitize_candidates
-        (CC=25)'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:13.235623Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:19:03.549434+00:00'
-    STARTER-524:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:14.988064Z'
-      description: 'code2llm reports `God Function: _drive_autopilot_once` in `src/koru/autonomous_cycle_orchestrator.py:321`.
-
-
-        Function ''_drive_autopilot_once'' is oversized: CC=8, fan-out=14, mutations=23.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_orchestrator.py:321:God
-        Function: _drive_autopilot_once'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:19:05.266069Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_cycle_orchestrator.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:19:05.409298+00:00'
-      id: STARTER-524
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: _drive_autopilot_once'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:14.977013Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:19:05.409265+00:00'
-    STARTER-525:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:16.638622Z'
-      description: 'code2llm reports `God Function: _manual_send_required_skip_result`
-        in `src/koru/autonomous_cycle_skip_conditions.py:506`.
-
-
-        Function ''_manual_send_required_skip_result'' is oversized: CC=13, fan-out=18,
-        mutations=17.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_skip_conditions.py:506:God
-        Function: _manual_send_required_skip_result'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:19:07.200690Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - src/koru/autonomous_cycle_skip_conditions.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:19:07.440344+00:00'
-      id: STARTER-525
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: _manual_send_required_skip_result'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context: {}
-        timestamp: '2026-06-03T09:59:16.635613Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:19:07.440293+00:00'
-    STARTER-526:
-      acceptance_criteria: []
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-03T09:59:18.341380Z'
-      description: 'code2llm reports `God Function: manual_vsix_unpack` in `packages/coru/src/coru/repair/pipeline.py:74`.
-
-
-        Function ''manual_vsix_unpack'' is oversized: CC=14, fan-out=23, mutations=18.
-
-
-        Make the smallest refactor that removes the smell and run local tests.
-
-
-        code2llm-dedupe: code2llm:smell:god_function:packages/coru/src/coru/repair/pipeline.py:74:God
-        Function: manual_vsix_unpack'
-      execution:
-        attempt: 0
-        finished_at: '2026-07-03T09:19:10.237729Z'
-        max_attempts: 1
-        queue: default
-        state: done
-      files:
-      - packages/coru/src/coru/repair/pipeline.py
-      history:
-      - action: update
-        changes:
-        - execution
-        - outputs
-        - status
-        execution_state: done
-        previous_execution_state: null
-        previous_status: open
-        source: planfile.store
-        status: done
-        timestamp: '2026-07-03T09:19:10.604804+00:00'
-      id: STARTER-526
-      labels:
-      - llm-ready
-      - code2llm
-      - code-smell
-      - god-function
-      name: 'Address code smell: God Function: manual_vsix_unpack'
-      outputs:
-        artifacts: []
-        notes: []
-      priority: high
-      source:
-        context:
-          dedupe_key: 'code2llm:smell:god_function:packages/coru/src/coru/repair/pipeline.py:191:God
-            Function: manual_vsix_unpack'
-          evidence:
-            artifact:
-              mtime_ns: 1783201952263365001
-              path: project/analysis.toon.yaml
-              sha256: 78669ab02fe2678b3a21ffcb342a6c44ca2d2ff2ef01188917f416e9e14d2903
-              size_bytes: 80467
-            files:
-            - mtime_ns: 1781177374241649544
-              path: packages/coru/src/coru/repair/pipeline.py
-              sha256: e03def4cdc6df1ca7879b014f255235a0fd0e9e177d6902a6d1651144f87ba0a
-              size_bytes: 30640
-            kind: code2llm_discovery
-            planfile_tickets:
-              mtime_ns: 1783201954506103207
-              path: project/planfile-tickets.yaml
-              sha256: c34438ae0a8d344b15ef49044363903546656ef42558b766487ee1156bca9020
-              size_bytes: 1096067
-            regenerate_command: code2llm /home/tom/github/semcod/koru -f all -o /home/tom/github/semcod/koru/project
-              --no-chunk --exclude *.md --exclude plugins --planfile-apply --planfile-source
-              koru-project-discovery --planfile-sprint current --planfile-project
-              /home/tom/github/semcod/koru --planfile-limit 20
-            schema: koru.ticket_evidence.v1
-            staleness_check: Regenerate artifacts and compare artifact.sha256 / files[].sha256
-              before assuming this ticket is still current.
-          signal: code2llm_smell_god_function
-        timestamp: '2026-06-03T09:59:18.337845Z'
-        tool: koru-project-discovery
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-07-03T09:19:10.604756+00:00'
     STARTER-540:
       blocked_by: []
       blocks: []
@@ -26514,75 +25274,6 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-06-07T09:48:43.873402+00:00'
-    STARTER-542:
-      blocked_by: []
-      blocks: []
-      created_at: '2026-06-12T11:22:32.194351+00:00'
-      description: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-        Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-        0/4 passed, 2 failed (2ms) track=/home/tom/github/semcod/koru/.wup/tracks/1781263348_koru-shell_quick.json.
-        Investigate and fix regression, stale quality artifact, or broken diagnostic
-        gate.'
-      execution:
-        attempt: 0
-        finished_at: '2026-06-12T13:09:46.436801+00:00'
-        last_error: null
-        lease_expires_at: null
-        max_attempts: 1
-        queue: default
-        state: done
-      executor:
-        kind: human
-        mode: interactive
-      files: []
-      history:
-      - action: created
-        message: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-          0/4 passed, 2 failed (2ms) track=/home/tom/github/semcod/koru/.wup/tracks/1781263348_koru-shell_quick.json.
-          Investigate and fix regression, stale quality artifact, or broken diagnostic
-          gate.'
-        source: koru task
-        timestamp: '2026-06-12T11:22:32.194351+00:00'
-      - action: auto_resolved
-        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
-        source: koru wup
-        timestamp: '2026-06-12T13:09:46.436801+00:00'
-      id: STARTER-542
-      inputs:
-        api_headers: {}
-        api_method: GET
-        api_timeout_seconds: 30.0
-        env_keys: []
-        prompt: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-          0/4 passed, 2 failed (2ms) track=/home/tom/github/semcod/koru/.wup/tracks/1781263348_koru-shell_quick.json.
-          Investigate and fix regression, stale quality artifact, or broken diagnostic
-          gate.'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      name: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-        Check: WUP service=koru-shell stage=...'
-      outputs:
-        artifacts: []
-        notes:
-        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
-      priority: high
-      source:
-        context:
-          input: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-            Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-            0/4 passed, 2 failed (2ms) track=/home/tom/github/semcod/koru/.wup/tracks/1781263348_koru-shell_quick.json.
-            Investigate and fix regression, stale quality artifact, or broken diagnostic
-            gate.'
-        timestamp: '2026-06-12T11:22:32.194351+00:00'
-        tool: koru-cli-nl
-      sprint: current
-      status: done
-      sync: {}
-      updated_at: '2026-06-12T13:09:46.436801+00:00'
     STARTER-543:
       acceptance_criteria: []
       blocked_by: []
@@ -29462,9 +28153,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T16:21:16.508311Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29481,6 +28173,26 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:06.696640+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T16:21:00.583679+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T16:21:14.017293+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T16:21:16.516701+00:00'
       id: STARTER-571
       inputs:
         api_headers: {}
@@ -29504,7 +28216,10 @@ sprint:
       name: 'Address code smell: God Function: _import_imgl_targets'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
       priority: high
       source:
         context:
@@ -29545,9 +28260,9 @@ sprint:
         timestamp: '2026-07-04T21:53:06.696640+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:06.696640+00:00'
+      updated_at: '2026-07-05T16:21:16.516668+00:00'
     STARTER-572:
       blocked_by: []
       blocks: []
@@ -29561,9 +28276,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T16:56:29.048653Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29580,6 +28296,26 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:08.954491+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T16:56:14.155031+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T16:56:27.658490+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T16:56:29.056870+00:00'
       id: STARTER-572
       inputs:
         api_headers: {}
@@ -29603,7 +28339,10 @@ sprint:
       name: 'Address code smell: God Function: _lane_calibration'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
       priority: high
       source:
         context:
@@ -29644,9 +28383,9 @@ sprint:
         timestamp: '2026-07-04T21:53:08.954491+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:08.954491+00:00'
+      updated_at: '2026-07-05T16:56:29.056834+00:00'
     STARTER-573:
       blocked_by: []
       blocks: []
@@ -29660,9 +28399,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T17:31:53.598044Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29679,6 +28419,34 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:11.203315+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T17:31:36.116903+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T17:31:51.786444+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T17:31:53.606289+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T17:37:19.620749+00:00'
       id: STARTER-573
       inputs:
         api_headers: {}
@@ -29702,7 +28470,25 @@ sprint:
       name: 'Address code smell: God Function: _main_subcommand'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ........................................................................
+          [  7%] ........................................................................
+          [  9%] ........................................................................
+          [ 12%] ........................................................................
+          [ 14%] ........................................................................
+          [ 16%] ........................................................................
+          [ 19%] ........................................................................
+          [ 21%] ........................................................................
+          [ 24%] ........................................................................
+          [ 26%] ........................................................................
+          [ 29%] ........................................................................
+          [ 31%] .......F =================================== FAILURES ===================================
+          _____________ test_bundled_vscodiu...'
       priority: high
       source:
         context:
@@ -29745,7 +28531,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-07-04T21:53:11.203315+00:00'
+      updated_at: '2026-07-05T17:37:19.620707+00:00'
     STARTER-574:
       blocked_by: []
       blocks: []
