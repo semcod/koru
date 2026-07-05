@@ -549,32 +549,56 @@ def build_context(
 # ---------------------------------------------------------------------------
 
 
+# mtime/size-keyed cache for the sprint YAML. The dashboard re-requests
+# /api/context every ~5s and each build_context call parsed the whole
+# (1MB+, 300-ticket) current.yaml with the pure-Python loader — ~1.5s each,
+# multiple times per request. Cache the parse and skip it entirely while the
+# file is unchanged; use the libyaml C loader (≈8x faster) when present.
+_SPRINT_YAML_CACHE: dict[str, tuple[int, int, dict[str, Any] | None]] = {}
+
+
+def _fast_yaml_load(path: Path) -> Any:
+    """Parse a YAML file with the C loader when available (much faster)."""
+    import yaml
+
+    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+    with open(path, encoding="utf-8") as f:
+        return yaml.load(f, Loader=loader)
+
+
 def _load_sprint_data(project: Path) -> dict[str, Any] | None:
-    """Load sprint data from current.yaml file."""
+    """Load sprint data from current.yaml, cached by file mtime+size."""
     from koru.runtime import planfile_dir
 
     pf = planfile_dir(project)
     sprint_file = pf / "sprints" / "current.yaml"
 
-    if not sprint_file.exists():
+    try:
+        stat = sprint_file.stat()
+    except OSError:
         return None
+
+    key = str(sprint_file)
+    cached = _SPRINT_YAML_CACHE.get(key)
+    if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+        return cached[2]
 
     try:
-        import yaml
-
-        with open(sprint_file, encoding="utf-8") as f:
-            sprint_data = yaml.safe_load(f)
-
-        if not sprint_data or "sprint" not in sprint_data:
-            return None
-
-        sprint_info = sprint_data["sprint"]
-        if "tickets" not in sprint_info:
-            return None
-
-        return sprint_data
+        sprint_data = _fast_yaml_load(sprint_file)
     except Exception:
         return None
+
+    result: dict[str, Any] | None = None
+    if (
+        sprint_data
+        and isinstance(sprint_data, dict)
+        and isinstance(sprint_data.get("sprint"), dict)
+        and "tickets" in sprint_data["sprint"]
+    ):
+        result = sprint_data
+
+    _SPRINT_YAML_CACHE[key] = (stat.st_mtime_ns, stat.st_size, result)
+    return result
 
 
 def _find_blocking_tickets(tickets: dict[str, Any]) -> set[str]:
