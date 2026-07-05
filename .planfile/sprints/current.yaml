@@ -29049,9 +29049,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T22:40:33.208424Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -29068,6 +29069,16 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:20.406572+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T22:40:33.216563+00:00'
       id: STARTER-577
       inputs:
         api_headers: {}
@@ -29132,9 +29143,9 @@ sprint:
         timestamp: '2026-07-04T21:53:20.406572+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:53:20.406572+00:00'
+      updated_at: '2026-07-05T22:40:33.216537+00:00'
     STARTER-578:
       blocked_by: []
       blocks: []

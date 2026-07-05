@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import shlex
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.autopilot.cli_snapshot_lines import _bridge_line as _bridge_line
 from koru.autopilot.cli_snapshot_lines import _calibration_line as _calibration_line
@@ -99,7 +99,7 @@ def _snapshot_runtime_block(
     *,
     project: Path,
     ide: str,
-) -> tuple[list[str], dict[str, Any]]:
+) -> _RuntimeBlock:
     """Daemon health/plugin/bridge lines plus the fetched status payload."""
     lines: list[str] = []
     info: dict[str, Any] = {}
@@ -127,7 +127,103 @@ def _snapshot_runtime_block(
                     info=info,
                 )
             )
-    return lines, info
+    return _RuntimeBlock(lines, info)
+
+
+class _SnapshotContext(NamedTuple):
+    project: Path
+    ide: str
+    client: Any
+    limit: int
+    ticket: str | None
+
+
+class _RuntimeBlock(NamedTuple):
+    lines: list[str]
+    info: dict[str, Any]
+
+
+def _snapshot_client(
+    args: argparse.Namespace,
+    *,
+    project: Path,
+    ide: str,
+    client_fn: Any | None,
+) -> Any:
+    if client_fn is None:
+        from koru.autopilot.client import AutopilotClient
+
+        return AutopilotClient(
+            socket_path=getattr(args, "socket", None),
+            project=project,
+            ide=ide,
+        )
+    return client_fn(args)
+
+
+def _snapshot_ticket(args: argparse.Namespace) -> str | None:
+    return str(args.ticket).strip() if getattr(args, "ticket", None) else None
+
+
+def _snapshot_context(
+    args: argparse.Namespace,
+    *,
+    client_fn: Any | None,
+) -> _SnapshotContext:
+    project = Path(args.project).resolve()
+    ide = canonical_autopilot_ide_id(normalize_ide_id(str(args.ide)))
+    client = _snapshot_client(args, project=project, ide=ide, client_fn=client_fn)
+    limit = max(0, int(args.limit or 12))
+    ticket = _snapshot_ticket(args)
+    return _SnapshotContext(
+        project=project, ide=ide, client=client, limit=limit, ticket=ticket
+    )
+
+
+def _replay_lines(ctx: _SnapshotContext, args: argparse.Namespace) -> list[str]:
+    lane_env = _lane_shell_env(
+        project=ctx.project,
+        ide=ctx.ide,
+        socket_path=str(ctx.client.socket_path),
+    )
+    shells = [
+        f"{lane_env} koru autopilot status --ide {ctx.ide} --explain --project {shlex.quote(str(ctx.project))}",
+        f"koru observe trace --project {shlex.quote(str(ctx.project))} --format path --limit {ctx.limit}",
+        f"koru autopilot trace --project {shlex.quote(str(ctx.project))} --format drive-dsl --limit {ctx.limit}",
+        f"{lane_env} koru replay 'ide connect-plugin {ctx.ide}' --explain",
+    ]
+    if args.include_env2llm:
+        shells.append(
+            f"ENV2LLM_DESKTOP_PROBE=1 env2llm {shlex.quote(str(ctx.project))} --probe-desktop"
+        )
+    return [
+        f"#{idx:03d} act=replay shell={_dsl_quote(shell, max_len=1000)}"
+        for idx, shell in enumerate(shells, start=904)
+    ]
+
+
+def _compose_snapshot_lines(
+    ctx: _SnapshotContext,
+    args: argparse.Namespace,
+    runtime: _RuntimeBlock,
+) -> list[str]:
+    decision_lines = _decision_lines(ctx.project, limit=1)
+    env_lines = _env2llm_lines(ctx.project) if args.include_env2llm else []
+    return [
+        *runtime.lines,
+        *decision_lines,
+        *_observe_path_line(ctx.project, ticket=ctx.ticket, limit=ctx.limit),
+        *_drive_dsl_lines(ctx.project, limit=ctx.limit),
+        *env_lines,
+        *_operator_lines(
+            project=ctx.project,
+            ide=ctx.ide,
+            socket_path=str(ctx.client.socket_path),
+            info=runtime.info,
+            skip_code=_skip_code_from_decision_lines(decision_lines),
+        ),
+        *_replay_lines(ctx, args),
+    ]
 
 
 def action_snapshot(
@@ -136,61 +232,11 @@ def action_snapshot(
     client_fn: Any | None = None,
 ) -> int:
     """Print a unified shell OQL/DSL snapshot with replay/validate commands."""
-    project = Path(args.project).resolve()
-    ide = canonical_autopilot_ide_id(normalize_ide_id(str(args.ide)))
-    if client_fn is None:
-        from koru.autopilot.client import AutopilotClient
-
-        client = AutopilotClient(
-            socket_path=getattr(args, "socket", None),
-            project=project,
-            ide=ide,
-        )
-    else:
-        client = client_fn(args)
-    limit = max(0, int(args.limit or 12))
-    ticket = str(args.ticket).strip() if getattr(args, "ticket", None) else None
-
-    lines, info = _snapshot_runtime_block(client, project=project, ide=ide)
-
-    decision_lines = _decision_lines(project, limit=1)
-    lines.extend(decision_lines)
-    skip_code = _skip_code_from_decision_lines(decision_lines)
-
-    lines.extend(_observe_path_line(project, ticket=ticket, limit=limit))
-    lines.extend(_drive_dsl_lines(project, limit=limit))
-    if args.include_env2llm:
-        lines.extend(_env2llm_lines(project))
-
-    lane_env = _lane_shell_env(
-        project=project,
-        ide=ide,
-        socket_path=str(client.socket_path),
-    )
-    replay_shells = [
-        f"{lane_env} koru autopilot status --ide {ide} --explain --project {shlex.quote(str(project))}",
-        f"koru observe trace --project {shlex.quote(str(project))} --format path --limit {limit}",
-        f"koru autopilot trace --project {shlex.quote(str(project))} --format drive-dsl --limit {limit}",
-        f"{lane_env} koru replay 'ide connect-plugin {ide}' --explain",
-    ]
-    if args.include_env2llm:
-        replay_shells.append(
-            f"ENV2LLM_DESKTOP_PROBE=1 env2llm {shlex.quote(str(project))} --probe-desktop"
-        )
-    lines.extend(
-        _operator_lines(
-            project=project,
-            ide=ide,
-            socket_path=str(client.socket_path),
-            info=info,
-            skip_code=skip_code,
-        )
-    )
-    for idx, shell in enumerate(replay_shells, start=904):
-        lines.append(f"#{idx:03d} act=replay shell={_dsl_quote(shell, max_len=1000)}")
-
+    ctx = _snapshot_context(args, client_fn=client_fn)
+    runtime = _snapshot_runtime_block(ctx.client, project=ctx.project, ide=ctx.ide)
+    lines = _compose_snapshot_lines(ctx, args, runtime)
     print("\n".join(lines))
-    return 0 if client.is_running() else 1
+    return 0 if ctx.client.is_running() else 1
 
 
 __all__ = ["action_snapshot"]
