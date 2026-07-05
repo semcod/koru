@@ -10,6 +10,9 @@ const ID = "vscode";
 
 function detect(appName: string): string | undefined {
   const lowered = appName.toLowerCase();
+  // Qoder masquerades as "Visual Studio Code" in appName; its install
+  // paths in the detect probe carry the real product name.
+  if (lowered.includes("qoder")) return undefined;
   if (
     lowered.includes("visual studio code") ||
     (lowered.includes("code") &&

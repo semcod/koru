@@ -37,7 +37,10 @@ export function detectIdeViaStrategies(appName: string): string | undefined {
 }
 
 export function bootstrapStrategies(): void {
-  for (const mod of ["./vscode", "./qoder"]) {
+  // Forks first: the detect probe may contain both the fork's install
+  // path and a masqueraded "Visual Studio Code" appName, so the more
+  // specific strategy must win before vscode's broad match.
+  for (const mod of ["./qoder", "./vscode"]) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require(mod);
   }

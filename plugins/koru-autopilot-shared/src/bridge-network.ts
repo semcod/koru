@@ -32,8 +32,13 @@ export abstract class SharedAutopilotBridgeNetwork extends SharedAutopilotBridge
   protected abstract injectChat(env: Envelope): Promise<void>;
 
   protected detectIde(): string {
-    const app = vscode.env.appName || "";
-    return detectIdeViaStrategies(app) ?? "vscode";
+    // Some forks masquerade as VS Code in `env.appName` (Qoder reports
+    // "Visual Studio Code"), so the probe also covers install paths
+    // (`appRoot`, `execPath`) which keep the real product name.
+    const probe = [vscode.env.appName, vscode.env.appRoot, process.execPath]
+      .filter(Boolean)
+      .join(" ");
+    return detectIdeViaStrategies(probe) ?? "vscode";
   }
 
   socketPath(): string {
