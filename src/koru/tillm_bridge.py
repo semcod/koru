@@ -185,10 +185,19 @@ def drive_shell_chat(
     execute: bool,
     model: str | None = None,
     execute_profile: str = "default",
+    timeout_seconds: float | None = None,
 ) -> dict[str, object]:
     ensure_local_tillm_path()
     from tillm.compat import drive_koru_chat
 
+    kwargs: dict[str, float] = {}
+    if timeout_seconds is not None:
+        # Older tillm without the timeout param keeps working (its 900s
+        # default applies); newer tillm honours the override.
+        import inspect
+
+        if "timeout_seconds" in inspect.signature(drive_koru_chat).parameters:
+            kwargs["timeout_seconds"] = timeout_seconds
     return drive_koru_chat(
         client_id=client_id,
         project=project,
@@ -196,6 +205,7 @@ def drive_shell_chat(
         execute=execute,
         model=model,
         execute_profile=execute_profile,
+        **kwargs,
     )
 
 

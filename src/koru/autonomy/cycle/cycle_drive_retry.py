@@ -569,6 +569,13 @@ def _drive_shell_client(
     """Drive a vendor CLI (claude-code, aider, codex, …) headlessly via tillm."""
     from koru.tillm_bridge import drive_shell_chat
 
+    timeout_seconds: float | None = None
+    raw_timeout = os.environ.get("KORU_TILLM_TIMEOUT_SECONDS", "").strip()
+    if raw_timeout:
+        try:
+            timeout_seconds = float(raw_timeout)
+        except ValueError:
+            timeout_seconds = None
     try:
         reply = drive_shell_chat(
             client_id=client_id,
@@ -578,6 +585,7 @@ def _drive_shell_client(
             model=os.environ.get("KORU_TILLM_MODEL", "").strip() or None,
             execute_profile=os.environ.get("KORU_TILLM_EXECUTE_PROFILE", "").strip()
             or "default",
+            timeout_seconds=timeout_seconds,
         )
     except Exception as exc:
         reply = {
