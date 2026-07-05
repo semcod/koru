@@ -119,13 +119,17 @@ def _editor_bin_usable_for_cli_install(exe: str) -> bool:
     Cursor AppImage mounts under ``/.mount_*`` cannot start a second instance for
     ``--install-extension`` (zygote/sandbox failure). Those installs share
     ``~/.cursor/extensions`` with the apt/snap CLI, so PATH ``cursor`` is enough.
+
+    Note: this function does *not* check whether the file exists — callers that
+    need an existence check (e.g. ``_fallback_cli_editor_bins``) perform
+    ``Path.is_file()`` themselves before invoking this predicate.
     """
     normalized = exe.replace("\\", "/")
     if "/.mount_" in normalized:
         return False
     if normalized.startswith("/snap/") and not normalized.startswith("/snap/bin/"):
         return False
-    return Path(exe).is_file()
+    return True
 
 
 def _which_cli_safe_editor(name: str) -> str | None:
