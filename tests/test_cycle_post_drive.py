@@ -12,7 +12,6 @@ from koru.autonomy.cycle.cycle_post_drive import (
     _drive_effect_payload,
     _emit_drive_effect_if_needed,
     _maybe_emit_improved_prompt,
-    _maybe_emit_llm_evaluation,
     _post_drive_ticket_id,
     _snapshot_before_drive,
     _submitted_but_no_effect,

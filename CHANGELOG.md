@@ -7,7 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `koru fleet up` / `koru fleet ls` (`koru/cli_fleet.py`): a supervisor that
+  discovers every project with a koru LLM-agent policy
+  (`.planfile/.koru/policy.yaml`) under a workspace root and runs one
+  supervised `koru autonomous up --project <p> --replace-existing` child
+  process per project — a single broker-style service (like an MQTT broker
+  managing many topics) instead of one hand-configured systemd unit per
+  project. Restarts a project's child after `--restart-backoff-seconds` if
+  it exits, and periodically re-discovers newly `koru --init`-ed projects
+  (`--rescan-interval-seconds`) without needing a restart. Process-level
+  isolation is deliberate — one project's crash/resource use can't take
+  down another's loop. 17 new tests (`tests/test_cli_fleet.py`), plus a
+  live smoke test (2 synthetic projects, verified child spawn + clean
+  SIGTERM shutdown of both).
+
 ### Fixed
+- **`_command_project()` (`autonomy/operator/operator_processes.py`)
+  resolved a relative `--project` argument (almost always `.` — the common
+  invocation shown by `koru --doctor`'s own recovery hint,
+  `koru autonomous up --project . --replace-existing`) against the
+  *checking* process's own current directory instead of the *target*
+  process's.** Two completely unrelated `koru autonomous up` instances for
+  different projects, each started with `--project .` from their own
+  directory, could resolve to the *same* absolute path whenever the
+  checking process's cwd happened to equal the other instance's original
+  cwd — `--replace-existing` would then kill a perfectly healthy, unrelated
+  project's autonomous loop, believing it was "the same project already
+  running." Reproduced live in this session by a `koru fleet up` child for
+  a synthetic test project killing an unrelated, hours-old, real
+  `koru autonomous up --project . --replace-existing` instance for a
+  different project. This is a strong candidate for at least some of the
+  autonomous loop's observed unreliability ("why doesn't it stay running")
+  — any two relatively-invoked instances anywhere on the machine were at
+  risk, not just deliberately-concurrent ones. Fixed by resolving the
+  relative path against that process's own cwd (`_process_cwd(pid)`,
+  already computed by the caller for exactly this purpose) instead of the
+  checking process's `Path.cwd()`. Verified with 11 new tests
+  (`tests/test_operator_processes_project_matching.py`) — including a
+  direct reproduction of the two-unrelated-instances scenario — plus the 3
+  existing `--replace-existing`/existing-process tests in
+  `tests/test_autonomous.py` still pass. This function had zero prior test
+  coverage.
 - `shell_drive_finalize.finalize_shell_drive_ticket` always ran `ticket done`
   + `queue.post_run_verify` unconditionally, even when the same ticket had
   already been resolved (done/canceled) by a concurrent actor — a human, or
