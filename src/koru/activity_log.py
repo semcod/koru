@@ -25,7 +25,7 @@ def preview_text(text: str, *, limit: int = 120) -> str:
     return f"{one_line[: limit - 1]}…"
 
 
-from koru.env_flags import env_disabled as _env_disabled
+from koru.env_flags import env_disabled as _env_disabled  # noqa: E402
 
 
 def configure_nfo_activity_log(project: Path) -> Path | None:

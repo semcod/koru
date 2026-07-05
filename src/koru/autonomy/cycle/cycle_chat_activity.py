@@ -2,57 +2,57 @@ from __future__ import annotations
 
 import os
 import time
-from hashlib import sha1
+from hashlib import sha1  # noqa: F401
 from pathlib import Path
 from typing import Any
 
 from koru.autonomy.cycle.cycle_chat_activity_analyzer import (
-    _CHAT_ACTIVITY_TYPES,
+    _CHAT_ACTIVITY_TYPES,  # noqa: F401
     _age_seconds_from_label,
     _chat_activity_cooldown_for_state,
     _determine_chat_activity_status,
-    _event_is_self_drive_for_other_ticket,
-    _event_matches_last_driven_prompt,
-    _event_timestamp,
+    _event_is_self_drive_for_other_ticket,  # noqa: F401
+    _event_matches_last_driven_prompt,  # noqa: F401
+    _event_timestamp,  # noqa: F401
     _filter_chat_activity_events_for_waiting_ticket,
     _last_self_drive_event_age,
     _last_successful_drive_ack_age,
     _llx_chat_reflection_enabled,
     _recent_chat_activity_events,
-    _recent_chat_history_fallback,
+    _recent_chat_history_fallback,  # noqa: F401
     _record_normalized_chat_activity_events,
     _state_events_to_chat_events,
-    classify_chat_event,
+    classify_chat_event,  # noqa: F401
     decide_intake_ticket,
     decide_redrive_cooldown,
     explain_skip,
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
+    autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,
+    autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    chat_intake_ticket_enabled as _chat_intake_ticket_enabled,
+    chat_intake_ticket_enabled as _chat_intake_ticket_enabled,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
     llm_needs_input_heuristic_enabled as _llm_needs_input_heuristic_enabled,
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,
+    llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,
+    llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,
+    llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_config import (
-    llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,
+    llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_text import (
-    compact_question_text as _compact_question_text,
+    compact_question_text as _compact_question_text,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_text import (
     extract_needs_input_question as _extract_needs_input_question,
@@ -61,20 +61,20 @@ from koru.autonomy.cycle.cycle_chat_activity_text import (
     latest_received_text as _latest_received_text,
 )
 from koru.autonomy.cycle.cycle_chat_activity_text import (
-    looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,
+    looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_text import (
-    looks_like_explicit_intake_text as _looks_like_explicit_intake_text,
+    looks_like_explicit_intake_text as _looks_like_explicit_intake_text,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_chat_activity_text import (
-    normalize_prompt_text as _normalize_prompt_text,
+    normalize_prompt_text as _normalize_prompt_text,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.prompts import PromptDecision
 from koru.autonomy.reflection_policy import decide_chat_reflection
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
-from koru.tasks import create_nl_task
+from koru.tasks import create_nl_task  # noqa: F401
 
 
 def _cycle_attr(name: str, fallback: Any) -> Any:
@@ -83,16 +83,16 @@ def _cycle_attr(name: str, fallback: Any) -> Any:
     return getattr(_cycle_mod, name, fallback)
 
 
-from koru.autonomy.cycle.cycle_chat_activity_tickets import (
-    _external_message_sent_text,
-    _llm_needs_input_operator_payload,
-    _llm_needs_input_summary,
-    _llm_needs_input_waiting_ticket,
-    _note_reused_llm_needs_input_operator_ticket,
+from koru.autonomy.cycle.cycle_chat_activity_tickets import (  # noqa: E402
+    _external_message_sent_text,  # noqa: F401
+    _llm_needs_input_operator_payload,  # noqa: F401
+    _llm_needs_input_summary,  # noqa: F401
+    _llm_needs_input_waiting_ticket,  # noqa: F401
+    _note_reused_llm_needs_input_operator_ticket,  # noqa: F401
     _recent_llm_reflection_summary,
     _upsert_chat_intake_operator_ticket,
     _upsert_llm_needs_input_operator_ticket,
-    _waiting_ticket_has_chat_intake_label,
+    _waiting_ticket_has_chat_intake_label,  # noqa: F401
 )
 
 

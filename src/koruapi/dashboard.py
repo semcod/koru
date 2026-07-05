@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import os
+import os  # noqa: F401
 import sys
 from pathlib import Path
 

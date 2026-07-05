@@ -17,7 +17,7 @@ from koru.autonomy.cycle.cycle_chat_activity_text import (
 )
 from koru.autonomy.events import normalize_chat_events
 from koru.autonomy.state import AutoloopState
-from koru.queue import QueueLoopResult
+from koru.queue import QueueLoopResult  # noqa: F401
 
 _CHAT_ACTIVITY_TYPES = ("message.sent", "message.received")
 

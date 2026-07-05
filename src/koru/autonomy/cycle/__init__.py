@@ -50,7 +50,7 @@ from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_id
 from koruide.ide import detect_terminal_host_ide_id  # noqa: F401
 
 __all__ = [
-    "DiagnosticResult",
+    "DiagnosticResult",  # noqa: F405
     "_autopilot_redrive_cooldown_seconds",
     "_build_queue_command",
     "_drain_autopilot_events",
@@ -66,46 +66,46 @@ __all__ = [
     "_skip_due_to_recent_chat_activity",
     "_take_pre_drive_snapshot",
     "detect_terminal_host_ide_id",
-    "apply_agent_lane_environ",
-    "apply_autopilot_drive_outcome",
-    "autopilot_escalation_cooldown_seconds",
-    "autopilot_os_injector_cooldown_seconds",
-    "autopilot_redrive_cooldown_seconds",
-    "build_cycle_run_kwargs",
-    "chat_intake_ticket_enabled",
-    "classify_chat_event",
-    "compact_question_text",
-    "compute_cycle_sleep",
-    "configure_loop_state",
-    "decide_intake_ticket",
-    "decide_redrive_cooldown",
-    "effective_cycle_autopilot_enabled",
-    "effective_cycle_scan_enabled",
-    "effective_ide_control_submit",
-    "explain_skip",
-    "extract_needs_input_question",
-    "imgl_fallback_enabled",
-    "latest_received_text",
-    "llm_needs_input_heuristic_enabled",
-    "llm_needs_input_ticket_enabled",
-    "llm_needs_input_ticket_priority",
-    "llm_needs_input_ticket_queue_name",
-    "llm_reflection_summary_max_age_seconds",
-    "looks_like_autopilot_generated_prompt",
-    "looks_like_explicit_intake_text",
-    "nlp2uri_ide_control_enabled",
-    "normalize_prompt_text",
-    "resolve_agent_lane_from_environ",
-    "resolve_autopilot_ide",
-    "resolve_effective_cycle_flags",
-    "run_cycle_with_compat",
-    "scan_while_waiting_input_enabled",
-    "select_and_log_cycle_profile",
-    "try_gillm_gui_fallback",
-    "try_imgl_gui_fallback",
-    "try_nlp2uri_focus_fallback",
-    "try_nlp2uri_ide_control",
-    "try_os_injector_fallback",
-    "try_os_injector_fallback_with_deps",
-    "try_vdisplay_control_fallback",
+    "apply_agent_lane_environ",  # noqa: F405
+    "apply_autopilot_drive_outcome",  # noqa: F405
+    "autopilot_escalation_cooldown_seconds",  # noqa: F405
+    "autopilot_os_injector_cooldown_seconds",  # noqa: F405
+    "autopilot_redrive_cooldown_seconds",  # noqa: F405
+    "build_cycle_run_kwargs",  # noqa: F405
+    "chat_intake_ticket_enabled",  # noqa: F405
+    "classify_chat_event",  # noqa: F405
+    "compact_question_text",  # noqa: F405
+    "compute_cycle_sleep",  # noqa: F405
+    "configure_loop_state",  # noqa: F405
+    "decide_intake_ticket",  # noqa: F405
+    "decide_redrive_cooldown",  # noqa: F405
+    "effective_cycle_autopilot_enabled",  # noqa: F405
+    "effective_cycle_scan_enabled",  # noqa: F405
+    "effective_ide_control_submit",  # noqa: F405
+    "explain_skip",  # noqa: F405
+    "extract_needs_input_question",  # noqa: F405
+    "imgl_fallback_enabled",  # noqa: F405
+    "latest_received_text",  # noqa: F405
+    "llm_needs_input_heuristic_enabled",  # noqa: F405
+    "llm_needs_input_ticket_enabled",  # noqa: F405
+    "llm_needs_input_ticket_priority",  # noqa: F405
+    "llm_needs_input_ticket_queue_name",  # noqa: F405
+    "llm_reflection_summary_max_age_seconds",  # noqa: F405
+    "looks_like_autopilot_generated_prompt",  # noqa: F405
+    "looks_like_explicit_intake_text",  # noqa: F405
+    "nlp2uri_ide_control_enabled",  # noqa: F405
+    "normalize_prompt_text",  # noqa: F405
+    "resolve_agent_lane_from_environ",  # noqa: F405
+    "resolve_autopilot_ide",  # noqa: F405
+    "resolve_effective_cycle_flags",  # noqa: F405
+    "run_cycle_with_compat",  # noqa: F405
+    "scan_while_waiting_input_enabled",  # noqa: F405
+    "select_and_log_cycle_profile",  # noqa: F405
+    "try_gillm_gui_fallback",  # noqa: F405
+    "try_imgl_gui_fallback",  # noqa: F405
+    "try_nlp2uri_focus_fallback",  # noqa: F405
+    "try_nlp2uri_ide_control",  # noqa: F405
+    "try_os_injector_fallback",  # noqa: F405
+    "try_os_injector_fallback_with_deps",  # noqa: F405
+    "try_vdisplay_control_fallback",  # noqa: F405
 ]

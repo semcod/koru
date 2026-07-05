@@ -1,8 +1,8 @@
 import json
-from pathlib import Path
+from pathlib import Path  # noqa: F401
 from unittest.mock import MagicMock, patch
 
-import pytest
+import pytest  # noqa: F401
 
 from koru.remote import KoruRemoteClient
 

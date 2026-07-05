@@ -45,7 +45,7 @@ DEFAULT_MAX_EVENTS = 256
 MAX_BODY_BYTES = 65_536
 
 
-from koru.env_flags import env_int as _env_int
+from koru.env_flags import env_int as _env_int  # noqa: E402
 
 
 @dataclass

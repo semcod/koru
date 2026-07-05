@@ -5,14 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from koru.autonomy.cycle import cycle_config as _autonomous_cycle_config
 from koru.autonomous_checkpoint import load_loop_checkpoint
+from koru.autonomy.cycle import cycle_config as _autonomous_cycle_config
 
 if TYPE_CHECKING:
     from koru.autonomy.orchestrator.orchestrator import AutoPipelineState
-from koru.autonomy.cycle.cycle_gate import apply_agent_lane_environ
 from koru.autonomy.configuration.config_env import effective_ticket_source_flags
 from koru.autonomy.configuration.config_startup import resolve_autopilot_ide_for_autonomous
+from koru.autonomy.cycle.cycle_gate import apply_agent_lane_environ
 from koru.autonomy.operator.operator_wup import _build_wup_watch_config, _start_wup_watch
 from koru.autonomy.state import AutoloopState
 from koru.ide_router import resolve_ide_route

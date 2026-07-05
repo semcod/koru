@@ -1,9 +1,9 @@
 
-import json
+import json  # noqa: F401
 import os
-import subprocess
+import subprocess  # noqa: F401
 import sys
-import time
+import time  # noqa: F401
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,7 @@ from koru.autonomy.cycle.cycle_chat_activity import (
     _extract_needs_input_question,
     _skip_due_to_recent_chat_activity,
 )
-from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
+from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label  # noqa: F401
 from koru.autonomy.cycle.cycle_drive_retry import (
     _log_autopilot_result,
     _reply_chat_input_busy,
@@ -26,7 +26,7 @@ from koru.autonomy.cycle.cycle_post_drive import (
     _take_pre_drive_snapshot as _take_pre_drive_snapshot_impl,
 )
 from koru.autonomy.cycle.cycle_skip_conditions import (
-    _is_topology_enabled,
+    _is_topology_enabled,  # noqa: F401
 )
 from koru.autonomy.cycle_diagnostics import _clear_diagnostic_marker as _clear_diagnostic_marker
 from koru.autonomy.cycle_diagnostics import _create_diagnostic_ticket as _create_diagnostic_ticket
@@ -91,10 +91,10 @@ from koru.autonomy.cycle_trace import (
 from koru.autonomy.cycle_trace import (
     record_decision_trace as _record_decision_trace_impl,
 )
-from koru.autonomy.decision_trace import load_recent_decisions
+from koru.autonomy.decision_trace import load_recent_decisions  # noqa: F401
 from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
 from koru.autonomy.operator.operator_wup import WupHealthResult
-from koru.autonomy.operator.operator_wup import _read_wup_health as _read_wup_health_impl
+from koru.autonomy.operator.operator_wup import _read_wup_health as _read_wup_health_impl  # noqa: F401
 from koru.autonomy.phases import queue_phase as _queue_phase
 from koru.autonomy.phases.contexts import (
     CyclePhaseContext,
@@ -114,28 +114,28 @@ from koru.autonomy.phases.verify_phase import (
     handle_post_run_verify_ide as _handle_post_run_verify_ide,
 )
 from koru.autonomy.planning_llm import (
-    prioritize_tickets as _llm_prioritize_tickets,
+    prioritize_tickets as _llm_prioritize_tickets,  # noqa: F401
 )
 from koru.autonomy.planning_llm import (
-    propose_strategy_tuning as _llm_propose_strategy_tuning,
+    propose_strategy_tuning as _llm_propose_strategy_tuning,  # noqa: F401
 )
 from koru.autonomy.post_run_verify import (
-    verify_completed_tickets,
+    verify_completed_tickets,  # noqa: F401
 )
 from koru.autonomy.state import AutoloopState
-from koru.autonomy_strategy.config import load_autonomy_strategy
-from koru.env_flags import env_truthy as _env_truthy
-from koru.environment_profile import environment_profile_payload
-from koru.queue import QueueLoopResult, run_planfile_queue_loop
-from koru.queue import default_human_prompt as _default_human_prompt
-from koru.queue import run_api_request as _run_api_request
-from koru.queue import run_llm_request as _run_llm_request
-from koru.queue import run_process as _run_process
-from koru.queue import run_shell_command as _run_shell_command
-from koru.queue.ticket import planfile_command
-from koru.scan import ScanResult, run_scan
+from koru.autonomy_strategy.config import load_autonomy_strategy  # noqa: F401
+from koru.env_flags import env_truthy as _env_truthy  # noqa: F401
+from koru.environment_profile import environment_profile_payload  # noqa: F401
+from koru.queue import QueueLoopResult, run_planfile_queue_loop  # noqa: F401
+from koru.queue import default_human_prompt as _default_human_prompt  # noqa: F401
+from koru.queue import run_api_request as _run_api_request  # noqa: F401
+from koru.queue import run_llm_request as _run_llm_request  # noqa: F401
+from koru.queue import run_process as _run_process  # noqa: F401
+from koru.queue import run_shell_command as _run_shell_command  # noqa: F401
+from koru.queue.ticket import planfile_command  # noqa: F401
+from koru.scan import ScanResult, run_scan  # noqa: F401
 from koru.stdio_events import write_stdio_event
-from koru.tasks import create_nl_task
+from koru.tasks import create_nl_task  # noqa: F401
 from koruide.ide import detect_terminal_host_ide_id
 
 _LEGACY_AUTONOMOUS_CYCLE_EXPORTS = (

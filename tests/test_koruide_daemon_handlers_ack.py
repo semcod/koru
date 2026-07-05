@@ -10,8 +10,8 @@ from koruide.daemon.handlers_ack import (
     _plugin_ack_needs_os_fallback,
     _record_plugin_ack_integration,
     _relay_message_sent_ack,
-    _relay_os_fallback_ack,
-    _relay_plugin_ack_os_fallback,
+    _relay_os_fallback_ack,  # noqa: F401
+    _relay_plugin_ack_os_fallback,  # noqa: F401
     _send_plugin_ack_reply,
     _strict_plugin_ack_ok,
     handle_ack,

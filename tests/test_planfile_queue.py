@@ -1692,7 +1692,7 @@ def test_planfile_error_message_actionable_on_module_missing(tmp_path: Path) -> 
         return SimpleNamespace(
             returncode=1,
             stdout="",
-            stderr="/x/.venv/bin/python: Error while finding module specification for 'planfile.cli' (ModuleNotFoundError: No module named 'planfile')",
+            stderr="/x/.venv/bin/python: Error while finding module specification for 'planfile.cli' (ModuleNotFoundError: No module named 'planfile')",  # noqa: E501
         )
 
     result = run_next_planfile_task(project=tmp_path, planfile_runner=planfile_runner)

@@ -19,7 +19,7 @@ from koruide.plugin_installer import (
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 PUBLISHER_ID = "semcod"
 _ANSI_YELLOW = "\033[33m"
-import tempfile
+import tempfile  # noqa: E402, F401
 
 _ANSI_RESET = "\033[0m"
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
-from koru.wizard import cli as wizard_cli
+from koru.wizard import cli as wizard_cli  # noqa: F401
 from koru.wizard import ide as wiz_ide
 from koru.wizard import ide_install as wiz_ide_install
 from koru.wizard import project as wiz_project

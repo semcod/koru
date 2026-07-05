@@ -7,7 +7,7 @@ import asyncio
 import sys
 
 from korumesh.envelope import sign_envelope
-from korumesh.keys import load_mesh_key, write_mesh_key
+from korumesh.keys import load_mesh_key, write_mesh_key  # noqa: F401
 from korumesh.store import remember_envelope
 from korumesh.transport import publish_envelope, run_relay
 

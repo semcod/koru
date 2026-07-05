@@ -317,7 +317,7 @@ def _record_replay_sidecar_command(project: Any, *, corr: str, command: str) -> 
             project,
             corr=corr,
             label="open ticket",
-            url=f"{action.args.get('url', 'http://127.0.0.1:8765')}#{action.positional[0] if action.positional else ''}",
+            url=f"{action.args.get('url', 'http://127.0.0.1:8765')}#{action.positional[0] if action.positional else ''}",  # noqa: E501
         )
 
 

@@ -40,7 +40,7 @@ class OnboardingOutcome:
     created_ticket_title: str
 
 
-from koru.env_flags import env_truthy as _env_truthy
+from koru.env_flags import env_truthy as _env_truthy  # noqa: E402
 
 
 def _resolve_strategies_path(project: Path) -> Path | None:

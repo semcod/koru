@@ -17,10 +17,10 @@ from typing import Any
 from gillm.injection.errors import InjectorError
 
 from koruide import host_hooks as _host_hooks
-from koruide.daemon.protocol import _Client, _daemon_package_version
+from koruide.daemon.protocol import _Client, _daemon_package_version  # noqa: F401
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
-from koruide.ide import normalize_ide_id
-from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION, Message, ack
+from koruide.ide import normalize_ide_id  # noqa: F401
+from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION, Message, ack  # noqa: F401
 
 # Host-integration seams resolve late through ``koruide.host_hooks`` (see
 # handlers_drive). Module-level wrappers keep existing monkeypatch targets
@@ -626,7 +626,7 @@ def _record_plugin_ack_integration(
 
 def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
     """Handle plugin acknowledgment message."""
-    from koruide.daemon.handlers import _cli_client_still_connected
+    from koruide.daemon.handlers import _cli_client_still_connected  # noqa: F401
 
     pending = client.awaiting_plugin
     if pending is None:

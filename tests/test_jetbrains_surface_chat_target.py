@@ -95,7 +95,8 @@ def test_jetbrains_chat_target_skips_wrong_monitor() -> None:
 def test_vision_located_target_skips_bottom_right_coord_warnings(monkeypatch):
     """A vision-refined right-docked chat target (mid-height, left of corner)
     must not be flagged by the bottom-right composer heuristics under vision."""
-    import os
+    import os  # noqa: F401
+
     from koru.integrations.photo_vql_validation import validate_chat_coords_for_ide
 
     monkeypatch.setenv("KORU_VDISPLAY_LLM_VISION_DECISION", "1")

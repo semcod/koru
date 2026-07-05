@@ -12,7 +12,7 @@ from koru.autonomous_cycle import (
 )
 from koru.autonomous_wup import WupHealthResult
 from koru.autonomy.state import AutoloopState
-from koru.autonomy.verification_engine import Snapshot
+from koru.autonomy.verification_engine import Snapshot  # noqa: F401
 from koru.queue import QueueLoopResult
 
 # These tests use subprocess and are slow; skip by default

@@ -1,6 +1,6 @@
 """Tests for koru.autonomy.decision_arbiter."""
 
-import pytest
+import pytest  # noqa: F401
 
 from koru.autonomy.decision_arbiter import (
     ActionPlan,
@@ -8,10 +8,10 @@ from koru.autonomy.decision_arbiter import (
     decide,
 )
 from koru.autonomy.verification_engine import (
-    ChatEvidence,
-    Evidence,
-    GitEvidence,
-    TestEvidence,
+    ChatEvidence,  # noqa: F401
+    Evidence,  # noqa: F401
+    GitEvidence,  # noqa: F401
+    TestEvidence,  # noqa: F401
     Verdict,
 )
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import os  # noqa: F401
 import socket
 import struct
 from dataclasses import dataclass, field

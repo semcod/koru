@@ -5,12 +5,12 @@ import json
 import os
 import select
 import socket
-import time
+import time  # noqa: F401
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from gillm.injection.errors import InjectorError
+from gillm.injection.errors import InjectorError  # noqa: F401
 
 from koruide.daemon.protocol import (
     _Client,
@@ -19,17 +19,17 @@ from koruide.daemon.protocol import (
 from koruide.daemon.storage import (
     add_console_log,
     get_console_logs,
-    start_new_log_session,
+    start_new_log_session,  # noqa: F401
 )
-from koruide.drive_policy import DrivePolicy as DriveOrchestrator
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator  # noqa: F401
 from koruide.ide import detect_running_ides_cached as detect_running_ides
-from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
+from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target  # noqa: F401
 from koruide.protocol import (
-    MIN_PLUGIN_PROTOCOL_VERSION,
+    MIN_PLUGIN_PROTOCOL_VERSION,  # noqa: F401
     Message,
     ack,
-    chat_send,
-    error,
+    chat_send,  # noqa: F401
+    error,  # noqa: F401
 )
 
 _STATUS_CONSOLE_LOGS_LIMIT = 80
@@ -64,17 +64,17 @@ def _cap_ack_info_for_cli(info: dict[str, Any]) -> dict[str, Any]:
     return trimmed
 
 
-from koruide.daemon.handlers_drive import (
-    _drive_via_keyboard,
-    _drive_via_keyboard_backend,
-    _drive_via_os_injector_backend,
-    _drive_via_plugin,
-    _prefer_keyboard_drive,
-    _resolve_keyboard_drive_selection,
-    _try_os_injector_drive,
-    handle_drive,
+from koruide.daemon.handlers_drive import (  # noqa: E402
+    _drive_via_keyboard,  # noqa: F401
+    _drive_via_keyboard_backend,  # noqa: F401
+    _drive_via_os_injector_backend,  # noqa: F401
+    _drive_via_plugin,  # noqa: F401
+    _prefer_keyboard_drive,  # noqa: F401
+    _resolve_keyboard_drive_selection,  # noqa: F401
+    _try_os_injector_drive,  # noqa: F401
+    handle_drive,  # noqa: F401
 )
-from koruide.utils import env_truthy as _env_truthy
+from koruide.utils import env_truthy as _env_truthy  # noqa: E402, F401
 
 
 def _plugin_rejection_log_interval_seconds() -> float:
@@ -123,13 +123,13 @@ def _default_handoff(project: Path) -> Callable[[dict[str, Any]], str]:
 
 # Hello handlers extracted to handlers_hello.py (R6)
 # Re-exported for backward compatibility
-from koruide.daemon.handlers_hello import (
-    _configure_plugin_client,
-    _extract_hello_metadata,
-    _handle_plugin_version_check,
-    _log_plugin_hello_accepted,
-    _log_rejected_plugin_connection,
-    handle_hello,
+from koruide.daemon.handlers_hello import (  # noqa: E402
+    _configure_plugin_client,  # noqa: F401
+    _extract_hello_metadata,  # noqa: F401
+    _handle_plugin_version_check,  # noqa: F401
+    _log_plugin_hello_accepted,  # noqa: F401
+    _log_rejected_plugin_connection,  # noqa: F401
+    handle_hello,  # noqa: F401
 )
 
 
@@ -207,31 +207,31 @@ def _cli_client_still_connected(daemon: Any, cli_client: _Client) -> bool:
 
 # Ack handlers extracted to handlers_ack.py (R6)
 # Re-exported for backward compatibility
-from koruide.daemon.handlers_ack import (
-    _annotated_plugin_ack_info,
-    _plugin_ack_needs_os_fallback,
-    _record_plugin_ack_integration,
-    _relay_message_sent_ack,
-    _relay_os_fallback_ack,
-    _relay_plugin_ack_os_fallback,
-    _send_plugin_ack_reply,
-    _strict_plugin_ack_ok,
-    handle_ack,
+from koruide.daemon.handlers_ack import (  # noqa: E402
+    _annotated_plugin_ack_info,  # noqa: F401
+    _plugin_ack_needs_os_fallback,  # noqa: F401
+    _record_plugin_ack_integration,  # noqa: F401
+    _relay_message_sent_ack,  # noqa: F401
+    _relay_os_fallback_ack,  # noqa: F401
+    _relay_plugin_ack_os_fallback,  # noqa: F401
+    _send_plugin_ack_reply,  # noqa: F401
+    _strict_plugin_ack_ok,  # noqa: F401
+    handle_ack,  # noqa: F401
 )
 
 # Plugin event handlers extracted to handlers_plugin_event.py (R6)
 # Re-exported for backward compatibility
-from koruide.daemon.handlers_plugin_event import (
-    _ack_plugin_event_without_handoff,
-    _append_event,
-    _check_handoff_cooldown,
-    _event_path,
-    _execute_handoff,
-    _forward_handoff_to_plugin,
-    _handle_plugin_event_basic,
-    _plugin_event_should_handoff,
-    _PluginEventHandoff,
-    handle_plugin_event,
+from koruide.daemon.handlers_plugin_event import (  # noqa: E402
+    _ack_plugin_event_without_handoff,  # noqa: F401
+    _append_event,  # noqa: F401
+    _check_handoff_cooldown,  # noqa: F401
+    _event_path,  # noqa: F401
+    _execute_handoff,  # noqa: F401
+    _forward_handoff_to_plugin,  # noqa: F401
+    _handle_plugin_event_basic,  # noqa: F401
+    _plugin_event_should_handoff,  # noqa: F401
+    _PluginEventHandoff,  # noqa: F401
+    handle_plugin_event,  # noqa: F401
 )
 
 

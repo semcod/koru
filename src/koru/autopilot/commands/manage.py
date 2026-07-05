@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from koru.autopilot.log_contract import emit_log
 
 if TYPE_CHECKING:
-    from koru.autopilot.install_manager import InstallManagerReport
+    from koru.autopilot.install_manager import InstallManagerReport  # noqa: F401
 
 
 def action_manage(

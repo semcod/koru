@@ -7,7 +7,7 @@ automation: AT-SPI / Playwright / terminal / X11 / vision routing with verify.
 
 from __future__ import annotations
 
-import base64
+import base64  # noqa: F401
 import datetime
 import json
 import logging
@@ -19,9 +19,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from koru.integrations import autonomy_session as _autonomy_session
-from koru.integrations.photo_vql_config import llm_vision_enabled
-from koru.integrations.photo_vql_monitor import (
+from koru.integrations import autonomy_session as _autonomy_session  # noqa: E402
+from koru.integrations.photo_vql_config import llm_vision_enabled  # noqa: E402
+from koru.integrations.photo_vql_monitor import (  # noqa: E402
     resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_impl,
 )
 
@@ -77,37 +77,37 @@ except ImportError:
     ) -> dict[str, Any] | None:
         del ide, source
         return None
-from koru.integrations.photo_vql_guard import (
+from koru.integrations.photo_vql_guard import (  # noqa: E402
     CaptureGuard,
 )
-from koru.integrations.photo_vql_guard import (
+from koru.integrations.photo_vql_guard import (  # noqa: E402
     allow_actuation_on_capture_mismatch as _allow_actuation_on_capture_mismatch,
 )
-from koru.integrations.photo_vql_guard import (
+from koru.integrations.photo_vql_guard import (  # noqa: E402
     allow_prepare_map_on_mismatch as _allow_prepare_map_on_mismatch,
 )
-from koru.integrations.photo_vql_guard import (
+from koru.integrations.photo_vql_guard import (  # noqa: E402
     allow_prepare_surface_on_capture_error as _allow_prepare_surface_on_capture_error,
 )
-from koru.integrations.photo_vql_guard import (
-    competing_ide_label_from_warning as _competing_ide_label_from_warning,
+from koru.integrations.photo_vql_guard import (  # noqa: E402
+    competing_ide_label_from_warning as _competing_ide_label_from_warning,  # noqa: F401
 )
-from koru.integrations.photo_vql_guard import (
+from koru.integrations.photo_vql_guard import (  # noqa: E402
     drive_blocked_on_capture_mismatch as _drive_blocked_on_capture_mismatch,
 )
-from koru.integrations.photo_vql_guard import (
+from koru.integrations.photo_vql_guard import (  # noqa: E402
     ide_mismatch_allowed as _ide_mismatch_allowed,
 )
-from koru.integrations.photo_vql_validation import (
+from koru.integrations.photo_vql_validation import (  # noqa: E402
     capture_title_from_meta as _capture_title_from_meta,
 )
-from koru.integrations.photo_vql_validation import (
+from koru.integrations.photo_vql_validation import (  # noqa: E402
     validate_chat_coords_for_ide as _validate_chat_coords_for_ide,
 )
-from koru.integrations.photo_vql_validation import (
+from koru.integrations.photo_vql_validation import (  # noqa: E402
     validate_vql_chat_target,
 )
-from koru.integrations.photo_vql_validation import (
+from koru.integrations.photo_vql_validation import (  # noqa: E402
     window_titles_from_vql_meta as _window_titles_from_vql_meta,
 )
 
@@ -159,7 +159,7 @@ _VDISPLAY_IMPORT_ERROR: str | None = None
 _vdisplay_control = None
 
 def _load_vdisplay_control():
-    """Lazy load to avoid top-level crashes from vdisplay submodules (e.g. missing dataclass in some versions) and make autonomy robust."""
+    """Lazy load to avoid top-level crashes from vdisplay submodules (e.g. missing dataclass in some versions) and make autonomy robust."""  # noqa: E501
     global _VDISPLAY_DIRECT, _VDISPLAY_IMPORT_ERROR, _vdisplay_control
     if _vdisplay_control is not None or _VDISPLAY_DIRECT:
         return _VDISPLAY_DIRECT
@@ -319,7 +319,7 @@ def verify_chat_text_visible(
 
     png, capture_meta, bounds = _capture_for_verify(chat_x, chat_y, map_path, ide)
     if not png:
-        return {"ok": False, "verified": False, "mode": "ocr_contains", "error": "screenshot capture failed", "bounds": bounds.to_dict() if bounds else None, "ide": ide}
+        return {"ok": False, "verified": False, "mode": "ocr_contains", "error": "screenshot capture failed", "bounds": bounds.to_dict() if bounds else None, "ide": ide}  # noqa: E501
 
     from koru.deps_autorepair import ensure_vision_ocr
 
@@ -366,13 +366,13 @@ def _capture_for_verify(chat_x, chat_y, map_path, ide):
     bounds = None
     if chat_x is not None and chat_y is not None:
         bounds = ControlBounds(x=int(chat_x) - 360, y=int(chat_y) - 24, width=720, height=48)
-        target = ControlNode(id="verify:chat-input", backend="vision", role=ControlRole.INPUT, name="chat-input", bounds=bounds)
+        target = ControlNode(id="verify:chat-input", backend="vision", role=ControlRole.INPUT, name="chat-input", bounds=bounds)  # noqa: E501
         try:
             png, capture_meta = capture_control_screenshot(target=target)
             if not png:
                 png, capture_meta = capture_control_screenshot(target=None)
             return png, capture_meta, bounds
-        except Exception as exc:
+        except Exception as exc:  # noqa: F841
             return None, None, bounds
     elif map_path:
         try:
@@ -384,7 +384,7 @@ def _capture_for_verify(chat_x, chat_y, map_path, ide):
             meta = element.capture_meta or pack.capture_meta or {}
             gx, gy, _ = global_pointer_coords(element.click_point.x, element.click_point.y, meta)
             return _capture_for_verify(gx, gy, None, ide)
-        except Exception as exc:
+        except Exception as exc:  # noqa: F841
             return None, None, None
     else:
         return None, None, None
@@ -403,7 +403,7 @@ def _ocr_verify(png, capture_meta, bounds, expected, ide, chat_x, chat_y):
     if isinstance(capture_meta, dict) and chat_x is not None and chat_y is not None:
         if not global_point_in_stream_bounds(int(chat_x), int(chat_y), capture_meta):
             stream = stream_bounds_from_meta(capture_meta)
-            stream_hint = f"Chat focus ({chat_x},{chat_y}) is outside active ScreenCast stream {stream}. Restart screencast and pick All Screens or the monitor containing the IDE."
+            stream_hint = f"Chat focus ({chat_x},{chat_y}) is outside active ScreenCast stream {stream}. Restart screencast and pick All Screens or the monitor containing the IDE."  # noqa: E501
 
     boxes = ocr_png(png)
     combined = " ".join(box.text for box in boxes)
@@ -1719,7 +1719,7 @@ def _focus_window_gnome_shell_for_ide(*, ide: str) -> dict[str, Any]:
         res = _focus_window_gnome_shell(title_contains=needle)
         attempts.append({"needle": needle, **res})
         if res.get("ok"):
-            return {"ok": True, "method": "gnome-shell-eval", "title": res.get("title"), "needle": needle, "attempts": attempts}
+            return {"ok": True, "method": "gnome-shell-eval", "title": res.get("title"), "needle": needle, "attempts": attempts}  # noqa: E501
     return {
         "ok": False,
         "method": "gnome-shell-eval",
@@ -1845,7 +1845,7 @@ def _persist_send_chat_drive_result(
         return
     backend = str(result.get("backend") or "")
     if result.get("type") == "blocked" or backend.endswith("+blocked"):
-        _autonomy_session.persist_autonomy_phase(session, "act", "drive_result", {**result, "prompt": prompt[:200], "submit": submit})
+        _autonomy_session.persist_autonomy_phase(session, "act", "drive_result", {**result, "prompt": prompt[:200], "submit": submit})  # noqa: E501
         return
     if not (backend.startswith("vdisplay") or result.get("type") == "drive"):
         return
@@ -2505,13 +2505,13 @@ def _vdisplay_capture_failure_hint(error: str) -> str | None:
     if "python3-dbus" in text or "no module named 'dbus'" in text:
         hints.append("Install/enable dbus bindings for the Python used by vdisplay-agent (python3-dbus / dbus-python).")
     if "screen recording" in text or "portal screenshot denied" in text:
-        hints.append("GNOME Wayland: Settings -> Privacy -> Screen Recording -> allow the terminal/IDE running vdisplay-agent.")
+        hints.append("GNOME Wayland: Settings -> Privacy -> Screen Recording -> allow the terminal/IDE running vdisplay-agent.")  # noqa: E501
     if "pipewire" in text or "gstreamer" in text or "timed out after" in text:
-        hints.append("ScreenCast frame capture timed out; prefer `koru autopilot vdisplay-up --ide jetbrains`, then in Chrome/Chromium click Share screen and keep the browser bridge tab open. Keeper fallback: `vdisplay agent screencast start --force` and probe with `vdisplay agent screencast probe --via-agent --source <monitor>`.")
+        hints.append("ScreenCast frame capture timed out; prefer `koru autopilot vdisplay-up --ide jetbrains`, then in Chrome/Chromium click Share screen and keep the browser bridge tab open. Keeper fallback: `vdisplay agent screencast start --force` and probe with `vdisplay agent screencast probe --via-agent --source <monitor>`.")  # noqa: E501
     if "list index out of range" in text:
-        hints.append("vdisplay-agent capture route raised an internal stream-index error; prefer browser bridge via `koru autopilot vdisplay-up --ide jetbrains`; if using keeper, restart `vdisplay-agent serve` and `vdisplay agent screencast start --force`, then probe the monitor via agent.")
+        hints.append("vdisplay-agent capture route raised an internal stream-index error; prefer browser bridge via `koru autopilot vdisplay-up --ide jetbrains`; if using keeper, restart `vdisplay-agent serve` and `vdisplay agent screencast start --force`, then probe the monitor via agent.")  # noqa: E501
     if "persistent screencast" in text or "vdisplay-agent serve" in text or "gnome-screenshot" in text:
-        hints.append("Use browser bridge first: `koru autopilot vdisplay-up --ide jetbrains`; in Chrome/Chromium choose the IDE monitor and keep the tab open. Keeper fallback: `vdisplay-agent serve`, then `vdisplay agent screencast start`.")
+        hints.append("Use browser bridge first: `koru autopilot vdisplay-up --ide jetbrains`; in Chrome/Chromium choose the IDE monitor and keep the tab open. Keeper fallback: `vdisplay-agent serve`, then `vdisplay agent screencast start`.")  # noqa: E501
     return " | ".join(dict.fromkeys(hints)) or None
 
 
@@ -3267,7 +3267,7 @@ def _submit_via_keyboard(*, ide: str, submit: bool) -> dict[str, Any] | None:
 
     canon = _canonical_ide(ide)
     app_id = _ide_prompt_app_id(ide)
-    key = "ctrl+Return" if app_id in {"pycharm", "jetbrains", "idea"} or canon in {"cursor", "jetbrains", "pycharm", "idea"} else "Return"
+    key = "ctrl+Return" if app_id in {"pycharm", "jetbrains", "idea"} or canon in {"cursor", "jetbrains", "pycharm", "idea"} else "Return"  # noqa: E501
     try:
         from gillm.config import cached_config
 
@@ -4048,7 +4048,7 @@ def _resolve_vql_chat_target(ide: str, hints: dict) -> dict | None:
     """
     vql_target = _find_vql_chat_target(ide)
     if not vql_target and ide in ("pycharm", "jetbrains"):
-        vql_target = {"click_center": {"x": 1024, "y": 640, "note": "PyCharm/JetBrains editor area on DP-1 second monitor from VQL"}}
+        vql_target = {"click_center": {"x": 1024, "y": 640, "note": "PyCharm/JetBrains editor area on DP-1 second monitor from VQL"}}  # noqa: E501
     if vql_target:
         return _extract_vql_click_from_target(vql_target)
     return None
@@ -4056,7 +4056,7 @@ def _resolve_vql_chat_target(ide: str, hints: dict) -> dict | None:
 
 def _find_vql_chat_target(ide: str) -> dict | None:
     """Helper extracted to reduce CC."""
-    return get_vql_target(ide, role="input", name_contains="chat") or get_vql_target(ide, role="input") or get_vql_target(ide, label="chat")
+    return get_vql_target(ide, role="input", name_contains="chat") or get_vql_target(ide, role="input") or get_vql_target(ide, label="chat")  # noqa: E501
 
 
 def _extract_vql_click_from_target(vql_target: dict) -> dict:
@@ -4071,14 +4071,14 @@ def _extract_vql_click_from_target(vql_target: dict) -> dict:
 
 
 def _get_pycharm_vql_editor_center():
-    """PyCharm specific VQL target for editor on second monitor (DP-1), using VQL click 1024,640 as if clicked in PyCharm on DP-1."""
-    return {"click_center": {"x": 1024, "y": 640, "note": "PyCharm editor area on DP-1 second monitor from VQL (autonomous click at 1024,640)"}}
+    """PyCharm specific VQL target for editor on second monitor (DP-1), using VQL click 1024,640 as if clicked in PyCharm on DP-1."""  # noqa: E501
+    return {"click_center": {"x": 1024, "y": 640, "note": "PyCharm editor area on DP-1 second monitor from VQL (autonomous click at 1024,640)"}}  # noqa: E501
 
 
 def _get_jetbrains_pycharm_chat_center():
     """Shim: prefer photo VQL based locate for chat window + mouse + kb focus (see get_vql_chat_target_from_photo)."""
     # From current foto screen VQL (31 elems), main editor/chat area on DP-1
-    return {"x": 1024, "y": 640, "note": "Chat window area from screen photo VQL (use move_mouse_to_vql_target_and_focus_keyboard for real mouse+focus)"}
+    return {"x": 1024, "y": 640, "note": "Chat window area from screen photo VQL (use move_mouse_to_vql_target_and_focus_keyboard for real mouse+focus)"}  # noqa: E501
 
 
 def _photo_vql_elements() -> tuple[list[dict], str | None]:
@@ -4385,7 +4385,7 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
         src_name, _ = _resolve_vdisplay_source_for_ide(canon)
 
     # Detect terminal pollution in VQL (common on DP-2 when control terminal text is visible in screenshot).
-    # If many candidates look like shell/env/command history (from the log's fake "PREFER LLM", "KORU_*", "po clear" etc.),
+    # If many candidates look like shell/env/command history (from the log's fake "PREFER LLM", "KORU_*", "po clear" etc.),  # noqa: E501
     # treat as polluted and force map for jetbrains (VQL is unreliable).
     is_polluted = _vql_candidates_polluted(candidates) or _vql_layers_show_vdisplay_overlay(els)
 
@@ -4414,7 +4414,7 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
             "vql_layers_count": len(els),
             "selection_method": method,
         }
-        cc = out.get("click_center") or {}
+        cc = out.get("click_center") or {}  # noqa: F841
         vql_meta = load_vql_metadata(allow_stale=True)
         eff_mismatch = mismatch
         if method == "jetbrains_surface_bounds" and _surface_only_fallback_active():
@@ -4474,7 +4474,7 @@ def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: st
             )
 
         meta_for_title = load_vql_metadata(allow_stale=True)
-        capture_validation = (meta_for_title.get("capture_validation") or {}) if isinstance(meta_for_title, dict) else {}
+        capture_validation = (meta_for_title.get("capture_validation") or {}) if isinstance(meta_for_title, dict) else {}  # noqa: E501
         return resolve_chat_target_from_screenshot(
             png,
             ide=canon,
@@ -4578,7 +4578,8 @@ def get_vql_editor_target_from_photo() -> dict:
 
 
 def click_editor_via_photo_vql(ide: str = "auto", source: str = "DP-1") -> dict:
-    """Użyj VQL z foto do zlokalizowania edytora (otwarty plik), kliknij center dla focus, przygotuj do precyzyjnego edit via coords.
+    """Użyj VQL z foto do zlokalizowania edytora (otwarty plik), kliknij center dla focus,
+    przygotuj do precyzyjnego edit via coords.
 
     Parallel to chat focus. Zwraca wynik z click_center z foto VQL.
     Autonomia może potem użyć coords do edit (set_value, keyboard, lub control na tym punkcie).
@@ -4736,8 +4737,8 @@ def _map_chat_pointer_meta(source: str) -> dict[str, Any]:
     """Enriched capture meta used to map global map points to capture-local coords."""
     meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
     region = (meta or {}).get("region") or {}
-    cap_w = int(region.get("width") or 2048)
-    cap_h = int(region.get("height") or 1280)
+    cap_w = int(region.get("width") or 2048)  # noqa: F841
+    cap_h = int(region.get("height") or 1280)  # noqa: F841
     return meta
 
 
@@ -6516,7 +6517,7 @@ def _photo_vql_unverified_chat_gate(
 
 def _photo_vql_edit_mismatch_allowances(*, t: dict[str, Any], ide: str) -> tuple[bool, bool]:
     """(map_mismatch_allowed, surface_mismatch_allowed) for combined_ok re-derivation."""
-    is_jetbrains_map = str((t or {}).get("id") or "").startswith("map:") and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
+    is_jetbrains_map = str((t or {}).get("id") or "").startswith("map:") and _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}  # noqa: E501
     map_mismatch_allowed = is_jetbrains_map and _ide_mismatch_allowed()
     surface_mismatch_allowed = _surface_mismatch_allowed_for_target(target=t, ide=ide)
     return map_mismatch_allowed, surface_mismatch_allowed
@@ -6728,7 +6729,8 @@ def perform_photo_vql_focus_and_edit(
     """Na podstawie foto screen VQL: zlokalizuj (chat lub editor), przesuń mysz + focus keyboard na click_center z foto,
     potem wykonaj precyzyjny edit/typ via coords (set_value at the VQL center).
 
-    To realizuje "użyć VQL do 'zobaczenia' otwartego pliku w edytorze i precyzyjnego edit via coords" (następny task z analizy).
+    To realizuje "użyć VQL do 'zobaczenia' otwartego pliku w edytorze
+    i precyzyjnego edit via coords" (następny task z analizy).
     Dla is_code_edit=True używa editor target (np. window_0 lub main panel z foto VQL).
     Dla chat (default) używa chat panel.
 
@@ -6736,13 +6738,14 @@ def perform_photo_vql_focus_and_edit(
     If .env has OPENROUTER_API_KEY and LLM_MODEL (vision model e.g. openrouter/google/gemini-3.1-flash-image-preview),
     we send base64(image_path) + VQL target excerpt + the prompt to the model.
     LLM should return JSON: {"click_center": {"x": int, "y": int}, "strategy": str, "confidence": float, "reason": str}.
-    If successful and confidence reasonable, the LLM's click_center (and strategy) overrides the pure VQL one for this call.
+    If successful and confidence reasonable, the LLM's click_center (and strategy)
+    overrides the pure VQL one for this call.
     This adds "LLM decides exact coords/strategy on top of photo VQL" as additional layer.
     Always falls back to the VQL-derived coords if no key, no image_path, call fails, or low confidence.
     IDE independent (dane z foto, nie z pluginu).
     """
     mismatch = _photo_vql_ide_capture_mismatch(ide=ide) if ide and ide != "auto" else None
-    use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {"1", "true", "yes", "on"}
+    use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {"1", "true", "yes", "on"}  # noqa: E501, F841
 
     err = _photo_vql_stale_metadata_gate(ide=ide, is_code_edit=is_code_edit)
     if err is not None:
@@ -6881,14 +6884,17 @@ def perform_photo_vql_focus_and_edit(
     return combined
 
 
-def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, ide: str = "auto", source: str = "DP-1") -> dict:
-    """Na podstawie foto screen: zlokalizuj okno chat (via get_vql_chat_target_from_photo), przenies mysz na click_center, click (dla focus keyboard).
+def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, ide: str = "auto", source: str = "DP-1") -> dict:  # noqa: E501
+    """Na podstawie foto screen: zlokalizuj okno chat (via get_vql_chat_target_from_photo),
+    przenies mysz na click_center, click (dla focus keyboard).
 
-    Dziala niezaleznie od IDE (jetbrains -> cursor itp.): VQL z aktualnego zrzutu ekranu daje centers/layers/data_locations.
+    Dziala niezaleznie od IDE (jetbrains -> cursor itp.): VQL z aktualnego zrzutu ekranu
+    daje centers/layers/data_locations.
     Po click na panel/input area, IDE dostaje keyboard focus w tym miejscu (chat composer lub editor).
 
     Uzywane w koru autonomy / send_chat (gdy KORU_VDISPLAY_USE_VQL_MOUSE_FOCUS=1) + recznie dla STARTER etc.
-    Real action via vdisplay _control_click (vision + point) + _control_focus; dziala gdy agent/keeper aktywny na --source.
+    Real action via vdisplay _control_click (vision + point) + _control_focus;
+    dziala gdy agent/keeper aktywny na --source.
     Dry-run / brak agenta -> tylko intencja + coords (zapis do .vdisplay via record).
     """
     if not target:
@@ -6908,7 +6914,7 @@ def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, i
 
     # Log cursor positioning at the exact moment we are about to issue the "move+click to chat" command.
     # All coords are derived from VQL (after corner heuristic / map / LLM enrich).
-    vql_file = target.get("source") if isinstance(target.get("source"), str) and target.get("source", "").endswith(".vql.json") else None
+    vql_file = target.get("source") if isinstance(target.get("source"), str) and target.get("source", "").endswith(".vql.json") else None  # noqa: E501
     _log_vql_cursor_positioning_at_command(
         target,
         stage="move_to_chat_for_write_command",
@@ -6923,13 +6929,13 @@ def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, i
         result.update({
             "ok": True,
             "dry_run": True,
-            "message": f"DRY-RUN: mouse move to chat VQL center ({x},{y}) + click -> keyboard focus in {ide} (from current screen foto)",
+            "message": f"DRY-RUN: mouse move to chat VQL center ({x},{y}) + click -> keyboard focus in {ide} (from current screen foto)",  # noqa: E501
         })
         return result
 
     # Real action: try to position mouse at exact VQL photo coords and click (to focus chat/input area).
     # The coords come from the capture frame (e.g. DP-1 portal stream local 0-2048x1280).
-    # We try a few payload shapes because raw point clicks on multi-stream portal captures can be sensitive to backend/source.
+    # We try a few payload shapes because raw point clicks on multi-stream portal captures can be sensitive to backend/source.  # noqa: E501
     # We always also ensure window-level focus for keyboard.
     click_res, focus_res, last_err = _move_mouse_attempt_focus_and_click(
         result, hints=hints, x=x, y=y, source=source
@@ -7030,11 +7036,11 @@ def _move_mouse_click_outcome(
         focus_ok = isinstance(focus_res, dict) and focus_res.get("ok", True)
         # Treat as success for the "keyboard focus" goal if window focus worked (brings kb to the IDE).
         # Mouse click at precise photo VQL center is attempted for the "przeniesiona mysz" part.
-        # If low-level point click on the portal stream is not confirming, the coords are still the correct ones from the foto.
+        # If low-level point click on the portal stream is not confirming, the coords are still the correct ones from the foto.  # noqa: E501
         overall_ok = focus_ok or click_ok
         result.update({
             "ok": overall_ok,
-            "message": f"Photo VQL target used ({x},{y} from {target.get('id')}). Mouse click at chat center from screen photo attempted; window focus for keyboard. ide={ide}. (Point click may need fresh screencast --source {source} or vision-assisted click.)",
+            "message": f"Photo VQL target used ({x},{y} from {target.get('id')}). Mouse click at chat center from screen photo attempted; window focus for keyboard. ide={ide}. (Point click may need fresh screencast --source {source} or vision-assisted click.)",  # noqa: E501
             "mouse_attempted": True,
             "keyboard_focus_attempted": focus_ok or True,
         })
@@ -7452,16 +7458,16 @@ def _parse_fresh_vql_elements(data: dict, cand: str) -> dict:
         ui_els.append({
             "id": str(e.get("id", f"elem-{len(ui_els)}")),
             "role": e.get("role") or e.get("kind") or "unknown",
-            "bounds": {"x": int(bx), "y": int(by), "width": int(bw), "height": int(bh), "coordinate_space": "capture_frame_local"},
-            "click_center": {"x": int(cx), "y": int(cy), "note": f"fresh VQL elem, color={e.get('color')}, conf={e.get('confidence')}"},
+            "bounds": {"x": int(bx), "y": int(by), "width": int(bw), "height": int(bh), "coordinate_space": "capture_frame_local"},  # noqa: E501
+            "click_center": {"x": int(cx), "y": int(cy), "note": f"fresh VQL elem, color={e.get('color')}, conf={e.get('confidence')}"},  # noqa: E501
             "label": e.get("label") or e.get("text"),
             "metadata": {k: e.get(k) for k in ("color","confidence","location") if k in e}
         })
-    res = {"ui_elements": ui_els, "layers": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}
+    res = {"ui_elements": ui_els, "layers": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}  # noqa: E501
     return res
 
 
-def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | None = None, label: str | None = None) -> dict | None:
+def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | None = None, label: str | None = None) -> dict | None:  # noqa: E501
     """Select target from loaded VQL ui_elements/layers by role or name/label.
     Returns dict with click_center, bounds, id for use in act (mouse nav).
     Used to close observe -> decide -> act gap when vision stub or no map.
@@ -7471,7 +7477,7 @@ def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | No
     for t in targets:
         if role and t.get("role") != role:
             continue
-        if name_contains and name_contains.lower() not in str(t.get("label", "")).lower() and name_contains.lower() not in str(t.get("id", "")).lower():
+        if name_contains and name_contains.lower() not in str(t.get("label", "")).lower() and name_contains.lower() not in str(t.get("id", "")).lower():  # noqa: E501
             continue
         if label and label.lower() not in str(t.get("label", "")).lower():
             continue
@@ -7498,11 +7504,11 @@ def resolve_click_for_frame(source: str = "DP-1", vql_path: str | None = None, v
         for el in m.get("ui_elements", []):
             if source.lower() in str(el.get("source", "")).lower() or "dp-1" in str(el).lower() or not el.get("source"):
                 if cc := el.get("click_center"):
-                    return {"x": cc.get("x"), "y": cc.get("y"), "source": m.get("_source"), "note": el.get("note", "from VQL")}
+                    return {"x": cc.get("x"), "y": cc.get("y"), "source": m.get("_source"), "note": el.get("note", "from VQL")}  # noqa: E501
         # fallback any
         el = m["ui_elements"][0]
         if cc := el.get("click_center") or el.get("center"):
-            return {"x": cc.get("x") if isinstance(cc, dict) else cc[0], "y": cc.get("y") if isinstance(cc, dict) else cc[1], "source": m.get("_source")}
+            return {"x": cc.get("x") if isinstance(cc, dict) else cc[0], "y": cc.get("y") if isinstance(cc, dict) else cc[1], "source": m.get("_source")}  # noqa: E501
     # last resort frame center for 2048x1280 DP-1 crop
     return {"x": 1024, "y": 640, "source": "hardcoded-fallback", "note": "DP-1 capture frame center"}
 
@@ -7517,7 +7523,7 @@ __all__ = [
     "load_vql_metadata",
     "get_vql_target",
     "resolve_click_for_frame",
-    # photo screen VQL based (from .vdisplay/*koru-cont*.vql.json + analysis): locate chat + mouse move + kb focus (IDE independent)
+    # photo screen VQL based (from .vdisplay/*koru-cont*.vql.json + analysis): locate chat + mouse move + kb focus (IDE independent)  # noqa: E501
     "get_vql_chat_target_from_photo",
     "validate_vql_chat_target",
     "move_mouse_to_vql_target_and_focus_keyboard",

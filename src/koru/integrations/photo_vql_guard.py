@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-
 _TRUTHY = {"1", "true", "yes", "on"}
 
 
