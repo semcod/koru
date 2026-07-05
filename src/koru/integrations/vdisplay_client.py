@@ -2146,10 +2146,15 @@ def ensure_vdisplay_ide_control(
 
 def _import_imgl_targets(name: str):
     """Import ``resolve_*`` from semcod imgl even when koru ships minimal ``imgl`` stubs."""
+    target = _import_imgl_target_via_stdlib(name)
+    if target is not None:
+        return target
+    return _import_imgl_target_from_source(name)
+
+
+def _import_imgl_target_via_stdlib(name: str):
+    """Resolve ``name`` from ``imgl.targets`` through the standard import machinery."""
     import importlib
-    import importlib.util
-    import sys
-    import types
 
     _ensure_real_imgl_on_path()
     for _attempt in range(2):
@@ -2160,6 +2165,45 @@ def _import_imgl_targets(name: str):
                 return getattr(mod, name)
         except ImportError:
             _ensure_real_imgl_on_path()
+    return None
+
+
+def _load_light_module(module_name: str, path: Path):
+    """Load a module from an explicit file path without triggering package import."""
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _install_imgl_source_packages(pkg_dir: Path):
+    """Register hand-built ``imgl``/``imgl.export`` package modules in ``sys.modules``."""
+    import sys
+    import types
+
+    pkg = types.ModuleType("imgl")
+    pkg.__file__ = str(pkg_dir / "__init__.py")
+    pkg.__path__ = [str(pkg_dir)]  # type: ignore[attr-defined]
+    pkg.__package__ = "imgl"
+    sys.modules["imgl"] = pkg
+    export_pkg = types.ModuleType("imgl.export")
+    export_pkg.__file__ = str(pkg_dir / "export" / "__init__.py")
+    export_pkg.__path__ = [str(pkg_dir / "export")]  # type: ignore[attr-defined]
+    export_pkg.__package__ = "imgl.export"
+    sys.modules["imgl.export"] = export_pkg
+    return pkg, export_pkg
+
+
+def _import_imgl_target_from_source(name: str):
+    """Resolve ``name`` by loading ``imgl.targets`` straight from the source tree."""
+    import sys
+
     root = _real_imgl_src()
     if not root:
         return None
@@ -2172,26 +2216,7 @@ def _import_imgl_targets(name: str):
     for mod_name in list(sys.modules):
         if mod_name == "imgl" or mod_name.startswith("imgl."):
             sys.modules.pop(mod_name, None)
-    pkg = types.ModuleType("imgl")
-    pkg.__file__ = str(pkg_dir / "__init__.py")
-    pkg.__path__ = [str(pkg_dir)]  # type: ignore[attr-defined]
-    pkg.__package__ = "imgl"
-    sys.modules["imgl"] = pkg
-    export_pkg = types.ModuleType("imgl.export")
-    export_pkg.__file__ = str(pkg_dir / "export" / "__init__.py")
-    export_pkg.__path__ = [str(pkg_dir / "export")]  # type: ignore[attr-defined]
-    export_pkg.__package__ = "imgl.export"
-    sys.modules["imgl.export"] = export_pkg
-
-    def _load_light_module(module_name: str, path: Path):
-        spec = importlib.util.spec_from_file_location(module_name, path)
-        if spec is None or spec.loader is None:
-            return None
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
-        return module
-
+    pkg, export_pkg = _install_imgl_source_packages(pkg_dir)
     actuation_mod = _load_light_module("imgl.export.actuation_layers", actuation_path)
     if actuation_mod is None:
         return None
@@ -2200,9 +2225,7 @@ def _import_imgl_targets(name: str):
     if targets_mod is None:
         return None
     pkg.targets = targets_mod
-    if hasattr(targets_mod, name):
-        return getattr(targets_mod, name)
-    return None
+    return getattr(targets_mod, name, None)
 
 
 def _main_vql_layer_count(vql_path: str | Path) -> int:
