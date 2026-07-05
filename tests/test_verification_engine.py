@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+import pytest  # noqa: F401
 
 from koru.autonomy.verification_engine import (
     ChatEvidence,

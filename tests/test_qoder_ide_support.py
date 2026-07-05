@@ -10,9 +10,9 @@ from koruide.ide import (
     vscode_extension_plugin_ide_ids,
 )
 from koruide.plugin_installer import (
-    SUPPORTED_IDES,
     _EXTENSION_IDS,
     _IDE_COMMANDS,
+    SUPPORTED_IDES,
     plugin_dir_names_for_ide,
 )
 

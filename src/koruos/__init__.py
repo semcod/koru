@@ -21,13 +21,13 @@ _DEPRECATION = (
 
 warnings.warn(_DEPRECATION, DeprecationWarning, stacklevel=2)
 
-import gillm.focus as _gillm_focus
-import gillm.focus.darwin as _darwin
-import gillm.focus.registry as _registry
-import gillm.focus.strategy as _base
-import gillm.focus.wayland as _wayland
-import gillm.focus.windows as _windows
-import gillm.focus.x11 as _x11
+import gillm.focus as _gillm_focus  # noqa: E402
+import gillm.focus.darwin as _darwin  # noqa: E402
+import gillm.focus.registry as _registry  # noqa: E402
+import gillm.focus.strategy as _base  # noqa: E402
+import gillm.focus.wayland as _wayland  # noqa: E402
+import gillm.focus.windows as _windows  # noqa: E402
+import gillm.focus.x11 as _x11  # noqa: E402
 
 sys.modules[__name__] = _gillm_focus
 sys.modules["koruos.strategies"] = _gillm_focus

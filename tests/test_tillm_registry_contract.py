@@ -25,9 +25,9 @@ tillm_registry = pytest.importorskip(
     "tillm.registry", reason="tillm is a core dependency; install it to run contract tests"
 )
 
-from koru.agents import _FALLBACK_SHELL_CLIENTS
-from koru.autonomous_parser import build_parser
-from koru.tillm_bridge import _FALLBACK_SHELL_CLIENT_TOKENS, shell_drive_client_id
+from koru.agents import _FALLBACK_SHELL_CLIENTS  # noqa: E402
+from koru.autonomous_parser import build_parser  # noqa: E402
+from koru.tillm_bridge import _FALLBACK_SHELL_CLIENT_TOKENS, shell_drive_client_id  # noqa: E402
 
 
 def _registry_specs():

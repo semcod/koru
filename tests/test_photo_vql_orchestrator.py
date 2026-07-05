@@ -517,7 +517,7 @@ def test_get_vql_chat_target_prefers_llm_detect_on_mismatch(monkeypatch: pytest.
         lambda **k: {"click_center": {"x": 100, "y": 200}, "id": "map:prompt"},
     )
     monkeypatch.setattr(vc, "_resolve_photo_png_path_from_vql", lambda source: "/tmp/capture.png")
-    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {"ui_elements": [], "capture_validation": {"capture_confirmed": False}})
+    monkeypatch.setattr(vc, "load_vql_metadata", lambda *a, **k: {"ui_elements": [], "capture_validation": {"capture_confirmed": False}})  # noqa: E501
     monkeypatch.setattr(vc._autonomy_session, "active_session_dir", lambda: None)
     monkeypatch.setattr(vc._autonomy_session, "persist_autonomy_phase", lambda *a, **k: None)
     monkeypatch.setattr(vc, "_log_vql_cursor_positioning_at_command", lambda *a, **k: None)

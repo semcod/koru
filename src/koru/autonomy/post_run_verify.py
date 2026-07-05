@@ -18,7 +18,6 @@ from typing import Any, Protocol
 
 from koru.project_pipeline import load_koru_project_pipeline
 
-
 ShellRunner = Callable[[str, Path], subprocess.CompletedProcess[str]]
 PlanfileRunner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]
 

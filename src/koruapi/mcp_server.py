@@ -15,7 +15,7 @@ Implementation is split across:
 from __future__ import annotations
 
 from koruapi.mcp_server_cli import mcp_serve_main
-from koruapi.mcp_server_desktop_uri import TOOL_DISPATCH as _DESKTOP_URI_TOOL_DISPATCH
+from koruapi.mcp_server_desktop_uri import TOOL_DISPATCH as _DESKTOP_URI_TOOL_DISPATCH  # noqa: F401
 from koruapi.mcp_server_ide import (
     tool_ide_command_catalog,
     tool_ide_command_scenario_schema,

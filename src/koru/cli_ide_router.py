@@ -1,23 +1,23 @@
 import argparse
-import asyncio
-import os
-import sys
-from pathlib import Path
-from typing import Any
+import asyncio  # noqa: F401
+import os  # noqa: F401
+import sys  # noqa: F401
+from pathlib import Path  # noqa: F401
+from typing import Any  # noqa: F401
 
-from koru.agents import detect_agent_options
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
-from koru.bootstrap import import_flat_pipeline
-from koru.context import build_context, render_markdown_handoff
-from koru.events import emit_management_event
-from koru.serve import DEFAULT_HOST, DEFAULT_PORT
-from koru.tasks import create_nl_task
+from koru.agents import detect_agent_options  # noqa: F401
+from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start  # noqa: F401
+from koru.bootstrap import import_flat_pipeline  # noqa: F401
+from koru.context import build_context, render_markdown_handoff  # noqa: F401
+from koru.events import emit_management_event  # noqa: F401
+from koru.serve import DEFAULT_HOST, DEFAULT_PORT  # noqa: F401
+from koru.tasks import create_nl_task  # noqa: F401
 from koru.tools import (
-    build_tool_task_scaffold,
-    detect_tools,
-    find_tool_entry,
-    load_tool_registry,
-    render_tools_detect_text,
+    build_tool_task_scaffold,  # noqa: F401
+    detect_tools,  # noqa: F401
+    find_tool_entry,  # noqa: F401
+    load_tool_registry,  # noqa: F401
+    render_tools_detect_text,  # noqa: F401
 )
 
 

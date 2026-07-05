@@ -21,9 +21,9 @@ from pathlib import Path
 from typing import Any
 
 from koruide.ide import (
-    detect_focused_ide_id,
-    detect_running_ides,
-    detect_terminal_host_ide_id,
+    detect_focused_ide_id,  # noqa: F401
+    detect_running_ides,  # noqa: F401
+    detect_terminal_host_ide_id,  # noqa: F401
     ide_binary_candidates,
     normalize_ide_id,
     supported_autopilot_ide_ids,

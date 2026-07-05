@@ -2,7 +2,7 @@
 under the flag, blocks an off-monitor cursor, and falls back on failure."""
 import types
 
-import pytest
+import pytest  # noqa: F401
 
 import koru.integrations.vdisplay_client as vc
 
@@ -38,7 +38,7 @@ def test_ydotool_click_falls_back_when_adaptive_returns_none(monkeypatch):
     monkeypatch.setattr(vc, "_adaptive_position_pointer", lambda **k: None)
 
     # stub the open-loop path so we don't touch hardware
-    fake_coords = types.SimpleNamespace()
+    fake_coords = types.SimpleNamespace()  # noqa: F841
     moved = {}
 
     class FakeY:
@@ -87,7 +87,8 @@ def test_abs_pointer_flag_and_precedence(monkeypatch):
 
 
 def test_abs_affine_conversion_math(monkeypatch, tmp_path):
-    import json
+    import json  # noqa: F401
+
     import koru.integrations.vdisplay_client as vc
     from koru.integrations.vdisplay import pointer_calibration as pc
 
@@ -103,7 +104,8 @@ def test_abs_affine_conversion_math(monkeypatch, tmp_path):
         def move_abs_and_click(self, x, y, **k): moved["at"] = (x, y)
         def close(self): pass
 
-    import types, sys
+    import sys
+    import types
     monkeypatch.setitem(sys.modules, "vdisplay.input.linux_uinput_abs",
                         types.SimpleNamespace(LinuxUinputAbsInput=FakeDev))
     res = vc._abs_pointer_click(x=1484, y=848, source="DP-1")

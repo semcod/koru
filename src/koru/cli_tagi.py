@@ -1,7 +1,7 @@
 """CLI commands for Tagi integration in Koru."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional  # noqa: F401
 
 import click
 

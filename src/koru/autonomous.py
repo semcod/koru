@@ -28,19 +28,7 @@ from typing import Any
 from gillm.injection import os_injector as _os_injector_module
 from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
 
-from koru.autonomy.configuration import config_cli_config as _autonomous_cli_config
 from koru import autonomous_cycle as _autonomous_cycle_module
-from koru.autonomy.cycle import cycle_config as _autonomous_cycle_config
-from koru.autonomy.cycle import cycle_gate as _autonomous_cycle_gate
-from koru.autonomy.operator import operator_daemon as _autonomous_daemon
-from koru.autonomy.operator import operator_diagnostics as _autonomous_diagnostics
-from koru.autonomy.operator import operator_loop_runner as _autonomous_loop_runner
-from koru.autonomy.operator import operator_onboarding as _autonomous_onboarding
-from koru.autonomy.operator import operator_operator as _autonomous_operator
-from koru.autonomy.operator import operator_parser as _autonomous_parser
-from koru.autonomy.operator import operator_plugin as _autonomous_plugin
-from koru.autonomy.operator import operator_resources as _autonomous_resources
-from koru.autonomy.operator import operator_runtime as _autonomous_runtime
 from koru.autonomous_auto_pipeline import (
     AutoPipelineProfile,
     AutoPipelineState,
@@ -64,21 +52,35 @@ from koru.autonomous_checkpoint import (
 from koru.autonomous_cycle import (
     DiagnosticResult,
 )
-from koru.autonomy.cycle.cycle_bridge import run_cycle_with_compat as _run_cycle_with_compat
+from koru.autonomy.configuration import config_cli_config as _autonomous_cli_config
 from koru.autonomy.configuration.config_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
-)
-from koru.autonomy.operator.operator_processes import (
-    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
-)
-from koru.autonomy.operator.operator_processes import (
-    stop_prior_autonomous_for_auto_start,
 )
 from koru.autonomy.configuration.config_startup import (
     build_startup_probe,
     format_post_startup_operator_hints,
     format_startup_banner,
     resolve_autopilot_ide_for_autonomous,
+)
+from koru.autonomy.cycle import cycle_config as _autonomous_cycle_config
+from koru.autonomy.cycle import cycle_gate as _autonomous_cycle_gate
+from koru.autonomy.cycle.cycle_bridge import run_cycle_with_compat as _run_cycle_with_compat
+from koru.autonomy.env import plugin_required_for_ide
+from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
+from koru.autonomy.operator import operator_daemon as _autonomous_daemon
+from koru.autonomy.operator import operator_diagnostics as _autonomous_diagnostics
+from koru.autonomy.operator import operator_loop_runner as _autonomous_loop_runner
+from koru.autonomy.operator import operator_onboarding as _autonomous_onboarding
+from koru.autonomy.operator import operator_operator as _autonomous_operator
+from koru.autonomy.operator import operator_parser as _autonomous_parser
+from koru.autonomy.operator import operator_plugin as _autonomous_plugin
+from koru.autonomy.operator import operator_resources as _autonomous_resources
+from koru.autonomy.operator import operator_runtime as _autonomous_runtime
+from koru.autonomy.operator.operator_processes import (
+    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
+)
+from koru.autonomy.operator.operator_processes import (
+    stop_prior_autonomous_for_auto_start,
 )
 from koru.autonomy.operator.operator_up import (
     AutonomousUpContext,
@@ -105,8 +107,6 @@ from koru.autonomy.operator.operator_wup import (
     _stop_process,
     _wup_watch_command,  # noqa: F401
 )
-from koru.autonomy.env import plugin_required_for_ide
-from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from koru.autonomy.operator_pipeline import run_startup_operator_pipeline
 from koru.autonomy.phases.startup_phase import prepare_startup_context
 from koru.autonomy.prompts import build_prompt

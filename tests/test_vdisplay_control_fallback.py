@@ -153,13 +153,13 @@ def test_send_chat_uses_semantic_set_value(monkeypatch: pytest.MonkeyPatch) -> N
 
     def _find_first(*, ide, selectors):
         if selectors is vdisplay_client._CHAT_INPUT_SELECTORS:
-            return ({"role": "input", "name_contains": "Chat"}, {"ok": True, "count": 1, "selected": {"id": "atspi:chat-input"}})
+            return ({"role": "input", "name_contains": "Chat"}, {"ok": True, "count": 1, "selected": {"id": "atspi:chat-input"}})  # noqa: E501
         return (None, {"ok": False, "count": 0})
 
     monkeypatch.setattr(vdisplay_client, "_find_first_selector", _find_first)
     monkeypatch.setattr(vdisplay_client, "_control_focus", lambda **kwargs: {"ok": True})
     monkeypatch.setattr(vdisplay_client, "_control_set_value", lambda **kwargs: {"ok": True})
-    monkeypatch.setattr(vdisplay_client, "_submit_via_keyboard", lambda **kwargs: {"ok": True, "backend": "vdisplay+keyboard"})
+    monkeypatch.setattr(vdisplay_client, "_submit_via_keyboard", lambda **kwargs: {"ok": True, "backend": "vdisplay+keyboard"})  # noqa: E501
     monkeypatch.setattr(vdisplay_client, "send_chat_via_ide_prompt", lambda *a, **k: None)
     monkeypatch.setattr(vdisplay_client, "get_vql_chat_target_from_photo", lambda **k: {})
 
@@ -433,8 +433,10 @@ def test_load_vql_metadata_sidecar_layers(tmp_path) -> None:
           "metadata": {
             "render_intent": {
               "layers": [
-                {"id": "window_0", "kind": "window", "bbox": {"x": 0, "y": 0, "w": 2040, "h": 1272}, "click_center": {"x": 1020, "y": 636}},
-                {"id": "panel_3", "kind": "panel", "bbox": {"x": 700, "y": 300, "w": 300, "h": 280}, "click_center": {"x": 854, "y": 440}, "location": "center"}
+               {"id": "window_0", "kind": "window", "bbox": {"x": 0, "y": 0, "w": 2040, "h": 1272},
+                "click_center": {"x": 1020, "y": 636}},
+               {"id": "panel_3", "kind": "panel", "bbox": {"x": 700, "y": 300, "w": 300, "h": 280},
+                "click_center": {"x": 854, "y": 440}, "location": "center"}
               ]
             }
           }
@@ -454,8 +456,10 @@ def test_get_vql_editor_target_uses_window_bbox_w_h(tmp_path, monkeypatch: pytes
           "metadata": {
             "render_intent": {
               "layers": [
-                {"id": "window_0", "kind": "window", "bbox": {"x": 0, "y": 0, "w": 2040, "h": 1272}, "click_center": {"x": 1020, "y": 636}},
-                {"id": "panel_3", "kind": "panel", "bbox": {"x": 700, "y": 300, "w": 300, "h": 280}, "click_center": {"x": 854, "y": 440}, "location": "center"}
+               {"id": "window_0", "kind": "window", "bbox": {"x": 0, "y": 0, "w": 2040, "h": 1272},
+                "click_center": {"x": 1020, "y": 636}},
+               {"id": "panel_3", "kind": "panel", "bbox": {"x": 700, "y": 300, "w": 300, "h": 280},
+                "click_center": {"x": 854, "y": 440}, "location": "center"}
               ]
             }
           }
@@ -481,8 +485,10 @@ def test_get_vql_chat_target_prefers_panel_over_send_chat_ocr(tmp_path, monkeypa
           "metadata": {
             "render_intent": {
               "layers": [
-                {"id": "window_0-input-50", "kind": "input", "label": "send_chat", "bbox": {"x": 964, "y": 507, "w": 77, "h": 17}, "click_center": {"x": 1002, "y": 515}},
-                {"id": "panel_3", "kind": "panel", "bbox": {"x": 700, "y": 300, "w": 320, "h": 280}, "click_center": {"x": 854, "y": 440}, "location": "center"}
+               {"id": "window_0-input-50", "kind": "input", "label": "send_chat",
+                "bbox": {"x": 964, "y": 507, "w": 77, "h": 17}, "click_center": {"x": 1002, "y": 515}},
+               {"id": "panel_3", "kind": "panel", "bbox": {"x": 700, "y": 300, "w": 320, "h": 280},
+                "click_center": {"x": 854, "y": 440}, "location": "center"}
               ]
             }
           }

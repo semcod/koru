@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 
 from korumesh.dashboard_parse import envelope_to_frame_entry
-from korumesh.envelope import sign_envelope
+from korumesh.envelope import sign_envelope  # noqa: F401
 from koruvision.capture import VisionFrame
 from koruvision.mesh import vision_frame_envelope
 from koruvision.providers.base import frame_from_png

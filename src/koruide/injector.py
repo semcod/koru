@@ -11,6 +11,6 @@ warnings.warn(
     stacklevel=2,
 )
 
-import gillm.injection.injector as _gillm_injector
+import gillm.injection.injector as _gillm_injector  # noqa: E402
 
 sys.modules[__name__] = _gillm_injector

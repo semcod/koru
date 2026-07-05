@@ -28,10 +28,10 @@ for attr in dir(_module_impl):
 from koru.autonomy.cycle.cycle import (  # noqa: E402
     _escalate_error_stagnation as _escalate_error_stagnation,
 )
-from koru.autonomy.cycle.cycle import (
+from koru.autonomy.cycle.cycle import (  # noqa: E402
     _run_drive_phase as _run_drive_phase,
 )
-from koru.autonomy.cycle.cycle import (
+from koru.autonomy.cycle.cycle import (  # noqa: E402
     _run_post_drive_phase as _run_post_drive_phase,
 )
 from koru.autonomy.cycle.cycle import _stdio_info as _stdio_info  # noqa: E402
@@ -39,15 +39,15 @@ from koru.autonomy.cycle.cycle_chat_activity import (  # noqa: E402
     _skip_due_to_recent_chat_activity as _skip_due_to_recent_chat_activity,
 )
 from koru.autonomy.cycle.cycle_chat_activity_text import (  # noqa: E402
-    extract_needs_input_question as _extract_needs_input_question,
+    extract_needs_input_question as _extract_needs_input_question,  # noqa: F401
 )
 from koru.autonomy.cycle.cycle_drive_retry import (  # noqa: E402
     _log_autopilot_result as _log_autopilot_result,
 )
-from koru.autonomy.cycle.cycle_drive_retry import (
+from koru.autonomy.cycle.cycle_drive_retry import (  # noqa: E402
     _reply_chat_input_busy as _reply_chat_input_busy,
 )
-from koru.autonomy.cycle.cycle_drive_retry import (
+from koru.autonomy.cycle.cycle_drive_retry import (  # noqa: E402
     _resolve_autopilot_drive_decision as _resolve_autopilot_drive_decision,
 )
 from koru.autonomy.cycle.cycle_orchestrator import (  # noqa: E402
@@ -59,13 +59,13 @@ from koru.autonomy.cycle_diagnostics import (  # noqa: E402
 from koru.autonomy.cycle_planning import (  # noqa: E402
     _load_open_tickets_for_planning as _load_open_tickets_for_planning,
 )
-from koru.autonomy.cycle_planning import (
+from koru.autonomy.cycle_planning import (  # noqa: E402
     _run_phase4_advisory_hooks as _run_phase4_advisory_hooks,
 )
-from koru.autonomy.cycle_queue_scan import (
+from koru.autonomy.cycle_queue_scan import (  # noqa: E402
     _build_queue_command as _build_queue_command,
 )
-from koru.autonomy.cycle_queue_scan import (
+from koru.autonomy.cycle_queue_scan import (  # noqa: E402
     _handle_scan_after_idle as _handle_scan_after_idle,
 )
 from koru.autonomy.cycle_queue_scan import (  # noqa: E402
@@ -75,10 +75,10 @@ from koru.autonomy.decision_trace import (  # noqa: E402
     load_recent_decisions as load_recent_decisions,
 )
 from koru.autonomy.planning_llm import (  # noqa: E402
-    prioritize_tickets as _llm_prioritize_tickets,
+    prioritize_tickets as _llm_prioritize_tickets,  # noqa: F401
 )
 from koru.autonomy.planning_llm import (  # noqa: E402
-    propose_strategy_tuning as _llm_propose_strategy_tuning,
+    propose_strategy_tuning as _llm_propose_strategy_tuning,  # noqa: F401
 )
 from koru.autonomy.post_run_verify import (  # noqa: E402
     verify_completed_tickets as verify_completed_tickets,
@@ -86,12 +86,12 @@ from koru.autonomy.post_run_verify import (  # noqa: E402
 from koru.autonomy_strategy.config import (  # noqa: E402
     load_autonomy_strategy as load_autonomy_strategy,
 )
-from koru.queue import default_human_prompt as _default_human_prompt  # noqa: E402
-from koru.queue import run_api_request as _run_api_request  # noqa: E402
-from koru.queue import run_llm_request as _run_llm_request  # noqa: E402
+from koru.queue import default_human_prompt as _default_human_prompt  # noqa: E402, F401
+from koru.queue import run_api_request as _run_api_request  # noqa: E402, F401
+from koru.queue import run_llm_request as _run_llm_request  # noqa: E402, F401
 from koru.queue import run_planfile_queue_loop as run_planfile_queue_loop  # noqa: E402
-from koru.queue import run_process as _run_process  # noqa: E402
-from koru.queue import run_shell_command as _run_shell_command  # noqa: E402
+from koru.queue import run_process as _run_process  # noqa: E402, F401
+from koru.queue import run_shell_command as _run_shell_command  # noqa: E402, F401
 from koru.scan import run_scan as run_scan  # noqa: E402
 
 # koru.autonomous imports this facade at module level, so these four cannot

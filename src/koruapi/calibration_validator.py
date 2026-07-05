@@ -14,7 +14,7 @@ Detects common calibration mistakes:
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime, timezone  # noqa: F401
 from typing import Any
 
 logger = logging.getLogger(__name__)

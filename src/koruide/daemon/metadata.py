@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime, timezone  # noqa: F401
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any

@@ -33,56 +33,56 @@ from typing import Any
 from koru.agents import detect_agent_environment
 from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
 from koru.context_render import (
-    _compact_ticket_error,
-    render_markdown_handoff,
+    _compact_ticket_error,  # noqa: F401
+    render_markdown_handoff,  # noqa: F401
 )
 from koru.context_render import (
-    render_active_ticket as _render_active_ticket,
+    render_active_ticket as _render_active_ticket,  # noqa: F401
 )
 from koru.context_render import (
-    render_agent_lanes as _render_agent_lanes,
+    render_agent_lanes as _render_agent_lanes,  # noqa: F401
 )
 from koru.context_render import (
-    render_ai_tool_support_2026 as _render_ai_tool_support_2026,
+    render_ai_tool_support_2026 as _render_ai_tool_support_2026,  # noqa: F401
 )
 from koru.context_render import (
-    render_autonomous_mode as _render_autonomous_mode,
+    render_autonomous_mode as _render_autonomous_mode,  # noqa: F401
 )
 from koru.context_render import (
-    render_autonomy_loop_brief as _render_autonomy_loop_brief,
+    render_autonomy_loop_brief as _render_autonomy_loop_brief,  # noqa: F401
 )
 from koru.context_render import (
-    render_dashboard as _render_dashboard,
+    render_dashboard as _render_dashboard,  # noqa: F401
 )
 from koru.context_render import (
-    render_environment as _render_environment,
+    render_environment as _render_environment,  # noqa: F401
 )
 from koru.context_render import (
-    render_gates as _render_gates,
+    render_gates as _render_gates,  # noqa: F401
 )
 from koru.context_render import (
-    render_header as _render_header,
+    render_header as _render_header,  # noqa: F401
 )
 from koru.context_render import (
-    render_no_active_ticket as _render_no_active_ticket,
+    render_no_active_ticket as _render_no_active_ticket,  # noqa: F401
 )
 from koru.context_render import (
-    render_policy as _render_policy,
+    render_policy as _render_policy,  # noqa: F401
 )
 from koru.context_render import (
-    render_project_pipeline as _render_project_pipeline,
+    render_project_pipeline as _render_project_pipeline,  # noqa: F401
 )
 from koru.context_render import (
-    render_rules as _render_rules,
+    render_rules as _render_rules,  # noqa: F401
 )
 from koru.context_render import (
-    render_self_service as _render_self_service,
+    render_self_service as _render_self_service,  # noqa: F401
 )
 from koru.context_render import (
-    render_semcod_tools as _render_semcod_tools,
+    render_semcod_tools as _render_semcod_tools,  # noqa: F401
 )
 from koru.context_render import (
-    render_setup_required as _render_setup_required,
+    render_setup_required as _render_setup_required,  # noqa: F401
 )
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
 from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER

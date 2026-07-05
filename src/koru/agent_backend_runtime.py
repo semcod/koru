@@ -412,7 +412,7 @@ def _nlp2uri_desktop_send(
 ) -> dict[str, Any]:
     """Focus IDE window via nlp2uri, then type text via gillm Injector."""
     try:
-        from nlp2uri import compile_uri_to_actions, execute_uri
+        from nlp2uri import compile_uri_to_actions, execute_uri  # noqa: F401
         from nlp2uri.models import HostPlatform
     except ImportError:
         return {

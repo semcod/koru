@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import os
+import os  # noqa: F401
 import stat
 import subprocess
 from collections.abc import Callable
@@ -25,7 +25,7 @@ class CoauthorHookResult:
     detail: str = ""
 
 
-from koru.env_flags import env_disabled as _env_disabled
+from koru.env_flags import env_disabled as _env_disabled  # noqa: E402
 
 
 def _git_dir(project: Path) -> Path | None:

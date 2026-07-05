@@ -5,7 +5,7 @@ import argparse
 import json
 from unittest import mock
 
-import pytest
+import pytest  # noqa: F401
 
 from koru.autopilot.commands.manage import action_manage
 

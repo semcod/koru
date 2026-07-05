@@ -133,7 +133,7 @@ def _detection_rules() -> list[str]:
     return [
         "Return should_act=false if the requested IDE is not the foreground window.",
         "Return should_act=false if the best target is a terminal or shell.",
-        "Prefer the visible chat text box. If only the chat panel is visible, choose a safe point inside the chat input area.",
+        "Prefer the visible chat text box. If only the chat panel is visible, choose a safe point inside the chat input area.",  # noqa: E501
         "Use screenshot-local coordinates, not global monitor coordinates.",
         "Use the calibrated_map_hint only as a hint, never as proof that the chat is visible.",
     ]

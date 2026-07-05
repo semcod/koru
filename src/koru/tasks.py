@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Any
 
-from koru.task_intake import _create_nl_task_impl
-from koru.task_io import _read_config, _read_sprint
+from koru.task_intake import _create_nl_task_impl  # noqa: F401
+from koru.task_io import _read_config, _read_sprint  # noqa: F401
 from koru.task_models import CreatedTask
 
 

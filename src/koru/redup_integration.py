@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
+import os  # noqa: F401
 import subprocess
 import sys
 from pathlib import Path
@@ -105,7 +105,7 @@ def _redup_json_scan_command(
     ]
 
 
-from koru.env_flags import env_truthy as _env_bool
+from koru.env_flags import env_truthy as _env_bool  # noqa: E402
 
 
 def _write_skipped_changed_report(output: str | Path, *, reason: str) -> None:

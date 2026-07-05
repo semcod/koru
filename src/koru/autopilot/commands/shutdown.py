@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from koru.autopilot.log_contract import emit_log
 
 if TYPE_CHECKING:
-    from koru.autopilot.client import AutopilotClient
+    from koru.autopilot.client import AutopilotClient  # noqa: F401
 
 
 def action_shutdown(

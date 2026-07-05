@@ -311,8 +311,8 @@ def confirm_pending_via_portal(*, ide: str = "jetbrains") -> dict[str, Any]:
     import time
 
     sx, sy = cached
-    p.move_abs(sx, sy); time.sleep(0.3)
-    p.click(); time.sleep(0.4)                   # click the chat panel -> Qoder gets kb focus
+    p.move_abs(sx, sy); time.sleep(0.3)  # noqa: E702
+    p.click(); time.sleep(0.4)                   # click the chat panel -> Qoder gets kb focus  # noqa: E702
     # light guard: a confirm sends no text, so we don't need the input focus
     # ring — just verify we're still on Qoder (the pending button is still there,
     # i.e. the click didn't switch to another app) before the Ctrl+Enter.
@@ -338,7 +338,7 @@ def autoconfirm_loop_via_portal(
         return {"ok": False, "error": "portal unavailable"}
     confirmed = 0
     empties = 0
-    deadline = None  # set after first grab (Date/monotonic via time.monotonic)
+    deadline = None  # set after first grab (Date/monotonic via time.monotonic)  # noqa: F841
     start = time.monotonic()
     while time.monotonic() - start < duration_s and empties < idle_polls:
         try:
@@ -399,7 +399,7 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         def _vc(before: bytes, after: bytes) -> bool:
             return _focused_near(after, sx, sy)
 
-        typed = p.type_into_input_verified(sx, sy, text, verify=_vc, submit=submit, clear_first=True, submit_mode="ctrl-enter")
+        typed = p.type_into_input_verified(sx, sy, text, verify=_vc, submit=submit, clear_first=True, submit_mode="ctrl-enter")  # noqa: E501
         logger.info("PORTAL_INPUT(cached) typed=%s stream=(%d,%d) submit=%s", typed, sx, sy, submit)
         return {
             "ok": bool(typed), "method": "portal-remotedesktop-cached",
@@ -426,8 +426,8 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         if rough is None:
             return {"ok": False, "method": "portal", "error": "chat input not found (no anchor/landmark/cache)"}
         rx, ry = rough
-        p.move_abs(rx, ry); time.sleep(0.35)
-        p.click(); time.sleep(0.4)
+        p.move_abs(rx, ry); time.sleep(0.35)  # noqa: E702
+        p.click(); time.sleep(0.4)  # noqa: E702
         # Focus guard BEFORE the destructive clear: clear_input() fires up to
         # 200 deletes, so a mis-located landmark click (editor / terminal pane)
         # must abort here — same ring check every typing path already uses.
@@ -437,7 +437,7 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
                 "method": "portal",
                 "error": "click did not focus the chat input (guard rejected before clear)",
             }
-        p.clear_input(200); time.sleep(0.4)
+        p.clear_input(200); time.sleep(0.4)  # noqa: E702
         frame = p.grab_frame()  # placeholder should be back now
         fw0, fh0 = _png_size(frame)
         re = _anchor_precise(frame, ide)
@@ -455,7 +455,7 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
         # lets us type, so a keystroke can never leak into the wrong window.
         return _focused_near(after, sx, sy)
 
-    typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True, submit_mode="ctrl-enter")
+    typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True, submit_mode="ctrl-enter")  # noqa: E501
     logger.info("PORTAL_INPUT typed=%s ide=%s stream=(%d,%d) submit=%s", typed, ide, sx, sy, submit)
     return {
         "ok": bool(typed),

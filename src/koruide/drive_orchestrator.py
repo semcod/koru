@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import functools
+import functools  # noqa: F401
 import json
 import os
 from pathlib import Path

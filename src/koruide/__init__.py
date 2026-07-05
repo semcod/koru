@@ -7,7 +7,7 @@ the canonical implementation.
 
 from __future__ import annotations
 
-import sys
+import sys  # noqa: F401
 
 try:
     import gillm.injection.errors as _errors  # noqa: F401

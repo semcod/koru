@@ -197,7 +197,7 @@ def test_forward_handoff_to_plugin() -> None:
     assert daemon._send.call_count == 2  # forwarded + ack
     assert ack_info["handoff"] == "sent"
     assert ack_info["chars"] == 9
-    daemon.audit.record.assert_called_once_with("handoff", ide="vscode", chat="default", reason="done", chars=9, ok=True)
+    daemon.audit.record.assert_called_once_with("handoff", ide="vscode", chat="default", reason="done", chars=9, ok=True)  # noqa: E501
 
 
 def test_handle_plugin_event_session_started() -> None:

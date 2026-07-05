@@ -8,7 +8,7 @@ import pytest
 from koruide.daemon.handlers_hello import (
     _configure_plugin_client,
     _extract_hello_metadata,
-    _handle_plugin_version_check,
+    _handle_plugin_version_check,  # noqa: F401
     _log_plugin_hello_accepted,
     _log_rejected_plugin_connection,
     handle_hello,

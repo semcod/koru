@@ -1,0 +1,60 @@
+# Deploy the koru GitHub Pages site.
+# This custom workflow replaces the auto-generated dynamic
+# pages-build-deployment workflow, giving full control over which files
+# are packaged and deployed to Pages.
+#
+# Only the website assets (index.html, .nojekyll, docs/, project/, README.md)
+# are uploaded.  Excluding Python source, tests and other non-web files keeps
+# the artifact small and deployments fast and reliable.
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment; do NOT cancel in-progress runs so
+# that a concurrent push does not orphan a partially-deployed site.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp .nojekyll _site/
+          cp README.md _site/
+          cp -r docs _site/
+          cp -r project _site/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "_site"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

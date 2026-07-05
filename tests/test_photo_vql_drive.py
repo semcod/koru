@@ -585,7 +585,7 @@ def test_perform_photo_vql_llm_coords_before_focus(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(
         vc,
         "_resolve_photo_vql_llm_coords",
-        lambda **kwargs: (order.append("llm") or (1985, 1049, {"click_center": {"x": 1985, "y": 1049}, "confidence": 0.9})),
+        lambda **kwargs: (order.append("llm") or (1985, 1049, {"click_center": {"x": 1985, "y": 1049}, "confidence": 0.9})),  # noqa: E501
     )
     monkeypatch.setattr(
         vc,
@@ -886,7 +886,7 @@ def test_prepare_syncs_ide_control_capture_confirmed_from_observe(monkeypatch: p
     from pathlib import Path
 
     capture_png = Path("/tmp/capture.png")
-    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-1", {"ok": True, "resolved_source": "DP-1"}))
+    monkeypatch.setattr(vc, "_resolve_vdisplay_source_for_ide", lambda ide, **k: ("DP-1", {"ok": True, "resolved_source": "DP-1"}))  # noqa: E501
     monkeypatch.setattr(vc, "_vdisplay_source_for_ide", lambda ide: "DP-1")
     monkeypatch.setattr(
         vc._autonomy_session,
@@ -1471,7 +1471,7 @@ def test_competing_ide_label_from_warning() -> None:
 
 
 def test_prepare_aborts_after_single_attempt_on_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
-    from pathlib import Path
+    from pathlib import Path  # noqa: F401
 
     calls = {"ide_control": 0, "refresh": 0}
 

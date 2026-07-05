@@ -5,7 +5,7 @@ from typing import Any
 
 
 class RegistryService:
-    def __init__(self, root: Path | str, project_id: str | None = None, probe_desktop: bool | None = None, mqtt: bool | None = None):
+    def __init__(self, root: Path | str, project_id: str | None = None, probe_desktop: bool | None = None, mqtt: bool | None = None):  # noqa: E501
         self.root = Path(root)
         self.project_id = project_id or self.root.name
         self.probe_desktop = probe_desktop
@@ -16,7 +16,7 @@ class RegistryService:
     def render(self, fmt: str = "json", refresh: bool = False) -> str:
         return "{}"
 
-    def refresh(self, write: bool = False, publish_mqtt: bool = False, output_format: str | None = None, **_kwargs) -> Any:
+    def refresh(self, write: bool = False, publish_mqtt: bool = False, output_format: str | None = None, **_kwargs) -> Any:  # noqa: E501
         from types import SimpleNamespace
 
         class IR:

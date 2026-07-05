@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from pathlib import Path  # noqa: F401
+from unittest.mock import MagicMock, patch  # noqa: F401
 
-import pytest
+import pytest  # noqa: F401
 
 from koru.autonomy.planning_llm import (
     BudgetTracker,
     LlmActionAdvice,
     LlmEvaluation,
     LlmReflection,
-    LlmResponse,
+    LlmResponse,  # noqa: F401
     StrategyTuning,
     TicketPriority,
     _call_openrouter,
