@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from koru.project_pipeline import load_koru_project_pipeline
-from koru.queue.runners import run_shell_command
+
 
 ShellRunner = Callable[[str, Path], subprocess.CompletedProcess[str]]
 PlanfileRunner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]
@@ -258,6 +258,31 @@ def verify_after_ide_work(
     return outcomes
 
 
+def _run_verify_shell_command(command: str, project: Path) -> subprocess.CompletedProcess[str]:
+    """Run a verify command in a sanitized, developer-shell-like environment.
+
+    The autonomous loop's runtime env (KORU_*/TILLM_*/VDISPLAY_*) leaks into
+    inherited subprocesses and flips env-sensitive test branches — 2026-07-05
+    a green suite went red only under the loop (llx-heuristic test), bouncing
+    finished tickets through reopen/redrive churn. Verification must judge the
+    repo the way a developer shell would, not the loop's internals.
+    """
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith(("KORU_", "TILLM_", "VDISPLAY_"))
+    }
+    return subprocess.run(
+        command,
+        cwd=project,
+        shell=True,
+        text=True,
+        capture_output=True,
+        check=False,
+        env=env,
+    )
+
+
 def run_verify_commands(
     project: Path,
     commands: Sequence[str],
@@ -265,7 +290,7 @@ def run_verify_commands(
     shell_runner: ShellRunner | None = None,
 ) -> tuple[bool, str, int | None]:
     """Run verification commands in order. Returns (ok, detail, last_exit_code)."""
-    runner = shell_runner or run_shell_command
+    runner = shell_runner or _run_verify_shell_command
     last_code: int | None = None
     for cmd in commands:
         if not cmd.strip():
