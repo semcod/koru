@@ -28566,7 +28566,7 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T18:32:57.535153Z'
+        finished_at: '2026-07-05T18:47:00.098775Z'
         max_attempts: 1
         queue: default
         state: done
@@ -28606,6 +28606,32 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-07-05T18:32:57.546407+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T18:39:11.945546+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T18:45:51.501161+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T18:46:57.879689+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T18:47:00.112809+00:00'
       id: STARTER-574
       inputs:
         api_headers: {}
@@ -28630,6 +28656,24 @@ sprint:
       outputs:
         artifacts: []
         notes:
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ........................................................................
+          [  7%] ........................................................................
+          [  9%] ........................................................................
+          [ 12%] ........................................................................
+          [ 14%] ........................................................................
+          [ 16%] ........................................................................
+          [ 19%] ........................................................................
+          [ 21%] ........................................................................
+          [ 24%] ........................................................................
+          [ 26%] ........................................................................
+          [ 29%] ........................................................................
+          [ 31%] ........................................................................
+          [ 33%] ...............................................'
         - '[KORU-SHELL-DRIVE] client=claude-code ok=true
 
           completed'
@@ -28676,7 +28720,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-07-05T18:32:57.546371+00:00'
+      updated_at: '2026-07-05T18:47:00.112768+00:00'
     STARTER-575:
       blocked_by: []
       blocks: []
