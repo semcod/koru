@@ -73,6 +73,7 @@ class TestFallbackTokenContract:
             "vscode",
             "vscodium",
             "cursor",
+            "qoder",
             "jetbrains",
             "zed",
         }
