@@ -4991,46 +4991,92 @@ def _llm_target_verified(llm_decision: dict[str, Any] | None) -> float | bool:
     return confidence >= 0.5
 
 
-def _build_vql_command_plan(
+def _vql_plan_resolve_validation(
     *,
     target: dict[str, Any],
+    ide: str,
     x: int,
     y: int,
-    source: str,
-    ide: str,
-    prompt: str,
-    llm_decision: dict[str, Any] | None = None,
-    candidates: list[dict[str, Any]] | None = None,
-    is_code_edit: bool = False,
-    stage: str = "pre_act",
-    capture_mismatch: dict[str, Any] | None = None,
-    capture_provenance: dict[str, Any] | None = None,
-    vql_validation: dict[str, Any] | None = None,
+    is_code_edit: bool,
+    capture_mismatch: dict[str, Any] | None,
+    vql_validation: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Structured command plan derived from VQL layers (+ map/LLM enrich) for autonomy audit."""
-    gx, gy, mapping = _global_coords_from_vql_local(x=x, y=y, source=source)
-    meta_for_val = load_vql_metadata(allow_stale=True)
-    validation = vql_validation or target.get("vql_validation") or validate_vql_chat_target(
+    """VQL validation dict for the plan: explicit > target-cached > freshly computed."""
+    if vql_validation:
+        return vql_validation
+    cached = target.get("vql_validation")
+    if cached:
+        return cached
+    return validate_vql_chat_target(
         target,
         ide=ide,
-        meta=meta_for_val,
+        meta=load_vql_metadata(allow_stale=True),
         capture_mismatch=capture_mismatch,
         selection_method=str(target.get("selection_method") or ""),
         is_code_edit=is_code_edit,
         x=x,
         y=y,
     )
-    warnings, validation_errors = _vql_plan_warnings(validation, capture_mismatch, target, llm_decision)
-    vql_file = target.get("source")
-    vql_mtime = _vql_plan_data_mtime(vql_file)
 
-    selection = _vql_plan_selection_method(target, vql_file, llm_decision)
-    capture_title, eff_mismatch, capture_confirmed = _vql_plan_capture_flags(
-        validation, capture_provenance, capture_mismatch, target, selection
+
+def _vql_plan_inference_flags(
+    *,
+    validation: dict[str, Any],
+    capture_confirmed: bool,
+    llm_decision: dict[str, Any] | None,
+    eff_mismatch: dict[str, Any] | None,
+) -> tuple[bool, bool]:
+    """(inference_ok, plan_capture_confirmed) gate flags for the command plan.
+
+    A vision-located click center (OCR placeholder anchor or LLM refine with high
+    confidence) is its own verification: it was taken from the actual current
+    screenshot, so neither the VQL element's suspicious bounds nor a missing/stale
+    VQL sidecar (capture_confirmed) veto it. A competing-IDE mismatch
+    (eff_mismatch) still always blocks.
+    """
+    llm_verified = bool(_llm_target_verified(llm_decision))
+    validation_ok = bool(validation.get("ok"))
+    mismatch_ok = eff_mismatch is None
+    inference_ok = bool(((validation_ok and capture_confirmed) or llm_verified) and mismatch_ok)
+    plan_capture_confirmed = bool(
+        (capture_confirmed or llm_verified) and mismatch_ok and (validation_ok or llm_verified)
     )
+    return inference_ok, plan_capture_confirmed
 
-    commands: list[dict[str, Any]] = _vql_plan_commands(ide=ide, x=x, y=y, gx=gx, gy=gy, prompt=prompt)
 
+def _vql_plan_payload(
+    *,
+    stage: str,
+    ide: str,
+    source: str,
+    is_code_edit: bool,
+    vql_file: Any,
+    vql_mtime: str | None,
+    target: dict[str, Any],
+    selection: str,
+    x: int,
+    y: int,
+    gx: int | None,
+    gy: int | None,
+    mapping: Any,
+    candidates: list[dict[str, Any]] | None,
+    llm_decision: dict[str, Any] | None,
+    warnings: list[Any],
+    validation_errors: list[Any],
+    commands: list[dict[str, Any]],
+    validation: dict[str, Any],
+    capture_title: Any,
+    eff_mismatch: dict[str, Any] | None,
+    capture_confirmed: bool,
+    capture_provenance: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Assemble the structured VQL command-plan payload for autonomy audit."""
+    inference_ok, plan_capture_confirmed = _vql_plan_inference_flags(
+        validation=validation,
+        capture_confirmed=capture_confirmed,
+        llm_decision=llm_decision,
+        eff_mismatch=eff_mismatch,
+    )
     return {
         "stage": stage,
         "ide": ide,
@@ -5051,19 +5097,8 @@ def _build_vql_command_plan(
         "warnings": warnings,
         "validation_errors": validation_errors,
         "commands": commands,
-        # A vision-located click center (OCR placeholder anchor or LLM refine
-        # with high confidence) is its own verification: it was taken from the
-        # actual current screenshot, so neither the VQL element's suspicious
-        # bounds nor a missing/stale VQL sidecar (capture_confirmed) veto it.
-        # A competing-IDE mismatch (eff_mismatch) still always blocks.
-        "inference_ok": (
-            (bool(validation.get("ok")) and capture_confirmed)
-            or _llm_target_verified(llm_decision)
-        )
-        and eff_mismatch is None,
-        "capture_confirmed": (capture_confirmed or bool(_llm_target_verified(llm_decision)))
-        and eff_mismatch is None
-        and (bool(validation.get("ok")) or _llm_target_verified(llm_decision)),
+        "inference_ok": inference_ok,
+        "capture_confirmed": plan_capture_confirmed,
         "capture_title": capture_title,
         "vql_element_size_ok": validation.get("vql_element_size_ok"),
         "app_match": validation.get("app_match"),
@@ -5073,6 +5108,71 @@ def _build_vql_command_plan(
         ),
         "capture_provenance": capture_provenance,
     }
+
+
+def _build_vql_command_plan(
+    *,
+    target: dict[str, Any],
+    x: int,
+    y: int,
+    source: str,
+    ide: str,
+    prompt: str,
+    llm_decision: dict[str, Any] | None = None,
+    candidates: list[dict[str, Any]] | None = None,
+    is_code_edit: bool = False,
+    stage: str = "pre_act",
+    capture_mismatch: dict[str, Any] | None = None,
+    capture_provenance: dict[str, Any] | None = None,
+    vql_validation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Structured command plan derived from VQL layers (+ map/LLM enrich) for autonomy audit."""
+    gx, gy, mapping = _global_coords_from_vql_local(x=x, y=y, source=source)
+    validation = _vql_plan_resolve_validation(
+        target=target,
+        ide=ide,
+        x=x,
+        y=y,
+        is_code_edit=is_code_edit,
+        capture_mismatch=capture_mismatch,
+        vql_validation=vql_validation,
+    )
+    warnings, validation_errors = _vql_plan_warnings(validation, capture_mismatch, target, llm_decision)
+    vql_file = target.get("source")
+    vql_mtime = _vql_plan_data_mtime(vql_file)
+
+    selection = _vql_plan_selection_method(target, vql_file, llm_decision)
+    capture_title, eff_mismatch, capture_confirmed = _vql_plan_capture_flags(
+        validation, capture_provenance, capture_mismatch, target, selection
+    )
+
+    commands: list[dict[str, Any]] = _vql_plan_commands(ide=ide, x=x, y=y, gx=gx, gy=gy, prompt=prompt)
+
+    return _vql_plan_payload(
+        stage=stage,
+        ide=ide,
+        source=source,
+        is_code_edit=is_code_edit,
+        vql_file=vql_file,
+        vql_mtime=vql_mtime,
+        target=target,
+        selection=selection,
+        x=x,
+        y=y,
+        gx=gx,
+        gy=gy,
+        mapping=mapping,
+        candidates=candidates,
+        llm_decision=llm_decision,
+        warnings=warnings,
+        validation_errors=validation_errors,
+        commands=commands,
+        validation=validation,
+        capture_title=capture_title,
+        eff_mismatch=eff_mismatch,
+        capture_confirmed=capture_confirmed,
+        capture_provenance=capture_provenance,
+    )
 
 
 def _cursor_record_vql_validation(

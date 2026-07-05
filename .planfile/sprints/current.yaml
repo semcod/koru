@@ -28795,9 +28795,10 @@ sprint:
         around the moved behavior.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T12:40:02.161077Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -28813,6 +28814,21 @@ sprint:
           tests around the moved behavior.'
         source: koru task
         timestamp: '2026-07-04T21:52:59.882963+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T12:40:01.527121+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T12:40:02.169386+00:00'
       id: STARTER-568
       inputs:
         api_headers: {}
@@ -28835,7 +28851,10 @@ sprint:
       name: 'Split god module: src/koru/configurator.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Split wykonany przez headless claude-code; zweryfikowany (39 testów configurator
+          zielonych, importerzy OK) i zacommitowany. Drive zgłosił timeout 900s, ale
+          praca była kompletna.
       priority: high
       source:
         context:
@@ -28874,9 +28893,9 @@ sprint:
         timestamp: '2026-07-04T21:52:59.882963+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-04T21:52:59.882963+00:00'
+      updated_at: '2026-07-05T12:40:02.169342+00:00'
     STARTER-569:
       blocked_by: []
       blocks: []
