@@ -365,6 +365,57 @@ class TestScanTodoMarkers(unittest.TestCase):
             self.assertEqual(len(result), 1)
             self.assertIn("src.py", result[0].title)
 
+    def test_ignores_markers_in_strings_and_labels(self) -> None:
+        # Regression: markers used as domain vocabulary in string literals /
+        # report labels (redsl: "TODO issues before/after") are NOT work-markers
+        # and must not raise cleanup tickets. STARTER-008/009/010.
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            mark = _MARK_A  # "TODO"
+            (project / "report.py").write_text(
+                f'def render(summary):\n'
+                f'    print(f"{mark} issues before: {{summary}}")\n'
+                f'    print(f"{mark} issues after: 0")\n'
+                f'    return "| Project | {mark} before | {mark} after |"\n'
+            )
+            # A file with the same count but as real comments still fires.
+            (project / "real.py").write_text(
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
+            )
+
+            result = scan_todo_markers(project, min_per_file=3)
+            titles = {s.title for s in result}
+            self.assertEqual(len(result), 1, titles)
+            self.assertIn("real.py", result[0].title)
+            self.assertFalse(any("report.py" in t for t in titles))
+
+    def test_inline_comment_marker_still_counts(self) -> None:
+        # A marker in a trailing inline comment is a genuine work-marker.
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "src.py").write_text(
+                f"x = 1  # {_MARK_A}: wire this up\n"
+                f"y = 2  # {_MARK_B}: handle None\n"
+                f"z = 3  # {_MARK_D}: revisit\n"
+            )
+            result = scan_todo_markers(project, min_per_file=3)
+            self.assertEqual(len(result), 1)
+            self.assertIn("src.py", result[0].title)
+
+    def test_syntax_error_file_falls_back_to_regex(self) -> None:
+        # Un-tokenizable files must not silently drop genuine markers.
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "broken.py").write_text(
+                "def f(:\n"  # deliberate syntax error
+                f"    # {_MARK_A}: fix signature\n"
+                f"    # {_MARK_B}: and this\n"
+                f"    # {_MARK_C}: and that\n"
+            )
+            result = scan_todo_markers(project, min_per_file=3)
+            self.assertEqual(len(result), 1)
+            self.assertIn("broken.py", result[0].title)
+
 
 class TestScanMissingGates(unittest.TestCase):
     def test_no_suggestions_when_tool_missing(self) -> None:

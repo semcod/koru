@@ -28859,9 +28859,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T20:16:26.134801Z'
+        finished_at: '2026-07-05T20:48:22.800206Z'
         max_attempts: 1
         queue: default
+        started_at: '2026-07-05T20:48:15.375276Z'
         state: done
       executor:
         kind: human
@@ -28909,6 +28910,31 @@ sprint:
         source: planfile.store
         status: open
         timestamp: '2026-07-05T20:27:30.669340+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: done
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T20:48:15.549637+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T20:48:18.606904+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T20:48:23.265898+00:00'
       id: STARTER-576
       inputs:
         api_headers: {}
@@ -28953,6 +28979,18 @@ sprint:
           [ 28%] ........................................................................
           [ 31%] ........................................................................
           [ 33%] .............................................'
+        - 'Investigated -- this is a heuristic false positive, not a genuine complexity
+          problem. _skip_due_to_recent_chat_activity itself is a clean ~20-line wrapper:
+          checks cooldown, gathers context via the already-extracted _gather_chat_activity_context
+          helper, then delegates the actual decision to the already-extracted _evaluate_chat_activity_skip
+          helper (which itself uses a clear, readable guard-clause/early-exit pattern:
+          _check_recent_drive_ack_skip -> _check_chat_intake_skip -> _check_recent_self_drive_skip
+          -> status checks). The flag is almost certainly counting call-graph fan-out
+          (this coordinator calls ~6 well-named sub-functions) rather than genuine
+          inline complexity. Further splitting would fragment an already well-factored,
+          readable decision chain without benefit. Not refactored; closing as a heuristic
+          false positive, matching the pattern found earlier today in the 4 CLI-dispatcher
+          ''God Function: main'' tickets.'
       priority: high
       source:
         context:
@@ -28995,9 +29033,9 @@ sprint:
         timestamp: '2026-07-04T21:53:18.072846+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-05T20:27:30.669303+00:00'
+      updated_at: '2026-07-05T20:48:23.265842+00:00'
     STARTER-577:
       blocked_by: []
       blocks: []

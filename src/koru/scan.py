@@ -238,6 +238,31 @@ def scan_pytest_collect(
 
 
 _MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[: ]")
+
+
+def _count_todo_markers(text: str) -> int:
+    """Count TODO/FIXME/XXX/HACK markers that live in *comments* only.
+
+    A work-marker is a comment convention (``# TODO: ...``). Counting the bare
+    regex across the whole file also matches the words inside string literals
+    and report labels — e.g. redsl, whose domain vocabulary is literally
+    ``"TODO issues before/after"`` — producing false cleanup tickets on every
+    scan. Tokenizing and inspecting only COMMENT tokens removes that noise.
+    Files that fail to tokenize (syntax errors, py2, partial edits) fall back to
+    the whole-text regex so genuine markers are never silently dropped.
+    """
+    import io
+    import tokenize
+
+    try:
+        comments = [
+            tok.string
+            for tok in tokenize.generate_tokens(io.StringIO(text).readline)
+            if tok.type == tokenize.COMMENT
+        ]
+    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        return len(_MARKER_RE.findall(text))
+    return sum(len(_MARKER_RE.findall(c)) for c in comments)
 _DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
     {
         ".git",
@@ -337,7 +362,7 @@ def scan_todo_markers(
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        n = len(_MARKER_RE.findall(text))
+        n = _count_todo_markers(text)
         if n >= min_per_file:
             counts[str(rel_path)] = n
     return [
