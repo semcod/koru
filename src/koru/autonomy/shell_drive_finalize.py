@@ -36,6 +36,48 @@ def _autodone_policy() -> str:
     return raw if raw in {"verified", "always", "off"} else "verified"
 
 
+_RESOLVED_STATUSES = frozenset({"done", "canceled"})
+
+
+def _ticket_already_resolved(
+    project: Path,
+    ticket_id: str,
+    *,
+    runner: Callable[..., Any],
+) -> bool:
+    """True if some other actor already closed this ticket.
+
+    The shell-drive lane spawns a real vendor CLI (``claude -p ...``) that
+    can take minutes; by the time it returns, the same ticket may have
+    already been resolved through a different path (a human, or another
+    concurrent koru/agent session working the same planfile queue). Blindly
+    running ``ticket done`` + verify in that case risks *reopening* work
+    that was already correctly finished, just because this stale drive
+    attempt's own verify run hit an unrelated failure (2026-07-05: a
+    concurrent session closed a ticket while this lane's own post_run_verify
+    was mid-flight and got killed, and the finalize path reopened it anyway).
+    Best-effort: any lookup failure is treated as "not resolved" so the
+    existing done+verify path still runs.
+    """
+    from koru.queue.ticket import planfile_command
+
+    result = planfile_command(
+        project,
+        ["ticket", "show", ticket_id, "--format", "json"],
+        runner=runner,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return False
+    try:
+        import json
+
+        data = json.loads(result.stdout)
+    except (ValueError, TypeError):
+        return False
+    status = str(data.get("status") or "").strip().lower()
+    return status in _RESOLVED_STATUSES
+
+
 def _reply_note(reply: dict[str, Any]) -> str:
     message = reply.get("message") or reply.get("stdout") or reply.get("output") or ""
     if isinstance(message, bytes):
@@ -75,6 +117,13 @@ def finalize_shell_drive_ticket(
     policy = _autodone_policy()
     from koru.queue.runners import run_process
     from koru.queue.ticket import planfile_command
+
+    if _ticket_already_resolved(project, ticket_id, runner=run_process):
+        _hp(
+            f"  shell-drive finalize: {ticket_id} already resolved (done/canceled) by "
+            "another actor — skipping done+verify to avoid reopening finished work",
+        )
+        return "already_resolved"
 
     planfile_command(
         project,
