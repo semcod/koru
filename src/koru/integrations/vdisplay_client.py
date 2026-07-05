@@ -666,6 +666,7 @@ _IDE_DEFAULT_SOURCE: dict[str, str] = {
     "windsurf": "DP-1",
     "antigravity": "DP-1",
     "vscode": "DP-1",
+    "qoder": "DP-1",
     "jetbrains": "DP-1",
     "pycharm": "DP-1",
     "idea": "DP-1",
@@ -676,6 +677,7 @@ _IDE_PROCESS_PATTERNS: dict[str, tuple[str, ...]] = {
     "windsurf": ("windsurf",),
     "vscode": ("code", "vscode", "vscodium"),
     "antigravity": ("antigravity",),
+    "qoder": ("qoder",),
     "jetbrains": ("pycharm", "idea", "webstorm", "goland", "clion", "rider", "jetbrains"),
     "pycharm": ("pycharm", "jetbrains"),
     "idea": ("idea", "intellij", "jetbrains"),
@@ -1095,6 +1097,7 @@ _IDE_WINDOW_TITLE_TOKENS: dict[str, tuple[str, ...]] = {
     "vscode": ("visual studio code", "vscode"),
     "vscodium": ("vscodium",),
     "antigravity": ("antigravity",),
+    "qoder": ("qoder",),
     "zed": ("zed",),
     "jetbrains": ("jetbrains", "pycharm", "intellij", "idea", "webstorm", "goland", "clion", "rider"),
     "pycharm": ("pycharm", "jetbrains"),
@@ -1103,12 +1106,13 @@ _IDE_WINDOW_TITLE_TOKENS: dict[str, tuple[str, ...]] = {
 
 # Window-title tokens that invalidate a capture for the requested IDE (avoid breadcrumb false positives).
 _COMPETING_IDE_WINDOW_TOKENS: dict[str, tuple[str, ...]] = {
-    "jetbrains": ("cursor", "visual studio code", "vscode", "windsurf", "vscodium", "antigravity", "zed"),
-    "pycharm": ("cursor", "visual studio code", "vscode", "windsurf"),
-    "idea": ("cursor", "visual studio code", "vscode", "windsurf"),
+    "jetbrains": ("cursor", "visual studio code", "vscode", "windsurf", "vscodium", "antigravity", "zed", "qoder"),
+    "pycharm": ("cursor", "visual studio code", "vscode", "windsurf", "qoder"),
+    "idea": ("cursor", "visual studio code", "vscode", "windsurf", "qoder"),
     "cursor": ("pycharm", "intellij", "jetbrains", "webstorm"),
     "windsurf": ("pycharm", "intellij", "jetbrains"),
     "vscode": ("pycharm", "intellij", "jetbrains", "cursor"),
+    "qoder": ("pycharm", "intellij", "jetbrains", "cursor", "windsurf"),
 }
 
 

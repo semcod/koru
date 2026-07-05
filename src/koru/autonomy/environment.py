@@ -118,7 +118,7 @@ def probe_ide_presence(
     out: list[IDEPresence] = []
     for ide in KNOWN_IDES:
         # VS Code forks (`vscodium`, `antigravity`) share VS Code's mcp config slot
-        cfg_key = "vscode" if ide in ("vscodium", "antigravity") else ide
+        cfg_key = "vscode" if ide in ("vscodium", "antigravity", "qoder") else ide
         cfg_path = mcp_paths.get(cfg_key)
         mcp_has_koru = False
         chosen_path: Path | None = None

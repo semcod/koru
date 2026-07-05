@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 _JETBRAINS_IDES = frozenset({"jetbrains", "pycharm", "idea"})
-_VSCODE_FAMILY_IDES = frozenset({"cursor", "windsurf", "vscode", "vscodium", "antigravity"})
+_VSCODE_FAMILY_IDES = frozenset({"cursor", "windsurf", "vscode", "vscodium", "antigravity", "qoder"})
 _VDISPLAY_DEFAULT_IDES = _JETBRAINS_IDES | _VSCODE_FAMILY_IDES
 
 

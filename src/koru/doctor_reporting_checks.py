@@ -387,6 +387,7 @@ def _ide_console_log_roots(selected: str) -> list[Path]:
         "vscode": [home / ".config" / "Code" / "logs"],
         "vscodium": [home / ".config" / "VSCodium" / "logs"],
         "cursor": [home / ".config" / "Cursor" / "logs"],
+        "qoder": [home / ".config" / "Qoder" / "logs"],
     }
     return roots.get(selected, [])
 

@@ -25,7 +25,7 @@ from koruide.ide import (
 )
 
 _PLUGIN_IDE_LANES = supported_autopilot_ide_ids() - {"auto"}
-_AUTOPILOT_PLUGIN_LANES = ("antigravity", "cursor", "windsurf", "vscodium", "vscode")
+_AUTOPILOT_PLUGIN_LANES = ("antigravity", "cursor", "qoder", "windsurf", "vscodium", "vscode")
 # Lanes that have no installable autopilot plugin but often appear in env/terminal
 # hints (integrated terminal inside the IDE). Auto-correct to a plugin IDE when
 # one is running — see ``_resolve_lane_from_explicit`` / ``_resolve_lane_from_terminal``.
@@ -651,6 +651,8 @@ def _get_settings_hint(ide: str) -> str:
         return "~/.config/Code/User/settings.json"
     if ide == "vscodium":
         return "~/.config/VSCodium/User/settings.json"
+    if ide == "qoder":
+        return "~/.config/Qoder/User/settings.json"
     return "IDE user settings (koruAutopilot.*)"
 
 

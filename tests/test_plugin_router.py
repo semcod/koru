@@ -55,6 +55,21 @@ def test_plugin_for_allows_vscodium_lane_with_vscode_plugin_client() -> None:
     assert router.plugin_for("vscodium") is vscode
 
 
+def test_plugin_for_allows_qoder_lane_with_vscode_plugin_client() -> None:
+    # Qoder loads the umbrella vscode VSIX; older builds register as "vscode".
+    vscode = _Client(1, ide="vscode")
+    router = PluginRouter({1: vscode}, drop_client=lambda _c: None)
+
+    assert router.plugin_for("qoder") is vscode
+
+
+def test_plugin_for_matches_qoder_plugin_client() -> None:
+    qoder = _Client(1, ide="qoder")
+    router = PluginRouter({1: qoder}, drop_client=lambda _c: None)
+
+    assert router.plugin_for("qoder") is qoder
+
+
 def test_plugin_for_prefers_workspace_matching_client() -> None:
     other_workspace = _Client(2, ide="vscode", workspace_name="other", workspace_folders=["/tmp/other"])
     matching = _Client(1, ide="vscode", workspace_name="koru", workspace_folders=["/repo/koru"])

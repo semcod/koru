@@ -9,6 +9,7 @@ from koruide.ide import TerminalKind
 _IDE_LABELS: dict[str, str] = {
     "antigravity": "Antigravity",
     "cursor": "Cursor",
+    "qoder": "Qoder",
     "jetbrains": "JetBrains IDE",
     "vscode": "VS Code",
     "vscodium": "VSCodium",

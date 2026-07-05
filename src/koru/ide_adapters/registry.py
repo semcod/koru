@@ -17,6 +17,7 @@ from koruide.ides import get_strategy as _get_ide_strategy
 _VSCODE_PLUGIN_STRATEGY_IDS = (
     "antigravity",
     "cursor",
+    "qoder",
     "vscodium",
     "vscode",
     "windsurf",

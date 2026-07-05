@@ -148,6 +148,7 @@ def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
             "vscode",
             "vscodium",
             "cursor",
+            "qoder",
             "jetbrains",
             "zed",
             "claude",

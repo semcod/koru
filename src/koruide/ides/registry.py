@@ -59,6 +59,7 @@ def _bootstrap_default_strategies() -> None:
         "koruide.ides.antigravity",
         "koruide.ides.cursor",
         "koruide.ides.jetbrains",
+        "koruide.ides.qoder",
         "koruide.ides.vscodium",
         "koruide.ides.vscode",
         "koruide.ides.windsurf",

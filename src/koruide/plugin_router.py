@@ -10,7 +10,9 @@ from typing import Any, Protocol
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
 
-_VSCODE_FAMILY_EQUIVALENT_IDS = frozenset({"vscode", "vscodium"})
+# Qoder loads the umbrella vscode VSIX, so an older plugin build may still
+# register as ide="vscode" while the drive target is "qoder".
+_VSCODE_FAMILY_EQUIVALENT_IDS = frozenset({"vscode", "vscodium", "qoder"})
 
 
 def _ide_ids_equivalent(left: str, right: str) -> bool:

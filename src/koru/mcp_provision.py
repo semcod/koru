@@ -122,7 +122,7 @@ def koru_mcp_configured(project: Path, ide: str) -> tuple[bool, str]:
     ide_norm = str(ide or "").strip().lower()
     if ide_norm == "cursor":
         candidates = (".cursor/mcp.json",)
-    elif ide_norm in {"vscode", "vscodium", "windsurf", "antigravity"}:
+    elif ide_norm in {"vscode", "vscodium", "windsurf", "antigravity", "qoder"}:
         candidates = (".vscode/mcp.json",)
     else:
         candidates = (".cursor/mcp.json", ".vscode/mcp.json")
@@ -346,7 +346,7 @@ def auto_provision_koru_mcp(
     ide_norm = str(ide or "").strip().lower()
     if ide_norm == "cursor":
         return [provision_cursor(project, dry_run=dry_run)]
-    if ide_norm in {"vscode", "vscodium", "antigravity"}:
+    if ide_norm in {"vscode", "vscodium", "antigravity", "qoder"}:
         return [provision_vscodium(project, dry_run=dry_run)]
     if ide_norm == "windsurf":
         return [provision_windsurf(project, dry_run=dry_run)]
@@ -415,6 +415,7 @@ _PROVISIONERS: dict[str, Any] = {
 # config layout.
 _PROVISIONER_COMPAT: dict[str, str] = {
     "antigravity": "vscode",  # VSCode-fork, same config layout
+    "qoder": "vscode",  # VSCode-fork, same config layout
 }
 
 

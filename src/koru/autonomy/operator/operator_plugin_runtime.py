@@ -6,7 +6,7 @@ import os
 from typing import Any
 
 VSCODE_FAMILY_PLUGIN_IDES = frozenset(
-    {"antigravity", "cursor", "vscode", "vscodium", "windsurf"},
+    {"antigravity", "cursor", "qoder", "vscode", "vscodium", "windsurf"},
 )
 
 

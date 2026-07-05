@@ -24,7 +24,7 @@ def _interface_matches_ide(interface_id: str, target_ide: str) -> bool:
         return "jetbrains" in interface_id
     if ide == "antigravity":
         return interface_id in {"plugin_socket_vscode_family", "antigravity_native_send"}
-    if ide in {"cursor", "vscode", "vscodium", "windsurf"}:
+    if ide in {"cursor", "qoder", "vscode", "vscodium", "windsurf"}:
         return interface_id == "plugin_socket_vscode_family"
     return True
 

@@ -1,8 +1,9 @@
 /**
- * VS Code-only strategy registry.
+ * Umbrella-plugin strategy registry.
  *
  * Cursor / VSCodium / Windsurf / Antigravity each have their own
- * standalone VSIX; this umbrella plugin serves Microsoft VS Code only.
+ * standalone VSIX; this umbrella plugin serves Microsoft VS Code and
+ * forks without a dedicated VSIX (Qoder).
  */
 
 import type { IdeStrategy } from "./ide-strategy";
@@ -36,7 +37,7 @@ export function detectIdeViaStrategies(appName: string): string | undefined {
 }
 
 export function bootstrapStrategies(): void {
-  for (const mod of ["./vscode"]) {
+  for (const mod of ["./vscode", "./qoder"]) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require(mod);
   }

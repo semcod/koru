@@ -24,7 +24,7 @@ from korullm import (
     resolve_active_llm_strategy,
 )
 
-_VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "vscode", "vscodium", "windsurf"})
+_VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "qoder", "vscode", "vscodium", "windsurf"})
 
 ReloadMethod = Literal["command_palette", "reuse_window", "none"]
 
