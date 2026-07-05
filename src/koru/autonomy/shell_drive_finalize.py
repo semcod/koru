@@ -1,0 +1,131 @@
+"""Auto-finalize planfile tickets after a successful shell-client drive.
+
+IDE-chat lanes are asynchronous: the drive submits a prompt and the loop
+waits for the editor agent to respond, so the ticket must stay open. The
+tillm shell lane (claude-code, codex, aider, …) is synchronous — when the
+drive returns ``ok`` the vendor CLI has already finished editing the repo.
+Leaving the ticket in ``waiting_input`` then requires a human to close it,
+which defeats the autonomous loop (2026-07-05: two god-module refactors
+completed by claude-code sat open until an operator intervened).
+
+Policy via ``KORU_SHELL_DRIVE_AUTODONE``:
+
+- ``verified`` (default): append the agent reply as a ticket note, mark the
+  ticket done, then run ``queue.post_run_verify`` commands (``koru.yaml``).
+  A red verify reopens/blocks the ticket via the existing policy. When no
+  verify commands are configured the ticket is left open (note only) — an
+  agent's exit code alone is not proof of done.
+- ``always``: note + done without verification (trust the agent).
+- ``off``: note only.
+"""
+
+from __future__ import annotations
+
+import os
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+_NOTE_TAG = "[KORU-SHELL-DRIVE]"
+_MAX_NOTE_CHARS = 1500
+_FINALIZE_KINDS = frozenset({"ticket_prompt", "escalation_prompt", "idle_ticket_prompt"})
+
+
+def _autodone_policy() -> str:
+    raw = (os.environ.get("KORU_SHELL_DRIVE_AUTODONE") or "").strip().lower()
+    return raw if raw in {"verified", "always", "off"} else "verified"
+
+
+def _reply_note(reply: dict[str, Any]) -> str:
+    message = reply.get("message") or reply.get("stdout") or reply.get("output") or ""
+    if isinstance(message, bytes):
+        message = message.decode("utf-8", errors="replace")
+    text = str(message).strip()
+    if len(text) > _MAX_NOTE_CHARS:
+        text = text[:_MAX_NOTE_CHARS] + " …[truncated]"
+    client = str(reply.get("client_id") or reply.get("backend") or "shell")
+    return f"{_NOTE_TAG} client={client} ok=true\n{text}" if text else f"{_NOTE_TAG} client={client} ok=true (no output captured)"
+
+
+def finalize_shell_drive_ticket(
+    *,
+    project: Path,
+    autopilot_ide: str,
+    ticket_id: str,
+    reply: dict[str, Any],
+    ok: bool,
+    decision_kind: str | None,
+    _hp: Callable[..., Any],
+) -> str:
+    """Best-effort ticket finalization; returns the action taken for telemetry."""
+    if not ok or not ticket_id:
+        return "skipped"
+    if (decision_kind or "") not in _FINALIZE_KINDS:
+        return "skipped"
+    try:
+        from koru.tillm_bridge import shell_drive_client_id
+
+        if not shell_drive_client_id(autopilot_ide):
+            return "skipped"
+    except Exception:
+        return "skipped"
+
+    policy = _autodone_policy()
+    from koru.queue.runners import run_process, run_shell_command
+    from koru.queue.ticket import planfile_command
+
+    planfile_command(
+        project,
+        ["ticket", "update", ticket_id, "--note", _reply_note(reply)],
+        runner=run_process,
+    )
+    if policy == "off":
+        _hp(f"  shell-drive finalize: note appended to {ticket_id} (autodone=off)")
+        return "noted"
+
+    verify_config = None
+    if policy == "verified":
+        try:
+            from koru.autonomy.post_run_verify import load_post_run_verify_config
+
+            verify_config = load_post_run_verify_config(project)
+        except Exception:
+            verify_config = None
+        if verify_config is None or not verify_config.enabled or not verify_config.commands:
+            _hp(
+                f"  shell-drive finalize: {ticket_id} left open — no queue.post_run_verify "
+                "commands in koru.yaml (set KORU_SHELL_DRIVE_AUTODONE=always to trust the agent)",
+            )
+            return "noted"
+
+    done = planfile_command(project, ["ticket", "done", ticket_id], runner=run_process)
+    if done.returncode != 0:
+        _hp(f"  shell-drive finalize: ticket done failed for {ticket_id} (rc={done.returncode})")
+        return "done_failed"
+
+    if policy == "always":
+        _hp(f"  shell-drive finalize: {ticket_id} marked done (autodone=always)")
+        return "done"
+
+    from koru.autonomy.post_run_verify import verify_completed_tickets
+
+    outcomes = verify_completed_tickets(
+        project,
+        [ticket_id],
+        config=verify_config,
+        planfile_runner=run_process,
+        shell_runner=run_shell_command,
+    )
+    failed = [o for o in outcomes if not o.get("ok")]
+    if failed:
+        action = str(failed[0].get("action") or "reopened")
+        _hp(
+            f"  shell-drive finalize: {ticket_id} verify FAILED → {action} "
+            "(agent work did not pass post_run_verify)",
+        )
+        return f"verify_failed:{action}"
+    _hp(f"  shell-drive finalize: {ticket_id} done + verified green")
+    return "done_verified"
+
+
+__all__ = ["finalize_shell_drive_ticket"]

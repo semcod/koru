@@ -148,3 +148,11 @@ autonomy:
       - test_health
       prefer_specific_work_until_queue_empty: true
       prefer_general_discovery_when_idle: true
+
+queue:
+  post_run_verify:
+    enabled: true
+    commands:
+      - .venv/bin/python -m pytest tests/ -q -x
+    on_failure: reopen
+    max_output_chars: 1200
