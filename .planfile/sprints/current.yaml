@@ -31217,9 +31217,11 @@ sprint:
         - No new mypy errors introduced (mypy src/koru/)'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T16:06:48.092084Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-07-05T16:06:43.262076Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -31241,6 +31243,31 @@ sprint:
           - No new mypy errors introduced (mypy src/koru/)'
         source: koru task
         timestamp: '2026-07-05T10:46:01.224281+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-07-05T16:06:43.422332+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T16:06:45.875923+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T16:06:48.249961+00:00'
       id: STARTER-588
       inputs:
         api_headers: {}
@@ -31270,7 +31297,18 @@ sprint:
       name: Fix unused imports across core modules
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Verified with ruff (target-version py312, --select F401,F403,F405) across
+          src/koru/: 0 findings. The remaining unchecked TODO.md entries (mostly ''from
+          __future__ import annotations'' and wildcard imports) are stale false-positives
+          from an older/different detection tool -- from __future__ import annotations
+          is a compiler directive, not a name-based import, and is a no-op (but harmless)
+          on koru''s actual minimum Python (>=3.12, which already supports PEP 585/604
+          natively). No source changes needed; package imports cleanly; tests/test_scan.py,
+          test_scan_split.py, test_scan_phase.py, test_package_deduplication.py (78
+          tests) pass. Full 2974-test suite not run end-to-end (multi-minute runtime);
+          ruff + targeted tests are sufficient evidence for this specific ticket''s
+          scope (unused imports).'
       priority: high
       source:
         context:
@@ -31293,9 +31331,9 @@ sprint:
         timestamp: '2026-07-05T10:46:01.224281+00:00'
         tool: koru-nxdo-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-07-05T10:46:01.224281+00:00'
+      updated_at: '2026-07-05T16:06:48.249920+00:00'
     STARTER-589:
       blocked_by: []
       blocks: []
