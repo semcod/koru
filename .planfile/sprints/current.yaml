@@ -28795,7 +28795,7 @@ sprint:
         around the moved behavior.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T14:33:13.762812Z'
+        finished_at: '2026-07-05T14:34:07.594013Z'
         max_attempts: 1
         queue: default
         state: done
@@ -28975,6 +28975,16 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-07-05T14:33:13.771197+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T14:34:05.356624+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T14:34:07.602614+00:00'
       id: STARTER-568
       inputs:
         api_headers: {}
@@ -29108,6 +29118,9 @@ sprint:
           = QueueLoopResult(             iterations=1,             completed=[],             failed=[],             waiting=["PLF-2014"],             last_status="waiting_input",             last_message="Need
           API context",         )         state = autonomous_mod.AutoloopState(             autopilot_events=[                 {                     "ts":
           autonomous_cycle_mod.time.time() - 8.0,                     "type": "messa...'
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
       priority: high
       source:
         context:
@@ -29148,7 +29161,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-07-05T14:33:13.771156+00:00'
+      updated_at: '2026-07-05T14:34:07.602573+00:00'
     STARTER-569:
       blocked_by: []
       blocks: []
