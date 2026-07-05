@@ -99,6 +99,29 @@ def _get_no_redirect(port: int, path: str) -> tuple[int, str]:
     raise AssertionError("request did not redirect")
 
 
+def _idle_planfile_run(
+    _project: Path,
+    args: object,
+    runner: object = None,
+) -> subprocess.CompletedProcess[str]:
+    """Deterministic stand-in for ``koru.context._run_planfile``.
+
+    ``build_context`` (behind ``/api/context`` and ``/api/handoff``) shells out
+    to ``python -m planfile.cli ticket …`` via ``_planfile_command_base()``,
+    which honours the ``KORU_PLANFILE_CMD`` env var. That variable is NOT scrubbed
+    by the global ``conftest`` teardown, so a leak from an earlier test survives
+    into this suite; in a headless CI container the resulting subprocess raises
+    ``FileNotFoundError`` (uncaught in ``_run_planfile``) and the endpoint answers
+    HTTP 500 — reproducing only under full-suite ordering, never in isolation.
+
+    Returning an idle-queue result makes the ticket branch hermetic and
+    deterministic while ``build_context`` still assembles policy, environment,
+    interfaces and instructions for real, so no assertion is weakened.
+    """
+    argv = list(args) if isinstance(args, (list, tuple)) else [str(args)]
+    return subprocess.CompletedProcess(argv, 0, stdout="null", stderr="")
+
+
 def _post_json(port: int, path: str, payload: dict[str, object]) -> tuple[int, str, str]:
     url = f"http://127.0.0.1:{port}{path}"
     body = json.dumps(payload).encode("utf-8")
@@ -379,7 +402,8 @@ class TestServe(unittest.TestCase):
         )
 
     def test_api_context_returns_brief(self) -> None:
-        status, ctype, body = _get(self.port, "/api/context")
+        with mock.patch("koru.context._run_planfile", side_effect=_idle_planfile_run):
+            status, ctype, body = _get(self.port, "/api/context")
         self.assertEqual(status, 200)
         self.assertIn("application/json", ctype)
         payload = json.loads(body)
@@ -534,7 +558,8 @@ class TestServe(unittest.TestCase):
         self.assertEqual(data["operation"], "POST /api/remote/drive")
 
     def test_api_handoff_returns_markdown(self) -> None:
-        status, ctype, body = _get(self.port, "/api/handoff")
+        with mock.patch("koru.context._run_planfile", side_effect=_idle_planfile_run):
+            status, ctype, body = _get(self.port, "/api/handoff")
         self.assertEqual(status, 200)
         self.assertIn("text/markdown", ctype)
         self.assertIn("# koru handoff", body)
