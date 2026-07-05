@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   isolation is deliberate — one project's crash/resource use can't take
   down another's loop. 17 new tests (`tests/test_cli_fleet.py`), plus a
   live smoke test (2 synthetic projects, verified child spawn + clean
-  SIGTERM shutdown of both).
+  SIGTERM shutdown of both). Docs + mermaid/ASCII architecture diagrams +
+  deployable systemd unit: [`docs/koru-fleet.md`](docs/koru-fleet.md),
+  [`examples/systemd/koru-fleet.service.example`](examples/systemd/koru-fleet.service.example).
 
 ### Fixed
 - **`_command_project()` (`autonomy/operator/operator_processes.py`)
