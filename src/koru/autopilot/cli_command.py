@@ -13,7 +13,7 @@ import sys
 import time
 from pathlib import Path
 
-from gillm.injection.errors import InjectorError
+from gillm.injection.errors import InjectorError  # noqa: F401
 from gillm.injection.injector import Injector
 
 from koru.agents import agent_lane_environment
@@ -62,7 +62,7 @@ from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
 from koru.autopilot.cli_snapshot import action_snapshot as _action_snapshot_impl
 from koru.autopilot.cli_trace import action_trace as _action_trace
 from koru.autopilot.client import AutopilotClient
-from koru.autopilot.commands.drive import _drive_command_argv
+from koru.autopilot.commands.drive import _drive_command_argv  # noqa: F401
 from koru.autopilot.commands.drive import action_drive as _drive_action_impl
 from koru.autopilot.commands.handoff import action_handoff as _handoff_action_impl
 from koru.autopilot.commands.manage import action_manage as _manage_action_impl
@@ -81,7 +81,7 @@ from koru.autopilot.lane_context import (
     resolve_client_socket_path,
     resolve_lane_context,
 )
-from koru.control_commands import shell_command
+from koru.control_commands import shell_command  # noqa: F401
 
 
 def _action_calibrate(args: argparse.Namespace) -> int:

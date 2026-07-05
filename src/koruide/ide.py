@@ -444,7 +444,7 @@ def detect_focused_ide_id(
     On unsupported environments this returns ``None``.
     """
     import sys
-    if _active_pid is None and ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):
+    if _active_pid is None and ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):  # noqa: E501
         return None
     pid = _active_pid if _active_pid is not None else _active_window_pid_x11()
     if pid is None:

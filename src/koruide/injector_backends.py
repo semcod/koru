@@ -11,6 +11,6 @@ warnings.warn(
     stacklevel=2,
 )
 
-import gillm.injection.backends as _gillm_backends
+import gillm.injection.backends as _gillm_backends  # noqa: E402
 
 sys.modules[__name__] = _gillm_backends

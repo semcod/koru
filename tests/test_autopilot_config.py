@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from koru.autopilot import config as config_mod
+from koru.autopilot import config as config_mod  # noqa: F401
 from koru.autopilot.config import (
     AutopilotConfig,
     cached_config,

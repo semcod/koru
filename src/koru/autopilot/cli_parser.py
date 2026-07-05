@@ -596,7 +596,7 @@ def _add_manage_parser(sub: argparse._SubParsersAction) -> None:
     manage.add_argument(
         "--allow-unconnected",
         action="store_true",
-        help="Exit 0 even if the plugin remains unconnected (useful during automated syncs where manual reload is expected).",
+        help="Exit 0 even if the plugin remains unconnected (useful during automated syncs where manual reload is expected).",  # noqa: E501
     )
 
 

@@ -135,7 +135,7 @@ class AutonomyConfig:
                 environ=env,
             )
             or "high",
-            diag_state_dir=Path(env_get("DIAG_STATE_DIR", ".planfile/.koru/autoloop-diag", environ=env) or ".planfile/.koru/autoloop-diag"),
+            diag_state_dir=Path(env_get("DIAG_STATE_DIR", ".planfile/.koru/autoloop-diag", environ=env) or ".planfile/.koru/autoloop-diag"),  # noqa: E501
             autopilot_skip_statuses=env_get("AUTOPILOT_SKIP_STATUSES", "waiting_input", environ=env)
             or "waiting_input",
             autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,

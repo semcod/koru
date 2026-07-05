@@ -11,7 +11,7 @@ import json
 import time
 from pathlib import Path
 
-import pytest
+import pytest  # noqa: F401
 
 from koruide.chat_history import (
     ChatEvent,

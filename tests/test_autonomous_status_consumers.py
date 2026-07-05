@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
+from types import SimpleNamespace  # noqa: F401
 
 from koru.autonomous_auto_pipeline import AutoPipelineState, _auto_pipeline_has_pressure
 from koru.autonomous_cycle_skip_conditions import _previous_drive_needs_manual_send

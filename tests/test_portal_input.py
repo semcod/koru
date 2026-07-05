@@ -2,7 +2,7 @@
 import struct
 import types
 
-import pytest
+import pytest  # noqa: F401
 
 from koru.integrations.vdisplay import portal_input as pi
 
@@ -25,7 +25,7 @@ def test_png_size_reads_ihdr():
 
 def test_landmark_input_between_context_and_auto(monkeypatch):
     Bounds = types.SimpleNamespace
-    Box = lambda text, x, y, w, h: types.SimpleNamespace(text=text, bounds=Bounds(x=x, y=y, width=w, height=h))
+    Box = lambda text, x, y, w, h: types.SimpleNamespace(text=text, bounds=Bounds(x=x, y=y, width=w, height=h))  # noqa: E731
     boxes = [
         Box("Add Context", 200, 700, 120, 24),
         Box("questions", 900, 300, 90, 20),   # a distractor 'context'-free word

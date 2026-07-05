@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone  # noqa: F401
 
-import pytest
+import pytest  # noqa: F401
 
 from koruapi.calibration_validator import (
-    BOTTOM_EDGE_THRESHOLD_PCT,
-    EXTREME_TOP_THRESHOLD_PCT,
+    BOTTOM_EDGE_THRESHOLD_PCT,  # noqa: F401
+    EXTREME_TOP_THRESHOLD_PCT,  # noqa: F401
     SEVERITY_ERROR,
     SEVERITY_INFO,
     SEVERITY_WARNING,
-    STALE_HOURS,
-    TOP_EDGE_THRESHOLD_PCT,
+    STALE_HOURS,  # noqa: F401
+    TOP_EDGE_THRESHOLD_PCT,  # noqa: F401
     validate_calibrations,
     validate_single_calibration,
 )

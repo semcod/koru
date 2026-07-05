@@ -14,7 +14,7 @@ from koruide.command_catalog_store import (
     command_catalog_enabled,
     parse_hello_command_catalog,
 )
-from koruide.daemon.protocol import _Client, _daemon_package_version
+from koruide.daemon.protocol import _Client, _daemon_package_version  # noqa: F401
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 from koruide.ide import normalize_ide_id
 from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION, Message, ack, error

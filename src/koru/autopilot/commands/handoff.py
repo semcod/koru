@@ -10,12 +10,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any  # noqa: F401
 
 from koru.autopilot.log_contract import emit_log
 
 if TYPE_CHECKING:
-    from koru.autopilot.client import AutopilotClient
+    from koru.autopilot.client import AutopilotClient  # noqa: F401
 
 
 def _build_brief(

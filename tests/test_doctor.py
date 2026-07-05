@@ -624,7 +624,7 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(check.status, WARN)
             self.assertIn("submit_unverified=", check.detail)
             self.assertIn("status_command=koru autopilot status --ide vscodium --explain", check.detail)
-            self.assertIn("probe_command=koru autopilot drive --ide vscodium --require-plugin 'probe test'", check.detail)
+            self.assertIn("probe_command=koru autopilot drive --ide vscodium --require-plugin 'probe test'", check.detail)  # noqa: E501
             self.assertIn("validate_command=koru autopilot trace --project", check.detail)
 
     def test_autopilot_debug_log_warns_when_selected_ide_has_no_activity(self) -> None:

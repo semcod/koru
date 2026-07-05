@@ -325,7 +325,7 @@ def probe_integration(project: Path, key: str) -> tuple[bool, str]:
 
 
 # ── slash commands ───────────────────────────────────────────────────────────
-def _cmd_help(_ctx: "ShellContext", _arg: str) -> None:
+def _cmd_help(_ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
     rows = [
         ("/help", "show this help"),
         ("/config", "interactive settings (model, actor, drain batch, auto-drain)"),
@@ -343,7 +343,7 @@ def _cmd_help(_ctx: "ShellContext", _arg: str) -> None:
     print(f"{DIM}Plain text (no slash) is sent to {RESET}{CYAN}the configured LLM{RESET}{DIM} and printed here.{RESET}")
 
 
-def _cmd_integration(ctx: "ShellContext", _arg: str) -> None:
+def _cmd_integration(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
     current = enabled_integrations(ctx.config)
     items = [
         (item.key, f"{item.label:<18} {DIM}{item.description}{RESET}", item.key in current)
@@ -369,7 +369,7 @@ def _cmd_integration(ctx: "ShellContext", _arg: str) -> None:
                 print(f"    {DIM}or: /bridge start (from the IDE's integrated terminal){RESET}")
 
 
-def _cmd_config(ctx: "ShellContext", _arg: str) -> None:
+def _cmd_config(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
     settings = shell_settings(ctx.config)
     fields = list(settings.items())
     print(f"{BOLD}Settings{RESET} {DIM}(enter number to edit, blank to finish){RESET}")
@@ -397,7 +397,7 @@ def _cmd_config(ctx: "ShellContext", _arg: str) -> None:
     print(f"{GREEN}saved to {CONFIG_REL_PATH}{RESET}")
 
 
-def _cmd_status(ctx: "ShellContext", _arg: str) -> None:
+def _cmd_status(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
     tickets = _open_tickets(ctx.project)
     current = enabled_integrations(ctx.config)
     settings = shell_settings(ctx.config)
@@ -416,7 +416,7 @@ def _cmd_status(ctx: "ShellContext", _arg: str) -> None:
     print(_box(lines))
 
 
-def _cmd_tickets(ctx: "ShellContext", _arg: str) -> None:
+def _cmd_tickets(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
     tickets = _open_tickets(ctx.project)
     if not tickets:
         print(f"{DIM}queue is empty{RESET}")
@@ -426,7 +426,7 @@ def _cmd_tickets(ctx: "ShellContext", _arg: str) -> None:
         print(f"  {CYAN}{t.get('id')}{RESET} {DIM}[{executor}]{RESET} {str(t.get('name'))[:70]}")
 
 
-def _cmd_drain(ctx: "ShellContext", arg: str) -> None:
+def _cmd_drain(ctx: "ShellContext", arg: str) -> None:  # noqa: UP037
     if "openrouter" not in enabled_integrations(ctx.config):
         print(f"{YELLOW}openrouter integration is disabled — enable it via /integration{RESET}")
         return
@@ -441,7 +441,7 @@ def _cmd_drain(ctx: "ShellContext", arg: str) -> None:
     subprocess.run(cmd, cwd=ctx.project)
 
 
-def _cmd_ticket(ctx: "ShellContext", arg: str) -> None:
+def _cmd_ticket(ctx: "ShellContext", arg: str) -> None:  # noqa: UP037
     text = arg.strip()
     if not text:
         print(f"{YELLOW}usage: /ticket <description>{RESET}")
@@ -455,7 +455,7 @@ def _cmd_ticket(ctx: "ShellContext", arg: str) -> None:
     print((proc.stdout or proc.stderr).strip())
 
 
-def _cmd_doctor(ctx: "ShellContext", _arg: str) -> None:
+def _cmd_doctor(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
     subprocess.run(["koru", "doctor"], cwd=ctx.project)
 
 
@@ -464,7 +464,7 @@ def _inside_vscode_terminal() -> bool:
     return os.environ.get("TERM_PROGRAM", "").lower() == "vscode"
 
 
-def _cmd_bridge(ctx: "ShellContext", arg: str) -> None:
+def _cmd_bridge(ctx: "ShellContext", arg: str) -> None:  # noqa: UP037
     action = arg.strip().lower()
     ok, detail = _probe_qoder_chat(ctx.project)
     mark = f"{GREEN}✓{RESET}" if ok else f"{RED}✗{RESET}"

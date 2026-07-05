@@ -112,7 +112,7 @@ def check_lane_dependencies(_project: Path) -> tuple[str, str]:
 
 def _installed_version(package: str) -> str | None:
     try:
-        from importlib.metadata import PackageNotFoundError, version
+        from importlib.metadata import PackageNotFoundError, version  # noqa: F401
 
         return version(package)
     except Exception:

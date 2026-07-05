@@ -51,7 +51,7 @@ from koru.doctor_autopilot_checks import (
 )
 from koru.doctor_autopilot_checks import (
     _resolve_autopilot_socket_for_doctor,
-    _selected_autopilot_ide,
+    _selected_autopilot_ide,  # noqa: F401
     _selected_autopilot_ide_for_diagnostics,
 )
 from koru.doctor_constants import (

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from types import SimpleNamespace
+from types import SimpleNamespace  # noqa: F401
 
 from gillm.routing import router as rt
 

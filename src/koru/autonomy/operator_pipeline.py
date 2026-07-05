@@ -8,7 +8,7 @@ prints numbered real-time status, and creates planfile tickets on the
 from __future__ import annotations
 
 import contextlib
-import json
+import json  # noqa: F401
 import os
 import subprocess
 import urllib.error
@@ -435,7 +435,7 @@ def _summarize_self_control_actions(report: Any) -> str:
 
 def _self_control_ok(project: Path, ide: str, socket_path: str) -> tuple[bool, str, str | None]:
     import sys
-    if ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")) and not os.environ.get("KORU_TEST_REAL_SELF_CONTROL"):
+    if ("pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")) and not os.environ.get("KORU_TEST_REAL_SELF_CONTROL"):  # noqa: E501
         return True, "self-control OK (pytest bypass)", None
     from koru.self_control import repair_self_control, run_self_control
 

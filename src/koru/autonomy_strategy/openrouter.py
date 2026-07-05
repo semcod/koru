@@ -103,7 +103,7 @@ def call_openrouter_vision(
     text_prompt: str,
     image_data_url: str,  # e.g. "data:image/png;base64,...."
     *,
-    system_prompt: str = "You are a precise desktop automation agent. Given a screenshot and VQL UI description, decide the best action. Return ONLY valid minified JSON with keys: click_center (dict with int x,y), strategy (short string), confidence (float 0-1), reason (short string).",
+    system_prompt: str = "You are a precise desktop automation agent. Given a screenshot and VQL UI description, decide the best action. Return ONLY valid minified JSON with keys: click_center (dict with int x,y), strategy (short string), confidence (float 0-1), reason (short string).",  # noqa: E501
     model: str | None = None,
     api_key: str | None = None,
     timeout_seconds: float = 60.0,

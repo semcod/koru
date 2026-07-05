@@ -30,7 +30,7 @@ def _clear_antigravity_env(monkeypatch: pytest.MonkeyPatch) -> None:
     ):
         monkeypatch.delenv(key, raising=False)
 
-from koru.autopilot import ide as ide_mod
+from koru.autopilot import ide as ide_mod  # noqa: E402
 
 
 @pytest.fixture

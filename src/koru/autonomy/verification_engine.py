@@ -401,7 +401,7 @@ def _git_dirty_count(project: Path) -> int:
         )
         if result.returncode != 0:
             return 0
-        lines = [l for l in (result.stdout or "").strip().splitlines() if l.strip()]
+        lines = [l for l in (result.stdout or "").strip().splitlines() if l.strip()]  # noqa: E741
         return len(lines)
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return 0
