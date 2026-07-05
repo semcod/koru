@@ -28795,7 +28795,7 @@ sprint:
         around the moved behavior.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T12:40:02.161077Z'
+        finished_at: '2026-07-05T14:14:13.183687Z'
         max_attempts: 1
         queue: default
         state: done
@@ -28829,6 +28829,136 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-07-05T12:40:02.169386+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T12:57:28.535113+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T13:05:35.755276+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T13:07:30.350490+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T13:40:21.085236+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T13:40:27.598594+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T13:41:37.332605+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T13:41:39.176248+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T13:42:41.059424+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T13:54:10.758488+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T13:55:13.539769+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T13:55:14.802546+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T13:56:17.419206+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T14:03:58.308946+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T14:04:27.222502+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T14:04:28.468801+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T14:05:45.763393+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T14:13:43.551541+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T14:13:53.994502+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T14:14:11.846901+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-07-05T14:14:13.192768+00:00'
       id: STARTER-568
       inputs:
         api_headers: {}
@@ -28855,6 +28985,102 @@ sprint:
         - Split wykonany przez headless claude-code; zweryfikowany (39 testów configurator
           zielonych, importerzy OK) i zacommitowany. Drive zgłosił timeout 900s, ale
           praca była kompletna.
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ................................F ===================================
+          FAILURES =================================== ___________ test_autonomous_respects_explicit_plugin_version_policy
+          ____________  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x764a6bd0a0b0>      def
+          test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) ->
+          None:         args = SimpleNamespace(enable_autopilot=True, emit_events="human")         messages:
+          list[str] = []         monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION",
+          "0")         monkeypatch.setattr(             autonomous_mod,             "_stdio_info",             lambda
+          message, **_kwargs: messages.append(message),         )              autonomous_mod._enable_autonomous_strict_plugin_policy(args)              assert
+          os.environ["KORU_STRICT_PLUGIN_VERSION"] == "0"         assert os.environ["KORU_STRICT_PLUGIN_ACK"]
+          == "1" >       assert messages == ["koru autonomous: strict plugin ack policy
+          enabled by default"] E       AssertionError: a...'
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ................................F ===================================
+          FAILURES =================================== ___________ test_autonomous_respects_explicit_plugin_version_policy
+          ____________  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7def376fc4b0>      def
+          test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) ->
+          None:         args = SimpleNamespace(enable_autopilot=True, emit_events="human")         messages:
+          list[str] = []         monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION",
+          "0")         monkeypatch.setattr(             autonomous_mod,             "_stdio_info",             lambda
+          message, **_kwargs: messages.append(message),         )              autonomous_mod._enable_autonomous_strict_plugin_policy(args)              assert
+          os.environ["KORU_STRICT_PLUGIN_VERSION"] == "0"         assert os.environ["KORU_STRICT_PLUGIN_ACK"]
+          == "1" >       assert messages == ["koru autonomous: strict plugin ack policy
+          enabled by default"] E       AssertionError: a...'
+        - 'Verified by hand: configurator split is complete and correct. 39 configurator
+          tests green (30 new + 9 pre-existing), public imports stable (__init__ re-exports
+          full API used by bootstrap/dashboard/mesh/vision importers), no late-binding
+          regression (no monkeypatch targets on configurator symbols), 7 focused submodules
+          by responsibility (schema/store/features/render/prompting/cli). Fixed the
+          post_run_verify blocker: test_autonomous_respects_explicit_plugin_version_policy
+          leaked KORU_STRICT_PLUGIN_ACK from the shell env (missing monkeypatch.delenv)
+          — pre-existing test-isolation bug, unrelated to configurator; committed
+          in d9934c8. Full-suite run (3127 tests): 12 unrelated failures remain, ALL
+          pre-existing and environmental — configurator commit 6ac2d99 blast-radius
+          is configurator-only; failing modules (autonomous, autonomy/readiness, lane_plugin_matching,
+          planfile_queue, serve) do not import configurator (serve /api/context handler
+          verified working standalone); their test files predate the refactor (15h-5w
+          old vs 57min). Causes: planfile 0.1.104 editable-install console script,
+          serve/network, llx/terminal/plugin detection — out of scope for a configurator-split
+          ticket.'
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ...............................................F ===================================
+          FAILURES =================================== _______ test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx
+          _______  tmp_path = PosixPath(''/tmp/pytest-of-tom/pytest-114/test_skip_due_to_recent_chat_a3'')
+          monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x700b7b9d96a0>      def
+          test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx(         tmp_path,         monkeypatch,     )
+          -> None:         monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")         queue_result
+          = QueueLoopResult(             iterations=1,             completed=[],             failed=[],             waiting=["PLF-2014"],             last_status="waiting_input",             last_message="Need
+          API context",         )         state = autonomous_mod.AutoloopState(             autopilot_events=[                 {                     "ts":
+          autonomous_cycle_mod.time.time() - 8.0,                     "type": "messa...'
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ...............................................F ===================================
+          FAILURES =================================== _______ test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx
+          _______  tmp_path = PosixPath(''/tmp/pytest-of-tom/pytest-120/test_skip_due_to_recent_chat_a3'')
+          monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7494037618d0>      def
+          test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx(         tmp_path,         monkeypatch,     )
+          -> None:         monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")         queue_result
+          = QueueLoopResult(             iterations=1,             completed=[],             failed=[],             waiting=["PLF-2014"],             last_status="waiting_input",             last_message="Need
+          API context",         )         state = autonomous_mod.AutoloopState(             autopilot_events=[                 {                     "ts":
+          autonomous_cycle_mod.time.time() - 8.0,                     "type": "messa...'
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ........................................................................
+          [  7%] ........................................................................
+          [  9%] ........................................................................
+          [ 12%] ........................................................................
+          [ 14%] .................................................................F
+          =================================== FAILURES ===================================
+          _________ test_lane_terminal_mismatch_when_integrated_terminal_differs _________  monkeypatch
+          = <_pytest.monkeypatch.MonkeyPatch object at 0x70ebe55db930>      def test_lane_terminal_mismatch_when_integrated_terminal_differs(         monkeypatch:
+          pytest.MonkeyPatch,     ) -> None:         monkeypatch.setattr(             "koru.autonomous_readiness.detect_terminal_host_ide_id",             lambda:
+          "vscode",         )         monkeypatch.setattr(             "koruide.ide.detect_terminal_host_context",             lambda:
+          type("Ctx",...'
+        - 'Already complete in 6ac2d99 ''refactor(configurator): dissolve god module
+          into the configurator package''. Verified before closing: src/koru/configurator.py
+          absent from HEAD (only stale build/lib copy remains); split into package
+          schema/store/features/render/prompting/cli, max 209 lines. Public imports
+          stable -- all 16 names re-exported via __init__, consumer-style ''from koru.configurator
+          import ...'' loads. 39 tests across test_configurator{,_cli,_features,_render,_store,_toggle}.py
+          pass. Stale code2llm god-ticket re-issue, not new work.'
+        - '[KORU-SHELL-DRIVE] client=claude-code ok=true
+
+          completed'
       priority: high
       source:
         context:
@@ -28895,7 +29121,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-07-05T12:40:02.169342+00:00'
+      updated_at: '2026-07-05T14:14:13.192725+00:00'
     STARTER-569:
       blocked_by: []
       blocks: []
@@ -28909,9 +29135,10 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
+        finished_at: '2026-07-05T12:55:26.503727Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -28928,6 +29155,24 @@ sprint:
           Make the smallest refactor that removes the smell and run local tests.'
         source: koru task
         timestamp: '2026-07-04T21:53:02.155821+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T12:55:26.511729+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T12:57:29.970940+00:00'
       id: STARTER-569
       inputs:
         api_headers: {}
@@ -28951,7 +29196,20 @@ sprint:
       name: 'Address code smell: God Function: _build_vql_command_plan'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'post_run_verify failed (exit 1): ........................................................................
+          [  2%] ........................................................................
+          [  4%] ................................F ===================================
+          FAILURES =================================== ___________ test_autonomous_respects_explicit_plugin_version_policy
+          ____________  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x764a6bd0a0b0>      def
+          test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) ->
+          None:         args = SimpleNamespace(enable_autopilot=True, emit_events="human")         messages:
+          list[str] = []         monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION",
+          "0")         monkeypatch.setattr(             autonomous_mod,             "_stdio_info",             lambda
+          message, **_kwargs: messages.append(message),         )              autonomous_mod._enable_autonomous_strict_plugin_policy(args)              assert
+          os.environ["KORU_STRICT_PLUGIN_VERSION"] == "0"         assert os.environ["KORU_STRICT_PLUGIN_ACK"]
+          == "1" >       assert messages == ["koru autonomous: strict plugin ack policy
+          enabled by default"] E       AssertionError: a...'
       priority: high
       source:
         context:
@@ -28995,7 +29253,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-07-04T21:53:02.155821+00:00'
+      updated_at: '2026-07-05T12:57:29.970902+00:00'
     STARTER-570:
       blocked_by: []
       blocks: []
