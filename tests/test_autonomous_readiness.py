@@ -266,8 +266,13 @@ def test_plugin_reconnect_pipeline_succeeds_on_second_attempt() -> None:
 def test_lane_terminal_mismatch_when_integrated_terminal_differs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Patch the module that actually calls the detector — readiness.py binds
+    # it as a module global at import time, so patching the
+    # koru.autonomous_readiness facade never took effect and the test only
+    # passed when a dev shell's ambient TERMINAL_EMULATOR happened to yield a
+    # mismatching IDE (it failed in clean env / under the autonomous loop).
     monkeypatch.setattr(
-        "koru.autonomous_readiness.detect_terminal_host_ide_id",
+        "koru.autonomy.readiness.readiness.detect_terminal_host_ide_id",
         lambda: "vscode",
     )
     monkeypatch.setattr(
