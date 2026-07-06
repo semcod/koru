@@ -486,6 +486,25 @@ def _build_os_calibration_step(
     session: str | None = None,
 ) -> OperatorStep:
     """Return OS injector calibration status for IDEs that need keyboard fallback."""
+    if ide == "auto":
+        # No concrete IDE was resolved at startup. An OS-injector profile is bound
+        # to a concrete editor (calibration saves under the detected IDE id, never
+        # under "auto"), so a `koru:ide-os:calibrate IDE=auto` task has no target
+        # chat and can never produce a profile that satisfies this check. Treat the
+        # unresolved case as not-applicable rather than emitting an unsatisfiable
+        # pending step.
+        return OperatorStep(
+            step_id="os_calibrate",
+            title="Kalibracja czatu OS injectora (auto)",
+            actor="human",
+            status="skipped",
+            detail=(
+                "niewymagana: nie rozwiązano konkretnego IDE (auto). Profil OS "
+                "injectora jest przypisany do konkretnego edytora — kalibracja "
+                "'auto' nie ma docelowego czatu i nie zostanie zapisana pod tą nazwą"
+            ),
+            task_command=None,
+        )
     if supports_autopilot_plugin_ide(ide):
         return OperatorStep(
             step_id="os_calibrate",

@@ -234,6 +234,39 @@ def test_build_operator_steps_skips_os_calibration_for_windsurf_main_instance(
     assert profile_checks == []
 
 
+def test_build_operator_steps_skips_os_calibration_for_unresolved_auto(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auto_probe = replace(
+        probe,
+        resolved_lane="auto",
+        resolved_autopilot_ide="auto",
+        terminal_lane="auto",
+    )
+    profile_checks: list[str] = []
+    monkeypatch.setattr(
+        op,
+        "_os_profile_ok",
+        lambda ide, _project: profile_checks.append(ide) or (False, "missing"),
+    )
+
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=auto_probe,
+        plugin_connected=False,
+    )
+    os_step = next(s for s in steps if s.step_id == "os_calibrate")
+
+    assert os_step.status == "skipped"
+    assert os_step.task_command is None
+    # Calibration saves the profile under the detected concrete IDE id, never
+    # "auto", so the step must neither look up an impossible "auto" profile nor
+    # emit an unsatisfiable `IDE=auto` task.
+    assert profile_checks == []
+
+
 def test_build_operator_steps_adds_self_control_step(
     tmp_path: Path,
     probe: AutonomousStartupProbe,
