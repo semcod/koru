@@ -197,6 +197,26 @@ class TestForceAndConflicts(unittest.TestCase):
             report = init_project(project, force=True)
             self.assertGreaterEqual(report.sprint_imported, 2)
 
+    def test_re_init_with_force_backs_up_previous_sprint(self) -> None:
+        """2026-07-06: `koru --init --force` on a project with real tickets
+        (not just the starter scaffold) silently destroyed them -- no
+        confirmation, no backup, unrecoverable for projects that gitignore
+        `.planfile/`. A backup of the sprint file must exist afterward."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            init_project(project)
+            sprint_path = project / ".planfile" / "sprints" / "current.yaml"
+            original_content = sprint_path.read_text(encoding="utf-8")
+
+            report = init_project(project, force=True)
+
+            self.assertIsNotNone(report.sprint_backup_path)
+            self.assertTrue(report.sprint_backup_path.exists())
+            self.assertEqual(
+                report.sprint_backup_path.read_text(encoding="utf-8"), original_content
+            )
+            self.assertIn("sprint backup:", report.summary())
+
 
 class TestFromExternalPipeline(unittest.TestCase):
     def test_imports_user_supplied_pipeline(self) -> None:

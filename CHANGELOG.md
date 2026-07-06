@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `koru --init --force` (`materialize_to_planfile` in `bootstrap.py`)
+  silently overwrote an existing `.planfile/sprints/<sprint>.yaml` with a
+  fresh scaffold — every ticket, done or open, gone the instant the write
+  landed, with zero backup. Projects that gitignore `.planfile/` entirely
+  (a common, deliberate choice — it's local runtime state, not shared team
+  state) had no recovery path at all. Reproduced live 2026-07-06: restoring
+  fleet-wide koru coverage required `--init --force` on 3 projects to add
+  the missing `.planfile/.koru/policy.yaml` marker; this destroyed 30 real,
+  non-scaffold tickets in one of them (`.planfile` gitignored there), only
+  partially recoverable by hand from conversation history — the other two
+  projects had `.planfile/sprints/` git-tracked and were fully recovered via
+  `git checkout`. Fixed by writing a timestamped backup
+  (`<sprint>.yaml.bak-<unix-ts>`) of the previous sprint file immediately
+  before the destructive overwrite, surfaced in both `ImportReport.summary()`
+  and `InitReport.summary()` ("sprint backup: ... (previous tickets)").
+  `.planfile/sprints/*.bak-*` added to the auto-managed `.gitignore` block
+  so the backup doesn't pollute git status for projects that *do* track
+  `.planfile/sprints/`. Verified: 4 new tests
+  (`tests/test_bootstrap.py::test_overwrite_backs_up_previous_sprint`,
+  `test_first_write_creates_no_backup`,
+  `tests/test_init.py::test_re_init_with_force_backs_up_previous_sprint`,
+  plus the pre-existing force/overwrite tests still pass unchanged — 47
+  across both files total).
+
 ### Added
 - `koru fleet up` / `koru fleet ls` (`koru/cli_fleet.py`): a supervisor that
   discovers every project with a koru LLM-agent policy
@@ -91,6 +116,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   confidence the mocks reflect real plugin behavior; left for follow-up
   with real integration fixtures rather than mocked ones that would give
   false confidence.
+
+## [0.1.390] - 2026-07-06
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_bootstrap.py
+- Update tests/test_init.py
+
+### Other
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update wup.yaml
 
 ## [0.1.389] - 2026-07-06
 

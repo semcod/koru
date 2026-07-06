@@ -242,6 +242,42 @@ class TestMaterializeToPlanfile(unittest.TestCase):
             report2 = materialize_to_planfile(tasks, project, overwrite=True)
             self.assertTrue(report2.sprint_file_overwritten)
 
+    def test_overwrite_backs_up_previous_sprint(self) -> None:
+        """2026-07-06 incident: `overwrite=True` (koru --init --force) wiped
+        an existing sprint file -- every ticket, done or open -- with no way
+        back for projects that gitignore `.planfile/` (common: it's local
+        runtime state). A backup must be written before the destructive
+        write, containing the previous tickets verbatim."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            yaml_path = project / "p.yaml"
+            _write_yaml(yaml_path, VALID_PIPELINE)
+            _, tasks = load_flat_pipeline(yaml_path)
+            materialize_to_planfile(tasks, project)
+            original_sprint_path = project / ".planfile" / "sprints" / "current.yaml"
+            original_content = original_sprint_path.read_text(encoding="utf-8")
+
+            report2 = materialize_to_planfile(tasks, project, overwrite=True)
+
+            assert report2.sprint_backup_path is not None
+            assert report2.sprint_backup_path.exists()
+            assert report2.sprint_backup_path.read_text(encoding="utf-8") == original_content
+            assert "backup:" in report2.summary()
+
+    def test_first_write_creates_no_backup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            yaml_path = project / "p.yaml"
+            _write_yaml(yaml_path, VALID_PIPELINE)
+            _, tasks = load_flat_pipeline(yaml_path)
+
+            report = materialize_to_planfile(tasks, project)
+
+            assert report.sprint_backup_path is None
+            sprints_dir = project / ".planfile" / "sprints"
+            backups = list(sprints_dir.glob("*.bak-*"))
+            assert backups == []
+
 
 class TestImportFlatPipeline(unittest.TestCase):
     def test_full_round_trip(self) -> None:

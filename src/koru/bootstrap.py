@@ -17,6 +17,7 @@ orchestrator and planfile remains the source of truth at runtime.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,7 @@ class ImportReport:
     config_created: bool = False
     sprint_file_created: bool = False
     sprint_file_overwritten: bool = False
+    sprint_backup_path: Path | None = None
 
     def summary(self) -> str:
         lines = [
@@ -63,6 +65,8 @@ class ImportReport:
             lines.append(f"sprint:  .planfile/sprints/{self.sprint}.yaml created")
         elif self.sprint_file_overwritten:
             lines.append(f"sprint:  .planfile/sprints/{self.sprint}.yaml overwritten")
+            if self.sprint_backup_path:
+                lines.append(f"backup:  {self.sprint_backup_path} (previous tickets)")
         return "\n".join(lines)
 
 
@@ -337,6 +341,20 @@ def materialize_to_planfile(
         raise FileExistsError(
             f"{sprint_path} already exists. Use overwrite=True (or --force) to replace it.",
         )
+
+    backup_path: Path | None = None
+    if sprint_path.exists() and overwrite:
+        # `overwrite=True` (koru --init --force) replaces the sprint file
+        # wholesale -- every existing ticket, done or open, is gone the
+        # instant this write lands. Projects with `.planfile/` gitignored
+        # (common: it's runtime/local state, not shared team state) have no
+        # other recovery path at all (2026-07-06: exactly this wiped 30 real
+        # tickets in a project with `.planfile` gitignored; recovered only
+        # by hand from conversation history, not from disk). One rotating,
+        # timestamped backup costs nothing and makes this reversible.
+        backup_path = sprints_dir / f"{sprint}.yaml.bak-{int(time.time())}"
+        backup_path.write_bytes(sprint_path.read_bytes())
+        report.sprint_backup_path = backup_path
 
     tickets: dict[str, dict[str, Any]] = {}
     for task in flat_tasks:

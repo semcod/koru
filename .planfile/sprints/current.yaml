@@ -29049,7 +29049,7 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T22:40:33.208424Z'
+        finished_at: '2026-07-05T23:11:07.095411Z'
         max_attempts: 1
         queue: default
         state: done
@@ -29079,6 +29079,35 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-07-05T22:40:33.216563+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T23:01:27.134343+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-05T23:10:58.187281+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-05T23:11:07.104388+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-05T23:30:45.995866+00:00'
       id: STARTER-577
       inputs:
         api_headers: {}
@@ -29102,7 +29131,43 @@ sprint:
       name: 'Address code smell: God Function: action_snapshot'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - '...ector_mod  tests/test_koruide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_desktop_uri.py::test_desktop_uri_plan_open_firefox - Module...
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 1397 passed, 157 deselected, 5 warnings, 44 subtests passed in
+          382.26s (0:06:22)'
+        - 'STALE — already resolved. action_snapshot was refactored after this ticket
+          was filed (2026-07-04); file sha256 now 6ba26de0 (8540B) vs ticket-evidence
+          289bdf90 (7376B). Verified with code2llm SmellDetector on current src/koru/autopilot/cli_snapshot.py:
+          action_snapshot @ line 229 (not 133), CC=2 fan_out=6 mutations=0 — below
+          every god-function threshold (fan>10/mut>6/CC>12). Reported CC=8/fan=28/mut=21
+          match the pre-refactor monolith (split into _snapshot_context/_snapshot_runtime_block/_compose_snapshot_lines/_replay_lines).
+          Smallest refactor = 0 lines. Local tests: 79 passed (autopilot cli/route/status/replay/operator);
+          action_snapshot runs end-to-end rc=0. Separate note: a real god-function
+          remains in this file — _operator_lines @ line 45 (CC=9 fan_out=11 mutations=10)
+          — NOT covered by this ticket.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2730 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 768.03s (0:12:48)'
       priority: high
       source:
         context:
@@ -29143,9 +29208,9 @@ sprint:
         timestamp: '2026-07-04T21:53:20.406572+00:00'
         tool: koru-project-discovery
       sprint: current
-      status: done
+      status: open
       sync: {}
-      updated_at: '2026-07-05T22:40:33.216537+00:00'
+      updated_at: '2026-07-05T23:30:45.995834+00:00'
     STARTER-578:
       blocked_by: []
       blocks: []

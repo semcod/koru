@@ -228,7 +228,7 @@ GITIGNORE_MARKER = "# koru runtime artefacts (generated)"
 GITIGNORE_LINE = ".planfile/.koru/"
 # .koru/ holds project.json / history.jsonl / event stores written by
 # ensure_project_state and the CQRS event log — also machine-local
-GITIGNORE_LINES = (GITIGNORE_LINE, ".koru/")
+GITIGNORE_LINES = (GITIGNORE_LINE, ".koru/", ".planfile/sprints/*.bak-*")
 
 
 @dataclass
@@ -247,6 +247,7 @@ class InitReport:
     autopilot_host_setup_written: bool = False
     koru_project_pipeline_yaml_written: bool = False
     host_environment_written: bool = False
+    sprint_backup_path: Path | None = None
 
     def _env_bit(self) -> str:
         return (
@@ -281,6 +282,8 @@ class InitReport:
             bits.append("koru.yaml: created")
         if self.host_environment_written:
             bits.append("host-environment: host-environment.{json,md}")
+        if self.sprint_backup_path:
+            bits.append(f"sprint backup: {self.sprint_backup_path.name} (previous tickets)")
         return ", ".join(bits)
 
     def summary(self) -> str:
@@ -293,6 +296,7 @@ class InitReport:
 class _InitPipelineImport:
     tickets_imported: int
     used_starter: bool
+    sprint_backup_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -368,6 +372,7 @@ def init_project(
         autopilot_host_setup_written=artifacts.autopilot_host_setup_written,
         koru_project_pipeline_yaml_written=artifacts.koru_project_pipeline_yaml_written,
         host_environment_written=artifacts.host_environment_written,
+        sprint_backup_path=pipeline.sprint_backup_path,
     )
 
 
@@ -450,6 +455,7 @@ def _import_init_pipeline(
     return _InitPipelineImport(
         tickets_imported=len(report.tickets_imported),
         used_starter=used_starter,
+        sprint_backup_path=report.sprint_backup_path,
     )
 
 

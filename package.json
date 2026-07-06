@@ -1,6 +1,6 @@
 {
   "name": "koru-autopilot-plugins-workspace",
-  "version": "0.1.389",
+  "version": "0.1.390",
   "private": true,
   "description": "Monorepo root for all koru autopilot IDE plugins. Each IDE has its own VSIX so a regression in one cannot leak into another. Shared code (protocol, socket, host-click-submit) lives in plugins/koru-autopilot-shared and is copied into per-IDE plugins at prebuild time.",
   "workspaces": [
