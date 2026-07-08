@@ -31760,63 +31760,557 @@ sprint:
       sync: {}
       updated_at: '2026-07-06T08:09:17.479354+00:00'
     STARTER-595:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-07-06T09:49:25.946248+00:00'
+      description: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+        0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        finished_at: '2026-07-08T07:48:54.588201+00:00'
+        last_error: null
+        lease_expires_at: null
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+          0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-07-06T09:49:25.946248+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T01:05:39.285060+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T01:28:10.890222+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T01:28:48.390736+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T01:51:13.735468+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T01:51:51.266892+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T02:14:25.399581+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T02:15:03.052722+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T02:33:55.864842+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T02:34:33.406900+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T02:57:06.853926+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T02:57:44.427584+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T03:20:19.450878+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T03:20:57.263818+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T03:43:31.405116+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T03:44:09.113629+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T04:03:06.201763+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T04:03:43.888701+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T04:22:47.529774+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T04:23:25.296031+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T04:42:26.907627+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T04:43:04.756477+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T05:01:59.177518+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T05:02:37.054648+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T05:25:05.199397+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T05:25:43.166222+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T05:48:00.373818+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T05:48:38.383702+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T06:11:12.921888+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T06:11:51.015231+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T06:34:18.964317+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T06:34:56.791464+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T06:57:31.147462+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T06:58:09.378747+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T07:20:53.062798+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T07:21:31.533388+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T07:27:43.835207+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-08T07:28:41.355370+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-08T07:48:03.386732+00:00'
+      - timestamp: '2026-07-08T07:48:54.588201+00:00'
+        action: auto_resolved
+        source: koru wup
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
       id: STARTER-595
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+          0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
       name: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
         Check: WUP service=koru-shell stage=...'
-      status: open
+      outputs:
+        artifacts: []
+        notes:
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 239.93s (0:03:59)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 231.08s (0:03:51)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 237.32s (0:03:57)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 221.33s (0:03:41)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 231.45s (0:03:51)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 226.23s (0:03:46)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 238.82s (0:03:58)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 225.70s (0:03:45)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 232.21s (0:03:52)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 230.19s (0:03:50)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 223.00s (0:03:42)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 225.61s (0:03:45)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 224.88s (0:03:44)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 231.60s (0:03:51)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 230.66s (0:03:50)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 227.06s (0:03:47)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 236.78s (0:03:56)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): [07:27:38] koru ▸ OBS: corr=d1 component=autopilot
+          phase name=input_busy_probe status=attempted ide=vscode [07:27:39] koru
+          ▸ OBS: corr=d1 component=autopilot phase name=paste status=attempted ide=vscode
+          [07:27:40] koru ▸ OBS: corr=d1 component=autopilot phase name=submit status=awaiting_ack
+          ide=vscode'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - '...ide_bridges.py:18   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:18:
+          DeprecationWarning: koruide.injector is deprecated; import from gillm.injection.injector
+          instead     from koruide import injector as koruide_injector_mod  tests/test_koruide_bridges.py:19   /home/tom/github/semcod/koru/tests/test_koruide_bridges.py:19:
+          DeprecationWarning: koruide.os_injector is deprecated; import from gillm.injection.os_injector
+          instead     from koruide import os_injector as koruide_os_injector_mod  tests/test_wizard_gui.py:11   /home/tom/github/semcod/koru/tests/test_wizard_gui.py:11:
+          StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is
+          deprecated; install `httpx2` instead.     from starlette.testclient import
+          TestClient  # noqa: E402  -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+          =========================== short test summary info ============================
+          FAILED tests/test_serve.py::TestServe::test_api_config_get_and_post_persist_dashboard_settings
+          !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          1 failed, 2734 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
+          passed in 239.87s (0:03:59)'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
       priority: high
-      sprint: current
       source:
-        tool: koru-cli-nl
-        timestamp: '2026-07-06T09:49:25.946248+00:00'
         context:
           input: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
             Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
             0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
             Investigate and fix regression, stale quality artifact, or broken diagnostic
             gate.'
-      description: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-        Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-        0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
-        Investigate and fix regression, stale quality artifact, or broken diagnostic
-        gate.'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      blocked_by: []
-      blocks: []
-      files: []
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-          0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
-          Investigate and fix regression, stale quality artifact, or broken diagnostic
-          gate.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
+        timestamp: '2026-07-06T09:49:25.946248+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: done
       sync: {}
-      history:
-      - timestamp: '2026-07-06T09:49:25.946248+00:00'
-        action: created
-        source: koru task
-        message: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
-          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
-          0/4 passed, 2 failed (120ms) track=/home/tom/github/semcod/koru/.wup/tracks/1783331326_koru-shell_quick.json.
-          Investigate and fix regression, stale quality artifact, or broken diagnostic
-          gate.'
-      created_at: '2026-07-06T09:49:25.946248+00:00'
-      updated_at: '2026-07-06T09:49:25.946248+00:00'
+      updated_at: '2026-07-08T07:48:54.588201+00:00'

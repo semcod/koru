@@ -1,7 +1,7 @@
 // DOQL system map — koru
 // role: LLM-generated schema (SystemMapIR → DOQL)
 // format: nlp2dsl.system_map.v1
-// generated: 2026-07-06T09:30:03.054097+00:00
+// generated: 2026-07-08T07:49:05.565994+00:00
 
 environment[name="koru"] {
   ENV2LLM_CONTEXT: "/home/tom/github/semcod/koru/.nlp2dsl/registry/environment.doql.less";
@@ -9,7 +9,7 @@ environment[name="koru"] {
   LLM_MODEL: "openrouter/google/gemini-3.1-flash-image-preview";
   NLP2DSL_DOQL_CONTEXT: "/home/tom/github/semcod/koru/.nlp2dsl/registry/environment.doql.less";
   OPENROUTER_API_KEY: "sk-o…7dd2";
-  generated_at: "2026-07-06T09:30:00.309985+00:00";
+  generated_at: "2026-07-08T07:49:02.154467+00:00";
 }
 
 data {
@@ -31,27 +31,29 @@ data {
   host.cap.docker: true;
   host.cap.docker_containers: true;
   host.cap.openrouter: true;
-  host.cap.playwright: true;
+  host.cap.playwright: false;
   host.cap.ports: true;
   host.cap.processes: true;
   host.cap.uia: false;
   host.cap.www_8788: true;
   host.cap.www_health: true;
-  host.container_count: 72;
-  host.cron_entry_count: 2;
+  host.container_count: 75;
+  host.cron_entry_count: 4;
   host.cron_taskinity_installed: true;
   host.endpoint.agent_http_8103: "http://localhost:8103/health";
   host.endpoint.agent_http_8104: "http://localhost:8104/health";
   host.endpoint.agent_http_8106: "http://localhost:8106/health";
   host.endpoint.agent_http_8108: "http://localhost:8108/health";
+  host.endpoint.agent_http_8109: "http://localhost:8109/health";
   host.endpoint.agent_http_8119: "http://localhost:8119/health";
   host.endpoint.agent_http_8120: "http://localhost:8120/health";
+  host.endpoint.agent_http_8121: "http://localhost:8121/health";
   host.endpoint.www_8788: "http://localhost:8788/www/";
   host.endpoint.www_health: "http://localhost:8788/health";
   host.hostname: "nvidia";
   host.monitor_log_path: "/tmp/taskinity-monitor.log";
   host.platform: "Linux-6.17.0-40-generic-x86_64-with-glibc2.42";
-  host.port_count: 86;
+  host.port_count: 92;
   host.process_count: 80;
   mcp.commands[koru_desktop_uri_get_getv_var].alias.desktop_uri_get_getv_var: "desktop uri get getv var";
   mcp.commands[koru_desktop_uri_get_getv_var].alias.koru_desktop_uri_get_getv_var: "koru desktop uri get getv var";
@@ -161,7 +163,7 @@ data {
   mcp.server: "koru";
   mcp.tool_count: 35;
   testql.desktop_tools: ['xdotool', 'wtype', 'ydotool', 'grim', 'scrot'];
-  testql.playwright: true;
+  testql.playwright: false;
   testql.scenario_count: 18;
   testql.scenario_paths: ['examples/nlp2uri-testql-browser/browser-dom.testql.toon.yaml', 'testql-scenarios/cli-coru_calibration.testql.toon.yaml', 'testql-scenarios/cli-koru-live.testql.toon.yaml', 'testql-scenarios/cli-koru.testql.toon.yaml', 'testql-scenarios/cli-koru_api.testql.toon.yaml', 'testql-scenarios/cli-koru_dsl.testql.toon.yaml', 'testql-scenarios/cli-koru_wup_testql.testql.toon.yaml', 'testql-scenarios/cli-smoke.testql.toon.yaml', 'testql-scenarios/conversations/send-invoice.testql.toon.yaml', 'testql-scenarios/generated-cli-tests.testql.toon.yaml', 'testql-scenarios/generated-from-pytests.testql.toon.yaml', 'testql-scenarios/vdisplay-photo-vql-drive.testql.toon.yaml'];
 }
@@ -211,10 +213,10 @@ host {
   status: "available";
   cron_available: true;
   cron_taskinity_installed: true;
-  probed_at: "2026-07-06T09:30:02.846951+00:00";
+  probed_at: "2026-07-08T07:49:05.296359+00:00";
   monitor_log_path: "/tmp/taskinity-monitor.log";
-  capabilities_available: "docker,playwright,curl,crontab,openrouter,agent_http_any,www_8788,www_health,docker_containers,processes,ports";
-  capabilities_missing: "cli_uri,cli_uri3,cli_hypervisor,cli_touri,cli_uri2flow,cli_nl2uri,adb,uia,agent_http_8101,agents";
+  capabilities_available: "docker,curl,crontab,openrouter,agent_http_any,www_8788,www_health,docker_containers,processes,ports";
+  capabilities_missing: "playwright,cli_uri,cli_uri3,cli_hypervisor,cli_touri,cli_uri2flow,cli_nl2uri,adb,uia,agent_http_8101,agents";
 }
 
 host_cron[0] {
@@ -228,6 +230,20 @@ host_cron[1] {
   schedule: "*/5 * * * *";
   command: "cd /home/tom/github/wronai/hypervisor && MONITOR_NOTIFY=1 WWW_BASE=http://localhost:8788 bash scripts/www/run_monitors.sh >> /tmp/taskinity-monitor.log 2>&1";
   marker: "taskinity-www-monitor";
+  enabled: true;
+}
+
+host_cron[2] {
+  schedule: "*/10 * * * *";
+  command: "curl -s -X POST http://127.0.0.1:8797/api/work/loop -d '{\"apply\":true}'";
+  marker: "urirun:u1 loop:// autonomiczny (safe: circuit-break/reconcile/route)";
+  enabled: true;
+}
+
+host_cron[3] {
+  schedule: "*/5 * * * *";
+  command: "curl -s http://127.0.0.1:8797/api/work/system >/dev/null";
+  marker: "urirun:u2 watchdog system-monitor (ciągły: logi/errory/kontrolery→findings)";
   enabled: true;
 }
 
@@ -267,41 +283,55 @@ host_endpoint[4] {
 }
 
 host_endpoint[5] {
+  id: "agent_http_8109";
+  url: "http://localhost:8109/health";
+  ok: true;
+  detail: "healthy";
+}
+
+host_endpoint[6] {
   id: "agent_http_8110";
   url: "http://localhost:8110/health";
   ok: false;
   detail: "<urlopen error [Errno 111] Connection refused>";
 }
 
-host_endpoint[6] {
+host_endpoint[7] {
   id: "agent_http_8118";
   url: "http://localhost:8118/health";
   ok: false;
   detail: "<urlopen error [Errno 111] Connection refused>";
 }
 
-host_endpoint[7] {
+host_endpoint[8] {
   id: "agent_http_8119";
   url: "http://localhost:8119/health";
   ok: true;
   detail: "healthy";
 }
 
-host_endpoint[8] {
+host_endpoint[9] {
   id: "agent_http_8120";
   url: "http://localhost:8120/health";
   ok: true;
   detail: "healthy";
 }
 
-host_endpoint[9] {
+host_endpoint[10] {
+  id: "agent_http_8121";
+  url: "http://localhost:8121/health";
+  ok: true;
+  detail: "healthy";
+}
+
+host_endpoint[11] {
   id: "www_8788";
   url: "http://localhost:8788/www/";
   ok: true;
   detail: "ok";
 }
 
-host_endpoint[10] {
+host_endpoint[12] {
   id: "www_health";
   url: "http://localhost:8788/health";
   ok: true;
@@ -309,2020 +339,2091 @@ host_endpoint[10] {
 }
 
 host_port[0] {
-  port: 5173;
+  port: 18002;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[1] {
-  port: 5432;
+  port: 18001;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[2] {
-  port: 6379;
+  port: 18000;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[3] {
-  port: 8096;
+  port: 18080;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[4] {
-  port: 8103;
+  port: 18091;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[5] {
-  port: 8100;
+  port: 18090;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[6] {
-  port: 8101;
+  port: 80;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[7] {
-  port: 8106;
+  port: 443;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[8] {
-  port: 8104;
+  port: 4000;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[9] {
-  port: 8111;
+  port: 5173;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[10] {
-  port: 8108;
+  port: 5432;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[11] {
-  port: 8112;
+  port: 6379;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[12] {
-  port: 8119;
+  port: 8001;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[13] {
-  port: 8120;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[14] {
-  port: 8070;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[15] {
-  port: 8079;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[16] {
-  port: 8080;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[17] {
-  port: 8081;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[18] {
-  port: 8085;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[19] {
-  port: 8090;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[20] {
-  port: 8092;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[21] {
-  port: 8093;
-  address: "0.0.0.0";
-  protocol: "tcp";
-}
-
-host_port[22] {
   port: 8000;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
+host_port[14] {
+  port: 8005;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[15] {
+  port: 8004;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[16] {
+  port: 8010;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[17] {
+  port: 8025;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[18] {
+  port: 8070;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[19] {
+  port: 8079;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[20] {
+  port: 8081;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[21] {
+  port: 8080;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
+host_port[22] {
+  port: 8085;
+  address: "0.0.0.0";
+  protocol: "tcp";
+}
+
 host_port[23] {
-  port: 8001;
+  port: 8090;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[24] {
-  port: 8004;
+  port: 8093;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[25] {
-  port: 8005;
+  port: 8092;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[26] {
-  port: 8010;
+  port: 8096;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[27] {
-  port: 80;
+  port: 8103;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[28] {
-  port: 443;
+  port: 8101;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[29] {
-  port: 4000;
+  port: 8100;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[30] {
-  port: 8302;
+  port: 8106;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[31] {
-  port: 8303;
+  port: 8104;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[32] {
-  port: 8300;
+  port: 8111;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[33] {
-  port: 8301;
+  port: 8109;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[34] {
-  port: 8205;
+  port: 8108;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[35] {
-  port: 8788;
+  port: 8112;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[36] {
-  port: 8797;
+  port: 8119;
   address: "0.0.0.0";
   protocol: "tcp";
-  pid: 408079;
-  process: "urirun";
-  detail: "users:((\"urirun\",pid=408079,fd=3))          ";
 }
 
 host_port[37] {
-  port: 9000;
+  port: 8121;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[38] {
-  port: 18080;
+  port: 8120;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[39] {
-  port: 18090;
+  port: 8788;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[40] {
-  port: 18091;
+  port: 8797;
   address: "0.0.0.0";
   protocol: "tcp";
+  pid: 3374;
+  process: "urirun";
+  detail: "users:((\"urirun\",pid=3374,fd=3))            ";
 }
 
 host_port[41] {
-  port: 18002;
+  port: 9000;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[42] {
-  port: 18000;
+  port: 8303;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[43] {
-  port: 18001;
+  port: 8302;
   address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[44] {
-  port: 8765;
-  address: "127.0.0.1";
+  port: 8301;
+  address: "0.0.0.0";
   protocol: "tcp";
-  pid: 10786;
-  process: "koru";
-  detail: "users:((\"koru\",pid=10786,fd=3))             ";
 }
 
 host_port[45] {
-  port: 5173;
-  address: "[::]";
+  port: 8300;
+  address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[46] {
-  port: 5432;
-  address: "[::]";
+  port: 8205;
+  address: "0.0.0.0";
   protocol: "tcp";
 }
 
 host_port[47] {
-  port: 6379;
-  address: "[::]";
+  port: 8765;
+  address: "127.0.0.1";
   protocol: "tcp";
+  pid: 16543;
+  process: "koru";
+  detail: "users:((\"koru\",pid=16543,fd=3))             ";
 }
 
 host_port[48] {
-  port: 8096;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[49] {
-  port: 8103;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[50] {
-  port: 8100;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[51] {
-  port: 8101;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[52] {
-  port: 8106;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[53] {
-  port: 8104;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[54] {
-  port: 8111;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[55] {
-  port: 8108;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[56] {
-  port: 8112;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[57] {
-  port: 8119;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[58] {
-  port: 8120;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[59] {
-  port: 8070;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[60] {
-  port: 8079;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[61] {
-  port: 8080;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[62] {
-  port: 8081;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[63] {
-  port: 8085;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[64] {
-  port: 8090;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[65] {
-  port: 8092;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[66] {
-  port: 8093;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[67] {
-  port: 8001;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[68] {
-  port: 8004;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[69] {
-  port: 8005;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[70] {
-  port: 8010;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[71] {
-  port: 80;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[72] {
-  port: 443;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[73] {
-  port: 4000;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[74] {
-  port: 8302;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[75] {
-  port: 8303;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[76] {
-  port: 8300;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[77] {
-  port: 8301;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[78] {
-  port: 8205;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[79] {
-  port: 9000;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[80] {
-  port: 18080;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[81] {
-  port: 18090;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[82] {
-  port: 18091;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[83] {
   port: 18002;
   address: "[::]";
   protocol: "tcp";
 }
 
-host_port[84] {
-  port: 18000;
-  address: "[::]";
-  protocol: "tcp";
-}
-
-host_port[85] {
+host_port[49] {
   port: 18001;
   address: "[::]";
   protocol: "tcp";
 }
 
+host_port[50] {
+  port: 18000;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[51] {
+  port: 18080;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[52] {
+  port: 18091;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[53] {
+  port: 18090;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[54] {
+  port: 80;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[55] {
+  port: 443;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[56] {
+  port: 4000;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[57] {
+  port: 5173;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[58] {
+  port: 5432;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[59] {
+  port: 6379;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[60] {
+  port: 8001;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[61] {
+  port: 8005;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[62] {
+  port: 8004;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[63] {
+  port: 8010;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[64] {
+  port: 8025;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[65] {
+  port: 8070;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[66] {
+  port: 8079;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[67] {
+  port: 8081;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[68] {
+  port: 8080;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[69] {
+  port: 8085;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[70] {
+  port: 8090;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[71] {
+  port: 8093;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[72] {
+  port: 8092;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[73] {
+  port: 8096;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[74] {
+  port: 8103;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[75] {
+  port: 8101;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[76] {
+  port: 8100;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[77] {
+  port: 8106;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[78] {
+  port: 8104;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[79] {
+  port: 8111;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[80] {
+  port: 8109;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[81] {
+  port: 8108;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[82] {
+  port: 8112;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[83] {
+  port: 8119;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[84] {
+  port: 8121;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[85] {
+  port: 8120;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[86] {
+  port: 9000;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[87] {
+  port: 8303;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[88] {
+  port: 8302;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[89] {
+  port: 8301;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[90] {
+  port: 8300;
+  address: "[::]";
+  protocol: "tcp";
+}
+
+host_port[91] {
+  port: 8205;
+  address: "[::]";
+  protocol: "tcp";
+}
+
 host_process[0] {
-  pid: 2841;
+  pid: 2756;
   ppid: 1;
   status: "Ssl";
-  elapsed: "01:25:54";
+  elapsed: "23:19";
   command: "python3";
   args: "/usr/bin/python3 -m uvicorn orchestrator:app --host 0.0.0.0 --port 8000 --log-level info";
 }
 
 host_process[1] {
-  pid: 3057;
+  pid: 3044;
   ppid: 1;
   status: "Ssl";
-  elapsed: "01:25:50";
+  elapsed: "23:16";
   command: "dockerd";
   args: "/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock";
 }
 
 host_process[2] {
-  pid: 12489;
-  ppid: 12437;
-  status: "Ss";
-  elapsed: "01:25:36";
-  command: "sh";
-  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
-}
-
-host_process[3] {
-  pid: 13240;
-  ppid: 12876;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
-}
-
-host_process[4] {
-  pid: 13318;
-  ppid: 13012;
+  pid: 5277;
+  ppid: 5181;
   status: "Ssl";
-  elapsed: "01:25:35";
-  command: "uvicorn";
-  args: "/app/.venv/bin/python /app/.venv/bin/uvicorn agents.system.hypervisor_dashboard.main:app --host 0.0.0.0 --port 8788";
-}
-
-host_process[5] {
-  pid: 13335;
-  ppid: 13079;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn worker:app --host 0.0.0.0 --port 8000";
-}
-
-host_process[6] {
-  pid: 13403;
-  ppid: 13081;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "docker-init";
-  args: "/sbin/docker-init -- /usr/bin/buildkitd-entrypoint --allow-insecure-entitlement=network.host";
-}
-
-host_process[7] {
-  pid: 13526;
-  ppid: 13113;
-  status: "Ssl";
-  elapsed: "01:25:35";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
-}
-
-host_process[8] {
-  pid: 13650;
-  ppid: 13500;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8020";
-}
-
-host_process[9] {
-  pid: 13781;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:35";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8120 -container-ip 172.18.0.2 -container-port 8120 -use-listen-fd";
-}
-
-host_process[10] {
-  pid: 13793;
-  ppid: 13283;
-  status: "Ssl";
-  elapsed: "01:25:35";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8090";
-}
-
-host_process[11] {
-  pid: 13801;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:35";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8120 -container-ip 172.18.0.2 -container-port 8120 -use-listen-fd";
-}
-
-host_process[12] {
-  pid: 14527;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:35";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8090 -container-ip 172.24.0.3 -container-port 8090 -use-listen-fd";
-}
-
-host_process[13] {
-  pid: 14536;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:35";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8090 -container-ip 172.24.0.3 -container-port 8090 -use-listen-fd";
-}
-
-host_process[14] {
-  pid: 14774;
-  ppid: 13731;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "sh";
-  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
-}
-
-host_process[15] {
-  pid: 14784;
-  ppid: 13253;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "sh";
-  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
-}
-
-host_process[16] {
-  pid: 14827;
-  ppid: 14037;
-  status: "Ss";
-  elapsed: "01:25:35";
-  command: "docker-init";
-  args: "/sbin/docker-init -- /bin/sh -c uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${API_WORKERS:-1}";
-}
-
-host_process[17] {
-  pid: 14851;
-  ppid: 13885;
-  status: "Ssl";
-  elapsed: "01:25:35";
+  elapsed: "23:11";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn main:app --host 0.0.0.0 --port 8080";
 }
 
-host_process[18] {
-  pid: 14995;
-  ppid: 13688;
-  status: "Ssl";
-  elapsed: "01:25:35";
+host_process[3] {
+  pid: 5285;
+  ppid: 5245;
+  status: "Ss";
+  elapsed: "23:11";
+  command: "sh";
+  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
+}
+
+host_process[4] {
+  pid: 5405;
+  ppid: 5381;
+  status: "Ss";
+  elapsed: "23:11";
+  command: "sh";
+  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
+}
+
+host_process[5] {
+  pid: 6014;
+  ppid: 5969;
+  status: "Ss";
+  elapsed: "23:11";
   command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8080 --log-level info";
+  args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8020";
 }
 
-host_process[19] {
-  pid: 15059;
-  ppid: 3057;
+host_process[6] {
+  pid: 6025;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:35";
+  elapsed: "23:11";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 5434 -container-ip 172.24.0.2 -container-port 5432 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 80 -container-ip 172.22.0.2 -container-port 80 -use-listen-fd";
 }
 
-host_process[20] {
-  pid: 15079;
-  ppid: 3057;
+host_process[7] {
+  pid: 6073;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:35";
+  elapsed: "23:11";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 5434 -container-ip 172.24.0.2 -container-port 5432 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 80 -container-ip 172.22.0.2 -container-port 80 -use-listen-fd";
 }
 
-host_process[21] {
-  pid: 15332;
-  ppid: 3057;
+host_process[8] {
+  pid: 6151;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:11";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8300 -container-ip 172.21.0.2 -container-port 8300 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 443 -container-ip 172.22.0.2 -container-port 443 -use-listen-fd";
 }
 
-host_process[22] {
-  pid: 15340;
-  ppid: 3057;
+host_process[9] {
+  pid: 6162;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:11";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8300 -container-ip 172.21.0.2 -container-port 8300 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 443 -container-ip 172.22.0.2 -container-port 443 -use-listen-fd";
 }
 
-host_process[23] {
-  pid: 15377;
-  ppid: 14665;
+host_process[10] {
+  pid: 6267;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:11";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18080 -container-ip 172.23.0.2 -container-port 8080 -use-listen-fd";
+}
+
+host_process[11] {
+  pid: 6277;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:11";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18080 -container-ip 172.23.0.2 -container-port 8080 -use-listen-fd";
+}
+
+host_process[12] {
+  pid: 6299;
+  ppid: 6217;
   status: "Ssl";
-  elapsed: "01:25:34";
+  elapsed: "23:11";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn gh2mcp.server:app --host 0.0.0.0 --port 8079";
 }
 
-host_process[24] {
-  pid: 15378;
-  ppid: 14255;
-  status: "Ssl";
-  elapsed: "01:25:34";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8000";
+host_process[13] {
+  pid: 6486;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:11";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8300 -container-ip 172.21.0.2 -container-port 8300 -use-listen-fd";
 }
 
-host_process[25] {
-  pid: 15454;
-  ppid: 12489;
+host_process[14] {
+  pid: 6498;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:11";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8300 -container-ip 172.21.0.2 -container-port 8300 -use-listen-fd";
+}
+
+host_process[15] {
+  pid: 6641;
+  ppid: 6560;
+  status: "Ssl";
+  elapsed: "23:11";
+  command: "uvicorn";
+  args: "/app/.venv/bin/python /app/.venv/bin/uvicorn agents.system.hypervisor_dashboard.main:app --host 0.0.0.0 --port 8788";
+}
+
+host_process[16] {
+  pid: 6717;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:11";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8301 -container-ip 172.21.0.3 -container-port 8301 -use-listen-fd";
+}
+
+host_process[17] {
+  pid: 6736;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:11";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8301 -container-ip 172.21.0.3 -container-port 8301 -use-listen-fd";
+}
+
+host_process[18] {
+  pid: 6831;
+  ppid: 5405;
   status: "S";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8300";
 }
 
-host_process[26] {
-  pid: 15504;
-  ppid: 3057;
+host_process[19] {
+  pid: 6946;
+  ppid: 5285;
+  status: "S";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8301";
+}
+
+host_process[20] {
+  pid: 6957;
+  ppid: 6751;
+  status: "Ss";
+  elapsed: "23:10";
+  command: "docker-init";
+  args: "/sbin/docker-init -- /usr/bin/buildkitd-entrypoint --allow-insecure-entitlement=network.host";
+}
+
+host_process[21] {
+  pid: 7140;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8005 -container-ip 192.168.32.2 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 5173 -container-ip 172.24.0.5 -container-port 80 -use-listen-fd";
+}
+
+host_process[22] {
+  pid: 7164;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 5173 -container-ip 172.24.0.5 -container-port 80 -use-listen-fd";
+}
+
+host_process[23] {
+  pid: 7184;
+  ppid: 6935;
+  status: "Ssl";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8000";
+}
+
+host_process[24] {
+  pid: 7272;
+  ppid: 6989;
+  status: "Ssl";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8090";
+}
+
+host_process[25] {
+  pid: 7327;
+  ppid: 6987;
+  status: "Ssl";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 9000";
+}
+
+host_process[26] {
+  pid: 7470;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8103 -container-ip 172.18.0.2 -container-port 8103 -use-listen-fd";
 }
 
 host_process[27] {
-  pid: 15512;
-  ppid: 3057;
+  pid: 7485;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8005 -container-ip 192.168.32.2 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8103 -container-ip 172.18.0.2 -container-port 8103 -use-listen-fd";
 }
 
 host_process[28] {
-  pid: 15545;
-  ppid: 3057;
+  pid: 7621;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 4000 -container-ip 172.24.0.4 -container-port 4000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8090 -container-ip 172.24.0.6 -container-port 8090 -use-listen-fd";
 }
 
 host_process[29] {
-  pid: 15566;
-  ppid: 3057;
+  pid: 7634;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 4000 -container-ip 172.24.0.4 -container-port 4000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8090 -container-ip 172.24.0.6 -container-port 8090 -use-listen-fd";
 }
 
 host_process[30] {
-  pid: 15578;
-  ppid: 14336;
+  pid: 7915;
+  ppid: 7698;
   status: "Ssl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8090";
 }
 
 host_process[31] {
-  pid: 15594;
-  ppid: 14633;
+  pid: 8051;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8070 -container-ip 172.27.0.4 -container-port 8020 -use-listen-fd";
+}
+
+host_process[32] {
+  pid: 8082;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8070 -container-ip 172.27.0.4 -container-port 8020 -use-listen-fd";
+}
+
+host_process[33] {
+  pid: 8616;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 1110 -container-ip 172.24.0.7 -container-port 1110 -use-listen-fd";
+}
+
+host_process[34] {
+  pid: 8671;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 1110 -container-ip 172.24.0.7 -container-port 1110 -use-listen-fd";
+}
+
+host_process[35] {
+  pid: 8905;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8079 -container-ip 172.30.0.4 -container-port 8079 -use-listen-fd";
+}
+
+host_process[36] {
+  pid: 8925;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8079 -container-ip 172.30.0.4 -container-port 8079 -use-listen-fd";
+}
+
+host_process[37] {
+  pid: 8947;
+  ppid: 7549;
   status: "Ssl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn redsl.api:app --host 0.0.0.0 --port 8000";
 }
 
-host_process[32] {
-  pid: 15694;
-  ppid: 14249;
-  status: "Ss";
-  elapsed: "01:25:34";
-  command: "sh";
-  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
+host_process[38] {
+  pid: 8948;
+  ppid: 7464;
+  status: "Ssl";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 8080 --log-level info";
 }
 
-host_process[33] {
-  pid: 15719;
-  ppid: 15157;
+host_process[39] {
+  pid: 9024;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18090 -container-ip 172.23.0.3 -container-port 80 -use-listen-fd";
+}
+
+host_process[40] {
+  pid: 9035;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18090 -container-ip 172.23.0.3 -container-port 80 -use-listen-fd";
+}
+
+host_process[41] {
+  pid: 9102;
+  ppid: 8286;
   status: "Ss";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
+}
+
+host_process[42] {
+  pid: 9104;
+  ppid: 8291;
+  status: "Ss";
+  elapsed: "23:10";
   command: "docker-init";
   args: "/sbin/docker-init -- /bin/sh -c uvicorn app.main_service_id_pilot:app --host 0.0.0.0 --port 8000 --workers 1";
 }
 
-host_process[34] {
-  pid: 15720;
-  ppid: 15231;
+host_process[43] {
+  pid: 9105;
+  ppid: 8220;
   status: "Ss";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-init";
   args: "/sbin/docker-init -- /bin/sh -c uvicorn app.main_service_manager_pilot:app --host 0.0.0.0 --port 8000 --workers 1";
 }
 
-host_process[35] {
-  pid: 15721;
-  ppid: 14675;
+host_process[44] {
+  pid: 9110;
+  ppid: 8348;
   status: "Ssl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 9000";
+  args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
 }
 
-host_process[36] {
-  pid: 15819;
-  ppid: 3057;
+host_process[45] {
+  pid: 9143;
+  ppid: 8296;
+  status: "Ss";
+  elapsed: "23:10";
+  command: "sh";
+  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
+}
+
+host_process[46] {
+  pid: 9202;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8004 -container-ip 172.27.0.3 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8120 -container-ip 172.18.0.3 -container-port 8120 -use-listen-fd";
 }
 
-host_process[37] {
-  pid: 15825;
-  ppid: 3057;
+host_process[47] {
+  pid: 9222;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:34";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8004 -container-ip 172.27.0.3 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8120 -container-ip 172.18.0.3 -container-port 8120 -use-listen-fd";
 }
 
-host_process[38] {
-  pid: 16101;
-  ppid: 3057;
+host_process[48] {
+  pid: 9244;
+  ppid: 8457;
+  status: "Ss";
+  elapsed: "23:10";
+  command: "sh";
+  args: "sh -c uvicorn api.main:app --host 0.0.0.0 --port ${MODULE_PORT:-8000}";
+}
+
+host_process[49] {
+  pid: 9257;
+  ppid: 8543;
+  status: "Ss";
+  elapsed: "23:10";
+  command: "uvicorn";
+  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn worker:app --host 0.0.0.0 --port 8000";
+}
+
+host_process[50] {
+  pid: 9267;
+  ppid: 8481;
+  status: "Ss";
+  elapsed: "23:10";
+  command: "docker-init";
+  args: "/sbin/docker-init -- /bin/sh -c uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${API_WORKERS:-1}";
+}
+
+host_process[51] {
+  pid: 9341;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8010 -container-ip 172.27.0.4 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 5432 -container-ip 172.18.0.4 -container-port 5432 -use-listen-fd";
 }
 
-host_process[39] {
-  pid: 16111;
-  ppid: 3057;
+host_process[52] {
+  pid: 9356;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:10";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8010 -container-ip 172.27.0.4 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 5432 -container-ip 172.18.0.4 -container-port 5432 -use-listen-fd";
 }
 
-host_process[40] {
-  pid: 16220;
-  ppid: 3057;
+host_process[53] {
+  pid: 9416;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8085 -container-ip 172.30.0.5 -container-port 8080 -use-listen-fd";
+}
+
+host_process[54] {
+  pid: 9424;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:10";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8085 -container-ip 172.30.0.5 -container-port 8080 -use-listen-fd";
+}
+
+host_process[55] {
+  pid: 9487;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:09";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8104 -container-ip 172.18.0.5 -container-port 8104 -use-listen-fd";
+}
+
+host_process[56] {
+  pid: 9495;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:09";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8104 -container-ip 172.18.0.5 -container-port 8104 -use-listen-fd";
+}
+
+host_process[57] {
+  pid: 9617;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:09";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8093 -container-ip 172.31.0.2 -container-port 8090 -use-listen-fd";
 }
 
-host_process[41] {
-  pid: 16227;
-  ppid: 3057;
+host_process[58] {
+  pid: 9626;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:09";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8093 -container-ip 172.31.0.2 -container-port 8090 -use-listen-fd";
 }
 
-host_process[42] {
-  pid: 16343;
-  ppid: 3057;
+host_process[59] {
+  pid: 9691;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18002 -container-ip 172.23.0.2 -container-port 80 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8106 -container-ip 172.18.0.6 -container-port 8106 -use-listen-fd";
 }
 
-host_process[43] {
-  pid: 16353;
-  ppid: 3057;
+host_process[60] {
+  pid: 9703;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18002 -container-ip 172.23.0.2 -container-port 80 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8106 -container-ip 172.18.0.6 -container-port 8106 -use-listen-fd";
 }
 
-host_process[44] {
-  pid: 16477;
-  ppid: 3057;
+host_process[61] {
+  pid: 9811;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8079 -container-ip 172.30.0.3 -container-port 8079 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9000 -container-ip 172.30.0.6 -container-port 9000 -use-listen-fd";
 }
 
-host_process[45] {
-  pid: 16489;
-  ppid: 3057;
+host_process[62] {
+  pid: 9818;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:33";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8079 -container-ip 172.30.0.3 -container-port 8079 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 9000 -container-ip 172.30.0.6 -container-port 9000 -use-listen-fd";
 }
 
-host_process[46] {
-  pid: 16645;
-  ppid: 3057;
+host_process[63] {
+  pid: 9913;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8302 -container-ip 172.21.0.3 -container-port 8302 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8119 -container-ip 172.18.0.7 -container-port 8119 -use-listen-fd";
 }
 
-host_process[47] {
-  pid: 16654;
-  ppid: 3057;
+host_process[64] {
+  pid: 9935;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8302 -container-ip 172.21.0.3 -container-port 8302 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8119 -container-ip 172.18.0.7 -container-port 8119 -use-listen-fd";
 }
 
-host_process[48] {
-  pid: 16706;
-  ppid: 14774;
-  status: "S";
-  elapsed: "01:25:32";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8302";
-}
-
-host_process[49] {
-  pid: 16712;
-  ppid: 3057;
+host_process[65] {
+  pid: 9997;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8070 -container-ip 172.27.0.5 -container-port 8020 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18001 -container-ip 172.23.0.4 -container-port 8000 -use-listen-fd";
 }
 
-host_process[50] {
-  pid: 16717;
-  ppid: 3057;
+host_process[66] {
+  pid: 10006;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8070 -container-ip 172.27.0.5 -container-port 8020 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18001 -container-ip 172.23.0.4 -container-port 8000 -use-listen-fd";
 }
 
-host_process[51] {
-  pid: 16796;
-  ppid: 3057;
+host_process[67] {
+  pid: 10037;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8301 -container-ip 172.21.0.4 -container-port 8301 -use-listen-fd";
-}
-
-host_process[52] {
-  pid: 16808;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8301 -container-ip 172.21.0.4 -container-port 8301 -use-listen-fd";
-}
-
-host_process[53] {
-  pid: 16844;
-  ppid: 14784;
-  status: "S";
-  elapsed: "01:25:32";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8301";
-}
-
-host_process[54] {
-  pid: 16869;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 6379 -container-ip 192.168.96.2 -container-port 6379 -use-listen-fd";
 }
 
-host_process[55] {
-  pid: 16877;
-  ppid: 3057;
+host_process[68] {
+  pid: 10045;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 6379 -container-ip 192.168.96.2 -container-port 6379 -use-listen-fd";
 }
 
-host_process[56] {
-  pid: 16894;
-  ppid: 3057;
+host_process[69] {
+  pid: 10067;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8001 -container-ip 192.168.96.2 -container-port 8001 -use-listen-fd";
 }
 
-host_process[57] {
-  pid: 16903;
-  ppid: 3057;
+host_process[70] {
+  pid: 10083;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:32";
+  elapsed: "23:09";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8001 -container-ip 192.168.96.2 -container-port 8001 -use-listen-fd";
 }
 
-host_process[58] {
-  pid: 16940;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 2525 -container-ip 172.24.0.8 -container-port 2525 -use-listen-fd";
-}
-
-host_process[59] {
-  pid: 16949;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 2525 -container-ip 172.24.0.8 -container-port 2525 -use-listen-fd";
-}
-
-host_process[60] {
-  pid: 17128;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18090 -container-ip 172.23.0.5 -container-port 80 -use-listen-fd";
-}
-
-host_process[61] {
-  pid: 17139;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18090 -container-ip 172.23.0.5 -container-port 80 -use-listen-fd";
-}
-
-host_process[62] {
-  pid: 17285;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:32";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8080 -container-ip 192.168.16.2 -container-port 80 -use-listen-fd";
-}
-
-host_process[63] {
-  pid: 17293;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8080 -container-ip 192.168.16.2 -container-port 80 -use-listen-fd";
-}
-
-host_process[64] {
-  pid: 17421;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18080 -container-ip 172.23.0.3 -container-port 8080 -use-listen-fd";
-}
-
-host_process[65] {
-  pid: 17428;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18080 -container-ip 172.23.0.3 -container-port 8080 -use-listen-fd";
-}
-
-host_process[66] {
-  pid: 17588;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18000 -container-ip 172.23.0.4 -container-port 80 -use-listen-fd";
-}
-
-host_process[67] {
-  pid: 17598;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18000 -container-ip 172.23.0.4 -container-port 80 -use-listen-fd";
-}
-
-host_process[68] {
-  pid: 17814;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 80 -container-ip 172.22.0.5 -container-port 80 -use-listen-fd";
-}
-
-host_process[69] {
-  pid: 17829;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 80 -container-ip 172.22.0.5 -container-port 80 -use-listen-fd";
-}
-
-host_process[70] {
-  pid: 17877;
-  ppid: 3057;
-  status: "Sl";
-  elapsed: "01:25:31";
-  command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 443 -container-ip 172.22.0.5 -container-port 443 -use-listen-fd";
-}
-
 host_process[71] {
-  pid: 17894;
-  ppid: 3057;
+  pid: 10114;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 443 -container-ip 172.22.0.5 -container-port 443 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 1025 -container-ip 192.168.160.2 -container-port 1025 -use-listen-fd";
 }
 
 host_process[72] {
-  pid: 18007;
-  ppid: 3057;
+  pid: 10122;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8303 -container-ip 172.21.0.5 -container-port 8303 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 1025 -container-ip 192.168.160.2 -container-port 1025 -use-listen-fd";
 }
 
 host_process[73] {
-  pid: 18015;
-  ppid: 3057;
+  pid: 10149;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8303 -container-ip 172.21.0.5 -container-port 8303 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8025 -container-ip 192.168.160.2 -container-port 8025 -use-listen-fd";
 }
 
 host_process[74] {
-  pid: 18052;
-  ppid: 15694;
-  status: "S";
-  elapsed: "01:25:31";
-  command: "uvicorn";
-  args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8303";
+  pid: 10157;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:09";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8025 -container-ip 192.168.160.2 -container-port 8025 -use-listen-fd";
 }
 
 host_process[75] {
-  pid: 18070;
-  ppid: 3057;
+  pid: 10204;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8101 -container-ip 172.18.0.7 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 4000 -container-ip 172.24.0.9 -container-port 4000 -use-listen-fd";
 }
 
 host_process[76] {
-  pid: 18078;
-  ppid: 3057;
+  pid: 10215;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8101 -container-ip 172.18.0.7 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 4000 -container-ip 172.24.0.9 -container-port 4000 -use-listen-fd";
 }
 
 host_process[77] {
-  pid: 18118;
-  ppid: 3057;
+  pid: 10257;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18001 -container-ip 172.23.0.6 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 2525 -container-ip 172.24.0.10 -container-port 2525 -use-listen-fd";
 }
 
 host_process[78] {
-  pid: 18125;
-  ppid: 3057;
+  pid: 10265;
+  ppid: 3044;
   status: "Sl";
-  elapsed: "01:25:31";
+  elapsed: "23:09";
   command: "docker-proxy";
-  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18001 -container-ip 172.23.0.6 -container-port 8000 -use-listen-fd";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 2525 -container-ip 172.24.0.10 -container-port 2525 -use-listen-fd";
 }
 
 host_process[79] {
-  pid: 18128;
-  ppid: 14827;
-  status: "S";
-  elapsed: "01:25:31";
-  command: "sh";
-  args: "/bin/sh -c uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${API_WORKERS:-1}";
+  pid: 10436;
+  ppid: 3044;
+  status: "Sl";
+  elapsed: "23:08";
+  command: "docker-proxy";
+  args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8005 -container-ip 192.168.32.2 -container-port 8000 -use-listen-fd";
 }
 
 host_container[0] {
+  id: "a8e56968d75b";
+  name: "cybermysz-app";
+  image: "cybermysz-local-app";
+  state: "running";
+  status: "Up 23 minutes";
+  ports: "80/tcp";
+  project: "cybermysz-local";
+  service: "app";
+}
+
+host_container[1] {
+  id: "47dece07a73d";
+  name: "cybermysz-traefik";
+  image: "traefik:v3.2";
+  state: "running";
+  status: "Up 23 minutes";
+  ports: "0.0.0.0:9080->80/tcp, [::]:9080->80/tcp, 0.0.0.0:9443->443/tcp, [::]:9443->443/tcp";
+  project: "cybermysz-local";
+  service: "traefik";
+}
+
+host_container[2] {
+  id: "a18e915a0200";
+  name: "cybermysz-mailpit";
+  image: "axllent/mailpit:v1.21";
+  state: "running";
+  status: "Up 23 minutes (healthy)";
+  ports: "0.0.0.0:1025->1025/tcp, [::]:1025->1025/tcp, 0.0.0.0:8025->8025/tcp, [::]:8025->8025/tcp, 1110/tcp";
+  project: "cybermysz-local";
+  service: "mailpit";
+}
+
+host_container[3] {
   id: "2c38f21f57e5";
   name: "identification-backend";
   image: "c2004-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8101->8000/tcp, [::]:8101->8000/tcp";
   project: "c2004";
   service: "backend";
 }
 
-host_container[1] {
+host_container[4] {
   id: "8a491829c06e";
   name: "connect-scenario";
   image: "c2004-connect-scenario";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8096->80/tcp, [::]:8096->80/tcp";
   project: "c2004";
   service: "connect-scenario";
 }
 
-host_container[2] {
+host_container[5] {
   id: "768222c4b45c";
   name: "identification-frontend";
   image: "c2004-frontend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8100->8100/tcp, [::]:8100->8100/tcp, 0.0.0.0:24678->24678/tcp, [::]:24678->24678/tcp";
   project: "c2004";
   service: "frontend";
 }
 
-host_container[3] {
+host_container[6] {
   id: "c3369161a292";
   name: "cql-backend";
   image: "c2004-cql-backend";
-  state: "restarting";
-  status: "Restarting (1) 33 seconds ago";
+  state: "running";
+  status: "Up 23 minutes (healthy)";
+  ports: "0.0.0.0:8109->8101/tcp, [::]:8109->8101/tcp";
   project: "c2004";
   service: "cql-backend";
 }
 
-host_container[4] {
+host_container[7] {
   id: "5b93dfd6ddf2";
   name: "service-id-pilot-backend";
   image: "c2004-service-id-pilot";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8111->8000/tcp, [::]:8111->8000/tcp";
   project: "c2004";
   service: "service-id-pilot";
 }
 
-host_container[5] {
+host_container[8] {
   id: "b8d755f15a4b";
   name: "connect-id-backend";
   image: "c2004-connect-id-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8103->8103/tcp, [::]:8103->8103/tcp, 8117/tcp";
   project: "c2004";
   service: "connect-id-backend";
 }
 
-host_container[6] {
+host_container[9] {
   id: "75e761c17622";
   name: "connect-scenario-backend";
   image: "c2004-connect-scenario-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8108->8108/tcp, [::]:8108->8108/tcp";
   project: "c2004";
   service: "connect-scenario-backend";
 }
 
-host_container[7] {
+host_container[10] {
   id: "2f35ecf77f97";
   name: "service-manager-pilot-backend";
   image: "c2004-service-manager-pilot";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8112->8000/tcp, [::]:8112->8000/tcp";
   project: "c2004";
   service: "service-manager-pilot";
 }
 
-host_container[8] {
+host_container[11] {
   id: "e28efa1d6393";
   name: "connect-template-backend";
   image: "c2004-connect-template-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8106->8106/tcp, [::]:8106->8106/tcp";
   project: "c2004";
   service: "connect-template-backend";
 }
 
-host_container[9] {
+host_container[12] {
   id: "d0bbe8bc4114";
   name: "connect-protocol-backend";
   image: "c2004-connect-protocol-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8120->8120/tcp, [::]:8120->8120/tcp";
   project: "c2004";
   service: "connect-protocol-backend";
 }
 
-host_container[10] {
+host_container[13] {
   id: "40bd4bf8de4a";
   name: "connect-manager-backend";
   image: "c2004-connect-manager-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8104->8104/tcp, [::]:8104->8104/tcp, 8107/tcp";
   project: "c2004";
   service: "connect-manager-backend";
 }
 
-host_container[11] {
+host_container[14] {
   id: "bc50e6551b4c";
   name: "c2004-postgres";
   image: "postgres:16-alpine";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp";
   project: "c2004";
   service: "postgres";
 }
 
-host_container[12] {
+host_container[15] {
   id: "74ab39c3d6a0";
   name: "connect-data-backend";
   image: "c2004-connect-data-backend";
-  state: "restarting";
-  status: "Restarting (1) 32 seconds ago";
+  state: "running";
+  status: "Up 23 minutes (healthy)";
+  ports: "0.0.0.0:8121->8121/tcp, [::]:8121->8121/tcp";
   project: "c2004";
   service: "connect-data-backend";
 }
 
-host_container[13] {
+host_container[16] {
   id: "f062ff0c537e";
   name: "connect-test-backend";
   image: "c2004-connect-test-backend";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8119->8119/tcp, [::]:8119->8119/tcp";
   project: "c2004";
   service: "connect-test-backend";
 }
 
-host_container[14] {
+host_container[17] {
   id: "bcc08b501554";
   name: "proxym";
   image: "proxym-proxy";
   state: "restarting";
-  status: "Restarting (1) 40 seconds ago";
+  status: "Restarting (1) 37 seconds ago";
   project: "proxym";
   service: "proxy";
 }
 
-host_container[15] {
+host_container[18] {
   id: "ef54193643b9";
   name: "proxym-redis";
   image: "redis/redis-stack:latest";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp, 0.0.0.0:8001->8001/tcp, [::]:8001->8001/tcp";
   project: "proxym";
   service: "redis";
 }
 
-host_container[16] {
+host_container[19] {
   id: "7bb7c17b208b";
   name: "hypervisor-www-chat";
   image: "hypervisor-www-chat:latest";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   project: "www";
   service: "www-chat";
 }
 
-host_container[17] {
+host_container[20] {
   id: "6ffcd37e2031";
   name: "mcp-git-proxy";
   image: "mcp-mcp-git-proxy";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8081->8080/tcp, [::]:8081->8080/tcp";
   project: "mcp";
   service: "mcp-git-proxy";
 }
 
-host_container[18] {
+host_container[21] {
   id: "b3a4e0e40e13";
   name: "mcp-gateway-worker";
   image: "mcp-mcp-gateway-worker";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "9000/tcp";
   project: "mcp";
   service: "mcp-gateway-worker";
 }
 
-host_container[19] {
+host_container[22] {
   id: "802dede3e433";
   name: "mcp-gateway";
   image: "mcp-mcp-gateway";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp";
   project: "mcp";
   service: "mcp-gateway";
 }
 
-host_container[20] {
+host_container[23] {
   id: "51ecc2a05648";
   name: "mcp-skills-server";
   image: "mcp-mcp-skills";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "8080/tcp";
   project: "mcp";
   service: "mcp-skills";
 }
 
-host_container[21] {
+host_container[24] {
   id: "68bcaaea41b8";
   name: "gh2mcp-agent";
   image: "mcp-gh2mcp-agent";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8079->8079/tcp, [::]:8079->8079/tcp";
   project: "mcp";
   service: "gh2mcp-agent";
 }
 
-host_container[22] {
+host_container[25] {
   id: "26e7725f5d5a";
   name: "mcp-webui";
   image: "mcp-mcp-webui";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8092->8090/tcp, [::]:8092->8090/tcp";
   project: "mcp";
   service: "mcp-webui";
 }
 
-host_container[23] {
+host_container[26] {
   id: "a4cddcdc36e7";
   name: "mcp-dashboard";
   image: "mcp-dashboard";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp";
   project: "mcp";
   service: "dashboard";
 }
 
-host_container[24] {
+host_container[27] {
   id: "6e8a04822c19";
   name: "mcp-docs";
   image: "mcp-mcp-docs";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8093->8090/tcp, [::]:8093->8090/tcp";
   project: "mcp";
   service: "mcp-docs";
 }
 
-host_container[25] {
+host_container[28] {
   id: "1ce30a73683b";
   name: "mcp-redis";
   image: "redis:7-alpine";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "6379/tcp";
   project: "mcp";
   service: "redis";
 }
 
-host_container[26] {
+host_container[29] {
   id: "6b49c29e9e4f";
   name: "nlp2dsl-worker-1";
   image: "nlp2dsl-worker";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8004->8000/tcp, [::]:8004->8000/tcp";
   project: "nlp2dsl";
   service: "worker";
 }
 
-host_container[27] {
+host_container[30] {
   id: "1e14dc39e965";
   name: "nlp2dsl-trigger-service-1";
   image: "nlp2dsl-trigger-service";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8070->8020/tcp, [::]:8070->8020/tcp";
   project: "nlp2dsl";
   service: "trigger-service";
 }
 
-host_container[28] {
+host_container[31] {
   id: "7a74c986097f";
   name: "nlp2dsl-backend-1";
   image: "nlp2dsl-backend";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8010->8000/tcp, [::]:8010->8000/tcp";
   project: "nlp2dsl";
   service: "backend";
 }
 
-host_container[29] {
+host_container[32] {
   id: "c33cba6f1125";
   name: "nlp2dsl-postgres-1";
   image: "postgres:16-alpine";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "5432/tcp";
   project: "nlp2dsl";
   service: "postgres";
 }
 
-host_container[30] {
+host_container[33] {
   id: "1157cbd3e28f";
   name: "nlp2dsl-redis-1";
   image: "redis:7-alpine";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "6379/tcp";
   project: "nlp2dsl";
   service: "redis";
 }
 
-host_container[31] {
+host_container[34] {
   id: "c00570fadcef";
   name: "nlp2dsl-13-autonomous-invoice-stack-postgres-1";
   image: "postgres:16-alpine";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "5432/tcp";
   project: "nlp2dsl-13-autonomous-invoice-stack";
   service: "postgres";
 }
 
-host_container[32] {
+host_container[35] {
   id: "1877d16cb6a1";
   name: "nlp2dsl-13-autonomous-invoice-stack-redis-1";
   image: "redis:7-alpine";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "6379/tcp";
   project: "nlp2dsl-13-autonomous-invoice-stack";
   service: "redis";
 }
 
-host_container[33] {
+host_container[36] {
   id: "825217dc8c61";
   name: "repact-caddy";
   image: "caddy:2.8-alpine";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp";
   project: "repact";
   service: "caddy";
 }
 
-host_container[34] {
+host_container[37] {
   id: "1a26b178ca2f";
   name: "nexu";
   image: "localhost/nexu-saas:latest";
   state: "restarting";
-  status: "Restarting (1) 16 seconds ago";
+  status: "Restarting (1) 12 seconds ago";
   project: "repact";
   service: "nexu";
 }
 
-host_container[35] {
+host_container[38] {
   id: "602216fdd328";
   name: "repact-api";
   image: "ghcr.io/semcod/repact-api:latest";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "8000/tcp";
   project: "repact";
   service: "repact-api";
 }
 
-host_container[36] {
+host_container[39] {
   id: "a19a754cc1fc";
   name: "nexu-cinema";
   image: "ghcr.io/semcod/nexu-cinema:latest";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "8080/tcp";
   project: "repact";
   service: "nexu-cinema";
 }
 
-host_container[37] {
+host_container[40] {
   id: "2068e2b8884d";
   name: "hw-tic249";
   image: "oqlos-tic249";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8205->5000/tcp, [::]:8205->5000/tcp";
   project: "oqlos";
   service: "tic249";
 }
 
-host_container[38] {
+host_container[41] {
   id: "2860dedaa874";
   name: "redsl-chroma-1";
   image: "chromadb/chroma:latest";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8005->8000/tcp, [::]:8005->8000/tcp";
   project: "redsl";
   service: "chroma";
 }
 
-host_container[39] {
+host_container[42] {
   id: "6a7b186de5de";
   name: "redsl-www";
   image: "www-app";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:8080->80/tcp, [::]:8080->80/tcp";
   project: "www";
   service: "app";
 }
 
-host_container[40] {
+host_container[43] {
   id: "6989156ae00d";
   name: "redsl-api";
   image: "www-redsl-api";
   state: "running";
-  status: "Up About an hour (unhealthy)";
+  status: "Up 23 minutes (unhealthy)";
   project: "www";
   service: "redsl-api";
 }
 
-host_container[41] {
+host_container[44] {
   id: "2332a45b75c9";
   name: "platform-sync-outbound";
   image: "dbos-sync-outbound";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   project: "dbos";
   service: "sync-outbound";
 }
 
-host_container[42] {
+host_container[45] {
   id: "6e8279c9f879";
   name: "platform-vfs-ftp";
   image: "dbos-vfs-ftp";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:2121->2121/tcp, [::]:2121->2121/tcp, 0.0.0.0:30000-30100->30000-30100/tcp, [::]:30000-30100->30000-30100/tcp";
   project: "dbos";
   service: "vfs-ftp";
 }
 
-host_container[43] {
+host_container[46] {
   id: "aee8e8578512";
   name: "platform-connector-ftp";
   image: "dbos-connector-ftp-pull";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   project: "dbos";
   service: "connector-ftp-pull";
 }
 
-host_container[44] {
+host_container[47] {
   id: "c320225cc1c6";
   name: "platform-storage-mirror";
   image: "dbos-storage-mirror";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   project: "dbos";
   service: "storage-mirror";
 }
 
-host_container[45] {
+host_container[48] {
   id: "a53e8e690e10";
   name: "platform-connector-sql";
   image: "dbos-connector-sql-mirror";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   project: "dbos";
   service: "connector-sql-mirror";
 }
 
-host_container[46] {
+host_container[49] {
   id: "79c3b7a7ce70";
   name: "platform-connector-imap";
   image: "dbos-connector-imap-pull";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   project: "dbos";
   service: "connector-imap-pull";
 }
 
-host_container[47] {
+host_container[50] {
   id: "86d13e3f3c2e";
   name: "platform-ui";
   image: "dbos-ui-runtime";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:5173->80/tcp, [::]:5173->80/tcp";
   project: "dbos";
   service: "ui-runtime";
 }
 
-host_container[48] {
+host_container[51] {
   id: "5cc6ca6c29bc";
   name: "platform-gen-handlebars";
   image: "dbos-gen-handlebars";
   state: "restarting";
-  status: "Restarting (1) 6 seconds ago";
+  status: "Restarting (1) 8 seconds ago";
   project: "dbos";
   service: "gen-handlebars";
 }
 
-host_container[49] {
+host_container[52] {
   id: "d4ab8c682bba";
   name: "platform-sync";
   image: "dbos-sync-engine";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   project: "dbos";
   service: "sync-engine";
 }
 
-host_container[50] {
+host_container[53] {
   id: "a107042844da";
   name: "platform-vfs-smtp";
   image: "dbos-vfs-smtp";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:2525->2525/tcp, [::]:2525->2525/tcp";
   project: "dbos";
   service: "vfs-smtp";
 }
 
-host_container[51] {
+host_container[54] {
   id: "b6932f54156f";
   name: "platform-gen-jinja";
   image: "dbos-gen-jinja";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:6001->6001/tcp, [::]:6001->6001/tcp";
   project: "dbos";
   service: "gen-jinja";
 }
 
-host_container[52] {
+host_container[55] {
   id: "fb1f6de916c6";
   name: "platform-gen-twig";
   image: "dbos-gen-twig";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:6002->6002/tcp, [::]:6002->6002/tcp";
   project: "dbos";
   service: "gen-twig";
 }
 
-host_container[53] {
+host_container[56] {
   id: "a6ccce314006";
   name: "platform-vfs-pop3";
   image: "dbos-vfs-pop3";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:1110->1110/tcp, [::]:1110->1110/tcp";
   project: "dbos";
   service: "vfs-pop3";
 }
 
-host_container[54] {
+host_container[57] {
   id: "e4fa29581a6c";
   name: "platform-vfs-imap";
   image: "dbos-vfs-imap";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:1143->1143/tcp, [::]:1143->1143/tcp";
   project: "dbos";
   service: "vfs-imap";
 }
 
-host_container[55] {
+host_container[58] {
   id: "d964be194b36";
   name: "platform-cdn";
   image: "nginx:alpine";
   state: "restarting";
-  status: "Restarting (1) 19 seconds ago";
+  status: "Restarting (1) 57 seconds ago";
   project: "dbos";
   service: "nginx-cdn";
 }
 
-host_container[56] {
+host_container[59] {
   id: "69842d3cbc76";
   name: "platform-bus";
   image: "dbos-command-bus";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:4000->4000/tcp, [::]:4000->4000/tcp";
   project: "dbos";
   service: "command-bus";
 }
 
-host_container[57] {
+host_container[60] {
   id: "fe3f38dbea8d";
   name: "platform-vfs-webdav";
   image: "dbos-vfs-webdav";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:8090->8090/tcp, [::]:8090->8090/tcp";
   project: "dbos";
   service: "vfs-webdav";
 }
 
-host_container[58] {
+host_container[61] {
   id: "fb4915b855a2";
   name: "platform-worker-php";
   image: "dbos-worker-php";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "5002/tcp";
   project: "dbos";
   service: "worker-php";
 }
 
-host_container[59] {
+host_container[62] {
   id: "5c3cdb1e1ac2";
   name: "platform-postgres";
   image: "postgres:16-alpine";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:5434->5432/tcp, [::]:5434->5432/tcp";
   project: "dbos";
   service: "postgres";
 }
 
-host_container[60] {
+host_container[63] {
   id: "91f429678af7";
   name: "platform-worker-python";
   image: "dbos-worker-python";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "5001/tcp";
   project: "dbos";
   service: "worker-python";
 }
 
-host_container[61] {
+host_container[64] {
   id: "f5ed3715cf60";
   name: "cqrs-workflow-editor";
   image: "codot-workflow-editor";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:18002->80/tcp, [::]:18002->80/tcp";
   project: "codot";
   service: "workflow-editor";
 }
 
-host_container[62] {
+host_container[65] {
   id: "da05ba462ace";
   name: "cqrs-api";
   image: "codot-api";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 23 minutes (healthy)";
   ports: "0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp";
   project: "codot";
   service: "api";
 }
 
-host_container[63] {
+host_container[66] {
   id: "cc8bc70620a2";
   name: "modules-connect-config-network-1";
   image: "connect-config-network:local";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "8000/tcp, 0.0.0.0:8300->8300/tcp, [::]:8300->8300/tcp";
   project: "modules";
   service: "connect-config-network";
 }
 
-host_container[64] {
+host_container[67] {
   id: "37172c4a004c";
   name: "modules-connect-manager-library-1";
   image: "connect-manager-library:local";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "8000/tcp, 0.0.0.0:8302->8302/tcp, [::]:8302->8302/tcp";
   project: "modules";
   service: "connect-manager-library";
 }
 
-host_container[65] {
+host_container[68] {
   id: "746ed0cbfd13";
   name: "modules-connect-id-user-list-1";
   image: "connect-id-user-list:local";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "8000/tcp, 0.0.0.0:8301->8301/tcp, [::]:8301->8301/tcp";
   project: "modules";
   service: "connect-id-user-list";
 }
 
-host_container[66] {
+host_container[69] {
   id: "17ad6b857d27";
   name: "modules-connect-reports-month-1";
   image: "connect-reports-month:local";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "8000/tcp, 0.0.0.0:8303->8303/tcp, [::]:8303->8303/tcp";
   project: "modules";
   service: "connect-reports-month";
 }
 
-host_container[67] {
+host_container[70] {
   id: "a5ca366e17e9";
   name: "cqrs-workflow-api";
   image: "codot-workflow-api";
   state: "running";
-  status: "Up About an hour (unhealthy)";
+  status: "Up 23 minutes (unhealthy)";
   ports: "0.0.0.0:18001->8000/tcp, [::]:18001->8000/tcp";
   project: "codot";
   service: "workflow-api";
 }
 
-host_container[68] {
+host_container[71] {
   id: "0dc811b00831";
   name: "cqrs-frontend";
   image: "codot-frontend";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:18000->80/tcp, [::]:18000->80/tcp";
   project: "codot";
   service: "frontend";
 }
 
-host_container[69] {
+host_container[72] {
   id: "117c0bad6a62";
   name: "cqrs-data";
   image: "nginx:alpine";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:18091->80/tcp, [::]:18091->80/tcp";
   project: "codot";
   service: "data";
 }
 
-host_container[70] {
+host_container[73] {
   id: "675a1d13648a";
   name: "cqrs-schemas";
   image: "nginx:alpine";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
   ports: "0.0.0.0:18090->80/tcp, [::]:18090->80/tcp";
   project: "codot";
   service: "schemas";
 }
 
-host_container[71] {
+host_container[74] {
   id: "9ac3479ca403";
   name: "buildx_buildkit_arm64-builder0";
   image: "moby/buildkit:buildx-stable-1";
   state: "running";
-  status: "Up About an hour";
+  status: "Up 23 minutes";
 }
 
 host_monitor_log_tail {
@@ -3002,7 +3103,7 @@ access[1] {
 }
 
 capabilities {
-  actions: "mcp_orchestration,desktop_control,testql_automation,host_docker,host_playwright,host_curl,host_crontab,host_openrouter,host_agent_http_any,host_www_8788,host_www_health,host_docker_containers,host_processes,host_ports,www_monitor_cron";
+  actions: "mcp_orchestration,desktop_control,testql_automation,host_docker,host_curl,host_crontab,host_openrouter,host_agent_http_any,host_www_8788,host_www_health,host_docker_containers,host_processes,host_ports,www_monitor_cron";
 }
 
 conversation {
@@ -3036,6 +3137,22 @@ schedules[1] {
   id: "taskinity-www-monitor";
   cron: "*/5 * * * *";
   task: "cd /home/tom/github/wronai/hypervisor && MONITOR_NOTIFY=1 WWW_BASE=http://localhost:8788 bash scripts/www/run_monitors.sh >> /tmp/taskinity-monitor.log 2>&1";
+  enabled: true;
+  timezone: "local";
+}
+
+schedules[2] {
+  id: "urirun:u1 loop:// autonomiczny (safe: circuit-break/reconcile/route)";
+  cron: "*/10 * * * *";
+  task: "curl -s -X POST http://127.0.0.1:8797/api/work/loop -d '{\"apply\":true}'";
+  enabled: true;
+  timezone: "local";
+}
+
+schedules[3] {
+  id: "urirun:u2 watchdog system-monitor (ciągły: logi/errory/kontrolery→findings)";
+  cron: "*/5 * * * *";
+  task: "curl -s http://127.0.0.1:8797/api/work/system >/dev/null";
   enabled: true;
   timezone: "local";
 }
