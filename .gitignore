@@ -265,3 +265,22 @@ packages/coru/src/coru/.koru/
 
 # machine-generated local dependency snapshots (~/github/local.dev.sh)
 local.dev.txt
+.agents/
+.aider.tags.cache.v4/
+.claude/
+.codex/
+.coru/
+.coverage_data/
+.cursor/
+.devin/
+.dirac-symbol-index/
+.github/
+.import_linter_cache/
+.nlp2dsl/
+.planfile/
+.redeploy/
+.redup/
+.tillm/
+.tmp/
+.vscode/
+.zed/
