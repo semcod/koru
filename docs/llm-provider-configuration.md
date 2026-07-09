@@ -63,7 +63,8 @@ w [`agent-backends-architecture.md`](./agent-backends-architecture.md)).
 |---------|------|----------|
 | `KORU_TILLM_CLIENT` | Kanoniczny klient tillm | `aider` |
 | `URIRUN_KORU_IDE` | Alias if-uri (ten sam sens) | `aider` |
-| `TILLM_PROVIDER` | Provider API dla każdego drive | `openrouter` |
+| `TILLM_PROVIDER` | Pojedynczy provider API (gdy brak `TILLM_PROVIDER_ORDER`) | `openrouter` |
+| `TILLM_PROVIDER_ORDER` | Łańcuch fallback przy wyczerpaniu limitu (429/402) | `subscription,z.ai,openrouter` |
 | `KORU_TILLM_MODEL` | Model przekazywany do CLI | `openrouter/deepseek/deepseek-v4-pro` |
 | `KORU_TILLM_EXECUTE_PROFILE` | Profil headless tillm | puste → `default`; `automation` tylko dla claude-code/codex |
 | `KORU_TILLM_TIMEOUT_SECONDS` | Timeout subprocessu | `600` |
@@ -79,7 +80,26 @@ w [`agent-backends-architecture.md`](./agent-backends-architecture.md)).
 
 **Precedencja providera** (tillm):
 
-`--provider` > `TILLM_PROVIDER` > domyślny z `tillm provider set`
+`--provider` > `TILLM_PROVIDER_ORDER` (łańcuch z automatycznym fallbackiem przy 429/402) > `TILLM_PROVIDER` > domyślny z `tillm provider set`
+
+### Łańcuch fallback (subscription → z.ai → OpenRouter)
+
+```bash
+# urirun/.env
+TILLM_PROVIDER_ORDER=subscription,z.ai,openrouter
+KORU_TILLM_CLIENT=claude-code
+KORU_TILLM_MODEL=openrouter/deepseek/deepseek-v4-pro   # używany na ostatnim kroku
+```
+
+Kolejność prób przy `drive` / `koru autonomous`:
+
+1. **`subscription`** — natywna subskrypcja Claude (`claude-code` bez overlay tillm; wymaga `claude login`)
+2. **`z.ai`** — GLM przez endpoint Anthropic/OpenAI (token `ZAI_API_KEY`)
+3. **`openrouter`** — gdy poprzednie zwrócą 429/402; dla `claude-code` tillm **przełącza klienta na `aider`**
+
+Dla klienta `aider` krok `subscription` jest pomijany (brak subskrypcji); łańcuch to `z.ai` → `openrouter`.
+
+Wyłącz łańcuch i wróć do jednego providera: usuń `TILLM_PROVIDER_ORDER` i ustaw `TILLM_PROVIDER=openrouter`.
 
 ---
 
