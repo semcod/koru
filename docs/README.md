@@ -14,6 +14,9 @@ refactor automation system for multi-repo workspaces.
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
+- **[`llm-provider-configuration.md`](./llm-provider-configuration.md)** (PL) — globalny wybór
+  klienta tillm (`aider`, `claude-code`), providera API (`openrouter`, `z.ai`, …),
+  modeli per rola i pliki `.env` / `urirun/.env`.
 - **[`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md)** (PL) — MCP bridge do nlp2uri: desktop, getv://, SystemMap URI, orchestracja z planfile.
 - **[`ide-control-architecture.md`](./ide-control-architecture.md)** (PL) — jak działa sterowanie IDE: koruide, pluginy, fallbacki i rola nlp2uri.
 - **[`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md)** (PL) — plan refaktoryzacji integracji nlp2uri ↔ kontrola IDE Koru.
@@ -39,35 +42,38 @@ For LLM agents starting a session in a koru-driven repository:
 6. **[`semcod-ticket-sources.md`](./semcod-ticket-sources.md)** — which semcod
    analysis tools can generate Planfile tickets directly or through Koru
    artifact adapters.
-7. **[`agent-backends-architecture.md`](./agent-backends-architecture.md)** —
+7. **[`llm-provider-configuration.md`](./llm-provider-configuration.md)** —
+   global LLM/client/provider selection for headless drive (`KORU_TILLM_*`,
+   `TILLM_PROVIDER`, tillm store, if-uri `urirun/.env`).
+8. **[`agent-backends-architecture.md`](./agent-backends-architecture.md)** —
    layered map: plugin+socket, MCP, vendor CLIs, OS injectors (no single
    universal “wake LLM” API).
-8. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
+9. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
    drive your IDE's LLM chat from a terminal (`koru autopilot`), including
    plugin install repair, version drift checks, and strict runtime gates.
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
    formal control-plane protocol: [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
-9. **[`ide-router.md`](./ide-router.md)** — how koru chooses the active IDE
+10. **[`ide-router.md`](./ide-router.md)** — how koru chooses the active IDE
    lane and keeps VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed separated.
-10. **[`ide-isolation.md`](./ide-isolation.md)** (PL) — granice izolacji lane/socket,
+11. **[`ide-isolation.md`](./ide-isolation.md)** (PL) — granice izolacji lane/socket,
     dlaczego nie ma pełnego sandboxu między IDE i jak ustawić hardening,
     żeby uniknąć cross-lane chat/event leakage.
-11. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
+12. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
-12. **[`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md)** (PL) —
+13. **[`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md)** (PL) —
    pętla **vdisplay + koru photo-VQL** (observe→decide→act→verify), skrypty
    `koru-drive-photo-vql.sh`, guardy, PyCharm/Wayland — **użyj tego do chat drive na pulpicie**.
-13. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
+14. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
    implemented doctor, guided repair, autopilot host repair, and safe
    autonomous diagnostic-ticket loops.
-14. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
+15. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
    how an idle planfile queue triggers whole-project `code2llm` discovery,
    `planfile` ticket generation, and explicit IDE LLM status handoff.
-15. **[`../packages/coru/README.md`](../packages/coru/README.md)** — thin client
+16. **[`../packages/coru/README.md`](../packages/coru/README.md)** — thin client
    layer (`coru`) that keeps user-facing commands stable while `koruenv` + `koru`
    internals can be refactored independently.
-16. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
+17. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
    incremental plan for moving selected modules from `src` to `packages/*`.
 
 For human operators / DevOps:
@@ -190,6 +196,7 @@ Complete index of documentation in this directory. Start with
 | [`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md) | vdisplay photo-VQL loop, chat drive (PL) |
 | [`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md) | Doctor, repair, diagnostic loops |
 | [`mcp-ide-flow.md`](./mcp-ide-flow.md) | MCP ↔ IDE integration flow |
+| [`llm-provider-configuration.md`](./llm-provider-configuration.md) | Global LLM/client/provider config (PL) |
 | [`agent-backends-architecture.md`](./agent-backends-architecture.md) | Plugin, MCP, CLI, OS injector layers |
 | [`../packages/coru/README.md`](../packages/coru/README.md) | `coru` client (`calibration`, `doctor`, `auto`) |
 

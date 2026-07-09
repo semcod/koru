@@ -86,7 +86,9 @@ autonomy guarantees (see `koru.autonomous_cycle_config` and
 2. **Headless auto-selection** — `--ide auto` with no lane, no running
    editor, and tillm importable auto-selects the first vendor CLI found on
    PATH, so the loop is autonomous on editor-less hosts (CI, servers).
-   Opt out with `KORU_AUTO_SHELL_CLIENT=0`.
+   Opt out with `KORU_AUTO_SHELL_CLIENT=0`. **Prefer** `KORU_TILLM_CLIENT`
+   / `URIRUN_KORU_IDE` from `.env` (or `urirun/.env`) before PATH order —
+   see [`llm-provider-configuration.md`](./llm-provider-configuration.md).
 3. **Cross-lane rescue** — when a tillm drive fails because the client is
    genuinely unavailable (tillm missing or CLI not on PATH) *and* an editor
    IDE is running, the drive is retried through the GUI fallback chain

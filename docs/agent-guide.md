@@ -19,6 +19,9 @@
 > `koru ide-router --format json` to inspect how this shell merges
 > `--autopilot-ide` with `KORU_AUTOPILOT_IDE` / headless probes.
 >
+> **Headless LLM (aider, claude-code, OpenRouter, …):**
+> [llm-provider-configuration.md](llm-provider-configuration.md).
+>
 > **Broader IDE control map** (RPC plugin, DAP/tasks, profiles, Neovim, OS fallback):
 > [ide-control-surfaces.md](ide-control-surfaces.md).
 

@@ -8,12 +8,12 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.391-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.46-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-219.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.77-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-223.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $1.4595 (614 commits)
-- 👤 **Human dev:** ~$21910 (219.1h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $1.7705 (620 commits)
+- 👤 **Human dev:** ~$22310 (223.1h @ $100/h, 30min dedup)
 
-Generated on 2026-07-07 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
+Generated on 2026-07-09 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 
@@ -400,7 +400,7 @@ brief / etc.).
 | `koru ide-router` | Route ticket events to specific IDE lanes. |
 | `koru task` / `koru agent` | Planfile task creation and LLM agent management. |
 | `koru tools` | Inspect / dispatch the AI tool registry. |
-| `koru tillm` | Interactive picker for shell LLM tools + API providers (claude-code via Anthropic or z.ai, aider via OpenRouter, …): choose from the list, paste a token, live-verify. Other args forward to tillm CLI (`koru tillm providers`, `koru tillm provider set z.ai`, `koru tillm drive --provider z.ai …`). |
+| `koru tillm` | Interactive picker for shell LLM tools + API providers (claude-code via Anthropic or z.ai, aider via OpenRouter, …): choose from the list, paste a token, live-verify. Other args forward to tillm CLI (`koru tillm providers`, `koru tillm provider set z.ai`, `koru tillm drive --provider z.ai …`). Full matrix: [`docs/llm-provider-configuration.md`](docs/llm-provider-configuration.md). |
 | `koru gate` / `koru queue` / `koru scan` | Run individual stages of the closed loop in isolation. |
 | `koru gc` | Garbage-collect old planfile tickets / artifacts (see [Queue GC](#queue-garbage-collection--koru-gc)). |
 | `koru tagi` | Run tagi-backed change analysis / safe commit orchestration. |

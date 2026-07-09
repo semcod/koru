@@ -724,8 +724,15 @@ task tickets:done TID=PLF-052
 
 ### Scenario 3: OpenRouter automation lane (opt-in)
 
+See also [`llm-provider-configuration.md`](./llm-provider-configuration.md) for
+the full client × provider matrix (`KORU_TILLM_CLIENT`, `TILLM_PROVIDER`,
+`urirun/.env`).
+
 ```bash
 export OPENROUTER_API_KEY=sk-or-v1-xxxxx
+export TILLM_PROVIDER=openrouter
+export KORU_TILLM_CLIENT=aider
+export KORU_TILLM_MODEL=openrouter/deepseek/deepseek-v4-pro
 
 # Validate a tricky patch with LLM-as-judge
 task quality:vallm:semantic FILE=backend/app/refactored.py
@@ -734,7 +741,11 @@ task quality:vallm:semantic FILE=backend/app/refactored.py
 REFACTOR_DRY_RUN=true redsl improve packages/shared/foo --max-actions 1
 
 # Run a shell LLM client through TILLM
-koru tillm drive --client aider --prompt "Refactor backend/app/protocols.py per PLF-051" --execute
+koru tillm drive --client aider --provider openrouter \
+  --prompt "Refactor backend/app/protocols.py per PLF-051" --execute
+
+# Headless autonomous loop on the same stack
+koru autonomous up --project . --agent-lane aider --ide aider
 ```
 
 ### Scenario 4: Workflow from .windsurf/workflows/
