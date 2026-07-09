@@ -12,6 +12,7 @@ from typing import Any
 
 from koru.activity_log import activity, configure_nfo_activity_log
 from koru.doctor_runtime_checks import _installed_koru_version, _read_koru_source_version
+from koru.dotenv_loader import load_dotenv as _load_project_dotenv
 from koru.env_flags import env_disabled as _env_disabled
 from koru.env_flags import env_truthy as _env_truthy
 
@@ -30,6 +31,9 @@ def setup_autonomous_session(
     correlation_id = str(uuid_factory())
     project = args.project.resolve()
     project.mkdir(parents=True, exist_ok=True)
+    # Load project + urirun/.env before lane/shell-client resolution so
+    # OPENROUTER_API_KEY, KORU_TILLM_CLIENT, etc. are visible to autonomous.
+    _load_project_dotenv(project)
     nfo_path = configure_nfo_activity_log(project)
     if nfo_path is not None:
         stdio_info(

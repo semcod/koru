@@ -20,8 +20,10 @@ import re
 from pathlib import Path
 
 # Order matters: ``.env`` is the public default, ``.env.local`` is a
-# common pattern for developer-specific overrides.
-_DEFAULT_FILES: tuple[str, ...] = (".env", ".env.local")
+# common pattern for developer-specific overrides. ``urirun/.env`` is the
+# canonical if-uri operator file when the monorepo keeps secrets/models there
+# instead of the project root.
+_DEFAULT_FILES: tuple[str, ...] = (".env", ".env.local", "urirun/.env")
 
 # ``KEY=value`` with optional ``export``, quoted values, inline ``#``
 # comments. Mirrors python-dotenv's grammar closely enough for koru's

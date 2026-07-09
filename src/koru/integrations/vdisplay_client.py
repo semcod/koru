@@ -6758,7 +6758,7 @@ def perform_photo_vql_focus_and_edit(
     Dla chat (default) używa chat panel.
 
     Optional LLM vision layer (enable with KORU_VDISPLAY_LLM_VISION_DECISION=1):
-    If .env has OPENROUTER_API_KEY and LLM_MODEL (vision model e.g. openrouter/google/gemini-3.1-flash-image-preview),
+    If .env has OPENROUTER_API_KEY and LLM_MODEL (vision model e.g. openrouter/qwen/qwen3.7-plus),
     we send base64(image_path) + VQL target excerpt + the prompt to the model.
     LLM should return JSON: {"click_center": {"x": int, "y": int}, "strategy": str, "confidence": float, "reason": str}.
     If successful and confidence reasonable, the LLM's click_center (and strategy)

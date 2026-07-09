@@ -74,6 +74,38 @@ def _autodetect_shell_client_for_auto(
     return detect_shell_client_fn()
 
 
+def _shell_client_from_environ() -> str | None:
+    """Honor operator-configured shell client before PATH autodetect."""
+    from koru.tillm_bridge import (
+        looks_like_shell_client,
+        shell_drive_client_id,
+        shell_agent_available,
+    )
+
+    for env_key in ("KORU_TILLM_CLIENT", "URIRUN_KORU_IDE"):
+        raw = (os.environ.get(env_key) or "").strip()
+        if not raw or raw.lower() == "auto":
+            continue
+        client_id = shell_drive_client_id(raw)
+        if client_id and shell_agent_available(client_id):
+            return client_id
+        if looks_like_shell_client(raw):
+            return shell_drive_client_id(raw) or raw
+    return None
+
+
+def _default_shell_execute_profile(client_id: str) -> str:
+    """Pick a tillm execute profile the named client actually supports."""
+    try:
+        from tillm.registry import get_client_spec
+
+        if "automation" in get_client_spec(client_id).supported_execute_profiles():
+            return "automation"
+    except Exception:
+        pass
+    return "default"
+
+
 def configure_loop_state(
     args: Any,
     project: Path,
@@ -116,6 +148,14 @@ def configure_loop_state(
             "(pip install tillm) or pick an editor IDE (e.g. --ide vscode)."
         )
     if not shell_client:
+        shell_client = _shell_client_from_environ()
+        if shell_client:
+            print(
+                f"[koru] using shell client '{shell_client}' from "
+                "KORU_TILLM_CLIENT/URIRUN_KORU_IDE.",
+                file=sys.stderr,
+            )
+    if not shell_client:
         shell_client = _autodetect_shell_client_for_auto(
             args.autopilot_ide, lane, tillm_available=tillm_available
         )
@@ -132,8 +172,12 @@ def configure_loop_state(
         if llm_model:
             os.environ["KORU_TILLM_MODEL"] = llm_model
         # Autonomous drive needs the client to apply edits and run checks;
-        # the conservative default profile would leave it read-only.
-        os.environ.setdefault("KORU_TILLM_EXECUTE_PROFILE", "automation")
+        # the conservative default profile would leave it read-only — but only
+        # for clients that actually support an ``automation`` profile (aider does not).
+        if "KORU_TILLM_EXECUTE_PROFILE" not in os.environ:
+            os.environ["KORU_TILLM_EXECUTE_PROFILE"] = _default_shell_execute_profile(
+                shell_client
+            )
     else:
         # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
         selected_ide, _autopilot_ide_source = resolve_autopilot_ide(

@@ -111,6 +111,20 @@ class TestLoadDotenv(unittest.TestCase):
                 "sk-or-test-12345",
             )
 
+    def test_urirun_dotenv_fills_missing_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            urirun = project / "urirun"
+            urirun.mkdir()
+            (urirun / ".env").write_text(
+                "KORU_TILLM_CLIENT=aider\nOPENROUTER_API_KEY=from-urirun\n",
+            )
+            os.environ.pop("KORU_TILLM_CLIENT", None)
+            os.environ.pop("OPENROUTER_API_KEY", None)
+            applied = load_dotenv(project)
+            self.assertEqual(applied["KORU_TILLM_CLIENT"], "aider")
+            self.assertEqual(applied["OPENROUTER_API_KEY"], "from-urirun")
+
 
 if __name__ == "__main__":
     unittest.main()

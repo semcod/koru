@@ -190,6 +190,35 @@ def test_compute_cycle_sleep_keeps_backoff_for_plain_idle_skip() -> None:
     assert sleep == 900.0
 
 
+def test_configure_loop_state_prefers_env_shell_client(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("KORU_TILLM_CLIENT", "aider")
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "aider")
+    args = SimpleNamespace(
+        ticket_sources="default",
+        queue_name="default",
+        agent_lane="auto",
+        autopilot_ide="auto",
+        emit_events="human",
+        llm_model=None,
+    )
+
+    def resolve_autopilot_ide(*_args, **_kwargs) -> tuple[str, str]:
+        raise AssertionError("shell client should bypass IDE resolution")
+
+    _, _, autopilot_ide, *_rest = configure_loop_state(
+        args,
+        tmp_path,
+        effective_flags=lambda ticket_sources: (True, False),
+        apply_agent_lane_environ=lambda *_args: "aider",
+        resolve_autopilot_ide=resolve_autopilot_ide,
+        resolve_ide_route_fn=lambda *_args, **_kwargs: None,
+        state_factory=lambda: object(),
+        load_checkpoint=lambda *_args, **_kwargs: 0,
+    )
+
+    assert autopilot_ide == "aider"
+
+
 def test_default_autopilot_instance_for_ide_uses_main_lane() -> None:
     assert default_autopilot_instance_for_ide("cursor") == "cursor-main"
     assert default_autopilot_instance_for_ide("jetbrains") == "jetbrains"
