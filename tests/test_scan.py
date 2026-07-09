@@ -545,7 +545,7 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             analysis = project / "project" / "analysis.toon.yaml"
             analysis.parent.mkdir()
-            analysis.write_text("HEALTH\n  🔴 DUP   2 classes duplicated\n", encoding="utf-8")
+            analysis.write_text("HEALTH\n  🔴 DUP   2 duplicate class groups\n", encoding="utf-8")
 
             suggestions = run_scan(
                 project,

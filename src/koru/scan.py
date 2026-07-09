@@ -559,7 +559,7 @@ _TOON_CC_RE = re.compile(
     re.MULTILINE,
 )
 _TOON_DUP_RE = re.compile(
-    r"^\s*🔴\s+DUP\s+(?P<count>\d+)\s+classes?\s+duplicated",
+    r"^\s*🔴\s+DUP\s+(?P<count>\d+)\s+(?:duplicate\s+)?class(?:es)?(?:\s+groups?)?",
     re.MULTILINE,
 )
 _TOON_REFACTOR_ITEM_RE = re.compile(r"^\s*(?P<num>\d+)\.\s+(?P<desc>.+?)\s*\((?P<note>[^)]+)\)\s*$")
@@ -651,9 +651,10 @@ def _parse_dup_suggestions(
             _with_source_context(
                 Suggestion(
                 signal="code2llm_dup",
-                title=f"Remove {count} duplicated classes (code2llm analysis)",
+                title=f"Remove {count} duplicate class groups (code2llm analysis)",
                 description=(
-                    f"`{rel}` reports **{count}** duplicated classes. "
+                    f"`{rel}` reports **{count}** duplicate class name groups "
+                    "(merged, not pairwise). "
                     "Extract shared helpers/modules; re-run the source.context.evidence.regenerate_command to refresh."
                 ),
                 priority="high",
