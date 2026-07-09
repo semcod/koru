@@ -213,6 +213,7 @@ Oczekiwany komunikat przy starcie autonomous (gdy env wskazuje aider):
 | `429 Weekly/Monthly Limit Exhausted` (claude) | Headless szedł w `claude-code` + subskrypcję | `KORU_TILLM_CLIENT=aider`, `TILLM_PROVIDER=openrouter` |
 | `unsupported execute profile 'automation'` (aider) | Wymuszony profil automation | `KORU_TILLM_EXECUTE_PROFILE=` (puste) lub usuń z env |
 | `openrouter: no` w brief mimo klucza w `urirun/.env` | Koru nie ładował `urirun/.env` | Zaktualizuj koru (≥ patch z `urirun/.env` w dotenv); `koru autonomous up --project .` |
+| `402` / `requires more credits` (OpenRouter) | Tygodniowy limit klucza OpenRouter wyczerpany | Podnieś limit na openrouter.ai → Keys, albo `TILLM_PROVIDER=z.ai` / inny provider z tokenem |
 | Autodetekcja wybiera `claude-code` | `--ide auto`, brak edytora, claude pierwszy na PATH | Jawny `--ide aider` lub `KORU_TILLM_CLIENT` |
 | Provider bez tokena | Brak env i brak wpisu w tillm store | `tillm provider set <id>` lub export `*_API_KEY` |
 
