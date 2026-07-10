@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Drive prompts now carry an explicit "Git discipline" contract (stage only
+  your own files by path, commit new files together with the code that
+  imports them, never `git add -A`/`git commit -a`, descriptive messages) —
+  appended wherever the Planfile handoff block is (ticket, fallback,
+  escalation and ide_work prompts).
+- Post-drive guard against swept-up operator work: the pre-drive snapshot now
+  records the dirty/untracked *paths*, and after a drive the cycle compares
+  the drive's commit range against them. When an agent commit absorbed files
+  that were already modified before the drive, the loop prints a warning and
+  emits `DriveCommitAbsorbedForeignChanges` with the absorbed paths.
 - Machine-wide kill-switch: `koru off [--reason]` / `koru on` / `koru status
   [--json]`. A single marker (`~/.config/koru/killswitch`, or
   `KORU_GLOBAL_DISABLE=1`) silences koru across every repository on the host:

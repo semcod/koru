@@ -16,6 +16,7 @@ from koru.autonomy.planning_llm import (
 from koru.autonomy.state import AutoloopState
 from koru.autonomy.verification_engine import (
     Verdict,
+    absorbed_foreign_paths,
     assess_verdict,
     collect_evidence,
     take_snapshot,
@@ -88,6 +89,9 @@ def _snapshot_before_drive(state: AutoloopState) -> Any | None:
         git_dirty_count=int(snap_dict.get("git_dirty_count", 0)),
         test_status=str(snap_dict.get("test_status", "unknown")),
         timestamp=float(snap_dict.get("timestamp", 0)),
+        git_dirty_paths=tuple(
+            str(p) for p in (snap_dict.get("git_dirty_paths") or []) if str(p)
+        ),
     )
 
 
@@ -134,6 +138,42 @@ def _post_drive_verdict(
     if effect["prompt_submitted"] and not effect["work_applied"]:
         return _submitted_but_no_effect(verdict, effect)
     return verdict
+
+
+def _warn_absorbed_foreign_changes(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    ticket_id: str,
+    hp: callable,
+    emit: callable,
+) -> None:
+    """Flag agent commits that swept up the operator's pre-drive changes.
+
+    Compares the drive's commit range against the paths that were already
+    dirty/untracked before the drive (recorded in the pre-drive snapshot).
+    A hit means work the agent did not do got absorbed into its commit —
+    the `git commit -a "refactoring"` failure mode that both hides the
+    operator's WIP and can break HEAD.
+    """
+    absorbed = absorbed_foreign_paths(project, _snapshot_before_drive(state))
+    if not absorbed:
+        return
+    preview = ", ".join(absorbed[:5]) + (" …" if len(absorbed) > 5 else "")
+    hp(
+        "  [!] drive commit absorbed pre-existing local changes "
+        f"({len(absorbed)} paths): {preview} — review the commit; the agent "
+        "should only commit files it changed itself"
+    )
+    emit(
+        "DriveCommitAbsorbedForeignChanges",
+        {
+            "cycle": cycle,
+            "ticket_id": ticket_id,
+            "absorbed_paths": absorbed[:50],
+            "absorbed_count": len(absorbed),
+        },
+    )
 
 
 def _emit_drive_effect_if_needed(
@@ -346,6 +386,7 @@ def _handle_post_drive_verification(
     verdict = _post_drive_verdict(state, evidence, ticket_id, effect)
     state.last_drive_verdict = verdict.to_dict()
 
+    _warn_absorbed_foreign_changes(project, state, cycle, ticket_id, _hp, _emit)
     _emit_drive_effect_if_needed(cycle, ticket_id, effect, _hp, _emit)
     _emit_drive_verdict(
         cycle=cycle,

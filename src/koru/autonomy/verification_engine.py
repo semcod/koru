@@ -90,9 +90,14 @@ class Snapshot:
     git_dirty_count: int = 0
     test_status: str = "unknown"
     timestamp: float = 0.0
+    #: Paths dirty/untracked BEFORE the drive — the operator's work in
+    #: progress. Used post-drive to detect agent commits that absorbed it.
+    git_dirty_paths: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        d["git_dirty_paths"] = list(self.git_dirty_paths)
+        return d
 
 
 @dataclass(frozen=True)
@@ -252,13 +257,43 @@ def collect_chat_evidence(
 def take_snapshot(project: Path, test_status: str = "unknown") -> Snapshot:
     """Capture current project state for later comparison."""
     git_head = _git_head(project)
-    git_dirty = _git_dirty_count(project)
+    dirty_paths = _git_dirty_paths(project)
     return Snapshot(
         git_head=git_head,
-        git_dirty_count=git_dirty,
+        git_dirty_count=len(dirty_paths),
         test_status=test_status,
         timestamp=time.time(),
+        git_dirty_paths=dirty_paths,
     )
+
+
+def absorbed_foreign_paths(project: Path, before: Snapshot | None) -> list[str]:
+    """Pre-drive dirty paths that ended up inside the drive's commits.
+
+    Compares the commit range ``before.git_head..HEAD`` against the paths that
+    were already dirty/untracked before the drive. A non-empty result means an
+    agent commit swept up the operator's work in progress (the
+    ``git commit -a "refactoring"`` failure mode).
+    """
+    if before is None or not before.git_head or not before.git_dirty_paths:
+        return []
+    head = _git_head(project)
+    if not head or head == before.git_head:
+        return []
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", f"{before.git_head}..{head}"],
+            cwd=str(project),
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    committed = {line.strip() for line in (result.stdout or "").splitlines() if line.strip()}
+    return sorted(committed & set(before.git_dirty_paths))
 
 
 def collect_evidence(
@@ -391,6 +426,11 @@ def _git_head(project: Path) -> str:
 
 
 def _git_dirty_count(project: Path) -> int:
+    return len(_git_dirty_paths(project))
+
+
+def _git_dirty_paths(project: Path) -> tuple[str, ...]:
+    """Repo-relative paths reported dirty/untracked by ``git status --porcelain``."""
     try:
         result = subprocess.run(
             ["git", "status", "--porcelain"],
@@ -399,12 +439,22 @@ def _git_dirty_count(project: Path) -> int:
             text=True,
             timeout=5,
         )
-        if result.returncode != 0:
-            return 0
-        lines = [l for l in (result.stdout or "").strip().splitlines() if l.strip()]  # noqa: E741
-        return len(lines)
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
-        return 0
+        return ()
+    if result.returncode != 0:
+        return ()
+    paths: list[str] = []
+    for line in (result.stdout or "").splitlines():
+        if not line.strip():
+            continue
+        entry = line[3:] if len(line) > 3 else ""
+        # Renames come as "old -> new"; the new path is what a commit would contain.
+        if " -> " in entry:
+            entry = entry.split(" -> ", 1)[1]
+        entry = entry.strip().strip('"')
+        if entry:
+            paths.append(entry)
+    return tuple(paths)
 
 
 __all__ = [
@@ -416,6 +466,7 @@ __all__ = [
     "TestEvidence",
     "Verdict",
     "VerdictOutcome",
+    "absorbed_foreign_paths",
     "assess_verdict",
     "collect_chat_evidence",
     "collect_evidence",
