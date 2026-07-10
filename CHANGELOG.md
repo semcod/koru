@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Machine-wide kill-switch: `koru off [--reason]` / `koru on` / `koru status
+  [--json]`. A single marker (`~/.config/koru/killswitch`, or
+  `KORU_GLOBAL_DISABLE=1`) silences koru across every repository on the host:
+  the CLI refuses agent subcommands (exit 3, diagnostic commands stay usable),
+  a running autonomous loop stops cleanly at the next cycle boundary
+  (`AutonomousStopped` with `reason=global_killswitch`), the
+  `prepare-commit-msg` co-author hook stays silent (checked in pure shell),
+  and the shipped systemd user units gain
+  `ConditionPathExists=!%h/.config/koru/killswitch` so `systemctl start`
+  becomes a no-op while disabled. `koru on|off|status` never re-exec into a
+  project venv (older venvs predate the subcommands), and the kill-switch
+  guard runs in the invoking install *before* any project-venv re-exec, so
+  stale project installs are covered too.
+
 ### Fixed
 - `koru --init --force` (`materialize_to_planfile` in `bootstrap.py`)
   silently overwrote an existing `.planfile/sprints/<sprint>.yaml` with a
