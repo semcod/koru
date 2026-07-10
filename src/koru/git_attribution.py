@@ -53,8 +53,12 @@ def _managed_block() -> str:
     return f"""{_HOOK_START}
 # Keep human or IDE commits attributed to the person making the commit, while
 # crediting koru as the assisting agent on GitHub.
+# Respects the global kill-switch (`koru off` / KORU_GLOBAL_DISABLE=1).
+koru_ctl_dir="${{KORU_GLOBAL_CONTROL_DIR:-${{XDG_CONFIG_HOME:-$HOME/.config}}/koru}}"
+case "${{KORU_GLOBAL_DISABLE:-}}" in 1|true|yes|on|y) koru_disabled=1;; *) koru_disabled=0;; esac
+[ -e "$koru_ctl_dir/killswitch" ] && koru_disabled=1
 koru_msg_file="$1"
-if [ -n "$koru_msg_file" ] && [ -f "$koru_msg_file" ]; then
+if [ "$koru_disabled" = 0 ] && [ -n "$koru_msg_file" ] && [ -f "$koru_msg_file" ]; then
   if ! grep -Fqx "{KORU_AGENT_COAUTHOR_TRAILER}" "$koru_msg_file"; then
     printf '\\n{KORU_AGENT_COAUTHOR_TRAILER}\\n' >> "$koru_msg_file"
   fi
@@ -98,6 +102,11 @@ def install_koru_agent_coauthor_hook(
     """
     if _env_disabled("KORU_AGENT_COAUTHOR"):
         return CoauthorHookResult(status="disabled")
+
+    from koru.global_control import is_globally_disabled
+
+    if is_globally_disabled():
+        return CoauthorHookResult(status="disabled_globally")
 
     git_dir = _git_dir(project)
     if git_dir is None:

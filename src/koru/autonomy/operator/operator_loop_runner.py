@@ -152,6 +152,10 @@ _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
 def _cycle_stop_reason(args: Any, queue_result: Any, cycle: int) -> str | None:
+    from koru.global_control import is_globally_disabled
+
+    if is_globally_disabled():
+        return "global_killswitch"
     if (
         getattr(args, "stop_on_waiting_input", False)
         and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
@@ -175,6 +179,19 @@ def handle_cycle_exit_conditions(
 ) -> bool:
     """Return True when the autonomous loop should stop after a cycle."""
     stop_reason = _cycle_stop_reason(args, queue_result, cycle)
+    if stop_reason == "global_killswitch":
+        from koru.global_control import disabled_message
+
+        if args.emit_events == "jsonl":
+            write_event(
+                output_stream,
+                event_type="AutonomousStopped",
+                correlation_id=correlation_id,
+                payload={"reason": "global_killswitch", "cycle": cycle},
+            )
+        stdio_info(disabled_message("autonomous"), fmt=args.emit_events)
+        return True
+
     if stop_reason == "waiting_input":
         if args.emit_events == "jsonl":
             write_event(

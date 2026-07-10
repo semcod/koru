@@ -25,6 +25,8 @@ from koru.cli_scan import scan_main as _scan_main
 from koru.dev_sync import dev_main
 from koru.env_flags import env_truthy as _env_truthy
 from koru.git_cli import git_main
+from koru.global_control import disabled_message as _global_disabled_message
+from koru.global_control import is_globally_disabled as _is_globally_disabled
 
 _build_parser = _cli_parser._build_parser
 _command_value = _cli_parser._command_value
@@ -201,7 +203,48 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     ),
     "tagi": lambda argv: _lazy_module_main("koru.cli_tagi", "tagi_main", argv),
     "dev": dev_main,
+    "on": lambda argv: _lazy_module_main("koru.cli_global_control", "on_main", argv),
+    "off": lambda argv: _lazy_module_main("koru.cli_global_control", "off_main", argv),
+    "status": lambda argv: _lazy_module_main("koru.cli_global_control", "status_main", argv),
 }
+
+#: Subcommands that stay usable while the global kill-switch is set.
+#: Everything else is agent work (or can start it) and is refused, so a
+#: single `koru off` reliably silences koru across every repository.
+_ALLOWED_WHEN_DISABLED: frozenset[str] = frozenset({
+    "on",
+    "off",
+    "status",
+    "doctor",
+    "events",
+    "context",
+    "git",
+    "gc",
+    "scan",
+    "gate",
+    "observe",
+    "topology",
+    "strategy",
+    "runtime-context",
+    "agent-backends",
+    "tools",
+    "self",
+    "configure",
+    "init-ci",
+    "init-ide",
+    "dev",
+})
+
+
+def _refuse_when_globally_disabled(subcommand: str) -> int | None:
+    """Return an exit code when the kill-switch blocks this invocation."""
+    if not _is_globally_disabled():
+        return None
+    if subcommand in _ALLOWED_WHEN_DISABLED:
+        return None
+    component = subcommand or "cli"
+    print(_global_disabled_message(component), file=sys.stderr)
+    return 3
 
 
 
@@ -348,12 +391,21 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
     return code
 
 
+_GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset({"on", "off", "status"})
+
+
 def main() -> int:
     raw_args = _normalize_top_level_aliases(sys.argv[1:])
+    subcommand = raw_args[0] if raw_args and not raw_args[0].startswith("-") else ""
+    # Machine-global controls always run in this install — never reexec into a
+    # project venv (older project venvs may predate these subcommands).
+    if subcommand in _GLOBAL_CONTROL_SUBCOMMANDS:
+        return _SUBCOMMANDS[subcommand](raw_args[1:])
+    if subcommand and (rc := _refuse_when_globally_disabled(subcommand)) is not None:
+        return rc
     _maybe_reexec_for_project_venv(raw_args)
     if (auto_rc := _dispatch_auto_alias(raw_args)) is not None:
         return auto_rc
-    subcommand = raw_args[0] if raw_args else ""
     if subcommand in _SUBCOMMANDS:
         return _SUBCOMMANDS[subcommand](raw_args[1:])
 
@@ -365,6 +417,12 @@ def main() -> int:
     if _is_bare_invocation(args):
         args.context = True
         args.output_format = "markdown"
+
+    # Legacy flag flow: --queue/--watch/--command/--bootstrap start agent work.
+    if (args.queue or args.watch or args.command or args.bootstrap) and (
+        rc := _refuse_when_globally_disabled("cli")
+    ) is not None:
+        return rc
 
     if (rc := _dispatch_flag_action(args, raw_args)) is not None:
         return rc

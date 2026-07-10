@@ -899,6 +899,9 @@ class TestSubcommandDispatch(unittest.TestCase):
             "self",
             "shell",
             "fleet",
+            "on",
+            "off",
+            "status",
         },
     )
 

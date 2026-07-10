@@ -47,6 +47,20 @@ def _no_real_shell_clients(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture(autouse=True)
+def _isolated_global_killswitch(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
+    """Never let the developer's real `koru off` state leak into tests.
+
+    ``is_globally_disabled()`` reads ``~/.config/koru/killswitch``; on a host
+    where the operator disabled koru, half the suite would otherwise see the
+    kill-switch and fail. Tests that exercise the switch set
+    ``KORU_GLOBAL_CONTROL_DIR`` themselves (see test_global_control.py).
+    """
+    ctl_dir = tmp_path_factory.mktemp("koru-global-ctl")
+    monkeypatch.setenv("KORU_GLOBAL_CONTROL_DIR", str(ctl_dir))
+    monkeypatch.delenv("KORU_GLOBAL_DISABLE", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def _isolate_command_picker_state():
     """Snapshot & restore the command-picker module's shared mutable state.
 

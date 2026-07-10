@@ -12,6 +12,8 @@
 #   journalctl --user -u coru-supervisor -f
 
 [Unit]
+# Global kill-switch: `koru off` creates this marker; the unit refuses to start.
+ConditionPathExists=!%h/.config/koru/killswitch
 Description=coru supervisor — lane registry and autopilot health watcher
 Documentation=https://github.com/semcod/koru/tree/main/packages/coru
 After=graphical-session.target

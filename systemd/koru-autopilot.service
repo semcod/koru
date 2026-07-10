@@ -15,6 +15,8 @@
 #   #   ExecStart=
 #   #   ExecStart=%h/.local/bin/koru autopilot daemon --project %h/work/myproj
 [Unit]
+# Global kill-switch: `koru off` creates this marker; the unit refuses to start.
+ConditionPathExists=!%h/.config/koru/killswitch
 Description=koru autopilot daemon — drive IDE chats from a terminal
 Documentation=https://github.com/semcod/koru/tree/main/docs/autopilot-quickstart.md
 # Tie lifecycle to the user's graphical session so the daemon stops
