@@ -56,7 +56,7 @@ class TestHostEnvironmentParsing(unittest.TestCase):
 
     def test_uinput_snapshot_absent_device(self) -> None:
         """_uinput_snapshot returns present=False when /dev/uinput does not exist."""
-        result = _uinput_snapshot.__wrapped__() if hasattr(_uinput_snapshot, "__wrapped__") else _uinput_snapshot()
+        result = _uinput_snapshot()
         # On CI / Windows / macOS /dev/uinput is absent; the function must not raise.
         self.assertIn("present", result)
 
