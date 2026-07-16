@@ -36,6 +36,86 @@ def test_find_existing_autonomous_does_not_skip_sibling_from_same_shell(
     assert [match.pid for match in matches] == [123]
 
 
+def _guard_args(**overrides):
+    base = {
+        "allow_duplicate": False,
+        "replace_existing": True,
+        "replace_existing_global": False,
+        "emit_events": "human",
+        "wup_watch": None,
+    }
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def _wup_proc(project: Path):
+    return autonomous_processes_mod.ExistingManagedProcess(
+        pid=123,
+        kind="wup-watch",
+        command=f"/usr/bin/wup watch {project}",
+        cwd=project,
+    )
+
+
+def test_replace_existing_skips_external_wup_when_no_wup_watch(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """--no-wup-watch means wup runs externally — replace must not SIGTERM it."""
+    project = tmp_path.resolve()
+    terminated: list[list] = []
+
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_autonomous_processes",
+        lambda _project, any_project=False: [],
+    )
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_wup_processes",
+        lambda _project: [_wup_proc(project)],
+    )
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_terminate_existing_processes",
+        lambda procs, stdio_format: terminated.append(list(procs)),
+    )
+
+    rc = autonomous_processes_mod.guard_existing_autonomous_processes(
+        _guard_args(wup_watch=False), project,
+    )
+
+    assert rc == 0
+    assert terminated == []
+
+
+def test_replace_existing_still_replaces_wup_when_managed(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Default (auto) wup_watch keeps the old replace semantics."""
+    project = tmp_path.resolve()
+    terminated: list[list] = []
+
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_autonomous_processes",
+        lambda _project, any_project=False: [],
+    )
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_find_existing_wup_processes",
+        lambda _project: [_wup_proc(project)],
+    )
+    monkeypatch.setattr(
+        autonomous_processes_mod, "_terminate_existing_processes",
+        lambda procs, stdio_format: terminated.append(list(procs)),
+    )
+
+    rc = autonomous_processes_mod.guard_existing_autonomous_processes(
+        _guard_args(wup_watch=None), project,
+    )
+
+    assert rc == 0
+    assert len(terminated) == 1
+    assert [proc.pid for proc in terminated[0]] == [123]
+
+
 def test_find_existing_wup_processes_filters_project_and_excluded_pid(
     tmp_path: Path,
     monkeypatch,

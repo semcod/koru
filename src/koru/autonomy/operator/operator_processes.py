@@ -373,12 +373,28 @@ def stop_prior_autonomous_for_auto_start(
     _terminate_existing_processes(existing, stdio_format=stdio_format)
 
 
+def _wup_processes_for_replace(
+    args: argparse.Namespace,
+    project: Path,
+) -> list[ExistingManagedProcess]:
+    """WUP watchers are only ours to stop when this run will manage WUP itself.
+
+    With an explicit ``--no-wup-watch`` the operator runs ``wup watch``
+    externally (e.g. as its own systemd unit) — sweeping it up here silently
+    killed the external watcher (SIGTERM, which ``Restart=on-failure`` units
+    deliberately do not restart from).
+    """
+    if getattr(args, "wup_watch", None) is False:
+        return []
+    return _find_existing_wup_processes(project)
+
+
 def guard_existing_autonomous_processes(args: argparse.Namespace, project: Path) -> int:
     if args.allow_duplicate:
         return 0
     existing = [
         *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project)),
-        *_find_existing_wup_processes(project),
+        *_wup_processes_for_replace(args, project),
     ]
     if not existing:
         return 0
@@ -389,7 +405,7 @@ def guard_existing_autonomous_processes(args: argparse.Namespace, project: Path)
                     _as_managed(proc)
                     for proc in _find_existing_autonomous_processes(project, any_project=True)
                 ),
-                *_find_existing_wup_processes(project),
+                *_wup_processes_for_replace(args, project),
             ]
         _terminate_existing_processes(existing, stdio_format=args.emit_events)
         return 0
