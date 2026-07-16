@@ -6,7 +6,6 @@ injectors, Wayland vs X11, clipboard helpers, ``/dev/uinput``).
 """
 
 
-import grp
 import json
 import os
 import shutil
@@ -15,6 +14,11 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+if sys.platform != "win32":
+    import grp as _grp
+else:
+    _grp = None  # type: ignore[assignment]
 
 from koru.ide_runtime import build_host_setup_report
 from koru.runtime import runtime_dir
@@ -69,7 +73,7 @@ def _uinput_snapshot() -> dict[str, Any]:
     except OSError as exc:
         return {"present": True, "stat_error": str(exc)}
     try:
-        group_name = grp.getgrgid(st.st_gid).gr_name
+        group_name = _grp.getgrgid(st.st_gid).gr_name if _grp is not None else str(st.st_gid)
     except (KeyError, OSError):
         group_name = str(st.st_gid)
     return {

@@ -26,7 +26,8 @@ from koru.init import (
     refresh_init_agent_lane,
     resolve_project_agent_lane,
 )
-from koru.init_host_environment import _parse_os_release_line
+import koru.init_host_environment as _ihe_mod
+from koru.init_host_environment import _parse_os_release_line, _uinput_snapshot
 from koru.policy import load_policy
 from koru.runtime import planfile_dir, runtime_dir
 
@@ -41,6 +42,23 @@ class TestHostEnvironmentParsing(unittest.TestCase):
         self.assertIsNone(_parse_os_release_line("# comment"))
         self.assertIsNone(_parse_os_release_line("MALFORMED"))
         self.assertIsNone(_parse_os_release_line("=missing-key"))
+
+    def test_grp_sentinel_matches_platform(self) -> None:
+        """_grp must be None on Windows and the real grp module elsewhere."""
+        import sys
+
+        if sys.platform == "win32":
+            self.assertIsNone(_ihe_mod._grp)
+        else:
+            import grp
+
+            self.assertIs(_ihe_mod._grp, grp)
+
+    def test_uinput_snapshot_absent_device(self) -> None:
+        """_uinput_snapshot returns present=False when /dev/uinput does not exist."""
+        result = _uinput_snapshot()
+        # On CI / Windows / macOS /dev/uinput is absent; the function must not raise.
+        self.assertIn("present", result)
 
 
 def _detach_ci_env() -> dict[str, str]:
