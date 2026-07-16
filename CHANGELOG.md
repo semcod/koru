@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Project-aware IDE proposal: koru now proposes the IDE/agent lane from the
+  project's own config markers (`.claude`/`CLAUDE.md` → claude-code,
+  `.cursor` → cursor, `.windsurf` → windsurf, `.aider.conf.yml` → aider,
+  `.gemini` → gemini-cli). `recommend_agent_for_project()` prefers a hinted
+  available lane over the generic preference order, the public
+  `propose_ide_for_project()` persists the decision to
+  `.planfile/.koru/ide-proposal.json`, and `koru autonomous up --ide auto`
+  uses the proposal instead of the first shell client found on PATH
+  (explicit `--ide` / `KORU_TILLM_CLIENT` still override).
 - Drive prompts now carry an explicit "Git discipline" contract (stage only
   your own files by path, commit new files together with the code that
   imports them, never `git add -A`/`git commit -a`, descriptive messages) —
@@ -33,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stale project installs are covered too.
 
 ### Fixed
+- `koru autonomous up --replace-existing` no longer SIGTERMs externally
+  managed `wup watch` processes when the run was started with an explicit
+  `--no-wup-watch`: the replace sweep includes WUP watchers only when this
+  run will manage WUP itself. Previously an external watcher (e.g. its own
+  systemd unit with `Restart=on-failure`) was killed ~1 s after koru started
+  and never came back.
 - `koru --init --force` (`materialize_to_planfile` in `bootstrap.py`)
   silently overwrote an existing `.planfile/sprints/<sprint>.yaml` with a
   fresh scaffold — every ticket, done or open, gone the instant the write
@@ -141,6 +156,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   confidence the mocks reflect real plugin behavior; left for follow-up
   with real integration fixtures rather than mocked ones that would give
   false confidence.
+
+## [0.1.394] - 2026-07-16
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
 
 ## [0.1.393] - 2026-07-16
 
