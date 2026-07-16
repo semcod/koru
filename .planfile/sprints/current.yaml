@@ -29073,7 +29073,7 @@ sprint:
         Make the smallest refactor that removes the smell and run local tests.'
       execution:
         attempt: 0
-        finished_at: '2026-07-05T23:11:07.095411Z'
+        finished_at: '2026-07-10T04:10:32.100862Z'
         max_attempts: 1
         queue: default
         state: done
@@ -29132,6 +29132,27 @@ sprint:
         source: planfile.store
         status: open
         timestamp: '2026-07-05T23:30:45.995866+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-07-10T04:10:32.109878+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-07-10T04:11:05.816244+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:12:36.975614+00:00'
       id: STARTER-577
       inputs:
         api_headers: {}
@@ -29192,6 +29213,24 @@ sprint:
           !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
           1 failed, 2730 passed, 10 skipped, 157 deselected, 5 warnings, 44 subtests
           passed in 768.03s (0:12:48)'
+        - 'Smell already resolved by prior refactor (commit e205845 ''extract helpers
+          in lane_context/snapshot/calibrate''). action_snapshot now delegates to
+          _snapshot_context/_snapshot_runtime_block/_compose_snapshot_lines. Verified
+          via code2llm SmellDetector on current src: CC=2, fan-out=6, mutations=3
+          — all under thresholds (CC>12/fan>10/mut>6), not flagged. Import clean;
+          tests/test_autopilot_{cli,route_cli,lane_context,status}.py = 67 passed.
+          Note: _operator_lines (cli_snapshot.py:45) and _runtime_lines/_drive_dsl_lines
+          (cli_snapshot_lines.py) are now themselves flagged as god functions — separate
+          concerns, not part of this ticket.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
       priority: high
       source:
         context:
@@ -29234,7 +29273,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-07-05T23:30:45.995834+00:00'
+      updated_at: '2026-07-10T04:12:36.975579+00:00'
     STARTER-578:
       blocked_by: []
       blocks: []
@@ -33559,7 +33598,7 @@ sprint:
         gate.'
       execution:
         attempt: 0
-        finished_at: '2026-07-09T16:31:03.957990+00:00'
+        finished_at: '2026-07-10T07:47:00.880080+00:00'
         last_error: null
         lease_expires_at: null
         max_attempts: 1
@@ -33674,7 +33713,607 @@ sprint:
         source: planfile.store
         status: open
         timestamp: '2026-07-09T16:30:17.456709+00:00'
-      - timestamp: '2026-07-09T16:31:03.957990+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T16:31:03.957990+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T16:49:58.465645+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T16:50:49.308963+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T17:09:46.696288+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T17:10:35.881571+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T17:29:26.675615+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T17:30:10.379379+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T17:49:04.170009+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T17:49:47.534384+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T18:08:43.677084+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T18:09:25.951321+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T18:28:12.840414+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T18:28:55.116563+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T18:47:38.848768+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T18:48:21.294506+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T19:07:13.403840+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T19:07:56.697885+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T19:26:41.384665+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T19:27:25.632273+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T19:46:19.291871+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T19:47:08.074484+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T20:05:58.076753+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T20:06:50.506206+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T20:25:44.658979+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T20:26:31.336263+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T20:45:20.414339+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T20:46:10.946017+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T21:05:06.368696+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T21:05:56.473249+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T21:24:38.913586+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T21:25:42.735576+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T21:44:44.139841+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T21:45:28.339333+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T22:04:12.265924+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T22:05:02.104049+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T22:26:38.522143+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T22:27:25.588691+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T22:46:07.090594+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T22:46:50.697359+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T23:05:33.233716+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T23:06:18.354234+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T23:24:50.038162+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T23:25:33.781427+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-09T23:44:20.261570+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-09T23:45:04.410994+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T00:03:45.727896+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T00:04:29.099323+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T00:23:10.058160+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T00:23:53.393858+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T00:42:30.620703+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T00:43:13.574499+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T01:01:51.771914+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T01:02:34.888839+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T01:21:21.128175+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T01:22:04.254486+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T01:40:48.179232+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T01:41:31.289000+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T02:00:14.767276+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T02:00:58.204647+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T02:19:38.509652+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T02:20:22.100284+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T02:39:04.509595+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T02:39:48.296551+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T02:58:31.686203+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T02:59:15.030171+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T03:17:57.083746+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T03:18:40.583074+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T03:37:17.867263+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T03:38:01.255545+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T03:56:43.003888+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T03:57:26.701746+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:12:38.413052+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T04:13:30.152534+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:21:55.400253+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T04:22:39.151565+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:27:19.543366+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T04:27:22.715157+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:33:08.156109+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T04:33:51.939836+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:41:30.147259+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T04:42:13.935609+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T04:53:52.779675+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T04:54:36.590227+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T05:13:18.702356+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T05:14:02.789468+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T05:32:43.484740+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T05:33:27.962020+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T05:52:05.484780+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T05:52:50.012584+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T06:11:28.528983+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T06:12:12.782569+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T06:30:57.540691+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T06:31:43.550667+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T06:50:35.206588+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T06:51:21.191432+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T07:10:08.657612+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T07:11:05.546220+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T07:29:57.000317+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-07-10T07:30:43.021079+00:00'
+      - action: update
+        changes:
+        - outputs
+        - status
+        previous_status: done
+        source: planfile.store
+        status: open
+        timestamp: '2026-07-10T07:46:07.510465+00:00'
+      - timestamp: '2026-07-10T07:47:00.880080+00:00'
         action: auto_resolved
         source: koru wup
         message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
@@ -33779,6 +34418,506 @@ sprint:
           "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
           with the `--fix` option.'
         - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        - 'post_run_verify failed (exit 1): I001 [*] Import block is un-sorted or
+          un-formatted   --> src/koru/autonomy/cycle/cycle_config.py:79:5    | 77
+          |   def _shell_client_from_environ() -> str | None: 78 |       """Honor
+          operator-configured shell client before PATH autodetect.""" 79 | /     from
+          koru.tillm_bridge import ( 80 | |         looks_like_shell_client, 81 |
+          |         shell_drive_client_id, 82 | |         shell_agent_available, 83
+          | |     )    | |_____^ 84 | 85 |       for env_key in ("KORU_TILLM_CLIENT",
+          "URIRUN_KORU_IDE"):    | help: Organize imports  Found 1 error. [*] 1 fixable
+          with the `--fix` option.'
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
       priority: high
       source:
         context:
@@ -33792,4 +34931,4 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-07-09T16:31:03.957990+00:00'
+      updated_at: '2026-07-10T07:47:00.880080+00:00'
