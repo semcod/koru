@@ -1,12 +1,15 @@
 """Detect and launch LLM/IDE agents available for a koru project."""
 
 
+import dataclasses
 import importlib.metadata
+import json
 import os
 import platform
 import shutil
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -194,6 +197,84 @@ def shell_agent_lane_rows() -> list[dict[str, Any]]:
     return [opt.to_dict() for opt in _shell_agent_options() if opt.launchable]
 
 
+# Project-config markers hinting which IDE/agent lane the project is set up
+# for (each value: tuples of path parts relative to project root; any match
+# sets the hint). Order of detect_agent_options still decides ties.
+_PROJECT_IDE_MARKERS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "claude-code": ((".claude",), ("CLAUDE.md",)),
+    "cursor": ((".cursor",),),
+    "windsurf": ((".windsurf",),),
+    "aider": ((".aider.conf.yml",),),
+    "gemini-cli": ((".gemini",),),
+}
+
+
+def _project_ide_hints(project: Path) -> dict[str, bool]:
+    return {
+        agent_id: any(_marker(project, *parts) for parts in markers)
+        for agent_id, markers in _PROJECT_IDE_MARKERS.items()
+    }
+
+
+def _apply_project_hints(agents: list[AgentOption], project: Path) -> list[AgentOption]:
+    """Flag lanes the project's own config points at (e.g. .claude → claude-code)."""
+    hints = _project_ide_hints(project)
+    out: list[AgentOption] = []
+    for agent in agents:
+        if hints.get(agent.id) and not agent.project_hint:
+            agent = dataclasses.replace(
+                agent,
+                project_hint=True,
+                reason=f"{agent.reason} Project config markers present.".strip(),
+            )
+        out.append(agent)
+    return out
+
+
+def recommend_agent_for_project(agents: list[AgentOption]) -> AgentOption | None:
+    """Project-aware pick: a lane the project is configured for wins over the
+    generic preference order; otherwise first available (legacy behavior)."""
+    hinted = next((a for a in agents if a.available and a.project_hint), None)
+    return hinted or next((a for a in agents if a.available), None)
+
+
+def _persist_ide_proposal(project: Path, agent: AgentOption) -> None:
+    """Record the proposal in project config for operators and tooling."""
+    try:
+        path = project / ".planfile" / ".koru" / "ide-proposal.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "ide": agent.id,
+                    "label": agent.label,
+                    "project_hint": agent.project_hint,
+                    "reason": agent.reason,
+                    "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    except OSError:
+        pass  # proposal is advisory — never block startup on it
+
+
+def propose_ide_for_project(project: Path, *, persist: bool = True) -> AgentOption | None:
+    """Koru's own IDE/lane proposal for this project.
+
+    Combines availability detection with the project's config markers and
+    (optionally) persists the result to ``.planfile/.koru/ide-proposal.json``.
+    """
+    project = project.resolve()
+    recommended = recommend_agent_for_project(detect_agent_options(project))
+    if recommended is not None and persist:
+        _persist_ide_proposal(project, recommended)
+    return recommended
+
+
 def detect_agent_options(project: Path) -> list[AgentOption]:
     """Return known LLM/IDE lanes ordered by koru preference."""
     project = project.resolve()
@@ -204,7 +285,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
     antigravity_home = Path.home() / ".gemini" / "antigravity"
     antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT")) or antigravity_home.exists()
 
-    return [
+    options = [
         AgentOption(
             id="antigravity",
             label="Antigravity Agent",
@@ -235,6 +316,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             ),
         ),
     ]
+    return _apply_project_hints(options, project)
 
 
 def detect_project_environment(project: Path) -> dict[str, Any]:
@@ -277,7 +359,7 @@ def detect_project_environment(project: Path) -> dict[str, Any]:
 def detect_agent_environment(project: Path) -> dict[str, Any]:
     """Combined environment block embedded in the LLM handoff."""
     agents = detect_agent_options(project)
-    recommended = next((agent for agent in agents if agent.available), None)
+    recommended = recommend_agent_for_project(agents)
     semcod_tools = detect_semcod_tools(project)
     return {
         "project": detect_project_environment(project),

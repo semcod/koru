@@ -219,3 +219,69 @@ class TestAutopilotBackendForLane(unittest.TestCase):
         self.assertEqual(autopilot_backend_for_agent_id("windsurf"), "plugin_socket")
         self.assertEqual(autopilot_backend_for_agent_id("openrouter"), "headless")
         self.assertEqual(autopilot_backend_for_agent_id("codex"), "tillm_shell")
+
+
+class TestProjectIdeProposal(unittest.TestCase):
+    """Project config markers drive koru's own IDE proposal."""
+
+    def test_claude_markers_set_project_hint(self) -> None:
+        from koru.agents import recommend_agent_for_project
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".claude").mkdir()
+            (project / "CLAUDE.md").write_text("# rules", encoding="utf-8")
+            with patch.dict(os.environ, {}, clear=True):
+                agents = detect_agent_options(project)
+
+            claude = next((a for a in agents if a.id == "claude-code"), None)
+            self.assertIsNotNone(claude)
+            self.assertTrue(claude.project_hint)
+
+            if claude.available:
+                # Project hint must beat generic preference order (e.g.
+                # Antigravity being first in the list).
+                recommended = recommend_agent_for_project(agents)
+                self.assertEqual(recommended.id, "claude-code")
+
+    def test_recommendation_falls_back_to_first_available(self) -> None:
+        from koru.agents import AgentOption, recommend_agent_for_project
+
+        agents = [
+            AgentOption(id="a", label="A", available=False, launchable=False),
+            AgentOption(id="b", label="B", available=True, launchable=True),
+            AgentOption(id="c", label="C", available=True, launchable=True),
+        ]
+        self.assertEqual(recommend_agent_for_project(agents).id, "b")
+
+    def test_project_hint_wins_over_order(self) -> None:
+        from koru.agents import AgentOption, recommend_agent_for_project
+
+        agents = [
+            AgentOption(id="first", label="F", available=True, launchable=True),
+            AgentOption(
+                id="hinted", label="H", available=True, launchable=True, project_hint=True
+            ),
+        ]
+        self.assertEqual(recommend_agent_for_project(agents).id, "hinted")
+
+    def test_propose_persists_proposal_json(self) -> None:
+        import json as json_mod
+
+        from koru.agents import propose_ide_for_project
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".claude").mkdir()
+            with patch.dict(os.environ, {}, clear=True):
+                proposal = propose_ide_for_project(project)
+
+            if proposal is None:
+                self.skipTest("no agent available in test environment")
+            payload = json_mod.loads(
+                (project / ".planfile" / ".koru" / "ide-proposal.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(payload["ide"], proposal.id)
+            self.assertIn("generated_at", payload)

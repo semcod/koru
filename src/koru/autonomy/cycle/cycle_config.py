@@ -35,6 +35,32 @@ def resolve_agent_lane_from_environ(
     return apply_agent_lane_environ(project, args.agent_lane)
 
 
+def _project_proposed_shell_client(project: Path | None) -> str | None:
+    """Shell client the project's own config markers propose.
+
+    E.g. ``.claude``/``CLAUDE.md`` → claude-code, ``.aider.conf.yml`` → aider.
+    The proposal is persisted to ``.planfile/.koru/ide-proposal.json`` so the
+    operator can see what koru picked and why.
+    """
+    if project is None:
+        return None
+    try:
+        from koru.agents import propose_ide_for_project
+        from koru.tillm_bridge import is_shell_agent
+
+        proposal = propose_ide_for_project(project)
+        if (
+            proposal is not None
+            and proposal.project_hint
+            and proposal.launchable
+            and is_shell_agent(proposal.id)
+        ):
+            return proposal.id
+    except Exception:  # noqa: BLE001 — proposal is advisory, never block startup
+        return None
+    return None
+
+
 def _autodetect_shell_client_for_auto(
     autopilot_ide: str,
     lane: str | None,
@@ -42,12 +68,14 @@ def _autodetect_shell_client_for_auto(
     tillm_available: Any,
     detect_running_ides_fn: Any = None,
     detect_shell_client_fn: Any = None,
+    project: Path | None = None,
 ) -> str | None:
     """Resolve ``--ide auto`` to a shell client on editor-less hosts.
 
     Only engages when no target was named, no lane points at an editor, and no
     editor IDE process is running — i.e. a headless/CI host where the plugin
-    lane can never connect. Returns the first tillm client found on PATH.
+    lane can never connect. The project's own config markers (via
+    ``koru.agents.propose_ide_for_project``) win over plain PATH order.
     """
     token = (autopilot_ide or "").strip().lower()
     if token not in ("", "auto"):
@@ -67,6 +95,14 @@ def _autodetect_shell_client_for_auto(
         from koruide.ide import detect_running_ides as detect_running_ides_fn
     if detect_running_ides_fn():
         return None
+    proposed = _project_proposed_shell_client(project)
+    if proposed:
+        print(
+            f"[koru] project config markers propose shell client '{proposed}' "
+            "(recorded in .planfile/.koru/ide-proposal.json). Pass --ide to override.",
+            file=sys.stderr,
+        )
+        return proposed
     if detect_shell_client_fn is None:
         from koru.tillm_bridge import (
             detect_available_shell_client as detect_shell_client_fn,
@@ -157,7 +193,7 @@ def configure_loop_state(
             )
     if not shell_client:
         shell_client = _autodetect_shell_client_for_auto(
-            args.autopilot_ide, lane, tillm_available=tillm_available
+            args.autopilot_ide, lane, tillm_available=tillm_available, project=project
         )
         if shell_client:
             print(
