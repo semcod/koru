@@ -142,6 +142,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.393] - 2026-07-16
+
+### Docs
+- Update README.md
+
 ## [0.1.392] - 2026-07-16
 
 ### Docs
