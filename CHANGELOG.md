@@ -142,6 +142,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.392] - 2026-07-16
+
+### Docs
+- Update README.md
+
+### Other
+- Update .nlp2dsl/environment.doql.less
+- Update .nlp2dsl/registry/environment.doql.less
+- Update .planfile/sprints/current.yaml
+- Update package-lock.json
+- Update uv.lock
+- Update wup.yaml
+
 ## [0.1.391] - 2026-07-06
 
 ### Docs
