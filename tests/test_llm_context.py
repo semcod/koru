@@ -168,14 +168,16 @@ class TestBuildProjectContext(unittest.TestCase):
             (project / "schema.sql").write_text(
                 "-- schema\nCREATE TABLE users (id INT);", encoding="utf-8"
             )
-            # ticket_files have .sql suffix which IS excluded (binary/generated)
-            # Use a .py file instead
+            # .sql suffix IS excluded (binary/database files)
             (project / "model.py").write_text("class User: pass\n", encoding="utf-8")
-            request = {"prompt": "analyse", "ticket_files": ["model.py"]}
+            request = {"prompt": "analyse", "ticket_files": ["model.py", "schema.sql"]}
             result = build_project_context(project, request)
             self.assertIsNotNone(result)
             assert result is not None
             self.assertIn("model.py", result.included_files)
+            # schema.sql is excluded by suffix — must never appear in output
+            self.assertNotIn("schema.sql", result.included_files)
+            self.assertNotIn("CREATE TABLE", result.text)
 
     def test_secrets_never_included(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -215,8 +217,8 @@ class TestBuildProjectContext(unittest.TestCase):
             self.assertTrue(result.truncated)
             self.assertGreater(result.total_chars, 200)
             self.assertIn("truncated", result.text)
-            # text itself should be bounded (allow for the "truncated" annotation appended)
-            self.assertLess(len(result.text), 500)
+            # text must not exceed max_context_chars (annotation is included in the limit)
+            self.assertLessEqual(len(result.text), 200)
 
     def test_default_max_context_chars_is_reasonable(self):
         self.assertEqual(DEFAULT_MAX_CONTEXT_CHARS, 32_000)

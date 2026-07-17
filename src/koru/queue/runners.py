@@ -162,8 +162,8 @@ def _build_llm_messages(request: dict[str, Any]) -> list[dict[str, str]]:
             meta_lines.append(f"Included files: {', '.join(included)}")
         if truncated:
             total = context_metadata.get("total_chars", 0)
-            limit = len(context_text)
-            meta_lines.append(f"[Context truncated: showing {limit} of {total} chars]")
+            shown_chars = len(context_text)
+            meta_lines.append(f"[Context truncated: showing {shown_chars} of {total} chars]")
         meta_note = ("\n" + "\n".join(meta_lines)) if meta_lines else ""
         context_block = (
             f"<project_context>{meta_note}\n\n{context_text}\n</project_context>"

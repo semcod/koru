@@ -346,8 +346,8 @@ def build_project_context(
     if len(full_text) > max_chars:
         truncated = True
         total_chars = len(full_text)
-        full_text = full_text[:max_chars]
-        full_text += f"\n\n... [context truncated at {max_chars} chars; {total_chars} total]"
+        annotation = f"\n\n... [context truncated at {max_chars} chars; {total_chars} total]"
+        full_text = full_text[: max_chars - len(annotation)] + annotation
 
     return ContextResult(
         text=full_text,
