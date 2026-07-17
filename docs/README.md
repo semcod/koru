@@ -5,7 +5,8 @@ refactor automation system for multi-repo workspaces.
 
 **Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md)
 
-- **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet up`: one supervisor
+- **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet bootstrap` / `up` / `ls`:
+  multi-project workspace init + one supervisor for every koru-managed project
   running a `koru autonomous up` child per koru-managed project on the
   machine (mermaid + ASCII architecture diagrams, systemd deployment, and
   the `--replace-existing` cross-project-kill bug it surfaced).
