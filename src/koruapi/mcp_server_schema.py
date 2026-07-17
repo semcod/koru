@@ -11,7 +11,10 @@ from koruapi.mcp_server_nlp2oql import build_tool_schemas as _build_nlp2oql_tool
 from koruapi.mcp_server_planfile import build_tool_schemas as _build_planfile_tool_schemas
 from koruapi.mcp_server_testql import build_tool_schemas as _build_testql_tool_schemas
 
-PROJECT_ROOT_DESCRIPTION = "Absolute path to project root on disk."
+PROJECT_ROOT_DESCRIPTION = (
+    "Absolute path to project root on disk. "
+    "Aliases accepted at runtime: project, project_dir, cwd."
+)
 
 
 def build_tools(project_root_description: str = PROJECT_ROOT_DESCRIPTION) -> list[dict[str, Any]]:

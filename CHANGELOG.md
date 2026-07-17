@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.399] - 2026-07-17
+
+### Improved
+- MCP planfile tools accept ``project`` / ``project_dir`` / ``cwd`` aliases for ``project_root`` (avoids KeyError when agents pass the natural name).
+- ``koru_list_tickets`` returns ``counts``, ``queue_status``, and ``suggested_actions`` when the filtered queue is idle; supports ``status=waiting_input``.
+- ``koru_propose_edits`` adds ``workflow_hints`` (≤80-line patch budget / oversized split guidance) for large tickets.
+
 ## [0.1.395] - 2026-07-17
 
 ### Fixed

@@ -79,11 +79,13 @@ def test_tool_list_tickets_status_filters(monkeypatch: pytest.MonkeyPatch) -> No
             {"id": "A", "name": "Open", "status": "open"},
             {"id": "B", "name": "Done", "status": "done"},
             {"id": "C", "name": "WIP", "status": "in_progress"},
+            {"id": "D", "name": "Wait", "status": "waiting_input"},
         ],
         "open_tickets": [{"id": "A", "name": "Open", "status": "open"}],
     }
     assert [t["id"] for t in _tickets_for_status_filter(ctx, "open")] == ["A"]
-    assert len(_tickets_for_status_filter(ctx, "all")) == 3
+    assert len(_tickets_for_status_filter(ctx, "all")) == 4
+    assert [t["id"] for t in _tickets_for_status_filter(ctx, "waiting_input")] == ["D"]
     assert _serialize_mcp_ticket(ctx["all_tickets"][0])["title"] == "Open"
 
     monkeypatch.setattr(
@@ -92,6 +94,68 @@ def test_tool_list_tickets_status_filters(monkeypatch: pytest.MonkeyPatch) -> No
     )
     out = tool_list_tickets({"project_root": ".", "status": "done"})
     assert out["tickets"][0]["id"] == "B"
+    assert out["queue_status"] == "active"
+    assert out["counts"]["waiting_input"] == 1
+
+
+def test_resolve_mcp_project_root_accepts_aliases(tmp_path: Path) -> None:
+    from koruapi.mcp_server_planfile import resolve_mcp_project_root
+
+    target = tmp_path / "proj"
+    target.mkdir()
+    assert resolve_mcp_project_root({"project": str(target)}) == target.resolve()
+    assert resolve_mcp_project_root({"project_dir": str(target)}) == target.resolve()
+    assert resolve_mcp_project_root({"cwd": str(target)}) == target.resolve()
+    try:
+        resolve_mcp_project_root({})
+        raise AssertionError("expected KeyError")
+    except KeyError as exc:
+        assert "project_root" in str(exc)
+
+
+def test_tool_list_tickets_idle_guidance(monkeypatch: pytest.MonkeyPatch) -> None:
+    from koruapi.mcp_server_planfile import tool_list_tickets
+
+    ctx = {
+        "all_tickets": [
+            {"id": "W", "name": "Need human", "status": "waiting_input"},
+        ],
+        "open_tickets": [],
+    }
+    monkeypatch.setattr("koru.context.build_context", lambda **_: ctx)
+    out = tool_list_tickets({"project": ".", "status": "open"})
+    assert out["tickets"] == []
+    assert out["queue_status"] == "idle"
+    assert out["counts"]["waiting_input"] == 1
+    assert any("waiting_input" in a for a in out["suggested_actions"])
+    assert any("scan" in a for a in out["suggested_actions"])
+
+
+def test_tool_propose_edits_oversized_workflow_hints(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koruapi.mcp_server_planfile import tool_propose_edits
+
+    files = [f"f{i}.py" for i in range(6)]
+    ctx = {
+        "all_tickets": [
+            {
+                "id": "PLF-1",
+                "name": "Big epic",
+                "status": "open",
+                "files": files,
+                "inputs": {"prompt": "x" * 50},
+                "executor": {"kind": "human"},
+            }
+        ],
+        "open_tickets": [],
+    }
+    monkeypatch.setattr("koru.context.build_context", lambda **_: ctx)
+    out = tool_propose_edits({"project_root": str(tmp_path), "ticket_id": "PLF-1"})
+    assert out["workflow_hints"]["oversized"] is True
+    assert out["workflow_hints"]["patch_budget_lines"] == 80
+    assert "Split" in out["workflow_hints"]["guidance"]
 
 
 def test_koru_api_main_dispatch_table_covers_all_subparser_actions() -> None:
