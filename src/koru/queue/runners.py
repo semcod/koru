@@ -2,6 +2,7 @@
 
 
 import json
+import locale
 import os
 import subprocess
 import time
@@ -18,7 +19,53 @@ def _planfile_env() -> dict[str, str]:
     """Force a wide, non-TTY console so planfile's Rich output stays one
     JSON object per line. Without this, long handler strings get wrapped
     by Rich and break json.loads on the koru side."""
-    return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
+    return {
+        **os.environ,
+        "COLUMNS": "10000",
+        "TERM": "dumb",
+        "PYTHONWARNINGS": "ignore",
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8",
+    }
+
+
+def _decode_subprocess_output(data: bytes | str | None) -> str:
+    """Decode subprocess output without crashing on mixed Windows code pages."""
+    if data is None:
+        return ""
+    if isinstance(data, str):
+        return data
+    for encoding in ("utf-8", locale.getpreferredencoding(False)):
+        try:
+            return data.decode(encoding)
+        except (LookupError, UnicodeDecodeError):
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
+def _run_captured_subprocess(
+    command: list[str] | str,
+    *,
+    cwd: Path,
+    env: dict[str, str] | None = None,
+    shell: bool = False,
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess and decode captured streams robustly."""
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        text=False,
+        capture_output=True,
+        check=False,
+        env=env,
+        shell=shell,
+    )
+    return subprocess.CompletedProcess(
+        result.args,
+        result.returncode,
+        _decode_subprocess_output(result.stdout),
+        _decode_subprocess_output(result.stderr),
+    )
 
 
 def _control_corr(prefix: str) -> str:
@@ -33,12 +80,9 @@ def run_process(command: list[str], project: Path) -> subprocess.CompletedProces
         argv=command,
         actor="planfile-runner",
     )
-    return subprocess.run(
+    return _run_captured_subprocess(
         command,
         cwd=project,
-        text=True,
-        capture_output=True,
-        check=False,
         env=_planfile_env(),
     )
 
@@ -51,13 +95,10 @@ def run_shell_command(command: str, project: Path) -> subprocess.CompletedProces
         argv=["sh", "-lc", command],
         actor="planfile-runner",
     )
-    return subprocess.run(
+    return _run_captured_subprocess(
         command,
         cwd=project,
         shell=True,
-        text=True,
-        capture_output=True,
-        check=False,
     )
 
 
