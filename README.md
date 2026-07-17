@@ -788,6 +788,22 @@ koru \
   --command "python -m pytest -q"
 ```
 
+### Fleet bootstrap (many sibling git repos)
+
+To wire Koru into every child repo under a parent folder (umbrella workspaces
+like `~/github/subactor`) without destroying existing tickets:
+
+```bash
+koru fleet bootstrap ~/github/subactor --dry-run
+koru fleet bootstrap ~/github/subactor --umbrella \
+  --include runtime --include core --include agents \
+  --exclude backups --exclude logo
+koru fleet ls --workspace ~/github/subactor
+```
+
+Idempotent soft-ensure: missing `policy.yaml` on an existing `.planfile/` is
+added **without** `--force`. See [`docs/koru-fleet.md`](./docs/koru-fleet.md).
+
 ### Or use Taskfile
 
 ```bash

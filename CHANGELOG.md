@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.400] - 2026-07-17
+
+### Added
+- ``koru fleet bootstrap`` (alias ``koru fleet init``): discover sibling git
+  projects under a parent workspace folder and ensure each has ``.planfile/``
+  + ``.planfile/.koru/policy.yaml`` so ``koru fleet ls`` / ``koru fleet up``
+  can see them. Flags: ``--dry-run``, ``--umbrella``, ``--include`` /
+  ``--exclude`` globs, ``--depth``, ``--allow-non-git``. Soft-ensure path
+  writes **only** a missing policy stub when planfile tickets already exist
+  — never requires ``--force`` for fleet coverage (fixes the ticket-clobber
+  failure mode documented under 0.1.399). ``--force`` remains available but
+  off by default and warned. Module: ``koru/fleet_bootstrap.py``; docs:
+  [`docs/koru-fleet.md`](docs/koru-fleet.md). Tests:
+  ``tests/test_fleet_bootstrap.py``.
+
 ## [0.1.399] - 2026-07-17
 
 ### Improved
