@@ -1,4 +1,4 @@
-# koru | 7310 func | 709f | 167341L | python | 2026-07-17
+# koru | 7310 func | 709f | 167353L | python | 2026-07-17
 # generated in 0.01s
 
 HEALTH:
@@ -17,8 +17,8 @@ ALERTS[20]:
   !!! high_fan_out     SharedAutopilotBridgeNetwork.tryConnectNext = 23 (limit:10)
 
 MODULES[1047] (top by size):
-  M[src/koru/integrations/vdisplay_client.py] 6836L C:0 F:274 CC↑15 D:6 (python)
-  M[packages/coru/src/coru/cli.py] 3464L C:3 F:180 CC↑13 D:2 (python)
+  M[src/koru/integrations/vdisplay_client.py] 6836L C:0 F:274 CC↑15 D:7 (python)
+  M[packages/coru/src/coru/cli.py] 3464L C:3 F:180 CC↑13 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[ui.vql.json] 1946L C:0 F:0 CC↑0 D:0 (json)
   M[src/koru/scan.py] 1673L C:0 F:63 CC↑13 D:7 (python)
@@ -49,4 +49,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/autonomy/operator/operator_plugin_wait.py (745L, 0 classes)
 
 EVOLUTION:
-  2026-07-17 CC̄=3.7 crit=461 167341L // Automated analysis
+  2026-07-17 CC̄=3.7 crit=461 167353L // Automated analysis

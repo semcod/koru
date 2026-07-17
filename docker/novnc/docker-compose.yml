@@ -1,0 +1,34 @@
+# koru noVNC desktop (browser-viewable X11)
+#
+# Usage (from repo root):
+#   docker compose -f docker/novnc/docker-compose.yml up --build -d
+#   open http://127.0.0.1:6080/vnc.html?autoconnect=true
+#   docker exec -it koru-novnc bash /home/koru/smoke-desktop.sh
+#   docker compose -f docker/novnc/docker-compose.yml down
+#
+# Limits: X11/XFCE lab for CLI + light GUI tools — not a full JetBrains/Wayland
+# photo-VQL substitute. See docs/docker-e2e-testing.md.
+
+services:
+  desktop:
+    build:
+      context: ../..
+      dockerfile: docker/novnc/Dockerfile
+    image: koru-novnc:local
+    container_name: koru-novnc
+    ports:
+      - "6080:6080"
+      - "5901:5901"
+    environment:
+      - VNC_RESOLUTION=1280x800
+      - VNC_PASSWORD=koru
+      - DISPLAY=:1
+    volumes:
+      # Editable koru install at container start
+      - ../..:/opt/koru:ro
+      - novnc-workspace:/home/koru/workspace
+    shm_size: "512m"
+    restart: unless-stopped
+
+volumes:
+  novnc-workspace:

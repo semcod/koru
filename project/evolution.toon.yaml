@@ -1,5 +1,5 @@
 # code2llm/evolution | 7178 func | 681f | 2026-07-17
-# generated in 0.04s
+# generated in 0.02s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
@@ -56,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.8 → now CC̄=3.7
+  prev CC̄=3.7 → now CC̄=3.7

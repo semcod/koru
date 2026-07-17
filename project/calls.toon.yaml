@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.45s
-# nodes: 426 | edges: 500 | modules: 83
+# generated in 0.37s
+# nodes: 375 | edges: 500 | modules: 74
 # CC̄=3.7
 
 HUBS[20]:
@@ -12,15 +12,15 @@ HUBS[20]:
     CC=11  in:27  out:25  total:52
   packages.dsl2coru.src.dsl2coru.parser._flag
     CC=7  in:33  out:8  total:41
-  plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.next
-    CC=2  in:36  out:1  total:37
   packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
     CC=3  in:0  out:33  total:33
+  packages.coru.src.coru.supervisor.registry.load_registry
+    CC=5  in:21  out:11  total:32
   packages.coru.src.coru.cli._run_lane_repair
     CC=7  in:7  out:24  total:31
-  src.koruide.plugin_installer._repo_root
-    CC=4  in:25  out:4  total:29
   src.koruide.ide.detect_running_ides
+    CC=4  in:25  out:4  total:29
+  src.koruide.plugin_installer._repo_root
     CC=4  in:25  out:4  total:29
   packages.coru.src.coru.cli_checks._trace
     CC=3  in:23  out:5  total:28
@@ -32,8 +32,6 @@ HUBS[20]:
     CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
     CC=3  in:0  out:26  total:26
-  packages.coru.src.coru.repair.diagnostics._collect_plugin_alignment_problems
-    CC=14  in:1  out:24  total:25
   packages.dsl2koru.src.dsl2koru.cli._main_subcommand
     CC=1  in:1  out:24  total:25
   packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql
@@ -42,8 +40,10 @@ HUBS[20]:
     CC=13  in:1  out:23  total:24
   packages.dsl2koru.src.dsl2koru.codegen.render_models_module
     CC=12  in:1  out:22  total:23
-  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message
-    CC=9  in:0  out:22  total:22
+  packages.uri2coru.src.uri2coru.decode.uri_to_dsl
+    CC=7  in:4  out:18  total:22
+  packages.coru.src.coru.cli._run_koru_lane
+    CC=2  in:18  out:4  total:22
 
 MODULES:
   packages.cli2coru.src.cli2coru.cli  [4 funcs]
@@ -60,17 +60,17 @@ MODULES:
     _print_result  CC=4  out:6
   packages.cli2koru.src.cli2koru.shell  [1 funcs]
     run_shell  CC=9  out:12
-  packages.coru.src.coru.cli  [11 funcs]
-    _diagnose_lane  CC=10  out:18
-    _infer_default_instance  CC=7  out:11
-    _koru_autopilot_env_payload  CC=13  out:10
-    _koru_exec_argv  CC=4  out:4
-    _lane_status_payload  CC=5  out:5
-    _lane_status_raw  CC=2  out:3
-    _print_terminal_context  CC=4  out:6
-    _print_troubleshooting_log_locations  CC=4  out:15
-    _run_koru_lane  CC=2  out:4
-    _run_lane_repair  CC=7  out:24
+  packages.coru.src.coru.cli  [75 funcs]
+    _active_project_root  CC=3  out:2
+    _agent_lane_from_auto_args  CC=7  out:7
+    _alive_daemon_ide  CC=8  out:6
+    _alive_daemon_instance  CC=13  out:16
+    _auto_default_instance  CC=4  out:3
+    _autonomous_startup_chain  CC=2  out:8
+    _binary_path  CC=6  out:8
+    _chain_project_from_plans  CC=3  out:1
+    _choose_option  CC=9  out:11
+    _cmd_exists  CC=1  out:1
   packages.coru.src.coru.cli_calibration  [25 funcs]
     _append_desktop_focus_lines  CC=2  out:2
     _calibration_desktop_focus_titles  CC=4  out:7
@@ -82,32 +82,11 @@ MODULES:
     _format_calibration_bridge_report  CC=7  out:13
     _format_calibration_desktop_report  CC=6  out:14
     _format_calibration_probe_report  CC=9  out:11
-  packages.coru.src.coru.cli_checks  [4 funcs]
+  packages.coru.src.coru.cli_checks  [2 funcs]
     _coru_normalize_project  CC=7  out:6
-    _coru_projects_equivalent  CC=4  out:3
     _trace  CC=3  out:5
-    _trace_enabled  CC=1  out:3
-  packages.coru.src.coru.cli_lane  [13 funcs]
-    apply_strict_plugin_policy_defaults  CC=6  out:3
-    ide_from_instance  CC=5  out:3
-    instance_from_socket_path  CC=4  out:5
-    instance_matches_ide  CC=1  out:1
-    lane_subprocess_env  CC=2  out:3
-    load_project_ide_settings  CC=5  out:5
-    normalize_lane_pair  CC=7  out:2
-    project_ide_settings_lane  CC=12  out:16
-    project_ide_settings_path  CC=5  out:3
-    remember_project_ide_settings  CC=8  out:11
-  packages.coru.src.coru.cli_parser  [9 funcs]
+  packages.coru.src.coru.cli_parser  [1 funcs]
     _add_lane_identifiers  CC=1  out:2
-    _add_shell_argument  CC=1  out:1
-    _build_parser  CC=1  out:12
-    _register_doctor_command  CC=1  out:6
-    _register_interaction_commands  CC=1  out:11
-    _register_lane_commands  CC=1  out:12
-    _register_operational_commands  CC=1  out:8
-    _register_repair_command  CC=1  out:10
-    _register_sync_command  CC=1  out:7
   packages.coru.src.coru.cli_reexec  [13 funcs]
     already_running_in_project_venv  CC=6  out:11
     cwd_repo_root  CC=4  out:4
@@ -119,77 +98,19 @@ MODULES:
     project_venv_candidates  CC=4  out:3
     project_venv_python  CC=5  out:3
     reexec_already_done  CC=3  out:4
-  packages.coru.src.coru.cli_terminal  [3 funcs]
-    _terminal_ide_hint  CC=1  out:1
-    _terminal_shell_context  CC=3  out:2
-    _terminal_shell_context_fallback  CC=1  out:1
-  packages.coru.src.coru.control  [5 funcs]
-    apply_nl  CC=6  out:8
-    dispatch_line  CC=3  out:7
-    dispatch_repair_history  CC=2  out:3
-    dispatch_status  CC=1  out:1
-    dispatch_validate_lane  CC=1  out:1
   packages.coru.src.coru.ecosystem  [5 funcs]
     _default_runner  CC=1  out:2
     _detect_running_plugin_ides  CC=4  out:2
     _local_package_paths  CC=5  out:7
     sync_ecosystem  CC=14  out:13
     sync_python_packages  CC=6  out:5
-  packages.coru.src.coru.ide_detection  [7 funcs]
-    _cursor_shell_context  CC=4  out:2
-    _generic_term_program_context  CC=3  out:0
-    _terminal_shell_context_fallback  CC=7  out:11
-    _vscode_term_program_context  CC=7  out:7
-    terminal_host_kind  CC=2  out:1
-    terminal_ide_hint  CC=1  out:1
-    terminal_shell_context  CC=3  out:2
-  packages.coru.src.coru.repair.diagnostics  [25 funcs]
-    _collect_manage_action_problems  CC=4  out:3
-    _collect_manage_issue_problems  CC=4  out:3
-    _collect_plugin_alignment_problems  CC=14  out:24
-    _dedupe_problems  CC=3  out:3
-    _disk_build_for_ide  CC=2  out:2
-    _drive_intent_unverified_problem  CC=8  out:11
-    _focus_risk_problem  CC=4  out:6
-    _host_key_trace_problem  CC=10  out:11
-    _installed_extension_dir  CC=4  out:6
-    _missing_status_payload_problems  CC=2  out:1
-  packages.coru.src.coru.repair.events  [1 funcs]
-    aggregate_id_for  CC=1  out:3
-  packages.coru.src.coru.repair.pipeline  [38 funcs]
-    _apply_round_actions  CC=1  out:1
-    _apply_round_resolution  CC=2  out:1
-    _attempt_ensure_daemon  CC=7  out:6
-    _clear_plugin_not_connected_if_ready  CC=5  out:1
-    _drop_codes_after_action  CC=6  out:1
-    _emit  CC=2  out:1
-    _emit_problems_detected  CC=2  out:2
-    _emit_session_finished  CC=2  out:3
-    _emit_session_started  CC=1  out:1
-    _exec_manage_fix  CC=2  out:2
-  packages.coru.src.coru.repair.projector  [7 funcs]
-    _extract_action_ids  CC=5  out:4
-    _extract_problem_codes  CC=8  out:6
-    _extract_resolved  CC=3  out:2
-    _project_one_session  CC=7  out:16
-    format_case_llm  CC=5  out:5
-    format_history_llm  CC=3  out:2
-    project_repair_cases  CC=9  out:10
-  packages.coru.src.coru.repair.query  [3 funcs]
-    cases  CC=2  out:2
-    cases_for_lane  CC=5  out:4
-    format_llm  CC=2  out:3
-  packages.coru.src.coru.repair.registry  [3 funcs]
-    playbook_for_codes  CC=5  out:6
-    registry_step  CC=3  out:0
-    registry_steps_for_code  CC=3  out:1
   packages.coru.src.coru.repair.runtime  [1 funcs]
     run_lane_repair  CC=1  out:1
-  packages.coru.src.coru.repair.service  [2 funcs]
-    record_diagnosis  CC=2  out:5
-    run_repair_with_events  CC=3  out:7
-  packages.coru.src.coru.repair_registry  [1 funcs]
-    run_repair_pipeline  CC=1  out:1
+  packages.coru.src.coru.supervisor.paths  [1 funcs]
+    registry_path  CC=1  out:1
+  packages.coru.src.coru.supervisor.registry  [2 funcs]
+    active_lane_pair  CC=2  out:2
+    load_registry  CC=5  out:11
   packages.dsl2coru.src.dsl2coru.bus  [7 funcs]
     _dispatch_koru  CC=6  out:7
     _normalize_command  CC=5  out:10
@@ -458,18 +379,19 @@ MODULES:
     parse_koru_uri  CC=7  out:9
     uri_for_block  CC=4  out:3
     uri_for_cmd  CC=4  out:5
-  plugins.koru-autopilot-shared.src.bridge-focus-core  [1 funcs]
-    next  CC=2  out:1
   project  [1 funcs]
     print  CC=0  out:0
-  src.koru.autonomy.operator.operator_runtime  [2 funcs]
-    normalize_project_root  CC=7  out:6
-    projects_equivalent  CC=3  out:2
+  src.koru.autonomy.ide_operator_guidance  [1 funcs]
+    terminal_kind_label  CC=3  out:0
+  src.koru.autonomy.readiness.readiness  [1 funcs]
+    _project_venv_python  CC=4  out:2
+  src.koru.autopilot.lane_context  [1 funcs]
+    _instance_matches_ide  CC=1  out:2
+  src.koru.ide_doctor_cli  [1 funcs]
+    _instance_from_socket_path  CC=5  out:7
   src.koru.integrations.imgl_client  [2 funcs]
     imgl_available  CC=2  out:3
     imgl_missing_message  CC=3  out:2
-  src.koru.scripts.koru-autoloop  [1 funcs]
-    run_koru  CC=0  out:0
   src.koru.wizard.gui.static.wizard  [1 funcs]
     list  CC=5  out:9
   src.koruide.ide  [2 funcs]

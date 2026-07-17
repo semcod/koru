@@ -10,7 +10,7 @@
 - **Total Functions**: 7310
 - **Total Classes**: 498
 - **Modules**: 1047
-- **Entry Points**: 2753
+- **Entry Points**: 2754
 
 ## Architecture by Module
 

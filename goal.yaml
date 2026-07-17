@@ -223,6 +223,10 @@ git:
     prefix: v
     format: '{prefix}{version}'
 publishing:
+  # PyPI publish is optional here; git tags still run via versioning + tag.enabled.
+  # GitHub Releases are separate from git tags: without create_on_tag (or a PyPI
+  # block fallback), /releases stays stuck on the last manually/fallback-created
+  # release even while tags advance (see docs/goal-tags-and-releases.md).
   enabled: false
   registries:
   - pypi
@@ -230,11 +234,14 @@ publishing:
   fallback:
     github_release:
       enabled: true
-      owner: ''
-      repo: ''
+      owner: semcod
+      repo: koru
       repo_map: {}
       token_env: GITHUB_TOKEN
       skip_pypi_retries_on_block: true
+      # Create a GitHub Release whenever goal creates/pushes a version tag
+      # (requires `gh` auth + GITHUB_TOKEN). Tags alone do not update Releases UI.
+      create_on_tag: true
       asset_glob: dist/*
 strategies:
   python:

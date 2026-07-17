@@ -86,6 +86,12 @@ tasks:
     cmds:
       - docker/capture/run.sh {{.CLI_ARGS}}
 
+  test:docker:novnc:
+    desc: Build/start koru noVNC lab (http://127.0.0.1:6080). See docker/novnc/README.md
+    cmds:
+      - docker compose -f docker/novnc/docker-compose.yml up --build -d
+      - 'echo "Open http://127.0.0.1:6080/vnc.html?autoconnect=true ; smoke: docker exec -it koru-novnc bash /home/koru/smoke-desktop.sh"'
+
   test:fast:
     desc: Run critical tests quietly in parallel when pytest-xdist is installed
     cmds:

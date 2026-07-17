@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 1.40s
+%% generated in 1.44s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__nlp2uri_testql_browser["examples.nlp2uri-testql-browser<br/>3 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
@@ -147,6 +147,7 @@ flowchart TD
     packages__uri2koru -->|1| packages__dsl2koru
     packages__nlp2coru -->|1| src__koru
     packages__nlp2coru -->|1| packages__uri2coru
+    packages__coru -->|1| packages__koruenv
     packages__nlp2koru -->|1| packages__coru
     packages__nlp2koru -->|1| packages__dsl2koru
     packages__nlp2koru -->|1| packages__uri2coru
@@ -157,6 +158,7 @@ flowchart TD
     src__koruapi -->|1| packages__nlpshim
     src__korullm -->|1| src__koru
     src__korullm -->|1| plugins__koru_autopilot_shared
+    src__koruvision -->|1| packages__coru
     src__koruvision -->|1| src__koruobserve
     src__korumesh -->|1| src__koruobserve
     src__nlp2imgl -->|1| src__imgl
@@ -174,4 +176,3 @@ flowchart TD
     scripts__sync_plugin_version -->|1| src__koru
     scripts___koru_autodiag_filter_tickets -->|1| project
     scripts__e2e_envmap_koru -->|1| src__koruapi
-    packages__coru -->|1| packages__koruenv

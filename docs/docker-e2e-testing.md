@@ -13,7 +13,7 @@ and what they **do not** cover (including noVNC / full desktop GUI).
 | Docker IDE matrix | OS × IDE **smoke** (drive dry-run, fake plugins) | **Stubs** for IDE/input | `task test:docker:ide-matrix` |
 | Capture smoke | headless + Xvfb screenshot path | mss/scrot/Xvfb | `docker/capture/run.sh` |
 | Examples Docker | Nested scenarios under `examples/**/run-docker.sh` | Per-example `EXTRA_PIP` | `bash examples/run-e2e.sh` |
-| **noVNC full desktop** | Browser-viewable GUI automation | — | **Not in this repo** (see gaps) |
+| **noVNC lab** | Browser XFCE desktop + koru mount | xdotool, optional koru extras | `docker compose -f docker/novnc/docker-compose.yml up` |
 
 Default `pytest` **deselects** slow Docker tests (`addopts` / markers).
 Docker suites must be requested explicitly.
@@ -160,21 +160,22 @@ not a silent core failure.
 
 ### noVNC
 
-**This repository does not ship a noVNC (or websockify) stack** for koru e2e.
+**Minimal lab (new):** [`docker/novnc/`](../docker/novnc/) — XFCE + TigerVNC +
+noVNC, browser on port **6080**, bind-mounts the repo for editable koru install.
 
-Related projects in the wider monorepo:
+```bash
+docker compose -f docker/novnc/docker-compose.yml up --build -d
+# http://127.0.0.1:6080/vnc.html?autoconnect=true
+docker exec -it koru-novnc bash /home/koru/smoke-desktop.sh
+```
 
-- `semcod/nlp2cmd` — `docker/novnc/` (desktop GUI demos)
-- `semcod/proxym` — docs for noVNC VM console
-- `wronai/vdisplay` — real desktop capture/control (host or agent; not noVNC in koru)
+This is an **X11 smoke lab**, not a full Wayland/JetBrains photo-VQL substitute.
+Real desktop drive: host + vdisplay ([`photo-vql-jetbrains-wayland.md`](./photo-vql-jetbrains-wayland.md)).
 
-If you need browser-viewable remote desktop validation for koru photo-VQL /
-JetBrains Wayland, use:
+Related elsewhere in the monorepo:
 
-1. Host Wayland + vdisplay agent (`docs/photo-vql-jetbrains-wayland.md`), or
-2. An external noVNC image composed **outside** this repo, mounting koru, or
-3. Future work: a `docker/novnc/` profile that installs Xvfb/x11vnc/noVNC +
-   koru`[vdisplay,desktop]` + real (or thin) IDE — **not implemented today**.
+- `semcod/nlp2cmd` — fuller noVNC demos
+- `semcod/proxym` — VM console noVNC docs
 
 ### “Every tool koru might use”
 

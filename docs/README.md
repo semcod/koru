@@ -15,7 +15,8 @@ refactor automation system for multi-repo workspaces.
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
 - **[`pipeline-design.md`](./pipeline-design.md)** — closed-loop stages (detect→plan→execute→verify→heal), flat pipeline YAML, autonomy layout, design-debt hotspots.
-- **[`docker-e2e-testing.md`](./docker-e2e-testing.md)** — Docker / shell e2e map: how suites run, what they install, IDE-matrix stubs, Xvfb capture smoke, **no noVNC in this repo**.
+- **[`docker-e2e-testing.md`](./docker-e2e-testing.md)** — Docker / shell e2e map: suites, installs, IDE-matrix stubs, Xvfb, **noVNC lab** (`docker/novnc/`).
+- **[`goal-tags-and-releases.md`](./goal-tags-and-releases.md)** — why git tags advance while GitHub Releases can stick on an old version (goal + `create_on_tag`).
 - **[`llm-provider-configuration.md`](./llm-provider-configuration.md)** (PL) — globalny wybór
   klienta tillm (`aider`, `claude-code`), providera API (`openrouter`, `z.ai`, …),
   modeli per rola i pliki `.env` / `urirun/.env`.

@@ -4,7 +4,7 @@
 # Keep floors aligned with pyproject.toml extras (see docs/docker-e2e-testing.md).
 # This image is a *queue/CLI* runtime, not a full desktop/noVNC stack.
 
-FROM python:3.12-slim as base
+FROM python:3.12-slim AS base
 
 WORKDIR /app
 
@@ -59,7 +59,7 @@ ENTRYPOINT ["koru"]
 CMD ["--help"]
 
 # Development stage with test dependencies
-FROM base as development
+FROM base AS development
 
 USER root
 RUN pip install --no-cache-dir -e ".[dev,watch,api,planfile,desktop]" && \
@@ -67,7 +67,7 @@ RUN pip install --no-cache-dir -e ".[dev,watch,api,planfile,desktop]" && \
 USER koru
 
 # Test stage
-FROM development as test
+FROM development AS test
 
 # Copy test files
 COPY tests/ ./tests/
@@ -76,4 +76,4 @@ COPY tests/ ./tests/
 RUN python -m pytest tests/ -v -m "not slow and not e2e and not integration" --maxfail=20
 
 # Production stage
-FROM base as production
+FROM base AS production
