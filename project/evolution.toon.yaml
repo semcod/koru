@@ -1,14 +1,14 @@
-# code2llm/evolution | 7174 func | 679f | 2026-07-17
-# generated in 0.03s
+# code2llm/evolution | 7178 func | 681f | 2026-07-17
+# generated in 0.04s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 6998L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 104970
+      WHY: 6836L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 102540
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 3641L, 3 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 47333
+      WHY: 3464L, 3 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 45032
 
   [3] !  SPLIT-FUNC      main  CC=17  fan=12
       WHY: CC=17 exceeds 15
@@ -20,12 +20,12 @@ NEXT[4] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 280 import paths
-  ⚠ Splitting packages/coru/src/coru/cli.py may break 192 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 274 import paths
+  ⚠ Splitting packages/coru/src/coru/cli.py may break 180 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
-  CC̄:          3.8 → ≤2.7
+  CC̄:          3.7 → ≤2.6
   max-CC:      17 → ≤8
   god-modules: 58 → 0
   high-CC(≥15): 2 → ≤1
@@ -56,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.8 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=3.7

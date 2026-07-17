@@ -676,40 +676,20 @@ def _photo_vql_metadata_root() -> Path:
     return Path(os.environ.get("VDISPLAY_METADATA_DIR", ".vdisplay")).expanduser()
 
 
-_IDE_WINDOW_TITLE_TOKENS: dict[str, tuple[str, ...]] = {
-    "cursor": ("cursor",),
-    "windsurf": ("windsurf",),
-    "vscode": ("visual studio code", "vscode"),
-    "vscodium": ("vscodium",),
-    "antigravity": ("antigravity",),
-    "qoder": ("qoder",),
-    "zed": ("zed",),
-    "jetbrains": ("jetbrains", "pycharm", "intellij", "idea", "webstorm", "goland", "clion", "rider"),
-    "pycharm": ("pycharm", "jetbrains"),
-    "idea": ("intellij", "idea", "jetbrains"),
-}
-
-# Window-title tokens that invalidate a capture for the requested IDE (avoid breadcrumb false positives).
-_COMPETING_IDE_WINDOW_TOKENS: dict[str, tuple[str, ...]] = {
-    "jetbrains": ("cursor", "visual studio code", "vscode", "windsurf", "vscodium", "antigravity", "zed", "qoder"),
-    "pycharm": ("cursor", "visual studio code", "vscode", "windsurf", "qoder"),
-    "idea": ("cursor", "visual studio code", "vscode", "windsurf", "qoder"),
-    "cursor": ("pycharm", "intellij", "jetbrains", "webstorm"),
-    "windsurf": ("pycharm", "intellij", "jetbrains"),
-    "vscode": ("pycharm", "intellij", "jetbrains", "cursor"),
-    "qoder": ("pycharm", "intellij", "jetbrains", "cursor", "windsurf"),
-}
-
-
-def _capture_validation_from_meta(meta: dict | None) -> dict[str, Any] | None:
-    if not meta:
-        return None
-    cv = meta.get("capture_validation")
-    if isinstance(cv, dict):
-        return cv
-    nested = meta.get("metadata") if isinstance(meta.get("metadata"), dict) else {}
-    cv = nested.get("capture_validation") if isinstance(nested, dict) else None
-    return cv if isinstance(cv, dict) else None
+from koru.integrations.vdisplay.photo_vql_meta import (  # noqa: E402,F401
+    COMPETING_IDE_WINDOW_TOKENS as _COMPETING_IDE_WINDOW_TOKENS,
+    IDE_WINDOW_TITLE_TOKENS as _IDE_WINDOW_TITLE_TOKENS,
+    _capture_validation_from_meta,
+    _photo_vql_overlay_labels,
+    _photo_vql_portal_actor_detected,
+    _photo_vql_share_prompt_detected,
+    _photo_vql_system_overlay_warning,
+    _type_text_plan_validation_warnings,
+    photo_vql_capture_validation_failed_warning,
+    photo_vql_expected_title_tokens,
+    photo_vql_ide_window_warning,
+    photo_vql_title_mismatch_warning,
+)
 
 
 def _capture_confirmed_from_meta(*, ide: str, meta: dict | None) -> bool:
@@ -759,149 +739,28 @@ def _capture_provenance(
 def _photo_vql_capture_validation_failed_warning(
     cv: dict[str, Any], *, ide: str, meta: dict
 ) -> dict[str, Any]:
-    """Warning dict for an embedded capture_validation that reported failure."""
-    reasons = list(cv.get("reasons") or [])
-    structure = cv.get("structure") if isinstance(cv.get("structure"), dict) else {}
-    for item in structure.get("reasons") or []:
-        if item not in reasons:
-            reasons.append(item)
-    return {
-        "ide": _canonical_ide(ide),
-        "expected_tokens": list(_IDE_WINDOW_TITLE_TOKENS.get(_canonical_ide(ide), ())),
-        "window_titles": list(cv.get("window_titles") or _window_titles_from_vql_meta(meta)),
-        "capture_validation_failed": True,
-        "reasons": reasons,
-        "message": (
-            f"Photo VQL capture not confirmed for {_canonical_ide(ide)}: "
-            f"validation reasons={reasons!r}. Focus the target IDE and refresh observe."
-        ),
-    }
+    return photo_vql_capture_validation_failed_warning(
+        cv, ide=ide, meta=meta, window_titles=_window_titles_from_vql_meta
+    )
 
 
 def _photo_vql_expected_title_tokens(canon: str) -> tuple[str, ...]:
-    """Expected window-title tokens for a canonical IDE (hints fallback)."""
-    tokens = _IDE_WINDOW_TITLE_TOKENS.get(canon)
-    if not tokens:
-        hints = _ide_hints(canon)
-        needle = str(hints.get("window_title_contains") or "").strip().lower()
-        tokens = (needle,) if needle else ()
-    return tokens
+    return photo_vql_expected_title_tokens(canon, ide_hints=_ide_hints)
 
 
 def _photo_vql_title_mismatch_warning(
     canon: str, tokens: tuple[str, ...], titles: list[str]
 ) -> dict[str, Any] | None:
-    """Compare capture window titles against expected/competing IDE tokens."""
-    joined_titles = " | ".join(titles).lower()
-    competing = _COMPETING_IDE_WINDOW_TOKENS.get(canon, ())
-    if any(comp in joined_titles for comp in competing):
-        return {
-            "ide": canon,
-            "expected_tokens": list(tokens),
-            "window_titles": titles,
-            "competing_detected": list(competing),
-            "message": (
-                f"Photo VQL capture foreground window looks like a different IDE than {canon}: "
-                f"title(s)={titles!r}. Re-focus {canon} on the capture monitor and refresh observe."
-            ),
-        }
-    if any(token in joined_titles for token in tokens):
-        return None
-    return {
-        "ide": canon,
-        "expected_tokens": list(tokens),
-        "window_titles": titles,
-        "message": (
-            f"Photo VQL capture does not look like {canon}: "
-            f"window title(s)={titles!r}. Focus the correct IDE on the target monitor before real drive."
-        ),
-    }
+    return photo_vql_title_mismatch_warning(canon, tokens, titles)
 
 
 def _photo_vql_ide_window_warning(*, ide: str, meta: dict) -> dict[str, Any] | None:
-    """Warn when the captured **foreground window title** does not match the requested IDE.
-
-    Uses the window layer only (not breadcrumb labels like ``PyCharm/JB`` inside another IDE).
-    Prefers ``capture_validation`` embedded at VQL write time when present.
-    """
-    overlay = _photo_vql_system_overlay_warning(meta=meta)
-    if overlay:
-        return overlay
-
-    cv = _capture_validation_from_meta(meta)
-    if isinstance(cv, dict):
-        if cv.get("capture_confirmed") is True:
-            return None
-        embedded = cv.get("ide_window_warning")
-        if isinstance(embedded, dict):
-            return embedded
-        if cv.get("capture_confirmed") is False:
-            return _photo_vql_capture_validation_failed_warning(cv, ide=ide, meta=meta)
-
-    canon = _canonical_ide(ide)
-    if canon in {"", "auto"}:
-        return None
-    tokens = _photo_vql_expected_title_tokens(canon)
-    if not tokens:
-        return None
-    titles = _window_titles_from_vql_meta(meta)
-    if not titles:
-        return None
-    return _photo_vql_title_mismatch_warning(canon, tokens, titles)
-
-
-def _photo_vql_overlay_labels(meta: dict) -> list[str]:
-    """Collect layer label/text/id strings for overlay detection."""
-    labels: list[str] = []
-    for layer in (meta.get("ui_elements") or meta.get("layers") or []):
-        if not isinstance(layer, dict):
-            continue
-        for key in ("label", "text", "id"):
-            value = str(layer.get(key) or "").strip()
-            if value:
-                labels.append(value)
-    return labels
-
-
-def _photo_vql_share_prompt_detected(joined: str) -> bool:
-    """True when capture labels look like a screen-share permission prompt."""
-    return (
-        "share screen" in joined
-        or "share your screen" in joined
-        or ("wants" in joined and "share" in joined and "screen" in joined)
+    return photo_vql_ide_window_warning(
+        ide=ide,
+        meta=meta,
+        window_titles=_window_titles_from_vql_meta,
+        ide_hints=_ide_hints,
     )
-
-
-def _photo_vql_portal_actor_detected(joined: str) -> bool:
-    """True when a portal/browser share actor is visible in capture labels."""
-    return (
-        "org.chromium.chromium" in joined
-        or ("gnome" in joined and "share" in joined)
-        or ("choose what" in joined and "share" in joined)
-    )
-
-
-def _photo_vql_system_overlay_warning(*, meta: dict) -> dict[str, Any] | None:
-    """Detect modal OS/browser share prompts that obscure the automation target."""
-    labels = _photo_vql_overlay_labels(meta)
-    joined = " ".join(labels).lower()
-    if not joined:
-        return None
-    share_prompt = _photo_vql_share_prompt_detected(joined)
-    portal_actor = _photo_vql_portal_actor_detected(joined)
-    if not (share_prompt and portal_actor):
-        return None
-    return {
-        "ide": "system-overlay",
-        "system_overlay": True,
-        "reason": "screen_share_overlay",
-        "window_titles": [],
-        "message": (
-            "Screen Share permission dialog is visible in the capture; "
-            "approve or dismiss it before drive so clicks do not target the modal."
-        ),
-        "matched_text": joined[:500],
-    }
 
 
 def _observe_vql_sidecar_path(*, source: str | None = None) -> str | None:
@@ -4789,27 +4648,6 @@ def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, An
         }
     except Exception as exc:
         return {"ok": False, "method": "ydotool-click", "error": str(exc)}
-
-
-def _type_text_plan_validation_warnings(
-    *,
-    target_for_log: dict[str, Any],
-    command_plan: dict[str, Any] | None,
-) -> list[str]:
-    """Warnings coming from the command plan + VQL validation payloads."""
-    warnings: list[str] = []
-    plan_warnings = (command_plan or {}).get("warnings") if isinstance(command_plan, dict) else None
-    if isinstance(plan_warnings, list):
-        warnings.extend(str(item) for item in plan_warnings)
-    validation = None
-    if isinstance(command_plan, dict):
-        validation = command_plan.get("vql_validation")
-    if not isinstance(validation, dict) and isinstance(target_for_log, dict):
-        validation = target_for_log.get("vql_validation")
-    if isinstance(validation, dict):
-        warnings.extend(str(item) for item in validation.get("coord_warnings") or [])
-        warnings.extend(str(item) for item in validation.get("validation_errors") or [])
-    return warnings
 
 
 def _type_text_blocking_warnings(

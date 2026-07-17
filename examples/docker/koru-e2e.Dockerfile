@@ -1,6 +1,8 @@
 # Reusable koru image for examples/*/*/docker-compose.yml builds.
 # Build context must be the koru repository root.
 #
+# Keep floors aligned with pyproject.toml (see docs/docker-e2e-testing.md).
+#
 # Example:
 #   docker build -f examples/docker/koru-e2e.Dockerfile \
 #     --build-arg E2E_SCRIPT=examples/ci/headless-autonomous-jsonl/e2e.sh \
@@ -14,17 +16,18 @@ RUN apt-get update \
 
 WORKDIR /opt/koru
 
-COPY pyproject.toml README.md LICENSE ./
+COPY pyproject.toml README.md LICENSE VERSION ./
 COPY src ./src/
+COPY packages ./packages/
 COPY templates ./templates/
 COPY docs ./docs/
 
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir -e ".[planfile,api]" \
     && pip install --no-cache-dir \
-        "planfile>=0.1.87" \
-        "uvicorn[standard]>=0.27" \
-        "fastapi>=0.110" \
+        "planfile>=0.1.100" \
+        "uvicorn[standard]>=0.30" \
+        "fastapi>=0.115" \
         "wup>=0.2.60"
 
 # Example-specific extra packages (e.g. "nlp2uri>=0.4.7 testql>=1.2.55")

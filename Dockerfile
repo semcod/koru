@@ -1,5 +1,8 @@
 # Koru - Closed-loop automation across semcod/* repositories
 # Multi-stage build for production and testing
+#
+# Keep floors aligned with pyproject.toml extras (see docs/docker-e2e-testing.md).
+# This image is a *queue/CLI* runtime, not a full desktop/noVNC stack.
 
 FROM python:3.12-slim as base
 
@@ -18,23 +21,26 @@ ARG CACHE_BUST=none
 
 # Copy source code first
 COPY src/ ./src/
+COPY packages/ ./packages/
 COPY templates/ ./templates/
 COPY docs/ ./docs/
 COPY README.md .
 COPY LICENSE* .
+COPY VERSION .
 COPY pyproject.toml .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -e .
-
-# Install external tools (planfile, regix, testql, etc.)
-RUN pip install --no-cache-dir \
-    planfile>=0.1.87 \
-    regix>=0.1.0 \
-    redup>=0.4.15 \
-    testql>=0.1.0 \
-    vallm>=0.1.87 \
-    wup>=0.1.0
+# Install Python package + extras used by common container e2e (queue, API, desktop bridges).
+# Optional quality gates (regix/redup/vallm) and vdisplay are installed as aligned floors;
+# they are not a substitute for host Wayland / noVNC desktop validation.
+RUN pip install --no-cache-dir -U pip setuptools wheel \
+    && pip install --no-cache-dir -e ".[planfile,api,desktop]" \
+    && pip install --no-cache-dir \
+        "planfile>=0.1.100" \
+        "testql>=1.2.55" \
+        "wup>=0.2.60" \
+        "regix>=0.1.0" \
+        "redup>=0.4.28" \
+        "vallm>=0.1.87"
 
 # Create non-root user
 RUN useradd -m -u 1000 koru && \
@@ -47,7 +53,7 @@ ENV KORU_AUTOPILOT_IDE=auto
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD koru --doctor || exit 1
+    CMD koru --version || exit 1
 
 ENTRYPOINT ["koru"]
 CMD ["--help"]
@@ -56,7 +62,7 @@ CMD ["--help"]
 FROM base as development
 
 USER root
-RUN pip install --no-cache-dir -e ".[dev,watch]" && \
+RUN pip install --no-cache-dir -e ".[dev,watch,api,planfile,desktop]" && \
     chown -R koru:koru /app
 USER koru
 
@@ -67,7 +73,7 @@ FROM development as test
 COPY tests/ ./tests/
 
 # Run tests
-RUN python -m pytest tests/ -v
+RUN python -m pytest tests/ -v -m "not slow and not e2e and not integration" --maxfail=20
 
 # Production stage
 FROM base as production

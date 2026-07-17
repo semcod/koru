@@ -69,17 +69,22 @@ tasks:
       - scripts/koru-pytest.sh --serial --all --verbose {{.CLI_ARGS}}
 
   test:docker:
-    desc: Run Docker E2E tests only (slow; deselected by default addopts)
+    desc: Run Docker E2E tests only (slow; deselected by default addopts). See docs/docker-e2e-testing.md
     cmds:
       - scripts/koru-pytest.sh --serial tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}}
 
   test:docker:ide-matrix:
-    desc: 'Run Docker OS x IDE smoke matrix. Vars: SYSTEMS, IDES (defaults cover Debian/Ubuntu/Fedora/Alpine and VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed)'
+    desc: 'Run Docker OS x IDE smoke matrix (FAKE IDE/input stubs — not real GUI). Vars: SYSTEMS, IDES. Docs: docs/docker-e2e-testing.md'
     cmds:
       - KORU_DOCKER_SYSTEMS="{{.SYSTEMS}}" KORU_DOCKER_IDES="{{.IDES}}" bash scripts/docker-ide-matrix.sh
     vars:
       SYSTEMS: '{{.SYSTEMS | default ""}}'
       IDES: '{{.IDES | default ""}}'
+
+  test:docker:capture:
+    desc: Xvfb/mss capture smoke (not noVNC). See docs/docker-e2e-testing.md
+    cmds:
+      - docker/capture/run.sh {{.CLI_ARGS}}
 
   test:fast:
     desc: Run critical tests quietly in parallel when pytest-xdist is installed

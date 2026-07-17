@@ -6,14 +6,17 @@ full stack: `koru --queue` → `planfile` CLI → file-based state in
 
 ## Requirements
 
-- `planfile >= 0.1.87` (released or installed from
-  [`semcod/planfile`](https://github.com/semcod/planfile) source). This
-  version ships:
+- `planfile >= 0.1.100` (same floor as `pyproject.toml` extras
+  `[planfile]` / `[desktop]`; install with `pip install -e ".[planfile]"`
+  or `task install:tools`). This line ships:
   - `TicketExecutor`, `TicketExecution`, `TicketInputs`, `TicketOutputs`
     Pydantic models on `Ticket`
   - CLI commands: `ticket next/claim/start/complete/fail/input/ready`
-- `python3` on PATH
+- Python **3.12+** (`requires-python = ">=3.12,<3.14"`)
 - `git` on PATH (each test creates a temp git repo to mirror real usage)
+
+For the full map of Docker / IDE-matrix / capture e2e (and the **noVNC gap**),
+see [`docs/docker-e2e-testing.md`](../../docs/docker-e2e-testing.md).
 
 ## Running locally
 
@@ -87,7 +90,7 @@ e2e:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
-    - run: pip install -e . "planfile>=0.1.87"
+    - run: pip install -e ".[planfile]"
     - run: bash tests/e2e/smoke.sh
 ```
 

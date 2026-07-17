@@ -3239,38 +3239,6 @@ def _doctor_or_daemon_requires_system_shell(
     return True
 
 
-def _dispatch_lane_command(args: argparse.Namespace) -> int | None:
-    if args.command == "lane":
-        ide, instance = _default_lane(args.ide, args.instance)
-        return _lane_env(ide, instance, args.shell)
-
-    if args.command == "lane-status":
-        ide, instance = _default_lane(args.ide, args.instance)
-        return _lane_status(ide, instance)
-
-    if args.command == "status":
-        ide, instance = _default_lane(args.ide, args.instance)
-        return _diagnose_lane(ide, instance, probe_drive=bool(getattr(args, "probe", False)))
-
-    if args.command == "env":
-        ide, instance = _default_lane(args.ide, args.instance)
-        return _lane_env(ide, instance, args.shell)
-
-    return None
-
-
-def _dispatch_auto_command(args: argparse.Namespace) -> int | None:
-    if args.command != "auto":
-        return None
-    ide, instance = _default_lane(args.ide, args.instance)
-    if args.ide or args.instance:
-        _remember_project_ide_settings(ide, instance)
-    rest = list(args.rest)
-    if rest and rest[0] == "--":
-        rest = rest[1:]
-    return _run_auto_with_readiness(ide, instance, rest)
-
-
 def _run_text_plan_chain(args: argparse.Namespace, *, verbose: bool) -> int:
     plans = _build_plan_chain(
         args.prompt,
@@ -3280,28 +3248,38 @@ def _run_text_plan_chain(args: argparse.Namespace, *, verbose: bool) -> int:
     return _execute_plans(plans, shell=args.shell, announce=verbose)
 
 
-def _dispatch_text_command(args: argparse.Namespace, *, verbose: bool) -> int | None:
-    if args.command != "text":
-        return None
-    from coru import control
+def _dispatch_lane_command(args: argparse.Namespace) -> int | None:
+    from coru.cli_dispatch import dispatch_lane_command
 
-    apply_nl = control.apply_nl
-    if apply_nl is _ORIGINAL_APPLY_NL and (
-        "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")
-    ):
-        return _run_text_plan_chain(args, verbose=verbose)
-    try:
-        rc = apply_nl(
-            args.prompt,
-            use_llm=args.llm,
-            single_action=args.single_action,
-        )
-    except ModuleNotFoundError:
-        # nlp2coru is optional; fall back to the built-in plan chain.
-        return _run_text_plan_chain(args, verbose=verbose)
-    if verbose and rc == 0:
-        print("[coru] dispatched via control bus (nlp2coru → dsl2coru)")
-    return rc
+    return dispatch_lane_command(
+        args,
+        default_lane=_default_lane,
+        lane_env=_lane_env,
+        lane_status=_lane_status,
+        diagnose_lane=_diagnose_lane,
+    )
+
+
+def _dispatch_auto_command(args: argparse.Namespace) -> int | None:
+    from coru.cli_dispatch import dispatch_auto_command
+
+    return dispatch_auto_command(
+        args,
+        default_lane=_default_lane,
+        remember_settings=_remember_project_ide_settings,
+        run_auto=_run_auto_with_readiness,
+    )
+
+
+def _dispatch_text_command(args: argparse.Namespace, *, verbose: bool) -> int | None:
+    from coru.cli_dispatch import dispatch_text_command
+
+    return dispatch_text_command(
+        args,
+        verbose=verbose,
+        original_apply_nl=_ORIGINAL_APPLY_NL,
+        run_text_plan_chain=_run_text_plan_chain,
+    )
 
 
 def _dispatch_chat_command(
@@ -3310,91 +3288,66 @@ def _dispatch_chat_command(
     verbose: bool,
     require_plugin: bool,
 ) -> int | None:
-    if args.command != "chat":
-        return None
-    return _chat_loop(
-        use_llm=args.llm,
-        shell=args.shell,
-        single_action=args.single_action,
+    from coru.cli_dispatch import dispatch_chat_command
+
+    return dispatch_chat_command(
+        args,
         verbose=verbose,
-        require_plugin=bool(args.require_plugin or require_plugin),
+        require_plugin=require_plugin,
+        chat_loop=_chat_loop,
     )
 
 
 def _dispatch_supervisor_command(args: argparse.Namespace) -> int | None:
-    if args.command != "supervisor":
-        return None
-    from coru.supervisor.cli import main as supervisor_main
+    from coru.cli_dispatch import dispatch_supervisor_command
 
-    sup_argv = list(args.supervisor_args)
-    if sup_argv and sup_argv[0] == "--":
-        sup_argv = sup_argv[1:]
-    return supervisor_main(sup_argv, koru_argv=_koru_exec_argv())
+    return dispatch_supervisor_command(args, koru_argv=_koru_exec_argv)
 
 
 def _dispatch_calibration_command(args: argparse.Namespace) -> int | None:
-    if args.command != "calibration":
-        return None
-    ide, instance = _default_lane(args.ide, args.instance)
-    ide, instance = _resolve_calibration_lane(
-        ide,
-        instance,
-        explicit_ide=args.ide,
-    )
-    return _lane_calibration(
-        ide,
-        instance,
-        probe_prompt=args.probe_prompt,
-        skip_fix=args.skip_fix,
-        skip_desktop=args.skip_desktop,
-        skip_bridge=args.skip_bridge,
+    from coru.cli_dispatch import dispatch_calibration_command
+
+    return dispatch_calibration_command(
+        args,
+        default_lane=_default_lane,
+        resolve_calibration_lane=_resolve_calibration_lane,
+        lane_calibration=_lane_calibration,
     )
 
 
 def _dispatch_doctor_command(args: argparse.Namespace) -> int | None:
-    if args.command != "doctor":
-        return None
-    ide, instance = _default_lane(args.ide, args.instance)
-    if _doctor_or_daemon_requires_system_shell(
-        command="doctor",
-        allow_integrated_shell=args.allow_integrated_shell,
-    ):
-        return 2
-    return _lane_doctor(
-        ide,
-        instance,
-        fix=args.fix,
-        probe=args.probe,
-        probe_prompt=args.probe_prompt,
+    from coru.cli_dispatch import dispatch_doctor_command
+
+    return dispatch_doctor_command(
+        args,
+        default_lane=_default_lane,
+        requires_system_shell=_doctor_or_daemon_requires_system_shell,
+        lane_doctor=_lane_doctor,
     )
 
 
 def _dispatch_repair_command(args: argparse.Namespace) -> int | None:
-    if args.command != "repair":
-        return None
-    if args.repair_command == "history":
-        return _cmd_repair_history(args)
-    if args.repair_command == "run":
-        return _cmd_repair_run(args)
-    return 2
+    from coru.cli_dispatch import dispatch_repair_command
+
+    return dispatch_repair_command(
+        args,
+        cmd_history=_cmd_repair_history,
+        cmd_run=_cmd_repair_run,
+    )
 
 
 def _dispatch_daemon_command(args: argparse.Namespace) -> int | None:
-    if args.command != "daemon":
-        return None
-    ide, instance = _default_lane(args.ide, args.instance)
-    if _doctor_or_daemon_requires_system_shell(
-        command="daemon",
-        allow_integrated_shell=args.allow_integrated_shell,
-    ):
-        return 2
-    resolved = _resolve_defaults(Plan(action="auto", ide=ide, instance=instance))
-    print(
-        f"coru daemon: foreground autopilot for ide={resolved.ide} instance={resolved.instance} "
-        "(Ctrl+C stops daemon)",
+    from coru.cli_dispatch import dispatch_daemon_command
+
+    return dispatch_daemon_command(
+        args,
+        default_lane=_default_lane,
+        requires_system_shell=_doctor_or_daemon_requires_system_shell,
+        resolve_defaults=_resolve_defaults,
+        plan_cls=Plan,
+        print_troubleshooting=_print_troubleshooting_log_locations,
+        lane_daemon_foreground=_lane_daemon_foreground,
     )
-    _print_troubleshooting_log_locations(resolved.ide, resolved.instance)
-    return _lane_daemon_foreground(resolved.ide, resolved.instance)
 
 
 def _dispatch_optional_command(
@@ -3403,42 +3356,40 @@ def _dispatch_optional_command(
     verbose: bool,
     require_plugin: bool,
 ) -> int | None:
-    for dispatch in (
-        lambda: _dispatch_lane_command(args),
-        lambda: _dispatch_auto_command(args),
-        lambda: _dispatch_text_command(args, verbose=verbose),
-        lambda: _dispatch_chat_command(args, verbose=verbose, require_plugin=require_plugin),
-        lambda: _dispatch_supervisor_command(args),
-        lambda: _dispatch_calibration_command(args),
-        lambda: _dispatch_doctor_command(args),
-        lambda: _dispatch_repair_command(args),
-        lambda: _dispatch_daemon_command(args),
-    ):
-        rc = dispatch()
-        if rc is not None:
-            return rc
-    return None
+    from coru.cli_dispatch import dispatch_optional_command
 
-
-def _dispatch_command(args: argparse.Namespace, *, verbose: bool, require_plugin: bool) -> int:
-    if args.command == "ensure":
-        return _ensure_commands(install=args.install)
-
-    if args.command == "sync":
-        return _cmd_sync(args)
-
-    if args.command == "setup":
-        return _setup_environment()
-
-    rc = _dispatch_optional_command(
+    return dispatch_optional_command(
         args,
         verbose=verbose,
         require_plugin=require_plugin,
+        dispatchers=[
+            lambda: _dispatch_lane_command(args),
+            lambda: _dispatch_auto_command(args),
+            lambda: _dispatch_text_command(args, verbose=verbose),
+            lambda: _dispatch_chat_command(
+                args, verbose=verbose, require_plugin=require_plugin
+            ),
+            lambda: _dispatch_supervisor_command(args),
+            lambda: _dispatch_calibration_command(args),
+            lambda: _dispatch_doctor_command(args),
+            lambda: _dispatch_repair_command(args),
+            lambda: _dispatch_daemon_command(args),
+        ],
     )
-    if rc is not None:
-        return rc
 
-    return 2
+
+def _dispatch_command(args: argparse.Namespace, *, verbose: bool, require_plugin: bool) -> int:
+    from coru.cli_dispatch import dispatch_command
+
+    return dispatch_command(
+        args,
+        verbose=verbose,
+        require_plugin=require_plugin,
+        ensure_commands=_ensure_commands,
+        cmd_sync=_cmd_sync,
+        setup_environment=_setup_environment,
+        dispatch_optional=_dispatch_optional_command,
+    )
 
 
 _KNOWN_CORU_COMMANDS = frozenset(

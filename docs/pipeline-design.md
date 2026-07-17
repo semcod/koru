@@ -64,6 +64,20 @@ See also:
 - [package-extraction-plan.md](./package-extraction-plan.md) — moving
   modules from `src/` into `packages/*`
 
+## Testing surfaces
+
+| Surface | Command | Notes |
+| ------- | ------- | ----- |
+| Critical unit | `task test:fast` | Default CI-style; no Docker |
+| Shell queue e2e | `bash tests/e2e/smoke.sh` | Needs `planfile>=0.1.100` |
+| Docker image e2e | `task test:docker` | Builds root `Dockerfile` |
+| OS × IDE matrix | `task test:docker:ide-matrix` | **Fake** IDE/input stubs |
+| Capture X11 | `docker/capture/run.sh` | Xvfb + mss; **not** noVNC |
+| Examples | `bash examples/run-e2e.sh` | Per-example `EXTRA_PIP` |
+
+Full detail, dependency floors, and gaps (including **no noVNC desktop stack
+in koru**): [`docker-e2e-testing.md`](./docker-e2e-testing.md).
+
 ## Design debt (from `project/analysis.toon.yaml`)
 
 Static analysis (code2llm, refreshed **2026-07-17**):
@@ -74,8 +88,8 @@ Static analysis (code2llm, refreshed **2026-07-17**):
 
 | Hotspot | Approx. size | Note |
 | ------- | ------------ | ---- |
-| `src/koru/integrations/vdisplay_client.py` | ~7.2k LOC | Split under `integrations/vdisplay/` (`portal_input`, `pointer_calibration`, `env_session`, `desktop_probe`, `surface_capture`, `control_policy`); keep re-exports |
-| `packages/coru/src/coru/cli.py` | ~3.6k LOC | Re-exec/venv helpers in `cli_reexec.py`; more splits remaining |
+| `src/koru/integrations/vdisplay_client.py` | ~6.8k LOC | Split under `integrations/vdisplay/` (+ `photo_vql_meta`, `window_focus`, …); keep re-exports |
+| `packages/coru/src/coru/cli.py` | ~3.5k LOC | `cli_reexec` + `cli_lane` + `cli_dispatch`; more repair/chat splits remaining |
 | `src/koru/scan.py` | ~1.6k LOC | Discovery / ticket emission |
 | `src/koru/configurator` | package | **Done** — was god-module `configurator.py` |
 

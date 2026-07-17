@@ -5,21 +5,21 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 768, typescript: 94, shell: 58, json: 41, yaml: 31
+- **Languages**: python: 770, typescript: 94, shell: 58, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7306
+- **Total Functions**: 7310
 - **Total Classes**: 498
-- **Modules**: 1045
-- **Entry Points**: 2740
+- **Modules**: 1047
+- **Entry Points**: 2753
 
 ## Architecture by Module
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 280
+- **Functions**: 274
 - **File**: `vdisplay_client.py`
 
 ### packages.coru.src.coru.cli
-- **Functions**: 192
+- **Functions**: 180
 - **Classes**: 3
 - **File**: `cli.py`
 
@@ -202,11 +202,11 @@ Args:
 > Check if autopilot should be skipped and return (should_skip, skip_reason).
 - **Calls**: src.koru.autonomy.cycle.cycle_skip_conditions._diagnostics_fail_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._manual_send_required_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._should_skip_for_idle_streak, src.koru.autonomy.cycle.cycle_skip_conditions._is_waiting_llm_ready_ticket, src.koru.autonomy.cycle.cycle_skip_conditions._is_stuck_status_skip_candidate, None.as_skip_tuple, src.koru.autonomy.cycle.cycle_skip_conditions._is_topology_enabled, _hp
 
-### src.koru.autonomy.phases.scan_phase.handle_scan_phase
-- **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
-
 ### src.koru.autonomy.operator.operator_runtime.setup_autonomous_session
 - **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.context._load_project_dotenv, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomy.operator.operator_runtime.project_venv_warning_lines
+
+### src.koru.autonomy.phases.scan_phase.handle_scan_phase
+- **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
 
 ### src.koru.doctor_render.render_text
 > Human-readable rendering — fixed-width status column.
@@ -525,11 +525,6 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
-### recursion_main
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
-
 ### recursion__capture_for_verify
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -591,8 +586,8 @@ Functions exposed as public API (no underscore prefix):
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
-- `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 28 calls
+- `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
 - `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 28 calls
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls

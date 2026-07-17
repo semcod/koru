@@ -253,6 +253,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.398] - 2026-07-17
+
+### Docs
+- Update README.md
+- Update docs/README.md
+- Update docs/docker-e2e-testing.md
+- Update docs/pipeline-design.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/e2e/README.md
+
+### Other
+- Update Taskfile.yml
+- Update examples/docker/koru-e2e.Dockerfile
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/src/coru/cli_dispatch.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/evolution.toon.yaml
+- ... and 7 more files
+
 ## [0.1.397] - 2026-07-17
 
 ### Docs
