@@ -41,6 +41,39 @@ from coru.cli_parser import (
     _register_repair_command,
     _register_sync_command,
 )
+from coru.cli_lane import (
+    LANE_SESSION_ENV_KEYS as _LANE_SESSION_ENV_KEYS_FROM_LANE,
+    VALID_AUTOPILOT_IDES as _VALID_AUTOPILOT_IDES,
+    WORKSPACE_SETTINGS_BY_IDE as _WORKSPACE_SETTINGS_BY_IDE,
+    _apply_strict_plugin_policy_defaults,
+    _ide_from_instance,
+    _instance_from_socket_path,
+    _instance_matches_ide,
+    _lane_subprocess_env,
+    _load_project_ide_settings,
+    _normalize_lane_pair,
+    _project_ide_settings_lane,
+    _project_ide_settings_path,
+    _remember_project_ide_settings,
+    _workspace_lane_hint,
+    _workspace_settings_path_for_ide,
+    _workspace_socket_path_for_ide,
+)
+from coru.cli_reexec import (
+    _already_running_in_project_venv,
+    _cwd_repo_root,
+    _installed_module_source_dir,
+    _local_module_source_dir,
+    _maybe_reexec_into_project_python,
+    _module_runtime_source_dir,
+    _project_repo_root,
+    _project_venv_candidates,
+    _project_venv_python,
+    _reexec_already_done,
+    _reexec_env_and_cmd,
+    _repo_root,
+    _venv_has_installed_module,
+)
 
 _LANE_ENV_KEYS = ("KORU_AUTOPILOT_IDE", "KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_SOCKET")
 _STRICT_PLUGIN_ENV_KEYS = (
@@ -48,7 +81,7 @@ _STRICT_PLUGIN_ENV_KEYS = (
     "KORU_STRICT_PLUGIN_ACK",
     "KORU_PLUGIN_VERSION_POLICY",
 )
-_LANE_SESSION_ENV_KEYS = (*_LANE_ENV_KEYS, *_STRICT_PLUGIN_ENV_KEYS)
+_LANE_SESSION_ENV_KEYS = _LANE_SESSION_ENV_KEYS_FROM_LANE
 _ORIGINAL_SUBPROCESS_RUN = subprocess.run
 
 from coru import control as _coru_control  # noqa: E402
@@ -580,174 +613,6 @@ def _tool_argv(binary: str, module: str, args: Sequence[str]) -> list[str]:
     raise FileNotFoundError(binary)
 
 
-def _cwd_repo_root() -> Path | None:
-    for parent in (Path.cwd(), *Path.cwd().parents):
-        if (parent / ".git").exists() and (parent / "pyproject.toml").exists():
-            return parent
-    return None
-
-
-def _project_repo_root() -> Path | None:
-    return _cwd_repo_root() or _repo_root()
-
-
-def _project_venv_candidates(root: Path) -> list[str]:
-    candidates: list[str] = []
-    for venv_name in (".venv", "venv"):
-        for python_name in ("python", "python3"):
-            candidate = root / venv_name / "bin" / python_name
-            if candidate.exists():
-                candidates.append(str(candidate))
-                break
-    return candidates
-
-
-def _venv_has_installed_module(venv_python: str, package: str) -> bool:
-    try:
-        venv_bin = Path(venv_python).absolute().parent
-        if venv_bin.name != "bin":
-            return False
-        venv_root = venv_bin.parent
-    except Exception:
-        return False
-    for lib_dir in venv_root.glob("lib/python*"):
-        site_packages = lib_dir / "site-packages"
-        if (site_packages / package / "__init__.py").exists():
-            return True
-        if any(site_packages.glob(f"__editable__.{package}*.pth")):
-            return True
-    return (venv_bin / package).exists()
-
-
-def _project_venv_python() -> str | None:
-    root = _project_repo_root()
-    if root is None:
-        return None
-    candidates = _project_venv_candidates(root)
-    if not candidates:
-        return None
-    for python in candidates:
-        if _venv_has_installed_module(python, "coru"):
-            return python
-    return candidates[0]
-
-
-def _reexec_already_done() -> bool:
-    return (
-        os.environ.get("CORU_DISABLE_AUTO_REEXEC") == "1"
-        or os.environ.get("CORU_REEXEC_DONE") == "1"
-        or bool(os.environ.get("PYTEST_CURRENT_TEST"))
-    )
-
-
-def _already_running_in_project_venv(project_python: str) -> bool:
-    try:
-        current_python = Path(sys.executable)
-        target_python = Path(project_python)
-        target_venv = target_python.parent.parent.resolve()
-    except Exception:
-        return True
-    try:
-        if (
-            current_python.resolve() == target_python.resolve()
-            and Path(sys.prefix).resolve() == target_venv
-        ):
-            return True
-    except Exception:
-        if str(current_python) == str(target_python):
-            return True
-    return str(current_python) == str(target_python)
-
-
-def _reexec_env_and_cmd(
-    project_python: str, argv: Sequence[str]
-) -> tuple[dict[str, str], list[str]] | None:
-    target_python = Path(project_python)
-    target_venv = target_python.parent.parent.resolve()
-    source_dir = _module_runtime_source_dir("coru.cli")
-    env = dict(os.environ)
-    env["CORU_REEXEC_DONE"] = "1"
-    target_bin = target_venv / "bin"
-    old_path = env.get("PATH", "")
-    path_parts = [part for part in old_path.split(os.pathsep) if part and part != str(target_bin)]
-    env["VIRTUAL_ENV"] = str(target_venv)
-    env["PATH"] = os.pathsep.join([str(target_bin), *path_parts])
-
-    if source_dir is not None:
-        runner = (
-            "import sys; "
-            f"sys.path.insert(0, {str(source_dir)!r}); "
-            "from coru.cli import main; "
-            "raise SystemExit(main(sys.argv[1:]))"
-        )
-        cmd = [str(target_python), "-c", runner, *list(argv)]
-    elif _venv_has_installed_module(str(target_python), "coru"):
-        cmd = [str(target_python), "-m", "coru.cli", *list(argv)]
-    else:
-        return None
-    return env, cmd
-
-
-def _maybe_reexec_into_project_python(argv: Sequence[str]) -> bool:
-    """Re-exec coru under repo-local .venv to avoid mixed runtime environments."""
-    if _reexec_already_done():
-        return False
-    project_python = _project_venv_python()
-    if not project_python or _already_running_in_project_venv(project_python):
-        return False
-    built = _reexec_env_and_cmd(project_python, argv)
-    if built is None:
-        return False
-    env, cmd = built
-    target_python = Path(project_python)
-    print(
-        f"[coru] re-exec into project venv: {target_python}",
-        file=sys.stderr,
-    )
-    os.execve(str(target_python), cmd, env)
-    return True
-
-
-def _local_module_source_dir(module_name: str) -> Path | None:
-    root = _repo_root()
-    if root is None:
-        return None
-    package = module_name.split(".", 1)[0]
-    if package == "koru":
-        source = root / "src"
-    else:
-        source = root / "packages" / package / "src"
-    module_path = source / package
-    if (module_path / "__init__.py").exists():
-        return source
-    return None
-
-
-def _installed_module_source_dir(module_name: str) -> Path | None:
-    package = module_name.split(".", 1)[0]
-    module = sys.modules.get(package)
-    origin: Path | None = None
-    if module is not None and getattr(module, "__file__", None):
-        origin = Path(module.__file__).resolve()
-    else:
-        import importlib.util
-
-        try:
-            spec = importlib.util.find_spec(package)
-        except Exception:
-            return None
-        if spec is None or spec.origin is None:
-            return None
-        origin = Path(spec.origin).resolve()
-    if origin.name == "__init__.py":
-        return origin.parent.parent
-    return origin.parent
-
-
-def _module_runtime_source_dir(module_name: str) -> Path | None:
-    return _local_module_source_dir(module_name) or _installed_module_source_dir(module_name)
-
-
 def _tool_available(binary: str, module: str) -> bool:
     return (
         _binary_path(binary) is not None
@@ -809,14 +674,6 @@ def _runtime_metadata_roots() -> list[Path]:
     return [root] if root is not None else []
 
 
-def _repo_root() -> Path | None:
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        if (parent / ".git").exists() and (parent / "pyproject.toml").exists():
-            return parent
-    return None
-
-
 def _local_install_target(package: str) -> str | None:
     root = _repo_root()
     if root is None:
@@ -832,18 +689,6 @@ def _local_install_target(package: str) -> str | None:
         return str(candidate)
     return None
 
-
-_VALID_AUTOPILOT_IDES = frozenset(
-    {"auto", "vscode", "vscodium", "cursor", "windsurf", "jetbrains", "zed", "antigravity"}
-)
-
-_WORKSPACE_SETTINGS_BY_IDE: dict[str, Path] = {
-    "cursor": Path(".cursor") / "settings.json",
-    "vscode": Path(".vscode") / "settings.json",
-    "vscodium": Path(".vscode-oss") / "settings.json",
-    "windsurf": Path(".windsurf") / "settings.json",
-    "antigravity": Path(".antigravity") / "settings.json",
-}
 
 _PROJECT_IDE_SETTINGS_NAME = "settings.json"
 
@@ -914,127 +759,6 @@ def _print_terminal_context(*, prefix: str = "[coru]") -> None:
             f"use `coru {ide} auto` unless another IDE lane is intentional",
             file=sys.stderr,
         )
-
-
-def _instance_matches_ide(instance: str, ide: str) -> bool:
-    return _ide_from_instance(instance) == ide
-
-
-def _ide_from_instance(instance: str) -> str | None:
-    normalized = instance.strip().lower()
-    if not normalized or normalized == "auto":
-        return None
-    if normalized in _VALID_AUTOPILOT_IDES:
-        return normalized
-    prefix = normalized.split("-", 1)[0]
-    return prefix if prefix in _VALID_AUTOPILOT_IDES else None
-
-
-def _workspace_settings_path_for_ide(ide: str) -> Path | None:
-    root = _repo_root()
-    rel = _WORKSPACE_SETTINGS_BY_IDE.get((ide or "").strip().lower())
-    if root is None or rel is None:
-        return None
-    return root / rel
-
-
-def _workspace_socket_path_for_ide(ide: str) -> str | None:
-    path = _workspace_settings_path_for_ide(ide)
-    if path is None or not path.exists():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-    if not isinstance(payload, dict):
-        return None
-    raw = payload.get("koruAutopilot.socketPath")
-    if not isinstance(raw, str):
-        return None
-    value = raw.strip()
-    return value or None
-
-
-def _instance_from_socket_path(socket_path: str | None) -> str | None:
-    if not socket_path:
-        return None
-    name = Path(socket_path).name
-    match = re.match(r"^koru-autopilot-([A-Za-z0-9_-]+)\.sock$", name)
-    if not match:
-        return None
-    instance = match.group(1).strip().lower()
-    return instance or None
-
-
-def _workspace_lane_hint(preferred_ide: str | None = None) -> tuple[str | None, str | None]:
-    order: list[str] = []
-    preferred = (preferred_ide or "").strip().lower()
-    if preferred in _WORKSPACE_SETTINGS_BY_IDE:
-        order.append(preferred)
-    for ide in _WORKSPACE_SETTINGS_BY_IDE:
-        if ide not in order:
-            order.append(ide)
-
-    for ide in order:
-        instance = _instance_from_socket_path(_workspace_socket_path_for_ide(ide))
-        if instance:
-            return _ide_from_instance(instance) or ide, instance
-    return None, None
-
-
-def _project_ide_settings_path(ide: str) -> Path | None:
-    root = _repo_root()
-    ide_id = (ide or "").strip().lower()
-    if root is None or ide_id not in _VALID_AUTOPILOT_IDES or ide_id == "auto":
-        return None
-    return root / ".koru" / ide_id / _PROJECT_IDE_SETTINGS_NAME
-
-
-def _load_project_ide_settings(ide: str) -> dict[str, Any]:
-    path = _project_ide_settings_path(ide)
-    if path is None or not path.is_file():
-        return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-    return payload if isinstance(payload, dict) else {}
-
-
-def _project_ide_settings_lane(ide: str) -> tuple[str, str] | None:
-    ide_id = (ide or "").strip().lower()
-    if ide_id not in _VALID_AUTOPILOT_IDES or ide_id == "auto":
-        return None
-    settings = _load_project_ide_settings(ide_id)
-    raw_instance = settings.get("instance") or settings.get("agent_lane") or settings.get("lane")
-    if isinstance(raw_instance, str) and raw_instance.strip():
-        return _normalize_lane_pair(ide_id, raw_instance.strip())
-    raw_socket = settings.get("socket") or settings.get("socket_path") or settings.get("socketPath")
-    if isinstance(raw_socket, str):
-        instance = _instance_from_socket_path(raw_socket)
-        if instance:
-            return _normalize_lane_pair(ide_id, instance)
-    return None
-
-
-def _remember_project_ide_settings(ide: str, instance: str) -> None:
-    ide_id = (ide or "").strip().lower()
-    instance_id = (instance or "").strip()
-    path = _project_ide_settings_path(ide_id)
-    if path is None or not instance_id or ide_id == "auto":
-        return
-    existing = _load_project_ide_settings(ide_id)
-    payload: dict[str, Any] = dict(existing)
-    payload["ide"] = ide_id
-    payload["instance"] = instance_id
-    root = _repo_root()
-    if root is not None:
-        payload["project"] = str(root)
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    except Exception:
-        return
 
 
 def _supervisor_lane_defaults() -> tuple[str, str] | None:
@@ -1340,36 +1064,6 @@ def _maybe_warn_lane_override(ide: str, instance: str, *, context: SessionContex
     print(f"[coru] stale lane overridden: {env_instance} -> {instance}", file=sys.stderr)
     if context is not None:
         context.lane_override_warned = True
-
-
-def _normalize_lane_pair(ide: str, instance: str) -> tuple[str, str]:
-    """Make lane resolution deterministic: explicit instance wins over IDE hint."""
-    instance_ide = _ide_from_instance(instance)
-    if instance_ide and ide and ide != "auto" and ide != instance_ide:
-        print(f"[coru] lane normalized from instance: ide {ide} -> {instance_ide} (instance={instance})", file=sys.stderr)
-        return instance_ide, instance
-    if ide == "auto" and instance_ide:
-        return instance_ide, instance
-    return ide, instance
-
-
-def _lane_subprocess_env(ide: str, instance: str, *, base: Mapping[str, str] | None = None) -> dict[str, str]:
-    env = dict(base or os.environ)
-    env["KORU_AUTOPILOT_IDE"] = ide
-    env["KORU_AUTOPILOT_INSTANCE"] = instance
-    env.pop("KORU_AUTOPILOT_SOCKET", None)
-    _apply_strict_plugin_policy_defaults(env)
-    return env
-
-
-def _apply_strict_plugin_policy_defaults(env: dict[str, str], *, force: bool = False) -> None:
-    if force or (
-        env.get("KORU_STRICT_PLUGIN_VERSION") is None
-        and env.get("KORU_PLUGIN_VERSION_POLICY") is None
-    ):
-        env["KORU_STRICT_PLUGIN_VERSION"] = "1"
-    if force or env.get("KORU_STRICT_PLUGIN_ACK") is None:
-        env["KORU_STRICT_PLUGIN_ACK"] = "1"
 
 
 @contextmanager
@@ -3747,6 +3441,52 @@ def _dispatch_command(args: argparse.Namespace, *, verbose: bool, require_plugin
     return 2
 
 
+_KNOWN_CORU_COMMANDS = frozenset(
+    {
+        "ensure",
+        "setup",
+        "sync",
+        "lane",
+        "lane-status",
+        "status",
+        "env",
+        "auto",
+        "text",
+        "chat",
+        "supervisor",
+        "doctor",
+        "calibration",
+        "daemon",
+        "repair",
+    }
+)
+
+
+def _run_main_dispatch(
+    raw_argv: list[str],
+    *,
+    verbose: bool,
+    log_format: str,
+    require_plugin: bool,
+) -> int:
+    default_mode_rc = _maybe_run_default_mode(raw_argv, verbose=verbose)
+    if default_mode_rc is not None:
+        return default_mode_rc
+    ide_auto_argv = _maybe_rewrite_ide_auto_shorthand(raw_argv, _KNOWN_CORU_COMMANDS)
+    if ide_auto_argv is not None:
+        raw_argv = ide_auto_argv
+    if _is_text_shorthand(raw_argv, _KNOWN_CORU_COMMANDS):
+        nested_argv = _rewrite_text_shorthand_argv(
+            raw_argv,
+            verbose=verbose,
+            log_format=log_format,
+            require_plugin=require_plugin,
+        )
+        return main(nested_argv)
+    args = _build_parser().parse_args(raw_argv)
+    return _dispatch_command(args, verbose=verbose, require_plugin=require_plugin)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     raw_argv = list(argv) if argv is not None else list(sys.argv[1:])
     if _maybe_reexec_into_project_python(raw_argv):
@@ -3758,42 +3498,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         _print_runtime_versions()
         _restore_log_format(previous_log_format)
         return 0
-
     try:
-        known_commands = {
-            "ensure",
-            "setup",
-            "sync",
-            "lane",
-            "lane-status",
-            "status",
-            "env",
-            "auto",
-            "text",
-            "chat",
-            "supervisor",
-            "doctor",
-            "calibration",
-            "daemon",
-            "repair",
-        }
-        default_mode_rc = _maybe_run_default_mode(raw_argv, verbose=verbose)
-        if default_mode_rc is not None:
-            return default_mode_rc
-        ide_auto_argv = _maybe_rewrite_ide_auto_shorthand(raw_argv, known_commands)
-        if ide_auto_argv is not None:
-            raw_argv = ide_auto_argv
-        if _is_text_shorthand(raw_argv, known_commands):
-            nested_argv = _rewrite_text_shorthand_argv(
-                raw_argv,
-                verbose=verbose,
-                log_format=log_format,
-                require_plugin=require_plugin,
-            )
-            return main(nested_argv)
-
-        args = _build_parser().parse_args(raw_argv)
-        return _dispatch_command(args, verbose=verbose, require_plugin=require_plugin)
+        return _run_main_dispatch(
+            raw_argv,
+            verbose=verbose,
+            log_format=log_format,
+            require_plugin=require_plugin,
+        )
     finally:
         _restore_log_format(previous_log_format)
 

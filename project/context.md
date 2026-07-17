@@ -5,21 +5,21 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 763, typescript: 94, shell: 58, json: 41, yaml: 31
+- **Languages**: python: 768, typescript: 94, shell: 58, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7257
+- **Total Functions**: 7306
 - **Total Classes**: 498
-- **Modules**: 1040
-- **Entry Points**: 2723
+- **Modules**: 1045
+- **Entry Points**: 2740
 
 ## Architecture by Module
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 290
+- **Functions**: 280
 - **File**: `vdisplay_client.py`
 
 ### packages.coru.src.coru.cli
-- **Functions**: 202
+- **Functions**: 192
 - **Classes**: 3
 - **File**: `cli.py`
 
@@ -202,11 +202,11 @@ Args:
 > Check if autopilot should be skipped and return (should_skip, skip_reason).
 - **Calls**: src.koru.autonomy.cycle.cycle_skip_conditions._diagnostics_fail_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._manual_send_required_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._should_skip_for_idle_streak, src.koru.autonomy.cycle.cycle_skip_conditions._is_waiting_llm_ready_ticket, src.koru.autonomy.cycle.cycle_skip_conditions._is_stuck_status_skip_candidate, None.as_skip_tuple, src.koru.autonomy.cycle.cycle_skip_conditions._is_topology_enabled, _hp
 
-### src.koru.autonomy.operator.operator_runtime.setup_autonomous_session
-- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.context._load_project_dotenv, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomy.operator.operator_runtime.project_venv_warning_lines
-
 ### src.koru.autonomy.phases.scan_phase.handle_scan_phase
 - **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
+
+### src.koru.autonomy.operator.operator_runtime.setup_autonomous_session
+- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.context._load_project_dotenv, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomy.operator.operator_runtime.project_venv_warning_lines
 
 ### src.koru.doctor_render.render_text
 > Human-readable rendering — fixed-width status column.
@@ -490,11 +490,6 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: packages.nlpshim.src.nlpshim.control.to_dsl
 
-### recursion_main
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: packages.coru.src.coru.cli.main
-
 ### recursion_create_ticket_from_dashboard
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -529,6 +524,11 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
+
+### recursion_main
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: packages.coru.src.coru.cli.main
 
 ### recursion__capture_for_verify
 - **Type**: recursion
@@ -579,7 +579,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
-- `src.koru.queue.context.build_project_context` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
@@ -592,10 +591,9 @@ Functions exposed as public API (no underscore prefix):
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
-- `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 28 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
+- `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 28 calls
 - `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 28 calls
-- `src.koruapi.desktop_uri.desktop_uri_handle` - 27 calls
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls
 - `src.koru.autonomy.nxdo_discovery.run_nxdo_discovery` - 27 calls
@@ -604,6 +602,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_tagi.auto` - 26 calls
 - `src.koru.cli_strategy.strategy_main` - 26 calls
 - `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
+- `src.koru.autonomy.operator.operator_daemon.start_or_reuse_daemon` - 26 calls
+- `src.koru.autopilot.cli_parser.build_autopilot_parser` - 26 calls
 
 ## System Interactions
 

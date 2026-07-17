@@ -253,6 +253,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.397] - 2026-07-17
+
+### Docs
+- Update README.md
+- Update docs/pipeline-design.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update packages/coru/src/coru/cli.py
+- Update packages/coru/src/coru/cli_lane.py
+- Update packages/coru/src/coru/cli_reexec.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 6 more files
+
 ## [0.1.396] - 2026-07-17
 
 ### Docs

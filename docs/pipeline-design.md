@@ -74,8 +74,8 @@ Static analysis (code2llm, refreshed **2026-07-17**):
 
 | Hotspot | Approx. size | Note |
 | ------- | ------------ | ---- |
-| `src/koru/integrations/vdisplay_client.py` | ~7.2k LOC | Split under `integrations/vdisplay/` (`portal_input`, `pointer_calibration`, `env_session`, `desktop_probe`, `surface_capture`); keep re-exports |
-| `packages/coru/src/coru/cli.py` | ~3.7k LOC | Thin client surface; split carefully |
+| `src/koru/integrations/vdisplay_client.py` | ~7.2k LOC | Split under `integrations/vdisplay/` (`portal_input`, `pointer_calibration`, `env_session`, `desktop_probe`, `surface_capture`, `control_policy`); keep re-exports |
+| `packages/coru/src/coru/cli.py` | ~3.6k LOC | Re-exec/venv helpers in `cli_reexec.py`; more splits remaining |
 | `src/koru/scan.py` | ~1.6k LOC | Discovery / ticket emission |
 | `src/koru/configurator` | package | **Done** — was god-module `configurator.py` |
 

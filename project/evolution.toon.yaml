@@ -1,46 +1,34 @@
-# code2llm/evolution | 7125 func | 674f | 2026-07-17
+# code2llm/evolution | 7174 func | 679f | 2026-07-17
 # generated in 0.03s
 
-NEXT[7] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 7375L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 110625
+      WHY: 6998L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 104970
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 3786L, 3 classes, max CC=16
-      EFFORT: ~4h  IMPACT: 60576
+      WHY: 3641L, 3 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 47333
 
-  [3] !  SPLIT-FUNC      build_project_context  CC=20  fan=20
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 400
+  [3] !  SPLIT-FUNC      main  CC=17  fan=12
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 204
 
-  [4] !  SPLIT-FUNC      _maybe_reexec_into_project_python  CC=16  fan=17
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 272
-
-  [5] !  SPLIT-FUNC      desktop_uri_handle  CC=15  fan=17
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 255
-
-  [6] !  SPLIT-FUNC      _run_fleet_up  CC=15  fan=15
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 225
-
-  [7] !! SPLIT           tree.txt
+  [4] !! SPLIT           tree.txt
       WHY: 2722L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 290 import paths
-  ⚠ Splitting packages/coru/src/coru/cli.py may break 202 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 280 import paths
+  ⚠ Splitting packages/coru/src/coru/cli.py may break 192 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      20 → ≤10
+  max-CC:      17 → ≤8
   god-modules: 58 → 0
-  high-CC(≥15): 9 → ≤4
+  high-CC(≥15): 2 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

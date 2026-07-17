@@ -263,6 +263,68 @@ def _collect_glob_files(project: Path, globs: list[str]) -> list[str]:
     return found
 
 
+def _context_nothing_requested(request: dict[str, Any]) -> bool:
+    return not (
+        request.get("include_project_context")
+        or request.get("context_files")
+        or request.get("context_globs")
+        or request.get("ticket_files")
+    )
+
+
+def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[str]:
+    """Ordered unique relative paths to embed from request inputs."""
+    include_project_context = request.get("include_project_context")
+    context_files: list[str] = list(request.get("context_files") or [])
+    context_globs: list[str] = list(request.get("context_globs") or [])
+    ticket_files: list[str] = list(request.get("ticket_files") or [])
+
+    files_to_include: list[str] = []
+    seen: set[str] = set()
+
+    def _add(rel: str) -> None:
+        if rel not in seen and not _is_excluded(rel):
+            seen.add(rel)
+            files_to_include.append(rel)
+
+    if include_project_context:
+        for rel in _collect_auto_files(project):
+            _add(rel)
+    for rel in ticket_files:
+        _add(rel)
+    for rel in context_files:
+        _add(rel)
+    if context_globs:
+        for rel in _collect_glob_files(project, context_globs):
+            _add(rel)
+    return files_to_include
+
+
+def _context_file_sections(
+    project: Path, files_to_include: list[str]
+) -> tuple[list[str], list[str]]:
+    """Return ``(markdown_sections, included_files)`` for readable files."""
+    sections: list[str] = []
+    included_files: list[str] = []
+    for rel in files_to_include:
+        content = _read_file_content(project, rel)
+        if content is None:
+            continue
+        lang = Path(rel).suffix.lstrip(".")
+        sections.append(f"## {rel}\n\n```{lang}\n{content}\n```")
+        included_files.append(rel)
+    return sections, included_files
+
+
+def _truncate_context_text(full_text: str, max_chars: int) -> tuple[str, bool, int]:
+    """Return ``(text, truncated, total_chars_before)``."""
+    if len(full_text) <= max_chars:
+        return full_text, False, 0
+    total_chars = len(full_text)
+    annotation = f"\n\n... [context truncated at {max_chars} chars; {total_chars} total]"
+    return full_text[: max_chars - len(annotation)] + annotation, True, total_chars
+
+
 def build_project_context(
     project: Path,
     request: dict[str, Any],
@@ -278,77 +340,28 @@ def build_project_context(
     - ``truncated``      — whether the text was cut at ``max_context_chars``
     - ``total_chars``    — size before truncation (0 if not truncated)
     """
-    include_project_context = request.get("include_project_context")
-    context_files: list[str] = list(request.get("context_files") or [])
-    context_globs: list[str] = list(request.get("context_globs") or [])
-    max_chars: int = int(request.get("max_context_chars") or DEFAULT_MAX_CONTEXT_CHARS)
-
-    # Also pick up files listed directly on the ticket
-    ticket_files: list[str] = list(request.get("ticket_files") or [])
-
-    nothing_requested = (
-        not include_project_context
-        and not context_files
-        and not context_globs
-        and not ticket_files
-    )
-    if nothing_requested:
+    if _context_nothing_requested(request):
         return None
 
     project = project.resolve()
+    max_chars: int = int(request.get("max_context_chars") or DEFAULT_MAX_CONTEXT_CHARS)
     sections: list[str] = []
-    included_files: list[str] = []
 
-    # 1. File tree (always included when context is requested)
     tree = _read_file_tree(project)
     if tree:
         sections.append(f"## Project file tree\n\n```\n{tree}\n```")
 
-    # 2. Collect files to include
-    files_to_include: list[str] = []
-    seen: set[str] = set()
-
-    def _add(rel: str) -> None:
-        if rel not in seen and not _is_excluded(rel):
-            seen.add(rel)
-            files_to_include.append(rel)
-
-    if include_project_context:
-        for rel in _collect_auto_files(project):
-            _add(rel)
-
-    for rel in ticket_files:
-        _add(rel)
-
-    for rel in context_files:
-        _add(rel)
-
-    if context_globs:
-        for rel in _collect_glob_files(project, context_globs):
-            _add(rel)
-
-    # 3. Read and append file contents
-    for rel in files_to_include:
-        content = _read_file_content(project, rel)
-        if content is None:
-            continue
-        lang = Path(rel).suffix.lstrip(".")
-        sections.append(f"## {rel}\n\n```{lang}\n{content}\n```")
-        included_files.append(rel)
+    file_sections, included_files = _context_file_sections(
+        project, _context_files_to_include(project, request)
+    )
+    sections.extend(file_sections)
 
     if not sections:
         return None
 
-    full_text = "\n\n".join(sections)
-    truncated = False
-    total_chars = 0
-
-    if len(full_text) > max_chars:
-        truncated = True
-        total_chars = len(full_text)
-        annotation = f"\n\n... [context truncated at {max_chars} chars; {total_chars} total]"
-        full_text = full_text[: max_chars - len(annotation)] + annotation
-
+    full_text, truncated, total_chars = _truncate_context_text(
+        "\n\n".join(sections), max_chars
+    )
     return ContextResult(
         text=full_text,
         included_files=included_files,

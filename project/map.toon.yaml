@@ -1,11 +1,11 @@
-# koru | 1039f 166427L | txt:5,yaml:31,json:41,yml:11,toml:16,python:763,shell:58,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-17
-# generated in 0.11s
-# stats: 7257 func | 0 cls | 1039 mod | CC̄=3.7 | critical:11 | cycles:0
+# koru | 1044f 167154L | txt:5,yaml:31,json:41,yml:11,python:768,shell:58,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-17
+# generated in 0.14s
+# stats: 7306 func | 0 cls | 1044 mod | CC̄=3.7 | critical:4 | cycles:0
 # alerts[5]: fan-out get_vql_chat_target_from_photo=37; fan-out prepare_photo_vql_for_drive=29; fan-out create_app=26; fan-out create_app=26; fan-out main=25
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; create_app fan=26; create_app fan=26; main fan=25
 # evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1039]:
+M[1044]:
   .pretest.yml,17
   Dockerfile,73
   Makefile,276
@@ -85,10 +85,12 @@ M[1039]:
   packages/cli2koru/src/cli2koru/shell.py,33
   packages/coru/pyproject.toml,28
   packages/coru/src/coru/__init__.py,3
-  packages/coru/src/coru/cli.py,3786
+  packages/coru/src/coru/cli.py,3641
   packages/coru/src/coru/cli_calibration.py,683
   packages/coru/src/coru/cli_checks.py,128
+  packages/coru/src/coru/cli_lane.py,238
   packages/coru/src/coru/cli_parser.py,154
+  packages/coru/src/coru/cli_reexec.py,220
   packages/coru/src/coru/cli_terminal.py,55
   packages/coru/src/coru/control.py,64
   packages/coru/src/coru/ecosystem.py,225
@@ -484,7 +486,7 @@ M[1039]:
   src/koru/autonomy/cycle/cycle_drive_outcome.py,102
   src/koru/autonomy/cycle/cycle_drive_retry.py,1053
   src/koru/autonomy/cycle/cycle_gate.py,449
-  src/koru/autonomy/cycle/cycle_orchestrator.py,550
+  src/koru/autonomy/cycle/cycle_orchestrator.py,565
   src/koru/autonomy/cycle/cycle_post_drive.py,430
   src/koru/autonomy/cycle/cycle_skip_conditions.py,694
   src/koru/autonomy/cycle_diagnostics.py,224
@@ -524,7 +526,7 @@ M[1039]:
   src/koru/autonomy/operator/operator_process_guard.py,271
   src/koru/autonomy/operator/operator_processes.py,447
   src/koru/autonomy/operator/operator_resources.py,96
-  src/koru/autonomy/operator/operator_runtime.py,690
+  src/koru/autonomy/operator/operator_runtime.py,707
   src/koru/autonomy/operator/operator_vdisplay_defaults.py,51
   src/koru/autonomy/operator/operator_wup.py,830
   src/koru/autonomy/operator_pipeline.py,1065
@@ -673,7 +675,7 @@ M[1039]:
   src/koru/cli_context.py,38
   src/koru/cli_doctor.py,308
   src/koru/cli_events.py,121
-  src/koru/cli_fleet.py,266
+  src/koru/cli_fleet.py,302
   src/koru/cli_gate.py,116
   src/koru/cli_gc.py,87
   src/koru/cli_global_control.py,150
@@ -735,7 +737,7 @@ M[1039]:
   src/koru/doctor_plugin_bundle.py,123
   src/koru/doctor_plugin_console.py,251
   src/koru/doctor_project_checks.py,108
-  src/koru/doctor_project_health.py,481
+  src/koru/doctor_project_health.py,499
   src/koru/doctor_registry_checks.py,28
   src/koru/doctor_render.py,62
   src/koru/doctor_reporting_checks.py,652
@@ -784,13 +786,16 @@ M[1039]:
   src/koru/integrations/photo_vql_target.py,790
   src/koru/integrations/photo_vql_user_guidance.py,395
   src/koru/integrations/photo_vql_validation.py,527
-  src/koru/integrations/vdisplay/__init__.py,13
+  src/koru/integrations/vdisplay/__init__.py,15
+  src/koru/integrations/vdisplay/control_policy.py,133
   src/koru/integrations/vdisplay/desktop_probe.py,184
   src/koru/integrations/vdisplay/env_session.py,102
   src/koru/integrations/vdisplay/pointer_calibration.py,203
   src/koru/integrations/vdisplay/portal_input.py,536
+  src/koru/integrations/vdisplay/surface_capture.py,245
+  src/koru/integrations/vdisplay/window_focus.py,274
   src/koru/integrations/vdisplay_agent_bootstrap.py,294
-  src/koru/integrations/vdisplay_client.py,7375
+  src/koru/integrations/vdisplay_client.py,6998
   src/koru/interface_registry.py,239
   src/koru/koruide_bridge.py,45
   src/koru/llm_reflect.py,173
@@ -805,7 +810,7 @@ M[1039]:
   src/koru/policy.py,262
   src/koru/project_pipeline.py,158
   src/koru/queue/__init__.py,38
-  src/koru/queue/context.py,357
+  src/koru/queue/context.py,370
   src/koru/queue/human.py,31
   src/koru/queue/koru_queue_argv.py,44
   src/koru/queue/local_manager.py,136
@@ -891,7 +896,7 @@ M[1039]:
   src/koruapi/dashboard_state.py,157
   src/koruapi/dashboard_tickets.py,322
   src/koruapi/dashboard_topology.py,22
-  src/koruapi/desktop_uri.py,665
+  src/koruapi/desktop_uri.py,703
   src/koruapi/env2llm_registry.py,375
   src/koruapi/integrations.py,264
   src/koruapi/invoke.py,31
@@ -1050,340 +1055,12 @@ D:
     e: _section,main
     _section(title)
     main()
-  src/koru/queue/context.py:
-    e: ContextResult,_is_excluded,_read_file_tree,_read_file_content,_collect_auto_files,_collect_glob_files,build_project_context
-    ContextResult:  # Output of a single context-assembly pass...
-    _is_excluded(rel_path)
-    _read_file_tree(project)
-    _read_file_content(project;rel_path)
-    _collect_auto_files(project)
-    _collect_glob_files(project;globs)
-    build_project_context(project;request)
-  packages/coru/src/coru/cli.py:
-    e: Plan,SessionContext,AutoReadiness,_koru_subprocess_timeout,_project_from_argv,_chain_project_from_plans,_active_project_root,_normalize_log_format,_current_log_format,_emit_log,_distribution_version,_print_runtime_versions,_startup_mode,_autonomous_startup_chain,_agent_lane_from_auto_args,_print_autonomous_banner,_enforce_runtime_readiness,_run_default_autonomous,_running_ide_choices,_supervisor_project_choices,_alive_daemon_instance,_instance_for_ide_choice,_choose_option,_interactive_select_agent_lane,_interactive_select_project_arg,_interactive_default_auto_args,_extract_global_flags,_run,_cmd_exists,_binary_path,_python_module_exists,_tool_argv,_cwd_repo_root,_project_repo_root,_project_venv_candidates,_venv_has_installed_module,_project_venv_python,_maybe_reexec_into_project_python,_local_module_source_dir,_installed_module_source_dir,_module_runtime_source_dir,_tool_available,_ensure_commands,_setup_environment,_runtime_metadata_roots,_repo_root,_local_install_target,_ide_from_vscode_pid,_vscode_family_env_hint,_windsurf_terminal_marker,_terminal_ide_hint,_terminal_shell_context,_terminal_host_kind,_terminal_shell_context_fallback,_print_terminal_context,_instance_matches_ide,_ide_from_instance,_workspace_settings_path_for_ide,_workspace_socket_path_for_ide,_instance_from_socket_path,_workspace_lane_hint,_project_ide_settings_path,_load_project_ide_settings,_project_ide_settings_lane,_remember_project_ide_settings,_supervisor_lane_defaults,_supervisor_lane_project,_is_lane_plugin_connected,_connected_daemon_instance,_connected_daemon_from_meta,_alive_daemon_ide,_prefer_terminal_over_lane,_warn_integrated_terminal_daemon_mismatch,_integrated_terminal_default_ide,_project_settings_default_ide,_supervisor_default_ide,_env_default_ide,_infer_default_ide,_project_ide_settings_instance,_supervisor_default_instance,_environment_default_instance,_auto_default_instance,_workspace_default_instance,_infer_default_instance,_maybe_warn_lane_override,_normalize_lane_pair,_lane_subprocess_env,_apply_strict_plugin_policy_defaults,_bind_lane_session,_run_with_lane_environment,_project_for_lane,_koru_autopilot_env_payload,_run_with_resolved_lane_env,_run_koru_lane,_koruenv_run_fallback,_lane_env,_lane_status_raw,_lane_status,_subprocess_blocked_in_tests,_lane_status_env,_run_lane_status_json,_lane_status_payload,_fetch_manage_report,_manage_repair_context,_drive_result_from_payload,_problem_from_readiness_issue,_runtime_readiness_problems,_lane_alignment_problems,_collect_lane_repair_problems,_repair_reload_ide,_repair_connect_plugin,_repair_strict_handshake_cycle,_run_lane_repair,_running_ide_summary,_target_plugin_rows,_plugin_workspace_summary,_print_ide_control_context,_lane_doctor,_refactor_intent,_lane_auto,_env_enabled,_gc_stale_lane_socket,_check_lane_status_and_ownership,_resolve_readiness_lane,_maybe_auto_repair_lane,_readiness_plugin_blocker,_readiness_consistency_step,_readiness_daemon_step,_readiness_blocker_step,_auto_readiness_gate,_resolve_daemon_alignment,_build_ownership_checks,_apply_ownership_check,_prepare_ownership_context,_run_ownership_checks_loop,_auto_ownership_gate,_readiness_issue_codes,_restart_stale_lane_daemon,_manage_report_plugin_blocker,_auto_readiness_can_continue_without_plugin,_auto_readiness_can_continue_with_keyboard_fallback,_run_auto_with_readiness,_lane_manage_fix,_lane_daemon_foreground,_koru_exec_argv,_fetch_drive_payload,_lane_chat_prompt,_start_autopilot_daemon_for_lane,_ensure_daemon_running,_import_koru_readiness_module,_diagnose_readiness_alignment,_warn_python_env_mismatch,_warn_koru_exec_outside_repo,_warn_lane_project_mismatch,_diagnose_runtime_consistency,_attempt_plugin_self_heal,_resolve_diagnose_lane,_diagnose_lane_status,_diagnose_lane,_print_troubleshooting_log_locations,_chat_llm_enabled,_llm_rewrite_chat_prompt,_intent_to_plan,_import_heuristic_plan_fn,_heuristic_plan,_llm_plan,_resolve_defaults,_default_lane,_dispatch_plan_action,_execute_plan,_build_plan_chain,_preflight_failure_ok_to_continue,_plan_step_identity,_emit_plan_step_log,_plan_failure_return,_run_single_plan_with_logging,_execute_plans,_chat_print_header,_chat_ensure_daemon,_chat_drive_with_retry,_chat_handle_drive,_chat_handle_command,_chat_loop,_cmd_repair_history,_cmd_repair_run,_cmd_sync,_restore_log_format,_maybe_run_default_mode,_maybe_rewrite_ide_auto_shorthand,_is_text_shorthand,_rewrite_text_shorthand_argv,_doctor_or_daemon_requires_system_shell,_dispatch_lane_command,_dispatch_auto_command,_run_text_plan_chain,_dispatch_text_command,_dispatch_chat_command,_dispatch_supervisor_command,_dispatch_calibration_command,_dispatch_doctor_command,_dispatch_repair_command,_dispatch_daemon_command,_dispatch_optional_command,_dispatch_command,main
-    Plan:
-    SessionContext:
-    AutoReadiness:
-    _koru_subprocess_timeout(koru_args)
-    _project_from_argv(argv)
-    _chain_project_from_plans(plans)
-    _active_project_root()
-    _normalize_log_format(raw)
-    _current_log_format()
-    _emit_log()
-    _distribution_version(distribution)
-    _print_runtime_versions()
-    _startup_mode()
-    _autonomous_startup_chain(auto_args)
-    _agent_lane_from_auto_args(auto_args)
-    _print_autonomous_banner(resolved;auto_args)
-    _enforce_runtime_readiness(root)
-    _run_default_autonomous(auto_args)
-    _running_ide_choices()
-    _supervisor_project_choices()
-    _alive_daemon_instance(ide)
-    _instance_for_ide_choice(ide)
-    _choose_option(label;options)
-    _interactive_select_agent_lane(running)
-    _interactive_select_project_arg()
-    _interactive_default_auto_args()
-    _extract_global_flags(argv)
-    _run(command)
-    _cmd_exists(name)
-    _binary_path(name)
-    _python_module_exists(module_name)
-    _tool_argv(binary;module;args)
-    _cwd_repo_root()
-    _project_repo_root()
-    _project_venv_candidates(root)
-    _venv_has_installed_module(venv_python;package)
-    _project_venv_python()
-    _maybe_reexec_into_project_python(argv)
-    _local_module_source_dir(module_name)
-    _installed_module_source_dir(module_name)
-    _module_runtime_source_dir(module_name)
-    _tool_available(binary;module)
-    _ensure_commands(install)
-    _setup_environment()
-    _runtime_metadata_roots()
-    _repo_root()
-    _local_install_target(package)
-    _ide_from_vscode_pid()
-    _vscode_family_env_hint()
-    _windsurf_terminal_marker()
-    _terminal_ide_hint()
-    _terminal_shell_context()
-    _terminal_host_kind()
-    _terminal_shell_context_fallback()
-    _print_terminal_context()
-    _instance_matches_ide(instance;ide)
-    _ide_from_instance(instance)
-    _workspace_settings_path_for_ide(ide)
-    _workspace_socket_path_for_ide(ide)
-    _instance_from_socket_path(socket_path)
-    _workspace_lane_hint(preferred_ide)
-    _project_ide_settings_path(ide)
-    _load_project_ide_settings(ide)
-    _project_ide_settings_lane(ide)
-    _remember_project_ide_settings(ide;instance)
-    _supervisor_lane_defaults()
-    _supervisor_lane_project(instance)
-    _is_lane_plugin_connected(ide;instance)
-    _connected_daemon_instance(ide)
-    _connected_daemon_from_meta(path)
-    _alive_daemon_ide()
-    _prefer_terminal_over_lane(hint;lane_ide)
-    _warn_integrated_terminal_daemon_mismatch(hint)
-    _integrated_terminal_default_ide(hint)
-    _project_settings_default_ide(hint)
-    _supervisor_default_ide(hint)
-    _env_default_ide(hint;workspace_ide)
-    _infer_default_ide()
-    _project_ide_settings_instance(ide)
-    _supervisor_default_instance(ide)
-    _environment_default_instance(ide)
-    _auto_default_instance()
-    _workspace_default_instance(ide)
-    _infer_default_instance()
-    _maybe_warn_lane_override(ide;instance)
-    _normalize_lane_pair(ide;instance)
-    _lane_subprocess_env(ide;instance)
-    _apply_strict_plugin_policy_defaults(env)
-    _bind_lane_session(ide;instance)
-    _run_with_lane_environment(command)
-    _project_for_lane(ide;instance)
-    _koru_autopilot_env_payload(ide;instance)
-    _run_with_resolved_lane_env(command)
-    _run_koru_lane(ide;instance;koru_args)
-    _koruenv_run_fallback(ide;instance;run_payload)
-    _lane_env(ide;instance;shell)
-    _lane_status_raw(ide;instance)
-    _lane_status(ide;instance)
-    _subprocess_blocked_in_tests()
-    _lane_status_env(ide;instance;resolved)
-    _run_lane_status_json(koru_exec;ide;instance;env)
-    _lane_status_payload(ide;instance)
-    _fetch_manage_report(ide;instance)
-    _manage_repair_context(ide;instance)
-    _drive_result_from_payload(payload)
-    _problem_from_readiness_issue(issue)
-    _runtime_readiness_problems(readiness;root)
-    _lane_alignment_problems(readiness;root;payload)
-    _collect_lane_repair_problems(ide;instance)
-    _repair_reload_ide(ide;repo_root)
-    _repair_connect_plugin(ide)
-    _repair_strict_handshake_cycle(ide;instance)
-    _run_lane_repair(ide;instance)
-    _running_ide_summary()
-    _target_plugin_rows(status)
-    _plugin_workspace_summary(plugin)
-    _print_ide_control_context(ide;instance)
-    _lane_doctor(ide;instance)
-    _refactor_intent(text)
-    _lane_auto(ide;instance;extra_args)
-    _env_enabled(name)
-    _gc_stale_lane_socket(ide;instance)
-    _check_lane_status_and_ownership(ide;instance;payload)
-    _resolve_readiness_lane(ide;instance;payload)
-    _maybe_auto_repair_lane(ide;instance;payload)
-    _readiness_plugin_blocker(ide;instance;payload)
-    _readiness_consistency_step(ide;instance;payload)
-    _readiness_daemon_step(ide;instance)
-    _readiness_blocker_step(ide;instance;payload)
-    _auto_readiness_gate(ide;instance)
-    _resolve_daemon_alignment(readiness;daemon;status;root;socket_path;ide;instance;payload)
-    _build_ownership_checks(readiness;daemon;root;socket_path;status;ide;instance)
-    _apply_ownership_check(readiness;result)
-    _prepare_ownership_context(ide;instance;payload)
-    _run_ownership_checks_loop(readiness;checks;root;socket_path)
-    _auto_ownership_gate(ide;instance)
-    _readiness_issue_codes(result)
-    _restart_stale_lane_daemon(ide;instance)
-    _manage_report_plugin_blocker(report)
-    _auto_readiness_can_continue_without_plugin(readiness)
-    _auto_readiness_can_continue_with_keyboard_fallback(readiness)
-    _run_auto_with_readiness(ide;instance;extra_args)
-    _lane_manage_fix(ide;instance)
-    _lane_daemon_foreground(ide;instance)
-    _koru_exec_argv()
-    _fetch_drive_payload(ide;instance;prompt)
-    _lane_chat_prompt(ide;instance;prompt)
-    _start_autopilot_daemon_for_lane(ide;instance)
-    _ensure_daemon_running(ide;instance)
-    _import_koru_readiness_module()
-    _diagnose_readiness_alignment()
-    _warn_python_env_mismatch()
-    _warn_koru_exec_outside_repo(root_s)
-    _warn_lane_project_mismatch(payload;root_s)
-    _diagnose_runtime_consistency(ide;instance;payload)
-    _attempt_plugin_self_heal(ide;instance)
-    _resolve_diagnose_lane(ide;instance)
-    _diagnose_lane_status(ide;instance)
-    _diagnose_lane(ide;instance)
-    _print_troubleshooting_log_locations(ide;instance)
-    _chat_llm_enabled(use_llm)
-    _llm_rewrite_chat_prompt(text)
-    _intent_to_plan(intent)
-    _import_heuristic_plan_fn()
-    _heuristic_plan(text)
-    _llm_plan(text)
-    _resolve_defaults(plan)
-    _default_lane(ide;instance)
-    _dispatch_plan_action(resolved;shell)
-    _execute_plan(plan)
-    _build_plan_chain(prompt)
-    _preflight_failure_ok_to_continue(plans;index)
-    _plan_step_identity(plan;ctx)
-    _emit_plan_step_log(plan;ctx)
-    _plan_failure_return(plan)
-    _run_single_plan_with_logging(plan)
-    _execute_plans(plans)
-    _chat_print_header()
-    _chat_ensure_daemon(ide;instance)
-    _chat_drive_with_retry(ide;instance;outbound)
-    _chat_handle_drive(line;ctx)
-    _chat_handle_command(line;ctx)
-    _chat_loop()
-    _cmd_repair_history(args)
-    _cmd_repair_run(args)
-    _cmd_sync(args)
-    _restore_log_format(previous_log_format)
-    _maybe_run_default_mode(raw_argv)
-    _maybe_rewrite_ide_auto_shorthand(raw_argv;known_commands)
-    _is_text_shorthand(raw_argv;known_commands)
-    _rewrite_text_shorthand_argv(raw_argv)
-    _doctor_or_daemon_requires_system_shell()
-    _dispatch_lane_command(args)
-    _dispatch_auto_command(args)
-    _run_text_plan_chain(args)
-    _dispatch_text_command(args)
-    _dispatch_chat_command(args)
-    _dispatch_supervisor_command(args)
-    _dispatch_calibration_command(args)
-    _dispatch_doctor_command(args)
-    _dispatch_repair_command(args)
-    _dispatch_daemon_command(args)
-    _dispatch_optional_command(args)
-    _dispatch_command(args)
-    main(argv)
   scripts/run_testql_conversations.py:
     e: _parse_args,main
     _parse_args(argv)
     main(argv)
-  src/koruapi/desktop_uri.py:
-    e: nlp2uri_available,nlp2uri_missing_message,_resolve_platform,_intent_ir_metadata,_imgl_plan_payload,desktop_uri_plan,_control_surface_hint,_portal_capture_enabled,_is_screen_capture_uri,_screen_capture_uri_for_prompt,_screen_capture_plan_dict,_capture_via_portal,desktop_uri_control_plan,desktop_uri_list_koru_ide_uris,desktop_uri_direct_ide_chat_execute,_control_uri_with_runtime_overrides,_try_direct_chat_fallback,_execute_control_plan,desktop_uri_control_execute,desktop_uri_imgl_execute,_should_route_to_imgl,desktop_uri_handle,_service,desktop_uri_list_getv,desktop_uri_resolve_getv,desktop_uri_get_getv_var,desktop_uri_resolve_system_map,desktop_uri_list_system_uris
-    nlp2uri_available()
-    nlp2uri_missing_message()
-    _resolve_platform(name)
-    _intent_ir_metadata(prompt)
-    _imgl_plan_payload(prompt)
-    desktop_uri_plan(prompt)
-    _control_surface_hint(uri)
-    _portal_capture_enabled(explicit)
-    _is_screen_capture_uri(uri)
-    _screen_capture_uri_for_prompt(prompt)
-    _screen_capture_plan_dict(uri)
-    _capture_via_portal(uri)
-    desktop_uri_control_plan(prompt)
-    desktop_uri_list_koru_ide_uris(status)
-    desktop_uri_direct_ide_chat_execute(message)
-    _control_uri_with_runtime_overrides(uri)
-    _try_direct_chat_fallback(prompt)
-    _execute_control_plan(plan_payload)
-    desktop_uri_control_execute(prompt)
-    desktop_uri_imgl_execute(prompt)
-    _should_route_to_imgl(prompt)
-    desktop_uri_handle(prompt)
-    _service()
-    desktop_uri_list_getv()
-    desktop_uri_resolve_getv(prompt)
-    desktop_uri_get_getv_var(uri)
-    desktop_uri_resolve_system_map(prompt)
-    desktop_uri_list_system_uris()
-  src/koru/doctor_project_health.py:
-    e: check_git_repo,check_planfile_binary,check_lane_dependencies,_installed_version,check_ecosystem_versions,planfile_version_argv,check_koru_package_version,check_planfile_cli_version,check_planfile_config,check_planfile_sprints,check_planfile_sprints_yaml,check_runtime_dir,check_koru_project_pipeline,check_policy_yaml,check_gitignore,resolve_pytest_collect_timeout,compact_pytest_collect_failure,check_pytest_collect,check_inotify_watches,check_wup_binary,check_ci_command
-    check_git_repo(project)
-    check_planfile_binary(_project)
-    check_lane_dependencies(_project)
-    _installed_version(package)
-    check_ecosystem_versions(project)
-    planfile_version_argv()
-    check_koru_package_version(_project)
-    check_planfile_cli_version(project)
-    check_planfile_config(project)
-    check_planfile_sprints(project)
-    check_planfile_sprints_yaml(project)
-    check_runtime_dir(project)
-    check_koru_project_pipeline(project)
-    check_policy_yaml(project)
-    check_gitignore(project)
-    resolve_pytest_collect_timeout()
-    compact_pytest_collect_failure(stdout;stderr)
-    check_pytest_collect(project)
-    check_inotify_watches(project)
-    check_wup_binary(_project)
-    check_ci_command(project)
-  src/koru/cli_fleet.py:
-    e: _ManagedProject,discover_projects,_default_workspace,_build_parser,_log,_run_fleet_up,_run_fleet_ls,fleet_main
-    _ManagedProject: __init__(2),command(0),is_running(0),start(0),poll_and_maybe_restart(0),terminate(0)  # One supervised ``koru autonomous up`` child for a single pro...
-    discover_projects(workspace)
-    _default_workspace()
-    _build_parser()
-    _log(message)
-    _run_fleet_up(args)
-    _run_fleet_ls(args)
-    fleet_main(argv)
-  src/koru/autonomy/cycle/cycle_orchestrator.py:
-    e: _AutopilotDriveContext,_AutopilotDriveAttempt,_drive_result_autopilot_status,_handle_autopilot_phase,_plugin_gate_status,_attempt_plugin_gate_recovery,_plugin_gate_recovery_key,_terminal_conflict_status,_drive_autopilot_once,_run_autopilot_drive_attempt,_apply_autopilot_drive_attempt,_emit_autopilot_preflight_skip,_emit_autopilot_observability_outcome
-    _AutopilotDriveContext:
-    _AutopilotDriveAttempt:
-    _drive_result_autopilot_status()
-    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit;queue_name)
-    _plugin_gate_status(project;cycle;queue_result;client;autopilot_ide;drive_prompt;submit;cycle_telemetry;_hp)
-    _attempt_plugin_gate_recovery(project;client;autopilot_ide;plugin_reason;_hp)
-    _plugin_gate_recovery_key(project;autopilot_ide;plugin_reason)
-    _terminal_conflict_status(autopilot_ide;cycle_telemetry;_hp)
-    _drive_autopilot_once(ctx)
-    _run_autopilot_drive_attempt(ctx)
-    _apply_autopilot_drive_attempt(ctx;attempt)
-    _emit_autopilot_preflight_skip()
-    _emit_autopilot_observability_outcome()
-  src/koru/autonomy/operator/operator_runtime.py:
-    e: AutopilotSocketDecision,StopSignalState,setup_autonomous_session,_path_is_relative_to,normalize_project_root,projects_equivalent,resolve_cli_project,_project_venv_roots,_local_project_koru,_local_project_venv,running_outside_project_venv,cli_should_reexec,project_venv_reexec_argv,maybe_sync_project_koru_package,project_venv_reexec_env,project_venv_warning_lines,default_autopilot_instance_for_ide,_instance_from_socket_path,_socket_path_for_lane,_resolve_autopilot_lane,_autopilot_socket_source,_decide_autopilot_socket,_log_autopilot_socket_decision,setup_autopilot_daemon,_log_runtime_readiness_gate,_apply_autopilot_readiness_after_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt
-    AutopilotSocketDecision:
-    StopSignalState:
-    setup_autonomous_session(args)
-    _path_is_relative_to(path;parent)
-    normalize_project_root(path)
-    projects_equivalent(left;right)
-    resolve_cli_project(raw_args)
-    _project_venv_roots(project)
-    _local_project_koru(project)
-    _local_project_venv(project)
-    running_outside_project_venv(project)
-    cli_should_reexec(raw_args)
-    project_venv_reexec_argv(project)
-    maybe_sync_project_koru_package(project)
-    project_venv_reexec_env(project)
-    project_venv_warning_lines(project)
-    default_autopilot_instance_for_ide(autopilot_ide)
-    _instance_from_socket_path(socket_path)
-    _socket_path_for_lane(default_socket_path;lane)
-    _resolve_autopilot_lane(args)
-    _autopilot_socket_source(args)
-    _decide_autopilot_socket(args)
-    _log_autopilot_socket_decision(args;decision)
-    setup_autopilot_daemon(args;project)
-    _log_runtime_readiness_gate(args;project)
-    _apply_autopilot_readiness_after_daemon(args;project;socket_path;client;autopilot_ide)
-    cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
-    setup_autonomous_env_vars()
-    restore_autonomous_env_vars(snapshot)
-    build_and_log_startup_probe(args;project)
-    install_sigterm_interrupt_handler(args;stop_state)
-    handle_autonomous_interrupt(args)
   src/koru/integrations/vdisplay_client.py:
-    e: _real_vdisplay_src,_ensure_real_vdisplay_on_path,_load_vdisplay_control,_canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,_capture_for_verify,_ocr_verify,record_koru_drive_step,_send_chat_os_injector_enabled,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_trusted_visual_target_id,_photo_vql_code_edit_enabled,_prefer_photo_vql_chat,_capture_matches_requested_ide,_vdisplay_source,_surface_confirms_ide_capture,_apply_surface_capture_error_fallback,_apply_surface_capture_confirmed,_apply_surface_capture_confirmation,_clear_surface_overridden_vql_staleness,_persist_surface_capture_confirmation_to_vql,_write_surface_capture_confirmation_sidecar,_annotate_prepare_drive_readiness,_resolve_vdisplay_source_for_ide,_abort_on_desktop_probe_fail,_vdisplay_source_for_ide,_photo_vql_metadata_root,_capture_validation_from_meta,_capture_confirmed_from_meta,_capture_provenance,_photo_vql_capture_validation_failed_warning,_photo_vql_expected_title_tokens,_photo_vql_title_mismatch_warning,_photo_vql_ide_window_warning,_photo_vql_overlay_labels,_photo_vql_share_prompt_detected,_photo_vql_portal_actor_detected,_photo_vql_system_overlay_warning,_observe_vql_sidecar_path,_annotate_png_artifact_state,_photo_png_from_vql_sidecar_path,_photo_png_from_vql_metadata,_resolve_photo_png_path_from_vql,_photo_vql_ide_capture_mismatch,_prefer_ide_prompt_over_photo_vql,_auto_ide_control_enabled,_auto_open_ide_enabled,_real_imgl_src,_ensure_real_imgl_on_path,_vdisplay_cli_candidates,_vdisplay_cli_path,_vdisplay_observe_python_candidates,_vdisplay_subprocess_env,_focus_window_xdotool,_focus_window_xdotool_for_ide,_focus_window_gnome_shell,_focus_window_gnome_shell_for_ide,_click_map_region_center,_raise_alt_tab_enabled,_alt_tab_window_cycle,_attempt_focus_recovery_capture,_persist_send_chat_drive_result,_map_raise_targets_for_ide,_map_interior_targets_for_ide,_dismiss_gnome_overview,_ide_control_resolve_map,_ide_control_open_ide,_ide_control_raise_window,_ide_control_region_raise,_ide_control_alt_tab,_ide_control_window_focus,_ide_control_focus_fallback,_ide_control_focus_interior,_ide_control_outcome_flags,_ide_control_finalize_result,ensure_vdisplay_ide_control,_import_imgl_targets,_import_imgl_target_via_stdlib,_load_light_module,_install_imgl_source_packages,_import_imgl_target_from_source,_main_vql_layer_count,_png_path_for_vql_sidecar,_resolve_photo_png_path,_photo_vql_refresh_mode,photo_vql_sidecar_needs_refresh,_photo_vql_refresh_dry_run_out,_photo_vql_refresh_screenshot,_photo_vql_reload_sidecar_meta,_photo_vql_observe_when_empty,_photo_vql_refresh_annotate_observe,_photo_vql_refresh_finalize_out,refresh_photo_vql_sidecar,_vdisplay_capture_failure_hint,_refresh_vql_sidecar_via_vdisplay_observe,_prepare_photo_vql_map_mismatch,_prepare_photo_vql_probe_abort,_prepare_photo_vql_out_skeleton,_prepare_photo_vql_ide_control_attempt,_prepare_photo_vql_refresh_or_reuse,_prepare_photo_vql_handle_window_warning,_prepare_photo_vql_map_focus_fallback,_prepare_photo_vql_finalize_out,_prepare_photo_vql_apply_capture_guard,prepare_photo_vql_for_drive,_photo_vql_drive_out_base,_photo_vql_drive_map_target_id,_photo_vql_drive_surface_trusted,_photo_vql_drive_verified_false_blocks,_apply_photo_vql_capture_confirmed,_apply_photo_vql_plan_inference_gate,_apply_photo_vql_map_mismatch_gate,_apply_photo_vql_provenance_and_verification,_apply_photo_vql_submit_fields,_normalize_photo_vql_drive_result,_finalize_send_chat,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_effective_submit_enabled,_submit_via_keyboard,_photo_vql_submit_chat,_ide_prompt_app_id,_resolve_ide_prompt_map,_ide_map_message_target,_type_text_via_ide_map_fallback,send_chat_via_ide_prompt,_send_chat_preflight_ide_prompt,_send_chat_preflight_capture_blocked,_send_chat_preflight,_send_chat_try_photo_vql,_send_chat_dry_run,_send_chat_try_os_injector,_send_chat_try_ide_prompt_fallback,_send_chat_semantic_vdisplay,_send_chat_photo_vql_mouse_focus,_send_chat_resolve_chat_selector,_send_chat_selector_click_point,_send_chat_selector_write_kwargs,_send_chat_type_at_selector,_send_chat_submit_if_requested,send_chat,_resolve_vql_chat_target,_find_vql_chat_target,_extract_vql_click_from_target,_get_pycharm_vql_editor_center,_get_jetbrains_pycharm_chat_center,_photo_vql_elements,_live_surface_monitor_lookup,_live_surface_screencast_region,_live_surface_monitor_region_fallback,_live_surface_capture_meta,_jetbrains_surface_chat_target,_chat_target_validation_accepts,_vql_file_for_positioning,_photo_vql_jetbrains_chat_flow,_photo_vql_vscode_chat_flow,_try_ocr_anchor_chat_target,get_vql_chat_target_from_photo,_photo_vql_needs_vision_or_map,_jetbrains_map_selection_method,_jetbrains_map_selection_stage,get_vql_editor_target_from_photo,click_editor_via_photo_vql,_photo_capture_meta_for_source,_enrich_stream_meta_via_vdisplay,_region_origin,_region_dict_from_bounds,_enrich_region_from_display_bounds,_enrich_region_from_ide_map,_enrich_region_from_monitor,_enrich_capture_meta_for_pointer,_map_chat_input_candidate_keys,_map_chat_pointer_meta,_map_chat_element_local_point,_map_chat_target_entry,_map_chat_bottom_right_target,_map_chat_nonnegative_target,_map_chat_target_capture_local,_global_coords_from_vql_local,_vql_plan_warnings,_vql_plan_data_mtime,_vql_plan_selection_method,_vql_plan_capture_flags,_vql_plan_commands,_llm_target_verified,_vql_plan_resolve_validation,_vql_plan_inference_flags,_vql_plan_payload,_build_vql_command_plan,_cursor_record_vql_validation,_log_vql_cursor_positioning_at_command,_ydotool_click_capture_local,_type_text_plan_validation_warnings,_type_text_blocking_warnings,_type_text_blocked_result,_type_text_dry_run_result,_type_text_try_atspi_set_value,_type_text_must_click,_type_text_fallback_click,_type_text_paste_or_type,_type_text_at_vql_coords,_resolve_photo_vql_llm_coords,_resolve_photo_vql_llm_coords_via_koru_detector,_llm_detection_decision_from_target,_photo_vql_map_paste_fallback,_mismatch_shows_competing_ide,_vision_overrides_capture_mismatch,_photo_vql_capture_mismatch_blocks,_surface_only_fallback_active,_surface_bounds_target_trusted,_surface_bounds_target_safe_for_actuation,_photo_vql_capture_mismatch_error,_target_selection_method,_selection_method_is_map,_map_target_can_clear_capture_mismatch,_is_jetbrains_map_target,_map_mismatch_allowed_for_target,_map_source_mismatch_actuation_allowed,_map_capture_mismatch_for_target,_map_capture_mismatch_for_ide,_photo_vql_map_source_mismatch_error,_surface_target_can_clear_capture_mismatch,_surface_mismatch_allowed_for_target,_photo_vql_should_block_unverified_chat,_photo_vql_unverified_chat_blocked,_photo_vql_focus_target,_photo_vql_edit_result,_photo_vql_stale_gate_override_ok,_photo_vql_stale_metadata_gate,_photo_vql_capture_mismatch_gate,_photo_vql_map_source_preflight_gate,_photo_vql_target_map_mismatch_gate,_photo_vql_maybe_clear_mismatch,_photo_vql_refined_target,_photo_vql_command_plan_pre_act,_photo_vql_unverified_chat_gate,_photo_vql_edit_mismatch_allowances,_photo_vql_combined_ok_after_edit,_photo_vql_run_paste_verification,_photo_vql_post_paste_verification,_photo_vql_submit_step,_photo_vql_assemble_combined,_photo_vql_persist_drive_result,perform_photo_vql_focus_and_edit,move_mouse_to_vql_target_and_focus_keyboard,_move_mouse_attempt_focus_and_click,_move_mouse_click_outcome,_imgl_sidecar_path_for_vql,_layers_from_imgl_sidecar_file,_vql_sidecar_layer_center,_vql_sidecar_layer_entry,_layers_from_vdisplay_sidecar,_with_embedded_capture_validation,_vql_candidate_is_stale,_vql_from_ui_elements,_vql_from_fresh_elements,_vql_imgl_fallback_layers,_vql_from_sidecar_layers,_vql_from_program_wrapper,_vql_from_screen_context,_vql_metadata_default,_parse_vql_candidate_data,_load_vql_candidate_metadata,load_vql_metadata,_resolve_vql_candidate,_monitor_source_slugs,_get_vql_candidates,_freshest_populated_vql_candidate,_fresh_vql_bbox_xy,_fresh_vql_bbox_wh,_fresh_vql_center,_fresh_vql_center_only,_fresh_vql_bbox_center,_parse_fresh_vql_elements,get_vql_target,resolve_click_for_frame
+    e: _real_vdisplay_src,_ensure_real_vdisplay_on_path,_load_vdisplay_control,_canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,_capture_for_verify,_ocr_verify,record_koru_drive_step,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_prefer_photo_vql_chat,_capture_matches_requested_ide,_vdisplay_source,_annotate_prepare_drive_readiness,_resolve_vdisplay_source_for_ide,_abort_on_desktop_probe_fail,_vdisplay_source_for_ide,_photo_vql_metadata_root,_capture_validation_from_meta,_capture_confirmed_from_meta,_capture_provenance,_photo_vql_capture_validation_failed_warning,_photo_vql_expected_title_tokens,_photo_vql_title_mismatch_warning,_photo_vql_ide_window_warning,_photo_vql_overlay_labels,_photo_vql_share_prompt_detected,_photo_vql_portal_actor_detected,_photo_vql_system_overlay_warning,_observe_vql_sidecar_path,_annotate_png_artifact_state,_photo_png_from_vql_sidecar_path,_photo_png_from_vql_metadata,_resolve_photo_png_path_from_vql,_photo_vql_ide_capture_mismatch,_prefer_ide_prompt_over_photo_vql,_auto_ide_control_enabled,_auto_open_ide_enabled,_real_imgl_src,_ensure_real_imgl_on_path,_vdisplay_cli_candidates,_vdisplay_cli_path,_vdisplay_observe_python_candidates,_vdisplay_subprocess_env,_focus_window_xdotool,_focus_window_xdotool_for_ide,_focus_window_gnome_shell,_focus_window_gnome_shell_for_ide,_click_map_region_center,_raise_alt_tab_enabled,_alt_tab_window_cycle,_attempt_focus_recovery_capture,_persist_send_chat_drive_result,_map_raise_targets_for_ide,_map_interior_targets_for_ide,_dismiss_gnome_overview,_ide_control_resolve_map,_ide_control_open_ide,_ide_control_raise_window,_ide_control_region_raise,_ide_control_alt_tab,_ide_control_window_focus,_ide_control_focus_fallback,_ide_control_focus_interior,_ide_control_outcome_flags,_ide_control_finalize_result,ensure_vdisplay_ide_control,_import_imgl_targets,_import_imgl_target_via_stdlib,_load_light_module,_install_imgl_source_packages,_import_imgl_target_from_source,_main_vql_layer_count,_png_path_for_vql_sidecar,_resolve_photo_png_path,_photo_vql_refresh_mode,photo_vql_sidecar_needs_refresh,_photo_vql_refresh_dry_run_out,_photo_vql_refresh_screenshot,_photo_vql_reload_sidecar_meta,_photo_vql_observe_when_empty,_photo_vql_refresh_annotate_observe,_photo_vql_refresh_finalize_out,refresh_photo_vql_sidecar,_vdisplay_capture_failure_hint,_refresh_vql_sidecar_via_vdisplay_observe,_prepare_photo_vql_map_mismatch,_prepare_photo_vql_probe_abort,_prepare_photo_vql_out_skeleton,_prepare_photo_vql_ide_control_attempt,_prepare_photo_vql_refresh_or_reuse,_prepare_photo_vql_handle_window_warning,_prepare_photo_vql_map_focus_fallback,_prepare_photo_vql_finalize_out,_prepare_photo_vql_apply_capture_guard,prepare_photo_vql_for_drive,_photo_vql_drive_out_base,_photo_vql_drive_map_target_id,_photo_vql_drive_surface_trusted,_photo_vql_drive_verified_false_blocks,_apply_photo_vql_capture_confirmed,_apply_photo_vql_plan_inference_gate,_apply_photo_vql_map_mismatch_gate,_apply_photo_vql_provenance_and_verification,_apply_photo_vql_submit_fields,_normalize_photo_vql_drive_result,_finalize_send_chat,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_effective_submit_enabled,_submit_via_keyboard,_photo_vql_submit_chat,_ide_prompt_app_id,_resolve_ide_prompt_map,_ide_map_message_target,_type_text_via_ide_map_fallback,send_chat_via_ide_prompt,_send_chat_preflight_ide_prompt,_send_chat_preflight_capture_blocked,_send_chat_preflight,_send_chat_try_photo_vql,_send_chat_dry_run,_send_chat_try_os_injector,_send_chat_try_ide_prompt_fallback,_send_chat_semantic_vdisplay,_send_chat_photo_vql_mouse_focus,_send_chat_resolve_chat_selector,_send_chat_selector_click_point,_send_chat_selector_write_kwargs,_send_chat_type_at_selector,_send_chat_submit_if_requested,send_chat,_resolve_vql_chat_target,_find_vql_chat_target,_extract_vql_click_from_target,_get_pycharm_vql_editor_center,_get_jetbrains_pycharm_chat_center,_photo_vql_elements,_live_surface_monitor_lookup,_live_surface_screencast_region,_live_surface_monitor_region_fallback,_live_surface_capture_meta,_jetbrains_surface_chat_target,_chat_target_validation_accepts,_vql_file_for_positioning,_photo_vql_jetbrains_chat_flow,_photo_vql_vscode_chat_flow,_try_ocr_anchor_chat_target,get_vql_chat_target_from_photo,_photo_vql_needs_vision_or_map,_jetbrains_map_selection_method,_jetbrains_map_selection_stage,get_vql_editor_target_from_photo,click_editor_via_photo_vql,_photo_capture_meta_for_source,_enrich_stream_meta_via_vdisplay,_region_origin,_region_dict_from_bounds,_enrich_region_from_display_bounds,_enrich_region_from_ide_map,_enrich_region_from_monitor,_enrich_capture_meta_for_pointer,_map_chat_input_candidate_keys,_map_chat_pointer_meta,_map_chat_element_local_point,_map_chat_target_entry,_map_chat_bottom_right_target,_map_chat_nonnegative_target,_map_chat_target_capture_local,_global_coords_from_vql_local,_vql_plan_warnings,_vql_plan_data_mtime,_vql_plan_selection_method,_vql_plan_capture_flags,_vql_plan_commands,_llm_target_verified,_vql_plan_resolve_validation,_vql_plan_inference_flags,_vql_plan_payload,_build_vql_command_plan,_cursor_record_vql_validation,_log_vql_cursor_positioning_at_command,_ydotool_click_capture_local,_type_text_plan_validation_warnings,_type_text_blocking_warnings,_type_text_blocked_result,_type_text_dry_run_result,_type_text_try_atspi_set_value,_type_text_must_click,_type_text_fallback_click,_type_text_paste_or_type,_type_text_at_vql_coords,_resolve_photo_vql_llm_coords,_resolve_photo_vql_llm_coords_via_koru_detector,_llm_detection_decision_from_target,_photo_vql_map_paste_fallback,_mismatch_shows_competing_ide,_vision_overrides_capture_mismatch,_photo_vql_capture_mismatch_blocks,_surface_only_fallback_active,_surface_bounds_target_trusted,_surface_bounds_target_safe_for_actuation,_photo_vql_capture_mismatch_error,_target_selection_method,_selection_method_is_map,_map_target_can_clear_capture_mismatch,_is_jetbrains_map_target,_map_mismatch_allowed_for_target,_map_source_mismatch_actuation_allowed,_map_capture_mismatch_for_target,_map_capture_mismatch_for_ide,_photo_vql_map_source_mismatch_error,_surface_target_can_clear_capture_mismatch,_surface_mismatch_allowed_for_target,_photo_vql_should_block_unverified_chat,_photo_vql_unverified_chat_blocked,_photo_vql_focus_target,_photo_vql_edit_result,_photo_vql_stale_gate_override_ok,_photo_vql_stale_metadata_gate,_photo_vql_capture_mismatch_gate,_photo_vql_map_source_preflight_gate,_photo_vql_target_map_mismatch_gate,_photo_vql_maybe_clear_mismatch,_photo_vql_refined_target,_photo_vql_command_plan_pre_act,_photo_vql_unverified_chat_gate,_photo_vql_edit_mismatch_allowances,_photo_vql_combined_ok_after_edit,_photo_vql_run_paste_verification,_photo_vql_post_paste_verification,_photo_vql_submit_step,_photo_vql_assemble_combined,_photo_vql_persist_drive_result,perform_photo_vql_focus_and_edit,move_mouse_to_vql_target_and_focus_keyboard,_move_mouse_attempt_focus_and_click,_move_mouse_click_outcome,_imgl_sidecar_path_for_vql,_layers_from_imgl_sidecar_file,_vql_sidecar_layer_center,_vql_sidecar_layer_entry,_layers_from_vdisplay_sidecar,_with_embedded_capture_validation,_vql_candidate_is_stale,_vql_from_ui_elements,_vql_from_fresh_elements,_vql_imgl_fallback_layers,_vql_from_sidecar_layers,_vql_from_program_wrapper,_vql_from_screen_context,_vql_metadata_default,_parse_vql_candidate_data,_load_vql_candidate_metadata,load_vql_metadata,_resolve_vql_candidate,_monitor_source_slugs,_get_vql_candidates,_freshest_populated_vql_candidate,_fresh_vql_bbox_xy,_fresh_vql_bbox_wh,_fresh_vql_center,_fresh_vql_center_only,_fresh_vql_bbox_center,_parse_fresh_vql_elements,get_vql_target,resolve_click_for_frame
     _real_vdisplay_src()
     _ensure_real_vdisplay_on_path()
     _load_vdisplay_control()
@@ -1398,21 +1075,11 @@ D:
     _capture_for_verify(chat_x;chat_y;map_path;ide)
     _ocr_verify(png;capture_meta;bounds;expected;ide;chat_x;chat_y)
     record_koru_drive_step(payload)
-    _send_chat_os_injector_enabled()
     simplified_control_likely_insufficient()
     vdisplay_fallback_enabled()
-    _trusted_visual_target_id(target_id)
-    _photo_vql_code_edit_enabled()
     _prefer_photo_vql_chat()
     _capture_matches_requested_ide(ide)
     _vdisplay_source()
-    _surface_confirms_ide_capture()
-    _apply_surface_capture_error_fallback(out;best_prov)
-    _apply_surface_capture_confirmed(out;best_prov)
-    _apply_surface_capture_confirmation(out)
-    _clear_surface_overridden_vql_staleness(out)
-    _persist_surface_capture_confirmation_to_vql(out)
-    _write_surface_capture_confirmation_sidecar(out)
     _annotate_prepare_drive_readiness(out)
     _resolve_vdisplay_source_for_ide(ide)
     _abort_on_desktop_probe_fail()
@@ -2286,6 +1953,14 @@ Designed to ...
     _precise_stream_xy(p;frame;ide)
     _clear_and_reanchor_stream_xy(p;frame;ide)
     type_into_chat_via_portal(text)
+  src/koru/integrations/vdisplay/desktop_probe.py:
+    e: _canonical_ide,probe_ide_processes,desktop_probe_ide_hints,desktop_probe_ide_surface_rank,_desktop_probe_windows,desktop_probe
+    _canonical_ide(ide)
+    probe_ide_processes(ide)
+    desktop_probe_ide_hints(ide)
+    desktop_probe_ide_surface_rank(row)
+    _desktop_probe_windows(out)
+    desktop_probe()
   src/koru/autopilot/install_manager.py:
     e: InstallManagerReport,_supports_color,_yellow,_resolve_source_root,_source_root,_source_version,_is_koru_source_root,_package_version,_repo_koru_bin,_path_koru_bin,_installed_editable_source_root,_expected_plugin_version,_expected_plugin_build_sha,_resolve_ide,_manager_socket_path,_daemon_status,_plugin_for_ide,_issue_list,_build_plugin_info_dict,_resolve_install_environment,collect_install_manager_report,repair_installation,_build_repair_steps,_build_plugin_build_mismatch_escalation_steps,_latest_action_result,_restart_ide_on_build_mismatch_enabled,_unsupported_plugin_repair_step,_force_reassert_install_when,_plugin_connected_build_stale,_install_plugin_repair_result,_versions_aligned,_plugin_already_aligned,_shutdown_daemon_for_plugin_repair_action,_skipped_shutdown_daemon_action,_shutdown_autopilot_daemon,_start_daemon_for_plugin_repair_action,_start_autopilot_daemon_for_plugin_repair,_reload_ide_reconnect_action,_wait_for_plugin_reconnect_action,_open_new_ide_window_for_plugin_build_action,_open_new_ide_window_for_plugin_build,_restart_ide_for_plugin_build_action,_restart_ide_for_plugin_build,_terminate_process,_process_exists,_timeout_result,_wait_for_plugin_reconnect,_apply_repair_steps,_reload_ide_after_plugin_fix,_daemon_has_plugin_workspace,_resolved_folder_key,_plugin_workspace_folders,_daemon_other_workspace_plugin_folders,_plugin_workspace_mismatch_repair_step,format_install_manager_report,_install_manager_base_lines,_install_manager_issue_lines,_install_manager_action_lines
     InstallManagerReport: to_dict(0)
@@ -2424,14 +2099,32 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koru/integrations/vdisplay/desktop_probe.py:
-    e: _canonical_ide,probe_ide_processes,desktop_probe_ide_hints,desktop_probe_ide_surface_rank,_desktop_probe_windows,desktop_probe
-    _canonical_ide(ide)
-    probe_ide_processes(ide)
-    desktop_probe_ide_hints(ide)
-    desktop_probe_ide_surface_rank(row)
-    _desktop_probe_windows(out)
-    desktop_probe()
+  src/koru/doctor_project_health.py:
+    e: check_git_repo,check_planfile_binary,check_lane_dependencies,_installed_version,check_ecosystem_versions,planfile_version_argv,check_koru_package_version,check_planfile_cli_version,check_planfile_config,check_planfile_sprints,check_planfile_sprints_yaml,check_runtime_dir,check_koru_project_pipeline,check_policy_yaml,check_gitignore,resolve_pytest_collect_timeout,compact_pytest_collect_failure,_pytest_collect_nested_guard,_map_pytest_collect_success,_map_pytest_collect_failure,check_pytest_collect,check_inotify_watches,check_wup_binary,check_ci_command
+    check_git_repo(project)
+    check_planfile_binary(_project)
+    check_lane_dependencies(_project)
+    _installed_version(package)
+    check_ecosystem_versions(project)
+    planfile_version_argv()
+    check_koru_package_version(_project)
+    check_planfile_cli_version(project)
+    check_planfile_config(project)
+    check_planfile_sprints(project)
+    check_planfile_sprints_yaml(project)
+    check_runtime_dir(project)
+    check_koru_project_pipeline(project)
+    check_policy_yaml(project)
+    check_gitignore(project)
+    resolve_pytest_collect_timeout()
+    compact_pytest_collect_failure(stdout;stderr)
+    _pytest_collect_nested_guard()
+    _map_pytest_collect_success(output)
+    _map_pytest_collect_failure(result;failure_compactor)
+    check_pytest_collect(project)
+    check_inotify_watches(project)
+    check_wup_binary(_project)
+    check_ci_command(project)
   packages/uri2koru/src/uri2koru/nlp2uri.py:
     e: ResolvedKoruUri,nlp2uri,best_uri
     ResolvedKoruUri: to_dict(0)
@@ -2948,6 +2641,33 @@ Designed to ...
     _format_plugin_setup_steps(ide;sock;settings_hint;project)
     _format_keyboard_setup_steps(ide;sock;project)
     format_post_startup_operator_hints(probe)
+  src/koru/queue/ticket.py:
+    e: _explicit_queue_value,ticket_queue_name,ticket_has_explicit_queue,_source_tool,ticket_is_implicit_diagnostic,ticket_matches_queue,parse_next_ticket,ticket_command,ticket_llm_request,ticket_api_request,_has_planfile_cli_module,_python_has_planfile_cli,_module_cli_command_for_project,_parse_version_tuple,_planfile_supports_structured_queue_json,_planfile_executable_candidates,_source_planfile_search_roots,_local_planfile_executable,planfile_module_missing,_configured_planfile_cmd_usable,_warn_planfile_cmd_fallback_once,resolve_planfile_base_command,_planfile_lock_timeout,planfile_command,result_json
+    _explicit_queue_value(ticket)
+    ticket_queue_name(ticket)
+    ticket_has_explicit_queue(ticket)
+    _source_tool(ticket)
+    ticket_is_implicit_diagnostic(ticket)
+    ticket_matches_queue(ticket;queue_name)
+    parse_next_ticket(stdout)
+    ticket_command(ticket)
+    ticket_llm_request(ticket)
+    ticket_api_request(ticket)
+    _has_planfile_cli_module()
+    _python_has_planfile_cli(python)
+    _module_cli_command_for_project(project)
+    _parse_version_tuple(text)
+    _planfile_supports_structured_queue_json(executable)
+    _planfile_executable_candidates(project)
+    _source_planfile_search_roots()
+    _local_planfile_executable(project)
+    planfile_module_missing(text)
+    _configured_planfile_cmd_usable(configured)
+    _warn_planfile_cmd_fallback_once(configured)
+    resolve_planfile_base_command(project)
+    _planfile_lock_timeout(result)
+    planfile_command(project;args;runner)
+    result_json(result)
   src/koru/integrations/photo_vql_drive.py:
     e: PhotoVqlDrive,session_prepare_is_fresh,_fresh_prepare_age,_load_prepare_payload,_prepare_payload_reusable,_allow_surface_only_actuation,_mark_prepare_reused,run_photo_vql_drive
     PhotoVqlDrive: __init__(0),prepare(0),_set_source_env(0),act(1),_surface_only_blocked(0),_act_surface_only(1),_act_map_only_with_photo_vql(1),_observe_png(0),_photo_vql_attempt_succeeded(-1),_mark_llm_backend_if_used(-1),_act_map_only_with_ide_prompt(1),_send_chat(1),run(1),_observe_allows_act(0),_prepare_failed_reply(1),_finalize_reply(1)  # One-shot photo-VQL drive: prepare (observe) then send_chat (...
@@ -3056,33 +2776,247 @@ Designed to ...
     compute_build_sha(plugin_dir)
     update_package(plugin_dir)
     main()
-  src/koru/queue/ticket.py:
-    e: _explicit_queue_value,ticket_queue_name,ticket_has_explicit_queue,_source_tool,ticket_is_implicit_diagnostic,ticket_matches_queue,parse_next_ticket,ticket_command,ticket_llm_request,ticket_api_request,_has_planfile_cli_module,_python_has_planfile_cli,_module_cli_command_for_project,_parse_version_tuple,_planfile_supports_structured_queue_json,_planfile_executable_candidates,_source_planfile_search_roots,_local_planfile_executable,planfile_module_missing,_configured_planfile_cmd_usable,_warn_planfile_cmd_fallback_once,resolve_planfile_base_command,_planfile_lock_timeout,planfile_command,result_json
-    _explicit_queue_value(ticket)
-    ticket_queue_name(ticket)
-    ticket_has_explicit_queue(ticket)
-    _source_tool(ticket)
-    ticket_is_implicit_diagnostic(ticket)
-    ticket_matches_queue(ticket;queue_name)
-    parse_next_ticket(stdout)
-    ticket_command(ticket)
-    ticket_llm_request(ticket)
-    ticket_api_request(ticket)
-    _has_planfile_cli_module()
-    _python_has_planfile_cli(python)
-    _module_cli_command_for_project(project)
-    _parse_version_tuple(text)
-    _planfile_supports_structured_queue_json(executable)
-    _planfile_executable_candidates(project)
-    _source_planfile_search_roots()
-    _local_planfile_executable(project)
-    planfile_module_missing(text)
-    _configured_planfile_cmd_usable(configured)
-    _warn_planfile_cmd_fallback_once(configured)
-    resolve_planfile_base_command(project)
-    _planfile_lock_timeout(result)
-    planfile_command(project;args;runner)
-    result_json(result)
+  packages/coru/src/coru/cli.py:
+    e: Plan,SessionContext,AutoReadiness,_koru_subprocess_timeout,_project_from_argv,_chain_project_from_plans,_active_project_root,_normalize_log_format,_current_log_format,_emit_log,_distribution_version,_print_runtime_versions,_startup_mode,_autonomous_startup_chain,_agent_lane_from_auto_args,_print_autonomous_banner,_enforce_runtime_readiness,_run_default_autonomous,_running_ide_choices,_supervisor_project_choices,_alive_daemon_instance,_instance_for_ide_choice,_choose_option,_interactive_select_agent_lane,_interactive_select_project_arg,_interactive_default_auto_args,_extract_global_flags,_run,_cmd_exists,_binary_path,_python_module_exists,_tool_argv,_tool_available,_ensure_commands,_setup_environment,_runtime_metadata_roots,_local_install_target,_ide_from_vscode_pid,_vscode_family_env_hint,_windsurf_terminal_marker,_terminal_ide_hint,_terminal_shell_context,_terminal_host_kind,_terminal_shell_context_fallback,_print_terminal_context,_instance_matches_ide,_ide_from_instance,_workspace_settings_path_for_ide,_workspace_socket_path_for_ide,_instance_from_socket_path,_workspace_lane_hint,_project_ide_settings_path,_load_project_ide_settings,_project_ide_settings_lane,_remember_project_ide_settings,_supervisor_lane_defaults,_supervisor_lane_project,_is_lane_plugin_connected,_connected_daemon_instance,_connected_daemon_from_meta,_alive_daemon_ide,_prefer_terminal_over_lane,_warn_integrated_terminal_daemon_mismatch,_integrated_terminal_default_ide,_project_settings_default_ide,_supervisor_default_ide,_env_default_ide,_infer_default_ide,_project_ide_settings_instance,_supervisor_default_instance,_environment_default_instance,_auto_default_instance,_workspace_default_instance,_infer_default_instance,_maybe_warn_lane_override,_normalize_lane_pair,_lane_subprocess_env,_apply_strict_plugin_policy_defaults,_bind_lane_session,_run_with_lane_environment,_project_for_lane,_koru_autopilot_env_payload,_run_with_resolved_lane_env,_run_koru_lane,_koruenv_run_fallback,_lane_env,_lane_status_raw,_lane_status,_subprocess_blocked_in_tests,_lane_status_env,_run_lane_status_json,_lane_status_payload,_fetch_manage_report,_manage_repair_context,_drive_result_from_payload,_problem_from_readiness_issue,_runtime_readiness_problems,_lane_alignment_problems,_collect_lane_repair_problems,_repair_reload_ide,_repair_connect_plugin,_repair_strict_handshake_cycle,_run_lane_repair,_running_ide_summary,_target_plugin_rows,_plugin_workspace_summary,_print_ide_control_context,_lane_doctor,_refactor_intent,_lane_auto,_env_enabled,_gc_stale_lane_socket,_check_lane_status_and_ownership,_resolve_readiness_lane,_maybe_auto_repair_lane,_readiness_plugin_blocker,_readiness_consistency_step,_readiness_daemon_step,_readiness_blocker_step,_auto_readiness_gate,_resolve_daemon_alignment,_build_ownership_checks,_apply_ownership_check,_prepare_ownership_context,_run_ownership_checks_loop,_auto_ownership_gate,_readiness_issue_codes,_restart_stale_lane_daemon,_manage_report_plugin_blocker,_auto_readiness_can_continue_without_plugin,_auto_readiness_can_continue_with_keyboard_fallback,_run_auto_with_readiness,_lane_manage_fix,_lane_daemon_foreground,_koru_exec_argv,_fetch_drive_payload,_lane_chat_prompt,_start_autopilot_daemon_for_lane,_ensure_daemon_running,_import_koru_readiness_module,_diagnose_readiness_alignment,_warn_python_env_mismatch,_warn_koru_exec_outside_repo,_warn_lane_project_mismatch,_diagnose_runtime_consistency,_attempt_plugin_self_heal,_resolve_diagnose_lane,_diagnose_lane_status,_diagnose_lane,_print_troubleshooting_log_locations,_chat_llm_enabled,_llm_rewrite_chat_prompt,_intent_to_plan,_import_heuristic_plan_fn,_heuristic_plan,_llm_plan,_resolve_defaults,_default_lane,_dispatch_plan_action,_execute_plan,_build_plan_chain,_preflight_failure_ok_to_continue,_plan_step_identity,_emit_plan_step_log,_plan_failure_return,_run_single_plan_with_logging,_execute_plans,_chat_print_header,_chat_ensure_daemon,_chat_drive_with_retry,_chat_handle_drive,_chat_handle_command,_chat_loop,_cmd_repair_history,_cmd_repair_run,_cmd_sync,_restore_log_format,_maybe_run_default_mode,_maybe_rewrite_ide_auto_shorthand,_is_text_shorthand,_rewrite_text_shorthand_argv,_doctor_or_daemon_requires_system_shell,_dispatch_lane_command,_dispatch_auto_command,_run_text_plan_chain,_dispatch_text_command,_dispatch_chat_command,_dispatch_supervisor_command,_dispatch_calibration_command,_dispatch_doctor_command,_dispatch_repair_command,_dispatch_daemon_command,_dispatch_optional_command,_dispatch_command,main
+    Plan:
+    SessionContext:
+    AutoReadiness:
+    _koru_subprocess_timeout(koru_args)
+    _project_from_argv(argv)
+    _chain_project_from_plans(plans)
+    _active_project_root()
+    _normalize_log_format(raw)
+    _current_log_format()
+    _emit_log()
+    _distribution_version(distribution)
+    _print_runtime_versions()
+    _startup_mode()
+    _autonomous_startup_chain(auto_args)
+    _agent_lane_from_auto_args(auto_args)
+    _print_autonomous_banner(resolved;auto_args)
+    _enforce_runtime_readiness(root)
+    _run_default_autonomous(auto_args)
+    _running_ide_choices()
+    _supervisor_project_choices()
+    _alive_daemon_instance(ide)
+    _instance_for_ide_choice(ide)
+    _choose_option(label;options)
+    _interactive_select_agent_lane(running)
+    _interactive_select_project_arg()
+    _interactive_default_auto_args()
+    _extract_global_flags(argv)
+    _run(command)
+    _cmd_exists(name)
+    _binary_path(name)
+    _python_module_exists(module_name)
+    _tool_argv(binary;module;args)
+    _tool_available(binary;module)
+    _ensure_commands(install)
+    _setup_environment()
+    _runtime_metadata_roots()
+    _local_install_target(package)
+    _ide_from_vscode_pid()
+    _vscode_family_env_hint()
+    _windsurf_terminal_marker()
+    _terminal_ide_hint()
+    _terminal_shell_context()
+    _terminal_host_kind()
+    _terminal_shell_context_fallback()
+    _print_terminal_context()
+    _instance_matches_ide(instance;ide)
+    _ide_from_instance(instance)
+    _workspace_settings_path_for_ide(ide)
+    _workspace_socket_path_for_ide(ide)
+    _instance_from_socket_path(socket_path)
+    _workspace_lane_hint(preferred_ide)
+    _project_ide_settings_path(ide)
+    _load_project_ide_settings(ide)
+    _project_ide_settings_lane(ide)
+    _remember_project_ide_settings(ide;instance)
+    _supervisor_lane_defaults()
+    _supervisor_lane_project(instance)
+    _is_lane_plugin_connected(ide;instance)
+    _connected_daemon_instance(ide)
+    _connected_daemon_from_meta(path)
+    _alive_daemon_ide()
+    _prefer_terminal_over_lane(hint;lane_ide)
+    _warn_integrated_terminal_daemon_mismatch(hint)
+    _integrated_terminal_default_ide(hint)
+    _project_settings_default_ide(hint)
+    _supervisor_default_ide(hint)
+    _env_default_ide(hint;workspace_ide)
+    _infer_default_ide()
+    _project_ide_settings_instance(ide)
+    _supervisor_default_instance(ide)
+    _environment_default_instance(ide)
+    _auto_default_instance()
+    _workspace_default_instance(ide)
+    _infer_default_instance()
+    _maybe_warn_lane_override(ide;instance)
+    _normalize_lane_pair(ide;instance)
+    _lane_subprocess_env(ide;instance)
+    _apply_strict_plugin_policy_defaults(env)
+    _bind_lane_session(ide;instance)
+    _run_with_lane_environment(command)
+    _project_for_lane(ide;instance)
+    _koru_autopilot_env_payload(ide;instance)
+    _run_with_resolved_lane_env(command)
+    _run_koru_lane(ide;instance;koru_args)
+    _koruenv_run_fallback(ide;instance;run_payload)
+    _lane_env(ide;instance;shell)
+    _lane_status_raw(ide;instance)
+    _lane_status(ide;instance)
+    _subprocess_blocked_in_tests()
+    _lane_status_env(ide;instance;resolved)
+    _run_lane_status_json(koru_exec;ide;instance;env)
+    _lane_status_payload(ide;instance)
+    _fetch_manage_report(ide;instance)
+    _manage_repair_context(ide;instance)
+    _drive_result_from_payload(payload)
+    _problem_from_readiness_issue(issue)
+    _runtime_readiness_problems(readiness;root)
+    _lane_alignment_problems(readiness;root;payload)
+    _collect_lane_repair_problems(ide;instance)
+    _repair_reload_ide(ide;repo_root)
+    _repair_connect_plugin(ide)
+    _repair_strict_handshake_cycle(ide;instance)
+    _run_lane_repair(ide;instance)
+    _running_ide_summary()
+    _target_plugin_rows(status)
+    _plugin_workspace_summary(plugin)
+    _print_ide_control_context(ide;instance)
+    _lane_doctor(ide;instance)
+    _refactor_intent(text)
+    _lane_auto(ide;instance;extra_args)
+    _env_enabled(name)
+    _gc_stale_lane_socket(ide;instance)
+    _check_lane_status_and_ownership(ide;instance;payload)
+    _resolve_readiness_lane(ide;instance;payload)
+    _maybe_auto_repair_lane(ide;instance;payload)
+    _readiness_plugin_blocker(ide;instance;payload)
+    _readiness_consistency_step(ide;instance;payload)
+    _readiness_daemon_step(ide;instance)
+    _readiness_blocker_step(ide;instance;payload)
+    _auto_readiness_gate(ide;instance)
+    _resolve_daemon_alignment(readiness;daemon;status;root;socket_path;ide;instance;payload)
+    _build_ownership_checks(readiness;daemon;root;socket_path;status;ide;instance)
+    _apply_ownership_check(readiness;result)
+    _prepare_ownership_context(ide;instance;payload)
+    _run_ownership_checks_loop(readiness;checks;root;socket_path)
+    _auto_ownership_gate(ide;instance)
+    _readiness_issue_codes(result)
+    _restart_stale_lane_daemon(ide;instance)
+    _manage_report_plugin_blocker(report)
+    _auto_readiness_can_continue_without_plugin(readiness)
+    _auto_readiness_can_continue_with_keyboard_fallback(readiness)
+    _run_auto_with_readiness(ide;instance;extra_args)
+    _lane_manage_fix(ide;instance)
+    _lane_daemon_foreground(ide;instance)
+    _koru_exec_argv()
+    _fetch_drive_payload(ide;instance;prompt)
+    _lane_chat_prompt(ide;instance;prompt)
+    _start_autopilot_daemon_for_lane(ide;instance)
+    _ensure_daemon_running(ide;instance)
+    _import_koru_readiness_module()
+    _diagnose_readiness_alignment()
+    _warn_python_env_mismatch()
+    _warn_koru_exec_outside_repo(root_s)
+    _warn_lane_project_mismatch(payload;root_s)
+    _diagnose_runtime_consistency(ide;instance;payload)
+    _attempt_plugin_self_heal(ide;instance)
+    _resolve_diagnose_lane(ide;instance)
+    _diagnose_lane_status(ide;instance)
+    _diagnose_lane(ide;instance)
+    _print_troubleshooting_log_locations(ide;instance)
+    _chat_llm_enabled(use_llm)
+    _llm_rewrite_chat_prompt(text)
+    _intent_to_plan(intent)
+    _import_heuristic_plan_fn()
+    _heuristic_plan(text)
+    _llm_plan(text)
+    _resolve_defaults(plan)
+    _default_lane(ide;instance)
+    _dispatch_plan_action(resolved;shell)
+    _execute_plan(plan)
+    _build_plan_chain(prompt)
+    _preflight_failure_ok_to_continue(plans;index)
+    _plan_step_identity(plan;ctx)
+    _emit_plan_step_log(plan;ctx)
+    _plan_failure_return(plan)
+    _run_single_plan_with_logging(plan)
+    _execute_plans(plans)
+    _chat_print_header()
+    _chat_ensure_daemon(ide;instance)
+    _chat_drive_with_retry(ide;instance;outbound)
+    _chat_handle_drive(line;ctx)
+    _chat_handle_command(line;ctx)
+    _chat_loop()
+    _cmd_repair_history(args)
+    _cmd_repair_run(args)
+    _cmd_sync(args)
+    _restore_log_format(previous_log_format)
+    _maybe_run_default_mode(raw_argv)
+    _maybe_rewrite_ide_auto_shorthand(raw_argv;known_commands)
+    _is_text_shorthand(raw_argv;known_commands)
+    _rewrite_text_shorthand_argv(raw_argv)
+    _doctor_or_daemon_requires_system_shell()
+    _dispatch_lane_command(args)
+    _dispatch_auto_command(args)
+    _run_text_plan_chain(args)
+    _dispatch_text_command(args)
+    _dispatch_chat_command(args)
+    _dispatch_supervisor_command(args)
+    _dispatch_calibration_command(args)
+    _dispatch_doctor_command(args)
+    _dispatch_repair_command(args)
+    _dispatch_daemon_command(args)
+    _dispatch_optional_command(args)
+    _dispatch_command(args)
+    main(argv)
+  src/koruapi/desktop_uri.py:
+    e: nlp2uri_available,nlp2uri_missing_message,_resolve_platform,_intent_ir_metadata,_imgl_plan_payload,desktop_uri_plan,_control_surface_hint,_portal_capture_enabled,_is_screen_capture_uri,_screen_capture_uri_for_prompt,_screen_capture_plan_dict,_capture_via_portal,desktop_uri_control_plan,desktop_uri_list_koru_ide_uris,desktop_uri_direct_ide_chat_execute,_control_uri_with_runtime_overrides,_try_direct_chat_fallback,_execute_control_plan,desktop_uri_control_execute,desktop_uri_imgl_execute,_should_route_to_imgl,_payload_with_intent,_handle_explicit_capture_uri,_handle_nlp_plan,desktop_uri_handle,_service,desktop_uri_list_getv,desktop_uri_resolve_getv,desktop_uri_get_getv_var,desktop_uri_resolve_system_map,desktop_uri_list_system_uris
+    nlp2uri_available()
+    nlp2uri_missing_message()
+    _resolve_platform(name)
+    _intent_ir_metadata(prompt)
+    _imgl_plan_payload(prompt)
+    desktop_uri_plan(prompt)
+    _control_surface_hint(uri)
+    _portal_capture_enabled(explicit)
+    _is_screen_capture_uri(uri)
+    _screen_capture_uri_for_prompt(prompt)
+    _screen_capture_plan_dict(uri)
+    _capture_via_portal(uri)
+    desktop_uri_control_plan(prompt)
+    desktop_uri_list_koru_ide_uris(status)
+    desktop_uri_direct_ide_chat_execute(message)
+    _control_uri_with_runtime_overrides(uri)
+    _try_direct_chat_fallback(prompt)
+    _execute_control_plan(plan_payload)
+    desktop_uri_control_execute(prompt)
+    desktop_uri_imgl_execute(prompt)
+    _should_route_to_imgl(prompt)
+    _payload_with_intent()
+    _handle_explicit_capture_uri(service)
+    _handle_nlp_plan(service)
+    desktop_uri_handle(prompt)
+    _service()
+    desktop_uri_list_getv()
+    desktop_uri_resolve_getv(prompt)
+    desktop_uri_get_getv_var(uri)
+    desktop_uri_resolve_system_map(prompt)
+    desktop_uri_list_system_uris()
+  src/koru/integrations/vdisplay/surface_capture.py:
+    e: _canonical_ide,surface_confirms_ide_capture,clear_surface_overridden_vql_staleness,apply_surface_capture_error_fallback,apply_surface_capture_confirmed,_surface_best_provenance,apply_surface_capture_confirmation,write_surface_capture_confirmation_sidecar,persist_surface_capture_confirmation_to_vql
+    _canonical_ide(ide)
+    surface_confirms_ide_capture()
+    clear_surface_overridden_vql_staleness(out)
+    apply_surface_capture_error_fallback(out;best_prov)
+    apply_surface_capture_confirmed(out;best_prov)
+    _surface_best_provenance(desktop_probe)
+    apply_surface_capture_confirmation(out)
+    write_surface_capture_confirmation_sidecar(out)
+    persist_surface_capture_confirmation_to_vql(out)
   packages/dsl2koru/src/dsl2koru/codegen.py:
     e: _python_type,build_model_registry,validate_payload,render_models_module,main
     _python_type(prop)
@@ -3660,6 +3594,22 @@ Designed to ...
     PlanfileQueueCommandService(CqrsService): run_next_task(1)  # Handles state-changing queue operations...
     PlanfileQueueQueryService(CqrsService): load_next_runnable_ticket(1),history(1)  # Handles read-only queue queries...
     _event_for_result(result)
+  src/koru/queue/runners.py:
+    e: _planfile_env,_decode_subprocess_output,_run_captured_subprocess,_control_corr,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
+    _planfile_env()
+    _decode_subprocess_output(data)
+    _run_captured_subprocess(command)
+    _control_corr(prefix)
+    run_process(command;project)
+    run_shell_command(command;project)
+    run_api_request(request;_project)
+    _resolve_llm_endpoint_and_key(request)
+    _build_llm_messages(request)
+    _build_llm_request_body(request;model;messages)
+    _build_llm_headers(endpoint;api_key)
+    _parse_llm_response(response;model)
+    _handle_llm_error(exc;model)
+    run_llm_request(request;_project)
   src/koru/deployment_events/analyzer.py:
     e: DeploymentEventAnalyzer
     DeploymentEventAnalyzer: __init__(1),add_events(1),filter_by_type(1),filter_by_source(1),filter_by_correlation(1),filter_by_time_range(2),get_errors(0),get_plugin_events(1),get_deployment_summary(0),analyze_deployment_flow(1),reflect_on_development_session(1),_generate_recommendations(1)  # Analyzer for deployment event history with reflection capabi...
@@ -3845,22 +3795,37 @@ Designed to ...
     _fallback_basic_checks(path)
     _testql_adapter_checks(path)
     main(argv)
-  src/koru/queue/runners.py:
-    e: _planfile_env,_decode_subprocess_output,_run_captured_subprocess,_control_corr,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
-    _planfile_env()
-    _decode_subprocess_output(data)
-    _run_captured_subprocess(command)
-    _control_corr(prefix)
-    run_process(command;project)
-    run_shell_command(command;project)
-    run_api_request(request;_project)
-    _resolve_llm_endpoint_and_key(request)
-    _build_llm_messages(request)
-    _build_llm_request_body(request;model;messages)
-    _build_llm_headers(endpoint;api_key)
-    _parse_llm_response(response;model)
-    _handle_llm_error(exc;model)
-    run_llm_request(request;_project)
+  packages/coru/src/coru/cli_lane.py:
+    e: ide_from_instance,instance_matches_ide,normalize_lane_pair,workspace_settings_path_for_ide,workspace_socket_path_for_ide,instance_from_socket_path,workspace_lane_hint,project_ide_settings_path,load_project_ide_settings,project_ide_settings_lane,remember_project_ide_settings,apply_strict_plugin_policy_defaults,lane_subprocess_env
+    ide_from_instance(instance)
+    instance_matches_ide(instance;ide)
+    normalize_lane_pair(ide;instance)
+    workspace_settings_path_for_ide(ide)
+    workspace_socket_path_for_ide(ide)
+    instance_from_socket_path(socket_path)
+    workspace_lane_hint(preferred_ide)
+    project_ide_settings_path(ide)
+    load_project_ide_settings(ide)
+    project_ide_settings_lane(ide)
+    remember_project_ide_settings(ide;instance)
+    apply_strict_plugin_policy_defaults(env)
+    lane_subprocess_env(ide;instance)
+  src/koru/autonomy/cycle/cycle_orchestrator.py:
+    e: _AutopilotDriveContext,_AutopilotDriveAttempt,_drive_result_autopilot_status,_handle_autopilot_phase,_plugin_gate_status,_attempt_plugin_gate_recovery,_plugin_gate_recovery_key,_terminal_conflict_status,_drive_autopilot_once,_run_autopilot_drive_attempt,_apply_autopilot_drive_attempt,_emit_autopilot_preflight_skip,_resolve_observability_blocker,_emit_autopilot_observability_outcome
+    _AutopilotDriveContext:
+    _AutopilotDriveAttempt:
+    _drive_result_autopilot_status()
+    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit;queue_name)
+    _plugin_gate_status(project;cycle;queue_result;client;autopilot_ide;drive_prompt;submit;cycle_telemetry;_hp)
+    _attempt_plugin_gate_recovery(project;client;autopilot_ide;plugin_reason;_hp)
+    _plugin_gate_recovery_key(project;autopilot_ide;plugin_reason)
+    _terminal_conflict_status(autopilot_ide;cycle_telemetry;_hp)
+    _drive_autopilot_once(ctx)
+    _run_autopilot_drive_attempt(ctx)
+    _apply_autopilot_drive_attempt(ctx;attempt)
+    _emit_autopilot_preflight_skip()
+    _resolve_observability_blocker()
+    _emit_autopilot_observability_outcome()
   packages/dsl2koru/src/dsl2koru/bus.py:
     e: dispatch,execute_dsl_line,execute_dsl
     dispatch(command)
@@ -4002,6 +3967,44 @@ Designed to ...
     _sync_single_package(name;repo)
     sync_developer_packages()
     dev_main(argv)
+  src/koru/cli_shell.py:
+    e: Integration,ShellContext,_config_path,load_config,save_config,shell_settings,enabled_integrations,_read_key,_checkbox_picker_numeric,_checkbox_picker_apply_key,_checkbox_picker_tty,_checkbox_picker,_box,_strip_ansi,_planfile_bin,_open_tickets,_api_key,_ask_llm,_probe_binary,_probe_qoder_chat,_probe_vdisplay,probe_integration,_cmd_help,_cmd_integration,_cmd_config,_cmd_status,_cmd_tickets,_cmd_drain,_cmd_ticket,_cmd_doctor,_inside_vscode_terminal,_cmd_bridge,_banner,_maybe_auto_drain,_dispatch,shell_main
+    Integration:
+    ShellContext:
+    _config_path(project)
+    load_config(project)
+    save_config(project;config)
+    shell_settings(config)
+    enabled_integrations(config)
+    _read_key()
+    _checkbox_picker_numeric(title;items;checked)
+    _checkbox_picker_apply_key(key_pressed)
+    _checkbox_picker_tty(title;items;checked)
+    _checkbox_picker(title;items)
+    _box(lines;color)
+    _strip_ansi(text)
+    _planfile_bin(project)
+    _open_tickets(project)
+    _api_key(project)
+    _ask_llm(project;settings;prompt)
+    _probe_binary(name)
+    _probe_qoder_chat(project)
+    _probe_vdisplay(_project)
+    probe_integration(project;key)
+    _cmd_help(_ctx;_arg)
+    _cmd_integration(ctx;_arg)
+    _cmd_config(ctx;_arg)
+    _cmd_status(ctx;_arg)
+    _cmd_tickets(ctx;_arg)
+    _cmd_drain(ctx;arg)
+    _cmd_ticket(ctx;arg)
+    _cmd_doctor(ctx;_arg)
+    _inside_vscode_terminal()
+    _cmd_bridge(ctx;arg)
+    _banner(ctx)
+    _maybe_auto_drain(ctx)
+    _dispatch(ctx;line)
+    shell_main(argv)
   src/koru/tools.py:
     e: default_registry_path,resolve_registry_path,_extract_tools_from_payload,_normalize_tool_entries,_merge_shell_tool_entries,load_tool_registry,_first_token,_extract_detect_config,_check_commands_exist,_check_markers_exist,_check_env_vars_exist,_build_detection_result,detect_tools,find_tool_entry,infer_adapter_kind,_extract_tool_metadata,_validate_adapter_kind,_build_scaffold_prompt_lines,_build_scaffold_labels,_build_scaffold_inputs,build_tool_task_scaffold,render_tools_detect_text
     default_registry_path()
@@ -4219,6 +4222,50 @@ Designed to ...
     _gather_chat_activity_context()
     _evaluate_chat_activity_skip()
     _skip_due_to_recent_chat_activity()
+  src/koru/autonomy/cycle/cycle_drive_retry.py:
+    e: _max_drive_retries,_drive_failure_signature,_active_decision_engine,_cycle_attr,_ide_supports_vscode_plugin,_operator_forces_keyboard,_workspace_mismatch_override,_client_has_usable_plugin,_folder_covers_project,_plugin_row_workspace_folders,_plugin_workspace_conflict,_try_imgl_gui_fallback,_try_gillm_gui_fallback,_try_vdisplay_control_fallback,_try_nlp2uri_focus_fallback,_try_os_injector_fallback,_try_nlp2uri_ide_control,_skip_closed_waiting_ticket_enabled,_resolve_waiting_ticket_id,_planfile_ticket_status,_waiting_ticket_is_closed,_waiting_ticket_is_missing,_resolve_autopilot_drive_decision,_build_drive_kwargs,_pre_drive_fallback,_post_drive_fallback_chain,_drive_shell_client,_shell_drive_editor_rescue,_invoke_client_autopilot_drive,_waiting_ticket_closed_skip_result,_idle_no_ticket_skip_result,_resolve_drive_plugin_requirement,_reply_missing_autopilot_plugin,_reply_chat_input_busy,_reply_needs_focus_retry,_reply_needs_plugin_retry,_reply_needs_submit_retry,_reply_requires_manual_chat_focus,_run_drive_retry_loop,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result
+    _max_drive_retries()
+    _drive_failure_signature(reply)
+    _active_decision_engine(project;autopilot_ide)
+    _cycle_attr(name;fallback)
+    _ide_supports_vscode_plugin(autopilot_ide)
+    _operator_forces_keyboard()
+    _workspace_mismatch_override()
+    _client_has_usable_plugin(client;autopilot_ide;project)
+    _folder_covers_project(folder;project_path)
+    _plugin_row_workspace_folders(row;wanted)
+    _plugin_workspace_conflict(status;autopilot_ide;project)
+    _try_imgl_gui_fallback(prompt)
+    _try_gillm_gui_fallback(prompt)
+    _try_vdisplay_control_fallback(prompt)
+    _try_nlp2uri_focus_fallback(prompt)
+    _try_os_injector_fallback(prompt)
+    _try_nlp2uri_ide_control(prompt)
+    _skip_closed_waiting_ticket_enabled()
+    _resolve_waiting_ticket_id(queue_result)
+    _planfile_ticket_status(project;ticket_id)
+    _waiting_ticket_is_closed(project;ticket_id)
+    _waiting_ticket_is_missing(project;ticket_id)
+    _resolve_autopilot_drive_decision(project;state;queue_result)
+    _build_drive_kwargs()
+    _pre_drive_fallback(client)
+    _post_drive_fallback_chain()
+    _drive_shell_client(client_id)
+    _shell_drive_editor_rescue(reply)
+    _invoke_client_autopilot_drive(client)
+    _waiting_ticket_closed_skip_result(queue_result;idle_prompt_kind;skip_reason;_hp)
+    _idle_no_ticket_skip_result(project;idle_prompt_kind;_hp)
+    _resolve_drive_plugin_requirement(client;autopilot_ide)
+    _reply_missing_autopilot_plugin(reply)
+    _reply_chat_input_busy(reply)
+    _reply_needs_focus_retry(reply)
+    _reply_needs_plugin_retry(reply)
+    _reply_needs_submit_retry(reply)
+    _reply_requires_manual_chat_focus(reply)
+    _run_drive_retry_loop(client)
+    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp;queue_name)
+    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
+    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
   src/koru/autonomy/cycle/cycle_chat_activity_analyzer.py:
     e: ChatActivityStatus,_event_timestamp,_recent_chat_activity_events,_state_events_to_chat_events,_chat_activity_cooldown_for_state,_last_successful_drive_ack_age,_event_matches_last_driven_prompt,_last_self_drive_event_age,_event_is_self_drive_for_other_ticket,_filter_chat_activity_events_for_waiting_ticket,_record_normalized_chat_activity_events,_llx_chat_reflection_enabled,_recent_chat_history_fallback,_determine_chat_activity_status,classify_chat_event,decide_intake_ticket,decide_redrive_cooldown,explain_skip,_age_seconds_from_label
     ChatActivityStatus(NamedTuple):  # Named view of :func:`classify_chat_event`'s positional 4-tup...
@@ -4477,88 +4524,17 @@ Designed to ...
     testRejectsWorkbenchChatOpenAsFocusOpen()
     filtered()
     run()
-  src/koru/cli_shell.py:
-    e: Integration,ShellContext,_config_path,load_config,save_config,shell_settings,enabled_integrations,_read_key,_checkbox_picker_numeric,_checkbox_picker_apply_key,_checkbox_picker_tty,_checkbox_picker,_box,_strip_ansi,_planfile_bin,_open_tickets,_api_key,_ask_llm,_probe_binary,_probe_qoder_chat,_probe_vdisplay,probe_integration,_cmd_help,_cmd_integration,_cmd_config,_cmd_status,_cmd_tickets,_cmd_drain,_cmd_ticket,_cmd_doctor,_inside_vscode_terminal,_cmd_bridge,_banner,_maybe_auto_drain,_dispatch,shell_main
-    Integration:
-    ShellContext:
-    _config_path(project)
-    load_config(project)
-    save_config(project;config)
-    shell_settings(config)
-    enabled_integrations(config)
-    _read_key()
-    _checkbox_picker_numeric(title;items;checked)
-    _checkbox_picker_apply_key(key_pressed)
-    _checkbox_picker_tty(title;items;checked)
-    _checkbox_picker(title;items)
-    _box(lines;color)
-    _strip_ansi(text)
-    _planfile_bin(project)
-    _open_tickets(project)
-    _api_key(project)
-    _ask_llm(project;settings;prompt)
-    _probe_binary(name)
-    _probe_qoder_chat(project)
-    _probe_vdisplay(_project)
-    probe_integration(project;key)
-    _cmd_help(_ctx;_arg)
-    _cmd_integration(ctx;_arg)
-    _cmd_config(ctx;_arg)
-    _cmd_status(ctx;_arg)
-    _cmd_tickets(ctx;_arg)
-    _cmd_drain(ctx;arg)
-    _cmd_ticket(ctx;arg)
-    _cmd_doctor(ctx;_arg)
-    _inside_vscode_terminal()
-    _cmd_bridge(ctx;arg)
-    _banner(ctx)
-    _maybe_auto_drain(ctx)
-    _dispatch(ctx;line)
-    shell_main(argv)
-  src/koru/autonomy/cycle/cycle_drive_retry.py:
-    e: _max_drive_retries,_drive_failure_signature,_active_decision_engine,_cycle_attr,_ide_supports_vscode_plugin,_operator_forces_keyboard,_workspace_mismatch_override,_client_has_usable_plugin,_folder_covers_project,_plugin_row_workspace_folders,_plugin_workspace_conflict,_try_imgl_gui_fallback,_try_gillm_gui_fallback,_try_vdisplay_control_fallback,_try_nlp2uri_focus_fallback,_try_os_injector_fallback,_try_nlp2uri_ide_control,_skip_closed_waiting_ticket_enabled,_resolve_waiting_ticket_id,_planfile_ticket_status,_waiting_ticket_is_closed,_waiting_ticket_is_missing,_resolve_autopilot_drive_decision,_build_drive_kwargs,_pre_drive_fallback,_post_drive_fallback_chain,_drive_shell_client,_shell_drive_editor_rescue,_invoke_client_autopilot_drive,_waiting_ticket_closed_skip_result,_idle_no_ticket_skip_result,_resolve_drive_plugin_requirement,_reply_missing_autopilot_plugin,_reply_chat_input_busy,_reply_needs_focus_retry,_reply_needs_plugin_retry,_reply_needs_submit_retry,_reply_requires_manual_chat_focus,_run_drive_retry_loop,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result
-    _max_drive_retries()
-    _drive_failure_signature(reply)
-    _active_decision_engine(project;autopilot_ide)
-    _cycle_attr(name;fallback)
-    _ide_supports_vscode_plugin(autopilot_ide)
-    _operator_forces_keyboard()
-    _workspace_mismatch_override()
-    _client_has_usable_plugin(client;autopilot_ide;project)
-    _folder_covers_project(folder;project_path)
-    _plugin_row_workspace_folders(row;wanted)
-    _plugin_workspace_conflict(status;autopilot_ide;project)
-    _try_imgl_gui_fallback(prompt)
-    _try_gillm_gui_fallback(prompt)
-    _try_vdisplay_control_fallback(prompt)
-    _try_nlp2uri_focus_fallback(prompt)
-    _try_os_injector_fallback(prompt)
-    _try_nlp2uri_ide_control(prompt)
-    _skip_closed_waiting_ticket_enabled()
-    _resolve_waiting_ticket_id(queue_result)
-    _planfile_ticket_status(project;ticket_id)
-    _waiting_ticket_is_closed(project;ticket_id)
-    _waiting_ticket_is_missing(project;ticket_id)
-    _resolve_autopilot_drive_decision(project;state;queue_result)
-    _build_drive_kwargs()
-    _pre_drive_fallback(client)
-    _post_drive_fallback_chain()
-    _drive_shell_client(client_id)
-    _shell_drive_editor_rescue(reply)
-    _invoke_client_autopilot_drive(client)
-    _waiting_ticket_closed_skip_result(queue_result;idle_prompt_kind;skip_reason;_hp)
-    _idle_no_ticket_skip_result(project;idle_prompt_kind;_hp)
-    _resolve_drive_plugin_requirement(client;autopilot_ide)
-    _reply_missing_autopilot_plugin(reply)
-    _reply_chat_input_busy(reply)
-    _reply_needs_focus_retry(reply)
-    _reply_needs_plugin_retry(reply)
-    _reply_needs_submit_retry(reply)
-    _reply_requires_manual_chat_focus(reply)
-    _run_drive_retry_loop(client)
-    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp;queue_name)
-    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
-    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
+  src/koru/integrations/vdisplay/window_focus.py:
+    e: _canonical_ide,focus_window_xdotool,_needles_for_ide,focus_window_xdotool_for_ide,focus_window_gnome_shell,focus_window_gnome_shell_for_ide,click_map_region_center,raise_alt_tab_enabled,alt_tab_window_cycle
+    _canonical_ide(ide)
+    focus_window_xdotool()
+    _needles_for_ide(ide)
+    focus_window_xdotool_for_ide()
+    focus_window_gnome_shell()
+    focus_window_gnome_shell_for_ide()
+    click_map_region_center(map_path)
+    raise_alt_tab_enabled()
+    alt_tab_window_cycle()
   packages/nlpshim/src/nlpshim/conversation_test_api.py:
     e: LLMProvider,ConversationContext,DialogResponse,parse_conversation_step,complete_missing_fields,execute_conversation_plan,export_trace
     LLMProvider(Protocol): reply_for(1)
@@ -5171,6 +5147,19 @@ Re-exported f...
     entry()
     makeProbeCache()
     mergeProbeCache()
+  src/koru/queue/context.py:
+    e: ContextResult,_is_excluded,_read_file_tree,_read_file_content,_collect_auto_files,_collect_glob_files,_context_nothing_requested,_context_files_to_include,_context_file_sections,_truncate_context_text,build_project_context
+    ContextResult:  # Output of a single context-assembly pass...
+    _is_excluded(rel_path)
+    _read_file_tree(project)
+    _read_file_content(project;rel_path)
+    _collect_auto_files(project)
+    _collect_glob_files(project;globs)
+    _context_nothing_requested(request)
+    _context_files_to_include(project;request)
+    _context_file_sections(project;files_to_include)
+    _truncate_context_text(full_text;max_chars)
+    build_project_context(project;request)
   packages/cli2koru/src/cli2koru/shell.py:
     e: run_shell
     run_shell()
@@ -5650,6 +5639,16 @@ C...
     _decide_queue_state(signals)
     _default_plan(signals)
     decide(signals)
+  src/koru/autonomy/shell_drive_finalize.py:
+    e: _autodone_policy,_ticket_already_resolved,_reply_note,_eligible_for_finalize,_load_verify_config_or_skip,_mark_done,_run_post_done_verify,finalize_shell_drive_ticket
+    _autodone_policy()
+    _ticket_already_resolved(project;ticket_id)
+    _reply_note(reply)
+    _eligible_for_finalize()
+    _load_verify_config_or_skip(project;ticket_id)
+    _mark_done(project;ticket_id)
+    _run_post_done_verify(project;ticket_id)
+    finalize_shell_drive_ticket()
   src/koru/autonomy/cycle_trace.py:
     e: _telemetry_next_step_hint,decision_next_step_hint,record_decision_trace
     _telemetry_next_step_hint(cycle_telemetry)
@@ -5681,6 +5680,23 @@ C...
     _auto_pipeline_stage(state;max_iterations)
     _select_auto_pipeline_profile(args;state)
     _update_auto_pipeline_state(state;queue_result;diag_result;autopilot_status)
+  src/koru/queue/runner.py:
+    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_run_next_planfile_task_impl,run_next_planfile_task
+    _source_tool(ticket)
+    _resolve_executor_kind(ticket;interactive;dry_run)
+    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
+    _resolve_ticket_action(ticket;executor_kind)
+    _handle_dry_run(ticket_id;executor_kind;action)
+    _claim_and_start(project;ticket_id;actor;planfile_runner)
+    _enrich_llm_request_with_context(action;project)
+    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
+    _append_shell_evidence(project;ticket_id;result;planfile_runner)
+    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner)
+    _next_ticket_or_result(project;planfile_runner;queue_name)
+    _log_queue_ticket_start(ticket;ticket_id)
+    _resolve_action_or_result()
+    _run_next_planfile_task_impl()
+    run_next_planfile_task()
   src/koru/integrations/photo_vql_user_guidance.py:
     e: _GuidanceContext,_truthy,preflight_repo_paths,_drive_retry_cmd,_audit_cmd,_guidance_success,_guidance_missing_repo,_guidance_monitor_not_connected,_monitor_not_connected,_fallback_monitor,_available_monitors_label,_guidance_ide_mismatch,_ide_mismatch_detected,_guidance_empty_vql,_empty_vql_error,_guidance_screencast,_guidance_map_capture_mismatch,_guidance_prepare_failed,_prepare_failed,_guidance_drive_failed,_build_guidance_context,_resolve_source,_monitor_names,_combined_error,build_user_guidance,format_user_guidance,speak_user_guidance,_user_guidance_speech_enabled,_notify_user_guidance,_speak_user_guidance_text,emit_user_guidance
     _GuidanceContext:
@@ -5927,33 +5943,42 @@ C...
     _create_ticket()
     _handle_existing_finding()
     main()
-  src/koru/autonomy/shell_drive_finalize.py:
-    e: _autodone_policy,_ticket_already_resolved,_reply_note,_eligible_for_finalize,_load_verify_config_or_skip,_mark_done,_run_post_done_verify,finalize_shell_drive_ticket
-    _autodone_policy()
-    _ticket_already_resolved(project;ticket_id)
-    _reply_note(reply)
-    _eligible_for_finalize()
-    _load_verify_config_or_skip(project;ticket_id)
-    _mark_done(project;ticket_id)
-    _run_post_done_verify(project;ticket_id)
-    finalize_shell_drive_ticket()
-  src/koru/queue/runner.py:
-    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_run_next_planfile_task_impl,run_next_planfile_task
-    _source_tool(ticket)
-    _resolve_executor_kind(ticket;interactive;dry_run)
-    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
-    _resolve_ticket_action(ticket;executor_kind)
-    _handle_dry_run(ticket_id;executor_kind;action)
-    _claim_and_start(project;ticket_id;actor;planfile_runner)
-    _enrich_llm_request_with_context(action;project)
-    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
-    _append_shell_evidence(project;ticket_id;result;planfile_runner)
-    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner)
-    _next_ticket_or_result(project;planfile_runner;queue_name)
-    _log_queue_ticket_start(ticket;ticket_id)
-    _resolve_action_or_result()
-    _run_next_planfile_task_impl()
-    run_next_planfile_task()
+  src/koru/autonomy/operator/operator_runtime.py:
+    e: AutopilotSocketDecision,StopSignalState,setup_autonomous_session,_path_is_relative_to,normalize_project_root,projects_equivalent,resolve_cli_project,_project_venv_roots,_local_project_koru,_local_project_venv,running_outside_project_venv,cli_should_reexec,project_venv_reexec_argv,_koru_version_mismatch,_run_editable_koru_sync,maybe_sync_project_koru_package,project_venv_reexec_env,project_venv_warning_lines,default_autopilot_instance_for_ide,_instance_from_socket_path,_socket_path_for_lane,_resolve_autopilot_lane,_autopilot_socket_source,_decide_autopilot_socket,_log_autopilot_socket_decision,setup_autopilot_daemon,_log_runtime_readiness_gate,_apply_autopilot_readiness_after_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt
+    AutopilotSocketDecision:
+    StopSignalState:
+    setup_autonomous_session(args)
+    _path_is_relative_to(path;parent)
+    normalize_project_root(path)
+    projects_equivalent(left;right)
+    resolve_cli_project(raw_args)
+    _project_venv_roots(project)
+    _local_project_koru(project)
+    _local_project_venv(project)
+    running_outside_project_venv(project)
+    cli_should_reexec(raw_args)
+    project_venv_reexec_argv(project)
+    _koru_version_mismatch(project)
+    _run_editable_koru_sync(project)
+    maybe_sync_project_koru_package(project)
+    project_venv_reexec_env(project)
+    project_venv_warning_lines(project)
+    default_autopilot_instance_for_ide(autopilot_ide)
+    _instance_from_socket_path(socket_path)
+    _socket_path_for_lane(default_socket_path;lane)
+    _resolve_autopilot_lane(args)
+    _autopilot_socket_source(args)
+    _decide_autopilot_socket(args)
+    _log_autopilot_socket_decision(args;decision)
+    setup_autopilot_daemon(args;project)
+    _log_runtime_readiness_gate(args;project)
+    _apply_autopilot_readiness_after_daemon(args;project;socket_path;client;autopilot_ide)
+    cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+    setup_autonomous_env_vars()
+    restore_autonomous_env_vars(snapshot)
+    build_and_log_startup_probe(args;project)
+    install_sigterm_interrupt_handler(args;stop_state)
+    handle_autonomous_interrupt(args)
   packages/dsl2koru/src/dsl2koru/events.py:
     e: StoredEvent,EventStore
     StoredEvent: to_dict(0)
@@ -6280,6 +6305,15 @@ C...
     _copy_text_if_needed()
     _imgl_sidecar_path(vql_path)
     _pin_observe_env()
+  src/koru/integrations/vdisplay/env_session.py:
+    e: clear_stale_observe_session_env,_sync_prepare_session_dir,_sync_prepare_png_paths,_sync_prepare_capture_match_flags,sync_prepare_capture_flags_to_env,session_type,dry_run_enabled
+    clear_stale_observe_session_env()
+    _sync_prepare_session_dir(prepare)
+    _sync_prepare_png_paths(prepare)
+    _sync_prepare_capture_match_flags(prepare)
+    sync_prepare_capture_flags_to_env(prepare)
+    session_type()
+    dry_run_enabled()
   src/koru/autopilot/doctor_cli.py:
     e: doctor_fix_payload,render_doctor_session_info,render_doctor_backends,render_doctor_ides,render_doctor_fix_steps,render_doctor_text,render_doctor_json,action_doctor,action_setup_host
     doctor_fix_payload()
@@ -6327,15 +6361,16 @@ C...
     update_package_json(new_version;dry_run)
     update_uv_lock(new_version;dry_run)
     main()
-  src/koru/integrations/vdisplay/env_session.py:
-    e: clear_stale_observe_session_env,_sync_prepare_session_dir,_sync_prepare_png_paths,_sync_prepare_capture_match_flags,sync_prepare_capture_flags_to_env,session_type,dry_run_enabled
-    clear_stale_observe_session_env()
-    _sync_prepare_session_dir(prepare)
-    _sync_prepare_png_paths(prepare)
-    _sync_prepare_capture_match_flags(prepare)
-    sync_prepare_capture_flags_to_env(prepare)
+  src/koru/integrations/vdisplay/control_policy.py:
+    e: _canonical_ide,session_type,send_chat_os_injector_enabled,simplified_control_likely_insufficient,vdisplay_fallback_enabled,trusted_visual_target_id,photo_vql_code_edit_enabled,prefer_photo_vql_chat
+    _canonical_ide(ide)
     session_type()
-    dry_run_enabled()
+    send_chat_os_injector_enabled()
+    simplified_control_likely_insufficient()
+    vdisplay_fallback_enabled()
+    trusted_visual_target_id(target_id)
+    photo_vql_code_edit_enabled()
+    prefer_photo_vql_chat()
   packages/dsl2koru/src/dsl2koru/grammar.py:
     e: _flag,_parse_query_repair_history,_parse_query_lane_status,_parse_validate_lane,_parse_resolve,_parse_repair_run,parse_line,_serialize_query_repair_history,_serialize_query_lane_status,_serialize_validate_lane,_serialize_resolve,_serialize_repair_run,to_text
     _flag(rest;name)
@@ -6748,6 +6783,25 @@ C...
     e: _tail_stream,format_shell_run_note
     _tail_stream(text;limit)
     format_shell_run_note()
+  src/koru/autopilot/daemon_cli.py:
+    e: _daemon_already_running,_start_local_manager,_record_daemon_start_failure,_stop_heartbeat,_resolve_daemon_project,_load_daemon_env,_apply_daemon_instance_defaults,_serve_daemon,run_daemon_command,shutdown_daemon_command,list_detected_ides_command
+    _daemon_already_running(args;socket_path)
+    _start_local_manager()
+    _record_daemon_start_failure(manager)
+    _stop_heartbeat(heartbeat)
+    _resolve_daemon_project(args)
+    _load_daemon_env(project)
+    _apply_daemon_instance_defaults()
+    _serve_daemon(daemon)
+    run_daemon_command(args)
+    shutdown_daemon_command(args)
+    list_detected_ides_command(_args)
+  src/koru/autopilot/vdisplay_up_cli.py:
+    e: _resolve_bridge_source,_services_up_namespace,_vdisplay_up_cli_fallback,action_vdisplay_up
+    _resolve_bridge_source(ide)
+    _services_up_namespace(args)
+    _vdisplay_up_cli_fallback()
+    action_vdisplay_up(args)
   src/koru/wizard/project.py:
     e: ProjectCandidate,_read_proc_cmdline,_read_proc_cwd,_extract_workspace_from_cmdline,_candidates_from_running_ide,_is_project_root,_walk_up_to_root,_shell_cwd_candidate,_recent_jetbrains_projects,_dedup,propose_projects
     ProjectCandidate: label(0)  # A workspace folder we can offer to the user...
@@ -6806,25 +6860,35 @@ C...
     _update_expected_versions(ide_id;version)
     _update_workflow_version(version)
     main()
-  src/koru/autopilot/daemon_cli.py:
-    e: _daemon_already_running,_start_local_manager,_record_daemon_start_failure,_stop_heartbeat,_resolve_daemon_project,_load_daemon_env,_apply_daemon_instance_defaults,_serve_daemon,run_daemon_command,shutdown_daemon_command,list_detected_ides_command
-    _daemon_already_running(args;socket_path)
-    _start_local_manager()
-    _record_daemon_start_failure(manager)
-    _stop_heartbeat(heartbeat)
-    _resolve_daemon_project(args)
-    _load_daemon_env(project)
-    _apply_daemon_instance_defaults()
-    _serve_daemon(daemon)
-    run_daemon_command(args)
-    shutdown_daemon_command(args)
-    list_detected_ides_command(_args)
-  src/koru/autopilot/vdisplay_up_cli.py:
-    e: _resolve_bridge_source,_services_up_namespace,_vdisplay_up_cli_fallback,action_vdisplay_up
-    _resolve_bridge_source(ide)
-    _services_up_namespace(args)
-    _vdisplay_up_cli_fallback()
-    action_vdisplay_up(args)
+  packages/coru/src/coru/cli_reexec.py:
+    e: repo_root,cwd_repo_root,project_repo_root,project_venv_candidates,venv_has_installed_module,project_venv_python,local_module_source_dir,installed_module_source_dir,module_runtime_source_dir,reexec_already_done,already_running_in_project_venv,reexec_env_and_cmd,maybe_reexec_into_project_python
+    repo_root()
+    cwd_repo_root()
+    project_repo_root()
+    project_venv_candidates(root)
+    venv_has_installed_module(venv_python;package)
+    project_venv_python()
+    local_module_source_dir(module_name)
+    installed_module_source_dir(module_name)
+    module_runtime_source_dir(module_name)
+    reexec_already_done()
+    already_running_in_project_venv(project_python)
+    reexec_env_and_cmd(project_python;argv)
+    maybe_reexec_into_project_python(argv)
+  src/koru/cli_fleet.py:
+    e: _ManagedProject,discover_projects,_default_workspace,_build_parser,_log,_fleet_extra_args,_fleet_bootstrap_managed,_fleet_rescan,_fleet_shutdown,_run_fleet_up,_run_fleet_ls,fleet_main
+    _ManagedProject: __init__(2),command(0),is_running(0),start(0),poll_and_maybe_restart(0),terminate(0)  # One supervised ``koru autonomous up`` child for a single pro...
+    discover_projects(workspace)
+    _default_workspace()
+    _build_parser()
+    _log(message)
+    _fleet_extra_args(args)
+    _fleet_bootstrap_managed(workspace;extra_args)
+    _fleet_rescan(managed)
+    _fleet_shutdown(managed)
+    _run_fleet_up(args)
+    _run_fleet_ls(args)
+    fleet_main(argv)
   packages/dsl2koru/src/dsl2koru/cli.py:
     e: _run_results,main,_main_subcommand,_main_legacy,_cmd_validate_schema,_cmd_encode,_cmd_decode,_cmd_roundtrip,_cmd_replay,_cmd_run,_handle_subcommand
     _run_results(results)
@@ -9180,18 +9244,17 @@ Th...
   regix.yaml:
   wup-shell-only.yaml:
   output.txt:
+  planfile.yaml:
   Makefile:
   coverage.json:
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
   nlp2uri.yaml:
-  pyproject.toml:
   tree.txt:
   todo.txt:
   screen.capture.json:
   pipeline.yaml:
-  package.json:
   prefact.yaml:
   Taskfile.yml:
   Dockerfile:
@@ -9769,5 +9832,6 @@ Th...
   testql-scenarios/artifacts/mock-llm-replies.yaml:
   testql-scenarios/conversations/send-invoice.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
-  planfile.yaml:
+  pyproject.toml:
+  package.json:
   src/koru/integrations/vdisplay/__init__.py:

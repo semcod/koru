@@ -503,80 +503,36 @@ def record_koru_drive_step(
     return str(session_dir) if session_dir else None
 
 
-def _send_chat_os_injector_enabled(*, ide: str) -> bool:
-    """Blind OS-injector clicks are unreliable on Wayland (focus stays in the terminal)."""
-    if _session_type() == "wayland":
-        return False
-    return _canonical_ide(ide) in {
-        "jetbrains",
-        "pycharm",
-        "idea",
-        "cursor",
-        "windsurf",
-        "vscode",
-        "vscodium",
-        "antigravity",
-    }
+from koru.integrations.vdisplay.control_policy import (  # noqa: E402
+    simplified_control_likely_insufficient as _simplified_control_policy,
+    vdisplay_fallback_enabled as _vdisplay_fallback_policy,
+)
+from koru.integrations.vdisplay.control_policy import (  # noqa: E402,F401
+    _photo_vql_code_edit_enabled,
+    _send_chat_os_injector_enabled,
+    _trusted_visual_target_id,
+)
 
 
 def simplified_control_likely_insufficient(*, ide: str, plugin_connected: bool = False) -> bool:
     """Heuristic: simplified keyboard/plugin paths are unlikely to work."""
-    if plugin_connected:
-        return False
-    if _session_type() == "wayland":
-        return True
-    canon = _canonical_ide(ide)
-    if canon in {"cursor", "windsurf", "antigravity"} and not plugin_connected:
-        return True
-    if not os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip():
-        return True
-    return False
+    return _simplified_control_policy(ide=ide, plugin_connected=plugin_connected)
 
 
 def vdisplay_fallback_enabled(*, ide: str | None = None, plugin_connected: bool = False) -> bool:
     """Whether drive may use vdisplay semantic control as fallback."""
-    raw = os.environ.get("KORU_VDISPLAY_CONTROL_FALLBACK", "auto").strip().lower()
-    if raw in {"0", "false", "no", "off"}:
-        return False
-    if not vdisplay_available():
-        return False
-    if raw in {"1", "true", "yes", "on"}:
-        return True
-    if plugin_connected:
-        return False
-    if ide and simplified_control_likely_insufficient(ide=ide, plugin_connected=plugin_connected):
-        return True
-    return False
-
-
-def _trusted_visual_target_id(target_id: str) -> bool:
-    tid = str(target_id or "")
-    return tid.startswith("map:") or tid.startswith("llm:")
-
-
-def _photo_vql_code_edit_enabled() -> bool:
-    """When set, send_chat routes to perform_photo_vql_focus_and_edit(is_code_edit=True)."""
-    return os.environ.get("KORU_VDISPLAY_PHOTO_VQL_CODE_EDIT", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    return _vdisplay_fallback_policy(
+        ide=ide,
+        plugin_connected=plugin_connected,
+        available=vdisplay_available,
+    )
 
 
 def _prefer_photo_vql_chat(*, ide: str = "auto") -> bool:
     """When set, send_chat uses photo VQL mouse+focus path before os_injector/ide_prompt."""
-    raw = os.environ.get("KORU_VDISPLAY_PREFER_PHOTO_VQL", "").strip().lower()
-    if raw in {"1", "true", "yes", "on"}:
-        return True
-    if raw in {"0", "false", "no", "off"}:
-        return False
-    if raw == "auto":
-        canon = _canonical_ide(ide)
-        if canon in {"jetbrains", "pycharm", "idea"}:
-            return _capture_matches_requested_ide(ide)
-        return True
-    return False
+    from koru.integrations.vdisplay.control_policy import prefer_photo_vql_chat
+
+    return prefer_photo_vql_chat(ide=ide, capture_matches=_capture_matches_requested_ide)
 
 
 def _capture_matches_requested_ide(ide: str) -> bool:
@@ -1219,142 +1175,27 @@ def _vdisplay_subprocess_env(*, ide: str = "auto") -> dict[str, str]:
     return env
 
 
-def _focus_window_xdotool(*, title_contains: str) -> dict[str, Any]:
-    """Raise/focus window by title substring (X11 xdotool fallback)."""
-    import subprocess
+from koru.integrations.vdisplay import window_focus as _window_focus  # noqa: E402
 
-    needle = title_contains.strip()
-    if not needle:
-        return {"ok": False, "method": "xdotool", "error": "empty title needle"}
-    try:
-        proc = subprocess.run(
-            ["xdotool", "search", "--name", needle],
-            capture_output=True,
-            text=True,
-            timeout=3.0,
-            check=False,
-        )
-        ids = [line.strip() for line in (proc.stdout or "").splitlines() if line.strip().isdigit()]
-        if not ids and proc.returncode != 0:
-            return {"ok": False, "method": "xdotool", "error": proc.stderr or "search failed"}
-        if not ids:
-            return {"ok": False, "method": "xdotool", "error": f"no window matching {needle!r}"}
-        wid = ids[-1]
-        subprocess.run(
-            ["xdotool", "windowactivate", "--sync", wid],
-            capture_output=True,
-            timeout=3.0,
-            check=False,
-        )
-        subprocess.run(["xdotool", "windowraise", wid], capture_output=True, timeout=3.0, check=False)
-        return {"ok": True, "method": "xdotool", "window_id": wid, "needle": needle}
-    except FileNotFoundError:
-        return {"ok": False, "method": "xdotool", "error": "xdotool not installed", "skipped": True}
-    except Exception as exc:
-        return {"ok": False, "method": "xdotool", "error": str(exc)}
+
+def _focus_window_xdotool(*, title_contains: str) -> dict[str, Any]:
+    return _window_focus.focus_window_xdotool(title_contains=title_contains)
 
 
 def _focus_window_xdotool_for_ide(*, ide: str) -> dict[str, Any]:
-    hints = _ide_hints(ide)
-    needles: list[str] = []
-    for candidate in (
-        str(hints.get("window_title_contains") or ""),
-        _ide_prompt_app_id(ide),
-        "PyCharm",
-        "IntelliJ",
-        "JetBrains",
-    ):
-        token = candidate.strip()
-        if token and token not in needles:
-            needles.append(token)
-    attempts: list[dict[str, Any]] = []
-    for needle in needles:
-        res = _focus_window_xdotool(title_contains=needle)
-        attempts.append({"needle": needle, **res})
-        if res.get("ok"):
-            return {"ok": True, "method": "xdotool", "needle": needle, "attempts": attempts, **res}
-    return {
-        "ok": False,
-        "method": "xdotool",
-        "error": "no window matched any title needle",
-        "attempts": attempts,
-    }
+    return _window_focus.focus_window_xdotool_for_ide(
+        ide=ide, ide_hints=_ide_hints, app_id=_ide_prompt_app_id
+    )
 
 
 def _focus_window_gnome_shell(*, title_contains: str) -> dict[str, Any]:
-    """Best-effort raise via org.gnome.Shell.Eval (may be blocked on some GNOME builds)."""
-    import re
-    import subprocess
-
-    needle = title_contains.replace("\\", "\\\\").replace("'", "\\'").lower()
-    script = (
-        "(() => {"
-        "const needle = '" + needle + "';"
-        "const actors = global.get_window_actors();"
-        "for (const a of actors) {"
-        "  const w = a.metaWindow;"
-        "  const t = (w.get_title() || '').toLowerCase();"
-        "  if (t.includes(needle)) { w.unminimize(); w.activate(global.get_current_time()); return w.get_title(); }"
-        "}"
-        "return null;"
-        "})()"
-    )
-    try:
-        proc = subprocess.run(
-            [
-                "gdbus",
-                "call",
-                "--session",
-                "--dest",
-                "org.gnome.Shell",
-                "--object-path",
-                "/org/gnome/Shell",
-                "--method",
-                "org.gnome.Shell.Eval",
-                script,
-            ],
-            capture_output=True,
-            text=True,
-            timeout=3.0,
-            check=False,
-        )
-        text = (proc.stdout or "").strip()
-        match = re.search(r"\(\s*(true|false)\s*,\s*'([^']*)'\s*\)", text, flags=re.IGNORECASE)
-        if match and match.group(1).lower() == "true" and match.group(2):
-            return {"ok": True, "method": "gnome-shell-eval", "title": match.group(2)}
-        return {"ok": False, "method": "gnome-shell-eval", "error": text or proc.stderr or "eval failed"}
-    except Exception as exc:
-        return {"ok": False, "method": "gnome-shell-eval", "error": str(exc)}
+    return _window_focus.focus_window_gnome_shell(title_contains=title_contains)
 
 
 def _focus_window_gnome_shell_for_ide(*, ide: str) -> dict[str, Any]:
-    """Try GNOME Shell raise with IDE-specific title needles (PyCharm, IntelliJ, …)."""
-    hints = _ide_hints(ide)
-    needles: list[str] = []
-    for candidate in (
-        str(hints.get("window_title_contains") or ""),
-        _ide_prompt_app_id(ide),
-        "pycharm",
-        "intellij",
-        "jetbrains",
-        "webstorm",
-        "goland",
-    ):
-        token = candidate.strip().lower()
-        if token and token not in needles:
-            needles.append(token)
-    attempts: list[dict[str, Any]] = []
-    for needle in needles:
-        res = _focus_window_gnome_shell(title_contains=needle)
-        attempts.append({"needle": needle, **res})
-        if res.get("ok"):
-            return {"ok": True, "method": "gnome-shell-eval", "title": res.get("title"), "needle": needle, "attempts": attempts}  # noqa: E501
-    return {
-        "ok": False,
-        "method": "gnome-shell-eval",
-        "error": "no window matched any title needle",
-        "attempts": attempts,
-    }
+    return _window_focus.focus_window_gnome_shell_for_ide(
+        ide=ide, ide_hints=_ide_hints, app_id=_ide_prompt_app_id
+    )
 
 
 def _click_map_region_center(
@@ -1363,63 +1204,20 @@ def _click_map_region_center(
     source: str,
     region_id: str = "pycharm.ai_chat",
 ) -> dict[str, Any]:
-    """Click the center of a GUI map region (raises native Wayland window on that monitor)."""
-    try:
-        from vdisplay.control.gui_map import load_gui_map
-
-        pack = load_gui_map(map_path)
-        region = pack.regions.get(region_id)
-        if region is None and pack.regions:
-            region = next(iter(pack.regions.values()))
-        if region is None:
-            return {"ok": False, "error": f"region {region_id!r} not in map"}
-        bounds = region.scope_bounds
-        cx = int(bounds.x + bounds.width / 2)
-        # Upper quarter of region — avoid bottom edge / GNOME hot corner on rotated DP-2.
-        cy = int(bounds.y + min(max(bounds.height * 0.22, 48), bounds.height - 48))
-        click = _control_click(
-            backend="vision",
-            x=cx,
-            y=cy,
-            source=source,
-            map_path=map_path,
-        )
-        return {"ok": bool(click.get("ok", True)), "region_id": region.id, "coords": {"x": cx, "y": cy}, "click": click}
-    except Exception as exc:
-        return {"ok": False, "error": str(exc)}
+    return _window_focus.click_map_region_center(
+        map_path,
+        source=source,
+        region_id=region_id,
+        control_click=_control_click,
+    )
 
 
 def _raise_alt_tab_enabled(*, ide: str = "auto") -> bool:
-    raw = os.environ.get("KORU_VDISPLAY_RAISE_ALT_TAB", "").strip().lower()
-    if raw in {"1", "true", "yes", "on"}:
-        return True
-    if raw in {"0", "false", "no", "off"}:
-        return False
-    return _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
+    return _window_focus.raise_alt_tab_enabled(ide=ide)
 
 
 def _alt_tab_window_cycle(*, cycles: int = 1, ide: str = "auto") -> dict[str, Any]:
-    """Optional ydotool Alt+Tab cycles to raise a background window."""
-    if not _raise_alt_tab_enabled(ide=ide):
-        return {"ok": False, "skipped": True}
-    try:
-        from vdisplay.input.resolve import resolve_pointer_input
-
-        inp, method = resolve_pointer_input()
-        hotkey = getattr(inp, "hotkey", None)
-        if hotkey is None:
-            return {"ok": False, "error": "hotkey unavailable"}
-        for _ in range(max(1, cycles)):
-            try:
-                hotkey("alt", "Tab")
-            except TypeError:
-                hotkey("alt+Tab")
-            import time
-
-            time.sleep(0.35)
-        return {"ok": True, "method": f"{method}-alt-tab", "cycles": cycles}
-    except Exception as exc:
-        return {"ok": False, "error": str(exc)}
+    return _window_focus.alt_tab_window_cycle(cycles=cycles, ide=ide)
 
 
 def _attempt_focus_recovery_capture(*, ide: str, source: str) -> dict[str, Any]:

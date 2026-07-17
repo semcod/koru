@@ -1,359 +1,374 @@
 flowchart LR
-%% generated in 1.37s
+%% generated in 1.71s
     subgraph packages__cli2coru
-        packages__cli2coru__src__cli2coru__cli___handle_exec["_handle_exec"]
-        packages__cli2coru__src__cli2coru__cli___handle_run["_handle_run"]
-        packages__cli2coru__src__cli2coru__shell__run_shell["run_shell"]
-        packages__cli2coru__src__cli2coru__cli___handle_shell["_handle_shell"]
         packages__cli2coru__src__cli2coru__cli___print_result["_print_result"]
+        packages__cli2coru__src__cli2coru__cli___handle_shell["_handle_shell"]
+        packages__cli2coru__src__cli2coru__shell__run_shell["run_shell"]
+        packages__cli2coru__src__cli2coru__cli___handle_run["_handle_run"]
+        packages__cli2coru__src__cli2coru__cli___handle_exec["_handle_exec"]
     end
     subgraph packages__cli2koru
-        packages__cli2koru__src__cli2koru__cli___handle_shell["_handle_shell"]
         packages__cli2koru__src__cli2koru__cli___handle_exec["_handle_exec"]
-        packages__cli2koru__src__cli2koru__cli___handle_run["_handle_run"]
         packages__cli2koru__src__cli2koru__shell__run_shell["run_shell"]
         packages__cli2koru__src__cli2koru__cli___print_result["_print_result"]
+        packages__cli2koru__src__cli2koru__cli___handle_run["_handle_run"]
+        packages__cli2koru__src__cli2koru__cli___handle_shell["_handle_shell"]
     end
     subgraph packages__coru
-        packages__coru__src__coru__cli___extract_global_flags["_extract_global_flags"]
-        packages__coru__src__coru__cli___infer_default_instance["_infer_default_instance"]
-        packages__coru__src__coru__repair__runtime__run_lane_repair["run_lane_repair"]
-        packages__coru__src__coru__cli___project_from_argv["_project_from_argv"]
-        packages__coru__src__coru__cli___enforce_runtime_readiness["_enforce_runtime_readiness"]
-        packages__coru__src__coru__cli_calibration___probe_report_header_lines["_probe_report_header_lines"]
-        packages__coru__src__coru__cli_calibration___write_calibration_bridge_testql["_write_calibration_bridge_test"]
-        packages__coru__src__coru__cli___print_terminal_context["_print_terminal_context"]
-        packages__coru__src__coru__cli_calibration___calibration_preflight_reports["_calibration_preflight_reports"]
-        packages__coru__src__coru__cli_calibration___probe_report_verification["_probe_report_verification"]
-        packages__coru__src__coru__cli___instance_for_ide_choice["_instance_for_ide_choice"]
-        packages__coru__src__coru__cli___alive_daemon_instance["_alive_daemon_instance"]
-        packages__coru__src__coru__cli_calibration___calibration_probe_drive["_calibration_probe_drive"]
         packages__coru__src__coru__cli_calibration___run_calibration_bridge_preflight["_run_calibration_bridge_prefli"]
-        packages__coru__src__coru__cli___supervisor_project_choices["_supervisor_project_choices"]
-        packages__coru__src__coru__cli___running_ide_choices["_running_ide_choices"]
-        packages__coru__src__coru__cli___ide_from_instance["_ide_from_instance"]
-        packages__coru__src__coru__ecosystem___default_runner["_default_runner"]
-        packages__coru__src__coru__cli___current_log_format["_current_log_format"]
-        packages__coru__src__coru__cli_calibration___calibration_socket_fix["_calibration_socket_fix"]
-        packages__coru__src__coru__supervisor__paths__registry_path["registry_path"]
-        packages__coru__src__coru__cli___normalize_log_format["_normalize_log_format"]
-        packages__coru__src__coru__cli___instance_matches_ide["_instance_matches_ide"]
-        packages__coru__src__coru__cli_calibration___resolve_calibration_lane["_resolve_calibration_lane"]
-        packages__coru__src__coru__cli___resolve_defaults["_resolve_defaults"]
-        packages__coru__src__coru__cli___print_troubleshooting_log_locations["_print_troubleshooting_log_loc"]
-        packages__coru__src__coru__cli_calibration___calibration_desktop_focus_titles["_calibration_desktop_focus_tit"]
-        packages__coru__src__coru__ecosystem__sync_python_packages["sync_python_packages"]
-        packages__coru__src__coru__cli_calibration___testql_run_scenario["_testql_run_scenario"]
-        packages__coru__src__coru__cli_calibration___format_calibration_desktop_report["_format_calibration_desktop_re"]
-        packages__coru__src__coru__supervisor__registry__load_registry["load_registry"]
-        packages__coru__src__coru__cli___emit_log["_emit_log"]
-        packages__coru__src__coru__cli_calibration___lane_calibration["_lane_calibration"]
-        packages__coru__src__coru__cli_calibration___desktop_capture_enabled["_desktop_capture_enabled"]
-        packages__coru__src__coru__cli___run_default_autonomous["_run_default_autonomous"]
-        packages__coru__src__coru__cli_calibration___register_calibration_command["_register_calibration_command"]
-        packages__coru__src__coru__cli_parser___add_lane_identifiers["_add_lane_identifiers"]
-        packages__coru__src__coru__ecosystem___local_package_paths["_local_package_paths"]
-        packages__coru__src__coru__cli___connected_daemon_instance["_connected_daemon_instance"]
-        packages__coru__src__coru__cli___active_project_root["_active_project_root"]
-        packages__coru__src__coru__ecosystem___detect_running_plugin_ides["_detect_running_plugin_ides"]
-        packages__coru__src__coru__cli___target_plugin_rows["_target_plugin_rows"]
-        packages__coru__src__coru__cli_calibration___materialize_calibration_desktop_oql["_materialize_calibration_deskt"]
-        packages__coru__src__coru__cli___agent_lane_from_auto_args["_agent_lane_from_auto_args"]
-        packages__coru__src__coru__cli_calibration___parse_drive_json_from_stdout["_parse_drive_json_from_stdout"]
-        packages__coru__src__coru__cli___choose_option["_choose_option"]
-        packages__coru__src__coru__cli___chain_project_from_plans["_chain_project_from_plans"]
-        packages__coru__src__coru__cli___terminal_shell_context["_terminal_shell_context"]
-        packages__coru__src__coru__cli___interactive_select_project_arg["_interactive_select_project_ar"]
-        packages__coru__src__coru__cli_calibration___probe_report_unverified_hint["_probe_report_unverified_hint"]
-        packages__coru__src__coru__cli___autonomous_startup_chain["_autonomous_startup_chain"]
-        packages__coru__src__coru__cli_calibration___append_desktop_focus_lines["_append_desktop_focus_lines"]
-        packages__coru__src__coru__cli___koru_autopilot_env_payload["_koru_autopilot_env_payload"]
-        packages__coru__src__coru__cli___interactive_select_agent_lane["_interactive_select_agent_lane"]
         packages__coru__src__coru__cli_calibration___testql_run_oql["_testql_run_oql"]
-        packages__coru__src__coru__cli_calibration___format_calibration_bridge_report["_format_calibration_bridge_rep"]
-        packages__coru__src__coru__cli___print_runtime_versions["_print_runtime_versions"]
-        packages__coru__src__coru__cli___infer_default_ide["_infer_default_ide"]
-        packages__coru__src__coru__cli_calibration___lane_drive_capture["_lane_drive_capture"]
-        packages__coru__src__coru__ecosystem__sync_ecosystem["sync_ecosystem"]
-        packages__coru__src__coru__cli_calibration___calibration_desktop_template_path["_calibration_desktop_template_"]
-        packages__coru__src__coru__cli___repo_root["_repo_root"]
-        packages__coru__src__coru__cli___diagnose_lane["_diagnose_lane"]
-        packages__coru__src__coru__cli___startup_mode["_startup_mode"]
-        packages__coru__src__coru__cli___distribution_version["_distribution_version"]
-        packages__coru__src__coru__cli_calibration___write_calibration_desktop_oql["_write_calibration_desktop_oql"]
-        packages__coru__src__coru__cli___execute_plans["_execute_plans"]
-        packages__coru__src__coru__cli___lane_status_raw["_lane_status_raw"]
-        packages__coru__src__coru__cli_calibration___format_calibration_probe_report["_format_calibration_probe_repo"]
-        packages__coru__src__coru__cli___koru_exec_argv["_koru_exec_argv"]
-        packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight["_run_calibration_desktop_prefl"]
-        packages__coru__src__coru__cli___import_koru_readiness_module["_import_koru_readiness_module"]
-        packages__coru__src__coru__cli___interactive_default_auto_args["_interactive_default_auto_args"]
-        packages__coru__src__coru__cli___alive_daemon_ide["_alive_daemon_ide"]
+        packages__coru__src__coru__control__dispatch_status["dispatch_status"]
+        packages__coru__src__coru__repair_registry__run_repair_pipeline["run_repair_pipeline"]
+        packages__coru__src__coru__repair__projector___project_one_session["_project_one_session"]
+        packages__coru__src__coru__cli_calibration___calibration_desktop_focus_titles["_calibration_desktop_focus_tit"]
+        packages__coru__src__coru__cli_calibration___format_calibration_desktop_report["_format_calibration_desktop_re"]
+        packages__coru__src__coru__ide_detection__terminal_host_kind["terminal_host_kind"]
+        packages__coru__src__coru__cli_calibration___lane_calibration["_lane_calibration"]
+        packages__coru__src__coru__cli___print_troubleshooting_log_locations["_print_troubleshooting_log_loc"]
+        packages__coru__src__coru__ecosystem___detect_running_plugin_ides["_detect_running_plugin_ides"]
+        packages__coru__src__coru__cli_calibration___materialize_calibration_desktop_oql["_materialize_calibration_deskt"]
+        packages__coru__src__coru__cli_checks___trace["_trace"]
         packages__coru__src__coru__cli___run_lane_repair["_run_lane_repair"]
-        packages__coru__src__coru__cli___runtime_metadata_roots["_runtime_metadata_roots"]
-        packages__coru__src__coru__cli___lane_status_payload["_lane_status_payload"]
+        packages__coru__src__coru__cli_calibration___write_calibration_bridge_testql["_write_calibration_bridge_test"]
+        packages__coru__src__coru__repair__projector__project_repair_cases["project_repair_cases"]
+        packages__coru__src__coru__cli_parser___register_operational_commands["_register_operational_commands"]
+        packages__coru__src__coru__ide_detection__terminal_shell_context["terminal_shell_context"]
+        packages__coru__src__coru__cli___diagnose_lane["_diagnose_lane"]
+        packages__coru__src__coru__repair__registry__registry_steps_for_code["registry_steps_for_code"]
+        packages__coru__src__coru__cli_terminal___terminal_shell_context_fallback["_terminal_shell_context_fallba"]
+        packages__coru__src__coru__ide_detection___terminal_shell_context_fallback["_terminal_shell_context_fallba"]
+        packages__coru__src__coru__cli_calibration___append_desktop_focus_lines["_append_desktop_focus_lines"]
+        packages__coru__src__coru__cli_parser___register_interaction_commands["_register_interaction_commands"]
+        packages__coru__src__coru__control__dispatch_repair_history["dispatch_repair_history"]
+        packages__coru__src__coru__cli_calibration___parse_drive_json_from_stdout["_parse_drive_json_from_stdout"]
+        packages__coru__src__coru__ide_detection___vscode_term_program_context["_vscode_term_program_context"]
+        packages__coru__src__coru__ide_detection___cursor_shell_context["_cursor_shell_context"]
+        packages__coru__src__coru__cli_calibration___write_calibration_desktop_oql["_write_calibration_desktop_oql"]
+        packages__coru__src__coru__cli_calibration___format_calibration_bridge_report["_format_calibration_bridge_rep"]
+        packages__coru__src__coru__cli_checks___coru_projects_equivalent["_coru_projects_equivalent"]
+        packages__coru__src__coru__repair__query__RepairHistoryQuery__cases_for_lane["cases_for_lane"]
+        packages__coru__src__coru__cli_terminal___terminal_shell_context["_terminal_shell_context"]
+        packages__coru__src__coru__cli_calibration___testql_run_scenario["_testql_run_scenario"]
+        packages__coru__src__coru__ecosystem__sync_python_packages["sync_python_packages"]
+        packages__coru__src__coru__repair__registry__playbook_for_codes["playbook_for_codes"]
+        packages__coru__src__coru__cli_calibration___format_calibration_probe_report["_format_calibration_probe_repo"]
+        packages__coru__src__coru__ecosystem__sync_ecosystem["sync_ecosystem"]
+        packages__coru__src__coru__cli_parser___add_lane_identifiers["_add_lane_identifiers"]
+        packages__coru__src__coru__cli_calibration___calibration_desktop_template_path["_calibration_desktop_template_"]
+        packages__coru__src__coru__ecosystem___default_runner["_default_runner"]
         packages__coru__src__coru__cli_checks___coru_normalize_project["_coru_normalize_project"]
+        packages__coru__src__coru__ide_detection___generic_term_program_context["_generic_term_program_context"]
+        packages__coru__src__coru__repair__query__RepairHistoryQuery__format_llm["format_llm"]
+        packages__coru__src__coru__cli_parser___register_lane_commands["_register_lane_commands"]
+        packages__coru__src__coru__repair__runtime__run_lane_repair["run_lane_repair"]
+        packages__coru__src__coru__repair__service__run_repair_with_events["run_repair_with_events"]
         packages__coru__src__coru__cli___lane_subprocess_env["_lane_subprocess_env"]
-        packages__coru__src__coru__cli___print_autonomous_banner["_print_autonomous_banner"]
-        packages__coru__src__coru__cli___instance_from_socket_path["_instance_from_socket_path"]
+        packages__coru__src__coru__cli___infer_default_instance["_infer_default_instance"]
+        packages__coru__src__coru__repair__diagnostics___dedupe_problems["_dedupe_problems"]
+        packages__coru__src__coru__cli___lane_status_raw["_lane_status_raw"]
+        packages__coru__src__coru__cli_checks___trace_enabled["_trace_enabled"]
+        packages__coru__src__coru__cli___koru_autopilot_env_payload["_koru_autopilot_env_payload"]
+        packages__coru__src__coru__cli___print_terminal_context["_print_terminal_context"]
+        packages__coru__src__coru__cli_terminal___terminal_ide_hint["_terminal_ide_hint"]
+        packages__coru__src__coru__repair__projector___extract_problem_codes["_extract_problem_codes"]
+        packages__coru__src__coru__cli_calibration___probe_report_header_lines["_probe_report_header_lines"]
+        packages__coru__src__coru__cli_parser___register_sync_command["_register_sync_command"]
+        packages__coru__src__coru__cli_calibration___resolve_calibration_lane["_resolve_calibration_lane"]
+        packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight["_run_calibration_desktop_prefl"]
+        packages__coru__src__coru__cli_calibration___calibration_probe_drive["_calibration_probe_drive"]
+        packages__coru__src__coru__repair__diagnostics__dedupe_problems["dedupe_problems"]
+        packages__coru__src__coru__cli___koru_exec_argv["_koru_exec_argv"]
+        packages__coru__src__coru__control__apply_nl["apply_nl"]
+        packages__coru__src__coru__repair__projector___extract_resolved["_extract_resolved"]
+        packages__coru__src__coru__cli_parser___add_shell_argument["_add_shell_argument"]
+        packages__coru__src__coru__cli_calibration___probe_report_verification["_probe_report_verification"]
+        packages__coru__src__coru__cli_parser___register_repair_command["_register_repair_command"]
+        packages__coru__src__coru__cli_calibration___probe_report_unverified_hint["_probe_report_unverified_hint"]
+        packages__coru__src__coru__cli_calibration___calibration_preflight_reports["_calibration_preflight_reports"]
+        packages__coru__src__coru__ide_detection__terminal_ide_hint["terminal_ide_hint"]
+        packages__coru__src__coru__control__dispatch_validate_lane["dispatch_validate_lane"]
+        packages__coru__src__coru__cli_calibration___register_calibration_command["_register_calibration_command"]
+        packages__coru__src__coru__cli_parser___build_parser["_build_parser"]
+        packages__coru__src__coru__cli___lane_status_payload["_lane_status_payload"]
+        packages__coru__src__coru__cli___target_plugin_rows["_target_plugin_rows"]
+        packages__coru__src__coru__ecosystem___local_package_paths["_local_package_paths"]
+        packages__coru__src__coru__repair__projector__format_case_llm["format_case_llm"]
+        packages__coru__src__coru__control__dispatch_line["dispatch_line"]
+        packages__coru__src__coru__repair__events__aggregate_id_for["aggregate_id_for"]
+        packages__coru__src__coru__cli_parser___register_doctor_command["_register_doctor_command"]
+        packages__coru__src__coru__repair__diagnostics___problem_from_manage_issue["_problem_from_manage_issue"]
         packages__coru__src__coru__cli___run_koru_lane["_run_koru_lane"]
+        packages__coru__src__coru__repair__diagnostics___collect_manage_issue_problems["_collect_manage_issue_problems"]
+        packages__coru__src__coru__repair__projector___extract_action_ids["_extract_action_ids"]
+        packages__coru__src__coru__cli_calibration___lane_drive_capture["_lane_drive_capture"]
+        packages__coru__src__coru__cli_calibration___desktop_capture_enabled["_desktop_capture_enabled"]
+        packages__coru__src__coru__repair__projector__format_history_llm["format_history_llm"]
+        packages__coru__src__coru__cli_calibration___calibration_socket_fix["_calibration_socket_fix"]
+        packages__coru__src__coru__repair__query__RepairHistoryQuery__cases["cases"]
     end
     subgraph packages__dsl2coru
-        packages__dsl2coru__src__dsl2coru__handlers__argv__to_cli_args["to_cli_args"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_run["_cmd_run"]
-        packages__dsl2coru__src__dsl2coru__parser__parse_line["parse_line"]
-        packages__dsl2coru__src__dsl2coru__codegen__main["main"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_ui_click["_parse_ui_click"]
-        packages__dsl2coru__src__dsl2coru__serializer___serialize_chat["_serialize_chat"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_repair_run["_parse_repair_run"]
-        packages__dsl2coru__src__dsl2coru__handlers__ui___build_ui_result["_build_ui_result"]
-        packages__dsl2coru__src__dsl2coru__parser___split_command["_split_command"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_env["_parse_env"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_auto["_parse_auto"]
-        packages__dsl2coru__src__dsl2coru__bus__dispatch["dispatch"]
-        packages__dsl2coru__src__dsl2coru__bus___normalize_command["_normalize_command"]
-        packages__dsl2coru__src__dsl2coru__serializer___append_flag["_append_flag"]
-        packages__dsl2coru__src__dsl2coru__handlers__runner___run_subprocess["_run_subprocess"]
-        packages__dsl2coru__src__dsl2coru__bus__execute_dsl["execute_dsl"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_sync["_parse_sync"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_chat["_parse_chat"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_ui_key["_parse_ui_key"]
-        packages__dsl2coru__src__dsl2coru__parser___flag["_flag"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__result_to_pb["result_to_pb"]
-        packages__dsl2coru__src__dsl2coru__cli___main_subcommand["_main_subcommand"]
-        packages__dsl2coru__src__dsl2coru__handlers__query__run_query["run_query"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__encode_text_to_protobuf["encode_text_to_protobuf"]
-        packages__dsl2coru__src__dsl2coru__codegen__render_models_module["render_models_module"]
-        packages__dsl2coru__src__dsl2coru__serializer___serialize_text["_serialize_text"]
-        packages__dsl2coru__src__dsl2coru__schema_registry__normalize_verb["normalize_verb"]
-        packages__dsl2coru__src__dsl2coru__bus__execute_dsl_line["execute_dsl_line"]
-        packages__dsl2coru__src__dsl2coru__cli__main["main"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_replay["_cmd_replay"]
-        packages__dsl2coru__src__dsl2coru__parser___ui_args["_ui_args"]
-        packages__dsl2coru__src__dsl2coru__serializer___serialize_doctor["_serialize_doctor"]
-        packages__dsl2coru__src__dsl2coru__codec__roundtrip_text["roundtrip_text"]
-        packages__dsl2coru__src__dsl2coru__serializer___serialize_calibration["_serialize_calibration"]
+        packages__dsl2coru__src__dsl2coru__codec__validate_payload["validate_payload"]
         packages__dsl2coru__src__dsl2coru__codegen__validate_payload["validate_payload"]
-        packages__dsl2coru__src__dsl2coru__handlers__ui___ensure_imgl_available["_ensure_imgl_available"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_ui_type["_parse_ui_type"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf_to_text["decode_protobuf_to_text"]
+        packages__dsl2coru__src__dsl2coru__bus__execute_dsl_line["execute_dsl_line"]
+        packages__dsl2coru__src__dsl2coru__codec__envelope_from_bytes["envelope_from_bytes"]
+        packages__dsl2coru__src__dsl2coru__events__EventStore___append_jsonl["_append_jsonl"]
+        packages__dsl2coru__src__dsl2coru__serializer___serialize_auto["_serialize_auto"]
+        packages__dsl2coru__src__dsl2coru__codec__envelope_to_json["envelope_to_json"]
+        packages__dsl2coru__src__dsl2coru__codec__envelope_to_bytes["envelope_to_bytes"]
+        packages__dsl2coru__src__dsl2coru__handlers__runner___run_subprocess["_run_subprocess"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_repair_run["_parse_repair_run"]
+        packages__dsl2coru__src__dsl2coru__handlers__runner__default_runner["default_runner"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_ensure["_parse_ensure"]
+        packages__dsl2coru__src__dsl2coru__cli___main_legacy["_main_legacy"]
+        packages__dsl2coru__src__dsl2coru__schema_registry__all_verbs["all_verbs"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__encode_text_to_protobuf["encode_text_to_protobuf"]
+        packages__dsl2coru__src__dsl2coru__schema_registry__schema_for_verb["schema_for_verb"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_encode["_cmd_encode"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__envelope_to_dict["envelope_to_dict"]
+        packages__dsl2coru__src__dsl2coru__cli___handle_subcommand["_handle_subcommand"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__encode_protobuf["encode_protobuf"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_lane["_parse_lane"]
+        packages__dsl2coru__src__dsl2coru__serializer___serialize_doctor["_serialize_doctor"]
+        packages__dsl2coru__src__dsl2coru__handlers__ui__run_ui_command["run_ui_command"]
+        packages__dsl2coru__src__dsl2coru__bus___normalize_command["_normalize_command"]
+        packages__dsl2coru__src__dsl2coru__codegen__main["main"]
+        packages__dsl2coru__src__dsl2coru__codegen__render_models_module["render_models_module"]
         packages__dsl2coru__src__dsl2coru__parser___parse_text["_parse_text"]
         packages__dsl2coru__src__dsl2coru__parser___parse_calibration["_parse_calibration"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_from_json["envelope_from_json"]
-        packages__dsl2coru__src__dsl2coru__cli___build_subcommand_parser["_build_subcommand_parser"]
-        packages__dsl2coru__src__dsl2coru__handlers__command__run_command["run_command"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_decode["_cmd_decode"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_ui_nl["_parse_ui_nl"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_exec["_cmd_exec"]
-        packages__dsl2coru__src__dsl2coru__handlers__ui__run_ui_command["run_ui_command"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_lane["_parse_lane"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_status["_parse_status"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf_to_text["decode_protobuf_to_text"]
-        packages__dsl2coru__src__dsl2coru__schema_registry__all_verbs["all_verbs"]
-        packages__dsl2coru__src__dsl2coru__bus__dispatch_text["dispatch_text"]
-        packages__dsl2coru__src__dsl2coru__schema_registry__validate_schemas["validate_schemas"]
-        packages__dsl2coru__src__dsl2coru__cli___handle_subcommand["_handle_subcommand"]
-        packages__dsl2coru__src__dsl2coru__serializer___serialize_auto["_serialize_auto"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__encode_protobuf["encode_protobuf"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_validate_schema["_cmd_validate_schema"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf["decode_protobuf"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_from_bytes["envelope_from_bytes"]
-        packages__dsl2coru__src__dsl2coru__cli___run_results["_run_results"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_ensure["_parse_ensure"]
-        packages__dsl2coru__src__dsl2coru__events__EventStore___append_pb["_append_pb"]
-        packages__dsl2coru__src__dsl2coru__codec__validate_payload["validate_payload"]
-        packages__dsl2coru__src__dsl2coru__bus___route_payload["_route_payload"]
-        packages__dsl2coru__src__dsl2coru__codegen__build_model_registry["build_model_registry"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__envelope_to_dict["envelope_to_dict"]
-        packages__dsl2coru__src__dsl2coru__codec__parse_text["parse_text"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope["dict_to_envelope"]
         packages__dsl2coru__src__dsl2coru__handlers__ui___ui_prompt_for_verb["_ui_prompt_for_verb"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_encode["_cmd_encode"]
-        packages__dsl2coru__src__dsl2coru__cli___cmd_roundtrip["_cmd_roundtrip"]
-        packages__dsl2coru__src__dsl2coru__cli___main_legacy["_main_legacy"]
-        packages__dsl2coru__src__dsl2coru__pb_codec___extract_auto["_extract_auto"]
-        packages__dsl2coru__src__dsl2coru__schema_registry___load_schemas["_load_schemas"]
-        packages__dsl2coru__src__dsl2coru__serializer___serialize_lane["_serialize_lane"]
-        packages__dsl2coru__src__dsl2coru__bus___dispatch_koru["_dispatch_koru"]
-        packages__dsl2coru__src__dsl2coru__handlers__runner__default_runner["default_runner"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_doctor["_parse_doctor"]
-        packages__dsl2coru__src__dsl2coru__pb_codec__encode_result_protobuf["encode_result_protobuf"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_to_bytes["envelope_to_bytes"]
-        packages__dsl2coru__src__dsl2coru__schema_registry__schema_for_verb["schema_for_verb"]
-        packages__dsl2coru__src__dsl2coru__codegen___python_type["_python_type"]
-        packages__dsl2coru__src__dsl2coru__codec__envelope_to_json["envelope_to_json"]
+        packages__dsl2coru__src__dsl2coru__bus___route_payload["_route_payload"]
+        packages__dsl2coru__src__dsl2coru__cli__main["main"]
+        packages__dsl2coru__src__dsl2coru__serializer___serialize_calibration["_serialize_calibration"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_ui_nl["_parse_ui_nl"]
         packages__dsl2coru__src__dsl2coru__serializer__to_text["to_text"]
-        packages__dsl2coru__src__dsl2coru__parser___parse_ui_common["_parse_ui_common"]
-        packages__dsl2coru__src__dsl2coru__pb_codec___set_body["_set_body"]
-        packages__dsl2coru__src__dsl2coru__events__EventStore___append_jsonl["_append_jsonl"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_exec["_cmd_exec"]
+        packages__dsl2coru__src__dsl2coru__parser__parse_line["parse_line"]
         packages__dsl2coru__src__dsl2coru__serializer___serialize_repair_run["_serialize_repair_run"]
+        packages__dsl2coru__src__dsl2coru__cli___main_subcommand["_main_subcommand"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_ui_click["_parse_ui_click"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_ui_common["_parse_ui_common"]
+        packages__dsl2coru__src__dsl2coru__handlers__query__run_query["run_query"]
+        packages__dsl2coru__src__dsl2coru__pb_codec___set_body["_set_body"]
+        packages__dsl2coru__src__dsl2coru__cli___run_results["_run_results"]
+        packages__dsl2coru__src__dsl2coru__handlers__command__run_command["run_command"]
+        packages__dsl2coru__src__dsl2coru__handlers__ui___build_ui_result["_build_ui_result"]
+        packages__dsl2coru__src__dsl2coru__parser___ui_args["_ui_args"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__dict_to_envelope["dict_to_envelope"]
+        packages__dsl2coru__src__dsl2coru__bus__execute_dsl["execute_dsl"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_chat["_parse_chat"]
+        packages__dsl2coru__src__dsl2coru__parser___split_command["_split_command"]
+        packages__dsl2coru__src__dsl2coru__schema_registry__validate_schemas["validate_schemas"]
+        packages__dsl2coru__src__dsl2coru__schema_registry__normalize_verb["normalize_verb"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_decode["_cmd_decode"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__decode_protobuf["decode_protobuf"]
+        packages__dsl2coru__src__dsl2coru__pb_codec___extract_auto["_extract_auto"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_doctor["_parse_doctor"]
+        packages__dsl2coru__src__dsl2coru__codegen___python_type["_python_type"]
+        packages__dsl2coru__src__dsl2coru__serializer___append_flag["_append_flag"]
+        packages__dsl2coru__src__dsl2coru__handlers__argv__to_cli_args["to_cli_args"]
+        packages__dsl2coru__src__dsl2coru__codec__envelope_from_json["envelope_from_json"]
+        packages__dsl2coru__src__dsl2coru__bus__dispatch_text["dispatch_text"]
+        packages__dsl2coru__src__dsl2coru__codec__roundtrip_text["roundtrip_text"]
+        packages__dsl2coru__src__dsl2coru__bus__dispatch["dispatch"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_ui_key["_parse_ui_key"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_validate_schema["_cmd_validate_schema"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_auto["_parse_auto"]
+        packages__dsl2coru__src__dsl2coru__events__EventStore___append_pb["_append_pb"]
+        packages__dsl2coru__src__dsl2coru__handlers__ui___ensure_imgl_available["_ensure_imgl_available"]
+        packages__dsl2coru__src__dsl2coru__codegen__build_model_registry["build_model_registry"]
+        packages__dsl2coru__src__dsl2coru__cli___build_subcommand_parser["_build_subcommand_parser"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_replay["_cmd_replay"]
+        packages__dsl2coru__src__dsl2coru__serializer___serialize_chat["_serialize_chat"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_env["_parse_env"]
+        packages__dsl2coru__src__dsl2coru__schema_registry___load_schemas["_load_schemas"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__result_to_pb["result_to_pb"]
+        packages__dsl2coru__src__dsl2coru__pb_codec__encode_result_protobuf["encode_result_protobuf"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_roundtrip["_cmd_roundtrip"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_sync["_parse_sync"]
+        packages__dsl2coru__src__dsl2coru__cli___cmd_run["_cmd_run"]
+        packages__dsl2coru__src__dsl2coru__serializer___serialize_lane["_serialize_lane"]
+        packages__dsl2coru__src__dsl2coru__parser___flag["_flag"]
+        packages__dsl2coru__src__dsl2coru__bus___dispatch_koru["_dispatch_koru"]
+        packages__dsl2coru__src__dsl2coru__codec__parse_text["parse_text"]
+        packages__dsl2coru__src__dsl2coru__serializer___serialize_text["_serialize_text"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_status["_parse_status"]
+        packages__dsl2coru__src__dsl2coru__parser___parse_ui_type["_parse_ui_type"]
     end
     subgraph packages__dsl2koru
-        packages__dsl2koru__src__dsl2koru__cli___main_subcommand["_main_subcommand"]
-        packages__dsl2koru__src__dsl2koru__cli___cmd_run["_cmd_run"]
-        packages__dsl2koru__src__dsl2koru__pb_codec__encode_result_protobuf["encode_result_protobuf"]
-        packages__dsl2koru__src__dsl2koru__bus__execute_dsl_line["execute_dsl_line"]
-        packages__dsl2koru__src__dsl2koru__codegen__main["main"]
-        packages__dsl2koru__src__dsl2koru__cli___cmd_validate_schema["_cmd_validate_schema"]
-        packages__dsl2koru__src__dsl2koru__schema_registry__schema_for_verb["schema_for_verb"]
-        packages__dsl2koru__src__dsl2koru__codegen__render_models_module["render_models_module"]
-        packages__dsl2koru__src__dsl2koru__handlers__run_command["run_command"]
-        packages__dsl2koru__src__dsl2koru__codegen__validate_payload["validate_payload"]
-        packages__dsl2koru__src__dsl2koru__pb_codec__result_to_pb["result_to_pb"]
-        packages__dsl2koru__src__dsl2koru__grammar__to_text["to_text"]
-        packages__dsl2koru__src__dsl2koru__cli___cmd_replay["_cmd_replay"]
-        packages__dsl2koru__src__dsl2koru__handlers___query_lane_status["_query_lane_status"]
-        packages__dsl2koru__src__dsl2koru__handlers___resolve["_resolve"]
-        packages__dsl2koru__src__dsl2koru__pb_codec__encode_protobuf["encode_protobuf"]
         packages__dsl2koru__src__dsl2koru__cli___cmd_decode["_cmd_decode"]
-        packages__dsl2koru__src__dsl2koru__grammar___parse_resolve["_parse_resolve"]
-        packages__dsl2koru__src__dsl2koru__pb_codec__encode_text_to_protobuf["encode_text_to_protobuf"]
-        packages__dsl2koru__src__dsl2koru__codegen___python_type["_python_type"]
-        packages__dsl2koru__src__dsl2koru__grammar__parse_line["parse_line"]
-        packages__dsl2koru__src__dsl2koru__cli__main["main"]
-        packages__dsl2koru__src__dsl2koru__codec__envelope_to_json["envelope_to_json"]
-        packages__dsl2koru__src__dsl2koru__cli___main_legacy["_main_legacy"]
-        packages__dsl2koru__src__dsl2koru__codec__validate_payload["validate_payload"]
-        packages__dsl2koru__src__dsl2koru__schema_registry__validate_schemas["validate_schemas"]
-        packages__dsl2koru__src__dsl2koru__schema_registry___load_schemas["_load_schemas"]
-        packages__dsl2koru__src__dsl2koru__cli___run_results["_run_results"]
-        packages__dsl2koru__src__dsl2koru__handlers___repair_run["_repair_run"]
-        packages__dsl2koru__src__dsl2koru__handlers___query_repair_history["_query_repair_history"]
-        packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes["envelope_from_bytes"]
-        packages__dsl2koru__src__dsl2koru__codec__envelope_from_json["envelope_from_json"]
+        packages__dsl2koru__src__dsl2koru__grammar___parse_query_repair_history["_parse_query_repair_history"]
+        packages__dsl2koru__src__dsl2koru__codegen__build_model_registry["build_model_registry"]
         packages__dsl2koru__src__dsl2koru__pb_codec__envelope_to_dict["envelope_to_dict"]
-        packages__dsl2koru__src__dsl2koru__grammar___parse_repair_run["_parse_repair_run"]
-        packages__dsl2koru__src__dsl2koru__events__EventStore__append_command["append_command"]
-        packages__dsl2koru__src__dsl2koru__codec__parse_text["parse_text"]
-        packages__dsl2koru__src__dsl2koru__schema_registry__all_verbs["all_verbs"]
-        packages__dsl2koru__src__dsl2koru__codec__roundtrip_text["roundtrip_text"]
-        packages__dsl2koru__src__dsl2koru__bus__execute_dsl["execute_dsl"]
-        packages__dsl2koru__src__dsl2koru__pb_codec___set_body["_set_body"]
-        packages__dsl2koru__src__dsl2koru__cli___cmd_roundtrip["_cmd_roundtrip"]
-        packages__dsl2koru__src__dsl2koru__grammar___parse_validate_lane["_parse_validate_lane"]
-        packages__dsl2koru__src__dsl2koru__codec__envelope_to_bytes["envelope_to_bytes"]
-        packages__dsl2koru__src__dsl2koru__handlers___validate_lane["_validate_lane"]
-        packages__dsl2koru__src__dsl2koru__bus__dispatch["dispatch"]
         packages__dsl2koru__src__dsl2koru__grammar___flag["_flag"]
         packages__dsl2koru__src__dsl2koru__pb_codec__decode_protobuf["decode_protobuf"]
-        packages__dsl2koru__src__dsl2koru__grammar___parse_query_repair_history["_parse_query_repair_history"]
-        packages__dsl2koru__src__dsl2koru__pb_codec__decode_protobuf_to_text["decode_protobuf_to_text"]
+        packages__dsl2koru__src__dsl2koru__handlers___query_repair_history["_query_repair_history"]
+        packages__dsl2koru__src__dsl2koru__codec__validate_payload["validate_payload"]
+        packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes["envelope_from_bytes"]
+        packages__dsl2koru__src__dsl2koru__schema_registry__schema_for_verb["schema_for_verb"]
+        packages__dsl2koru__src__dsl2koru__pb_codec___set_body["_set_body"]
+        packages__dsl2koru__src__dsl2koru__grammar___parse_validate_lane["_parse_validate_lane"]
+        packages__dsl2koru__src__dsl2koru__handlers__run_command["run_command"]
+        packages__dsl2koru__src__dsl2koru__pb_codec__encode_result_protobuf["encode_result_protobuf"]
         packages__dsl2koru__src__dsl2koru__cli___cmd_encode["_cmd_encode"]
-        packages__dsl2koru__src__dsl2koru__codegen__build_model_registry["build_model_registry"]
+        packages__dsl2koru__src__dsl2koru__codec__parse_text["parse_text"]
+        packages__dsl2koru__src__dsl2koru__pb_codec__decode_protobuf_to_text["decode_protobuf_to_text"]
+        packages__dsl2koru__src__dsl2koru__codec__roundtrip_text["roundtrip_text"]
         packages__dsl2koru__src__dsl2koru__grammar___parse_query_lane_status["_parse_query_lane_status"]
+        packages__dsl2koru__src__dsl2koru__codegen__main["main"]
+        packages__dsl2koru__src__dsl2koru__codegen__validate_payload["validate_payload"]
+        packages__dsl2koru__src__dsl2koru__cli___cmd_validate_schema["_cmd_validate_schema"]
+        packages__dsl2koru__src__dsl2koru__grammar__to_text["to_text"]
+        packages__dsl2koru__src__dsl2koru__codegen___python_type["_python_type"]
+        packages__dsl2koru__src__dsl2koru__codec__envelope_from_json["envelope_from_json"]
         packages__dsl2koru__src__dsl2koru__handlers__run_query["run_query"]
+        packages__dsl2koru__src__dsl2koru__handlers___query_lane_status["_query_lane_status"]
+        packages__dsl2koru__src__dsl2koru__events__EventStore__append_command["append_command"]
+        packages__dsl2koru__src__dsl2koru__cli___cmd_replay["_cmd_replay"]
+        packages__dsl2koru__src__dsl2koru__cli___main_legacy["_main_legacy"]
+        packages__dsl2koru__src__dsl2koru__handlers___repair_run["_repair_run"]
+        packages__dsl2koru__src__dsl2koru__cli___run_results["_run_results"]
+        packages__dsl2koru__src__dsl2koru__grammar__parse_line["parse_line"]
+        packages__dsl2koru__src__dsl2koru__cli___main_subcommand["_main_subcommand"]
+        packages__dsl2koru__src__dsl2koru__pb_codec__encode_text_to_protobuf["encode_text_to_protobuf"]
+        packages__dsl2koru__src__dsl2koru__bus__dispatch["dispatch"]
+        packages__dsl2koru__src__dsl2koru__cli__main["main"]
+        packages__dsl2koru__src__dsl2koru__schema_registry__validate_schemas["validate_schemas"]
+        packages__dsl2koru__src__dsl2koru__bus__execute_dsl["execute_dsl"]
+        packages__dsl2koru__src__dsl2koru__pb_codec__result_to_pb["result_to_pb"]
+        packages__dsl2koru__src__dsl2koru__codegen__render_models_module["render_models_module"]
+        packages__dsl2koru__src__dsl2koru__grammar___parse_resolve["_parse_resolve"]
+        packages__dsl2koru__src__dsl2koru__handlers___resolve["_resolve"]
+        packages__dsl2koru__src__dsl2koru__bus__execute_dsl_line["execute_dsl_line"]
+        packages__dsl2koru__src__dsl2koru__schema_registry___load_schemas["_load_schemas"]
+        packages__dsl2koru__src__dsl2koru__cli___cmd_roundtrip["_cmd_roundtrip"]
+        packages__dsl2koru__src__dsl2koru__handlers___validate_lane["_validate_lane"]
+        packages__dsl2koru__src__dsl2koru__schema_registry__all_verbs["all_verbs"]
+        packages__dsl2koru__src__dsl2koru__grammar___parse_repair_run["_parse_repair_run"]
+        packages__dsl2koru__src__dsl2koru__pb_codec__encode_protobuf["encode_protobuf"]
+        packages__dsl2koru__src__dsl2koru__cli___cmd_run["_cmd_run"]
+        packages__dsl2koru__src__dsl2koru__codec__envelope_to_bytes["envelope_to_bytes"]
+        packages__dsl2koru__src__dsl2koru__codec__envelope_to_json["envelope_to_json"]
     end
     subgraph packages__koruenv
-        packages__koruenv__src__koruenv__lane__validate_instance["validate_instance"]
-        packages__koruenv__src__koruenv__cli___run_with_overlay["_run_with_overlay"]
-        packages__koruenv__src__koruenv__cli___iso_ts["_iso_ts"]
-        packages__koruenv__src__koruenv__cli___emit_log["_emit_log"]
-        packages__koruenv__src__koruenv__lane__validate_ide["validate_ide"]
-        packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os["resolve_lane_socket_for_os"]
-        packages__koruenv__src__koruenv__lane__build_lane_environ["build_lane_environ"]
-        packages__koruenv__src__koruenv__cli__main["main"]
         packages__koruenv__src__koruenv__cli___strip_double_dash["_strip_double_dash"]
-        packages__koruenv__src__koruenv__lane___fallback_temp_dir["_fallback_temp_dir"]
+        packages__koruenv__src__koruenv__cli___run_with_overlay["_run_with_overlay"]
+        packages__koruenv__src__koruenv__cli__main["main"]
+        packages__koruenv__src__koruenv__cli___emit_log["_emit_log"]
         packages__koruenv__src__koruenv__cli___normalize_log_format["_normalize_log_format"]
+        packages__koruenv__src__koruenv__cli___iso_ts["_iso_ts"]
+        packages__koruenv__src__koruenv__lane__build_lane_environ["build_lane_environ"]
+        packages__koruenv__src__koruenv__lane___fallback_temp_dir["_fallback_temp_dir"]
+        packages__koruenv__src__koruenv__lane__resolve_lane_socket_for_os["resolve_lane_socket_for_os"]
         packages__koruenv__src__koruenv__lane__resolve_lane_socket["resolve_lane_socket"]
+        packages__koruenv__src__koruenv__lane__validate_ide["validate_ide"]
+        packages__koruenv__src__koruenv__lane__validate_instance["validate_instance"]
     end
     subgraph packages__mcp2coru
         packages__mcp2coru__src__mcp2coru__server__create_server["create_server"]
-        packages__mcp2coru__src__mcp2coru__server__CoruMCPServer____post_init__["__post_init__"]
-        packages__mcp2coru__src__mcp2coru__tools__coru_run_dsl["coru_run_dsl"]
-        packages__mcp2coru__src__mcp2coru__tools__coru_run_command_pb["coru_run_command_pb"]
-        packages__mcp2coru__src__mcp2coru__tools__coru_to_dsl["coru_to_dsl"]
         packages__mcp2coru__src__mcp2coru__server___require_fastmcp["_require_fastmcp"]
-        packages__mcp2coru__src__mcp2coru__cli__main["main"]
+        packages__mcp2coru__src__mcp2coru__tools__coru_run_dsl["coru_run_dsl"]
+        packages__mcp2coru__src__mcp2coru__server__CoruMCPServer____post_init__["__post_init__"]
         packages__mcp2coru__src__mcp2coru__tools__coru_run_command["coru_run_command"]
+        packages__mcp2coru__src__mcp2coru__tools__coru_run_command_pb["coru_run_command_pb"]
+        packages__mcp2coru__src__mcp2coru__cli__main["main"]
+        packages__mcp2coru__src__mcp2coru__tools__coru_to_dsl["coru_to_dsl"]
         packages__mcp2coru__src__mcp2coru__server__run_server["run_server"]
     end
     subgraph packages__mcp2koru
-        packages__mcp2koru__src__mcp2koru__tools__koru_run_dsl["koru_run_dsl"]
-        packages__mcp2koru__src__mcp2koru__tools__koru_run_command_pb["koru_run_command_pb"]
-        packages__mcp2koru__src__mcp2koru__server__create_server["create_server"]
-        packages__mcp2koru__src__mcp2koru__server__run_server["run_server"]
-        packages__mcp2koru__src__mcp2koru__tools__koru_run_command["koru_run_command"]
-        packages__mcp2koru__src__mcp2koru__tools__koru_to_dsl["koru_to_dsl"]
         packages__mcp2koru__src__mcp2koru__server__KoruMCPServer____post_init__["__post_init__"]
+        packages__mcp2koru__src__mcp2koru__tools__koru_run_command_pb["koru_run_command_pb"]
+        packages__mcp2koru__src__mcp2koru__tools__koru_run_dsl["koru_run_dsl"]
+        packages__mcp2koru__src__mcp2koru__server__run_server["run_server"]
+        packages__mcp2koru__src__mcp2koru__server__create_server["create_server"]
         packages__mcp2koru__src__mcp2koru__cli__main["main"]
+        packages__mcp2koru__src__mcp2koru__tools__koru_to_dsl["koru_to_dsl"]
+        packages__mcp2koru__src__mcp2koru__tools__koru_run_command["koru_run_command"]
     end
     subgraph packages__nlp2coru
+        packages__nlp2coru__src__nlp2coru__heuristic___resolve_heuristic_action["_resolve_heuristic_action"]
+        packages__nlp2coru__src__nlp2coru__control__dispatch_line["dispatch_line"]
+        packages__nlp2coru__src__nlp2coru__openrouter_config__setup_openrouter_env["setup_openrouter_env"]
+        packages__nlp2coru__src__nlp2coru__openrouter_config__should_use_ollama_fallback["should_use_ollama_fallback"]
+        packages__nlp2coru__src__nlp2coru__heuristic___heuristic_intent["_heuristic_intent"]
+        packages__nlp2coru__src__nlp2coru__openrouter_config__load_project_metadata["load_project_metadata"]
+        packages__nlp2coru__src__nlp2coru__openrouter_config__get_fallback_model["get_fallback_model"]
         packages__nlp2coru__src__nlp2coru__heuristic___refactor_intent["_refactor_intent"]
+        packages__nlp2coru__src__nlp2coru__heuristic___contains_any["_contains_any"]
+        packages__nlp2coru__src__nlp2coru__rewrite__rewrite_chat_prompt["rewrite_chat_prompt"]
+        packages__nlp2coru__src__nlp2coru__llm_backend__LitellmBackend__complete["complete"]
+        packages__nlp2coru__src__nlp2coru__cli___emit["_emit"]
+        packages__nlp2coru__src__nlp2coru__llm___parse_llm_json["_parse_llm_json"]
+        packages__nlp2coru__src__nlp2coru__apply__apply_prompt["apply_prompt"]
+        packages__nlp2coru__src__nlp2coru__openrouter_config__get_ollama_base_url["get_ollama_base_url"]
+        packages__nlp2coru__src__nlp2coru__openrouter_config__get_openrouter_headers["get_openrouter_headers"]
+        packages__nlp2coru__src__nlp2coru__control__is_dsl2koru_line["is_dsl2koru_line"]
         packages__nlp2coru__src__nlp2coru__heuristic__heuristic_plan["heuristic_plan"]
         packages__nlp2coru__src__nlp2coru__heuristic__to_dsl_lines["to_dsl_lines"]
-        packages__nlp2coru__src__nlp2coru__openrouter_config__get_fallback_model["get_fallback_model"]
-        packages__nlp2coru__src__nlp2coru__heuristic___contains_any["_contains_any"]
-        packages__nlp2coru__src__nlp2coru__cli___emit["_emit"]
-        packages__nlp2coru__src__nlp2coru__heuristic__detect_setup_intent["detect_setup_intent"]
-        packages__nlp2coru__src__nlp2coru__llm__llm_plan["llm_plan"]
-        packages__nlp2coru__src__nlp2coru__control__dispatch_line["dispatch_line"]
-        packages__nlp2coru__src__nlp2coru__apply__apply_prompt["apply_prompt"]
-        packages__nlp2coru__src__nlp2coru__openrouter_config__should_use_ollama_fallback["should_use_ollama_fallback"]
-        packages__nlp2coru__src__nlp2coru__openrouter_config__load_project_metadata["load_project_metadata"]
-        packages__nlp2coru__src__nlp2coru__llm_backend__LitellmBackend__complete["complete"]
-        packages__nlp2coru__src__nlp2coru__openrouter_config__setup_openrouter_env["setup_openrouter_env"]
-        packages__nlp2coru__src__nlp2coru__openrouter_config__get_openrouter_headers["get_openrouter_headers"]
-        packages__nlp2coru__src__nlp2coru__llm_backend__get_backend["get_backend"]
-        packages__nlp2coru__src__nlp2coru__rewrite__rewrite_chat_prompt["rewrite_chat_prompt"]
         packages__nlp2coru__src__nlp2coru__heuristic___parse_lane_mentions["_parse_lane_mentions"]
+        packages__nlp2coru__src__nlp2coru__llm_backend__get_backend["get_backend"]
+        packages__nlp2coru__src__nlp2coru__heuristic__detect_setup_intent["detect_setup_intent"]
         packages__nlp2coru__src__nlp2coru__apply___execute_line["_execute_line"]
         packages__nlp2coru__src__nlp2coru__to_dsl__to_dsl["to_dsl"]
-        packages__nlp2coru__src__nlp2coru__openrouter_config__get_ollama_base_url["get_ollama_base_url"]
-        packages__nlp2coru__src__nlp2coru__heuristic___resolve_heuristic_action["_resolve_heuristic_action"]
-        packages__nlp2coru__src__nlp2coru__control__is_dsl2koru_line["is_dsl2koru_line"]
-        packages__nlp2coru__src__nlp2coru__heuristic___heuristic_intent["_heuristic_intent"]
-        packages__nlp2coru__src__nlp2coru__llm___parse_llm_json["_parse_llm_json"]
+        packages__nlp2coru__src__nlp2coru__llm__llm_plan["llm_plan"]
     end
     subgraph packages__nlpshim
-        packages__nlpshim__src__nlpshim__client___intent_ir_steps["_intent_ir_steps"]
-        packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent["parse_intent"]
-        packages__nlpshim__src__nlpshim__client__analyze_text_structure["analyze_text_structure"]
-        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message["message"]
-        packages__nlpshim__src__nlpshim__client___workflow_steps_from_client["_workflow_steps_from_client"]
-        packages__nlpshim__src__nlpshim__client___use_intent_ir["_use_intent_ir"]
-        packages__nlpshim__src__nlpshim__client__NLPBridgeClient____init__["__init__"]
-        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__export_trace["export_trace"]
-        packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step["parse_conversation_step"]
-        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient____init__["__init__"]
         packages__nlpshim__src__nlpshim__conversation_test_api__complete_missing_fields["complete_missing_fields"]
         packages__nlpshim__src__nlpshim__client__get_nlp2dsl_client["get_nlp2dsl_client"]
+        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message["message"]
+        packages__nlpshim__src__nlpshim__client___use_intent_ir["_use_intent_ir"]
+        packages__nlpshim__src__nlpshim__client__NLPBridgeClient__parse_intent["parse_intent"]
+        packages__nlpshim__src__nlpshim__client___intent_ir_steps["_intent_ir_steps"]
+        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient____init__["__init__"]
+        packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__export_trace["export_trace"]
         packages__nlpshim__src__nlpshim__control__to_dsl["to_dsl"]
+        packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step["parse_conversation_step"]
+        packages__nlpshim__src__nlpshim__client___workflow_steps_from_client["_workflow_steps_from_client"]
+        packages__nlpshim__src__nlpshim__client__analyze_text_structure["analyze_text_structure"]
+        packages__nlpshim__src__nlpshim__client__NLPBridgeClient____init__["__init__"]
     end
     subgraph packages__uri2coru
-        packages__uri2coru__src__uri2coru__uri__is_coru_uri["is_coru_uri"]
-        packages__uri2coru__src__uri2coru__uri___decode["_decode"]
-        packages__uri2coru__src__uri2coru__uri__parse_coru_uri["parse_coru_uri"]
-        packages__uri2coru__src__uri2coru__decode__uri_to_dsl["uri_to_dsl"]
-        packages__uri2coru__src__uri2coru__uri__uri_for_cmd["uri_for_cmd"]
-        packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri["nlp2uri"]
-        packages__uri2coru__src__uri2coru__uri___encode["_encode"]
-        packages__uri2coru__src__uri2coru__run__run_uri["run_uri"]
-        packages__uri2coru__src__uri2coru__nlp2uri__best_uri["best_uri"]
         packages__uri2coru__src__uri2coru__uri__uri_for_block["uri_for_block"]
+        packages__uri2coru__src__uri2coru__decode__uri_to_dsl["uri_to_dsl"]
+        packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri["nlp2uri"]
+        packages__uri2coru__src__uri2coru__uri__is_coru_uri["is_coru_uri"]
+        packages__uri2coru__src__uri2coru__nlp2uri__best_uri["best_uri"]
+        packages__uri2coru__src__uri2coru__run__run_uri["run_uri"]
+        packages__uri2coru__src__uri2coru__uri___decode["_decode"]
+        packages__uri2coru__src__uri2coru__uri__uri_for_cmd["uri_for_cmd"]
+        packages__uri2coru__src__uri2coru__uri___encode["_encode"]
+        packages__uri2coru__src__uri2coru__uri__parse_coru_uri["parse_coru_uri"]
     end
     subgraph packages__uri2koru
-        packages__uri2koru__src__uri2koru__decode___block_uri_to_dsl["_block_uri_to_dsl"]
-        packages__uri2koru__src__uri2koru__run__run_uri["run_uri"]
+        packages__uri2koru__src__uri2koru__uri___decode["_decode"]
+        packages__uri2koru__src__uri2koru__nlp2uri__nlp2uri["nlp2uri"]
+        packages__uri2koru__src__uri2koru__decode___cmd_uri_to_dsl["_cmd_uri_to_dsl"]
+        packages__uri2koru__src__uri2koru__uri__is_koru_uri["is_koru_uri"]
         packages__uri2koru__src__uri2koru__uri__uri_for_cmd["uri_for_cmd"]
         packages__uri2koru__src__uri2koru__uri__parse_koru_uri["parse_koru_uri"]
-        packages__uri2koru__src__uri2koru__uri__is_koru_uri["is_koru_uri"]
-        packages__uri2koru__src__uri2koru__decode__uri_to_dsl["uri_to_dsl"]
+        packages__uri2koru__src__uri2koru__decode___block_uri_to_dsl["_block_uri_to_dsl"]
         packages__uri2koru__src__uri2koru__uri__uri_for_block["uri_for_block"]
-        packages__uri2koru__src__uri2koru__decode___cmd_uri_to_dsl["_cmd_uri_to_dsl"]
-        packages__uri2koru__src__uri2koru__nlp2uri__best_uri["best_uri"]
-        packages__uri2koru__src__uri2koru__uri___decode["_decode"]
+        packages__uri2koru__src__uri2koru__run__run_uri["run_uri"]
+        packages__uri2koru__src__uri2koru__decode__uri_to_dsl["uri_to_dsl"]
         packages__uri2koru__src__uri2koru__uri___encode["_encode"]
-        packages__uri2koru__src__uri2koru__nlp2uri__nlp2uri["nlp2uri"]
+        packages__uri2koru__src__uri2koru__nlp2uri__best_uri["best_uri"]
+    end
+    subgraph plugins__koru_autopilot_shared
+        plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next["next"]
     end
     subgraph project
         project__print["print"]
     end
     subgraph src__koru
-        src__koru__wizard__gui__static__wizard__list["list"]
+        src__koru__autonomy__operator__operator_runtime__normalize_project_root["normalize_project_root"]
         src__koru__integrations__imgl_client__imgl_available["imgl_available"]
+        src__koru__wizard__gui__static__wizard__list["list"]
+        src__koru__autonomy__operator__operator_runtime__projects_equivalent["projects_equivalent"]
         src__koru__integrations__imgl_client__imgl_missing_message["imgl_missing_message"]
     end
     subgraph src__koruide
+        src__koruide__plugin_installer___repo_root["_repo_root"]
+        src__koruide__ide__detect_terminal_host_context["detect_terminal_host_context"]
         src__koruide__ide__detect_running_ides["detect_running_ides"]
     end
     packages__dsl2koru__src__dsl2koru__bus__dispatch --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes
@@ -663,11 +678,11 @@ flowchart LR
     packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight --> packages__coru__src__coru__cli_calibration___materialize_calibration_desktop_oql
     packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight --> packages__coru__src__coru__cli_calibration___testql_run_oql
     packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight --> packages__coru__src__coru__cli_calibration___format_calibration_desktop_report
-    packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli_calibration___run_calibration_desktop_preflight --> src__koruide__plugin_installer___repo_root
     packages__coru__src__coru__cli_calibration___run_calibration_bridge_preflight --> packages__coru__src__coru__cli_calibration___write_calibration_bridge_testql
     packages__coru__src__coru__cli_calibration___run_calibration_bridge_preflight --> packages__coru__src__coru__cli_calibration___testql_run_scenario
     packages__coru__src__coru__cli_calibration___run_calibration_bridge_preflight --> packages__coru__src__coru__cli_calibration___format_calibration_bridge_report
-    packages__coru__src__coru__cli_calibration___run_calibration_bridge_preflight --> packages__coru__src__coru__cli___repo_root
+    packages__coru__src__coru__cli_calibration___run_calibration_bridge_preflight --> src__koruide__plugin_installer___repo_root
     packages__coru__src__coru__cli_calibration___lane_drive_capture --> packages__coru__src__coru__cli___koru_exec_argv
     packages__coru__src__coru__cli_calibration___lane_drive_capture --> packages__coru__src__coru__cli___lane_subprocess_env
     packages__coru__src__coru__cli_calibration___lane_drive_capture --> project__print
@@ -677,7 +692,7 @@ flowchart LR
     packages__coru__src__coru__cli_calibration___format_calibration_probe_report --> packages__coru__src__coru__cli_calibration___probe_report_header_lines
     packages__coru__src__coru__cli_calibration___format_calibration_probe_report --> packages__coru__src__coru__cli_calibration___probe_report_unverified_hint
     packages__coru__src__coru__cli_calibration___resolve_calibration_lane --> packages__coru__src__coru__cli___print_terminal_context
-    packages__coru__src__coru__cli_calibration___resolve_calibration_lane --> packages__coru__src__coru__cli___terminal_shell_context
+    packages__coru__src__coru__cli_calibration___resolve_calibration_lane --> packages__coru__src__coru__cli_terminal___terminal_shell_context
     packages__coru__src__coru__cli_calibration___resolve_calibration_lane --> packages__coru__src__coru__cli___infer_default_instance
     packages__coru__src__coru__cli_calibration___resolve_calibration_lane --> project__print
     packages__coru__src__coru__cli_calibration___calibration_socket_fix --> project__print
@@ -705,52 +720,52 @@ flowchart LR
     packages__coru__src__coru__ecosystem___detect_running_plugin_ides --> src__koruide__ide__detect_running_ides
     packages__coru__src__coru__ecosystem__sync_ecosystem --> packages__coru__src__coru__ecosystem__sync_python_packages
     packages__coru__src__coru__ecosystem__sync_ecosystem --> packages__coru__src__coru__ecosystem___detect_running_plugin_ides
-    packages__coru__src__coru__cli___chain_project_from_plans --> packages__coru__src__coru__cli___project_from_argv
-    packages__coru__src__coru__cli___active_project_root --> packages__coru__src__coru__cli___repo_root
-    packages__coru__src__coru__cli___active_project_root --> packages__coru__src__coru__cli_checks___coru_normalize_project
-    packages__coru__src__coru__cli___current_log_format --> packages__coru__src__coru__cli___normalize_log_format
-    packages__coru__src__coru__cli___emit_log --> packages__coru__src__coru__cli___current_log_format
-    packages__coru__src__coru__cli___emit_log --> project__print
-    packages__coru__src__coru__cli___print_runtime_versions --> project__print
-    packages__coru__src__coru__cli___print_runtime_versions --> packages__coru__src__coru__cli___distribution_version
-    packages__coru__src__coru__cli___startup_mode --> project__print
-    packages__coru__src__coru__cli___autonomous_startup_chain --> packages__coru__src__coru__cli___resolve_defaults
-    packages__coru__src__coru__cli___print_autonomous_banner --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___print_autonomous_banner --> project__print
-    packages__coru__src__coru__cli___print_autonomous_banner --> packages__coru__src__coru__cli___print_runtime_versions
-    packages__coru__src__coru__cli___print_autonomous_banner --> packages__coru__src__coru__cli___print_troubleshooting_log_locations
-    packages__coru__src__coru__cli___enforce_runtime_readiness --> packages__coru__src__coru__cli___import_koru_readiness_module
-    packages__coru__src__coru__cli___enforce_runtime_readiness --> project__print
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___project_from_argv
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___agent_lane_from_auto_args
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___resolve_defaults
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___print_autonomous_banner
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___enforce_runtime_readiness
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___autonomous_startup_chain
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___execute_plans
-    packages__coru__src__coru__cli___run_default_autonomous --> packages__coru__src__coru__cli___repo_root
-    packages__coru__src__coru__cli___running_ide_choices --> src__koruide__ide__detect_running_ides
-    packages__coru__src__coru__cli___supervisor_project_choices --> packages__coru__src__coru__supervisor__registry__load_registry
-    packages__coru__src__coru__cli___supervisor_project_choices --> packages__coru__src__coru__supervisor__paths__registry_path
-    packages__coru__src__coru__cli___alive_daemon_instance --> packages__coru__src__coru__cli___runtime_metadata_roots
-    packages__coru__src__coru__cli___alive_daemon_instance --> packages__coru__src__coru__cli___instance_from_socket_path
-    packages__coru__src__coru__cli___alive_daemon_instance --> packages__coru__src__coru__cli___ide_from_instance
-    packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__cli___alive_daemon_instance
-    packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__cli___instance_matches_ide
-    packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__supervisor__registry__load_registry
-    packages__coru__src__coru__cli___instance_for_ide_choice --> packages__coru__src__coru__supervisor__paths__registry_path
-    packages__coru__src__coru__cli___choose_option --> project__print
-    packages__coru__src__coru__cli___interactive_select_agent_lane --> packages__coru__src__coru__cli___terminal_shell_context
-    packages__coru__src__coru__cli___interactive_select_agent_lane --> packages__coru__src__coru__cli___alive_daemon_ide
-    packages__coru__src__coru__cli___interactive_select_agent_lane --> packages__coru__src__coru__cli___infer_default_ide
-    packages__coru__src__coru__cli___interactive_select_agent_lane --> packages__coru__src__coru__cli___choose_option
-    packages__coru__src__coru__cli___interactive_select_agent_lane --> packages__coru__src__coru__cli___instance_for_ide_choice
-    packages__coru__src__coru__cli___interactive_select_agent_lane --> packages__coru__src__coru__cli___connected_daemon_instance
-    packages__coru__src__coru__cli___interactive_select_project_arg --> packages__coru__src__coru__cli___supervisor_project_choices
-    packages__coru__src__coru__cli___interactive_select_project_arg --> packages__coru__src__coru__cli___repo_root
-    packages__coru__src__coru__cli___interactive_select_project_arg --> packages__coru__src__coru__cli___choose_option
-    packages__coru__src__coru__cli___interactive_default_auto_args --> packages__coru__src__coru__cli___interactive_select_agent_lane
-    packages__coru__src__coru__cli___interactive_default_auto_args --> packages__coru__src__coru__cli___interactive_select_project_arg
-    packages__coru__src__coru__cli___interactive_default_auto_args --> packages__coru__src__coru__cli___running_ide_choices
-    packages__coru__src__coru__cli___extract_global_flags --> src__koru__wizard__gui__static__wizard__list
-    packages__coru__src__coru__cli___extract_global_flags --> packages__coru__src__coru__cli___normalize_log_format
+    packages__coru__src__coru__repair_registry__run_repair_pipeline --> packages__coru__src__coru__repair__service__run_repair_with_events
+    packages__coru__src__coru__cli_checks___trace --> project__print
+    packages__coru__src__coru__cli_checks___trace --> packages__coru__src__coru__cli_checks___trace_enabled
+    packages__coru__src__coru__cli_checks___coru_normalize_project --> src__koru__autonomy__operator__operator_runtime__normalize_project_root
+    packages__coru__src__coru__cli_checks___coru_projects_equivalent --> src__koru__autonomy__operator__operator_runtime__projects_equivalent
+    packages__coru__src__coru__cli_checks___coru_projects_equivalent --> packages__coru__src__coru__cli_checks___coru_normalize_project
+    packages__coru__src__coru__ide_detection___terminal_shell_context_fallback --> packages__coru__src__coru__ide_detection___vscode_term_program_context
+    packages__coru__src__coru__ide_detection___terminal_shell_context_fallback --> packages__coru__src__coru__ide_detection___cursor_shell_context
+    packages__coru__src__coru__ide_detection___terminal_shell_context_fallback --> packages__coru__src__coru__ide_detection___generic_term_program_context
+    packages__coru__src__coru__ide_detection__terminal_shell_context --> packages__coru__src__coru__ide_detection___terminal_shell_context_fallback
+    packages__coru__src__coru__ide_detection__terminal_shell_context --> src__koruide__ide__detect_terminal_host_context
+    packages__coru__src__coru__ide_detection__terminal_ide_hint --> packages__coru__src__coru__ide_detection__terminal_shell_context
+    packages__coru__src__coru__ide_detection__terminal_host_kind --> src__koruide__ide__detect_terminal_host_context
+    packages__coru__src__coru__cli_parser___register_lane_commands --> packages__coru__src__coru__cli_parser___add_lane_identifiers
+    packages__coru__src__coru__cli_parser___register_lane_commands --> packages__coru__src__coru__cli_parser___add_shell_argument
+    packages__coru__src__coru__cli_parser___register_operational_commands --> packages__coru__src__coru__cli_parser___add_lane_identifiers
+    packages__coru__src__coru__cli_parser___register_interaction_commands --> packages__coru__src__coru__cli_parser___add_shell_argument
+    packages__coru__src__coru__cli_parser___register_repair_command --> packages__coru__src__coru__cli_parser___add_lane_identifiers
+    packages__coru__src__coru__cli_parser___register_sync_command --> packages__coru__src__coru__cli_parser___add_lane_identifiers
+    packages__coru__src__coru__cli_parser___register_doctor_command --> packages__coru__src__coru__cli_parser___add_lane_identifiers
+    packages__coru__src__coru__cli_parser___build_parser --> packages__coru__src__coru__cli_parser___register_sync_command
+    packages__coru__src__coru__cli_parser___build_parser --> packages__coru__src__coru__cli_parser___register_lane_commands
+    packages__coru__src__coru__cli_parser___build_parser --> packages__coru__src__coru__cli_parser___register_operational_commands
+    packages__coru__src__coru__cli_parser___build_parser --> packages__coru__src__coru__cli_parser___register_interaction_commands
+    packages__coru__src__coru__cli_parser___build_parser --> packages__coru__src__coru__cli_calibration___register_calibration_command
+    packages__coru__src__coru__cli_terminal___terminal_ide_hint --> packages__coru__src__coru__cli_terminal___terminal_shell_context
+    packages__coru__src__coru__cli_terminal___terminal_shell_context --> packages__coru__src__coru__cli_terminal___terminal_shell_context_fallback
+    packages__coru__src__coru__cli_terminal___terminal_shell_context --> src__koruide__ide__detect_terminal_host_context
+    packages__coru__src__coru__control__dispatch_line --> packages__dsl2koru__src__dsl2koru__bus__dispatch
+    packages__coru__src__coru__control__dispatch_repair_history --> packages__coru__src__coru__control__dispatch_line
+    packages__coru__src__coru__control__dispatch_validate_lane --> packages__coru__src__coru__control__dispatch_line
+    packages__coru__src__coru__control__dispatch_status --> packages__coru__src__coru__control__dispatch_line
+    packages__coru__src__coru__control__apply_nl --> packages__nlp2coru__src__nlp2coru__apply__apply_prompt
+    packages__coru__src__coru__control__apply_nl --> project__print
+    packages__coru__src__coru__repair__runtime__run_lane_repair --> packages__coru__src__coru__cli___run_lane_repair
+    packages__coru__src__coru__repair__query__RepairHistoryQuery__cases --> packages__coru__src__coru__repair__projector__project_repair_cases
+    packages__coru__src__coru__repair__query__RepairHistoryQuery__cases_for_lane --> packages__coru__src__coru__repair__events__aggregate_id_for
+    packages__coru__src__coru__repair__query__RepairHistoryQuery__cases_for_lane --> packages__coru__src__coru__repair__projector__project_repair_cases
+    packages__coru__src__coru__repair__query__RepairHistoryQuery__format_llm --> packages__coru__src__coru__repair__projector__format_history_llm
+    packages__coru__src__coru__repair__projector__project_repair_cases --> packages__coru__src__coru__repair__projector___project_one_session
+    packages__coru__src__coru__repair__projector___project_one_session --> plugins__koru_autopilot_shared__src__bridge_focus_core__SharedAutopilotBridgeFocusCore__next
+    packages__coru__src__coru__repair__projector___project_one_session --> packages__coru__src__coru__repair__projector___extract_problem_codes
+    packages__coru__src__coru__repair__projector___project_one_session --> packages__coru__src__coru__repair__projector___extract_action_ids
+    packages__coru__src__coru__repair__projector___project_one_session --> packages__coru__src__coru__repair__projector___extract_resolved
+    packages__coru__src__coru__repair__projector___project_one_session --> packages__coru__src__coru__repair__registry__playbook_for_codes
+    packages__coru__src__coru__repair__projector__format_history_llm --> packages__coru__src__coru__repair__projector__format_case_llm
+    packages__coru__src__coru__repair__registry__playbook_for_codes --> packages__coru__src__coru__repair__registry__registry_steps_for_code
+    packages__coru__src__coru__repair__diagnostics__dedupe_problems --> packages__coru__src__coru__repair__diagnostics___dedupe_problems
+    packages__coru__src__coru__repair__diagnostics___collect_manage_issue_problems --> packages__coru__src__coru__repair__diagnostics___problem_from_manage_issue

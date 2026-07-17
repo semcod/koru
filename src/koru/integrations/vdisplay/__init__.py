@@ -11,4 +11,6 @@ Modules:
 * :mod:`koru.integrations.vdisplay.env_session` — prepare/session env flags
 * :mod:`koru.integrations.vdisplay.desktop_probe` — monitors / IDE surface preflight
 * :mod:`koru.integrations.vdisplay.surface_capture` — surface-registry capture confirm
+* :mod:`koru.integrations.vdisplay.control_policy` — drive/fallback env heuristics
+* :mod:`koru.integrations.vdisplay.window_focus` — xdotool/GNOME/Alt+Tab raise helpers
 """
