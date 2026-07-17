@@ -38,6 +38,7 @@ def _decode_subprocess_output(data: bytes | str | None) -> str:
         return data
 
     seen: set[str] = set()
+    candidates: list[str] = []
     for encoding in ("utf-8", locale.getpreferredencoding(False)):
         try:
             normalized = codecs.lookup(encoding).name
@@ -46,11 +47,13 @@ def _decode_subprocess_output(data: bytes | str | None) -> str:
         if normalized in seen:
             continue
         seen.add(normalized)
+        candidates.append(normalized)
         try:
             return data.decode(normalized)
         except UnicodeDecodeError:
             continue
-    return data.decode("utf-8", errors="replace")
+    fallback = candidates[-1] if candidates else "utf-8"
+    return data.decode(fallback, errors="replace")
 
 
 def _run_captured_subprocess(
@@ -60,7 +63,11 @@ def _run_captured_subprocess(
     env: dict[str, str] | None = None,
     shell: bool = False,
 ) -> subprocess.CompletedProcess[str]:
-    """Run a subprocess and decode captured streams robustly."""
+    """Run a subprocess and decode captured streams robustly.
+
+    ``command`` is usually ``list[str]`` for direct execution and ``str`` for
+    ``shell=True`` calls.
+    """
     result = subprocess.run(
         command,
         cwd=cwd,
