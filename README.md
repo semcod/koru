@@ -848,7 +848,13 @@ Supported executor kinds:
   OpenAI-compatible chat-completion endpoint (default OpenRouter),
   capture the assistant's text as the ticket's `stdout`, and store
   `llm_model` + token `usage` in the result-json. Configure via
-  `OPENROUTER_API_KEY` / `OPENAI_API_KEY` / `KORU_LLM_ENDPOINT`. See
+  `OPENROUTER_API_KEY` / `OPENAI_API_KEY` / `KORU_LLM_ENDPOINT`.
+  Set `inputs.include_project_context: true` to auto-attach the
+  repository file tree and common project files (Dockerfile, README,
+  koru.yaml, …) so the model can answer questions about the actual
+  project rather than making generic assumptions. Use
+  `inputs.context_files` or `inputs.context_globs` for fine-grained
+  control. Secrets and private keys are always excluded. See
   [`docs/cli-examples.md`](docs/cli-examples.md) for the full schema.
 - `executor.kind: human` — print the prompt and leave the task for
   an operator. With `--interactive`, koru collects the answer on

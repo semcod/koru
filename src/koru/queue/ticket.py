@@ -126,13 +126,22 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
     Returns None when the ticket lacks the minimum signal (a prompt to
     send), so the caller can fall back to ``planfile ticket block``
     with a ``--reason`` describing the missing input.
+
+    Context fields (all optional):
+      include_project_context – when truthy, auto-include file tree and
+        common project files (Dockerfile, README, koru.yaml, …).
+      context_files           – explicit list of file paths relative to the
+        project root to include verbatim.
+      context_globs           – glob patterns relative to the project root.
+      max_context_chars       – hard cap on assembled context size
+        (default 32 000 characters).
     """
     inputs = ticket.get("inputs") or {}
     executor = ticket.get("executor") or {}
     prompt = inputs.get("prompt") or ticket.get("description") or ticket.get("name")
     if not prompt:
         return None
-    return {
+    request: dict[str, Any] = {
         "endpoint": inputs.get("llm_endpoint") or executor.get("handler"),
         "model": inputs.get("llm_model"),
         "prompt": str(prompt),
@@ -142,6 +151,20 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
         "response_schema": inputs.get("response_schema"),
         "timeout_seconds": inputs.get("llm_timeout_seconds") or 60.0,
     }
+    # Context assembly inputs — passed through for the runner to act on.
+    if inputs.get("include_project_context"):
+        request["include_project_context"] = True
+    if inputs.get("context_files"):
+        request["context_files"] = list(inputs["context_files"])
+    if inputs.get("context_globs"):
+        request["context_globs"] = list(inputs["context_globs"])
+    if inputs.get("max_context_chars") is not None:
+        request["max_context_chars"] = int(inputs["max_context_chars"])
+    # ticket.files — files listed on the ticket itself are passed for context
+    ticket_files = ticket.get("files")
+    if ticket_files:
+        request["ticket_files"] = list(ticket_files)
+    return request
 
 
 def ticket_api_request(ticket: dict) -> dict[str, Any] | None:

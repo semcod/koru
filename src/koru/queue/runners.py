@@ -209,6 +209,25 @@ def _build_llm_messages(request: dict[str, Any]) -> list[dict[str, str]]:
     system = request.get("system_prompt")
     if system:
         messages.append({"role": "system", "content": str(system)})
+
+    context_text = request.get("context_text")
+    if context_text:
+        context_metadata = request.get("context_metadata") or {}
+        included = context_metadata.get("included_files") or []
+        truncated = context_metadata.get("truncated", False)
+        meta_lines = []
+        if included:
+            meta_lines.append(f"Included files: {', '.join(included)}")
+        if truncated:
+            total = context_metadata.get("total_chars", 0)
+            shown_chars = len(context_text)
+            meta_lines.append(f"[Context truncated: showing {shown_chars} of {total} chars]")
+        meta_note = ("\n" + "\n".join(meta_lines)) if meta_lines else ""
+        context_block = (
+            f"<project_context>{meta_note}\n\n{context_text}\n</project_context>"
+        )
+        messages.append({"role": "user", "content": context_block})
+
     messages.append({"role": "user", "content": str(request["prompt"])})
     return messages
 

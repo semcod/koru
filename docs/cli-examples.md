@@ -546,6 +546,68 @@ Supported `inputs.*` fields:
 | `llm_temperature` | `0.0` | Determinism (0 = greedy) |
 | `response_schema` | – | JSON Schema → forces structured JSON output |
 | `llm_timeout_seconds` | `60.0` | Per-call timeout |
+| `include_project_context` | `false` | Auto-attach file tree + common project files (Dockerfile, README, koru.yaml, …) |
+| `context_files` | – | Explicit list of file paths (relative to project root) to include verbatim |
+| `context_globs` | – | Glob patterns (e.g. `["src/**/*.py"]`) to include matching files |
+| `max_context_chars` | `32000` | Hard cap on assembled context size (characters) |
+
+#### Project context
+
+When `include_project_context: true` (or `context_files`/`context_globs` are
+set), koru assembles a bounded, secret-free snapshot of repository files and
+prepends it to the LLM request as a structured `<project_context>` user
+message.  The main prompt is sent as a separate user message after the context
+block.
+
+Security: the following are **always excluded** regardless of opt-in:
+- `.env`, `.env.*`, `*.key`, `*.pem`, `*.p12` — credentials and private keys
+- `.git`, `node_modules`, `vendor`, `__pycache__`, `.venv` — VCS, deps, caches
+- `*.pyc`, `*.so`, `*.exe`, binary and archive files
+- `*.lock` — large generated lockfiles
+
+The LLM request records which files were included and whether the context was
+truncated under `context_metadata` (visible in the run log and ticket note).
+
+Example ticket requesting project context:
+
+```yaml
+- id: CTX-001
+  name: "Analyse this PHP and Docker project"
+  status: open
+  executor:
+    kind: llm
+    mode: automatic
+  inputs:
+    llm_model: openai/gpt-4o-mini
+    include_project_context: true
+    prompt: |
+      Describe the architecture of this project, focusing on:
+      - how the PHP application is structured
+      - how Docker Compose orchestrates the services
+      - any test infrastructure you can identify
+```
+
+To include only specific files:
+
+```yaml
+  inputs:
+    context_files:
+      - Dockerfile
+      - docker-compose.yml
+      - src/Controller/HomeController.php
+    prompt: "Review the service configuration and the home controller."
+```
+
+To include files matching glob patterns:
+
+```yaml
+  inputs:
+    context_globs:
+      - "src/**/*.php"
+      - "tests/**/*.php"
+    max_context_chars: 16000
+    prompt: "Identify code-quality issues in the PHP source."
+```
 
 Safety: when neither `OPENROUTER_API_KEY` nor `OPENAI_API_KEY` is set,
 koru refuses the call and returns `status=failed` with a clear message

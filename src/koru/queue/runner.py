@@ -8,6 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.queue.context import build_project_context
 from koru.queue.human import default_human_prompt
 from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
@@ -152,6 +153,35 @@ def _claim_and_start(
     return None
 
 
+def _enrich_llm_request_with_context(
+    action: dict[str, Any],
+    project: Path,
+) -> dict[str, Any]:
+    """Attach project context to *action* when the ticket requests it.
+
+    Builds the context string, injects it as ``context_text``, and records
+    assembly metadata under ``context_metadata``.  Returns *action* unchanged
+    when no context was requested.
+    """
+    ctx = build_project_context(project, action)
+    if ctx is None:
+        return action
+    enriched = dict(action)
+    enriched["context_text"] = ctx.text
+    enriched["context_metadata"] = {
+        "included_files": ctx.included_files,
+        "truncated": ctx.truncated,
+        "total_chars": ctx.total_chars if ctx.truncated else len(ctx.text),
+    }
+    _logger.debug(
+        "koru.queue.llm_context files=%d truncated=%s chars=%d ticket_id=?",
+        len(ctx.included_files),
+        ctx.truncated,
+        enriched["context_metadata"]["total_chars"],
+    )
+    return enriched
+
+
 def _execute_action(
     executor_kind: str,
     action: Any,
@@ -165,6 +195,7 @@ def _execute_action(
         result = api_runner(action, project)
         action_label = f"{action['method']} {action['endpoint']}"
     elif executor_kind == "llm":
+        action = _enrich_llm_request_with_context(action, project)
         result = llm_runner(action, project)
         action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
     else:
