@@ -1,11 +1,10 @@
 # Lightweight desktop for koru GUI smoke (noVNC in browser).
-# Not a full Wayland/JetBrains lab — X11 + XFCE + koru[desktop,vdisplay] for
-# browser-visible automation experiments. See docs/docker-e2e-testing.md.
+# Python must be >=3.12 (koru requires-python). Base: bookworm + desktop/VNC.
 #
 # Build context: repository root
 #   docker compose -f docker/novnc/docker-compose.yml up --build
 
-FROM ubuntu:22.04
+FROM python:3.12-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:1 \
@@ -20,8 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         tigervnc-standalone-server tigervnc-common \
         novnc websockify \
         xterm scrot imagemagick xdotool xclip x11-utils \
-        curl wget git sudo procps net-tools ca-certificates \
-        python3 python3-pip python3-venv \
+        curl wget git sudo procps net-tools ca-certificates rsync \
         fonts-liberation fonts-dejavu-core \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -31,9 +29,7 @@ RUN useradd -m -s /bin/bash koru \
 USER koru
 WORKDIR /home/koru
 
-# Editable koru install from build context (mounted or copied)
-# Runtime: compose mounts the repo; image still gets a baseline venv.
-RUN python3 -m venv /home/koru/venv \
+RUN python -m venv /home/koru/venv \
     && /home/koru/venv/bin/pip install --no-cache-dir -U pip setuptools wheel
 
 COPY --chown=koru:koru docker/novnc/start-vnc.sh /home/koru/start-vnc.sh

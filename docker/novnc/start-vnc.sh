@@ -1,6 +1,6 @@
 #!/bin/bash
 # Start TigerVNC + noVNC for the koru desktop smoke image.
-# Install must tolerate a read-only bind-mount of the repo at /opt/koru.
+# /opt/koru is typically bind-mounted :ro — never write egg-info there.
 set -uo pipefail
 
 echo "=== koru noVNC desktop ==="
@@ -9,24 +9,51 @@ echo "User: $(whoami) | Home: $HOME | DISPLAY=${DISPLAY:-unset}"
 export PATH="/home/koru/venv/bin:${PATH}"
 export VIRTUAL_ENV=/home/koru/venv
 
-# Install koru without writing into the (often :ro) source tree.
-if [[ -f /opt/koru/pyproject.toml ]]; then
-  echo "Installing koru from /opt/koru (non-editable copy into venv)..."
-  if /home/koru/venv/bin/pip install --no-cache-dir \
-      "/opt/koru[planfile,api]" 2>/tmp/koru-pip.log; then
-    echo "OK: koru installed"
+install_koru_from_mount() {
+  local src=/opt/koru
+  [[ -f "$src/pyproject.toml" ]] || return 0
+
+  echo "Installing koru from $src (copy → writable build dir)..."
+  local build
+  build="$(mktemp -d /tmp/koru-build.XXXXXX)"
+  # Minimal tree for setuptools; skip venv/node/build/egg-info
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a \
+      --exclude '.venv' --exclude 'venv' --exclude 'node_modules' \
+      --exclude 'build' --exclude 'dist' --exclude '.git' \
+      --exclude '*.egg-info' --exclude '__pycache__' \
+      --exclude 'publish-env' --exclude '.tox' \
+      "$src/" "$build/"
   else
-    echo "WARN: full extras failed; trying minimal install..." >&2
-    tail -20 /tmp/koru-pip.log >&2 || true
-    /home/koru/venv/bin/pip install --no-cache-dir /opt/koru 2>>/tmp/koru-pip.log \
-      || echo "WARN: koru pip install failed — PYTHONPATH fallback" >&2
+    # fallback: selective copy
+    mkdir -p "$build"
+    for item in src packages templates pyproject.toml README.md LICENSE VERSION MANIFEST.in; do
+      [[ -e "$src/$item" ]] && cp -a "$src/$item" "$build/"
+    done
+    # LICENSE* optional
+    cp -a "$src"/LICENSE* "$build/" 2>/dev/null || true
   fi
-  # Fallback so CLI still works if packaging fails
-  if ! command -v koru >/dev/null 2>&1; then
+
+  if /home/koru/venv/bin/pip install --no-cache-dir "$build[planfile,api]" 2>/tmp/koru-pip.log; then
+    echo "OK: koru installed (planfile,api)"
+  elif /home/koru/venv/bin/pip install --no-cache-dir "$build" 2>>/tmp/koru-pip.log; then
+    echo "OK: koru installed (base)"
+  else
+    echo "WARN: pip install failed — using PYTHONPATH" >&2
+    tail -15 /tmp/koru-pip.log >&2 || true
     export PYTHONPATH="/opt/koru/src:/opt/koru/packages/coru/src${PYTHONPATH:+:$PYTHONPATH}"
-    echo "PYTHONPATH=$PYTHONPATH"
+    # shim CLI
+    cat > /home/koru/venv/bin/koru << 'SH'
+#!/bin/bash
+export PYTHONPATH="/opt/koru/src:/opt/koru/packages/coru/src${PYTHONPATH:+:$PYTHONPATH}"
+exec /home/koru/venv/bin/python -m koru.cli "$@"
+SH
+    chmod +x /home/koru/venv/bin/koru
   fi
-fi
+  rm -rf "$build"
+}
+
+install_koru_from_mount
 
 mkdir -p "$HOME/.vnc"
 cat > "$HOME/.vnc/xstartup" << 'XEOF'
@@ -44,7 +71,6 @@ sleep 1
 VNC_RESOLUTION="${VNC_RESOLUTION:-1280x800}"
 VNC_PORT="${VNC_PORT:-5901}"
 NOVNC_PORT="${NOVNC_PORT:-6080}"
-VNC_PASSWORD="${VNC_PASSWORD:-koru}"
 
 echo "Starting VNC on :1 (${VNC_RESOLUTION})..."
 if ! vncserver :1 \
@@ -69,6 +95,9 @@ echo "=== Ready ==="
 echo "noVNC:  http://127.0.0.1:${NOVNC_PORT}/vnc.html?autoconnect=true"
 echo "VNC:    localhost:${VNC_PORT}"
 echo "Smoke:  docker exec -it koru-novnc bash /home/koru/smoke-desktop.sh"
+if command -v koru >/dev/null 2>&1; then
+  koru --version || true
+fi
 echo ""
 
 exec tail -f /dev/null
