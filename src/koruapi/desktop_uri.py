@@ -484,6 +484,83 @@ def _should_route_to_imgl(
     return is_ui_prompt(prompt)
 
 
+def _payload_with_intent(
+    *,
+    prompt: str,
+    platform: str,
+    plan: dict[str, Any],
+    result: Any,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "prompt": prompt,
+        "platform": platform,
+        "plan": plan,
+        "result": result,
+    }
+    intent_ir = _intent_ir_metadata(prompt)
+    if intent_ir:
+        payload["nlp_bridge"] = intent_ir
+    return payload
+
+
+def _handle_explicit_capture_uri(
+    service: Any,
+    *,
+    prompt: str,
+    capture_uri: str,
+    dry_run: bool,
+    use_portal_capture: bool | None,
+) -> dict[str, Any]:
+    plan_dict = _screen_capture_plan_dict(capture_uri)
+    if not dry_run and _portal_capture_enabled(use_portal_capture):
+        portal_result = _capture_via_portal(capture_uri)
+        if portal_result is not None:
+            return {
+                "prompt": prompt,
+                "platform": service._host().value,
+                "plan": plan_dict,
+                "result": portal_result,
+            }
+    result = service.execute(capture_uri, dry_run=dry_run)
+    return _payload_with_intent(
+        prompt=prompt,
+        platform=service._host().value,
+        plan=plan_dict,
+        result=result.to_dict(),
+    )
+
+
+def _handle_nlp_plan(
+    service: Any,
+    *,
+    prompt: str,
+    locale: str | None,
+    dry_run: bool,
+    use_portal_capture: bool | None,
+) -> dict[str, Any]:
+    plan = service.from_prompt(prompt, locale=locale)
+    if (
+        not dry_run
+        and _portal_capture_enabled(use_portal_capture)
+        and _is_screen_capture_uri(plan.uri)
+    ):
+        portal_result = _capture_via_portal(plan.uri)
+        if portal_result is not None:
+            return _payload_with_intent(
+                prompt=prompt,
+                platform=service._host().value,
+                plan=plan.to_dict(),
+                result=portal_result,
+            )
+    result = service.execute(plan.uri, dry_run=dry_run)
+    return _payload_with_intent(
+        prompt=prompt,
+        platform=service._host().value,
+        plan=plan.to_dict(),
+        result=result.to_dict(),
+    )
+
+
 def desktop_uri_handle(
     prompt: str,
     *,
@@ -512,59 +589,20 @@ def desktop_uri_handle(
     service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
     capture_uri = _screen_capture_uri_for_prompt(prompt)
     if capture_uri:
-        plan_dict = _screen_capture_plan_dict(capture_uri)
-        if not dry_run and _portal_capture_enabled(use_portal_capture):
-            portal_result = _capture_via_portal(capture_uri)
-            if portal_result is not None:
-                return {
-                    "prompt": prompt,
-                    "platform": service._host().value,
-                    "plan": plan_dict,
-                    "result": portal_result,
-                }
-        result = service.execute(capture_uri, dry_run=dry_run)
-        payload = {
-            "prompt": prompt,
-            "platform": service._host().value,
-            "plan": plan_dict,
-            "result": result.to_dict(),
-        }
-        intent_ir = _intent_ir_metadata(prompt)
-        if intent_ir:
-            payload["nlp_bridge"] = intent_ir
-        return payload
-
-    plan = service.from_prompt(prompt, locale=locale)
-
-    if (
-        not dry_run
-        and _portal_capture_enabled(use_portal_capture)
-        and _is_screen_capture_uri(plan.uri)
-    ):
-        portal_result = _capture_via_portal(plan.uri)
-        if portal_result is not None:
-            payload: dict[str, Any] = {
-                "prompt": prompt,
-                "platform": service._host().value,
-                "plan": plan.to_dict(),
-                "result": portal_result,
-            }
-            intent_ir = _intent_ir_metadata(prompt)
-            if intent_ir:
-                payload["nlp_bridge"] = intent_ir
-            return payload
-
-    result = service.execute(plan.uri, dry_run=dry_run)
-    payload = {
-        "prompt": prompt,
-        "platform": service._host().value,
-        "plan": plan.to_dict(),
-        "result": result.to_dict(),
-    }
-    intent_ir = _intent_ir_metadata(prompt)
-    if intent_ir:
-        payload["nlp_bridge"] = intent_ir
-    return payload
+        return _handle_explicit_capture_uri(
+            service,
+            prompt=prompt,
+            capture_uri=capture_uri,
+            dry_run=dry_run,
+            use_portal_capture=use_portal_capture,
+        )
+    return _handle_nlp_plan(
+        service,
+        prompt=prompt,
+        locale=locale,
+        dry_run=dry_run,
+        use_portal_capture=use_portal_capture,
+    )
 
 
 def _service() -> Any:

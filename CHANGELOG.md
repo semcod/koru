@@ -5,6 +5,102 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.395] - 2026-07-17
+
+### Fixed
+- Fix import-optimization issues (ticket-4603a223)
+- Fix import-dependencies issues (ticket-df205f37)
+- Fix import-optimization issues (ticket-1e0b52b4)
+- Fix import-dependencies issues (ticket-44036f4e)
+- Fix ast-unused-imports issues (ticket-66d233d7)
+- Fix string-concat-fstring issues (ticket-abcf75e9)
+- Fix import-optimization issues (ticket-0e0675a1)
+- Fix ast-unused-imports issues (ticket-6ca25b81)
+- Fix ast-sorted-imports issues (ticket-2003a5f3)
+- Fix ast-string-concat issues (ticket-713b73d3)
+- Fix string-concat-fstring issues (ticket-8446f655)
+- Fix import-dependencies issues (ticket-ab162c0f)
+- Fix import-optimization issues (ticket-bc985376)
+- Fix ast-unused-imports issues (ticket-6a8a2589)
+- Fix ast-sorted-imports issues (ticket-ed1fa3d3)
+- Fix ast-string-concat issues (ticket-c2439955)
+- Fix string-concat-fstring issues (ticket-7155728d)
+- Fix import-dependencies issues (ticket-5b806dd2)
+- Fix import-optimization issues (ticket-40aae4d6)
+- Fix ast-unused-imports issues (ticket-94baf3cd)
+- Fix import-dependencies issues (ticket-b9ce56ee)
+- Fix import-optimization issues (ticket-5ea53f67)
+- Fix ast-unused-imports issues (ticket-ac7ca43e)
+- Fix string-concat-fstring issues (ticket-93166df5)
+- Fix import-dependencies issues (ticket-b694bc4d)
+- Fix import-optimization issues (ticket-2af63376)
+- Fix import-dependencies issues (ticket-ed34fdb6)
+- Fix import-optimization issues (ticket-293a7ecd)
+- Fix ast-unused-imports issues (ticket-f608585d)
+- Fix ast-duplicate-imports issues (ticket-ccbc71dd)
+- Fix ast-wildcard-imports issues (ticket-66868c69)
+- Fix unimport-duplicate-imports issues (ticket-f4350ab8)
+- Fix unimport-star-imports issues (ticket-1917a5ea)
+- Fix importchecker-duplicate-imports issues (ticket-80f191a3)
+- Fix import-dependencies issues (ticket-746ac2d6)
+- Fix ast-unused-imports issues (ticket-7156e8f4)
+- Fix ast-sorted-imports issues (ticket-1862e086)
+- Fix import-dependencies issues (ticket-abf07aa7)
+- Fix import-optimization issues (ticket-05c02cb0)
+- Fix ast-unused-imports issues (ticket-6f21b911)
+- Fix ast-sorted-imports issues (ticket-dc66c3a2)
+- Fix string-concat-fstring issues (ticket-4b853675)
+- Fix unused-imports issues (ticket-b09dc4af)
+- Fix string-formatting issues (ticket-f76a82d7)
+- Fix import-dependencies issues (ticket-25f959fa)
+- Fix import-optimization issues (ticket-783c4248)
+- Fix ast-unused-imports issues (ticket-006b41b0)
+- Fix ast-duplicate-imports issues (ticket-d3baaf53)
+- Fix ast-wildcard-imports issues (ticket-038758b7)
+- Fix unimport-duplicate-imports issues (ticket-85850fba)
+- Fix unimport-star-imports issues (ticket-f0609993)
+- Fix importchecker-duplicate-imports issues (ticket-d3ec7cc9)
+- Fix import-dependencies issues (ticket-8afa9d13)
+- Fix import-optimization issues (ticket-dddd889b)
+- Fix ast-unused-imports issues (ticket-868d1f1f)
+- Fix ast-sorted-imports issues (ticket-b40c574d)
+- Fix ast-string-concat issues (ticket-f9136c7e)
+- Fix string-concat-fstring issues (ticket-46b911c3)
+- Fix unused-imports issues (ticket-6f04c0af)
+- Fix import-dependencies issues (ticket-2b692356)
+- Fix import-optimization issues (ticket-2191a359)
+- Fix ast-unused-imports issues (ticket-1dbcce41)
+- Fix ast-unused-imports issues (ticket-250ab82b)
+- Fix unused-imports issues (ticket-aa9532e9)
+- Fix import-dependencies issues (ticket-94367989)
+- Fix import-optimization issues (ticket-b7e3cc45)
+- Fix ast-unused-imports issues (ticket-5028cefc)
+- Fix import-dependencies issues (ticket-9fa60b38)
+- Fix import-optimization issues (ticket-97776831)
+- Fix ast-unused-imports issues (ticket-7e2aa429)
+- Fix ast-sorted-imports issues (ticket-70aaab1a)
+- Fix string-concat-fstring issues (ticket-69fb928f)
+- Fix import-dependencies issues (ticket-5eac066d)
+- Fix import-optimization issues (ticket-914927ab)
+- Fix ast-unused-imports issues (ticket-ccba79ab)
+- Fix ast-sorted-imports issues (ticket-4b6180ca)
+- Fix import-dependencies issues (ticket-a7a79afb)
+- Fix import-optimization issues (ticket-b61c694b)
+- Fix ast-unused-imports issues (ticket-da1c08d5)
+- Fix ast-sorted-imports issues (ticket-aa3efda4)
+- Fix ast-print-statements issues (ticket-4a2eeef5)
+- Fix ruff-print-statements issues (ticket-dd9e31cd)
+- Fix ruff-sorted-imports issues (ticket-1c546e89)
+- Fix import-dependencies issues (ticket-68210ed0)
+- Fix import-optimization issues (ticket-eff4f2f3)
+- Fix ast-unused-imports issues (ticket-21a5e622)
+- Fix ast-sorted-imports issues (ticket-445d7189)
+- Fix ast-print-statements issues (ticket-81428cd8)
+- Fix ruff-print-statements issues (ticket-30f65748)
+- Fix import-dependencies issues (ticket-0707b1cd)
+- Fix import-optimization issues (ticket-6df48be4)
+- Fix ast-sorted-imports issues (ticket-f9655854)
+
 ## [Unreleased]
 
 ### Added
@@ -156,6 +252,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   confidence the mocks reflect real plugin behavior; left for follow-up
   with real integration fixtures rather than mocked ones that would give
   false confidence.
+
+## [0.1.396] - 2026-07-17
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/pipeline-design.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_vdisplay_env_session.py
+
+### Other
+- Update app.doql.less
+- Update packages/coru/src/coru/cli.py
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- ... and 8 more files
 
 ## [0.1.395] - 2026-07-17
 

@@ -632,36 +632,38 @@ def _project_venv_python() -> str | None:
     return candidates[0]
 
 
-def _maybe_reexec_into_project_python(argv: Sequence[str]) -> bool:
-    """Re-exec coru under repo-local .venv to avoid mixed runtime environments."""
-    if os.environ.get("CORU_DISABLE_AUTO_REEXEC") == "1":
-        return False
-    if os.environ.get("CORU_REEXEC_DONE") == "1":
-        return False
-    if os.environ.get("PYTEST_CURRENT_TEST"):
-        return False
+def _reexec_already_done() -> bool:
+    return (
+        os.environ.get("CORU_DISABLE_AUTO_REEXEC") == "1"
+        or os.environ.get("CORU_REEXEC_DONE") == "1"
+        or bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    )
 
-    project_python = _project_venv_python()
-    if not project_python:
-        return False
 
+def _already_running_in_project_venv(project_python: str) -> bool:
     try:
         current_python = Path(sys.executable)
         target_python = Path(project_python)
         target_venv = target_python.parent.parent.resolve()
     except Exception:
-        return False
-
+        return True
     try:
-        if current_python.resolve() == target_python.resolve() and Path(sys.prefix).resolve() == target_venv:
-            return False
+        if (
+            current_python.resolve() == target_python.resolve()
+            and Path(sys.prefix).resolve() == target_venv
+        ):
+            return True
     except Exception:
         if str(current_python) == str(target_python):
-            return False
+            return True
+    return str(current_python) == str(target_python)
 
-    if str(current_python) == str(target_python):
-        return False
 
+def _reexec_env_and_cmd(
+    project_python: str, argv: Sequence[str]
+) -> tuple[dict[str, str], list[str]] | None:
+    target_python = Path(project_python)
+    target_venv = target_python.parent.parent.resolve()
     source_dir = _module_runtime_source_dir("coru.cli")
     env = dict(os.environ)
     env["CORU_REEXEC_DONE"] = "1"
@@ -682,8 +684,22 @@ def _maybe_reexec_into_project_python(argv: Sequence[str]) -> bool:
     elif _venv_has_installed_module(str(target_python), "coru"):
         cmd = [str(target_python), "-m", "coru.cli", *list(argv)]
     else:
-        return False
+        return None
+    return env, cmd
 
+
+def _maybe_reexec_into_project_python(argv: Sequence[str]) -> bool:
+    """Re-exec coru under repo-local .venv to avoid mixed runtime environments."""
+    if _reexec_already_done():
+        return False
+    project_python = _project_venv_python()
+    if not project_python or _already_running_in_project_venv(project_python):
+        return False
+    built = _reexec_env_and_cmd(project_python, argv)
+    if built is None:
+        return False
+    env, cmd = built
+    target_python = Path(project_python)
     print(
         f"[coru] re-exec into project venv: {target_python}",
         file=sys.stderr,

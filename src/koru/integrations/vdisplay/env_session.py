@@ -23,38 +23,54 @@ def clear_stale_observe_session_env() -> None:
         os.environ.pop(key, None)
 
 
-def sync_prepare_capture_flags_to_env(prepare: dict[str, Any]) -> None:
-    """Restore capture guard env from a reused observe/prepare payload."""
-    source = str(prepare.get("source") or "").strip()
-    if source:
-        os.environ["KORU_VDISPLAY_SOURCE"] = source
+def _sync_prepare_session_dir(prepare: dict[str, Any]) -> None:
     session_raw = str(prepare.get("session_dir") or "").strip()
-    if session_raw:
-        session_path = Path(session_raw).expanduser()
-        if not session_path.is_absolute():
-            session_path = (Path.cwd() / session_path).resolve()
-        if session_path.is_dir():
-            os.environ["KORU_AUTONOMY_SESSION_DIR"] = str(session_path)
+    if not session_raw:
+        return
+    session_path = Path(session_raw).expanduser()
+    if not session_path.is_absolute():
+        session_path = (Path.cwd() / session_path).resolve()
+    if session_path.is_dir():
+        os.environ["KORU_AUTONOMY_SESSION_DIR"] = str(session_path)
+
+
+def _sync_prepare_png_paths(prepare: dict[str, Any]) -> None:
     png = str(prepare.get("png") or "").strip()
-    if png:
-        png_path = Path(png).expanduser()
-        if png_path.is_file():
-            os.environ["KORU_VDISPLAY_PHOTO_PATH"] = str(png_path.resolve())
-            vql = png_path.with_suffix(png_path.suffix + ".vql.json")
-            if vql.is_file():
-                os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql.resolve())
+    if not png:
+        return
+    png_path = Path(png).expanduser()
+    if not png_path.is_file():
+        return
+    os.environ["KORU_VDISPLAY_PHOTO_PATH"] = str(png_path.resolve())
+    vql = png_path.with_suffix(png_path.suffix + ".vql.json")
+    if vql.is_file():
+        os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql.resolve())
+
+
+def _sync_prepare_capture_match_flags(prepare: dict[str, Any]) -> None:
     if prepare.get("surface_only_fallback"):
         os.environ["KORU_VDISPLAY_SURFACE_ONLY_FALLBACK"] = "1"
         if prepare.get("capture_confirmed"):
             os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
         else:
             os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
-    elif prepare.get("capture_confirmed") and prepare.get("ok"):
+        return
+    if prepare.get("capture_confirmed") and prepare.get("ok"):
         os.environ.pop("KORU_VDISPLAY_SURFACE_ONLY_FALLBACK", None)
         os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
-    else:
-        os.environ.pop("KORU_VDISPLAY_SURFACE_ONLY_FALLBACK", None)
-        os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
+        return
+    os.environ.pop("KORU_VDISPLAY_SURFACE_ONLY_FALLBACK", None)
+    os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
+
+
+def sync_prepare_capture_flags_to_env(prepare: dict[str, Any]) -> None:
+    """Restore capture guard env from a reused observe/prepare payload."""
+    source = str(prepare.get("source") or "").strip()
+    if source:
+        os.environ["KORU_VDISPLAY_SOURCE"] = source
+    _sync_prepare_session_dir(prepare)
+    _sync_prepare_png_paths(prepare)
+    _sync_prepare_capture_match_flags(prepare)
 
 
 def session_type() -> str:

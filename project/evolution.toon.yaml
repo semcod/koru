@@ -1,58 +1,46 @@
-# code2llm/evolution | 7090 func | 671f | 2026-07-17
-# generated in 0.04s
+# code2llm/evolution | 7125 func | 674f | 2026-07-17
+# generated in 0.03s
 
-NEXT[10] (ranked by impact):
+NEXT[7] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 7571L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 113565
+      WHY: 7375L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 110625
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3786L, 3 classes, max CC=16
       EFFORT: ~4h  IMPACT: 60576
 
-  [3] !  SPLIT-FUNC      type_into_chat_via_portal  CC=19  fan=21
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 399
+  [3] !  SPLIT-FUNC      build_project_context  CC=20  fan=20
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 400
 
-  [4] !  SPLIT-FUNC      run_daemon_command  CC=15  fan=26
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 390
-
-  [5] !! SPLIT-FUNC      SharedAutopilotBridgePaste.shouldProbeInput  CC=26  fan=14
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 364
-
-  [6] !  SPLIT-FUNC      _maybe_reexec_into_project_python  CC=16  fan=17
+  [4] !  SPLIT-FUNC      _maybe_reexec_into_project_python  CC=16  fan=17
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 272
 
-  [7] !  SPLIT-FUNC      action_vdisplay_up  CC=15  fan=18
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 270
-
-  [8] !  SPLIT-FUNC      _checkbox_picker  CC=19  fan=14
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 266
-
-  [9] !  SPLIT-FUNC      desktop_uri_handle  CC=15  fan=17
+  [5] !  SPLIT-FUNC      desktop_uri_handle  CC=15  fan=17
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 255
 
-  [10] !  SPLIT-FUNC      _run_fleet_up  CC=15  fan=15
+  [6] !  SPLIT-FUNC      _run_fleet_up  CC=15  fan=15
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 225
 
+  [7] !! SPLIT           tree.txt
+      WHY: 2722L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
+
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 299 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 290 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 202 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      26 → ≤13
-  god-modules: 56 → 0
-  high-CC(≥15): 16 → ≤8
+  max-CC:      20 → ≤10
+  god-modules: 58 → 0
+  high-CC(≥15): 9 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +68,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.7 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=3.8

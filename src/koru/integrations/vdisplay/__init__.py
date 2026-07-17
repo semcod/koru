@@ -9,4 +9,6 @@ Modules:
 * :mod:`koru.integrations.vdisplay.portal_input` — RemoteDesktop portal type-in
 * :mod:`koru.integrations.vdisplay.pointer_calibration` — ABS/adaptive pointer
 * :mod:`koru.integrations.vdisplay.env_session` — prepare/session env flags
+* :mod:`koru.integrations.vdisplay.desktop_probe` — monitors / IDE surface preflight
+* :mod:`koru.integrations.vdisplay.surface_capture` — surface-registry capture confirm
 """

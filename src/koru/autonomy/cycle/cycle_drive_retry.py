@@ -151,6 +151,25 @@ def _client_has_usable_plugin(
     return True, ""
 
 
+def _folder_covers_project(folder: str, project_path: str) -> bool:
+    return (
+        folder == project_path
+        or project_path.startswith(folder + "/")
+        or folder.startswith(project_path + "/")
+    )
+
+
+def _plugin_row_workspace_folders(row: dict[str, Any], wanted: str) -> list[str] | None:
+    """Normalized folders for a matching IDE row, or None to skip the row."""
+    ide = str(row.get("ide") or "").strip().lower()
+    if wanted not in ("", "auto") and ide != wanted:
+        return None
+    folders = row.get("workspaceFolders")
+    if not isinstance(folders, list) or not folders:
+        return None  # unknown workspace — not a conflict
+    return [str(folder).rstrip("/") for folder in folders if str(folder).strip()]
+
+
 def _plugin_workspace_conflict(
     status: Any,
     autopilot_ide: str,
@@ -172,20 +191,11 @@ def _plugin_workspace_conflict(
     for row in plugins:
         if not isinstance(row, dict):
             continue
-        ide = str(row.get("ide") or "").strip().lower()
-        if wanted not in ("", "auto") and ide != wanted:
+        normalized = _plugin_row_workspace_folders(row, wanted)
+        if normalized is None:
             continue
-        folders = row.get("workspaceFolders")
-        if not isinstance(folders, list) or not folders:
-            continue  # unknown workspace — not a conflict
-        normalized = [str(folder).rstrip("/") for folder in folders if str(folder).strip()]
-        for folder in normalized:
-            if (
-                folder == project_path
-                or project_path.startswith(folder + "/")
-                or folder.startswith(project_path + "/")
-            ):
-                return None  # covered
+        if any(_folder_covers_project(folder, project_path) for folder in normalized):
+            return None  # covered
         seen_folders = normalized
     if seen_folders:
         return (

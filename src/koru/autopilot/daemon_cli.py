@@ -68,6 +68,61 @@ def _stop_heartbeat(heartbeat: Any | None) -> None:
     thread.join(timeout=2.0)
 
 
+def _resolve_daemon_project(args: argparse.Namespace) -> Path | None:
+    from koru.autonomy.operator.operator_runtime import normalize_project_root
+
+    raw_project = args.project.resolve()
+    return normalize_project_root(raw_project) if raw_project is not None else None
+
+
+def _load_daemon_env(project: Path | None) -> None:
+    load_dotenv(Path.cwd())
+    if project is None:
+        return
+    load_dotenv(project)
+    os.environ.setdefault("VDISPLAY_METADATA_DIR", str(project.resolve() / ".vdisplay"))
+    os.environ.setdefault("KORU_PROJECT_ROOT", str(project.resolve()))
+
+
+def _apply_daemon_instance_defaults() -> None:
+    instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip().lower()
+    if not instance:
+        return
+    from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
+
+    applied = apply_vdisplay_drive_defaults(ide=instance)
+    if applied:
+        print(
+            "koru autopilot daemon: vdisplay defaults applied "
+            f"({len(applied)} unset keys for {instance})"
+        )
+
+
+def _serve_daemon(
+    daemon: AutopilotDaemon,
+    *,
+    manager: Any | None,
+    heartbeat: Any | None,
+    socket_path: Path,
+    handoff: bool,
+    project: Path | None,
+) -> int:
+    if handoff:
+        print(f"koru autopilot daemon: handoff enabled for project={project}")
+    else:
+        print("koru autopilot daemon: handoff disabled (--no-handoff)")
+    try:
+        daemon.serve_forever()
+    except KeyboardInterrupt:
+        print()
+        print("koru autopilot daemon: interrupted")
+    finally:
+        _stop_heartbeat(heartbeat)
+        if manager is not None:
+            manager.complete(status="completed", result={"socket": str(socket_path)})
+    return 0
+
+
 def run_daemon_command(
     args: argparse.Namespace,
     *,
@@ -86,25 +141,10 @@ def run_daemon_command(
         print(f"koru autopilot daemon: removed stale socket {path}")
     if _daemon_already_running(args, socket_path):
         return 0
-    from koru.autonomy.operator.operator_runtime import normalize_project_root
 
-    raw_project = args.project.resolve()
-    project = normalize_project_root(raw_project) if raw_project is not None else None
-    load_dotenv(Path.cwd())
-    if project is not None:
-        load_dotenv(project)
-        os.environ.setdefault("VDISPLAY_METADATA_DIR", str(project.resolve() / ".vdisplay"))
-        os.environ.setdefault("KORU_PROJECT_ROOT", str(project.resolve()))
-    instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip().lower()
-    if instance:
-        from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
-
-        applied = apply_vdisplay_drive_defaults(ide=instance)
-        if applied:
-            print(
-                "koru autopilot daemon: vdisplay defaults applied "
-                f"({len(applied)} unset keys for {instance})"
-            )
+    project = _resolve_daemon_project(args)
+    _load_daemon_env(project)
+    _apply_daemon_instance_defaults()
     manager, stop_rc = _start_local_manager(
         socket_path=socket_path,
         project=project,
@@ -135,20 +175,14 @@ def run_daemon_command(
         socket_path=socket_path,
         project=project,
     )
-    if args.handoff:
-        print(f"koru autopilot daemon: handoff enabled for project={project}")
-    else:
-        print("koru autopilot daemon: handoff disabled (--no-handoff)")
-    try:
-        daemon.serve_forever()
-    except KeyboardInterrupt:
-        print()
-        print("koru autopilot daemon: interrupted")
-    finally:
-        _stop_heartbeat(heartbeat)
-        if manager is not None:
-            manager.complete(status="completed", result={"socket": str(socket_path)})
-    return 0
+    return _serve_daemon(
+        daemon,
+        manager=manager,
+        heartbeat=heartbeat,
+        socket_path=socket_path,
+        handoff=args.handoff,
+        project=project,
+    )
 
 
 def shutdown_daemon_command(args: argparse.Namespace, *, client_fn: Callable) -> int:

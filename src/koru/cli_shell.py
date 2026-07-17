@@ -140,30 +140,53 @@ def _read_key() -> str:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
 
-def _checkbox_picker(
+def _checkbox_picker_numeric(
     title: str,
     items: list[tuple[str, str, bool]],
+    checked: set[str],
 ) -> list[str] | None:
-    """Arrow-key checkbox list → selected keys, or None on cancel.
+    """Non-TTY fallback: toggle by number list."""
+    print(title)
+    for idx, (key, label, _) in enumerate(items, start=1):
+        mark = "☑" if key in checked else "☐"
+        print(f"  {idx}. {mark} {label}")
+    raw = input("toggle numbers (space-separated), enter=save, q=cancel: ").strip()
+    if raw.lower() == "q":
+        return None
+    for token in raw.split():
+        if token.isdigit() and 1 <= int(token) <= len(items):
+            key = items[int(token) - 1][0]
+            checked.symmetric_difference_update({key})
+    return sorted(checked)
 
-    ``items`` is (key, rendered_label, checked). Falls back to numeric input
-    when stdin is not a TTY.
-    """
-    checked = {key for key, _, is_on in items if is_on}
-    if not sys.stdin.isatty():  # numeric fallback (tests, pipes)
-        print(title)
-        for idx, (key, label, _) in enumerate(items, start=1):
-            mark = "☑" if key in checked else "☐"
-            print(f"  {idx}. {mark} {label}")
-        raw = input("toggle numbers (space-separated), enter=save, q=cancel: ").strip()
-        if raw.lower() == "q":
-            return None
-        for token in raw.split():
-            if token.isdigit() and 1 <= int(token) <= len(items):
-                key = items[int(token) - 1][0]
-                checked.symmetric_difference_update({key})
-        return sorted(checked)
 
+def _checkbox_picker_apply_key(
+    key_pressed: str,
+    *,
+    items: list[tuple[str, str, bool]],
+    checked: set[str],
+    cursor: int,
+) -> tuple[int, list[str] | None, bool]:
+    """Apply one keypress. Returns ``(cursor, result_or_None, done)``."""
+    if key_pressed == "up":
+        return (cursor - 1) % len(items), None, False
+    if key_pressed == "down":
+        return (cursor + 1) % len(items), None, False
+    if key_pressed == " ":
+        checked.symmetric_difference_update({items[cursor][0]})
+        return cursor, None, False
+    if key_pressed in {"\r", "\n"}:
+        return cursor, sorted(checked), True
+    if key_pressed in {"q", "esc", "\x03"}:
+        return cursor, None, True
+    return cursor, None, False
+
+
+def _checkbox_picker_tty(
+    title: str,
+    items: list[tuple[str, str, bool]],
+    checked: set[str],
+) -> list[str] | None:
     cursor = 0
     while True:
         sys.stdout.write("\x1b[2J\x1b[H")  # clear screen
@@ -176,18 +199,29 @@ def _checkbox_picker(
                 print(f"{INVERT}{line}{RESET}")
             else:
                 print(line)
-        key_pressed = _read_key()
-        if key_pressed == "up":
-            cursor = (cursor - 1) % len(items)
-        elif key_pressed == "down":
-            cursor = (cursor + 1) % len(items)
-        elif key_pressed == " ":
-            item_key = items[cursor][0]
-            checked.symmetric_difference_update({item_key})
-        elif key_pressed in {"\r", "\n"}:
-            return sorted(checked)
-        elif key_pressed in {"q", "esc", "\x03"}:
-            return None
+        cursor, result, done = _checkbox_picker_apply_key(
+            _read_key(),
+            items=items,
+            checked=checked,
+            cursor=cursor,
+        )
+        if done:
+            return result
+
+
+def _checkbox_picker(
+    title: str,
+    items: list[tuple[str, str, bool]],
+) -> list[str] | None:
+    """Arrow-key checkbox list → selected keys, or None on cancel.
+
+    ``items`` is (key, rendered_label, checked). Falls back to numeric input
+    when stdin is not a TTY.
+    """
+    checked = {key for key, _, is_on in items if is_on}
+    if not sys.stdin.isatty():
+        return _checkbox_picker_numeric(title, items, checked)
+    return _checkbox_picker_tty(title, items, checked)
 
 
 def _box(lines: list[str], color: str = DIM) -> str:

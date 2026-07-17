@@ -27,6 +27,77 @@ def _resolve_bridge_source(ide: str) -> str:
         return "HDMI-1"
 
 
+def _services_up_namespace(
+    args: argparse.Namespace,
+    *,
+    ide: str,
+    source: str,
+    agent_url: str,
+    port: int,
+) -> argparse.Namespace:
+    return argparse.Namespace(
+        host="127.0.0.1",
+        port=port,
+        timeout_s=float(getattr(args, "timeout_s", 3.0) or 3.0),
+        instance=ide,
+        target=ide,
+        source=source,
+        agent_url=agent_url,
+        no_agent_bridge=False,
+        mode="full",
+        no_always_on_top=False,
+        ozone_platform=None,
+        startup_timeout_s=float(getattr(args, "startup_timeout_s", 25.0) or 25.0),
+        agent_startup_timeout_s=float(
+            getattr(args, "agent_startup_timeout_s", 15.0) or 15.0
+        ),
+        capture_timeout_s=float(getattr(args, "capture_timeout_s", 120.0) or 120.0),
+        wait_capture=not bool(getattr(args, "no_wait_capture", False)),
+        start_agent=not bool(getattr(args, "no_start_agent", False)),
+        open_browser_bridge=not bool(getattr(args, "no_open_browser_bridge", False)),
+        install=bool(getattr(args, "install", False)),
+    )
+
+
+def _vdisplay_up_cli_fallback(
+    *,
+    ide: str,
+    source: str,
+    agent_url: str,
+    port: int,
+    args: argparse.Namespace,
+) -> int:
+    vdisplay_bin = shutil.which("vdisplay")
+    if not vdisplay_bin:
+        print(
+            "vdisplay not found — install wronai/vdisplay in this venv or on PATH",
+            file=sys.stderr,
+        )
+        return 1
+    cmd = [
+        vdisplay_bin,
+        "services",
+        "up",
+        "--instance",
+        ide,
+        "--target",
+        ide,
+        "--source",
+        source,
+        "--port",
+        str(port),
+        "--agent-url",
+        agent_url,
+    ]
+    if not getattr(args, "no_open_browser_bridge", False):
+        cmd.append("--open-browser-bridge")
+    if getattr(args, "no_wait_capture", False):
+        cmd.append("--no-wait-capture")
+    if getattr(args, "no_start_agent", False):
+        cmd.append("--no-start-agent")
+    return subprocess.run(cmd, check=False).returncode
+
+
 def action_vdisplay_up(args: argparse.Namespace) -> int:
     ide = str(getattr(args, "ide", "jetbrains") or "jetbrains").strip().lower()
     from koru.autonomy.operator.operator_vdisplay_defaults import apply_vdisplay_drive_defaults
@@ -44,59 +115,19 @@ def action_vdisplay_up(args: argparse.Namespace) -> int:
     try:
         from vdisplay.commands.services import handle_up as services_up
 
-        ns = argparse.Namespace(
-            host="127.0.0.1",
-            port=port,
-            timeout_s=float(getattr(args, "timeout_s", 3.0) or 3.0),
-            instance=ide,
-            target=ide,
+        return services_up(
+            _services_up_namespace(
+                args, ide=ide, source=source, agent_url=agent_url, port=port
+            )
+        )
+    except ImportError:
+        return _vdisplay_up_cli_fallback(
+            ide=ide,
             source=source,
             agent_url=agent_url,
-            no_agent_bridge=False,
-            mode="full",
-            no_always_on_top=False,
-            ozone_platform=None,
-            startup_timeout_s=float(getattr(args, "startup_timeout_s", 25.0) or 25.0),
-            agent_startup_timeout_s=float(
-                getattr(args, "agent_startup_timeout_s", 15.0) or 15.0
-            ),
-            capture_timeout_s=float(getattr(args, "capture_timeout_s", 120.0) or 120.0),
-            wait_capture=not bool(getattr(args, "no_wait_capture", False)),
-            start_agent=not bool(getattr(args, "no_start_agent", False)),
-            open_browser_bridge=not bool(getattr(args, "no_open_browser_bridge", False)),
-            install=bool(getattr(args, "install", False)),
+            port=port,
+            args=args,
         )
-        return services_up(ns)
-    except ImportError:
-        vdisplay_bin = shutil.which("vdisplay")
-        if not vdisplay_bin:
-            print(
-                "vdisplay not found — install wronai/vdisplay in this venv or on PATH",
-                file=sys.stderr,
-            )
-            return 1
-        cmd = [
-            vdisplay_bin,
-            "services",
-            "up",
-            "--instance",
-            ide,
-            "--target",
-            ide,
-            "--source",
-            source,
-            "--port",
-            str(port),
-            "--agent-url",
-            agent_url,
-        ]
-        if not getattr(args, "no_open_browser_bridge", False):
-            cmd.append("--open-browser-bridge")
-        if getattr(args, "no_wait_capture", False):
-            cmd.append("--no-wait-capture")
-        if getattr(args, "no_start_agent", False):
-            cmd.append("--no-start-agent")
-        return subprocess.run(cmd, check=False).returncode
 
 
 __all__ = ["action_vdisplay_up"]

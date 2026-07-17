@@ -91,6 +91,93 @@ def _reply_note(reply: dict[str, Any]) -> str:
     return f"{_NOTE_TAG} client={client} ok=true (no output captured)"
 
 
+def _eligible_for_finalize(
+    *,
+    ok: bool,
+    ticket_id: str,
+    decision_kind: str | None,
+    autopilot_ide: str,
+) -> bool:
+    if not ok or not ticket_id:
+        return False
+    if (decision_kind or "") not in _FINALIZE_KINDS:
+        return False
+    try:
+        from koru.tillm_bridge import shell_drive_client_id
+
+        return bool(shell_drive_client_id(autopilot_ide))
+    except Exception:
+        return False
+
+
+def _load_verify_config_or_skip(
+    project: Path,
+    ticket_id: str,
+    *,
+    _hp: Callable[..., Any],
+) -> tuple[Any | None, str | None]:
+    """Return ``(config, early_action)``. Early action is set when finalize should stop."""
+    try:
+        from koru.autonomy.post_run_verify import load_post_run_verify_config
+
+        verify_config = load_post_run_verify_config(project)
+    except Exception:
+        verify_config = None
+    if verify_config is None or not verify_config.enabled or not verify_config.commands:
+        _hp(
+            f"  shell-drive finalize: {ticket_id} left open — no queue.post_run_verify "
+            "commands in koru.yaml (set KORU_SHELL_DRIVE_AUTODONE=always to trust the agent)",
+        )
+        return None, "noted"
+    return verify_config, None
+
+
+def _mark_done(
+    project: Path,
+    ticket_id: str,
+    *,
+    runner: Callable[..., Any],
+    planfile_command: Callable[..., Any],
+    _hp: Callable[..., Any],
+) -> bool:
+    done = planfile_command(project, ["ticket", "done", ticket_id], runner=runner)
+    if done.returncode != 0:
+        _hp(f"  shell-drive finalize: ticket done failed for {ticket_id} (rc={done.returncode})")
+        return False
+    return True
+
+
+def _run_post_done_verify(
+    project: Path,
+    ticket_id: str,
+    *,
+    verify_config: Any,
+    runner: Callable[..., Any],
+    _hp: Callable[..., Any],
+) -> str:
+    from koru.autonomy.post_run_verify import verify_completed_tickets
+
+    # shell_runner deliberately omitted: the default sanitized runner strips
+    # the loop's KORU_*/TILLM_*/VDISPLAY_* env, which otherwise flips
+    # env-sensitive test branches and bounces finished tickets.
+    outcomes = verify_completed_tickets(
+        project,
+        [ticket_id],
+        config=verify_config,
+        planfile_runner=runner,
+    )
+    failed = [o for o in outcomes if not o.get("ok")]
+    if failed:
+        action = str(failed[0].get("action") or "reopened")
+        _hp(
+            f"  shell-drive finalize: {ticket_id} verify FAILED → {action} "
+            "(agent work did not pass post_run_verify)",
+        )
+        return f"verify_failed:{action}"
+    _hp(f"  shell-drive finalize: {ticket_id} done + verified green")
+    return "done_verified"
+
+
 def finalize_shell_drive_ticket(
     *,
     project: Path,
@@ -102,16 +189,12 @@ def finalize_shell_drive_ticket(
     _hp: Callable[..., Any],
 ) -> str:
     """Best-effort ticket finalization; returns the action taken for telemetry."""
-    if not ok or not ticket_id:
-        return "skipped"
-    if (decision_kind or "") not in _FINALIZE_KINDS:
-        return "skipped"
-    try:
-        from koru.tillm_bridge import shell_drive_client_id
-
-        if not shell_drive_client_id(autopilot_ide):
-            return "skipped"
-    except Exception:
+    if not _eligible_for_finalize(
+        ok=ok,
+        ticket_id=ticket_id,
+        decision_kind=decision_kind,
+        autopilot_ide=autopilot_ide,
+    ):
         return "skipped"
 
     policy = _autodone_policy()
@@ -136,49 +219,30 @@ def finalize_shell_drive_ticket(
 
     verify_config = None
     if policy == "verified":
-        try:
-            from koru.autonomy.post_run_verify import load_post_run_verify_config
+        verify_config, early = _load_verify_config_or_skip(project, ticket_id, _hp=_hp)
+        if early is not None:
+            return early
 
-            verify_config = load_post_run_verify_config(project)
-        except Exception:
-            verify_config = None
-        if verify_config is None or not verify_config.enabled or not verify_config.commands:
-            _hp(
-                f"  shell-drive finalize: {ticket_id} left open — no queue.post_run_verify "
-                "commands in koru.yaml (set KORU_SHELL_DRIVE_AUTODONE=always to trust the agent)",
-            )
-            return "noted"
-
-    done = planfile_command(project, ["ticket", "done", ticket_id], runner=run_process)
-    if done.returncode != 0:
-        _hp(f"  shell-drive finalize: ticket done failed for {ticket_id} (rc={done.returncode})")
+    if not _mark_done(
+        project,
+        ticket_id,
+        runner=run_process,
+        planfile_command=planfile_command,
+        _hp=_hp,
+    ):
         return "done_failed"
 
     if policy == "always":
         _hp(f"  shell-drive finalize: {ticket_id} marked done (autodone=always)")
         return "done"
 
-    from koru.autonomy.post_run_verify import verify_completed_tickets
-
-    # shell_runner deliberately omitted: the default sanitized runner strips
-    # the loop's KORU_*/TILLM_*/VDISPLAY_* env, which otherwise flips
-    # env-sensitive test branches and bounces finished tickets.
-    outcomes = verify_completed_tickets(
+    return _run_post_done_verify(
         project,
-        [ticket_id],
-        config=verify_config,
-        planfile_runner=run_process,
+        ticket_id,
+        verify_config=verify_config,
+        runner=run_process,
+        _hp=_hp,
     )
-    failed = [o for o in outcomes if not o.get("ok")]
-    if failed:
-        action = str(failed[0].get("action") or "reopened")
-        _hp(
-            f"  shell-drive finalize: {ticket_id} verify FAILED → {action} "
-            "(agent work did not pass post_run_verify)",
-        )
-        return f"verify_failed:{action}"
-    _hp(f"  shell-drive finalize: {ticket_id} done + verified green")
-    return "done_verified"
 
 
 __all__ = ["finalize_shell_drive_ticket"]

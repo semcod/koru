@@ -372,18 +372,12 @@ def compact_pytest_collect_failure(stdout: str, stderr: str) -> str:
     return lines[0][:220] + ("..." if len(lines[0]) > 220 else "")
 
 
-def check_pytest_collect(
-    project: Path,
-    *,
-    timeout_resolver: Callable[[], float],
-    failure_compactor: Callable[[str, str], str],
-) -> tuple[str, str]:
+def _pytest_collect_nested_guard() -> tuple[str, str] | None:
+    """Skip real nested collect while koru's own suite is running."""
     import sys
-    # Avoid spawning a real nested `pytest --collect-only` while koru's own
-    # test suite is running (keeps doctor-facade tests fast and non-recursive).
+
     # When subprocess.run is monkeypatched there is no real subprocess to guard
-    # against — the probe's own unit tests rely on the outcome→status mapping
-    # below actually running, so do not short-circuit in that case.
+    # against — unit tests rely on the outcome→status mapping actually running.
     real_subprocess = type(subprocess.run).__module__ != "unittest.mock"
     if real_subprocess and (
         "pytest" in sys.modules
@@ -391,6 +385,40 @@ def check_pytest_collect(
         or os.environ.get("PYTEST_CURRENT_TEST")
     ):
         return PASS, "1 test(s) collected"
+    return None
+
+
+def _map_pytest_collect_success(output: str) -> tuple[str, str]:
+    match = _PYTEST_COLLECT_COUNT_RE.search(output)
+    if match:
+        return PASS, f"{match.group(1)} test(s) collected"
+    if _PYTEST_NO_TESTS_RE.search(output):
+        return WARN, "0 tests collected — verify testpaths / discovery rules"
+    return PASS, "collection clean (count not parseable)"
+
+
+def _map_pytest_collect_failure(
+    result: subprocess.CompletedProcess[str],
+    failure_compactor: Callable[[str, str], str],
+) -> tuple[str, str]:
+    detail = "pytest --collect-only failed — run `koru scan` for actionable per-file tickets"
+    headline = failure_compactor(result.stdout or "", result.stderr or "")
+    if headline:
+        detail = f"{detail}; first_error={headline}"
+    return WARN, detail
+
+
+def check_pytest_collect(
+    project: Path,
+    *,
+    timeout_resolver: Callable[[], float],
+    failure_compactor: Callable[[str, str], str],
+) -> tuple[str, str]:
+    # Avoid spawning a real nested `pytest --collect-only` while koru's own
+    # test suite is running (keeps doctor-facade tests fast and non-recursive).
+    guarded = _pytest_collect_nested_guard()
+    if guarded is not None:
+        return guarded
     timeout_seconds = timeout_resolver()
     cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]
     try:
@@ -413,18 +441,8 @@ def check_pytest_collect(
 
     output = f"{result.stdout or ''}\n{result.stderr or ''}"
     if result.returncode == 0:
-        match = _PYTEST_COLLECT_COUNT_RE.search(output)
-        if match:
-            return PASS, f"{match.group(1)} test(s) collected"
-        if _PYTEST_NO_TESTS_RE.search(output):
-            return WARN, "0 tests collected — verify testpaths / discovery rules"
-        return PASS, "collection clean (count not parseable)"
-
-    detail = "pytest --collect-only failed — run `koru scan` for actionable per-file tickets"
-    headline = failure_compactor(result.stdout or "", result.stderr or "")
-    if headline:
-        detail = f"{detail}; first_error={headline}"
-    return WARN, detail
+        return _map_pytest_collect_success(output)
+    return _map_pytest_collect_failure(result, failure_compactor)
 
 
 def check_inotify_watches(project: Path) -> tuple[str, str]:

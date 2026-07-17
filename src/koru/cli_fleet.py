@@ -28,6 +28,7 @@ import os
 import signal
 import subprocess
 import sys
+from typing import Any
 import time
 from pathlib import Path
 from typing import Any
@@ -183,13 +184,65 @@ def _log(message: str) -> None:
     print(message, file=sys.stderr, flush=True)
 
 
-def _run_fleet_up(args: argparse.Namespace) -> int:
-    workspace = args.workspace or _default_workspace()
+def _fleet_extra_args(args: argparse.Namespace) -> list[str]:
     extra_args = list(args.extra_args)
     if extra_args and extra_args[0] == "--":
-        extra_args = extra_args[1:]
+        return extra_args[1:]
+    return extra_args
 
+
+def _fleet_bootstrap_managed(
+    workspace: Path, extra_args: list[str]
+) -> dict[Path, _ManagedProject] | None:
+    projects = discover_projects(workspace)
+    if not projects:
+        _log(f"koru fleet: no koru-managed projects found under {workspace}")
+        return None
+    _log(f"koru fleet: managing {len(projects)} project(s) under {workspace}:")
     managed: dict[Path, _ManagedProject] = {}
+    for p in projects:
+        _log(f"  - {p}")
+        managed[p] = _ManagedProject(p, extra_args)
+    return managed
+
+
+def _fleet_rescan(
+    managed: dict[Path, _ManagedProject],
+    *,
+    workspace: Path,
+    extra_args: list[str],
+) -> None:
+    for p in discover_projects(workspace):
+        if p not in managed:
+            _log(f"koru fleet: new project discovered -> {p}")
+            managed[p] = _ManagedProject(p, extra_args)
+
+
+def _fleet_shutdown(
+    managed: dict[Path, _ManagedProject],
+    *,
+    previous_sigterm: Any,
+    previous_sigint: Any,
+) -> None:
+    _log("koru fleet: shutting down — stopping all managed loops")
+    for mp in managed.values():
+        mp.terminate(log=_log)
+    deadline = time.monotonic() + 30.0
+    for mp in managed.values():
+        remaining = max(0.0, deadline - time.monotonic())
+        if mp.process is not None:
+            try:
+                mp.process.wait(timeout=remaining)
+            except subprocess.TimeoutExpired:
+                _log(f"koru fleet: force-killing {mp.project} (pid={mp.process.pid})")
+                mp.process.kill()
+    signal.signal(signal.SIGTERM, previous_sigterm)
+    signal.signal(signal.SIGINT, previous_sigint)
+
+
+def _run_fleet_up(args: argparse.Namespace) -> int:
+    workspace = args.workspace or _default_workspace()
+    extra_args = _fleet_extra_args(args)
     stopped = {"flag": False}
 
     def _handle_stop(_signo: int, _frame: object) -> None:
@@ -198,14 +251,9 @@ def _run_fleet_up(args: argparse.Namespace) -> int:
     previous_sigterm = signal.signal(signal.SIGTERM, _handle_stop)
     previous_sigint = signal.signal(signal.SIGINT, _handle_stop)
 
-    projects = discover_projects(workspace)
-    if not projects:
-        _log(f"koru fleet: no koru-managed projects found under {workspace}")
+    managed = _fleet_bootstrap_managed(workspace, extra_args)
+    if managed is None:
         return 1
-    _log(f"koru fleet: managing {len(projects)} project(s) under {workspace}:")
-    for p in projects:
-        _log(f"  - {p}")
-        managed[p] = _ManagedProject(p, extra_args)
 
     last_rescan = time.monotonic()
     try:
@@ -217,26 +265,14 @@ def _run_fleet_up(args: argparse.Namespace) -> int:
                 )
             if now - last_rescan >= args.rescan_interval_seconds:
                 last_rescan = now
-                for p in discover_projects(workspace):
-                    if p not in managed:
-                        _log(f"koru fleet: new project discovered -> {p}")
-                        managed[p] = _ManagedProject(p, extra_args)
+                _fleet_rescan(managed, workspace=workspace, extra_args=extra_args)
             time.sleep(_POLL_INTERVAL_SECONDS)
     finally:
-        _log("koru fleet: shutting down — stopping all managed loops")
-        for mp in managed.values():
-            mp.terminate(log=_log)
-        deadline = time.monotonic() + 30.0
-        for mp in managed.values():
-            remaining = max(0.0, deadline - time.monotonic())
-            if mp.process is not None:
-                try:
-                    mp.process.wait(timeout=remaining)
-                except subprocess.TimeoutExpired:
-                    _log(f"koru fleet: force-killing {mp.project} (pid={mp.process.pid})")
-                    mp.process.kill()
-        signal.signal(signal.SIGTERM, previous_sigterm)
-        signal.signal(signal.SIGINT, previous_sigint)
+        _fleet_shutdown(
+            managed,
+            previous_sigterm=previous_sigterm,
+            previous_sigint=previous_sigint,
+        )
     return 0
 
 

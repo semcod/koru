@@ -196,8 +196,8 @@ def project_venv_reexec_argv(project: Path) -> list[str] | None:
     return [str(local_koru), *sys.argv[1:]]
 
 
-def maybe_sync_project_koru_package(project: Path) -> str | None:
-    """Editable-install koru when import version lags ``pyproject.toml`` (once per process)."""
+def _koru_version_mismatch(project: Path) -> tuple[str, str] | None:
+    """Return ``(installed, source)`` when versions diverge and sync is allowed."""
     if os.environ.get("KORU_CLI_SYNC_DONE") or _env_truthy("KORU_CLI_NO_SYNC"):
         return None
     if running_outside_project_venv(project):
@@ -209,6 +209,12 @@ def maybe_sync_project_koru_package(project: Path) -> str | None:
     installed_version = _installed_koru_version()
     if not source_version or not installed_version or source_version == installed_version:
         return None
+    return installed_version, source_version
+
+
+def _run_editable_koru_sync(
+    project: Path, *, installed_version: str, source_version: str
+) -> str | None:
     local_venv = _local_project_venv(project) or (project / ".venv").resolve()
     pip = local_venv / "bin" / "pip"
     if not pip.is_file():
@@ -229,6 +235,17 @@ def maybe_sync_project_koru_package(project: Path) -> str | None:
     return (
         f"koru: synced editable package {installed_version} -> {new_version} "
         f"(pyproject {source_version})"
+    )
+
+
+def maybe_sync_project_koru_package(project: Path) -> str | None:
+    """Editable-install koru when import version lags ``pyproject.toml`` (once per process)."""
+    mismatch = _koru_version_mismatch(project)
+    if mismatch is None:
+        return None
+    installed_version, source_version = mismatch
+    return _run_editable_koru_sync(
+        project, installed_version=installed_version, source_version=source_version
     )
 
 

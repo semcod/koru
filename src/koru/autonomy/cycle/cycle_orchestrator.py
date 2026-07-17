@@ -494,6 +494,33 @@ def _emit_autopilot_preflight_skip(
     emit_terminal_observability_path(events)
 
 
+def _resolve_observability_blocker(
+    *,
+    status: Any,
+    reply: dict[str, Any],
+    decision_kind: str,
+) -> tuple[str, str] | None:
+    """Return ``(blocker, next_action)`` or None when nothing should be emitted."""
+    if not (status.failed or status.skipped):
+        return None
+    blocker = "drive_failed"
+    next_action = "retry_next_cycle"
+    verification = str(reply.get("verification") or "").strip().lower()
+    if status.submit_unverified or verification in {"submit_unverified", "submit_failed"}:
+        blocker = "manual_send_required"
+        next_action = "validate_submit_or_mark_ticket_input"
+    if status.manual_focus:
+        return "manual_focus_required", "focus_chat_or_open_interfaces"
+    if decision_kind in {
+        "idle_no_ticket",
+        "waiting_ticket_closed",
+        "skipped(idle_no_ticket)",
+        "skipped(waiting_ticket_closed)",
+    }:
+        return None
+    return blocker, next_action
+
+
 def _emit_autopilot_observability_outcome(
     *,
     project: Path,
@@ -508,27 +535,15 @@ def _emit_autopilot_observability_outcome(
     if ok:
         return
     status = parse_autopilot_status(autopilot_status)
-    if not (status.failed or status.skipped):
+    resolved = _resolve_observability_blocker(
+        status=status, reply=reply, decision_kind=decision_kind
+    )
+    if resolved is None:
         return
+    blocker, next_action = resolved
     corr = str(reply.get("id") or "cli-drive")
     ticket = _queue_loop_waiting_ticket_label(queue_result)
     cycle_number = cycle if isinstance(cycle, int) else None
-    blocker = "drive_failed"
-    next_action = "retry_next_cycle"
-    verification = str(reply.get("verification") or "").strip().lower()
-    if status.submit_unverified or verification in {"submit_unverified", "submit_failed"}:
-        blocker = "manual_send_required"
-        next_action = "validate_submit_or_mark_ticket_input"
-    if status.manual_focus:
-        blocker = "manual_focus_required"
-        next_action = "focus_chat_or_open_interfaces"
-    elif decision_kind in {
-        "idle_no_ticket",
-        "waiting_ticket_closed",
-        "skipped(idle_no_ticket)",
-        "skipped(waiting_ticket_closed)",
-    }:
-        return
     emit_blocker(
         project,
         corr=corr,
