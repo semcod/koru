@@ -1,6 +1,7 @@
 """Process execution runners for different executor types."""
 
 
+import codecs
 import json
 import locale
 import os
@@ -35,10 +36,19 @@ def _decode_subprocess_output(data: bytes | str | None) -> str:
         return ""
     if isinstance(data, str):
         return data
+
+    seen: set[str] = set()
     for encoding in ("utf-8", locale.getpreferredencoding(False)):
         try:
-            return data.decode(encoding)
-        except (LookupError, UnicodeDecodeError):
+            normalized = codecs.lookup(encoding).name
+        except LookupError:
+            continue
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        try:
+            return data.decode(normalized)
+        except UnicodeDecodeError:
             continue
     return data.decode("utf-8", errors="replace")
 
