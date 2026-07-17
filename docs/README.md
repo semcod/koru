@@ -14,6 +14,7 @@ refactor automation system for multi-repo workspaces.
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
+- **[`pipeline-design.md`](./pipeline-design.md)** — closed-loop stages (detect→plan→execute→verify→heal), flat pipeline YAML, autonomy layout, design-debt hotspots.
 - **[`llm-provider-configuration.md`](./llm-provider-configuration.md)** (PL) — globalny wybór
   klienta tillm (`aider`, `claude-code`), providera API (`openrouter`, `z.ai`, …),
   modeli per rola i pliki `.env` / `urirun/.env`.

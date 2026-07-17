@@ -3,4 +3,10 @@
 Cohesive clusters are being extracted here from the historical monolith;
 vdisplay_client.py re-exports them for backward compatibility, so existing
 `from koru.integrations.vdisplay_client import X` imports keep working.
+
+Modules:
+
+* :mod:`koru.integrations.vdisplay.portal_input` — RemoteDesktop portal type-in
+* :mod:`koru.integrations.vdisplay.pointer_calibration` — ABS/adaptive pointer
+* :mod:`koru.integrations.vdisplay.env_session` — prepare/session env flags
 """

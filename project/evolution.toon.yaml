@@ -1,58 +1,58 @@
-# code2llm/evolution | 7702 func | 727f | 2026-07-05
+# code2llm/evolution | 7090 func | 671f | 2026-07-17
 # generated in 0.04s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 7433L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 111495
+      WHY: 7571L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 113565
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
-      WHY: 3772L, 3 classes, max CC=16
-      EFFORT: ~4h  IMPACT: 60352
+      WHY: 3786L, 3 classes, max CC=16
+      EFFORT: ~4h  IMPACT: 60576
 
-  [3] !! SPLIT-FUNC      tillm_setup_main  CC=25  fan=32
-      WHY: CC=25 exceeds 15
-      EFFORT: ~1h  IMPACT: 800
+  [3] !  SPLIT-FUNC      type_into_chat_via_portal  CC=19  fan=21
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 399
 
   [4] !  SPLIT-FUNC      run_daemon_command  CC=15  fan=26
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 390
 
-  [5] !  SPLIT-FUNC      type_into_chat_via_portal  CC=18  fan=21
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 378
-
-  [6] !! SPLIT-FUNC      SharedAutopilotBridgePaste.shouldProbeInput  CC=26  fan=14
+  [5] !! SPLIT-FUNC      SharedAutopilotBridgePaste.shouldProbeInput  CC=26  fan=14
       WHY: CC=26 exceeds 15
       EFFORT: ~1h  IMPACT: 364
 
-  [7] !  SPLIT-FUNC      _maybe_reexec_into_project_python  CC=16  fan=17
+  [6] !  SPLIT-FUNC      _maybe_reexec_into_project_python  CC=16  fan=17
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 272
 
-  [8] !  SPLIT-FUNC      action_vdisplay_up  CC=15  fan=18
+  [7] !  SPLIT-FUNC      action_vdisplay_up  CC=15  fan=18
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 270
 
-  [9] !  SPLIT-FUNC      _checkbox_picker  CC=19  fan=14
+  [8] !  SPLIT-FUNC      _checkbox_picker  CC=19  fan=14
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 266
 
-  [10] !  SPLIT-FUNC      desktop_uri_handle  CC=15  fan=17
+  [9] !  SPLIT-FUNC      desktop_uri_handle  CC=15  fan=17
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 255
 
+  [10] !  SPLIT-FUNC      _run_fleet_up  CC=15  fan=15
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 225
+
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 291 import paths
-  ⚠ Splitting packages/coru/src/coru/cli.py may break 200 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 299 import paths
+  ⚠ Splitting packages/coru/src/coru/cli.py may break 202 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
-  CC̄:          3.7 → ≤2.6
+  CC̄:          3.8 → ≤2.7
   max-CC:      26 → ≤13
   god-modules: 56 → 0
-  high-CC(≥15): 14 → ≤7
+  high-CC(≥15): 16 → ≤8
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.1 → now CC̄=3.7
+  prev CC̄=3.7 → now CC̄=3.8

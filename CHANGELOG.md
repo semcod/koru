@@ -157,6 +157,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.395] - 2026-07-17
+
+### Docs
+- Update README.md
+- Update docs/README.md
+- Update docs/pipeline-design.md
+- Update docs/plans/observation-mesh-plan.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update plugins/koru-autopilot-shared/src/bridge-paste.ts
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/index.html
+- Update project/map.toon.yaml
+- ... and 4 more files
+
 ## [0.1.394] - 2026-07-16
 
 ### Docs

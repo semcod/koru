@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from importlib import import_module
+from importlib import import_module, metadata
+
+try:
+    __version__ = metadata.version("koru")
+except metadata.PackageNotFoundError:  # pragma: no cover - editable/source tree
+    __version__ = "0.0.0+local"
 
 _EXPORTS: dict[str, tuple[str, str]] = {
     "Check": ("koru.doctor", "Check"),
@@ -58,6 +63,7 @@ def __dir__() -> list[str]:
     return sorted(set(globals()) | set(_EXPORTS))
 
 __all__ = [
+    "__version__",
     "Check",
     "DoctorReport",
     "ImportReport",

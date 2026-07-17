@@ -358,109 +358,179 @@ def autoconfirm_loop_via_portal(
     return {"ok": True, "confirmed": confirmed}
 
 
+def _env_truthy(name: str) -> bool:
+    return (os.environ.get(name) or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _portal_type_result(
+    *,
+    ok: bool,
+    method: str,
+    sx: int | None = None,
+    sy: int | None = None,
+    submit: bool = False,
+    typed: bool = False,
+    error: str | None = None,
+) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "ok": ok,
+        "method": method,
+        "error": error,
+    }
+    if sx is not None and sy is not None:
+        out["stream_xy"] = [sx, sy]
+        out["submitted"] = bool(submit and typed)
+    return out
+
+
+def _maybe_autoremember_focused_input(p: Any, ide: str) -> None:
+    """Opt-in: cache blue-ring focus position. Off by default (busy screens)."""
+    if not _env_truthy("KORU_VDISPLAY_PORTAL_AUTOREMEMBER"):
+        return
+    try:
+        f0 = p.grab_frame()
+        ring = _blue_ring_center(f0)
+        if ring is None:
+            return
+        fw0, fh0 = _png_size(f0)
+        rsx, rsy = p.frame_to_stream(ring[0], ring[1], frame_w=fw0, frame_h=fh0)
+        _cache_input_xy(ide, (rsx, rsy))
+        logger.info("PORTAL_REMEMBER focused input at stream=(%d,%d)", rsx, rsy)
+    except Exception:
+        pass
+
+
+def _stream_target_from_ocr(p: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
+    fw, fh = _png_size(frame)
+    xy = _ocr_anchor_xy(frame, ide)  # placeholder anchor, then landmark
+    if xy is None:
+        return None
+    return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
+
+
+def _type_at_stream_coords(
+    p: Any,
+    text: str,
+    *,
+    sx: int,
+    sy: int,
+    submit: bool,
+    method: str,
+    log_label: str,
+) -> dict[str, Any]:
+    def _verify(before: bytes, after: bytes) -> bool:
+        # Focus guard: blue ring near target confirms the composer got focus.
+        return _focused_near(after, sx, sy)
+
+    typed = p.type_into_input_verified(
+        sx,
+        sy,
+        text,
+        verify=_verify,
+        submit=submit,
+        clear_first=True,
+        submit_mode="ctrl-enter",
+    )
+    logger.info("%s typed=%s stream=(%d,%d) submit=%s", log_label, typed, sx, sy, submit)
+    return _portal_type_result(
+        ok=bool(typed),
+        method=method,
+        sx=sx,
+        sy=sy,
+        submit=submit,
+        typed=bool(typed),
+        error=None if typed else "click did not focus the chat input (guard rejected)",
+    )
+
+
+def _precise_stream_xy(p: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
+    """Empty-input placeholder anchor in stream coords, or None."""
+    precise_fx = _anchor_precise(frame, ide)
+    if precise_fx is None:
+        return None
+    fw, fh = _png_size(frame)
+    return p.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=fw, frame_h=fh)
+
+
+def _clear_and_reanchor_stream_xy(
+    p: Any,
+    frame: bytes,
+    ide: str,
+) -> tuple[tuple[int, int] | None, str | None]:
+    """Two-pass when the input already holds text (no placeholder).
+
+    Rough click → focus guard → clear → re-anchor on empty placeholder.
+    Returns ``(stream_xy, error)``; on success ``error`` is None.
+    """
+    import time
+
+    # Prefer cached known-good position over flaky landmark.
+    rough = _cached_input_xy(ide) or _stream_target_from_ocr(p, frame, ide)
+    if rough is None:
+        return None, "chat input not found (no anchor/landmark/cache)"
+    rx, ry = rough
+    p.move_abs(rx, ry)
+    time.sleep(0.35)
+    p.click()
+    time.sleep(0.4)
+    # Focus guard BEFORE destructive clear (up to 200 deletes).
+    if not _focused_near(p.grab_frame(), rx, ry):
+        return None, "click did not focus the chat input (guard rejected before clear)"
+    p.clear_input(200)
+    time.sleep(0.4)
+    frame = p.grab_frame()  # placeholder should be back now
+    re = _anchor_precise(frame, ide)
+    if re is not None:
+        fw, fh = _png_size(frame)
+        return p.frame_to_stream(re[0], re[1], frame_w=fw, frame_h=fh), None
+    return _cached_input_xy(ide), None
+
+
 def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool = False) -> dict[str, Any]:
     """Full portal flow: locate the chat input on the portal's own frame and
     type (guarded). Returns a result dict."""
-    import time
-
     p = _get_session()
     if p is None:
-        return {"ok": False, "method": "portal", "error": "portal unavailable"}
+        return _portal_type_result(ok=False, method="portal", error="portal unavailable")
 
-    def _target(frame: bytes) -> tuple[int, int] | None:
-        fw, fh = _png_size(frame)
-        xy = _ocr_anchor_xy(frame, ide)  # placeholder anchor, then landmark
-        if xy is None:
-            return None
-        return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
+    _maybe_autoremember_focused_input(p, ide)
 
-    # Auto-remember (opt-in): if the chat input is currently focused (blue ring),
-    # cache that position. OFF by default — on a busy screen (Qoder + terminal)
-    # blue-ring detection can catch the wrong element and clobber a known-good
-    # calibrated coord; explicit calibrate_input_from_focus() is the reliable way.
-    if (os.environ.get("KORU_VDISPLAY_PORTAL_AUTOREMEMBER") or "").strip().lower() in {"1", "true", "yes", "on"}:
-        try:
-            f0 = p.grab_frame()
-            ring = _blue_ring_center(f0)
-            if ring is not None:
-                fw0, fh0 = _png_size(f0)
-                rsx, rsy = p.frame_to_stream(ring[0], ring[1], frame_w=fw0, frame_h=fh0)
-                _cache_input_xy(ide, (rsx, rsy))
-                logger.info("PORTAL_REMEMBER focused input at stream=(%d,%d)", rsx, rsy)
-        except Exception:
-            pass
-
-    # A remembered/calibrated coord is deterministic and beats the flaky OCR
-    # anchor — the composer doesn't move. Prefer it.
+    # Calibrated/cached coords beat flaky OCR — the composer doesn't move.
     cached = _cached_input_xy(ide)
     if cached is not None:
         sx, sy = cached
-
-        def _vc(before: bytes, after: bytes) -> bool:
-            return _focused_near(after, sx, sy)
-
-        typed = p.type_into_input_verified(sx, sy, text, verify=_vc, submit=submit, clear_first=True, submit_mode="ctrl-enter")  # noqa: E501
-        logger.info("PORTAL_INPUT(cached) typed=%s stream=(%d,%d) submit=%s", typed, sx, sy, submit)
-        return {
-            "ok": bool(typed), "method": "portal-remotedesktop-cached",
-            "stream_xy": [sx, sy], "submitted": bool(submit and typed),
-            "error": None if typed else "click did not focus the chat input (guard rejected)",
-        }
+        return _type_at_stream_coords(
+            p,
+            text,
+            sx=sx,
+            sy=sy,
+            submit=submit,
+            method="portal-remotedesktop-cached",
+            log_label="PORTAL_INPUT(cached)",
+        )
 
     frame = p.grab_frame()
-    fw0, fh0 = _png_size(frame)
-    precise_fx = _anchor_precise(frame, ide)  # empty input -> exact placeholder bbox
-    precise = None
-    if precise_fx is not None:
-        precise = p.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=fw0, frame_h=fh0)
+    precise = _precise_stream_xy(p, frame, ide)
+    if precise is not None:
         _cache_input_xy(ide, precise)  # seed: the input doesn't move
+    else:
+        precise, err = _clear_and_reanchor_stream_xy(p, frame, ide)
+        if err is not None:
+            return _portal_type_result(ok=False, method="portal", error=err)
+        frame = p.grab_frame()
 
-    # Two-pass when the input already holds text (no placeholder): a rough
-    # landmark click focuses + clears it, the placeholder reappears, then we
-    # re-anchor precisely on the now-empty input before typing.
-    if precise is None:
-        # input has text (no placeholder): prefer a cached known-good position
-        # (the composer doesn't move) over the flaky landmark; either way clear
-        # it, then re-anchor precisely on the now-empty input.
-        rough = _cached_input_xy(ide) or _target(frame)
-        if rough is None:
-            return {"ok": False, "method": "portal", "error": "chat input not found (no anchor/landmark/cache)"}
-        rx, ry = rough
-        p.move_abs(rx, ry); time.sleep(0.35)  # noqa: E702
-        p.click(); time.sleep(0.4)  # noqa: E702
-        # Focus guard BEFORE the destructive clear: clear_input() fires up to
-        # 200 deletes, so a mis-located landmark click (editor / terminal pane)
-        # must abort here — same ring check every typing path already uses.
-        if not _focused_near(p.grab_frame(), rx, ry):
-            return {
-                "ok": False,
-                "method": "portal",
-                "error": "click did not focus the chat input (guard rejected before clear)",
-            }
-        p.clear_input(200); time.sleep(0.4)  # noqa: E702
-        frame = p.grab_frame()  # placeholder should be back now
-        fw0, fh0 = _png_size(frame)
-        re = _anchor_precise(frame, ide)
-        precise = p.frame_to_stream(re[0], re[1], frame_w=fw0, frame_h=fh0) if re else _cached_input_xy(ide)
-
-    sx_sy = precise or _target(frame)
+    sx_sy = precise or _stream_target_from_ocr(p, frame, ide)
     if sx_sy is None:
-        return {"ok": False, "method": "portal", "error": "chat input not found after clear"}
+        return _portal_type_result(
+            ok=False, method="portal", error="chat input not found after clear"
+        )
     sx, sy = sx_sy
-
-    def _verify(before: bytes, after: bytes) -> bool:
-        # focus guard: the click must have FOCUSED the input — confirmed by the
-        # blue focus ring appearing around it (Qoder highlights the focused
-        # composer). Pointing at Qoder is not enough; only an actual focus change
-        # lets us type, so a keystroke can never leak into the wrong window.
-        return _focused_near(after, sx, sy)
-
-    typed = p.type_into_input_verified(sx, sy, text, verify=_verify, submit=submit, clear_first=True, submit_mode="ctrl-enter")  # noqa: E501
-    logger.info("PORTAL_INPUT typed=%s ide=%s stream=(%d,%d) submit=%s", typed, ide, sx, sy, submit)
-    return {
-        "ok": bool(typed),
-        "method": "portal-remotedesktop",
-        "stream_xy": [sx, sy],
-        "submitted": bool(submit and typed),
-        "error": None if typed else "click did not focus the chat input (guard rejected)",
-    }
+    return _type_at_stream_coords(
+        p,
+        text,
+        sx=sx,
+        sy=sy,
+        submit=submit,
+        method="portal-remotedesktop",
+        log_label=f"PORTAL_INPUT ide={ide}",
+    )

@@ -5,7 +5,7 @@ Powiązane: [`docs/ide-control-surfaces.md`](../ide-control-surfaces.md),
 [`docs/local-service.md`](../local-service.md),
 [`docs/autopilot-design.md`](../autopilot-design.md),
 [`docs/plans/capture-providers-refactor.md`](./capture-providers-refactor.md) — refaktor warstwy capture,
-[`src/koru/configurator.py`](../../src/koru/configurator.py),
+[`src/koru/configurator/`](../../src/koru/configurator/) (package: schema, store, features, render, prompting, cli),
 [`src/koruapi/dashboard_serve.py`](../../src/koruapi/dashboard_serve.py),
 [`src/koruide/plugin_installer.py`](../../src/koruide/plugin_installer.py).
 
@@ -487,8 +487,9 @@ regresji).
 
 ## 12. Co już mamy w repo, co reużyjemy
 
-- `src/koru/configurator.py` — schema config + interactive prompter →
-  rozszerzamy o sekcje v2.
+- `src/koru/configurator/` — schema config + interactive prompter
+  (`schema`, `store`, `features`, `render`, `prompting`, `cli`) →
+  rozszerzamy o sekcje v2 (już w `features.py` / `CONFIG_SCHEMA_V2`).
 - `src/koruapi/dashboard_serve.py` — lifecycle HTTP+WS serwera
   (`serve`, `start_serve_background`, `bind_serve_server`).
 - `src/koruapi/dashboard_serve_utils.py` — port-locking, bind retry,
