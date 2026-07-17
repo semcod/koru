@@ -62,3 +62,10 @@ def test_uv_lock_koru_metadata_matches_pyproject() -> None:
     assert locked["version"] == project["version"]
     assert sorted(locked["optional-dependencies"]) == sorted(project["optional-dependencies"])
     assert sorted(locked["metadata"]["provides-extras"]) == sorted(project["optional-dependencies"])
+
+
+def test_version_file_matches_pyproject() -> None:
+    """VERSION must stay in sync with pyproject (0.1.399 drift trap)."""
+    project_version = _pyproject()["project"]["version"]
+    file_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    assert file_version == project_version
