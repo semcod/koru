@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 772, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 774, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7357
-- **Total Classes**: 502
-- **Modules**: 1053
-- **Entry Points**: 2757
+- **Total Functions**: 7378
+- **Total Classes**: 504
+- **Modules**: 1055
+- **Entry Points**: 2758
 
 ## Architecture by Module
 
@@ -576,6 +576,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
+- `src.koru.queue.patch_transaction.apply_proposed_patch` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
 - `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
@@ -598,7 +599,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_tagi.auto` - 26 calls
 - `src.koru.cli_strategy.strategy_main` - 26 calls
 - `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
-- `src.koru.autonomy.operator.operator_daemon.start_or_reuse_daemon` - 26 calls
 
 ## System Interactions
 

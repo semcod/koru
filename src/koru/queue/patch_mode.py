@@ -176,8 +176,18 @@ def current_file_excerpt(
         if not target.is_file() or budget <= 0:
             continue
         try:
-            body = target.read_text(encoding="utf-8", errors="replace")
+            raw = target.read_bytes()
         except OSError:
+            continue
+        if b"\x00" in raw[:8192]:
+            # Binary. Quoting it would spend the budget on mojibake the model
+            # cannot act on — it has no way to express a binary change as a
+            # unified diff either. Name it and move on.
+            sections.append(f"### `{rel}` — binary file, contents not shown")
+            continue
+        try:
+            body = raw.decode("utf-8", errors="replace")
+        except (UnicodeError, OSError):
             continue
         if len(body) > budget:
             body = body[:budget] + "\n… (truncated)"

@@ -1,5 +1,5 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.55s
+# generated in 0.71s
 # nodes: 375 | edges: 500 | modules: 74
 # CC̄=3.7
 
@@ -7,7 +7,7 @@ HUBS[20]:
   project.print
     CC=0  in:1044  out:0  total:1044
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:231  out:9  total:240
+    CC=5  in:232  out:9  total:241
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
   packages.dsl2coru.src.dsl2coru.parser._flag
@@ -18,9 +18,9 @@ HUBS[20]:
     CC=5  in:21  out:11  total:32
   packages.coru.src.coru.cli._run_lane_repair
     CC=7  in:7  out:24  total:31
-  src.koruide.ide.detect_running_ides
-    CC=4  in:25  out:4  total:29
   src.koruide.plugin_installer._repo_root
+    CC=4  in:25  out:4  total:29
+  src.koruide.ide.detect_running_ides
     CC=4  in:25  out:4  total:29
   packages.coru.src.coru.cli_checks._trace
     CC=3  in:23  out:5  total:28
@@ -34,14 +34,14 @@ HUBS[20]:
     CC=3  in:0  out:26  total:26
   packages.dsl2koru.src.dsl2koru.cli._main_subcommand
     CC=1  in:1  out:24  total:25
-  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri
-    CC=13  in:1  out:23  total:24
   packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql
     CC=7  in:2  out:22  total:24
+  packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri
+    CC=13  in:1  out:23  total:24
   packages.dsl2koru.src.dsl2koru.codegen.render_models_module
     CC=12  in:1  out:22  total:23
-  packages.uri2coru.src.uri2coru.decode.uri_to_dsl
-    CC=7  in:4  out:18  total:22
+  packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message
+    CC=9  in:0  out:22  total:22
   packages.coru.src.coru.cli._run_koru_lane
     CC=2  in:18  out:4  total:22
 

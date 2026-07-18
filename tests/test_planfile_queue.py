@@ -1810,6 +1810,68 @@ class TestPatchMode(unittest.TestCase):
 
             self.assertFalse(list(parent.glob(".koru-run-*")))
 
+    def test_conflict_on_one_file_promotes_none_of_them(self) -> None:
+        """Promotion is all-or-nothing: a concurrent edit to one target must not
+        leave the patch's other files half-applied."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            (project / "a.txt").write_text("a1\n", encoding="utf-8")
+            (project / "b.txt").write_text("b1\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=project, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "commit", "-qm", "base"], cwd=project, check=True, capture_output=True,
+            )
+            reply = SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "```diff\n"
+                    "diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n"
+                    "@@ -1 +1 @@\n-a1\n+a2\n"
+                    "diff --git a/b.txt b/b.txt\n--- a/b.txt\n+++ b/b.txt\n"
+                    "@@ -1 +1 @@\n-b1\n+b2\n"
+                    "```\n"
+                ),
+                stderr="",
+            )
+            calls = {"n": 0}
+
+            def gate(command: str, cwd: Path):
+                calls["n"] += 1
+                if calls["n"] == 2:  # after the worktree baseline, before promotion
+                    (project / "b.txt").write_text("touched by someone else\n", encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, outcome = apply_proposed_patch(
+                project, reply, {"inputs": {"verify_command": "true"}}, gate,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, PROMOTION_CONFLICT)
+            # Neither file moved: a.txt was not promoted just because it was clean.
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "a1\n")
+            self.assertEqual(
+                (project / "b.txt").read_text(encoding="utf-8"), "touched by someone else\n",
+            )
+
+    def test_binary_targets_are_named_not_dumped_into_the_prompt(self) -> None:
+        """A binary file quoted into a retry prompt is mojibake the model cannot
+        act on, and it cannot express a binary change as a unified diff anyway."""
+        from koru.queue.patch_mode import current_file_excerpt
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\x01\x02payload\xff")
+            (project / "notes.txt").write_text("readable text\n", encoding="utf-8")
+
+            excerpt = current_file_excerpt(project, ("logo.png", "notes.txt"))
+
+            self.assertIn("logo.png", excerpt)
+            self.assertIn("binary file, contents not shown", excerpt)
+            self.assertNotIn("\ufffd", excerpt)
+            self.assertIn("readable text", excerpt)
+
     def test_read_only_checkout_degrades_instead_of_crashing(self) -> None:
         """Containers and CI mount repos read-only — koru's own noVNC image
         uses /opt/koru:ro. Staging must decline, not raise."""
