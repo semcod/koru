@@ -21,18 +21,12 @@ from koru.queue.verify import (
     render_profile_command,
     resolve_verify,
 )
+from tests import _repolab
 
 
 class _RepoCase(unittest.TestCase):
     def _git_repo(self, tmp: str) -> Path:
-        project = Path(tmp)
-        for args in (
-            ["init", "-q"],
-            ["config", "user.email", "koru@test"],
-            ["config", "user.name", "koru"],
-        ):
-            subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
-        return project
+        return _repolab.git_repo(tmp)
 
     def _koru_yaml(self, project: Path, body: str) -> None:
         (project / "koru.yaml").write_text(body, encoding="utf-8")

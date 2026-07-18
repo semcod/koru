@@ -42,6 +42,7 @@ from koru.queue.transaction import (
     skip_verify_baseline,
     verify_output,
 )
+from tests import _repolab
 
 _DIFF = (
     "diff --git a/a.txt b/a.txt\n"
@@ -61,23 +62,10 @@ class _RepoCase(unittest.TestCase):
     """A throwaway git repo with one committed file."""
 
     def _git_repo(self, tmp: str) -> Path:
-        project = Path(tmp)
-        for args in (
-            ["init", "-q"],
-            ["config", "user.email", "koru@test"],
-            ["config", "user.name", "koru"],
-        ):
-            subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
-        return project
+        return _repolab.git_repo(tmp)
 
     def _commit_file(self, project: Path, rel: str, body: str) -> None:
-        target = project / rel
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(body, encoding="utf-8")
-        subprocess.run(["git", "add", "-A"], cwd=project, check=True, capture_output=True)
-        subprocess.run(
-            ["git", "commit", "-qm", "baseline"], cwd=project, check=True, capture_output=True,
-        )
+        _repolab.commit_file(project, rel, body)
 
     def _plan(self, project: Path, ticket: dict | None = None):
         return build_patch_plan(project, ticket if ticket is not None else {"id": "T-1"}, _DIFF)

@@ -7,7 +7,6 @@ an unsatisfiable contract, not freedom.
 
 from __future__ import annotations
 
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,6 +20,7 @@ from koru.queue.contracts import (
     contract_for_ticket,
 )
 from koru.queue.patch_mode import POLICY_DENIED
+from tests import _repolab
 
 _CONTRACT = CapabilityContract(
     id="local-refactor-r1",
@@ -126,23 +126,10 @@ class TestContractEvaluation(unittest.TestCase):
 
 class _RepoCase(unittest.TestCase):
     def _git_repo(self, tmp: str) -> Path:
-        project = Path(tmp)
-        for args in (
-            ["init", "-q"],
-            ["config", "user.email", "koru@test"],
-            ["config", "user.name", "koru"],
-        ):
-            subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
-        return project
+        return _repolab.git_repo(tmp)
 
     def _commit_file(self, project: Path, rel: str, body: str) -> None:
-        target = project / rel
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(body, encoding="utf-8")
-        subprocess.run(["git", "add", "-A"], cwd=project, check=True, capture_output=True)
-        subprocess.run(
-            ["git", "commit", "-qm", "baseline"], cwd=project, check=True, capture_output=True,
-        )
+        _repolab.commit_file(project, rel, body)
 
     def _write_contract(self, project: Path, *, allow_paths='["src/**"]') -> None:
         (project / "koru.yaml").write_text(

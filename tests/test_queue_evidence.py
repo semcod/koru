@@ -8,7 +8,6 @@ record, and a landed patch that cannot prove itself may not close its ticket.
 from __future__ import annotations
 
 import json
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +21,7 @@ from koru.queue.evidence import (
     load_evidence,
 )
 from koru.queue.patch_retry import apply_patch_with_retry
+from tests import _repolab
 
 _GOOD_REPLY = (
     "```diff\n"
@@ -60,21 +60,10 @@ def _ticket_args(command) -> list[str]:
 
 class _RepoCase(unittest.TestCase):
     def _git_repo(self, tmp: str) -> Path:
-        project = Path(tmp)
-        for args in (
-            ["init", "-q"],
-            ["config", "user.email", "koru@test"],
-            ["config", "user.name", "koru"],
-        ):
-            subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
-        return project
+        return _repolab.git_repo(tmp)
 
     def _commit_file(self, project: Path, rel: str, body: str) -> None:
-        (project / rel).write_text(body, encoding="utf-8")
-        subprocess.run(["git", "add", "-A"], cwd=project, check=True, capture_output=True)
-        subprocess.run(
-            ["git", "commit", "-qm", "baseline"], cwd=project, check=True, capture_output=True,
-        )
+        _repolab.commit_file(project, rel, body)
 
     def _gate_ok(self, command: str, cwd: Path):
         return _reply()
