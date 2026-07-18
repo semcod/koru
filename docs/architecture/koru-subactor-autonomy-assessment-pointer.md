@@ -8,6 +8,6 @@ Pełny raport (Part A: subactor ask / publikacje domen; Part B: checklist Werdyk
 
 - Subactor ask: pełny apply = `--execute --apply --yes`; po edycji `step-catalog.json` → `docker compose restart hr-control` w `platform/`.
 - Logo/www/docs-stage: apply na origin OK (200); logo używa `/logo.subactor.com`; docs.prod celowo bez apply.
-- Koru queue: worktree + dirty refuse + manifest drift + retry(1) — **częściowo** spełnia Werdykt; brak trwałego manifestu per run i niedokończony `promotion_mode=commit`.
+- **P0 done (2026-07-18, `5fea503d`):** ADR-005 Accepted, persist manifest per run, `promotion_mode=commit` on clean main, E2E bridge test.
+- **P1 template:** [`docs/subactor-development-repair-template.md`](../subactor-development-repair-template.md) — `patch_mode`, `promotion_mode=branch`, worktree, `max_patch_attempts=2`, local verify.
 - Most `development_defect` Subactor→Koru jest w repo; Koru nie powinien mutować Plesk/DNS.
-- P0 wspólne: ADR-005 Accept, persist manifest, regresja stale step-catalog, E2E bridge test.

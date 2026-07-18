@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Subactor `development_defect` **repair ticket template** (`subactor-development-repair`):
+  packaged YAML under `templates/planfile/`, loader in `koru.queue.ticket_templates`,
+  docs in `docs/subactor-development-repair-template.md`, regression test
+  `tests/test_subactor_repair_ticket_template.py`. Policy: `patch_mode`, branch
+  promotion, worktree, `max_patch_attempts=2`, local `node --test` verify — no
+  Plesk/DNS/`--apply`.
+- Queue patch tickets may set `inputs.max_patch_attempts` (overrides
+  `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
+
 ## [0.1.400] - 2026-07-17
 
 ### Added

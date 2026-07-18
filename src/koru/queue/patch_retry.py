@@ -34,8 +34,15 @@ from koru.queue.patch_transaction import apply_proposed_patch, resolve_verify_co
 from koru.queue.types import CommandResult
 
 
-def patch_retry_budget() -> int:
+def patch_retry_budget(ticket: dict | None = None) -> int:
     """How many times to re-ask an agent whose diff would not apply."""
+    if ticket is not None:
+        per_ticket = (ticket.get("inputs") or {}).get("max_patch_attempts")
+        if per_ticket is not None:
+            try:
+                return max(0, int(per_ticket))
+            except (TypeError, ValueError):
+                pass
     raw = (os.environ.get("KORU_QUEUE_PATCH_RETRIES") or "").strip()
     try:
         return max(0, int(raw)) if raw else 1
@@ -63,7 +70,7 @@ def apply_patch_with_retry(
     rather than imported so this module stays independent of the queue runner.
     """
     base_prompt = str(action.get("prompt") or "")
-    budget = patch_retry_budget()
+    budget = patch_retry_budget(ticket)
     remaining = budget
     manifest: dict | None = None
 
