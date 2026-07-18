@@ -22,6 +22,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.410] - 2026-07-18
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_queue_journal.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/index.html
+- Update project/map.toon.yaml
+- Update project/mermaid.export
+- ... and 5 more files
+
 ## [0.1.409] - 2026-07-18
 
 ### Docs
