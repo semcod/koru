@@ -1810,6 +1810,34 @@ class TestPatchMode(unittest.TestCase):
 
             self.assertFalse(list(parent.glob(".koru-run-*")))
 
+    def test_read_only_checkout_degrades_instead_of_crashing(self) -> None:
+        """Containers and CI mount repos read-only — koru's own noVNC image
+        uses /opt/koru:ro. Staging must decline, not raise."""
+        from koru.queue.patch_mode import staging_worktree
+
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            project = parent / "repo"
+            project.mkdir()
+            for args in (
+                ["init", "-q"],
+                ["config", "user.email", "koru@test"],
+                ["config", "user.name", "koru"],
+            ):
+                subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
+            self._commit_file(project, "a.txt", "old\n")
+
+            project.chmod(0o555)
+            parent.chmod(0o555)
+            try:
+                with staging_worktree(project, ("a.txt",)) as staged:
+                    # No writable location anywhere: decline so the caller can
+                    # fall back to in-place execution and its dirty-file guard.
+                    self.assertIsNone(staged)
+            finally:
+                parent.chmod(0o755)
+                project.chmod(0o755)
+
     def test_symlink_creating_patch_is_refused(self) -> None:
         """git apply blocks `../` traversal but not a link pointing anywhere on
         the filesystem, which would let a scoped patch reach outside it."""

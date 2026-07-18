@@ -638,8 +638,16 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
     created, leaving the caller to fall back to in-place execution.
     """
     prune_stale_worktrees(project)
-    path = _worktree_location(project, uuid4().hex[:12])
-    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path = _worktree_location(project, uuid4().hex[:12])
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # Read-only checkouts are normal in containers and CI — koru's own
+        # noVNC image mounts the repo at /opt/koru:ro. Degrade to in-place
+        # execution, which refuses to touch dirty files, rather than crashing
+        # the queue over a directory that cannot be created.
+        yield None
+        return
     created = _git(project, "worktree", "add", "--detach", "--quiet", str(path), "HEAD")
     if created.returncode != 0:
         yield None
