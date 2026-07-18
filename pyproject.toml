@@ -273,6 +273,7 @@ koru = [
     "wizard/templates/*.json",
     "wizard/gui/templates/*.html",
     "wizard/gui/static/*",
+    "repair_runs/migrations/*.sql",
     "*.proto",
 ]
 koruapi = ["dashboard_template.html"]
