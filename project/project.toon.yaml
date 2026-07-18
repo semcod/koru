@@ -1,8 +1,8 @@
-# koru | 7353 func | 712f | 168924L | python | 2026-07-18
-# generated in 0.01s
+# koru | 7357 func | 712f | 168970L | python | 2026-07-18
+# generated in 0.00s
 
 HEALTH:
-  CC̄=3.7  critical=469 (limit:10)  dup=20  cycles=0
+  CC̄=3.7  critical=470 (limit:10)  dup=20  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     get_vql_chat_target_from_photo = 37 (limit:10)
@@ -45,10 +45,10 @@ HOTSPOTS[10]:
 
 REFACTOR[15]:
   [1] H/H Split god module src/koru/scan.py (1796L, 0 classes)
-  [2] H/H Split god module src/koru/queue/runner.py (687L, 0 classes)
+  [2] H/H Split god module src/koru/queue/runner.py (725L, 0 classes)
   [3] H/H Split god module src/koruapi/mcp_server_planfile.py (965L, 0 classes)
   [4] H/H Split god module src/koru/integrations/vdisplay_client.py (6836L, 0 classes)
   [5] H/H Split god module src/koru/queue/runners.py (529L, 0 classes)
 
 EVOLUTION:
-  2026-07-18 CC̄=3.7 crit=469 168924L // Automated analysis
+  2026-07-18 CC̄=3.7 crit=470 168970L // Automated analysis

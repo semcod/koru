@@ -35,6 +35,10 @@ else — no prose before or after it.
 
 - Use `diff --git a/<path> b/<path>` headers with paths relative to the repository root.
 - Follow each `diff --git` header with the `--- a/<path>` and `+++ b/<path>` lines.
+- Every line inside a hunk MUST begin with a marker: a space for context, `-` for a
+  removed line, `+` for an added one. A line starting at column 0 makes the whole
+  patch unusable. Blank context lines are a single space, not an empty line.
+- Changing a line means both a `-` line and a `+` line — never edit a line in place.
 - Include at least 3 lines of context around every hunk so the patch applies cleanly.
 - Emit one diff covering every file you change.
 - If you cannot produce the change, emit exactly `NO-PATCH: <one-line reason>` instead.
@@ -66,6 +70,24 @@ def patch_mode_enabled(ticket: dict) -> bool:
 def build_patch_prompt(prompt: str) -> str:
     """Append the diff-only output contract to a ticket prompt."""
     return f"{prompt.rstrip()}\n{PATCH_PROMPT_SUFFIX}"
+
+
+def build_retry_prompt(prompt: str, failure: str) -> str:
+    """Re-ask for a patch, quoting exactly why the previous one was rejected.
+
+    ``git apply`` reports precisely what is wrong ("corrupt patch at line 8"),
+    and that diagnostic is far more useful to the agent than a bare retry —
+    without it the model tends to re-emit the same malformed diff.
+    """
+    return (
+        f"{build_patch_prompt(prompt).rstrip()}\n\n"
+        "## Previous attempt was rejected\n\n"
+        f"Your last diff could not be applied:\n\n    {failure.strip()}\n\n"
+        "Re-read the current contents of the files you are changing, then emit a "
+        "corrected diff. Check that every hunk line starts with a space, `-` or `+`, "
+        "that each changed line appears as both a `-` and a `+` line, and that the "
+        "context lines match the file exactly as it is on disk right now."
+    )
 
 
 def extract_unified_diff(text: str) -> str | None:

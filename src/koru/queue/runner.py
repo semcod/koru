@@ -16,6 +16,7 @@ from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
 from koru.queue.patch_mode import (
     apply_unified_diff,
     build_patch_prompt,
+    build_retry_prompt,
     diff_target_files,
     extract_unified_diff,
     patch_mode_enabled,
@@ -298,12 +299,52 @@ def _resolve_verify_command(project: Path, ticket: dict) -> str:
     return str(commands[0]).strip() if commands else ""
 
 
+def _patch_retry_budget() -> int:
+    """How many times to re-ask an agent whose diff would not apply."""
+    raw = (os.environ.get("KORU_QUEUE_PATCH_RETRIES") or "").strip()
+    try:
+        return max(0, int(raw)) if raw else 1
+    except ValueError:
+        return 1
+
+
+def _apply_patch_with_retry(
+    project: Path,
+    result: CommandResult,
+    ticket: dict,
+    action: dict[str, Any],
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult],
+    shell_runner: Callable[[str, Path], CommandResult],
+) -> tuple[CommandResult, str | None]:
+    """Apply the agent's patch, re-asking with the exact rejection on failure.
+
+    A malformed or stale diff is a mechanical problem the agent can fix once it
+    sees ``git apply``'s complaint, so those attempts are retried. A patch that
+    applies but fails verification is a *substantive* failure — retrying it
+    would just burn another agent run on the same wrong idea — so it is not.
+    """
+    base_prompt = str(action.get("prompt") or "")
+    remaining = _patch_retry_budget()
+    while True:
+        result, error, retryable = _apply_proposed_patch(project, result, ticket, shell_runner)
+        if error is None or not retryable or remaining <= 0:
+            return result, error
+        remaining -= 1
+        retry_action = _enrich_llm_request_with_context(
+            {**action, "prompt": build_retry_prompt(base_prompt, error)},
+            project,
+        )
+        result = llm_runner(retry_action, project)
+        if result.returncode != 0:
+            return result, error
+
+
 def _apply_proposed_patch(
     project: Path,
     result: CommandResult,
     ticket: dict,
     shell_runner: Callable[[str, Path], CommandResult],
-) -> tuple[CommandResult, str | None]:
+) -> tuple[CommandResult, str | None, bool]:
     """Apply the diff an agent proposed, then verify it, rolling back on failure.
 
     The agent's own exit code only says it produced *an answer*; whether that
@@ -318,32 +359,34 @@ def _apply_proposed_patch(
         return result, (
             "agent returned no unified diff, so nothing could be applied. "
             f"First line of the reply: {summary}"
-        )
+        ), True
 
     verify_command = _resolve_verify_command(project, ticket)
 
     if verify_command and worktree_enabled(project):
-        staged_error = _stage_patch_in_worktree(project, diff, verify_command, shell_runner)
+        staged_error, retryable = _stage_patch_in_worktree(
+            project, diff, verify_command, shell_runner,
+        )
         if staged_error is not None:
-            return result, staged_error
+            return result, staged_error, retryable
 
     applied = apply_unified_diff(project, diff)
     if not applied.ok:
-        return result, applied.detail
+        return result, applied.detail, True
 
     if not verify_command:
-        return result, None
+        return result, None, False
 
     verify = shell_runner(verify_command, project)
     if verify.returncode == 0:
-        return result, None
+        return result, None, False
 
     revert_files(project, applied.changed_files)
     output = (verify.stderr or verify.stdout or "").strip()[-600:]
     return result, (
         f"patch applied but verification failed, so it was rolled back. "
         f"`{verify_command}` exited {verify.returncode}: {output}"
-    )
+    ), False
 
 
 def _stage_patch_in_worktree(
@@ -351,28 +394,29 @@ def _stage_patch_in_worktree(
     diff: str,
     verify_command: str,
     shell_runner: Callable[[str, Path], CommandResult],
-) -> str | None:
+) -> tuple[str | None, bool]:
     """Prove a patch in a throwaway worktree before it touches the workspace.
 
     Nothing reaches the real tree until the patch has both applied and passed
     its gate in isolation, so a bad patch — or one racing another agent's edits
-    — costs a discarded directory rather than a broken workspace.
+    — costs a discarded directory rather than a broken workspace. Returns the
+    failure reason and whether re-asking the agent could plausibly fix it.
     """
     targets = diff_target_files(project, diff)
     with staging_worktree(project, targets) as staged:
         if staged is None:
-            return None  # cannot isolate; in-place apply + revert still guards us
+            return None, False  # cannot isolate; in-place apply + revert still guards us
         applied = apply_unified_diff(staged, diff)
         if not applied.ok:
-            return applied.detail
+            return applied.detail, True
         verify = shell_runner(verify_command, staged)
         if verify.returncode == 0:
-            return None
+            return None, False
         output = (verify.stderr or verify.stdout or "").strip()[-600:]
         return (
             "patch failed verification in an isolated worktree, so the workspace "
             f"was left untouched. `{verify_command}` exited {verify.returncode}: {output}"
-        )
+        ), False
 
 
 def _ticket_expects_edits(ticket: dict) -> bool:
@@ -675,7 +719,9 @@ def _run_next_planfile_task_impl(
 
         patch_error: str | None = None
         if use_patch_mode and result.returncode == 0:
-            result, patch_error = _apply_proposed_patch(project, result, ticket, shell_runner)
+            result, patch_error = _apply_patch_with_retry(
+                project, result, ticket, resolved_action, llm_runner, shell_runner,
+            )
 
         verification_error = patch_error
         if verification_error is None and expects_edits:

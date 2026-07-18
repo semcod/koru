@@ -1,6 +1,6 @@
-# code2llm | 1053f 168871L | python:772,typescript:94,shell:60,json:41,yaml:31,toml:16,yml:12,kotlin:6,txt:5,proto:4,go:2,javascript:1,rust:1,properties:1,xml:1 | 2026-07-18
-# generated in 1.47s
-# CC̅=3.7 | critical:10/7353 | dups:0 | cycles:0
+# code2llm | 1053f 168970L | python:772,typescript:94,shell:60,json:41,yaml:31,toml:16,yml:12,kotlin:6,txt:5,proto:4,go:2,javascript:1,rust:1,properties:1,xml:1 | 2026-07-18
+# generated in 1.80s
+# CC̅=3.7 | critical:10/7357 | dups:0 | cycles:0
 
 HEALTH[10]:
   🟡 CC    tool_propose_edits CC=16 (limit:15)
@@ -150,13 +150,13 @@ LAYERS:
   │ !! cli_parser                 781L  0C   21m  CC=1      ←0
   │ !! code2llm_discovery         752L  1C   31m  CC=13     ←4
   │ !! operator_plugin_wait       745L  0C   19m  CC=14     ←1
+  │ !! runner                     725L  0C   21m  CC=17     ←3
   │ !! operator_runtime           707L  2C   32m  CC=9      ←9
   │ !! desktop_uri                703L  0C   31m  CC=13     ←4
   │ !! scan_phase                 702L  0C   27m  CC=11     ←0
   │ !! decision_trace             700L  1C   24m  CC=12     ←4
   │ !! cycle_skip_conditions      694L  0C   31m  CC=14     ←2
   │ !! handlers_ack               693L  0C   27m  CC=13     ←3
-  │ !! runner                     687L  0C   20m  CC=17     ←3
   │ !! init                       676L  3C   18m  CC=12     ←3
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←1
   │ !! doctor_reporting_checks    652L  1C   27m  CC=13     ←0
@@ -268,6 +268,7 @@ LAYERS:
   │ photo_vql_meta             278L  0C   11m  CC=13     ←1
   │ git_cli                    274L  0C   20m  CC=9      ←0
   │ window_focus               274L  0C    9m  CC=11     ←0
+  │ patch_mode                 273L  1C   12m  CC=9      ←1
   │ environment_profile        271L  5C   11m  CC=9      ←4
   │ operator_process_guard     271L  3C   16m  CC=10     ←1
   │ browser_getdisplay         266L  1C   14m  CC=8      ←2
@@ -313,7 +314,6 @@ LAYERS:
   │ task_intake                214L  3C   13m  CC=4      ←1
   │ ide_operator_guidance      212L  0C   11m  CC=11     ←6
   │ daemon_cli                 212L  0C   11m  CC=7      ←0
-  │ patch_mode                 212L  1C    9m  CC=9      ←1
   │ command_telemetry          210L  1C   11m  CC=13     ←0
   │ prompting                  209L  1C   12m  CC=8      ←4
   │ library                    207L  0C   19m  CC=9      ←1
@@ -1223,40 +1223,40 @@ COUPLING:
                            koru                              2                                                                                                                          ←3                                                                                                                                                         ←1                                                                                                                          ──                                 hub
               packages.uri2coru                              1                              6                                                                                                                                                          1                                                                                                                                                         ←1                                                                                           ──  hub
   CYCLES: none
-  HUB: packages.koruenv/ (fan-in=10)
-  HUB: src.koru/ (fan-in=217)
-  HUB: packages.dsl2koru/ (fan-in=71)
-  HUB: src.korumesh/ (fan-in=12)
-  HUB: src.koruvision/ (fan-in=37)
-  HUB: packages.nlpshim/ (fan-in=6)
-  HUB: koru/ (fan-in=22)
-  HUB: packages.nlp2coru/ (fan-in=33)
-  HUB: packages.coru/ (fan-in=7)
-  HUB: src.koruapi/ (fan-in=15)
-  HUB: packages.uri2coru/ (fan-in=11)
+  HUB: src.koruobserve/ (fan-in=16)
   HUB: plugins.koru-autopilot-shared/ (fan-in=92)
   HUB: src.koruide/ (fan-in=278)
-  HUB: project/ (fan-in=1044)
-  HUB: packages.mcp2coru/ (fan-in=6)
-  HUB: src.koruobserve/ (fan-in=16)
   HUB: src.imgl/ (fan-in=5)
-  SMELL: packages.cli2koru/ fan-out=11 → split needed
-  SMELL: src.koru/ fan-out=1019 → split needed
-  SMELL: packages.nlp2koru/ fan-out=17 → split needed
-  SMELL: packages.dsl2koru/ fan-out=19 → split needed
-  SMELL: packages.dsl2coru/ fan-out=48 → split needed
-  SMELL: scripts/ fan-out=78 → split needed
-  SMELL: src.korumesh/ fan-out=14 → split needed
-  SMELL: src.koruvision/ fan-out=29 → split needed
-  SMELL: packages.nlp2coru/ fan-out=10 → split needed
+  HUB: src.koruvision/ (fan-in=37)
+  HUB: src.koruapi/ (fan-in=15)
+  HUB: packages.nlp2coru/ (fan-in=33)
+  HUB: packages.mcp2coru/ (fan-in=6)
+  HUB: packages.uri2coru/ (fan-in=11)
+  HUB: koru/ (fan-in=22)
+  HUB: project/ (fan-in=1044)
+  HUB: src.koru/ (fan-in=217)
+  HUB: packages.koruenv/ (fan-in=10)
+  HUB: packages.coru/ (fan-in=7)
+  HUB: src.korumesh/ (fan-in=12)
+  HUB: packages.dsl2koru/ (fan-in=71)
+  HUB: packages.nlpshim/ (fan-in=6)
   SMELL: examples/ fan-out=12 → split needed
-  SMELL: packages.coru/ fan-out=267 → split needed
-  SMELL: src.koruapi/ fan-out=172 → split needed
-  SMELL: packages.uri2coru/ fan-out=8 → split needed
-  SMELL: src.koruide/ fan-out=81 → split needed
-  SMELL: packages.uri2koru/ fan-out=16 → split needed
+  SMELL: packages.dsl2coru/ fan-out=48 → split needed
   SMELL: packages.cli2coru/ fan-out=12 → split needed
   SMELL: src.koruobserve/ fan-out=38 → split needed
+  SMELL: src.koruide/ fan-out=81 → split needed
+  SMELL: packages.nlp2koru/ fan-out=17 → split needed
+  SMELL: src.koruvision/ fan-out=29 → split needed
+  SMELL: src.koruapi/ fan-out=172 → split needed
+  SMELL: packages.nlp2coru/ fan-out=10 → split needed
+  SMELL: packages.uri2coru/ fan-out=8 → split needed
+  SMELL: scripts/ fan-out=78 → split needed
+  SMELL: src.koru/ fan-out=1019 → split needed
+  SMELL: packages.coru/ fan-out=267 → split needed
+  SMELL: packages.cli2koru/ fan-out=11 → split needed
+  SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: packages.dsl2koru/ fan-out=19 → split needed
+  SMELL: packages.uri2koru/ fan-out=16 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

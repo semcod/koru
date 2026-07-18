@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.400', 'python').
+project_metadata('koru', '0.1.402', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 1359, 'less').
@@ -1196,8 +1196,9 @@ project_file('src/koru/queue/koru_queue_argv.py', 45, 'python').
 project_file('src/koru/queue/local_manager.py', 136, 'python').
 project_file('src/koru/queue/locking.py', 95, 'python').
 project_file('src/koru/queue/loop.py', 116, 'python').
+project_file('src/koru/queue/patch_mode.py', 292, 'python').
 project_file('src/koru/queue/planfile_ticket_note.py', 56, 'python').
-project_file('src/koru/queue/runner.py', 596, 'python').
+project_file('src/koru/queue/runner.py', 772, 'python').
 project_file('src/koru/queue/runners.py', 530, 'python').
 project_file('src/koru/queue/shell_evidence.py', 75, 'python').
 project_file('src/koru/queue/ticket.py', 421, 'python').
@@ -1634,7 +1635,7 @@ project_file('tests/test_photo_vql_guard_vision.py', 69, 'python').
 project_file('tests/test_photo_vql_monitor_source.py', 94, 'python').
 project_file('tests/test_photo_vql_orchestrator.py', 686, 'python').
 project_file('tests/test_planfile_cmd_fallback.py', 159, 'python').
-project_file('tests/test_planfile_queue.py', 1858, 'python').
+project_file('tests/test_planfile_queue.py', 2267, 'python').
 project_file('tests/test_planning_llm.py', 632, 'python').
 project_file('tests/test_plugin_router.py', 224, 'python').
 project_file('tests/test_policy.py', 194, 'python').
@@ -5927,6 +5928,19 @@ python_function('src/koru/queue/locking.py', 'claim_lease_seconds_str', 0, 2, 6)
 python_function('src/koru/queue/locking.py', 'ticket_claim_command_missing', 1, 2, 1).
 python_function('src/koru/queue/locking.py', 'ticket_claim_or_error', 3, 5, 5).
 python_function('src/koru/queue/loop.py', 'run_planfile_queue_loop', 0, 14, 7).
+python_function('src/koru/queue/patch_mode.py', 'patch_mode_enabled', 1, 4, 4).
+python_function('src/koru/queue/patch_mode.py', 'build_patch_prompt', 1, 1, 1).
+python_function('src/koru/queue/patch_mode.py', 'build_retry_prompt', 2, 1, 3).
+python_function('src/koru/queue/patch_mode.py', 'extract_unified_diff', 1, 6, 5).
+python_function('src/koru/queue/patch_mode.py', '_normalize_diff', 1, 3, 6).
+python_function('src/koru/queue/patch_mode.py', '_repair_hunk_counts', 1, 8, 5).
+python_function('src/koru/queue/patch_mode.py', '_repair_missing_file_headers', 1, 6, 7).
+python_function('src/koru/queue/patch_mode.py', '_git', 1, 1, 1).
+python_function('src/koru/queue/patch_mode.py', 'apply_unified_diff', 2, 9, 7).
+python_function('src/koru/queue/patch_mode.py', 'revert_files', 2, 2, 1).
+python_function('src/koru/queue/patch_mode.py', 'diff_target_files', 2, 4, 5).
+python_function('src/koru/queue/patch_mode.py', 'worktree_enabled', 1, 4, 5).
+python_function('src/koru/queue/patch_mode.py', 'staging_worktree', 2, 4, 6).
 python_function('src/koru/queue/planfile_ticket_note.py', '_stderr_unknown_option', 2, 3, 0).
 python_function('src/koru/queue/planfile_ticket_note.py', 'append_shell_evidence_note', 3, 5, 7).
 python_function('src/koru/queue/runner.py', '_source_tool', 1, 4, 3).
@@ -5938,6 +5952,11 @@ python_function('src/koru/queue/runner.py', '_claim_and_start', 4, 2, 2).
 python_function('src/koru/queue/runner.py', '_enrich_llm_request_with_context', 2, 3, 4).
 python_function('src/koru/queue/runner.py', '_execute_action', 7, 5, 7).
 python_function('src/koru/queue/runner.py', '_append_shell_evidence', 4, 5, 6).
+python_function('src/koru/queue/runner.py', '_resolve_verify_command', 2, 12, 5).
+python_function('src/koru/queue/runner.py', '_patch_retry_budget', 0, 4, 4).
+python_function('src/koru/queue/runner.py', '_apply_patch_with_retry', 6, 7, 7).
+python_function('src/koru/queue/runner.py', '_apply_proposed_patch', 4, 12, 9).
+python_function('src/koru/queue/runner.py', '_stage_patch_in_worktree', 4, 6, 5).
 python_function('src/koru/queue/runner.py', '_ticket_expects_edits', 1, 5, 4).
 python_function('src/koru/queue/runner.py', '_snapshot_declared_files', 2, 4, 5).
 python_function('src/koru/queue/runner.py', '_verify_declared_files_changed', 3, 4, 6).
@@ -5945,7 +5964,7 @@ python_function('src/koru/queue/runner.py', '_finalize_ticket', 7, 7, 4).
 python_function('src/koru/queue/runner.py', '_next_ticket_or_result', 3, 4, 4).
 python_function('src/koru/queue/runner.py', '_log_queue_ticket_start', 2, 4, 3).
 python_function('src/koru/queue/runner.py', '_resolve_action_or_result', 0, 6, 3).
-python_function('src/koru/queue/runner.py', '_run_next_planfile_task_impl', 0, 10, 15).
+python_function('src/koru/queue/runner.py', '_run_next_planfile_task_impl', 0, 17, 20).
 python_function('src/koru/queue/runner.py', 'run_next_planfile_task', 0, 1, 4).
 python_function('src/koru/queue/runners.py', '_planfile_env', 0, 1, 0).
 python_function('src/koru/queue/runners.py', '_decode_subprocess_output', 1, 8, 7).
@@ -10558,6 +10577,7 @@ python_class('src/koru/policy.py', 'Policy').
 python_method('Policy', 'to_dict', 0, 1, 1).
 python_class('src/koru/queue/context.py', 'ContextResult').
 python_class('src/koru/queue/local_manager.py', 'QueueManagerEarlyExit').
+python_class('src/koru/queue/patch_mode.py', 'PatchApplyResult').
 python_class('src/koru/queue/types.py', 'CommandResult').
 python_class('src/koru/queue/types.py', 'QueueRunResult').
 python_class('src/koru/queue/types.py', 'QueueLoopResult').
@@ -11929,6 +11949,26 @@ python_method('TestQueueEditVerification', 'test_refactor_ticket_expects_edits_b
 python_method('TestQueueEditVerification', 'test_explicit_flag_overrides_label_heuristic', 0, 1, 4).
 python_method('TestQueueEditVerification', 'test_unchanged_file_is_reported_as_failure', 0, 2, 10).
 python_method('TestQueueEditVerification', 'test_creating_a_missing_declared_file_counts_as_a_change', 0, 1, 8).
+python_class('tests/test_planfile_queue.py', 'TestPatchMode').
+python_method('TestPatchMode', '_git_repo', 1, 2, 2).
+python_method('TestPatchMode', '_commit_file', 3, 1, 3).
+python_method('TestPatchMode', 'test_extracts_diff_from_fenced_reply', 0, 4, 6).
+python_method('TestPatchMode', 'test_refusal_and_prose_yield_no_diff', 0, 1, 2).
+python_method('TestPatchMode', 'test_applies_a_valid_patch', 0, 1, 8).
+python_method('TestPatchMode', 'test_stale_patch_is_refused_without_touching_the_tree', 0, 1, 8).
+python_method('TestPatchMode', 'test_missing_file_headers_are_repaired_and_apply', 0, 4, 10).
+python_method('TestPatchMode', 'test_existing_file_headers_are_left_alone', 0, 2, 3).
+python_method('TestPatchMode', 'test_miscounted_hunk_header_is_recomputed_and_applies', 0, 2, 9).
+python_method('TestPatchMode', 'test_unapplicable_patch_is_retried_with_the_git_error', 0, 1, 13).
+python_method('TestPatchMode', 'test_verification_failure_is_not_retried', 0, 1, 9).
+python_method('TestPatchMode', 'test_retry_budget_is_bounded', 0, 2, 10).
+python_method('TestPatchMode', 'test_failing_verify_never_reaches_the_workspace', 0, 4, 15).
+python_method('TestPatchMode', 'test_failing_verify_rolls_back_when_worktree_is_disabled', 0, 2, 10).
+python_method('TestPatchMode', 'test_worktree_staging_sees_uncommitted_workspace_edits', 0, 1, 9).
+python_method('TestPatchMode', 'test_passing_verify_keeps_the_patch', 0, 1, 8).
+python_method('TestPatchMode', 'test_reply_without_a_diff_is_not_treated_as_work', 0, 2, 10).
+python_method('TestPatchMode', 'test_patch_mode_defaults_on_and_is_overridable', 0, 1, 4).
+python_method('TestPatchMode', 'test_prompt_carries_the_diff_only_contract', 0, 1, 2).
 python_class('tests/test_planfile_queue.py', 'TestPlanfileQueueLoop').
 python_method('TestPlanfileQueueLoop', '_make_runner', 1, 1, 5).
 python_method('TestPlanfileQueueLoop', 'test_loop_drains_three_shell_tickets_to_idle', 0, 1, 8).

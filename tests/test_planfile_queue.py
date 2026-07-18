@@ -1589,38 +1589,180 @@ class TestPatchMode(unittest.TestCase):
                 "one\ninserted\ntwo\nthree\n",
             )
 
-    def test_failing_verify_rolls_the_patch_back(self) -> None:
-        """A patch that breaks the project's gate must leave no trace."""
+    _PATCH_REPLY = (
+        "```diff\n"
+        "diff --git a/a.txt b/a.txt\n"
+        "--- a/a.txt\n"
+        "+++ b/a.txt\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        "+new\n"
+        "```\n"
+    )
+
+    def test_unapplicable_patch_is_retried_with_the_git_error(self) -> None:
+        """A malformed diff is a mechanical failure the agent can fix — but only
+        if it is told exactly what git objected to."""
+        from koru.queue.runner import _apply_patch_with_retry
+
+        corrupt = (
+            "```diff\n"
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1 +1 @@\n"
+            "this line has no marker\n"
+            "```\n"
+        )
+        prompts: list[str] = []
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            action = {"prompt": "Rename the thing."}
+            first = SimpleNamespace(returncode=0, stdout=corrupt, stderr="")
+
+            def retry_agent(request, cwd):
+                prompts.append(str(request.get("prompt")))
+                return SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+
+            def gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, error = _apply_patch_with_retry(
+                project, first, {"inputs": {}}, action, retry_agent, gate,
+            )
+
+            self.assertIsNone(error, error)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
+            self.assertEqual(len(prompts), 1)
+            self.assertIn("Previous attempt was rejected", prompts[0])
+            self.assertIn("Rename the thing.", prompts[0])
+
+    def test_verification_failure_is_not_retried(self) -> None:
+        """A patch that applies but fails its gate is wrong on the merits, so
+        re-asking would just spend another agent run on the same idea."""
+        from koru.queue.runner import _apply_patch_with_retry
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            first = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+
+            def never_called(request, cwd):
+                raise AssertionError("a substantive failure must not be retried")
+
+            def failing_gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=1, stdout="", stderr="tests failed")
+
+            _result, error = _apply_patch_with_retry(
+                project,
+                first,
+                {"inputs": {"verify_command": "false"}},
+                {"prompt": "x"},
+                never_called,
+                failing_gate,
+            )
+
+            self.assertIsNotNone(error)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_retry_budget_is_bounded(self) -> None:
+        """An agent that keeps emitting junk must not loop forever."""
+        from koru.queue.runner import _apply_patch_with_retry
+
+        calls = {"n": 0}
+        junk = SimpleNamespace(returncode=0, stdout="I cannot do that.", stderr="")
+
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"KORU_QUEUE_PATCH_RETRIES": "2"},
+        ):
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+
+            def junk_agent(request, cwd):
+                calls["n"] += 1
+                return junk
+
+            def gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, error = _apply_patch_with_retry(
+                project, junk, {"inputs": {}}, {"prompt": "x"}, junk_agent, gate,
+            )
+
+            self.assertIsNotNone(error)
+            self.assertIn("no unified diff", error or "")
+            self.assertEqual(calls["n"], 2)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_failing_verify_never_reaches_the_workspace(self) -> None:
+        """With worktree staging, a patch that fails its gate is proven bad in
+        isolation and the real workspace is never modified at all."""
         from koru.queue.runner import _apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._commit_file(project, "a.txt", "old\n")
-            agent_reply = SimpleNamespace(
-                returncode=0,
-                stdout=(
-                    "```diff\n"
-                    "diff --git a/a.txt b/a.txt\n"
-                    "--- a/a.txt\n"
-                    "+++ b/a.txt\n"
-                    "@@ -1 +1 @@\n"
-                    "-old\n"
-                    "+new\n"
-                    "```\n"
-                ),
-                stderr="",
-            )
+            agent_reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {"inputs": {"verify_command": "false"}}
+            seen: list[Path] = []
+
+            def failing_gate(command: str, cwd: Path):
+                seen.append(Path(cwd))
+                return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
+
+            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+
+            self.assertIsNotNone(error)
+            self.assertIn("left untouched", error or "")
+            self.assertIn("2 tests failed", error or "")
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+            # The gate ran against the worktree, not the project itself.
+            self.assertTrue(seen and seen[0] != project, seen)
+            self.assertFalse(list((project / ".koru" / "worktrees").glob("run-*")))
+
+    def test_failing_verify_rolls_back_when_worktree_is_disabled(self) -> None:
+        """Without isolation the patch does land, so it must be reverted."""
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"KORU_QUEUE_WORKTREE": "0"},
+        ):
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            agent_reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
             ticket = {"inputs": {"verify_command": "false"}}
 
             def failing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
 
-            _result, error = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
 
             self.assertIsNotNone(error)
             self.assertIn("rolled back", error or "")
-            self.assertIn("2 tests failed", error or "")
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_worktree_staging_sees_uncommitted_workspace_edits(self) -> None:
+        """The agent diffs the working tree, so the worktree must be seeded
+        with uncommitted content — otherwise every patch against a dirty file
+        would be rejected as not applying."""
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "committed\n")
+            (project / "a.txt").write_text("old\n", encoding="utf-8")  # uncommitted edit
+            agent_reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {"inputs": {"verify_command": "true"}}
+
+            def passing_gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+
+            self.assertIsNone(error)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
     def test_passing_verify_keeps_the_patch(self) -> None:
         from koru.queue.runner import _apply_proposed_patch
@@ -1647,7 +1789,7 @@ class TestPatchMode(unittest.TestCase):
             def passing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
-            _result, error = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
 
             self.assertIsNone(error)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
@@ -1667,7 +1809,7 @@ class TestPatchMode(unittest.TestCase):
             def unused_gate(command: str, cwd: Path):
                 raise AssertionError("verify must not run when no patch was applied")
 
-            _result, error = _apply_proposed_patch(project, agent_reply, {}, unused_gate)
+            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, {}, unused_gate)
 
             self.assertIsNotNone(error)
             self.assertIn("no unified diff", error or "")

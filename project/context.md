@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.03s -->
+<!-- generated in 0.05s -->
 
 ## Overview
 
@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 772, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7353
+- **Total Functions**: 7357
 - **Total Classes**: 502
 - **Modules**: 1053
 - **Entry Points**: 2757
