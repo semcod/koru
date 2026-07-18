@@ -2,11 +2,25 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
 from koru.scan_types import CreateTicketResult, ScanResult, Suggestion
+
+
+def scan_executor_kind() -> str:
+    """Executor kind stamped on scan-created tickets.
+
+    Scan findings are ``llm-ready`` by label, but default to ``human`` so the
+    autopilot/IDE lane drives them. On a headless host (no IDE plugin, no GUI
+    session) that lane never connects and the queue parks every ticket at
+    ``waiting_input``. Setting ``KORU_SCAN_EXECUTOR_KIND=llm`` lets the queue
+    execute them directly — with no API key that routes to a local agent CLI.
+    """
+    raw = (os.environ.get("KORU_SCAN_EXECUTOR_KIND") or "").strip().lower()
+    return raw if raw in {"human", "llm", "shell", "api"} else "human"
 
 
 def create_ticket(
@@ -37,7 +51,7 @@ def create_ticket(
                         "dedupe_key": suggestion_dedupe_key(source, suggestion),
                         **suggestion.source_context,
                     },
-                    "executor_kind": "human",
+                    "executor_kind": scan_executor_kind(),
                     "executor_mode": "interactive",
                 },
             )

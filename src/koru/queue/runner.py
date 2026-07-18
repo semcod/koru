@@ -1,6 +1,7 @@
 """Main queue runner logic for executing planfile tickets."""
 
 
+import hashlib
 import json
 import logging
 import uuid
@@ -258,6 +259,60 @@ def _append_shell_evidence(
         )
 
 
+def _ticket_expects_edits(ticket: dict) -> bool:
+    """Whether finishing this ticket means the declared files must change.
+
+    Opt in explicitly with ``inputs.expect_files_changed``; scan-emitted
+    refactor tickets are treated as edit tickets by default, since that is what
+    "refactor" means. Tickets that merely *reference* files (a deploy recipe, a
+    question) are unaffected.
+    """
+    inputs = ticket.get("inputs") or {}
+    if "expect_files_changed" in inputs:
+        return bool(inputs["expect_files_changed"])
+    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
+    return "refactor" in labels
+
+
+def _snapshot_declared_files(project: Path, ticket: dict) -> dict[str, str]:
+    """Hash the ticket's declared files so edits can be detected afterwards."""
+    snapshot: dict[str, str] = {}
+    for rel in ticket.get("files") or []:
+        path = project / str(rel)
+        try:
+            snapshot[str(rel)] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            snapshot[str(rel)] = ""  # missing now; creating it counts as a change
+    return snapshot
+
+
+def _verify_declared_files_changed(
+    project: Path,
+    ticket: dict,
+    before: dict[str, str],
+) -> str | None:
+    """Return a failure reason when an edit ticket changed nothing.
+
+    An agent that hits a permission prompt, refuses, or merely *describes* the
+    change still exits 0, and without this check the queue closes the ticket as
+    done while the code is untouched. Absence of any edit is cheap and
+    unambiguous to detect, so it is worth catching even though it cannot prove
+    the edit was *correct*.
+    """
+    if not before:
+        return None
+    after = _snapshot_declared_files(project, ticket)
+    if any(after.get(rel) != digest for rel, digest in before.items()):
+        return None
+    listed = ", ".join(sorted(before))
+    return (
+        "agent reported success but left every declared file unchanged "
+        f"({listed}). The work was not done — check the run note for a refusal, "
+        "a permission prompt, or an answer that only described the change. "
+        "Set inputs.expect_files_changed=false if this ticket is not meant to edit files."
+    )
+
+
 def _finalize_ticket(
     project: Path,
     ticket_id: str,
@@ -265,7 +320,26 @@ def _finalize_ticket(
     result: CommandResult,
     action_label: str,
     planfile_runner: Callable[[list[str], Path], CommandResult],
+    verification_error: str | None = None,
 ) -> QueueRunResult:
+    if verification_error and result.returncode == 0:
+        _append_shell_evidence(
+            project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG,
+        )
+        planfile_command(
+            project,
+            ["ticket", "block", ticket_id, "--reason", f"FAIL: {verification_error}"],
+            runner=planfile_runner,
+        )
+        return QueueRunResult(
+            status="failed",
+            ticket_id=ticket_id,
+            executor_kind=executor_kind,
+            message=action_label,
+            exit_code=1,
+            stdout=result.stdout,
+            stderr=verification_error,
+        )
     if result.returncode == 0:
         if executor_kind == "shell":
             _append_shell_evidence(project, ticket_id, result, planfile_runner)
@@ -464,6 +538,9 @@ def _run_next_planfile_task_impl(
         if claimed:
             return claimed
 
+        expects_edits = _ticket_expects_edits(ticket)
+        before = _snapshot_declared_files(project, ticket) if expects_edits else {}
+
         result, action_label = _execute_action(
             executor_kind,
             resolved_action,
@@ -481,6 +558,7 @@ def _run_next_planfile_task_impl(
             result,
             action_label,
             planfile_runner,
+            _verify_declared_files_changed(project, ticket, before) if expects_edits else None,
         )
 
 

@@ -149,7 +149,10 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
         "max_tokens": inputs.get("llm_max_tokens"),
         "temperature": inputs.get("llm_temperature", 0.0),
         "response_schema": inputs.get("response_schema"),
-        "timeout_seconds": inputs.get("llm_timeout_seconds") or 60.0,
+        # Only an explicit per-ticket timeout is passed through; each runner
+        # applies its own default. An HTTP completion and an agentic CLI doing a
+        # real refactor do not belong on the same clock.
+        "timeout_seconds": inputs.get("llm_timeout_seconds"),
     }
     # Context assembly inputs — passed through for the runner to act on.
     if inputs.get("include_project_context"):

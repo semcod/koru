@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import tempfile
@@ -1246,26 +1247,181 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 "Should we move only reusable code to packages/?",
             )
 
-    def test_llm_default_runner_without_api_key_returns_clear_error(self) -> None:
-        """When OPENROUTER_API_KEY is unset, the default runner must
-        refuse to make a network call and return a helpful error."""
-        from koru.queue.runners import run_llm_request as _run_llm_request
+    _LLM_ENV_KEYS = (
+        "OPENROUTER_API_KEY",
+        "OPENAI_API_KEY",
+        "KORU_LLM_ENDPOINT",
+        "KORU_LLM_PROVIDER",
+        "KORU_LLM_SHELL_FALLBACK",
+        "KORU_TILLM_CLIENT",
+    )
 
-        env_backup = {
-            k: os.environ.pop(k, None)
-            for k in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "KORU_LLM_ENDPOINT")
-        }
+    @contextlib.contextmanager
+    def _clean_llm_env(self, **overrides: str):
+        """Run with every LLM-selecting env var cleared, plus overrides."""
+        backup = {k: os.environ.pop(k, None) for k in self._LLM_ENV_KEYS}
+        os.environ.update(overrides)
         try:
-            request = {"prompt": "hi", "model": "openai/gpt-4o-mini"}
-            result = _run_llm_request(request, Path("/tmp"))
+            yield
         finally:
-            for k, v in env_backup.items():
-                if v is not None:
-                    os.environ[k] = v
+            for key in overrides:
+                os.environ.pop(key, None)
+            for key, value in backup.items():
+                if value is not None:
+                    os.environ[key] = value
+
+    def test_llm_default_runner_without_api_key_or_cli_returns_clear_error(self) -> None:
+        """With no API key and no vendor CLI on PATH, the default runner must
+        refuse to make a network call and return a helpful error."""
+        from koru.queue import runners as runners_mod
+
+        with self._clean_llm_env(), patch.object(
+            runners_mod.shutil, "which", return_value=None,
+        ):
+            request = {"prompt": "hi", "model": "openai/gpt-4o-mini"}
+            result = runners_mod.run_llm_request(request, Path("/tmp"))
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.status_code, 0)
         self.assertIn("OPENROUTER_API_KEY", result.stderr)
+        self.assertIn("vendor agent CLI", result.stderr)
+
+    def test_llm_falls_back_to_vendor_cli_when_no_api_key(self) -> None:
+        """A logged-in agent CLI is a valid executor: with no API key but
+        `claude` on PATH, the ticket runs locally instead of failing."""
+        from koru.queue import runners as runners_mod
+
+        captured: dict[str, object] = {}
+
+        def fake_drive(**kwargs: object) -> dict[str, object]:
+            captured.update(kwargs)
+            return {"ok": True, "exit_code": 0, "stdout": "done", "stderr": ""}
+
+        with self._clean_llm_env(), patch.object(
+            runners_mod.shutil, "which", side_effect=lambda cmd: cmd == "claude",
+        ), patch("koru.tillm_bridge.drive_shell_chat", fake_drive):
+            result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "done")
+        self.assertEqual(captured["client_id"], "claude-code")
+        self.assertEqual(captured["prompt"], "hi")
+
+    def test_llm_shell_fallback_can_be_disabled(self) -> None:
+        """KORU_LLM_SHELL_FALLBACK=0 restores the strict API-key requirement."""
+        from koru.queue import runners as runners_mod
+
+        with self._clean_llm_env(KORU_LLM_SHELL_FALLBACK="0"), patch.object(
+            runners_mod.shutil, "which", return_value="/usr/bin/claude",
+        ):
+            result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("OPENROUTER_API_KEY", result.stderr)
+
+    def test_llm_explicit_provider_selects_vendor_cli_over_api(self) -> None:
+        """An explicit provider wins even when an API key is available."""
+        from koru.queue import runners as runners_mod
+
+        captured: dict[str, object] = {}
+
+        def fake_drive(**kwargs: object) -> dict[str, object]:
+            captured.update(kwargs)
+            return {"ok": True, "exit_code": 0, "stdout": "ok", "stderr": ""}
+
+        with self._clean_llm_env(OPENROUTER_API_KEY="sk-should-not-be-used"), patch(
+            "koru.tillm_bridge.drive_shell_chat", fake_drive,
+        ):
+            result = runners_mod.run_llm_request(
+                {"prompt": "hi", "provider": "claude"}, Path("/tmp"),
+            )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(captured["client_id"], "claude-code")
+
+    def test_llm_vendor_cli_failure_blocks_ticket(self) -> None:
+        """A non-zero vendor CLI exit is surfaced as a failed run."""
+        from koru.queue import runners as runners_mod
+
+        def fake_drive(**_kwargs: object) -> dict[str, object]:
+            return {"ok": False, "exit_code": 3, "stdout": "", "stderr": "boom"}
+
+        with self._clean_llm_env(KORU_LLM_PROVIDER="claude"), patch(
+            "koru.tillm_bridge.drive_shell_chat", fake_drive,
+        ):
+            result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("boom", result.stderr)
+
+
+class TestQueueEditVerification(unittest.TestCase):
+    """An agent that exits 0 without editing anything must not close a ticket.
+
+    Reproduces the real failure: `claude -p` hit a permission prompt, refused,
+    described the change instead of making it, and exited 0 — and the queue
+    marked the refactor done while the file was untouched."""
+
+    def _ticket(self, **overrides: object) -> dict:
+        ticket = {
+            "id": "SBX-001",
+            "labels": ["koru", "llm-ready", "refactor"],
+            "files": ["src/router.mjs"],
+            "inputs": {"prompt": "refactor it"},
+        }
+        ticket.update(overrides)
+        return ticket
+
+    def test_refactor_ticket_expects_edits_by_default(self) -> None:
+        from koru.queue.runner import _ticket_expects_edits
+
+        self.assertTrue(_ticket_expects_edits(self._ticket()))
+        self.assertFalse(_ticket_expects_edits(self._ticket(labels=["deploy"])))
+
+    def test_explicit_flag_overrides_label_heuristic(self) -> None:
+        from koru.queue.runner import _ticket_expects_edits
+
+        opted_out = self._ticket(inputs={"expect_files_changed": False})
+        self.assertFalse(_ticket_expects_edits(opted_out))
+        opted_in = self._ticket(labels=["deploy"], inputs={"expect_files_changed": True})
+        self.assertTrue(_ticket_expects_edits(opted_in))
+
+    def test_unchanged_file_is_reported_as_failure(self) -> None:
+        from koru.queue.runner import (
+            _snapshot_declared_files,
+            _verify_declared_files_changed,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            target = project / "src" / "router.mjs"
+            target.parent.mkdir(parents=True)
+            target.write_text("original", encoding="utf-8")
+            ticket = self._ticket()
+
+            before = _snapshot_declared_files(project, ticket)
+            reason = _verify_declared_files_changed(project, ticket, before)
+            self.assertIsNotNone(reason)
+            self.assertIn("src/router.mjs", reason or "")
+
+            target.write_text("refactored", encoding="utf-8")
+            self.assertIsNone(_verify_declared_files_changed(project, ticket, before))
+
+    def test_creating_a_missing_declared_file_counts_as_a_change(self) -> None:
+        from koru.queue.runner import (
+            _snapshot_declared_files,
+            _verify_declared_files_changed,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            ticket = self._ticket(files=["src/new-module.mjs"])
+            before = _snapshot_declared_files(project, ticket)
+
+            created = project / "src" / "new-module.mjs"
+            created.parent.mkdir(parents=True)
+            created.write_text("export const x = 1;\n", encoding="utf-8")
+            self.assertIsNone(_verify_declared_files_changed(project, ticket, before))
 
 
 class TestPlanfileQueueLoop(unittest.TestCase):

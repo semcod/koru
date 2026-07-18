@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.398', 'python').
+project_metadata('koru', '0.1.400', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 1359, 'less').
@@ -7,8 +7,8 @@ project_file('check_dups.py', 28, 'python').
 project_file('docker/capture/entrypoint-x11.sh', 36, 'shell').
 project_file('docker/capture/run.sh', 59, 'shell').
 project_file('docker/capture/smoke.py', 142, 'python').
-project_file('docker/novnc/smoke-desktop.sh', 25, 'shell').
-project_file('docker/novnc/start-vnc.sh', 56, 'shell').
+project_file('docker/novnc/smoke-desktop.sh', 55, 'shell').
+project_file('docker/novnc/start-vnc.sh', 104, 'shell').
 project_file('docs/llm-tools/costs/install.sh', 50, 'shell').
 project_file('docs/llm-tools/cursor/install.sh', 89, 'shell').
 project_file('docs/llm-tools/doql/install.sh', 53, 'shell').
@@ -734,7 +734,7 @@ project_file('project.sh', 140, 'shell').
 project_file('scripts/_koru_autodiag_filter_tickets.py', 56, 'python').
 project_file('scripts/activate-koru-dev.sh', 19, 'shell').
 project_file('scripts/autopilot-ide-autodetect-smoke.sh', 183, 'shell').
-project_file('scripts/bump_version.py', 129, 'python').
+project_file('scripts/bump_version.py', 138, 'python').
 project_file('scripts/diagnose-vdisplay-llm.sh', 23, 'shell').
 project_file('scripts/docker-ide-matrix-entrypoint.sh', 76, 'shell').
 project_file('scripts/docker-ide-matrix.sh', 93, 'shell').
@@ -1050,7 +1050,7 @@ project_file('src/koru/cli_bootstrap.py', 66, 'python').
 project_file('src/koru/cli_context.py', 39, 'python').
 project_file('src/koru/cli_doctor.py', 309, 'python').
 project_file('src/koru/cli_events.py', 121, 'python').
-project_file('src/koru/cli_fleet.py', 303, 'python').
+project_file('src/koru/cli_fleet.py', 416, 'python').
 project_file('src/koru/cli_gate.py', 117, 'python').
 project_file('src/koru/cli_gc.py', 88, 'python').
 project_file('src/koru/cli_global_control.py', 151, 'python').
@@ -1126,6 +1126,7 @@ project_file('src/koru/env_config.py', 66, 'python').
 project_file('src/koru/env_flags.py', 82, 'python').
 project_file('src/koru/environment_profile.py', 272, 'python').
 project_file('src/koru/events.py', 91, 'python').
+project_file('src/koru/fleet_bootstrap.py', 329, 'python').
 project_file('src/koru/gate.py', 203, 'python').
 project_file('src/koru/gc.py', 365, 'python').
 project_file('src/koru/gc_cli_helpers.py', 82, 'python').
@@ -1196,10 +1197,10 @@ project_file('src/koru/queue/local_manager.py', 136, 'python').
 project_file('src/koru/queue/locking.py', 95, 'python').
 project_file('src/koru/queue/loop.py', 116, 'python').
 project_file('src/koru/queue/planfile_ticket_note.py', 56, 'python').
-project_file('src/koru/queue/runner.py', 518, 'python').
-project_file('src/koru/queue/runners.py', 364, 'python').
+project_file('src/koru/queue/runner.py', 596, 'python').
+project_file('src/koru/queue/runners.py', 530, 'python').
 project_file('src/koru/queue/shell_evidence.py', 75, 'python').
-project_file('src/koru/queue/ticket.py', 418, 'python').
+project_file('src/koru/queue/ticket.py', 421, 'python').
 project_file('src/koru/queue/types.py', 89, 'python').
 project_file('src/koru/queue_clean.py', 392, 'python').
 project_file('src/koru/queue_cli_helpers.py', 291, 'python').
@@ -1209,11 +1210,11 @@ project_file('src/koru/remote/__init__.py', 10, 'python').
 project_file('src/koru/remote/client.py', 59, 'python').
 project_file('src/koru/run_log.py', 124, 'python').
 project_file('src/koru/runtime.py', 105, 'python').
-project_file('src/koru/scan.py', 1674, 'python').
+project_file('src/koru/scan.py', 1797, 'python').
 project_file('src/koru/scan_collection.py', 40, 'python').
 project_file('src/koru/scan_dedupe_policy.py', 191, 'python').
 project_file('src/koru/scan_render.py', 126, 'python').
-project_file('src/koru/scan_ticket_emission.py', 212, 'python').
+project_file('src/koru/scan_ticket_emission.py', 226, 'python').
 project_file('src/koru/scan_types.py', 79, 'python').
 project_file('src/koru/scripts/koru-autoloop.sh', 677, 'shell').
 project_file('src/koru/self_control.py', 629, 'python').
@@ -1278,16 +1279,16 @@ project_file('src/koruapi/invoke.py', 32, 'python').
 project_file('src/koruapi/invoke_handlers.py', 380, 'python').
 project_file('src/koruapi/local.py', 37, 'python').
 project_file('src/koruapi/mcp.py', 16, 'python').
-project_file('src/koruapi/mcp_server.py', 95, 'python').
+project_file('src/koruapi/mcp_server.py', 97, 'python').
 project_file('src/koruapi/mcp_server_cli.py', 38, 'python').
 project_file('src/koruapi/mcp_server_desktop_uri.py', 283, 'python').
 project_file('src/koruapi/mcp_server_dispatch.py', 121, 'python').
 project_file('src/koruapi/mcp_server_env2llm.py', 232, 'python').
 project_file('src/koruapi/mcp_server_ide.py', 425, 'python').
 project_file('src/koruapi/mcp_server_nlp2oql.py', 85, 'python').
-project_file('src/koruapi/mcp_server_planfile.py', 840, 'python').
+project_file('src/koruapi/mcp_server_planfile.py', 966, 'python').
 project_file('src/koruapi/mcp_server_runtime.py', 84, 'python').
-project_file('src/koruapi/mcp_server_schema.py', 30, 'python').
+project_file('src/koruapi/mcp_server_schema.py', 33, 'python').
 project_file('src/koruapi/mcp_server_testql.py', 76, 'python').
 project_file('src/koruapi/mcp_server_transport.py', 54, 'python').
 project_file('src/koruapi/nlp2oql_bridge.py', 131, 'python').
@@ -1555,6 +1556,7 @@ project_file('tests/test_env_flags.py', 96, 'python').
 project_file('tests/test_environment_profile.py', 126, 'python').
 project_file('tests/test_events.py', 67, 'python').
 project_file('tests/test_facade_late_binding_contract.py', 110, 'python').
+project_file('tests/test_fleet_bootstrap.py', 213, 'python').
 project_file('tests/test_gate.py', 167, 'python').
 project_file('tests/test_gc.py', 336, 'python').
 project_file('tests/test_gc_cli_helpers.py', 29, 'python').
@@ -1588,7 +1590,7 @@ project_file('tests/test_jetbrains_surface_chat_target.py', 127, 'python').
 project_file('tests/test_koru_browser_stack.py', 70, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
-project_file('tests/test_koruapi.py', 167, 'python').
+project_file('tests/test_koruapi.py', 231, 'python').
 project_file('tests/test_koruapi_transports.py', 21, 'python').
 project_file('tests/test_korudsl.py', 41, 'python').
 project_file('tests/test_koruide_bridges.py', 78, 'python').
@@ -1632,7 +1634,7 @@ project_file('tests/test_photo_vql_guard_vision.py', 69, 'python').
 project_file('tests/test_photo_vql_monitor_source.py', 94, 'python').
 project_file('tests/test_photo_vql_orchestrator.py', 686, 'python').
 project_file('tests/test_planfile_cmd_fallback.py', 159, 'python').
-project_file('tests/test_planfile_queue.py', 1702, 'python').
+project_file('tests/test_planfile_queue.py', 1858, 'python').
 project_file('tests/test_planning_llm.py', 632, 'python').
 project_file('tests/test_plugin_router.py', 224, 'python').
 project_file('tests/test_policy.py', 194, 'python').
@@ -1642,7 +1644,7 @@ project_file('tests/test_post_run_verify_env.py', 56, 'python').
 project_file('tests/test_provider_browser_upload.py', 190, 'python').
 project_file('tests/test_provider_obs.py', 145, 'python').
 project_file('tests/test_provider_portal_screencast.py', 91, 'python').
-project_file('tests/test_pyproject_metadata.py', 65, 'python').
+project_file('tests/test_pyproject_metadata.py', 72, 'python').
 project_file('tests/test_qoder_ide_support.py', 49, 'python').
 project_file('tests/test_queue_clean.py', 341, 'python').
 project_file('tests/test_queue_cli_helpers.py', 120, 'python').
@@ -2744,7 +2746,8 @@ python_function('scripts/bump_version.py', 'bump', 2, 5, 3).
 python_function('scripts/bump_version.py', 'update_pyproject', 2, 3, 4).
 python_function('scripts/bump_version.py', 'update_package_json', 2, 4, 5).
 python_function('scripts/bump_version.py', 'update_uv_lock', 2, 8, 9).
-python_function('scripts/bump_version.py', 'main', 0, 4, 10).
+python_function('scripts/bump_version.py', 'update_version_file', 2, 3, 2).
+python_function('scripts/bump_version.py', 'main', 0, 4, 11).
 python_function('scripts/e2e_envmap_koru.py', '_section', 1, 1, 1).
 python_function('scripts/e2e_envmap_koru.py', 'main', 0, 22, 15).
 python_function('scripts/koru-gate-capture.py', '_normalize_line', 1, 1, 3).
@@ -4466,7 +4469,8 @@ python_function('src/koru/cli_fleet.py', '_fleet_rescan', 1, 3, 3).
 python_function('src/koru/cli_fleet.py', '_fleet_shutdown', 1, 5, 8).
 python_function('src/koru/cli_fleet.py', '_run_fleet_up', 1, 6, 10).
 python_function('src/koru/cli_fleet.py', '_run_fleet_ls', 1, 4, 4).
-python_function('src/koru/cli_fleet.py', 'fleet_main', 1, 3, 5).
+python_function('src/koru/cli_fleet.py', '_run_fleet_bootstrap', 1, 9, 6).
+python_function('src/koru/cli_fleet.py', 'fleet_main', 1, 4, 6).
 python_function('src/koru/cli_gate.py', 'build_gate_parser', 0, 1, 6).
 python_function('src/koru/cli_gate.py', 'gate_main', 1, 5, 7).
 python_function('src/koru/cli_gc.py', 'build_gc_parser', 0, 1, 5).
@@ -4926,6 +4930,14 @@ python_function('src/koru/environment_profile.py', 'resolve_environment_profile'
 python_function('src/koru/environment_profile.py', 'environment_profile_payload', 1, 1, 2).
 python_function('src/koru/events.py', 'emit_management_event', 0, 8, 6).
 python_function('src/koru/events.py', 'main', 0, 4, 7).
+python_function('src/koru/fleet_bootstrap.py', 'is_koru_managed', 1, 1, 2).
+python_function('src/koru/fleet_bootstrap.py', 'has_planfile_config', 1, 1, 2).
+python_function('src/koru/fleet_bootstrap.py', '_is_git_project', 1, 2, 2).
+python_function('src/koru/fleet_bootstrap.py', '_rel_key', 2, 2, 3).
+python_function('src/koru/fleet_bootstrap.py', '_matches_any', 2, 7, 3).
+python_function('src/koru/fleet_bootstrap.py', 'discover_bootstrap_candidates', 1, 18, 22).
+python_function('src/koru/fleet_bootstrap.py', 'ensure_koru_project', 1, 10, 12).
+python_function('src/koru/fleet_bootstrap.py', 'bootstrap_workspace', 1, 2, 6).
 python_function('src/koru/gate.py', 'parse_authorizations', 1, 12, 9).
 python_function('src/koru/gate.py', '_resolve_actor', 1, 4, 1).
 python_function('src/koru/gate.py', '_planfile_base', 0, 4, 3).
@@ -5926,11 +5938,14 @@ python_function('src/koru/queue/runner.py', '_claim_and_start', 4, 2, 2).
 python_function('src/koru/queue/runner.py', '_enrich_llm_request_with_context', 2, 3, 4).
 python_function('src/koru/queue/runner.py', '_execute_action', 7, 5, 7).
 python_function('src/koru/queue/runner.py', '_append_shell_evidence', 4, 5, 6).
-python_function('src/koru/queue/runner.py', '_finalize_ticket', 6, 5, 4).
+python_function('src/koru/queue/runner.py', '_ticket_expects_edits', 1, 5, 4).
+python_function('src/koru/queue/runner.py', '_snapshot_declared_files', 2, 4, 5).
+python_function('src/koru/queue/runner.py', '_verify_declared_files_changed', 3, 4, 6).
+python_function('src/koru/queue/runner.py', '_finalize_ticket', 7, 7, 4).
 python_function('src/koru/queue/runner.py', '_next_ticket_or_result', 3, 4, 4).
 python_function('src/koru/queue/runner.py', '_log_queue_ticket_start', 2, 4, 3).
 python_function('src/koru/queue/runner.py', '_resolve_action_or_result', 0, 6, 3).
-python_function('src/koru/queue/runner.py', '_run_next_planfile_task_impl', 0, 8, 12).
+python_function('src/koru/queue/runner.py', '_run_next_planfile_task_impl', 0, 10, 15).
 python_function('src/koru/queue/runner.py', 'run_next_planfile_task', 0, 1, 4).
 python_function('src/koru/queue/runners.py', '_planfile_env', 0, 1, 0).
 python_function('src/koru/queue/runners.py', '_decode_subprocess_output', 1, 8, 7).
@@ -5940,12 +5955,19 @@ python_function('src/koru/queue/runners.py', 'run_process', 2, 1, 4).
 python_function('src/koru/queue/runners.py', 'run_shell_command', 2, 1, 3).
 python_function('src/koru/queue/runners.py', 'run_api_request', 2, 12, 21).
 python_function('src/koru/queue/runners.py', '_resolve_llm_endpoint_and_key', 1, 5, 3).
+python_function('src/koru/queue/runners.py', '_shell_llm_truthy', 1, 3, 2).
+python_function('src/koru/queue/runners.py', '_normalize_shell_llm_client', 1, 6, 4).
+python_function('src/koru/queue/runners.py', '_resolve_shell_llm_client', 1, 4, 4).
+python_function('src/koru/queue/runners.py', '_autodetect_shell_llm_client', 0, 8, 5).
+python_function('src/koru/queue/runners.py', '_as_text', 1, 3, 3).
+python_function('src/koru/queue/runners.py', '_flatten_llm_messages', 1, 6, 5).
+python_function('src/koru/queue/runners.py', 'run_shell_llm_request', 3, 15, 13).
 python_function('src/koru/queue/runners.py', '_build_llm_messages', 1, 8, 5).
 python_function('src/koru/queue/runners.py', '_build_llm_request_body', 3, 3, 3).
 python_function('src/koru/queue/runners.py', '_build_llm_headers', 2, 3, 1).
 python_function('src/koru/queue/runners.py', '_parse_llm_response', 2, 9, 8).
 python_function('src/koru/queue/runners.py', '_handle_llm_error', 2, 2, 6).
-python_function('src/koru/queue/runners.py', 'run_llm_request', 2, 5, 14).
+python_function('src/koru/queue/runners.py', 'run_llm_request', 2, 7, 17).
 python_function('src/koru/queue/shell_evidence.py', '_tail_stream', 2, 3, 2).
 python_function('src/koru/queue/shell_evidence.py', 'format_shell_run_note', 0, 7, 4).
 python_function('src/koru/queue/ticket.py', '_explicit_queue_value', 1, 5, 3).
@@ -5956,7 +5978,7 @@ python_function('src/koru/queue/ticket.py', 'ticket_is_implicit_diagnostic', 1, 
 python_function('src/koru/queue/ticket.py', 'ticket_matches_queue', 2, 5, 3).
 python_function('src/koru/queue/ticket.py', 'parse_next_ticket', 1, 12, 6).
 python_function('src/koru/queue/ticket.py', 'ticket_command', 1, 4, 1).
-python_function('src/koru/queue/ticket.py', 'ticket_llm_request', 1, 13, 4).
+python_function('src/koru/queue/ticket.py', 'ticket_llm_request', 1, 12, 4).
 python_function('src/koru/queue/ticket.py', 'ticket_api_request', 1, 8, 1).
 python_function('src/koru/queue/ticket.py', '_has_planfile_cli_module', 0, 2, 1).
 python_function('src/koru/queue/ticket.py', '_python_has_planfile_cli', 1, 2, 1).
@@ -6024,16 +6046,18 @@ python_function('src/koru/scan.py', 'scan_missing_tools', 1, 13, 12).
 python_function('src/koru/scan.py', 'scan_gitignore_drift', 1, 4, 3).
 python_function('src/koru/scan.py', '_scan_jscpd_report', 1, 11, 9).
 python_function('src/koru/scan.py', '_find_analysis_file', 1, 4, 4).
+python_function('src/koru/scan.py', '_code2llm_cc_locations', 1, 20, 14).
+python_function('src/koru/scan.py', '_merge_call_graph_locations', 2, 22, 15).
 python_function('src/koru/scan.py', '_file_evidence', 3, 3, 6).
 python_function('src/koru/scan.py', '_code2llm_regenerate_command', 1, 1, 0).
 python_function('src/koru/scan.py', '_code2llm_source_context', 3, 1, 2).
 python_function('src/koru/scan.py', '_with_source_context', 2, 2, 3).
 python_function('src/koru/scan.py', '_parse_dup_suggestions', 2, 2, 6).
 python_function('src/koru/scan.py', '_parse_god_module_suggestions', 2, 2, 6).
-python_function('src/koru/scan.py', '_parse_high_cc_suggestions', 2, 3, 9).
+python_function('src/koru/scan.py', '_parse_high_cc_suggestions', 2, 10, 14).
 python_function('src/koru/scan.py', '_parse_refactor_suggestions', 2, 7, 8).
 python_function('src/koru/scan.py', '_parse_layer_hotspot_suggestions', 2, 8, 11).
-python_function('src/koru/scan.py', '_scan_code2llm_analysis', 1, 3, 9).
+python_function('src/koru/scan.py', '_scan_code2llm_analysis', 1, 3, 10).
 python_function('src/koru/scan.py', '_scan_testql_export', 1, 5, 7).
 python_function('src/koru/scan.py', '_scan_redup_filtered', 1, 7, 9).
 python_function('src/koru/scan.py', '_scan_redup_changed', 1, 7, 9).
@@ -6090,7 +6114,8 @@ python_function('src/koru/scan_render.py', 'color_signal', 1, 6, 2).
 python_function('src/koru/scan_render.py', 'color_priority', 1, 2, 1).
 python_function('src/koru/scan_render.py', 'render_scan_text', 1, 8, 7).
 python_function('src/koru/scan_render.py', 'render_scan_markdown', 1, 7, 3).
-python_function('src/koru/scan_ticket_emission.py', 'create_ticket', 2, 11, 8).
+python_function('src/koru/scan_ticket_emission.py', 'scan_executor_kind', 0, 3, 3).
+python_function('src/koru/scan_ticket_emission.py', 'create_ticket', 2, 11, 9).
 python_function('src/koru/scan_ticket_emission.py', 'is_reused_create_detail', 1, 2, 2).
 python_function('src/koru/scan_ticket_emission.py', 'normalize_create_detail', 1, 3, 2).
 python_function('src/koru/scan_ticket_emission.py', 'log_scan_decision', 1, 2, 1).
@@ -6630,15 +6655,19 @@ python_function('src/koruapi/mcp_server_ide.py', 'tool_validate_ide_command_scen
 python_function('src/koruapi/mcp_server_nlp2oql.py', 'build_tool_schemas', 0, 1, 0).
 python_function('src/koruapi/mcp_server_nlp2oql.py', 'tool_nlp2oql_generate', 1, 1, 3).
 python_function('src/koruapi/mcp_server_nlp2oql.py', 'tool_nlp2oql_run', 1, 1, 3).
-python_function('src/koruapi/mcp_server_planfile.py', 'build_tool_schemas', 0, 1, 0).
+python_function('src/koruapi/mcp_server_planfile.py', 'resolve_mcp_project_root', 1, 4, 7).
+python_function('src/koruapi/mcp_server_planfile.py', '_project_root_schema_props', 1, 1, 0).
+python_function('src/koruapi/mcp_server_planfile.py', 'build_tool_schemas', 0, 1, 1).
 python_function('src/koruapi/mcp_server_planfile.py', '_get_job_store_path', 1, 2, 1).
 python_function('src/koruapi/mcp_server_planfile.py', '_load_jobs', 1, 3, 4).
 python_function('src/koruapi/mcp_server_planfile.py', '_save_jobs', 2, 2, 4).
 python_function('src/koruapi/mcp_server_planfile.py', '_get_process_memory_mb', 1, 3, 2).
 python_function('src/koruapi/mcp_server_planfile.py', '_monitor_subprocess_oom', 4, 8, 5).
-python_function('src/koruapi/mcp_server_planfile.py', '_tickets_for_status_filter', 2, 11, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_tickets_for_status_filter', 2, 14, 1).
+python_function('src/koruapi/mcp_server_planfile.py', '_ticket_status_counts', 1, 4, 3).
+python_function('src/koruapi/mcp_server_planfile.py', '_idle_queue_suggested_actions', 1, 3, 2).
 python_function('src/koruapi/mcp_server_planfile.py', '_serialize_mcp_ticket', 1, 3, 1).
-python_function('src/koruapi/mcp_server_planfile.py', 'tool_list_tickets', 1, 3, 7).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_list_tickets', 1, 6, 8).
 python_function('src/koruapi/mcp_server_planfile.py', '_create_job', 3, 1, 4).
 python_function('src/koruapi/mcp_server_planfile.py', '_update_job', 2, 1, 2).
 python_function('src/koruapi/mcp_server_planfile.py', '_collect_process_logs', 1, 3, 3).
@@ -6648,16 +6677,17 @@ python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_timeout_respo
 python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_oom_response', 0, 1, 3).
 python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_completed_response', 0, 5, 3).
 python_function('src/koruapi/mcp_server_planfile.py', '_run_ticket_error_response', 4, 1, 2).
-python_function('src/koruapi/mcp_server_planfile.py', 'tool_run_ticket', 1, 4, 15).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_run_ticket', 1, 5, 14).
 python_function('src/koruapi/mcp_server_planfile.py', 'tool_job_status', 1, 3, 1).
 python_function('src/koruapi/mcp_server_planfile.py', '_gate_commands', 1, 1, 2).
 python_function('src/koruapi/mcp_server_planfile.py', '_detect_enabled_gates', 2, 5, 3).
 python_function('src/koruapi/mcp_server_planfile.py', '_resolve_gates', 3, 4, 3).
 python_function('src/koruapi/mcp_server_planfile.py', '_run_single_gate', 6, 10, 7).
-python_function('src/koruapi/mcp_server_planfile.py', 'tool_run_quality_gates', 1, 6, 7).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_run_quality_gates', 1, 7, 7).
 python_function('src/koruapi/mcp_server_planfile.py', '_find_ticket', 2, 3, 1).
 python_function('src/koruapi/mcp_server_planfile.py', '_build_edit_context', 2, 3, 4).
-python_function('src/koruapi/mcp_server_planfile.py', 'tool_propose_edits', 1, 14, 8).
+python_function('src/koruapi/mcp_server_planfile.py', '_ticket_workflow_hints', 0, 4, 1).
+python_function('src/koruapi/mcp_server_planfile.py', 'tool_propose_edits', 1, 16, 8).
 python_function('src/koruapi/mcp_server_runtime.py', 'handle_message', 1, 1, 1).
 python_function('src/koruapi/mcp_server_runtime.py', 'run_stdio', 0, 1, 1).
 python_function('src/koruapi/mcp_server_runtime.py', 'jsonrpc_response', 2, 1, 1).
@@ -8624,6 +8654,8 @@ python_function('tests/test_facade_late_binding_contract.py', 'test_collector_fi
 python_function('tests/test_facade_late_binding_contract.py', 'test_every_late_bound_attribute_exists_on_its_facade', 0, 6, 7).
 python_function('tests/test_facade_late_binding_contract.py', '_all_autonomous_shim_modules', 0, 2, 2).
 python_function('tests/test_facade_late_binding_contract.py', 'test_autonomous_shims_importable', 1, 1, 3).
+python_function('tests/test_fleet_bootstrap.py', '_git_repo', 1, 1, 1).
+python_function('tests/test_fleet_bootstrap.py', '_write_tickets', 2, 1, 4).
 python_function('tests/test_gate.py', '_ok', 1, 1, 1).
 python_function('tests/test_gate.py', '_fail', 1, 1, 1).
 python_function('tests/test_gate.py', 'test_authorize_gate_records_structured_note', 1, 12, 9).
@@ -8931,7 +8963,10 @@ python_function('tests/test_koruapi.py', 'test_unknown_integration', 0, 1, 3).
 python_function('tests/test_koruapi.py', 'test_koru_api_main_uses_process_argv_for_help', 2, 3, 4).
 python_function('tests/test_koruapi.py', 'test_koru_api_main_uses_process_argv_for_version', 2, 3, 5).
 python_function('tests/test_koruapi.py', 'test_wired_handlers_are_catalogued', 0, 3, 3).
-python_function('tests/test_koruapi.py', 'test_tool_list_tickets_status_filters', 1, 5, 5).
+python_function('tests/test_koruapi.py', 'test_tool_list_tickets_status_filters', 1, 8, 5).
+python_function('tests/test_koruapi.py', 'test_resolve_mcp_project_root_accepts_aliases', 1, 6, 5).
+python_function('tests/test_koruapi.py', 'test_tool_list_tickets_idle_guidance', 1, 6, 3).
+python_function('tests/test_koruapi.py', 'test_tool_propose_edits_oversized_workflow_hints', 2, 5, 4).
 python_function('tests/test_koruapi.py', 'test_koru_api_main_dispatch_table_covers_all_subparser_actions', 0, 5, 5).
 python_function('tests/test_koruapi.py', 'test_koru_api_main_list_action_emits_integrations', 2, 3, 3).
 python_function('tests/test_koruapi.py', 'test_openapi_document_lists_invoke_path', 0, 6, 2).
@@ -9426,6 +9461,7 @@ python_function('tests/test_pyproject_metadata.py', 'test_root_install_exposes_c
 python_function('tests/test_pyproject_metadata.py', 'test_all_extra_matches_union_of_other_extras', 0, 5, 3).
 python_function('tests/test_pyproject_metadata.py', 'test_readme_documents_each_installation_extra', 0, 3, 2).
 python_function('tests/test_pyproject_metadata.py', 'test_uv_lock_koru_metadata_matches_pyproject', 0, 4, 3).
+python_function('tests/test_pyproject_metadata.py', 'test_version_file_matches_pyproject', 0, 2, 3).
 python_function('tests/test_qoder_ide_support.py', 'test_qoder_signature_matches_real_process', 0, 3, 1).
 python_function('tests/test_qoder_ide_support.py', 'test_qoder_signature_ignores_qoderwake_daemon', 0, 2, 1).
 python_function('tests/test_qoder_ide_support.py', 'test_qoder_is_vscode_extension_family', 0, 3, 1).
@@ -10396,6 +10432,12 @@ python_class('src/koru/environment_profile.py', 'LlmEnvironment').
 python_class('src/koru/environment_profile.py', 'ControlEnvironment').
 python_class('src/koru/environment_profile.py', 'EnvironmentProfile').
 python_method('EnvironmentProfile', 'to_dict', 0, 1, 1).
+python_class('src/koru/fleet_bootstrap.py', 'BootstrapStatus').
+python_class('src/koru/fleet_bootstrap.py', 'BootstrapResult').
+python_method('BootstrapResult', 'line', 0, 2, 1).
+python_class('src/koru/fleet_bootstrap.py', 'BootstrapSummary').
+python_method('BootstrapSummary', 'counts', 0, 2, 1).
+python_method('BootstrapSummary', 'report_text', 0, 4, 6).
 python_class('src/koru/gate.py', 'GateAuthorization').
 python_method('GateAuthorization', 'to_note', 0, 1, 2).
 python_class('src/koru/gc.py', 'GcCandidate').
@@ -11615,6 +11657,29 @@ python_method('FakeResponse', '__exit__', 0, 1, 0).
 python_class('tests/test_events.py', 'TestManagementEvents').
 python_method('TestManagementEvents', 'test_emit_management_event_posts_expected_payload', 0, 1, 8).
 python_method('TestManagementEvents', 'test_emit_management_event_is_disabled_without_url', 0, 1, 3).
+python_class('tests/test_fleet_bootstrap.py', 'TestDiscoverBootstrapCandidates').
+python_method('TestDiscoverBootstrapCandidates', 'test_finds_git_children_depth_one', 1, 2, 5).
+python_method('TestDiscoverBootstrapCandidates', 'test_skips_non_git_by_default', 1, 2, 2).
+python_method('TestDiscoverBootstrapCandidates', 'test_allow_non_git_via_require_git_false', 1, 2, 3).
+python_method('TestDiscoverBootstrapCandidates', 'test_exclude_backups', 1, 2, 3).
+python_method('TestDiscoverBootstrapCandidates', 'test_include_globs', 1, 3, 2).
+python_method('TestDiscoverBootstrapCandidates', 'test_umbrella_adds_workspace_root', 1, 2, 3).
+python_method('TestDiscoverBootstrapCandidates', 'test_umbrella_with_include_still_adds_root', 1, 5, 3).
+python_method('TestDiscoverBootstrapCandidates', 'test_depth_two_finds_nested', 1, 2, 3).
+python_class('tests/test_fleet_bootstrap.py', 'TestEnsureKoruProject').
+python_method('TestEnsureKoruProject', 'test_fresh_init', 1, 3, 3).
+python_method('TestEnsureKoruProject', 'test_idempotent_skip', 1, 2, 2).
+python_method('TestEnsureKoruProject', 'test_soft_ensure_adds_policy_without_clobbering_tickets', 1, 5, 9).
+python_method('TestEnsureKoruProject', 'test_dry_run_writes_nothing', 1, 4, 5).
+python_method('TestEnsureKoruProject', 'test_dry_run_policy_only', 1, 3, 7).
+python_class('tests/test_fleet_bootstrap.py', 'TestBootstrapWorkspace').
+python_method('TestBootstrapWorkspace', 'test_summary_and_fleet_ls_see_new_projects', 1, 4, 7).
+python_method('TestBootstrapWorkspace', 'test_second_run_all_skipped', 1, 2, 3).
+python_method('TestBootstrapWorkspace', 'test_no_clobber_across_workspace', 1, 7, 9).
+python_class('tests/test_fleet_bootstrap.py', 'TestFleetBootstrapCli').
+python_method('TestFleetBootstrapCli', 'test_bootstrap_dry_run_cli', 2, 4, 5).
+python_method('TestFleetBootstrapCli', 'test_bootstrap_alias_init', 1, 3, 4).
+python_method('TestFleetBootstrapCli', 'test_full_init_then_ls', 2, 4, 5).
 python_class('tests/test_gc.py', 'TestCollectGcCandidates').
 python_method('TestCollectGcCandidates', 'test_finds_old_done_tickets', 0, 2, 7).
 python_method('TestCollectGcCandidates', 'test_includes_failed_and_blocked', 0, 2, 6).
@@ -11852,7 +11917,18 @@ python_method('TestPlanfileQueueLlm', 'test_llm_answer_persisted_as_ticket_note'
 python_method('TestPlanfileQueueLlm', 'test_llm_ticket_failure_marks_failed', 0, 4, 12).
 python_method('TestPlanfileQueueLlm', 'test_llm_ticket_without_prompt_requests_input', 0, 3, 11).
 python_method('TestPlanfileQueueLlm', 'test_llm_dry_run_returns_request_without_calling', 0, 1, 10).
-python_method('TestPlanfileQueueLlm', 'test_llm_default_runner_without_api_key_returns_clear_error', 0, 4, 6).
+python_method('TestPlanfileQueueLlm', '_clean_llm_env', 0, 5, 3).
+python_method('TestPlanfileQueueLlm', 'test_llm_default_runner_without_api_key_or_cli_returns_clear_error', 0, 1, 6).
+python_method('TestPlanfileQueueLlm', 'test_llm_falls_back_to_vendor_cli_when_no_api_key', 0, 1, 7).
+python_method('TestPlanfileQueueLlm', 'test_llm_shell_fallback_can_be_disabled', 0, 1, 6).
+python_method('TestPlanfileQueueLlm', 'test_llm_explicit_provider_selects_vendor_cli_over_api', 0, 1, 6).
+python_method('TestPlanfileQueueLlm', 'test_llm_vendor_cli_failure_blocks_ticket', 0, 1, 6).
+python_class('tests/test_planfile_queue.py', 'TestQueueEditVerification').
+python_method('TestQueueEditVerification', '_ticket', 0, 1, 1).
+python_method('TestQueueEditVerification', 'test_refactor_ticket_expects_edits_by_default', 0, 1, 4).
+python_method('TestQueueEditVerification', 'test_explicit_flag_overrides_label_heuristic', 0, 1, 4).
+python_method('TestQueueEditVerification', 'test_unchanged_file_is_reported_as_failure', 0, 2, 10).
+python_method('TestQueueEditVerification', 'test_creating_a_missing_declared_file_counts_as_a_change', 0, 1, 8).
 python_class('tests/test_planfile_queue.py', 'TestPlanfileQueueLoop').
 python_method('TestPlanfileQueueLoop', '_make_runner', 1, 1, 5).
 python_method('TestPlanfileQueueLoop', 'test_loop_drains_three_shell_tickets_to_idle', 0, 1, 8).

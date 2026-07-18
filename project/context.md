@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 770, typescript: 94, shell: 58, json: 41, yaml: 31
+- **Languages**: python: 771, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7310
-- **Total Classes**: 498
-- **Modules**: 1047
-- **Entry Points**: 2754
+- **Total Functions**: 7342
+- **Total Classes**: 501
+- **Modules**: 1052
+- **Entry Points**: 2757
 
 ## Architecture by Module
 
@@ -42,6 +42,10 @@
 - **Classes**: 1
 - **File**: `bridge-network.ts`
 
+### src.koru.scan
+- **Functions**: 65
+- **File**: `scan.py`
+
 ### src.koruide.plugin_installer
 - **Functions**: 64
 - **Classes**: 3
@@ -51,10 +55,6 @@
 - **Functions**: 64
 - **Classes**: 1
 - **File**: `bridge-focus-strategy.ts`
-
-### src.koru.scan
-- **Functions**: 63
-- **File**: `scan.py`
 
 ### src.koruide.ide
 - **Functions**: 59
@@ -569,6 +569,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
+- `src.koru.fleet_bootstrap.discover_bootstrap_candidates` - 34 calls
 - `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 34 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
@@ -598,7 +599,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_strategy.strategy_main` - 26 calls
 - `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
 - `src.koru.autonomy.operator.operator_daemon.start_or_reuse_daemon` - 26 calls
-- `src.koru.autopilot.cli_parser.build_autopilot_parser` - 26 calls
 
 ## System Interactions
 

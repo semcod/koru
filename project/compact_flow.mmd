@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 1.44s
+%% generated in 1.50s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__nlp2uri_testql_browser["examples.nlp2uri-testql-browser<br/>3 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
@@ -26,7 +26,7 @@ flowchart TD
     plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>526 funcs"]
     project["project<br/>1 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
-    scripts__bump_version["scripts.bump_version<br/>6 funcs"]
+    scripts__bump_version["scripts.bump_version<br/>7 funcs"]
     scripts__e2e_envmap_koru["scripts.e2e_envmap_koru<br/>2 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
@@ -41,8 +41,8 @@ flowchart TD
     services__healing_webhook["services.healing-webhook<br/>39 funcs"]
     src__env2llm["src.env2llm<br/>13 funcs"]
     src__imgl["src.imgl<br/>14 funcs"]
-    src__koru["src.koru<br/>3780 funcs"]
-    src__koruapi["src.koruapi<br/>363 funcs"]
+    src__koru["src.koru<br/>3805 funcs"]
+    src__koruapi["src.koruapi<br/>368 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
     src__koruide["src.koruide<br/>502 funcs"]
     src__korullm["src.korullm<br/>39 funcs"]
@@ -50,11 +50,11 @@ flowchart TD
     src__koruobserve["src.koruobserve<br/>57 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
     src__nlp2imgl["src.nlp2imgl<br/>5 funcs"]
-    src__koru ==>|621| project
-    src__koru ==>|221| src__koruide
+    src__koru ==>|622| project
+    src__koru ==>|223| src__koruide
     packages__coru ==>|183| project
     src__koruapi ==>|100| src__koru
-    src__koru ==>|55| plugins__koru_autopilot_shared
+    src__koru ==>|58| plugins__koru_autopilot_shared
     packages__coru ==>|42| src__koru
     src__koruide ==>|41| src__koru
     packages__dsl2coru ==>|34| packages__dsl2koru
@@ -70,9 +70,9 @@ flowchart TD
     src__koruapi ==>|13| plugins__koru_autopilot_shared
     examples__remote_orchestration_demo ==>|12| project
     src__koruvision ==>|12| project
+    src__koru ==>|12| src__koruobserve
     packages__dsl2koru ==>|11| project
     packages__dsl2coru ==>|11| project
-    src__koru ==>|11| src__koruobserve
     src__koruide ==>|9| plugins__koru_autopilot_shared
     src__koru ==>|9| koru__observability_dsl
     scripts__planfile_sync_todo ==>|9| project
@@ -82,12 +82,12 @@ flowchart TD
     packages__uri2koru ==>|8| packages__uri2coru
     src__koruvision ==>|8| src__korumesh
     scripts__sync_plugin_version ==>|8| project
+    scripts__bump_version ==>|8| project
     packages__nlp2koru ==>|7| project
     src__koruobserve ==>|7| src__koru
     src__koruobserve ==>|7| src__koruvision
     src__korumesh ==>|7| project
     src__koru ==>|7| koru__observability_events
-    scripts__bump_version ==>|7| project
     packages__dsl2koru ==>|6| packages__koruenv
     packages__uri2coru ==>|6| project
     packages__nlpshim ==>|6| src__koru

@@ -583,6 +583,106 @@ def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
     return path, str(path.relative_to(project))
 
 
+_CC_LOCATION_RE = re.compile(r"at `(?P<file>[^`:]+):(?P<line>\d+)`")
+
+
+def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
+    """Map a function name to the source file(s) that define it.
+
+    The ``analysis.toon`` HEALTH section names functions but not their files,
+    so CC tickets built from it can only point at the analysis artifact — which
+    tells an agent nothing about what to edit. code2llm's sibling
+    ``planfile-tickets.yaml`` export carries ``files`` and ``path:line`` for the
+    same findings, so use it as the location index when present.
+
+    Keys are both the fully-qualified name (``pkg.mod.func``) and the bare
+    ``func``, since the two exports disagree on which they use.
+    """
+    candidates = (
+        project / "project" / "planfile-tickets.yaml",
+        project / "planfile-tickets.yaml",
+    )
+    path = next((p for p in candidates if p.is_file()), None)
+    if path is None:
+        return {}
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+
+    locations: dict[str, list[str]] = {}
+    for ticket in payload.get("tickets") or []:
+        if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_cc":
+            continue
+        files = [str(f) for f in (ticket.get("files") or []) if f]
+        if not files:
+            continue
+        match = _CC_LOCATION_RE.search(str(ticket.get("description") or ""))
+        located = f"{files[0]}:{match.group('line')}" if match else files[0]
+        key = str(ticket.get("dedupe_key") or "").rsplit(":", 1)[-1].strip()
+        if not key:
+            continue
+        for alias in {key, key.rsplit(".", 1)[-1]}:
+            bucket = locations.setdefault(alias, [])
+            if located not in bucket:
+                bucket.append(located)
+
+    _merge_call_graph_locations(project, locations)
+    return locations
+
+
+# Source extensions probed when turning a dotted module into a file path.
+_MODULE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".py", ".php")
+
+
+def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) -> None:
+    """Fill location gaps from the code2llm call graph.
+
+    ``planfile-tickets.yaml`` is capped (``--planfile-limit``) so it covers only
+    the worst offenders, while ``calls.yaml`` records every node with its module
+    and line. The module is dotted rather than a path, so resolve it against the
+    filesystem — an unresolvable module is skipped rather than guessed at.
+    """
+    candidates = (project / "project" / "calls.yaml", project / "calls.yaml")
+    path = next((p for p in candidates if p.is_file()), None)
+    if path is None:
+        return
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
+    except (OSError, yaml.YAMLError):
+        return
+    nodes = (payload or {}).get("nodes") if isinstance(payload, dict) else None
+    if not isinstance(nodes, dict):
+        return
+
+    resolved: dict[str, str | None] = {}
+    for qualified, node in nodes.items():
+        if not isinstance(node, dict):
+            continue
+        name = str(node.get("name") or "").strip()
+        module = str(node.get("module") or "").strip()
+        if not name or not module:
+            continue
+        if module not in resolved:
+            stem = project / Path(*module.split("."))
+            match = next(
+                (stem.with_suffix(sfx) for sfx in _MODULE_SUFFIXES if stem.with_suffix(sfx).is_file()),
+                None,
+            )
+            resolved[module] = str(match.relative_to(project)) if match else None
+        rel_path = resolved[module]
+        if not rel_path:
+            continue
+        line = node.get("line")
+        located = f"{rel_path}:{line}" if isinstance(line, int) else rel_path
+        for alias in {str(qualified), name}:
+            bucket = locations.setdefault(alias, [])
+            if located not in bucket:
+                bucket.append(located)
+
+
 def _file_evidence(project: Path, path: Path, rel: str | None = None) -> dict[str, object]:
     try:
         stat = path.stat()
@@ -705,6 +805,7 @@ def _parse_high_cc_suggestions(
     rel: str,
     *,
     source_context: dict[str, object] | None = None,
+    locations: dict[str, list[str]] | None = None,
 ) -> list[Suggestion]:
     """Parse high-CC method suggestions from analysis text."""
     suggestions: list[Suggestion] = []
@@ -716,18 +817,33 @@ def _parse_high_cc_suggestions(
         if func in cc_seen:
             continue
         cc_seen.add(func)
+
+        # Point the ticket at the code to edit when the location is known and
+        # unambiguous. Several functions share a bare name (``value``,
+        # ``description``), so a multi-hit lookup names every candidate rather
+        # than sending an agent to edit an arbitrary one.
+        found = (locations or {}).get(func) or []
+        files = tuple(entry.split(":", 1)[0] for entry in found) or (rel,)
+        if len(found) == 1:
+            where = f"`{found[0]}`"
+        elif found:
+            where = "one of " + ", ".join(f"`{entry}`" for entry in found)
+        else:
+            where = f"a location not recorded in `{rel}`"
         suggestions.append(
             _with_source_context(
                 Suggestion(
                 signal="code2llm_cc",
                 title=f"Reduce cyclomatic complexity: {func} (CC={cc}, limit={limit})",
                 description=(
-                    f"`{rel}` reports `{func}` with CC={cc} (limit={limit}). "
-                    "Extract sub-functions, simplify conditionals, or split into strategy pattern."
+                    f"`{rel}` reports `{func}` with CC={cc} (limit={limit}), "
+                    f"defined in {where}. "
+                    "Extract sub-functions, simplify conditionals, or split into strategy pattern. "
+                    "Preserve behaviour — this is a pure refactor."
                 ),
                 priority="normal",
                 labels=("code2llm", "complexity", "refactor", "scan"),
-                files=(rel,),
+                files=files,
                 ),
                 source_context,
             ),
@@ -833,7 +949,14 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     suggestions: list[Suggestion] = []
     suggestions.extend(_parse_dup_suggestions(text, rel, source_context=source_context))
     suggestions.extend(_parse_god_module_suggestions(text, rel, source_context=source_context))
-    suggestions.extend(_parse_high_cc_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(
+        _parse_high_cc_suggestions(
+            text,
+            rel,
+            source_context=source_context,
+            locations=_code2llm_cc_locations(project),
+        ),
+    )
     suggestions.extend(_parse_refactor_suggestions(text, rel, source_context=source_context))
     suggestions.extend(_parse_layer_hotspot_suggestions(text, rel, source_context=source_context))
     return suggestions

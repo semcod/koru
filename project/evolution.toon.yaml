@@ -1,7 +1,7 @@
-# code2llm/evolution | 7178 func | 681f | 2026-07-17
-# generated in 0.02s
+# code2llm/evolution | 7209 func | 683f | 2026-07-18
+# generated in 0.03s
 
-NEXT[4] (ranked by impact):
+NEXT[7] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
       WHY: 6836L, 0 classes, max CC=15
       EFFORT: ~4h  IMPACT: 102540
@@ -10,11 +10,23 @@ NEXT[4] (ranked by impact):
       WHY: 3464L, 3 classes, max CC=13
       EFFORT: ~4h  IMPACT: 45032
 
-  [3] !  SPLIT-FUNC      main  CC=17  fan=12
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 204
+  [3] !  SPLIT-FUNC      discover_bootstrap_candidates  CC=18  fan=27
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 486
 
-  [4] !! SPLIT           tree.txt
+  [4] !  SPLIT-FUNC      _merge_call_graph_locations  CC=22  fan=17
+      WHY: CC=22 exceeds 15
+      EFFORT: ~1h  IMPACT: 374
+
+  [5] !  SPLIT-FUNC      _code2llm_cc_locations  CC=20  fan=16
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 320
+
+  [6] !  SPLIT-FUNC      run_shell_llm_request  CC=15  fan=14
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [7] !! SPLIT           tree.txt
       WHY: 2722L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
@@ -25,10 +37,10 @@ RISKS[3]:
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
-  CC̄:          3.7 → ≤2.6
-  max-CC:      17 → ≤8
-  god-modules: 58 → 0
-  high-CC(≥15): 2 → ≤1
+  CC̄:          3.8 → ≤2.7
+  max-CC:      22 → ≤11
+  god-modules: 59 → 0
+  high-CC(≥15): 7 → ≤3
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -56,4 +68,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.7 → now CC̄=3.7
+  prev CC̄=3.8 → now CC̄=3.8
