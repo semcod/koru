@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot (VS Code)",
   "description": "Bridge between Microsoft VS Code and the koru autopilot daemon. Standalone VSIX for VS Code only; sibling packages cover Cursor, VSCodium, Windsurf and Antigravity.",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -197,6 +197,6 @@
   },
   "koruAutopilotBuild": {
     "schema": 1,
-    "sha": "e9e6ee68ec133d42"
+    "sha": "68a11e724df3200c"
   }
 }
