@@ -43,18 +43,31 @@ const payload = buildDevelopmentDefectPayload({
 });
 const structural = classifyDevelopmentFailure("invalid_runner_response");
 const operational = classifyDevelopmentFailure("dns_mismatch");
+const manifestBug = classifyDevelopmentFailure("plan_hash_mismatch");
+const grantOps = classifyDevelopmentFailure("apply_grant_plan_hash_mismatch");
+const manifestPayload = buildDevelopmentDefectPayload({
+  ticketId: "PLF-409",
+  component: "plesk-bridge",
+  entry: {stage: "urirun", urirun: {error: "plan_hash_mismatch"}},
+});
 const first = store.upsert(payload);
 const second = store.upsert(payload);
+const manifestUpsert = store.upsert(manifestPayload);
 console.log(JSON.stringify({
   structural_action: structural.action,
   operational_action: operational.action,
+  manifest_bug_action: manifestBug.action,
+  grant_ops_action: grantOps.action,
   payload_type: payload.type,
   payload_queue: payload.queue,
   fingerprint: payload.fingerprint,
+  manifest_fingerprint: manifestPayload.fingerprint,
+  manifest_affected_files: manifestPayload.affected_files,
   first_id: first.ticket_id,
   first_deduplicated: first.deduplicated,
   second_deduplicated: second.deduplicated,
   blocked_by: store.getBlockedBy("PLF-364"),
+  manifest_ticket_id: manifestUpsert.ticket_id,
 }));
 """
 
@@ -81,12 +94,17 @@ class TestSubactorDevelopmentBridge(unittest.TestCase):
 
         self.assertEqual(data["structural_action"], "ticket")
         self.assertEqual(data["operational_action"], "ignore")
+        self.assertEqual(data["manifest_bug_action"], "ticket")
+        self.assertEqual(data["grant_ops_action"], "ignore")
         self.assertEqual(data["payload_type"], "development_defect")
         self.assertEqual(data["payload_queue"], "development")
         self.assertEqual(data["fingerprint"], "orchestrator:invalid_runner_response")
+        self.assertEqual(data["manifest_fingerprint"], "plesk-bridge:plan_hash_mismatch")
+        self.assertTrue(any("plesk-httpdocs-sync" in f for f in data["manifest_affected_files"]))
         self.assertFalse(data["first_deduplicated"])
         self.assertTrue(data["second_deduplicated"])
         self.assertEqual(data["blocked_by"], [data["first_id"]])
+        self.assertTrue(data["manifest_ticket_id"])
 
 
 if __name__ == "__main__":
