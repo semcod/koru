@@ -56,12 +56,20 @@ _TOWARD_MODEL_RUNNING: dict[str, str] = {
 class RepairRecordingSession:
     """One queue run of one patch ticket, mirrored into the store."""
 
-    def __init__(self, store: RepairRunStore, run: RepairRun, owner: str) -> None:
+    def __init__(
+        self,
+        store: RepairRunStore,
+        run: RepairRun,
+        owner: str,
+        registry: tuple = (),
+    ) -> None:
         self._store = store
         self._run = run
         self._owner = owner
         self._attempt_no = 0
         self._iteration = run.current_iteration + 1
+        self._registry = registry
+        self._parked = False
 
     @classmethod
     def begin(
@@ -103,7 +111,9 @@ class RepairRecordingSession:
                     "koru.repair.lease_held_elsewhere run=%s ticket=%s", run.id, ticket_id,
                 )
                 return None
-            session = cls(store, claimed, actor)
+            from koru.repair_runs.router import load_model_registry
+
+            session = cls(store, claimed, actor, registry=load_model_registry(project))
             return session if session._advance_to_model_running() else None
         except Exception:
             _logger.exception("koru.repair.recording_unavailable ticket=%s", ticket_id)
@@ -117,29 +127,67 @@ class RepairRecordingSession:
         self,
         llm_runner: Callable[[dict[str, Any], Path], CommandResult],
     ) -> Callable[[dict[str, Any], Path], CommandResult]:
-        """Every model call goes through the store: start → invoke → persist."""
+        """Every model call goes through the store: start → invoke → persist.
+
+        With a model registry configured, a classified provider failure routes
+        to the next model *inside the same call* — same run, same ledger, same
+        contract; the router hands out nothing but a model name. Without a
+        registry the single configured model is invoked exactly as before.
+        """
+        from koru.repair_runs.router import (
+            NO_SWITCH_CODES,
+            classify_invocation,
+            choose_model,
+        )
 
         def recording_runner(action: dict[str, Any], project: Path) -> CommandResult:
-            attempt = self._start_attempt(action)
-            try:
-                result = llm_runner(action, project)
-            except Exception:
-                self._finish_attempt(attempt, status="interrupted", failure_code="invoke_error")
-                raise
-            if attempt is not None:
-                if result.returncode == 0:
+            last_failure: str | None = None
+            result: CommandResult | None = None
+            while True:
+                routed = action
+                if self._registry:
+                    spec = choose_model(
+                        self._registry,
+                        self._store.attempts(self._run.id),
+                        last_failure=last_failure,
+                    )
+                    if spec is None:
+                        self._park_exhausted()
+                        return result if result is not None else _exhausted_result()
+                    routed = {**action, "model": spec.model, "provider": spec.provider}
+
+                attempt = self._start_attempt(routed)
+                try:
+                    result = llm_runner(routed, project)
+                except Exception:
+                    self._finish_attempt(
+                        attempt, status="interrupted", failure_code="invoke_error",
+                    )
+                    raise
+                failure = classify_invocation(result)
+                if failure is None:
                     self._finish_attempt(
                         attempt,
                         status="succeeded",
                         output_hash=stable_hash(result.stdout or ""),
                     )
-                else:
-                    self._finish_attempt(
-                        attempt, status="failed", failure_code="invoke_failed",
-                    )
-            return result
+                    return result
+                self._finish_attempt(attempt, status="failed", failure_code=failure)
+                if not self._registry or failure in NO_SWITCH_CODES:
+                    # No roster to route within, or an operation that is
+                    # forbidden regardless of who performs it.
+                    return result
+                last_failure = failure
 
         return recording_runner
+
+    def _park_exhausted(self) -> None:
+        """Every model on the roster is burned: park, never improvise."""
+        try:
+            self._walk(lc.MODEL_BLOCKED, lc.MODEL_EXHAUSTED, lc.SAFE_BLOCKED)
+        except Exception:
+            _logger.exception("koru.repair.park_failed run=%s", self._run.id)
+        self._parked = True
 
     def finish(self, result: CommandResult, outcome: PatchOutcome | None) -> None:
         """Walk the run to its terminal status and give the lease back.
@@ -149,6 +197,9 @@ class RepairRecordingSession:
         router and recovery will read.
         """
         try:
+            if self._parked:
+                self._store.release(self._run.id, self._owner)
+                return
             if outcome is None and result.returncode == 0:
                 self._walk(
                     lc.ACTION_PROPOSED, lc.ACTION_VALIDATED, lc.STAGING,
@@ -213,6 +264,20 @@ class RepairRecordingSession:
             self._run = self._store.transition(
                 self._run.id, status, expected_version=self._run.version,
             )
+
+
+def _exhausted_result() -> CommandResult:
+    """The reply the queue sees when no model on the roster could answer."""
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        returncode=1,
+        stdout="",
+        stderr=(
+            "model_exhausted: every configured repair model is blocked or burned "
+            "for this run; the run is parked safe_blocked for a human."
+        ),
+    )
 
 
 def _terminal_chain_for(outcome: PatchOutcome) -> tuple[str, ...]:
