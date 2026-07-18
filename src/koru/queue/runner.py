@@ -44,13 +44,6 @@ from koru.queue.types import CommandResult, QueueRunResult
 _logger = logging.getLogger(__name__)
 
 
-def _source_tool(ticket: dict) -> str:
-    source = ticket.get("source")
-    if isinstance(source, dict):
-        return str(source.get("tool") or "")
-    return str(source or "")
-
-
 def _resolve_executor_kind(ticket: dict, interactive: bool, dry_run: bool) -> str:
     """Determine executor kind from ticket metadata."""
     executor = ticket.get("executor") or {}

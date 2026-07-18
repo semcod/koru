@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from koru.queue.manifest import manifest_run_directory
+from koru.queue.manifest import manifest_run_directory, persist_run_artifact
 from koru.queue.patch_mode import redact_secrets
 
 #: How a run ended. ``verified`` — landed with a green gate; ``applied`` —
@@ -106,13 +106,7 @@ def build_evidence_bundle(
 
 def persist_evidence(project: Path, bundle: dict) -> Path:
     """Write the bundle where the manifest already lives, atomically."""
-    directory = manifest_run_directory(project, bundle["run_id"])
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "evidence.json"
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(bundle, indent=2, sort_keys=True), encoding="utf-8")
-    tmp.replace(path)
-    return path
+    return persist_run_artifact(project, bundle["run_id"], "evidence.json", bundle)
 
 
 def load_evidence(project: Path, run_id: str) -> dict | None:

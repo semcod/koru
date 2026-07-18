@@ -12,7 +12,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-_VERIFY_COMMAND_HEADS = frozenset({"node", "npm", "pytest", "python", "python3", "bash"})
+#: Command heads that make an acceptance criterion look like a runnable gate.
+#: Public: ticket templating consults the same set — one notion of
+#: "command-shaped", not two drifting copies.
+VERIFY_COMMAND_HEADS = frozenset({"node", "npm", "pytest", "python", "python3", "bash"})
 
 
 def resolve_legacy_verify_command(project: Path, ticket: dict) -> str:
@@ -27,7 +30,7 @@ def resolve_legacy_verify_command(project: Path, ticket: dict) -> str:
     if explicit:
         return explicit
 
-    from_criteria = _verify_command_from_criteria(ticket)
+    from_criteria = verify_command_from_criteria(ticket)
     if from_criteria:
         return from_criteria
 
@@ -38,11 +41,11 @@ def resolve_legacy_verify_command(project: Path, ticket: dict) -> str:
     return _verify_command_from_project(project)
 
 
-def _verify_command_from_criteria(ticket: dict) -> str:
+def verify_command_from_criteria(ticket: dict) -> str:
     """Read a gate out of acceptance criteria that were written as commands."""
     for item in ticket.get("acceptance_criteria") or []:
         cmd = str(item or "").strip()
-        if cmd and cmd.split()[0] in _VERIFY_COMMAND_HEADS:
+        if cmd and cmd.split()[0] in VERIFY_COMMAND_HEADS:
             return cmd
     return ""
 

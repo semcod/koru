@@ -72,15 +72,25 @@ def manifest_run_directory(project: Path, run_id: str) -> Path:
     return project / ".koru" / "runs" / run_id
 
 
-def persist_manifest(project: Path, manifest: dict) -> Path:
-    """Write an immutable manifest for audit and pre-promotion verification."""
-    directory = manifest_run_directory(project, manifest["run_id"])
+def persist_run_artifact(project: Path, run_id: str, filename: str, payload: dict) -> Path:
+    """Atomically write one JSON artifact into a run's directory.
+
+    The one write path for everything a run leaves on disk (manifest,
+    evidence): tmp + rename, so a crash leaves the old file or the new one,
+    never a torn half.
+    """
+    directory = manifest_run_directory(project, run_id)
     directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "manifest.json"
+    path = directory / filename
     tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     tmp.replace(path)
     return path
+
+
+def persist_manifest(project: Path, manifest: dict) -> Path:
+    """Write an immutable manifest for audit and pre-promotion verification."""
+    return persist_run_artifact(project, manifest["run_id"], "manifest.json", manifest)
 
 
 def load_persisted_manifest(project: Path, run_id: str) -> dict | None:

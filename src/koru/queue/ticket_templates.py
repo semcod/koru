@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 from koru.queue.runners import _DEFAULT_LLM_MODEL
+from koru.queue.verify.legacy import VERIFY_COMMAND_HEADS, verify_command_from_criteria
 
 SUBACTOR_DEVELOPMENT_REPAIR = "subactor-development-repair"
 _TEMPLATE_SCHEMA = "koru.queue.ticket_template/v1"
@@ -26,10 +27,6 @@ _REQUIRED_INPUTS: tuple[str, ...] = (
     "worktree",
     "max_patch_attempts",
     "verify_command",
-)
-
-_VERIFY_COMMAND_PREFIXES: frozenset[str] = frozenset(
-    {"node", "npm", "pytest", "python", "python3", "bash"},
 )
 
 _FORBIDDEN_VERIFY_FRAGMENTS: tuple[str, ...] = (
@@ -202,12 +199,6 @@ def resolve_repair_llm_model(variables: dict[str, str] | None = None) -> str:
     return _DEFAULT_LLM_MODEL
 
 
-def _verify_from_acceptance_criteria(ticket: dict[str, Any]) -> str:
-    for item in ticket.get("acceptance_criteria") or []:
-        cmd = str(item or "").strip()
-        if cmd and cmd.split()[0] in _VERIFY_COMMAND_PREFIXES:
-            return cmd
-    return ""
 
 
 def _resolve_hydrated_inputs(
@@ -224,7 +215,7 @@ def _resolve_hydrated_inputs(
     # let that example outrank the command the ticket actually declared. A gate
     # naming a file the project does not have fails every patch put through it.
     if not str(inputs.get("verify_command") or "").strip():
-        from_criteria = _verify_from_acceptance_criteria(ticket)
+        from_criteria = verify_command_from_criteria(ticket)
         if from_criteria:
             inputs["verify_command"] = from_criteria
         elif "verify_command" in template_inputs:
@@ -286,7 +277,7 @@ def render_repair_ticket_from_development_defect(payload: dict[str, Any]) -> dic
 
     rendered = render_subactor_repair_ticket(variables_from_development_defect(payload))
     acceptance = [str(item).strip() for item in (payload.get("acceptance_tests") or []) if item]
-    if acceptance and acceptance[0].split()[0] in _VERIFY_COMMAND_PREFIXES:
+    if acceptance and acceptance[0].split()[0] in VERIFY_COMMAND_HEADS:
         rendered.setdefault("inputs", {})["verify_command"] = acceptance[0]
         rendered["acceptance_criteria"] = [acceptance[0]]
     return rendered
