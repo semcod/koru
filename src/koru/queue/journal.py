@@ -15,8 +15,11 @@ says what it *was doing* at every step.
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -42,6 +45,10 @@ PHASE_PROMOTED = "promoted"  # commit exists
 PHASE_COMPLETED = "completed"
 
 
+#: Bumped when the event envelope changes incompatibly.
+SCHEMA_VERSION = 1
+
+
 class RunJournal:
     """The events.jsonl of one run, safe to reopen after a crash.
 
@@ -49,6 +56,12 @@ class RunJournal:
     resumes after the last valid entry. A file whose final line was cut short by
     a dying process is healed by starting the next entry on a fresh line — the
     torn line stays in the file as bytes but never as an event.
+
+    Appends hold a per-run advisory lock, so a queue session and a daemon
+    touching the same run interleave whole events rather than bytes. An exact
+    duplicate of the last event is a no-op — recovery and retries may replay
+    their bookkeeping without inflating the record — and a phase that cannot
+    legally follow the current one raises instead of being archived.
     """
 
     def __init__(self, project: Path, run_id: str) -> None:
@@ -56,6 +69,7 @@ class RunJournal:
         self._run_id = run_id
         events = read_events(project, run_id)
         self._seq = events[-1]["seq"] if events else 0
+        self._last: dict | None = events[-1] if events else None
 
     @property
     def path(self) -> Path:
@@ -73,8 +87,20 @@ class RunJournal:
         One ``write`` of one line in append mode, flushed and fsynced: a crash
         leaves at most a torn final line, never an interleaved or missing one.
         """
+        from koru.queue.lifecycle import validate_transition
+
+        if (
+            self._last is not None
+            and self._last.get("phase") == phase
+            and self._last.get("manifest_hash") == manifest_hash
+            and self._last.get("data") == (data or {})
+        ):
+            return self._last  # idempotent duplicate — replayed bookkeeping
+        validate_transition(self._last.get("phase") if self._last else None, phase)
+
         self._seq += 1
         event = {
+            "schema_version": SCHEMA_VERSION,
             "seq": self._seq,
             "run_id": self._run_id,
             "phase": phase,
@@ -84,13 +110,25 @@ class RunJournal:
         }
         self._path.parent.mkdir(parents=True, exist_ok=True)
         line = json.dumps(event, sort_keys=True, separators=(",", ":"))
-        with self._path.open("a", encoding="utf-8") as handle:
+        with self._locked(), self._path.open("a", encoding="utf-8") as handle:
             if self._needs_newline(handle):
                 handle.write("\n")
             handle.write(line + "\n")
             handle.flush()
             os.fsync(handle.fileno())
+        self._last = event
         return event
+
+    @contextmanager
+    def _locked(self) -> Iterator[None]:
+        """Advisory per-run lock so concurrent appenders interleave whole events."""
+        lock_path = self._path.with_suffix(".lock")
+        with lock_path.open("a") as lock:
+            try:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+                yield
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
     def _needs_newline(self, handle) -> bool:
         """Whether the file ends mid-line — the signature of a torn write."""

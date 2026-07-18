@@ -127,6 +127,62 @@ class TestJournalMechanics(unittest.TestCase):
             self.assertEqual(read_events(project, "run1"), read_events(project, "run1"))
 
 
+class TestLifecycleEnforcement(unittest.TestCase):
+    def test_an_impossible_history_is_rejected_at_write_time(self) -> None:
+        """`promoted` out of nowhere must fail loudly, not be archived."""
+        from koru.queue.lifecycle import LifecycleViolation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            journal = RunJournal(Path(tmp), "run1")
+            journal.append(PHASE_RESOLVED)
+
+            with self.assertRaises(LifecycleViolation):
+                journal.append(PHASE_PROMOTED)
+
+    def test_an_exact_duplicate_event_is_idempotent(self) -> None:
+        """Replayed bookkeeping must not inflate the record."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            journal = RunJournal(project, "run1")
+            journal.append(PHASE_RESOLVED, data={"mode": "apply"})
+
+            first = journal.append(PHASE_FROZEN, manifest_hash="abc")
+            second = journal.append(PHASE_FROZEN, manifest_hash="abc")
+
+            self.assertEqual(first["seq"], second["seq"])
+            self.assertEqual(len(read_events(project, "run1")), 2)
+
+    def test_a_changed_payload_is_not_a_duplicate(self) -> None:
+        """Same phase, different manifest — that is a new fact, not a replay."""
+        from koru.queue.lifecycle import LifecycleViolation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            journal = RunJournal(Path(tmp), "run1")
+            journal.append(PHASE_RESOLVED)
+            journal.append(PHASE_FROZEN, manifest_hash="abc")
+
+            with self.assertRaises(LifecycleViolation):
+                journal.append(PHASE_FROZEN, manifest_hash="DIFFERENT")
+
+    def test_events_carry_the_schema_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            RunJournal(project, "run1").append(PHASE_RESOLVED)
+
+            [event] = read_events(project, "run1")
+            self.assertEqual(event["schema_version"], 1)
+
+    def test_a_retry_may_reopen_after_a_refusal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            journal = RunJournal(Path(tmp), "run1")
+            journal.append(PHASE_RESOLVED)
+            journal.append(PHASE_REFUSED)
+
+            event = journal.append(PHASE_RESOLVED)
+
+            self.assertEqual(event["seq"], 3)
+
+
 class TestInterruptedMutation(unittest.TestCase):
     def _events(self, *phases: str) -> list[dict]:
         return [{"seq": i + 1, "phase": phase} for i, phase in enumerate(phases)]
