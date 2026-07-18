@@ -329,26 +329,18 @@ def _stage_patch_in_worktree(
         if staged is None:
             return None  # cannot isolate; the caller's dirty check still guards us
 
-        # Establish that the gate passes here *before* the patch exists. A suite
-        # that resolves fixtures relative to the repo root, or otherwise assumes
-        # its usual location on disk, fails inside a worktree no matter what the
-        # patch says — and blaming the agent for that is a false negative.
-        # Development-defect repairs are the opposite: the baseline is expected
-        # to fail until the agent fixes the declared files.
+        # Record whether the gate passes *before* the patch exists, but do not
+        # decide on it yet. A red baseline means two very different things: a
+        # suite that cannot run here at all (fixtures resolved outside the repo),
+        # or code that is broken precisely because this ticket is the repair.
+        # Only the post-patch result tells them apart — red→green is a fix.
+        baseline_ok = True
+        baseline_output = ""
         if not _skip_verify_baseline(ticket):
             baseline = shell_runner(verify_command, staged)
-            if baseline.returncode != 0:
-                output = (baseline.stderr or baseline.stdout or "").strip()[-400:]
-                return PatchOutcome(
-                    code=VERIFY_BASELINE_FAILED,
-                    message=(
-                        f"`{verify_command}` already fails in a clean worktree "
-                        f"(exit {baseline.returncode}), so the patch could not be judged "
-                        "there and nothing was promoted. The suite likely depends on paths "
-                        "outside the repository; re-run with KORU_QUEUE_WORKTREE=0 to "
-                        f"verify in the checkout itself. Baseline output: {output}"
-                    ),
-                )
+            baseline_ok = baseline.returncode == 0
+            if not baseline_ok:
+                baseline_output = (baseline.stderr or baseline.stdout or "").strip()[-400:]
 
         applied = apply_unified_diff(staged, diff)
         if not applied.ok:
@@ -377,6 +369,20 @@ def _stage_patch_in_worktree(
                 _logger.info("koru.queue.patch_branch branch=%s commit=%s", branch, detail)
             return None
         output = (verify.stderr or verify.stdout or "").strip()[-600:]
+        if not baseline_ok:
+            # Red before, red after: the patch is not what made it fail, so the
+            # agent cannot be judged on this and re-asking will not help.
+            return PatchOutcome(
+                code=VERIFY_BASELINE_FAILED,
+                message=(
+                    f"`{verify_command}` already failed in a clean worktree before the "
+                    "patch and still fails after it, so the patch could not be judged "
+                    "there and nothing was promoted. Either the suite depends on paths "
+                    "outside the repository — re-run with KORU_QUEUE_WORKTREE=0 to verify "
+                    "in the checkout itself — or the patch does not fix the reported "
+                    f"defect. Before: {baseline_output} After: {output}"
+                ),
+            )
         return PatchOutcome(
             code=VERIFY_FAILED_ISOLATED,
             message=(

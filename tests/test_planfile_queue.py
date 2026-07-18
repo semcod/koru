@@ -1439,10 +1439,8 @@ from koru.queue.patch_mode import (  # noqa: E402
     MANIFEST_MISMATCH,
     MANIFEST_NOT_PERSISTED,
     NO_PATCH_EMITTED,
-    PATCH_DOES_NOT_APPLY,
     PATCH_INTRODUCES_SYMLINK,
     PROMOTION_CONFLICT,
-    PROMOTION_FAILED,
     PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
     VERIFY_BASELINE_FAILED,
@@ -2217,10 +2215,43 @@ class TestPatchMode(unittest.TestCase):
             self.assertIsNotNone(outcome)
             self.assertEqual(outcome.code, VERIFY_BASELINE_FAILED)
             self.assertFalse(outcome.retryable)  # re-asking cannot fix the environment
-            self.assertIn("already fails in a clean worktree", outcome.message)
-            # The gate ran once (baseline) and the patch was never applied there.
-            self.assertEqual(calls["n"], 1)
+            self.assertIn("already failed in a clean worktree", outcome.message)
+            # Red before and red after: the gate ran on both sides so the two
+            # cases could be told apart, and nothing reached the workspace.
+            self.assertEqual(calls["n"], 2)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_a_patch_that_turns_the_gate_green_is_a_repair_not_a_failure(self) -> None:
+        """A red baseline is also what a repair ticket looks like before its fix.
+        Deciding on the baseline alone threw away correct patches whenever the
+        ticket was not labelled type:development-defect."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            calls = {"n": 0}
+
+            def gate(command: str, cwd: Path):
+                # Fails on "old", passes on "new" — the patch is the fix.
+                calls["n"] += 1
+                fixed = (Path(cwd) / "a.txt").read_text(encoding="utf-8").strip() == "new"
+                return SimpleNamespace(
+                    returncode=0 if fixed else 1, stdout="", stderr="" if fixed else "still broken",
+                )
+
+            # Deliberately unlabelled: no type:development-defect, no opt-out flag.
+            _result, outcome = apply_proposed_patch(
+                project,
+                reply,
+                {"labels": ["refactor"], "inputs": {"verify_command": "node --test"}},
+                gate,
+            )
+
+            self.assertIsNone(outcome, outcome)
+            self.assertEqual(calls["n"], 2)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
     def test_development_defect_skips_verify_baseline_in_worktree(self) -> None:
         from koru.queue.patch_transaction import apply_proposed_patch
