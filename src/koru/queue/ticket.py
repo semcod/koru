@@ -14,6 +14,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
+from koru.queue.runners import _decode_subprocess_output
 from koru.queue.types import CommandResult
 
 
@@ -203,7 +204,7 @@ def _python_has_planfile_cli(python: str) -> bool:
                 ),
             ],
             capture_output=True,
-            text=True,
+            text=False,
             timeout=5,
             check=False,
         )
@@ -243,12 +244,15 @@ def _planfile_supports_structured_queue_json(executable: str) -> bool:
             [executable, "--version"],
             check=False,
             capture_output=True,
-            text=True,
+            text=False,
             timeout=2,
         )
     except (OSError, subprocess.SubprocessError):
         return True
-    version = _parse_version_tuple(f"{result.stdout}\n{result.stderr}")
+    version = _parse_version_tuple(
+        f"{_decode_subprocess_output(result.stdout)}\n"
+        f"{_decode_subprocess_output(result.stderr)}"
+    )
     if version is None:
         return True
     return version >= _MIN_STRUCTURED_QUEUE_PLANFILE_VERSION
@@ -326,7 +330,7 @@ def _configured_planfile_cmd_usable(configured: str) -> bool:
         proc = subprocess.run(
             [*parts, "--version"],
             capture_output=True,
-            text=True,
+            text=False,
             timeout=5,
             check=False,
         )
@@ -334,7 +338,10 @@ def _configured_planfile_cmd_usable(configured: str) -> bool:
         return True
     if proc.returncode == 0:
         return True
-    text = f"{proc.stdout}\n{proc.stderr}".lower()
+    text = (
+        f"{_decode_subprocess_output(proc.stdout)}\n"
+        f"{_decode_subprocess_output(proc.stderr)}"
+    ).lower()
     return not any(marker in text for marker in _PLANFILE_MODULE_MISSING_MARKERS)
 
 
