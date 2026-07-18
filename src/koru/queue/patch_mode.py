@@ -1,32 +1,71 @@
-"""Patch-propose execution for edit tickets.
+"""Prompts, redaction and promotion policy for patch tickets.
 
 Letting an agent CLI edit files in place requires granting it write access to
 the workspace — which in practice means disabling its permission prompts
-wholesale. Patch mode avoids that trade entirely: the agent only writes a
-unified diff to stdout, and koru applies it deterministically with ``git
-apply``. The diff is an inspectable, hashable artifact, and ``git`` provides
-both the pre-flight check and the rollback path.
+wholesale. Patch mode avoids that trade: the agent only writes a unified diff
+to stdout, and koru applies it. The diff is an inspectable, hashable artifact,
+and git provides both the pre-flight check and the rollback path.
+
+This module holds what koru *says* to the agent and what it *allows*. The
+mechanics live next door: `diff_repair` normalises the reply, `workspace`
+touches git and disk, `manifest` pins the plan. Those names are re-exported
+here so callers have one import site.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
-import shutil
-import subprocess
-from collections.abc import Iterator
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import uuid4
 
-_FENCE_RE = re.compile(
-    r"```(?:diff|patch)?\s*\n(?P<body>.*?)(?:\n```|\Z)",
-    re.DOTALL,
+from koru.queue.diff_repair import extract_unified_diff, symlink_creations
+from koru.queue.manifest import (
+    MANIFEST_MISMATCH,
+    build_manifest,
+    manifest_drift,
+    manifest_hash,
 )
-_DIFF_START_RE = re.compile(r"^(diff --git |--- )", re.MULTILINE)
+from koru.queue.workspace import (
+    FileFingerprint,
+    PatchApplyResult,
+    apply_unified_diff,
+    changed_since,
+    commit_worktree,
+    current_head,
+    diff_target_files,
+    dirty_paths,
+    fingerprint_files,
+    prune_stale_worktrees,
+    repository_is_clean,
+    revert_files,
+    staging_worktree,
+    worktree_enabled,
+)
+
+__all__ = [
+    "MANIFEST_MISMATCH",
+    "FileFingerprint",
+    "PatchApplyResult",
+    "apply_unified_diff",
+    "build_manifest",
+    "changed_since",
+    "commit_worktree",
+    "current_head",
+    "diff_target_files",
+    "dirty_paths",
+    "extract_unified_diff",
+    "fingerprint_files",
+    "manifest_drift",
+    "manifest_hash",
+    "prune_stale_worktrees",
+    "repository_is_clean",
+    "revert_files",
+    "staging_worktree",
+    "symlink_creations",
+    "worktree_enabled",
+]
 
 PATCH_PROMPT_SUFFIX = """
 
@@ -47,13 +86,6 @@ else — no prose before or after it.
 """
 
 
-@dataclass(frozen=True)
-class PatchApplyResult:
-    """Outcome of applying an agent-proposed diff."""
-
-    ok: bool
-    detail: str
-    changed_files: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -202,124 +234,22 @@ def current_file_excerpt(
     )
 
 
-def extract_unified_diff(text: str) -> str | None:
-    """Pull a unified diff out of an agent's stdout.
-
-    Agents habitually wrap diffs in code fences and add commentary, so accept
-    both fenced and bare output. Returns None when the reply contains no diff,
-    which includes the explicit ``NO-PATCH:`` refusal.
-    """
-    if not text:
-        return None
-    for match in _FENCE_RE.finditer(text):
-        body = match.group("body")
-        if _DIFF_START_RE.search(body):
-            return _normalize_diff(body)
-    if _DIFF_START_RE.search(text):
-        start = _DIFF_START_RE.search(text)
-        assert start is not None
-        return _normalize_diff(text[start.start():])
-    return None
 
 
-def _normalize_diff(body: str) -> str:
-    """Trim trailing fences/prose and guarantee the single trailing newline
-    ``git apply`` expects."""
-    lines = body.splitlines()
-    while lines and lines[-1].strip() in {"", "```"}:
-        lines.pop()
-    return "\n".join(_repair_hunk_counts(_repair_missing_file_headers(lines))) + "\n"
 
 
-_HUNK_RE = re.compile(
-    r"^@@ -(?P<old_start>\d+)(?:,(?P<old_len>\d+))? \+(?P<new_start>\d+)(?:,(?P<new_len>\d+))? @@(?P<tail>.*)$",
-)
 
 
-def _repair_hunk_counts(lines: list[str]) -> list[str]:
-    """Recompute ``@@`` line counts from the hunk body.
-
-    Models miscount hunk lengths routinely — one line off makes ``git apply``
-    reject the whole patch as "corrupt patch at line N". The body is the
-    authoritative content and the counts are derived from it, so recomputing
-    them is a safe normalisation rather than a guess.
-    """
-    repaired = list(lines)
-    for index, line in enumerate(repaired):
-        match = _HUNK_RE.match(line)
-        if not match:
-            continue
-        old_count = 0
-        new_count = 0
-        for body_line in repaired[index + 1:]:
-            if body_line.startswith(("@@", "diff --git", "--- ", "+++ ")):
-                break
-            if body_line.startswith("\\"):  # "\ No newline at end of file"
-                continue
-            if body_line.startswith("+"):
-                new_count += 1
-            elif body_line.startswith("-"):
-                old_count += 1
-            else:  # context line (a bare empty line counts as context too)
-                old_count += 1
-                new_count += 1
-        repaired[index] = (
-            f"@@ -{match.group('old_start')},{old_count} "
-            f"+{match.group('new_start')},{new_count} @@{match.group('tail')}"
-        )
-    return repaired
 
 
-_GIT_HEADER_RE = re.compile(r"^diff --git a/(?P<old>.+?) b/(?P<new>.+?)\s*$")
 
 
-def _repair_missing_file_headers(lines: list[str]) -> list[str]:
-    """Insert ``---``/``+++`` lines when an agent omits them.
-
-    Models routinely emit a ``diff --git`` header followed straight by a
-    ``@@`` hunk, which ``git apply`` rejects as "patch fragment without
-    header". The paths are already in the ``diff --git`` line, so the headers
-    can be reconstructed deterministically rather than by re-prompting.
-    """
-    repaired: list[str] = []
-    for index, line in enumerate(lines):
-        repaired.append(line)
-        match = _GIT_HEADER_RE.match(line)
-        if not match:
-            continue
-        following = next(
-            (candidate for candidate in lines[index + 1:] if candidate.strip()),
-            "",
-        )
-        if following.startswith("@@"):
-            repaired.append(f"--- a/{match.group('old')}")
-            repaired.append(f"+++ b/{match.group('new')}")
-    return repaired
 
 
-def _git(project: Path, *args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["git", *args],
-        cwd=project,
-        input=stdin,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
 
 
-_SYMLINK_MODE_RE = re.compile(r"^(?:new file mode|new mode) 120000\s*$", re.MULTILINE)
 
 
-def symlink_creations(diff: str) -> bool:
-    """Whether a diff creates a symlink or converts a file into one.
-
-    ``git apply`` rejects ``../`` paths but happily creates a link pointing
-    anywhere on the filesystem, which hands an agent-authored patch a way out
-    of the workspace it was scoped to. Legitimate uses exist, so this is a
-    policy question rather than a hard error — see ``symlinks_allowed``.
-    """
-    return bool(_SYMLINK_MODE_RE.search(diff))
 
 
 def symlinks_allowed() -> bool:
@@ -328,46 +258,8 @@ def symlinks_allowed() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
-def apply_unified_diff(project: Path, diff: str) -> PatchApplyResult:
-    """Apply a diff to the workspace, refusing anything that does not apply cleanly.
-
-    ``git apply --check`` runs first so a malformed or stale patch changes
-    nothing at all, rather than leaving the tree half-edited.
-    """
-    if not (project / ".git").exists():
-        return PatchApplyResult(
-            ok=False,
-            detail=f"{project} is not a git repository — patch mode needs one to apply and roll back",
-        )
-
-    check = _git(project, "apply", "--check", "-", stdin=diff)
-    if check.returncode != 0:
-        return PatchApplyResult(
-            ok=False,
-            detail=f"patch does not apply cleanly: {(check.stderr or '').strip()[:400]}",
-        )
-
-    listed = _git(project, "apply", "--numstat", "-", stdin=diff)
-    changed = tuple(
-        line.split("\t")[-1].strip()
-        for line in (listed.stdout or "").splitlines()
-        if line.strip()
-    )
-
-    applied = _git(project, "apply", "-", stdin=diff)
-    if applied.returncode != 0:
-        return PatchApplyResult(
-            ok=False,
-            detail=f"git apply failed: {(applied.stderr or '').strip()[:400]}",
-        )
-    return PatchApplyResult(ok=True, detail="patch applied", changed_files=changed)
 
 
-def revert_files(project: Path, files: tuple[str, ...]) -> None:
-    """Restore tracked files to HEAD — the rollback path for a failed verify."""
-    if not files:
-        return
-    _git(project, "checkout", "--", *files)
 
 
 """Where a verified patch is allowed to land."""
@@ -399,33 +291,8 @@ def promotion_mode(ticket: dict) -> str:
     return env if env in _PROMOTION_MODES else PROMOTION_APPLY
 
 
-def commit_worktree(
-    worktree: Path,
-    branch: str,
-    message: str,
-    paths: tuple[str, ...] = (),
-) -> tuple[bool, str]:
-    """Commit the patch's files in *worktree* onto a fresh *branch*.
-
-    Only *paths* are staged. ``git add -A`` would sweep in whatever else the run
-    left behind — koru's own event log, tool caches, test output — and the point
-    of this commit is that it contains the reviewed patch and nothing else.
-    """
-    switched = _git(worktree, "switch", "--quiet", "-c", branch)
-    if switched.returncode != 0:
-        return False, (switched.stderr or "").strip()[:300]
-    _git(worktree, "add", "--", *paths) if paths else _git(worktree, "add", "-A")
-    committed = _git(worktree, "commit", "--quiet", "-m", message)
-    if committed.returncode != 0:
-        return False, (committed.stderr or committed.stdout or "").strip()[:300]
-    head = _git(worktree, "rev-parse", "HEAD")
-    return True, (head.stdout or "").strip()
 
 
-def repository_is_clean(project: Path) -> bool:
-    """Whether the working tree has no uncommitted changes at all."""
-    status = _git(project, "status", "--porcelain")
-    return status.returncode == 0 and not (status.stdout or "").strip()
 
 
 def write_patch_artifact(project: Path, run_id: str, diff: str, evidence: dict) -> Path:
@@ -439,237 +306,29 @@ def write_patch_artifact(project: Path, run_id: str, diff: str, evidence: dict) 
     return directory
 
 
-@dataclass(frozen=True)
-class FileFingerprint:
-    """Enough of a file's identity to detect that someone else changed it."""
-
-    exists: bool
-    sha256: str | None
-    mode: int | None
-    symlink_target: str | None
 
 
-def fingerprint_files(project: Path, paths: tuple[str, ...]) -> dict[str, FileFingerprint]:
-    """Capture the current state of the files a patch will touch."""
-    prints: dict[str, FileFingerprint] = {}
-    for rel in paths:
-        target = project / rel
-        if target.is_symlink():
-            prints[rel] = FileFingerprint(True, None, None, os.readlink(target))
-            continue
-        if not target.is_file():
-            prints[rel] = FileFingerprint(False, None, None, None)
-            continue
-        stat = target.stat()
-        prints[rel] = FileFingerprint(
-            exists=True,
-            sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
-            mode=stat.st_mode & 0o777,
-            symlink_target=None,
-        )
-    return prints
 
 
-def changed_since(project: Path, baseline: dict[str, FileFingerprint]) -> tuple[str, ...]:
-    """Paths whose on-disk state no longer matches the captured baseline."""
-    current = fingerprint_files(project, tuple(baseline))
-    return tuple(sorted(rel for rel, before in baseline.items() if current.get(rel) != before))
 
 
-def dirty_paths(project: Path, paths: tuple[str, ...]) -> tuple[str, ...]:
-    """Which of *paths* carry uncommitted work.
-
-    ``git checkout --`` restores from the index, so reverting a file that
-    already held the user's unstaged edits destroys them. Direct-apply mode
-    must therefore refuse to touch a dirty file rather than promise a rollback
-    it cannot honour.
-    """
-    if not paths:
-        return ()
-    status = _git(project, "status", "--porcelain", "--", *paths)
-    if status.returncode != 0:
-        return paths  # cannot tell — assume the worst rather than risk the edits
-    return tuple(
-        sorted(
-            {
-                line[3:].strip().strip('"').split(" -> ")[-1]
-                for line in (status.stdout or "").splitlines()
-                if line.strip()
-            },
-        ),
-    )
 
 
-MANIFEST_MISMATCH = "manifest_mismatch"
 
 
-def current_head(project: Path) -> str:
-    """The commit a run is based on, or "" outside a git repository."""
-    head = _git(project, "rev-parse", "HEAD")
-    return (head.stdout or "").strip() if head.returncode == 0 else ""
 
 
-def build_manifest(
-    project: Path,
-    *,
-    run_id: str,
-    ticket: dict,
-    diff: str,
-    targets: tuple[str, ...],
-    verify_command: str,
-    mode: str,
-    attempt: int,
-    max_attempts: int,
-) -> dict:
-    """Freeze what this run is allowed to do, and against what.
-
-    Recorded before anything is staged so promotion can prove the world did not
-    move underneath it. Deliberately carries no timestamp: the hash must depend
-    only on the decision, so the same inputs always produce the same manifest.
-    """
-    fingerprints = fingerprint_files(project, targets)
-    manifest = {
-        "run_id": run_id,
-        "ticket_id": ticket.get("id"),
-        "base_head": current_head(project),
-        "base_files": {
-            rel: (print_.sha256 or ("symlink:" + (print_.symlink_target or "")) if print_.exists else None)
-            for rel, print_ in fingerprints.items()
-        },
-        "patch_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
-        "touched_files": sorted(targets),
-        "verify_command": verify_command,
-        "promotion_mode": mode,
-        "attempt": attempt,
-        "max_attempts": max_attempts,
-    }
-    manifest["manifest_hash"] = manifest_hash(manifest)
-    return manifest
 
 
-def manifest_hash(manifest: dict) -> str:
-    """Canonical hash of a manifest, ignoring any hash already recorded on it."""
-    payload = {key: value for key, value in manifest.items() if key != "manifest_hash"}
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"),
-    ).hexdigest()
 
 
-def manifest_drift(project: Path, manifest: dict) -> str:
-    """Describe how the workspace diverged from the manifest, or "" if it has not.
-
-    Checks the commit *and* the file contents, because the change that matters
-    most here — another session editing a target file — need not be committed
-    to invalidate the plan.
-    """
-    if manifest.get("base_head") and current_head(project) != manifest["base_head"]:
-        return f"HEAD moved from {str(manifest['base_head'])[:12]} to {current_head(project)[:12]}"
-    recorded: dict = manifest.get("base_files") or {}
-    current = fingerprint_files(project, tuple(recorded))
-    drifted = sorted(
-        rel
-        for rel, digest in recorded.items()
-        if (current[rel].sha256 if current[rel].exists else None) != digest
-    )
-    return f"changed on disk: {', '.join(drifted)}" if drifted else ""
 
 
-def diff_target_files(project: Path, diff: str) -> tuple[str, ...]:
-    """List the paths a diff touches, without applying it."""
-    listed = _git(project, "apply", "--numstat", "-", stdin=diff)
-    return tuple(
-        line.split("\t")[-1].strip()
-        for line in (listed.stdout or "").splitlines()
-        if line.strip()
-    )
 
 
-def worktree_enabled(project: Path) -> bool:
-    """Whether to stage a patch in a throwaway worktree before promoting it.
-
-    Requires a git repository with at least one commit, since the worktree is
-    created from HEAD. ``KORU_QUEUE_WORKTREE=0`` opts out.
-    """
-    if (os.environ.get("KORU_QUEUE_WORKTREE") or "").strip().lower() in {"0", "false", "no", "off"}:
-        return False
-    if not (project / ".git").exists():
-        return False
-    return _git(project, "rev-parse", "--verify", "HEAD").returncode == 0
 
 
-def _worktree_location(project: Path, run_id: str) -> Path:
-    """Where to put the staging worktree.
-
-    Placed as a *sibling* of the project rather than inside it, so the checkout
-    keeps its usual depth on disk. Suites routinely resolve fixtures relative to
-    the repository's parent (``resolve(__dirname, "../..")`` in a monorepo), and
-    a worktree nested under ``<project>/.koru/`` silently breaks every one of
-    them. Sibling placement keeps those paths resolving as they do normally.
-    """
-    override = (os.environ.get("KORU_QUEUE_WORKTREE_DIR") or "").strip()
-    if override:
-        return Path(override).expanduser() / f".koru-run-{run_id}"
-    parent = project.parent
-    if os.access(parent, os.W_OK):
-        return parent / f".koru-run-{run_id}"
-    return project / ".koru" / "worktrees" / f"run-{run_id}"
 
 
-def prune_stale_worktrees(project: Path) -> None:
-    """Clear worktrees left behind by an interrupted run.
-
-    A killed process never runs its cleanup, leaving both a directory and a git
-    registration. ``git worktree prune`` drops registrations whose directory is
-    gone; the reverse case — a surviving directory git no longer tracks — is
-    removed here. Only paths matching koru's own naming are touched, and a
-    directory git still lists is left alone, so a concurrent run is never
-    disturbed.
-    """
-    _git(project, "worktree", "prune")
-    listed = _git(project, "worktree", "list", "--porcelain")
-    live = {
-        line.split(" ", 1)[1].strip()
-        for line in (listed.stdout or "").splitlines()
-        if line.startswith("worktree ")
-    }
-    for candidate in (*project.parent.glob(".koru-run-*"), *(project / ".koru" / "worktrees").glob("run-*")):
-        if candidate.is_dir() and str(candidate) not in live:
-            shutil.rmtree(candidate, ignore_errors=True)
 
 
-@contextmanager
-def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Path | None]:
-    """Yield a disposable worktree seeded with the workspace's current content.
-
-    The agent read the *working tree*, so its diff is written against whatever
-    is on disk — including uncommitted edits. A worktree checked out at HEAD
-    would therefore reject the patch, so the files the patch touches are copied
-    across before it is applied. Yields None when the worktree cannot be
-    created, leaving the caller to fall back to in-place execution.
-    """
-    prune_stale_worktrees(project)
-    try:
-        path = _worktree_location(project, uuid4().hex[:12])
-        path.parent.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        # Read-only checkouts are normal in containers and CI — koru's own
-        # noVNC image mounts the repo at /opt/koru:ro. Degrade to in-place
-        # execution, which refuses to touch dirty files, rather than crashing
-        # the queue over a directory that cannot be created.
-        yield None
-        return
-    created = _git(project, "worktree", "add", "--detach", "--quiet", str(path), "HEAD")
-    if created.returncode != 0:
-        yield None
-        return
-    try:
-        for rel in seed_files:
-            source = project / rel
-            if not source.is_file():
-                continue
-            destination = path / rel
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, destination)
-        yield path
-    finally:
-        _git(project, "worktree", "remove", "--force", str(path))
