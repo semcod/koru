@@ -136,7 +136,10 @@ class TestRepairRecording(unittest.TestCase):
             )
             self.assertEqual(run.status, "completed")
 
-    def test_a_failed_verify_ends_the_run_failed_and_releases_the_lease(self) -> None:
+    def test_a_failed_verify_leaves_the_run_resumable_not_failed(self) -> None:
+        """The routing table's row: verification_failed opens a corrective
+        iteration — while the iteration budget lasts, a red gate is a state to
+        resume from, not a verdict."""
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._commit_file(project, "a.txt", "old\n")
@@ -146,12 +149,27 @@ class TestRepairRecording(unittest.TestCase):
 
             result = self._drive(project, ticket, [_reply(stdout=_GOOD_REPLY)])
 
-            self.assertEqual(result.status, "failed")
+            self.assertEqual(result.status, "failed", "this queue pass still failed")
+            store = self._store(project)
+            run = store.find_run("REC-1", str(project))
+            assert run is not None
+            self.assertEqual(run.status, "verification_failed")
+            self.assertIsNone(run.lease_owner)
+
+    def test_an_exhausted_iteration_budget_makes_the_verify_failure_final(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            ticket = self._ticket(verify_command="false")
+            ticket["inputs"]["skip_verify_baseline"] = True
+            ticket["inputs"]["max_repair_iterations"] = 1
+
+            self._drive(project, ticket, [_reply(stdout=_GOOD_REPLY)])
+
             store = self._store(project)
             run = store.find_run("REC-1", str(project))
             assert run is not None
             self.assertEqual(run.status, "failed")
-            self.assertIsNone(run.lease_owner)
 
     def test_a_model_that_never_answers_fails_the_run_with_a_failed_attempt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -188,8 +206,10 @@ class TestRepairRecording(unittest.TestCase):
             self.assertEqual(result.status, "completed")
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
-    def test_a_second_queue_pass_resumes_the_same_run(self) -> None:
-        """A failed repair re-runs under the same run identity, next iteration."""
+    def test_a_corrective_iteration_resumes_the_same_run_and_completes(self) -> None:
+        """The plan's loop across queue passes: red verify leaves the run
+        resumable; the next pass reopens the SAME run through context_required
+        as iteration 2 and finishes it."""
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._commit_file(project, "a.txt", "old\n")
@@ -199,18 +219,18 @@ class TestRepairRecording(unittest.TestCase):
 
             self._drive(project, failing, [_reply(stdout=_GOOD_REPLY)])
             store = self._store(project)
-            run = store.find_run("REC-1", str(project))
-            assert run is not None
-            self.assertEqual(run.status, "failed")
+            first = store.find_run("REC-1", str(project))
+            assert first is not None
+            self.assertEqual(first.status, "verification_failed")
 
-            # `failed` is terminal: a re-run of the ticket must NOT silently
-            # reuse the dead run — and must still work, unrecorded.
             result = self._drive(project, self._ticket(), [_reply(stdout=_GOOD_REPLY)])
 
             self.assertEqual(result.status, "completed")
             after = store.find_run("REC-1", str(project))
             assert after is not None
-            self.assertEqual(after.status, "failed", "the terminal record is immutable")
+            self.assertEqual(after.id, first.id, "the SAME run, not a replacement")
+            self.assertEqual(after.status, "completed")
+            self.assertEqual(after.current_iteration, 2, "a fresh corrective iteration")
 
 
 if __name__ == "__main__":

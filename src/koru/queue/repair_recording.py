@@ -456,10 +456,51 @@ class RepairRecordingSession:
                 # The model never produced a usable answer.
                 self._walk(lc.FAILED)
             else:
-                self._walk(*_terminal_chain_for(outcome))
+                self._walk(*self._chain_for(outcome))
             self._store.release(self._run.id, self._owner)
         except Exception:
             _logger.exception("koru.repair.finish_failed run=%s", self._run.id)
+
+    def _chain_for(self, outcome: PatchOutcome) -> tuple[str, ...]:
+        """Where this outcome leaves the run, judged through the routing table.
+
+        A red verify and a drifted workspace are not verdicts while iterations
+        remain: ``model_router.route`` maps them to their non-model remedies
+        (corrective iteration, remanifest), and the chain stops at the matching
+        *resumable* state — the next queue pass reopens the same run, next
+        iteration, through ``context_required``. Only an exhausted iteration
+        budget, an unusable patch, or a policy denial ends the run for good.
+        """
+        from koru.repair_runs.model_router import (
+            FORBIDDEN_STOP,
+            REMANIFEST_OR_STOP,
+            REPAIR_ITERATION,
+            route,
+        )
+
+        canonical = _canonical_failure(outcome.code)
+        verb = None
+        if canonical is not None:
+            verb = route(
+                canonical,
+                registry=list(self._registry),
+                attempts=self._store.attempts(self._run.id),
+            ).verb
+        iterations_left = self._iteration < self._run.max_iterations
+
+        if verb == REPAIR_ITERATION and iterations_left:
+            return (
+                lc.ACTION_PROPOSED, lc.ACTION_VALIDATED, lc.STAGING,
+                lc.VERIFYING, lc.VERIFICATION_FAILED,
+            )
+        if verb == REMANIFEST_OR_STOP and iterations_left:
+            return (
+                lc.ACTION_PROPOSED, lc.ACTION_VALIDATED, lc.STAGING,
+                lc.WORKSPACE_DRIFT,
+            )
+        if verb == FORBIDDEN_STOP:
+            return (lc.ACTION_PROPOSED, lc.ACTION_VALIDATED, lc.SAFE_BLOCKED)
+        return _terminal_chain_for(outcome)
 
     # -- internals ----------------------------------------------------------
     def _advance_to_model_running(self) -> bool:
@@ -533,8 +574,29 @@ def _exhausted_result() -> CommandResult:
     )
 
 
+def _canonical_failure(outcome_code: str) -> str | None:
+    """A patch outcome as the routing table's canonical failure, if it maps."""
+    from koru.repair_runs.model_router import (
+        RUNTIME_POLICY_DENIED,
+        VERIFICATION_FAILED,
+        WORKSPACE_DRIFT,
+    )
+
+    if outcome_code == POLICY_DENIED:
+        return RUNTIME_POLICY_DENIED
+    if outcome_code in {PROMOTION_CONFLICT, MANIFEST_MISMATCH}:
+        return WORKSPACE_DRIFT
+    if outcome_code.startswith("verify"):
+        return VERIFICATION_FAILED
+    return None
+
+
 def _terminal_chain_for(outcome: PatchOutcome) -> tuple[str, ...]:
-    """Map a patch outcome onto the repair lifecycle's legal terminal chains."""
+    """Map a patch outcome onto the repair lifecycle's legal terminal chains.
+
+    Reached when routing offered no live remedy — the iteration budget is
+    spent, the patch itself was unusable, or nothing maps.
+    """
     if outcome.code == POLICY_DENIED:
         return (lc.ACTION_PROPOSED, lc.ACTION_VALIDATED, lc.SAFE_BLOCKED)
     if outcome.code in {NO_PATCH_EMITTED, PATCH_DOES_NOT_APPLY}:
