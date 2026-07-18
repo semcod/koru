@@ -2161,7 +2161,7 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, outcome = apply_patch_with_retry(
+            _result, outcome, _evidence = apply_patch_with_retry(
                 project,
                 corrupt,
                 {"inputs": {}, "files": ["a.txt"]},
@@ -2500,7 +2500,7 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, outcome = apply_patch_with_retry(
+            _result, outcome, _evidence = apply_patch_with_retry(
                 project, first, {"inputs": {}}, action, retry_agent, gate,
             )
 
@@ -2531,7 +2531,7 @@ class TestPatchMode(unittest.TestCase):
                     return SimpleNamespace(returncode=0, stdout="", stderr="")
                 return SimpleNamespace(returncode=1, stdout="", stderr="tests failed")
 
-            _result, outcome = apply_patch_with_retry(
+            _result, outcome, _evidence = apply_patch_with_retry(
                 project,
                 first,
                 {"inputs": {"verify_command": "false"}},
@@ -2565,7 +2565,7 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, outcome = apply_patch_with_retry(
+            _result, outcome, _evidence = apply_patch_with_retry(
                 project, junk, {"inputs": {}}, {"prompt": "x"}, junk_agent, gate,
             )
 

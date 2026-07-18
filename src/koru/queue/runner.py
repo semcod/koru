@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.queue.context import build_project_context
+from koru.queue.evidence import completion_gap
 from koru.queue.human import default_human_prompt
 from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
 from koru.queue.patch_mode import (
@@ -471,6 +472,82 @@ def _resolve_action_or_result(
     )
 
 
+def _prepare_action_for_patch_mode(
+    executor_kind: str,
+    expects_edits: bool,
+    ticket: dict[str, Any],
+    resolved_action: Any,
+) -> tuple[Any, bool]:
+    """Rewrite the LLM prompt for patch mode when the ticket qualifies.
+
+    Returns ``(action, use_patch_mode)``; *action* is returned unchanged
+    when patch mode does not apply.
+    """
+    use_patch_mode = executor_kind == "llm" and expects_edits and patch_mode_enabled(ticket)
+    if use_patch_mode:
+        resolved_action = dict(resolved_action)
+        resolved_action["prompt"] = build_patch_prompt(str(resolved_action.get("prompt") or ""))
+    return resolved_action, use_patch_mode
+
+
+def _apply_patch_step(
+    project: Path,
+    result: CommandResult,
+    ticket: dict[str, Any],
+    resolved_action: Any,
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult],
+    shell_runner: Callable[[str, Path], CommandResult],
+    use_patch_mode: bool,
+) -> tuple[CommandResult, PatchOutcome | None, dict | None]:
+    if use_patch_mode and result.returncode == 0:
+        return apply_patch_with_retry(
+            project,
+            result,
+            ticket,
+            resolved_action,
+            llm_runner,
+            shell_runner,
+            enrich=_enrich_llm_request_with_context,
+        )
+    return result, None, None
+
+
+def _compute_verification_error(
+    project: Path,
+    ticket: dict[str, Any],
+    use_patch_mode: bool,
+    result: CommandResult,
+    patch_outcome: PatchOutcome | None,
+    patch_evidence: dict | None,
+    expects_edits: bool,
+    before: dict[str, str],
+) -> str | None:
+    """Decide whether the ticket's work should be considered unverified."""
+    verification_error = (
+        f"[{patch_outcome.code}] {patch_outcome.message}" if patch_outcome else None
+    )
+    if (
+        use_patch_mode
+        and result.returncode == 0
+        and verification_error is None
+        and (gap := completion_gap(project, patch_evidence))
+    ):
+        # A landed patch that cannot prove itself may not close its ticket:
+        # an unauditable success is indistinguishable from an unnoticed
+        # failure, which is the exact confusion evidence exists to prevent.
+        verification_error = f"[evidence_incomplete] {gap}"
+    # `branch` and `artifact` deliver the result outside the working tree on
+    # purpose, so an unchanged workspace is the expected outcome there — the
+    # branch ref or patch file is the evidence, not the files on disk.
+    delivered_outside_workspace = use_patch_mode and promotion_mode(ticket) in {
+        PROMOTION_BRANCH,
+        PROMOTION_ARTIFACT,
+    }
+    if verification_error is None and expects_edits and not delivered_outside_workspace:
+        verification_error = _verify_declared_files_changed(project, ticket, before)
+    return verification_error
+
+
 def _run_next_planfile_task_impl(
     *,
     project: Path,
@@ -551,12 +628,9 @@ def _run_next_planfile_task_impl(
 
         expects_edits = _ticket_expects_edits(ticket)
         before = _snapshot_declared_files(project, ticket) if expects_edits else {}
-        use_patch_mode = (
-            executor_kind == "llm" and expects_edits and patch_mode_enabled(ticket)
+        resolved_action, use_patch_mode = _prepare_action_for_patch_mode(
+            executor_kind, expects_edits, ticket, resolved_action,
         )
-        if use_patch_mode:
-            resolved_action = dict(resolved_action)
-            resolved_action["prompt"] = build_patch_prompt(str(resolved_action.get("prompt") or ""))
 
         result, action_label = _execute_action(
             executor_kind,
@@ -568,30 +642,26 @@ def _run_next_planfile_task_impl(
             shell_runner,
         )
 
-        patch_outcome: PatchOutcome | None = None
-        if use_patch_mode and result.returncode == 0:
-            result, patch_outcome = apply_patch_with_retry(
-                project,
-                result,
-                ticket,
-                resolved_action,
-                llm_runner,
-                shell_runner,
-                enrich=_enrich_llm_request_with_context,
-            )
-
-        verification_error = (
-            f"[{patch_outcome.code}] {patch_outcome.message}" if patch_outcome else None
+        result, patch_outcome, patch_evidence = _apply_patch_step(
+            project,
+            result,
+            ticket,
+            resolved_action,
+            llm_runner,
+            shell_runner,
+            use_patch_mode,
         )
-        # `branch` and `artifact` deliver the result outside the working tree on
-        # purpose, so an unchanged workspace is the expected outcome there — the
-        # branch ref or patch file is the evidence, not the files on disk.
-        delivered_outside_workspace = use_patch_mode and promotion_mode(ticket) in {
-            PROMOTION_BRANCH,
-            PROMOTION_ARTIFACT,
-        }
-        if verification_error is None and expects_edits and not delivered_outside_workspace:
-            verification_error = _verify_declared_files_changed(project, ticket, before)
+
+        verification_error = _compute_verification_error(
+            project,
+            ticket,
+            use_patch_mode,
+            result,
+            patch_outcome,
+            patch_evidence,
+            expects_edits,
+            before,
+        )
 
         return _finalize_ticket(
             project,

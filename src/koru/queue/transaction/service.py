@@ -74,19 +74,22 @@ def execute_patch_transaction(
         return PatchTransactionResult(
             result,
             PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
+            plan=plan,
         )
     freeze = ManifestFreeze(plan, manifest)
 
     if plan.mode == PROMOTION_ARTIFACT:
         deliver_patch_artifact(plan, freeze.freeze())
-        return PatchTransactionResult(result, None)
+        return PatchTransactionResult(result, None, plan=plan, manifest=freeze.manifest)
 
     refusal = screen_promotion_preconditions(plan)
     if refusal is not None:
-        return PatchTransactionResult(result, refusal)
+        return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
 
     run = _run_isolated if plan.isolated else _run_direct
-    return PatchTransactionResult(result, run(plan, freeze, shell_runner))
+    return PatchTransactionResult(
+        result, run(plan, freeze, shell_runner), plan=plan, manifest=freeze.manifest,
+    )
 
 
 def _run_isolated(

@@ -72,10 +72,17 @@ class StagingResult:
 
 @dataclass(frozen=True)
 class PatchTransactionResult:
-    """The agent's reply, plus why the patch was refused — or ``None`` if it landed."""
+    """The agent's reply, plus why the patch was refused — or ``None`` if it landed.
+
+    ``plan`` and ``manifest`` are carried for the evidence layer: they are
+    ``None`` exactly when the transaction refused before resolving a plan or
+    freezing one, which is itself evidence — nothing was going to change.
+    """
 
     result: CommandResult
     outcome: PatchOutcome | None
+    plan: PatchPlan | None = None
+    manifest: dict | None = None
 
     def as_tuple(self) -> tuple[CommandResult, PatchOutcome | None]:
         """Adapt to the ``(result, outcome)`` pair callers have always taken."""
