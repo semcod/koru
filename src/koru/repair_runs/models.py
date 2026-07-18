@@ -127,3 +127,24 @@ class RepairArtifact:
     artifact_ref: str
     sha256: str
     created_at: datetime = field(default_factory=utcnow)
+
+
+@dataclass(frozen=True)
+class UsedGrant:
+    """A signed apply-grant consumed by a run. UNIQUE(grant_jti) makes replay
+    a database impossibility, surviving restarts that in-memory state would lose."""
+
+    id: str
+    run_id: str
+    grant_jti: str
+    grant_hash: str
+    used_at: datetime = field(default_factory=utcnow)
+
+    @classmethod
+    def consumed(cls, run_id: str, *, grant_jti: str, grant_body: object) -> UsedGrant:
+        return cls(
+            id=new_id("grant"),
+            run_id=run_id,
+            grant_jti=grant_jti,
+            grant_hash=stable_hash(grant_body),
+        )

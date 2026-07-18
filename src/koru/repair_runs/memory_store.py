@@ -18,10 +18,12 @@ from koru.repair_runs.models import (
     RepairEvent,
     RepairFact,
     RepairRun,
+    UsedGrant,
     new_id,
     utcnow,
 )
 from koru.repair_runs.store import (
+    GrantAlreadyUsed,
     RepairRunStore,
     RunAlreadyExists,
     StaleVersion,
@@ -38,6 +40,7 @@ class MemoryRepairRunStore(RepairRunStore):
         self._attempts: dict[str, list[ModelAttempt]] = {}
         self._facts: dict[str, list[RepairFact]] = {}
         self._artifacts: dict[str, list[RepairArtifact]] = {}
+        self._grants_by_jti: dict[str, UsedGrant] = {}
 
     # -- runs ---------------------------------------------------------------
     def create_run(
@@ -277,6 +280,22 @@ class MemoryRepairRunStore(RepairRunStore):
 
     def artifacts(self, run_id: str) -> list[RepairArtifact]:
         return list(self._artifacts.get(run_id, []))
+
+    # -- grant replay protection --------------------------------------------
+    def record_grant_use(self, grant: UsedGrant) -> None:
+        with self._lock:
+            if grant.grant_jti in self._grants_by_jti:
+                raise GrantAlreadyUsed(grant.grant_jti)
+            self._grants_by_jti[grant.grant_jti] = grant
+
+    def is_grant_used(self, grant_jti: str) -> bool:
+        return grant_jti in self._grants_by_jti
+
+    def used_grants(self, run_id: str) -> list[UsedGrant]:
+        return sorted(
+            (g for g in self._grants_by_jti.values() if g.run_id == run_id),
+            key=lambda g: g.used_at,
+        )
 
     # -- recovery -----------------------------------------------------------
     def resumable_runs(self, *, now: datetime | None = None) -> list[RepairRun]:

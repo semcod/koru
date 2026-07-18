@@ -23,10 +23,12 @@ from koru.repair_runs.models import (
     RepairEvent,
     RepairFact,
     RepairRun,
+    UsedGrant,
     new_id,
     utcnow,
 )
 from koru.repair_runs.store import (
+    GrantAlreadyUsed,
     RepairRunStore,
     RunAlreadyExists,
     StaleVersion,
@@ -349,6 +351,42 @@ class SqliteRepairRunStore(RepairRunStore):
             (run_id,),
         ).fetchall()
         return [_artifact_from_row(row) for row in rows]
+
+    # -- grant replay protection --------------------------------------------
+    def record_grant_use(self, grant: UsedGrant) -> None:
+        try:
+            self._db.execute(
+                "INSERT INTO used_grants (id, run_id, grant_jti, grant_hash, used_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    grant.id, grant.run_id, grant.grant_jti, grant.grant_hash,
+                    grant.used_at.isoformat(),
+                ),
+            )
+        except sqlite3.IntegrityError as error:
+            # UNIQUE(grant_jti): the check and the record are one atomic step.
+            raise GrantAlreadyUsed(grant.grant_jti) from error
+
+    def is_grant_used(self, grant_jti: str) -> bool:
+        row = self._db.execute(
+            "SELECT 1 FROM used_grants WHERE grant_jti = ?", (grant_jti,),
+        ).fetchone()
+        return row is not None
+
+    def used_grants(self, run_id: str) -> list[UsedGrant]:
+        rows = self._db.execute(
+            "SELECT * FROM used_grants WHERE run_id = ? ORDER BY used_at", (run_id,),
+        ).fetchall()
+        return [
+            UsedGrant(
+                id=row["id"],
+                run_id=row["run_id"],
+                grant_jti=row["grant_jti"],
+                grant_hash=row["grant_hash"],
+                used_at=_parse_dt(row["used_at"]) or utcnow(),
+            )
+            for row in rows
+        ]
 
     # -- recovery -----------------------------------------------------------
     def resumable_runs(self, *, now: datetime | None = None) -> list[RepairRun]:

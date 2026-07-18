@@ -22,20 +22,24 @@ from koru.repair_runs.models import (
     RepairEvent,
     RepairFact,
     RepairRun,
+    UsedGrant,
     new_id,
     stable_hash,
     utcnow,
 )
+from koru.repair_runs.store import GrantAlreadyUsed
 
 __all__ = [
     "RESUMABLE_STATES",
     "TERMINAL_STATES",
+    "GrantAlreadyUsed",
     "ModelAttempt",
     "RepairArtifact",
     "RepairEvent",
     "RepairFact",
     "RepairLifecycleViolation",
     "RepairRun",
+    "UsedGrant",
     "is_valid_transition",
     "new_id",
     "stable_hash",

@@ -27,6 +27,7 @@ from koru.repair_runs.models import (
     RepairEvent,
     RepairFact,
     RepairRun,
+    UsedGrant,
 )
 
 
@@ -40,6 +41,10 @@ class UnknownRun(Exception):
 
 class StaleVersion(Exception):
     """Someone else updated the run since it was read; re-read and retry."""
+
+
+class GrantAlreadyUsed(Exception):
+    """This apply-grant (by jti) was already consumed — a replay attempt."""
 
 
 class RepairRunStore(ABC):
@@ -149,6 +154,18 @@ class RepairRunStore(ABC):
 
     @abstractmethod
     def artifacts(self, run_id: str) -> list[RepairArtifact]: ...
+
+    # -- grant replay protection --------------------------------------------
+    @abstractmethod
+    def record_grant_use(self, grant: UsedGrant) -> None:
+        """Record that a grant (by jti) was consumed. Raises GrantAlreadyUsed
+        on replay — the check and the record are one atomic step."""
+
+    @abstractmethod
+    def is_grant_used(self, grant_jti: str) -> bool: ...
+
+    @abstractmethod
+    def used_grants(self, run_id: str) -> list[UsedGrant]: ...
 
     # -- recovery -----------------------------------------------------------
     @abstractmethod

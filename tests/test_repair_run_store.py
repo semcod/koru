@@ -214,6 +214,28 @@ class _StoreContract:
         [artifact] = self.store.artifacts(run.id)
         self.assertEqual(artifact.kind, "patch")
 
+    # -- grant replay protection --------------------------------------------
+    def test_a_grant_jti_is_consumable_exactly_once(self) -> None:
+        """The check and the record are one atomic step — replay is impossible."""
+        from koru.repair_runs.models import UsedGrant
+        from koru.repair_runs.store import GrantAlreadyUsed
+
+        run = self._run()
+        grant = UsedGrant.consumed(run.id, grant_jti="jti-1", grant_body={"m": "h"})
+
+        self.store.record_grant_use(grant)
+
+        self.assertTrue(self.store.is_grant_used("jti-1"))
+        with self.assertRaises(GrantAlreadyUsed):
+            self.store.record_grant_use(
+                UsedGrant.consumed(run.id, grant_jti="jti-1", grant_body={"m": "h2"}),
+            )
+        [used] = self.store.used_grants(run.id)
+        self.assertEqual(used.grant_jti, "jti-1")
+
+    def test_an_unused_jti_reads_unused(self) -> None:
+        self.assertFalse(self.store.is_grant_used("never-seen"))
+
     # -- recovery -----------------------------------------------------------
     def test_resumable_runs_are_nonterminal_with_dead_leases(self) -> None:
         active = self._run()
