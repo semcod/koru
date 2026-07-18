@@ -93,6 +93,10 @@ class RepairFact:
     value_hash: str
     observed_at: datetime = field(default_factory=utcnow)
     expires_at: datetime | None = None
+    #: How much the observing capability vouches for the value. Deliberately
+    #: outside ``value`` (and its hash): same value, different confidence,
+    #: same identity.
+    confidence: float = 1.0
 
     @classmethod
     def observed(
@@ -104,6 +108,7 @@ class RepairFact:
         value: dict,
         source: str,
         expires_at: datetime | None = None,
+        confidence: float = 1.0,
     ) -> RepairFact:
         return cls(
             id=new_id("fact"),
@@ -114,6 +119,7 @@ class RepairFact:
             source=source,
             value_hash=stable_hash(value),
             expires_at=expires_at,
+            confidence=confidence,
         )
 
 

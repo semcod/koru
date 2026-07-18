@@ -313,13 +313,14 @@ class SqliteRepairRunStore(RepairRunStore):
         try:
             self._db.execute(
                 "INSERT INTO repair_facts (id, run_id, schema_id, fact_key, value_json, "
-                "source, value_hash, observed_at, expires_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "source, value_hash, observed_at, expires_at, confidence) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     fact.id, fact.run_id, fact.schema_id, fact.fact_key,
                     json.dumps(fact.value, sort_keys=True), fact.source, fact.value_hash,
                     fact.observed_at.isoformat(),
                     fact.expires_at.isoformat() if fact.expires_at else None,
+                    fact.confidence,
                 ),
             )
         except sqlite3.IntegrityError:
@@ -464,6 +465,7 @@ def _fact_from_row(row: sqlite3.Row) -> RepairFact:
         value_hash=row["value_hash"],
         observed_at=_parse_dt(row["observed_at"]) or utcnow(),
         expires_at=_parse_dt(row["expires_at"]),
+        confidence=float(row["confidence"] if "confidence" in row.keys() else 1.0),
     )
 
 

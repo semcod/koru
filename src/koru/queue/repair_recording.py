@@ -53,10 +53,24 @@ _TOWARD_MODEL_RUNNING: dict[str, str] = {
     lc.CONTEXT_READY: lc.MODEL_RUNNING,
     lc.MODEL_BLOCKED: lc.MODEL_RUNNING,
     lc.PATCH_REJECTED: lc.MODEL_RUNNING,
+    lc.PROBE_REQUIRED: lc.CONTEXT_REQUIRED,  # facts may exist by now; re-enter
     lc.VERIFICATION_FAILED: lc.CONTEXT_REQUIRED,
     lc.WORKSPACE_DRIFT: lc.CONTEXT_REQUIRED,
     lc.ROLLED_BACK: lc.CONTEXT_REQUIRED,
 }
+
+
+def _required_facts(ticket: dict) -> list:
+    """Fact requests a ticket declares (``inputs.required_facts``)."""
+    from koru.repair_runs.context_broker import FactRequest
+
+    requests = []
+    for entry in (ticket.get("inputs") or {}).get("required_facts") or []:
+        if isinstance(entry, dict) and entry.get("schema") and entry.get("key"):
+            requests.append(
+                FactRequest(fact_schema=str(entry["schema"]), key=str(entry["key"])),
+            )
+    return requests
 
 
 class RepairRecordingSession:
@@ -83,6 +97,7 @@ class RepairRecordingSession:
         self._iteration = max(run.current_iteration, recorded) + 1
         self._registry = registry
         self._parked = False
+        self._snapshot = None  # ContextSnapshot once the broker delivered
 
     @classmethod
     def begin(
@@ -91,6 +106,7 @@ class RepairRecordingSession:
         ticket: dict,
         actor: str,
         store: RepairRunStore | None = None,
+        probes: dict | None = None,
     ) -> RepairRecordingSession | None:
         """Open (or resume) the ticket's repair run and take its lease.
 
@@ -127,6 +143,13 @@ class RepairRecordingSession:
             from koru.repair_runs.router import load_model_registry
 
             session = cls(store, claimed, actor, registry=load_model_registry(project))
+            required = _required_facts(ticket)
+            if required and not session._ensure_context(required, probes):
+                # Declared facts could not be delivered: the run is parked
+                # ``probe_required`` (visible to resume tooling), the lease is
+                # given back, and the queue proceeds unrecorded — a model must
+                # not run on a context the ticket said was mandatory.
+                return None
             return session if session._advance_to_model_running() else None
         except Exception:
             _logger.exception("koru.repair.recording_unavailable ticket=%s", ticket_id)
@@ -168,6 +191,10 @@ class RepairRecordingSession:
                         self._park_exhausted()
                         return result if result is not None else _exhausted_result()
                     routed = {**action, "model": spec.model, "provider": spec.provider}
+                if self._snapshot is not None:
+                    # The model sees facts, not logs — and the snapshot hash is
+                    # part of the attempt's input identity below.
+                    routed = {**routed, "context_facts": self._snapshot.render()}
 
                 attempt = self._start_attempt(routed)
                 try:
@@ -193,6 +220,48 @@ class RepairRecordingSession:
                 last_failure = failure
 
         return recording_runner
+
+    def _ensure_context(self, required: list, probes: dict | None) -> bool:
+        """Deliver the ticket's required facts through the broker, or park.
+
+        Success pins the snapshot hash on the run (via the ``context_ready``
+        transition) and stashes the snapshot for injection into every model
+        call. Failure walks the run to ``probe_required`` and releases the
+        lease — declared context is mandatory, and running the model without
+        it would be answering a different question.
+        """
+        from koru.repair_runs.context_broker import ContextBroker, ContextSnapshot
+
+        try:
+            if self._run.status == lc.CREATED:
+                self._run = self._store.transition(
+                    self._run.id, lc.CONTEXT_REQUIRED,
+                    expected_version=self._run.version,
+                    current_iteration=self._iteration,
+                )
+            broker = ContextBroker(self._store, probes)
+            delivered = broker.ensure(self._run, required)
+            if isinstance(delivered, ContextSnapshot):
+                self._snapshot = delivered
+                if self._run.status == lc.CONTEXT_REQUIRED:
+                    self._run = self._store.transition(
+                        self._run.id, lc.CONTEXT_READY,
+                        expected_version=self._run.version,
+                        context_hash=delivered.hash,
+                    )
+                return True
+            _logger.info(
+                "koru.repair.probe_required run=%s: %s", self._run.id, delivered.reason,
+            )
+            if self._run.status == lc.CONTEXT_REQUIRED:
+                self._run = self._store.transition(
+                    self._run.id, lc.PROBE_REQUIRED, expected_version=self._run.version,
+                )
+            self._store.release(self._run.id, self._owner)
+            return False
+        except Exception:
+            _logger.exception("koru.repair.context_failed run=%s", self._run.id)
+            return False
 
     def _park_exhausted(self) -> None:
         """Every model on the roster is burned: park, never improvise."""
@@ -257,7 +326,13 @@ class RepairRecordingSession:
                 provider=str(action.get("provider") or "openrouter"),
                 model=str(action.get("model") or "default"),
                 input_hash=stable_hash(
-                    {"prompt": action.get("prompt"), "model": action.get("model")},
+                    {
+                        "prompt": action.get("prompt"),
+                        "model": action.get("model"),
+                        "context_hash": (action.get("context_facts") or {}).get(
+                            "context_hash",
+                        ),
+                    },
                 ),
             )
         except Exception:
