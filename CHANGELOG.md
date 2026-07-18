@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.413] - 2026-07-18
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_repair_run_store.py
+
+### Other
+- Update src/koru/repair_runs/migrations/002_used_grants.sql
+
 ## [0.1.412] - 2026-07-18
 
 ### Docs
