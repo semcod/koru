@@ -5,6 +5,11 @@ refactor automation system for multi-repo workspaces.
 
 **Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md)
 
+## Architecture (autonomy / determinism)
+
+- **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — Subactor-like governance for Koru (intent → grant → verify); ~18 PRs; **docs only until PR1**.
+- **[`architecture/adr/`](./architecture/adr/README.md)** — ADR stubs AD-001…AD-006 (namespaces, SSOT, ExecutionPlan, grant/manifest, worktree, remote mTLS).
+
 - **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet bootstrap` / `up` / `ls`:
   multi-project workspace init + one supervisor for every koru-managed project
   running a `koru autonomous up` child per koru-managed project on the
