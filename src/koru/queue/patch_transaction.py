@@ -9,29 +9,44 @@ above it without muddying the decision.
 
 from __future__ import annotations
 
+import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
+from uuid import uuid4
 
 from koru.queue.patch_mode import (
     NO_PATCH_EMITTED,
     PATCH_DOES_NOT_APPLY,
+    PROMOTION_APPLY,
+    PROMOTION_ARTIFACT,
+    PROMOTION_BRANCH,
+    PROMOTION_COMMIT,
     PROMOTION_CONFLICT,
+    PROMOTION_FAILED,
+    PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
+    VERIFY_BASELINE_FAILED,
     VERIFY_FAILED_ISOLATED,
     VERIFY_FAILED_ROLLED_BACK,
     PatchOutcome,
     apply_unified_diff,
-    changed_since,
+    build_manifest,
+    commit_worktree,
     diff_target_files,
     dirty_paths,
     extract_unified_diff,
-    fingerprint_files,
+    manifest_drift,
+    promotion_mode,
+    repository_is_clean,
     revert_files,
     staging_worktree,
     worktree_enabled,
+    write_patch_artifact,
 )
 from koru.queue.types import CommandResult
+
+_logger = logging.getLogger(__name__)
 
 
 def resolve_verify_command(project: Path, ticket: dict) -> str:
@@ -67,6 +82,7 @@ def apply_proposed_patch(
     result: CommandResult,
     ticket: dict,
     shell_runner: Callable[[str, Path], CommandResult],
+    manifest: dict | None = None,
 ) -> tuple[CommandResult, PatchOutcome | None]:
     """Apply the diff an agent proposed, then verify it, rolling back on failure.
 
@@ -91,22 +107,69 @@ def apply_proposed_patch(
     verify_command = resolve_verify_command(project, ticket)
     targets = diff_target_files(project, diff)
     isolated = verify_command and worktree_enabled(project)
+    mode = promotion_mode(ticket)
+    run_id = uuid4().hex[:12]
+
+    if mode == PROMOTION_ARTIFACT:
+        # Deliver the patch as a reviewable file and change nothing. Useful on a
+        # shared checkout, and the only mode that needs no verification at all.
+        directory = write_patch_artifact(
+            project,
+            run_id,
+            diff,
+            {
+                "run_id": run_id,
+                "ticket_id": ticket.get("id"),
+                "targets": list(targets),
+                "verify_command": verify_command,
+                "promotion_mode": mode,
+            },
+        )
+        _logger.info("koru.queue.patch_artifact run_id=%s path=%s", run_id, directory)
+        return result, None
+
+    if mode == PROMOTION_COMMIT and not repository_is_clean(project):
+        return result, PatchOutcome(
+            code=PROMOTION_REFUSED_DIRTY_REPO,
+            message=(
+                "promotion_mode=commit requires a clean repository so the commit "
+                "contains only this patch, but the working tree has uncommitted "
+                "changes. Commit or stash them, or use promotion_mode=branch."
+            ),
+        )
 
     if isolated:
-        # Fingerprint before staging so a concurrent edit during verification
-        # is caught at promotion time rather than silently overwritten.
-        baseline = fingerprint_files(project, targets)
-        staged = _stage_patch_in_worktree(project, diff, verify_command, shell_runner)
+        # Freeze the plan before staging. The manifest records the base commit
+        # and the exact content of every target, so promotion can prove the
+        # world did not move underneath a verification that took minutes.
+        plan = manifest or build_manifest(
+            project,
+            run_id=run_id,
+            ticket=ticket,
+            diff=diff,
+            targets=targets,
+            verify_command=verify_command,
+            mode=mode,
+            attempt=1,
+            max_attempts=1,
+        )
+        staged = _stage_patch_in_worktree(
+            project, diff, verify_command, shell_runner, mode=mode, run_id=run_id, ticket=ticket,
+        )
         if staged is not None:
             return result, staged
-        conflicted = changed_since(project, baseline)
-        if conflicted:
+        if mode == PROMOTION_BRANCH:
+            # The verified result already lives on its own ref; deliberately
+            # nothing is written to the shared working tree.
+            return result, None
+        drift = manifest_drift(project, plan)
+        if drift:
             return result, PatchOutcome(
                 code=PROMOTION_CONFLICT,
                 message=(
-                    "the workspace changed while the patch was being verified, so it "
-                    f"was not promoted: {', '.join(conflicted)}. Another session most "
-                    "likely edited these files; re-run the ticket against the new state."
+                    "the workspace moved while the patch was being verified, so it was "
+                    f"not promoted ({drift}). Another session most likely edited it; "
+                    "re-run the ticket against the new state."
                 ),
             )
     else:
@@ -158,17 +221,42 @@ def _stage_patch_in_worktree(
     diff: str,
     verify_command: str,
     shell_runner: Callable[[str, Path], CommandResult],
+    *,
+    mode: str = PROMOTION_APPLY,
+    run_id: str = "",
+    ticket: dict | None = None,
 ) -> PatchOutcome | None:
     """Prove a patch in a throwaway worktree before it touches the workspace.
 
     Nothing reaches the real tree until the patch has both applied and passed
     its gate in isolation, so a bad patch — or one racing another agent's edits
-    — costs a discarded directory rather than a broken workspace.
+    — costs a discarded directory rather than a broken workspace. Under
+    ``promotion_mode=branch`` the verified result is committed here and the
+    branch ref outlives the worktree, so the shared tree is never written to.
     """
     targets = diff_target_files(project, diff)
     with staging_worktree(project, targets) as staged:
         if staged is None:
             return None  # cannot isolate; the caller's dirty check still guards us
+
+        # Establish that the gate passes here *before* the patch exists. A suite
+        # that resolves fixtures relative to the repo root, or otherwise assumes
+        # its usual location on disk, fails inside a worktree no matter what the
+        # patch says — and blaming the agent for that is a false negative.
+        baseline = shell_runner(verify_command, staged)
+        if baseline.returncode != 0:
+            output = (baseline.stderr or baseline.stdout or "").strip()[-400:]
+            return PatchOutcome(
+                code=VERIFY_BASELINE_FAILED,
+                message=(
+                    f"`{verify_command}` already fails in a clean worktree "
+                    f"(exit {baseline.returncode}), so the patch could not be judged "
+                    "there and nothing was promoted. The suite likely depends on paths "
+                    "outside the repository; re-run with KORU_QUEUE_WORKTREE=0 to "
+                    f"verify in the checkout itself. Baseline output: {output}"
+                ),
+            )
+
         applied = apply_unified_diff(staged, diff)
         if not applied.ok:
             return PatchOutcome(
@@ -179,6 +267,21 @@ def _stage_patch_in_worktree(
             )
         verify = shell_runner(verify_command, staged)
         if verify.returncode == 0:
+            if mode == PROMOTION_BRANCH:
+                branch = f"koru/run-{run_id}"
+                ticket_id = (ticket or {}).get("id") or "ticket"
+                ok, detail = commit_worktree(
+                    staged,
+                    branch,
+                    f"koru({ticket_id}): verified patch\n\nrun_id: {run_id}",
+                    applied.changed_files,
+                )
+                if not ok:
+                    return PatchOutcome(
+                        code=PROMOTION_FAILED,
+                        message=f"verified patch could not be committed to {branch}: {detail}",
+                    )
+                _logger.info("koru.queue.patch_branch branch=%s commit=%s", branch, detail)
             return None
         output = (verify.stderr or verify.stdout or "").strip()[-600:]
         return PatchOutcome(

@@ -1426,9 +1426,12 @@ class TestQueueEditVerification(unittest.TestCase):
 
 
 from koru.queue.patch_mode import (  # noqa: E402
+    MANIFEST_MISMATCH,
     NO_PATCH_EMITTED,
     PROMOTION_CONFLICT,
+    PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
+    VERIFY_BASELINE_FAILED,
     VERIFY_FAILED_ISOLATED,
     VERIFY_FAILED_ROLLED_BACK,
 )
@@ -1609,12 +1612,408 @@ class TestPatchMode(unittest.TestCase):
         "```\n"
     )
 
+    def _gate_ok(self, command: str, cwd: Path):
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    def test_branch_mode_commits_the_result_without_touching_the_workspace(self) -> None:
+        """On a shared checkout the verified result lands on its own ref, so a
+        concurrent `git add -A` elsewhere cannot absorb it into another commit."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {
+                "id": "SBX-9",
+                "inputs": {"verify_command": "true", "promotion_mode": "branch"},
+            }
+
+            _result, outcome = apply_proposed_patch(project, reply, ticket, self._gate_ok)
+
+            self.assertIsNone(outcome, outcome)
+            # Working tree untouched...
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+            # ...but the verified change exists on its own branch.
+            branches = subprocess.run(
+                ["git", "branch", "--list", "koru/run-*"],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout
+            self.assertIn("koru/run-", branches)
+            branch = branches.split()[-1]
+            committed = subprocess.run(
+                ["git", "show", f"{branch}:a.txt"],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout
+            self.assertEqual(committed, "new\n")
+            # Only the patch's file is in the commit — not koru's own run
+            # artifacts, which `git add -A` would otherwise sweep in.
+            files = subprocess.run(
+                ["git", "show", "--name-only", "--pretty=format:", branch],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout.split()
+            self.assertEqual(files, ["a.txt"])
+
+    def test_artifact_mode_writes_the_patch_and_changes_nothing(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {"id": "SBX-9", "inputs": {"promotion_mode": "artifact"}}
+
+            def unused_gate(command: str, cwd: Path):
+                raise AssertionError("artifact mode must not run a gate")
+
+            _result, outcome = apply_proposed_patch(project, reply, ticket, unused_gate)
+
+            self.assertIsNone(outcome, outcome)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+            runs = list((project / ".koru" / "runs").glob("*/patch.diff"))
+            self.assertEqual(len(runs), 1)
+            self.assertIn("+new", runs[0].read_text(encoding="utf-8"))
+            evidence = json.loads(
+                (runs[0].parent / "evidence.json").read_text(encoding="utf-8"),
+            )
+            self.assertEqual(evidence["ticket_id"], "SBX-9")
+            self.assertEqual(evidence["targets"], ["a.txt"])
+
+    def test_commit_mode_refuses_a_dirty_repository(self) -> None:
+        """A commit must contain only this patch, which a dirty tree cannot promise."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            (project / "unrelated.txt").write_text("someone else's work\n", encoding="utf-8")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {"inputs": {"verify_command": "true", "promotion_mode": "commit"}}
+
+            _result, outcome = apply_proposed_patch(project, reply, ticket, self._gate_ok)
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, PROMOTION_REFUSED_DIRTY_REPO)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_promotion_mode_falls_back_to_env_then_apply(self) -> None:
+        from koru.queue.patch_mode import PROMOTION_APPLY, PROMOTION_BRANCH, promotion_mode
+
+        self.assertEqual(promotion_mode({"inputs": {}}), PROMOTION_APPLY)
+        self.assertEqual(
+            promotion_mode({"inputs": {"promotion_mode": "branch"}}), PROMOTION_BRANCH,
+        )
+        with patch.dict(os.environ, {"KORU_QUEUE_PROMOTION_MODE": "branch"}):
+            self.assertEqual(promotion_mode({"inputs": {}}), PROMOTION_BRANCH)
+            # An unknown ticket value must not silently inherit the env default.
+            self.assertEqual(
+                promotion_mode({"inputs": {"promotion_mode": "nonsense"}}), PROMOTION_BRANCH,
+            )
+
+    def test_worktree_keeps_the_repository_depth_on_disk(self) -> None:
+        """Suites resolve fixtures relative to the repo's parent in a monorepo
+        (`resolve(__dirname, "../..")`). A worktree nested inside the project
+        silently breaks every one of them, so it is staged as a sibling."""
+        from koru.queue.patch_mode import staging_worktree
+
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            project = parent / "repo"
+            project.mkdir()
+            for args in (
+                ["init", "-q"],
+                ["config", "user.email", "koru@test"],
+                ["config", "user.name", "koru"],
+            ):
+                subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
+            self._commit_file(project, "a.txt", "old\n")
+            # A fixture that lives beside the repo, as in a monorepo checkout.
+            (parent / "fixture.json").write_text("{}", encoding="utf-8")
+
+            with staging_worktree(project, ("a.txt",)) as staged:
+                self.assertIsNotNone(staged)
+                assert staged is not None
+                # Same depth as the project, so "../.." lands where it normally would.
+                self.assertEqual(staged.parent, project.parent)
+                self.assertTrue((staged / ".." / "fixture.json").resolve().is_file())
+
+            self.assertFalse(list(parent.glob(".koru-run-*")))
+
+    def test_manifest_hash_is_stable_and_content_sensitive(self) -> None:
+        """The hash must depend only on the decision, so identical inputs always
+        produce the same manifest — otherwise it cannot pin anything."""
+        from koru.queue.patch_mode import build_manifest, manifest_hash
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            kwargs = dict(
+                run_id="fixed-run",
+                ticket={"id": "T-1"},
+                diff="a diff",
+                targets=("a.txt",),
+                verify_command="true",
+                mode="apply",
+                attempt=1,
+                max_attempts=2,
+            )
+            first = build_manifest(project, **kwargs)
+            second = build_manifest(project, **kwargs)
+            self.assertEqual(first["manifest_hash"], second["manifest_hash"])
+            self.assertEqual(first, second)
+
+            other = build_manifest(project, **{**kwargs, "diff": "a different diff"})
+            self.assertNotEqual(first["manifest_hash"], other["manifest_hash"])
+            # The recorded hash is not itself part of the hashed payload.
+            self.assertEqual(manifest_hash(first), first["manifest_hash"])
+
+    def test_manifest_detects_content_and_head_drift(self) -> None:
+        from koru.queue.patch_mode import build_manifest, manifest_drift
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            manifest = build_manifest(
+                project,
+                run_id="r",
+                ticket={"id": "T-1"},
+                diff="d",
+                targets=("a.txt",),
+                verify_command="true",
+                mode="apply",
+                attempt=1,
+                max_attempts=1,
+            )
+            self.assertEqual(manifest_drift(project, manifest), "")
+
+            (project / "a.txt").write_text("someone else edited this\n", encoding="utf-8")
+            self.assertIn("a.txt", manifest_drift(project, manifest))
+
+    def test_retry_does_not_silently_rebase_after_workspace_changed(self) -> None:
+        """A retry must target the base it was pinned to. If another session
+        moves the workspace between attempts, abandon rather than rebase."""
+        from koru.queue.patch_retry import apply_patch_with_retry
+
+        corrupt = SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "```diff\ndiff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n"
+                "@@ -1 +1 @@\nno marker here\n```\n"
+            ),
+            stderr="",
+        )
+
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"KORU_QUEUE_PATCH_RETRIES": "3"},
+        ):
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+
+            def moving_target(request, cwd):
+                # Simulate a second session editing the file between attempts.
+                (project / "a.txt").write_text("moved by another session\n", encoding="utf-8")
+                return corrupt
+
+            def gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, outcome = apply_patch_with_retry(
+                project,
+                corrupt,
+                {"inputs": {}, "files": ["a.txt"]},
+                {"prompt": "x"},
+                moving_target,
+                gate,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, MANIFEST_MISMATCH)
+            self.assertEqual(
+                (project / "a.txt").read_text(encoding="utf-8"), "moved by another session\n",
+            )
+
+    def test_context_excerpt_is_bounded_and_redacted(self) -> None:
+        from koru.queue.patch_mode import current_file_excerpt
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "cfg.py").write_text(
+                'API_KEY = "sk-must-not-leak-abcdefgh"\n' + ("filler\n" * 5000),
+                encoding="utf-8",
+            )
+            excerpt = current_file_excerpt(project, ("cfg.py",), max_chars=500)
+
+            self.assertIn("cfg.py", excerpt)
+            self.assertNotIn("sk-must-not-leak-abcdefgh", excerpt)
+            self.assertLess(len(excerpt), 1500)
+            self.assertEqual(current_file_excerpt(project, ("missing.py",)), "")
+
+    def test_gate_failing_before_the_patch_is_not_blamed_on_the_agent(self) -> None:
+        """Found by the first real pilot: a suite that resolves fixtures relative
+        to the repo root fails inside a worktree regardless of the patch. Judging
+        the agent on that is a false negative, so the baseline is checked first."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            calls = {"n": 0}
+
+            def broken_environment(command: str, cwd: Path):
+                calls["n"] += 1
+                return SimpleNamespace(returncode=1, stdout="", stderr="cannot find fixture")
+
+            _result, outcome = apply_proposed_patch(
+                project, reply, {"inputs": {"verify_command": "node --test"}}, broken_environment,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, VERIFY_BASELINE_FAILED)
+            self.assertFalse(outcome.retryable)  # re-asking cannot fix the environment
+            self.assertIn("already fails in a clean worktree", outcome.message)
+            # The gate ran once (baseline) and the patch was never applied there.
+            self.assertEqual(calls["n"], 1)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_retry_feedback_redacts_credentials(self) -> None:
+        """Diagnostics travel back to the model, so anything credential-shaped
+        in git or test output must not go with them."""
+        from koru.queue.patch_mode import redact_secrets
+
+        leaky = (
+            'error: patch failed: config.py:3\n'
+            'ANTHROPIC_API_KEY="sk-ant-abcdefghijklmnop"\n'
+            "db_password = 'hunter2-very-secret'\n"
+            "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payloadpayload.signature\n"
+            "AKIAIOSFODNN7EXAMPLE\n"
+        )
+        cleaned = redact_secrets(leaky)
+
+        for secret in (
+            "sk-ant-abcdefghijklmnop",
+            "hunter2-very-secret",
+            "eyJhbGciOiJIUzI1NiJ9.payloadpayload.signature",
+            "AKIAIOSFODNN7EXAMPLE",
+        ):
+            self.assertNotIn(secret, cleaned)
+        # The part the agent actually needs survives.
+        self.assertIn("patch failed: config.py:3", cleaned)
+
+    def test_retry_feedback_is_length_bounded(self) -> None:
+        from koru.queue.patch_mode import redact_secrets
+
+        cleaned = redact_secrets("x" * 10_000)
+        self.assertLess(len(cleaned), 2_200)
+        self.assertIn("truncated", cleaned)
+
+    def test_patch_creating_a_new_file_is_promoted(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            creation = (
+                "```diff\n"
+                "diff --git a/new.txt b/new.txt\n"
+                "new file mode 100644\n"
+                "--- /dev/null\n"
+                "+++ b/new.txt\n"
+                "@@ -0,0 +1 @@\n"
+                "+created\n"
+                "```\n"
+            )
+            reply = SimpleNamespace(returncode=0, stdout=creation, stderr="")
+
+            def gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, outcome = apply_proposed_patch(
+                project, reply, {"inputs": {"verify_command": "true"}}, gate,
+            )
+
+            self.assertIsNone(outcome, outcome)
+            self.assertEqual((project / "new.txt").read_text(encoding="utf-8"), "created\n")
+
+    def test_patch_deleting_a_file_is_promoted(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "gone.txt", "bye\n")
+            deletion = (
+                "```diff\n"
+                "diff --git a/gone.txt b/gone.txt\n"
+                "deleted file mode 100644\n"
+                "--- a/gone.txt\n"
+                "+++ /dev/null\n"
+                "@@ -1 +0,0 @@\n"
+                "-bye\n"
+                "```\n"
+            )
+            reply = SimpleNamespace(returncode=0, stdout=deletion, stderr="")
+
+            def gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, outcome = apply_proposed_patch(
+                project, reply, {"inputs": {"verify_command": "true"}}, gate,
+            )
+
+            self.assertIsNone(outcome, outcome)
+            self.assertFalse((project / "gone.txt").exists())
+
+    def test_worktree_is_cleaned_up_when_the_gate_raises(self) -> None:
+        """A crashing verify command must not leak a worktree directory."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+
+            def exploding_gate(command: str, cwd: Path):
+                raise RuntimeError("gate blew up")
+
+            with self.assertRaises(RuntimeError):
+                apply_proposed_patch(
+                    project, reply, {"inputs": {"verify_command": "true"}}, exploding_gate,
+                )
+
+            self.assertFalse(list(project.parent.glob(".koru-run-*")))
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_untracked_file_counts_as_dirty_in_direct_mode(self) -> None:
+        """An untracked file has no index version at all, so `git checkout --`
+        could not restore it either — it must block direct apply too."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"KORU_QUEUE_WORKTREE": "0"},
+        ):
+            project = self._git_repo(tmp)
+            self._commit_file(project, "seed.txt", "seed\n")
+            (project / "a.txt").write_text("old\n", encoding="utf-8")  # untracked
+
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+
+            def unused_gate(command: str, cwd: Path):
+                raise AssertionError("verify must not run when the patch was refused")
+
+            _result, outcome = apply_proposed_patch(
+                project, reply, {"inputs": {"verify_command": "true"}}, unused_gate,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, UNSAFE_DIRTY_WORKSPACE)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
     def test_direct_mode_refuses_to_touch_a_dirty_file(self) -> None:
         """Regression: `git checkout --` restores from the index, so rolling a
         patch back off a file that already held unstaged work would destroy
         that work. Direct mode must refuse rather than promise a rollback it
         cannot honour."""
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp, patch.dict(
             os.environ, {"KORU_QUEUE_WORKTREE": "0"},
@@ -1628,7 +2027,7 @@ class TestPatchMode(unittest.TestCase):
             def unused_gate(command: str, cwd: Path):
                 raise AssertionError("verify must not run when the patch was refused")
 
-            _result, outcome = _apply_proposed_patch(
+            _result, outcome = apply_proposed_patch(
                 project, agent_reply, {"inputs": {"verify_command": "true"}}, unused_gate,
             )
 
@@ -1641,7 +2040,7 @@ class TestPatchMode(unittest.TestCase):
     def test_promotion_is_rejected_when_workspace_changes_during_verification(self) -> None:
         """Another session editing the same file mid-verification must not be
         silently overwritten by the promotion."""
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
@@ -1654,7 +2053,7 @@ class TestPatchMode(unittest.TestCase):
                 (project / "a.txt").write_text("another session was here\n", encoding="utf-8")
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, outcome = _apply_proposed_patch(
+            _result, outcome = apply_proposed_patch(
                 project, agent_reply, {"inputs": {"verify_command": "true"}}, concurrent_editor,
             )
 
@@ -1671,7 +2070,7 @@ class TestPatchMode(unittest.TestCase):
     def test_unapplicable_patch_is_retried_with_the_git_error(self) -> None:
         """A malformed diff is a mechanical failure the agent can fix — but only
         if it is told exactly what git objected to."""
-        from koru.queue.runner import _apply_patch_with_retry
+        from koru.queue.patch_retry import apply_patch_with_retry
 
         corrupt = (
             "```diff\n"
@@ -1697,7 +2096,7 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, outcome = _apply_patch_with_retry(
+            _result, outcome = apply_patch_with_retry(
                 project, first, {"inputs": {}}, action, retry_agent, gate,
             )
 
@@ -1710,7 +2109,7 @@ class TestPatchMode(unittest.TestCase):
     def test_verification_failure_is_not_retried(self) -> None:
         """A patch that applies but fails its gate is wrong on the merits, so
         re-asking would just spend another agent run on the same idea."""
-        from koru.queue.runner import _apply_patch_with_retry
+        from koru.queue.patch_retry import apply_patch_with_retry
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
@@ -1720,10 +2119,15 @@ class TestPatchMode(unittest.TestCase):
             def never_called(request, cwd):
                 raise AssertionError("a substantive failure must not be retried")
 
+            calls = {"n": 0}
+
             def failing_gate(command: str, cwd: Path):
+                calls["n"] += 1
+                if calls["n"] == 1:  # clean-worktree baseline
+                    return SimpleNamespace(returncode=0, stdout="", stderr="")
                 return SimpleNamespace(returncode=1, stdout="", stderr="tests failed")
 
-            _result, outcome = _apply_patch_with_retry(
+            _result, outcome = apply_patch_with_retry(
                 project,
                 first,
                 {"inputs": {"verify_command": "false"}},
@@ -1739,7 +2143,7 @@ class TestPatchMode(unittest.TestCase):
 
     def test_retry_budget_is_bounded(self) -> None:
         """An agent that keeps emitting junk must not loop forever."""
-        from koru.queue.runner import _apply_patch_with_retry
+        from koru.queue.patch_retry import apply_patch_with_retry
 
         calls = {"n": 0}
         junk = SimpleNamespace(returncode=0, stdout="I cannot do that.", stderr="")
@@ -1757,7 +2161,7 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, outcome = _apply_patch_with_retry(
+            _result, outcome = apply_patch_with_retry(
                 project, junk, {"inputs": {}}, {"prompt": "x"}, junk_agent, gate,
             )
 
@@ -1769,7 +2173,7 @@ class TestPatchMode(unittest.TestCase):
     def test_failing_verify_never_reaches_the_workspace(self) -> None:
         """With worktree staging, a patch that fails its gate is proven bad in
         isolation and the real workspace is never modified at all."""
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
@@ -1780,9 +2184,13 @@ class TestPatchMode(unittest.TestCase):
 
             def failing_gate(command: str, cwd: Path):
                 seen.append(Path(cwd))
+                # First call is the clean-worktree baseline; it must pass so the
+                # failure below is attributed to the patch, not the environment.
+                if len(seen) == 1:
+                    return SimpleNamespace(returncode=0, stdout="", stderr="")
                 return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
 
-            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+            _result, outcome = apply_proposed_patch(project, agent_reply, ticket, failing_gate)
 
             self.assertIsNotNone(outcome)
             self.assertEqual(outcome.code, VERIFY_FAILED_ISOLATED)
@@ -1791,11 +2199,11 @@ class TestPatchMode(unittest.TestCase):
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
             # The gate ran against the worktree, not the project itself.
             self.assertTrue(seen and seen[0] != project, seen)
-            self.assertFalse(list((project / ".koru" / "worktrees").glob("run-*")))
+            self.assertFalse(list(project.parent.glob(".koru-run-*")))
 
     def test_failing_verify_rolls_back_when_worktree_is_disabled(self) -> None:
         """Without isolation the patch does land, so it must be reverted."""
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp, patch.dict(
             os.environ, {"KORU_QUEUE_WORKTREE": "0"},
@@ -1808,7 +2216,7 @@ class TestPatchMode(unittest.TestCase):
             def failing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
 
-            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+            _result, outcome = apply_proposed_patch(project, agent_reply, ticket, failing_gate)
 
             self.assertIsNotNone(outcome)
             self.assertEqual(outcome.code, VERIFY_FAILED_ROLLED_BACK)
@@ -1818,7 +2226,7 @@ class TestPatchMode(unittest.TestCase):
         """The agent diffs the working tree, so the worktree must be seeded
         with uncommitted content — otherwise every patch against a dirty file
         would be rejected as not applying."""
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
@@ -1830,13 +2238,13 @@ class TestPatchMode(unittest.TestCase):
             def passing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
-            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+            _result, outcome = apply_proposed_patch(project, agent_reply, ticket, passing_gate)
 
             self.assertIsNone(outcome)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
     def test_passing_verify_keeps_the_patch(self) -> None:
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
@@ -1860,13 +2268,13 @@ class TestPatchMode(unittest.TestCase):
             def passing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
-            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+            _result, outcome = apply_proposed_patch(project, agent_reply, ticket, passing_gate)
 
             self.assertIsNone(outcome)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
     def test_reply_without_a_diff_is_not_treated_as_work(self) -> None:
-        from koru.queue.runner import _apply_proposed_patch
+        from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
@@ -1880,7 +2288,7 @@ class TestPatchMode(unittest.TestCase):
             def unused_gate(command: str, cwd: Path):
                 raise AssertionError("verify must not run when no patch was applied")
 
-            _result, outcome = _apply_proposed_patch(project, agent_reply, {}, unused_gate)
+            _result, outcome = apply_proposed_patch(project, agent_reply, {}, unused_gate)
 
             self.assertIsNotNone(outcome)
             self.assertEqual(outcome.code, NO_PATCH_EMITTED)

@@ -4,7 +4,6 @@
 import hashlib
 import json
 import logging
-import os
 import uuid
 from collections.abc import Callable
 from pathlib import Path
@@ -14,26 +13,14 @@ from koru.queue.context import build_project_context
 from koru.queue.human import default_human_prompt
 from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
 from koru.queue.patch_mode import (
-    NO_PATCH_EMITTED,
-    PATCH_DOES_NOT_APPLY,
-    PROMOTION_CONFLICT,
-    UNSAFE_DIRTY_WORKSPACE,
-    VERIFY_FAILED_ISOLATED,
-    VERIFY_FAILED_ROLLED_BACK,
+    PROMOTION_ARTIFACT,
+    PROMOTION_BRANCH,
     PatchOutcome,
-    apply_unified_diff,
     build_patch_prompt,
-    build_retry_prompt,
-    changed_since,
-    diff_target_files,
-    dirty_paths,
-    extract_unified_diff,
-    fingerprint_files,
     patch_mode_enabled,
-    revert_files,
-    staging_worktree,
-    worktree_enabled,
+    promotion_mode,
 )
+from koru.queue.patch_retry import apply_patch_with_retry
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
 from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
@@ -581,14 +568,27 @@ def _run_next_planfile_task_impl(
 
         patch_outcome: PatchOutcome | None = None
         if use_patch_mode and result.returncode == 0:
-            result, patch_outcome = _apply_patch_with_retry(
-                project, result, ticket, resolved_action, llm_runner, shell_runner,
+            result, patch_outcome = apply_patch_with_retry(
+                project,
+                result,
+                ticket,
+                resolved_action,
+                llm_runner,
+                shell_runner,
+                enrich=_enrich_llm_request_with_context,
             )
 
         verification_error = (
             f"[{patch_outcome.code}] {patch_outcome.message}" if patch_outcome else None
         )
-        if verification_error is None and expects_edits:
+        # `branch` and `artifact` deliver the result outside the working tree on
+        # purpose, so an unchanged workspace is the expected outcome there — the
+        # branch ref or patch file is the evidence, not the files on disk.
+        delivered_outside_workspace = use_patch_mode and promotion_mode(ticket) in {
+            PROMOTION_BRANCH,
+            PROMOTION_ARTIFACT,
+        }
+        if verification_error is None and expects_edits and not delivered_outside_workspace:
             verification_error = _verify_declared_files_changed(project, ticket, before)
 
         return _finalize_ticket(

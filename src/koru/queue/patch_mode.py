@@ -11,6 +11,7 @@ both the pre-flight check and the rollback path.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -79,6 +80,7 @@ UNSAFE_DIRTY_WORKSPACE = "unsafe_direct_apply_to_dirty_workspace"
 PROMOTION_CONFLICT = "promotion_conflict"
 VERIFY_FAILED_ISOLATED = "verify_failed_isolated"
 VERIFY_FAILED_ROLLED_BACK = "verify_failed_rolled_back"
+VERIFY_BASELINE_FAILED = "verify_baseline_failed"
 
 
 def patch_mode_enabled(ticket: dict) -> bool:
@@ -99,6 +101,43 @@ def build_patch_prompt(prompt: str) -> str:
     return f"{prompt.rstrip()}\n{PATCH_PROMPT_SUFFIX}"
 
 
+_SECRET_PATTERNS = (
+    # Assignments: API_KEY=..., token: "...", password = '...'
+    re.compile(
+        r"(?i)\b([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL)[A-Z0-9_]*)"
+        r"(\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|\S+)",
+    ),
+    # Bearer / Authorization headers.
+    re.compile(r"(?i)\b(authorization|bearer)(\s*:?\s+)(\S+)"),
+    # Recognisable standalone key shapes (sk-…, ghp_…, AKIA…, JWTs).
+    re.compile(r"\b(sk-|ghp_|gho_|github_pat_|xox[baprs]-|AKIA)[A-Za-z0-9_\-]{8,}"),
+    re.compile(r"\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]+"),
+)
+
+_REDACTED = "[redacted]"
+
+
+def redact_secrets(text: str, *, limit: int = 2000) -> str:
+    """Strip credential-shaped strings from output before it leaves the host.
+
+    ``git`` and test runners echo file contents, so a diagnostic fed back to a
+    model — or written into a ticket — can carry whatever the workspace holds.
+    Redaction is deliberately over-eager: a mangled error message costs a retry,
+    a leaked key costs far more.
+    """
+    if not text:
+        return ""
+    redacted = text
+    for pattern in _SECRET_PATTERNS:
+        if pattern.groups >= 3:
+            redacted = pattern.sub(lambda m: f"{m.group(1)}{m.group(2)}{_REDACTED}", redacted)
+        else:
+            redacted = pattern.sub(_REDACTED, redacted)
+    if len(redacted) > limit:
+        redacted = redacted[:limit] + "\n… (truncated)"
+    return redacted
+
+
 def build_retry_prompt(prompt: str, failure: str) -> str:
     """Re-ask for a patch, quoting exactly why the previous one was rejected.
 
@@ -114,6 +153,42 @@ def build_retry_prompt(prompt: str, failure: str) -> str:
         "corrected diff. Check that every hunk line starts with a space, `-` or `+`, "
         "that each changed line appears as both a `-` and a `+` line, and that the "
         "context lines match the file exactly as it is on disk right now."
+    )
+
+
+def current_file_excerpt(
+    project: Path,
+    paths: tuple[str, ...],
+    *,
+    max_chars: int = 6000,
+) -> str:
+    """Quote the files a patch must apply to, for a retry prompt.
+
+    A context mismatch means the model's idea of the file is stale, and telling
+    it so without showing the actual contents tends to produce the same diff
+    again. Only safe once a manifest has pinned the base — otherwise this would
+    hand the agent a snapshot that may already be out of date.
+    """
+    sections: list[str] = []
+    budget = max_chars
+    for rel in paths:
+        target = project / rel
+        if not target.is_file() or budget <= 0:
+            continue
+        try:
+            body = target.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if len(body) > budget:
+            body = body[:budget] + "\n… (truncated)"
+        budget -= len(body)
+        sections.append(f"### `{rel}` (current contents)\n\n```\n{redact_secrets(body, limit=budget + len(body))}\n```")
+    if not sections:
+        return ""
+    return (
+        "\n\n## The files as they are on disk right now\n\n"
+        "Write your replacement diff against exactly this content.\n\n"
+        + "\n\n".join(sections)
     )
 
 
@@ -265,6 +340,74 @@ def revert_files(project: Path, files: tuple[str, ...]) -> None:
     _git(project, "checkout", "--", *files)
 
 
+"""Where a verified patch is allowed to land."""
+PROMOTION_APPLY = "apply"  # write into the workspace, leave committing to a human
+PROMOTION_BRANCH = "branch"  # commit onto koru/run-<id>; workspace untouched
+PROMOTION_COMMIT = "commit"  # apply and commit on the current branch
+PROMOTION_ARTIFACT = "artifact"  # keep the patch as a file; change nothing
+
+_PROMOTION_MODES = frozenset(
+    {PROMOTION_APPLY, PROMOTION_BRANCH, PROMOTION_COMMIT, PROMOTION_ARTIFACT},
+)
+
+PROMOTION_REFUSED_DIRTY_REPO = "promotion_refused_dirty_repo"
+PROMOTION_FAILED = "promotion_failed"
+
+
+def promotion_mode(ticket: dict) -> str:
+    """How a verified patch should be delivered.
+
+    Defaults to ``apply`` for continuity, but ``branch`` is the safer choice on
+    a shared checkout: the result lands on its own ref, so a concurrent
+    ``git add -A`` in another session cannot absorb it into an unrelated commit.
+    """
+    raw = str((ticket.get("inputs") or {}).get("promotion_mode") or "").strip().lower()
+    if raw in _PROMOTION_MODES:
+        return raw
+    env = (os.environ.get("KORU_QUEUE_PROMOTION_MODE") or "").strip().lower()
+    return env if env in _PROMOTION_MODES else PROMOTION_APPLY
+
+
+def commit_worktree(
+    worktree: Path,
+    branch: str,
+    message: str,
+    paths: tuple[str, ...] = (),
+) -> tuple[bool, str]:
+    """Commit the patch's files in *worktree* onto a fresh *branch*.
+
+    Only *paths* are staged. ``git add -A`` would sweep in whatever else the run
+    left behind — koru's own event log, tool caches, test output — and the point
+    of this commit is that it contains the reviewed patch and nothing else.
+    """
+    switched = _git(worktree, "switch", "--quiet", "-c", branch)
+    if switched.returncode != 0:
+        return False, (switched.stderr or "").strip()[:300]
+    _git(worktree, "add", "--", *paths) if paths else _git(worktree, "add", "-A")
+    committed = _git(worktree, "commit", "--quiet", "-m", message)
+    if committed.returncode != 0:
+        return False, (committed.stderr or committed.stdout or "").strip()[:300]
+    head = _git(worktree, "rev-parse", "HEAD")
+    return True, (head.stdout or "").strip()
+
+
+def repository_is_clean(project: Path) -> bool:
+    """Whether the working tree has no uncommitted changes at all."""
+    status = _git(project, "status", "--porcelain")
+    return status.returncode == 0 and not (status.stdout or "").strip()
+
+
+def write_patch_artifact(project: Path, run_id: str, diff: str, evidence: dict) -> Path:
+    """Persist the patch and its evidence without touching the workspace."""
+    directory = project / ".koru" / "runs" / run_id
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "patch.diff").write_text(diff, encoding="utf-8")
+    (directory / "evidence.json").write_text(
+        json.dumps(evidence, indent=2, sort_keys=True), encoding="utf-8",
+    )
+    return directory
+
+
 @dataclass(frozen=True)
 class FileFingerprint:
     """Enough of a file's identity to detect that someone else changed it."""
@@ -326,6 +469,80 @@ def dirty_paths(project: Path, paths: tuple[str, ...]) -> tuple[str, ...]:
     )
 
 
+MANIFEST_MISMATCH = "manifest_mismatch"
+
+
+def current_head(project: Path) -> str:
+    """The commit a run is based on, or "" outside a git repository."""
+    head = _git(project, "rev-parse", "HEAD")
+    return (head.stdout or "").strip() if head.returncode == 0 else ""
+
+
+def build_manifest(
+    project: Path,
+    *,
+    run_id: str,
+    ticket: dict,
+    diff: str,
+    targets: tuple[str, ...],
+    verify_command: str,
+    mode: str,
+    attempt: int,
+    max_attempts: int,
+) -> dict:
+    """Freeze what this run is allowed to do, and against what.
+
+    Recorded before anything is staged so promotion can prove the world did not
+    move underneath it. Deliberately carries no timestamp: the hash must depend
+    only on the decision, so the same inputs always produce the same manifest.
+    """
+    fingerprints = fingerprint_files(project, targets)
+    manifest = {
+        "run_id": run_id,
+        "ticket_id": ticket.get("id"),
+        "base_head": current_head(project),
+        "base_files": {
+            rel: (print_.sha256 or ("symlink:" + (print_.symlink_target or "")) if print_.exists else None)
+            for rel, print_ in fingerprints.items()
+        },
+        "patch_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
+        "touched_files": sorted(targets),
+        "verify_command": verify_command,
+        "promotion_mode": mode,
+        "attempt": attempt,
+        "max_attempts": max_attempts,
+    }
+    manifest["manifest_hash"] = manifest_hash(manifest)
+    return manifest
+
+
+def manifest_hash(manifest: dict) -> str:
+    """Canonical hash of a manifest, ignoring any hash already recorded on it."""
+    payload = {key: value for key, value in manifest.items() if key != "manifest_hash"}
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"),
+    ).hexdigest()
+
+
+def manifest_drift(project: Path, manifest: dict) -> str:
+    """Describe how the workspace diverged from the manifest, or "" if it has not.
+
+    Checks the commit *and* the file contents, because the change that matters
+    most here — another session editing a target file — need not be committed
+    to invalidate the plan.
+    """
+    if manifest.get("base_head") and current_head(project) != manifest["base_head"]:
+        return f"HEAD moved from {str(manifest['base_head'])[:12]} to {current_head(project)[:12]}"
+    recorded: dict = manifest.get("base_files") or {}
+    current = fingerprint_files(project, tuple(recorded))
+    drifted = sorted(
+        rel
+        for rel, digest in recorded.items()
+        if (current[rel].sha256 if current[rel].exists else None) != digest
+    )
+    return f"changed on disk: {', '.join(drifted)}" if drifted else ""
+
+
 def diff_target_files(project: Path, diff: str) -> tuple[str, ...]:
     """List the paths a diff touches, without applying it."""
     listed = _git(project, "apply", "--numstat", "-", stdin=diff)
@@ -349,6 +566,24 @@ def worktree_enabled(project: Path) -> bool:
     return _git(project, "rev-parse", "--verify", "HEAD").returncode == 0
 
 
+def _worktree_location(project: Path, run_id: str) -> Path:
+    """Where to put the staging worktree.
+
+    Placed as a *sibling* of the project rather than inside it, so the checkout
+    keeps its usual depth on disk. Suites routinely resolve fixtures relative to
+    the repository's parent (``resolve(__dirname, "../..")`` in a monorepo), and
+    a worktree nested under ``<project>/.koru/`` silently breaks every one of
+    them. Sibling placement keeps those paths resolving as they do normally.
+    """
+    override = (os.environ.get("KORU_QUEUE_WORKTREE_DIR") or "").strip()
+    if override:
+        return Path(override).expanduser() / f".koru-run-{run_id}"
+    parent = project.parent
+    if os.access(parent, os.W_OK):
+        return parent / f".koru-run-{run_id}"
+    return project / ".koru" / "worktrees" / f"run-{run_id}"
+
+
 @contextmanager
 def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Path | None]:
     """Yield a disposable worktree seeded with the workspace's current content.
@@ -359,9 +594,8 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
     across before it is applied. Yields None when the worktree cannot be
     created, leaving the caller to fall back to in-place execution.
     """
-    parent = project / ".koru" / "worktrees"
-    parent.mkdir(parents=True, exist_ok=True)
-    path = parent / f"run-{uuid4().hex[:12]}"
+    path = _worktree_location(project, uuid4().hex[:12])
+    path.parent.mkdir(parents=True, exist_ok=True)
     created = _git(project, "worktree", "add", "--detach", "--quiet", str(path), "HEAD")
     if created.returncode != 0:
         yield None

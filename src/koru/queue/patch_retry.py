@@ -14,9 +14,22 @@ import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
-from koru.queue.patch_mode import PatchOutcome, build_retry_prompt, redact_secrets
-from koru.queue.patch_transaction import apply_proposed_patch
+from koru.queue.patch_mode import (
+    MANIFEST_MISMATCH,
+    PATCH_DOES_NOT_APPLY,
+    PatchOutcome,
+    build_manifest,
+    build_retry_prompt,
+    current_file_excerpt,
+    diff_target_files,
+    extract_unified_diff,
+    manifest_drift,
+    promotion_mode,
+    redact_secrets,
+)
+from koru.queue.patch_transaction import apply_proposed_patch, resolve_verify_command
 from koru.queue.types import CommandResult
 
 
@@ -36,6 +49,7 @@ def apply_patch_with_retry(
     action: dict[str, Any],
     llm_runner: Callable[[dict[str, Any], Path], CommandResult],
     shell_runner: Callable[[str, Path], CommandResult],
+    enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None = None,
 ) -> tuple[CommandResult, PatchOutcome | None]:
     """Apply the agent's patch, re-asking with the exact rejection on failure.
 
@@ -43,18 +57,73 @@ def apply_patch_with_retry(
     sees ``git apply``'s complaint, so those attempts are retried. A patch that
     applies but fails verification is a *substantive* failure — retrying it
     would just burn another agent run on the same wrong idea — so it is not.
+
+    ``enrich`` re-attaches project context to the retry request; it is injected
+    rather than imported so this module stays independent of the queue runner.
     """
     base_prompt = str(action.get("prompt") or "")
-    remaining = patch_retry_budget()
+    budget = patch_retry_budget()
+    remaining = budget
+    manifest: dict | None = None
+
     while True:
-        result, outcome = apply_proposed_patch(project, result, ticket, shell_runner)
+        result, outcome = apply_proposed_patch(project, result, ticket, shell_runner, manifest)
         if outcome is None or not outcome.retryable or remaining <= 0:
             return result, outcome
+
+        # Pin the base on the first failure. Every later attempt is judged
+        # against that same snapshot, so a retry can never silently rebase onto
+        # a workspace another session has moved in the meantime.
+        if manifest is None:
+            manifest = _pin_base(project, ticket, result, budget)
+        elif (drift := manifest_drift(project, manifest)):
+            return result, PatchOutcome(
+                code=MANIFEST_MISMATCH,
+                message=(
+                    "the workspace changed between patch attempts, so the retry was "
+                    f"abandoned rather than rebased onto a moving target ({drift}). "
+                    "Re-run the ticket against the new state."
+                ),
+            )
+
         remaining -= 1
-        retry_action = _enrich_llm_request_with_context(
-            {**action, "prompt": build_retry_prompt(base_prompt, outcome.diagnostics or outcome.message)},
-            project,
-        )
+        # git and test output can quote file contents, so redact before it
+        # travels back out to the model.
+        diagnostic = redact_secrets(outcome.diagnostics or outcome.message)
+        prompt = build_retry_prompt(base_prompt, diagnostic)
+        if manifest and outcome.code == PATCH_DOES_NOT_APPLY:
+            # Safe only because the manifest guarantees these contents are still
+            # the ones the patch must apply to.
+            prompt += current_file_excerpt(project, tuple(manifest.get("touched_files") or ()))
+        retry_action = {**action, "prompt": prompt}
+        if enrich is not None:
+            retry_action = enrich(retry_action, project)
         result = llm_runner(retry_action, project)
         if result.returncode != 0:
             return result, outcome
+
+
+def _pin_base(project: Path, ticket: dict, result: CommandResult, budget: int) -> dict:
+    """Freeze the base the remaining attempts must target.
+
+    The first attempt is pinned precisely when it failed for a reason that still
+    let us read its targets. A corrupt diff yields none — ``git apply
+    --numstat`` cannot parse it — which is exactly the case retries exist for,
+    so fall back to the files the ticket declared. A manifest that pins nothing
+    would silently permit the rebase it is meant to prevent.
+    """
+    diff = extract_unified_diff(result.stdout) or ""
+    targets = diff_target_files(project, diff) or tuple(
+        str(rel) for rel in (ticket.get("files") or [])
+    )
+    return build_manifest(
+        project,
+        run_id=uuid4().hex[:12],
+        ticket=ticket,
+        diff=diff,
+        targets=targets,
+        verify_command=resolve_verify_command(project, ticket),
+        mode=promotion_mode(ticket),
+        attempt=1,
+        max_attempts=budget + 1,
+    )
