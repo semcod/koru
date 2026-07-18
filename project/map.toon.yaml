@@ -1,11 +1,11 @@
-# koru | 1092f 175596L | txt:5,yaml:31,json:41,yml:12,python:812,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
-# generated in 0.13s
-# stats: 7632 func | 0 cls | 1092 mod | CC̄=3.7 | critical:4 | cycles:0
+# koru | 1094f 176311L | txt:5,yaml:31,json:41,yml:12,python:814,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
+# generated in 0.22s
+# stats: 7660 func | 0 cls | 1094 mod | CC̄=3.7 | critical:5 | cycles:0
 # alerts[5]: fan-out get_vql_chat_target_from_photo=37; fan-out prepare_photo_vql_for_drive=29; fan-out create_app=26; fan-out create_app=26; fan-out _run_next_planfile_task_impl=24
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; create_app fan=26; create_app fan=26; run_api_request fan=24
 # evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1092]:
+M[1094]:
   .pretest.yml,17
   Dockerfile,79
   Makefile,276
@@ -822,7 +822,7 @@ M[1092]:
   src/koru/queue/context.py,370
   src/koru/queue/contracts.py,214
   src/koru/queue/diff_repair.py,134
-  src/koru/queue/evidence.py,151
+  src/koru/queue/evidence.py,145
   src/koru/queue/grant.py,210
   src/koru/queue/grant_store.py,147
   src/koru/queue/human.py,31
@@ -832,18 +832,18 @@ M[1092]:
   src/koru/queue/local_manager.py,136
   src/koru/queue/locking.py,94
   src/koru/queue/loop.py,115
-  src/koru/queue/manifest.py,130
+  src/koru/queue/manifest.py,140
   src/koru/queue/patch_mode.py,341
   src/koru/queue/patch_retry.py,365
   src/koru/queue/patch_transaction.py,34
   src/koru/queue/planfile_ticket_note.py,55
   src/koru/queue/recovery.py,228
-  src/koru/queue/repair_recording.py,299
-  src/koru/queue/runner.py,756
+  src/koru/queue/repair_recording.py,552
+  src/koru/queue/runner.py,749
   src/koru/queue/runners.py,555
   src/koru/queue/shell_evidence.py,74
   src/koru/queue/ticket.py,420
-  src/koru/queue/ticket_templates.py,308
+  src/koru/queue/ticket_templates.py,299
   src/koru/queue/transaction/__init__.py,54
   src/koru/queue/transaction/preflight.py,175
   src/koru/queue/transaction/promotion.py,112
@@ -855,7 +855,7 @@ M[1092]:
   src/koru/queue/types.py,88
   src/koru/queue/verify/__init__.py,32
   src/koru/queue/verify/executor.py,61
-  src/koru/queue/verify/legacy.py,64
+  src/koru/queue/verify/legacy.py,67
   src/koru/queue/verify/profiles.py,83
   src/koru/queue/verify/registry.py,110
   src/koru/queue/verify/resolver.py,114
@@ -867,15 +867,17 @@ M[1092]:
   src/koru/refactor_planfile_handoff.py,46
   src/koru/remote/__init__.py,9
   src/koru/remote/client.py,58
-  src/koru/repair_runs/__init__.py,44
+  src/koru/repair_runs/__init__.py,48
+  src/koru/repair_runs/context_broker.py,152
   src/koru/repair_runs/lifecycle.py,109
-  src/koru/repair_runs/memory_store.py,292
-  src/koru/repair_runs/model_router.py,210
-  src/koru/repair_runs/models.py,129
+  src/koru/repair_runs/memory_store.py,311
+  src/koru/repair_runs/model_router.py,244
+  src/koru/repair_runs/models.py,156
+  src/koru/repair_runs/next_action.py,185
   src/koru/repair_runs/resume.py,128
-  src/koru/repair_runs/router.py,146
-  src/koru/repair_runs/sqlite_store.py,440
-  src/koru/repair_runs/store.py,156
+  src/koru/repair_runs/router.py,139
+  src/koru/repair_runs/sqlite_store.py,480
+  src/koru/repair_runs/store.py,173
   src/koru/run_log.py,123
   src/koru/runtime.py,104
   src/koru/scan.py,1809
@@ -1140,6 +1142,11 @@ D:
     _verify_status(plan;outcome)
     _verdict(plan;outcome)
     _pin_base(project;ticket;result;budget;run_id)
+  src/koru/repair_runs/router.py:
+    e: load_model_registry,classify_invocation,choose_model
+    load_model_registry(project)
+    classify_invocation(result)
+    choose_model(registry;attempts)
   packages/uri2coru/src/uri2coru/nlp2uri.py:
     e: ResolvedCoruUri,nlp2uri,best_uri
     ResolvedCoruUri: to_dict(0)
@@ -2209,15 +2216,17 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koru/repair_runs/router.py:
-    e: ModelSpec,load_model_registry,classify_invocation,choose_model
-    ModelSpec:
-    load_model_registry(project)
-    classify_invocation(result)
-    choose_model(registry;attempts)
+  src/koru/queue/repair_recording.py:
+    e: RepairRecordingSession,_open_run,_structured_output_enabled,_with_stdout,_required_facts,_exhausted_result,_terminal_chain_for
+    RepairRecordingSession: __init__(4),begin(5),wrap_llm(1),_handle_structured_reply(3),_deliver_requested_facts(1),_ensure_context(2),_park_exhausted(0),finish(2),_advance_to_model_running(0),_start_attempt(1),_finish_attempt(1),_walk(0)  # One queue run of one patch ticket, mirrored into the store...
+    _open_run(store;project;ticket;ticket_id)
+    _structured_output_enabled(project;ticket)
+    _with_stdout(result;stdout)
+    _required_facts(ticket)
+    _exhausted_result()
+    _terminal_chain_for(outcome)
   src/koru/queue/runner.py:
-    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_prepare_action_for_patch_mode,_pre_llm_contract_denial,_apply_patch_step,_compute_verification_error,_run_next_planfile_task_impl,run_next_planfile_task
-    _source_tool(ticket)
+    e: _resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_prepare_action_for_patch_mode,_pre_llm_contract_denial,_apply_patch_step,_compute_verification_error,_run_next_planfile_task_impl,run_next_planfile_task
     _resolve_executor_kind(ticket;interactive;dry_run)
     _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
     _resolve_ticket_action(ticket;executor_kind)
@@ -3111,11 +3120,6 @@ Designed to ...
     compute_build_sha(plugin_dir)
     update_package(plugin_dir)
     main()
-  src/koru/queue/repair_recording.py:
-    e: RepairRecordingSession,_exhausted_result,_terminal_chain_for
-    RepairRecordingSession: __init__(4),begin(4),wrap_llm(1),_park_exhausted(0),finish(2),_advance_to_model_running(0),_start_attempt(1),_finish_attempt(1),_walk(0)  # One queue run of one patch ticket, mirrored into the store...
-    _exhausted_result()
-    _terminal_chain_for(outcome)
   packages/dsl2koru/src/dsl2koru/codegen.py:
     e: _python_type,build_model_registry,validate_payload,render_models_module,main
     _python_type(prop)
@@ -3751,13 +3755,6 @@ Designed to ...
     _handle_llm_error(exc;model)
     _normalize_llm_model(model;endpoint)
     run_llm_request(request;project)
-  src/koru/queue/evidence.py:
-    e: patch_attempt_record,build_evidence_bundle,persist_evidence,load_evidence,completion_gap
-    patch_attempt_record(attempt)
-    build_evidence_bundle()
-    persist_evidence(project;bundle)
-    load_evidence(project;run_id)
-    completion_gap(project;bundle)
   src/koru/queue/ticket.py:
     e: _explicit_queue_value,ticket_queue_name,ticket_has_explicit_queue,_source_tool,ticket_is_implicit_diagnostic,ticket_matches_queue,parse_next_ticket,ticket_command,ticket_llm_request,ticket_api_request,_has_planfile_cli_module,_python_has_planfile_cli,_module_cli_command_for_project,_parse_version_tuple,_planfile_supports_structured_queue_json,_planfile_executable_candidates,_source_planfile_search_roots,_local_planfile_executable,planfile_module_missing,_configured_planfile_cmd_usable,_warn_planfile_cmd_fallback_once,resolve_planfile_base_command,_planfile_lock_timeout,planfile_command,result_json
     _explicit_queue_value(ticket)
@@ -3976,6 +3973,13 @@ Designed to ...
     _fallback_basic_checks(path)
     _testql_adapter_checks(path)
     main(argv)
+  src/koru/queue/evidence.py:
+    e: patch_attempt_record,build_evidence_bundle,persist_evidence,load_evidence,completion_gap
+    patch_attempt_record(attempt)
+    build_evidence_bundle()
+    persist_evidence(project;bundle)
+    load_evidence(project;run_id)
+    completion_gap(project;bundle)
   packages/dsl2koru/src/dsl2koru/bus.py:
     e: dispatch,execute_dsl_line,execute_dsl
     dispatch(command)
@@ -4541,28 +4545,6 @@ Designed to ...
     _run_code2llm_discovery_after_idle(project;_hp;_emit)
     _ensure_standardized_discovery_follow_up(project)
     _format_idle_discovery_toolchain_line(project)
-  src/koru/queue/ticket_templates.py:
-    e: template_dir,template_path,load_ticket_template,_validate_ticket_files,_validate_ticket_executor,_validate_required_input_flags,_validate_max_patch_attempts,_validate_verify_command,_validate_ticket_inputs,validate_subactor_repair_template,_resolve_affected_files,_build_prompt_body,variables_from_development_defect,resolve_repair_llm_model,_verify_from_acceptance_criteria,_resolve_hydrated_inputs,hydrate_subactor_repair_ticket,render_subactor_repair_ticket,render_repair_ticket_from_development_defect,_substitute
-    template_dir()
-    template_path(name)
-    load_ticket_template(name)
-    _validate_ticket_files(files)
-    _validate_ticket_executor(executor)
-    _validate_required_input_flags(inputs)
-    _validate_max_patch_attempts(inputs)
-    _validate_verify_command(inputs)
-    _validate_ticket_inputs(inputs)
-    validate_subactor_repair_template(data)
-    _resolve_affected_files(payload)
-    _build_prompt_body(payload)
-    variables_from_development_defect(payload)
-    resolve_repair_llm_model(variables)
-    _verify_from_acceptance_criteria(ticket)
-    _resolve_hydrated_inputs(ticket;template_inputs)
-    hydrate_subactor_repair_ticket(ticket)
-    render_subactor_repair_ticket(variables)
-    render_repair_ticket_from_development_defect(payload)
-    _substitute(value;variables)
   src/koru/integrations/photo_vql_guard.py:
     e: CaptureGuard,ide_mismatch_allowed,llm_vision_decision_enabled,allow_prepare_map_on_mismatch,allow_prepare_surface_on_capture_error,allow_surface_only_actuation,allow_actuation_on_capture_mismatch,competing_ide_label_from_warning,drive_blocked_on_capture_mismatch,_resolve_map_fallback,_resolve_surface_fallback,_blocked_for_observe,_apply_guard_flags,_apply_guard_ide_control,_apply_guard_blocked
     CaptureGuard: from_observe(0),apply_to_prepare_out(1)
@@ -4708,6 +4690,27 @@ Designed to ...
     testRejectsWorkbenchChatOpenAsFocusOpen()
     filtered()
     run()
+  src/koru/queue/ticket_templates.py:
+    e: template_dir,template_path,load_ticket_template,_validate_ticket_files,_validate_ticket_executor,_validate_required_input_flags,_validate_max_patch_attempts,_validate_verify_command,_validate_ticket_inputs,validate_subactor_repair_template,_resolve_affected_files,_build_prompt_body,variables_from_development_defect,resolve_repair_llm_model,_resolve_hydrated_inputs,hydrate_subactor_repair_ticket,render_subactor_repair_ticket,render_repair_ticket_from_development_defect,_substitute
+    template_dir()
+    template_path(name)
+    load_ticket_template(name)
+    _validate_ticket_files(files)
+    _validate_ticket_executor(executor)
+    _validate_required_input_flags(inputs)
+    _validate_max_patch_attempts(inputs)
+    _validate_verify_command(inputs)
+    _validate_ticket_inputs(inputs)
+    validate_subactor_repair_template(data)
+    _resolve_affected_files(payload)
+    _build_prompt_body(payload)
+    variables_from_development_defect(payload)
+    resolve_repair_llm_model(variables)
+    _resolve_hydrated_inputs(ticket;template_inputs)
+    hydrate_subactor_repair_ticket(ticket)
+    render_subactor_repair_ticket(variables)
+    render_repair_ticket_from_development_defect(payload)
+    _substitute(value;variables)
   packages/nlpshim/src/nlpshim/conversation_test_api.py:
     e: LLMProvider,ConversationContext,DialogResponse,parse_conversation_step,complete_missing_fields,execute_conversation_plan,export_trace
     LLMProvider(Protocol): reply_for(1)
@@ -5370,6 +5373,18 @@ Re-exported f...
     entry()
     makeProbeCache()
     mergeProbeCache()
+  src/koru/repair_runs/next_action.py:
+    e: NextAction,NextActionError,parse_next_action,_refuse,_extract_payload,_validate_schema,_validate_action,_validate_facts,_validate_patch,_clamped_confidence
+    NextAction:  # One validated instruction from the model. The type is the pe...
+    NextActionError:  # Why a reply failed the contract. Feeds router classification...
+    parse_next_action(text)
+    _refuse(detail;text)
+    _extract_payload(text)
+    _validate_schema(payload)
+    _validate_action(payload)
+    _validate_facts(payload)
+    _validate_patch(payload)
+    _clamped_confidence(payload)
   packages/cli2koru/src/cli2koru/shell.py:
     e: run_shell
     run_shell()
@@ -6249,6 +6264,13 @@ Calle...
     _create_ticket()
     _handle_existing_finding()
     main()
+  src/koru/repair_runs/context_broker.py:
+    e: FactRequest,ContextSnapshot,MissingFacts,ContextBroker,fact_envelope
+    FactRequest:  # What a repair iteration needs to know before a model runs...
+    ContextSnapshot: render(0)  # The small, hashed view of the world a model is allowed to se...
+    MissingFacts:  # Requests nothing could answer. The caller escalates; nothing...
+    ContextBroker: __init__(2),ensure(2)  # Delivers facts to repair iterations; refuses to deliver anyt...
+    fact_envelope(fact)
   packages/dsl2koru/src/dsl2koru/events.py:
     e: StoredEvent,EventStore
     StoredEvent: to_dict(0)
@@ -6528,16 +6550,6 @@ Calle...
     _is_auto_or_autonomous_up(parts;idx)
     _match_koru_auto_parts(parts)
     looks_like_autonomous_up_command(command)
-  src/koru/queue/manifest.py:
-    e: build_manifest,workspace_snapshot_sha256,manifest_run_directory,persist_manifest,load_persisted_manifest,persisted_manifest_mismatch,manifest_hash,manifest_drift
-    build_manifest(project)
-    workspace_snapshot_sha256(base_files)
-    manifest_run_directory(project;run_id)
-    persist_manifest(project;manifest)
-    load_persisted_manifest(project;run_id)
-    persisted_manifest_mismatch(project;manifest)
-    manifest_hash(manifest)
-    manifest_drift(project;manifest)
   src/koru/queue/diff_repair.py:
     e: extract_unified_diff,_normalize_diff,_repair_hunk_counts,_repair_missing_file_headers,symlink_creations
     extract_unified_diff(text)
@@ -6557,11 +6569,6 @@ Calle...
     _jti_path(project;jti)
     _read(path)
     _write_atomic(path;record)
-  src/koru/queue/verify/legacy.py:
-    e: resolve_legacy_verify_command,_verify_command_from_criteria,_verify_command_from_project
-    resolve_legacy_verify_command(project;ticket)
-    _verify_command_from_criteria(ticket)
-    _verify_command_from_project(project)
   src/koru/queue/transaction/verification.py:
     e: skip_verify_baseline,verify_output
     skip_verify_baseline(ticket)
@@ -6693,7 +6700,23 @@ Calle...
     main()
   src/koru/repair_runs/memory_store.py:
     e: MemoryRepairRunStore
-    MemoryRepairRunStore(RepairRunStore): __init__(0),create_run(0),get_run(1),find_run(2),transition(2),claim(2),release(2),append_event(3),events(1),start_attempt(1),finish_attempt(1),attempts(1),put_fact(1),facts(1),add_artifact(1),artifacts(1),resumable_runs(0)
+    MemoryRepairRunStore(RepairRunStore): __init__(0),create_run(0),get_run(1),find_run(2),transition(2),claim(2),release(2),append_event(3),events(1),start_attempt(1),finish_attempt(1),attempts(1),put_fact(1),facts(1),add_artifact(1),artifacts(1),record_grant_use(1),is_grant_used(1),used_grants(1),resumable_runs(0)
+  src/koru/queue/manifest.py:
+    e: build_manifest,workspace_snapshot_sha256,manifest_run_directory,persist_run_artifact,persist_manifest,load_persisted_manifest,persisted_manifest_mismatch,manifest_hash,manifest_drift
+    build_manifest(project)
+    workspace_snapshot_sha256(base_files)
+    manifest_run_directory(project;run_id)
+    persist_run_artifact(project;run_id;filename;payload)
+    persist_manifest(project;manifest)
+    load_persisted_manifest(project;run_id)
+    persisted_manifest_mismatch(project;manifest)
+    manifest_hash(manifest)
+    manifest_drift(project;manifest)
+  src/koru/queue/verify/legacy.py:
+    e: resolve_legacy_verify_command,verify_command_from_criteria,_verify_command_from_project
+    resolve_legacy_verify_command(project;ticket)
+    verify_command_from_criteria(ticket)
+    _verify_command_from_project(project)
   packages/dsl2koru/src/dsl2koru/grammar.py:
     e: _flag,_parse_query_repair_history,_parse_query_lane_status,_parse_validate_lane,_parse_resolve,_parse_repair_run,parse_line,_serialize_query_repair_history,_serialize_query_lane_status,_serialize_validate_lane,_serialize_resolve,_serialize_repair_run,to_text
     _flag(rest;name)
@@ -8109,7 +8132,7 @@ Construct once ...
     lowered()
   src/koru/repair_runs/sqlite_store.py:
     e: SqliteRepairRunStore,default_store_path,_parse_dt,_run_from_row,_event_from_row,_attempt_from_row,_fact_from_row,_artifact_from_row
-    SqliteRepairRunStore(RepairRunStore): __init__(1),close(0),_migrate(0),create_run(0),get_run(1),find_run(2),transition(2),claim(2),release(2),append_event(3),events(1),start_attempt(1),finish_attempt(1),attempts(1),put_fact(1),facts(1),add_artifact(1),artifacts(1),resumable_runs(0)
+    SqliteRepairRunStore(RepairRunStore): __init__(1),close(0),_migrate(0),create_run(0),get_run(1),find_run(2),transition(2),claim(2),release(2),append_event(3),events(1),start_attempt(1),finish_attempt(1),attempts(1),put_fact(1),facts(1),add_artifact(1),artifacts(1),record_grant_use(1),is_grant_used(1),used_grants(1),resumable_runs(0)
     default_store_path(project)
     _parse_dt(text)
     _run_from_row(row)
@@ -8244,6 +8267,12 @@ The c...
     _read_config(path)
     _read_sprint(path)
     _write_yaml(path;data)
+  src/koru/repair_runs/resume.py:
+    e: ResumeAction,sweep_resumable,_interrupt_dangling_attempts,_classify_and_heal
+    ResumeAction:
+    sweep_resumable(store)
+    _interrupt_dangling_attempts(store;run_id)
+    _classify_and_heal(store;run;interrupted)
   src/koru/autonomy/cycle_finalize.py:
     e: emit_cycle_completion_events
     emit_cycle_completion_events()
@@ -8406,12 +8435,6 @@ The c...
     catalog()
     capability()
     matchingCommandsFlat()
-  src/koru/repair_runs/resume.py:
-    e: ResumeAction,sweep_resumable,_interrupt_dangling_attempts,_classify_and_heal
-    ResumeAction:
-    sweep_resumable(store)
-    _interrupt_dangling_attempts(store;run_id)
-    _classify_and_heal(store;run;interrupted)
   packages/coru/src/coru/cli_terminal.py:
     e: _ide_from_vscode_pid,_vscode_family_env_hint,_windsurf_terminal_marker,_terminal_ide_hint,_terminal_shell_context,_terminal_host_kind,_terminal_shell_context_fallback
     _ide_from_vscode_pid()
@@ -9113,6 +9136,11 @@ Subclasses are **pure data + thin...
     _add_bootstrap_and_init_arguments(parser)
     _add_doctor_and_context_arguments(parser)
     _build_parser()
+  src/koru/repair_runs/lifecycle.py:
+    e: RepairLifecycleViolation,is_valid_transition,validate_transition
+    RepairLifecycleViolation(Exception):  # A status was requested that cannot follow the run's current ...
+    is_valid_transition(current;requested)
+    validate_transition(current;requested)
   src/koru/autonomy/replay_types.py:
     e: ReplayAction,ReplayResult,ValidationResult
     ReplayAction: to_dsl(0),to_shell(0)  # One actionable step the operator (or automation) can execute...
@@ -9341,11 +9369,6 @@ Subclasses are **pure data + thin...
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
-  src/koru/repair_runs/lifecycle.py:
-    e: RepairLifecycleViolation,is_valid_transition,validate_transition
-    RepairLifecycleViolation(Exception):  # A status was requested that cannot follow the run's current ...
-    is_valid_transition(current;requested)
-    validate_transition(current;requested)
   packages/dsl2koru/src/dsl2koru/result.py:
     e: DslResult
     DslResult: to_dict(0)
@@ -9635,18 +9658,20 @@ Th...
     activate()
     deactivate()
   src/koru/repair_runs/store.py:
-    e: RunAlreadyExists,UnknownRun,StaleVersion,RepairRunStore
+    e: RunAlreadyExists,UnknownRun,StaleVersion,GrantAlreadyUsed,RepairRunStore
     RunAlreadyExists(Exception):  # A live repair for this (ticket, project root) already exists...
     UnknownRun(Exception):  # No repair run with that id...
     StaleVersion(Exception):  # Someone else updated the run since it was read; re-read and ...
-    RepairRunStore(ABC): create_run(0),get_run(1),find_run(2),transition(2),claim(2),release(2),append_event(3),events(1),start_attempt(1),finish_attempt(1),attempts(1),put_fact(1),facts(1),add_artifact(1),artifacts(1),resumable_runs(0)  # The contract. Every method is safe to call from a freshly re...
+    GrantAlreadyUsed(Exception):  # This apply-grant (by jti) was already consumed — a replay at...
+    RepairRunStore(ABC): create_run(0),get_run(1),find_run(2),transition(2),claim(2),release(2),append_event(3),events(1),start_attempt(1),finish_attempt(1),attempts(1),put_fact(1),facts(1),add_artifact(1),artifacts(1),record_grant_use(1),is_grant_used(1),used_grants(1),resumable_runs(0)  # The contract. Every method is safe to call from a freshly re...
   src/koru/repair_runs/models.py:
-    e: RepairRun,RepairEvent,ModelAttempt,RepairFact,RepairArtifact,utcnow,new_id,stable_hash
+    e: RepairRun,RepairEvent,ModelAttempt,RepairFact,RepairArtifact,UsedGrant,utcnow,new_id,stable_hash
     RepairRun:  # The durable identity of one repair: everything else hangs of...
     RepairEvent:  # One appended fact about a run. Sequence and idempotency key ...
     ModelAttempt:  # One model invocation. A blocked provider is a failed attempt...
     RepairFact: observed(1)  # A typed observation the Context Broker collected — never a r...
     RepairArtifact:  # A pointer to a large by-product (patch, verify output), hash...
+    UsedGrant: consumed(1)  # A signed apply-grant consumed by a run. UNIQUE(grant_jti) ma...
     utcnow()
     new_id(prefix)
     stable_hash(value)

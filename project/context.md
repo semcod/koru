@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.03s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 812, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 814, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7632
-- **Total Classes**: 537
-- **Modules**: 1093
-- **Entry Points**: 2850
+- **Total Functions**: 7660
+- **Total Classes**: 544
+- **Modules**: 1095
+- **Entry Points**: 2864
 
 ## Architecture by Module
 
@@ -347,9 +347,20 @@ action_handoff [src.koru.autopilot.commands.handoff]
 - **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.super, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.injectChat, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.text, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.submit, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previous, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previousHost, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.message, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
 
 ### src.koru.repair_runs.sqlite_store.SqliteRepairRunStore
-- **Methods**: 19
+- **Methods**: 22
 - **Key Methods**: src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.__init__, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.close, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore._migrate, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.create_run, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.get_run, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.find_run, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.transition, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.claim, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.release, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.append_event
 - **Inherits**: RepairRunStore
+
+### src.koru.repair_runs.memory_store.MemoryRepairRunStore
+- **Methods**: 20
+- **Key Methods**: src.koru.repair_runs.memory_store.MemoryRepairRunStore.__init__, src.koru.repair_runs.memory_store.MemoryRepairRunStore.create_run, src.koru.repair_runs.memory_store.MemoryRepairRunStore.get_run, src.koru.repair_runs.memory_store.MemoryRepairRunStore.find_run, src.koru.repair_runs.memory_store.MemoryRepairRunStore.transition, src.koru.repair_runs.memory_store.MemoryRepairRunStore.claim, src.koru.repair_runs.memory_store.MemoryRepairRunStore.release, src.koru.repair_runs.memory_store.MemoryRepairRunStore.append_event, src.koru.repair_runs.memory_store.MemoryRepairRunStore.events, src.koru.repair_runs.memory_store.MemoryRepairRunStore.start_attempt
+- **Inherits**: RepairRunStore
+
+### src.koru.repair_runs.store.RepairRunStore
+> The contract. Every method is safe to call from a freshly restarted worker.
+- **Methods**: 19
+- **Key Methods**: src.koru.repair_runs.store.RepairRunStore.create_run, src.koru.repair_runs.store.RepairRunStore.get_run, src.koru.repair_runs.store.RepairRunStore.find_run, src.koru.repair_runs.store.RepairRunStore.transition, src.koru.repair_runs.store.RepairRunStore.claim, src.koru.repair_runs.store.RepairRunStore.release, src.koru.repair_runs.store.RepairRunStore.append_event, src.koru.repair_runs.store.RepairRunStore.events, src.koru.repair_runs.store.RepairRunStore.start_attempt, src.koru.repair_runs.store.RepairRunStore.finish_attempt
+- **Inherits**: ABC
 
 ### plugins.koru-autopilot-shared.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
 - **Methods**: 17
@@ -359,11 +370,6 @@ action_handoff [src.koru.autopilot.commands.handoff]
 - **Methods**: 17
 - **Key Methods**: plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.injectChat, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.calibrateProbe, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.ide, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.prep, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.focus, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.pasted, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.cache, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.captureSubmitClickPosition, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.res, plugins.koru-autopilot-shared.src.bridge-commands.SharedAutopilotBridgeCommands.match
 
-### src.koru.repair_runs.memory_store.MemoryRepairRunStore
-- **Methods**: 17
-- **Key Methods**: src.koru.repair_runs.memory_store.MemoryRepairRunStore.__init__, src.koru.repair_runs.memory_store.MemoryRepairRunStore.create_run, src.koru.repair_runs.memory_store.MemoryRepairRunStore.get_run, src.koru.repair_runs.memory_store.MemoryRepairRunStore.find_run, src.koru.repair_runs.memory_store.MemoryRepairRunStore.transition, src.koru.repair_runs.memory_store.MemoryRepairRunStore.claim, src.koru.repair_runs.memory_store.MemoryRepairRunStore.release, src.koru.repair_runs.memory_store.MemoryRepairRunStore.append_event, src.koru.repair_runs.memory_store.MemoryRepairRunStore.events, src.koru.repair_runs.memory_store.MemoryRepairRunStore.start_attempt
-- **Inherits**: RepairRunStore
-
 ### src.koru.integrations.photo_vql_drive.PhotoVqlDrive
 > One-shot photo-VQL drive: prepare (observe) then send_chat (decide/act/verify).
 - **Methods**: 16
@@ -372,12 +378,6 @@ action_handoff [src.koru.autopilot.commands.handoff]
 ### plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter
 - **Methods**: 16
 - **Key Methods**: plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
-
-### src.koru.repair_runs.store.RepairRunStore
-> The contract. Every method is safe to call from a freshly restarted worker.
-- **Methods**: 16
-- **Key Methods**: src.koru.repair_runs.store.RepairRunStore.create_run, src.koru.repair_runs.store.RepairRunStore.get_run, src.koru.repair_runs.store.RepairRunStore.find_run, src.koru.repair_runs.store.RepairRunStore.transition, src.koru.repair_runs.store.RepairRunStore.claim, src.koru.repair_runs.store.RepairRunStore.release, src.koru.repair_runs.store.RepairRunStore.append_event, src.koru.repair_runs.store.RepairRunStore.events, src.koru.repair_runs.store.RepairRunStore.start_attempt, src.koru.repair_runs.store.RepairRunStore.finish_attempt
-- **Inherits**: ABC
 
 ### src.koruide.plugin_router.PluginRouter
 > Select, enumerate and deduplicate connected plugin sessions.
@@ -526,15 +526,15 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
-### recursion__substitute
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: src.koru.queue.ticket_templates._substitute
-
 ### recursion__capture_for_verify
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.integrations.vdisplay_client._capture_for_verify
+
+### recursion__substitute
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.queue.ticket_templates._substitute
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
