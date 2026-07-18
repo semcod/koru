@@ -19,6 +19,7 @@ from koru.queue.patch_mode import (
     PATCH_DOES_NOT_APPLY,
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
+    PROMOTION_FAILED,
     PatchOutcome,
     apply_unified_diff,
 )
@@ -38,7 +39,6 @@ from koru.queue.transaction.promotion import (
 from koru.queue.transaction.result import PatchPlan, PatchTransactionResult
 from koru.queue.transaction.rollback import roll_back_failed_verify
 from koru.queue.transaction.staging import stage_patch
-from koru.queue.transaction.verification import run_verify
 from koru.queue.types import CommandResult
 
 ShellRunner = Callable[[str, Path], CommandResult]
@@ -57,7 +57,7 @@ def execute_patch_transaction(
     leaves the workspace as it found it.
     """
     diff, refusal = extract_patch(result)
-    if refusal is not None or diff is None:
+    if diff is None:
         return PatchTransactionResult(result, refusal)
 
     refusal = screen_diff_contents(diff)
@@ -88,8 +88,10 @@ def _run_isolated(
     frozen = freeze.freeze()
 
     staged = stage_patch(plan, shell_runner)
-    if staged is not None:
-        return staged
+    if not staged.isolated:
+        return _without_isolation(plan, freeze, shell_runner)
+    if staged.outcome is not None:
+        return staged.outcome
     if plan.mode == PROMOTION_BRANCH:
         # The verified result already lives on its own ref; deliberately nothing
         # is written to the shared working tree.
@@ -101,6 +103,32 @@ def _run_isolated(
     # Already verified in isolation — re-running the gate here would only
     # re-prove it against a workspace the manifest just confirmed unchanged.
     return _apply_to_workspace(plan, freeze, shell_runner, verify=False)
+
+
+def _without_isolation(
+    plan: PatchPlan,
+    freeze: ManifestFreeze,
+    shell_runner: ShellRunner,
+) -> PatchOutcome | None:
+    """Decide what a patch that could not be staged is still allowed to do.
+
+    Reached on a read-only checkout, where no worktree can be created. Branch
+    promotion is then impossible to honour — its whole promise is that the
+    shared tree is never written to — so it is refused rather than quietly
+    downgraded. The other modes fall back to patching in place, which brings
+    its own dirty-file guard and runs the gate in the workspace itself.
+    """
+    if plan.mode == PROMOTION_BRANCH:
+        return PatchOutcome(
+            code=PROMOTION_FAILED,
+            message=(
+                "promotion_mode=branch needs a staging worktree to commit into, and "
+                "one could not be created here — a read-only checkout is the usual "
+                "reason. Nothing was applied. Re-run with promotion_mode=apply to "
+                "patch the workspace directly, or from a writable checkout."
+            ),
+        )
+    return _run_direct(plan, freeze, shell_runner)
 
 
 def _run_direct(
@@ -135,7 +163,7 @@ def _apply_to_workspace(
         )
 
     if verify:
-        gate = run_verify(shell_runner, plan.verify_command, plan.project)
+        gate = shell_runner(plan.verify_command, plan.project)
         if gate.returncode != 0:
             return roll_back_failed_verify(plan, applied.changed_files, gate)
 

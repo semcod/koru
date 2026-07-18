@@ -9,7 +9,6 @@ replaced by a named profile registry without touching the transaction.
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
 from pathlib import Path
 
 from koru.queue.types import CommandResult
@@ -79,15 +78,6 @@ def skip_verify_baseline(ticket: dict | None) -> bool:
         return True
     inputs = ticket.get("inputs") or {}
     return bool(inputs.get("skip_verify_baseline") or inputs.get("expect_broken_baseline"))
-
-
-def run_verify(
-    shell_runner: Callable[[str, Path], CommandResult],
-    command: str,
-    directory: Path,
-) -> CommandResult:
-    """Run the gate in ``directory``."""
-    return shell_runner(command, directory)
 
 
 def verify_output(result: CommandResult, *, limit: int = VERIFY_OUTPUT_LIMIT) -> str:

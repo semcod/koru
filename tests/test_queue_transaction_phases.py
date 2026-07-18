@@ -8,6 +8,7 @@ inferred from a full run.
 
 from __future__ import annotations
 
+import contextlib
 import subprocess
 import tempfile
 import unittest
@@ -22,6 +23,7 @@ from koru.queue.patch_mode import (
     PROMOTION_ARTIFACT,
     PROMOTION_COMMIT,
     PROMOTION_CONFLICT,
+    PROMOTION_FAILED,
     PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
     VERIFY_FAILED_ROLLED_BACK,
@@ -180,6 +182,22 @@ class TestResolveVerifyCommand(_RepoCase):
             project = self._git_repo(tmp)
 
             self.assertEqual(resolve_verify_command(project, {}), "")
+
+    def test_a_missing_pyyaml_resolves_to_nothing_instead_of_crashing(self) -> None:
+        """The gate is unknowable without yaml, but that must not take the run down.
+
+        Naming ``yaml.YAMLError`` in the handler that also caught ``ImportError``
+        used to raise ``UnboundLocalError`` out of the whole transaction.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            (project / "koru.yaml").write_text(
+                "when:\n  before_complete_ticket:\n    commands:\n      - pytest -q\n",
+                encoding="utf-8",
+            )
+
+            with mock.patch.dict("sys.modules", {"yaml": None}):
+                self.assertEqual(resolve_verify_command(project, {}), "")
 
 
 class TestSkipVerifyBaseline(unittest.TestCase):
@@ -380,6 +398,99 @@ class TestRollback(_RepoCase):
             self.assertTrue(outcome.workspace_left_untouched)
             self.assertIn("pytest -q", outcome.message)
             self.assertIn("1 failed", outcome.message)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+
+class TestWorktreeUnavailable(_RepoCase):
+    """A checkout that cannot host a worktree must not silently lose the guards.
+
+    ``staging_worktree`` yields ``None`` on a read-only checkout — koru's own
+    noVNC image mounts the repo that way. That used to be indistinguishable from
+    "verified, promote", so the patch either vanished or landed ungated.
+    """
+
+    _REPLY = (
+        "```diff\n"
+        "diff --git a/a.txt b/a.txt\n"
+        "--- a/a.txt\n"
+        "+++ b/a.txt\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        "+new\n"
+        "```\n"
+    )
+
+    @contextlib.contextmanager
+    def _no_worktree(self):
+        @contextlib.contextmanager
+        def _unavailable(project: Path, targets: tuple[str, ...]):
+            yield None
+
+        with mock.patch(
+            "koru.queue.transaction.staging.staging_worktree", _unavailable,
+        ):
+            yield
+
+    def _apply(self, project: Path, ticket: dict, gate):
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with self._no_worktree():
+            return apply_proposed_patch(
+                project, _reply(stdout=self._REPLY), ticket, gate,
+            )[1]
+
+    def test_branch_mode_refuses_rather_than_reporting_a_patch_it_never_made(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            ticket = {"inputs": {"verify_command": "true", "promotion_mode": "branch"}}
+
+            outcome = self._apply(project, ticket, lambda cmd, cwd: _reply())
+
+            assert outcome is not None
+            self.assertEqual(outcome.code, PROMOTION_FAILED)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+            branches = subprocess.run(
+                ["git", "branch", "--list", "koru/run-*"],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout
+            self.assertEqual(branches.strip(), "", "no ref may claim an unmade patch")
+
+    def test_apply_mode_still_refuses_to_clobber_uncommitted_work(self) -> None:
+        """The dirty guard lives on the direct path, so the fallback must go there."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            (project / "a.txt").write_text("someone was editing this\n", encoding="utf-8")
+            ticket = {"inputs": {"verify_command": "true"}}
+
+            outcome = self._apply(project, ticket, lambda cmd, cwd: _reply())
+
+            assert outcome is not None
+            self.assertEqual(outcome.code, UNSAFE_DIRTY_WORKSPACE)
+            self.assertEqual(
+                (project / "a.txt").read_text(encoding="utf-8"),
+                "someone was editing this\n",
+            )
+
+    def test_apply_mode_still_runs_the_gate_and_rolls_back_when_it_fails(self) -> None:
+        """Losing isolation must not mean losing verification."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            ran: list[Path] = []
+
+            def failing_gate(command: str, cwd: Path):
+                ran.append(cwd)
+                return _reply(returncode=1, stderr="boom")
+
+            outcome = self._apply(
+                project, {"inputs": {"verify_command": "pytest -q"}}, failing_gate,
+            )
+
+            assert outcome is not None
+            self.assertEqual(outcome.code, VERIFY_FAILED_ROLLED_BACK)
+            self.assertEqual(ran, [project], "the gate must run, in the workspace itself")
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
 

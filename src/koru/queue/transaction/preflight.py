@@ -145,8 +145,12 @@ class ManifestFreeze:
     def manifest(self) -> dict | None:
         return self._manifest
 
-    def freeze(self, *, attempt: int = 1, max_attempts: int = 1) -> dict:
-        """Pin the plan if it is not pinned yet, then write it out."""
+    def freeze(self) -> dict:
+        """Pin the plan if it is not pinned yet, then write it out.
+
+        Always a first attempt: a retry does not come through here at all, it
+        arrives with the manifest ``patch_retry`` already pinned and passed in.
+        """
         if self._manifest is None:
             self._manifest = build_manifest(
                 self._plan.project,
@@ -156,8 +160,8 @@ class ManifestFreeze:
                 targets=self._plan.targets,
                 verify_command=self._plan.verify_command,
                 mode=self._plan.mode,
-                attempt=attempt,
-                max_attempts=max_attempts,
+                attempt=1,
+                max_attempts=1,
             )
         persist_manifest(self._plan.project, self._manifest)
         return self._manifest

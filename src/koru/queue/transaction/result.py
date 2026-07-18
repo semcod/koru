@@ -37,6 +37,34 @@ class PatchPlan:
 
 
 @dataclass(frozen=True)
+class StagingResult:
+    """What the worktree phase concluded — and whether it ran at all.
+
+    ``isolated=False`` means no worktree could be created, which is not the same
+    as a patch that passed. Collapsing the two into a bare ``None`` is what let
+    an ungated patch reach the workspace on a read-only checkout.
+    """
+
+    isolated: bool
+    outcome: PatchOutcome | None = None
+
+    @classmethod
+    def unavailable(cls) -> StagingResult:
+        """No worktree could be created; the caller must find another way."""
+        return cls(isolated=False)
+
+    @classmethod
+    def verified(cls) -> StagingResult:
+        """The patch applied and passed its gate in isolation."""
+        return cls(isolated=True)
+
+    @classmethod
+    def refused(cls, outcome: PatchOutcome) -> StagingResult:
+        """The patch was judged in isolation and rejected."""
+        return cls(isolated=True, outcome=outcome)
+
+
+@dataclass(frozen=True)
 class PatchTransactionResult:
     """The agent's reply, plus why the patch was refused — or ``None`` if it landed."""
 

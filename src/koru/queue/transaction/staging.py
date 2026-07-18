@@ -8,6 +8,7 @@ a discarded directory rather than a broken workspace.
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 from koru.queue.patch_mode import (
@@ -20,10 +21,9 @@ from koru.queue.patch_mode import (
     staging_worktree,
 )
 from koru.queue.transaction.promotion import commit_on_run_branch
-from koru.queue.transaction.result import PatchPlan
+from koru.queue.transaction.result import PatchPlan, StagingResult
 from koru.queue.transaction.verification import (
     BASELINE_OUTPUT_LIMIT,
-    run_verify,
     skip_verify_baseline,
     verify_output,
 )
@@ -33,42 +33,49 @@ from koru.queue.types import CommandResult
 def stage_patch(
     plan: PatchPlan,
     shell_runner: Callable[[str, Path], CommandResult],
-) -> PatchOutcome | None:
-    """Apply and verify the patch in isolation; ``None`` means it may proceed.
+) -> StagingResult:
+    """Apply and verify the patch in isolation, if isolation is available at all.
 
     Under ``promotion_mode=branch`` the verified result is committed here and
     the branch ref outlives the worktree, so the shared tree is never written to.
     """
     with staging_worktree(plan.project, plan.targets) as staged:
         if staged is None:
-            return None  # cannot isolate; the caller's dirty check still guards us
+            # Read-only checkouts cannot host a worktree. Say so rather than
+            # returning something the caller could read as "verified" — deciding
+            # what to do without isolation is not this phase's call to make.
+            return StagingResult.unavailable()
 
         baseline = _record_baseline(plan, staged, shell_runner)
 
         applied = apply_unified_diff(staged, plan.diff)
         if not applied.ok:
-            return PatchOutcome(
-                code=PATCH_DOES_NOT_APPLY,
-                message=applied.detail,
-                retryable=True,
-                diagnostics=applied.detail,
+            return StagingResult.refused(
+                PatchOutcome(
+                    code=PATCH_DOES_NOT_APPLY,
+                    message=applied.detail,
+                    retryable=True,
+                    diagnostics=applied.detail,
+                ),
             )
 
-        verify = run_verify(shell_runner, plan.verify_command, staged)
+        verify = shell_runner(plan.verify_command, staged)
         if verify.returncode != 0:
-            return _staged_verify_failure(plan, baseline, verify)
+            return StagingResult.refused(_staged_verify_failure(plan, baseline, verify))
 
         if plan.mode == PROMOTION_BRANCH:
-            return commit_on_run_branch(plan, staged, applied.changed_files)
-        return None
+            promoted = commit_on_run_branch(plan, staged, applied.changed_files)
+            if promoted is not None:
+                return StagingResult.refused(promoted)
+        return StagingResult.verified()
 
 
+@dataclass(frozen=True)
 class _Baseline:
     """Whether the gate passed *before* the patch existed, and what it said."""
 
-    def __init__(self, *, ok: bool = True, output: str = "") -> None:
-        self.ok = ok
-        self.output = output
+    ok: bool = True
+    output: str = ""
 
 
 def _record_baseline(
@@ -85,7 +92,7 @@ def _record_baseline(
     """
     if skip_verify_baseline(plan.ticket):
         return _Baseline()
-    result = run_verify(shell_runner, plan.verify_command, staged)
+    result = shell_runner(plan.verify_command, staged)
     if result.returncode == 0:
         return _Baseline()
     return _Baseline(ok=False, output=verify_output(result, limit=BASELINE_OUTPUT_LIMIT))
