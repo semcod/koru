@@ -290,6 +290,17 @@ def _commit_if_requested(
     )
 
 
+def _skip_verify_baseline(ticket: dict | None) -> bool:
+    """Repair tickets may legitimately fail verify before the patch lands."""
+    if not ticket:
+        return False
+    labels = {str(label).lower() for label in (ticket.get("labels") or []) if label}
+    if "type:development-defect" in labels:
+        return True
+    inputs = ticket.get("inputs") or {}
+    return bool(inputs.get("skip_verify_baseline") or inputs.get("expect_broken_baseline"))
+
+
 def _stage_patch_in_worktree(
     project: Path,
     diff: str,
@@ -317,19 +328,22 @@ def _stage_patch_in_worktree(
         # that resolves fixtures relative to the repo root, or otherwise assumes
         # its usual location on disk, fails inside a worktree no matter what the
         # patch says — and blaming the agent for that is a false negative.
-        baseline = shell_runner(verify_command, staged)
-        if baseline.returncode != 0:
-            output = (baseline.stderr or baseline.stdout or "").strip()[-400:]
-            return PatchOutcome(
-                code=VERIFY_BASELINE_FAILED,
-                message=(
-                    f"`{verify_command}` already fails in a clean worktree "
-                    f"(exit {baseline.returncode}), so the patch could not be judged "
-                    "there and nothing was promoted. The suite likely depends on paths "
-                    "outside the repository; re-run with KORU_QUEUE_WORKTREE=0 to "
-                    f"verify in the checkout itself. Baseline output: {output}"
-                ),
-            )
+        # Development-defect repairs are the opposite: the baseline is expected
+        # to fail until the agent fixes the declared files.
+        if not _skip_verify_baseline(ticket):
+            baseline = shell_runner(verify_command, staged)
+            if baseline.returncode != 0:
+                output = (baseline.stderr or baseline.stdout or "").strip()[-400:]
+                return PatchOutcome(
+                    code=VERIFY_BASELINE_FAILED,
+                    message=(
+                        f"`{verify_command}` already fails in a clean worktree "
+                        f"(exit {baseline.returncode}), so the patch could not be judged "
+                        "there and nothing was promoted. The suite likely depends on paths "
+                        "outside the repository; re-run with KORU_QUEUE_WORKTREE=0 to "
+                        f"verify in the checkout itself. Baseline output: {output}"
+                    ),
+                )
 
         applied = apply_unified_diff(staged, diff)
         if not applied.ok:

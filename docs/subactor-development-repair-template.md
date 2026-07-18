@@ -62,6 +62,26 @@ Override `verify_command` per ticket when the defect is outside intent-packs
 (e.g. `node --test orchestrator/tests/development-defect.test.mjs`), but keep
 commands **local** — no docker compose up, no `--apply`, no Plesk URIs.
 
+## Real-LLM pilot (queue intake)
+
+Planfile's ``TicketInputs`` schema drops Koru-only keys (`patch_mode`,
+`verify_command`, `promotion_mode`, …). For a one-shot real-LLM pilot, set the
+env fallbacks Koru already reads:
+
+```bash
+cd /home/tom/github/semcod/koru
+source .env   # OPENROUTER_API_KEY, LLM_MODEL (registry prefix ok)
+export KORU_QUEUE_PROMOTION_MODE=branch
+export KORU_QUEUE_WORKTREE=1
+export KORU_QUEUE_VERIFY_COMMAND='node --check path/to/file.mjs'
+export KORU_LLM_SHELL_FALLBACK=0
+python scripts/subactor-development-repair-pilot.py
+```
+
+The script renders ``subactor-development-repair``, adds ``executor.kind=llm``,
+imports into an isolated temp git repo, and runs ``koru --queue`` once. It never
+calls Plesk, DNS, or ``subactor ask --apply``.
+
 ## Related
 
 - [Subactor bridge doc](https://github.com/subactor/subactor/blob/main/docs/architecture/subactor-koru-development-bridge.md) (local: `/home/tom/github/subactor/docs/architecture/subactor-koru-development-bridge.md`)

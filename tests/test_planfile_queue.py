@@ -1356,6 +1356,15 @@ class TestPlanfileQueueLlm(unittest.TestCase):
         self.assertEqual(result.returncode, 3)
         self.assertIn("boom", result.stderr)
 
+    def test_normalize_openrouter_model_strips_registry_prefix(self) -> None:
+        from koru.queue import runners as runners_mod
+
+        normalized = runners_mod._normalize_llm_model(
+            "openrouter/qwen/qwen3.7-plus",
+            "https://openrouter.ai/api/v1/chat/completions",
+        )
+        self.assertEqual(normalized, "qwen/qwen3.7-plus")
+
 
 class TestQueueEditVerification(unittest.TestCase):
     """An agent that exits 0 without editing anything must not close a ticket.
@@ -2210,6 +2219,33 @@ class TestPatchMode(unittest.TestCase):
             self.assertFalse(outcome.retryable)  # re-asking cannot fix the environment
             self.assertIn("already fails in a clean worktree", outcome.message)
             # The gate ran once (baseline) and the patch was never applied there.
+            self.assertEqual(calls["n"], 1)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_development_defect_skips_verify_baseline_in_worktree(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            calls = {"n": 0}
+
+            def gate(command: str, cwd: Path):
+                calls["n"] += 1
+                return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+            ticket = {
+                "labels": ["type:development-defect"],
+                "inputs": {
+                    "verify_command": "node --test",
+                    "promotion_mode": "branch",
+                },
+            }
+            with patch.dict(os.environ, {"KORU_QUEUE_WORKTREE": "1"}):
+                _result, outcome = apply_proposed_patch(project, reply, ticket, gate)
+
+            self.assertIsNone(outcome)
             self.assertEqual(calls["n"], 1)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 

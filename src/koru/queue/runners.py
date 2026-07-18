@@ -471,6 +471,14 @@ def _handle_llm_error(
         )
 
 
+def _normalize_llm_model(model: str, endpoint: str) -> str:
+    """Strip registry prefixes before calling OpenRouter-compatible endpoints."""
+    normalized = model.strip()
+    if "openrouter.ai" in endpoint and normalized.startswith("openrouter/"):
+        return normalized.split("/", 1)[1]
+    return normalized
+
+
 def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
     """Run an LLM ticket, via a local vendor CLI or an HTTP chat-completion API.
 
@@ -482,13 +490,15 @@ def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
     openrouter.ai and ``OPENAI_API_KEY`` otherwise. Honours
     ``KORU_LLM_ENDPOINT`` for self-hosted proxies (e.g. an Ollama shim).
     """
-    model = str(request.get("model") or _DEFAULT_LLM_MODEL)
+    endpoint, api_key, key_var = _resolve_llm_endpoint_and_key(request)
+    model = _normalize_llm_model(
+        str(request.get("model") or os.getenv("LLM_MODEL") or _DEFAULT_LLM_MODEL),
+        endpoint,
+    )
 
     requested_client = _resolve_shell_llm_client(request)
     if requested_client:
         return run_shell_llm_request(request, project, requested_client)
-
-    endpoint, api_key, key_var = _resolve_llm_endpoint_and_key(request)
 
     if not api_key:
         fallback_client = _autodetect_shell_llm_client()
