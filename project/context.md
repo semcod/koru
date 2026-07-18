@@ -1,21 +1,21 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.04s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 793, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 795, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7448
-- **Total Classes**: 512
-- **Modules**: 1074
-- **Entry Points**: 2771
+- **Total Functions**: 7504
+- **Total Classes**: 513
+- **Modules**: 1076
+- **Entry Points**: 2779
 
 ## Architecture by Module
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 274
+- **Functions**: 275
 - **File**: `vdisplay_client.py`
 
 ### packages.coru.src.coru.cli
@@ -43,7 +43,7 @@
 - **File**: `bridge-network.ts`
 
 ### src.koru.scan
-- **Functions**: 65
+- **Functions**: 69
 - **File**: `scan.py`
 
 ### src.koruide.plugin_installer
@@ -111,9 +111,6 @@
 ## Key Entry Points
 
 Main execution flows into the system:
-
-### scripts.e2e_envmap_koru.main
-- **Calls**: scripts.e2e_envmap_koru._section, project.print, project.print, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section, env2llm_registry.env2llm_available, scripts.e2e_envmap_koru._section, scripts.e2e_envmap_koru._section
 
 ### src.koru.autonomy.orchestrator.orchestrator._select_auto_pipeline_profile
 - **Calls**: src.koru.autonomy.orchestrator.orchestrator._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomy.orchestrator.orchestrator._auto_value
@@ -228,21 +225,15 @@ Args:
 ### packages.nlp2coru.src.nlp2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, sub.add_parser
 
+### src.koru.cli_tagi.auto
+> Auto-commit all changes using Tagi's auto-ordering.
+- **Calls**: tagi.command, click.argument, click.option, click.option, click.option, None.resolve, click.echo, TagiIntegration
+
 ## Process Flows
 
 Key execution flows identified:
 
-### Flow 1: main
-```
-main [scripts.e2e_envmap_koru]
-  └─> _section
-      └─ →> print
-  └─> _section
-      └─ →> print
-  └─ →> print
-```
-
-### Flow 2: _select_auto_pipeline_profile
+### Flow 1: _select_auto_pipeline_profile
 ```
 _select_auto_pipeline_profile [src.koru.autonomy.orchestrator.orchestrator]
   └─> _auto_pipeline_stage
@@ -250,18 +241,18 @@ _select_auto_pipeline_profile [src.koru.autonomy.orchestrator.orchestrator]
           └─ →> parse_autopilot_status
 ```
 
-### Flow 3: from_env
+### Flow 2: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
   └─ →> env_int
 ```
 
-### Flow 4: create_app
+### Flow 3: create_app
 ```
 create_app [packages.rest2koru.src.rest2koru.app]
 ```
 
-### Flow 5: run_api_request
+### Flow 4: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
   └─ →> api_command
@@ -270,7 +261,7 @@ run_api_request [src.koru.queue.runners]
       └─> control_command
 ```
 
-### Flow 6: drive
+### Flow 5: drive
 ```
 drive [src.koru.ide_client.LegacyAutopilotClientAdapter]
   └─ →> activity
@@ -279,13 +270,13 @@ drive [src.koru.ide_client.LegacyAutopilotClientAdapter]
           └─> _ansi
 ```
 
-### Flow 7: register
+### Flow 6: register
 ```
 register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 8: action_trace
+### Flow 7: action_trace
 ```
 action_trace [src.koru.autopilot.cli_trace]
   └─> _print_observability_dsl_trace
@@ -298,16 +289,26 @@ action_trace [src.koru.autopilot.cli_trace]
       └─> decision_trace_path
 ```
 
-### Flow 9: _diagnose_bridge_after_drive_failure
+### Flow 8: _diagnose_bridge_after_drive_failure
 ```
 _diagnose_bridge_after_drive_failure [src.koru.autopilot.commands.drive]
   └─ →> runtime_for_project
       └─ →> project_event_store_path
 ```
 
-### Flow 10: append_command
+### Flow 9: append_command
 ```
 append_command [packages.dsl2koru.src.dsl2koru.events.EventStore]
+```
+
+### Flow 10: action_handoff
+```
+action_handoff [src.koru.autopilot.commands.handoff]
+  └─ →> emit_log
+      └─> _resolve_log_format
+  └─ →> emit_log
+      └─> _resolve_log_format
+  └─ →> print
 ```
 
 ## Key Classes
@@ -504,11 +505,6 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.reorder_ticket_from_dashboard
 
-### recursion__sum_structured_counts
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: src.koru.scan._sum_structured_counts
-
 ### recursion_send_chat
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -523,6 +519,11 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
+
+### recursion__sum_structured_counts
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.scan._sum_structured_counts
 
 ### recursion__substitute
 - **Type**: recursion
@@ -563,8 +564,6 @@ Key functions that process and transform data:
 
 Functions exposed as public API (no underscore prefix):
 
-- `scripts.e2e_envmap_koru.main` - 73 calls
-- `src.koru.queue.ticket_templates.validate_subactor_repair_template` - 56 calls
 - `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 54 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
@@ -574,7 +573,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
-- `src.koru.fleet_bootstrap.discover_bootstrap_candidates` - 34 calls
 - `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 34 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
@@ -600,9 +598,12 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_tagi.deploy` - 27 calls
 - `src.koru.autonomy.nxdo_discovery.run_nxdo_discovery` - 27 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
-- `src.koru.queue.ticket_templates.hydrate_subactor_repair_ticket` - 27 calls
 - `packages.nlp2coru.src.nlp2coru.cli.main` - 26 calls
 - `src.koru.cli_tagi.auto` - 26 calls
+- `src.koru.cli_strategy.strategy_main` - 26 calls
+- `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
+- `src.koru.autonomy.operator.operator_daemon.start_or_reuse_daemon` - 26 calls
+- `src.koru.autopilot.cli_parser.build_autopilot_parser` - 26 calls
 
 ## System Interactions
 
@@ -610,8 +611,6 @@ How components interact:
 
 ```mermaid
 graph TD
-    main --> _section
-    main --> print
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
@@ -640,6 +639,8 @@ graph TD
     action_trace --> load_recent_decision
     action_trace --> print
     action_trace --> _print_observability
+    action_trace --> _print_drive_dsl_tra
+    _diagnose_bridge_aft --> bool
 ```
 
 ## Reverse Engineering Guidelines

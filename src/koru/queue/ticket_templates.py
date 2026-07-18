@@ -61,33 +61,24 @@ def load_ticket_template(name: str) -> dict[str, Any]:
     return data
 
 
-def validate_subactor_repair_template(data: dict[str, Any]) -> list[str]:
-    """Return validation errors; empty list means the template schema is sound."""
-    errors: list[str] = []
-    if data.get("schema") != _TEMPLATE_SCHEMA:
-        errors.append(f"schema must be {_TEMPLATE_SCHEMA!r}")
-    if data.get("id") != SUBACTOR_DEVELOPMENT_REPAIR:
-        errors.append(f"id must be {SUBACTOR_DEVELOPMENT_REPAIR!r}")
-
-    ticket = data.get("ticket")
-    if not isinstance(ticket, dict):
-        return errors + ["ticket must be a mapping"]
-
-    files = ticket.get("files")
+def _validate_ticket_files(files: Any) -> list[str]:
     if not isinstance(files, list) or not (1 <= len(files) <= 2):
-        errors.append("ticket.files must list 1–2 placeholder paths")
-    elif not all(isinstance(item, str) and item.strip() for item in files):
-        errors.append("ticket.files entries must be non-empty strings")
+        return ["ticket.files must list 1–2 placeholder paths"]
+    if not all(isinstance(item, str) and item.strip() for item in files):
+        return ["ticket.files entries must be non-empty strings"]
+    return []
 
-    executor = ticket.get("executor")
+
+def _validate_ticket_executor(executor: Any) -> list[str]:
     if not isinstance(executor, dict):
-        errors.append("ticket.executor must be a mapping")
-    elif str(executor.get("kind") or "").strip().lower() != "llm":
-        errors.append("ticket.executor.kind must be llm")
+        return ["ticket.executor must be a mapping"]
+    if str(executor.get("kind") or "").strip().lower() != "llm":
+        return ["ticket.executor.kind must be llm"]
+    return []
 
-    inputs = ticket.get("inputs")
-    if not isinstance(inputs, dict):
-        return errors + ["ticket.inputs must be a mapping"]
+
+def _validate_required_input_flags(inputs: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     llm_model = str(inputs.get("llm_model") or "").strip()
     if not llm_model:
         errors.append("ticket.inputs.llm_model must be non-empty")
@@ -101,25 +92,58 @@ def validate_subactor_repair_template(data: dict[str, Any]) -> list[str]:
         errors.append("ticket.inputs.promotion_mode must be branch")
     if inputs.get("worktree") is not True:
         errors.append("ticket.inputs.worktree must be true")
+    return errors
 
+
+def _validate_max_patch_attempts(inputs: dict[str, Any]) -> list[str]:
     try:
         attempts = int(inputs.get("max_patch_attempts"))
     except (TypeError, ValueError):
-        errors.append("ticket.inputs.max_patch_attempts must be an integer")
-    else:
-        if attempts < 1 or attempts > 3:
-            errors.append("ticket.inputs.max_patch_attempts must be 1–3")
+        return ["ticket.inputs.max_patch_attempts must be an integer"]
+    if attempts < 1 or attempts > 3:
+        return ["ticket.inputs.max_patch_attempts must be 1–3"]
+    return []
 
+
+def _validate_verify_command(inputs: dict[str, Any]) -> list[str]:
     verify = str(inputs.get("verify_command") or "").strip()
     if not verify:
-        errors.append("ticket.inputs.verify_command must be non-empty")
-    else:
-        lowered = verify.lower()
-        for fragment in _FORBIDDEN_VERIFY_FRAGMENTS:
-            if fragment in lowered:
-                errors.append(
-                    f"ticket.inputs.verify_command must not reference {fragment!r}"
-                )
+        return ["ticket.inputs.verify_command must be non-empty"]
+    lowered = verify.lower()
+    return [
+        f"ticket.inputs.verify_command must not reference {fragment!r}"
+        for fragment in _FORBIDDEN_VERIFY_FRAGMENTS
+        if fragment in lowered
+    ]
+
+
+def _validate_ticket_inputs(inputs: dict[str, Any]) -> list[str]:
+    return [
+        *_validate_required_input_flags(inputs),
+        *_validate_max_patch_attempts(inputs),
+        *_validate_verify_command(inputs),
+    ]
+
+
+def validate_subactor_repair_template(data: dict[str, Any]) -> list[str]:
+    """Return validation errors; empty list means the template schema is sound."""
+    errors: list[str] = []
+    if data.get("schema") != _TEMPLATE_SCHEMA:
+        errors.append(f"schema must be {_TEMPLATE_SCHEMA!r}")
+    if data.get("id") != SUBACTOR_DEVELOPMENT_REPAIR:
+        errors.append(f"id must be {SUBACTOR_DEVELOPMENT_REPAIR!r}")
+
+    ticket = data.get("ticket")
+    if not isinstance(ticket, dict):
+        return errors + ["ticket must be a mapping"]
+
+    errors.extend(_validate_ticket_files(ticket.get("files")))
+    errors.extend(_validate_ticket_executor(ticket.get("executor")))
+
+    inputs = ticket.get("inputs")
+    if not isinstance(inputs, dict):
+        return errors + ["ticket.inputs must be a mapping"]
+    errors.extend(_validate_ticket_inputs(inputs))
 
     forbidden = data.get("forbidden")
     if not isinstance(forbidden, list) or len(forbidden) < 3:
@@ -132,8 +156,7 @@ def validate_subactor_repair_template(data: dict[str, Any]) -> list[str]:
     return errors
 
 
-def variables_from_development_defect(payload: dict[str, Any]) -> dict[str, str]:
-    """Map Subactor orchestrator ``development_defect`` payload to template vars."""
+def _resolve_affected_files(payload: dict[str, Any]) -> tuple[str, str]:
     affected = [str(path) for path in (payload.get("affected_files") or []) if path][:2]
     fallback_files = (
         "orchestrator/bin/subactor-run.mjs",
@@ -141,13 +164,21 @@ def variables_from_development_defect(payload: dict[str, Any]) -> dict[str, str]
     )
     while len(affected) < 2:
         affected.append(fallback_files[len(affected)])
+    return affected[0], affected[1]
 
+
+def _build_prompt_body(payload: dict[str, Any]) -> str:
     acceptance = [str(item) for item in (payload.get("acceptance_tests") or []) if item]
     prompt_lines = [f"- Acceptance: {item}" for item in acceptance[:5]]
     message = str(payload.get("message") or "").strip()
     if message:
         prompt_lines.insert(0, message[:500])
+    return "\n".join(prompt_lines) if prompt_lines else "Add focused regression coverage."
 
+
+def variables_from_development_defect(payload: dict[str, Any]) -> dict[str, str]:
+    """Map Subactor orchestrator ``development_defect`` payload to template vars."""
+    file_1, file_2 = _resolve_affected_files(payload)
     return {
         "COMPONENT": str(payload.get("component") or "unknown"),
         "ERROR_CODE": str(payload.get("error_code") or "unknown"),
@@ -155,9 +186,9 @@ def variables_from_development_defect(payload: dict[str, Any]) -> dict[str, str]
         "DISCOVERED_IN": str(
             payload.get("discovered_in") or payload.get("source_ticket_id") or "",
         ),
-        "FILE_1": affected[0],
-        "FILE_2": affected[1],
-        "PROMPT_BODY": "\n".join(prompt_lines) if prompt_lines else "Add focused regression coverage.",
+        "FILE_1": file_1,
+        "FILE_2": file_2,
+        "PROMPT_BODY": _build_prompt_body(payload),
     }
 
 
@@ -179,18 +210,10 @@ def _verify_from_acceptance_criteria(ticket: dict[str, Any]) -> str:
     return ""
 
 
-def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
-    """Restore Koru patch policy when planfile import drops unknown ``inputs`` keys."""
-    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
-    if "source:subactor-bridge" not in labels:
-        return ticket
-
-    template = load_ticket_template(SUBACTOR_DEVELOPMENT_REPAIR)
-    template_ticket = template["ticket"]
-    template_inputs = template_ticket.get("inputs") or {}
-    out = dict(ticket)
-    inputs = dict(out.get("inputs") or {})
-
+def _resolve_hydrated_inputs(
+    ticket: dict[str, Any], template_inputs: dict[str, Any]
+) -> dict[str, Any]:
+    inputs = dict(ticket.get("inputs") or {})
     for key in ("patch_mode", "promotion_mode", "worktree", "max_patch_attempts"):
         if key not in inputs and key in template_inputs:
             inputs[key] = template_inputs[key]
@@ -201,15 +224,28 @@ def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
     # let that example outrank the command the ticket actually declared. A gate
     # naming a file the project does not have fails every patch put through it.
     if not str(inputs.get("verify_command") or "").strip():
-        from_criteria = _verify_from_acceptance_criteria(out)
+        from_criteria = _verify_from_acceptance_criteria(ticket)
         if from_criteria:
             inputs["verify_command"] = from_criteria
         elif "verify_command" in template_inputs:
             inputs["verify_command"] = template_inputs["verify_command"]
     if not str(inputs.get("llm_model") or "").strip():
         inputs["llm_model"] = resolve_repair_llm_model()
+    return inputs
 
-    out["inputs"] = inputs
+
+def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
+    """Restore Koru patch policy when planfile import drops unknown ``inputs`` keys."""
+    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
+    if "source:subactor-bridge" not in labels:
+        return ticket
+
+    template = load_ticket_template(SUBACTOR_DEVELOPMENT_REPAIR)
+    template_ticket = template["ticket"]
+    template_inputs = template_ticket.get("inputs") or {}
+    out = dict(ticket)
+    out["inputs"] = _resolve_hydrated_inputs(ticket, template_inputs)
+
     executor = out.get("executor") or {}
     if not str(executor.get("kind") or "").strip():
         out["executor"] = dict(template_ticket.get("executor") or {"kind": "llm", "mode": "automatic"})

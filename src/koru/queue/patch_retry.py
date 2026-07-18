@@ -29,6 +29,7 @@ from koru.queue.evidence import (
     patch_attempt_record,
     persist_evidence,
 )
+from koru.queue.journal import PHASE_COMPLETED, RunJournal
 from koru.queue.patch_mode import (
     MANIFEST_MISMATCH,
     PATCH_DOES_NOT_APPLY,
@@ -111,54 +112,90 @@ def apply_patch_with_retry(
         if outcome is None or not outcome.retryable or remaining <= 0:
             return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts)
 
-        # Pin the base on the first failure — under the run_id the transaction
-        # already used, so every manifest and the evidence of this run share one
-        # directory. Every later attempt is judged against that same snapshot,
-        # so a retry can never silently rebase onto a workspace another session
-        # has moved in the meantime.
-        if manifest is None:
-            manifest = _pin_base(
-                project,
-                ticket,
-                result,
-                budget,
-                run_id=transaction.plan.run_id if transaction.plan else None,
-            )
-            persist_manifest(project, manifest)
-        elif (drift := manifest_drift(project, manifest)):
-            aborted = PatchOutcome(
-                code=MANIFEST_MISMATCH,
-                message=(
-                    "the workspace changed between patch attempts, so the retry was "
-                    f"abandoned rather than rebased onto a moving target ({drift}). "
-                    "Re-run the ticket against the new state."
-                ),
-            )
-            attempts.append(
-                patch_attempt_record(
-                    len(attempts) + 1,
-                    patch_sha256=None,
-                    outcome_code=aborted.code,
-                    message=aborted.message,
-                ),
-            )
+        manifest, aborted = _pin_or_detect_drift(
+            project, ticket, result, budget, manifest, transaction, attempts,
+        )
+        if aborted is not None:
             return result, aborted, _finish_run(project, ticket, transaction, manifest, attempts)
 
         remaining -= 1
-        # git and test output can quote file contents, so redact before it
-        # travels back out to the model.
-        diagnostic = redact_secrets(outcome.diagnostics or outcome.message)
-        prompt = build_retry_prompt(base_prompt, diagnostic)
-        if manifest and outcome.code == PATCH_DOES_NOT_APPLY:
-            # Safe only because the manifest guarantees these contents are still
-            # the ones the patch must apply to.
-            prompt += current_file_excerpt(project, tuple(manifest.get("touched_files") or ()))
-        retry_action = {**action, "prompt": prompt}
-        if enrich is not None:
-            retry_action = enrich(retry_action, project)
+        retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
         result = llm_runner(retry_action, project)
         if result.returncode != 0:
             return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts)
+
+
+def _pin_or_detect_drift(
+    project: Path,
+    ticket: dict,
+    result: CommandResult,
+    budget: int,
+    manifest: dict | None,
+    transaction: PatchTransactionResult,
+    attempts: list[dict],
+) -> tuple[dict | None, PatchOutcome | None]:
+    """Pin the base on the first failure, or abort if it since drifted.
+
+    Pinning happens under the run_id the transaction already used, so every
+    manifest and the evidence of this run share one directory. Every later
+    attempt is judged against that same snapshot, so a retry can never
+    silently rebase onto a workspace another session has moved in the
+    meantime.
+    """
+    if manifest is None:
+        manifest = _pin_base(
+            project,
+            ticket,
+            result,
+            budget,
+            run_id=transaction.plan.run_id if transaction.plan else None,
+        )
+        persist_manifest(project, manifest)
+        return manifest, None
+
+    drift = manifest_drift(project, manifest)
+    if not drift:
+        return manifest, None
+
+    aborted = PatchOutcome(
+        code=MANIFEST_MISMATCH,
+        message=(
+            "the workspace changed between patch attempts, so the retry was "
+            f"abandoned rather than rebased onto a moving target ({drift}). "
+            "Re-run the ticket against the new state."
+        ),
+    )
+    attempts.append(
+        patch_attempt_record(
+            len(attempts) + 1,
+            patch_sha256=None,
+            outcome_code=aborted.code,
+            message=aborted.message,
+        ),
+    )
+    return manifest, aborted
+
+
+def _build_retry_action(
+    action: dict[str, Any],
+    base_prompt: str,
+    project: Path,
+    manifest: dict | None,
+    outcome: PatchOutcome,
+    enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None,
+) -> dict[str, Any]:
+    # git and test output can quote file contents, so redact before it
+    # travels back out to the model.
+    diagnostic = redact_secrets(outcome.diagnostics or outcome.message)
+    prompt = build_retry_prompt(base_prompt, diagnostic)
+    if manifest and outcome.code == PATCH_DOES_NOT_APPLY:
+        # Safe only because the manifest guarantees these contents are still
+        # the ones the patch must apply to.
+        prompt += current_file_excerpt(project, tuple(manifest.get("touched_files") or ()))
+    retry_action = {**action, "prompt": prompt}
+    if enrich is not None:
+        retry_action = enrich(retry_action, project)
+    return retry_action
 
 
 def _attempt_record(attempt: int, transaction: PatchTransactionResult) -> dict:
@@ -216,7 +253,32 @@ def _finish_run(
         persist_evidence(project, bundle)
     except OSError:
         pass
+    _journal_terminal(project, run_id, bundle, transaction)
     return bundle
+
+
+def _journal_terminal(
+    project: Path,
+    run_id: str,
+    bundle: dict,
+    transaction: PatchTransactionResult,
+) -> None:
+    """Close the run's journal with its verdict.
+
+    Refusals were journaled by the transaction as they happened, and artifact
+    delivery writes its own ``completed`` — only a landed patch still owes the
+    journal its terminal event. Best-effort by design: the journal aids
+    recovery, while the completion *gate* is the evidence bundle.
+    """
+    plan = transaction.plan
+    if transaction.outcome is not None or plan is None or plan.mode == PROMOTION_ARTIFACT:
+        return
+    try:
+        RunJournal(project, run_id).append(
+            PHASE_COMPLETED, data={"verdict": bundle["verdict"]},
+        )
+    except OSError:
+        pass
 
 
 def _verdict(plan: PatchPlan | None, outcome: PatchOutcome | None) -> str:

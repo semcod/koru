@@ -4951,6 +4951,26 @@ def _type_text_paste_or_type(
     return result
 
 
+def _type_text_prepare_click_context(
+    *,
+    x: int,
+    y: int,
+    ide: str,
+    focus_ok: bool,
+    focus_res: dict[str, Any] | None,
+    force_point_click: bool,
+    vql_target: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool, dict[str, Any]]:
+    hints = _ide_hints(ide) if ide and ide != "auto" else {}
+    jetbrains = _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
+    must_click = force_point_click or jetbrains or not focus_ok
+    target_for_log = vql_target or (focus_res or {}).get("vql_target") or {
+        "click_center": {"x": x, "y": y},
+        "note": "pre-type chat write",
+    }
+    return hints, must_click, target_for_log
+
+
 def _type_text_at_vql_coords(
     value: str,
     *,
@@ -4965,14 +4985,16 @@ def _type_text_at_vql_coords(
     command_plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Click caret at VQL capture coords, then type/paste via resolved pointer input."""
-    hints = _ide_hints(ide) if ide and ide != "auto" else {}
+    hints, must_click, target_for_log = _type_text_prepare_click_context(
+        x=x,
+        y=y,
+        ide=ide,
+        focus_ok=focus_ok,
+        focus_res=focus_res,
+        force_point_click=force_point_click,
+        vql_target=vql_target,
+    )
     result: dict[str, Any] = {"ok": False, "coords": {"x": x, "y": y}}
-    jetbrains = _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
-    must_click = force_point_click or jetbrains or not focus_ok
-    target_for_log = vql_target or (focus_res or {}).get("vql_target") or {
-        "click_center": {"x": x, "y": y},
-        "note": "pre-type chat write",
-    }
     blocking_warnings = _type_text_blocking_warnings(
         x=x, y=y, ide=ide, target_for_log=target_for_log, command_plan=command_plan
     )

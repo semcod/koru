@@ -159,9 +159,21 @@ def current_head(project: Path) -> str:
 
 
 def repository_is_clean(project: Path) -> bool:
-    """Whether the working tree has no uncommitted changes at all."""
+    """Whether the working tree has no uncommitted changes at all.
+
+    koru's own run bookkeeping (``.koru/`` journals, manifests, evidence) does
+    not count: it is written by the very run asking the question, and treating
+    it as dirt would make every journaled run refuse its own commit.
+    """
     status = _git(project, "status", "--porcelain")
-    return status.returncode == 0 and not (status.stdout or "").strip()
+    if status.returncode != 0:
+        return False
+    lines = [
+        line
+        for line in (status.stdout or "").splitlines()
+        if line.strip() and not line[3:].startswith(".koru/")
+    ]
+    return not lines
 
 
 def commit_on_main(

@@ -304,6 +304,45 @@ def _flatten_llm_messages(messages: list[dict[str, str]]) -> str:
     return "\n\n".join(parts)
 
 
+def _resolve_shell_llm_call_args(request: dict[str, Any]) -> tuple[str, str, str, float]:
+    """Resolve the prompt, model, execute profile, and timeout for a vendor CLI call."""
+    prompt = _flatten_llm_messages(_build_llm_messages(request))
+    model = str(request.get("model") or os.getenv("KORU_TILLM_MODEL") or "").strip()
+    profile = (os.getenv("KORU_TILLM_EXECUTE_PROFILE") or "default").strip() or "default"
+    # An agent CLI editing real code routinely runs for many minutes, so the
+    # HTTP-scale default does not apply here. Explicit per-ticket timeouts win.
+    timeout = request.get("timeout_seconds") or os.getenv("KORU_LLM_SHELL_TIMEOUT_SECONDS") or 1800.0
+    return prompt, model, profile, float(timeout)
+
+
+def _shell_llm_error_result(client_id: str, model: str, exc: Exception) -> LlmRunResult:
+    """Build the blocked-ticket result for a failed vendor CLI invocation."""
+    return LlmRunResult(
+        returncode=1,
+        stdout="",
+        stderr=f"vendor CLI '{client_id}' failed: {exc}",
+        status_code=0,
+        model=model or client_id,
+        usage={},
+        raw={},
+    )
+
+
+def _parse_shell_llm_reply(reply: dict[str, Any], model: str, client_id: str) -> LlmRunResult:
+    """Translate a tillm bridge reply into an LlmRunResult."""
+    exit_code = int(reply.get("exit_code") or 0)
+    succeeded = bool(reply.get("ok")) and exit_code == 0
+    return LlmRunResult(
+        returncode=0 if succeeded else (exit_code or 1),
+        stdout=_as_text(reply.get("stdout")),
+        stderr=_as_text(reply.get("stderr")),
+        status_code=0,
+        model=model or client_id,
+        usage={},
+        raw=dict(reply),
+    )
+
+
 def run_shell_llm_request(
     request: dict[str, Any],
     project: Path,
@@ -316,12 +355,7 @@ def run_shell_llm_request(
     """
     from koru.tillm_bridge import drive_shell_chat
 
-    prompt = _flatten_llm_messages(_build_llm_messages(request))
-    model = str(request.get("model") or os.getenv("KORU_TILLM_MODEL") or "").strip()
-    profile = (os.getenv("KORU_TILLM_EXECUTE_PROFILE") or "default").strip() or "default"
-    # An agent CLI editing real code routinely runs for many minutes, so the
-    # HTTP-scale default does not apply here. Explicit per-ticket timeouts win.
-    timeout = request.get("timeout_seconds") or os.getenv("KORU_LLM_SHELL_TIMEOUT_SECONDS") or 1800.0
+    prompt, model, profile, timeout = _resolve_shell_llm_call_args(request)
     try:
         reply = drive_shell_chat(
             client_id=client_id,
@@ -330,30 +364,12 @@ def run_shell_llm_request(
             execute=True,
             model=model or None,
             execute_profile=profile,
-            timeout_seconds=float(timeout),
+            timeout_seconds=timeout,
         )
     except Exception as exc:  # noqa: BLE001 - surface any bridge failure as a blocked ticket
-        return LlmRunResult(
-            returncode=1,
-            stdout="",
-            stderr=f"vendor CLI '{client_id}' failed: {exc}",
-            status_code=0,
-            model=model or client_id,
-            usage={},
-            raw={},
-        )
+        return _shell_llm_error_result(client_id, model, exc)
 
-    exit_code = int(reply.get("exit_code") or 0)
-    succeeded = bool(reply.get("ok")) and exit_code == 0
-    return LlmRunResult(
-        returncode=0 if succeeded else (exit_code or 1),
-        stdout=_as_text(reply.get("stdout")),
-        stderr=_as_text(reply.get("stderr")),
-        status_code=0,
-        model=model or client_id,
-        usage={},
-        raw=dict(reply),
-    )
+    return _parse_shell_llm_reply(reply, model, client_id)
 
 
 def _build_llm_messages(request: dict[str, Any]) -> list[dict[str, str]]:

@@ -6,8 +6,10 @@ model out of it is what makes the outcome reproducible: the same patch against
 the same workspace always resolves the same way, so retry policy can live above
 it without muddying the decision.
 
-Every phase either refuses (returning a ``PatchOutcome``) or hands control on.
-Read top to bottom, the orchestrator *is* the transaction's contract.
+Every phase either refuses (returning a ``PatchOutcome``) or hands control on,
+and every step is journaled as it happens — decisions once, mutations as an
+intent/completion pair — so a restart can tell what was underway. Read top to
+bottom, the orchestrator *is* the transaction's contract.
 """
 
 from __future__ import annotations
@@ -15,10 +17,27 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
+from koru.queue.journal import (
+    PHASE_APPLIED,
+    PHASE_APPLYING,
+    PHASE_COMPLETED,
+    PHASE_FROZEN,
+    PHASE_PROMOTED,
+    PHASE_PROMOTING,
+    PHASE_REFUSED,
+    PHASE_RESOLVED,
+    PHASE_ROLLED_BACK,
+    PHASE_STAGED,
+    PHASE_STAGING,
+    PHASE_STAGING_UNAVAILABLE,
+    PHASE_VERIFIED,
+    RunJournal,
+)
 from koru.queue.patch_mode import (
     PATCH_DOES_NOT_APPLY,
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
+    PROMOTION_COMMIT,
     PROMOTION_FAILED,
     VERIFY_PROFILE_INVALID,
     PatchOutcome,
@@ -56,6 +75,9 @@ def execute_patch_transaction(
 
     A patch that fails its ticket's verify command is reverted, so a failed run
     leaves the workspace as it found it.
+
+    Refusals that fire before a plan exists (no diff, symlink screen) are not
+    journaled: there is no run identity yet, and nothing was going to change.
     """
     diff, refusal = extract_patch(result)
     if diff is None:
@@ -66,11 +88,22 @@ def execute_patch_transaction(
         return PatchTransactionResult(result, refusal)
 
     plan = build_patch_plan(project, ticket, diff, manifest)
+    journal = RunJournal(project, plan.run_id)
+    journal.append(
+        PHASE_RESOLVED,
+        data={
+            "mode": plan.mode,
+            "verify_source": plan.verify_source,
+            "isolated": plan.isolated,
+            "targets": sorted(plan.targets),
+        },
+    )
     if plan.verify_error is not None:
         # The ticket asked for a gate that cannot be honoured. Refusing beats
         # every alternative: falling through to a weaker gate would let a typo
         # disable verification, and artifact mode would still record a run
         # whose governance was misconfigured.
+        journal.append(PHASE_REFUSED, data={"code": VERIFY_PROFILE_INVALID})
         return PatchTransactionResult(
             result,
             PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
@@ -79,49 +112,64 @@ def execute_patch_transaction(
     freeze = ManifestFreeze(plan, manifest)
 
     if plan.mode == PROMOTION_ARTIFACT:
-        deliver_patch_artifact(plan, freeze.freeze())
+        frozen = freeze.freeze()
+        journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+        deliver_patch_artifact(plan, frozen)
+        journal.append(PHASE_COMPLETED, data={"delivery": "artifact"})
         return PatchTransactionResult(result, None, plan=plan, manifest=freeze.manifest)
 
     refusal = screen_promotion_preconditions(plan)
     if refusal is not None:
+        journal.append(PHASE_REFUSED, data={"code": refusal.code})
         return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
 
     run = _run_isolated if plan.isolated else _run_direct
-    return PatchTransactionResult(
-        result, run(plan, freeze, shell_runner), plan=plan, manifest=freeze.manifest,
-    )
+    outcome = run(plan, freeze, shell_runner, journal)
+    return PatchTransactionResult(result, outcome, plan=plan, manifest=freeze.manifest)
 
 
 def _run_isolated(
     plan: PatchPlan,
     freeze: ManifestFreeze,
     shell_runner: ShellRunner,
+    journal: RunJournal,
 ) -> PatchOutcome | None:
     """Verify in a worktree first; only a proven patch reaches the workspace."""
     frozen = freeze.freeze()
+    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
 
+    journal.append(PHASE_STAGING, data={"mode": plan.mode})
     staged = stage_patch(plan, shell_runner)
     if not staged.isolated:
-        return _without_isolation(plan, freeze, shell_runner)
+        journal.append(PHASE_STAGING_UNAVAILABLE)
+        return _without_isolation(plan, freeze, shell_runner, journal)
     if staged.outcome is not None:
+        journal.append(PHASE_REFUSED, data={"code": staged.outcome.code})
         return staged.outcome
     if plan.mode == PROMOTION_BRANCH:
         # The verified result already lives on its own ref; deliberately nothing
-        # is written to the shared working tree.
+        # is written to the shared working tree. The branch commit happened
+        # under the ``staging`` intent, so ``staged`` closes it and ``promoted``
+        # records where the result now lives.
+        journal.append(PHASE_STAGED, data={"verified": True})
+        journal.append(PHASE_PROMOTED, data={"branch": f"koru/run-{plan.run_id}"})
         return None
+    journal.append(PHASE_STAGED, data={"verified": True})
 
     conflict = guard_promotion(plan, frozen)
     if conflict is not None:
+        journal.append(PHASE_REFUSED, data={"code": conflict.code})
         return conflict
     # Already verified in isolation — re-running the gate here would only
     # re-prove it against a workspace the manifest just confirmed unchanged.
-    return _apply_to_workspace(plan, freeze, shell_runner, verify=False)
+    return _apply_to_workspace(plan, freeze, shell_runner, journal, verify=False)
 
 
 def _without_isolation(
     plan: PatchPlan,
     freeze: ManifestFreeze,
     shell_runner: ShellRunner,
+    journal: RunJournal,
 ) -> PatchOutcome | None:
     """Decide what a patch that could not be staged is still allowed to do.
 
@@ -132,6 +180,7 @@ def _without_isolation(
     its own dirty-file guard and runs the gate in the workspace itself.
     """
     if plan.mode == PROMOTION_BRANCH:
+        journal.append(PHASE_REFUSED, data={"code": PROMOTION_FAILED})
         return PatchOutcome(
             code=PROMOTION_FAILED,
             message=(
@@ -141,43 +190,64 @@ def _without_isolation(
                 "patch the workspace directly, or from a writable checkout."
             ),
         )
-    return _run_direct(plan, freeze, shell_runner)
+    return _run_direct(plan, freeze, shell_runner, journal)
 
 
 def _run_direct(
     plan: PatchPlan,
     freeze: ManifestFreeze,
     shell_runner: ShellRunner,
+    journal: RunJournal,
 ) -> PatchOutcome | None:
     """Patch the workspace in place, with ``git checkout --`` as the only undo."""
     refusal = screen_direct_apply(plan)
     if refusal is not None:
+        journal.append(PHASE_REFUSED, data={"code": refusal.code})
         return refusal
-    return _apply_to_workspace(plan, freeze, shell_runner, verify=bool(plan.verify_command))
+    frozen = freeze.freeze()
+    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    return _apply_to_workspace(
+        plan, freeze, shell_runner, journal, verify=bool(plan.verify_command),
+    )
 
 
 def _apply_to_workspace(
     plan: PatchPlan,
     freeze: ManifestFreeze,
     shell_runner: ShellRunner,
+    journal: RunJournal,
     *,
     verify: bool,
 ) -> PatchOutcome | None:
     """Write the patch into the real tree, gate it if asked, then promote."""
     freeze.freeze()
 
+    journal.append(PHASE_APPLYING)
     applied = apply_unified_diff(plan.project, plan.diff)
     if not applied.ok:
+        journal.append(PHASE_REFUSED, data={"code": PATCH_DOES_NOT_APPLY})
         return PatchOutcome(
             code=PATCH_DOES_NOT_APPLY,
             message=applied.detail,
             retryable=True,
             diagnostics=applied.detail,
         )
+    journal.append(PHASE_APPLIED, data={"changed_files": sorted(applied.changed_files)})
 
     if verify:
         gate = shell_runner(plan.verify_command, plan.project)
         if gate.returncode != 0:
-            return roll_back_failed_verify(plan, applied.changed_files, gate)
+            outcome = roll_back_failed_verify(plan, applied.changed_files, gate)
+            journal.append(PHASE_ROLLED_BACK, data={"code": outcome.code})
+            return outcome
+        journal.append(PHASE_VERIFIED)
 
-    return commit_if_requested(plan, applied.changed_files)
+    if plan.mode != PROMOTION_COMMIT:
+        return None
+    journal.append(PHASE_PROMOTING, data={"mode": plan.mode})
+    outcome = commit_if_requested(plan, applied.changed_files)
+    if outcome is not None:
+        journal.append(PHASE_ROLLED_BACK, data={"code": outcome.code})
+        return outcome
+    journal.append(PHASE_PROMOTED, data={"mode": plan.mode})
+    return None

@@ -902,6 +902,42 @@ def _ticket_workflow_hints(
     return hints
 
 
+def _resolve_propose_edits_ticket(
+    project: Path, ticket_id: str
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    from koru.context import build_context
+
+    try:
+        ctx = build_context(project=project)
+    except Exception as exc:
+        return None, {"ticket_id": ticket_id, "edits": [], "error": str(exc)}
+
+    all_tickets = ctx.get("all_tickets") or []
+    ticket = _find_ticket(all_tickets, ticket_id)
+    if ticket is None:
+        return None, {
+            "ticket_id": ticket_id,
+            "edits": [],
+            "error": f"Ticket {ticket_id} not found in queue.",
+        }
+    return ticket, None
+
+
+def _scope_ticket_files(ticket_files: list[Any], files_scope: list[Any]) -> list[Any]:
+    if not files_scope:
+        return ticket_files
+    return [f for f in ticket_files if f in files_scope]
+
+
+def _collect_edit_contexts(
+    project: Path, ticket_files: list[Any], max_edits: Any
+) -> list[dict[str, Any]]:
+    edits_context = [_build_edit_context(project, file_path) for file_path in ticket_files]
+    if max_edits and len(edits_context) > max_edits:
+        edits_context = edits_context[:max_edits]
+    return edits_context
+
+
 def tool_propose_edits(arguments: dict[str, Any]) -> dict[str, Any]:
     """Generate proposed file edits for a ticket (read-only, no writes)."""
     try:
@@ -912,35 +948,17 @@ def tool_propose_edits(arguments: dict[str, Any]) -> dict[str, Any]:
     files_scope = arguments.get("files_scope") or []
     max_edits = arguments.get("max_edits")
 
-    from koru.context import build_context
+    ticket, error = _resolve_propose_edits_ticket(project, ticket_id)
+    if error is not None:
+        return error
 
-    try:
-        ctx = build_context(project=project)
-    except Exception as exc:
-        return {"ticket_id": ticket_id, "edits": [], "error": str(exc)}
-
-    all_tickets = ctx.get("all_tickets") or []
-    ticket = _find_ticket(all_tickets, ticket_id)
-
-    if ticket is None:
-        return {
-            "ticket_id": ticket_id,
-            "edits": [],
-            "error": f"Ticket {ticket_id} not found in queue.",
-        }
-
-    ticket_files = ticket.get("files") or []
-    if files_scope:
-        ticket_files = [f for f in ticket_files if f in files_scope]
+    ticket_files = _scope_ticket_files(ticket.get("files") or [], files_scope)
 
     inputs = ticket.get("inputs") or {}
     prompt = inputs.get("prompt", "")
     description = ticket.get("name", "")
 
-    edits_context = [_build_edit_context(project, file_path) for file_path in ticket_files]
-
-    if max_edits and len(edits_context) > max_edits:
-        edits_context = edits_context[:max_edits]
+    edits_context = _collect_edit_contexts(project, ticket_files, max_edits)
 
     return {
         "ticket_id": ticket_id,

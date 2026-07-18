@@ -586,6 +586,37 @@ def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
 _CC_LOCATION_RE = re.compile(r"at `(?P<file>[^`:]+):(?P<line>\d+)`")
 
 
+def _load_yaml_mapping(candidates: tuple[Path, ...]) -> dict | None:
+    path = next((p for p in candidates if p.is_file()), None)
+    if path is None:
+        return None
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
+    except (OSError, yaml.YAMLError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _add_location(locations: dict[str, list[str]], alias: str, located: str) -> None:
+    bucket = locations.setdefault(alias, [])
+    if located not in bucket:
+        bucket.append(located)
+
+
+def _location_from_cc_ticket(ticket: object) -> tuple[str, str] | None:
+    if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_cc":
+        return None
+    files = [str(f) for f in (ticket.get("files") or []) if f]
+    if not files:
+        return None
+    match = _CC_LOCATION_RE.search(str(ticket.get("description") or ""))
+    located = f"{files[0]}:{match.group('line')}" if match else files[0]
+    key = str(ticket.get("dedupe_key") or "").rsplit(":", 1)[-1].strip()
+    if not key:
+        return None
+    return key, located
+
+
 def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
     """Map a function name to the source file(s) that define it.
 
@@ -602,32 +633,18 @@ def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
         project / "project" / "planfile-tickets.yaml",
         project / "planfile-tickets.yaml",
     )
-    path = next((p for p in candidates if p.is_file()), None)
-    if path is None:
-        return {}
-    try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
-    except (OSError, yaml.YAMLError):
-        return {}
-    if not isinstance(payload, dict):
+    payload = _load_yaml_mapping(candidates)
+    if payload is None:
         return {}
 
     locations: dict[str, list[str]] = {}
     for ticket in payload.get("tickets") or []:
-        if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_cc":
+        result = _location_from_cc_ticket(ticket)
+        if result is None:
             continue
-        files = [str(f) for f in (ticket.get("files") or []) if f]
-        if not files:
-            continue
-        match = _CC_LOCATION_RE.search(str(ticket.get("description") or ""))
-        located = f"{files[0]}:{match.group('line')}" if match else files[0]
-        key = str(ticket.get("dedupe_key") or "").rsplit(":", 1)[-1].strip()
-        if not key:
-            continue
+        key, located = result
         for alias in {key, key.rsplit(".", 1)[-1]}:
-            bucket = locations.setdefault(alias, [])
-            if located not in bucket:
-                bucket.append(located)
+            _add_location(locations, alias, located)
 
     _merge_call_graph_locations(project, locations)
     return locations
@@ -635,6 +652,15 @@ def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
 
 # Source extensions probed when turning a dotted module into a file path.
 _MODULE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".py", ".php")
+
+
+def _resolve_module_path(project: Path, module: str) -> str | None:
+    stem = project / Path(*module.split("."))
+    match = next(
+        (stem.with_suffix(sfx) for sfx in _MODULE_SUFFIXES if stem.with_suffix(sfx).is_file()),
+        None,
+    )
+    return str(match.relative_to(project)) if match else None
 
 
 def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) -> None:
@@ -646,14 +672,8 @@ def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) 
     filesystem — an unresolvable module is skipped rather than guessed at.
     """
     candidates = (project / "project" / "calls.yaml", project / "calls.yaml")
-    path = next((p for p in candidates if p.is_file()), None)
-    if path is None:
-        return
-    try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
-    except (OSError, yaml.YAMLError):
-        return
-    nodes = (payload or {}).get("nodes") if isinstance(payload, dict) else None
+    payload = _load_yaml_mapping(candidates)
+    nodes = payload.get("nodes") if payload else None
     if not isinstance(nodes, dict):
         return
 
@@ -666,21 +686,14 @@ def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) 
         if not name or not module:
             continue
         if module not in resolved:
-            stem = project / Path(*module.split("."))
-            match = next(
-                (stem.with_suffix(sfx) for sfx in _MODULE_SUFFIXES if stem.with_suffix(sfx).is_file()),
-                None,
-            )
-            resolved[module] = str(match.relative_to(project)) if match else None
+            resolved[module] = _resolve_module_path(project, module)
         rel_path = resolved[module]
         if not rel_path:
             continue
         line = node.get("line")
         located = f"{rel_path}:{line}" if isinstance(line, int) else rel_path
         for alias in {str(qualified), name}:
-            bucket = locations.setdefault(alias, [])
-            if located not in bucket:
-                bucket.append(located)
+            _add_location(locations, alias, located)
 
 
 def _file_evidence(project: Path, path: Path, rel: str | None = None) -> dict[str, object]:

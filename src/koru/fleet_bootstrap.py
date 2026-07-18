@@ -124,6 +124,111 @@ def _matches_any(key: str, patterns: list[str]) -> bool:
     return False
 
 
+def _passes_glob_filters(
+    key: str,
+    name: str,
+    *,
+    exclude_globs: list[str],
+    include_globs: list[str],
+    skip_include: bool,
+) -> bool:
+    if _matches_any(key, exclude_globs) or _matches_any(name, exclude_globs):
+        return False
+    # --include filters children; umbrella root is opted in via --umbrella.
+    if include_globs and not skip_include:
+        if not (_matches_any(key, include_globs) or _matches_any(name, include_globs)):
+            return False
+    return True
+
+
+def _is_bootstrap_candidate(
+    path: Path,
+    workspace: Path,
+    *,
+    exclude_globs: list[str],
+    include_globs: list[str],
+    git_required: bool,
+    skip_include: bool = False,
+) -> bool:
+    if not path.is_dir():
+        return False
+    if path.name.startswith(".") and path != workspace:
+        return False
+    key = "." if path == workspace else _rel_key(workspace, path)
+    name = path.name
+    if not _passes_glob_filters(
+        key,
+        name,
+        exclude_globs=exclude_globs,
+        include_globs=include_globs,
+        skip_include=skip_include,
+    ):
+        return False
+    if git_required and not _is_git_project(path):
+        return False
+    return True
+
+
+_PRUNE_DIR_NAMES = {"node_modules", "backups", "__pycache__", "dist", "build"}
+
+
+def _prune_dirnames(dirnames: list[str]) -> list[str]:
+    return [
+        d
+        for d in dirnames
+        if not d.startswith(".")
+        and d not in _PRUNE_DIR_NAMES
+        and not d.endswith(".egg-info")
+    ]
+
+
+def _walk_bootstrap_children(
+    workspace: Path,
+    max_depth: int,
+    *,
+    exclude_globs: list[str],
+    include_globs: list[str],
+    require_git: bool,
+) -> list[Path]:
+    found: list[Path] = []
+    for dirpath, dirnames, _filenames in os.walk(workspace):
+        base = Path(dirpath)
+        try:
+            rel_parts = base.resolve().relative_to(workspace).parts
+        except ValueError:
+            dirnames[:] = []
+            continue
+        current_depth = len(rel_parts)
+        if current_depth >= max_depth:
+            dirnames[:] = []
+            continue
+        dirnames[:] = _prune_dirnames(dirnames)
+        for name in list(dirnames):
+            child = base / name
+            child_depth = current_depth + 1
+            if child_depth > max_depth:
+                continue
+            if _is_bootstrap_candidate(
+                child,
+                workspace,
+                exclude_globs=exclude_globs,
+                include_globs=include_globs,
+                git_required=require_git,
+            ):
+                found.append(child.resolve())
+    return found
+
+
+def _dedupe_sorted_paths(paths: list[Path]) -> list[Path]:
+    seen: set[Path] = set()
+    ordered: list[Path] = []
+    for p in paths:
+        if p not in seen:
+            seen.add(p)
+            ordered.append(p)
+    return sorted(ordered)
+
+
 def discover_bootstrap_candidates(
     workspace: Path,
     *,
@@ -151,63 +256,28 @@ def discover_bootstrap_candidates(
         exclude_globs.extend(exclude)
 
     found: list[Path] = []
-
-    def _accept(path: Path, *, git_required: bool, skip_include: bool = False) -> bool:
-        if not path.is_dir():
-            return False
-        if path.name.startswith(".") and path != workspace:
-            return False
-        key = "." if path == workspace else _rel_key(workspace, path)
-        name = path.name
-        if _matches_any(key, exclude_globs) or _matches_any(name, exclude_globs):
-            return False
-        # --include filters children; umbrella root is opted in via --umbrella.
-        if include_globs and not skip_include:
-            if not (_matches_any(key, include_globs) or _matches_any(name, include_globs)):
-                return False
-        if git_required and not _is_git_project(path):
-            return False
-        return True
-
-    if umbrella and _accept(workspace, git_required=False, skip_include=True):
+    if umbrella and _is_bootstrap_candidate(
+        workspace,
+        workspace,
+        exclude_globs=exclude_globs,
+        include_globs=include_globs,
+        git_required=False,
+        skip_include=True,
+    ):
         found.append(workspace)
 
     max_depth = max(1, int(depth))
-    for dirpath, dirnames, _filenames in os.walk(workspace):
-        base = Path(dirpath)
-        try:
-            rel_parts = base.resolve().relative_to(workspace).parts
-        except ValueError:
-            dirnames[:] = []
-            continue
-        current_depth = len(rel_parts)
-        if current_depth >= max_depth:
-            dirnames[:] = []
-            continue
-        # Prune obvious junk early
-        dirnames[:] = [
-            d
-            for d in dirnames
-            if not d.startswith(".")
-            and d not in {"node_modules", "backups", "__pycache__", "dist", "build"}
-            and not d.endswith(".egg-info")
-        ]
-        for name in list(dirnames):
-            child = base / name
-            child_depth = current_depth + 1
-            if child_depth > max_depth:
-                continue
-            if _accept(child, git_required=require_git):
-                found.append(child.resolve())
+    found.extend(
+        _walk_bootstrap_children(
+            workspace,
+            max_depth,
+            exclude_globs=exclude_globs,
+            include_globs=include_globs,
+            require_git=require_git,
+        )
+    )
 
-    # Stable unique order
-    seen: set[Path] = set()
-    ordered: list[Path] = []
-    for p in found:
-        if p not in seen:
-            seen.add(p)
-            ordered.append(p)
-    return sorted(ordered)
+    return _dedupe_sorted_paths(found)
 
 
 def ensure_koru_project(

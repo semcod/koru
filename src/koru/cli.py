@@ -394,9 +394,7 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
 _GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset({"on", "off", "status"})
 
 
-def main() -> int:
-    raw_args = _normalize_top_level_aliases(sys.argv[1:])
-    subcommand = raw_args[0] if raw_args and not raw_args[0].startswith("-") else ""
+def _dispatch_before_parse(subcommand: str, raw_args: list[str]) -> int | None:
     # Machine-global controls always run in this install — never reexec into a
     # project venv (older project venvs may predate these subcommands).
     if subcommand in _GLOBAL_CONTROL_SUBCOMMANDS:
@@ -408,6 +406,21 @@ def main() -> int:
         return auto_rc
     if subcommand in _SUBCOMMANDS:
         return _SUBCOMMANDS[subcommand](raw_args[1:])
+    return None
+
+
+def _refuse_if_legacy_flags_disabled(args: argparse.Namespace) -> int | None:
+    # --queue/--watch/--command/--bootstrap start agent work.
+    if not (args.queue or args.watch or args.command or args.bootstrap):
+        return None
+    return _refuse_when_globally_disabled("cli")
+
+
+def main() -> int:
+    raw_args = _normalize_top_level_aliases(sys.argv[1:])
+    subcommand = raw_args[0] if raw_args and not raw_args[0].startswith("-") else ""
+    if (rc := _dispatch_before_parse(subcommand, raw_args)) is not None:
+        return rc
 
     try:
         args = _build_parser().parse_args(raw_args)
@@ -418,10 +431,7 @@ def main() -> int:
         args.context = True
         args.output_format = "markdown"
 
-    # Legacy flag flow: --queue/--watch/--command/--bootstrap start agent work.
-    if (args.queue or args.watch or args.command or args.bootstrap) and (
-        rc := _refuse_when_globally_disabled("cli")
-    ) is not None:
+    if (rc := _refuse_if_legacy_flags_disabled(args)) is not None:
         return rc
 
     if (rc := _dispatch_flag_action(args, raw_args)) is not None:

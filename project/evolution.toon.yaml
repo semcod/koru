@@ -1,54 +1,34 @@
-# code2llm/evolution | 7302 func | 700f | 2026-07-18
-# generated in 0.02s
+# code2llm/evolution | 7347 func | 702f | 2026-07-18
+# generated in 0.04s
 
-NEXT[9] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 6836L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 102540
+      WHY: 6858L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 96012
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3464L, 3 classes, max CC=13
       EFFORT: ~4h  IMPACT: 45032
 
-  [3] !! SPLIT-FUNC      validate_subactor_repair_template  CC=33  fan=15
-      WHY: CC=33 exceeds 15
-      EFFORT: ~1h  IMPACT: 495
+  [3] !  SPLIT-FUNC      apply_patch_with_retry  CC=15  fan=20
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 300
 
-  [4] !  SPLIT-FUNC      discover_bootstrap_candidates  CC=18  fan=27
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 486
-
-  [5] !  SPLIT-FUNC      _run_next_planfile_task_impl  CC=20  fan=22
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 440
-
-  [6] !  SPLIT-FUNC      _merge_call_graph_locations  CC=22  fan=17
-      WHY: CC=22 exceeds 15
-      EFFORT: ~1h  IMPACT: 374
-
-  [7] !  SPLIT-FUNC      _code2llm_cc_locations  CC=20  fan=16
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 320
-
-  [8] !  SPLIT-FUNC      hydrate_subactor_repair_ticket  CC=21  fan=15
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 315
-
-  [9] !! SPLIT           tree.txt
+  [4] !! SPLIT           tree.txt
       WHY: 2722L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 274 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 275 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 180 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      33 → ≤16
+  max-CC:      15 → ≤7
   god-modules: 59 → 0
-  high-CC(≥15): 11 → ≤5
+  high-CC(≥15): 1 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
