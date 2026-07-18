@@ -19,6 +19,7 @@ from pathlib import Path
 
 import yaml
 
+import koru.init_host_environment as _ihe_mod
 from koru.init import (
     GITIGNORE_LINE,
     POLICY_STUB,
@@ -26,7 +27,6 @@ from koru.init import (
     refresh_init_agent_lane,
     resolve_project_agent_lane,
 )
-import koru.init_host_environment as _ihe_mod
 from koru.init_host_environment import _parse_os_release_line, _uinput_snapshot
 from koru.policy import load_policy
 from koru.runtime import planfile_dir, runtime_dir

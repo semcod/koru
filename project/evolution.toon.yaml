@@ -1,5 +1,5 @@
-# code2llm/evolution | 7347 func | 702f | 2026-07-18
-# generated in 0.04s
+# code2llm/evolution | 7388 func | 709f | 2026-07-18
+# generated in 0.03s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
@@ -10,9 +10,9 @@ NEXT[4] (ranked by impact):
       WHY: 3464L, 3 classes, max CC=13
       EFFORT: ~4h  IMPACT: 45032
 
-  [3] !  SPLIT-FUNC      apply_patch_with_retry  CC=15  fan=20
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 300
+  [3] !  SPLIT-FUNC      CapabilityContract.evaluate  CC=21  fan=13
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 273
 
   [4] !! SPLIT           tree.txt
       WHY: 2722L, 0 classes, max CC=0
@@ -26,9 +26,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      15 → ≤7
+  max-CC:      21 → ≤10
   god-modules: 59 → 0
-  high-CC(≥15): 1 → ≤0
+  high-CC(≥15): 3 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

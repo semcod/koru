@@ -24,10 +24,10 @@ import unittest
 from pathlib import Path
 
 from koru.queue.ticket_templates import (
+    SUBACTOR_DEVELOPMENT_REPAIR,
+    load_ticket_template,
     render_repair_ticket_from_development_defect,
     validate_subactor_repair_template,
-    load_ticket_template,
-    SUBACTOR_DEVELOPMENT_REPAIR,
 )
 
 _BRIDGE_E2E_SCRIPT = """

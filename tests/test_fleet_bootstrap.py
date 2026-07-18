@@ -15,7 +15,6 @@ from koru.fleet_bootstrap import (
     ensure_koru_project,
     is_koru_managed,
 )
-from koru.init import init_project
 from koru.runtime import planfile_dir, runtime_dir
 
 

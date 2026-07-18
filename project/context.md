@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.04s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 795, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 802, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7504
-- **Total Classes**: 513
-- **Modules**: 1076
-- **Entry Points**: 2779
+- **Total Functions**: 7545
+- **Total Classes**: 520
+- **Modules**: 1083
+- **Entry Points**: 2784
 
 ## Architecture by Module
 
@@ -160,6 +160,10 @@ Args:
     daemon_start_
 - **Calls**: client_fn, src.koru.autopilot.log_contract.emit_log, str, src.koru.autopilot.commands.status._print_status_json, src.koru.autopilot.commands.status._maybe_print_empty_plugin_bridge_explain, src.koru.autopilot.log_contract.emit_log, client.is_running, project.print
 
+### src.koru.queue.contracts.CapabilityContract.evaluate
+> Judge one intended action. Any single violation refuses the whole.
+- **Calls**: ContractDecision, ContractDecision, ContractDecision, _RISK_ORDER.get, _RISK_ORDER.get, ContractDecision, str, ContractDecision
+
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
 
@@ -224,10 +228,6 @@ Args:
 
 ### packages.nlp2coru.src.nlp2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, sub.add_parser
-
-### src.koru.cli_tagi.auto
-> Auto-commit all changes using Tagi's auto-ordering.
-- **Calls**: tagi.command, click.argument, click.option, click.option, click.option, None.resolve, click.echo, TagiIntegration
 
 ## Process Flows
 
@@ -505,6 +505,11 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.reorder_ticket_from_dashboard
 
+### recursion__sum_structured_counts
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.scan._sum_structured_counts
+
 ### recursion_send_chat
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -519,11 +524,6 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
-
-### recursion__sum_structured_counts
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: src.koru.scan._sum_structured_counts
 
 ### recursion__substitute
 - **Type**: recursion
@@ -573,11 +573,13 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.ide_client.LegacyAutopilotClientAdapter.drive` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 37 calls
+- `src.koru.queue.grant.verify_grant` - 37 calls
 - `src.koru.integrations.vdisplay_client.prepare_photo_vql_for_drive` - 34 calls
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
+- `src.koru.queue.contracts.CapabilityContract.evaluate` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
@@ -602,8 +604,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_tagi.auto` - 26 calls
 - `src.koru.cli_strategy.strategy_main` - 26 calls
 - `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
-- `src.koru.autonomy.operator.operator_daemon.start_or_reuse_daemon` - 26 calls
-- `src.koru.autopilot.cli_parser.build_autopilot_parser` - 26 calls
 
 ## System Interactions
 
