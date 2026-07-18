@@ -10,7 +10,7 @@
 | [AD-002](./002-intent-capability-ssot.md) | Intent pack + capability contract jako SSOT | Proposed |
 | [AD-003](./003-execution-plan-lifecycle.md) | Wspólny `ExecutionPlan` i lifecycle | Proposed |
 | [AD-004](./004-grant-and-manifest.md) | Immutable manifest + execution grant | Proposed |
-| [AD-005](./005-transactional-workspace.md) | Transakcyjne worktree / promote|rollback | Proposed |
+| [AD-005](./005-transactional-workspace.md) | Transakcyjne worktree / promote|rollback | **Accepted** (queue patch v1) |
 | [AD-006](./006-remote-executor.md) | Zdalny executor (capability + mTLS) | Proposed |
 
 **Powiązane ADR-y legacy (pozostają w `docs/adr/`):**

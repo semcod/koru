@@ -1428,14 +1428,18 @@ class TestQueueEditVerification(unittest.TestCase):
 
 from koru.queue.patch_mode import (  # noqa: E402
     MANIFEST_MISMATCH,
+    MANIFEST_NOT_PERSISTED,
     NO_PATCH_EMITTED,
+    PATCH_DOES_NOT_APPLY,
     PATCH_INTRODUCES_SYMLINK,
     PROMOTION_CONFLICT,
+    PROMOTION_FAILED,
     PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
     VERIFY_BASELINE_FAILED,
     VERIFY_FAILED_ISOLATED,
     VERIFY_FAILED_ROLLED_BACK,
+    load_persisted_manifest,
 )
 
 
@@ -1696,6 +1700,85 @@ class TestPatchMode(unittest.TestCase):
 
             self.assertIsNotNone(outcome)
             self.assertEqual(outcome.code, PROMOTION_REFUSED_DIRTY_REPO)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_commit_mode_commits_on_clean_main_after_verify(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {
+                "id": "SBX-10",
+                "inputs": {"verify_command": "true", "promotion_mode": "commit"},
+            }
+
+            _result, outcome = apply_proposed_patch(project, reply, ticket, self._gate_ok)
+
+            self.assertIsNone(outcome, outcome)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
+            log = subprocess.run(
+                ["git", "log", "-1", "--pretty=%s"],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout.strip()
+            self.assertIn("koru(SBX-10)", log)
+            committed = subprocess.run(
+                ["git", "show", "HEAD:a.txt"],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout
+            self.assertEqual(committed, "new\n")
+
+    def test_manifest_is_persisted_for_patch_runs(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {"id": "SBX-11", "inputs": {"verify_command": "true"}}
+
+            _result, outcome = apply_proposed_patch(project, reply, ticket, self._gate_ok)
+
+            self.assertIsNone(outcome, outcome)
+            runs = list((project / ".koru" / "runs").glob("*/manifest.json"))
+            self.assertEqual(len(runs), 1)
+            manifest = json.loads(runs[0].read_text(encoding="utf-8"))
+            self.assertEqual(manifest["ticket_id"], "SBX-11")
+            self.assertEqual(manifest["touched_files"], ["a.txt"])
+            self.assertIn("manifest_hash", manifest)
+            self.assertIn("workspace_snapshot_sha256", manifest)
+            self.assertIn("patch_sha256", manifest)
+            self.assertEqual(manifest["dirty_files"], [])
+            self.assertEqual(
+                load_persisted_manifest(project, manifest["run_id"]),
+                manifest,
+            )
+
+    def test_promotion_refuses_when_persisted_manifest_is_tampered(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+            ticket = {"inputs": {"verify_command": "true"}}
+            calls = {"n": 0}
+
+            def gate_then_tamper(command: str, cwd: Path):
+                calls["n"] += 1
+                if calls["n"] == 2:
+                    runs = list((project / ".koru" / "runs").glob("*/manifest.json"))
+                    self.assertEqual(len(runs), 1)
+                    tampered = json.loads(runs[0].read_text(encoding="utf-8"))
+                    tampered["base_head"] = "0" * 40
+                    runs[0].write_text(json.dumps(tampered), encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, outcome = apply_proposed_patch(project, reply, ticket, gate_then_tamper)
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, MANIFEST_NOT_PERSISTED)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
     def test_promotion_mode_falls_back_to_env_then_apply(self) -> None:

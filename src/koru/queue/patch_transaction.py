@@ -16,6 +16,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from koru.queue.patch_mode import (
+    MANIFEST_NOT_PERSISTED,
     NO_PATCH_EMITTED,
     PATCH_DOES_NOT_APPLY,
     PATCH_INTRODUCES_SYMLINK,
@@ -33,11 +34,14 @@ from koru.queue.patch_mode import (
     PatchOutcome,
     apply_unified_diff,
     build_manifest,
+    commit_on_main,
     commit_worktree,
     diff_target_files,
     dirty_paths,
     extract_unified_diff,
     manifest_drift,
+    persist_manifest,
+    persisted_manifest_mismatch,
     promotion_mode,
     repository_is_clean,
     revert_files,
@@ -124,11 +128,30 @@ def apply_proposed_patch(
     targets = diff_target_files(project, diff)
     isolated = verify_command and worktree_enabled(project)
     mode = promotion_mode(ticket)
-    run_id = uuid4().hex[:12]
+    plan: dict | None = manifest
+    run_id = plan["run_id"] if plan else uuid4().hex[:12]
+
+    def _freeze_plan(*, attempt: int = 1, max_attempts: int = 1) -> dict:
+        nonlocal plan
+        if plan is None:
+            plan = build_manifest(
+                project,
+                run_id=run_id,
+                ticket=ticket,
+                diff=diff,
+                targets=targets,
+                verify_command=verify_command,
+                mode=mode,
+                attempt=attempt,
+                max_attempts=max_attempts,
+            )
+        persist_manifest(project, plan)
+        return plan
 
     if mode == PROMOTION_ARTIFACT:
         # Deliver the patch as a reviewable file and change nothing. Useful on a
         # shared checkout, and the only mode that needs no verification at all.
+        frozen = _freeze_plan()
         directory = write_patch_artifact(
             project,
             run_id,
@@ -139,6 +162,7 @@ def apply_proposed_patch(
                 "targets": list(targets),
                 "verify_command": verify_command,
                 "promotion_mode": mode,
+                "manifest_hash": frozen["manifest_hash"],
             },
         )
         _logger.info("koru.queue.patch_artifact run_id=%s path=%s", run_id, directory)
@@ -158,17 +182,8 @@ def apply_proposed_patch(
         # Freeze the plan before staging. The manifest records the base commit
         # and the exact content of every target, so promotion can prove the
         # world did not move underneath a verification that took minutes.
-        plan = manifest or build_manifest(
-            project,
-            run_id=run_id,
-            ticket=ticket,
-            diff=diff,
-            targets=targets,
-            verify_command=verify_command,
-            mode=mode,
-            attempt=1,
-            max_attempts=1,
-        )
+        _freeze_plan()
+        assert plan is not None
         staged = _stage_patch_in_worktree(
             project, diff, verify_command, shell_runner, mode=mode, run_id=run_id, ticket=ticket,
         )
@@ -178,6 +193,14 @@ def apply_proposed_patch(
             # The verified result already lives on its own ref; deliberately
             # nothing is written to the shared working tree.
             return result, None
+        if (persisted := persisted_manifest_mismatch(project, plan)):
+            return result, PatchOutcome(
+                code=MANIFEST_NOT_PERSISTED,
+                message=(
+                    "the run manifest on disk does not match the frozen plan, so "
+                    f"promotion was refused ({persisted}). Re-run the ticket."
+                ),
+            )
         drift = manifest_drift(project, plan)
         if drift:
             return result, PatchOutcome(
@@ -204,6 +227,9 @@ def apply_proposed_patch(
                 ),
             )
 
+    _freeze_plan()
+    assert plan is not None
+
     applied = apply_unified_diff(project, diff)
     if not applied.ok:
         return result, PatchOutcome(
@@ -214,11 +240,17 @@ def apply_proposed_patch(
         )
 
     if not verify_command or isolated:
-        return result, None  # already verified in the worktree
+        outcome = _commit_if_requested(
+            project, mode, ticket, run_id, applied.changed_files,
+        )
+        return (result, outcome) if outcome else (result, None)
 
     verify = shell_runner(verify_command, project)
     if verify.returncode == 0:
-        return result, None
+        outcome = _commit_if_requested(
+            project, mode, ticket, run_id, applied.changed_files,
+        )
+        return (result, outcome) if outcome else (result, None)
 
     revert_files(project, applied.changed_files)
     output = (verify.stderr or verify.stdout or "").strip()[-600:]
@@ -229,6 +261,32 @@ def apply_proposed_patch(
             f"`{verify_command}` exited {verify.returncode}: {output}"
         ),
         workspace_left_untouched=True,
+    )
+
+
+def _commit_if_requested(
+    project: Path,
+    mode: str,
+    ticket: dict,
+    run_id: str,
+    changed_files: tuple[str, ...],
+) -> PatchOutcome | None:
+    """Commit verified changes on main when ``promotion_mode=commit``."""
+    if mode != PROMOTION_COMMIT:
+        return None
+    ticket_id = ticket.get("id") or "ticket"
+    ok, detail = commit_on_main(
+        project,
+        f"koru({ticket_id}): verified patch\n\nrun_id: {run_id}",
+        changed_files,
+    )
+    if ok:
+        _logger.info("koru.queue.patch_commit run_id=%s commit=%s", run_id, detail)
+        return None
+    revert_files(project, changed_files)
+    return PatchOutcome(
+        code=PROMOTION_FAILED,
+        message=f"verified patch could not be committed on main: {detail}",
     )
 
 

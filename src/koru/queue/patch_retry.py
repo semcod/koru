@@ -26,6 +26,7 @@ from koru.queue.patch_mode import (
     diff_target_files,
     extract_unified_diff,
     manifest_drift,
+    persist_manifest,
     promotion_mode,
     redact_secrets,
 )
@@ -76,6 +77,7 @@ def apply_patch_with_retry(
         # a workspace another session has moved in the meantime.
         if manifest is None:
             manifest = _pin_base(project, ticket, result, budget)
+            persist_manifest(project, manifest)
         elif (drift := manifest_drift(project, manifest)):
             return result, PatchOutcome(
                 code=MANIFEST_MISMATCH,

@@ -23,15 +23,21 @@ from pathlib import Path
 from koru.queue.diff_repair import extract_unified_diff, symlink_creations
 from koru.queue.manifest import (
     MANIFEST_MISMATCH,
+    MANIFEST_NOT_PERSISTED,
     build_manifest,
+    load_persisted_manifest,
     manifest_drift,
     manifest_hash,
+    persist_manifest,
+    persisted_manifest_mismatch,
+    workspace_snapshot_sha256,
 )
 from koru.queue.workspace import (
     FileFingerprint,
     PatchApplyResult,
     apply_unified_diff,
     changed_since,
+    commit_on_main,
     commit_worktree,
     current_head,
     diff_target_files,
@@ -46,11 +52,13 @@ from koru.queue.workspace import (
 
 __all__ = [
     "MANIFEST_MISMATCH",
+    "MANIFEST_NOT_PERSISTED",
     "FileFingerprint",
     "PatchApplyResult",
     "apply_unified_diff",
     "build_manifest",
     "changed_since",
+    "commit_on_main",
     "commit_worktree",
     "current_head",
     "diff_target_files",
@@ -59,6 +67,10 @@ __all__ = [
     "fingerprint_files",
     "manifest_drift",
     "manifest_hash",
+    "load_persisted_manifest",
+    "persist_manifest",
+    "persisted_manifest_mismatch",
+    "workspace_snapshot_sha256",
     "prune_stale_worktrees",
     "repository_is_clean",
     "revert_files",

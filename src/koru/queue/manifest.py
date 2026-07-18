@@ -14,9 +14,10 @@ import hashlib
 import json
 from pathlib import Path
 
-from koru.queue.workspace import current_head, fingerprint_files
+from koru.queue.workspace import current_head, dirty_paths, fingerprint_files
 
 MANIFEST_MISMATCH = "manifest_mismatch"
+MANIFEST_NOT_PERSISTED = "manifest_not_persisted"
 
 
 def build_manifest(
@@ -38,14 +39,17 @@ def build_manifest(
     only on the decision, so the same inputs always produce the same manifest.
     """
     fingerprints = fingerprint_files(project, targets)
+    base_files = {
+        rel: (print_.sha256 or ("symlink:" + (print_.symlink_target or "")) if print_.exists else None)
+        for rel, print_ in fingerprints.items()
+    }
     manifest = {
         "run_id": run_id,
         "ticket_id": ticket.get("id"),
         "base_head": current_head(project),
-        "base_files": {
-            rel: (print_.sha256 or ("symlink:" + (print_.symlink_target or "")) if print_.exists else None)
-            for rel, print_ in fingerprints.items()
-        },
+        "base_files": base_files,
+        "workspace_snapshot_sha256": workspace_snapshot_sha256(base_files),
+        "dirty_files": sorted(dirty_paths(project, targets)),
         "patch_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
         "touched_files": sorted(targets),
         "verify_command": verify_command,
@@ -55,6 +59,46 @@ def build_manifest(
     }
     manifest["manifest_hash"] = manifest_hash(manifest)
     return manifest
+
+
+def workspace_snapshot_sha256(base_files: dict) -> str:
+    """Digest of the frozen target-file snapshot (Subactor ``plan_hash`` analogue)."""
+    payload = json.dumps(base_files, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def manifest_run_directory(project: Path, run_id: str) -> Path:
+    """Evidence directory for a single patch run."""
+    return project / ".koru" / "runs" / run_id
+
+
+def persist_manifest(project: Path, manifest: dict) -> Path:
+    """Write an immutable manifest for audit and pre-promotion verification."""
+    directory = manifest_run_directory(project, manifest["run_id"])
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "manifest.json"
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    tmp.replace(path)
+    return path
+
+
+def load_persisted_manifest(project: Path, run_id: str) -> dict | None:
+    """Load a previously persisted run manifest, or ``None`` if missing."""
+    path = manifest_run_directory(project, run_id) / "manifest.json"
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def persisted_manifest_mismatch(project: Path, manifest: dict) -> str:
+    """Describe disagreement between *manifest* and its on-disk copy, or "" if aligned."""
+    loaded = load_persisted_manifest(project, manifest["run_id"])
+    if loaded is None:
+        return "manifest was not persisted for this run"
+    if manifest_hash(loaded) != manifest_hash(manifest):
+        return "persisted manifest hash mismatch"
+    return ""
 
 
 def manifest_hash(manifest: dict) -> str:

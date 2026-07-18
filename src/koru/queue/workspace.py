@@ -164,6 +164,25 @@ def repository_is_clean(project: Path) -> bool:
     return status.returncode == 0 and not (status.stdout or "").strip()
 
 
+def commit_on_main(
+    project: Path,
+    message: str,
+    paths: tuple[str, ...] = (),
+) -> tuple[bool, str]:
+    """Commit only the patch's files on the current branch."""
+    if paths:
+        staged = _git(project, "add", "--", *paths)
+    else:
+        staged = _git(project, "add", "-A")
+    if staged.returncode != 0:
+        return False, (staged.stderr or staged.stdout or "").strip()[:300]
+    committed = _git(project, "commit", "--quiet", "-m", message)
+    if committed.returncode != 0:
+        return False, (committed.stderr or committed.stdout or "").strip()[:300]
+    head = _git(project, "rev-parse", "HEAD")
+    return True, (head.stdout or "").strip()
+
+
 def commit_worktree(
     worktree: Path,
     branch: str,
