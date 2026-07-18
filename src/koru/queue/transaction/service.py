@@ -190,7 +190,9 @@ def _without_isolation(
                 "patch the workspace directly, or from a writable checkout."
             ),
         )
-    return _run_direct(plan, freeze, shell_runner, journal)
+    # The isolated path already journaled `frozen`; re-announcing it here
+    # would forge a second freeze that never happened.
+    return _run_direct(plan, freeze, shell_runner, journal, frozen_journaled=True)
 
 
 def _run_direct(
@@ -198,6 +200,8 @@ def _run_direct(
     freeze: ManifestFreeze,
     shell_runner: ShellRunner,
     journal: RunJournal,
+    *,
+    frozen_journaled: bool = False,
 ) -> PatchOutcome | None:
     """Patch the workspace in place, with ``git checkout --`` as the only undo."""
     refusal = screen_direct_apply(plan)
@@ -205,7 +209,8 @@ def _run_direct(
         journal.append(PHASE_REFUSED, data={"code": refusal.code})
         return refusal
     frozen = freeze.freeze()
-    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    if not frozen_journaled:
+        journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
     return _apply_to_workspace(
         plan, freeze, shell_runner, journal, verify=bool(plan.verify_command),
     )
