@@ -1,12 +1,18 @@
-"""Recording queue patch runs into the durable repair-run store (commit 4).
+"""Recording — and now routing — queue patch runs through the durable store.
 
-Every LLM invocation becomes a persisted model attempt — started before the
-call, finished with the invocation's outcome and an output hash — and the
-run's coarse status walks the repair lifecycle as the queue works. This layer
-is deliberately *observational* for now: recording failures never break the
-queue, and no routing decisions are made here. The router (commit 6) will
-turn the same records into decisions; the shape of what is recorded is
-already the shape it will need.
+Every LLM invocation becomes a persisted model attempt (started before the
+call, finished with its outcome and an output hash), and the run's coarse
+status walks the repair lifecycle as the queue works. Recording itself is
+still best-effort: a store failure never breaks the queue.
+
+Routing is now live (commit 6): with a model registry configured, a
+classified provider failure — policy block, sticky error, exhausted timeout —
+routes to the next model *inside the same call*, on the same run and ledger,
+and a fully burned roster parks the run ``safe_blocked`` rather than
+improvising. The decision logic lives in ``repair_runs.router``
+(``choose_model``/``classify_invocation``); this module only drives it. See
+``tests/test_repair_router.py`` for the end-to-end milestone (model A blocked
+→ model B completes as a second attempt on one run, surviving a restart).
 
 Dependency direction is law: this module imports ``repair_runs``; nothing in
 ``repair_runs`` may ever import the queue.
