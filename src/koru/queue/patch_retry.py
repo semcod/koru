@@ -48,6 +48,7 @@ from koru.queue.patch_mode import (
 )
 from koru.queue.transaction.result import PatchPlan, PatchTransactionResult
 from koru.queue.types import CommandResult
+from koru.queue.workspace import branch_head
 
 
 def patch_retry_budget(ticket: dict | None = None) -> int:
@@ -81,6 +82,7 @@ def apply_patch_with_retry(
     llm_runner: Callable[[dict[str, Any], Path], CommandResult],
     shell_runner: Callable[[str, Path], CommandResult],
     enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None = None,
+    actor: str | None = None,
 ) -> tuple[CommandResult, PatchOutcome | None, dict | None]:
     """Apply the agent's patch, re-asking with the exact rejection on failure.
 
@@ -110,19 +112,19 @@ def apply_patch_with_retry(
         result, outcome = transaction.result, transaction.outcome
         attempts.append(_attempt_record(len(attempts) + 1, transaction))
         if outcome is None or not outcome.retryable or remaining <= 0:
-            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts)
+            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor)
 
         manifest, aborted = _pin_or_detect_drift(
             project, ticket, result, budget, manifest, transaction, attempts,
         )
         if aborted is not None:
-            return result, aborted, _finish_run(project, ticket, transaction, manifest, attempts)
+            return result, aborted, _finish_run(project, ticket, transaction, manifest, attempts, actor)
 
         remaining -= 1
         retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
         result = llm_runner(retry_action, project)
         if result.returncode != 0:
-            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts)
+            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor)
 
 
 def _pin_or_detect_drift(
@@ -219,6 +221,7 @@ def _finish_run(
     transaction: PatchTransactionResult,
     manifest: dict | None,
     attempts: list[dict],
+    actor: str | None = None,
 ) -> dict:
     """Assemble and persist the run's evidence bundle.
 
@@ -233,12 +236,21 @@ def _finish_run(
         or (plan.run_id if plan else None)
         or uuid4().hex[:12],
     )
-    verify = (
-        {"command": plan.verify_command, "source": plan.verify_source} if plan else {}
-    )
+    outcome = transaction.outcome
+    verify: dict = {}
+    if plan:
+        verify = {
+            "command": plan.verify_command,
+            "source": plan.verify_source,
+            "profile": str((ticket.get("inputs") or {}).get("verify_profile") or "") or None,
+            "status": _verify_status(plan, outcome),
+        }
     promotion: dict = {"mode": plan.mode, "isolated": plan.isolated} if plan else {}
-    if plan and plan.mode == PROMOTION_BRANCH and transaction.outcome is None:
-        promotion["branch"] = f"koru/run-{run_id}"
+    if plan and plan.mode == PROMOTION_BRANCH and outcome is None:
+        branch = f"koru/run-{run_id}"
+        promotion["branch"] = branch
+        # The ref can be moved later; the recorded SHA cannot.
+        promotion["commit_sha"] = branch_head(project, branch) or None
 
     bundle = build_evidence_bundle(
         run_id=run_id,
@@ -247,7 +259,8 @@ def _finish_run(
         patch_attempts=attempts,
         verify=verify,
         promotion=promotion,
-        verdict=_verdict(plan, transaction.outcome),
+        verdict=_verdict(plan, outcome),
+        actor=actor,
     )
     try:
         persist_evidence(project, bundle)
@@ -279,6 +292,15 @@ def _journal_terminal(
         )
     except OSError:
         pass
+
+
+def _verify_status(plan: PatchPlan, outcome: PatchOutcome | None) -> str:
+    """What happened at the gate: passed, failed, or never ran."""
+    if not plan.verify_command:
+        return "skipped"
+    if outcome is None:
+        return "passed" if plan.mode != PROMOTION_ARTIFACT else "skipped"
+    return "failed" if outcome.code.startswith("verify") else "not_reached"
 
 
 def _verdict(plan: PatchPlan | None, outcome: PatchOutcome | None) -> str:

@@ -158,6 +158,16 @@ def current_head(project: Path) -> str:
     return (head.stdout or "").strip() if head.returncode == 0 else ""
 
 
+def branch_head(project: Path, branch: str) -> str:
+    """The commit a branch points at, or "" when it does not exist.
+
+    Evidence wants the actual SHA a promotion produced, not just the ref name —
+    a ref can be moved later, the recorded SHA cannot.
+    """
+    head = _git(project, "rev-parse", "--verify", f"refs/heads/{branch}")
+    return (head.stdout or "").strip() if head.returncode == 0 else ""
+
+
 def repository_is_clean(project: Path) -> bool:
     """Whether the working tree has no uncommitted changes at all.
 

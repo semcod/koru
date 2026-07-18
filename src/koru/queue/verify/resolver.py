@@ -38,15 +38,20 @@ def resolve_verify(
     if name:
         return _resolve_profile(registry, name, ticket, targets)
 
-    # Import late so tests monkeypatching the legacy chain through the facade
-    # still bind: the transaction package re-exports it, and grabbing it at
-    # module load would freeze the unpatched function.
-    from koru.queue.transaction.verification import resolve_verify_command
+    from koru.queue.verify.legacy import resolve_legacy_verify_command
 
-    command = resolve_verify_command(project, ticket)
-    if not command:
-        return VerifyResolution(source="none")
-    if _profiles_required(project) and not registry.allows_raw(command):
+    command = resolve_legacy_verify_command(project, ticket)
+    if not _profiles_required(project):
+        if not command:
+            return VerifyResolution(source="none")
+        return VerifyResolution(command=command, source="legacy")
+
+    # Profiles are mandatory here. A raw command survives only via the
+    # allowlist, and "no gate at all" is refused too: a project that turned
+    # this on wants every code change judged, and silence is not a judgement.
+    if command and registry.allows_raw(command):
+        return VerifyResolution(command=command, profile=CUSTOM_READONLY, source="allowlist")
+    if command:
         return VerifyResolution(
             error=(
                 f"this project requires named verify profiles, and `{command}` is "
@@ -54,7 +59,13 @@ def resolve_verify(
                 f"to one of: {', '.join(registry.names)}; or allowlist the command."
             ),
         )
-    return VerifyResolution(command=command, source="legacy")
+    return VerifyResolution(
+        error=(
+            "this project requires a named verify profile and the ticket names "
+            "no gate at all. Set inputs.verify_profile to one of: "
+            f"{', '.join(registry.names)}."
+        ),
+    )
 
 
 def _resolve_profile(

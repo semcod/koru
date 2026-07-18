@@ -1,72 +1,31 @@
-"""Choosing the gate a patch must pass, and running it.
+"""What the transaction itself still knows about verification: policy, not commands.
 
-Resolution is deliberately separate from execution: which command proves a
-patch is good is a governance question with several fallbacks, while running it
-is mechanical. Keeping them apart is what will let the fallback chain be
-replaced by a named profile registry without touching the transaction.
+Command resolution lives entirely in :mod:`koru.queue.verify` — the registry,
+its resolver and the legacy compatibility chain. This module keeps only the
+judgements the transaction makes around a gate it was handed: whether the
+baseline may be skipped, and how a gate's output is quoted back.
+
+``resolve_verify_command`` remains importable here for compatibility, but it is
+the legacy chain, re-exported: the profile-aware path is
+``koru.queue.verify.resolver.resolve_verify``.
 """
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 from koru.queue.types import CommandResult
+from koru.queue.verify.legacy import resolve_legacy_verify_command as resolve_verify_command
 
-_VERIFY_COMMAND_HEADS = frozenset({"node", "npm", "pytest", "python", "python3", "bash"})
+__all__ = [
+    "BASELINE_OUTPUT_LIMIT",
+    "VERIFY_OUTPUT_LIMIT",
+    "resolve_verify_command",
+    "skip_verify_baseline",
+    "verify_output",
+]
 
 #: How much of a failing gate's output travels back to the caller.
 VERIFY_OUTPUT_LIMIT = 600
 BASELINE_OUTPUT_LIMIT = 400
-
-
-def resolve_verify_command(project: Path, ticket: dict) -> str:
-    """Find the command that proves a patch is good.
-
-    Ticket-level config is preferred but cannot be relied on: planfile's schema
-    keeps a closed set of ``inputs`` keys and silently drops unknown ones. So
-    fall back to the project's own declared gate — ``koru.yaml`` already names
-    the command to run before completing a ticket, which is exactly this.
-    """
-    explicit = str((ticket.get("inputs") or {}).get("verify_command") or "").strip()
-    if explicit:
-        return explicit
-
-    from_criteria = _verify_command_from_criteria(ticket)
-    if from_criteria:
-        return from_criteria
-
-    from_env = (os.environ.get("KORU_QUEUE_VERIFY_COMMAND") or "").strip()
-    if from_env:
-        return from_env
-
-    return _verify_command_from_project(project)
-
-
-def _verify_command_from_criteria(ticket: dict) -> str:
-    """Read a gate out of acceptance criteria that were written as commands."""
-    for item in ticket.get("acceptance_criteria") or []:
-        cmd = str(item or "").strip()
-        if cmd and cmd.split()[0] in _VERIFY_COMMAND_HEADS:
-            return cmd
-    return ""
-
-
-def _verify_command_from_project(project: Path) -> str:
-    """Fall back to the gate the project already declares in ``koru.yaml``."""
-    try:
-        import yaml
-    except ImportError:
-        return ""
-
-    try:
-        config = yaml.safe_load((project / "koru.yaml").read_text(encoding="utf-8"))
-        commands = (((config or {}).get("when") or {}).get("before_complete_ticket") or {}).get(
-            "commands",
-        ) or []
-    except (OSError, AttributeError, yaml.YAMLError):
-        return ""
-    return str(commands[0]).strip() if commands else ""
 
 
 def skip_verify_baseline(ticket: dict | None) -> bool:

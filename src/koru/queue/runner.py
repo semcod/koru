@@ -498,6 +498,7 @@ def _apply_patch_step(
     llm_runner: Callable[[dict[str, Any], Path], CommandResult],
     shell_runner: Callable[[str, Path], CommandResult],
     use_patch_mode: bool,
+    actor: str | None = None,
 ) -> tuple[CommandResult, PatchOutcome | None, dict | None]:
     if use_patch_mode and result.returncode == 0:
         return apply_patch_with_retry(
@@ -508,6 +509,7 @@ def _apply_patch_step(
             llm_runner,
             shell_runner,
             enrich=_enrich_llm_request_with_context,
+            actor=actor,
         )
     return result, None, None
 
@@ -650,6 +652,7 @@ def _run_next_planfile_task_impl(
             llm_runner,
             shell_runner,
             use_patch_mode,
+            actor=actor,
         )
 
         verification_error = _compute_verification_error(

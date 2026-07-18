@@ -262,6 +262,19 @@ class TestResolveVerify(_RepoCase):
             self.assertFalse(resolution.refused)
             self.assertEqual(resolution.command, "task quality:local")
 
+    def test_require_profile_refuses_a_ticket_with_no_gate_at_all(self) -> None:
+        """A project that made profiles mandatory wants every change judged —
+        silence is not a judgement."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._koru_yaml(project, "queue:\n  verify_require_profile: true\n")
+
+            resolution = resolve_verify(project, {})
+
+            self.assertTrue(resolution.refused)
+            assert resolution.error is not None
+            self.assertIn("no gate at all", resolution.error)
+
     def test_a_ticket_with_no_gate_at_all_resolves_to_none_not_an_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)

@@ -27,7 +27,11 @@ VERDICT_REFUSED = "refused"
 
 _VERDICTS = frozenset({VERDICT_VERIFIED, VERDICT_APPLIED, VERDICT_ARTIFACT, VERDICT_REFUSED})
 
+#: Bumped when the bundle's shape changes incompatibly; auditors key on it.
+SCHEMA_VERSION = 1
+
 _REQUIRED_KEYS = (
+    "schema_version",
     "run_id",
     "ticket_id",
     "manifest_hash",
@@ -72,17 +76,22 @@ def build_evidence_bundle(
     verify: dict,
     promotion: dict,
     verdict: str,
+    actor: str | None = None,
 ) -> dict:
     """Assemble the canonical bundle for a finished run.
 
-    ``manifest=None`` is legitimate only for refusals that fired before the
-    plan was frozen — there was nothing to pin because nothing was going to
-    change. Every path that mutates has a manifest, and the bundle carries its
-    hash so the two artifacts vouch for each other.
+    The verdict is computed by the transaction layer from outcomes — never by
+    an LLM, whose text has no authority here. ``manifest=None`` is legitimate
+    only for refusals that fired before the plan was frozen — there was nothing
+    to pin because nothing was going to change. Every path that mutates has a
+    manifest, and the bundle carries its hash so the two artifacts vouch for
+    each other.
     """
     return {
+        "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
         "ticket_id": ticket.get("id"),
+        "actor": actor,
         "manifest_hash": (manifest or {}).get("manifest_hash"),
         "base_head": (manifest or {}).get("base_head"),
         "workspace_snapshot": (manifest or {}).get("workspace_snapshot_sha256"),
@@ -90,7 +99,7 @@ def build_evidence_bundle(
         "patch_attempts": patch_attempts,
         "verify": verify,
         "promotion": promotion,
-        "cleanup": {"staging_worktree": "released"} if promotion.get("isolated") else {},
+        "cleanup": {"worktree_removed": bool(promotion.get("isolated"))},
         "verdict": verdict,
     }
 
