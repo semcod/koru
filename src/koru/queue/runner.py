@@ -650,6 +650,16 @@ def _run_next_planfile_task_impl(
             executor_kind, expects_edits, ticket, resolved_action,
         )
 
+        recording = None
+        if use_patch_mode:
+            from koru.queue.repair_recording import RepairRecordingSession
+
+            # Best-effort at this stage: a missing store never blocks the queue,
+            # but every model call of a recorded run is persisted as an attempt.
+            recording = RepairRecordingSession.begin(project, ticket, actor)
+            if recording is not None:
+                llm_runner = recording.wrap_llm(llm_runner)
+
         if use_patch_mode and (denial := _pre_llm_contract_denial(project, ticket, actor)):
             # The contract is checked before the model ever sees a prompt: an
             # actor outside its box must not spend an LLM run finding out.
@@ -688,6 +698,8 @@ def _run_next_planfile_task_impl(
             use_patch_mode,
             actor=actor,
         )
+        if recording is not None:
+            recording.finish(result, patch_outcome)
 
         verification_error = _compute_verification_error(
             project,
