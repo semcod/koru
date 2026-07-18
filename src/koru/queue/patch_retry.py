@@ -43,6 +43,13 @@ def patch_retry_budget(ticket: dict | None = None) -> int:
                 return max(0, int(per_ticket))
             except (TypeError, ValueError):
                 pass
+        execution = ticket.get("execution") or {}
+        exec_attempts = execution.get("max_attempts")
+        if exec_attempts is not None:
+            try:
+                return max(0, int(exec_attempts))
+            except (TypeError, ValueError):
+                pass
     raw = (os.environ.get("KORU_QUEUE_PATCH_RETRIES") or "").strip()
     try:
         return max(0, int(raw)) if raw else 1

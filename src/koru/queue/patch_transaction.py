@@ -68,6 +68,11 @@ def resolve_verify_command(project: Path, ticket: dict) -> str:
     if explicit:
         return explicit
 
+    for item in ticket.get("acceptance_criteria") or []:
+        cmd = str(item or "").strip()
+        if cmd and cmd.split()[0] in {"node", "npm", "pytest", "python", "python3", "bash"}:
+            return cmd
+
     from_env = (os.environ.get("KORU_QUEUE_VERIFY_COMMAND") or "").strip()
     if from_env:
         return from_env

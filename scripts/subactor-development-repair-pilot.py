@@ -5,9 +5,11 @@ Creates an isolated git fixture under /tmp, imports a rendered
 ``subactor-development-repair`` ticket, and runs ``koru --queue`` once with
 OpenRouter credentials from ``<koru-root>/.env``.
 
-Planfile's ``TicketInputs`` schema drops Koru patch policy keys
-(``patch_mode``, ``verify_command``, …), so this script sets the matching
-``KORU_QUEUE_*`` env fallbacks documented in ``patch_transaction.py``.
+Planfile's ``TicketInputs`` schema keeps ``llm_model`` and ``executor`` but drops
+Koru-only patch policy keys (``patch_mode``, ``verify_command``, …). The queue
+restores those from the packaged template (``hydrate_subactor_repair_ticket``)
+when labels include ``source:subactor-bridge``. ``verify_command`` also falls
+back to ``acceptance_criteria`` and ``KORU_QUEUE_VERIFY_COMMAND``.
 
 Usage:
   python scripts/subactor-development-repair-pilot.py
@@ -102,6 +104,7 @@ def _init_planfile(root: Path) -> None:
 def _render_ticket() -> dict:
     from koru.queue.ticket_templates import render_subactor_repair_ticket
 
+    verify = "node --check src/broken.mjs && node --test tests/broken.test.mjs"
     ticket = render_subactor_repair_ticket(
         {
             "COMPONENT": "pilot-fixture",
@@ -116,9 +119,8 @@ def _render_ticket() -> dict:
             ),
         },
     )
-    ticket["executor"] = {"kind": "llm", "mode": "automatic"}
-    ticket["inputs"]["llm_model"] = os.environ["LLM_MODEL"]
-    ticket["inputs"]["max_patch_attempts"] = 2
+    ticket["inputs"]["verify_command"] = verify
+    ticket["acceptance_criteria"] = [verify]
     ticket["queue"] = "development"
     return ticket
 
@@ -154,16 +156,8 @@ def _import_ticket(root: Path, ticket: dict) -> str:
 
 
 def _queue_env(root: Path) -> dict[str, str]:
-    verify = "node --check src/broken.mjs && node --test tests/broken.test.mjs"
     env = os.environ.copy()
-    env.update(
-        {
-            "KORU_QUEUE_PROMOTION_MODE": "branch",
-            "KORU_QUEUE_WORKTREE": "1",
-            "KORU_QUEUE_VERIFY_COMMAND": verify,
-            "KORU_LLM_SHELL_FALLBACK": "0",
-        },
-    )
+    env.setdefault("KORU_LLM_SHELL_FALLBACK", "0")
     return env
 
 
@@ -188,10 +182,10 @@ def _collect_evidence(root: Path) -> dict:
     branches = _run(["git", "branch", "--list", "koru/run-*"], cwd=root)
     runs_dir = root / ".planfile" / ".koru" / "runs"
     run_ids = sorted(p.name for p in runs_dir.glob("*") if p.is_dir()) if runs_dir.is_dir() else []
+    verify = "node --check src/broken.mjs && node --test tests/broken.test.mjs"
     verify = _run(
-        ["bash", "-lc", os.environ.get("KORU_QUEUE_VERIFY_COMMAND", "")],
+        ["bash", "-lc", verify],
         cwd=root,
-        env=_queue_env(root),
     )
     return {
         "branches": (branches.stdout or "").strip().splitlines(),

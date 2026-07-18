@@ -37,6 +37,7 @@ from koru.queue.ticket import (
     ticket_command,
     ticket_llm_request,
 )
+from koru.queue.ticket_templates import hydrate_subactor_repair_ticket
 from koru.queue.types import CommandResult, QueueRunResult
 
 _logger = logging.getLogger(__name__)
@@ -509,6 +510,7 @@ def _run_next_planfile_task_impl(
         if early_result is not None:
             return early_result
         assert ticket is not None
+        ticket = hydrate_subactor_repair_ticket(ticket)
 
         ticket_id = str(ticket["id"])
         _log_queue_ticket_start(ticket, ticket_id)

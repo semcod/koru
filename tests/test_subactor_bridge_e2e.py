@@ -129,11 +129,13 @@ class TestSubactorKoruBridgeE2E(unittest.TestCase):
         self.assertEqual(self.bridge["manifest_blocked_by"], [upsert["ticket_id"]])
 
         ticket = render_repair_ticket_from_development_defect(payload)
+        self.assertEqual((ticket.get("executor") or {}).get("kind"), "llm")
         self.assertEqual(ticket["inputs"]["promotion_mode"], "branch")
         self.assertTrue(ticket["inputs"]["patch_mode"])
         self.assertTrue(ticket["inputs"]["worktree"])
         self.assertIn("plesk-httpdocs-sync", ticket["files"][0])
         self.assertIn("plesk-httpdocs-sync", ticket["inputs"]["verify_command"])
+        self.assertEqual(ticket["acceptance_criteria"][0], ticket["inputs"]["verify_command"])
         self.assertEqual(ticket["inputs"]["discovered_in"], "PLF-409")
         self.assertIn("PLF-409", ticket["inputs"]["prompt"])
         self.assertNotIn("__", ticket["name"])

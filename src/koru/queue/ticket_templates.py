@@ -7,11 +7,14 @@ stay a declarative artifact under templates/planfile/.
 from __future__ import annotations
 
 import copy
+import os
 import re
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from koru.queue.runners import _DEFAULT_LLM_MODEL
 
 SUBACTOR_DEVELOPMENT_REPAIR = "subactor-development-repair"
 _TEMPLATE_SCHEMA = "koru.queue.ticket_template/v1"
@@ -23,6 +26,10 @@ _REQUIRED_INPUTS: tuple[str, ...] = (
     "worktree",
     "max_patch_attempts",
     "verify_command",
+)
+
+_VERIFY_COMMAND_PREFIXES: frozenset[str] = frozenset(
+    {"node", "npm", "pytest", "python", "python3", "bash"},
 )
 
 _FORBIDDEN_VERIFY_FRAGMENTS: tuple[str, ...] = (
@@ -72,9 +79,18 @@ def validate_subactor_repair_template(data: dict[str, Any]) -> list[str]:
     elif not all(isinstance(item, str) and item.strip() for item in files):
         errors.append("ticket.files entries must be non-empty strings")
 
+    executor = ticket.get("executor")
+    if not isinstance(executor, dict):
+        errors.append("ticket.executor must be a mapping")
+    elif str(executor.get("kind") or "").strip().lower() != "llm":
+        errors.append("ticket.executor.kind must be llm")
+
     inputs = ticket.get("inputs")
     if not isinstance(inputs, dict):
         return errors + ["ticket.inputs must be a mapping"]
+    llm_model = str(inputs.get("llm_model") or "").strip()
+    if not llm_model:
+        errors.append("ticket.inputs.llm_model must be non-empty")
     for key in _REQUIRED_INPUTS:
         if key not in inputs:
             errors.append(f"ticket.inputs.{key} is required")
@@ -145,6 +161,57 @@ def variables_from_development_defect(payload: dict[str, Any]) -> dict[str, str]
     }
 
 
+def resolve_repair_llm_model(variables: dict[str, str] | None = None) -> str:
+    """Pick the model for ``executor.kind=llm`` repair tickets."""
+    merged = variables or {}
+    for candidate in (merged.get("LLM_MODEL"), os.environ.get("LLM_MODEL")):
+        model = str(candidate or "").strip()
+        if model:
+            return model
+    return _DEFAULT_LLM_MODEL
+
+
+def _verify_from_acceptance_criteria(ticket: dict[str, Any]) -> str:
+    for item in ticket.get("acceptance_criteria") or []:
+        cmd = str(item or "").strip()
+        if cmd and cmd.split()[0] in _VERIFY_COMMAND_PREFIXES:
+            return cmd
+    return ""
+
+
+def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
+    """Restore Koru patch policy when planfile import drops unknown ``inputs`` keys."""
+    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
+    if "source:subactor-bridge" not in labels:
+        return ticket
+
+    template = load_ticket_template(SUBACTOR_DEVELOPMENT_REPAIR)
+    template_ticket = template["ticket"]
+    template_inputs = template_ticket.get("inputs") or {}
+    out = dict(ticket)
+    inputs = dict(out.get("inputs") or {})
+
+    for key in ("patch_mode", "promotion_mode", "worktree", "max_patch_attempts", "verify_command"):
+        if key not in inputs and key in template_inputs:
+            inputs[key] = template_inputs[key]
+    if not str(inputs.get("verify_command") or "").strip():
+        from_criteria = _verify_from_acceptance_criteria(out)
+        if from_criteria:
+            inputs["verify_command"] = from_criteria
+    if not str(inputs.get("llm_model") or "").strip():
+        inputs["llm_model"] = resolve_repair_llm_model()
+
+    out["inputs"] = inputs
+    executor = out.get("executor") or {}
+    if not str(executor.get("kind") or "").strip():
+        out["executor"] = dict(template_ticket.get("executor") or {"kind": "llm", "mode": "automatic"})
+
+    template_env = template.get("environment") or {}
+    for key, value in template_env.items():
+        os.environ.setdefault(str(key), str(value))
+    return out
+
+
 def render_subactor_repair_ticket(variables: dict[str, str]) -> dict[str, Any]:
     """Render the Subactor repair skeleton with concrete bridge metadata."""
     data = load_ticket_template(SUBACTOR_DEVELOPMENT_REPAIR)
@@ -152,7 +219,13 @@ def render_subactor_repair_ticket(variables: dict[str, str]) -> dict[str, Any]:
     if errors:
         raise ValueError("; ".join(errors))
 
-    rendered = _substitute(copy.deepcopy(data["ticket"]), variables)
+    render_vars = dict(variables)
+    render_vars.setdefault("LLM_MODEL", resolve_repair_llm_model(render_vars))
+    rendered = _substitute(copy.deepcopy(data["ticket"]), render_vars)
+    rendered["inputs"]["llm_model"] = resolve_repair_llm_model(render_vars)
+    verify = str(rendered.get("inputs", {}).get("verify_command") or "").strip()
+    if verify:
+        rendered["acceptance_criteria"] = [verify]
     leftover = _PLACEHOLDER_RE.findall(yaml.safe_dump(rendered))
     if leftover:
         missing = ", ".join(sorted(set(leftover)))
@@ -169,8 +242,9 @@ def render_repair_ticket_from_development_defect(payload: dict[str, Any]) -> dic
 
     rendered = render_subactor_repair_ticket(variables_from_development_defect(payload))
     acceptance = [str(item).strip() for item in (payload.get("acceptance_tests") or []) if item]
-    if acceptance and acceptance[0].split()[0] in {"node", "npm", "pytest", "python", "python3"}:
+    if acceptance and acceptance[0].split()[0] in _VERIFY_COMMAND_PREFIXES:
         rendered.setdefault("inputs", {})["verify_command"] = acceptance[0]
+        rendered["acceptance_criteria"] = [acceptance[0]]
     return rendered
 
 

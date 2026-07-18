@@ -6,6 +6,7 @@ import unittest
 
 from koru.queue.ticket_templates import (
     SUBACTOR_DEVELOPMENT_REPAIR,
+    hydrate_subactor_repair_ticket,
     load_ticket_template,
     render_repair_ticket_from_development_defect,
     render_subactor_repair_ticket,
@@ -26,6 +27,9 @@ class TestSubactorRepairTicketTemplate(unittest.TestCase):
 
         ticket = data["ticket"]
         inputs = ticket["inputs"]
+        self.assertEqual((ticket.get("executor") or {}).get("kind"), "llm")
+        self.assertEqual((ticket.get("executor") or {}).get("mode"), "automatic")
+        self.assertTrue(str(inputs.get("llm_model") or "").strip())
         self.assertTrue(inputs["patch_mode"])
         self.assertEqual(inputs["promotion_mode"], "branch")
         self.assertTrue(inputs["worktree"])
@@ -48,14 +52,47 @@ class TestSubactorRepairTicketTemplate(unittest.TestCase):
             },
         )
         self.assertEqual(rendered["files"][0], "orchestrator/bin/subactor-run.mjs")
+        self.assertEqual((rendered.get("executor") or {}).get("kind"), "llm")
+        self.assertTrue(str(rendered["inputs"].get("llm_model") or "").strip())
         self.assertIn("PLF-364", rendered["inputs"]["prompt"])
         self.assertNotIn("__", rendered["name"])
+
+    def test_hydrate_restores_planfile_stripped_patch_policy(self) -> None:
+        rendered = render_subactor_repair_ticket(
+            {
+                "COMPONENT": "orchestrator",
+                "ERROR_CODE": "invalid_runner_response",
+                "FINGERPRINT": "orchestrator:invalid_runner_response",
+                "DISCOVERED_IN": "PLF-364",
+                "FILE_1": "orchestrator/bin/subactor-run.mjs",
+                "FILE_2": "orchestrator/tests/development-defect.test.mjs",
+                "PROMPT_BODY": "Keep JSON valid.",
+            },
+        )
+        stripped = {
+            "id": "PLF-900",
+            "labels": rendered["labels"],
+            "inputs": {
+                "prompt": rendered["inputs"]["prompt"],
+                "llm_model": rendered["inputs"]["llm_model"],
+            },
+            "executor": rendered["executor"],
+            "acceptance_criteria": rendered["acceptance_criteria"],
+        }
+        hydrated = hydrate_subactor_repair_ticket(stripped)
+        self.assertTrue(hydrated["inputs"]["patch_mode"])
+        self.assertEqual(hydrated["inputs"]["promotion_mode"], "branch")
+        self.assertEqual(
+            hydrated["inputs"]["verify_command"],
+            rendered["acceptance_criteria"][0],
+        )
 
     def test_max_patch_attempts_overrides_env_default(self) -> None:
         from koru.queue.patch_retry import patch_retry_budget
 
         ticket = {"inputs": {"max_patch_attempts": 2}}
         self.assertEqual(patch_retry_budget(ticket), 2)
+        self.assertEqual(patch_retry_budget({"execution": {"max_attempts": 2}}), 2)
         self.assertEqual(patch_retry_budget({"inputs": {}}), 1)
 
     def test_render_from_development_defect_payload(self) -> None:
@@ -75,6 +112,7 @@ class TestSubactorRepairTicketTemplate(unittest.TestCase):
             "classification": {"action": "ticket", "category": "development_defect"},
         }
         ticket = render_repair_ticket_from_development_defect(payload)
+        self.assertEqual((ticket.get("executor") or {}).get("kind"), "llm")
         self.assertEqual(ticket["inputs"]["promotion_mode"], "branch")
         self.assertIn("plesk-httpdocs-sync", ticket["inputs"]["verify_command"])
         self.assertEqual(ticket["inputs"]["discovered_in"], "PLF-409")

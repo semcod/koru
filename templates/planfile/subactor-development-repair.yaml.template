@@ -40,6 +40,13 @@ environment:
 ticket:
   name: "[DEV] __COMPONENT__: __ERROR_CODE__"
   priority: high
+  executor:
+    kind: llm
+    mode: automatic
+  execution:
+    max_attempts: 2
+  acceptance_criteria:
+    - node --test platform/test/intent-packs.test.mjs
   files:
     - __FILE_1__
     - __FILE_2__
@@ -53,6 +60,7 @@ ticket:
     - component:__COMPONENT__
     - fingerprint:__FINGERPRINT__
   inputs:
+    llm_model: openai/gpt-4o-mini
     patch_mode: true
     promotion_mode: branch
     worktree: true

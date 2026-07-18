@@ -47,40 +47,66 @@ ticket = render_subactor_repair_ticket({
 # planfile ticket import --source koru-template  (stdin JSON list)
 ```
 
+Rendered tickets include **`executor.kind=llm`**, **`inputs.llm_model`** (from
+`LLM_MODEL` env when set, else `openai/gpt-4o-mini`), and mirror
+`verify_command` into **`acceptance_criteria`** so planfile keeps the gate
+command after import.
+
 ## Default patch policy
 
 | Field | Value | Notes |
 | --- | --- | --- |
+| `executor.kind` | `llm` | Headless OpenRouter / vendor CLI patch lane |
+| `inputs.llm_model` | `LLM_MODEL` env or `openai/gpt-4o-mini` | OpenRouter prefix stripped at HTTP call |
 | `patch_mode` | `true` | Agent emits unified diff; Koru applies |
 | `promotion_mode` | `branch` | Commit on `koru/run-<run_id>`; main untouched |
-| `worktree` | `true` | Staging worktree (+ `KORU_QUEUE_WORKTREE=1`) |
-| `max_patch_attempts` | `2` | Mechanical diff retries (not verify failures) |
+| `worktree` | `true` | Staging worktree (+ template `KORU_QUEUE_WORKTREE=1`) |
+| `max_patch_attempts` | `2` | Mechanical diff retries; also `execution.max_attempts` |
 | `files` | 1–2 paths | Placeholders replaced from bridge `affected_files` |
-| `verify_command` | `node --test platform/test/intent-packs.test.mjs` | Local platform unit test from Subactor repo root |
+| `verify_command` | `node --test platform/test/intent-packs.test.mjs` | Copied to `acceptance_criteria` for planfile |
 
 Override `verify_command` per ticket when the defect is outside intent-packs
 (e.g. `node --test orchestrator/tests/development-defect.test.mjs`), but keep
 commands **local** — no docker compose up, no `--apply`, no Plesk URIs.
 
-## Real-LLM pilot (queue intake)
+## Planfile import vs Koru queue
 
-Planfile's ``TicketInputs`` schema drops Koru-only keys (`patch_mode`,
-`verify_command`, `promotion_mode`, …). For a one-shot real-LLM pilot, set the
-env fallbacks Koru already reads:
+Planfile's `TicketInputs` schema **keeps** `llm_model`, `prompt`, and top-level
+`executor`, but **drops** Koru-only keys (`patch_mode`, `verify_command`,
+`promotion_mode`, …).
+
+On queue drain, `hydrate_subactor_repair_ticket` (label `source:subactor-bridge`)
+re-applies the packaged template defaults for stripped patch policy. Verify
+resolution order:
+
+1. `inputs.verify_command` (when still present)
+2. first runnable `acceptance_criteria` entry
+3. `KORU_QUEUE_VERIFY_COMMAND`
+4. `koru.yaml` → `when.before_complete_ticket.commands[0]`
+
+**Operator env still optional:**
+
+| Variable | When needed |
+| --- | --- |
+| `OPENROUTER_API_KEY` + `LLM_MODEL` | Real LLM runs (required) |
+| `KORU_QUEUE_VERIFY_COMMAND` | Only if verify is not in `acceptance_criteria` / hydrated inputs |
+| `KORU_QUEUE_PROMOTION_MODE` | Only for non-bridge tickets without `inputs.promotion_mode` |
+| `KORU_LLM_SHELL_FALLBACK=0` | Force HTTP OpenRouter instead of local agent CLI |
+
+Bridge tickets imported via planfile normally need **no** `KORU_QUEUE_*` overrides.
+
+## Real-LLM pilot (queue intake)
 
 ```bash
 cd /home/tom/github/semcod/koru
 source .env   # OPENROUTER_API_KEY, LLM_MODEL (registry prefix ok)
-export KORU_QUEUE_PROMOTION_MODE=branch
-export KORU_QUEUE_WORKTREE=1
-export KORU_QUEUE_VERIFY_COMMAND='node --check path/to/file.mjs'
 export KORU_LLM_SHELL_FALLBACK=0
 python scripts/subactor-development-repair-pilot.py
 ```
 
-The script renders ``subactor-development-repair``, adds ``executor.kind=llm``,
-imports into an isolated temp git repo, and runs ``koru --queue`` once. It never
-calls Plesk, DNS, or ``subactor ask --apply``.
+The script renders `subactor-development-repair` (with `executor.kind=llm`),
+imports into an isolated temp git repo, and runs `koru --queue` once. It never
+calls Plesk, DNS, or `subactor ask --apply`.
 
 ## Related
 

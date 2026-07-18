@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Subactor repair template ships **`executor.kind=llm`** and **`inputs.llm_model`**
+  (defaults from `LLM_MODEL` env). `acceptance_criteria` mirrors verify command
+  for planfile import. Queue **`hydrate_subactor_repair_ticket`** restores
+  stripped patch policy; verify also reads `acceptance_criteria` and
+  `execution.max_attempts` maps to patch retry budget.
 - Subactor `development_defect` **repair ticket template** (`subactor-development-repair`):
   packaged YAML under `templates/planfile/`, loader in `koru.queue.ticket_templates`,
   docs in `docs/subactor-development-repair-template.md`, regression test
