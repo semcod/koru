@@ -1,7 +1,7 @@
-# code2llm/evolution | 7245 func | 686f | 2026-07-18
-# generated in 0.08s
+# code2llm/evolution | 7289 func | 697f | 2026-07-18
+# generated in 0.04s
 
-NEXT[8] (ranked by impact):
+NEXT[9] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
       WHY: 6836L, 0 classes, max CC=15
       EFFORT: ~4h  IMPACT: 102540
@@ -10,17 +10,17 @@ NEXT[8] (ranked by impact):
       WHY: 3464L, 3 classes, max CC=13
       EFFORT: ~4h  IMPACT: 45032
 
-  [3] !  SPLIT-FUNC      apply_proposed_patch  CC=22  fan=24
-      WHY: CC=22 exceeds 15
-      EFFORT: ~1h  IMPACT: 528
+  [3] !! SPLIT-FUNC      validate_subactor_repair_template  CC=33  fan=15
+      WHY: CC=33 exceeds 15
+      EFFORT: ~1h  IMPACT: 495
 
   [4] !  SPLIT-FUNC      discover_bootstrap_candidates  CC=18  fan=27
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 486
 
-  [5] !  SPLIT-FUNC      _run_next_planfile_task_impl  CC=20  fan=21
+  [5] !  SPLIT-FUNC      _run_next_planfile_task_impl  CC=20  fan=22
       WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 420
+      EFFORT: ~1h  IMPACT: 440
 
   [6] !  SPLIT-FUNC      _merge_call_graph_locations  CC=22  fan=17
       WHY: CC=22 exceeds 15
@@ -30,7 +30,11 @@ NEXT[8] (ranked by impact):
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 320
 
-  [8] !! SPLIT           tree.txt
+  [8] !  SPLIT-FUNC      hydrate_subactor_repair_ticket  CC=21  fan=15
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 315
+
+  [9] !! SPLIT           tree.txt
       WHY: 2722L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
@@ -42,9 +46,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      22 → ≤11
-  god-modules: 60 → 0
-  high-CC(≥15): 9 → ≤4
+  max-CC:      33 → ≤16
+  god-modules: 59 → 0
+  high-CC(≥15): 11 → ≤5
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

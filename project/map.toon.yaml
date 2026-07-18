@@ -1,11 +1,11 @@
-# koru | 1054f 169710L | txt:5,yaml:31,json:41,yml:12,python:774,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
-# generated in 0.31s
-# stats: 7378 func | 0 cls | 1054 mod | CC̄=3.7 | critical:11 | cycles:0
-# alerts[5]: fan-out get_vql_chat_target_from_photo=37; fan-out prepare_photo_vql_for_drive=29; fan-out discover_bootstrap_candidates=27; fan-out create_app=26; fan-out create_app=26
+# koru | 1067f 171021L | txt:5,yaml:31,json:41,yml:12,toml:16,python:787,shell:60,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
+# generated in 0.15s
+# stats: 7435 func | 0 cls | 1067 mod | CC̄=3.7 | critical:13 | cycles:0
+# alerts[5]: fan-out get_vql_chat_target_from_photo=37; CC validate_subactor_repair_template=33; fan-out prepare_photo_vql_for_drive=29; fan-out discover_bootstrap_candidates=27; fan-out create_app=26
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; discover_bootstrap_candidates fan=27; create_app fan=26; create_app fan=26
 # evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1054]:
+M[1067]:
   .pretest.yml,17
   Dockerfile,79
   Makefile,276
@@ -396,6 +396,7 @@ M[1054]:
   scripts/run_testql_conversations.py,68
   scripts/scaffold-ide-plugin.py,310
   scripts/simulate-multi-lane-docker.sh,31
+  scripts/subactor-development-repair-pilot.py,271
   scripts/sync-plugin-build.py,136
   scripts/sync-plugin-shared.py,108
   scripts/sync-plugin-version.py,149
@@ -818,20 +819,32 @@ M[1054]:
   src/koru/project_pipeline.py,158
   src/koru/queue/__init__.py,38
   src/koru/queue/context.py,370
+  src/koru/queue/diff_repair.py,134
   src/koru/queue/human.py,31
   src/koru/queue/koru_queue_argv.py,44
   src/koru/queue/local_manager.py,136
   src/koru/queue/locking.py,94
   src/koru/queue/loop.py,115
-  src/koru/queue/patch_mode.py,665
-  src/koru/queue/patch_retry.py,129
-  src/koru/queue/patch_transaction.py,309
+  src/koru/queue/manifest.py,130
+  src/koru/queue/patch_mode.py,346
+  src/koru/queue/patch_retry.py,145
+  src/koru/queue/patch_transaction.py,34
   src/koru/queue/planfile_ticket_note.py,55
-  src/koru/queue/runner.py,635
-  src/koru/queue/runners.py,529
+  src/koru/queue/runner.py,637
+  src/koru/queue/runners.py,539
   src/koru/queue/shell_evidence.py,74
   src/koru/queue/ticket.py,420
+  src/koru/queue/ticket_templates.py,272
+  src/koru/queue/transaction/__init__.py,55
+  src/koru/queue/transaction/preflight.py,163
+  src/koru/queue/transaction/promotion.py,112
+  src/koru/queue/transaction/result.py,48
+  src/koru/queue/transaction/rollback.py,34
+  src/koru/queue/transaction/service.py,142
+  src/koru/queue/transaction/staging.py,122
+  src/koru/queue/transaction/verification.py,95
   src/koru/queue/types.py,88
+  src/koru/queue/workspace.py,299
   src/koru/queue_clean.py,391
   src/koru/queue_cli_helpers.py,290
   src/koru/redup_integration.py,188
@@ -1061,6 +1074,19 @@ M[1054]:
   wup.yaml,113
   wup-shell-only.yaml,110
 D:
+  src/koru/queue/ticket_templates.py:
+    e: template_dir,template_path,load_ticket_template,validate_subactor_repair_template,variables_from_development_defect,resolve_repair_llm_model,_verify_from_acceptance_criteria,hydrate_subactor_repair_ticket,render_subactor_repair_ticket,render_repair_ticket_from_development_defect,_substitute
+    template_dir()
+    template_path(name)
+    load_ticket_template(name)
+    validate_subactor_repair_template(data)
+    variables_from_development_defect(payload)
+    resolve_repair_llm_model(variables)
+    _verify_from_acceptance_criteria(ticket)
+    hydrate_subactor_repair_ticket(ticket)
+    render_subactor_repair_ticket(variables)
+    render_repair_ticket_from_development_defect(payload)
+    _substitute(value;variables)
   src/koru/scan.py:
     e: scan_pytest_collect,_count_todo_markers,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,_is_workspace_root,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,_scan_jscpd_report,_find_analysis_file,_code2llm_cc_locations,_merge_call_graph_locations,_file_evidence,_code2llm_regenerate_command,_code2llm_source_context,_with_source_context,_parse_dup_suggestions,_parse_god_module_suggestions,_parse_high_cc_suggestions,_parse_refactor_suggestions,_parse_layer_hotspot_suggestions,_scan_code2llm_analysis,_scan_testql_export,_scan_redup_filtered,_scan_redup_changed,_first_existing_artifact,_load_structured_artifact,_intish,_sum_structured_counts,_scan_vallm_validation,_scan_structured_semcod_report,_scan_pyqual_report,_scan_prefact_report,_scan_regix_report,_scan_redsl_report,_count_pfix_diagnose_issues,_scan_pfix_report,_scan_metrun_report,scan_semcod_quality_artifacts,_normalize_scan_filter_path,_matches_scan_filter,_suggestion_matches_paths,_filter_suggestions_by_paths,resolve_scan_paths,resolve_code2llm_source,apply_scan_path_environ,collect_suggestions,_record_scan_activity,_add_existing_scan_title_keys,_add_active_scan_title_keys,_existing_scan_titles_from_sprint,_scan_ticket_list_payload,_existing_scan_titles_from_payload,_load_existing_scan_titles,_existing_scan_titles,_create_ticket,_suggestion_dedupe_key,_is_reused_create_detail,_log_scan_decision,_scan_duplicate_skip,_normalize_create_detail,_apply_create_result,_apply_scan_suggestions,run_scan
     scan_pytest_collect(project)
@@ -1132,11 +1158,6 @@ D:
     e: _section,main
     _section(title)
     main()
-  src/koru/queue/patch_transaction.py:
-    e: resolve_verify_command,apply_proposed_patch,_stage_patch_in_worktree
-    resolve_verify_command(project;ticket)
-    apply_proposed_patch(project;result;ticket;shell_runner;manifest)
-    _stage_patch_in_worktree(project;diff;verify_command;shell_runner)
   src/koru/queue/runner.py:
     e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_run_next_planfile_task_impl,run_next_planfile_task
     _source_tool(ticket)
@@ -1210,7 +1231,7 @@ D:
     _parse_args(argv)
     main(argv)
   src/koru/queue/runners.py:
-    e: _planfile_env,_decode_subprocess_output,_run_captured_subprocess,_control_corr,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_shell_llm_truthy,_normalize_shell_llm_client,_resolve_shell_llm_client,_autodetect_shell_llm_client,_as_text,_flatten_llm_messages,run_shell_llm_request,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
+    e: _planfile_env,_decode_subprocess_output,_run_captured_subprocess,_control_corr,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_shell_llm_truthy,_normalize_shell_llm_client,_resolve_shell_llm_client,_autodetect_shell_llm_client,_as_text,_flatten_llm_messages,run_shell_llm_request,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,_normalize_llm_model,run_llm_request
     _planfile_env()
     _decode_subprocess_output(data)
     _run_captured_subprocess(command)
@@ -1231,6 +1252,7 @@ D:
     _build_llm_headers(endpoint;api_key)
     _parse_llm_response(response;model)
     _handle_llm_error(exc;model)
+    _normalize_llm_model(model;endpoint)
     run_llm_request(request;project)
   src/koru/integrations/vdisplay_client.py:
     e: _real_vdisplay_src,_ensure_real_vdisplay_on_path,_load_vdisplay_control,_canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,_capture_for_verify,_ocr_verify,record_koru_drive_step,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_prefer_photo_vql_chat,_capture_matches_requested_ide,_vdisplay_source,_annotate_prepare_drive_readiness,_resolve_vdisplay_source_for_ide,_abort_on_desktop_probe_fail,_vdisplay_source_for_ide,_photo_vql_metadata_root,_capture_confirmed_from_meta,_capture_provenance,_photo_vql_capture_validation_failed_warning,_photo_vql_expected_title_tokens,_photo_vql_title_mismatch_warning,_photo_vql_ide_window_warning,_observe_vql_sidecar_path,_annotate_png_artifact_state,_photo_png_from_vql_sidecar_path,_photo_png_from_vql_metadata,_resolve_photo_png_path_from_vql,_photo_vql_ide_capture_mismatch,_prefer_ide_prompt_over_photo_vql,_auto_ide_control_enabled,_auto_open_ide_enabled,_real_imgl_src,_ensure_real_imgl_on_path,_vdisplay_cli_candidates,_vdisplay_cli_path,_vdisplay_observe_python_candidates,_vdisplay_subprocess_env,_focus_window_xdotool,_focus_window_xdotool_for_ide,_focus_window_gnome_shell,_focus_window_gnome_shell_for_ide,_click_map_region_center,_raise_alt_tab_enabled,_alt_tab_window_cycle,_attempt_focus_recovery_capture,_persist_send_chat_drive_result,_map_raise_targets_for_ide,_map_interior_targets_for_ide,_dismiss_gnome_overview,_ide_control_resolve_map,_ide_control_open_ide,_ide_control_raise_window,_ide_control_region_raise,_ide_control_alt_tab,_ide_control_window_focus,_ide_control_focus_fallback,_ide_control_focus_interior,_ide_control_outcome_flags,_ide_control_finalize_result,ensure_vdisplay_ide_control,_import_imgl_targets,_import_imgl_target_via_stdlib,_load_light_module,_install_imgl_source_packages,_import_imgl_target_from_source,_main_vql_layer_count,_png_path_for_vql_sidecar,_resolve_photo_png_path,_photo_vql_refresh_mode,photo_vql_sidecar_needs_refresh,_photo_vql_refresh_dry_run_out,_photo_vql_refresh_screenshot,_photo_vql_reload_sidecar_meta,_photo_vql_observe_when_empty,_photo_vql_refresh_annotate_observe,_photo_vql_refresh_finalize_out,refresh_photo_vql_sidecar,_vdisplay_capture_failure_hint,_refresh_vql_sidecar_via_vdisplay_observe,_prepare_photo_vql_map_mismatch,_prepare_photo_vql_probe_abort,_prepare_photo_vql_out_skeleton,_prepare_photo_vql_ide_control_attempt,_prepare_photo_vql_refresh_or_reuse,_prepare_photo_vql_handle_window_warning,_prepare_photo_vql_map_focus_fallback,_prepare_photo_vql_finalize_out,_prepare_photo_vql_apply_capture_guard,prepare_photo_vql_for_drive,_photo_vql_drive_out_base,_photo_vql_drive_map_target_id,_photo_vql_drive_surface_trusted,_photo_vql_drive_verified_false_blocks,_apply_photo_vql_capture_confirmed,_apply_photo_vql_plan_inference_gate,_apply_photo_vql_map_mismatch_gate,_apply_photo_vql_provenance_and_verification,_apply_photo_vql_submit_fields,_normalize_photo_vql_drive_result,_finalize_send_chat,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_effective_submit_enabled,_submit_via_keyboard,_photo_vql_submit_chat,_ide_prompt_app_id,_resolve_ide_prompt_map,_ide_map_message_target,_type_text_via_ide_map_fallback,send_chat_via_ide_prompt,_send_chat_preflight_ide_prompt,_send_chat_preflight_capture_blocked,_send_chat_preflight,_send_chat_try_photo_vql,_send_chat_dry_run,_send_chat_try_os_injector,_send_chat_try_ide_prompt_fallback,_send_chat_semantic_vdisplay,_send_chat_photo_vql_mouse_focus,_send_chat_resolve_chat_selector,_send_chat_selector_click_point,_send_chat_selector_write_kwargs,_send_chat_type_at_selector,_send_chat_submit_if_requested,send_chat,_resolve_vql_chat_target,_find_vql_chat_target,_extract_vql_click_from_target,_get_pycharm_vql_editor_center,_get_jetbrains_pycharm_chat_center,_photo_vql_elements,_live_surface_monitor_lookup,_live_surface_screencast_region,_live_surface_monitor_region_fallback,_live_surface_capture_meta,_jetbrains_surface_chat_target,_chat_target_validation_accepts,_vql_file_for_positioning,_photo_vql_jetbrains_chat_flow,_photo_vql_vscode_chat_flow,_try_ocr_anchor_chat_target,get_vql_chat_target_from_photo,_photo_vql_needs_vision_or_map,_jetbrains_map_selection_method,_jetbrains_map_selection_stage,get_vql_editor_target_from_photo,click_editor_via_photo_vql,_photo_capture_meta_for_source,_enrich_stream_meta_via_vdisplay,_region_origin,_region_dict_from_bounds,_enrich_region_from_display_bounds,_enrich_region_from_ide_map,_enrich_region_from_monitor,_enrich_capture_meta_for_pointer,_map_chat_input_candidate_keys,_map_chat_pointer_meta,_map_chat_element_local_point,_map_chat_target_entry,_map_chat_bottom_right_target,_map_chat_nonnegative_target,_map_chat_target_capture_local,_global_coords_from_vql_local,_vql_plan_warnings,_vql_plan_data_mtime,_vql_plan_selection_method,_vql_plan_capture_flags,_vql_plan_commands,_llm_target_verified,_vql_plan_resolve_validation,_vql_plan_inference_flags,_vql_plan_payload,_build_vql_command_plan,_cursor_record_vql_validation,_log_vql_cursor_positioning_at_command,_ydotool_click_capture_local,_type_text_blocking_warnings,_type_text_blocked_result,_type_text_dry_run_result,_type_text_try_atspi_set_value,_type_text_must_click,_type_text_fallback_click,_type_text_paste_or_type,_type_text_at_vql_coords,_resolve_photo_vql_llm_coords,_resolve_photo_vql_llm_coords_via_koru_detector,_llm_detection_decision_from_target,_photo_vql_map_paste_fallback,_mismatch_shows_competing_ide,_vision_overrides_capture_mismatch,_photo_vql_capture_mismatch_blocks,_surface_only_fallback_active,_surface_bounds_target_trusted,_surface_bounds_target_safe_for_actuation,_photo_vql_capture_mismatch_error,_target_selection_method,_selection_method_is_map,_map_target_can_clear_capture_mismatch,_is_jetbrains_map_target,_map_mismatch_allowed_for_target,_map_source_mismatch_actuation_allowed,_map_capture_mismatch_for_target,_map_capture_mismatch_for_ide,_photo_vql_map_source_mismatch_error,_surface_target_can_clear_capture_mismatch,_surface_mismatch_allowed_for_target,_photo_vql_should_block_unverified_chat,_photo_vql_unverified_chat_blocked,_photo_vql_focus_target,_photo_vql_edit_result,_photo_vql_stale_gate_override_ok,_photo_vql_stale_metadata_gate,_photo_vql_capture_mismatch_gate,_photo_vql_map_source_preflight_gate,_photo_vql_target_map_mismatch_gate,_photo_vql_maybe_clear_mismatch,_photo_vql_refined_target,_photo_vql_command_plan_pre_act,_photo_vql_unverified_chat_gate,_photo_vql_edit_mismatch_allowances,_photo_vql_combined_ok_after_edit,_photo_vql_run_paste_verification,_photo_vql_post_paste_verification,_photo_vql_submit_step,_photo_vql_assemble_combined,_photo_vql_persist_drive_result,perform_photo_vql_focus_and_edit,move_mouse_to_vql_target_and_focus_keyboard,_move_mouse_attempt_focus_and_click,_move_mouse_click_outcome,_imgl_sidecar_path_for_vql,_layers_from_imgl_sidecar_file,_vql_sidecar_layer_center,_vql_sidecar_layer_entry,_layers_from_vdisplay_sidecar,_with_embedded_capture_validation,_vql_candidate_is_stale,_vql_from_ui_elements,_vql_from_fresh_elements,_vql_imgl_fallback_layers,_vql_from_sidecar_layers,_vql_from_program_wrapper,_vql_from_screen_context,_vql_metadata_default,_parse_vql_candidate_data,_load_vql_candidate_metadata,load_vql_metadata,_resolve_vql_candidate,_monitor_source_slugs,_get_vql_candidates,_freshest_populated_vql_candidate,_fresh_vql_bbox_xy,_fresh_vql_bbox_wh,_fresh_vql_center,_fresh_vql_center_only,_fresh_vql_bbox_center,_parse_fresh_vql_elements,get_vql_target,resolve_click_for_frame
@@ -2005,6 +2027,11 @@ Designed to ...
   src/koru/queue/loop.py:
     e: run_planfile_queue_loop
     run_planfile_queue_loop()
+  src/koru/queue/patch_retry.py:
+    e: patch_retry_budget,apply_patch_with_retry,_pin_base
+    patch_retry_budget(ticket)
+    apply_patch_with_retry(project;result;ticket;action;llm_runner;shell_runner;enrich)
+    _pin_base(project;ticket;result;budget)
   src/koru/integrations/photo_vql_target.py:
     e: _InputMetrics,_layer_role,_layer_label,_layer_bounds,_layer_click_center,_canonical_ide,_input_metrics,_has_any,_terminal_or_shell_noise,vql_candidates_polluted,vql_layers_show_vdisplay_overlay,score_photo_vql_chat_input,_score_jetbrains_metrics,_jetbrains_position_score,_jetbrains_size_score,_label_noise_penalty,_score_vscode_top_chat_input,_score_vscode_metrics,_vscode_label_score,_vscode_position_score,_vscode_size_score,photo_vql_chat_input_candidates,_chat_candidate_from_layer,vscode_family_top_chat_rejected,vscode_family_chat_target_from_layers,jetbrains_corner_rejected,_target_bounds,_target_bounds_too_small,jetbrains_chat_corner_target_from_layers,_capture_png_dimensions,_monitor_geometry_for_source,_capture_region_geometry,_clamp_rect_to_monitor,_capture_local_rect_for_global_rect,_local_via_capture_region,_monitor_row_for_source,_clamped_local_in_monitor,_local_via_monitor_geometry,_local_via_vdisplay_coords,_global_to_capture_local_for_source,_surface_window_rect,_monitor_for_capture,_composer_capture_point,_surface_target_payload,jetbrains_chat_target_from_surface,_target_from_candidate
     _InputMetrics:
@@ -2262,11 +2289,6 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koru/queue/patch_retry.py:
-    e: patch_retry_budget,apply_patch_with_retry,_pin_base
-    patch_retry_budget()
-    apply_patch_with_retry(project;result;ticket;action;llm_runner;shell_runner;enrich)
-    _pin_base(project;ticket;result;budget)
   packages/uri2koru/src/uri2koru/nlp2uri.py:
     e: ResolvedKoruUri,nlp2uri,best_uri
     ResolvedKoruUri: to_dict(0)
@@ -5807,6 +5829,38 @@ C...
     _auto_pipeline_stage(state;max_iterations)
     _select_auto_pipeline_profile(args;state)
     _update_auto_pipeline_state(state;queue_result;diag_result;autopilot_status)
+  src/koru/queue/patch_mode.py:
+    e: PatchOutcome,patch_mode_enabled,build_patch_prompt,redact_secrets,build_retry_prompt,current_file_excerpt,symlinks_allowed,promotion_mode,write_patch_artifact
+    PatchOutcome:  # Why a patch ticket failed, as data rather than prose.
+
+Calle...
+    patch_mode_enabled(ticket)
+    build_patch_prompt(prompt)
+    redact_secrets(text)
+    build_retry_prompt(prompt;failure)
+    current_file_excerpt(project;paths)
+    symlinks_allowed()
+    promotion_mode(ticket)
+    write_patch_artifact(project;run_id;diff;evidence)
+  src/koru/queue/workspace.py:
+    e: PatchApplyResult,FileFingerprint,_git,apply_unified_diff,revert_files,diff_target_files,fingerprint_files,changed_since,dirty_paths,current_head,repository_is_clean,commit_on_main,commit_worktree,worktree_enabled,_worktree_location,prune_stale_worktrees,staging_worktree
+    PatchApplyResult:  # Outcome of applying an agent-proposed diff...
+    FileFingerprint:  # Enough of a file's identity to detect that someone else chan...
+    _git(project)
+    apply_unified_diff(project;diff)
+    revert_files(project;files)
+    diff_target_files(project;diff)
+    fingerprint_files(project;paths)
+    changed_since(project;baseline)
+    dirty_paths(project;paths)
+    current_head(project)
+    repository_is_clean(project)
+    commit_on_main(project;message;paths)
+    commit_worktree(worktree;branch;message;paths)
+    worktree_enabled(project)
+    _worktree_location(project;run_id)
+    prune_stale_worktrees(project)
+    staging_worktree(project;seed_files)
   src/koru/integrations/photo_vql_user_guidance.py:
     e: _GuidanceContext,_truthy,preflight_repo_paths,_drive_retry_cmd,_audit_cmd,_guidance_success,_guidance_missing_repo,_guidance_monitor_not_connected,_monitor_not_connected,_fallback_monitor,_available_monitors_label,_guidance_ide_mismatch,_ide_mismatch_detected,_guidance_empty_vql,_empty_vql_error,_guidance_screencast,_guidance_map_capture_mismatch,_guidance_prepare_failed,_prepare_failed,_guidance_drive_failed,_build_guidance_context,_resolve_source,_monitor_names,_combined_error,build_user_guidance,format_user_guidance,speak_user_guidance,_user_guidance_speech_enabled,_notify_user_guidance,_speak_user_guidance_text,emit_user_guidance
     _GuidanceContext:
@@ -6053,43 +6107,6 @@ C...
     _create_ticket()
     _handle_existing_finding()
     main()
-  src/koru/queue/patch_mode.py:
-    e: PatchApplyResult,PatchOutcome,FileFingerprint,patch_mode_enabled,build_patch_prompt,redact_secrets,build_retry_prompt,current_file_excerpt,extract_unified_diff,_normalize_diff,_repair_hunk_counts,_repair_missing_file_headers,_git,symlink_creations,symlinks_allowed,apply_unified_diff,revert_files,promotion_mode,commit_worktree,repository_is_clean,write_patch_artifact,fingerprint_files,changed_since,dirty_paths,current_head,build_manifest,manifest_hash,manifest_drift,diff_target_files,worktree_enabled,_worktree_location,prune_stale_worktrees,staging_worktree
-    PatchApplyResult:  # Outcome of applying an agent-proposed diff...
-    PatchOutcome:  # Why a patch ticket failed, as data rather than prose.
-
-Calle...
-    FileFingerprint:  # Enough of a file's identity to detect that someone else chan...
-    patch_mode_enabled(ticket)
-    build_patch_prompt(prompt)
-    redact_secrets(text)
-    build_retry_prompt(prompt;failure)
-    current_file_excerpt(project;paths)
-    extract_unified_diff(text)
-    _normalize_diff(body)
-    _repair_hunk_counts(lines)
-    _repair_missing_file_headers(lines)
-    _git(project)
-    symlink_creations(diff)
-    symlinks_allowed()
-    apply_unified_diff(project;diff)
-    revert_files(project;files)
-    promotion_mode(ticket)
-    commit_worktree(worktree;branch;message;paths)
-    repository_is_clean(project)
-    write_patch_artifact(project;run_id;diff;evidence)
-    fingerprint_files(project;paths)
-    changed_since(project;baseline)
-    dirty_paths(project;paths)
-    current_head(project)
-    build_manifest(project)
-    manifest_hash(manifest)
-    manifest_drift(project;manifest)
-    diff_target_files(project;diff)
-    worktree_enabled(project)
-    _worktree_location(project;run_id)
-    prune_stale_worktrees(project)
-    staging_worktree(project;seed_files)
   packages/dsl2koru/src/dsl2koru/events.py:
     e: StoredEvent,EventStore
     StoredEvent: to_dict(0)
@@ -6369,6 +6386,23 @@ Calle...
     _is_auto_or_autonomous_up(parts;idx)
     _match_koru_auto_parts(parts)
     looks_like_autonomous_up_command(command)
+  src/koru/queue/manifest.py:
+    e: build_manifest,workspace_snapshot_sha256,manifest_run_directory,persist_manifest,load_persisted_manifest,persisted_manifest_mismatch,manifest_hash,manifest_drift
+    build_manifest(project)
+    workspace_snapshot_sha256(base_files)
+    manifest_run_directory(project;run_id)
+    persist_manifest(project;manifest)
+    load_persisted_manifest(project;run_id)
+    persisted_manifest_mismatch(project;manifest)
+    manifest_hash(manifest)
+    manifest_drift(project;manifest)
+  src/koru/queue/diff_repair.py:
+    e: extract_unified_diff,_normalize_diff,_repair_hunk_counts,_repair_missing_file_headers,symlink_creations
+    extract_unified_diff(text)
+    _normalize_diff(body)
+    _repair_hunk_counts(lines)
+    _repair_missing_file_headers(lines)
+    symlink_creations(diff)
   src/koru/deployment_events/models.py:
     e: Component,DeploymentEvent
     Component:  # Component being deployed or affected...
@@ -6483,6 +6517,14 @@ Calle...
     update_uv_lock(new_version;dry_run)
     update_version_file(new_version;dry_run)
     main()
+  src/koru/queue/transaction/verification.py:
+    e: resolve_verify_command,_verify_command_from_criteria,_verify_command_from_project,skip_verify_baseline,run_verify,verify_output
+    resolve_verify_command(project;ticket)
+    _verify_command_from_criteria(ticket)
+    _verify_command_from_project(project)
+    skip_verify_baseline(ticket)
+    run_verify(shell_runner;command;directory)
+    verify_output(result)
   packages/dsl2koru/src/dsl2koru/grammar.py:
     e: _flag,_parse_query_repair_history,_parse_query_lane_status,_parse_validate_lane,_parse_resolve,_parse_repair_run,parse_line,_serialize_query_repair_history,_serialize_query_lane_status,_serialize_validate_lane,_serialize_resolve,_serialize_repair_run,to_text
     _flag(rest;name)
@@ -6986,6 +7028,27 @@ Calle...
     _read_package_version(plugin_dir)
     _update_expected_versions(ide_id;version)
     _update_workflow_version(version)
+    main()
+  src/koru/queue/transaction/service.py:
+    e: execute_patch_transaction,_run_isolated,_run_direct,_apply_to_workspace
+    execute_patch_transaction(project;result;ticket;shell_runner;manifest)
+    _run_isolated(plan;freeze;shell_runner)
+    _run_direct(plan;freeze;shell_runner)
+    _apply_to_workspace(plan;freeze;shell_runner)
+  scripts/subactor-development-repair-pilot.py:
+    e: _load_koru_dotenv,_require_llm_env,_normalize_model,_run,_init_fixture,_init_planfile,_render_ticket,_import_ticket,_queue_env,_run_queue,_collect_evidence,_run_ids_from_ticket,main
+    _load_koru_dotenv()
+    _require_llm_env()
+    _normalize_model(model)
+    _run(cmd)
+    _init_fixture(root)
+    _init_planfile(root)
+    _render_ticket()
+    _import_ticket(root;ticket)
+    _queue_env(root)
+    _run_queue(root)
+    _collect_evidence(root)
+    _run_ids_from_ticket(root)
     main()
   packages/dsl2koru/src/dsl2koru/cli.py:
     e: _run_results,main,_main_subcommand,_main_legacy,_cmd_validate_schema,_cmd_encode,_cmd_decode,_cmd_roundtrip,_cmd_replay,_cmd_run,_handle_subcommand
@@ -7862,6 +7925,12 @@ Construct once ...
     e: isVscodiumHost,lowered
     isVscodiumHost()
     lowered()
+  src/koru/queue/transaction/staging.py:
+    e: _Baseline,stage_patch,_record_baseline,_staged_verify_failure
+    _Baseline: __init__(0)  # Whether the gate passed *before* the patch existed, and what...
+    stage_patch(plan;shell_runner)
+    _record_baseline(plan;staged;shell_runner)
+    _staged_verify_failure(plan;baseline;verify)
   check_dups.py:
     e: get_files
     get_files(path)
@@ -8143,6 +8212,14 @@ The c...
     catalog()
     capability()
     matchingCommandsFlat()
+  src/koru/queue/transaction/preflight.py:
+    e: ManifestFreeze,extract_patch,screen_diff_contents,build_patch_plan,screen_promotion_preconditions,screen_direct_apply
+    ManifestFreeze: __init__(2),freeze(0)  # The plan pinned to disk, built once and re-persisted on dema...
+    extract_patch(result)
+    screen_diff_contents(diff)
+    build_patch_plan(project;ticket;diff;manifest)
+    screen_promotion_preconditions(plan)
+    screen_direct_apply(plan)
   packages/coru/src/coru/cli_terminal.py:
     e: _ide_from_vscode_pid,_vscode_family_env_hint,_windsurf_terminal_marker,_terminal_ide_hint,_terminal_shell_context,_terminal_host_kind,_terminal_shell_context_fallback
     _ide_from_vscode_pid()
@@ -8667,6 +8744,13 @@ The c...
     write_probe_tests(ide)
     patch_watcher_test(ide)
     main()
+  src/koru/queue/transaction/promotion.py:
+    e: guard_promotion,deliver_patch_artifact,commit_on_run_branch,commit_if_requested,_commit_message
+    guard_promotion(plan;manifest)
+    deliver_patch_artifact(plan;manifest)
+    commit_on_run_branch(plan;staged;changed_files)
+    commit_if_requested(plan;changed_files)
+    _commit_message(plan)
   packages/dsl2koru/src/dsl2koru/codec.py:
     e: validate_payload,parse_text,envelope_to_bytes,envelope_from_bytes,envelope_to_json,envelope_from_json,roundtrip_text
     validate_payload(payload)
@@ -8776,6 +8860,9 @@ The c...
     _default_hook(name)
     set_host_hooks()
     reset_host_hooks()
+  src/koruide/plugin_version.py:
+    e: expected_plugin_version_for_ide
+    expected_plugin_version_for_ide(ide_id)
   src/koruide/ides/base.py:
     e: DetectionSignature,TerminalSignature,PluginPolicy,KeyboardPolicy,IdeAliases,IdeStrategy,StaticIdeIdentityMixin,StaticVscodeFolderMixin,VscodeFamilyStrategy
     DetectionSignature:  # Process-name patterns Koru uses to find the IDE on ``/proc``...
@@ -9057,9 +9144,6 @@ Subclasses are **pure data + thin...
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
-  src/koruide/plugin_version.py:
-    e: expected_plugin_version_for_ide
-    expected_plugin_version_for_ide(ide_id)
   packages/dsl2koru/src/dsl2koru/result.py:
     e: DslResult
     DslResult: to_dict(0)
@@ -9337,6 +9421,16 @@ Th...
     runtime()
     activate()
     deactivate()
+  src/koru/queue/patch_transaction.py:
+    e: apply_proposed_patch
+    apply_proposed_patch(project;result;ticket;shell_runner;manifest)
+  src/koru/queue/transaction/rollback.py:
+    e: roll_back_failed_verify
+    roll_back_failed_verify(plan;changed_files;verify)
+  src/koru/queue/transaction/result.py:
+    e: PatchPlan,PatchTransactionResult
+    PatchPlan:  # Everything the transaction resolved before touching the work...
+    PatchTransactionResult: as_tuple(0)  # The agent's reply, plus why the patch was refused — or ``Non...
   sllm_defs.txt:
   goal.yaml:
   regix.yaml:
@@ -9349,10 +9443,12 @@ Th...
   wup.yaml:
   docker-compose.yml:
   nlp2uri.yaml:
+  pyproject.toml:
   tree.txt:
   todo.txt:
   screen.capture.json:
   pipeline.yaml:
+  package.json:
   prefact.yaml:
   Taskfile.yml:
   Dockerfile:
@@ -9813,6 +9909,7 @@ Th...
     SubmitFallbackPolicy:
     IdeStrategy:
   plugins/koru-autopilot-cursor/package.json:
+  plugins/koru-autopilot-vscode/package.json:
   plugins/koru-autopilot-windsurf/package.json:
   plugins/koru-autopilot-jetbrains/settings.gradle.kts:
     e: gradlePluginPortal,mavenCentral
@@ -9936,6 +10033,4 @@ Th...
   testql-scenarios/artifacts/mock-llm-replies.yaml:
   testql-scenarios/conversations/send-invoice.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
-  pyproject.toml:
-  package.json:
-  plugins/koru-autopilot-vscode/package.json:
+  src/koru/queue/transaction/__init__.py:

@@ -1,11 +1,11 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.71s
+# generated in 0.30s
 # nodes: 375 | edges: 500 | modules: 74
 # CC̄=3.7
 
 HUBS[20]:
   project.print
-    CC=0  in:1044  out:0  total:1044
+    CC=0  in:1051  out:0  total:1051
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:232  out:9  total:241
   packages.dsl2koru.src.dsl2koru.bus.dispatch
@@ -34,10 +34,10 @@ HUBS[20]:
     CC=3  in:0  out:26  total:26
   packages.dsl2koru.src.dsl2koru.cli._main_subcommand
     CC=1  in:1  out:24  total:25
-  packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql
-    CC=7  in:2  out:22  total:24
   packages.uri2koru.src.uri2koru.nlp2uri.nlp2uri
     CC=13  in:1  out:23  total:24
+  packages.coru.src.coru.cli_calibration._materialize_calibration_desktop_oql
+    CC=7  in:2  out:22  total:24
   packages.dsl2koru.src.dsl2koru.codegen.render_models_module
     CC=12  in:1  out:22  total:23
   packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message

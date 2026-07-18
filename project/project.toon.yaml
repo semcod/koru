@@ -1,11 +1,12 @@
-# koru | 7378 func | 714f | 169710L | python | 2026-07-18
+# koru | 7435 func | 726f | 171021L | python | 2026-07-18
 # generated in 0.01s
 
 HEALTH:
-  CC̄=3.7  critical=472 (limit:10)  dup=20  cycles=0
+  CC̄=3.7  critical=474 (limit:10)  dup=20  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     get_vql_chat_target_from_photo = 37 (limit:10)
+  !!! cc_exceeded      validate_subactor_repair_template = 33 (limit:15)
   !!! high_fan_out     prepare_photo_vql_for_drive = 29 (limit:10)
   !!! high_fan_out     discover_bootstrap_candidates = 27 (limit:10)
   !!! high_fan_out     create_app = 26 (limit:10)
@@ -13,10 +14,9 @@ ALERTS[20]:
   !!! high_fan_out     main = 25 (limit:10)
   !!! high_fan_out     run_api_request = 24 (limit:10)
   !!! high_fan_out     build_autopilot_parser = 24 (limit:10)
-  !!! high_fan_out     apply_proposed_patch = 24 (limit:10)
   !!! high_fan_out     EventStore.append_command = 23 (limit:10)
 
-MODULES[1055] (top by size):
+MODULES[1068] (top by size):
   M[src/koru/integrations/vdisplay_client.py] 6836L C:0 F:274 CC↑15 D:7 (python)
   M[packages/coru/src/coru/cli.py] 3464L C:3 F:180 CC↑13 D:3 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
@@ -32,7 +32,7 @@ MODULES[1055] (top by size):
   M[src/koru/autonomy/cycle/cycle_drive_retry.py] 1053L C:0 F:42 CC↑11 D:3 (python)
   M[packages/coru/src/coru/repair/pipeline.py] 1039L C:2 F:42 CC↑9 D:0 (python)
   M[src/koruide/ide.py] 1020L C:2 F:59 CC↑13 D:57 (python)
-  LANGS: python:775/typescript:94/shell:60/json:41/yaml:31/toml:16/yml:12/kotlin:6/other:5/txt:5/proto:4/go:2/javascript:1/rust:1/properties:1/xml:1
+  LANGS: python:788/typescript:94/shell:60/json:41/yaml:31/toml:16/yml:12/kotlin:6/other:5/txt:5/proto:4/go:2/javascript:1/rust:1/properties:1/xml:1
 
 HOTSPOTS[10]:
   ★ get_vql_chat_target_from_photo fan=37  // Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.target
@@ -44,11 +44,11 @@ HOTSPOTS[10]:
   ★ create_app fan=26  // Orchestrates 26 calls
 
 REFACTOR[15]:
-  [1] H/H Split god module src/koru/scan.py (1796L, 0 classes)
-  [2] H/H Split god module src/koru/queue/runner.py (635L, 0 classes)
-  [3] H/H Split god module src/koruapi/mcp_server_planfile.py (965L, 0 classes)
-  [4] H/H Split god module src/koru/integrations/vdisplay_client.py (6836L, 0 classes)
-  [5] H/H Split god module src/koru/queue/runners.py (529L, 0 classes)
+  [1] H/L Split validate_subactor_repair_template (CC=33)
+  [2] H/H Split god module src/koru/scan.py (1796L, 0 classes)
+  [3] H/H Split god module src/koru/queue/runner.py (637L, 0 classes)
+  [4] H/H Split god module src/koruapi/mcp_server_planfile.py (965L, 0 classes)
+  [5] H/H Split god module src/koru/integrations/vdisplay_client.py (6836L, 0 classes)
 
 EVOLUTION:
-  2026-07-18 CC̄=3.7 crit=472 169710L // Automated analysis
+  2026-07-18 CC̄=3.7 crit=474 171021L // Automated analysis

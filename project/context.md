@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.05s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 774, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 787, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7378
-- **Total Classes**: 504
-- **Modules**: 1055
-- **Entry Points**: 2758
+- **Total Functions**: 7435
+- **Total Classes**: 508
+- **Modules**: 1068
+- **Entry Points**: 2767
 
 ## Architecture by Module
 
@@ -188,6 +188,9 @@ Args:
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
 
+### scripts.subactor-development-repair-pilot.main
+- **Calls**: argparse.ArgumentParser, parser.add_argument, parser.parse_args, scripts.subactor-development-repair-pilot._load_koru_dotenv, scripts.subactor-development-repair-pilot._require_llm_env, project.print, scripts.subactor-development-repair-pilot._render_ticket, scripts.subactor-development-repair-pilot._import_ticket
+
 ### packages.uri2coru.src.uri2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, dec.add_argument, dec.add_argument, sub.add_parser, run.add_argument, run.add_argument
 
@@ -224,10 +227,6 @@ Args:
 
 ### packages.nlp2coru.src.nlp2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, sub.add_parser
-
-### src.koru.cli_tagi.auto
-> Auto-commit all changes using Tagi's auto-ordering.
-- **Calls**: tagi.command, click.argument, click.option, click.option, click.option, None.resolve, click.echo, TagiIntegration
 
 ## Process Flows
 
@@ -530,6 +529,11 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koru.integrations.vdisplay_client._capture_for_verify
 
+### recursion__substitute
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.queue.ticket_templates._substitute
+
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
 - **Confidence**: 0.70
@@ -560,6 +564,7 @@ Key functions that process and transform data:
 Functions exposed as public API (no underscore prefix):
 
 - `scripts.e2e_envmap_koru.main` - 73 calls
+- `src.koru.queue.ticket_templates.validate_subactor_repair_template` - 56 calls
 - `src.koru.integrations.vdisplay_client.get_vql_chat_target_from_photo` - 54 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
@@ -576,7 +581,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
-- `src.koru.queue.patch_transaction.apply_proposed_patch` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
 - `src.koruide.daemon.handlers.handle_status` - 30 calls
 - `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
@@ -584,6 +588,7 @@ Functions exposed as public API (no underscore prefix):
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
 - `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
+- `scripts.subactor-development-repair-pilot.main` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
@@ -595,10 +600,9 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_tagi.deploy` - 27 calls
 - `src.koru.autonomy.nxdo_discovery.run_nxdo_discovery` - 27 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
+- `src.koru.queue.ticket_templates.hydrate_subactor_repair_ticket` - 27 calls
 - `packages.nlp2coru.src.nlp2coru.cli.main` - 26 calls
 - `src.koru.cli_tagi.auto` - 26 calls
-- `src.koru.cli_strategy.strategy_main` - 26 calls
-- `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
 
 ## System Interactions
 
