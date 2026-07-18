@@ -298,6 +298,26 @@ def _git(project: Path, *args: str, stdin: str | None = None) -> subprocess.Comp
     )
 
 
+_SYMLINK_MODE_RE = re.compile(r"^(?:new file mode|new mode) 120000\s*$", re.MULTILINE)
+
+
+def symlink_creations(diff: str) -> bool:
+    """Whether a diff creates a symlink or converts a file into one.
+
+    ``git apply`` rejects ``../`` paths but happily creates a link pointing
+    anywhere on the filesystem, which hands an agent-authored patch a way out
+    of the workspace it was scoped to. Legitimate uses exist, so this is a
+    policy question rather than a hard error — see ``symlinks_allowed``.
+    """
+    return bool(_SYMLINK_MODE_RE.search(diff))
+
+
+def symlinks_allowed() -> bool:
+    """Whether agent patches may introduce symlinks (off by default)."""
+    raw = (os.environ.get("KORU_QUEUE_ALLOW_SYMLINKS") or "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 def apply_unified_diff(project: Path, diff: str) -> PatchApplyResult:
     """Apply a diff to the workspace, refusing anything that does not apply cleanly.
 
@@ -352,6 +372,7 @@ _PROMOTION_MODES = frozenset(
 
 PROMOTION_REFUSED_DIRTY_REPO = "promotion_refused_dirty_repo"
 PROMOTION_FAILED = "promotion_failed"
+PATCH_INTRODUCES_SYMLINK = "patch_introduces_symlink"
 
 
 def promotion_mode(ticket: dict) -> str:
@@ -584,6 +605,28 @@ def _worktree_location(project: Path, run_id: str) -> Path:
     return project / ".koru" / "worktrees" / f"run-{run_id}"
 
 
+def prune_stale_worktrees(project: Path) -> None:
+    """Clear worktrees left behind by an interrupted run.
+
+    A killed process never runs its cleanup, leaving both a directory and a git
+    registration. ``git worktree prune`` drops registrations whose directory is
+    gone; the reverse case — a surviving directory git no longer tracks — is
+    removed here. Only paths matching koru's own naming are touched, and a
+    directory git still lists is left alone, so a concurrent run is never
+    disturbed.
+    """
+    _git(project, "worktree", "prune")
+    listed = _git(project, "worktree", "list", "--porcelain")
+    live = {
+        line.split(" ", 1)[1].strip()
+        for line in (listed.stdout or "").splitlines()
+        if line.startswith("worktree ")
+    }
+    for candidate in (*project.parent.glob(".koru-run-*"), *(project / ".koru" / "worktrees").glob("run-*")):
+        if candidate.is_dir() and str(candidate) not in live:
+            shutil.rmtree(candidate, ignore_errors=True)
+
+
 @contextmanager
 def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Path | None]:
     """Yield a disposable worktree seeded with the workspace's current content.
@@ -594,6 +637,7 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
     across before it is applied. Yields None when the worktree cannot be
     created, leaving the caller to fall back to in-place execution.
     """
+    prune_stale_worktrees(project)
     path = _worktree_location(project, uuid4().hex[:12])
     path.parent.mkdir(parents=True, exist_ok=True)
     created = _git(project, "worktree", "add", "--detach", "--quiet", str(path), "HEAD")

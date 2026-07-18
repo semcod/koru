@@ -18,6 +18,7 @@ from uuid import uuid4
 from koru.queue.patch_mode import (
     NO_PATCH_EMITTED,
     PATCH_DOES_NOT_APPLY,
+    PATCH_INTRODUCES_SYMLINK,
     PROMOTION_APPLY,
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
@@ -41,6 +42,8 @@ from koru.queue.patch_mode import (
     repository_is_clean,
     revert_files,
     staging_worktree,
+    symlink_creations,
+    symlinks_allowed,
     worktree_enabled,
     write_patch_artifact,
 )
@@ -102,6 +105,19 @@ def apply_proposed_patch(
                 f"First line of the reply: {summary}"
             ),
             retryable=True,
+        )
+
+    if symlink_creations(diff) and not symlinks_allowed():
+        # git apply blocks `../` traversal but not a link pointing anywhere on
+        # the filesystem, which would let a scoped patch reach outside its
+        # workspace. Refuse by default; KORU_QUEUE_ALLOW_SYMLINKS=1 opts in.
+        return result, PatchOutcome(
+            code=PATCH_INTRODUCES_SYMLINK,
+            message=(
+                "the patch creates a symlink, which would let it point outside the "
+                "workspace it is scoped to. Set KORU_QUEUE_ALLOW_SYMLINKS=1 if this "
+                "project legitimately needs agent-authored symlinks."
+            ),
         )
 
     verify_command = resolve_verify_command(project, ticket)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -1428,6 +1429,7 @@ class TestQueueEditVerification(unittest.TestCase):
 from koru.queue.patch_mode import (  # noqa: E402
     MANIFEST_MISMATCH,
     NO_PATCH_EMITTED,
+    PATCH_INTRODUCES_SYMLINK,
     PROMOTION_CONFLICT,
     PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
@@ -1738,6 +1740,168 @@ class TestPatchMode(unittest.TestCase):
                 self.assertTrue((staged / ".." / "fixture.json").resolve().is_file())
 
             self.assertFalse(list(parent.glob(".koru-run-*")))
+
+    def test_stale_worktrees_from_a_killed_run_are_reclaimed(self) -> None:
+        """A killed process never runs its cleanup. The next run must reclaim
+        both the abandoned directory and git's registration of it."""
+        from koru.queue.patch_mode import prune_stale_worktrees, staging_worktree
+
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            project = parent / "repo"
+            project.mkdir()
+            for args in (
+                ["init", "-q"],
+                ["config", "user.email", "koru@test"],
+                ["config", "user.name", "koru"],
+            ):
+                subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
+            self._commit_file(project, "a.txt", "old\n")
+
+            # A registration whose directory vanished, and a directory git no
+            # longer knows about — the two ways a killed run leaves debris.
+            subprocess.run(
+                ["git", "worktree", "add", "--detach", "--quiet", str(parent / ".koru-run-gone"), "HEAD"],
+                cwd=project, check=True, capture_output=True,
+            )
+            shutil.rmtree(parent / ".koru-run-gone")
+            orphan_dir = parent / ".koru-run-orphaned"
+            orphan_dir.mkdir()
+            (orphan_dir / "leftover.txt").write_text("debris", encoding="utf-8")
+
+            # Reclaimed as a side effect of starting the next run, not only
+            # when called directly — that wiring is the part that matters.
+            with staging_worktree(project, ("a.txt",)) as fresh:
+                self.assertIsNotNone(fresh)
+
+            self.assertFalse(orphan_dir.exists())
+            listed = subprocess.run(
+                ["git", "worktree", "list"], cwd=project, capture_output=True, text=True, check=True,
+            ).stdout
+            self.assertNotIn(".koru-run-gone", listed)
+
+            # A live worktree must survive pruning — concurrent runs rely on it.
+            with staging_worktree(project, ("a.txt",)) as staged:
+                self.assertIsNotNone(staged)
+                assert staged is not None
+                prune_stale_worktrees(project)
+                self.assertTrue(staged.is_dir())
+
+    def test_worktree_is_cleaned_up_on_keyboard_interrupt(self) -> None:
+        """Ctrl-C during verification must not leave a worktree behind."""
+        from koru.queue.patch_mode import staging_worktree
+
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            project = parent / "repo"
+            project.mkdir()
+            for args in (
+                ["init", "-q"],
+                ["config", "user.email", "koru@test"],
+                ["config", "user.name", "koru"],
+            ):
+                subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
+            self._commit_file(project, "a.txt", "old\n")
+
+            with self.assertRaises(KeyboardInterrupt):
+                with staging_worktree(project, ("a.txt",)) as staged:
+                    self.assertIsNotNone(staged)
+                    raise KeyboardInterrupt
+
+            self.assertFalse(list(parent.glob(".koru-run-*")))
+
+    def test_symlink_creating_patch_is_refused(self) -> None:
+        """git apply blocks `../` traversal but not a link pointing anywhere on
+        the filesystem, which would let a scoped patch reach outside it."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            reply = SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "```diff\n"
+                    "diff --git a/link b/link\n"
+                    "new file mode 120000\n"
+                    "--- /dev/null\n"
+                    "+++ b/link\n"
+                    "@@ -0,0 +1 @@\n"
+                    "+/etc/passwd\n"
+                    "```\n"
+                ),
+                stderr="",
+            )
+
+            def unused_gate(command: str, cwd: Path):
+                raise AssertionError("a refused patch must not reach the gate")
+
+            _result, outcome = apply_proposed_patch(
+                project, reply, {"inputs": {"verify_command": "true"}}, unused_gate,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, PATCH_INTRODUCES_SYMLINK)
+            self.assertFalse(outcome.retryable)
+            self.assertFalse((project / "link").exists())
+
+    def test_symlinks_can_be_opted_into(self) -> None:
+        from koru.queue.patch_mode import symlink_creations, symlinks_allowed
+
+        symlink_diff = "diff --git a/l b/l\nnew file mode 120000\n"
+        self.assertTrue(symlink_creations(symlink_diff))
+        self.assertFalse(symlink_creations("diff --git a/f b/f\nnew file mode 100644\n"))
+        self.assertFalse(symlinks_allowed())
+        with patch.dict(os.environ, {"KORU_QUEUE_ALLOW_SYMLINKS": "1"}):
+            self.assertTrue(symlinks_allowed())
+
+    def test_multi_file_patch_is_all_or_nothing(self) -> None:
+        """One bad file must not leave the others half-applied."""
+        from koru.queue.patch_mode import apply_unified_diff
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            partial = (
+                "diff --git a/a.txt b/a.txt\n"
+                "--- a/a.txt\n"
+                "+++ b/a.txt\n"
+                "@@ -1 +1 @@\n"
+                "-old\n"
+                "+new\n"
+                "diff --git a/missing.txt b/missing.txt\n"
+                "--- a/missing.txt\n"
+                "+++ b/missing.txt\n"
+                "@@ -1 +1 @@\n"
+                "-nope\n"
+                "+new\n"
+            )
+            result = apply_unified_diff(project, partial)
+
+            self.assertFalse(result.ok)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_rename_and_mode_change_are_allowed(self) -> None:
+        """Renames and the executable bit are ordinary refactoring output."""
+        from koru.queue.patch_mode import apply_unified_diff
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "old-name.sh", "echo hi\n")
+            rename = (
+                "diff --git a/old-name.sh b/new-name.sh\n"
+                "old mode 100644\n"
+                "new mode 100755\n"
+                "similarity index 100%\n"
+                "rename from old-name.sh\n"
+                "rename to new-name.sh\n"
+            )
+            result = apply_unified_diff(project, rename)
+
+            self.assertTrue(result.ok, result.detail)
+            self.assertFalse((project / "old-name.sh").exists())
+            self.assertTrue((project / "new-name.sh").exists())
+            self.assertTrue(os.access(project / "new-name.sh", os.X_OK))
 
     def test_manifest_hash_is_stable_and_content_sensitive(self) -> None:
         """The hash must depend only on the decision, so identical inputs always
