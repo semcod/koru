@@ -286,15 +286,16 @@ PATCH_INTRODUCES_SYMLINK = "patch_introduces_symlink"
 def promotion_mode(ticket: dict) -> str:
     """How a verified patch should be delivered.
 
-    Defaults to ``apply`` for continuity, but ``branch`` is the safer choice on
-    a shared checkout: the result lands on its own ref, so a concurrent
-    ``git add -A`` in another session cannot absorb it into an unrelated commit.
+    Defaults to ``branch``: the result lands on its own ``koru/run-*`` ref, so
+    a concurrent ``git add -A`` in another session cannot absorb it into an
+    unrelated commit, and the shared working tree is never written to. ``apply``
+    remains available explicitly for controlled local application.
     """
     raw = str((ticket.get("inputs") or {}).get("promotion_mode") or "").strip().lower()
     if raw in _PROMOTION_MODES:
         return raw
     env = (os.environ.get("KORU_QUEUE_PROMOTION_MODE") or "").strip().lower()
-    return env if env in _PROMOTION_MODES else PROMOTION_APPLY
+    return env if env in _PROMOTION_MODES else PROMOTION_BRANCH
 
 
 

@@ -189,7 +189,8 @@ class TestNeedsHuman(_CrashLab):
             project = self._git_repo(tmp)
             self._commit_file(project, "a.txt", "old\n")
             _r, outcome, _b = self._run(
-                project, {"id": "R-4", "inputs": {"verify_command": "true"}},
+                project,
+                {"id": "R-4", "inputs": {"verify_command": "true", "promotion_mode": "apply"}},
             )
             self.assertIsNone(outcome, outcome)  # a.txt is now "new"
             run_id = self._the_run_id(project)

@@ -126,6 +126,24 @@ def execute_patch_transaction(
         journal.append(PHASE_REFUSED, data={"code": refusal.code})
         return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
 
+    if plan.mode == PROMOTION_BRANCH and not plan.isolated:
+        # Branch promises a verified commit and an untouched shared tree; a run
+        # that cannot isolate (no gate to verify with, or no worktree support)
+        # cannot keep either promise. Falling back to writing the workspace
+        # would be the silent downgrade the mode exists to rule out.
+        refusal = PatchOutcome(
+            code=PROMOTION_FAILED,
+            message=(
+                "promotion_mode=branch requires a verify gate and worktree "
+                "isolation, and this run has neither a resolvable verify command "
+                "nor an isolatable checkout. Name a verify profile (or command), "
+                "or explicitly choose promotion_mode=apply for an unverified "
+                "local application."
+            ),
+        )
+        journal.append(PHASE_REFUSED, data={"code": refusal.code})
+        return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
+
     run = _run_isolated if plan.isolated else _run_direct
     outcome = run(plan, freeze, shell_runner, journal, authorize=authorize)
     return PatchTransactionResult(result, outcome, plan=plan, manifest=freeze.manifest)

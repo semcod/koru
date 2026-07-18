@@ -203,7 +203,8 @@ class TestContractEnforcementInTransaction(_RepoCase):
             self._write_contract(project)
             ticket = {
                 "id": "C-2",
-                "inputs": {"verify_command": "true", "contract": "local-r1"},
+                "inputs": {"verify_command": "true", "contract": "local-r1",
+                           "promotion_mode": "apply"},
             }
 
             _r, outcome, _bundle = self._run(project, ticket)
@@ -260,7 +261,7 @@ class TestGrantEnforcedTransaction(_RepoCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._commit_file(project, "src/a.txt", "old\n")
-            ticket = {"id": "G-2", "inputs": {"verify_command": "true"}}
+            ticket = {"id": "G-2", "inputs": {"verify_command": "true", "promotion_mode": "apply"}}
 
             with self._env():
                 _r, outcome, _b = self._run(project, ticket)
@@ -285,7 +286,7 @@ class TestGrantEnforcedTransaction(_RepoCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._commit_file(project, "src/a.txt", "old\n")
-            ticket = {"id": "G-3", "inputs": {"verify_command": "true"}}
+            ticket = {"id": "G-3", "inputs": {"verify_command": "true", "promotion_mode": "apply"}}
 
             _r, outcome, _b = self._run(project, ticket)
 

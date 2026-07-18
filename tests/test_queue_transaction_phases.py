@@ -462,7 +462,7 @@ class TestWorktreeUnavailable(_RepoCase):
             project = self._git_repo(tmp)
             self._commit_file(project, "a.txt", "old\n")
             (project / "a.txt").write_text("someone was editing this\n", encoding="utf-8")
-            ticket = {"inputs": {"verify_command": "true"}}
+            ticket = {"inputs": {"verify_command": "true", "promotion_mode": "apply"}}
 
             outcome = self._apply(project, ticket, lambda cmd, cwd: _reply())
 
@@ -485,12 +485,76 @@ class TestWorktreeUnavailable(_RepoCase):
                 return _reply(returncode=1, stderr="boom")
 
             outcome = self._apply(
-                project, {"inputs": {"verify_command": "pytest -q"}}, failing_gate,
+                project,
+                {"inputs": {"verify_command": "pytest -q", "promotion_mode": "apply"}},
+                failing_gate,
             )
 
             assert outcome is not None
             self.assertEqual(outcome.code, VERIFY_FAILED_ROLLED_BACK)
             self.assertEqual(ran, [project], "the gate must run, in the workspace itself")
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+
+class TestBranchFirstDefault(_RepoCase):
+    """E7: with nothing said anywhere, the result lands on its own ref."""
+
+    _REPLY = (
+        "```diff\n"
+        "diff --git a/a.txt b/a.txt\n"
+        "--- a/a.txt\n"
+        "+++ b/a.txt\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        "+new\n"
+        "```\n"
+    )
+
+    def test_a_default_run_lands_on_a_branch_and_leaves_the_tree_alone(self) -> None:
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            ticket = {"id": "BF-1", "inputs": {"verify_command": "true"}}
+
+            with mock.patch.dict("os.environ", {}, clear=True):
+                _result, outcome = apply_proposed_patch(
+                    project,
+                    _reply(stdout=self._REPLY),
+                    ticket,
+                    lambda cmd, cwd: _reply(),
+                )
+
+            self.assertIsNone(outcome, outcome)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+            branches = subprocess.run(
+                ["git", "branch", "--list", "koru/run-*"],
+                cwd=project, capture_output=True, text=True, check=True,
+            ).stdout
+            self.assertIn("koru/run-", branches)
+
+    def test_a_default_run_without_a_gate_refuses_rather_than_applying_unverified(self) -> None:
+        """Branch promises a verified commit; no gate means no verification, and
+        silently downgrading to a workspace write is exactly what the default
+        exists to rule out."""
+        from koru.queue.patch_transaction import apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+
+            with mock.patch.dict("os.environ", {}, clear=True):
+                _result, outcome = apply_proposed_patch(
+                    project,
+                    _reply(stdout=self._REPLY),
+                    {"id": "BF-2", "inputs": {}},
+                    lambda cmd, cwd: _reply(),
+                )
+
+            assert outcome is not None
+            self.assertEqual(outcome.code, PROMOTION_FAILED)
+            self.assertIn("verify", outcome.message)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
 

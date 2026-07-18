@@ -242,7 +242,7 @@ class TestTransactionJournaling(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._commit_file(project, "a.txt", "old\n")
-            ticket = {"id": "J-1", "inputs": {"verify_command": "true"}}
+            ticket = {"id": "J-1", "inputs": {"verify_command": "true", "promotion_mode": "apply"}}
 
             _result, outcome, _bundle = apply_patch_with_retry(
                 project,

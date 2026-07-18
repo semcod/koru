@@ -1454,7 +1454,17 @@ class TestPatchMode(unittest.TestCase):
     """Patch mode: the agent proposes a diff, koru applies it deterministically.
 
     This is what lets an edit ticket run without granting the agent CLI write
-    access to the workspace."""
+    access to the workspace.
+
+    The apply/direct pipeline is pinned explicitly here: the *default*
+    promotion mode is ``branch``, and these tests exercise the apply mechanics
+    (in-place write, rollback, dirty guards), which tickets now have to opt
+    into. Tests with an explicit ``promotion_mode`` input override the pin."""
+
+    def setUp(self) -> None:
+        patcher = patch.dict(os.environ, {"KORU_QUEUE_PROMOTION_MODE": "apply"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def _git_repo(self, tmp: str) -> Path:
         project = Path(tmp)
@@ -1788,18 +1798,21 @@ class TestPatchMode(unittest.TestCase):
             self.assertEqual(outcome.code, MANIFEST_NOT_PERSISTED)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
-    def test_promotion_mode_falls_back_to_env_then_apply(self) -> None:
+    def test_promotion_mode_falls_back_to_env_then_branch(self) -> None:
+        """Branch-first is the default: with nothing said, the result lands on
+        its own ref and the shared working tree stays untouched."""
         from koru.queue.patch_mode import PROMOTION_APPLY, PROMOTION_BRANCH, promotion_mode
 
-        self.assertEqual(promotion_mode({"inputs": {}}), PROMOTION_APPLY)
-        self.assertEqual(
-            promotion_mode({"inputs": {"promotion_mode": "branch"}}), PROMOTION_BRANCH,
-        )
-        with patch.dict(os.environ, {"KORU_QUEUE_PROMOTION_MODE": "branch"}):
+        with patch.dict(os.environ, {}, clear=True):
             self.assertEqual(promotion_mode({"inputs": {}}), PROMOTION_BRANCH)
+        self.assertEqual(
+            promotion_mode({"inputs": {"promotion_mode": "apply"}}), PROMOTION_APPLY,
+        )
+        with patch.dict(os.environ, {"KORU_QUEUE_PROMOTION_MODE": "commit"}):
+            self.assertEqual(promotion_mode({"inputs": {}}), "commit")
             # An unknown ticket value must not silently inherit the env default.
             self.assertEqual(
-                promotion_mode({"inputs": {"promotion_mode": "nonsense"}}), PROMOTION_BRANCH,
+                promotion_mode({"inputs": {"promotion_mode": "nonsense"}}), "commit",
             )
 
     def test_worktree_keeps_the_repository_depth_on_disk(self) -> None:
