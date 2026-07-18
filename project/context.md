@@ -1,15 +1,15 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.03s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 771, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 772, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7342
-- **Total Classes**: 501
-- **Modules**: 1052
+- **Total Functions**: 7353
+- **Total Classes**: 502
+- **Modules**: 1053
 - **Entry Points**: 2757
 
 ## Architecture by Module

@@ -4,6 +4,7 @@
 import hashlib
 import json
 import logging
+import os
 import uuid
 from collections.abc import Callable
 from pathlib import Path
@@ -12,6 +13,16 @@ from typing import Any
 from koru.queue.context import build_project_context
 from koru.queue.human import default_human_prompt
 from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
+from koru.queue.patch_mode import (
+    apply_unified_diff,
+    build_patch_prompt,
+    diff_target_files,
+    extract_unified_diff,
+    patch_mode_enabled,
+    revert_files,
+    staging_worktree,
+    worktree_enabled,
+)
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
 from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
@@ -256,6 +267,111 @@ def _append_shell_evidence(
             run_id,
             up.returncode,
             (up.stderr or "")[:500],
+        )
+
+
+def _resolve_verify_command(project: Path, ticket: dict) -> str:
+    """Find the command that proves a patch is good.
+
+    Ticket-level config is preferred but cannot be relied on: planfile's schema
+    keeps a closed set of ``inputs`` keys and silently drops unknown ones. So
+    fall back to the project's own declared gate — ``koru.yaml`` already names
+    the command to run before completing a ticket, which is exactly this.
+    """
+    explicit = str((ticket.get("inputs") or {}).get("verify_command") or "").strip()
+    if explicit:
+        return explicit
+
+    from_env = (os.environ.get("KORU_QUEUE_VERIFY_COMMAND") or "").strip()
+    if from_env:
+        return from_env
+
+    try:
+        import yaml
+
+        config = yaml.safe_load((project / "koru.yaml").read_text(encoding="utf-8"))
+        commands = (((config or {}).get("when") or {}).get("before_complete_ticket") or {}).get(
+            "commands",
+        ) or []
+    except (OSError, ImportError, AttributeError, yaml.YAMLError):
+        return ""
+    return str(commands[0]).strip() if commands else ""
+
+
+def _apply_proposed_patch(
+    project: Path,
+    result: CommandResult,
+    ticket: dict,
+    shell_runner: Callable[[str, Path], CommandResult],
+) -> tuple[CommandResult, str | None]:
+    """Apply the diff an agent proposed, then verify it, rolling back on failure.
+
+    The agent's own exit code only says it produced *an answer*; whether that
+    answer contained an applicable patch, and whether the patch is any good,
+    are separate questions. A patch that fails its ticket's verify command is
+    reverted, so a failed run leaves the workspace as it found it.
+    """
+    diff = extract_unified_diff(result.stdout)
+    if diff is None:
+        head = (result.stdout or "").strip().splitlines()
+        summary = head[0][:200] if head else "(empty reply)"
+        return result, (
+            "agent returned no unified diff, so nothing could be applied. "
+            f"First line of the reply: {summary}"
+        )
+
+    verify_command = _resolve_verify_command(project, ticket)
+
+    if verify_command and worktree_enabled(project):
+        staged_error = _stage_patch_in_worktree(project, diff, verify_command, shell_runner)
+        if staged_error is not None:
+            return result, staged_error
+
+    applied = apply_unified_diff(project, diff)
+    if not applied.ok:
+        return result, applied.detail
+
+    if not verify_command:
+        return result, None
+
+    verify = shell_runner(verify_command, project)
+    if verify.returncode == 0:
+        return result, None
+
+    revert_files(project, applied.changed_files)
+    output = (verify.stderr or verify.stdout or "").strip()[-600:]
+    return result, (
+        f"patch applied but verification failed, so it was rolled back. "
+        f"`{verify_command}` exited {verify.returncode}: {output}"
+    )
+
+
+def _stage_patch_in_worktree(
+    project: Path,
+    diff: str,
+    verify_command: str,
+    shell_runner: Callable[[str, Path], CommandResult],
+) -> str | None:
+    """Prove a patch in a throwaway worktree before it touches the workspace.
+
+    Nothing reaches the real tree until the patch has both applied and passed
+    its gate in isolation, so a bad patch — or one racing another agent's edits
+    — costs a discarded directory rather than a broken workspace.
+    """
+    targets = diff_target_files(project, diff)
+    with staging_worktree(project, targets) as staged:
+        if staged is None:
+            return None  # cannot isolate; in-place apply + revert still guards us
+        applied = apply_unified_diff(staged, diff)
+        if not applied.ok:
+            return applied.detail
+        verify = shell_runner(verify_command, staged)
+        if verify.returncode == 0:
+            return None
+        output = (verify.stderr or verify.stdout or "").strip()[-600:]
+        return (
+            "patch failed verification in an isolated worktree, so the workspace "
+            f"was left untouched. `{verify_command}` exited {verify.returncode}: {output}"
         )
 
 
@@ -540,6 +656,12 @@ def _run_next_planfile_task_impl(
 
         expects_edits = _ticket_expects_edits(ticket)
         before = _snapshot_declared_files(project, ticket) if expects_edits else {}
+        use_patch_mode = (
+            executor_kind == "llm" and expects_edits and patch_mode_enabled(ticket)
+        )
+        if use_patch_mode:
+            resolved_action = dict(resolved_action)
+            resolved_action["prompt"] = build_patch_prompt(str(resolved_action.get("prompt") or ""))
 
         result, action_label = _execute_action(
             executor_kind,
@@ -551,6 +673,14 @@ def _run_next_planfile_task_impl(
             shell_runner,
         )
 
+        patch_error: str | None = None
+        if use_patch_mode and result.returncode == 0:
+            result, patch_error = _apply_proposed_patch(project, result, ticket, shell_runner)
+
+        verification_error = patch_error
+        if verification_error is None and expects_edits:
+            verification_error = _verify_declared_files_changed(project, ticket, before)
+
         return _finalize_ticket(
             project,
             ticket_id,
@@ -558,7 +688,7 @@ def _run_next_planfile_task_impl(
             result,
             action_label,
             planfile_runner,
-            _verify_declared_files_changed(project, ticket, before) if expects_edits else None,
+            verification_error,
         )
 
 

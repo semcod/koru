@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -1422,6 +1423,272 @@ class TestQueueEditVerification(unittest.TestCase):
             created.parent.mkdir(parents=True)
             created.write_text("export const x = 1;\n", encoding="utf-8")
             self.assertIsNone(_verify_declared_files_changed(project, ticket, before))
+
+
+class TestPatchMode(unittest.TestCase):
+    """Patch mode: the agent proposes a diff, koru applies it deterministically.
+
+    This is what lets an edit ticket run without granting the agent CLI write
+    access to the workspace."""
+
+    def _git_repo(self, tmp: str) -> Path:
+        project = Path(tmp)
+        for args in (
+            ["init", "-q"],
+            ["config", "user.email", "koru@test"],
+            ["config", "user.name", "koru"],
+        ):
+            subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
+        return project
+
+    def _commit_file(self, project: Path, rel: str, body: str) -> None:
+        target = project / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(body, encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=project, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-qm", "baseline"], cwd=project, check=True, capture_output=True,
+        )
+
+    def test_extracts_diff_from_fenced_reply(self) -> None:
+        from koru.queue.patch_mode import extract_unified_diff
+
+        reply = (
+            "Here is the change you asked for:\n\n"
+            "```diff\n"
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1 +1 @@\n"
+            "-old\n"
+            "+new\n"
+            "```\n\n"
+            "Let me know if you want anything adjusted."
+        )
+        diff = extract_unified_diff(reply)
+        self.assertIsNotNone(diff)
+        self.assertIn("diff --git a/a.txt b/a.txt", diff or "")
+        self.assertNotIn("Let me know", diff or "")
+        self.assertTrue((diff or "").endswith("\n"))
+
+    def test_refusal_and_prose_yield_no_diff(self) -> None:
+        from koru.queue.patch_mode import extract_unified_diff
+
+        self.assertIsNone(extract_unified_diff("NO-PATCH: the file does not exist"))
+        self.assertIsNone(extract_unified_diff("I would restructure the module like this..."))
+        self.assertIsNone(extract_unified_diff(""))
+
+    def test_applies_a_valid_patch(self) -> None:
+        from koru.queue.patch_mode import apply_unified_diff
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            diff = (
+                "diff --git a/a.txt b/a.txt\n"
+                "--- a/a.txt\n"
+                "+++ b/a.txt\n"
+                "@@ -1 +1 @@\n"
+                "-old\n"
+                "+new\n"
+            )
+            result = apply_unified_diff(project, diff)
+            self.assertTrue(result.ok, result.detail)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
+            self.assertIn("a.txt", result.changed_files)
+
+    def test_stale_patch_is_refused_without_touching_the_tree(self) -> None:
+        from koru.queue.patch_mode import apply_unified_diff
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "actual content\n")
+            stale = (
+                "diff --git a/a.txt b/a.txt\n"
+                "--- a/a.txt\n"
+                "+++ b/a.txt\n"
+                "@@ -1 +1 @@\n"
+                "-something else entirely\n"
+                "+new\n"
+            )
+            result = apply_unified_diff(project, stale)
+            self.assertFalse(result.ok)
+            self.assertIn("does not apply cleanly", result.detail)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "actual content\n")
+
+    def test_missing_file_headers_are_repaired_and_apply(self) -> None:
+        """Agents often emit `diff --git` straight into `@@`, which git rejects
+        as "patch fragment without header". The paths are already known, so the
+        headers are reconstructed instead of failing the run."""
+        from koru.queue.patch_mode import apply_unified_diff, extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/a.txt b/a.txt\n"
+            "@@ -1 +1 @@\n"
+            "-old\n"
+            "+new\n"
+            "```\n"
+        )
+        diff = extract_unified_diff(reply)
+        self.assertIsNotNone(diff)
+        self.assertIn("--- a/a.txt", diff or "")
+        self.assertIn("+++ b/a.txt", diff or "")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            result = apply_unified_diff(project, diff or "")
+            self.assertTrue(result.ok, result.detail)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
+
+    def test_existing_file_headers_are_left_alone(self) -> None:
+        from koru.queue.patch_mode import extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1 +1 @@\n"
+            "-old\n"
+            "+new\n"
+            "```\n"
+        )
+        diff = extract_unified_diff(reply) or ""
+        self.assertEqual(diff.count("--- a/a.txt"), 1)
+        self.assertEqual(diff.count("+++ b/a.txt"), 1)
+
+    def test_miscounted_hunk_header_is_recomputed_and_applies(self) -> None:
+        """Models miscount `@@` lengths, which git rejects as a corrupt patch.
+        The body is authoritative, so the counts are recomputed from it."""
+        from koru.queue.patch_mode import apply_unified_diff, extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1,3 +1,99 @@\n"  # deliberately wrong new-length
+            " one\n"
+            "+inserted\n"
+            " two\n"
+            " three\n"
+            "```\n"
+        )
+        diff = extract_unified_diff(reply) or ""
+        self.assertIn("@@ -1,3 +1,4 @@", diff)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "one\ntwo\nthree\n")
+            result = apply_unified_diff(project, diff)
+            self.assertTrue(result.ok, result.detail)
+            self.assertEqual(
+                (project / "a.txt").read_text(encoding="utf-8"),
+                "one\ninserted\ntwo\nthree\n",
+            )
+
+    def test_failing_verify_rolls_the_patch_back(self) -> None:
+        """A patch that breaks the project's gate must leave no trace."""
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            agent_reply = SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "```diff\n"
+                    "diff --git a/a.txt b/a.txt\n"
+                    "--- a/a.txt\n"
+                    "+++ b/a.txt\n"
+                    "@@ -1 +1 @@\n"
+                    "-old\n"
+                    "+new\n"
+                    "```\n"
+                ),
+                stderr="",
+            )
+            ticket = {"inputs": {"verify_command": "false"}}
+
+            def failing_gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
+
+            _result, error = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+
+            self.assertIsNotNone(error)
+            self.assertIn("rolled back", error or "")
+            self.assertIn("2 tests failed", error or "")
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_passing_verify_keeps_the_patch(self) -> None:
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            agent_reply = SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "```diff\n"
+                    "diff --git a/a.txt b/a.txt\n"
+                    "--- a/a.txt\n"
+                    "+++ b/a.txt\n"
+                    "@@ -1 +1 @@\n"
+                    "-old\n"
+                    "+new\n"
+                    "```\n"
+                ),
+                stderr="",
+            )
+            ticket = {"inputs": {"verify_command": "true"}}
+
+            def passing_gate(command: str, cwd: Path):
+                return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+            _result, error = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+
+            self.assertIsNone(error)
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
+
+    def test_reply_without_a_diff_is_not_treated_as_work(self) -> None:
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            agent_reply = SimpleNamespace(
+                returncode=0,
+                stdout="NO-PATCH: the function is already simple enough",
+                stderr="",
+            )
+
+            def unused_gate(command: str, cwd: Path):
+                raise AssertionError("verify must not run when no patch was applied")
+
+            _result, error = _apply_proposed_patch(project, agent_reply, {}, unused_gate)
+
+            self.assertIsNotNone(error)
+            self.assertIn("no unified diff", error or "")
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_patch_mode_defaults_on_and_is_overridable(self) -> None:
+        from koru.queue.patch_mode import patch_mode_enabled
+
+        self.assertTrue(patch_mode_enabled({"inputs": {}}))
+        self.assertFalse(patch_mode_enabled({"inputs": {"patch_mode": False}}))
+        with patch.dict(os.environ, {"KORU_LLM_PATCH_MODE": "0"}):
+            self.assertFalse(patch_mode_enabled({"inputs": {}}))
+            self.assertTrue(patch_mode_enabled({"inputs": {"patch_mode": True}}))
+
+    def test_prompt_carries_the_diff_only_contract(self) -> None:
+        from koru.queue.patch_mode import build_patch_prompt
+
+        prompt = build_patch_prompt("Refactor applyRoute.")
+        self.assertIn("Refactor applyRoute.", prompt)
+        self.assertIn("Do NOT edit any file", prompt)
+        self.assertIn("NO-PATCH", prompt)
 
 
 class TestPlanfileQueueLoop(unittest.TestCase):

@@ -275,6 +275,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.402] - 2026-07-18
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_planfile_queue.py
+
+### Other
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- Update project/index.html
+- Update project/map.toon.yaml
+- Update project/mermaid.export
+- ... and 3 more files
+
 ## [0.1.401] - 2026-07-18
 
 ### Docs

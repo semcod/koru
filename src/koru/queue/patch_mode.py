@@ -1,0 +1,269 @@
+"""Patch-propose execution for edit tickets.
+
+Letting an agent CLI edit files in place requires granting it write access to
+the workspace — which in practice means disabling its permission prompts
+wholesale. Patch mode avoids that trade entirely: the agent only writes a
+unified diff to stdout, and koru applies it deterministically with ``git
+apply``. The diff is an inspectable, hashable artifact, and ``git`` provides
+both the pre-flight check and the rollback path.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import shutil
+import subprocess
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from uuid import uuid4
+
+_FENCE_RE = re.compile(
+    r"```(?:diff|patch)?\s*\n(?P<body>.*?)(?:\n```|\Z)",
+    re.DOTALL,
+)
+_DIFF_START_RE = re.compile(r"^(diff --git |--- )", re.MULTILINE)
+
+PATCH_PROMPT_SUFFIX = """
+
+## Output contract
+
+Do NOT edit any file. Emit your change as a single unified diff and nothing
+else — no prose before or after it.
+
+- Use `diff --git a/<path> b/<path>` headers with paths relative to the repository root.
+- Follow each `diff --git` header with the `--- a/<path>` and `+++ b/<path>` lines.
+- Include at least 3 lines of context around every hunk so the patch applies cleanly.
+- Emit one diff covering every file you change.
+- If you cannot produce the change, emit exactly `NO-PATCH: <one-line reason>` instead.
+"""
+
+
+@dataclass(frozen=True)
+class PatchApplyResult:
+    """Outcome of applying an agent-proposed diff."""
+
+    ok: bool
+    detail: str
+    changed_files: tuple[str, ...] = ()
+
+
+def patch_mode_enabled(ticket: dict) -> bool:
+    """Whether this ticket's agent should propose a diff instead of editing.
+
+    Explicit ``inputs.patch_mode`` wins; otherwise ``KORU_LLM_PATCH_MODE``
+    decides, defaulting to on for edit tickets since it is the safer contract.
+    """
+    inputs = ticket.get("inputs") or {}
+    if "patch_mode" in inputs:
+        return bool(inputs["patch_mode"])
+    raw = (os.environ.get("KORU_LLM_PATCH_MODE") or "").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def build_patch_prompt(prompt: str) -> str:
+    """Append the diff-only output contract to a ticket prompt."""
+    return f"{prompt.rstrip()}\n{PATCH_PROMPT_SUFFIX}"
+
+
+def extract_unified_diff(text: str) -> str | None:
+    """Pull a unified diff out of an agent's stdout.
+
+    Agents habitually wrap diffs in code fences and add commentary, so accept
+    both fenced and bare output. Returns None when the reply contains no diff,
+    which includes the explicit ``NO-PATCH:`` refusal.
+    """
+    if not text:
+        return None
+    for match in _FENCE_RE.finditer(text):
+        body = match.group("body")
+        if _DIFF_START_RE.search(body):
+            return _normalize_diff(body)
+    if _DIFF_START_RE.search(text):
+        start = _DIFF_START_RE.search(text)
+        assert start is not None
+        return _normalize_diff(text[start.start():])
+    return None
+
+
+def _normalize_diff(body: str) -> str:
+    """Trim trailing fences/prose and guarantee the single trailing newline
+    ``git apply`` expects."""
+    lines = body.splitlines()
+    while lines and lines[-1].strip() in {"", "```"}:
+        lines.pop()
+    return "\n".join(_repair_hunk_counts(_repair_missing_file_headers(lines))) + "\n"
+
+
+_HUNK_RE = re.compile(
+    r"^@@ -(?P<old_start>\d+)(?:,(?P<old_len>\d+))? \+(?P<new_start>\d+)(?:,(?P<new_len>\d+))? @@(?P<tail>.*)$",
+)
+
+
+def _repair_hunk_counts(lines: list[str]) -> list[str]:
+    """Recompute ``@@`` line counts from the hunk body.
+
+    Models miscount hunk lengths routinely — one line off makes ``git apply``
+    reject the whole patch as "corrupt patch at line N". The body is the
+    authoritative content and the counts are derived from it, so recomputing
+    them is a safe normalisation rather than a guess.
+    """
+    repaired = list(lines)
+    for index, line in enumerate(repaired):
+        match = _HUNK_RE.match(line)
+        if not match:
+            continue
+        old_count = 0
+        new_count = 0
+        for body_line in repaired[index + 1:]:
+            if body_line.startswith(("@@", "diff --git", "--- ", "+++ ")):
+                break
+            if body_line.startswith("\\"):  # "\ No newline at end of file"
+                continue
+            if body_line.startswith("+"):
+                new_count += 1
+            elif body_line.startswith("-"):
+                old_count += 1
+            else:  # context line (a bare empty line counts as context too)
+                old_count += 1
+                new_count += 1
+        repaired[index] = (
+            f"@@ -{match.group('old_start')},{old_count} "
+            f"+{match.group('new_start')},{new_count} @@{match.group('tail')}"
+        )
+    return repaired
+
+
+_GIT_HEADER_RE = re.compile(r"^diff --git a/(?P<old>.+?) b/(?P<new>.+?)\s*$")
+
+
+def _repair_missing_file_headers(lines: list[str]) -> list[str]:
+    """Insert ``---``/``+++`` lines when an agent omits them.
+
+    Models routinely emit a ``diff --git`` header followed straight by a
+    ``@@`` hunk, which ``git apply`` rejects as "patch fragment without
+    header". The paths are already in the ``diff --git`` line, so the headers
+    can be reconstructed deterministically rather than by re-prompting.
+    """
+    repaired: list[str] = []
+    for index, line in enumerate(lines):
+        repaired.append(line)
+        match = _GIT_HEADER_RE.match(line)
+        if not match:
+            continue
+        following = next(
+            (candidate for candidate in lines[index + 1:] if candidate.strip()),
+            "",
+        )
+        if following.startswith("@@"):
+            repaired.append(f"--- a/{match.group('old')}")
+            repaired.append(f"+++ b/{match.group('new')}")
+    return repaired
+
+
+def _git(project: Path, *args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", *args],
+        cwd=project,
+        input=stdin,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def apply_unified_diff(project: Path, diff: str) -> PatchApplyResult:
+    """Apply a diff to the workspace, refusing anything that does not apply cleanly.
+
+    ``git apply --check`` runs first so a malformed or stale patch changes
+    nothing at all, rather than leaving the tree half-edited.
+    """
+    if not (project / ".git").exists():
+        return PatchApplyResult(
+            ok=False,
+            detail=f"{project} is not a git repository — patch mode needs one to apply and roll back",
+        )
+
+    check = _git(project, "apply", "--check", "-", stdin=diff)
+    if check.returncode != 0:
+        return PatchApplyResult(
+            ok=False,
+            detail=f"patch does not apply cleanly: {(check.stderr or '').strip()[:400]}",
+        )
+
+    listed = _git(project, "apply", "--numstat", "-", stdin=diff)
+    changed = tuple(
+        line.split("\t")[-1].strip()
+        for line in (listed.stdout or "").splitlines()
+        if line.strip()
+    )
+
+    applied = _git(project, "apply", "-", stdin=diff)
+    if applied.returncode != 0:
+        return PatchApplyResult(
+            ok=False,
+            detail=f"git apply failed: {(applied.stderr or '').strip()[:400]}",
+        )
+    return PatchApplyResult(ok=True, detail="patch applied", changed_files=changed)
+
+
+def revert_files(project: Path, files: tuple[str, ...]) -> None:
+    """Restore tracked files to HEAD — the rollback path for a failed verify."""
+    if not files:
+        return
+    _git(project, "checkout", "--", *files)
+
+
+def diff_target_files(project: Path, diff: str) -> tuple[str, ...]:
+    """List the paths a diff touches, without applying it."""
+    listed = _git(project, "apply", "--numstat", "-", stdin=diff)
+    return tuple(
+        line.split("\t")[-1].strip()
+        for line in (listed.stdout or "").splitlines()
+        if line.strip()
+    )
+
+
+def worktree_enabled(project: Path) -> bool:
+    """Whether to stage a patch in a throwaway worktree before promoting it.
+
+    Requires a git repository with at least one commit, since the worktree is
+    created from HEAD. ``KORU_QUEUE_WORKTREE=0`` opts out.
+    """
+    if (os.environ.get("KORU_QUEUE_WORKTREE") or "").strip().lower() in {"0", "false", "no", "off"}:
+        return False
+    if not (project / ".git").exists():
+        return False
+    return _git(project, "rev-parse", "--verify", "HEAD").returncode == 0
+
+
+@contextmanager
+def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Path | None]:
+    """Yield a disposable worktree seeded with the workspace's current content.
+
+    The agent read the *working tree*, so its diff is written against whatever
+    is on disk — including uncommitted edits. A worktree checked out at HEAD
+    would therefore reject the patch, so the files the patch touches are copied
+    across before it is applied. Yields None when the worktree cannot be
+    created, leaving the caller to fall back to in-place execution.
+    """
+    parent = project / ".koru" / "worktrees"
+    parent.mkdir(parents=True, exist_ok=True)
+    path = parent / f"run-{uuid4().hex[:12]}"
+    created = _git(project, "worktree", "add", "--detach", "--quiet", str(path), "HEAD")
+    if created.returncode != 0:
+        yield None
+        return
+    try:
+        for rel in seed_files:
+            source = project / rel
+            if not source.is_file():
+                continue
+            destination = path / rel
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        yield path
+    finally:
+        _git(project, "worktree", "remove", "--force", str(path))

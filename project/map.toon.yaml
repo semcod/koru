@@ -1,11 +1,11 @@
-# koru | 1051f 168567L | txt:5,yaml:31,json:41,yml:12,toml:16,python:771,shell:60,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
-# generated in 0.16s
-# stats: 7342 func | 0 cls | 1051 mod | CC̄=3.7 | critical:9 | cycles:0
+# koru | 1052f 168871L | txt:5,yaml:31,json:41,yml:12,python:772,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
+# generated in 0.18s
+# stats: 7353 func | 0 cls | 1052 mod | CC̄=3.7 | critical:10 | cycles:0
 # alerts[5]: fan-out get_vql_chat_target_from_photo=37; fan-out prepare_photo_vql_for_drive=29; fan-out discover_bootstrap_candidates=27; fan-out create_app=26; fan-out create_app=26
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; discover_bootstrap_candidates fan=27; create_app fan=26; create_app fan=26
 # evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1051]:
+M[1052]:
   .pretest.yml,17
   Dockerfile,79
   Makefile,276
@@ -823,8 +823,9 @@ M[1051]:
   src/koru/queue/local_manager.py,136
   src/koru/queue/locking.py,94
   src/koru/queue/loop.py,115
+  src/koru/queue/patch_mode.py,212
   src/koru/queue/planfile_ticket_note.py,55
-  src/koru/queue/runner.py,595
+  src/koru/queue/runner.py,687
   src/koru/queue/runners.py,529
   src/koru/queue/shell_evidence.py,74
   src/koru/queue/ticket.py,420
@@ -1142,6 +1143,28 @@ D:
     discover_bootstrap_candidates(workspace)
     ensure_koru_project(project)
     bootstrap_workspace(workspace)
+  src/koru/queue/runner.py:
+    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_resolve_verify_command,_apply_proposed_patch,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_run_next_planfile_task_impl,run_next_planfile_task
+    _source_tool(ticket)
+    _resolve_executor_kind(ticket;interactive;dry_run)
+    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
+    _resolve_ticket_action(ticket;executor_kind)
+    _handle_dry_run(ticket_id;executor_kind;action)
+    _claim_and_start(project;ticket_id;actor;planfile_runner)
+    _enrich_llm_request_with_context(action;project)
+    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
+    _append_shell_evidence(project;ticket_id;result;planfile_runner)
+    _resolve_verify_command(project;ticket)
+    _apply_proposed_patch(project;result;ticket;shell_runner)
+    _ticket_expects_edits(ticket)
+    _snapshot_declared_files(project;ticket)
+    _verify_declared_files_changed(project;ticket;before)
+    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner;verification_error)
+    _next_ticket_or_result(project;planfile_runner;queue_name)
+    _log_queue_ticket_start(ticket;ticket_id)
+    _resolve_action_or_result()
+    _run_next_planfile_task_impl()
+    run_next_planfile_task()
   src/koruapi/mcp_server_planfile.py:
     e: resolve_mcp_project_root,_project_root_schema_props,build_tool_schemas,_get_job_store_path,_load_jobs,_save_jobs,_get_process_memory_mb,_monitor_subprocess_oom,_tickets_for_status_filter,_ticket_status_counts,_idle_queue_suggested_actions,_serialize_mcp_ticket,tool_list_tickets,_create_job,_update_job,_collect_process_logs,_launch_oom_monitor,_run_ticket_queue_args,_run_ticket_timeout_response,_run_ticket_oom_response,_run_ticket_completed_response,_run_ticket_error_response,tool_run_ticket,tool_job_status,_gate_commands,_detect_enabled_gates,_resolve_gates,_run_single_gate,tool_run_quality_gates,_find_ticket,_build_edit_context,_ticket_workflow_hints,tool_propose_edits
     resolve_mcp_project_root(arguments)
@@ -4916,26 +4939,6 @@ Designed to ...
     load_strategy_tree(project)
     _onboarding_max_questions()
     run_interactive_onboarding(args)
-  src/koru/queue/runner.py:
-    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_run_next_planfile_task_impl,run_next_planfile_task
-    _source_tool(ticket)
-    _resolve_executor_kind(ticket;interactive;dry_run)
-    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
-    _resolve_ticket_action(ticket;executor_kind)
-    _handle_dry_run(ticket_id;executor_kind;action)
-    _claim_and_start(project;ticket_id;actor;planfile_runner)
-    _enrich_llm_request_with_context(action;project)
-    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
-    _append_shell_evidence(project;ticket_id;result;planfile_runner)
-    _ticket_expects_edits(ticket)
-    _snapshot_declared_files(project;ticket)
-    _verify_declared_files_changed(project;ticket;before)
-    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner;verification_error)
-    _next_ticket_or_result(project;planfile_runner;queue_name)
-    _log_queue_ticket_start(ticket;ticket_id)
-    _resolve_action_or_result()
-    _run_next_planfile_task_impl()
-    run_next_planfile_task()
   src/koru/queue/context.py:
     e: ContextResult,_is_excluded,_read_file_tree,_read_file_content,_collect_auto_files,_collect_glob_files,_context_nothing_requested,_context_files_to_include,_context_file_sections,_truncate_context_text,build_project_context
     ContextResult:  # Output of a single context-assembly pass...
@@ -6040,6 +6043,18 @@ C...
     _create_ticket()
     _handle_existing_finding()
     main()
+  src/koru/queue/patch_mode.py:
+    e: PatchApplyResult,patch_mode_enabled,build_patch_prompt,extract_unified_diff,_normalize_diff,_repair_hunk_counts,_repair_missing_file_headers,_git,apply_unified_diff,revert_files
+    PatchApplyResult:  # Outcome of applying an agent-proposed diff...
+    patch_mode_enabled(ticket)
+    build_patch_prompt(prompt)
+    extract_unified_diff(text)
+    _normalize_diff(body)
+    _repair_hunk_counts(lines)
+    _repair_missing_file_headers(lines)
+    _git(project)
+    apply_unified_diff(project;diff)
+    revert_files(project;files)
   packages/dsl2koru/src/dsl2koru/events.py:
     e: StoredEvent,EventStore
     StoredEvent: to_dict(0)
@@ -9299,12 +9314,10 @@ Th...
   wup.yaml:
   docker-compose.yml:
   nlp2uri.yaml:
-  pyproject.toml:
   tree.txt:
   todo.txt:
   screen.capture.json:
   pipeline.yaml:
-  package.json:
   prefact.yaml:
   Taskfile.yml:
   Dockerfile:
@@ -9889,3 +9902,5 @@ Th...
   testql-scenarios/artifacts/mock-llm-replies.yaml:
   testql-scenarios/conversations/send-invoice.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  pyproject.toml:
+  package.json:

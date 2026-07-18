@@ -1,8 +1,8 @@
-# code2llm | 1052f 168567L | python:771,typescript:94,shell:60,json:41,yaml:31,toml:16,yml:12,kotlin:6,txt:5,proto:4,go:2,javascript:1,rust:1,properties:1,xml:1 | 2026-07-18
-# generated in 1.10s
-# CC̅=3.7 | critical:9/7342 | dups:0 | cycles:0
+# code2llm | 1053f 168871L | python:772,typescript:94,shell:60,json:41,yaml:31,toml:16,yml:12,kotlin:6,txt:5,proto:4,go:2,javascript:1,rust:1,properties:1,xml:1 | 2026-07-18
+# generated in 1.47s
+# CC̅=3.7 | critical:10/7353 | dups:0 | cycles:0
 
-HEALTH[9]:
+HEALTH[10]:
   🟡 CC    tool_propose_edits CC=16 (limit:15)
   🟡 CC    main CC=17 (limit:15)
   🟡 CC    _code2llm_cc_locations CC=20 (limit:15)
@@ -12,9 +12,10 @@ HEALTH[9]:
   🟡 CC    _type_text_at_vql_coords CC=15 (limit:15)
   🟡 CC    main CC=22 (limit:15)
   🟡 CC    main CC=16 (limit:15)
+  🟡 CC    _run_next_planfile_task_impl CC=17 (limit:15)
 
 REFACTOR[1]:
-  1. split 9 high-CC methods  (CC>15)
+  1. split 10 high-CC methods  (CC>15)
 
 PIPELINES[2213]:
   [1] Src [get_files]: get_files
@@ -155,6 +156,7 @@ LAYERS:
   │ !! decision_trace             700L  1C   24m  CC=12     ←4
   │ !! cycle_skip_conditions      694L  0C   31m  CC=14     ←2
   │ !! handlers_ack               693L  0C   27m  CC=13     ←3
+  │ !! runner                     687L  0C   20m  CC=17     ←3
   │ !! init                       676L  3C   18m  CC=12     ←3
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←1
   │ !! doctor_reporting_checks    652L  1C   27m  CC=13     ←0
@@ -162,7 +164,6 @@ LAYERS:
   │ !! self_control               628L  3C   27m  CC=12     ←2
   │ !! dashboard_routes           607L  0C   35m  CC=9      ←2
   │ !! ide_doctor_cli             595L  0C   24m  CC=11     ←2
-  │ !! runner                     595L  0C   18m  CC=10     ←3
   │ !! operator_parser            585L  0C   15m  CC=8      ←2
   │ !! command_catalog            575L  1C    8m  CC=9      ←8
   │ !! cycle_orchestrator         565L  2C   12m  CC=12     ←1
@@ -256,7 +257,7 @@ LAYERS:
   │ cli_tillm_setup            292L  0C   15m  CC=10     ←1
   │ local_manager_state        292L  4C   21m  CC=14     ←0
   │ environment                292L  3C    8m  CC=14     ←5
-  │ wizard.js                  292L  0C   38m  CC=13     ←120
+  │ wizard.js                  292L  0C   38m  CC=13     ←121
   │ plugin_router              291L  3C   19m  CC=13     ←0
   │ queue_cli_helpers          290L  0C   10m  CC=9      ←1
   │ operator_plugin            289L  0C   19m  CC=13     ←4
@@ -312,6 +313,7 @@ LAYERS:
   │ task_intake                214L  3C   13m  CC=4      ←1
   │ ide_operator_guidance      212L  0C   11m  CC=11     ←6
   │ daemon_cli                 212L  0C   11m  CC=7      ←0
+  │ patch_mode                 212L  1C    9m  CC=9      ←1
   │ command_telemetry          210L  1C   11m  CC=13     ←0
   │ prompting                  209L  1C   12m  CC=8      ←4
   │ library                    207L  0C   19m  CC=9      ←1
@@ -989,7 +991,7 @@ LAYERS:
   │ probe-ladder.test.ts       315L  0C   38m  CC=5      ←0
   │ KoruAutopilotService.kt    264L  1C    6m  CC=0.0    ←0
   │ ack-payload.ts             260L  0C   31m  CC=12     ←3
-  │ bridge-focus-core.ts       239L  1C   33m  CC=5      ←26
+  │ bridge-focus-core.ts       239L  1C   33m  CC=5      ←27
   │ package.json               213L  0C    0m  CC=0.0    ←0
   │ package.json               202L  0C    0m  CC=0.0    ←0
   │ autopilot-bridge.ts        200L  1C   20m  CC=8      ←7
@@ -1205,12 +1207,12 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        project                    src.koruide                  packages.coru                    src.koruapi  plugins.koru-autopilot-shared              packages.dsl2koru                        scripts                 src.koruvision                src.koruobserve              packages.dsl2coru              packages.nlp2coru                   src.korumesh                           koru              packages.uri2coru
-                       src.koru                             ──                            622                            223                              4                             14                             58                              3                             ←1                             22                             12                             ←3                             25                             ←2                             18                             ←1  hub
+                       src.koru                             ──                            622                            223                              4                             14                             59                              3                             ←1                             22                             12                             ←3                             25                             ←2                             18                             ←1  hub
                         project                           ←622                             ──                            ←26                           ←183                            ←17                                                           ←11                            ←76                            ←12                            ←22                            ←11                             ←6                             ←7                                                            ←6  hub
                     src.koruide                             40                             26                             ──                            ←28                            ←27                              9                                                                                                                           1                                                                                                                                                             hub
                   packages.coru                             42                            183                             28                             ──                                                             3                              3                                                            ←1                                                                                            4                                                                                               hub
                     src.koruapi                            100                             17                             27                                                            ──                             13                                                            ←1                              2                                                                                                                           3                              3                                 hub
-  plugins.koru-autopilot-shared                            ←58                                                            ←9                             ←3                            ←13                             ──                                                                                           ←2                                                                                                                          ←2                                                                hub
+  plugins.koru-autopilot-shared                            ←59                                                            ←9                             ←3                            ←13                             ──                                                                                           ←2                                                                                                                          ←2                                                                hub
               packages.dsl2koru                             ←3                             11                                                             1                                                                                           ──                                                                                                                         ←34                             ←2                                                                                            1  hub
                         scripts                              1                             76                                                                                            1                                                                                           ──                                                                                                                                                                                                                           !! fan-out
                  src.koruvision                              5                             12                                                             1                             ←2                              2                                                                                           ──                              1                                                                                            8                                                                hub
@@ -1221,40 +1223,40 @@ COUPLING:
                            koru                              2                                                                                                                          ←3                                                                                                                                                         ←1                                                                                                                          ──                                 hub
               packages.uri2coru                              1                              6                                                                                                                                                          1                                                                                                                                                         ←1                                                                                           ──  hub
   CYCLES: none
-  HUB: packages.nlpshim/ (fan-in=6)
-  HUB: src.koruapi/ (fan-in=15)
-  HUB: project/ (fan-in=1044)
   HUB: packages.koruenv/ (fan-in=10)
-  HUB: packages.uri2coru/ (fan-in=11)
-  HUB: src.imgl/ (fan-in=5)
-  HUB: plugins.koru-autopilot-shared/ (fan-in=91)
-  HUB: packages.coru/ (fan-in=7)
-  HUB: src.koruobserve/ (fan-in=16)
-  HUB: koru/ (fan-in=22)
+  HUB: src.koru/ (fan-in=217)
   HUB: packages.dsl2koru/ (fan-in=71)
-  HUB: src.koruide/ (fan-in=278)
-  HUB: packages.mcp2coru/ (fan-in=6)
   HUB: src.korumesh/ (fan-in=12)
   HUB: src.koruvision/ (fan-in=37)
-  HUB: src.koru/ (fan-in=217)
+  HUB: packages.nlpshim/ (fan-in=6)
+  HUB: koru/ (fan-in=22)
   HUB: packages.nlp2coru/ (fan-in=33)
-  SMELL: scripts/ fan-out=78 → split needed
-  SMELL: src.koruapi/ fan-out=172 → split needed
-  SMELL: packages.uri2coru/ fan-out=8 → split needed
-  SMELL: packages.uri2koru/ fan-out=16 → split needed
-  SMELL: packages.coru/ fan-out=267 → split needed
-  SMELL: src.koruobserve/ fan-out=38 → split needed
-  SMELL: packages.dsl2koru/ fan-out=19 → split needed
-  SMELL: src.koruide/ fan-out=81 → split needed
-  SMELL: examples/ fan-out=12 → split needed
-  SMELL: packages.cli2coru/ fan-out=12 → split needed
+  HUB: packages.coru/ (fan-in=7)
+  HUB: src.koruapi/ (fan-in=15)
+  HUB: packages.uri2coru/ (fan-in=11)
+  HUB: plugins.koru-autopilot-shared/ (fan-in=92)
+  HUB: src.koruide/ (fan-in=278)
+  HUB: project/ (fan-in=1044)
+  HUB: packages.mcp2coru/ (fan-in=6)
+  HUB: src.koruobserve/ (fan-in=16)
+  HUB: src.imgl/ (fan-in=5)
+  SMELL: packages.cli2koru/ fan-out=11 → split needed
+  SMELL: src.koru/ fan-out=1019 → split needed
   SMELL: packages.nlp2koru/ fan-out=17 → split needed
+  SMELL: packages.dsl2koru/ fan-out=19 → split needed
+  SMELL: packages.dsl2coru/ fan-out=48 → split needed
+  SMELL: scripts/ fan-out=78 → split needed
   SMELL: src.korumesh/ fan-out=14 → split needed
   SMELL: src.koruvision/ fan-out=29 → split needed
-  SMELL: src.koru/ fan-out=1018 → split needed
-  SMELL: packages.cli2koru/ fan-out=11 → split needed
   SMELL: packages.nlp2coru/ fan-out=10 → split needed
-  SMELL: packages.dsl2coru/ fan-out=48 → split needed
+  SMELL: examples/ fan-out=12 → split needed
+  SMELL: packages.coru/ fan-out=267 → split needed
+  SMELL: src.koruapi/ fan-out=172 → split needed
+  SMELL: packages.uri2coru/ fan-out=8 → split needed
+  SMELL: src.koruide/ fan-out=81 → split needed
+  SMELL: packages.uri2koru/ fan-out=16 → split needed
+  SMELL: packages.cli2coru/ fan-out=12 → split needed
+  SMELL: src.koruobserve/ fan-out=38 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
