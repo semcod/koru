@@ -67,7 +67,14 @@ class RepairRecordingSession:
         self._run = run
         self._owner = owner
         self._attempt_no = 0
-        self._iteration = run.current_iteration + 1
+        # A fresh iteration must sit above everything already in the ledger,
+        # not just above the run row — a crash may have recorded attempts the
+        # run's counter never caught up with.
+        recorded = max(
+            (attempt.iteration for attempt in store.attempts(run.id)),
+            default=0,
+        )
+        self._iteration = max(run.current_iteration, recorded) + 1
         self._registry = registry
         self._parked = False
 
@@ -136,8 +143,8 @@ class RepairRecordingSession:
         """
         from koru.repair_runs.router import (
             NO_SWITCH_CODES,
-            classify_invocation,
             choose_model,
+            classify_invocation,
         )
 
         def recording_runner(action: dict[str, Any], project: Path) -> CommandResult:

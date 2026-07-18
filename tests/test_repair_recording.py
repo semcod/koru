@@ -180,7 +180,7 @@ class TestRepairRecording(unittest.TestCase):
             self.assertEqual(run.status, "failed")
             [attempt] = store.attempts(run.id)
             self.assertEqual(attempt.status, "failed")
-            self.assertEqual(attempt.failure_code, "invoke_failed")
+            self.assertEqual(attempt.failure_code, "provider_error")
 
     def test_recording_being_unavailable_never_blocks_the_queue(self) -> None:
         """The store is observational at this stage; the queue's job comes first."""
