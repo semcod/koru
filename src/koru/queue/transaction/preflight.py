@@ -29,7 +29,6 @@ from koru.queue.patch_mode import (
     worktree_enabled,
 )
 from koru.queue.transaction.result import PatchPlan
-from koru.queue.transaction.verification import resolve_verify_command
 from koru.queue.types import CommandResult
 
 
@@ -78,17 +77,26 @@ def build_patch_plan(
     diff: str,
     manifest: dict | None = None,
 ) -> PatchPlan:
-    """Resolve, once, every fact the later phases decide on."""
-    verify_command = resolve_verify_command(project, ticket)
+    """Resolve, once, every fact the later phases decide on.
+
+    Targets are read before the gate: a profile that takes file arguments
+    renders against exactly the files this diff touches.
+    """
+    from koru.queue.verify.resolver import resolve_verify
+
+    targets = diff_target_files(project, diff)
+    resolution = resolve_verify(project, ticket, targets)
     return PatchPlan(
         project=project,
         ticket=ticket,
         diff=diff,
-        targets=diff_target_files(project, diff),
-        verify_command=verify_command,
+        targets=targets,
+        verify_command=resolution.command,
         mode=promotion_mode(ticket),
         run_id=manifest["run_id"] if manifest else uuid4().hex[:12],
-        isolated=bool(verify_command) and worktree_enabled(project),
+        isolated=bool(resolution.command) and worktree_enabled(project),
+        verify_source=resolution.source,
+        verify_error=resolution.error,
     )
 
 

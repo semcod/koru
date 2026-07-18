@@ -30,6 +30,12 @@ class PatchPlan:
     mode: str
     run_id: str
     isolated: bool
+    #: Which rung of the verify precedence ladder produced the command —
+    #: "profile", "allowlist", "legacy" or "none". Evidence wants the why.
+    verify_source: str = "legacy"
+    #: Set when the ticket asked for a gate that cannot be honoured (unknown
+    #: profile, un-allowlisted raw command). The transaction must refuse.
+    verify_error: str | None = None
 
     @property
     def ticket_id(self) -> str:

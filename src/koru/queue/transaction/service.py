@@ -20,6 +20,7 @@ from koru.queue.patch_mode import (
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
     PROMOTION_FAILED,
+    VERIFY_PROFILE_INVALID,
     PatchOutcome,
     apply_unified_diff,
 )
@@ -65,6 +66,15 @@ def execute_patch_transaction(
         return PatchTransactionResult(result, refusal)
 
     plan = build_patch_plan(project, ticket, diff, manifest)
+    if plan.verify_error is not None:
+        # The ticket asked for a gate that cannot be honoured. Refusing beats
+        # every alternative: falling through to a weaker gate would let a typo
+        # disable verification, and artifact mode would still record a run
+        # whose governance was misconfigured.
+        return PatchTransactionResult(
+            result,
+            PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
+        )
     freeze = ManifestFreeze(plan, manifest)
 
     if plan.mode == PROMOTION_ARTIFACT:

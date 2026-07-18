@@ -117,6 +117,7 @@ PROMOTION_CONFLICT = "promotion_conflict"
 VERIFY_FAILED_ISOLATED = "verify_failed_isolated"
 VERIFY_FAILED_ROLLED_BACK = "verify_failed_rolled_back"
 VERIFY_BASELINE_FAILED = "verify_baseline_failed"
+VERIFY_PROFILE_INVALID = "verify_profile_invalid"
 
 
 def patch_mode_enabled(ticket: dict) -> bool:
