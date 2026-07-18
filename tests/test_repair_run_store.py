@@ -297,6 +297,29 @@ class TestSqliteStore(_StoreContract, unittest.TestCase):
         )
         self.assertEqual(replay.sequence, 1)
 
+    def test_a_consumed_grant_stays_consumed_across_a_restart(self) -> None:
+        """SQLite only: the whole point of persisting used_grants — a grant used
+        before a crash cannot be replayed by the worker that resumes the run."""
+        from koru.repair_runs.models import UsedGrant
+        from koru.repair_runs.store import GrantAlreadyUsed
+
+        path = Path(self._tmp.name) / "repair-runs.sqlite3"
+        run = self._run()
+        self.store.record_grant_use(
+            UsedGrant.consumed(run.id, grant_jti="apply-jti-9", grant_body={"n": 1}),
+        )
+        self.store.close()
+
+        reopened = SqliteRepairRunStore(path)
+        self.addCleanup(reopened.close)
+        self.store = reopened
+
+        self.assertTrue(reopened.is_grant_used("apply-jti-9"))
+        with self.assertRaises(GrantAlreadyUsed):
+            reopened.record_grant_use(
+                UsedGrant.consumed(run.id, grant_jti="apply-jti-9", grant_body={"n": 2}),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
