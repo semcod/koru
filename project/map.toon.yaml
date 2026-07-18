@@ -1,11 +1,11 @@
-# koru | 1067f 171021L | txt:5,yaml:31,json:41,yml:12,toml:16,python:787,shell:60,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
-# generated in 0.15s
-# stats: 7435 func | 0 cls | 1067 mod | CC̄=3.7 | critical:13 | cycles:0
+# koru | 1073f 171513L | txt:5,yaml:31,json:41,yml:12,python:793,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-18
+# generated in 0.12s
+# stats: 7448 func | 0 cls | 1073 mod | CC̄=3.7 | critical:13 | cycles:0
 # alerts[5]: fan-out get_vql_chat_target_from_photo=37; CC validate_subactor_repair_template=33; fan-out prepare_photo_vql_for_drive=29; fan-out discover_bootstrap_candidates=27; fan-out create_app=26
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; discover_bootstrap_candidates fan=27; create_app fan=26; create_app fan=26
 # evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1067]:
+M[1073]:
   .pretest.yml,17
   Dockerfile,79
   Makefile,276
@@ -826,7 +826,7 @@ M[1067]:
   src/koru/queue/locking.py,94
   src/koru/queue/loop.py,115
   src/koru/queue/manifest.py,130
-  src/koru/queue/patch_mode.py,346
+  src/koru/queue/patch_mode.py,339
   src/koru/queue/patch_retry.py,145
   src/koru/queue/patch_transaction.py,34
   src/koru/queue/planfile_ticket_note.py,55
@@ -835,15 +835,21 @@ M[1067]:
   src/koru/queue/shell_evidence.py,74
   src/koru/queue/ticket.py,420
   src/koru/queue/ticket_templates.py,272
-  src/koru/queue/transaction/__init__.py,55
-  src/koru/queue/transaction/preflight.py,163
+  src/koru/queue/transaction/__init__.py,54
+  src/koru/queue/transaction/preflight.py,175
   src/koru/queue/transaction/promotion.py,112
-  src/koru/queue/transaction/result.py,48
+  src/koru/queue/transaction/result.py,82
   src/koru/queue/transaction/rollback.py,34
-  src/koru/queue/transaction/service.py,142
-  src/koru/queue/transaction/staging.py,122
-  src/koru/queue/transaction/verification.py,95
+  src/koru/queue/transaction/service.py,180
+  src/koru/queue/transaction/staging.py,129
+  src/koru/queue/transaction/verification.py,85
   src/koru/queue/types.py,88
+  src/koru/queue/verify/__init__.py,32
+  src/koru/queue/verify/executor.py,61
+  src/koru/queue/verify/profiles.py,83
+  src/koru/queue/verify/registry.py,110
+  src/koru/queue/verify/resolver.py,103
+  src/koru/queue/verify/result.py,30
   src/koru/queue/workspace.py,299
   src/koru/queue_clean.py,391
   src/koru/queue_cli_helpers.py,290
@@ -5245,6 +5251,12 @@ Re-exported f...
     entry()
     makeProbeCache()
     mergeProbeCache()
+  src/koru/queue/verify/registry.py:
+    e: VerifyRegistry,load_registry,_queue_section,_parse_profile
+    VerifyRegistry: get(1),allows_raw(1)  # The gates this workspace is allowed to run...
+    load_registry(project)
+    _queue_section(project)
+    _parse_profile(name;spec)
   packages/cli2koru/src/cli2koru/shell.py:
     e: run_shell
     run_shell()
@@ -5829,19 +5841,6 @@ C...
     _auto_pipeline_stage(state;max_iterations)
     _select_auto_pipeline_profile(args;state)
     _update_auto_pipeline_state(state;queue_result;diag_result;autopilot_status)
-  src/koru/queue/patch_mode.py:
-    e: PatchOutcome,patch_mode_enabled,build_patch_prompt,redact_secrets,build_retry_prompt,current_file_excerpt,symlinks_allowed,promotion_mode,write_patch_artifact
-    PatchOutcome:  # Why a patch ticket failed, as data rather than prose.
-
-Calle...
-    patch_mode_enabled(ticket)
-    build_patch_prompt(prompt)
-    redact_secrets(text)
-    build_retry_prompt(prompt;failure)
-    current_file_excerpt(project;paths)
-    symlinks_allowed()
-    promotion_mode(ticket)
-    write_patch_artifact(project;run_id;diff;evidence)
   src/koru/queue/workspace.py:
     e: PatchApplyResult,FileFingerprint,_git,apply_unified_diff,revert_files,diff_target_files,fingerprint_files,changed_since,dirty_paths,current_head,repository_is_clean,commit_on_main,commit_worktree,worktree_enabled,_worktree_location,prune_stale_worktrees,staging_worktree
     PatchApplyResult:  # Outcome of applying an agent-proposed diff...
@@ -6107,6 +6106,19 @@ Calle...
     _create_ticket()
     _handle_existing_finding()
     main()
+  src/koru/queue/patch_mode.py:
+    e: PatchOutcome,patch_mode_enabled,build_patch_prompt,redact_secrets,build_retry_prompt,current_file_excerpt,symlinks_allowed,promotion_mode,write_patch_artifact
+    PatchOutcome:  # Why a patch ticket failed, as data rather than prose.
+
+Calle...
+    patch_mode_enabled(ticket)
+    build_patch_prompt(prompt)
+    redact_secrets(text)
+    build_retry_prompt(prompt;failure)
+    current_file_excerpt(project;paths)
+    symlinks_allowed()
+    promotion_mode(ticket)
+    write_patch_artifact(project;run_id;diff;evidence)
   packages/dsl2koru/src/dsl2koru/events.py:
     e: StoredEvent,EventStore
     StoredEvent: to_dict(0)
@@ -6517,13 +6529,17 @@ Calle...
     update_uv_lock(new_version;dry_run)
     update_version_file(new_version;dry_run)
     main()
+  src/koru/queue/verify/resolver.py:
+    e: resolve_verify,_resolve_profile,_profiles_required
+    resolve_verify(project;ticket;targets;registry)
+    _resolve_profile(registry;name;ticket;targets)
+    _profiles_required(project)
   src/koru/queue/transaction/verification.py:
-    e: resolve_verify_command,_verify_command_from_criteria,_verify_command_from_project,skip_verify_baseline,run_verify,verify_output
+    e: resolve_verify_command,_verify_command_from_criteria,_verify_command_from_project,skip_verify_baseline,verify_output
     resolve_verify_command(project;ticket)
     _verify_command_from_criteria(ticket)
     _verify_command_from_project(project)
     skip_verify_baseline(ticket)
-    run_verify(shell_runner;command;directory)
     verify_output(result)
   packages/dsl2koru/src/dsl2koru/grammar.py:
     e: _flag,_parse_query_repair_history,_parse_query_lane_status,_parse_validate_lane,_parse_resolve,_parse_repair_run,parse_line,_serialize_query_repair_history,_serialize_query_lane_status,_serialize_validate_lane,_serialize_resolve,_serialize_repair_run,to_text
@@ -7029,12 +7045,6 @@ Calle...
     _update_expected_versions(ide_id;version)
     _update_workflow_version(version)
     main()
-  src/koru/queue/transaction/service.py:
-    e: execute_patch_transaction,_run_isolated,_run_direct,_apply_to_workspace
-    execute_patch_transaction(project;result;ticket;shell_runner;manifest)
-    _run_isolated(plan;freeze;shell_runner)
-    _run_direct(plan;freeze;shell_runner)
-    _apply_to_workspace(plan;freeze;shell_runner)
   scripts/subactor-development-repair-pilot.py:
     e: _load_koru_dotenv,_require_llm_env,_normalize_model,_run,_init_fixture,_init_planfile,_render_ticket,_import_ticket,_queue_env,_run_queue,_collect_evidence,_run_ids_from_ticket,main
     _load_koru_dotenv()
@@ -7050,6 +7060,13 @@ Calle...
     _collect_evidence(root)
     _run_ids_from_ticket(root)
     main()
+  src/koru/queue/transaction/service.py:
+    e: execute_patch_transaction,_run_isolated,_without_isolation,_run_direct,_apply_to_workspace
+    execute_patch_transaction(project;result;ticket;shell_runner;manifest)
+    _run_isolated(plan;freeze;shell_runner)
+    _without_isolation(plan;freeze;shell_runner)
+    _run_direct(plan;freeze;shell_runner)
+    _apply_to_workspace(plan;freeze;shell_runner)
   packages/dsl2koru/src/dsl2koru/cli.py:
     e: _run_results,main,_main_subcommand,_main_legacy,_cmd_validate_schema,_cmd_encode,_cmd_decode,_cmd_roundtrip,_cmd_replay,_cmd_run,_handle_subcommand
     _run_results(results)
@@ -7478,6 +7495,12 @@ Construct once ...
     detectIdeViaStrategies()
     id()
     bootstrapStrategies()
+  src/koru/queue/transaction/staging.py:
+    e: _Baseline,stage_patch,_record_baseline,_staged_verify_failure
+    _Baseline:  # Whether the gate passed *before* the patch existed, and what...
+    stage_patch(plan;shell_runner)
+    _record_baseline(plan;staged;shell_runner)
+    _staged_verify_failure(plan;baseline;verify)
   packages/dsl2koru/src/dsl2koru/pb_codec.py:
     e: _set_query_repair_history,_set_query_lane_status,_set_validate_lane,_set_resolve,_set_repair_run,_set_body,_extract_query_repair_history,_extract_query_lane_status,_extract_validate_lane,_extract_resolve,_extract_repair_run,envelope_to_dict,encode_protobuf,decode_protobuf,encode_text_to_protobuf,decode_protobuf_to_text,result_to_pb,encode_result_protobuf
     _set_query_repair_history(msg;cmd)
@@ -7925,12 +7948,11 @@ Construct once ...
     e: isVscodiumHost,lowered
     isVscodiumHost()
     lowered()
-  src/koru/queue/transaction/staging.py:
-    e: _Baseline,stage_patch,_record_baseline,_staged_verify_failure
-    _Baseline: __init__(0)  # Whether the gate passed *before* the patch existed, and what...
-    stage_patch(plan;shell_runner)
-    _record_baseline(plan;staged;shell_runner)
-    _staged_verify_failure(plan;baseline;verify)
+  src/koru/queue/verify/executor.py:
+    e: render_profile_command,_matching_targets,_with_timeout
+    render_profile_command(profile;targets)
+    _matching_targets(profile;targets)
+    _with_timeout(command;timeout_s)
   check_dups.py:
     e: get_files
     get_files(path)
@@ -8405,6 +8427,13 @@ The c...
     e: LocalManagerCommandService,LocalManagerQueryService
     LocalManagerCommandService: __init__(2),enqueue(1),claim(1),complete(1),register_worker(1),heartbeat_worker(1)  # Handles state-changing local-manager operations...
     LocalManagerQueryService: __init__(1),health(1),queue_snapshot(1),workers_snapshot(1),state_snapshot(1)  # Handles read-only local-manager queries...
+  src/koru/queue/transaction/promotion.py:
+    e: guard_promotion,deliver_patch_artifact,commit_on_run_branch,commit_if_requested,_commit_message
+    guard_promotion(plan;manifest)
+    deliver_patch_artifact(plan;manifest)
+    commit_on_run_branch(plan;staged;changed_files)
+    commit_if_requested(plan;changed_files)
+    _commit_message(plan)
   src/koru/utils/subprocess_runner.py:
     e: default_subprocess_runner,resolve_planfile_subpath,get_python_cmd
     default_subprocess_runner(cmd;cwd)
@@ -8744,13 +8773,6 @@ The c...
     write_probe_tests(ide)
     patch_watcher_test(ide)
     main()
-  src/koru/queue/transaction/promotion.py:
-    e: guard_promotion,deliver_patch_artifact,commit_on_run_branch,commit_if_requested,_commit_message
-    guard_promotion(plan;manifest)
-    deliver_patch_artifact(plan;manifest)
-    commit_on_run_branch(plan;staged;changed_files)
-    commit_if_requested(plan;changed_files)
-    _commit_message(plan)
   packages/dsl2koru/src/dsl2koru/codec.py:
     e: validate_payload,parse_text,envelope_to_bytes,envelope_from_bytes,envelope_to_json,envelope_from_json,roundtrip_text
     validate_payload(payload)
@@ -9363,6 +9385,12 @@ Th...
   src/koru/bounded_contexts/topology/read_model.py:
     e: TopologyEventLogProjection
     TopologyEventLogProjection(EventLogProjection): __init__(0)  # In-memory read model for topology change history...
+  src/koru/queue/patch_transaction.py:
+    e: apply_proposed_patch
+    apply_proposed_patch(project;result;ticket;shell_runner;manifest)
+  src/koru/queue/transaction/rollback.py:
+    e: roll_back_failed_verify
+    roll_back_failed_verify(plan;changed_files;verify)
   src/koru/configurator/schema.py:
     e: ConfigureResult,_ConfigureValues,_ConfigureArgs
     ConfigureResult:
@@ -9421,15 +9449,10 @@ Th...
     runtime()
     activate()
     deactivate()
-  src/koru/queue/patch_transaction.py:
-    e: apply_proposed_patch
-    apply_proposed_patch(project;result;ticket;shell_runner;manifest)
-  src/koru/queue/transaction/rollback.py:
-    e: roll_back_failed_verify
-    roll_back_failed_verify(plan;changed_files;verify)
   src/koru/queue/transaction/result.py:
-    e: PatchPlan,PatchTransactionResult
+    e: PatchPlan,StagingResult,PatchTransactionResult
     PatchPlan:  # Everything the transaction resolved before touching the work...
+    StagingResult: unavailable(0),verified(0),refused(1)  # What the worktree phase concluded — and whether it ran at al...
     PatchTransactionResult: as_tuple(0)  # The agent's reply, plus why the patch was refused — or ``Non...
   sllm_defs.txt:
   goal.yaml:
@@ -9443,12 +9466,10 @@ Th...
   wup.yaml:
   docker-compose.yml:
   nlp2uri.yaml:
-  pyproject.toml:
   tree.txt:
   todo.txt:
   screen.capture.json:
   pipeline.yaml:
-  package.json:
   prefact.yaml:
   Taskfile.yml:
   Dockerfile:
@@ -10033,4 +10054,17 @@ Th...
   testql-scenarios/artifacts/mock-llm-replies.yaml:
   testql-scenarios/conversations/send-invoice.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  pyproject.toml:
+  package.json:
+  src/koru/queue/verify/__init__.py:
+  src/koru/queue/verify/profiles.py:
+    e: VerifyProfile
+    VerifyProfile:  # A named, bounded gate.
+
+``timeout_s`` is enforced by prefixi...
+  src/koru/queue/verify/result.py:
+    e: VerifyResolution
+    VerifyResolution:  # The gate a patch must pass, or why none could be resolved.
+
+...
   src/koru/queue/transaction/__init__.py:

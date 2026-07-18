@@ -1,6 +1,6 @@
-# code2llm | 1068f 171021L | python:787,typescript:94,shell:60,json:41,yaml:31,toml:16,yml:12,kotlin:6,txt:5,proto:4,go:2,javascript:1,rust:1,properties:1,xml:1 | 2026-07-18
+# code2llm | 1074f 171513L | python:793,typescript:94,shell:60,json:41,yaml:31,toml:16,yml:12,kotlin:6,txt:5,proto:4,go:2,javascript:1,rust:1,properties:1,xml:1 | 2026-07-18
 # generated in 0.91s
-# CC̅=3.7 | critical:13/7435 | dups:0 | cycles:0
+# CC̅=3.7 | critical:13/7448 | dups:0 | cycles:0
 
 HEALTH[13]:
   🟡 CC    tool_propose_edits CC=16 (limit:15)
@@ -10,17 +10,17 @@ HEALTH[13]:
   🟡 CC    discover_bootstrap_candidates CC=18 (limit:15)
   🟡 CC    run_shell_llm_request CC=15 (limit:15)
   🟡 CC    _run_next_planfile_task_impl CC=20 (limit:15)
-  🟡 CC    _type_text_at_vql_coords CC=15 (limit:15)
-  🟡 CC    main CC=22 (limit:15)
-  🟡 CC    main CC=16 (limit:15)
   🟡 CC    validate_subactor_repair_template CC=33 (limit:15)
   🟡 CC    variables_from_development_defect CC=17 (limit:15)
   🟡 CC    hydrate_subactor_repair_ticket CC=21 (limit:15)
+  🟡 CC    _type_text_at_vql_coords CC=15 (limit:15)
+  🟡 CC    main CC=22 (limit:15)
+  🟡 CC    main CC=16 (limit:15)
 
 REFACTOR[1]:
   1. split 13 high-CC methods  (CC>15)
 
-PIPELINES[2220]:
+PIPELINES[2225]:
   [1] Src [get_files]: get_files
       PURITY: 100% pure
   [2] Src [main]: main → _main_legacy → _run_results → print
@@ -226,10 +226,10 @@ LAYERS:
   │ photo_vql_llm_detect       356L  0C   20m  CC=11     ←1
   │ calibrate_cli              355L  0C   12m  CC=9      ←0
   │ app                        349L  1C   19m  CC=10     ←0
-  │ patch_mode                 346L  1C    8m  CC=9      ←4
   │ tree                       342L  5C   19m  CC=10     ←4
   │ init_host_environment      341L  0C   18m  CC=14     ←1
   │ imgl_client                339L  0C   17m  CC=14     ←7
+  │ patch_mode                 339L  1C    8m  CC=9      ←4
   │ tools                      336L  0C   22m  CC=11     ←2
   │ dashboard_projects         334L  0C   20m  CC=10     ←2
   │ activity_log               334L  0C   14m  CC=12     ←26
@@ -339,10 +339,12 @@ LAYERS:
   │ desktop_probe              184L  0C    6m  CC=14     ←1
   │ openapi                    183L  0C    1m  CC=2      ←1
   │ cli_task                   183L  0C    5m  CC=11     ←0
+  │ service                    180L  0C    5m  CC=7      ←1
   │ queue_phase                178L  0C    6m  CC=11     ←0
   │ cli_auto                   176L  0C   11m  CC=11     ←1
   │ cli                        176L  0C    5m  CC=2      ←6
   │ diagnostics                175L  0C    8m  CC=8      ←4
+  │ preflight                  175L  1C    7m  CC=4      ←1
   │ events                     174L  1C   11m  CC=7      ←1
   │ llm_reflect                173L  1C    5m  CC=8      ←2
   │ operator_loop_reporting    172L  0C    6m  CC=8      ←0
@@ -352,7 +354,6 @@ LAYERS:
   │ command_catalog_store      165L  1C   13m  CC=10     ←3
   │ dashboard_config           164L  1C   13m  CC=10     ←1
   │ application                164L  2C   11m  CC=3      ←0
-  │ preflight                  163L  1C    7m  CC=4      ←1
   │ project                    160L  1C   11m  CC=7      ←1
   │ cli                        159L  0C   10m  CC=3      ←0
   │ config                     159L  1C    2m  CC=11     ←1
@@ -377,7 +378,6 @@ LAYERS:
   │ strategy_prompt            142L  0C    3m  CC=6      ←2
   │ global_control             142L  0C    8m  CC=6      ←3
   │ operator_loop_interfaces   142L  0C   12m  CC=7      ←4
-  │ service                    142L  0C    4m  CC=7      ←1
   │ cli                        141L  0C    7m  CC=6      ←0
   │ metadata                   136L  0C   10m  CC=5      ←2
   │ local_manager              136L  1C    6m  CC=5      ←1
@@ -392,6 +392,7 @@ LAYERS:
   │ replay_builders            131L  0C    9m  CC=3      ←3
   │ nlp2oql_bridge             130L  0C    5m  CC=7      ←1
   │ manifest                   130L  0C    8m  CC=8      ←3
+  │ staging                    129L  1C    3m  CC=6      ←1
   │ llx                        128L  1C    4m  CC=14     ←3
   │ cli_parser                 125L  0C    4m  CC=7      ←1
   │ scan_render                125L  0C    5m  CC=8      ←1
@@ -399,7 +400,6 @@ LAYERS:
   │ run_log                    123L  1C    7m  CC=4      ←1
   │ observability_events       122L  0C   10m  CC=3      ←3
   │ submit_strategy            122L  0C    7m  CC=11     ←3
-  │ staging                    122L  1C    4m  CC=5      ←1
   │ cli_events                 121L  0C    3m  CC=7      ←0
   │ mcp_server_dispatch        120L  0C    7m  CC=6      ←1
   │ application                120L  2C    4m  CC=12     ←0
@@ -421,12 +421,13 @@ LAYERS:
   │ loop                       115L  0C    1m  CC=14     ←3
   │ replay_handlers            113L  2C    5m  CC=3      ←0
   │ autonomous_cycle           112L  0C    1m  CC=2      ←0
-  │ session                    112L  2C    8m  CC=4      ←0
   │ promotion                  112L  0C    5m  CC=3      ←2
+  │ session                    112L  2C    8m  CC=4      ←0
   │ planning_llm_parsing       111L  0C    7m  CC=7      ←1
   │ contexts                   111L  8C    0m  CC=0.0    ←0
   │ __init__                   111L  0C    0m  CC=0.0    ←0
   │ features                   110L  0C    4m  CC=6      ←2
+  │ registry                   110L  1C    5m  CC=10     ←1
   │ defaults                   109L  0C    2m  CC=1      ←2
   │ doctor_project_checks      108L  0C    4m  CC=7      ←0
   │ host_hooks                 106L  0C    3m  CC=2      ←0
@@ -438,6 +439,7 @@ LAYERS:
   │ web-app.json               104L  0C    0m  CC=0.0    ←0
   │ __init__                   103L  0C    2m  CC=2      ←0
   │ systemd_cli                103L  0C    4m  CC=6      ←0
+  │ resolver                   103L  0C    3m  CC=8      ←1
   │ testql_bridge              102L  0C    5m  CC=7      ←1
   │ cycle_drive_outcome        102L  0C    1m  CC=11     ←1
   │ env_session                102L  0C    7m  CC=8      ←1
@@ -450,7 +452,6 @@ LAYERS:
   │ mcp_server                  96L  0C    0m  CC=0.0    ←0
   │ ide_control                 95L  1C    2m  CC=3      ←1
   │ __init__                    95L  2C    5m  CC=3      ←6
-  │ verification                95L  0C    6m  CC=8      ←5
   │ locking                     94L  0C    5m  CC=5      ←3
   │ config                      94L  1C    3m  CC=4      ←4
   │ watch                       93L  0C    6m  CC=9      ←1
@@ -476,12 +477,15 @@ LAYERS:
   │ cli_agent                   85L  0C    3m  CC=3      ←0
   │ planfile_handoff            85L  0C    3m  CC=2      ←2
   │ route                       85L  0C    3m  CC=10     ←1
+  │ verification                85L  0C    5m  CC=8      ←4
   │ mcp_server_nlp2oql          84L  0C    3m  CC=1      ←0
   │ doctor_runner               84L  0C    3m  CC=4      ←2
   │ manage                      84L  0C    1m  CC=13     ←0
   │ mcp_server_runtime          83L  0C    6m  CC=1      ←1
   │ registry                    83L  0C    5m  CC=4      ←2
   │ sleep_phase                 83L  0C    1m  CC=4      ←1
+  │ profiles                    83L  1C    0m  CC=0.0    ←0
+  │ result                      82L  3C    4m  CC=1      ←0
   │ gc_cli_helpers              81L  0C    5m  CC=12     ←1
   │ env_flags                   81L  0C    4m  CC=5      ←1
   │ mesh                        79L  0C    5m  CC=8      ←2
@@ -538,6 +542,7 @@ LAYERS:
   │ render                      63L  0C    3m  CC=12     ←1
   │ cli_agent_backends          62L  0C    1m  CC=8      ←1
   │ doctor_render               62L  0C    3m  CC=8      ←1
+  │ executor                    61L  0C    3m  CC=5      ←1
   │ screencast_session          60L  0C    5m  CC=7      ←2
   │ store                       60L  0C    4m  CC=6      ←2
   │ utils                       60L  0C    3m  CC=5      ←3
@@ -562,9 +567,9 @@ LAYERS:
   │ library.json                55L  0C    0m  CC=0.0    ←0
   │ ml-research.json            55L  0C    0m  CC=0.0    ←0
   │ cli-tool.json               55L  0C    0m  CC=0.0    ←0
-  │ __init__                    55L  0C    0m  CC=0.0    ←0
   │ mss                         54L  1C    4m  CC=8      ←0
   │ batch                       54L  1C    5m  CC=2      ←0
+  │ __init__                    54L  0C    0m  CC=0.0    ←0
   │ mcp_server_transport        53L  0C    3m  CC=7      ←1
   │ replay_actions              53L  0C    0m  CC=0.0    ←0
   │ scaling                     52L  0C    3m  CC=6      ←5
@@ -582,7 +587,6 @@ LAYERS:
   │ cli_loop                    49L  0C    1m  CC=7      ←0
   │ stdio_events                49L  0C    3m  CC=3      ←4
   │ drive_strategies            48L  2C    1m  CC=6      ←1
-  │ result                      48L  2C    1m  CC=1      ←0
   │ __init__                    48L  5C    0m  CC=0.0    ←0
   │ protocol                    48L  0C    0m  CC=0.0    ←0
   │ __init__                    47L  0C    0m  CC=0.0    ←0
@@ -623,9 +627,9 @@ LAYERS:
   │ local                       36L  0C    2m  CC=6      ←2
   │ __init__                    36L  3C    0m  CC=0.0    ←0
   │ planfile_queue              36L  0C    0m  CC=0.0    ←0
-  │ store                       34L  0C    3m  CC=4      ←8
   │ patch_transaction           34L  0C    1m  CC=1      ←1
   │ rollback                    34L  0C    1m  CC=1      ←1
+  │ store                       34L  0C    3m  CC=4      ←8
   │ __init__                    34L  2C    0m  CC=0.0    ←0
   │ __init__                    33L  0C    1m  CC=4      ←0
   │ __init__                    33L  4C    0m  CC=0.0    ←0
@@ -634,6 +638,7 @@ LAYERS:
   │ registry                    32L  0C    2m  CC=1      ←1
   │ tasks                       32L  0C    1m  CC=1      ←9
   │ __init__                    32L  1C    0m  CC=0.0    ←0
+  │ __init__                    32L  0C    0m  CC=0.0    ←0
   │ invoke                      31L  0C    1m  CC=4      ←2
   │ cli_parser                  31L  0C    1m  CC=1      ←1
   │ ide_status_systemmap        31L  0C    1m  CC=3      ←1
@@ -641,6 +646,7 @@ LAYERS:
   │ human                       31L  0C    1m  CC=5      ←0
   │ utils                       30L  0C    2m  CC=4      ←3
   │ __init__                    30L  3C    0m  CC=0.0    ←0
+  │ result                      30L  1C    0m  CC=0.0    ←0
   │ __init__                    29L  1C    0m  CC=0.0    ←0
   │ __init__                    29L  2C    0m  CC=0.0    ←0
   │ __init__                    29L  0C    0m  CC=0.0    ←0
@@ -810,7 +816,7 @@ LAYERS:
   │ serializer                 154L  0C   19m  CC=5      ←0
   │ cli_parser                 154L  0C    9m  CC=1      ←1
   │ heuristic                  148L  0C    8m  CC=13     ←5
-  │ registry                   146L  0C   10m  CC=14     ←5
+  │ registry                   146L  0C   10m  CC=14     ←6
   │ probe                      136L  0C    8m  CC=13     ←1
   │ grammar                    132L  0C   13m  CC=7      ←5
   │ client                     131L  2C   13m  CC=11     ←3
@@ -1225,7 +1231,7 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        project                    src.koruide                  packages.coru                    src.koruapi  plugins.koru-autopilot-shared              packages.dsl2koru                        scripts                 src.koruvision                src.koruobserve              packages.dsl2coru              packages.nlp2coru                   src.korumesh                           koru              packages.uri2coru
-                       src.koru                             ──                            622                            223                              4                             14                             59                              3                             ←3                             22                             12                             ←3                             25                             ←2                             18                             ←1  hub
+                       src.koru                             ──                            622                            223                              5                             14                             59                              3                             ←3                             22                             12                             ←3                             25                             ←2                             18                             ←1  hub
                         project                           ←622                             ──                            ←26                           ←183                            ←17                                                           ←11                            ←83                            ←12                            ←22                            ←11                             ←6                             ←7                                                            ←6  hub
                     src.koruide                             40                             26                             ──                            ←28                            ←27                              9                                                                                                                           1                                                                                                                                                             hub
                   packages.coru                             42                            183                             28                             ──                                                             3                              3                                                            ←1                                                                                            4                                                                                               hub
@@ -1241,40 +1247,40 @@ COUPLING:
                            koru                              2                                                                                                                          ←3                                                                                                                                                         ←1                                                                                                                          ──                                 hub
               packages.uri2coru                              1                              6                                                                                                                                                          1                                                                                                                                                         ←1                                                                                           ──  hub
   CYCLES: none
-  HUB: src.koruobserve/ (fan-in=16)
-  HUB: packages.koruenv/ (fan-in=10)
-  HUB: src.imgl/ (fan-in=5)
   HUB: src.koru/ (fan-in=219)
-  HUB: packages.nlpshim/ (fan-in=6)
-  HUB: packages.nlp2coru/ (fan-in=33)
-  HUB: project/ (fan-in=1051)
-  HUB: src.koruapi/ (fan-in=15)
-  HUB: packages.coru/ (fan-in=7)
-  HUB: src.koruvision/ (fan-in=37)
   HUB: koru/ (fan-in=22)
-  HUB: packages.dsl2koru/ (fan-in=71)
-  HUB: packages.uri2coru/ (fan-in=11)
-  HUB: src.koruide/ (fan-in=278)
-  HUB: plugins.koru-autopilot-shared/ (fan-in=92)
-  HUB: packages.mcp2coru/ (fan-in=7)
+  HUB: project/ (fan-in=1051)
   HUB: src.korumesh/ (fan-in=12)
-  SMELL: src.koruobserve/ fan-out=38 → split needed
-  SMELL: scripts/ fan-out=87 → split needed
-  SMELL: src.koru/ fan-out=1020 → split needed
-  SMELL: packages.uri2koru/ fan-out=16 → split needed
-  SMELL: packages.nlp2coru/ fan-out=10 → split needed
-  SMELL: src.koruapi/ fan-out=172 → split needed
-  SMELL: packages.nlp2koru/ fan-out=17 → split needed
-  SMELL: packages.coru/ fan-out=267 → split needed
+  HUB: src.koruobserve/ (fan-in=16)
+  HUB: packages.dsl2koru/ (fan-in=71)
+  HUB: src.koruvision/ (fan-in=37)
+  HUB: src.koruide/ (fan-in=278)
+  HUB: src.imgl/ (fan-in=5)
+  HUB: packages.koruenv/ (fan-in=10)
+  HUB: packages.nlp2coru/ (fan-in=33)
+  HUB: packages.nlpshim/ (fan-in=6)
+  HUB: packages.uri2coru/ (fan-in=11)
+  HUB: packages.mcp2coru/ (fan-in=7)
+  HUB: packages.coru/ (fan-in=8)
+  HUB: src.koruapi/ (fan-in=15)
+  HUB: plugins.koru-autopilot-shared/ (fan-in=92)
   SMELL: packages.cli2koru/ fan-out=11 → split needed
-  SMELL: src.koruvision/ fan-out=29 → split needed
-  SMELL: packages.dsl2koru/ fan-out=19 → split needed
-  SMELL: packages.uri2coru/ fan-out=8 → split needed
-  SMELL: src.koruide/ fan-out=81 → split needed
-  SMELL: packages.dsl2coru/ fan-out=48 → split needed
-  SMELL: packages.cli2coru/ fan-out=12 → split needed
-  SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: src.koru/ fan-out=1021 → split needed
   SMELL: examples/ fan-out=12 → split needed
+  SMELL: scripts/ fan-out=87 → split needed
+  SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: src.koruobserve/ fan-out=38 → split needed
+  SMELL: packages.dsl2koru/ fan-out=19 → split needed
+  SMELL: src.koruvision/ fan-out=29 → split needed
+  SMELL: src.koruide/ fan-out=81 → split needed
+  SMELL: packages.cli2coru/ fan-out=12 → split needed
+  SMELL: packages.nlp2koru/ fan-out=17 → split needed
+  SMELL: packages.nlp2coru/ fan-out=10 → split needed
+  SMELL: packages.uri2coru/ fan-out=8 → split needed
+  SMELL: packages.coru/ fan-out=267 → split needed
+  SMELL: src.koruapi/ fan-out=172 → split needed
+  SMELL: packages.uri2koru/ fan-out=16 → split needed
+  SMELL: packages.dsl2coru/ fan-out=48 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

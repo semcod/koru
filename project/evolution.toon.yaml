@@ -1,5 +1,5 @@
-# code2llm/evolution | 7289 func | 697f | 2026-07-18
-# generated in 0.04s
+# code2llm/evolution | 7302 func | 700f | 2026-07-18
+# generated in 0.02s
 
 NEXT[9] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py

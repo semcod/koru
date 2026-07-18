@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 787, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 793, typescript: 94, shell: 60, json: 41, yaml: 31
 - **Analysis Mode**: static
-- **Total Functions**: 7435
-- **Total Classes**: 508
-- **Modules**: 1068
-- **Entry Points**: 2767
+- **Total Functions**: 7448
+- **Total Classes**: 512
+- **Modules**: 1074
+- **Entry Points**: 2771
 
 ## Architecture by Module
 
@@ -524,15 +524,15 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
-### recursion__capture_for_verify
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: src.koru.integrations.vdisplay_client._capture_for_verify
-
 ### recursion__substitute
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.queue.ticket_templates._substitute
+
+### recursion__capture_for_verify
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.integrations.vdisplay_client._capture_for_verify
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
