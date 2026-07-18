@@ -74,6 +74,22 @@ def patch_retry_budget(ticket: dict | None = None) -> int:
         return 1
 
 
+def _contract_capped_budget(project: Path, ticket: dict) -> int:
+    """The retry budget, never above what the ticket's contract permits.
+
+    The contract caps *attempts*; the budget counts *retries*, so a contract
+    max_attempts of 2 leaves room for one re-ask. A ticket cannot raise this —
+    contracts only shrink.
+    """
+    budget = patch_retry_budget(ticket)
+    from koru.queue.contracts import contract_for_ticket
+
+    contract = contract_for_ticket(project, ticket)
+    if contract is not None and contract.max_attempts is not None:
+        budget = min(budget, max(0, contract.max_attempts - 1))
+    return budget
+
+
 def apply_patch_with_retry(
     project: Path,
     result: CommandResult,
@@ -99,16 +115,20 @@ def apply_patch_with_retry(
     rather than imported so this module stays independent of the queue runner.
     """
     # Imported at call time so the facade stays the single seam tests stub.
+    from koru.queue.authorization import build_authorizer
     from koru.queue.transaction.service import execute_patch_transaction
 
     base_prompt = str(action.get("prompt") or "")
-    budget = patch_retry_budget(ticket)
+    budget = _contract_capped_budget(project, ticket)
     remaining = budget
     manifest: dict | None = None
     attempts: list[dict] = []
+    authorize = build_authorizer(project, ticket, actor or "koru-shell")
 
     while True:
-        transaction = execute_patch_transaction(project, result, ticket, shell_runner, manifest)
+        transaction = execute_patch_transaction(
+            project, result, ticket, shell_runner, manifest, authorize=authorize,
+        )
         result, outcome = transaction.result, transaction.outcome
         attempts.append(_attempt_record(len(attempts) + 1, transaction))
         if outcome is None or not outcome.retryable or remaining <= 0:

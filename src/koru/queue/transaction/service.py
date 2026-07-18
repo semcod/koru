@@ -20,6 +20,7 @@ from pathlib import Path
 from koru.queue.journal import (
     PHASE_APPLIED,
     PHASE_APPLYING,
+    PHASE_AUTHORIZED,
     PHASE_COMPLETED,
     PHASE_FROZEN,
     PHASE_PROMOTED,
@@ -62,6 +63,7 @@ from koru.queue.transaction.staging import stage_patch
 from koru.queue.types import CommandResult
 
 ShellRunner = Callable[[str, Path], CommandResult]
+Authorizer = Callable[[PatchPlan, dict], PatchOutcome | None]
 
 
 def execute_patch_transaction(
@@ -70,6 +72,7 @@ def execute_patch_transaction(
     ticket: dict,
     shell_runner: ShellRunner,
     manifest: dict | None = None,
+    authorize: Authorizer | None = None,
 ) -> PatchTransactionResult:
     """Apply the diff an agent proposed, then verify it, rolling back on failure.
 
@@ -124,8 +127,31 @@ def execute_patch_transaction(
         return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
 
     run = _run_isolated if plan.isolated else _run_direct
-    outcome = run(plan, freeze, shell_runner, journal)
+    outcome = run(plan, freeze, shell_runner, journal, authorize=authorize)
     return PatchTransactionResult(result, outcome, plan=plan, manifest=freeze.manifest)
+
+
+def _authorize(
+    plan: PatchPlan,
+    frozen: dict,
+    journal: RunJournal,
+    authorize: Authorizer | None,
+) -> PatchOutcome | None:
+    """Run the injected authorization against the frozen plan, journaled.
+
+    Called after the freeze because the grant signs the manifest hash — there
+    is nothing binding to authorize before the plan is pinned. No authorizer
+    means legacy behaviour, and the journal shows no ``authorized`` event, so
+    an audit can tell an unauthorized-but-legal run from an authorized one.
+    """
+    if authorize is None:
+        return None
+    refusal = authorize(plan, frozen)
+    if refusal is not None:
+        journal.append(PHASE_REFUSED, data={"code": refusal.code})
+        return refusal
+    journal.append(PHASE_AUTHORIZED, manifest_hash=frozen.get("manifest_hash"))
+    return None
 
 
 def _run_isolated(
@@ -133,10 +159,15 @@ def _run_isolated(
     freeze: ManifestFreeze,
     shell_runner: ShellRunner,
     journal: RunJournal,
+    *,
+    authorize: Authorizer | None = None,
 ) -> PatchOutcome | None:
     """Verify in a worktree first; only a proven patch reaches the workspace."""
     frozen = freeze.freeze()
     journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    refusal = _authorize(plan, frozen, journal, authorize)
+    if refusal is not None:
+        return refusal
 
     journal.append(PHASE_STAGING, data={"mode": plan.mode})
     staged = stage_patch(plan, shell_runner)
@@ -202,6 +233,7 @@ def _run_direct(
     journal: RunJournal,
     *,
     frozen_journaled: bool = False,
+    authorize: Authorizer | None = None,
 ) -> PatchOutcome | None:
     """Patch the workspace in place, with ``git checkout --`` as the only undo."""
     refusal = screen_direct_apply(plan)
@@ -211,6 +243,9 @@ def _run_direct(
     frozen = freeze.freeze()
     if not frozen_journaled:
         journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+        refusal = _authorize(plan, frozen, journal, authorize)
+        if refusal is not None:
+            return refusal
     return _apply_to_workspace(
         plan, freeze, shell_runner, journal, verify=bool(plan.verify_command),
     )

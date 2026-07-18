@@ -12,6 +12,7 @@ from __future__ import annotations
 from koru.queue.journal import (
     PHASE_APPLIED,
     PHASE_APPLYING,
+    PHASE_AUTHORIZED,
     PHASE_COMPLETED,
     PHASE_FROZEN,
     PHASE_PROMOTED,
@@ -35,10 +36,13 @@ TRANSITIONS: dict[str | None, frozenset[str]] = {
     None: frozenset({PHASE_RESOLVED}),
     PHASE_RESOLVED: frozenset({PHASE_REFUSED, PHASE_FROZEN}),
     # ``frozen → refused`` exists for recovery closing a run that died right
-    # after the freeze; ``frozen → completed`` is artifact delivery.
+    # after the freeze; ``frozen → completed`` is artifact delivery. The direct
+    # ``frozen → staging/applying`` arcs remain legal for runs without an
+    # authorizer — authorization narrows, its absence must not forge history.
     PHASE_FROZEN: frozenset(
-        {PHASE_STAGING, PHASE_APPLYING, PHASE_COMPLETED, PHASE_REFUSED},
+        {PHASE_AUTHORIZED, PHASE_STAGING, PHASE_APPLYING, PHASE_COMPLETED, PHASE_REFUSED},
     ),
+    PHASE_AUTHORIZED: frozenset({PHASE_STAGING, PHASE_APPLYING, PHASE_REFUSED}),
     # ``staging → promoted`` is recovery finishing a run whose branch commit
     # exists but whose bookkeeping died with the process.
     PHASE_STAGING: frozenset(

@@ -28,7 +28,8 @@ from koru.queue.manifest import manifest_run_directory
 # Decision events — replaying them is free.
 PHASE_RESOLVED = "resolved"  # plan built: gate, mode, targets known
 PHASE_FROZEN = "frozen"  # manifest pinned and persisted
-PHASE_REFUSED = "refused"  # a screen or gate said no; workspace untouched
+PHASE_AUTHORIZED = "authorized"  # contract satisfied and, if required, grant verified
+PHASE_REFUSED = "refused"  # a screen, contract or gate said no; workspace untouched
 
 # Mutation events, in intent/completion pairs — the crash-recovery backbone.
 PHASE_STAGING = "staging"  # about to apply+verify in a worktree (branch ref may be created)

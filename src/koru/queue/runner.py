@@ -490,6 +490,22 @@ def _prepare_action_for_patch_mode(
     return resolved_action, use_patch_mode
 
 
+def _pre_llm_contract_denial(project: Path, ticket: dict, actor: str) -> str | None:
+    """Whether this ticket's contract forbids even proposing a patch."""
+    from koru.queue.contracts import CAP_PROPOSE, contract_for_ticket
+
+    contract = contract_for_ticket(project, ticket)
+    if contract is None:
+        return None
+    decision = contract.evaluate(
+        actor=actor,
+        capability=CAP_PROPOSE,
+        risk_class=str((ticket.get("inputs") or {}).get("risk_class") or "R1"),
+        workspace=project,
+    )
+    return None if decision.allowed else decision.reason
+
+
 def _apply_patch_step(
     project: Path,
     result: CommandResult,
@@ -633,6 +649,24 @@ def _run_next_planfile_task_impl(
         resolved_action, use_patch_mode = _prepare_action_for_patch_mode(
             executor_kind, expects_edits, ticket, resolved_action,
         )
+
+        if use_patch_mode and (denial := _pre_llm_contract_denial(project, ticket, actor)):
+            # The contract is checked before the model ever sees a prompt: an
+            # actor outside its box must not spend an LLM run finding out.
+            planfile_command(
+                project,
+                ["ticket", "block", ticket_id, "--reason", f"FAIL: [policy_denied] {denial}"],
+                runner=planfile_runner,
+            )
+            return QueueRunResult(
+                status="failed",
+                ticket_id=ticket_id,
+                executor_kind=executor_kind,
+                message=denial,
+                exit_code=1,
+                stdout="",
+                stderr=denial,
+            )
 
         result, action_label = _execute_action(
             executor_kind,
