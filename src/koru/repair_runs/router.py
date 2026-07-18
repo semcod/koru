@@ -40,6 +40,9 @@ CONTEXT_LENGTH_EXCEEDED = "context_length_exceeded"
 RUNTIME_POLICY_DENIED = "runtime_policy_denied"
 PROVIDER_ERROR = "provider_error"
 WORKER_DIED = "worker_died"
+#: The model abdicated ("retry_with_model") or broke the output contract —
+#: asking it again is spending an attempt on a known answer.
+MODEL_DECLINED = "model_declined"
 
 #: Failures that stick to the *model* across iterations: they describe the
 #: provider relationship, not the patch, so retrying the same model with the
@@ -51,6 +54,7 @@ STICKY_CODES = frozenset(
         INVALID_STRUCTURED_OUTPUT,
         CONTEXT_LENGTH_EXCEEDED,
         WORKER_DIED,
+        MODEL_DECLINED,
     },
 )
 
