@@ -7,6 +7,7 @@ import unittest
 from koru.queue.ticket_templates import (
     SUBACTOR_DEVELOPMENT_REPAIR,
     load_ticket_template,
+    render_repair_ticket_from_development_defect,
     render_subactor_repair_ticket,
     template_path,
     validate_subactor_repair_template,
@@ -56,6 +57,32 @@ class TestSubactorRepairTicketTemplate(unittest.TestCase):
         ticket = {"inputs": {"max_patch_attempts": 2}}
         self.assertEqual(patch_retry_budget(ticket), 2)
         self.assertEqual(patch_retry_budget({"inputs": {}}), 1)
+
+    def test_render_from_development_defect_payload(self) -> None:
+        payload = {
+            "type": "development_defect",
+            "component": "plesk-bridge",
+            "error_code": "plan_hash_mismatch",
+            "fingerprint": "plesk-bridge:plan_hash_mismatch",
+            "discovered_in": "PLF-409",
+            "affected_files": [
+                "platform/components/connectors/services/bridge/src/plesk-httpdocs-sync.mjs",
+                "platform/components/runtime/src/apply-grant.mjs",
+            ],
+            "acceptance_tests": [
+                "node --test platform/components/testkit/tests/plesk-httpdocs-sync.test.mjs",
+            ],
+            "classification": {"action": "ticket", "category": "development_defect"},
+        }
+        ticket = render_repair_ticket_from_development_defect(payload)
+        self.assertEqual(ticket["inputs"]["promotion_mode"], "branch")
+        self.assertIn("plesk-httpdocs-sync", ticket["inputs"]["verify_command"])
+        self.assertEqual(ticket["inputs"]["discovered_in"], "PLF-409")
+
+        with self.assertRaises(ValueError):
+            render_repair_ticket_from_development_defect(
+                {**payload, "classification": {"action": "ignore", "category": "operational_boundary"}},
+            )
 
 
 if __name__ == "__main__":

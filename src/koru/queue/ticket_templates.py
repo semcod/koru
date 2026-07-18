@@ -116,6 +116,35 @@ def validate_subactor_repair_template(data: dict[str, Any]) -> list[str]:
     return errors
 
 
+def variables_from_development_defect(payload: dict[str, Any]) -> dict[str, str]:
+    """Map Subactor orchestrator ``development_defect`` payload to template vars."""
+    affected = [str(path) for path in (payload.get("affected_files") or []) if path][:2]
+    fallback_files = (
+        "orchestrator/bin/subactor-run.mjs",
+        "orchestrator/tests/development-defect.test.mjs",
+    )
+    while len(affected) < 2:
+        affected.append(fallback_files[len(affected)])
+
+    acceptance = [str(item) for item in (payload.get("acceptance_tests") or []) if item]
+    prompt_lines = [f"- Acceptance: {item}" for item in acceptance[:5]]
+    message = str(payload.get("message") or "").strip()
+    if message:
+        prompt_lines.insert(0, message[:500])
+
+    return {
+        "COMPONENT": str(payload.get("component") or "unknown"),
+        "ERROR_CODE": str(payload.get("error_code") or "unknown"),
+        "FINGERPRINT": str(payload.get("fingerprint") or ""),
+        "DISCOVERED_IN": str(
+            payload.get("discovered_in") or payload.get("source_ticket_id") or "",
+        ),
+        "FILE_1": affected[0],
+        "FILE_2": affected[1],
+        "PROMPT_BODY": "\n".join(prompt_lines) if prompt_lines else "Add focused regression coverage.",
+    }
+
+
 def render_subactor_repair_ticket(variables: dict[str, str]) -> dict[str, Any]:
     """Render the Subactor repair skeleton with concrete bridge metadata."""
     data = load_ticket_template(SUBACTOR_DEVELOPMENT_REPAIR)
@@ -128,6 +157,20 @@ def render_subactor_repair_ticket(variables: dict[str, str]) -> dict[str, Any]:
     if leftover:
         missing = ", ".join(sorted(set(leftover)))
         raise ValueError(f"unresolved template placeholders: {missing}")
+    return rendered
+
+
+def render_repair_ticket_from_development_defect(payload: dict[str, Any]) -> dict[str, Any]:
+    """Render Koru repair ticket from a Subactor bridge ``development_defect`` payload."""
+    classification = payload.get("classification") or {}
+    if classification.get("action") != "ticket":
+        reason = classification.get("reason") or classification.get("category") or "operational"
+        raise ValueError(f"payload is not a development ticket candidate: {reason}")
+
+    rendered = render_subactor_repair_ticket(variables_from_development_defect(payload))
+    acceptance = [str(item).strip() for item in (payload.get("acceptance_tests") or []) if item]
+    if acceptance and acceptance[0].split()[0] in {"node", "npm", "pytest", "python", "python3"}:
+        rendered.setdefault("inputs", {})["verify_command"] = acceptance[0]
     return rendered
 
 
