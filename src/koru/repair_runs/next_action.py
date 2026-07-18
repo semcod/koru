@@ -92,16 +92,42 @@ def parse_next_action(text: str) -> NextAction | NextActionError:
     """Validate a model reply against the contract; refuse everything else.
 
     Fenced JSON is unwrapped (models fence despite instructions); everything
-    beyond that one courtesy is strict.
+    beyond that one courtesy is strict. Small validators, one concern each —
+    the first refusal wins.
     """
+    payload = _extract_payload(text)
+    if isinstance(payload, NextActionError):
+        return payload
+    refusal = (
+        _validate_schema(payload)
+        or _validate_action(payload)
+        or _validate_facts(payload)
+        or _validate_patch(payload)
+    )
+    if refusal is not None:
+        return _refuse(refusal, text)
+    facts = payload.get("required_facts") or []
+    action = payload["action"]
+    return NextAction(
+        action=action,
+        reason_code=str(payload.get("reason_code") or ""),
+        required_facts=tuple(
+            {"schema": str(f["schema"]), "key": str(f["key"])} for f in facts
+        ),
+        patch=payload.get("patch") if action == ACTION_PROPOSE_PATCH else None,
+        confidence=_clamped_confidence(payload),
+    )
 
-    def _refuse(detail: str) -> NextActionError:
-        return NextActionError(
-            failure_code="invalid_structured_output",
-            detail=detail,
-            raw_excerpt=(text or "").strip()[:200],
-        )
 
+def _refuse(detail: str, text: str) -> NextActionError:
+    return NextActionError(
+        failure_code="invalid_structured_output",
+        detail=detail,
+        raw_excerpt=(text or "").strip()[:200],
+    )
+
+
+def _extract_payload(text: str) -> dict | NextActionError:
     raw = (text or "").strip()
     fenced = _FENCE.search(raw)
     if fenced:
@@ -109,44 +135,51 @@ def parse_next_action(text: str) -> NextAction | NextActionError:
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
-        return _refuse("reply is not a JSON object")
+        return _refuse("reply is not a JSON object", text)
     if not isinstance(payload, dict):
-        return _refuse("reply is JSON but not an object")
-    if payload.get("schema") != NEXT_ACTION_SCHEMA:
-        return _refuse(f"schema is {payload.get('schema')!r}, not {NEXT_ACTION_SCHEMA}")
+        return _refuse("reply is JSON but not an object", text)
+    return payload
 
+
+def _validate_schema(payload: dict) -> str | None:
+    if payload.get("schema") != NEXT_ACTION_SCHEMA:
+        return f"schema is {payload.get('schema')!r}, not {NEXT_ACTION_SCHEMA}"
+    return None
+
+
+def _validate_action(payload: dict) -> str | None:
     action = payload.get("action")
     if action not in ALLOWED_ACTIONS:
         # The closed set IS the security boundary: "run_shell" dies here.
-        return _refuse(f"action {action!r} is not in the allowed set")
+        return f"action {action!r} is not in the allowed set"
+    return None
 
+
+def _validate_facts(payload: dict) -> str | None:
     facts = payload.get("required_facts") or []
     if not isinstance(facts, list) or not all(
         isinstance(f, dict) and f.get("schema") and f.get("key") for f in facts
     ):
-        return _refuse("required_facts must be a list of {schema, key} objects")
+        return "required_facts must be a list of {schema, key} objects"
+    action = payload.get("action")
     if action in {ACTION_REQUEST_FACT, ACTION_RUN_PROBE} and not facts:
-        return _refuse(f"{action} requires a non-empty required_facts")
+        return f"{action} requires a non-empty required_facts"
+    return None
 
+
+def _validate_patch(payload: dict) -> str | None:
+    action = payload.get("action")
     patch = payload.get("patch")
     if action == ACTION_PROPOSE_PATCH:
         if not isinstance(patch, str) or "--- " not in patch or "+++ " not in patch:
-            return _refuse("propose_patch requires `patch` to be a unified diff")
+            return "propose_patch requires `patch` to be a unified diff"
     elif patch:
-        return _refuse(f"{action} must not carry a patch")
+        return f"{action} must not carry a patch"
+    return None
 
+
+def _clamped_confidence(payload: dict) -> float:
     try:
-        confidence = min(1.0, max(0.0, float(payload.get("confidence") or 0.0)))
+        return min(1.0, max(0.0, float(payload.get("confidence") or 0.0)))
     except (TypeError, ValueError):
-        confidence = 0.0
-
-    return NextAction(
-        action=action,
-        reason_code=str(payload.get("reason_code") or ""),
-        required_facts=tuple(
-            {"schema": str(f["schema"]), "key": str(f["key"])} for f in facts
-        ),
-        patch=patch if action == ACTION_PROPOSE_PATCH else None,
-        confidence=confidence,
-    )
-
+        return 0.0

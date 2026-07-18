@@ -1,73 +1,59 @@
-"""Model routing: a blocked provider is an operational event, not a verdict.
+"""The wired model-selection layer over :mod:`model_router`'s single authority.
 
-The router owns two decisions and nothing else: *what kind of failure was
-that* (classification) and *who answers next* (selection). It reads the
-attempt ledger and the registry; it never invokes a model, never mutates a
-workspace, and — the rule that matters most — **switching models never widens
-the run's rights**: every candidate works under the same contract, the same
-file scope and the same risk ceiling, because the router hands out nothing
-but a model name.
+One vocabulary, one classifier, one ``ModelSpec`` — all owned by
+``model_router``. This module keeps the two pieces the queue wrapper actually
+plugs in:
 
-Model names are configuration, not code:
+- ``load_model_registry`` — the koru.yaml roster (names are configuration);
+- ``classify_invocation`` / ``choose_model`` — the invocation-level loop the
+  recording session drives: classify the reply's transport surface, skip
+  models whose ledger shows a sticky failure, hand back nothing but a name.
 
-.. code-block:: yaml
-
-    queue:
-      repair_models:
-        - id: primary
-          model: anthropic/claude-sonnet
-          capabilities: [code, reasoning]
-        - id: fallback-policy
-          model: openai/gpt
-          capabilities: [code, strict-json]
-        - id: fallback-context
-          model: google/gemini
-          capabilities: [long-context]
+``model_router.route`` is the full decision table (non-model remedies:
+reduce context, run probe, corrective iteration, remanifest, forbidden stop)
+for the coming plan-level runner; this layer is deliberately the small subset
+a single wrapped LLM call needs. Both read the same codes, so a failure never
+means two things.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
+from koru.repair_runs.model_router import (
+    CONTEXT_LENGTH_EXCEEDED,
+    INVALID_STRUCTURED_OUTPUT,
+    MODEL_DECLINED,
+    NO_SWITCH_CODES,
+    PROVIDER_ERROR,
+    PROVIDER_POLICY_BLOCK,
+    PROVIDER_TIMEOUT,
+    PROVIDER_UNAVAILABLE,
+    RUNTIME_POLICY_DENIED,
+    STICKY_CODES,
+    WORKER_DIED,
+    ModelSpec,
+    classify_failure,
+)
 from koru.repair_runs.models import ModelAttempt
 
-# Invocation failure codes, per the plan's classification table.
-PROVIDER_POLICY_BLOCK = "provider_policy_block"
-PROVIDER_TIMEOUT = "provider_timeout"
-INVALID_STRUCTURED_OUTPUT = "invalid_structured_output"
-CONTEXT_LENGTH_EXCEEDED = "context_length_exceeded"
-RUNTIME_POLICY_DENIED = "runtime_policy_denied"
-PROVIDER_ERROR = "provider_error"
-WORKER_DIED = "worker_died"
-#: The model abdicated ("retry_with_model") or broke the output contract —
-#: asking it again is spending an attempt on a known answer.
-MODEL_DECLINED = "model_declined"
-
-#: Failures that stick to the *model* across iterations: they describe the
-#: provider relationship, not the patch, so retrying the same model with the
-#: same request is spending an attempt on a known answer. A red verify, by
-#: contrast, never marks the model.
-STICKY_CODES = frozenset(
-    {
-        PROVIDER_POLICY_BLOCK,
-        INVALID_STRUCTURED_OUTPUT,
-        CONTEXT_LENGTH_EXCEEDED,
-        WORKER_DIED,
-        MODEL_DECLINED,
-    },
-)
-
-#: Failures where switching is pointless or forbidden.
-NO_SWITCH_CODES = frozenset({RUNTIME_POLICY_DENIED})
-
-
-@dataclass(frozen=True)
-class ModelSpec:
-    id: str
-    model: str
-    provider: str = "openrouter"
-    capabilities: tuple[str, ...] = ()
+__all__ = [
+    "CONTEXT_LENGTH_EXCEEDED",
+    "INVALID_STRUCTURED_OUTPUT",
+    "MODEL_DECLINED",
+    "NO_SWITCH_CODES",
+    "PROVIDER_ERROR",
+    "PROVIDER_POLICY_BLOCK",
+    "PROVIDER_TIMEOUT",
+    "PROVIDER_UNAVAILABLE",
+    "RUNTIME_POLICY_DENIED",
+    "STICKY_CODES",
+    "WORKER_DIED",
+    "ModelSpec",
+    "choose_model",
+    "classify_invocation",
+    "load_model_registry",
+]
 
 
 def load_model_registry(project: Path) -> tuple[ModelSpec, ...]:
@@ -88,12 +74,17 @@ def load_model_registry(project: Path) -> tuple[ModelSpec, ...]:
         model = str(entry.get("model") or "").strip()
         if not model:
             continue
+        try:
+            max_attempts = max(1, int(entry.get("max_attempts") or 1))
+        except (TypeError, ValueError):
+            max_attempts = 1
         specs.append(
             ModelSpec(
                 id=str(entry.get("id") or model),
                 model=model,
                 provider=str(entry.get("provider") or "openrouter"),
                 capabilities=tuple(str(c) for c in (entry.get("capabilities") or [])),
+                max_attempts=max_attempts,
             ),
         )
     return tuple(specs)
@@ -102,23 +93,21 @@ def load_model_registry(project: Path) -> tuple[ModelSpec, ...]:
 def classify_invocation(result) -> str | None:
     """What kind of failure an invocation was; ``None`` means it answered.
 
-    Classification reads the transport surface (status code, stderr), never
-    the model's prose — a model cannot talk its way into a different failure
-    class any more than into wider permissions.
+    Delegates to the single classifier — transport status codes first, then
+    the provider's own words; never the model's prose. A failure nothing
+    explains is ``provider_error``: on this layer every failed invocation
+    carries *some* code, because the attempt ledger requires one.
     """
-    if getattr(result, "returncode", 1) == 0:
+    returncode = getattr(result, "returncode", 1)
+    if returncode == 0:
         return None
-    status = getattr(result, "status_code", None)
-    stderr = (getattr(result, "stderr", "") or "").lower()
-    if status == 403 or "policy" in stderr and "denied" not in stderr:
-        return PROVIDER_POLICY_BLOCK
-    if status in {408, 504} or "timed out" in stderr or "timeout" in stderr:
-        return PROVIDER_TIMEOUT
-    if status == 413 or "context length" in stderr or "context_length" in stderr:
-        return CONTEXT_LENGTH_EXCEEDED
-    if "runtime_policy_denied" in stderr:
-        return RUNTIME_POLICY_DENIED
-    return PROVIDER_ERROR
+    code = classify_failure(
+        returncode,
+        getattr(result, "stderr", "") or "",
+        getattr(result, "stdout", "") or "",
+        status_code=getattr(result, "status_code", None),
+    )
+    return code or PROVIDER_ERROR
 
 
 def choose_model(
@@ -131,7 +120,7 @@ def choose_model(
 
     Models whose ledger shows a sticky failure are skipped for the rest of the
     run. After a context-length failure, candidates carrying ``long-context``
-    are preferred (until the Context Broker exists to shrink the context
+    are preferred (until the Context Broker learns to shrink the snapshot
     instead). Returning ``None`` is the *only* escalation — there is no
     "try anything once more" path.
     """

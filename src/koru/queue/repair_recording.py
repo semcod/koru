@@ -60,6 +60,29 @@ _TOWARD_MODEL_RUNNING: dict[str, str] = {
 }
 
 
+def _open_run(store: RepairRunStore, project: Path, ticket: dict, ticket_id: str):
+    """The ticket's live run — found or created — or ``None`` when terminal.
+
+    Creation races another worker safely: losing the ``RunAlreadyExists``
+    race means the winner's run is the run.
+    """
+    run = store.find_run(ticket_id, str(project))
+    if run is None:
+        try:
+            run = store.create_run(
+                ticket_id=ticket_id,
+                project_root=str(project),
+                max_iterations=int(
+                    (ticket.get("inputs") or {}).get("max_repair_iterations") or 5,
+                ),
+            )
+        except RunAlreadyExists:
+            run = store.find_run(ticket_id, str(project))
+    if run is None or run.status in lc.TERMINAL_STATES:
+        return None
+    return run
+
+
 def _structured_output_enabled(project: Path, ticket: dict) -> bool:
     """Whether replies must follow koru.repair.next-action/v1.
 
@@ -152,20 +175,8 @@ class RepairRecordingSession:
             return None
         try:
             store = store or SqliteRepairRunStore(default_store_path(project))
-            run = store.find_run(ticket_id, str(project))
+            run = _open_run(store, project, ticket, ticket_id)
             if run is None:
-                try:
-                    run = store.create_run(
-                        ticket_id=ticket_id,
-                        project_root=str(project),
-                        max_iterations=int(
-                            (ticket.get("inputs") or {}).get("max_repair_iterations")
-                            or 5,
-                        ),
-                    )
-                except RunAlreadyExists:
-                    run = store.find_run(ticket_id, str(project))
-            if run is None or run.status in lc.TERMINAL_STATES:
                 return None
             claimed = store.claim(run.id, actor, lease_s=_DEFAULT_LEASE_S)
             if claimed is None:

@@ -34,6 +34,9 @@ VERIFICATION_FAILED = "verification_failed"
 RUNTIME_POLICY_DENIED = "runtime_policy_denied"
 WORKSPACE_DRIFT = "workspace_drift"
 CAPABILITY_UNAVAILABLE = "capability_unavailable"
+PROVIDER_ERROR = "provider_error"  # failed invocation nothing else explains
+WORKER_DIED = "worker_died"  # attempt interrupted by a dying process
+MODEL_DECLINED = "model_declined"  # the model abdicated or broke the output contract
 
 # ── Routing verbs the runner acts on ─────────────────────────────────────────
 SWITCH_MODEL = "switch_model"  # this model cannot; a different one might
@@ -46,6 +49,23 @@ DISCOVERY_PROBE = "discovery_probe"  # a capability is missing; discover, don't 
 REMANIFEST_OR_STOP = "remanifest_or_stop"  # the base moved; re-pin or stop safely
 FORBIDDEN_STOP = "forbidden_stop"  # runtime denied it; no model may proceed
 MODEL_EXHAUSTED = "model_exhausted"  # every eligible model has been spent
+
+
+#: Failures that stick to the *model* for the rest of the run: they describe
+#: the provider relationship, not the patch. A red verify never marks a model.
+STICKY_CODES = frozenset(
+    {
+        PROVIDER_POLICY_BLOCK,
+        PROVIDER_UNAVAILABLE,
+        INVALID_STRUCTURED_OUTPUT,
+        CONTEXT_LENGTH_EXCEEDED,
+        WORKER_DIED,
+        MODEL_DECLINED,
+    },
+)
+
+#: Failures where switching is pointless or forbidden.
+NO_SWITCH_CODES = frozenset({RUNTIME_POLICY_DENIED})
 
 
 # ── Failure classification: raw invocation result → a canonical code ─────────
@@ -69,7 +89,13 @@ _FAILURE_SIGNATURES: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 
-def classify_failure(returncode: int, stderr: str = "", stdout: str = "") -> str | None:
+def classify_failure(
+    returncode: int,
+    stderr: str = "",
+    stdout: str = "",
+    *,
+    status_code: int | None = None,
+) -> str | None:
     """Turn a raw model-invocation result into a canonical failure code.
 
     Returns ``None`` on success (returncode 0) or when nothing matches — an
@@ -79,6 +105,14 @@ def classify_failure(returncode: int, stderr: str = "", stdout: str = "") -> str
     """
     if returncode == 0:
         return None
+    if status_code == 403:
+        return PROVIDER_POLICY_BLOCK
+    if status_code in {408, 504}:
+        return PROVIDER_TIMEOUT
+    if status_code == 413:
+        return CONTEXT_LENGTH_EXCEEDED
+    if status_code in {429, 502, 503}:
+        return PROVIDER_UNAVAILABLE
     text = f"{stderr or ''}\n{stdout or ''}"
     for code, pattern in _FAILURE_SIGNATURES:
         if pattern.search(text):
@@ -92,8 +126,8 @@ class ModelSpec:
 
     id: str
     model: str
-    provider: str
-    capabilities: frozenset[str] = frozenset()
+    provider: str = "openrouter"
+    capabilities: tuple[str, ...] = ()
     max_attempts: int = 1
 
 
