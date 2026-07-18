@@ -191,13 +191,21 @@ def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
     out = dict(ticket)
     inputs = dict(out.get("inputs") or {})
 
-    for key in ("patch_mode", "promotion_mode", "worktree", "max_patch_attempts", "verify_command"):
+    for key in ("patch_mode", "promotion_mode", "worktree", "max_patch_attempts"):
         if key not in inputs and key in template_inputs:
             inputs[key] = template_inputs[key]
+
+    # verify_command is resolved separately, with the template last. Its value
+    # there is a documentation example naming a Subactor path, and planfile
+    # strips the ticket's own key on import — so seeding from the template first
+    # let that example outrank the command the ticket actually declared. A gate
+    # naming a file the project does not have fails every patch put through it.
     if not str(inputs.get("verify_command") or "").strip():
         from_criteria = _verify_from_acceptance_criteria(out)
         if from_criteria:
             inputs["verify_command"] = from_criteria
+        elif "verify_command" in template_inputs:
+            inputs["verify_command"] = template_inputs["verify_command"]
     if not str(inputs.get("llm_model") or "").strip():
         inputs["llm_model"] = resolve_repair_llm_model()
 

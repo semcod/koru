@@ -125,3 +125,32 @@ class TestSubactorRepairTicketTemplate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_ticket_acceptance_criteria_outrank_the_template_verify_command():
+    """planfile strips inputs.verify_command on import. Seeding it from the
+    template first made its documentation example — a Subactor path — outrank
+    the command the ticket actually declared, so every patch was gated on a
+    file the project does not have."""
+    from koru.queue.ticket_templates import hydrate_subactor_repair_ticket
+
+    ticket = {
+        "labels": ["source:subactor-bridge", "type:development-defect"],
+        "acceptance_criteria": ["node --check src/broken.mjs"],
+        "inputs": {"prompt": "fix it"},  # verify_command dropped by planfile
+    }
+
+    hydrated = hydrate_subactor_repair_ticket(ticket)
+
+    assert hydrated["inputs"]["verify_command"] == "node --check src/broken.mjs"
+
+
+def test_template_verify_command_is_used_only_as_a_last_resort():
+    from koru.queue.ticket_templates import hydrate_subactor_repair_ticket
+
+    ticket = {"labels": ["source:subactor-bridge"], "inputs": {"prompt": "fix it"}}
+
+    hydrated = hydrate_subactor_repair_ticket(ticket)
+
+    # No acceptance_criteria to go on, so the template still provides a default.
+    assert hydrated["inputs"]["verify_command"]

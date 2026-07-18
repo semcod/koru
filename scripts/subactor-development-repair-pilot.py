@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -179,20 +180,51 @@ def _run_queue(root: Path) -> subprocess.CompletedProcess[str]:
 
 
 def _collect_evidence(root: Path) -> dict:
-    branches = _run(["git", "branch", "--list", "koru/run-*"], cwd=root)
-    runs_dir = root / ".planfile" / ".koru" / "runs"
-    run_ids = sorted(p.name for p in runs_dir.glob("*") if p.is_dir()) if runs_dir.is_dir() else []
-    verify = "node --check src/broken.mjs && node --test tests/broken.test.mjs"
-    verify = _run(
-        ["bash", "-lc", verify],
-        cwd=root,
-    )
+    listed = _run(["git", "branch", "--list", "koru/run-*"], cwd=root).stdout or ""
+    branches = [line.strip().lstrip("* ").strip() for line in listed.splitlines() if line.strip()]
+    verify_cmd = "node --check src/broken.mjs && node --test tests/broken.test.mjs"
+
+    # promotion_mode=branch leaves the working tree deliberately broken — the fix
+    # lives on koru/run-<id>. Verifying the tree therefore always failed and said
+    # nothing about the patch, so check the branch out and verify that instead.
+    target = branches[0] if branches else None
+    if target:
+        checkout = Path(tempfile.mkdtemp(prefix="koru-pilot-verify-"))
+        shutil.rmtree(checkout, ignore_errors=True)
+        _run(["git", "worktree", "add", "--detach", "--quiet", str(checkout), target], cwd=root)
+        try:
+            verify = _run(["bash", "-lc", verify_cmd], cwd=checkout)
+        finally:
+            _run(["git", "worktree", "remove", "--force", str(checkout)], cwd=root)
+    else:
+        verify = _run(["bash", "-lc", verify_cmd], cwd=root)
+
     return {
-        "branches": (branches.stdout or "").strip().splitlines(),
-        "run_ids": run_ids,
+        "branches": branches,
+        "verified": target or "working tree",
+        "run_ids": _run_ids_from_ticket(root),
         "verify_exit_code": verify.returncode,
         "head": _run(["git", "rev-parse", "--short", "HEAD"], cwd=root).stdout.strip(),
     }
+
+
+def _run_ids_from_ticket(root: Path) -> list[str]:
+    """Read run ids from the KORU-LLM-RUN notes the queue appends to the ticket.
+
+    The previous location (``.planfile/.koru/runs``) is never written by the
+    queue, so this reported an empty list even on a fully successful run.
+    """
+    sprint = root / ".planfile" / "sprints" / "current.yaml"
+    if not sprint.is_file():
+        return []
+    ids: list[str] = []
+    # The note is JSON embedded in YAML, so the quotes arrive escaped
+    # (``run_id\": \"…\"``) — match them with or without the backslash.
+    pattern = r'\\?"run_id\\?":\s*\\?"([0-9a-f]+)\\?"'
+    for match in re.finditer(pattern, sprint.read_text(encoding="utf-8")):
+        if match.group(1) not in ids:
+            ids.append(match.group(1))
+    return ids
 
 
 def main() -> int:
