@@ -275,6 +275,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with real integration fixtures rather than mocked ones that would give
   false confidence.
 
+## [0.1.404] - 2026-07-18
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_planfile_queue.py
+
 ## [0.1.403] - 2026-07-18
 
 ### Docs

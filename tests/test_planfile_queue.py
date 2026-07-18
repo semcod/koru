@@ -1425,6 +1425,15 @@ class TestQueueEditVerification(unittest.TestCase):
             self.assertIsNone(_verify_declared_files_changed(project, ticket, before))
 
 
+from koru.queue.patch_mode import (  # noqa: E402
+    NO_PATCH_EMITTED,
+    PROMOTION_CONFLICT,
+    UNSAFE_DIRTY_WORKSPACE,
+    VERIFY_FAILED_ISOLATED,
+    VERIFY_FAILED_ROLLED_BACK,
+)
+
+
 class TestPatchMode(unittest.TestCase):
     """Patch mode: the agent proposes a diff, koru applies it deterministically.
 
@@ -1600,6 +1609,65 @@ class TestPatchMode(unittest.TestCase):
         "```\n"
     )
 
+    def test_direct_mode_refuses_to_touch_a_dirty_file(self) -> None:
+        """Regression: `git checkout --` restores from the index, so rolling a
+        patch back off a file that already held unstaged work would destroy
+        that work. Direct mode must refuse rather than promise a rollback it
+        cannot honour."""
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"KORU_QUEUE_WORKTREE": "0"},
+        ):
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "committed\n")
+            (project / "a.txt").write_text("old\n", encoding="utf-8")  # the user's WIP
+
+            agent_reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+
+            def unused_gate(command: str, cwd: Path):
+                raise AssertionError("verify must not run when the patch was refused")
+
+            _result, outcome = _apply_proposed_patch(
+                project, agent_reply, {"inputs": {"verify_command": "true"}}, unused_gate,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, UNSAFE_DIRTY_WORKSPACE)
+            self.assertFalse(outcome.retryable)
+            # The user's uncommitted edit survives untouched.
+            self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+    def test_promotion_is_rejected_when_workspace_changes_during_verification(self) -> None:
+        """Another session editing the same file mid-verification must not be
+        silently overwritten by the promotion."""
+        from koru.queue.runner import _apply_proposed_patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            agent_reply = SimpleNamespace(returncode=0, stdout=self._PATCH_REPLY, stderr="")
+
+            def concurrent_editor(command: str, cwd: Path):
+                # Simulate a second session writing to the main tree while the
+                # patch is being verified inside the worktree.
+                (project / "a.txt").write_text("another session was here\n", encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            _result, outcome = _apply_proposed_patch(
+                project, agent_reply, {"inputs": {"verify_command": "true"}}, concurrent_editor,
+            )
+
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, PROMOTION_CONFLICT)
+            self.assertTrue(outcome.workspace_left_untouched)
+            self.assertFalse(outcome.retryable)
+            # The other session's work is intact; no half-applied patch.
+            self.assertEqual(
+                (project / "a.txt").read_text(encoding="utf-8"),
+                "another session was here\n",
+            )
+
     def test_unapplicable_patch_is_retried_with_the_git_error(self) -> None:
         """A malformed diff is a mechanical failure the agent can fix — but only
         if it is told exactly what git objected to."""
@@ -1629,11 +1697,11 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, error = _apply_patch_with_retry(
+            _result, outcome = _apply_patch_with_retry(
                 project, first, {"inputs": {}}, action, retry_agent, gate,
             )
 
-            self.assertIsNone(error, error)
+            self.assertIsNone(outcome, outcome)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
             self.assertEqual(len(prompts), 1)
             self.assertIn("Previous attempt was rejected", prompts[0])
@@ -1655,7 +1723,7 @@ class TestPatchMode(unittest.TestCase):
             def failing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=1, stdout="", stderr="tests failed")
 
-            _result, error = _apply_patch_with_retry(
+            _result, outcome = _apply_patch_with_retry(
                 project,
                 first,
                 {"inputs": {"verify_command": "false"}},
@@ -1664,7 +1732,9 @@ class TestPatchMode(unittest.TestCase):
                 failing_gate,
             )
 
-            self.assertIsNotNone(error)
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, VERIFY_FAILED_ISOLATED)
+            self.assertFalse(outcome.retryable)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
     def test_retry_budget_is_bounded(self) -> None:
@@ -1687,12 +1757,12 @@ class TestPatchMode(unittest.TestCase):
             def gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            _result, error = _apply_patch_with_retry(
+            _result, outcome = _apply_patch_with_retry(
                 project, junk, {"inputs": {}}, {"prompt": "x"}, junk_agent, gate,
             )
 
-            self.assertIsNotNone(error)
-            self.assertIn("no unified diff", error or "")
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, NO_PATCH_EMITTED)
             self.assertEqual(calls["n"], 2)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
@@ -1712,11 +1782,12 @@ class TestPatchMode(unittest.TestCase):
                 seen.append(Path(cwd))
                 return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
 
-            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
 
-            self.assertIsNotNone(error)
-            self.assertIn("left untouched", error or "")
-            self.assertIn("2 tests failed", error or "")
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, VERIFY_FAILED_ISOLATED)
+            self.assertTrue(outcome.workspace_left_untouched)
+            self.assertIn("2 tests failed", outcome.message)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
             # The gate ran against the worktree, not the project itself.
             self.assertTrue(seen and seen[0] != project, seen)
@@ -1737,10 +1808,10 @@ class TestPatchMode(unittest.TestCase):
             def failing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=1, stdout="", stderr="2 tests failed")
 
-            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
+            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, failing_gate)
 
-            self.assertIsNotNone(error)
-            self.assertIn("rolled back", error or "")
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, VERIFY_FAILED_ROLLED_BACK)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
     def test_worktree_staging_sees_uncommitted_workspace_edits(self) -> None:
@@ -1759,9 +1830,9 @@ class TestPatchMode(unittest.TestCase):
             def passing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
-            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
 
-            self.assertIsNone(error)
+            self.assertIsNone(outcome)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
     def test_passing_verify_keeps_the_patch(self) -> None:
@@ -1789,9 +1860,9 @@ class TestPatchMode(unittest.TestCase):
             def passing_gate(command: str, cwd: Path):
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
-            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
+            _result, outcome = _apply_proposed_patch(project, agent_reply, ticket, passing_gate)
 
-            self.assertIsNone(error)
+            self.assertIsNone(outcome)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "new\n")
 
     def test_reply_without_a_diff_is_not_treated_as_work(self) -> None:
@@ -1809,10 +1880,11 @@ class TestPatchMode(unittest.TestCase):
             def unused_gate(command: str, cwd: Path):
                 raise AssertionError("verify must not run when no patch was applied")
 
-            _result, error, _retryable = _apply_proposed_patch(project, agent_reply, {}, unused_gate)
+            _result, outcome = _apply_proposed_patch(project, agent_reply, {}, unused_gate)
 
-            self.assertIsNotNone(error)
-            self.assertIn("no unified diff", error or "")
+            self.assertIsNotNone(outcome)
+            self.assertEqual(outcome.code, NO_PATCH_EMITTED)
+            self.assertTrue(outcome.retryable)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
     def test_patch_mode_defaults_on_and_is_overridable(self) -> None:
