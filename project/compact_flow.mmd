@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 1.37s
+%% generated in 0.96s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__nlp2uri_testql_browser["examples.nlp2uri-testql-browser<br/>3 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
@@ -40,7 +40,7 @@ flowchart TD
     scripts__validate_testql_conversations["scripts.validate_testql_conversations<br/>5 funcs"]
     scripts__write_ide_plugin_tests["scripts.write-ide-plugin-tests<br/>3 funcs"]
     services__healing_webhook["services.healing-webhook<br/>39 funcs"]
-    src__koru["src.koru<br/>4124 funcs"]
+    src__koru["src.koru<br/>4100 funcs"]
     src__koruapi["src.koruapi<br/>371 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
     src__koruide["src.koruide<br/>502 funcs"]
@@ -52,7 +52,7 @@ flowchart TD
     src__koru ==>|224| src__koruide
     packages__coru ==>|183| project
     src__koruapi ==>|102| src__koru
-    src__koru ==>|59| plugins__koru_autopilot_shared
+    src__koru ==>|55| plugins__koru_autopilot_shared
     packages__coru ==>|42| src__koru
     src__koruide ==>|41| src__koru
     packages__dsl2coru ==>|34| packages__dsl2koru
@@ -152,6 +152,8 @@ flowchart TD
     src__koruobserve -->|1| src__korumesh
     src__koruobserve -->|1| koru__observability_dsl
     src__korudsl -->|1| plugins__koru_autopilot_shared
+    src__koruapi -->|1| packages__nlpshim
+    src__koruapi -->|1| src__koruvision
     src__korullm -->|1| src__koru
     src__korullm -->|1| plugins__koru_autopilot_shared
     src__koruvision -->|1| src__koruobserve
@@ -168,5 +170,3 @@ flowchart TD
     scripts__sync_plugin_version -->|1| src__koru
     scripts___koru_autodiag_filter_tickets -->|1| project
     scripts__e2e_envmap_koru -->|1| src__koruapi
-    src__koruapi -->|1| packages__nlpshim
-    src__koruapi -->|1| src__koruvision

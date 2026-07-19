@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 797, typescript: 94, shell: 60, json: 45, yaml: 34
 - **Analysis Mode**: static
-- **Total Functions**: 7603
+- **Total Functions**: 7579
 - **Total Classes**: 536
 - **Modules**: 1085
 - **Entry Points**: 2819
@@ -15,7 +15,7 @@
 ## Architecture by Module
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 275
+- **Functions**: 260
 - **File**: `vdisplay_client.py`
 
 ### packages.coru.src.coru.cli

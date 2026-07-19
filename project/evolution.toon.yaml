@@ -1,10 +1,10 @@
-# code2llm/evolution | 7446 func | 707f | 2026-07-19
-# generated in 0.04s
+# code2llm/evolution | 7422 func | 707f | 2026-07-19
+# generated in 0.03s
 
 NEXT[5] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 6856L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 95984
+      WHY: 6629L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 92806
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3464L, 3 classes, max CC=13
@@ -24,7 +24,7 @@ NEXT[5] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 275 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 260 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 180 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 

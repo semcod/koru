@@ -3394,85 +3394,11 @@ def _photo_vql_elements() -> tuple[list[dict], str | None]:
     return els, vql.get("_source")
 
 
-def _live_surface_monitor_lookup(source: str) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
-    """Locate the monitor row matching source among local monitors (best effort)."""
-    monitors: list[dict[str, Any]] = []
-    monitor: dict[str, Any] | None = None
-    try:
-        from vdisplay.application.services.discovery import list_monitors_local
-
-        monitors = list(list_monitors_local().get("monitors") or [])
-        monitor = next((row for row in monitors if str(row.get("name") or "") == source), None)
-    except Exception:
-        pass
-    return monitors, monitor
-
-
-def _live_surface_screencast_region(
-    meta: dict[str, Any],
-    monitor: dict[str, Any] | None,
-    monitors: list[dict[str, Any]],
-) -> None:
-    """Fill meta region from an active portal screencast stream (best effort)."""
-    try:
-        from vdisplay.capture import resolve_multi_stream_region
-        from vdisplay.capture.portal_screencast import get_active_screencast
-        from vdisplay.capture.screencast_stream_matching import screencast_stream_index_for_monitor
-
-        session = get_active_screencast()
-        if session is not None and isinstance(monitor, dict):
-            stream_idx = screencast_stream_index_for_monitor(
-                session,
-                monitor,
-                all_monitors=monitors or [monitor],
-            )
-            region = resolve_multi_stream_region(session, stream_idx, monitor)
-            if isinstance(region, dict):
-                meta["region"] = dict(region)
-                meta["screencast_stream"] = True
-                meta["width"] = int(region.get("width") or 0)
-                meta["height"] = int(region.get("height") or 0)
-                meta["screencast_stream_index"] = stream_idx
-    except Exception:
-        pass
-
-
-def _live_surface_monitor_region_fallback(meta: dict[str, Any], source: str) -> None:
-    """Fill meta region from monitor geometry when no screencast region resolved."""
-    try:
-        from vdisplay.application.services.discovery import list_monitors_local
-
-        monitor = next(
-            (
-                row
-                for row in (list_monitors_local().get("monitors") or [])
-                if str(row.get("name") or "") == source
-            ),
-            None,
-        )
-        if isinstance(monitor, dict):
-            meta["region"] = {
-                "x": int(monitor.get("x") or 0),
-                "y": int(monitor.get("y") or 0),
-                "width": int(monitor.get("width") or monitor.get("width_px") or 0),
-                "height": int(monitor.get("height") or monitor.get("height_px") or 0),
-            }
-    except Exception:
-        pass
-
-
 def _live_surface_capture_meta(source: str) -> dict[str, Any]:
-    """Fresh capture metadata for surface-based pointer math (ignore stale PNG sidecars)."""
-    meta: dict[str, Any] = {"source": source, "monitor_name": source}
-    monitors, monitor = _live_surface_monitor_lookup(source)
-    if isinstance(monitor, dict):
-        meta["rotation"] = monitor.get("rotation") or "normal"
-    _live_surface_screencast_region(meta, monitor, monitors)
-    if "region" not in meta:
-        _live_surface_monitor_region_fallback(meta, source)
-    meta.setdefault("width", 2048)
-    meta.setdefault("height", 1280)
-    return meta
+    """Fresh VDisplay-owned snapshot for surface-based pointer math."""
+    from vdisplay.capture import resolve_live_capture_meta
+
+    return resolve_live_capture_meta(source, default_size=(2048, 1280))
 
 
 def _jetbrains_surface_chat_target(*, ide: str, source: str | None = None) -> dict[str, Any] | None:
@@ -3923,47 +3849,8 @@ def _photo_capture_meta_for_source(source: str) -> dict[str, Any]:
     return _enrich_capture_meta_for_pointer(meta, source)
 
 
-def _enrich_stream_meta_via_vdisplay(enriched: dict[str, Any]) -> dict[str, Any]:
-    """Best-effort screencast stream-meta enrichment via vdisplay (either import path)."""
-    try:
-        from vdisplay.capture.screencast_stream_meta import enrich_screencast_stream_meta
-
-        enriched = enrich_screencast_stream_meta(enriched)
-    except Exception:
-        try:
-            from vdisplay.control.screenshot_verify import enrich_screencast_stream_meta
-
-            enriched = enrich_screencast_stream_meta(enriched)
-        except Exception:
-            pass
-    return enriched
-
-
-def _region_origin(enriched: dict[str, Any]) -> tuple[int, int]:
-    """Return the (x, y) origin of the capture region (0, 0 when absent)."""
-    region = enriched.get("region") if isinstance(enriched.get("region"), dict) else {}
-    return int(region.get("x") or 0), int(region.get("y") or 0)
-
-
-def _region_dict_from_bounds(db: dict[str, Any]) -> dict[str, int]:
-    """Build a region dict from a bounds-like dict (x/y/width/height)."""
-    return {
-        "x": int(db.get("x") or 0),
-        "y": int(db.get("y") or 0),
-        "width": int(db.get("width") or 0),
-        "height": int(db.get("height") or 0),
-    }
-
-
-def _enrich_region_from_display_bounds(enriched: dict[str, Any]) -> None:
-    """Derive the capture region from embedded display_bounds when usable."""
-    display_bounds = enriched.get("display_bounds")
-    if isinstance(display_bounds, dict) and display_bounds.get("width") and display_bounds.get("height"):
-        enriched["region"] = _region_dict_from_bounds(display_bounds)
-
-
-def _enrich_region_from_ide_map(enriched: dict[str, Any], source: str) -> None:
-    """Copy region/rotation/stream fields from a matching calibrated IDE map's capture_meta."""
+def _matching_ide_map_capture_meta(source: str) -> dict[str, Any]:
+    """Load caller-approved calibrated metadata; VDisplay owns its normalization."""
     app_id = _ide_prompt_app_id(source if source in {"pycharm", "jetbrains", "idea"} else "pycharm")
     map_path = _resolve_ide_prompt_map(app_id)
     if map_path and os.path.isfile(map_path):
@@ -3972,54 +3859,30 @@ def _enrich_region_from_ide_map(enriched: dict[str, Any], source: str) -> None:
                 map_data = json.load(f)
             mcap = map_data.get("capture_meta") if isinstance(map_data.get("capture_meta"), dict) else {}
             if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, "", "DP-2"}:
-                for key in (
-                    "region",
-                    "rotation",
-                    "screencast_stream",
-                    "screencast_full_frame",
-                    "width",
-                    "height",
-                    "display_bounds",
-                ):
-                    if mcap.get(key) is not None:
-                        enriched[key] = mcap[key]
-                db = mcap.get("display_bounds")
-                if isinstance(db, dict) and not enriched.get("region"):
-                    enriched["region"] = _region_dict_from_bounds(db)
+                return dict(mcap)
         except Exception:
             pass
-
-
-def _enrich_region_from_monitor(enriched: dict[str, Any], source: str, origin_x: int, origin_y: int) -> None:
-    """Fill rotation/region from the vdisplay monitor layout as a last resort."""
-    try:
-        from vdisplay.input import monitor_by_name
-
-        mon = monitor_by_name(enriched.get("display"), source)
-        if isinstance(mon, dict):
-            enriched.setdefault("rotation", mon.get("rotation"))
-            if origin_x == 0 and origin_y == 0 and not enriched.get("region"):
-                enriched["region"] = {
-                    "x": int(mon.get("x") or 0),
-                    "y": int(mon.get("y") or 0),
-                    "width": int(mon.get("width") or enriched.get("width") or 0),
-                    "height": int(mon.get("height") or enriched.get("height") or 0),
-                }
-    except Exception:
-        pass
+    return {}
 
 
 def _enrich_capture_meta_for_pointer(meta: dict[str, Any], source: str) -> dict[str, Any]:
-    """Fill portal stream region/rotation when screenshot sidecar only has a 0,0 crop."""
-    enriched = _enrich_stream_meta_via_vdisplay(dict(meta or {}))
-    origin_x, origin_y = _region_origin(enriched)
-    if origin_x == 0 and origin_y == 0:
-        _enrich_region_from_display_bounds(enriched)
-        origin_x, origin_y = _region_origin(enriched)
-    if origin_x == 0 and origin_y == 0:
-        _enrich_region_from_ide_map(enriched, source)
-        _enrich_region_from_monitor(enriched, source, origin_x, origin_y)
-    return enriched
+    """Bind Koru's calibrated snapshot to VDisplay's canonical metadata model."""
+    try:
+        from vdisplay.capture import canonicalize_capture_meta
+        from vdisplay.capture.screencast_stream_meta import enrich_screencast_stream_meta
+        from vdisplay.input import monitor_by_name
+
+        enriched = enrich_screencast_stream_meta(dict(meta or {}))
+        monitor = monitor_by_name(enriched.get("display"), source)
+        return canonicalize_capture_meta(
+            enriched,
+            source=source,
+            fallback_meta=_matching_ide_map_capture_meta(source),
+            monitor=monitor,
+            replace_zero_origin=True,
+        )
+    except Exception:
+        return dict(meta or {})
 
 
 def _map_chat_input_candidate_keys(app_id: str) -> list[str]:
@@ -4161,13 +4024,16 @@ def _map_chat_target_capture_local(*, ide: str, source: str) -> dict[str, Any] |
 def _global_coords_from_vql_local(*, x: int, y: int, source: str) -> tuple[int | None, int | None, dict[str, Any]]:
     """Map capture-local VQL coords to global pointer space (for command generation audit)."""
     try:
+        from vdisplay.capture import compile_capture_coordinate_map
         from vdisplay.input.coords import global_pointer_coords
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
+        coordinate_map = compile_capture_coordinate_map(capture_meta, source=source)
         gx, gy, details = global_pointer_coords(int(x), int(y), capture_meta)
         return int(gx), int(gy), {
             "capture_meta_region": capture_meta.get("region"),
             "capture_meta_rotation": capture_meta.get("rotation"),
+            "coordinate_map": coordinate_map.to_dict(),
             "mapping_details": details,
         }
     except Exception as exc:
@@ -4608,10 +4474,12 @@ from koru.integrations.vdisplay.pointer_calibration import (  # noqa: E402,F401
 def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, Any]:
     """Direct ydotool move+click when vdisplay vision point click fails."""
     try:
+        from vdisplay.capture import compile_capture_coordinate_map
         from vdisplay.input.coords import global_pointer_coords
         from vdisplay.input.linux_ydotool import LinuxYdotoolInput
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
+        coordinate_map = compile_capture_coordinate_map(capture_meta, source=source)
         # Deterministic own-uinput-ABS positioning (opt-in): a cached per-monitor
         # affine converts capture pixel -> ABS command. Preferred over ydotool's
         # opaque space on multi-monitor HiDPI. Falls back below on failure.
@@ -4642,6 +4510,7 @@ def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, An
             "y": int(gy),
             "local_x": int(x),
             "local_y": int(y),
+            "coordinate_map": coordinate_map.to_dict(),
             "details": details,
         }
     except Exception as exc:

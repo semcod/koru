@@ -108,11 +108,15 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
 
     def test_vdisplay_public_screen_truth_api_is_available(self) -> None:
         from vdisplay.capture import (
+            CaptureCoordinateMap,
             MssObservationProvider,
             ObservationProvider,
             PortalScreenCastObservationProvider,
             ScreenObservation,
+            canonicalize_capture_meta,
             capture_observations_with_fallback,
+            compile_capture_coordinate_map,
+            coordinate_map_v1_schema,
             reset_screencast_consent,
             resolve_multi_stream_region,
             screen_observation_v1_schema,
@@ -121,6 +125,13 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
         from vdisplay.integrations import build_imgl_layers, normalize_vql_ui_elements
 
         self.assertTrue(callable(resolve_multi_stream_region))
+        self.assertTrue(callable(CaptureCoordinateMap))
+        self.assertTrue(callable(canonicalize_capture_meta))
+        self.assertTrue(callable(compile_capture_coordinate_map))
+        self.assertEqual(
+            coordinate_map_v1_schema()["properties"]["schema"]["const"],
+            "vdisplay.coordinate-map.v1",
+        )
         self.assertTrue(callable(ScreenObservation))
         self.assertTrue(callable(ObservationProvider))
         self.assertTrue(callable(MssObservationProvider))
