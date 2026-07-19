@@ -146,7 +146,7 @@ def test_capture_monitor_png_auto_falls_back_to_portal_on_wayland(monkeypatch, c
             side_effect=RuntimeError("black frames"),
         ):
             with mock.patch(
-                "vdisplay.capture.providers.observation_builtin.capture_portal_png",
+                "vdisplay.capture.providers.observation_portal.capture_portal_png",
                 return_value=_png(9, 4),
             ):
                 frame = capture_monitor_png(None)
@@ -162,15 +162,15 @@ def test_capture_monitor_png_auto_uses_native_command_when_mss_fails(monkeypatch
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
     monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
     monkeypatch.setattr(
-        "vdisplay.capture.providers.observation_builtin.command_candidates",
+        "vdisplay.capture.providers.observation_cli.command_candidates",
         lambda: [("grim", ["grim", "-"], True)],
     )
     monkeypatch.setattr(
-        "vdisplay.capture.providers.observation_builtin.shutil.which",
+        "vdisplay.capture.providers.observation_cli.shutil.which",
         lambda binary: f"/usr/bin/{binary}",
     )
     monkeypatch.setattr(
-        "vdisplay.capture.providers.observation_builtin.subprocess.run",
+        "vdisplay.capture.providers.observation_cli.subprocess.run",
         lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=_png(11, 6), stderr=b""),
     )
     with mock.patch(
@@ -203,7 +203,7 @@ def test_capture_all_monitors_auto_falls_back_to_portal(monkeypatch) -> None:
             side_effect=RuntimeError("all monitors returned black frames"),
         ):
             with mock.patch(
-                "vdisplay.capture.providers.observation_builtin.capture_portal_png",
+                "vdisplay.capture.providers.observation_portal.capture_portal_png",
                 return_value=_png(5, 3),
             ):
                 frames = capture_all_monitors()
@@ -219,7 +219,7 @@ def test_capture_monitor_png_reports_headless_environment(monkeypatch) -> None:
     monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
     monkeypatch.delenv("XDG_SESSION_TYPE", raising=False)
     monkeypatch.setattr(
-        "vdisplay.capture.providers.observation_builtin.command_candidates",
+        "vdisplay.capture.providers.observation_cli.command_candidates",
         lambda: [],
     )
     with mock.patch(

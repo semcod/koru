@@ -1,8 +1,8 @@
-# koru | 7654 func | 745f | 178912L | python | 2026-07-19
-# generated in 0.01s
+# koru | 7603 func | 736f | 177888L | python | 2026-07-19
+# generated in 0.00s
 
 HEALTH:
-  CC̄=3.8  critical=489 (limit:10)  dup=21  cycles=0
+  CC̄=3.8  critical=489 (limit:10)  dup=20  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     get_vql_chat_target_from_photo = 37 (limit:10)
@@ -10,15 +10,15 @@ ALERTS[20]:
   !!! high_fan_out     create_app = 26 (limit:10)
   !!! high_fan_out     create_app = 26 (limit:10)
   !!! high_fan_out     run_api_request = 24 (limit:10)
-  !!! high_fan_out     build_autopilot_parser = 24 (limit:10)
   !!! high_fan_out     _run_next_planfile_task_impl = 24 (limit:10)
+  !!! high_fan_out     build_autopilot_parser = 24 (limit:10)
   !!! high_fan_out     EventStore.append_command = 23 (limit:10)
   !!! high_fan_out     _load_or_calibrate_abs_affine = 23 (limit:10)
   !!! high_fan_out     SharedAutopilotBridgeNetwork.tryConnectNext = 23 (limit:10)
 
-MODULES[1094] (top by size):
+MODULES[1085] (top by size):
   M[src/koru/integrations/vdisplay_client.py] 6856L C:0 F:275 CC↑14 D:6 (python)
-  M[packages/coru/src/coru/cli.py] 3464L C:3 F:180 CC↑13 D:3 (python)
+  M[packages/coru/src/coru/cli.py] 3464L C:3 F:180 CC↑13 D:2 (python)
   M[tree.txt] 2722L C:0 F:0 CC↑0 D:0 (txt)
   M[ui.vql.json] 1946L C:0 F:0 CC↑0 D:0 (json)
   M[src/koru/scan.py] 1809L C:0 F:69 CC↑13 D:7 (python)
@@ -32,7 +32,7 @@ MODULES[1094] (top by size):
   M[src/koru/autonomy/cycle/cycle_drive_retry.py] 1053L C:0 F:42 CC↑11 D:3 (python)
   M[packages/coru/src/coru/repair/pipeline.py] 1039L C:2 F:42 CC↑9 D:0 (python)
   M[src/koruide/ide.py] 1020L C:2 F:59 CC↑13 D:57 (python)
-  LANGS: python:807/typescript:94/shell:60/json:45/yaml:34/toml:16/yml:12/kotlin:6/other:5/txt:5/proto:4/go:2/javascript:1/rust:1/properties:1/xml:1
+  LANGS: python:798/typescript:94/shell:60/json:45/yaml:34/toml:16/yml:12/kotlin:6/other:5/txt:5/proto:4/go:2/javascript:1/rust:1/properties:1/xml:1
 
 HOTSPOTS[10]:
   ★ get_vql_chat_target_from_photo fan=37  // Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.target
@@ -49,4 +49,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/autonomy/operator_pipeline.py (1065L, 2 classes)
 
 EVOLUTION:
-  2026-07-19 CC̄=3.8 crit=489 178912L // Automated analysis
+  2026-07-19 CC̄=3.8 crit=489 177888L // Automated analysis

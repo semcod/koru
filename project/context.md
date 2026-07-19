@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 806, typescript: 94, shell: 60, json: 45, yaml: 34
+- **Languages**: python: 797, typescript: 94, shell: 60, json: 45, yaml: 34
 - **Analysis Mode**: static
-- **Total Functions**: 7654
-- **Total Classes**: 547
-- **Modules**: 1094
-- **Entry Points**: 2846
+- **Total Functions**: 7603
+- **Total Classes**: 536
+- **Modules**: 1085
+- **Entry Points**: 2819
 
 ## Architecture by Module
 
@@ -590,8 +590,8 @@ Functions exposed as public API (no underscore prefix):
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
 - `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `scripts.subactor-development-repair-pilot.main` - 29 calls
 - `src.koru.queue.planfile_sdk.parse_lifecycle_request` - 29 calls
+- `scripts.subactor-development-repair-pilot.main` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls

@@ -11,11 +11,37 @@ nobody noticed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 from koru.queue.manifest import manifest_run_directory, persist_run_artifact
 from koru.queue.patch_mode import redact_secrets
+
+
+def _sha256_of(value: object) -> str:
+    """Canonical-JSON sha256 — the same convention the ProposalEnvelope uses."""
+    canonical = json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _runtime_versions() -> dict:
+    """What produced this bundle — needed to reproduce a run months later."""
+    try:
+        from koru import __version__ as koru_version
+    except Exception:  # noqa: BLE001 — version lookup must never break evidence
+        koru_version = "unknown"
+    try:
+        from koru.proposal_envelope import SCHEMA_VERSION as proposal_schema
+    except Exception:  # noqa: BLE001
+        proposal_schema = "unknown"
+    return {
+        "koru": koru_version,
+        "proposal_schema": proposal_schema,
+        "evidence_schema": SCHEMA_VERSION,
+    }
 
 #: How a run ended. ``verified`` — landed with a green gate; ``applied`` —
 #: landed with no gate to run; ``artifact`` — delivered as a reviewable file;
@@ -123,6 +149,21 @@ def build_evidence_bundle(
     manifest, and the bundle carries its hash so the two artifacts vouch for
     each other.
     """
+    manifest_hash = (manifest or {}).get("manifest_hash")
+    # The ladder's lower rungs, computed at assembly so they cannot disagree
+    # with the fields they summarise. ``verification_hash`` pins what gate ran
+    # and how it ended; ``execution_binding_hash`` ties proposal → manifest →
+    # verification → delivery into one value an auditor can recompute.
+    verification_hash = _sha256_of(verify) if verify else None
+    execution_binding_hash = _sha256_of(
+        {
+            "proposal_sha256": (bindings or {}).get("proposal_sha256"),
+            "manifest_hash": manifest_hash,
+            "verification_hash": verification_hash,
+            "promotion": promotion,
+            "verdict": verdict,
+        }
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -133,6 +174,9 @@ def build_evidence_bundle(
         # ``None`` means the legacy bare-diff contract, whose ladder starts
         # at patch_sha256/manifest_hash instead.
         "bindings": bindings,
+        "verification_hash": verification_hash,
+        "execution_binding_hash": execution_binding_hash,
+        "versions": _runtime_versions(),
         "manifest_hash": (manifest or {}).get("manifest_hash"),
         "base_head": (manifest or {}).get("base_head"),
         "workspace_snapshot": (manifest or {}).get("workspace_snapshot_sha256"),

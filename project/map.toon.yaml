@@ -1,11 +1,11 @@
-# koru | 1093f 178912L | txt:5,yaml:34,json:45,yml:12,python:806,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-19
-# generated in 0.12s
-# stats: 7654 func | 0 cls | 1093 mod | CC̄=3.8 | critical:7 | cycles:0
+# koru | 1084f 177888L | txt:5,yaml:34,json:45,yml:12,python:797,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-19
+# generated in 0.17s
+# stats: 7603 func | 0 cls | 1084 mod | CC̄=3.8 | critical:7 | cycles:0
 # alerts[5]: fan-out get_vql_chat_target_from_photo=37; fan-out prepare_photo_vql_for_drive=29; fan-out create_app=26; fan-out create_app=26; fan-out _run_next_planfile_task_impl=24
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; create_app fan=26; create_app fan=26; run_api_request fan=24
 # evolution: CC̄ 3.8→3.8 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1093]:
+M[1084]:
   .pretest.yml,17
   Dockerfile,79
   Makefile,276
@@ -23,7 +23,7 @@ M[1093]:
   docker/novnc/start-vnc.sh,103
   docs/ai-tool-registry-2026.yaml,206
   docs/architecture/autonomy-mutation-inventory.yaml,402
-  docs/architecture/dependency-boundary-inventory.yaml,431
+  docs/architecture/dependency-boundary-inventory.yaml,432
   docs/architecture/volume-reduction-plan.yaml,346
   docs/ide-command-api-map.yaml,425
   docs/interfaces/koru-interface-registry.yaml,270
@@ -368,7 +368,7 @@ M[1093]:
   plugins/koru-autopilot-windsurf/src/probe-ladder.test.ts,77
   prefact.yaml,93
   project.sh,140
-  pyproject.toml,374
+  pyproject.toml,376
   redeploy/device/manifest.yaml,125
   regix.yaml,43
   schemas/autonomy-mutation-inventory.schema.json,122
@@ -833,8 +833,8 @@ M[1093]:
   src/koru/queue/locking.py,94
   src/koru/queue/loop.py,115
   src/koru/queue/manifest.py,140
-  src/koru/queue/patch_mode.py,343
-  src/koru/queue/patch_retry.py,381
+  src/koru/queue/patch_mode.py,430
+  src/koru/queue/patch_retry.py,389
   src/koru/queue/patch_transaction.py,43
   src/koru/queue/planfile_sdk.py,321
   src/koru/queue/planfile_ticket_note.py,56
@@ -947,7 +947,7 @@ M[1093]:
   src/koruapi/dashboard_state.py,157
   src/koruapi/dashboard_tickets.py,322
   src/koruapi/dashboard_topology.py,22
-  src/koruapi/desktop_uri.py,703
+  src/koruapi/desktop_uri.py,705
   src/koruapi/env2llm_registry.py,375
   src/koruapi/integrations.py,264
   src/koruapi/invoke.py,31
@@ -1056,31 +1056,22 @@ M[1093]:
   src/koruobserve/diagnostics.py,175
   src/koruobserve/lifecycle.py,327
   src/koruobserve/paths.py,21
-  src/koruobserve/providers_cli.py,148
+  src/koruobserve/providers_cli.py,153
   src/koruos/__init__.py,39
   src/koruvision/__init__.py,12
   src/koruvision/agent.py,76
-  src/koruvision/capture.py,69
-  src/koruvision/capture_mss.py,248
+  src/koruvision/capture.py,54
   src/koruvision/capture_probe.py,50
   src/koruvision/cli.py,75
   src/koruvision/cli_parser.py,41
   src/koruvision/mesh.py,79
-  src/koruvision/portal_capture.py,118
   src/koruvision/providers/__init__.py,22
-  src/koruvision/providers/base.py,90
+  src/koruvision/providers/base.py,33
   src/koruvision/providers/browser_getdisplay.py,266
-  src/koruvision/providers/cli_tools.py,45
-  src/koruvision/providers/detector.py,306
+  src/koruvision/providers/detector.py,296
   src/koruvision/providers/env.py,58
-  src/koruvision/providers/grim.py,44
-  src/koruvision/providers/mss.py,54
   src/koruvision/providers/obs_websocket.py,231
-  src/koruvision/providers/portal_screencast.py,383
-  src/koruvision/providers/portal_screenshot.py,46
-  src/koruvision/providers/registry.py,32
-  src/koruvision/providers/screencast_session.py,60
-  src/koruvision/scaling.py,52
+  src/koruvision/providers/registry.py,35
   testql-scenarios/artifacts/mock-llm-replies.yaml,4
   testql-scenarios/cli-coru_calibration.testql.toon.yaml,9
   testql-scenarios/cli-koru-live.testql.toon.yaml,16
@@ -1271,21 +1262,6 @@ D:
   src/koruapi/topology_post.py:
     e: apply_topology_post_update
     apply_topology_post_update(project;body)
-  src/koruvision/capture_mss.py:
-    e: BlackFrameError,is_wayland,png_dimensions,png_payload_descriptor,frame_from_shot,ordered_monitor_indices,portal_capture_dict,command_candidates,run_png_command,command_capture_dict,grab_target,_grab_single_mss_raw,_grab_all_mss_raw
-    BlackFrameError(RuntimeError):  # Captured buffer is empty/black (common with XWayland + ``mss...
-    is_wayland()
-    png_dimensions(payload)
-    png_payload_descriptor(payload)
-    frame_from_shot(shot)
-    ordered_monitor_indices(targets)
-    portal_capture_dict()
-    command_candidates()
-    run_png_command(binary;template;stdout_png)
-    command_capture_dict()
-    grab_target(grabber;target;index;scale)
-    _grab_single_mss_raw(monitor_id;scale)
-    _grab_all_mss_raw(scale)
   src/koruide/host_setup.py:
     e: _ydotoold_socket_path,install_ydotoold_user_service,_package_manager_hint,_human_followups,build_setup_host_report,_try_apt_install,run_host_setup,_print_setup_host_header,_print_setup_host_backends,_print_setup_host_ides,_print_setup_host_apt_section,_print_setup_host_human_followups,_print_setup_host_install_details,_print_text_report
     _ydotoold_socket_path()
@@ -1727,6 +1703,29 @@ Designed to ...
     _exhausted_result()
     _canonical_failure(outcome_code)
     _terminal_chain_for(outcome)
+  src/koru/queue/runner.py:
+    e: _resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_prepare_action_for_patch_mode,_pre_llm_contract_denial,_apply_patch_step,_compute_verification_error,_run_next_planfile_task_impl,run_next_planfile_task
+    _resolve_executor_kind(ticket;interactive;dry_run)
+    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
+    _resolve_ticket_action(ticket;executor_kind)
+    _handle_dry_run(ticket_id;executor_kind;action)
+    _claim_and_start(project;ticket_id;actor;planfile_runner)
+    _enrich_llm_request_with_context(action;project)
+    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
+    _append_shell_evidence(project;ticket_id;result;planfile_runner)
+    _ticket_expects_edits(ticket)
+    _snapshot_declared_files(project;ticket)
+    _verify_declared_files_changed(project;ticket;before)
+    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner;verification_error)
+    _next_ticket_or_result(project;planfile_runner;queue_name)
+    _log_queue_ticket_start(ticket;ticket_id)
+    _resolve_action_or_result()
+    _prepare_action_for_patch_mode(executor_kind;expects_edits;ticket;resolved_action)
+    _pre_llm_contract_denial(project;ticket;actor)
+    _apply_patch_step(project;result;ticket;resolved_action;llm_runner;shell_runner;use_patch_mode;actor)
+    _compute_verification_error(project;ticket;use_patch_mode;result;patch_outcome;patch_evidence;expects_edits;before)
+    _run_next_planfile_task_impl()
+    run_next_planfile_task()
   src/koru/integrations/photo_vql_target.py:
     e: _InputMetrics,_layer_role,_layer_label,_layer_bounds,_layer_click_center,_canonical_ide,_input_metrics,_has_any,_terminal_or_shell_noise,vql_candidates_polluted,vql_layers_show_vdisplay_overlay,score_photo_vql_chat_input,_score_jetbrains_metrics,_jetbrains_position_score,_jetbrains_size_score,_label_noise_penalty,_score_vscode_top_chat_input,_score_vscode_metrics,_vscode_label_score,_vscode_position_score,_vscode_size_score,photo_vql_chat_input_candidates,_chat_candidate_from_layer,vscode_family_top_chat_rejected,vscode_family_chat_target_from_layers,jetbrains_corner_rejected,_target_bounds,_target_bounds_too_small,jetbrains_chat_corner_target_from_layers,_capture_png_dimensions,_monitor_geometry_for_source,_capture_region_geometry,_clamp_rect_to_monitor,_capture_local_rect_for_global_rect,_local_via_capture_region,_monitor_row_for_source,_clamped_local_in_monitor,_local_via_monitor_geometry,_local_via_vdisplay_coords,_global_to_capture_local_for_source,_surface_window_rect,_monitor_for_capture,_composer_capture_point,_surface_target_payload,jetbrains_chat_target_from_surface,_target_from_candidate
     _InputMetrics:
@@ -1984,29 +1983,22 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koru/queue/runner.py:
-    e: _resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_enrich_llm_request_with_context,_execute_action,_append_shell_evidence,_ticket_expects_edits,_snapshot_declared_files,_verify_declared_files_changed,_finalize_ticket,_next_ticket_or_result,_log_queue_ticket_start,_resolve_action_or_result,_prepare_action_for_patch_mode,_pre_llm_contract_denial,_apply_patch_step,_compute_verification_error,_run_next_planfile_task_impl,run_next_planfile_task
-    _resolve_executor_kind(ticket;interactive;dry_run)
-    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
-    _resolve_ticket_action(ticket;executor_kind)
-    _handle_dry_run(ticket_id;executor_kind;action)
-    _claim_and_start(project;ticket_id;actor;planfile_runner)
-    _enrich_llm_request_with_context(action;project)
-    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
-    _append_shell_evidence(project;ticket_id;result;planfile_runner)
-    _ticket_expects_edits(ticket)
-    _snapshot_declared_files(project;ticket)
-    _verify_declared_files_changed(project;ticket;before)
-    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner;verification_error)
-    _next_ticket_or_result(project;planfile_runner;queue_name)
-    _log_queue_ticket_start(ticket;ticket_id)
-    _resolve_action_or_result()
-    _prepare_action_for_patch_mode(executor_kind;expects_edits;ticket;resolved_action)
-    _pre_llm_contract_denial(project;ticket;actor)
-    _apply_patch_step(project;result;ticket;resolved_action;llm_runner;shell_runner;use_patch_mode;actor)
-    _compute_verification_error(project;ticket;use_patch_mode;result;patch_outcome;patch_evidence;expects_edits;before)
-    _run_next_planfile_task_impl()
-    run_next_planfile_task()
+  src/koru/queue/patch_mode.py:
+    e: PatchOutcome,_EnvelopedReply,patch_mode_enabled,build_patch_prompt,proposal_producer_enabled,wrap_reply_in_proposal_envelope,redact_secrets,build_retry_prompt,current_file_excerpt,symlinks_allowed,promotion_mode,write_patch_artifact
+    PatchOutcome:  # Why a patch ticket failed, as data rather than prose.
+
+Calle...
+    _EnvelopedReply:  # The agent's reply with stdout replaced by its canonical enve...
+    patch_mode_enabled(ticket)
+    build_patch_prompt(prompt)
+    proposal_producer_enabled()
+    wrap_reply_in_proposal_envelope(result;prompt)
+    redact_secrets(text)
+    build_retry_prompt(prompt;failure)
+    current_file_excerpt(project;paths)
+    symlinks_allowed()
+    promotion_mode(ticket)
+    write_patch_artifact(project;run_id;diff;evidence)
   src/koru/integrations/vdisplay_client.py:
     e: _real_vdisplay_src,_ensure_real_vdisplay_on_path,_load_vdisplay_control,_canonical_ide,_agent_url,_probe_agent,_reload_vdisplay_direct,_ensure_vdisplay_runtime,vdisplay_available,vdisplay_missing_message,verify_chat_text_visible,_capture_for_verify,_ocr_verify,record_koru_drive_step,simplified_control_likely_insufficient,vdisplay_fallback_enabled,_prefer_photo_vql_chat,_capture_matches_requested_ide,_vdisplay_source,_annotate_prepare_drive_readiness,_resolve_vdisplay_source_for_ide,_abort_on_desktop_probe_fail,_vdisplay_source_for_ide,_photo_vql_metadata_root,_capture_confirmed_from_meta,_capture_provenance,_photo_vql_capture_validation_failed_warning,_photo_vql_expected_title_tokens,_photo_vql_title_mismatch_warning,_photo_vql_ide_window_warning,_observe_vql_sidecar_path,_annotate_png_artifact_state,_photo_png_from_vql_sidecar_path,_photo_png_from_vql_metadata,_resolve_photo_png_path_from_vql,_photo_vql_ide_capture_mismatch,_prefer_ide_prompt_over_photo_vql,_auto_ide_control_enabled,_auto_open_ide_enabled,_real_imgl_src,_ensure_real_imgl_on_path,_vdisplay_cli_candidates,_vdisplay_cli_path,_vdisplay_observe_python_candidates,_vdisplay_subprocess_env,_focus_window_xdotool,_focus_window_xdotool_for_ide,_focus_window_gnome_shell,_focus_window_gnome_shell_for_ide,_click_map_region_center,_raise_alt_tab_enabled,_alt_tab_window_cycle,_attempt_focus_recovery_capture,_persist_send_chat_drive_result,_map_raise_targets_for_ide,_map_interior_targets_for_ide,_dismiss_gnome_overview,_ide_control_resolve_map,_ide_control_open_ide,_ide_control_raise_window,_ide_control_region_raise,_ide_control_alt_tab,_ide_control_window_focus,_ide_control_focus_fallback,_ide_control_focus_interior,_ide_control_outcome_flags,_ide_control_finalize_result,ensure_vdisplay_ide_control,_import_imgl_targets,_import_imgl_target_via_stdlib,_load_light_module,_install_imgl_source_packages,_import_imgl_target_from_source,_main_vql_layer_count,_png_path_for_vql_sidecar,_resolve_photo_png_path,_photo_vql_refresh_mode,photo_vql_sidecar_needs_refresh,_photo_vql_refresh_dry_run_out,_photo_vql_refresh_screenshot,_photo_vql_reload_sidecar_meta,_photo_vql_observe_when_empty,_photo_vql_refresh_annotate_observe,_photo_vql_refresh_finalize_out,refresh_photo_vql_sidecar,_vdisplay_capture_failure_hint,_refresh_vql_sidecar_via_vdisplay_observe,_prepare_photo_vql_map_mismatch,_prepare_photo_vql_probe_abort,_prepare_photo_vql_out_skeleton,_prepare_photo_vql_ide_control_attempt,_prepare_photo_vql_refresh_or_reuse,_prepare_photo_vql_handle_window_warning,_prepare_photo_vql_map_focus_fallback,_prepare_photo_vql_finalize_out,_prepare_photo_vql_apply_capture_guard,prepare_photo_vql_for_drive,_photo_vql_drive_out_base,_photo_vql_drive_map_target_id,_photo_vql_drive_surface_trusted,_photo_vql_drive_verified_false_blocks,_apply_photo_vql_capture_confirmed,_apply_photo_vql_plan_inference_gate,_apply_photo_vql_map_mismatch_gate,_apply_photo_vql_provenance_and_verification,_apply_photo_vql_submit_fields,_normalize_photo_vql_drive_result,_finalize_send_chat,_ide_hints,_chat_selectors_for,_submit_selectors_for,_agent_client,_controls_find,_control_focus,_control_set_value,_control_click,_find_first_selector,_effective_submit_enabled,_submit_via_keyboard,_photo_vql_submit_chat,_ide_prompt_app_id,_resolve_ide_prompt_map,_ide_map_message_target,_type_text_via_ide_map_fallback,send_chat_via_ide_prompt,_send_chat_preflight_ide_prompt,_send_chat_preflight_capture_blocked,_send_chat_preflight,_send_chat_try_photo_vql,_send_chat_dry_run,_send_chat_try_os_injector,_send_chat_try_ide_prompt_fallback,_send_chat_semantic_vdisplay,_send_chat_photo_vql_mouse_focus,_send_chat_resolve_chat_selector,_send_chat_selector_click_point,_send_chat_selector_write_kwargs,_send_chat_type_at_selector,_send_chat_submit_if_requested,send_chat,_resolve_vql_chat_target,_find_vql_chat_target,_extract_vql_click_from_target,_get_pycharm_vql_editor_center,_get_jetbrains_pycharm_chat_center,_photo_vql_elements,_live_surface_monitor_lookup,_live_surface_screencast_region,_live_surface_monitor_region_fallback,_live_surface_capture_meta,_jetbrains_surface_chat_target,_chat_target_validation_accepts,_vql_file_for_positioning,_photo_vql_jetbrains_chat_flow,_photo_vql_vscode_chat_flow,_try_ocr_anchor_chat_target,get_vql_chat_target_from_photo,_photo_vql_needs_vision_or_map,_jetbrains_map_selection_method,_jetbrains_map_selection_stage,get_vql_editor_target_from_photo,click_editor_via_photo_vql,_photo_capture_meta_for_source,_enrich_stream_meta_via_vdisplay,_region_origin,_region_dict_from_bounds,_enrich_region_from_display_bounds,_enrich_region_from_ide_map,_enrich_region_from_monitor,_enrich_capture_meta_for_pointer,_map_chat_input_candidate_keys,_map_chat_pointer_meta,_map_chat_element_local_point,_map_chat_target_entry,_map_chat_bottom_right_target,_map_chat_nonnegative_target,_map_chat_target_capture_local,_global_coords_from_vql_local,_vql_plan_warnings,_vql_plan_data_mtime,_vql_plan_selection_method,_vql_plan_capture_flags,_vql_plan_commands,_llm_target_verified,_vql_plan_resolve_validation,_vql_plan_inference_flags,_vql_plan_payload,_build_vql_command_plan,_cursor_record_vql_validation,_log_vql_cursor_positioning_at_command,_ydotool_click_capture_local,_type_text_blocking_warnings,_type_text_blocked_result,_type_text_dry_run_result,_type_text_try_atspi_set_value,_type_text_must_click,_type_text_fallback_click,_type_text_paste_or_type,_type_text_prepare_click_context,_type_text_at_vql_coords,_resolve_photo_vql_llm_coords,_resolve_photo_vql_llm_coords_via_koru_detector,_llm_detection_decision_from_target,_photo_vql_map_paste_fallback,_mismatch_shows_competing_ide,_vision_overrides_capture_mismatch,_photo_vql_capture_mismatch_blocks,_surface_only_fallback_active,_surface_bounds_target_trusted,_surface_bounds_target_safe_for_actuation,_photo_vql_capture_mismatch_error,_target_selection_method,_selection_method_is_map,_map_target_can_clear_capture_mismatch,_is_jetbrains_map_target,_map_mismatch_allowed_for_target,_map_source_mismatch_actuation_allowed,_map_capture_mismatch_for_target,_map_capture_mismatch_for_ide,_photo_vql_map_source_mismatch_error,_surface_target_can_clear_capture_mismatch,_surface_mismatch_allowed_for_target,_photo_vql_should_block_unverified_chat,_photo_vql_unverified_chat_blocked,_photo_vql_focus_target,_photo_vql_edit_result,_photo_vql_stale_gate_override_ok,_photo_vql_stale_metadata_gate,_photo_vql_capture_mismatch_gate,_photo_vql_map_source_preflight_gate,_photo_vql_target_map_mismatch_gate,_photo_vql_maybe_clear_mismatch,_photo_vql_refined_target,_photo_vql_command_plan_pre_act,_photo_vql_unverified_chat_gate,_photo_vql_edit_mismatch_allowances,_photo_vql_combined_ok_after_edit,_photo_vql_run_paste_verification,_photo_vql_post_paste_verification,_photo_vql_submit_step,_photo_vql_assemble_combined,_photo_vql_persist_drive_result,perform_photo_vql_focus_and_edit,move_mouse_to_vql_target_and_focus_keyboard,_move_mouse_attempt_focus_and_click,_move_mouse_click_outcome,_imgl_sidecar_path_for_vql,_layers_from_imgl_sidecar_file,_vql_sidecar_layer_center,_vql_sidecar_layer_entry,_layers_from_vdisplay_sidecar,_with_embedded_capture_validation,_vql_candidate_is_stale,_vql_from_ui_elements,_vql_from_fresh_elements,_vql_imgl_fallback_layers,_vql_from_sidecar_layers,_vql_from_program_wrapper,_vql_from_screen_context,_vql_metadata_default,_parse_vql_candidate_data,_load_vql_candidate_metadata,load_vql_metadata,_resolve_vql_candidate,_monitor_source_slugs,_get_vql_candidates,_freshest_populated_vql_candidate,_fresh_vql_bbox_xy,_fresh_vql_bbox_wh,_fresh_vql_center,_fresh_vql_center_only,_fresh_vql_bbox_center,_parse_fresh_vql_elements,get_vql_target,resolve_click_for_frame
     _real_vdisplay_src()
@@ -2522,18 +2514,6 @@ Designed to ...
     _select_plugin(info;ide)
     _success_health(info;record)
     probe_lane_health(record)
-  src/koruobserve/providers_cli.py:
-    e: screencast_session_path,providers_list_payload,providers_list_text,providers_test_payload,providers_test_text,providers_reset_consent,providers_reset_text,cmd_providers_list,cmd_providers_test,cmd_providers_reset
-    screencast_session_path(project)
-    providers_list_payload(project)
-    providers_list_text(payload)
-    providers_test_payload(name)
-    providers_test_text(payload)
-    providers_reset_consent(project)
-    providers_reset_text(payload)
-    cmd_providers_list(project)
-    cmd_providers_test(project;name)
-    cmd_providers_reset(project)
   src/koruapi/calibration_validator.py:
     e: _find_display,_pct,_missing_display_coord_issue,_display_lookup_issues,_vertical_position_issues,_stale_calibration_issue,_pointer_display_mismatch_issue,validate_single_calibration,_empty_desktop_result,_no_calibrations_result,_build_validation_summary,validate_calibrations
     _find_display(displays;display_id)
@@ -2548,39 +2528,6 @@ Designed to ...
     _no_calibrations_result()
     _build_validation_summary(checked;error_count;warning_count;ok)
     validate_calibrations(desktop)
-  src/koruapi/desktop_uri.py:
-    e: nlp2uri_available,nlp2uri_missing_message,_resolve_platform,_intent_ir_metadata,_imgl_plan_payload,desktop_uri_plan,_control_surface_hint,_portal_capture_enabled,_is_screen_capture_uri,_screen_capture_uri_for_prompt,_screen_capture_plan_dict,_capture_via_portal,desktop_uri_control_plan,desktop_uri_list_koru_ide_uris,desktop_uri_direct_ide_chat_execute,_control_uri_with_runtime_overrides,_try_direct_chat_fallback,_execute_control_plan,desktop_uri_control_execute,desktop_uri_imgl_execute,_should_route_to_imgl,_payload_with_intent,_handle_explicit_capture_uri,_handle_nlp_plan,desktop_uri_handle,_service,desktop_uri_list_getv,desktop_uri_resolve_getv,desktop_uri_get_getv_var,desktop_uri_resolve_system_map,desktop_uri_list_system_uris
-    nlp2uri_available()
-    nlp2uri_missing_message()
-    _resolve_platform(name)
-    _intent_ir_metadata(prompt)
-    _imgl_plan_payload(prompt)
-    desktop_uri_plan(prompt)
-    _control_surface_hint(uri)
-    _portal_capture_enabled(explicit)
-    _is_screen_capture_uri(uri)
-    _screen_capture_uri_for_prompt(prompt)
-    _screen_capture_plan_dict(uri)
-    _capture_via_portal(uri)
-    desktop_uri_control_plan(prompt)
-    desktop_uri_list_koru_ide_uris(status)
-    desktop_uri_direct_ide_chat_execute(message)
-    _control_uri_with_runtime_overrides(uri)
-    _try_direct_chat_fallback(prompt)
-    _execute_control_plan(plan_payload)
-    desktop_uri_control_execute(prompt)
-    desktop_uri_imgl_execute(prompt)
-    _should_route_to_imgl(prompt)
-    _payload_with_intent()
-    _handle_explicit_capture_uri(service)
-    _handle_nlp_plan(service)
-    desktop_uri_handle(prompt)
-    _service()
-    desktop_uri_list_getv()
-    desktop_uri_resolve_getv(prompt)
-    desktop_uri_get_getv_var(uri)
-    desktop_uri_resolve_system_map(prompt)
-    desktop_uri_list_system_uris()
   src/koruide/chat_history.py:
     e: ChatEvent,default_events_path,_parse_line,_event_matches_filters,read_events,last_event,has_recent_activity
     ChatEvent:  # Single plugin event as read from the NDJSON file...
@@ -3159,6 +3106,51 @@ Designed to ...
     compute_build_sha(plugin_dir)
     update_package(plugin_dir)
     main()
+  src/koruobserve/providers_cli.py:
+    e: screencast_session_path,providers_list_payload,providers_list_text,providers_test_payload,providers_test_text,providers_reset_consent,providers_reset_text,cmd_providers_list,cmd_providers_test,cmd_providers_reset
+    screencast_session_path(project)
+    providers_list_payload(project)
+    providers_list_text(payload)
+    providers_test_payload(name)
+    providers_test_text(payload)
+    providers_reset_consent(project)
+    providers_reset_text(payload)
+    cmd_providers_list(project)
+    cmd_providers_test(project;name)
+    cmd_providers_reset(project)
+  src/koruapi/desktop_uri.py:
+    e: nlp2uri_available,nlp2uri_missing_message,_resolve_platform,_intent_ir_metadata,_imgl_plan_payload,desktop_uri_plan,_control_surface_hint,_portal_capture_enabled,_is_screen_capture_uri,_screen_capture_uri_for_prompt,_screen_capture_plan_dict,_capture_via_portal,desktop_uri_control_plan,desktop_uri_list_koru_ide_uris,desktop_uri_direct_ide_chat_execute,_control_uri_with_runtime_overrides,_try_direct_chat_fallback,_execute_control_plan,desktop_uri_control_execute,desktop_uri_imgl_execute,_should_route_to_imgl,_payload_with_intent,_handle_explicit_capture_uri,_handle_nlp_plan,desktop_uri_handle,_service,desktop_uri_list_getv,desktop_uri_resolve_getv,desktop_uri_get_getv_var,desktop_uri_resolve_system_map,desktop_uri_list_system_uris
+    nlp2uri_available()
+    nlp2uri_missing_message()
+    _resolve_platform(name)
+    _intent_ir_metadata(prompt)
+    _imgl_plan_payload(prompt)
+    desktop_uri_plan(prompt)
+    _control_surface_hint(uri)
+    _portal_capture_enabled(explicit)
+    _is_screen_capture_uri(uri)
+    _screen_capture_uri_for_prompt(prompt)
+    _screen_capture_plan_dict(uri)
+    _capture_via_portal(uri)
+    desktop_uri_control_plan(prompt)
+    desktop_uri_list_koru_ide_uris(status)
+    desktop_uri_direct_ide_chat_execute(message)
+    _control_uri_with_runtime_overrides(uri)
+    _try_direct_chat_fallback(prompt)
+    _execute_control_plan(plan_payload)
+    desktop_uri_control_execute(prompt)
+    desktop_uri_imgl_execute(prompt)
+    _should_route_to_imgl(prompt)
+    _payload_with_intent()
+    _handle_explicit_capture_uri(service)
+    _handle_nlp_plan(service)
+    desktop_uri_handle(prompt)
+    _service()
+    desktop_uri_list_getv()
+    desktop_uri_resolve_getv(prompt)
+    desktop_uri_get_getv_var(uri)
+    desktop_uri_resolve_system_map(prompt)
+    desktop_uri_list_system_uris()
   packages/dsl2koru/src/dsl2koru/codegen.py:
     e: _python_type,build_model_registry,validate_payload,render_models_module,main
     _python_type(prop)
@@ -4095,22 +4087,6 @@ Designed to ...
     _capture_cycle(monitor_id;scale)
     normalize_capture_interval(interval_seconds)
     run_capture_loop()
-  src/koruvision/providers/detector.py:
-    e: monitors_via_xrandr,_forced_provider_rank,_auto_provider_order,_available_ranked_providers,rank_providers,list_provider_status,provider_diagnostics_rows,probe_capture_providers,_auto_failure_message,_provider_label,_should_report_auto_portal,_stamp_provider,capture_one_with_providers,capture_all_with_providers
-    monitors_via_xrandr()
-    _forced_provider_rank(pref)
-    _auto_provider_order()
-    _available_ranked_providers(ordered_names)
-    rank_providers()
-    list_provider_status()
-    provider_diagnostics_rows()
-    probe_capture_providers(name)
-    _auto_failure_message(errors)
-    _provider_label(provider)
-    _should_report_auto_portal(provider;index)
-    _stamp_provider(frame;provider_name)
-    capture_one_with_providers(monitor_id;scale)
-    capture_all_with_providers(scale)
   src/koruvision/providers/obs_websocket.py:
     e: ObsWebSocketProvider,obs_url,obs_password,obs_source_name,obs_screenshot_width,_obs_auth,_websockets_missing,_with_obs_connection,_obs_request,probe_obs_reachable,_run_obs_capture,_capture_source_png
     ObsWebSocketProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
@@ -4337,16 +4313,6 @@ Designed to ...
     _merge_cli_scaffold(scaffold)
     _print_task_result(created;args)
     _task_main(argv)
-  src/koru/deps_autorepair.py:
-    e: auto_install_enabled,module_importable,pip_install,ensure_modules,ensure_extra,ensure_desktop_stack,ensure_vdisplay_runtime,ensure_vision_ocr
-    auto_install_enabled()
-    module_importable(module)
-    pip_install(specs)
-    ensure_modules()
-    ensure_extra(extra)
-    ensure_desktop_stack()
-    ensure_vdisplay_runtime()
-    ensure_vision_ocr()
   src/koru/autonomy/config.py:
     e: AutonomyConfig,structured_cycle_report_enabled
     AutonomyConfig: from_env(0)  # Configuration for autonomous loop (unified shell + Python).
@@ -4740,6 +4706,31 @@ Designed to ...
     testRejectsWorkbenchChatOpenAsFocusOpen()
     filtered()
     run()
+  src/koruvision/providers/detector.py:
+    e: monitors_via_xrandr,_forced_provider_rank,_auto_provider_order,_available_ranked_providers,rank_providers,list_provider_status,provider_diagnostics_rows,probe_capture_providers,_auto_failure_message,_provider_label,_should_report_auto_portal,capture_one_with_providers,capture_all_with_providers
+    monitors_via_xrandr()
+    _forced_provider_rank(pref)
+    _auto_provider_order()
+    _available_ranked_providers(ordered_names)
+    rank_providers()
+    list_provider_status()
+    provider_diagnostics_rows()
+    probe_capture_providers(name)
+    _auto_failure_message(errors)
+    _provider_label(provider)
+    _should_report_auto_portal(provider;index)
+    capture_one_with_providers(monitor_id;scale)
+    capture_all_with_providers(scale)
+  src/koru/deps_autorepair.py:
+    e: auto_install_enabled,module_importable,pip_install,ensure_modules,ensure_extra,ensure_desktop_stack,ensure_vdisplay_runtime,ensure_vision_ocr
+    auto_install_enabled()
+    module_importable(module)
+    pip_install(specs)
+    ensure_modules()
+    ensure_extra(extra)
+    ensure_desktop_stack()
+    ensure_vdisplay_runtime()
+    ensure_vision_ocr()
   packages/nlpshim/src/nlpshim/conversation_test_api.py:
     e: LLMProvider,ConversationContext,DialogResponse,parse_conversation_step,complete_missing_fields,execute_conversation_plan,export_trace
     LLMProvider(Protocol): reply_for(1)
@@ -4847,12 +4838,6 @@ Designed to ...
     _collect_projects_for_ide(ide)
     projects_by_ide(ides)
     resolve_dashboard_project(project;configured_workspace;raw)
-  src/koruvision/providers/portal_screencast.py:
-    e: PortalScreenCastProvider,_screencast_frames,_run_screencast_subprocess,_parse_screencast_stdout
-    PortalScreenCastProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    _screencast_frames(scale)
-    _run_screencast_subprocess(args)
-    _parse_screencast_stdout(stdout)
   src/korumesh/browser_capture.py:
     e: capture_host_html,capture_host_context,_render_capture_host,browser_upload_payload,serve_browser_capture_http
     capture_host_html()
@@ -6009,19 +5994,6 @@ C...
     _auto_pipeline_stage(state;max_iterations)
     _select_auto_pipeline_profile(args;state)
     _update_auto_pipeline_state(state;queue_result;diag_result;autopilot_status)
-  src/koru/queue/patch_mode.py:
-    e: PatchOutcome,patch_mode_enabled,build_patch_prompt,redact_secrets,build_retry_prompt,current_file_excerpt,symlinks_allowed,promotion_mode,write_patch_artifact
-    PatchOutcome:  # Why a patch ticket failed, as data rather than prose.
-
-Calle...
-    patch_mode_enabled(ticket)
-    build_patch_prompt(prompt)
-    redact_secrets(text)
-    build_retry_prompt(prompt;failure)
-    current_file_excerpt(project;paths)
-    symlinks_allowed()
-    promotion_mode(ticket)
-    write_patch_artifact(project;run_id;diff;evidence)
   src/koru/queue/workspace.py:
     e: PatchApplyResult,FileFingerprint,_git,apply_unified_diff,revert_files,diff_target_files,fingerprint_files,changed_since,dirty_paths,current_head,branch_head,repository_is_clean,commit_on_main,commit_worktree,worktree_enabled,_worktree_location,prune_stale_worktrees,staging_worktree
     PatchApplyResult:  # Outcome of applying an agent-proposed diff...
@@ -6319,11 +6291,6 @@ Calle...
     _last_failure_line(text)
     _wayland_hint(session)
     capture_diagnostics(project)
-  src/koruvision/portal_capture.py:
-    e: PortalCaptureError,_portal_python,capture_portal_png
-    PortalCaptureError(RuntimeError):  # Portal screenshot failed (denied / timeout / no dbus availab...
-    _portal_python()
-    capture_portal_png()
   src/koruvision/mesh.py:
     e: default_peer_id,resolve_mesh_publish,_vision_mime,vision_frame_envelope,publish_vision_frame
     default_peer_id()
@@ -6331,9 +6298,6 @@ Calle...
     _vision_mime(frame)
     vision_frame_envelope(frame)
     publish_vision_frame(frame)
-  src/koruvision/providers/mss.py:
-    e: MssProvider
-    MssProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
   src/koruvision/providers/browser_getdisplay.py:
     e: BrowserGetDisplayProvider,browser_capture_requested,browser_capture_interval_seconds,_vision_mime_with_provider,_frames_from_store,_decode_browser_png_upload,_browser_upload_monitor_id,_mesh_key_for_browser_upload,_remember_browser_upload_envelope,_publish_browser_upload_if_requested,ingest_browser_upload
     BrowserGetDisplayProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
@@ -6922,13 +6886,6 @@ Calle...
     e: python_can_capture,resolve_observe_python
     python_can_capture(executable)
     resolve_observe_python()
-  src/koruvision/providers/screencast_session.py:
-    e: session_file_for_project,resolve_screencast_session_file,load_session_path,save_session_path,clear_session_file
-    session_file_for_project(project)
-    resolve_screencast_session_file()
-    load_session_path(path)
-    save_session_path(session_path;path)
-    clear_session_file(path)
   src/koruide/daemon/handlers_plugin_event.py:
     e: _PluginEventHandoff,_event_path,_append_event,_plugin_event_should_handoff,_ack_plugin_event_without_handoff,_handle_plugin_event_basic,_check_handoff_cooldown,_execute_handoff,_forward_handoff_to_plugin,handle_plugin_event
     _PluginEventHandoff:  # Result of basic plugin event handling when handoff is requir...
@@ -7431,11 +7388,6 @@ Calle...
   src/korullm/strategies/codex.py:
     e: CodexStrategy
     CodexStrategy(StaticLlmIdentityMixin,LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0),prompt_envelope(1)
-  src/koruvision/scaling.py:
-    e: resolve_scale,downscale_rgb_nearest,rgb_mostly_black
-    resolve_scale(override)
-    downscale_rgb_nearest(rgb;src_w;src_h;dst_w;dst_h)
-    rgb_mostly_black(rgb)
   src/korumesh/store.py:
     e: _remember_in_memory,remember_envelope,list_vision_frames,clear_vision_frames
     _remember_in_memory(envelope)
@@ -7828,14 +7780,6 @@ Construct once ...
     _mesh_publish_enabled(project;explicit)
     _maybe_publish_mesh(args;frame)
     vision_main(argv)
-  src/koruvision/providers/base.py:
-    e: BlackFrameError,ProviderAvailability,MonitorSpec,CaptureProvider,png_dimensions,frame_from_png
-    BlackFrameError(RuntimeError):  # Captured buffer is empty/black (common with XWayland + ``mss...
-    ProviderAvailability:
-    MonitorSpec:
-    CaptureProvider(Protocol): availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    png_dimensions(payload)
-    frame_from_png(payload)
   src/koruvision/providers/env.py:
     e: capture_provider_pref,is_wayland,env_truthy,portal_possible,looks_headless,compositor_hint,tool_available
     capture_provider_pref()
@@ -7981,6 +7925,13 @@ Construct once ...
   src/koru/queue/koru_queue_argv.py:
     e: build_koru_queue_argv
     build_koru_queue_argv(project)
+  src/koru/queue/locking.py:
+    e: queue_lock_wanted,queue_runner_lock,claim_lease_seconds_str,ticket_claim_command_missing,ticket_claim_or_error
+    queue_lock_wanted()
+    queue_runner_lock(project)
+    claim_lease_seconds_str()
+    ticket_claim_command_missing(result)
+    ticket_claim_or_error(project;ticket_id;actor)
   src/koru/queue/local_manager.py:
     e: QueueManagerEarlyExit,queue_local_manager_session,queue_manager_start,queue_manager_health,queue_manager_decision_action,queue_manager_stop_callback,queue_manager_complete
     QueueManagerEarlyExit:
@@ -7993,6 +7944,10 @@ Construct once ...
   src/koru/queue/human.py:
     e: default_human_prompt
     default_human_prompt(prompt;ticket_id)
+  src/koru/queue/planfile_ticket_note.py:
+    e: _stderr_unknown_option,append_shell_evidence_note
+    _stderr_unknown_option(stderr;flag)
+    append_shell_evidence_note(project;ticket_id;note)
   src/koru/queue/verify/executor.py:
     e: render_profile_command,_matching_targets,_with_timeout
     render_profile_command(profile;targets)
@@ -8149,17 +8104,6 @@ Construct once ...
     e: isVscodiumHost,lowered
     isVscodiumHost()
     lowered()
-  src/koru/queue/locking.py:
-    e: queue_lock_wanted,queue_runner_lock,claim_lease_seconds_str,ticket_claim_command_missing,ticket_claim_or_error
-    queue_lock_wanted()
-    queue_runner_lock(project)
-    claim_lease_seconds_str()
-    ticket_claim_command_missing(result)
-    ticket_claim_or_error(project;ticket_id;actor)
-  src/koru/queue/planfile_ticket_note.py:
-    e: _stderr_unknown_option,append_shell_evidence_note
-    _stderr_unknown_option(stderr;flag)
-    append_shell_evidence_note(project;ticket_id;note)
   check_dups.py:
     e: get_files
     get_files(path)
@@ -8226,10 +8170,6 @@ Construct once ...
 ...
     LlmStrategy(ABC): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0),prompt_envelope(1),_reply_message(0),_reply_verification(0),_reply_reason(0),failure_signature(0),__repr__(0)  # Per-LLM knowledge object...
     StaticLlmIdentityMixin:  # Provide ``id``/``label`` from class-level constants...
-  src/koruvision/providers/grim.py:
-    e: GrimProvider,_grim_png
-    GrimProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    _grim_png()
   src/koruide/ides/registry.py:
     e: register_strategy,get_strategy,all_strategies,strategy_ids,_bootstrap_default_strategies
     register_strategy(strategy)
@@ -8479,10 +8419,6 @@ The c...
     _action_mcp(args;rest;project)
     _action_local(args;rest;project)
     main(argv)
-  src/koruvision/providers/cli_tools.py:
-    e: CliToolsProvider,_tool_available
-    CliToolsProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    _tool_available(name)
   src/korumesh/dashboard.py:
     e: grid_html,_diagnostics_payload,mesh_frames_payload,mesh_diagnostics_payload,_serve_grid,_serve_frames,_serve_diagnostics,serve_mesh_http
     grid_html()
@@ -8973,6 +8909,9 @@ The c...
     write_probe_tests(ide)
     patch_watcher_test(ide)
     main()
+  src/koruvision/providers/base.py:
+    e: frame_from_png
+    frame_from_png(payload)
   packages/dsl2koru/src/dsl2koru/codec.py:
     e: validate_payload,parse_text,envelope_to_bytes,envelope_from_bytes,envelope_to_json,envelope_from_json,roundtrip_text
     validate_payload(payload)
@@ -9053,22 +8992,12 @@ The c...
   src/korullm/strategies/ollama.py:
     e: OllamaStrategy
     OllamaStrategy(StaticLlmIdentityMixin,LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
-  src/koruvision/capture.py:
-    e: VisionFrame,_frame,list_monitors,capture_monitor_png,capture_all_monitors
-    VisionFrame:
-    _frame(descriptor)
-    list_monitors()
-    capture_monitor_png(monitor_id;scale)
-    capture_all_monitors(scale)
   src/koruvision/cli_parser.py:
     e: register_mesh_publish_args,_add_capture_subparser,_add_agent_subparser,build_vision_parser
     register_mesh_publish_args(parser)
     _add_capture_subparser(sub)
     _add_agent_subparser(sub)
     build_vision_parser()
-  src/koruvision/providers/portal_screenshot.py:
-    e: PortalScreenshotProvider
-    PortalScreenshotProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
   src/koruide/__init__.py:
     e: _koru_activity_warn_bridge,__getattr__,__dir__
     _koru_activity_warn_bridge(message)
@@ -9368,6 +9297,12 @@ Subclasses are **pure data + thin...
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
+  src/koruvision/capture.py:
+    e: _frame,list_monitors,capture_monitor_png,capture_all_monitors
+    _frame(descriptor)
+    list_monitors()
+    capture_monitor_png(monitor_id;scale)
+    capture_all_monitors(scale)
   packages/dsl2koru/src/dsl2koru/result.py:
     e: DslResult
     DslResult: to_dict(0)
@@ -9451,10 +9386,6 @@ Subclasses are **pure data + thin...
   src/korullm/strategies/claude.py:
     e: ClaudeStrategy
     ClaudeStrategy(StaticLlmIdentityMixin,LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
-  src/koruvision/providers/registry.py:
-    e: all_providers,provider_by_name
-    all_providers()
-    provider_by_name(name)
   src/korumesh/codec.py:
     e: envelope_to_wire,envelope_from_wire
     envelope_to_wire(envelope)
@@ -9671,6 +9602,10 @@ Th...
     runtime()
     activate()
     deactivate()
+  src/koruvision/providers/registry.py:
+    e: all_providers,provider_by_name
+    all_providers()
+    provider_by_name(name)
   sllm_defs.txt:
   goal.yaml:
   regix.yaml:
@@ -9696,6 +9631,7 @@ Th...
   .pretest.yml:
   gillm_defs.txt:
   ui.vql.json:
+  schemas/volume-reduction-plan.schema.json:
   schemas/autonomy-mutation-inventory.schema.json:
   schemas/dependency-boundary-inventory.schema.json:
   schemas/koru-stdio-event.schema.json:
@@ -9786,6 +9722,7 @@ Th...
   docs/ai-tool-registry-2026.yaml:
   docs/recipes/python-quality-baseline.yaml:
   docs/recipes/monorepo-hygiene.yaml:
+  docs/architecture/autonomy-mutation-inventory.yaml:
   docs/interfaces/koru-interface-registry.yaml:
   docs/llm-tools/costs/install.sh:
   docs/llm-tools/redeploy/install.sh:
@@ -10285,7 +10222,5 @@ Th...
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
   pyproject.toml:
   package.json:
-  schemas/volume-reduction-plan.schema.json:
   docs/architecture/dependency-boundary-inventory.yaml:
   docs/architecture/volume-reduction-plan.yaml:
-  docs/architecture/autonomy-mutation-inventory.yaml:

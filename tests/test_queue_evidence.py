@@ -417,3 +417,56 @@ class TestBindings:
             verdict="refused",
         )
         assert bundle["bindings"] is None
+
+
+class TestHashLadder:
+    """P0-4: the bundle's lower rungs are recomputable by an auditor."""
+
+    def _bundle(self, *, verify=None, verdict="refused", bindings=None):
+        from koru.queue.evidence import build_evidence_bundle
+
+        return build_evidence_bundle(
+            run_id="run-h",
+            ticket={"id": "PLF-9"},
+            manifest={"manifest_hash": "m" * 64},
+            patch_attempts=[{"attempt": 1}],
+            verify=verify or {},
+            promotion={"mode": "branch", "isolated": True},
+            verdict=verdict,
+            bindings=bindings,
+        )
+
+    def test_hashes_are_deterministic(self):
+        verify = {"command": "pytest -q", "status": "passed"}
+        first = self._bundle(verify=verify)
+        second = self._bundle(verify=verify)
+        assert first["verification_hash"] == second["verification_hash"]
+        assert first["execution_binding_hash"] == second["execution_binding_hash"]
+
+    def test_changing_the_gate_changes_both_hashes(self):
+        green = self._bundle(verify={"command": "pytest -q", "status": "passed"})
+        red = self._bundle(verify={"command": "pytest -q", "status": "failed"})
+        assert green["verification_hash"] != red["verification_hash"]
+        assert green["execution_binding_hash"] != red["execution_binding_hash"]
+
+    def test_no_gate_means_no_verification_hash_but_binding_still_exists(self):
+        bundle = self._bundle(verify=None)
+        assert bundle["verification_hash"] is None
+        assert isinstance(bundle["execution_binding_hash"], str)
+
+    def test_binding_covers_the_proposal(self):
+        with_proposal = self._bundle(
+            bindings={"proposal_sha256": "d" * 64}
+        )
+        without = self._bundle()
+        assert (
+            with_proposal["execution_binding_hash"]
+            != without["execution_binding_hash"]
+        )
+
+    def test_versions_recorded(self):
+        bundle = self._bundle()
+        versions = bundle["versions"]
+        assert versions["evidence_schema"] == 1
+        assert versions["proposal_schema"] == "1.0"
+        assert versions["koru"] and versions["koru"] != "unknown"

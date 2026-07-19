@@ -164,8 +164,15 @@ przechodzą przez capability dispatcher i kontrakty.
       hashe ProposalEnvelope (input/prompt_schema/artifact/proposal + intent
       pack) przewleczone przez `extract_patch` → `PatchPlan.proposal` →
       evidence; `proposal_sha256` trafia również do journalu (PHASE_RESOLVED).
-      Legacy bare diff = `bindings: null`. Otwarte: wersje pack/compiler/policy
-      i ogniwa verification_hash / execution_binding_hash.*
+      Legacy bare diff = `bindings: null`. Dolne ogniwa drabiny dowiezione
+      2026-07-19: `verification_hash` (canonical-JSON sha256 bloku verify),
+      `execution_binding_hash` (proposal→manifest→verification→promotion→
+      verdict, przeliczalny przez audytora) i `versions`
+      (koru/proposal_schema/evidence_schema) — liczone przy składaniu bundle,
+      więc nie mogą rozjechać się z polami, które podsumowują; testy
+      `TestHashLadder`. Jedyny brak względem akceptacji: tożsamość grantu
+      (`jti`) jest w journalu runu (PHASE_AUTHORIZED), nie w samym bundle —
+      wymaga poszerzenia sygnatury `Authorizer`.*
 - [ ] **P0-5 — kontrolowany pilot mostu Subactor → Koru → resume.** Wykonać
       realny, repo-only structural defect przez istniejący szablon, worktree,
       targeted regression i ponowny preflight zadania źródłowego.
