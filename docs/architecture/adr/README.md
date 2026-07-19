@@ -6,7 +6,7 @@
 
 | ADR | Temat | Status |
 | --- | --- | --- |
-| [AD-001](./001-canonical-namespaces.md) | Kanoniczne namespace’y `coru` / `koru` / `koruide` | Proposed |
+| [AD-001](./001-canonical-namespaces.md) | Kanoniczne namespace’y `coru` / `koru` / `koruide` | **Accepted** (inventory DSL + CI) |
 | [AD-002](./002-intent-capability-ssot.md) | Intent pack + capability contract jako SSOT | Proposed |
 | [AD-003](./003-execution-plan-lifecycle.md) | Wspólny `ExecutionPlan` i lifecycle | Proposed |
 | [AD-004](./004-grant-and-manifest.md) | Immutable manifest + execution grant | Proposed |

@@ -11,10 +11,19 @@ from collections.abc import Callable
 from pathlib import Path
 
 from koru.queue.patch_mode import PatchOutcome
-from koru.queue.transaction import execute_patch_transaction, resolve_verify_command
+from koru.queue.transaction import (
+    PatchTransactionResult,
+    execute_patch_transaction,
+    resolve_verify_command,
+)
 from koru.queue.types import CommandResult
 
-__all__ = ["apply_proposed_patch", "resolve_verify_command"]
+__all__ = [
+    "PatchTransactionResult",
+    "apply_proposed_patch",
+    "execute_patch_transaction",
+    "resolve_verify_command",
+]
 
 
 def apply_proposed_patch(

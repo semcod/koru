@@ -2572,7 +2572,7 @@ class TestPatchMode(unittest.TestCase):
 
             self.assertIsNotNone(outcome)
             self.assertEqual(outcome.code, NO_PATCH_EMITTED)
-            self.assertEqual(calls["n"], 2)
+            self.assertEqual(calls["n"], 1)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
     def test_failing_verify_never_reaches_the_workspace(self) -> None:

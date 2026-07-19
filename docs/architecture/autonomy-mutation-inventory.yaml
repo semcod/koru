@@ -1,0 +1,419 @@
+# Machine-readable PR1 inventory. It is a contract/catalog DSL, not an executor.
+# A model may refer to an id from this file; it may not add ids at runtime.
+schema_version: "1.0"
+
+namespaces:
+  - id: cli2coru
+    boundary: coru
+    roots:
+      - packages/cli2coru/src/cli2coru
+    owns: CLI-to-coru transport adaptation.
+    must_not_own: Queue, policy, grants, or side-effect orchestration.
+  - id: cli2koru
+    boundary: koru
+    roots:
+      - packages/cli2koru/src/cli2koru
+      - packages/mcp2koru/src/cli2koru
+      - packages/nlp2koru/src/cli2koru
+      - packages/rest2koru/src/cli2koru
+      - packages/uri2koru/src/cli2koru
+    owns: CLI-to-koru protocol adaptation.
+    must_not_own: Capability policy or concrete side-effect engines.
+  - id: coru
+    boundary: coru
+    roots:
+      - packages/coru/src/coru
+    owns: Stable end-user CLI and thin client dispatch.
+    must_not_own: Queue internals, grant crypto, or GUI geometry.
+  - id: dsl2coru
+    boundary: coru
+    roots:
+      - packages/dsl2coru/src/dsl2coru
+    owns: Validation and transport of coru command DSL payloads.
+    must_not_own: Authorization policy or domain orchestration.
+  - id: dsl2koru
+    boundary: koru
+    roots:
+      - packages/dsl2koru/src/dsl2koru
+    owns: Validation and transport of koru command DSL payloads.
+    must_not_own: Capability expansion or direct side effects.
+  - id: env2llm
+    boundary: koru
+    roots:
+      - src/env2llm
+    owns: Bounded environment context supplied to model calls.
+    must_not_own: Secrets, authorization, or execution.
+  - id: imgl
+    boundary: koruvision
+    roots:
+      - src/imgl
+    owns: Image-derived semantic structures used by vision adapters.
+    must_not_own: Drive policy, ticket lifecycle, or approval.
+  - id: koru
+    boundary: koru
+    roots:
+      - src/koru
+    owns: Autonomy orchestration, queue, policy, plans, grants, and evidence.
+    must_not_own: Low-level IDE plugin protocol or screen geometry primitives.
+  - id: koruapi
+    boundary: koru
+    roots:
+      - src/koruapi
+    owns: Inbound API and MCP adapters into Koru application services.
+    must_not_own: Independent policy, planning, or side-effect paths.
+  - id: korudsl
+    boundary: koru
+    roots:
+      - src/korudsl
+    owns: Scenario DSL parsing and canonical library JSON conversion.
+    must_not_own: Authorization, executor selection, or mutation.
+  - id: koruenv
+    boundary: koru
+    roots:
+      - packages/koruenv/src/koruenv
+      - src/koruenv
+    owns: Environment discovery and normalized environment facts.
+    must_not_own: Model policy or side effects.
+  - id: koruide
+    boundary: koruide
+    roots:
+      - src/koruide
+    owns: IDE control-plane, daemon protocol, command catalog, and plugins.
+    must_not_own: Ticket prioritization, intent registry, or grants.
+  - id: korullm
+    boundary: koru
+    roots:
+      - src/korullm
+    owns: Model invocation and typed model-facing integration helpers.
+    must_not_own: Approval, capability policy, or direct mutation.
+  - id: korumesh
+    boundary: koru
+    roots:
+      - src/korumesh
+    owns: Mesh identity, transport, and persistence primitives.
+    must_not_own: Intent resolution or capability policy.
+  - id: koruobserve
+    boundary: koru
+    roots:
+      - src/koruobserve
+    owns: Observation and append-only telemetry structures.
+    must_not_own: Mutation or success decisions.
+  - id: koruos
+    boundary: koruide
+    roots:
+      - src/koruos
+    owns: Low-level operating-system input and process adapters.
+    must_not_own: Planning, approval, or ticket state.
+  - id: koruvision
+    boundary: koruvision
+    roots:
+      - src/koruvision
+    owns: Screen truth, semantic visual selection, and geometry contracts.
+    must_not_own: Drive policy, approval, or ticket lifecycle.
+  - id: mcp2coru
+    boundary: coru
+    roots:
+      - packages/mcp2coru/src/mcp2coru
+    owns: MCP-to-coru transport adaptation.
+    must_not_own: Domain policy or direct side effects.
+  - id: mcp2koru
+    boundary: koru
+    roots:
+      - packages/cli2koru/src/mcp2koru
+      - packages/mcp2koru/src/mcp2koru
+      - packages/nlp2koru/src/mcp2koru
+      - packages/rest2koru/src/mcp2koru
+      - packages/uri2koru/src/mcp2koru
+    owns: MCP-to-koru transport adaptation.
+    must_not_own: Capability expansion or a parallel executor.
+  - id: nlp2coru
+    boundary: coru
+    roots:
+      - packages/nlp2coru/src/nlp2coru
+    owns: Natural-language input adaptation for coru.
+    must_not_own: Approval or execution.
+  - id: nlp2imgl
+    boundary: koruvision
+    roots:
+      - src/nlp2imgl
+    owns: Natural-language to bounded image-semantics adaptation.
+    must_not_own: Raw GUI actuation or approval.
+  - id: nlp2koru
+    boundary: koru
+    roots:
+      - packages/cli2koru/src/nlp2koru
+      - packages/mcp2koru/src/nlp2koru
+      - packages/nlp2koru/src/nlp2koru
+      - packages/rest2koru/src/nlp2koru
+      - packages/uri2koru/src/nlp2koru
+    owns: Natural-language proposal adaptation for Koru.
+    must_not_own: Capability creation, approval, or execution.
+  - id: nlpshim
+    boundary: koru
+    roots:
+      - packages/nlpshim/src/nlpshim
+    owns: Compatibility shim for natural-language adapters.
+    must_not_own: Policy or side effects.
+  - id: rest2coru
+    boundary: coru
+    roots:
+      - packages/rest2coru/src/rest2coru
+    owns: REST-to-coru transport adaptation.
+    must_not_own: Domain policy or direct side effects.
+  - id: rest2koru
+    boundary: koru
+    roots:
+      - packages/cli2koru/src/rest2koru
+      - packages/mcp2koru/src/rest2koru
+      - packages/nlp2koru/src/rest2koru
+      - packages/rest2koru/src/rest2koru
+      - packages/uri2koru/src/rest2koru
+    owns: REST-to-koru transport adaptation.
+    must_not_own: Capability expansion or a parallel executor.
+  - id: uri2coru
+    boundary: coru
+    roots:
+      - packages/uri2coru/src/uri2coru
+    owns: URI-to-coru transport adaptation.
+    must_not_own: Domain policy or direct side effects.
+  - id: uri2koru
+    boundary: koru
+    roots:
+      - packages/cli2koru/src/uri2koru
+      - packages/mcp2koru/src/uri2koru
+      - packages/nlp2koru/src/uri2koru
+      - packages/rest2koru/src/uri2koru
+      - packages/uri2koru/src/uri2koru
+    owns: URI-to-koru transport adaptation.
+    must_not_own: Capability expansion or a parallel executor.
+
+capabilities:
+  - id: agent.prompt.submit
+    owner: koru
+    effect: control
+    risk: R1
+    executor: capability_dispatcher.agent_prompt
+    evidence: [control_command, drive_trace, provider_provenance]
+    enforcement: observed
+  - id: autonomy.replay.execute
+    owner: koru
+    effect: mutate
+    risk: R2
+    executor: capability_dispatcher.replay
+    evidence: [control_command, replay_result]
+    enforcement: observed
+  - id: code.patch.promote_branch
+    owner: koru
+    effect: mutate
+    risk: R1
+    executor: koru.queue.transaction.promotion
+    evidence: [manifest_hash, commit_sha, evidence_bundle]
+    enforcement: contracted
+  - id: code.patch.promote_main
+    owner: koru
+    effect: mutate
+    risk: R2
+    executor: koru.queue.transaction.promotion
+    evidence: [manifest_hash, commit_sha, evidence_bundle]
+    enforcement: contracted
+  - id: code.patch.propose
+    owner: koru
+    effect: propose
+    risk: R0
+    executor: koru.queue.patch_retry
+    evidence: [proposal_hash, provider_provenance]
+    enforcement: contracted
+  - id: code.patch.stage
+    owner: koru
+    effect: mutate
+    risk: R1
+    executor: koru.queue.transaction.service
+    evidence: [patch_sha256, manifest_hash, evidence_bundle]
+    enforcement: contracted
+  - id: gui.pointer.control
+    owner: koruide
+    effect: control
+    risk: R1
+    executor: capability_dispatcher.gui_pointer
+    evidence: [control_command, vql_reference, drive_trace]
+    enforcement: observed
+  - id: gui.text.write
+    owner: koruide
+    effect: mutate
+    risk: R2
+    executor: capability_dispatcher.gui_text
+    evidence: [control_command, target_reference, verification]
+    enforcement: observed
+  - id: queue.ticket.mutate
+    owner: koru
+    effect: mutate
+    risk: R1
+    executor: capability_dispatcher.planfile
+    evidence: [ticket_id, ticket_event]
+    enforcement: observed
+  - id: repair.action.execute
+    owner: koru
+    effect: mutate
+    risk: R2
+    executor: capability_dispatcher.repair
+    evidence: [repair_run_id, repair_result, verification]
+    enforcement: observed
+  - id: runtime.process.manage
+    owner: koru
+    effect: manage
+    risk: R2
+    executor: capability_dispatcher.runtime
+    evidence: [control_command, process_result]
+    enforcement: observed
+  - id: scan.ticket.create
+    owner: koru
+    effect: mutate
+    risk: R1
+    executor: capability_dispatcher.planfile
+    evidence: [scan_fingerprint, ticket_id, ticket_event]
+    enforcement: observed
+
+mutation_entrypoints:
+  - id: autonomy.replay
+    actor: operator:replay
+    intent: autonomy.replay_action
+    capability: autonomy.replay.execute
+    modules:
+      - src/koru/autonomy/replay_execution.py
+      - src/koru/autonomy/replay_handlers.py
+    current_executor: replay handler registry plus direct subprocess for selected actions
+    target_executor: capability_dispatcher.replay
+    evidence: [control_command, replay_result]
+    enforcement: observed
+  - id: gui.pointer
+    actor: service:autopilot
+    intent: gui.focus_target
+    capability: gui.pointer.control
+    modules:
+      - src/koru/integrations/photo_vql_drive.py
+      - src/koru/integrations/vdisplay_client.py
+    current_executor: vdisplay plugin, semantic selector, VQL, and OS injector ladder
+    target_executor: capability_dispatcher.gui_pointer
+    evidence: [control_command, vql_reference, drive_trace]
+    enforcement: observed
+  - id: gui.text
+    actor: service:autopilot
+    intent: gui.write_text
+    capability: gui.text.write
+    modules:
+      - src/koru/integrations/photo_vql_drive.py
+      - src/koru/integrations/vdisplay_client.py
+    current_executor: vdisplay set-value or bounded OS input fallback
+    target_executor: capability_dispatcher.gui_text
+    evidence: [control_command, target_reference, verification]
+    enforcement: observed
+  - id: ide.chat.drive
+    actor: service:autopilot
+    intent: ide.submit_prompt
+    capability: agent.prompt.submit
+    modules:
+      - src/koru/autopilot/commands/drive.py
+      - src/koru/ide_client.py
+    current_executor: koruide plugin with guarded vdisplay fallback
+    target_executor: capability_dispatcher.agent_prompt
+    evidence: [control_command, drive_trace, provider_provenance]
+    enforcement: observed
+  - id: queue.patch.promote_branch
+    actor: service:queue
+    intent: development.promote_branch
+    capability: code.patch.promote_branch
+    modules:
+      - src/koru/queue/transaction/promotion.py
+      - src/koru/queue/transaction/staging.py
+    current_executor: queue patch transaction
+    target_executor: koru.queue.transaction.promotion
+    evidence: [manifest_hash, commit_sha, evidence_bundle]
+    enforcement: contracted
+  - id: queue.patch.promote_main
+    actor: service:queue
+    intent: development.promote_main
+    capability: code.patch.promote_main
+    modules:
+      - src/koru/queue/transaction/promotion.py
+    current_executor: queue patch transaction
+    target_executor: koru.queue.transaction.promotion
+    evidence: [manifest_hash, commit_sha, evidence_bundle]
+    enforcement: contracted
+  - id: queue.patch.propose
+    actor: service:queue
+    intent: development.propose_patch
+    capability: code.patch.propose
+    modules:
+      - src/koru/queue/patch_retry.py
+    current_executor: tillm runner constrained by patch prompt and contract
+    target_executor: proposal_envelope.compiler
+    evidence: [proposal_hash, provider_provenance]
+    enforcement: contracted
+  - id: queue.patch.stage
+    actor: service:queue
+    intent: development.stage_patch
+    capability: code.patch.stage
+    modules:
+      - src/koru/queue/patch_transaction.py
+      - src/koru/queue/transaction/service.py
+      - src/koru/queue/transaction/staging.py
+    current_executor: queue patch transaction in isolated worktree
+    target_executor: koru.queue.transaction.service
+    evidence: [patch_sha256, manifest_hash, evidence_bundle]
+    enforcement: contracted
+  - id: queue.ticket.mutate
+    actor: service:queue
+    intent: queue.update_ticket
+    capability: queue.ticket.mutate
+    modules:
+      - src/koru/queue/planfile_ticket_note.py
+      - src/koru/queue/ticket.py
+    current_executor: planfile CLI adapter
+    target_executor: capability_dispatcher.planfile
+    evidence: [ticket_id, ticket_event]
+    enforcement: observed
+  - id: repair.action
+    actor: service:repair
+    intent: repair.execute_action
+    capability: repair.action.execute
+    modules:
+      - src/koru/deps_autorepair.py
+      - src/koru/repair_runs/router.py
+    current_executor: repair router and command-specific subprocess adapter
+    target_executor: capability_dispatcher.repair
+    evidence: [repair_run_id, repair_result, verification]
+    enforcement: observed
+  - id: runtime.process
+    actor: service:autopilot
+    intent: runtime.manage_process
+    capability: runtime.process.manage
+    modules:
+      - src/koru/autopilot/systemd_cli.py
+      - src/koru/autopilot/vdisplay_up_cli.py
+      - src/koru/autonomous_processes.py
+    current_executor: guarded subprocess and systemd adapters
+    target_executor: capability_dispatcher.runtime
+    evidence: [control_command, process_result]
+    enforcement: observed
+  - id: scan.ticket.create
+    actor: service:scanner
+    intent: backlog.materialize_finding
+    capability: scan.ticket.create
+    modules:
+      - src/koru/cli_scan.py
+      - src/koru/scan.py
+    current_executor: planfile ticket create subprocess adapter
+    target_executor: capability_dispatcher.planfile
+    evidence: [scan_fingerprint, ticket_id, ticket_event]
+    enforcement: observed
+  - id: shell.agent.drive
+    actor: service:queue
+    intent: agent.drive_ticket
+    capability: agent.prompt.submit
+    modules:
+      - src/koru/autonomy/shell_drive_finalize.py
+      - src/koru/queue/runners.py
+    current_executor: tillm drive subprocess with provider fallback
+    target_executor: capability_dispatcher.agent_prompt
+    evidence: [control_command, drive_trace, provider_provenance]
+    enforcement: observed

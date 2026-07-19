@@ -84,6 +84,20 @@ class PatchTransactionResult:
     plan: PatchPlan | None = None
     manifest: dict | None = None
 
+    @property
+    def ok(self) -> bool:
+        """The patch landed and passed its gate."""
+        return self.outcome is None
+
+    @property
+    def code(self) -> str | None:
+        """Stable structural failure code, or ``None`` when the patch landed.
+
+        External consumers (bridge, ticket notes) branch on this — never on
+        the wording of ``outcome.message``.
+        """
+        return self.outcome.code if self.outcome else None
+
     def as_tuple(self) -> tuple[CommandResult, PatchOutcome | None]:
         """Adapt to the ``(result, outcome)`` pair callers have always taken."""
         return self.result, self.outcome

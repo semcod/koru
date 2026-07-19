@@ -26,6 +26,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.418] - 2026-07-19
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update docs/architecture/adr/001-canonical-namespaces.md
+- Update docs/architecture/adr/README.md
+- Update docs/architecture/autonomy-mutation-inventory.yaml
+- Update docs/proposal-envelope.md
+
+### Test
+- Update tests/test_autonomy_mutation_inventory.py
+- Update tests/test_patch_result_public_api.py
+- Update tests/test_planfile_queue.py
+- Update tests/test_proposal_envelope.py
+
+### Other
+- Update schemas/autonomy-mutation-inventory.schema.json
+- Update src/koru/data/proposal-envelope-v1.schema.json
+
 ## [0.1.417] - 2026-07-19
 
 ### Docs

@@ -32,6 +32,7 @@ from koru.queue.evidence import (
 from koru.queue.journal import PHASE_COMPLETED, RunJournal
 from koru.queue.patch_mode import (
     MANIFEST_MISMATCH,
+    NO_PATCH_EMITTED,
     PATCH_DOES_NOT_APPLY,
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
@@ -133,6 +134,11 @@ def apply_patch_with_retry(
         attempts.append(_attempt_record(len(attempts) + 1, transaction))
         if outcome is None or not outcome.retryable or remaining <= 0:
             return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor)
+
+        # A structurally invalid model artifact gets one repair attempt. A
+        # ticket/env knob may shrink that budget, never expand it into a loop.
+        if outcome.code == NO_PATCH_EMITTED:
+            remaining = min(remaining, 1)
 
         manifest, aborted = _pin_or_detect_drift(
             project, ticket, result, budget, manifest, transaction, attempts,

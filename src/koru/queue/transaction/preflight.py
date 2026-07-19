@@ -10,6 +10,11 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
+from koru.proposal_envelope import (
+    ProposalValidationError,
+    looks_like_proposal_envelope,
+    parse_proposal_envelope,
+)
 from koru.queue.patch_mode import (
     NO_PATCH_EMITTED,
     PATCH_INTRODUCES_SYMLINK,
@@ -38,7 +43,28 @@ def extract_patch(result: CommandResult) -> tuple[str | None, PatchOutcome | Non
     The agent's exit code only says it produced *an answer*; whether that answer
     contained an applicable patch is a separate question.
     """
-    diff = extract_unified_diff(result.stdout)
+    artifact = result.stdout
+    if looks_like_proposal_envelope(artifact):
+        try:
+            envelope = parse_proposal_envelope(artifact)
+        except ProposalValidationError as exc:
+            return None, PatchOutcome(
+                code=NO_PATCH_EMITTED,
+                message=f"agent returned an invalid ProposalEnvelope: {exc}",
+                retryable=exc.retryable,
+            )
+        if envelope.artifact_kind != "unified_diff":
+            return None, PatchOutcome(
+                code=NO_PATCH_EMITTED,
+                message=(
+                    "patch mode requires a unified_diff artifact, but the "
+                    f"ProposalEnvelope contains {envelope.artifact_kind!r}"
+                ),
+                retryable=True,
+            )
+        artifact = str(envelope.artifact_content)
+
+    diff = extract_unified_diff(artifact)
     if diff is not None:
         return diff, None
     head = (result.stdout or "").strip().splitlines()
@@ -46,7 +72,7 @@ def extract_patch(result: CommandResult) -> tuple[str | None, PatchOutcome | Non
     return None, PatchOutcome(
         code=NO_PATCH_EMITTED,
         message=(
-            "agent returned no unified diff, so nothing could be applied. "
+            "agent returned no valid unified-diff artifact, so nothing could be applied. "
             f"First line of the reply: {summary}"
         ),
         retryable=True,

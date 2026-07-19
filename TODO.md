@@ -6,6 +6,208 @@
 
 ---
 
+<!-- KORU-AUTONOMY-PLAN:START — sekcja ręczna (2026-07-19); prefact: zachować przy regeneracji -->
+## 🎯 Plan działań: większa autonomia przez deterministyczne kontrakty
+
+**Aktualizacja:** 2026-07-19
+
+**Źródła:**
+`/home/tom/github/subactor/docs/architecture/koru-subactor-autonomy-assessment-2026-07-18.md`,
+`docs/architecture/autonomy-determinism-refactor-plan.md`, ADR-y Koru,
+`/home/tom/github/subactor/eql/SUBACTOR_KORU_INTEGRATION.md` oraz dokumentacja
+Intent Pack / AQL / OQL / EQL / TestQL w Subactorze.
+
+### Cel i granice
+
+Docelowa pętla Koru:
+
+```text
+NL/event
+→ IntentProposal (LLM opcjonalny)
+→ Intent Pack + dozwolone sloty
+→ kompilowany ExecutionPlan
+→ capability preflight + dry-run
+→ manifest + execution grant
+→ deterministyczny dispatcher / transactional workspace
+→ verify + EvidenceBundle
+→ completed | rolled_back | needs_human | development_blocked
+```
+
+LLM może wybrać nazwany intent pack, wypełnić jawnie dozwolone pola i
+zaproponować ograniczony artefakt. Nie może wymyślać capability, transportu,
+URI, sekretu, polityki, approval ani wykonywać mutacji. Koru przejmuje z
+Subactora **podział odpowiedzialności**, ale nie kopiuje AQL/OQL jako nowych
+języków: authority mapuje na capability contracts i granty Koru, a plan
+operacyjny na `ExecutionPlan` oraz Planfile.
+
+Granica odpowiedzialności mostu pozostaje twarda: błąd strukturalny kodu może
+utworzyć deduplikowany ticket `development`; DNS, credentials, Plesk i inne
+błędy operacyjne kończą się `needs_human`. Koru nie dziedziczy produkcyjnego
+grantu Subactora i nie omija approval.
+
+### Stos DSL-i — jedna odpowiedzialność na warstwę
+
+| Etap | Kontrakt / DSL | Rola LLM | Deterministyczna bramka |
+|---|---|---|---|
+| Intencja | Intent Pack JSON Schema + `korudsl`/library JSON | tylko `pack_id` i dozwolone sloty; resolver regułowy ma pierwszeństwo | strict schema, brak dodatkowych pól, wersja packa |
+| Plan | `ExecutionPlan` JSON Schema/protobuf + Planfile | brak bezpośredniej mutacji planu | kompilator, `plan_hash`, jawny lifecycle i zależności |
+| Authority | capability contract w `koru.yaml` + policy YAML | brak | actor/capability/risk/limits, deny unknown, signed grant + `jti` |
+| Wywołanie modelu | profil tillm/provider order + `ProposalEnvelope` | generuje wyłącznie typowany proposal | timeout/retry budget, provenance, `prompt_schema_hash` |
+| Zmiana kodu | unified diff + queue `patch_mode` | proponuje diff | parser diff, allowlista plików/rozmiaru, worktree, manifest, `git apply` |
+| GUI / IDE | `control.command`; VQL jako zaufany selektor; Koru Drive DSL jako ślad | może wskazać nazwany intent, nie surowe kliknięcia | dispatcher capability i polityka fallbacku jako dane |
+| Semantyka | opcjonalny adapter EQL `SemanticPatch` | tylko allowlistowane pola semantyczne | core bez LLM, kanonikalizacja, odrzut pól wykonawczych |
+| Weryfikacja | TestQL + istniejące komendy testów/quality | może wyjaśnić błąd, nie orzeka o sukcesie | `verification_hash`; `applied_unverified` ≠ `completed` |
+| Audyt | manifest + `EvidenceBundle` + ticket notes | brak | append-only evidence, spójne hashe i kody outcome |
+
+Koru Drive DSL pozostaje obecnie formatem obserwowalności i replay/diagnostyki;
+nie należy traktować go jako execution IR, dopóki wszystkie jego operacje nie
+przechodzą przez capability dispatcher i kontrakty.
+
+### Niezmienniki determinizmu
+
+1. **LLM proponuje, kod decyduje.** Free text nie uruchamia efektu ubocznego.
+   Niepoprawny proposal dostaje najwyżej jeden retry z błędem walidacji, potem
+   kontrolowany fallback albo `needs_human`.
+2. **Kompilacja jest czysta i powtarzalna.** Ten sam zwalidowany input, wersje
+   katalogów i policy dają bajtowo ten sam `ExecutionPlan` oraz `plan_hash`.
+   Sam model nie musi zwracać tych samych tokenów: równoważne propozycje
+   normalizują się do tego samego planu, a nierównoważne wymagają nowego
+   dry-run i authorization.
+3. **Hash ladder wiąże cały run:** `input_hash` → `proposal_hash` → `plan_hash`
+   → `manifest_hash`/`artifact_hash` → `verification_hash` →
+   `execution_binding_hash`. Provider/model/prompt/schema są provenance, nie
+   authority.
+4. **Provider fallback zmienia wykonawcę, nie uprawnienia.** Po przełączeniu
+   modelu proposal przechodzi od nowa przez ten sam schema/compiler/gate;
+   żaden provider nie dostaje szerszych capability.
+5. **Mutacja wymaga niezależnych bramek AND:** kill-switch, capability contract,
+   dry-run/manifest pin i ważny jednorazowy grant. Unknown capability = deny.
+6. **Weryfikacja jest częścią transakcji.** Brak evidence lub niezielony
+   TestQL/test oznacza `applied_unverified`, rollback albo ticket — nigdy
+   automatyczne `completed`.
+7. **SSOT i runtime cache są rozdzielone.** Zmiana katalogu packów/capability
+   unieważnia cache i hash planu; konsument nie może działać na starej wersji.
+
+### Fundament już dowieziony — nie planować ponownie
+
+- [x] ADR-005 Accepted: izolowany worktree, kontrola dirty seed i drift,
+      ograniczony retry oraz promocja artifact/branch/apply/commit.
+- [x] Trwały `manifest.json` każdego patch runu i kanoniczny `evidence.json`;
+      persist evidence jest bramką ukończenia.
+- [x] Queue ma capability contracts, Ed25519 execution grants i trwały,
+      single-use `jti`; ich wymuszenie jest jeszcze lokalne/flagowane, nie
+      obejmuje wszystkich mutatorów Koru.
+- [x] Szablon `development_defect`, hydrate pól Koru, fingerprint dedupe,
+      test E2E bridge i skrypt kontrolowanego pilota LLM są dostępne.
+- [x] `tillm provider order/sync`, notki `provider-switch` i
+      `provider-exhausted` zapewniają deterministyczny fallback i audyt decyzji.
+
+### P0 — uwiarygodnić granice i wynik LLM
+
+- [x] **P0-1 — mapa mutacji i capability namespace (PR0–PR1).** Zinwentaryzowano
+      każdy entrypoint mutujący (queue, shell drive, IDE/GUI, scan remediation,
+      promote) jako `actor → intent → capability → risk → executor → evidence`;
+      AD-001 jest Accepted. DSL
+      `docs/architecture/autonomy-mutation-inventory.yaml` + JSON Schema i test
+      CI wykrywają nieznane/zdublowane nazwy, brakujące moduły oraz nowy
+      import-root bez właściciela. Status `observed` jawnie oznacza mutator,
+      który czeka jeszcze na dispatcher/grant enforcement.
+- [ ] **P0-2 — `ProposalEnvelope` v1.** Dodać strict JSON Schema z wersją,
+      `intent_pack`, slots/artifact reference, hashami oraz provenance
+      `provider/model/prompt_schema`; zakazać URI, transportu, vault refs,
+      approval i capability spoza packa. **Akceptacja:** dodatkowe pole,
+      free text i uszkodzony diff kończą się strukturalnym kodem
+      `no_valid_artifact`; retry ≤1, bez efektu ubocznego.
+  - [x] Schema runtime, canonical builder/parser, hash binding i queue dual-read
+        są wdrożone; niepoprawny envelope/free text ma `no_valid_artifact`,
+        a strukturalny retry jest ograniczony do jednego.
+  - [ ] Przełączyć producentów tillm/IDE na envelope i po zielonym dual-run
+        usunąć zgodność z legacy bare diff; dopiero wtedy zamknąć P0-2.
+- [ ] **P0-3 — publiczny `PatchTransactionResult`.** Zastąpić rozpoznawanie
+      komunikatów strukturą `code/state/retryable/manifest/evidence`; most i
+      notki ticketów reagują wyłącznie na stabilne kody. **Akceptacja:** brak
+      `assertIn`/substring matching w decyzjach o retry, resume i eskalacji.
+      *Postęp 2026-07-19: typ + 9 stałych kodów wyeksportowane publicznie z
+      `koru.queue` (fasada `patch_transaction` też), accessory `ok`/`code`,
+      testy `tests/test_patch_result_public_api.py`; decyzje retry już chodzą
+      po kodach — otwarta pozostaje strona mostu w repo subactor.*
+- [ ] **P0-4 — pełne binding/provenance evidence.** Uzupełnić run o hash ladder,
+      wersje pack/compiler/policy, provider/model oraz przyczynę fallbacku.
+      **Akceptacja:** z jednego EvidenceBundle można odtworzyć, kto zaproponował,
+      co skompilowano, na co wydano grant, co wykonano i czym zweryfikowano.
+- [ ] **P0-5 — kontrolowany pilot mostu Subactor → Koru → resume.** Wykonać
+      realny, repo-only structural defect przez istniejący szablon, worktree,
+      targeted regression i ponowny preflight zadania źródłowego.
+      **Akceptacja:** fingerprint dedupe, brak tokenu produkcyjnego w Koru,
+      zielony regression, resume od preflight oraz kompletny evidence chain.
+
+### P1 — intent packs i jeden kanoniczny plan
+
+- [ ] **P1-1 — rejestr wersjonowanych Intent Packów (PR2).** Dla pierwszych 2–3
+      wysokowartościowych ścieżek (repair code, inspect/verify, IDE submit)
+      zdefiniować schema slotów, defaults, wymagane capability i policy LLM.
+      Resolver deterministyczny działa pierwszy, LLM tylko przy niejednoznacznej
+      intencji. **Akceptacja:** LLM zwraca wyłącznie istniejący pack i sloty;
+      nie może rozszerzyć planu ani authority.
+- [ ] **P1-2 — SSOT capability contracts (PR3).** Ujednolicić istniejące
+      kontrakty queue z rejestrem używanym przez shell/IDE/GUI; intent pack
+      deklaruje tylko `required_capabilities`, nigdy ALLOW. Najpierw dual-run i
+      diff telemetry, potem fail-closed dla mutacji.
+- [ ] **P1-3 — `ExecutionPlan` + lifecycle (PR4–PR5).** Skompilować pack/slots,
+      kontekst i policy do jednej IR używanej przez CLI, queue i autonomy:
+      `proposed → resolved → preflight → dry_run → authorized → applying →
+      applied → verified → completed`, z jawnymi failure states.
+      **Akceptacja:** 10 powtórzeń kompilatora daje ten sam canonical JSON/hash;
+      wszystkie przejścia są walidowane.
+- [ ] **P1-4 — Capability Dispatcher (PR6).** Owinąć side-effect engines w
+      jeden interfejs `preflight/dry_run/apply/verify/rollback`; dodać zakaz
+      importów omijających dispatcher. **Akceptacja:** nieznana capability i
+      wywołanie boczną ścieżką fail-closed przed mutacją.
+- [ ] **P1-5 — transactional mutators + granty (PR7–PR10).** Shell i IDE mają
+      zwracać diff/artifact do queue zamiast edytować repo bezpośrednio;
+      rozszerzyć istniejący manifest/grant store poza queue i po dual-run
+      wymusić go dla apply/commit. **Akceptacja:** verify failure zostawia
+      główny workspace bez zmian; expired/replayed/drifted grant nie mutuje,
+      a restart procesu nie resetuje `jti`.
+
+### P2 — GUI i weryfikacja końca do końca
+
+- [ ] **P2-1 — TestQL/evidence jako twarda bramka (PR11).** Zmapować kryteria
+      packa na TestQL lub deterministyczne test commands; stan
+      `applied_unverified` nie zamyka ticketa. **Akceptacja:** brak, timeout lub
+      niezielony verify wymusza rollback bądź jawny ticket.
+- [ ] **P2-2 — GUI ladder jako wersjonowana policy (PR12).** Kolejność:
+      plugin/API → semantic VDisplay → trusted VQL → `needs_human`; każda
+      degradacja tworzy zdarzenie `control.command` i note podobną do
+      `provider-switch`. Surowe współrzędne nie mogą być authority; mutacja GUI
+      także wymaga capability contract i grantu.
+- [ ] **P2-3 — opcjonalny adapter EQL.** Użyć EQL tylko tam, gdzie potrzebna
+      jest semantyczna kompilacja (np. UI/content), z allowlistowanym
+      `SemanticPatch`; nie uzależniać repair code od EQL. **Akceptacja:** mock
+      enrichment deterministyczny daje stałe hashe, a naprzemienne sprzeczne
+      patche są odrzucane przed grantem.
+- [ ] **P2-4 — failure matrix i cross-repo E2E (PR13–PR17).** Testować provider
+      exhaustion, malformed proposal, policy deny, drift, replay, verify fail,
+      rollback fail i restart w połowie runu. Remote executor/mTLS dopiero po
+      zamknięciu lokalnych bramek.
+
+### Miary skuteczności i bramki wydania
+
+- **Bezpieczeństwo (wymagane 100%):** mutujący run ma `plan_hash`, contract,
+  grant, manifest, verification i EvidenceBundle; unknown capability = 0 apply.
+- **Determinizm (wymagane 100%):** ten sam canonical input i wersje dają ten sam
+  `plan_hash`; różny plan po fallbacku modelu wymaga ponownego dry-run/grantu.
+- **Autonomia:** mierzyć `verified_auto_complete`, `needs_human`, rollback,
+  średnią liczbę retry, provider-switch oraz czas structural defect → resume.
+  SLO ustalić dopiero po bazowej próbie co najmniej 100 runów.
+- **Jakość klasyfikacji:** osobno false-positive `development_defect` i próby
+  skierowania operacyjnych problemów do Koru; każda taka próba ma fail-closed.
+- **Warunek promocji etapu:** green unit/integration/failure-injection, replay
+  evidence oraz dual-run bez rozbieżności; dopiero potem włączenie enforcement.
+<!-- KORU-AUTONOMY-PLAN:END -->
+
+---
+
 ## ✅ Completed Tasks
 
 - [x] src/koru/api/__init__.py:21 - Import used only once: sys
