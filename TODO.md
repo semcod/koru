@@ -112,7 +112,12 @@ przechodzą przez capability dispatcher i kontrakty.
       CI wykrywają nieznane/zdublowane nazwy, brakujące moduły oraz nowy
       import-root bez właściciela. Status `observed` jawnie oznacza mutator,
       który czeka jeszcze na dispatcher/grant enforcement.
-- [ ] **P0-2 — `ProposalEnvelope` v1.** Dodać strict JSON Schema z wersją,
+- [x] **P0-2 — `ProposalEnvelope` v1.** *(zweryfikowane 2026-07-19:
+      `koru/proposal_envelope.py` + `data/proposal-envelope-v1.schema.json`;
+      extra field / free text / authority-slot → `no_valid_artifact`,
+      retryable, budżet retry ≤1 w `patch_retry`; wpięte w
+      `transaction/preflight.py`; testy `test_proposal_envelope.py`.)*
+      Dodać strict JSON Schema z wersją,
       `intent_pack`, slots/artifact reference, hashami oraz provenance
       `provider/model/prompt_schema`; zakazać URI, transportu, vault refs,
       approval i capability spoza packa. **Akceptacja:** dodatkowe pole,
@@ -135,6 +140,12 @@ przechodzą przez capability dispatcher i kontrakty.
       wersje pack/compiler/policy, provider/model oraz przyczynę fallbacku.
       **Akceptacja:** z jednego EvidenceBundle można odtworzyć, kto zaproponował,
       co skompilowano, na co wydano grant, co wykonano i czym zweryfikowano.
+      *Postęp 2026-07-19: bundle ma pole `provenance` (provider/model/
+      provider_attempts + powód fallbacku z payloadu tillm w `LlmRunResult.raw`),
+      a każdy patch attempt zapamiętuje własnego autora (retry po fallbacku ≠
+      pierwszy provider) — `evidence.provenance_from_result`, testy w
+      `test_queue_evidence.py`. Otwarte: wersje pack/compiler/policy i pełna
+      drabina hashy proposal→plan→grant.*
 - [ ] **P0-5 — kontrolowany pilot mostu Subactor → Koru → resume.** Wykonać
       realny, repo-only structural defect przez istniejący szablon, worktree,
       targeted regression i ponowny preflight zadania źródłowego.

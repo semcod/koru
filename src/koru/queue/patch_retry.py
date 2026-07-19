@@ -27,6 +27,7 @@ from koru.queue.evidence import (
     VERDICT_VERIFIED,
     build_evidence_bundle,
     patch_attempt_record,
+    provenance_from_result,
     persist_evidence,
 )
 from koru.queue.journal import PHASE_COMPLETED, RunJournal
@@ -230,7 +231,7 @@ def _attempt_record(attempt: int, transaction: PatchTransactionResult) -> dict:
     """One transaction attempt, as it will be remembered."""
     plan = transaction.plan
     outcome = transaction.outcome
-    return patch_attempt_record(
+    record = patch_attempt_record(
         attempt,
         patch_sha256=(
             hashlib.sha256(plan.diff.encode("utf-8")).hexdigest() if plan else None
@@ -239,6 +240,13 @@ def _attempt_record(attempt: int, transaction: PatchTransactionResult) -> dict:
         message=outcome.message if outcome else "",
         retryable=bool(outcome and outcome.retryable),
     )
+    # A retry can land on a different provider after a fallback; each attempt
+    # remembers who authored it, not just the bundle-level summary.
+    provenance = provenance_from_result(transaction.result)
+    if provenance:
+        record["provider"] = provenance.get("provider")
+        record["model"] = provenance.get("model")
+    return record
 
 
 def _finish_run(
@@ -287,6 +295,7 @@ def _finish_run(
         promotion=promotion,
         verdict=_verdict(plan, outcome),
         actor=actor,
+        provenance=provenance_from_result(transaction.result),
     )
     try:
         persist_evidence(project, bundle)

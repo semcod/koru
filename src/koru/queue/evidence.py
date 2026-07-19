@@ -67,6 +67,40 @@ def patch_attempt_record(
     }
 
 
+def provenance_from_result(result: object) -> dict | None:
+    """LLM provenance carried by the agent reply, or ``None`` for other lanes.
+
+    The tillm shell lane keeps the full drive payload on ``LlmRunResult.raw``:
+    ``provider`` is the one that actually served the request and
+    ``provider_attempts`` the configured fallback queue. When the winner is
+    not the queue's first choice the fallback is recorded here too, so the
+    bundle alone answers *who proposed this change and why that provider* —
+    without consulting loop logs. Provenance is context, never authority.
+    """
+    raw = getattr(result, "raw", None)
+    raw = raw if isinstance(raw, dict) else {}
+    provider = str(raw.get("provider") or "").strip() or None
+    model = str(raw.get("model") or getattr(result, "model", "") or "").strip() or None
+    attempts = [
+        str(item).strip()
+        for item in (raw.get("provider_attempts") or ())
+        if str(item).strip()
+    ]
+    if not (provider or model or attempts):
+        return None
+    provenance: dict = {
+        "provider": provider,
+        "model": model,
+        "provider_attempts": attempts or None,
+    }
+    if provider and attempts and attempts[0] != provider:
+        skipped = attempts[: attempts.index(provider)] if provider in attempts else attempts[:1]
+        provenance["fallback"] = (
+            f"{' → '.join(skipped)} unavailable/exhausted; served by {provider}"
+        )
+    return provenance
+
+
 def build_evidence_bundle(
     *,
     run_id: str,
@@ -77,6 +111,7 @@ def build_evidence_bundle(
     promotion: dict,
     verdict: str,
     actor: str | None = None,
+    provenance: dict | None = None,
 ) -> dict:
     """Assemble the canonical bundle for a finished run.
 
@@ -92,6 +127,7 @@ def build_evidence_bundle(
         "run_id": run_id,
         "ticket_id": ticket.get("id"),
         "actor": actor,
+        "provenance": provenance,
         "manifest_hash": (manifest or {}).get("manifest_hash"),
         "base_head": (manifest or {}).get("base_head"),
         "workspace_snapshot": (manifest or {}).get("workspace_snapshot_sha256"),

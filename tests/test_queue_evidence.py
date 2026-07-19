@@ -316,3 +316,63 @@ class TestRunnerCompletionGate(_RepoCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestProvenance:
+    """P0-4: the bundle answers *who proposed* without loop logs."""
+
+    def _reply(self, **raw):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(returncode=0, stdout="", stderr="", raw=raw, model="")
+
+    def test_non_llm_result_yields_none(self):
+        from types import SimpleNamespace
+
+        from koru.queue.evidence import provenance_from_result
+
+        assert provenance_from_result(SimpleNamespace(returncode=0)) is None
+        assert provenance_from_result(self._reply()) is None
+
+    def test_provider_model_and_queue_are_recorded(self):
+        from koru.queue.evidence import provenance_from_result
+
+        provenance = provenance_from_result(
+            self._reply(provider="z.ai", model="glm-5.2", provider_attempts=["z.ai"])
+        )
+        assert provenance == {
+            "provider": "z.ai",
+            "model": "glm-5.2",
+            "provider_attempts": ["z.ai"],
+        }
+
+    def test_fallback_reason_names_the_skipped_providers(self):
+        from koru.queue.evidence import provenance_from_result
+
+        provenance = provenance_from_result(
+            self._reply(
+                provider="minimax",
+                model="MiniMax-M2",
+                provider_attempts=["subscription", "z.ai", "minimax"],
+            )
+        )
+        assert provenance["fallback"] == (
+            "subscription → z.ai unavailable/exhausted; served by minimax"
+        )
+
+    def test_bundle_carries_provenance(self):
+        from koru.queue.evidence import build_evidence_bundle, provenance_from_result
+
+        bundle = build_evidence_bundle(
+            run_id="run-1",
+            ticket={"id": "PLF-1"},
+            manifest=None,
+            patch_attempts=[{"attempt": 1}],
+            verify={},
+            promotion={},
+            verdict="refused",
+            provenance=provenance_from_result(
+                self._reply(provider="z.ai", provider_attempts=["z.ai"])
+            ),
+        )
+        assert bundle["provenance"]["provider"] == "z.ai"
