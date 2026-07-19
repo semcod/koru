@@ -302,8 +302,17 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
         izolowane backendy MSS, CLI, portal Screenshot i portal ScreenCast.
         Koru wymaga tej wersji, zachowuje kolejność/policy i adaptery domenowe
         OBS/browser, a usuwa 7 modułów i 728 linii z `koruvision` (2056→1328).
-  - [ ] Następnie przenieść canonical coordinate map i normalization z
-        `vdisplay_client.py`; po jednym wydaniu shimu usunąć
+  - [x] VDisplay 0.1.57 posiada publiczny, czysty
+        `normalize_vql_ui_elements(payload, fallback_center=...)`, który
+        deterministycznie sprowadza warianty VQL/IMGL (`layers`, `elements`,
+        `render_intent`, `program`) do wspólnej reprezentacji. Koru deleguje
+        parsing bbox/center/layers i usunęło 96 linii z `vdisplay_client.py`
+        (6856→6760); wybór pliku, freshness, target policy i authority pozostają
+        w Koru. Łączna redukcja trzech ukończonych slice'ów: 1220 linii i 9
+        modułów produkcyjnych.
+  - [ ] Następnie przenieść canonical coordinate map oraz niezależne od policy
+        wzbogacanie capture metadata z `vdisplay_client.py`; po jednym wydaniu
+        shimu usunąć
         `koruvision.providers.base.frame_from_png`. OBS/browser przenosić tylko
         po pojawieniu się drugiego konsumenta lub neutralnego transportu.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
@@ -383,6 +392,10 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
   - [x] VDisplay 0.1.56 opublikowano z typed provider/fallback API i osobnymi
         backendami MSS/CLI/portal. Koru deleguje mechanikę, zachowuje policy,
         a `koruvision` zmalało o kolejne 728 linii i 7 modułów.
+  - [x] VDisplay 0.1.57 opublikowano z publicznym deterministycznym
+        normalizerem VQL/IMGL. Koru używa jednego kontraktu dla sidecarów i
+        świeżych payloadów, zachowując discovery, freshness, wybór targetu i
+        authority; `vdisplay_client.py` zmalał o 96 linii.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie

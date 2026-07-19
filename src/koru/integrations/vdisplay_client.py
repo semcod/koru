@@ -6399,47 +6399,11 @@ def _layers_from_imgl_sidecar_file(vql_path: str) -> tuple[list[dict], str | Non
     return _layers_from_vdisplay_sidecar({"layers": built, "metadata": {"render_intent": {"layers": built}}}), imgl_path
 
 
-def _vql_sidecar_layer_center(layer: dict, bbox: Any) -> dict:
-    """Click-center for a vdisplay sidecar layer (bbox midpoint fallback)."""
-    center = layer.get("click_center") or layer.get("center") or {}
-    if not center and isinstance(bbox, dict):
-        w = int(bbox.get("w") or bbox.get("width") or 0)
-        h = int(bbox.get("h") or bbox.get("height") or 0)
-        if w > 0 and h > 0:
-            center = {
-                "x": int(bbox.get("x") or 0) + w // 2,
-                "y": int(bbox.get("y") or 0) + h // 2,
-            }
-    return center
-
-
-def _vql_sidecar_layer_entry(layer: dict) -> dict:
-    """Normalize a single vdisplay sidecar layer into a ui-element dict."""
-    bbox = layer.get("bbox") or {}
-    center = _vql_sidecar_layer_center(layer, bbox)
-    return {
-        "id": layer.get("id"),
-        "role": layer.get("kind") or layer.get("role"),
-        "label": layer.get("text") or layer.get("label"),
-        "bounds": bbox,
-        "click_center": center,
-        "metadata": {k: layer.get(k) for k in ("confidence", "location") if k in layer},
-    }
-
-
 def _layers_from_vdisplay_sidecar(data: dict) -> list[dict]:
-    """Extract IMGL/VQL layers from vdisplay ``.png.vql.json`` sidecar."""
-    metadata = data.get("metadata") or {}
-    render = metadata.get("render_intent") or {}
-    layers = render.get("layers") or data.get("layers") or []
-    if not isinstance(layers, list):
-        return []
-    ui: list[dict] = []
-    for layer in layers:
-        if not isinstance(layer, dict):
-            continue
-        ui.append(_vql_sidecar_layer_entry(layer))
-    return ui
+    """Delegate sidecar element normalization to its VDisplay owner."""
+    from vdisplay.integrations import normalize_vql_ui_elements
+
+    return normalize_vql_ui_elements(data)
 
 
 def _with_embedded_capture_validation(meta: dict, raw: dict | None = None) -> dict:
@@ -6704,84 +6668,24 @@ def _freshest_populated_vql_candidate() -> str | None:
     return best
 
 
-def _fresh_vql_bbox_xy(bbox: dict) -> tuple[int, int]:
-    """Top-left corner of a dict-shaped fresh-VQL bbox."""
-    bx = int(bbox.get("x") or bbox.get("left") or 0)
-    by = int(bbox.get("y") or bbox.get("top") or 0)
-    return bx, by
-
-
-def _fresh_vql_bbox_wh(bbox: dict, bx: int, by: int) -> tuple[int, int]:
-    """Width/height of a dict-shaped fresh-VQL bbox, deriving from right/bottom when needed."""
-    bw = int(bbox.get("w") or bbox.get("width") or 0)
-    bh = int(bbox.get("h") or bbox.get("height") or 0)
-    if not bw and bbox.get("right") is not None:
-        bw = max(0, int(bbox.get("right") or 0) - bx)
-    if not bh and bbox.get("bottom") is not None:
-        bh = max(0, int(bbox.get("bottom") or 0) - by)
-    return bw, bh
-
-
-def _fresh_vql_center(center: Any, bx: int, by: int, bw: int, bh: int) -> tuple[int, int]:
-    """Click center from a fresh-VQL element's center field, defaulting to bbox center."""
-    if isinstance(center, dict) and center:
-        cx = int(center.get("x") or bx + bw // 2)
-        cy = int(center.get("y") or by + bh // 2)
-    elif isinstance(center, (list, tuple)) and len(center) >= 2:
-        cx, cy = int(center[0]), int(center[1])
-    else:
-        cx, cy = bx + bw // 2, by + bh // 2
-    return cx, cy
-
-
-def _fresh_vql_center_only(center: Any) -> tuple[Any, Any]:
-    """Click center when a fresh-VQL element has no usable bbox.
-
-    Falls back to the DP-1 capture-frame center (1024, 640) at every level,
-    mirroring resolve_click_for_frame's hardcoded fallback.
-    """
-    if isinstance(center, dict) and center:
-        return int(center.get("x") or 1024), int(center.get("y") or 640)
-    c = center or [1024, 640]
-    if not isinstance(c, (list, tuple)):
-        c = [1024, 640]
-    return c[0], c[1]
-
-
-def _fresh_vql_bbox_center(e: dict) -> tuple[int, int, int, int, Any, Any]:
-    """Resolve (bx, by, bw, bh, cx, cy) for a fresh-VQL element across bbox shapes."""
-    bbox = e.get("bbox") or [0, 0, 0, 0]
-    center = e.get("click_center") or e.get("center") or {}
-    if isinstance(bbox, dict):
-        bx, by = _fresh_vql_bbox_xy(bbox)
-        bw, bh = _fresh_vql_bbox_wh(bbox, bx, by)
-        cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
-    elif isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
-        bx, by = int(bbox[0]), int(bbox[1])
-        bw = max(0, int(bbox[2]) - bx)
-        bh = max(0, int(bbox[3]) - by)
-        cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
-    else:
-        cx, cy = _fresh_vql_center_only(center)
-        bx, by, bw, bh = 0, 0, 0, 0
-    return bx, by, bw, bh, cx, cy
-
-
 def _parse_fresh_vql_elements(data: dict, cand: str) -> dict:
-    """Helper extracted to reduce CC in load_vql_metadata (autonomous refactor for high-CC split)."""
-    ui_els = []
-    for e in data["elements"]:
-        bx, by, bw, bh, cx, cy = _fresh_vql_bbox_center(e)
-        ui_els.append({
-            "id": str(e.get("id", f"elem-{len(ui_els)}")),
-            "role": e.get("role") or e.get("kind") or "unknown",
-            "bounds": {"x": int(bx), "y": int(by), "width": int(bw), "height": int(bh), "coordinate_space": "capture_frame_local"},  # noqa: E501
-            "click_center": {"x": int(cx), "y": int(cy), "note": f"fresh VQL elem, color={e.get('color')}, conf={e.get('confidence')}"},  # noqa: E501
-            "label": e.get("label") or e.get("text"),
-            "metadata": {k: e.get(k) for k in ("color","confidence","location") if k in e}
-        })
-    res = {"ui_elements": ui_els, "layers": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}  # noqa: E501
-    return res
+    """Normalize fresh elements through VDisplay while preserving Koru provenance."""
+    from vdisplay.integrations import normalize_vql_ui_elements
+
+    ui_elements = normalize_vql_ui_elements(data, fallback_center=(1024, 640))
+    for raw, element in zip(data["elements"], ui_elements, strict=False):
+        element["click_center"]["note"] = (
+            f"fresh VQL elem, color={raw.get('color')}, conf={raw.get('confidence')}"
+        )
+    return {
+        "ui_elements": ui_elements,
+        "layers": ui_elements,
+        "element_count": data.get("element_count", len(ui_elements)),
+        "by_role": data.get("by_role", {}),
+        "scene": data.get("scene"),
+        "_source": cand,
+        "raw_fresh": True,
+    }
 
 
 def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | None = None, label: str | None = None) -> dict | None:  # noqa: E501

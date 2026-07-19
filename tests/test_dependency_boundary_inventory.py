@@ -118,7 +118,7 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
             screen_observation_v1_schema,
         )
         from vdisplay.input import monitor_by_name
-        from vdisplay.integrations import build_imgl_layers
+        from vdisplay.integrations import build_imgl_layers, normalize_vql_ui_elements
 
         self.assertTrue(callable(resolve_multi_stream_region))
         self.assertTrue(callable(ScreenObservation))
@@ -133,6 +133,7 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
         )
         self.assertTrue(callable(monitor_by_name))
         self.assertTrue(callable(build_imgl_layers))
+        self.assertTrue(callable(normalize_vql_ui_elements))
 
 
 if __name__ == "__main__":
