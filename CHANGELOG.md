@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The TestQL bridge now delegates scenario resolution and batch execution to
+  the public `testql.verification` contract from TestQL 1.2.62. Successful
+  responses include the versioned result schema plus canonical request/result
+  hashes, and Koru no longer imports private TestQL runner symbols.
 - The env2llm registry bridge now consumes the public, typed service factory
   from env2llm 0.1.14 and includes its canonical service descriptor plus
   request/descriptor hashes in every successful response. Service construction
@@ -29,6 +33,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Plesk/DNS/`--apply`.
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
+
+## [0.1.435] - 2026-07-20
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/architecture/dependency-boundary-inventory.yaml
+
+### Test
+- Update tests/test_deps_autorepair.py
+- Update tests/test_package_deduplication.py
+- Update tests/test_testql_bridge.py
+
+### Other
+- Update app.doql.less
+- Update uv.lock
 
 ## [0.1.434] - 2026-07-19
 

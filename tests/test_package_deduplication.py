@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 
-def test_koru_src_has_no_private_env2llm_imports() -> None:
+def _private_dependency_imports(package: str) -> list[str]:
     root = Path(__file__).resolve().parents[1] / "src"
     offenders: list[str] = []
     for path in root.rglob("*.py"):
@@ -19,14 +19,25 @@ def test_koru_src_has_no_private_env2llm_imports() -> None:
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:
                 parts = node.module.split(".")
-                if parts[0] == "env2llm" and any(part.startswith("_") for part in parts):
+                private = any(part.startswith("_") for part in parts) or any(
+                    alias.name.startswith("_") for alias in node.names
+                )
+                if parts[0] == package and private:
                     offenders.append(str(path.relative_to(root)))
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     parts = alias.name.split(".")
-                    if parts[0] == "env2llm" and any(part.startswith("_") for part in parts):
+                    if parts[0] == package and any(part.startswith("_") for part in parts):
                         offenders.append(str(path.relative_to(root)))
-    assert offenders == []
+    return offenders
+
+
+def test_koru_src_has_no_private_env2llm_imports() -> None:
+    assert _private_dependency_imports("env2llm") == []
+
+
+def test_koru_src_has_no_private_testql_imports() -> None:
+    assert _private_dependency_imports("testql") == []
 
 
 def test_autopilot_config_is_gillm_canonical() -> None:

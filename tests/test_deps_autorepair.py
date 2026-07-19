@@ -62,6 +62,13 @@ def test_vdisplay_autorepair_uses_public_api_release_floor() -> None:
     assert EXTRA_PIP_SPECS["vdisplay"] == ["vdisplay>=0.1.58"]
 
 
+def test_testql_autorepair_uses_public_runner_release_floor() -> None:
+    from koru.deps_autorepair import EXTRA_PIP_SPECS, MODULE_PIP_SPECS
+
+    assert MODULE_PIP_SPECS["testql"] == "testql>=1.2.62"
+    assert "testql>=1.2.62" in EXTRA_PIP_SPECS["desktop"]
+
+
 def _load_env2llm_registry_module():
     root = Path(__file__).resolve().parents[1] / "src"
     path = root / "koruapi" / "env2llm_registry.py"

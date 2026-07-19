@@ -353,7 +353,7 @@ extractions:
   - id: testql.public_runner
     order: 60
     priority: P0
-    status: proposed
+    status: complete
     kind: move
     source_modules:
       - src/koruapi/testql_bridge.py
@@ -366,9 +366,10 @@ extractions:
     keep_in_koru:
       - Selection of acceptance criteria and the completed versus applied_unverified decision.
     current_smells:
-      - Koru imports private TestQL runner symbols _resolve_input_paths and _run_single.
+      - Resolved in TestQL 1.2.62 and Koru 0.1.435+; TestQL owns path resolution, batch execution and canonical result serialization.
     acceptance:
       - Koru uses only a public TestQL API and records canonical verification result hashes.
+      - Malformed requests fail through the typed public contract before scenario execution.
     blocked_by: []
   - id: tillm.bridge_cleanup
     order: 90

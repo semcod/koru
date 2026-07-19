@@ -1416,7 +1416,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.434"
+version = "0.1.435"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1713,10 +1713,10 @@ requires-dist = [
     { name = "structlog", marker = "extra == 'obs'", specifier = ">=24.4,<26.0" },
     { name = "tagi", marker = "extra == 'all'", specifier = ">=0.49.0" },
     { name = "tagi", marker = "extra == 'dev'", specifier = ">=0.49.0" },
-    { name = "testql", marker = "extra == 'all'", specifier = ">=1.2.55" },
-    { name = "testql", marker = "extra == 'browser'", specifier = ">=1.2.55" },
-    { name = "testql", marker = "extra == 'desktop'", specifier = ">=1.2.55" },
-    { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.55" },
+    { name = "testql", marker = "extra == 'all'", specifier = ">=1.2.62" },
+    { name = "testql", marker = "extra == 'browser'", specifier = ">=1.2.62" },
+    { name = "testql", marker = "extra == 'desktop'", specifier = ">=1.2.62" },
+    { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.62" },
     { name = "tiktoken", marker = "extra == 'agent'", specifier = ">=0.8,<1.0" },
     { name = "tiktoken", marker = "extra == 'all'", specifier = ">=0.8,<1.0" },
     { name = "tillm", editable = "../tillm" },
@@ -3809,7 +3809,7 @@ wheels = [
 
 [[package]]
 name = "testql"
-version = "1.2.61"
+version = "1.2.62"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -3823,9 +3823,9 @@ dependencies = [
     { name = "rich" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/f4/04d8e374f545c0ddca35ca34511b778ee169714e6345c2e4772788137920/testql-1.2.61.tar.gz", hash = "sha256:034df0cbe4380a999bd0426e2dd814f083117037a18c6951bea583070728e55b", size = 385382, upload-time = "2026-07-15T11:03:30.254Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/55/5ab6d3e1f0c65ec1b3f575cb9f0df636ee67e2cb5396a6b5ee14d73494ac/testql-1.2.62.tar.gz", hash = "sha256:ff46aa71df26e04ac48eadc65c1d82b66549beaa6b98c753e53bd7f0433589ab", size = 400384, upload-time = "2026-07-19T21:57:19.461Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/b6/ae0061011d6800fde6d5faf9b6a2727f55c103f68b1ce1243899a39746eb/testql-1.2.61-py3-none-any.whl", hash = "sha256:befa28aba8342782a8a850b6ca2f33f238a3128ceea388d96450839ac0ac834d", size = 378839, upload-time = "2026-07-15T11:03:28.12Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/fa/9d7ab62ce5ba89b27cf18ee23f7c3902bdd54f580a334f497c24551b3f0a/testql-1.2.62-py3-none-any.whl", hash = "sha256:acb61912dcd6c791fbc81e8c8b91271ec2bbadfa6485af0299398357b37870f5", size = 390775, upload-time = "2026-07-19T21:57:17.239Z" },
 ]
 
 [[package]]

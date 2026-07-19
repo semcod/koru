@@ -330,6 +330,12 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
         rejestrowanymi przez hosta. Koru wymaga tej wersji, dołącza typed result
         do odpowiedzi IDE i usunęło behavioral fallbacki drivera/recovery:
         kolejne 445 linii produkcyjnych netto, łącznie 2087 linii i 10 modułów.
+  - [x] TestQL 1.2.62 przejął rozwiązywanie ścieżek/globów, batch execution i
+        serializację wyniku przez `testql.verification-request.v1` oraz
+        `testql.verification-result.v1`. Most Koru nie importuje już prywatnych
+        symboli ani nie przepakowuje wyniku; zmalał o 26 linii netto. Po
+        uwzględnieniu jawnej provenance z env2llm łączna redukcja wynosi 2110
+        linii i 10 modułów produkcyjnych.
   - [ ] Alias `VisionFrame` pozostawić do osobnej decyzji kompatybilnościowej.
         Transporty OBS/browser przenosić tylko po pojawieniu się drugiego
         konsumenta lub neutralnego transportu.
@@ -444,6 +450,11 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
         odpowiedź niesie kanoniczny request/descriptor hash do audytu.
         Minimalna wersja runtime i DSL zależności to 0.1.14; guard AST blokuje
         powrót prywatnych importów env2llm.
+  - [x] **TestQL slice:** TestQL 1.2.62 udostępnia publiczny, wersjonowany
+        `VerificationRequest`/`VerificationResult`, pakowane JSON Schema oraz
+        kanoniczne `request_hash` i `result_hash`. Koru deleguje resolution i
+        batch execution jednym wywołaniem, zachowując wybór acceptance
+        criteria; guard AST blokuje powrót prywatnych importów TestQL.
 - [ ] **DEP-5 — cienki most tillm (kolejność 90, P2).** Po podbiciu minimalnej
       wersji usunąć lokalny provider registry i path injection; konsumować
       typowany completion/provenance. `ProposalEnvelope`, retry budget,
