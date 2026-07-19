@@ -124,7 +124,7 @@ stages:
   - id: gillm.gui_actuation
     order: 70
     priority: P1
-    status: blocked_by_upstream
+    status: complete
     action: move_to_dependency
     source_paths:
       - src/koru/ide_adapters/gillm_client.py
@@ -143,8 +143,7 @@ stages:
     acceptance:
       - Gillm has no dynamic or static import of Koru.
       - Koru carries no behavioral copy of Gillm recovery.
-    blocked_by:
-      - vdisplay.screen_capture
+    blocked_by: []
 
   - id: namespaces.coru_koru_pairs
     order: 30

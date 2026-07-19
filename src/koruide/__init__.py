@@ -11,7 +11,6 @@ import sys  # noqa: F401
 
 try:
     import gillm.injection.errors as _errors  # noqa: F401
-    import gillm.injection.os_injector as _os_injector
     from gillm.injection.errors import InjectorError
     from gillm.injection.injector import Injector
     from gillm.injection.os_injector import (
@@ -20,8 +19,9 @@ try:
         load_profile,
         try_drive_with_profile,
     )
+    from gillm.runtime import set_activity_sink as _set_activity_sink
 except ImportError:  # degraded host: keep koruide importable; actuation soft-fails
-    _os_injector = None
+    _set_activity_sink = None
 
     class InjectorError(Exception):  # type: ignore[no-redef]
         """Raised when gillm's injection stack is unavailable on this host."""
@@ -73,14 +73,24 @@ from .protocol import (
 from .socket import default_socket_path
 
 
-def _koru_activity_warn_bridge(message: str, *, hint: str | None = None, **kwargs) -> None:
+def _koru_activity_bridge(
+    category: str,
+    message: str,
+    preview: str | None = None,
+) -> None:
+    from koru.activity_log import activity
+
+    activity(category, message, preview=preview)
+
+
+def _koru_activity_warn_bridge(message: str, hint: str | None = None) -> None:
     from koru.activity_log import activity_warn
 
-    activity_warn(message, hint=hint, **kwargs)
+    activity_warn(message, hint=hint)
 
 
-if _os_injector is not None:
-    _os_injector.emit_activity_warn = _koru_activity_warn_bridge
+if _set_activity_sink is not None:
+    _set_activity_sink(_koru_activity_bridge, warn_sink=_koru_activity_warn_bridge)
 
 
 # Lazy exports (STARTER-563): ``.daemon``, ``.config`` and ``.host_setup``

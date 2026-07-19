@@ -213,7 +213,7 @@ extractions:
   - id: gillm.actuation_recovery
     order: 40
     priority: P1
-    status: proposed
+    status: complete
     kind: delete_duplicate
     source_modules:
       - src/koru/ide_adapters/gillm_client.py
@@ -230,13 +230,11 @@ extractions:
       - GUI fallback order, capability/grant checks and escalation to needs_human.
       - Ticket notes and evidence binding for the authorized action.
     current_smells:
-      - Koru carries fallback copies of gillm behavior when imports fail.
-      - gillm activity integration performs a best-effort reverse import of koru.activity_log.
+      - Resolved in Gillm 0.1.24 and Koru 0.1.432+; guard tests prevent behavioral fallback copies and reverse Koru imports from returning.
     acceptance:
       - gillm imports no Koru module and Koru carries no behavioral fallback copy.
       - A typed result preserves attempted strategy, coordinates and evidence references.
-    blocked_by:
-      - vdisplay.screen_truth
+    blocked_by: []
   - id: imgl.vision_transport
     order: 50
     priority: P1

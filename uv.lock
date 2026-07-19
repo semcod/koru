@@ -798,7 +798,7 @@ wheels = [
 
 [[package]]
 name = "gillm"
-version = "0.1.23"
+version = "0.1.24"
 source = { editable = "../gillm" }
 dependencies = [
     { name = "pyyaml" },
@@ -1416,7 +1416,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.432"
+version = "0.1.433"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },

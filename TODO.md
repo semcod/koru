@@ -324,6 +324,12 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
         nie wykonuje już round-trip przez legacy `dict`, a test granicy blokuje
         odtworzenie shimu. Wynik: kolejne 20 linii netto i 1 moduł; łącznie
         1642 linie oraz 10 modułów produkcyjnych.
+  - [x] Gillm 0.1.24 posiada deterministyczny
+        `gillm.gui-action-result.v1`, pakowany JSON Schema i kanoniczny hash
+        wyniku. Gillm nie importuje Koru; aktywność przekazuje callbackami
+        rejestrowanymi przez hosta. Koru wymaga tej wersji, dołącza typed result
+        do odpowiedzi IDE i usunęło behavioral fallbacki drivera/recovery:
+        kolejne 445 linii produkcyjnych netto, łącznie 2087 linii i 10 modułów.
   - [ ] Alias `VisionFrame` pozostawić do osobnej decyzji kompatybilnościowej.
         Transporty OBS/browser przenosić tylko po pojawieniu się drugiego
         konsumenta lub neutralnego transportu.
@@ -419,12 +425,12 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
         `ObservationProvider`, `ProviderAvailability`, `MonitorSpec` i
         `ScreenObservation` z VDisplay. Lokalna konwersja obrazu i descriptor
         shim nie istnieją, a Koru zachowuje wyłącznie ranking providerów.
-- [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
-      strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
-      odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie
-      zgodności usunąć kopie fallbacków z Koru. **Akceptacja:** Gillm działa bez
-      Koru, zwraca `gillm.gui-action-result.v1`, a polityka fallbacku i grant
-      nadal są wyłącznie po stronie Koru.
+- [x] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Gillm 0.1.24
+      jest właścicielem strategii type-at-coordinates, driverów i recovery,
+      działa bez importu Koru oraz zwraca `gillm.gui-action-result.v1` z
+      kanonicznym hashem i JSON Schema. Koru rejestruje callback aktywności,
+      konsumuje typed result i nie zawiera behavioral fallbacków Gillm;
+      polityka kolejności, grant i eskalacja pozostają w Koru.
 - [ ] **DEP-4 — publiczne adaptery IMGL/TestQL/env2llm/Tagi (kolejność 50–80,
       P0–P1).** IMGL przejmuje transport i freshness capture, TestQL publiczny
       batch runner, env2llm publiczną service factory, a Tagi typed change plan.

@@ -19,7 +19,7 @@ def test_base_runtime_dependencies_stay_small() -> None:
     project = _pyproject()["project"]
 
     assert project["dependencies"] == [
-        "gillm>=0.1.9",
+        "gillm>=0.1.24",
         "pyyaml>=6.0,<7.0",
         "rich>=14.3.4",
         # Zero-dep shell-client registry/driver; core so `--ide claude` can

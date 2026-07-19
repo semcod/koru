@@ -26,6 +26,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.433] - 2026-07-19
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update docs/architecture/dependency-boundary-inventory.yaml
+- Update docs/architecture/volume-reduction-plan.yaml
+- Update docs/docker-e2e-testing.md
+
+### Test
+- Update tests/test_gillm_ide_client.py
+- Update tests/test_gillm_recovery_degradation_contract.py
+- Update tests/test_package_deduplication.py
+- Update tests/test_pyproject_metadata.py
+
+### Other
+- Update app.doql.less
+- Update uv.lock
+
 ## [0.1.432] - 2026-07-19
 
 ### Docs

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from gillm.contracts import GUI_ACTION_RESULT_V1
+
 from koru.ide_adapters.gillm_client import build_gillm_ide_client
 from koru.ide_client import build_ide_client
 
@@ -12,6 +14,10 @@ def test_build_gillm_ide_client_dry_run_drive() -> None:
     assert reply["ok"] is True
     assert reply["backend"] == "dry_run"
     assert reply["tool_id"] == "cursor"
+    assert reply["result_schema"] == GUI_ACTION_RESULT_V1
+    assert reply["action_result"]["schema"] == GUI_ACTION_RESULT_V1
+    assert reply["result_hash"] == reply["action_result"]["result_hash"]
+    assert len(reply["result_hash"]) == 64
 
 
 def test_build_ide_client_selects_gillm_backend(monkeypatch) -> None:
