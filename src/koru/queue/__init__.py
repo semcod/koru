@@ -1,9 +1,9 @@
 """Planfile queue system - split into focused modules."""
 
+from koru.proposal_envelope import NO_VALID_ARTIFACT
 from koru.queue.human import default_human_prompt
 from koru.queue.koru_queue_argv import build_koru_queue_argv
 from koru.queue.loop import run_planfile_queue_loop
-from koru.proposal_envelope import NO_VALID_ARTIFACT
 from koru.queue.patch_mode import (
     PATCH_DOES_NOT_APPLY,
     POLICY_DENIED,
