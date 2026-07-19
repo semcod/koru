@@ -15,6 +15,13 @@ ROOT = Path(__file__).resolve().parents[1]
 FOREIGN_NAMESPACES = ("env2llm", "imgl", "nlp2imgl")
 REMOVED_RUNTIME_MODULES = (
     "koruvision/scaling.py",
+    "koruvision/capture_mss.py",
+    "koruvision/portal_capture.py",
+    "koruvision/providers/cli_tools.py",
+    "koruvision/providers/grim.py",
+    "koruvision/providers/mss.py",
+    "koruvision/providers/portal_screencast.py",
+    "koruvision/providers/portal_screenshot.py",
     "koruvision/providers/screencast_session.py",
 )
 

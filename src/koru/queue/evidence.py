@@ -139,6 +139,7 @@ def build_evidence_bundle(
     actor: str | None = None,
     provenance: dict | None = None,
     bindings: dict | None = None,
+    authorization: dict | None = None,
 ) -> dict:
     """Assemble the canonical bundle for a finished run.
 
@@ -160,6 +161,7 @@ def build_evidence_bundle(
             "proposal_sha256": (bindings or {}).get("proposal_sha256"),
             "manifest_hash": manifest_hash,
             "verification_hash": verification_hash,
+            "grant_jti": (authorization or {}).get("jti"),
             "promotion": promotion,
             "verdict": verdict,
         }
@@ -174,6 +176,10 @@ def build_evidence_bundle(
         # ``None`` means the legacy bare-diff contract, whose ladder starts
         # at patch_sha256/manifest_hash instead.
         "bindings": bindings,
+        # Under which authority the mutation ran: contract flag, grant ``jti``
+        # and the capabilities it covered. ``None`` = legacy unenforced run —
+        # visible as such, matching the journal's missing ``authorized`` event.
+        "authorization": authorization,
         "verification_hash": verification_hash,
         "execution_binding_hash": execution_binding_hash,
         "versions": _runtime_versions(),

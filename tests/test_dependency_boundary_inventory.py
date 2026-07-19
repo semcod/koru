@@ -108,7 +108,11 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
 
     def test_vdisplay_public_screen_truth_api_is_available(self) -> None:
         from vdisplay.capture import (
+            MssObservationProvider,
+            ObservationProvider,
+            PortalScreenCastObservationProvider,
             ScreenObservation,
+            capture_observations_with_fallback,
             reset_screencast_consent,
             resolve_multi_stream_region,
             screen_observation_v1_schema,
@@ -118,6 +122,10 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
 
         self.assertTrue(callable(resolve_multi_stream_region))
         self.assertTrue(callable(ScreenObservation))
+        self.assertTrue(callable(ObservationProvider))
+        self.assertTrue(callable(MssObservationProvider))
+        self.assertTrue(callable(PortalScreenCastObservationProvider))
+        self.assertTrue(callable(capture_observations_with_fallback))
         self.assertTrue(callable(reset_screencast_consent))
         self.assertEqual(
             screen_observation_v1_schema()["properties"]["schema"]["const"],

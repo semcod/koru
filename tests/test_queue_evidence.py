@@ -470,3 +470,28 @@ class TestHashLadder:
         assert versions["evidence_schema"] == 1
         assert versions["proposal_schema"] == "1.0"
         assert versions["koru"] and versions["koru"] != "unknown"
+
+
+class TestAuthorizationInBundle:
+    def test_binding_hash_covers_the_grant(self):
+        from koru.queue.evidence import build_evidence_bundle
+
+        def bundle(auth):
+            return build_evidence_bundle(
+                run_id="run-a",
+                ticket={"id": "PLF-A"},
+                manifest={"manifest_hash": "m" * 64},
+                patch_attempts=[{"attempt": 1}],
+                verify={},
+                promotion={},
+                verdict="refused",
+                authorization=auth,
+            )
+
+        granted = bundle({"jti": "j-1", "capabilities": ["code.patch.stage"]})
+        legacy = bundle(None)
+        assert granted["authorization"]["jti"] == "j-1"
+        assert legacy["authorization"] is None
+        assert (
+            granted["execution_binding_hash"] != legacy["execution_binding_hash"]
+        )

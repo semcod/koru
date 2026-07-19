@@ -47,13 +47,23 @@ def grant_required() -> bool:
 
 
 def build_authorizer(project: Path, ticket: dict, actor: str) -> Authorizer | None:
-    """The authorization this ticket runs under, or ``None`` for legacy runs."""
+    """The authorization this ticket runs under, or ``None`` for legacy runs.
+
+    The returned callable keeps the ``(plan, manifest) → outcome`` seam tests
+    stub, and additionally exposes ``authorize.record`` — a dict the last call
+    filled with what was actually granted (``jti``, capabilities, promotion
+    mode). Evidence reads it so the bundle can answer "under which grant"
+    without widening the Authorizer signature.
+    """
     contract = contract_for_ticket(project, ticket)
     needs_grant = grant_required()
     if contract is None and not needs_grant:
         return None
 
+    record: dict = {}
+
     def authorize(plan: PatchPlan, manifest: dict) -> PatchOutcome | None:
+        record.clear()
         if contract is not None:
             capability = CAP_STAGE
             decision = contract.evaluate(
@@ -71,10 +81,12 @@ def build_authorizer(project: Path, ticket: dict, actor: str) -> Authorizer | No
                 promotion = contract.evaluate(actor=actor, capability=extra)
                 if not promotion.allowed:
                     return PatchOutcome(code=POLICY_DENIED, message=promotion.reason)
+            record["contract"] = True
         if needs_grant:
-            return _grant_gate(project, plan, manifest, actor)
+            return _grant_gate(project, plan, manifest, actor, record)
         return None
 
+    authorize.record = record  # type: ignore[attr-defined]
     return authorize
 
 
@@ -83,6 +95,7 @@ def _grant_gate(
     plan: PatchPlan,
     manifest: dict,
     actor: str,
+    record: dict | None = None,
 ) -> PatchOutcome | None:
     """KORU_MUTATIONS_ENABLED + valid signature + bindings + unspent jti = yes."""
     if not mutations_enabled():
@@ -135,6 +148,14 @@ def _grant_gate(
     )
     if not claim.ok:
         return PatchOutcome(code=POLICY_DENIED, message=f"grant replay refused: {claim.reason}")
+    if record is not None:
+        record.update(
+            {
+                "jti": decision.jti,
+                "capabilities": list(capabilities),
+                "promotion_mode": plan.mode,
+            }
+        )
     return None
 
 

@@ -405,8 +405,6 @@ extractions:
       - src/koru/integrations/photo_vql_validation.py
       - src/koru/integrations/vdisplay_client.py
       - src/koruvision/capture.py
-      - src/koruvision/capture_mss.py
-      - src/koruvision/portal_capture.py
       - src/koruvision/providers
     target_repositories:
       - wronai/vdisplay
@@ -416,16 +414,17 @@ extractions:
     move:
       - VQL parsing and normalization, geometry, monitor topology and capture metadata.
       - Stable public APIs for multi-stream regions, monitor lookup and IMGL layer building.
-      - The generic capture provider stack currently duplicated by koruvision.
+      - Generic observation-provider contracts, deterministic fallback mechanics and reusable capture backends.
       - Canonical ScreenObservation, pixel primitives and persistent ScreenCast lifecycle are public in VDisplay 0.1.55.
+      - MSS, native CLI, portal Screenshot and portal ScreenCast providers are public in VDisplay 0.1.56.
     keep_in_koru:
       - Observe-decide-act-verify policy, GUI fallback ladder and authorization.
       - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
     current_smells:
       - The main Koru vdisplay client is a multi-thousand-line integration boundary.
       - Public crop, monitor and VQL layer helpers are consumed from VDisplay 0.1.54 with zero private imports.
-      - Koru's VisionFrame is a compatibility alias for VDisplay ScreenObservation; its portal provider is now a thin VDisplay adapter.
-      - MSS, CLI, portal screenshot and OBS adapters plus coordinate normalization still await extraction.
+      - Koru's VisionFrame and provider base are one-release compatibility shims over VDisplay contracts.
+      - Koru retains only policy ordering plus its Koru-specific OBS and browser/mesh adapters; coordinate normalization still awaits extraction.
     acceptance:
       - Koru has no private vdisplay imports and performs no coordinate conversion itself.
       - Replaying one observation yields the same normalized targets and coordinate map hash.

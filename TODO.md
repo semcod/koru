@@ -152,7 +152,7 @@ przechodzą przez capability dispatcher i kontrakty.
       `koru.queue` (fasada `patch_transaction` też), accessory `ok`/`code`,
       testy `tests/test_patch_result_public_api.py`; decyzje retry już chodzą
       po kodach — otwarta pozostaje strona mostu w repo subactor.*
-- [ ] **P0-4 — pełne binding/provenance evidence.** Uzupełnić run o hash ladder,
+- [x] **P0-4 — pełne binding/provenance evidence.** Uzupełnić run o hash ladder,
       wersje pack/compiler/policy, provider/model oraz przyczynę fallbacku.
       **Akceptacja:** z jednego EvidenceBundle można odtworzyć, kto zaproponował,
       co skompilowano, na co wydano grant, co wykonano i czym zweryfikowano.
@@ -170,9 +170,13 @@ przechodzą przez capability dispatcher i kontrakty.
       verdict, przeliczalny przez audytora) i `versions`
       (koru/proposal_schema/evidence_schema) — liczone przy składaniu bundle,
       więc nie mogą rozjechać się z polami, które podsumowują; testy
-      `TestHashLadder`. Jedyny brak względem akceptacji: tożsamość grantu
-      (`jti`) jest w journalu runu (PHASE_AUTHORIZED), nie w samym bundle —
-      wymaga poszerzenia sygnatury `Authorizer`.*
+      `TestHashLadder`. Domknięte 2026-07-19: bundle ma pole `authorization`
+      (grant `jti` + capabilities + promotion_mode, przez side-channel
+      `authorize.record` — sygnatura `Authorizer` nietknięta, stuby testów
+      działają), `jti` wchodzi też do `execution_binding_hash` i do journalu
+      (PHASE_AUTHORIZED data.jti); legacy run = `authorization: null`, spójnie
+      z brakiem eventu `authorized`. E2E: jti w bundle == wydany plik w
+      `.koru/grants/`. Akceptacja P0-4 spełniona.*
 - [ ] **P0-5 — kontrolowany pilot mostu Subactor → Koru → resume.** Wykonać
       realny, repo-only structural defect przez istniejący szablon, worktree,
       targeted regression i ponowny preflight zadania źródłowego.
@@ -293,11 +297,15 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
         provider portalu deleguje do VDisplay, a z Koru usunięto własny skrypt
         D-Bus/GStreamer, cache uchwytu i `koruvision.scaling`: netto -396 linii
         produkcyjnych i -2 moduły.
-  - [ ] Następnie zastąpić pozostałe registry/provider adapters
-        (`mss`, CLI, portal screenshot, OBS) publicznym typed provider API oraz
-        przenieść canonical coordinate map i normalization z
-        `vdisplay_client.py`. Etap jest w compatibility shim, już nie
-        `blocked_by_upstream` dla obserwacji i ScreenCast.
+  - [x] VDisplay 0.1.56 posiada publiczny typed `ObservationProvider`,
+        deterministyczny runner fallbacku z uporządkowanym śladem błędów oraz
+        izolowane backendy MSS, CLI, portal Screenshot i portal ScreenCast.
+        Koru wymaga tej wersji, zachowuje kolejność/policy i adaptery domenowe
+        OBS/browser, a usuwa 7 modułów i 728 linii z `koruvision` (2056→1328).
+  - [ ] Następnie przenieść canonical coordinate map i normalization z
+        `vdisplay_client.py`; po jednym wydaniu shimu usunąć
+        `koruvision.providers.base.frame_from_png`. OBS/browser przenosić tylko
+        po pojawieniu się drugiego konsumenta lub neutralnego transportu.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
       Gillm przejmuje bounded actuation/recovery; producenci analyzerów emitują
       `TicketProposalV1`; IMGL/TestQL/env2llm/Tagi dostają publiczne typed API;
@@ -372,6 +380,9 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
         canonical hash i publicznym ScreenCast lifecycle. Koru wymaga tej
         wersji dla extras `vision`/`observe`, zachowuje nazwę `VisionFrame`
         jako shim i usunęło 396 linii własnego mechanizmu capture.
+  - [x] VDisplay 0.1.56 opublikowano z typed provider/fallback API i osobnymi
+        backendami MSS/CLI/portal. Koru deleguje mechanikę, zachowuje policy,
+        a `koruvision` zmalało o kolejne 728 linii i 7 modułów.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie

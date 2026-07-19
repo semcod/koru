@@ -259,14 +259,22 @@ class TestGrantEnforcedTransaction(_RepoCase):
             )
             grants = list((project / ".koru" / "grants").glob("*.json"))
             self.assertEqual(len(grants), 1, "exactly one jti was spent")
+            # The bundle names the grant it ran under — same jti the store spent.
+            spent_jti = grants[0].stem
+            self.assertIsNotNone(_b)
+            self.assertEqual(_b["authorization"]["jti"], spent_jti)
+            self.assertIn("code.patch.stage", _b["authorization"]["capabilities"])
             # The journal shows the authorization happened between freeze and staging.
             from koru.queue.journal import read_events
 
             [journal] = (project / ".koru" / "runs").glob("*/events.jsonl")
-            phases = [e["phase"] for e in read_events(project, journal.parent.name)]
+            events = read_events(project, journal.parent.name)
+            phases = [e["phase"] for e in events]
             self.assertIn("authorized", phases)
             self.assertLess(phases.index("frozen"), phases.index("authorized"))
             self.assertLess(phases.index("authorized"), phases.index("staging"))
+            [authorized] = [e for e in events if e["phase"] == "authorized"]
+            self.assertEqual((authorized.get("data") or {}).get("jti"), spent_jti)
 
     def test_an_unenforced_run_journals_no_authorized_event(self) -> None:
         """An audit must be able to tell unauthorized-but-legal from authorized."""
@@ -283,6 +291,9 @@ class TestGrantEnforcedTransaction(_RepoCase):
             [journal] = (project / ".koru" / "runs").glob("*/events.jsonl")
             phases = [e["phase"] for e in read_events(project, journal.parent.name)]
             self.assertNotIn("authorized", phases)
+            # ...and the bundle shows the same absence, so both artifacts agree.
+            self.assertIsNotNone(_b)
+            self.assertIsNone(_b["authorization"])
 
 
 if __name__ == "__main__":

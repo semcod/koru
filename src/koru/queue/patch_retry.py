@@ -138,7 +138,7 @@ def apply_patch_with_retry(
         result, outcome = transaction.result, transaction.outcome
         attempts.append(_attempt_record(len(attempts) + 1, transaction))
         if outcome is None or not outcome.retryable or remaining <= 0:
-            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor)
+            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize))
 
         # A structurally invalid model artifact gets one repair attempt. A
         # ticket/env knob may shrink that budget, never expand it into a loop.
@@ -149,7 +149,7 @@ def apply_patch_with_retry(
             project, ticket, result, budget, manifest, transaction, attempts,
         )
         if aborted is not None:
-            return result, aborted, _finish_run(project, ticket, transaction, manifest, attempts, actor)
+            return result, aborted, _finish_run(project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize))
 
         remaining -= 1
         retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
@@ -159,7 +159,7 @@ def apply_patch_with_retry(
             result, str(retry_action.get("prompt") or "")
         )
         if result.returncode != 0:
-            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor)
+            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize))
 
 
 def _pin_or_detect_drift(
@@ -257,6 +257,12 @@ def _attempt_record(attempt: int, transaction: PatchTransactionResult) -> dict:
     return record
 
 
+def _authorization_record(authorize) -> dict | None:
+    """What the last authorize() call actually granted, or None when legacy."""
+    record = getattr(authorize, "record", None)
+    return dict(record) if record else None
+
+
 def _finish_run(
     project: Path,
     ticket: dict,
@@ -264,6 +270,7 @@ def _finish_run(
     manifest: dict | None,
     attempts: list[dict],
     actor: str | None = None,
+    authorization: dict | None = None,
 ) -> dict:
     """Assemble and persist the run's evidence bundle.
 
@@ -305,6 +312,7 @@ def _finish_run(
         actor=actor,
         provenance=provenance_from_result(transaction.result),
         bindings=plan.proposal if plan else None,
+        authorization=authorization,
     )
     try:
         persist_evidence(project, bundle)

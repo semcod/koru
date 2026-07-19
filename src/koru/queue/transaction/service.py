@@ -169,7 +169,12 @@ def _authorize(
     if refusal is not None:
         journal.append(PHASE_REFUSED, data={"code": refusal.code})
         return refusal
-    journal.append(PHASE_AUTHORIZED, manifest_hash=frozen.get("manifest_hash"))
+    record = getattr(authorize, "record", None) or {}
+    journal.append(
+        PHASE_AUTHORIZED,
+        manifest_hash=frozen.get("manifest_hash"),
+        data={"jti": record.get("jti")} if record.get("jti") else None,
+    )
     return None
 
 
