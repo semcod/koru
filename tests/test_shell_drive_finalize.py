@@ -223,3 +223,60 @@ class TestProviderSwitchNote:
         }
         _finalize(tmp_path, reply=reply, _hp=lines.append)
         assert any("provider-switch" in line for line in lines)
+
+
+class TestProviderExhaustionNote:
+    """A drive that failed on every provider must leave a ticket trace."""
+
+    @pytest.fixture(autouse=True)
+    def _fresh_dedupe(self):
+        from koru.autonomy import shell_drive_finalize as mod
+
+        mod._EXHAUSTION_NOTED.clear()
+        yield
+        mod._EXHAUSTION_NOTED.clear()
+
+    def _note(self, tmp_path, reply, hp=None):
+        from koru.autonomy.shell_drive_finalize import note_provider_exhaustion
+
+        return note_provider_exhaustion(
+            project=tmp_path,
+            ticket_id="STARTER-1",
+            reply=reply,
+            _hp=hp or _hp,
+        )
+
+    def test_skipped_without_attempts_or_markers(self, tmp_path, planfile):
+        assert self._note(tmp_path, {"ok": False, "stderr": "429 limit"}) == "skipped"
+        assert (
+            self._note(
+                tmp_path,
+                {"ok": False, "provider_attempts": ["z.ai"], "stderr": "file not found"},
+            )
+            == "skipped"
+        )
+        assert planfile.calls == []
+
+    def test_exhaustion_writes_note_once(self, tmp_path, planfile):
+        reply = {
+            "ok": False,
+            "provider_attempts": ["subscription", "z.ai", "openrouter"],
+            "stderr": "429 rate limit exceeded",
+        }
+        assert self._note(tmp_path, reply) == "noted_exhaustion"
+        assert self._note(tmp_path, reply) == "already_noted"
+        updates = [c for c in planfile.calls if c[:2] == ["ticket", "update"]]
+        assert len(updates) == 1
+        note = updates[0][updates[0].index("--note") + 1]
+        assert "provider-exhausted: tried subscription → z.ai → openrouter" in note
+        assert "tillm provider order" in note
+
+    def test_exhaustion_reported_live(self, tmp_path, planfile):
+        lines: list[str] = []
+        reply = {
+            "ok": False,
+            "provider_attempts": ["z.ai"],
+            "message": "402 requires more credits",
+        }
+        assert self._note(tmp_path, reply, hp=lines.append) == "noted_exhaustion"
+        assert any("provider-exhausted" in line for line in lines)

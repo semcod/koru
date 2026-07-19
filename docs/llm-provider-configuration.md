@@ -160,7 +160,12 @@ na obu poziomach:
 tillm provider sync z.ai                    # dry-run: plan na oba poziomy
 tillm provider sync z.ai --level terminal   # tylko narzędzia shellowe
 tillm provider sync z.ai --apply            # import brakującego tokenu + zapisy
+tillm provider sync z.ai --apply --surface codex --surface opencode
+                                            # eksport wybiórczy (bez claude-settings)
 ```
+
+`--surface` przyjmuje: `claude`, `codex`, `opencode`, `jetbrains`, `qoder`
+(lub pełne id powierzchni).
 
 Kierunki: gdy store nie ma tokenu, a któraś powierzchnia ma → **import** do
 store; gdy store ma token → **eksport** do zapisywalnych powierzchni, którym
@@ -203,6 +208,12 @@ następnego providera z kolejki. Taka zmiana jest raportowana:
 
 Każda notka drive'a zawiera też `provider=<id>`, więc po fakcie widać, który
 provider wykonał pracę nad ticketem.
+
+Gdy **cała kolejka** padnie (każdy provider 429/402/credits), ticket dostaje
+notkę `provider-exhausted: tried … — every provider in the queue was
+unavailable/exhausted` (raz na proces pętli, bez spamu przy retry), a pętla
+loguje to samo na stdout. Ticket zostaje otwarty do czasu dodania
+tokenu/providera.
 
 ### OpenAI Codex
 

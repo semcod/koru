@@ -106,6 +106,68 @@ def provider_switch_note(reply: dict[str, Any]) -> str | None:
     )
 
 
+# (ticket_id, attempts-signature) pairs already noted by this loop process —
+# a failed drive is retried every cycle and must not spam the ticket.
+_EXHAUSTION_NOTED: set[tuple[str, str]] = set()
+
+
+def note_provider_exhaustion(
+    *,
+    project: Path,
+    ticket_id: str,
+    reply: dict[str, Any],
+    _hp: Callable[..., Any],
+) -> str:
+    """Record on the ticket that the whole provider queue was exhausted.
+
+    ``provider_switch_note`` covers the *successful* fallback; this covers the
+    drive that failed after every attempt (429/402/credits on each provider).
+    The loop keeps retrying, so the note is written once per loop process per
+    attempts-signature. Returns the action taken for telemetry.
+    """
+    if not ticket_id:
+        return "skipped"
+    attempts = [
+        str(item).strip()
+        for item in (reply.get("provider_attempts") or ())
+        if str(item).strip()
+    ]
+    if not attempts:
+        return "skipped"
+    try:
+        from tillm.providers import is_provider_exhaustion
+    except ImportError:
+        return "skipped"
+    if not is_provider_exhaustion(
+        stdout=str(reply.get("stdout") or ""),
+        stderr=str(reply.get("stderr") or ""),
+        message=str(reply.get("message") or ""),
+    ):
+        return "skipped"
+    key = (ticket_id, ",".join(attempts))
+    if key in _EXHAUSTION_NOTED:
+        return "already_noted"
+    note = (
+        f"{_NOTE_TAG} provider-exhausted: tried {' → '.join(attempts)} — every "
+        "provider in the queue was unavailable/exhausted (limits/credits); the "
+        "drive failed and this ticket stays open. Add a provider token "
+        "(`tillm provider set …`) or re-prioritize (`tillm provider order …`)."
+    )
+    _hp(f"  shell-drive: {note}")
+    from koru.queue.runners import run_process
+    from koru.queue.ticket import planfile_command
+
+    result = planfile_command(
+        project,
+        ["ticket", "update", ticket_id, "--note", note],
+        runner=run_process,
+    )
+    if result.returncode != 0:
+        return "note_failed"
+    _EXHAUSTION_NOTED.add(key)
+    return "noted_exhaustion"
+
+
 def _reply_note(reply: dict[str, Any]) -> str:
     message = reply.get("message") or reply.get("stdout") or reply.get("output") or ""
     if isinstance(message, bytes):
@@ -279,4 +341,8 @@ def finalize_shell_drive_ticket(
     )
 
 
-__all__ = ["finalize_shell_drive_ticket", "provider_switch_note"]
+__all__ = [
+    "finalize_shell_drive_ticket",
+    "note_provider_exhaustion",
+    "provider_switch_note",
+]
