@@ -425,9 +425,10 @@ extractions:
     current_smells:
       - The main Koru vdisplay client is a multi-thousand-line integration boundary.
       - Public crop, monitor and VQL layer helpers are consumed from VDisplay 0.1.54 with zero private imports.
-      - Koru's VisionFrame and provider base are one-release compatibility shims over VDisplay contracts.
+      - Koru's VisionFrame remains a compatibility name, while the provider-base shim has been deleted and domain adapters emit typed VDisplay observations directly.
       - Canonical coordinate mapping and policy-free capture metadata enrichment delegate to VDisplay 0.1.58; Koru retains calibration selection, policy ordering and its Koru-specific OBS and browser/mesh adapters.
     acceptance:
       - Koru has no private vdisplay imports and performs no coordinate conversion itself.
+      - Koru contains no provider-base compatibility module or local PNG-to-observation factory.
       - Replaying one observation yields the same normalized targets and coordinate map hash.
     blocked_by: []

@@ -85,7 +85,7 @@ def test_browser_provider_reads_from_store(tmp_path: Path) -> None:
     provider = BrowserGetDisplayProvider()
     frames = provider.capture_all(scale=1.0)
     assert len(frames) == 1
-    assert frames[0]["output"] == "browser"
+    assert frames[0].output == "browser"
     clear_vision_frames()
 
 

@@ -128,7 +128,7 @@ def test_capture_all_monitors_returns_frame_per_display(monkeypatch) -> None:
 
 
 def test_capture_monitor_png_auto_falls_back_to_portal_on_wayland(monkeypatch, capsys) -> None:
-    from koruvision.providers.base import ProviderAvailability
+    from vdisplay.capture import ProviderAvailability
 
     monkeypatch.delenv("KORU_VISION_BACKEND", raising=False)
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
@@ -185,7 +185,7 @@ def test_capture_monitor_png_auto_uses_native_command_when_mss_fails(monkeypatch
 
 
 def test_capture_all_monitors_auto_falls_back_to_portal(monkeypatch) -> None:
-    from koruvision.providers.base import ProviderAvailability
+    from vdisplay.capture import ProviderAvailability
 
     monkeypatch.delenv("KORU_VISION_BACKEND", raising=False)
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")

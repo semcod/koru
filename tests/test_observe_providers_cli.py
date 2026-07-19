@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from vdisplay.capture import ProviderAvailability
 
 from koruobserve.providers_cli import (
     cmd_providers_list,
@@ -36,8 +37,6 @@ def test_probe_capture_providers_unknown_name() -> None:
 
 
 def test_probe_capture_providers_mss_mocked() -> None:
-    from koruvision.providers.base import ProviderAvailability
-
     fake_frame = {
         "payload": b"\x89PNG\r\n\x1a\n" + b"\x00" * 20,
         "width": 2,

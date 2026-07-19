@@ -13,16 +13,12 @@ import subprocess  # noqa: F401 — re-exported for monkeypatching from tests
 from typing import Any
 
 from vdisplay.capture import BlackFrameError, ScreenObservation, resolve_capture_scale
-from koruvision.providers.detector import capture_all_with_providers, capture_one_with_providers
 
+from koruvision.providers.detector import capture_all_with_providers, capture_one_with_providers
 
 # Compatibility name retained for Koru callers.  The data contract and its
 # canonical hashing now live at the capture boundary owned by VDisplay.
 VisionFrame = ScreenObservation
-
-
-def _frame(descriptor: dict[str, Any]) -> VisionFrame:
-    return VisionFrame(**descriptor)
 
 
 def list_monitors() -> list[dict[str, Any]]:
@@ -36,13 +32,13 @@ def list_monitors() -> list[dict[str, Any]]:
 def capture_monitor_png(monitor_id: int | None = None, scale: float | None = None) -> VisionFrame:
     """Capture a single monitor using the best available provider."""
     resolved_scale = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
-    return _frame(capture_one_with_providers(monitor_id, resolved_scale))
+    return capture_one_with_providers(monitor_id, resolved_scale)
 
 
 def capture_all_monitors(scale: float | None = None) -> list[VisionFrame]:
     """Capture every detected monitor; black/failed monitors are skipped."""
     resolved_scale = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
-    return [_frame(item) for item in capture_all_with_providers(resolved_scale)]
+    return capture_all_with_providers(resolved_scale)
 
 
 __all__ = [

@@ -1,6 +1,7 @@
 """Capture provider plugins for :mod:`koruvision.capture`."""
 
-from koruvision.providers.base import BlackFrameError, ProviderAvailability
+from vdisplay.capture import BlackFrameError, ProviderAvailability
+
 from koruvision.providers.detector import (
     capture_all_with_providers,
     capture_one_with_providers,

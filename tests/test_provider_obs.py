@@ -83,9 +83,9 @@ def test_obs_provider_capture_one(monkeypatch) -> None:
     )
     provider = ObsWebSocketProvider()
     frame = provider.capture_one(None, scale=0.5)
-    assert frame["output"] == "Screen 1"
-    assert frame["monitor_id"] == 0
-    assert frame["payload"][:8] == b"\x89PNG\r\n\x1a\n"
+    assert frame.output == "Screen 1"
+    assert frame.monitor_id == 0
+    assert frame.payload[:8] == b"\x89PNG\r\n\x1a\n"
 
 
 class FakeWsForCapture:

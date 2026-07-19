@@ -142,8 +142,7 @@ src/koruvision/
 
   providers/
     __init__.py               # registry + auto-detect
-    base.py                   # CaptureProvider Protocol + ProviderResult
-    detector.py               # rank_providers(env) -> [Provider, ...]
+    detector.py               # policy rank; provider contract owns vdisplay.capture
 
     mss.py                    # X11 / macOS / Windows native (stary _capture_via_mss_single)
     portal_screenshot.py      # xdg-desktop-portal.Screenshot (interactive)
@@ -160,11 +159,11 @@ src/koruvision/
 ### 4.2. Kontrakt providera
 
 ```python
-# providers/base.py
+# Public owner: vdisplay.capture
 from typing import Protocol, runtime_checkable
 
 @runtime_checkable
-class CaptureProvider(Protocol):
+class ObservationProvider(Protocol):
     name: str
     needs_consent: bool
     streams: bool  # True = stay-resident, False = one-shot per cycle

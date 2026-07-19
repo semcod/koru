@@ -6,14 +6,16 @@ import sys
 from typing import Any
 
 from vdisplay.capture import (
+    MonitorSpec,
+    ObservationProvider,
     ObservationProviderChainError,
-    coerce_screen_observation,
+    ScreenObservation,
     capture_observations_with_fallback,
+    coerce_screen_observation,
     resolve_capture_scale,
 )
 from vdisplay.discovery import list_outputs as discover_monitors
 
-from koruvision.providers.base import CaptureProvider, MonitorSpec
 from koruvision.providers.env import (
     capture_provider_pref,
     compositor_hint,
@@ -63,7 +65,7 @@ def monitors_via_xrandr() -> list[MonitorSpec]:
     return monitors
 
 
-def _forced_provider_rank(pref: str) -> list[CaptureProvider] | None:
+def _forced_provider_rank(pref: str) -> list[ObservationProvider] | None:
     if pref == "auto":
         return None
     forced = _LEGACY_MAP.get(pref, pref)
@@ -95,9 +97,9 @@ def _auto_provider_order() -> list[str]:
     return ordered_names
 
 
-def _available_ranked_providers(ordered_names: list[str]) -> list[CaptureProvider]:
+def _available_ranked_providers(ordered_names: list[str]) -> list[ObservationProvider]:
     seen: set[str] = set()
-    ranked: list[CaptureProvider] = []
+    ranked: list[ObservationProvider] = []
     for name in ordered_names:
         if name in seen:
             continue
@@ -110,7 +112,7 @@ def _available_ranked_providers(ordered_names: list[str]) -> list[CaptureProvide
     return ranked
 
 
-def rank_providers() -> list[CaptureProvider]:
+def rank_providers() -> list[ObservationProvider]:
     pref = capture_provider_pref()
     forced = _forced_provider_rank(pref)
     if forced is not None:
@@ -225,11 +227,11 @@ def _auto_failure_message(errors: list[str]) -> str:
     return msg
 
 
-def _provider_label(provider: CaptureProvider) -> str:
+def _provider_label(provider: ObservationProvider) -> str:
     return "portal" if provider.name == "portal_screenshot" else provider.name
 
 
-def _should_report_auto_portal(provider: CaptureProvider, index: int) -> bool:
+def _should_report_auto_portal(provider: ObservationProvider, index: int) -> bool:
     return (
         index == 0
         and provider.name == "portal_screenshot"
@@ -238,7 +240,10 @@ def _should_report_auto_portal(provider: CaptureProvider, index: int) -> bool:
     )
 
 
-def capture_one_with_providers(monitor_id: int | None, scale: float) -> dict[str, Any]:
+def capture_one_with_providers(
+    monitor_id: int | None,
+    scale: float,
+) -> ScreenObservation:
     providers = rank_providers()
     if not providers:
         raise RuntimeError(_auto_failure_message(["no providers available"]))
@@ -264,10 +269,10 @@ def capture_one_with_providers(monitor_id: int | None, scale: float) -> dict[str
             "koru vision: auto selected Wayland portal — used portal capture",
             file=sys.stderr,
         )
-    return batch.observations[0].to_descriptor()
+    return batch.observations[0]
 
 
-def capture_all_with_providers(scale: float) -> list[dict[str, Any]]:
+def capture_all_with_providers(scale: float) -> list[ScreenObservation]:
     providers = rank_providers()
     if not providers:
         raise RuntimeError(_auto_failure_message(["no providers available"]))
@@ -293,4 +298,4 @@ def capture_all_with_providers(scale: float) -> list[dict[str, Any]]:
             "koru vision: auto selected Wayland portal — used portal capture",
             file=sys.stderr,
         )
-    return [observation.to_descriptor() for observation in batch.observations]
+    return list(batch.observations)

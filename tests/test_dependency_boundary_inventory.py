@@ -106,6 +106,16 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
 
         self.assertEqual(found, set())
 
+    def test_vdisplay_provider_base_shim_is_removed(self) -> None:
+        shim = ROOT / "src/koruvision/providers/base.py"
+        self.assertFalse(shim.exists())
+        for path in (ROOT / "src").rglob("*.py"):
+            with self.subTest(path=path.relative_to(ROOT).as_posix()):
+                self.assertNotIn(
+                    "koruvision.providers.base",
+                    path.read_text(encoding="utf-8"),
+                )
+
     def test_vdisplay_public_screen_truth_api_is_available(self) -> None:
         from vdisplay.capture import (
             CaptureCoordinateMap,

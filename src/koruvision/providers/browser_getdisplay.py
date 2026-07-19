@@ -7,7 +7,13 @@ import os
 from pathlib import Path
 from typing import Any
 
-from koruvision.providers.base import MonitorSpec, ProviderAvailability, frame_from_png
+from vdisplay.capture import (
+    MonitorSpec,
+    ProviderAvailability,
+    ScreenObservation,
+    screen_observation_from_png,
+)
+
 from koruvision.providers.env import capture_provider_pref, env_truthy
 
 _PROVIDER_NAME = "browser_getdisplay"
@@ -29,36 +35,36 @@ def browser_capture_interval_seconds() -> int:
         return 30
 
 
-def _vision_mime_with_provider(frame: dict[str, Any]) -> str:
-    native_w = int(frame.get("native_width") or frame.get("width") or 0)
-    native_h = int(frame.get("native_height") or frame.get("height") or 0)
+def _vision_mime_with_provider(frame: ScreenObservation) -> str:
+    native_w = frame.native_width or frame.width
+    native_h = frame.native_height or frame.height
     parts = [
         "image/png",
-        f"monitor={frame['monitor_id']}",
-        f"w={frame['width']}",
-        f"h={frame['height']}",
+        f"monitor={frame.monitor_id}",
+        f"w={frame.width}",
+        f"h={frame.height}",
         f"nw={native_w}",
         f"nh={native_h}",
         f"provider={_PROVIDER_NAME}",
     ]
-    output = str(frame.get("output") or "").strip()
+    output = frame.output.strip()
     if output:
         parts.append(f"output={output}")
     return "; ".join(parts)
 
 
-def _frames_from_store() -> list[dict[str, Any]]:
+def _frames_from_store() -> list[ScreenObservation]:
     from korumesh.dashboard_parse import parse_mime_params
     from korumesh.store import list_vision_frames
 
-    rows: list[dict[str, Any]] = []
+    rows: list[ScreenObservation] = []
     for envelope in list_vision_frames():
         _base, params = parse_mime_params(envelope.mime)
         if params.get("provider") != _PROVIDER_NAME:
             continue
         monitor_id = int(params.get("monitor", "0") or 0)
         rows.append(
-            frame_from_png(
+            screen_observation_from_png(
                 envelope.payload,
                 monitor_id=monitor_id,
                 scale=1.0,
@@ -105,7 +111,7 @@ def _remember_browser_upload_envelope(
     *,
     project: Path,
     peer: str,
-    frame_dict: dict[str, Any],
+    frame: ScreenObservation,
 ) -> None:
     from korumesh.envelope import sign_envelope
     from korumesh.store import remember_envelope
@@ -114,10 +120,10 @@ def _remember_browser_upload_envelope(
         peer_from=peer,
         peer_to="*",
         topic="vision/frame",
-        mime=_vision_mime_with_provider(frame_dict),
-        payload=frame_dict["payload"],
+        mime=_vision_mime_with_provider(frame),
+        payload=frame.payload,
         key=_mesh_key_for_browser_upload(project),
-        envelope_id=f"{peer}:vision:{frame_dict['monitor_id']}",
+        envelope_id=f"{peer}:vision:{frame.monitor_id}",
     )
     remember_envelope(envelope)
 
@@ -126,18 +132,17 @@ def _publish_browser_upload_if_requested(
     *,
     project: Path,
     peer: str,
-    frame_dict: dict[str, Any],
+    frame: ScreenObservation,
     publish_mesh: bool,
 ) -> bool:
     if not publish_mesh:
         return False
     try:
-        from koruvision.capture import VisionFrame
         from koruvision.mesh import publish_vision_frame, resolve_mesh_publish
 
         mesh_url, mesh_peer, mesh_key = resolve_mesh_publish(project)
         publish_vision_frame(
-            VisionFrame(**frame_dict),
+            frame,
             mesh_url=mesh_url,
             peer_from=peer or mesh_peer,
             key=mesh_key,
@@ -160,7 +165,7 @@ def ingest_browser_upload(
     peer = str(body.get("peer") or body.get("peer_from") or "").strip()
     scale = float(body.get("scale", 1.0) or 1.0)
 
-    frame_dict = frame_from_png(
+    frame = screen_observation_from_png(
         payload,
         monitor_id=monitor_id,
         scale=scale,
@@ -176,20 +181,20 @@ def ingest_browser_upload(
     _remember_browser_upload_envelope(
         project=project,
         peer=peer,
-        frame_dict=frame_dict,
+        frame=frame,
     )
     published = _publish_browser_upload_if_requested(
         project=project,
         peer=peer,
-        frame_dict=frame_dict,
+        frame=frame,
         publish_mesh=publish_mesh,
     )
 
     return {
         "ok": True,
         "peer_from": peer,
-        "monitor_id": frame_dict["monitor_id"],
-        "frame_id": frame_dict["frame_id"],
+        "monitor_id": frame.monitor_id,
+        "frame_id": frame.frame_id,
         "published": published,
         "provider": _PROVIDER_NAME,
     }
@@ -228,16 +233,16 @@ class BrowserGetDisplayProvider:
             ]
         return [
             MonitorSpec(
-                id=int(item["monitor_id"]),
-                output=str(item.get("output") or "browser"),
-                width=int(item.get("native_width") or item.get("width") or 0),
-                height=int(item.get("native_height") or item.get("height") or 0),
+                id=item.monitor_id,
+                output=item.output or "browser",
+                width=item.native_width or item.width,
+                height=item.native_height or item.height,
                 is_primary=idx == 0,
             )
             for idx, item in enumerate(frames)
         ]
 
-    def capture_all(self, scale: float) -> list[dict[str, Any]]:
+    def capture_all(self, scale: float) -> list[ScreenObservation]:
         frames = _frames_from_store()
         if not frames:
             raise RuntimeError(
@@ -246,21 +251,21 @@ class BrowserGetDisplayProvider:
         if scale == 1.0:
             return frames
         return [
-            frame_from_png(
-                item["payload"],
-                monitor_id=int(item["monitor_id"]),
+            screen_observation_from_png(
+                item.payload,
+                monitor_id=item.monitor_id,
                 scale=scale,
-                output=str(item.get("output") or "browser"),
+                output=item.output or "browser",
                 provider=self.name,
             )
             for item in frames
         ]
 
-    def capture_one(self, monitor_id: int | None, scale: float) -> dict[str, Any]:
+    def capture_one(self, monitor_id: int | None, scale: float) -> ScreenObservation:
         frames = self.capture_all(scale)
         if monitor_id is None:
             return frames[0]
         for frame in frames:
-            if frame["monitor_id"] == monitor_id:
+            if frame.monitor_id == monitor_id:
                 return frame
         return frames[min(max(monitor_id, 0), len(frames) - 1)]

@@ -26,6 +26,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.432] - 2026-07-19
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update docs/architecture/dependency-boundary-inventory.yaml
+- Update docs/architecture/volume-reduction-plan.yaml
+- Update docs/plans/capture-providers-refactor.md
+
+### Test
+- Update tests/test_dependency_boundary_inventory.py
+- Update tests/test_koruvision_capture.py
+- Update tests/test_observe_providers_cli.py
+- Update tests/test_provider_browser_upload.py
+- Update tests/test_provider_obs.py
+- Update tests/test_vision_provider_mime.py
+
 ## [0.1.431] - 2026-07-19
 
 ### Docs

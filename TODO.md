@@ -318,9 +318,15 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
         target policy, grant i authority. Z `vdisplay_client.py` oraz
         `photo_vql_target.py` usunięto netto 402 linie. Łączna redukcja czterech
         ukończonych slice'ów: 1622 linie i 9 modułów produkcyjnych.
-  - [ ] Po jednym wydaniu shimu usunąć
-        `koruvision.providers.base.frame_from_png`. OBS/browser przenosić tylko
-        po pojawieniu się drugiego konsumenta lub neutralnego transportu.
+  - [x] Po okresie kompatybilności usunięto cały
+        `koruvision.providers.base`, nie tylko `frame_from_png`. Adaptery OBS i
+        browser emitują bezpośrednio publiczny `ScreenObservation`, detector
+        nie wykonuje już round-trip przez legacy `dict`, a test granicy blokuje
+        odtworzenie shimu. Wynik: kolejne 20 linii netto i 1 moduł; łącznie
+        1642 linie oraz 10 modułów produkcyjnych.
+  - [ ] Alias `VisionFrame` pozostawić do osobnej decyzji kompatybilnościowej.
+        Transporty OBS/browser przenosić tylko po pojawieniu się drugiego
+        konsumenta lub neutralnego transportu.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
       Gillm przejmuje bounded actuation/recovery; producenci analyzerów emitują
       `TicketProposalV1`; IMGL/TestQL/env2llm/Tagi dostają publiczne typed API;
@@ -408,6 +414,11 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
         adapterem live. Koru nie implementuje już konwersji współrzędnych;
         dwa główne adaptery zmalały netto o 402 linie, a audit działania
         utrwala deskryptor i hash użytej mapy.
+  - [x] Usunięto lokalny `koruvision.providers.base`; domenowe adaptery OBS i
+        browser oraz fallback detector używają teraz bezpośrednio typed
+        `ObservationProvider`, `ProviderAvailability`, `MonitorSpec` i
+        `ScreenObservation` z VDisplay. Lokalna konwersja obrazu i descriptor
+        shim nie istnieją, a Koru zachowuje wyłącznie ranking providerów.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie
