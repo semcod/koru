@@ -307,9 +307,10 @@ extractions:
   - id: planfile.client_lifecycle
     order: 10
     priority: P0
-    status: upstream_api_ready
+    status: dual_run
     kind: move
     source_modules:
+      - src/koru/queue/planfile_sdk.py
       - src/koru/queue/planfile_ticket_note.py
       - src/koru/queue/ticket.py
     target_repositories:
@@ -323,8 +324,8 @@ extractions:
     keep_in_koru:
       - Queue ordering, lane selection, capability policy and the decision to transition a ticket.
     current_smells:
-      - Koru duplicates executable search, version probes, CLI invocation and lock retry.
-      - Ticket decisions depend on transport details instead of typed result codes.
+      - Read-only and administrative Planfile operations still need CLI resolution.
+      - Dashboard and shell-finalize lifecycle call sites still await the typed gateway.
     acceptance:
       - Koru performs ticket operations through a public Planfile SDK with no text parsing.
       - Planfile contract tests cover lock contention, missing ticket and invalid transition.
@@ -422,7 +423,8 @@ extractions:
       - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
     current_smells:
       - The main Koru vdisplay client is a multi-thousand-line integration boundary.
-      - Koru imports private vdisplay symbols for crop, monitor and VQL bridge behavior.
+      - Public crop, monitor and VQL layer helpers are implemented in the VDisplay 0.1.53 working tree but unpublished.
+      - Koru must retain the three private imports until a dependency-first VDisplay release is available.
     acceptance:
       - Koru has no private vdisplay imports and performs no coordinate conversion itself.
       - Replaying one observation yields the same normalized targets and coordinate map hash.

@@ -22,6 +22,7 @@ from koru.queue.patch_mode import (
     promotion_mode,
 )
 from koru.queue.patch_retry import apply_patch_with_retry
+from koru.queue.planfile_sdk import planfile_lifecycle_command
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
 from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
@@ -91,12 +92,12 @@ def _handle_human_ticket(
     )
     if claimed:
         return claimed
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
     )
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "done", ticket_id],
         runner=planfile_runner,
@@ -150,7 +151,7 @@ def _claim_and_start(
     claimed = ticket_claim_or_error(project, ticket_id, actor, planfile_runner=planfile_runner)
     if claimed:
         return claimed
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
@@ -330,7 +331,7 @@ def _finalize_ticket(
         _append_shell_evidence(
             project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG,
         )
-        planfile_command(
+        planfile_lifecycle_command(
             project,
             ["ticket", "block", ticket_id, "--reason", f"FAIL: {verification_error}"],
             runner=planfile_runner,
@@ -353,7 +354,7 @@ def _finalize_ticket(
             _append_shell_evidence(
                 project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG
             )
-        planfile_command(
+        planfile_lifecycle_command(
             project,
             ["ticket", "done", ticket_id],
             runner=planfile_runner,
@@ -361,7 +362,7 @@ def _finalize_ticket(
         status = "completed"
     else:
         reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
-        planfile_command(
+        planfile_lifecycle_command(
             project,
             ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],
             runner=planfile_runner,
@@ -452,7 +453,7 @@ def _resolve_action_or_result(
     if executor_kind == "shell" and not interactive and not dry_run:
         return "true", None
 
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "block", ticket_id, "--reason", missing_prompt],
         runner=planfile_runner,
@@ -656,7 +657,7 @@ def _run_next_planfile_task_impl(
         if use_patch_mode and (denial := _pre_llm_contract_denial(project, ticket, actor)):
             # The contract is checked before the model ever sees a prompt: an
             # actor outside its box must not spend an LLM run finding out.
-            planfile_command(
+            planfile_lifecycle_command(
                 project,
                 ["ticket", "block", ticket_id, "--reason", f"FAIL: [policy_denied] {denial}"],
                 runner=planfile_runner,

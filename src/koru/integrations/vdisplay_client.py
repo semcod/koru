@@ -920,7 +920,7 @@ def _auto_open_ide_enabled(*, ide: str = "auto") -> bool:
 
 
 def _real_imgl_src() -> str | None:
-    """Filesystem path to semcod imgl (not koru/src/imgl stub)."""
+    """Filesystem path to a semcod imgl checkout, when one is available."""
     candidates: list[str] = []
     explicit = os.environ.get("IMGL_SRC", "").strip()
     if explicit:
@@ -934,14 +934,12 @@ def _real_imgl_src() -> str | None:
 
 
 def _ensure_real_imgl_on_path() -> None:
-    """Prefer real semcod imgl over koru/src/imgl compatibility stub."""
+    """Prefer an explicit semcod imgl checkout over an installed package."""
     import sys
 
     imgl_root = _real_imgl_src()
     if not imgl_root:
         return
-    koru_stub = str(Path(__file__).resolve().parents[2] / "imgl")
-    sys.path = [p for p in sys.path if p not in {koru_stub, str(Path(koru_stub).resolve())}]
     if imgl_root in sys.path:
         sys.path.remove(imgl_root)
     sys.path.insert(0, imgl_root)

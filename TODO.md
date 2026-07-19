@@ -241,24 +241,36 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
       generatorów i hashy. Potencjał: 146 747 linii i ~15,96 MiB checkoutu.
       To jest operacja destrukcyjna dla historii roboczej, więc nie wykonywać
       jej jako efektu ubocznego innego refaktoru.
-- [ ] **VOL-2 — runtime bez shadow packages (order 20, P0).** Przenieść
-      `src/env2llm`, `src/imgl`, `src/nlp2imgl` do `tests/fakes` i dodać smoke
-      zbudowanego wheela. Wynik: -302 linie produkcyjnych namespace'ów, bez
-      udawania redukcji checkoutu.
+- [x] **VOL-2 — runtime bez shadow packages (order 20, P0).** Test doubles
+      `env2llm`, `imgl` i `nlp2imgl` są ładowane wyłącznie z `tests/fakes` przez
+      konfigurację pytest; dawne katalogi zniknęły z `src/`. Kontrakt CI bada
+      izolowane import discovery, a wheel smoke potwierdza brak trzech cudzych
+      namespace'ów. Wynik: -302 linie produkcyjnych namespace'ów, bez udawania
+      redukcji checkoutu.
 - [ ] **VOL-3 — jeden namespace `koru` (order 30, P0).** Scalić możliwości
       par `cli/dsl/mcp/nlp/rest/uri` `*2coru` + `*2koru` w kanoniczne
       implementacje `*2koru`; przez jedno wydanie zostawić wyłącznie warning +
       re-export/alias. Minimalny cel: 3000 naprawdę usuniętych linii.
 - [ ] **VOL-4 — pierwsza bezpieczna ekstrakcja: Planfile (order 50, P0).**
-      Podbić Koru z zainstalowanego Planfile 0.1.115 do wydanego 0.1.116,
-      wykonać dual-run `PlanfileClient` kontra CLI i dopiero po zgodności usunąć
-      discovery/version/lock retry z `queue/ticket.py`. To jest pierwszy ruch
-      kodu, bo publiczne API docelowe już istnieje.
+      Minimum i środowisko Koru podniesiono do Planfile 0.1.116. Główna kolejka
+      wykonuje `claim/start/complete/block/note` przez `PlanfileClient`, a przez
+      jedno wydanie porównuje typowany wynik z bezpiecznym odczytem
+      `ticket show`. Mutacja nie jest wykonywana drugi raz. `KORU_PLANFILE_SDK=cli`
+      pozostaje kill-switchem, custom runner i brak SDK zachowują stary CLI.
+      Usunąć discovery/version/lock retry z `queue/ticket.py` dopiero po okresie
+      telemetry bez `parity=mismatch`.
 - [ ] **VOL-5 — screen truth do VDisplay (order 60, P0).** Zastąpić cały
       `koruvision` capture/provider stack publicznym VDisplay oraz przenieść z
       `vdisplay_client.py` VQL normalization, geometrię, topology i capture
       metadata. Cel minimalny: -5000 linii z Koru; w Koru zostają policy,
       grant, GUI ladder, mesh publication i evidence.
+  - [x] Pierwszy dependency-first slice jest gotowy w drzewie VDisplay 0.1.53:
+        publiczne `resolve_multi_stream_region`, `monitor_by_name` i
+        `build_imgl_layers`, shimy dawnych symboli oraz publiczny contract suite.
+  - [ ] Wydać VDisplay z tym API, podbić minimum w Koru i przełączyć trzy
+        prywatne importy; dopiero po dual-run usuwać shimy po stronie VDisplay.
+  - [ ] Następnie przenieść canonical observation/coordinate map i zastąpić
+        `koruvision` capture stack; ten etap nadal jest `blocked_by_upstream`.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
       Gillm przejmuje bounded actuation/recovery; producenci analyzerów emitują
       `TicketProposalV1`; IMGL/TestQL/env2llm/Tagi dostają publiczne typed API;
@@ -308,8 +320,13 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
         canonical hash, bezpieczną konwersję pól oraz `PlanfileClient` ze
         stabilnym `TicketTransitionResult` i bounded lock retry; pełny suite
         Planfile: 215 passed, 7 skipped.
-  - [ ] Podbić minimum w Koru i wykonać dual-run SDK kontra
-        dotychczasowe CLI przed usunięciem resolvera/retry z `queue/ticket.py`.
+  - [x] Koru wymaga i używa Planfile 0.1.116; lifecycle głównej queue ma typed
+        gateway, read-only CLI parity, audit `control.command`, kill-switch i
+        test realnego `claim → start → note → done`. Status migracji: dual-run.
+  - [ ] Po jednym wydaniu bez `parity=mismatch` przełączyć pozostałe mutatory
+        dashboard/shell-finalize i usunąć lifecycle lock retry/CLI resolution z
+        `queue/ticket.py`; read-only i administracyjne komendy CLI zostają do
+        czasu dodania publicznych metod SDK.
   - [ ] Przełączyć producentów code2llm/redup/pfix/prefact na wspólny proposal;
         dopiero po tym usunąć parsery ich formatów z `scan.py`.
 - [ ] **DEP-2 — VDisplay jako właściciel prawdy o ekranie (kolejność 30,
@@ -318,6 +335,12 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
       `wronai/vdisplay`. Koru zachowuje observe→decide→act→verify, GUI ladder,
       granty i evidence. **Akceptacja:** zero prywatnych importów VDisplay w
       Koru; replay obserwacji daje identyczny target/coordinate-map hash.
+  - [x] Publiczne odpowiedniki wszystkich trzech bezpośrednich prywatnych
+        importów Koru są zaimplementowane w VDisplay wraz z testem kontraktu;
+        pełny suite VDisplay (797 testów zebranych) jest zielony.
+  - [ ] Opublikować nową wersję VDisplay, przełączyć Koru i zebrać diff telemetry
+        przed usunięciem aliasów kompatybilności. Bez wydania Koru pozostaje na
+        starych importach, aby nie złamać instalacji z minimalnym VDisplay.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie
@@ -342,10 +365,10 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
       repo: najpierw publiczny adapter, standalone contract suite i realny
       drugi konsument. **Akceptacja:** nlp2uri instaluje się bez Koru, a koruide
       wchodzi do ekstrakcji dopiero po spełnieniu wszystkich trzech bramek.
-- [ ] **DEP-7 — usunąć testowe pseudo-zależności z runtime tree.** Przenieść
-      `src/env2llm`, `src/imgl` i `src/nlp2imgl` do `tests/fakes`, tak aby wheel,
-      import discovery i inwentarz namespace nie sugerowały własności cudzych
-      pakietów przez Koru.
+- [x] **DEP-7 — usunąć testowe pseudo-zależności z runtime tree.** Przeniesiono
+      `src/env2llm`, `src/imgl` i `src/nlp2imgl` do `tests/fakes`; wheel, import
+      discovery i produkcyjny inwentarz namespace nie przypisują już Koru
+      własności cudzych pakietów.
 - [ ] **DEP-8 — dependency-first release train.** Dla każdego kroku: schema i
       API w repo właściciela → jego contract tests → wydanie → bump minimalnej
       wersji w Koru → dual-run/diff telemetry → 1–2 wydania shimu → usunięcie

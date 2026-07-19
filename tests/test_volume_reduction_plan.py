@@ -61,7 +61,12 @@ class TestVolumeReductionPlan(unittest.TestCase):
             self.assertLessEqual(stage["minimum_checkout_lines_removed"], stage["candidate_lines"])
             for source in stage["source_paths"]:
                 with self.subTest(stage=stage["id"], source=source):
-                    self.assertTrue((ROOT / source).exists(), source)
+                    source_path = ROOT / source
+                    if stage["status"] == "complete" and stage["action"] == "move_to_test_support":
+                        self.assertFalse(source_path.exists(), source)
+                        self.assertTrue((ROOT / "tests/fakes" / source_path.name).is_dir(), source)
+                    else:
+                        self.assertTrue(source_path.exists(), source)
             for blocker in stage["blocked_by"]:
                 with self.subTest(stage=stage["id"], blocker=blocker):
                     self.assertIn(blocker, stages)
@@ -90,6 +95,13 @@ class TestVolumeReductionPlan(unittest.TestCase):
         self.assertLess(targets["indexed_lines_max"], baseline["indexed_lines"])
         self.assertLess(targets["python_modules_max"], baseline["python_modules"])
         self.assertLess(targets["tracked_repository_bytes_max"], baseline["tracked_repository_bytes"])
+
+    def test_test_doubles_are_explicitly_test_only(self) -> None:
+        import tomllib
+
+        config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        pythonpath = config["tool"]["pytest"]["ini_options"]["pythonpath"]
+        self.assertLess(pythonpath.index("tests/fakes"), pythonpath.index("src"))
 
 
 if __name__ == "__main__":

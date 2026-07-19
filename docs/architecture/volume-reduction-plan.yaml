@@ -185,7 +185,7 @@ stages:
   - id: planfile.client_lifecycle
     order: 50
     priority: P0
-    status: upstream_api_ready
+    status: dual_run
     action: move_to_dependency
     source_paths:
       - src/koru/queue/planfile_ticket_note.py
@@ -244,7 +244,7 @@ stages:
   - id: runtime.shadow_packages
     order: 20
     priority: P0
-    status: ready
+    status: complete
     action: move_to_test_support
     source_paths:
       - src/env2llm

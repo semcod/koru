@@ -1416,7 +1416,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.422"
+version = "0.1.423"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1674,9 +1674,9 @@ requires-dist = [
     { name = "opentelemetry-sdk", marker = "extra == 'obs'", specifier = ">=1.28,<2.0" },
     { name = "pfix", marker = "extra == 'all'", specifier = ">=0.1.60" },
     { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "planfile", marker = "extra == 'all'", specifier = ">=0.1.100" },
-    { name = "planfile", marker = "extra == 'desktop'", specifier = ">=0.1.100" },
-    { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.100" },
+    { name = "planfile", marker = "extra == 'all'", editable = "../planfile" },
+    { name = "planfile", marker = "extra == 'desktop'", editable = "../planfile" },
+    { name = "planfile", marker = "extra == 'planfile'", editable = "../planfile" },
     { name = "playwright", marker = "extra == 'all'", specifier = ">=1.40,<2.0" },
     { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.40,<2.0" },
     { name = "pre-commit", marker = "extra == 'all'", specifier = ">=3.8,<5.0" },
@@ -1752,7 +1752,7 @@ dev = [
     { name = "mypy", specifier = ">=1.11,<3.0" },
     { name = "pfix", specifier = ">=0.1.60" },
     { name = "pillow", specifier = ">=10.0" },
-    { name = "planfile", specifier = ">=0.1.100" },
+    { name = "planfile", editable = "../planfile" },
     { name = "pre-commit", specifier = ">=3.8,<5.0" },
     { name = "protobuf", specifier = ">=5.0" },
     { name = "pyright", specifier = ">=1.1.390,<2.0" },
@@ -2771,8 +2771,8 @@ wheels = [
 
 [[package]]
 name = "planfile"
-version = "0.1.115"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.116"
+source = { editable = "../planfile" }
 dependencies = [
     { name = "filelock" },
     { name = "httpx" },
@@ -2785,10 +2785,51 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/4c/d1c3f727942b7413adf52da66b75a342bb4cbbb006873e977df030645273/planfile-0.1.115.tar.gz", hash = "sha256:7b672091fac0a61ffc6db27e8361909181c3b8e96118116bab4c9774cb060841", size = 257575, upload-time = "2026-07-16T09:16:27.711Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/ca/8db5511b1eb393f0cbe2a46b1f017d5cafa3bf89561bb5151ed25922fd33/planfile-0.1.115-py3-none-any.whl", hash = "sha256:a02125bb1db9427d960b30593610b7bb82c72f9fc2c2cdc2c9f748f6fc81f823", size = 251988, upload-time = "2026-07-16T09:16:25.407Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.25" },
+    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.25" },
+    { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.111" },
+    { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.111" },
+    { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.111" },
+    { name = "filelock", specifier = ">=3.0" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12" },
+    { name = "jira", marker = "extra == 'all'", specifier = ">=3.5" },
+    { name = "jira", marker = "extra == 'jira'", specifier = ">=3.5" },
+    { name = "litellm", marker = "extra == 'all'", specifier = ">=1.40" },
+    { name = "litellm", marker = "extra == 'litellm'", specifier = ">=1.40" },
+    { name = "llx", marker = "extra == 'all'", specifier = ">=0.1.75" },
+    { name = "llx", marker = "extra == 'llx'", specifier = ">=0.1.75" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "openai", marker = "extra == 'all'", specifier = ">=1.0" },
+    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "pydantic-settings", specifier = ">=2.0" },
+    { name = "pygithub", specifier = ">=2.0" },
+    { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.0" },
+    { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.0" },
+    { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "python-gitlab", marker = "extra == 'all'", specifier = ">=4.0" },
+    { name = "python-gitlab", marker = "extra == 'gitlab'", specifier = ">=4.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "requests", specifier = ">=2.31" },
+    { name = "rich", specifier = ">=13.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "typer", specifier = ">=0.12" },
+    { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30" },
+    { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30" },
+    { name = "uvicorn", extras = ["standard"], marker = "extra == 'dev'", specifier = ">=0.30" },
 ]
+provides-extras = ["github", "jira", "gitlab", "api", "litellm", "openai", "anthropic", "llx", "all", "dev"]
 
 [[package]]
 name = "platformdirs"

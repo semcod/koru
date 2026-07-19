@@ -5,7 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
-from koru.queue.ticket import planfile_command
+from koru.queue.planfile_sdk import planfile_lifecycle_command
 from koru.queue.types import CommandResult
 
 
@@ -30,15 +30,16 @@ def append_shell_evidence_note(
     some 0.1.x builds) omit both; then writes
     ``.planfile/.koru/runs/<ticket_id>-<run_id>.shell-evidence.txt``.
 
-    Returns ``(result, kind)`` where *kind* is ``"cli"`` or ``"artifact"``.
+    Returns ``(result, kind)`` where *kind* is ``"sdk"``, ``"cli"`` or
+    ``"artifact"``.
     """
     project = project.resolve()
     flags = ("--note", "-n")
     for flag in flags:
         cmd = ["ticket", "update", ticket_id, flag, note]
-        res = planfile_command(project, cmd, runner=planfile_runner)
+        res = planfile_lifecycle_command(project, cmd, runner=planfile_runner)
         if res.returncode == 0:
-            return res, "cli"
+            return res, str(getattr(res, "transport", "cli"))
         if _stderr_unknown_option(res.stderr or "", flag):
             continue
         return res, "cli"

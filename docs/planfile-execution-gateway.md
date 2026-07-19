@@ -429,6 +429,36 @@ working implementation.
 - optional OpenRouter-backed `llm` executor
 - richer multi-actor coordination
 
+## Typed lifecycle SDK migration (2026-07-19)
+
+Koru requires Planfile 0.1.116 and the primary queue lifecycle now routes
+`claim`, `start`, `complete`, `block`, and note append through
+`planfile.client.PlanfileClient`. Storage lock retry and stable transition
+codes therefore belong to Planfile, while Koru still decides whether and when
+the transition is allowed.
+
+The compatibility release uses a single-write dual-run:
+
+1. perform the mutation exactly once through the SDK;
+2. read the ticket through `planfile ticket show --format json`;
+3. compare a canonical projection of lifecycle fields;
+4. report `verified`, `mismatch`, or `unavailable` as parity telemetry.
+
+A typed SDK failure is never retried as a CLI mutation. Every SDK request emits
+`koru.control.v1` with `interface_id=planfile_client_lifecycle`,
+`transport=python_sdk`, and `replayable=false`. Note and reason contents are
+excluded from the control log.
+
+Compatibility controls:
+
+- `KORU_PLANFILE_SDK=cli` — force the legacy CLI path;
+- `KORU_PLANFILE_SDK=sdk` — force SDK mode for a custom embedded runner;
+- `KORU_PLANFILE_SDK_VERIFY=0` — disable the read-only CLI parity probe.
+
+Custom runners retain CLI behavior unless SDK mode is explicitly requested.
+CLI executable discovery remains temporarily for read-only/administrative
+operations and for the one-release compatibility path.
+
 ## External queue adapters (Mullm and others)
 
 Multiple products can **emit** tickets into the same planfile without owning

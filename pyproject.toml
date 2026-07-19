@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.422"
+version = "0.1.423"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -49,7 +49,7 @@ observe = [
 desktop = [
     "nlp2uri[envmap]>=0.4.7",
     "env2llm[mqtt]>=0.1.10",
-    "planfile>=0.1.100",
+    "planfile>=0.1.116",
     "testql>=1.2.55",
 ]
 imgl = [
@@ -66,7 +66,7 @@ testql = [
 # can end up with no usable planfile anywhere and every cycle dies with
 # planfile_error (2026-07-03 incident: 17 stagnant cycles on c2004).
 planfile = [
-    "planfile>=0.1.100",
+    "planfile>=0.1.116",
 ]
 curllm = [
     "curllm[mcp]>=1.0.0",
@@ -187,7 +187,7 @@ all = [
     "env2llm[mqtt]>=0.1.10",
     "fullm>=0.1.22",
     "nlp2uri[envmap]>=0.4.7",
-    "planfile>=0.1.100",
+    "planfile>=0.1.116",
     "playwright>=1.40,<2.0",
     "testql>=1.2.55",
     "vdisplay>=0.1.44",
@@ -224,7 +224,7 @@ dev = [
     "mcp>=1.0",
     # uv sync prunes ad-hoc pip installs; the queue needs planfile in the
     # default-synced group or every sync reintroduces planfile_error.
-    "planfile>=0.1.100",
+    "planfile>=0.1.116",
     # photo-VQL / vision chat drive imports vdisplay; without it in the
     # default-synced group every `uv sync` (i.e. every goal release) drops it
     # and the daemon's vision path silently disables.
@@ -252,14 +252,15 @@ tillm = { path = "../tillm", editable = true }
 # install kept resurfacing in .venv and shadowing local gillm changes
 gillm = { path = "../gillm", editable = true }
 vdisplay = { path = "../../wronai/vdisplay", editable = true }
+planfile = { path = "../planfile", editable = true }
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src", "packages/coru/src"]
-# src/ also holds test-only stubs (imgl, env2llm, nlp2imgl) that shadow real
-# PyPI packages of the same name — they must never ship in the wheel.
+# Keep distribution ownership explicit: foreign dependency namespaces belong
+# to their own packages and test doubles live under tests/fakes.
 include = ["koru*", "coru*"]
 
 [tool.setuptools.package-data]
@@ -283,6 +284,7 @@ korumesh = ["*.html"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [
+    "tests/fakes",
     "src",
     "packages/coru/src",
     "packages/koruenv/src",

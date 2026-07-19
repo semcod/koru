@@ -49,6 +49,7 @@ def build_execute_report(*, prompt: str, image: str, window: str, dry_run: bool,
 
 def render_report(payload: dict, fmt: str = "json") -> str:
     import json
+
     if fmt == "markdown":
         md = "# imgl\n"
         cap = payload.get("capture", {})

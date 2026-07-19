@@ -37,18 +37,6 @@ namespaces:
       - packages/dsl2koru/src/dsl2koru
     owns: Validation and transport of koru command DSL payloads.
     must_not_own: Capability expansion or direct side effects.
-  - id: env2llm
-    boundary: koru
-    roots:
-      - src/env2llm
-    owns: Bounded environment context supplied to model calls.
-    must_not_own: Secrets, authorization, or execution.
-  - id: imgl
-    boundary: koruvision
-    roots:
-      - src/imgl
-    owns: Image-derived semantic structures used by vision adapters.
-    must_not_own: Drive policy, ticket lifecycle, or approval.
   - id: koru
     boundary: koru
     roots:
@@ -132,12 +120,6 @@ namespaces:
       - packages/nlp2coru/src/nlp2coru
     owns: Natural-language input adaptation for coru.
     must_not_own: Approval or execution.
-  - id: nlp2imgl
-    boundary: koruvision
-    roots:
-      - src/nlp2imgl
-    owns: Natural-language to bounded image-semantics adaptation.
-    must_not_own: Raw GUI actuation or approval.
   - id: nlp2koru
     boundary: koru
     roots:
@@ -366,9 +348,10 @@ mutation_entrypoints:
     intent: queue.update_ticket
     capability: queue.ticket.mutate
     modules:
+      - src/koru/queue/planfile_sdk.py
       - src/koru/queue/planfile_ticket_note.py
       - src/koru/queue/ticket.py
-    current_executor: planfile CLI adapter
+    current_executor: PlanfileClient lifecycle gateway with read-only CLI parity fallback
     target_executor: capability_dispatcher.planfile
     evidence: [ticket_id, ticket_event]
     enforcement: observed

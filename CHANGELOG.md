@@ -26,6 +26,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.423] - 2026-07-19
+
+### Docs
+- Update README.md
+- Update TODO.md
+- Update docs/architecture/autonomy-mutation-inventory.yaml
+- Update docs/architecture/dependency-boundary-inventory.yaml
+- Update docs/architecture/volume-reduction-plan.yaml
+- Update docs/planfile-execution-gateway.md
+
+### Test
+- Update tests/fakes/env2llm/__init__.py
+- Update tests/fakes/env2llm/integrators/__init__.py
+- Update tests/fakes/env2llm/integrators/_service_factory.py
+- Update tests/fakes/env2llm/probes/testql.py
+- Update tests/fakes/env2llm/service/__init__.py
+- Update tests/fakes/env2llm/service/registry_service.py
+- Update tests/fakes/imgl/__init__.py
+- Update tests/fakes/imgl/autodiag.py
+- Update tests/fakes/imgl/freshness.py
+- Update tests/fakes/nlp2imgl/__init__.py
+- ... and 6 more files
+
+### Other
+- Update uv.lock
+
 ## [0.1.422] - 2026-07-19
 
 ### Docs

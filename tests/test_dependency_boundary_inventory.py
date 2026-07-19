@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -91,6 +92,36 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
             for blocker in extraction["blocked_by"]:
                 with self.subTest(extraction=extraction["id"], blocker=blocker):
                     self.assertLess(orders[blocker], extraction["order"])
+
+    def test_private_vdisplay_import_debt_is_frozen_until_public_release(self) -> None:
+        expected = {
+            (
+                "src/koru/integrations/vdisplay_client.py",
+                "vdisplay.capture.screencast_crop",
+                "_resolve_multi_stream_region",
+            ),
+            (
+                "src/koru/integrations/vdisplay_client.py",
+                "vdisplay.input.coords",
+                "_monitor_by_name",
+            ),
+            (
+                "src/koru/integrations/vdisplay_client.py",
+                "vdisplay.integrations.vql_bridge",
+                "_build_imgl_layers",
+            ),
+        }
+        found: set[tuple[str, str, str]] = set()
+        pattern = re.compile(
+            r"^\s*from\s+(vdisplay(?:\.[a-zA-Z0-9_]+)+)\s+import\s+(_[a-zA-Z0-9_]+)\s*$",
+            re.MULTILINE,
+        )
+        for path in (ROOT / "src").rglob("*.py"):
+            relative = path.relative_to(ROOT).as_posix()
+            for module, symbol in pattern.findall(path.read_text(encoding="utf-8")):
+                found.add((relative, module, symbol))
+
+        self.assertEqual(found, expected)
 
 
 if __name__ == "__main__":
