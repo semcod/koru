@@ -222,8 +222,8 @@ class TestServe(unittest.TestCase):
         self.assertIn("searchParams", body)
         self.assertIn("tab", body)
         self.assertIn("project", body)
-        self.assertIn("ticket-select", body)
-        self.assertIn("ticket", body)
+        self.assertIn("ticketsTable", body)
+        self.assertIn("open_tickets", body)
         self.assertIn("change", body)
         self.assertIn("executor_kind", body)
         self.assertIn("ct-description", body)
@@ -278,7 +278,7 @@ class TestServe(unittest.TestCase):
             self.assertIsInstance(row["projects"], list)
 
 
-    def test_dashboard_endpoint_lists_project_tickets_and_selected_context(self) -> None:
+    def test_context_endpoint_lists_project_tickets(self) -> None:
         tickets = [
             {
                 "id": "PLF-001",
@@ -295,41 +295,30 @@ class TestServe(unittest.TestCase):
                 "executor": {"kind": "shell"},
             },
         ]
-        with (
-            mock.patch("koru.serve._list_tickets", return_value=tickets),
-            mock.patch("koru.serve.build_context") as build_context_mock,
-        ):
-            build_context_mock.return_value = {
+        with mock.patch(
+            "koruapi.dashboard_routes.dashboard_context_payload",
+        ) as context_payload_mock:
+            context_payload_mock.return_value = {
                 "project": str(self.project.resolve()),
                 "policy": {},
                 "environment": {},
                 "ticket": {"id": "PLF-002"},
+                "open_tickets": tickets[:1],
+                "all_tickets": tickets,
             }
             status, ctype, body = _get(
                 self.port,
-                f"/api/dashboard?project={self.project.resolve()}",
+                f"/api/context?project={self.project.resolve()}",
             )
             self.assertEqual(status, 200)
             self.assertIn("application/json", ctype)
             payload = json.loads(body)
-            self.assertEqual(payload["selected_project"], str(self.project.resolve()))
+            self.assertEqual(payload["ticket"]["id"], "PLF-002")
             self.assertEqual(
-                [row["id"] for row in payload["tickets"]],
+                [row["id"] for row in payload["all_tickets"]],
                 ["PLF-001", "PLF-002"],
             )
-            self.assertEqual(payload["current_ticket_id"], "PLF-002")
-
-            status, _, body = _get(
-                self.port,
-                f"/api/context?project={self.project.resolve()}&ticket=PLF-002",
-            )
-            self.assertEqual(status, 200)
-            self.assertEqual(json.loads(body)["ticket"]["id"], "PLF-002")
-            build_context_mock.assert_called_with(
-                project=self.project.resolve(),
-                ticket_id="PLF-002",
-                queue_name=None,
-            )
+            context_payload_mock.assert_called_once_with(self.project.resolve(), None)
 
     def test_api_config_get_and_post_persist_dashboard_settings(self) -> None:
         status, ctype, body = _get(self.port, "/api/config")
@@ -338,7 +327,8 @@ class TestServe(unittest.TestCase):
         payload = json.loads(body)
         self.assertEqual(payload["config"]["project"], str(self.project.resolve()))
         self.assertFalse(payload["exists"])
-        self.assertIn("export KORU_WORKSPACE=", payload["shell_exports"])
+        self.assertEqual(payload["dotenv"]["path"], str(self.project / ".env"))
+        self.assertIn("auto", payload["ide_choices"])
 
         status, _, body = _post_json(
             self.port,

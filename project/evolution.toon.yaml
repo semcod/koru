@@ -1,5 +1,5 @@
-# code2llm/evolution | 7503 func | 720f | 2026-07-18
-# generated in 0.04s
+# code2llm/evolution | 7517 func | 721f | 2026-07-19
+# generated in 0.03s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
@@ -28,7 +28,7 @@ METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
   max-CC:      21 → ≤10
   god-modules: 60 → 0
-  high-CC(≥15): 5 → ≤2
+  high-CC(≥15): 6 → ≤3
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

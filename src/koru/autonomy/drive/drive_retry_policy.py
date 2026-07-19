@@ -193,6 +193,22 @@ def _drive_retry_decision(
             should_retry=False,
             should_warn="semantic_required",
         )
+    from koru.autonomy.drive_result import DriveAttemptResult
+
+    attempt_result = DriveAttemptResult.from_reply(reply, ok=False)
+    if attempt_result.requires_manual_focus:
+        from korullm import DriveFailureAssessment
+
+        return DriveRetryDecision(
+            assessment=DriveFailureAssessment(
+                kind="stop_manual_focus",
+                failure_signature="manual_focus:no_focus_open_candidates",
+                detail="focus_open_candidates_empty",
+                warn_banner="manual_focus",
+            ),
+            should_retry=False,
+            should_warn="manual_focus",
+        )
     if engine is not None:
         return engine.assess_drive_failure(
             reply,

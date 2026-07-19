@@ -101,6 +101,13 @@ przechodzą przez capability dispatcher i kontrakty.
       test E2E bridge i skrypt kontrolowanego pilota LLM są dostępne.
 - [x] `tillm provider order/sync`, notki `provider-switch` i
       `provider-exhausted` zapewniają deterministyczny fallback i audyt decyzji.
+- [x] Kontrolowany self-improvement `STARTER-597`/`STARTER-598`: Koru utworzył
+      deduplikowane tickety, wygenerował policy handoff, wymusił lifecycle i
+      evidence; deterministyczna bramka `manual_focus` oraz aktualizacja
+      kontraktów testowych dashboardu przywróciły pełny wynik 3495 passed.
+- [ ] `STARTER-600` — dry-run-first migracja 11 historycznych ticketów ze
+      statusem `skipped`, którego aktualny Planfile nie akceptuje. Najpierw
+      wersjonowana reguła mapowania i test, bez bezpośredniej edycji sprint YAML.
 
 ### P0 — uwiarygodnić granice i wynik LLM
 
@@ -206,6 +213,69 @@ przechodzą przez capability dispatcher i kontrakty.
       rollback fail i restart w połowie runu. Remote executor/mTLS dopiero po
       zamknięciu lokalnych bramek.
 
+### Tor VOL — redukcja objętości wyprowadzona z indeksu projektu
+
+**Baseline 2026-07-19:** `project/map.toon.yaml` raportuje 1101 plików,
+178 416 linii, 816 modułów Python, 6 funkcji krytycznych, średnie CC 3,7 i
+zero cykli. Największe grupy to `src/koru` 100 616 linii, `src/koruide`
+12 001, `packages/coru` 9700, `src/koruapi` 8462 i pluginy autopilota około
+14 tys. linii indeksowanych. Osobny pomiar Git pokazuje 30,38 MiB oraz
+523 456 śledzonych linii; same generowane analizy, coverage i nagranie zajmują
+około 15,96 MiB.
+
+Walidowany plan ilościowy znajduje się w
+[`docs/architecture/volume-reduction-plan.yaml`](docs/architecture/volume-reduction-plan.yaml)
+(schema: `schemas/volume-reduction-plan.schema.json`). Rozróżnia on trzy miary:
+usunięcie z runtime namespace, zmniejszenie checkoutu Koru i rzeczywiste
+usunięcie duplikatu z całego ekosystemu. Samo przeniesienie kodu do zależności
+nie może być raportowane jako redukcja ekosystemu.
+
+Cele pierwszego programu: ≤150 tys. linii indeksowanych, ≤700 modułów Python,
+≤16 MiB śledzonego checkoutu, zero prywatnych importów zależności i zero
+cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
+
+- [ ] **VOL-1 — generated state poza Git (DSL order 10, P0).** W osobnym,
+      jawnie zatwierdzonym tickecie przestać śledzić `project/`, `.tmp` output,
+      `code2llm_output`, `SUMD.md`, `SUMR.md`, coverage, `tree.txt` i `koru.mp4`;
+      CI ma publikować je jako artefakty, a repo zachować mały manifest wersji
+      generatorów i hashy. Potencjał: 146 747 linii i ~15,96 MiB checkoutu.
+      To jest operacja destrukcyjna dla historii roboczej, więc nie wykonywać
+      jej jako efektu ubocznego innego refaktoru.
+- [ ] **VOL-2 — runtime bez shadow packages (order 20, P0).** Przenieść
+      `src/env2llm`, `src/imgl`, `src/nlp2imgl` do `tests/fakes` i dodać smoke
+      zbudowanego wheela. Wynik: -302 linie produkcyjnych namespace'ów, bez
+      udawania redukcji checkoutu.
+- [ ] **VOL-3 — jeden namespace `koru` (order 30, P0).** Scalić możliwości
+      par `cli/dsl/mcp/nlp/rest/uri` `*2coru` + `*2koru` w kanoniczne
+      implementacje `*2koru`; przez jedno wydanie zostawić wyłącznie warning +
+      re-export/alias. Minimalny cel: 3000 naprawdę usuniętych linii.
+- [ ] **VOL-4 — pierwsza bezpieczna ekstrakcja: Planfile (order 50, P0).**
+      Podbić Koru z zainstalowanego Planfile 0.1.115 do wydanego 0.1.116,
+      wykonać dual-run `PlanfileClient` kontra CLI i dopiero po zgodności usunąć
+      discovery/version/lock retry z `queue/ticket.py`. To jest pierwszy ruch
+      kodu, bo publiczne API docelowe już istnieje.
+- [ ] **VOL-5 — screen truth do VDisplay (order 60, P0).** Zastąpić cały
+      `koruvision` capture/provider stack publicznym VDisplay oraz przenieść z
+      `vdisplay_client.py` VQL normalization, geometrię, topology i capture
+      metadata. Cel minimalny: -5000 linii z Koru; w Koru zostają policy,
+      grant, GUI ladder, mesh publication i evidence.
+- [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
+      Gillm przejmuje bounded actuation/recovery; producenci analyzerów emitują
+      `TicketProposalV1`; IMGL/TestQL/env2llm/Tagi dostają publiczne typed API;
+      tillm przejmuje resztę registry/transportu. Każdy ruch: upstream contract
+      → release → minimum version → dual-run → jeden release shimu → delete.
+- [ ] **VOL-7 — scalić front-end `coru` z Koru (order 110, P1).** Najpierw
+      zbudować parytet wszystkich komend operatora, potem pozostawić nazwę
+      console-script `coru` jako delegujący alias do kanonicznych handlerów
+      Koru i usunąć drugi repair/supervisor engine. Minimalny cel: -12 tys.
+      linii rzeczywistego kodu, nie mechaniczne przeniesienie do nowego repo.
+
+**Świadomie odroczone:** `koruide` (12 001 linii) nie jest teraz celem
+ekstrakcji, bo repo `semcod/koruide` nie istnieje, a rdzeń ma 45 konsumentów;
+pluginy nie mają niezależnego właściciela protokołu; `koruapi` jest fasadą
+decyzyjną; `korudsl` jest językiem domeny/authority; `korumesh` nie ma drugiego
+konsumenta. Nie tworzyć repo tylko po to, aby przesunąć licznik linii.
+
 ### Tor równoległy DEP — odchudzenie Koru na granicach zależności
 
 Reguła własności: biblioteka posiada mechanizm **jak** (transport, parser,
@@ -234,11 +304,11 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
       prefact na emisję tego artefaktu. Koru zachowuje harmonogram, cross-source
       dedupe, authorization i zapis. **Akceptacja:** `scan.py` nie parsuje
       tekstu CLI, a błędna wersja proposal nie tworzy ticketa.
-  - [x] W worktree `semcod/planfile` dodano strict `TicketProposalV1`,
+  - [x] W `semcod/planfile` 0.1.116 wydano strict `TicketProposalV1`,
         canonical hash, bezpieczną konwersję pól oraz `PlanfileClient` ze
         stabilnym `TicketTransitionResult` i bounded lock retry; pełny suite
         Planfile: 215 passed, 7 skipped.
-  - [ ] Wydać Planfile, podbić minimum w Koru i wykonać dual-run SDK kontra
+  - [ ] Podbić minimum w Koru i wykonać dual-run SDK kontra
         dotychczasowe CLI przed usunięciem resolvera/retry z `queue/ticket.py`.
   - [ ] Przełączyć producentów code2llm/redup/pfix/prefact na wspólny proposal;
         dopiero po tym usunąć parsery ich formatów z `scan.py`.
@@ -265,11 +335,13 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
       typowany completion/provenance. `ProposalEnvelope`, retry budget,
       provider policy i capability pozostają w Koru. **Akceptacja:** fallback
       providera nigdy nie zmienia schematu proposal ani zakresu grantu.
-- [ ] **DEP-6 — odwrócenie nlp2uri i osobny koruide (kolejność 100–110, P2).**
+- [ ] **DEP-6 — odwrócenie nlp2uri; koruide dopiero po bramce repo (P2).**
       `nlp2uri` ma wyłącznie kompilować intent do canonical `ControlPlan`, bez
-      importu Koru/koruide i bez wykonywania CLI; opublikować standalone
-      `semcod/koruide`, a dispatcher pozostawić w Koru/uri2koru. **Akceptacja:**
-      oba pakiety instalują się i przechodzą contract tests bez Koru.
+      importu Koru/koruide i bez wykonywania CLI; dispatcher pozostawić w
+      Koru/uri2koru. Nie przenosić obecnego `src/koruide` do nieistniejącego
+      repo: najpierw publiczny adapter, standalone contract suite i realny
+      drugi konsument. **Akceptacja:** nlp2uri instaluje się bez Koru, a koruide
+      wchodzi do ekstrakcji dopiero po spełnieniu wszystkich trzech bramek.
 - [ ] **DEP-7 — usunąć testowe pseudo-zależności z runtime tree.** Przenieść
       `src/env2llm`, `src/imgl` i `src/nlp2imgl` do `tests/fakes`, tak aby wheel,
       import discovery i inwentarz namespace nie sugerowały własności cudzych

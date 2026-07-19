@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 814, typescript: 94, shell: 60, json: 41, yaml: 31
+- **Languages**: python: 816, typescript: 94, shell: 60, json: 44, yaml: 33
 - **Analysis Mode**: static
-- **Total Functions**: 7660
-- **Total Classes**: 544
-- **Modules**: 1095
-- **Entry Points**: 2864
+- **Total Functions**: 7674
+- **Total Classes**: 546
+- **Modules**: 1102
+- **Entry Points**: 2866
 
 ## Architecture by Module
 
@@ -342,14 +342,14 @@ action_handoff [src.koru.autopilot.commands.handoff]
 - **Methods**: 37
 - **Key Methods**: plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.sleep, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.runCommand, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.result, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.probeLadderEnabled, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.probeFocusDelayMs, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.probePasteDelayMs, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.waitForCommand, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.deadline, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.existing, plugins.koru-autopilot-shared.src.bridge-focus-core.SharedAutopilotBridgeFocusCore.editorSnapshot
 
-### plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge
-- **Methods**: 22
-- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.super, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.injectChat, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.text, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.submit, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previous, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previousHost, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.message, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
-
 ### src.koru.repair_runs.sqlite_store.SqliteRepairRunStore
 - **Methods**: 22
 - **Key Methods**: src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.__init__, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.close, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore._migrate, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.create_run, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.get_run, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.find_run, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.transition, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.claim, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.release, src.koru.repair_runs.sqlite_store.SqliteRepairRunStore.append_event
 - **Inherits**: RepairRunStore
+
+### plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge
+- **Methods**: 22
+- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.super, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.injectChat, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.text, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.submit, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previous, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previousHost, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.message, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge._performInject
 
 ### src.koru.repair_runs.memory_store.MemoryRepairRunStore
 - **Methods**: 20
@@ -526,15 +526,20 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koru.bounded_contexts.topology.application.TopologyQueryService.enabled_components_for_pipeline
 
+### recursion__substitute
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.queue.ticket_templates._substitute
+
 ### recursion__capture_for_verify
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.integrations.vdisplay_client._capture_for_verify
 
-### recursion__substitute
+### recursion__forbidden_slot_paths
 - **Type**: recursion
 - **Confidence**: 0.90
-- **Functions**: src.koru.queue.ticket_templates._substitute
+- **Functions**: src.koru.proposal_envelope._forbidden_slot_paths
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
@@ -555,11 +560,6 @@ Key functions that process and transform data:
 - **Type**: state_machine
 - **Confidence**: 0.70
 - **Functions**: src.koru.local_manager_state.WorkerRegistry.__init__, src.koru.local_manager_state.WorkerRegistry.register, src.koru.local_manager_state.WorkerRegistry.heartbeat, src.koru.local_manager_state.WorkerRegistry._reconcile_locked, src.koru.local_manager_state.WorkerRegistry._reply_locked
-
-### state_machine_SharedAutopilotBridgeNetwork
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.openChatPanel, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.injectChat, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.detectIde, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.socketPath, plugins.koru-autopilot-shared.src.bridge-network.SharedAutopilotBridgeNetwork.cfg
 
 ## Public API Surface
 

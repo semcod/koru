@@ -262,7 +262,7 @@ extractions:
   - id: koruide.distribution
     order: 110
     priority: P2
-    status: proposed
+    status: blocked
     kind: publish_package
     source_modules:
       - src/koruide
@@ -276,6 +276,7 @@ extractions:
       - Optional adapter registration, lane policy, grants and evidence capture.
     current_smells:
       - A reusable IDE control package is versioned and released as part of the Koru monolith.
+      - The planned semcod/koruide repository does not exist and Koru core has 45 current consumers.
     acceptance:
       - koruide installs and passes contract tests without Koru installed.
       - Koru consumes only the versioned public control adapter.
@@ -376,12 +377,14 @@ extractions:
     kind: delete_duplicate
     source_modules:
       - src/koru/tillm_bridge.py
+      - src/korullm
     target_repositories:
       - semcod/tillm
     contract_ids:
       - tillm.completion
     move:
       - Keep provider registry, transport, fallback provenance and completion result in tillm.
+      - Move reusable shell-client strategy metadata while keeping orchestration decisions in Koru.
     keep_in_koru:
       - ProposalEnvelope validation, retry budget, provider policy and authority decisions.
     current_smells:
@@ -400,6 +403,11 @@ extractions:
       - src/koru/integrations/photo_vql_target.py
       - src/koru/integrations/photo_vql_validation.py
       - src/koru/integrations/vdisplay_client.py
+      - src/koruvision/capture.py
+      - src/koruvision/capture_mss.py
+      - src/koruvision/portal_capture.py
+      - src/koruvision/providers
+      - src/koruvision/scaling.py
     target_repositories:
       - wronai/vdisplay
     contract_ids:
@@ -408,6 +416,7 @@ extractions:
     move:
       - VQL parsing and normalization, geometry, monitor topology and capture metadata.
       - Stable public APIs for multi-stream regions, monitor lookup and IMGL layer building.
+      - The generic capture provider stack currently duplicated by koruvision.
     keep_in_koru:
       - Observe-decide-act-verify policy, GUI fallback ladder and authorization.
       - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
