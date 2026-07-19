@@ -93,24 +93,7 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
                 with self.subTest(extraction=extraction["id"], blocker=blocker):
                     self.assertLess(orders[blocker], extraction["order"])
 
-    def test_private_vdisplay_import_debt_is_frozen_until_public_release(self) -> None:
-        expected = {
-            (
-                "src/koru/integrations/vdisplay_client.py",
-                "vdisplay.capture.screencast_crop",
-                "_resolve_multi_stream_region",
-            ),
-            (
-                "src/koru/integrations/vdisplay_client.py",
-                "vdisplay.input.coords",
-                "_monitor_by_name",
-            ),
-            (
-                "src/koru/integrations/vdisplay_client.py",
-                "vdisplay.integrations.vql_bridge",
-                "_build_imgl_layers",
-            ),
-        }
+    def test_koru_has_no_private_vdisplay_imports(self) -> None:
         found: set[tuple[str, str, str]] = set()
         pattern = re.compile(
             r"^\s*from\s+(vdisplay(?:\.[a-zA-Z0-9_]+)+)\s+import\s+(_[a-zA-Z0-9_]+)\s*$",
@@ -121,7 +104,16 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
             for module, symbol in pattern.findall(path.read_text(encoding="utf-8")):
                 found.add((relative, module, symbol))
 
-        self.assertEqual(found, expected)
+        self.assertEqual(found, set())
+
+    def test_vdisplay_public_screen_truth_api_is_available(self) -> None:
+        from vdisplay.capture import resolve_multi_stream_region
+        from vdisplay.input import monitor_by_name
+        from vdisplay.integrations import build_imgl_layers
+
+        self.assertTrue(callable(resolve_multi_stream_region))
+        self.assertTrue(callable(monitor_by_name))
+        self.assertTrue(callable(build_imgl_layers))
 
 
 if __name__ == "__main__":

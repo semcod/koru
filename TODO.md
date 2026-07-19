@@ -264,11 +264,12 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
       `vdisplay_client.py` VQL normalization, geometrię, topology i capture
       metadata. Cel minimalny: -5000 linii z Koru; w Koru zostają policy,
       grant, GUI ladder, mesh publication i evidence.
-  - [x] Pierwszy dependency-first slice jest gotowy w drzewie VDisplay 0.1.53:
+  - [x] Pierwszy dependency-first slice wydano w VDisplay 0.1.54:
         publiczne `resolve_multi_stream_region`, `monitor_by_name` i
         `build_imgl_layers`, shimy dawnych symboli oraz publiczny contract suite.
-  - [ ] Wydać VDisplay z tym API, podbić minimum w Koru i przełączyć trzy
-        prywatne importy; dopiero po dual-run usuwać shimy po stronie VDisplay.
+  - [x] Koru wymaga VDisplay 0.1.54, używa trzech publicznych fasad, a kontrakt
+        CI wymusza zero prywatnych importów. Shimy po stronie VDisplay pozostają
+        na okres kompatybilności.
   - [ ] Następnie przenieść canonical observation/coordinate map i zastąpić
         `koruvision` capture stack; ten etap nadal jest `blocked_by_upstream`.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
@@ -338,9 +339,9 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
   - [x] Publiczne odpowiedniki wszystkich trzech bezpośrednich prywatnych
         importów Koru są zaimplementowane w VDisplay wraz z testem kontraktu;
         pełny suite VDisplay (797 testów zebranych) jest zielony.
-  - [ ] Opublikować nową wersję VDisplay, przełączyć Koru i zebrać diff telemetry
-        przed usunięciem aliasów kompatybilności. Bez wydania Koru pozostaje na
-        starych importach, aby nie złamać instalacji z minimalnym VDisplay.
+  - [x] VDisplay 0.1.54 opublikowano, minimum Koru podniesiono, trzy importy
+        przełączono na publiczne fasady, a test DSL wymusza zero `_private`.
+        Aliasy kompatybilności pozostają przez co najmniej jedno wydanie.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie

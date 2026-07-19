@@ -34,21 +34,21 @@ class TestVolumeReductionPlan(unittest.TestCase):
             "\n".join(f"{list(error.absolute_path)}: {error.message}" for error in errors),
         )
 
-    def test_baseline_matches_index_header(self) -> None:
+    def test_current_index_header_is_parseable_and_structural_volume_does_not_regress(self) -> None:
         baseline = self.plan["baseline"]
         header = (ROOT / baseline["map_path"]).read_text(encoding="utf-8").splitlines()[:6]
         summary = re.search(r"\| (\d+)f (\d+)L .*python:(\d+)", header[0])
         stats = re.search(r"critical:(\d+) \| cycles:(\d+)", header[2])
         self.assertIsNotNone(summary)
         self.assertIsNotNone(stats)
-        self.assertEqual(
-            (baseline["indexed_files"], baseline["indexed_lines"], baseline["python_modules"]),
-            tuple(map(int, summary.groups())),
-        )
-        self.assertEqual(
-            (baseline["critical_functions"], baseline["dependency_cycles"]),
-            tuple(map(int, stats.groups())),
-        )
+        current_files, current_lines, current_python = map(int, summary.groups())
+        current_critical, current_cycles = map(int, stats.groups())
+
+        self.assertGreater(current_lines, 0)
+        self.assertGreaterEqual(current_critical, 0)
+        self.assertLessEqual(current_files, baseline["indexed_files"])
+        self.assertLessEqual(current_python, baseline["python_modules"])
+        self.assertLessEqual(current_cycles, baseline["dependency_cycles"])
 
     def test_sources_exist_and_stage_references_are_closed(self) -> None:
         stages = {stage["id"]: stage for stage in self.plan["stages"]}

@@ -11,7 +11,7 @@ from collections.abc import Sequence
 # Top-level import name -> pip requirement
 MODULE_PIP_SPECS: dict[str, str] = {
     "env2llm": "env2llm[mqtt]>=0.1.10",
-    "vdisplay": "vdisplay>=0.1.8",
+    "vdisplay": "vdisplay>=0.1.54",
     "nlp2uri": "nlp2uri[envmap]>=0.4.7",
     "testql": "testql>=1.2.55",
     "gillm": "gillm>=0.1.9",
@@ -27,7 +27,7 @@ EXTRA_PIP_SPECS: dict[str, list[str]] = {
         "env2llm[mqtt]>=0.1.10",
         "testql>=1.2.55",
     ],
-    "vdisplay": ["vdisplay>=0.1.8"],
+    "vdisplay": ["vdisplay>=0.1.54"],
     "vision": ["Pillow>=10.0", "pytesseract>=0.3.10"],
 }
 

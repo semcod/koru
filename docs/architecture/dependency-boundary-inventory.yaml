@@ -423,8 +423,8 @@ extractions:
       - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
     current_smells:
       - The main Koru vdisplay client is a multi-thousand-line integration boundary.
-      - Public crop, monitor and VQL layer helpers are implemented in the VDisplay 0.1.53 working tree but unpublished.
-      - Koru must retain the three private imports until a dependency-first VDisplay release is available.
+      - Public crop, monitor and VQL layer helpers are consumed from VDisplay 0.1.54 with zero private imports.
+      - Canonical observation normalization and the duplicate koruvision capture stack still await extraction.
     acceptance:
       - Koru has no private vdisplay imports and performs no coordinate conversion itself.
       - Replaying one observation yields the same normalized targets and coordinate map hash.

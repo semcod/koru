@@ -3415,8 +3415,8 @@ def _live_surface_screencast_region(
 ) -> None:
     """Fill meta region from an active portal screencast stream (best effort)."""
     try:
+        from vdisplay.capture import resolve_multi_stream_region
         from vdisplay.capture.portal_screencast import get_active_screencast
-        from vdisplay.capture.screencast_crop import _resolve_multi_stream_region
         from vdisplay.capture.screencast_stream_matching import screencast_stream_index_for_monitor
 
         session = get_active_screencast()
@@ -3426,7 +3426,7 @@ def _live_surface_screencast_region(
                 monitor,
                 all_monitors=monitors or [monitor],
             )
-            region = _resolve_multi_stream_region(session, stream_idx, monitor)
+            region = resolve_multi_stream_region(session, stream_idx, monitor)
             if isinstance(region, dict):
                 meta["region"] = dict(region)
                 meta["screencast_stream"] = True
@@ -3993,9 +3993,9 @@ def _enrich_region_from_ide_map(enriched: dict[str, Any], source: str) -> None:
 def _enrich_region_from_monitor(enriched: dict[str, Any], source: str, origin_x: int, origin_y: int) -> None:
     """Fill rotation/region from the vdisplay monitor layout as a last resort."""
     try:
-        from vdisplay.input.coords import _monitor_by_name
+        from vdisplay.input import monitor_by_name
 
-        mon = _monitor_by_name(enriched.get("display"), source)
+        mon = monitor_by_name(enriched.get("display"), source)
         if isinstance(mon, dict):
             enriched.setdefault("rotation", mon.get("rotation"))
             if origin_x == 0 and origin_y == 0 and not enriched.get("region"):
@@ -6389,9 +6389,9 @@ def _layers_from_imgl_sidecar_file(vql_path: str) -> tuple[list[dict], str | Non
     except Exception:
         return [], None
     try:
-        from vdisplay.integrations.vql_bridge import _build_imgl_layers
+        from vdisplay.integrations import build_imgl_layers
 
-        built = _build_imgl_layers({"ok": True, "scene": imgl_data})
+        built = build_imgl_layers({"ok": True, "scene": imgl_data})
     except Exception:
         built = []
     if not built:

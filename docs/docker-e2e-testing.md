@@ -138,7 +138,7 @@ Canonical floors live in [`pyproject.toml`](../pyproject.toml):
 | testql | `>=1.2.55` |
 | tillm | `>=0.1.35` (core) |
 | gillm | `>=0.1.9` (core) |
-| vdisplay | `>=0.1.35` extra; uv dev group `>=0.1.44` |
+| vdisplay | `>=0.1.54` (public screen-truth helpers) |
 | nlp2uri | `>=0.4.7` |
 | env2llm | `>=0.1.10` |
 | playwright | `>=1.40` via `[browser]` only |
