@@ -1,11 +1,11 @@
-# koru | 1084f 177480L | txt:5,yaml:34,json:45,yml:12,python:797,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-19
-# generated in 0.14s
-# stats: 7579 func | 0 cls | 1084 mod | CC̄=3.7 | critical:7 | cycles:0
+# koru | 1083f 177462L | txt:5,yaml:34,json:45,yml:12,python:796,shell:60,toml:16,proto:4,javascript:1,go:2,rust:1,typescript:94,kotlin:6,properties:1,xml:1 | 2026-07-19
+# generated in 0.13s
+# stats: 7577 func | 0 cls | 1083 mod | CC̄=3.7 | critical:7 | cycles:0
 # alerts[5]: fan-out get_vql_chat_target_from_photo=37; fan-out prepare_photo_vql_for_drive=29; fan-out create_app=26; fan-out create_app=26; fan-out _run_next_planfile_task_impl=24
 # hotspots[5]: get_vql_chat_target_from_photo fan=37; prepare_photo_vql_for_drive fan=29; create_app fan=26; create_app fan=26; run_api_request fan=24
 # evolution: CC̄ 3.8→3.7 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[1084]:
+M[1083]:
   .pretest.yml,17
   Dockerfile,79
   Makefile,276
@@ -23,8 +23,8 @@ M[1084]:
   docker/novnc/start-vnc.sh,103
   docs/ai-tool-registry-2026.yaml,206
   docs/architecture/autonomy-mutation-inventory.yaml,402
-  docs/architecture/dependency-boundary-inventory.yaml,432
-  docs/architecture/volume-reduction-plan.yaml,346
+  docs/architecture/dependency-boundary-inventory.yaml,434
+  docs/architecture/volume-reduction-plan.yaml,347
   docs/ide-command-api-map.yaml,425
   docs/interfaces/koru-interface-registry.yaml,270
   docs/llm-tools/costs/install.sh,49
@@ -1060,17 +1060,16 @@ M[1084]:
   src/koruos/__init__.py,39
   src/koruvision/__init__.py,12
   src/koruvision/agent.py,76
-  src/koruvision/capture.py,54
+  src/koruvision/capture.py,50
   src/koruvision/capture_probe.py,50
   src/koruvision/cli.py,75
   src/koruvision/cli_parser.py,41
   src/koruvision/mesh.py,79
-  src/koruvision/providers/__init__.py,22
-  src/koruvision/providers/base.py,33
-  src/koruvision/providers/browser_getdisplay.py,266
-  src/koruvision/providers/detector.py,296
+  src/koruvision/providers/__init__.py,23
+  src/koruvision/providers/browser_getdisplay.py,271
+  src/koruvision/providers/detector.py,301
   src/koruvision/providers/env.py,58
-  src/koruvision/providers/obs_websocket.py,231
+  src/koruvision/providers/obs_websocket.py,236
   src/koruvision/providers/registry.py,35
   testql-scenarios/artifacts/mock-llm-replies.yaml,4
   testql-scenarios/cli-coru_calibration.testql.toon.yaml,9
@@ -2959,6 +2958,48 @@ Calle...
     _format_plugin_setup_steps(ide;sock;settings_hint;project)
     _format_keyboard_setup_steps(ide;sock;project)
     format_post_startup_operator_hints(probe)
+  src/koru/queue/authorization.py:
+    e: grant_required,build_authorizer,_grant_gate,_local_keys
+    grant_required()
+    build_authorizer(project;ticket;actor)
+    _grant_gate(project;plan;manifest;actor;record)
+    _local_keys(project)
+  src/koru/integrations/photo_vql_target.py:
+    e: _InputMetrics,_layer_role,_layer_label,_layer_bounds,_layer_click_center,_canonical_ide,_input_metrics,_has_any,_terminal_or_shell_noise,vql_candidates_polluted,vql_layers_show_vdisplay_overlay,score_photo_vql_chat_input,_score_jetbrains_metrics,_jetbrains_position_score,_jetbrains_size_score,_label_noise_penalty,_score_vscode_top_chat_input,_score_vscode_metrics,_vscode_label_score,_vscode_position_score,_vscode_size_score,photo_vql_chat_input_candidates,_chat_candidate_from_layer,vscode_family_top_chat_rejected,vscode_family_chat_target_from_layers,jetbrains_corner_rejected,_target_bounds,_target_bounds_too_small,jetbrains_chat_corner_target_from_layers,_surface_window_rect,_composer_capture_point,_surface_target_payload,jetbrains_chat_target_from_surface,_target_from_candidate
+    _InputMetrics:
+    _layer_role(layer)
+    _layer_label(layer)
+    _layer_bounds(layer)
+    _layer_click_center(layer)
+    _canonical_ide(ide)
+    _input_metrics(layer)
+    _has_any(text;tokens)
+    _terminal_or_shell_noise(label)
+    vql_candidates_polluted(candidates)
+    vql_layers_show_vdisplay_overlay(layers)
+    score_photo_vql_chat_input(layer)
+    _score_jetbrains_metrics(metrics)
+    _jetbrains_position_score(metrics)
+    _jetbrains_size_score(metrics)
+    _label_noise_penalty(label)
+    _score_vscode_top_chat_input()
+    _score_vscode_metrics(metrics)
+    _vscode_label_score(label)
+    _vscode_position_score(cy)
+    _vscode_size_score(metrics)
+    photo_vql_chat_input_candidates(layers)
+    _chat_candidate_from_layer(layer)
+    vscode_family_top_chat_rejected(candidate)
+    vscode_family_chat_target_from_layers(layers)
+    jetbrains_corner_rejected(corner)
+    _target_bounds(target)
+    _target_bounds_too_small(bounds)
+    jetbrains_chat_corner_target_from_layers(layers)
+    _surface_window_rect(surface;source)
+    _composer_capture_point()
+    _surface_target_payload()
+    jetbrains_chat_target_from_surface(surface)
+    _target_from_candidate(candidate)
   src/koru/integrations/photo_vql_drive.py:
     e: PhotoVqlDrive,session_prepare_is_fresh,_fresh_prepare_age,_load_prepare_payload,_prepare_payload_reusable,_allow_surface_only_actuation,_mark_prepare_reused,run_photo_vql_drive
     PhotoVqlDrive: __init__(0),prepare(0),_set_source_env(0),act(1),_surface_only_blocked(0),_act_surface_only(1),_act_map_only_with_photo_vql(1),_observe_png(0),_photo_vql_attempt_succeeded(-1),_mark_llm_backend_if_used(-1),_act_map_only_with_ide_prompt(1),_send_chat(1),run(1),_observe_allows_act(0),_prepare_failed_reply(1),_finalize_reply(1)  # One-shot photo-VQL drive: prepare (observe) then send_chat (...
@@ -3091,48 +3132,6 @@ Calle...
     compute_build_sha(plugin_dir)
     update_package(plugin_dir)
     main()
-  src/koru/queue/authorization.py:
-    e: grant_required,build_authorizer,_grant_gate,_local_keys
-    grant_required()
-    build_authorizer(project;ticket;actor)
-    _grant_gate(project;plan;manifest;actor;record)
-    _local_keys(project)
-  src/koru/integrations/photo_vql_target.py:
-    e: _InputMetrics,_layer_role,_layer_label,_layer_bounds,_layer_click_center,_canonical_ide,_input_metrics,_has_any,_terminal_or_shell_noise,vql_candidates_polluted,vql_layers_show_vdisplay_overlay,score_photo_vql_chat_input,_score_jetbrains_metrics,_jetbrains_position_score,_jetbrains_size_score,_label_noise_penalty,_score_vscode_top_chat_input,_score_vscode_metrics,_vscode_label_score,_vscode_position_score,_vscode_size_score,photo_vql_chat_input_candidates,_chat_candidate_from_layer,vscode_family_top_chat_rejected,vscode_family_chat_target_from_layers,jetbrains_corner_rejected,_target_bounds,_target_bounds_too_small,jetbrains_chat_corner_target_from_layers,_surface_window_rect,_composer_capture_point,_surface_target_payload,jetbrains_chat_target_from_surface,_target_from_candidate
-    _InputMetrics:
-    _layer_role(layer)
-    _layer_label(layer)
-    _layer_bounds(layer)
-    _layer_click_center(layer)
-    _canonical_ide(ide)
-    _input_metrics(layer)
-    _has_any(text;tokens)
-    _terminal_or_shell_noise(label)
-    vql_candidates_polluted(candidates)
-    vql_layers_show_vdisplay_overlay(layers)
-    score_photo_vql_chat_input(layer)
-    _score_jetbrains_metrics(metrics)
-    _jetbrains_position_score(metrics)
-    _jetbrains_size_score(metrics)
-    _label_noise_penalty(label)
-    _score_vscode_top_chat_input()
-    _score_vscode_metrics(metrics)
-    _vscode_label_score(label)
-    _vscode_position_score(cy)
-    _vscode_size_score(metrics)
-    photo_vql_chat_input_candidates(layers)
-    _chat_candidate_from_layer(layer)
-    vscode_family_top_chat_rejected(candidate)
-    vscode_family_chat_target_from_layers(layers)
-    jetbrains_corner_rejected(corner)
-    _target_bounds(target)
-    _target_bounds_too_small(bounds)
-    jetbrains_chat_corner_target_from_layers(layers)
-    _surface_window_rect(surface;source)
-    _composer_capture_point()
-    _surface_target_payload()
-    jetbrains_chat_target_from_surface(surface)
-    _target_from_candidate(candidate)
   packages/dsl2koru/src/dsl2koru/codegen.py:
     e: _python_type,build_model_registry,validate_payload,render_models_module,main
     _python_type(prop)
@@ -4063,35 +4062,6 @@ Calle...
     _capture_cycle(monitor_id;scale)
     normalize_capture_interval(interval_seconds)
     run_capture_loop()
-  src/koruvision/providers/detector.py:
-    e: monitors_via_xrandr,_forced_provider_rank,_auto_provider_order,_available_ranked_providers,rank_providers,list_provider_status,provider_diagnostics_rows,probe_capture_providers,_auto_failure_message,_provider_label,_should_report_auto_portal,capture_one_with_providers,capture_all_with_providers
-    monitors_via_xrandr()
-    _forced_provider_rank(pref)
-    _auto_provider_order()
-    _available_ranked_providers(ordered_names)
-    rank_providers()
-    list_provider_status()
-    provider_diagnostics_rows()
-    probe_capture_providers(name)
-    _auto_failure_message(errors)
-    _provider_label(provider)
-    _should_report_auto_portal(provider;index)
-    capture_one_with_providers(monitor_id;scale)
-    capture_all_with_providers(scale)
-  src/koruvision/providers/obs_websocket.py:
-    e: ObsWebSocketProvider,obs_url,obs_password,obs_source_name,obs_screenshot_width,_obs_auth,_websockets_missing,_with_obs_connection,_obs_request,probe_obs_reachable,_run_obs_capture,_capture_source_png
-    ObsWebSocketProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    obs_url()
-    obs_password()
-    obs_source_name()
-    obs_screenshot_width()
-    _obs_auth(password;salt;challenge)
-    _websockets_missing()
-    _with_obs_connection(fn)
-    _obs_request(ws;request_type;request_data)
-    probe_obs_reachable()
-    _run_obs_capture(fn)
-    _capture_source_png(source_name)
   src/koru/agent_backends.py:
     e: AgentBackendProfile,LaneConfig,AgentIntegrationConfig,_normalize_key,_agent_backend_profile_from_mapping,_external_backend_profiles,_backend_aliases,normalize_agent_backend_id,list_agent_backend_ids,iter_agent_backend_profiles,get_agent_backend_profile,_parse_lane,load_agent_integration_config,validate_agent_integration_config
     AgentBackendProfile:  # Static description of one way koru can reach an IDE-side age...
@@ -4697,6 +4667,35 @@ Calle...
     testRejectsWorkbenchChatOpenAsFocusOpen()
     filtered()
     run()
+  src/koruvision/providers/detector.py:
+    e: monitors_via_xrandr,_forced_provider_rank,_auto_provider_order,_available_ranked_providers,rank_providers,list_provider_status,provider_diagnostics_rows,probe_capture_providers,_auto_failure_message,_provider_label,_should_report_auto_portal,capture_one_with_providers,capture_all_with_providers
+    monitors_via_xrandr()
+    _forced_provider_rank(pref)
+    _auto_provider_order()
+    _available_ranked_providers(ordered_names)
+    rank_providers()
+    list_provider_status()
+    provider_diagnostics_rows()
+    probe_capture_providers(name)
+    _auto_failure_message(errors)
+    _provider_label(provider)
+    _should_report_auto_portal(provider;index)
+    capture_one_with_providers(monitor_id;scale)
+    capture_all_with_providers(scale)
+  src/koruvision/providers/obs_websocket.py:
+    e: ObsWebSocketProvider,obs_url,obs_password,obs_source_name,obs_screenshot_width,_obs_auth,_websockets_missing,_with_obs_connection,_obs_request,probe_obs_reachable,_run_obs_capture,_capture_source_png
+    ObsWebSocketProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
+    obs_url()
+    obs_password()
+    obs_source_name()
+    obs_screenshot_width()
+    _obs_auth(password;salt;challenge)
+    _websockets_missing()
+    _with_obs_connection(fn)
+    _obs_request(ws;request_type;request_data)
+    probe_obs_reachable()
+    _run_obs_capture(fn)
+    _capture_source_png(source_name)
   src/koru/deps_autorepair.py:
     e: auto_install_enabled,module_importable,pip_install,ensure_modules,ensure_extra,ensure_desktop_stack,ensure_vdisplay_runtime,ensure_vision_ocr
     auto_install_enabled()
@@ -5107,6 +5106,14 @@ Calle...
     resolve_verify(project;ticket;targets;registry)
     _resolve_profile(registry;name;ticket;targets)
     _profiles_required(project)
+  src/koru/queue/transaction/service.py:
+    e: execute_patch_transaction,_authorize,_run_isolated,_without_isolation,_run_direct,_apply_to_workspace
+    execute_patch_transaction(project;result;ticket;shell_runner;manifest;authorize)
+    _authorize(plan;frozen;journal;authorize)
+    _run_isolated(plan;freeze;shell_runner;journal)
+    _without_isolation(plan;freeze;shell_runner;journal)
+    _run_direct(plan;freeze;shell_runner;journal)
+    _apply_to_workspace(plan;freeze;shell_runner;journal)
   src/koru/cqrs/event_store.py:
     e: StoredEvent,EventStore,InMemoryEventStore,JsonlEventStore,_utc_now,_event_to_record,_record_to_event,project_event_store_path,storage_dir_event_store_path
     StoredEvent:  # Persisted domain event envelope...
@@ -5368,14 +5375,6 @@ Re-exported f...
     entry()
     makeProbeCache()
     mergeProbeCache()
-  src/koru/queue/transaction/service.py:
-    e: execute_patch_transaction,_authorize,_run_isolated,_without_isolation,_run_direct,_apply_to_workspace
-    execute_patch_transaction(project;result;ticket;shell_runner;manifest;authorize)
-    _authorize(plan;frozen;journal;authorize)
-    _run_isolated(plan;freeze;shell_runner;journal)
-    _without_isolation(plan;freeze;shell_runner;journal)
-    _run_direct(plan;freeze;shell_runner;journal)
-    _apply_to_workspace(plan;freeze;shell_runner;journal)
   packages/cli2koru/src/cli2koru/shell.py:
     e: run_shell
     run_shell()
@@ -6274,19 +6273,6 @@ C...
     _vision_mime(frame)
     vision_frame_envelope(frame)
     publish_vision_frame(frame)
-  src/koruvision/providers/browser_getdisplay.py:
-    e: BrowserGetDisplayProvider,browser_capture_requested,browser_capture_interval_seconds,_vision_mime_with_provider,_frames_from_store,_decode_browser_png_upload,_browser_upload_monitor_id,_mesh_key_for_browser_upload,_remember_browser_upload_envelope,_publish_browser_upload_if_requested,ingest_browser_upload
-    BrowserGetDisplayProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
-    browser_capture_requested()
-    browser_capture_interval_seconds()
-    _vision_mime_with_provider(frame)
-    _frames_from_store()
-    _decode_browser_png_upload(body)
-    _browser_upload_monitor_id(body)
-    _mesh_key_for_browser_upload(project)
-    _remember_browser_upload_envelope()
-    _publish_browser_upload_if_requested()
-    ingest_browser_upload(project;body)
   src/korumesh/store_persistence.py:
     e: frame_store_path,append_envelope,rotate_store,load_recent_envelopes
     frame_store_path()
@@ -7202,6 +7188,19 @@ C...
     _print_scenario_report(path;args;result)
     _run_scenario(path;args;adapter_cls;runner_cls)
     main(argv)
+  src/koruvision/providers/browser_getdisplay.py:
+    e: BrowserGetDisplayProvider,browser_capture_requested,browser_capture_interval_seconds,_vision_mime_with_provider,_frames_from_store,_decode_browser_png_upload,_browser_upload_monitor_id,_mesh_key_for_browser_upload,_remember_browser_upload_envelope,_publish_browser_upload_if_requested,ingest_browser_upload
+    BrowserGetDisplayProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
+    browser_capture_requested()
+    browser_capture_interval_seconds()
+    _vision_mime_with_provider(frame)
+    _frames_from_store()
+    _decode_browser_png_upload(body)
+    _browser_upload_monitor_id(body)
+    _mesh_key_for_browser_upload(project)
+    _remember_browser_upload_envelope()
+    _publish_browser_upload_if_requested()
+    ingest_browser_upload(project;body)
   packages/dsl2koru/src/dsl2koru/cli.py:
     e: _run_results,main,_main_subcommand,_main_legacy,_cmd_validate_schema,_cmd_encode,_cmd_decode,_cmd_roundtrip,_cmd_replay,_cmd_run,_handle_subcommand
     _run_results(results)
@@ -8395,9 +8394,6 @@ The c...
     _action_mcp(args;rest;project)
     _action_local(args;rest;project)
     main(argv)
-  src/koruvision/providers/base.py:
-    e: frame_from_png
-    frame_from_png(payload)
   src/korumesh/dashboard.py:
     e: grid_html,_diagnostics_payload,mesh_frames_payload,mesh_diagnostics_payload,_serve_grid,_serve_frames,_serve_diagnostics,serve_mesh_http
     grid_html()
@@ -8968,12 +8964,6 @@ The c...
   src/korullm/strategies/ollama.py:
     e: OllamaStrategy
     OllamaStrategy(StaticLlmIdentityMixin,LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
-  src/koruvision/capture.py:
-    e: _frame,list_monitors,capture_monitor_png,capture_all_monitors
-    _frame(descriptor)
-    list_monitors()
-    capture_monitor_png(monitor_id;scale)
-    capture_all_monitors(scale)
   src/koruvision/cli_parser.py:
     e: register_mesh_publish_args,_add_capture_subparser,_add_agent_subparser,build_vision_parser
     register_mesh_publish_args(parser)
@@ -9279,6 +9269,11 @@ Subclasses are **pure data + thin...
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
+  src/koruvision/capture.py:
+    e: list_monitors,capture_monitor_png,capture_all_monitors
+    list_monitors()
+    capture_monitor_png(monitor_id;scale)
+    capture_all_monitors(scale)
   packages/dsl2koru/src/dsl2koru/result.py:
     e: DslResult
     DslResult: to_dict(0)
@@ -9755,7 +9750,6 @@ Th...
   src/korullm/__init__.py:
   src/korullm/strategies/__init__.py:
   src/koruvision/__init__.py:
-  src/koruvision/providers/__init__.py:
   src/korumesh/__init__.py:
   src/koruide/config.py:
   src/koruide/daemon_storage.py:
@@ -10200,3 +10194,4 @@ Th...
   package.json:
   docs/architecture/dependency-boundary-inventory.yaml:
   docs/architecture/volume-reduction-plan.yaml:
+  src/koruvision/providers/__init__.py:
