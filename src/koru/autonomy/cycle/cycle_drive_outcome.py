@@ -38,6 +38,7 @@ def apply_autopilot_drive_outcome(
     autopilot_drive_kind = idle_prompt_kind or decision_kind
     autopilot_backend = str(reply.get("backend")) if reply.get("backend") is not None else None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    ticket_id = "" if waiting_ticket == "-" else waiting_ticket
 
     if ok:
         state.last_message_sent_ts = time.time()
@@ -80,7 +81,7 @@ def apply_autopilot_drive_outcome(
             finalize_action = finalize_shell_drive_ticket(
                 project=project,
                 autopilot_ide=autopilot_ide,
-                ticket_id=waiting_ticket,
+                ticket_id=ticket_id,
                 reply=reply,
                 ok=ok,
                 decision_kind=decision_kind,
@@ -89,7 +90,7 @@ def apply_autopilot_drive_outcome(
         else:
             finalize_action = note_provider_exhaustion(
                 project=project,
-                ticket_id=waiting_ticket or "",
+                ticket_id=ticket_id,
                 reply=reply,
                 _hp=_hp,
             )

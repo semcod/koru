@@ -257,6 +257,25 @@ class TestProviderExhaustionNote:
         )
         assert planfile.calls == []
 
+    def test_skipped_without_real_ticket(self, tmp_path, planfile):
+        from koru.autonomy.shell_drive_finalize import note_provider_exhaustion
+
+        reply = {
+            "ok": False,
+            "provider_attempts": ["z.ai"],
+            "stderr": "429 limit exceeded",
+        }
+        assert (
+            note_provider_exhaustion(
+                project=tmp_path,
+                ticket_id="-",
+                reply=reply,
+                _hp=_hp,
+            )
+            == "skipped"
+        )
+        assert planfile.calls == []
+
     def test_exhaustion_writes_note_once(self, tmp_path, planfile):
         reply = {
             "ok": False,

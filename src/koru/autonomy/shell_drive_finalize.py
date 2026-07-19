@@ -106,9 +106,9 @@ def provider_switch_note(reply: dict[str, Any]) -> str | None:
     )
 
 
-# (ticket_id, attempts-signature) pairs already noted by this loop process —
-# a failed drive is retried every cycle and must not spam the ticket.
-_EXHAUSTION_NOTED: set[tuple[str, str]] = set()
+# (project, ticket_id, attempts-signature) tuples already noted by this loop
+# process — a failed drive is retried every cycle and must not spam the ticket.
+_EXHAUSTION_NOTED: set[tuple[str, str, str]] = set()
 
 
 def note_provider_exhaustion(
@@ -125,7 +125,7 @@ def note_provider_exhaustion(
     The loop keeps retrying, so the note is written once per loop process per
     attempts-signature. Returns the action taken for telemetry.
     """
-    if not ticket_id:
+    if not ticket_id or ticket_id == "-":
         return "skipped"
     attempts = [
         str(item).strip()
@@ -135,6 +135,9 @@ def note_provider_exhaustion(
     if not attempts:
         return "skipped"
     try:
+        from koru.tillm_bridge import ensure_local_tillm_path
+
+        ensure_local_tillm_path()
         from tillm.providers import is_provider_exhaustion
     except ImportError:
         return "skipped"
@@ -144,7 +147,7 @@ def note_provider_exhaustion(
         message=str(reply.get("message") or ""),
     ):
         return "skipped"
-    key = (ticket_id, ",".join(attempts))
+    key = (str(project.resolve()), ticket_id, ",".join(attempts))
     if key in _EXHAUSTION_NOTED:
         return "already_noted"
     note = (

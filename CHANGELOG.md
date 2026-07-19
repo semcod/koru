@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Failed autonomous shell drives now append a deduplicated
+  `[KORU-SHELL-DRIVE] provider-exhausted` note to the active ticket when every
+  provider in the fallback queue is out of limits/credits; the ticket remains
+  open and the same remediation is printed in the live loop log.
 - Subactor repair template ships **`executor.kind=llm`** and **`inputs.llm_model`**
   (defaults from `LLM_MODEL` env). `acceptance_criteria` mirrors verify command
   for planfile import. Queue **`hydrate_subactor_repair_ticket`** restores
@@ -21,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Plesk/DNS/`--apply`.
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
+
+## [0.1.417] - 2026-07-19
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_autonomous_cycle_drive_outcome.py
+- Update tests/test_shell_drive_finalize.py
+
+### Other
+- Update uv.lock
 
 ## [0.1.416] - 2026-07-19
 
