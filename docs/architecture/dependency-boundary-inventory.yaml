@@ -193,7 +193,7 @@ extractions:
   - id: env2llm.public_factory
     order: 70
     priority: P1
-    status: proposed
+    status: complete
     kind: delete_duplicate
     source_modules:
       - src/koruapi/env2llm_registry.py
@@ -206,9 +206,10 @@ extractions:
     keep_in_koru:
       - The API facade and the decision which environment observations a run may request.
     current_smells:
-      - Koru imports env2llm.integrators._service_factory from a private module.
+      - Resolved in env2llm 0.1.14 and Koru 0.1.434+; env2llm owns typed construction, caching and serializable provenance.
     acceptance:
       - Koru has no env2llm private imports and unknown service kinds return a typed error.
+      - Every successful Koru registry response carries the canonical env2llm service descriptor and request hash.
     blocked_by: []
   - id: gillm.actuation_recovery
     order: 40

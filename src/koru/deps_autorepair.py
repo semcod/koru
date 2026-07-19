@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 # Top-level import name -> pip requirement
 MODULE_PIP_SPECS: dict[str, str] = {
-    "env2llm": "env2llm[mqtt]>=0.1.10",
+    "env2llm": "env2llm[mqtt]>=0.1.14",
     "vdisplay": "vdisplay>=0.1.58",
     "nlp2uri": "nlp2uri[envmap]>=0.4.7",
     "testql": "testql>=1.2.55",
@@ -24,7 +24,7 @@ MODULE_PIP_SPECS: dict[str, str] = {
 EXTRA_PIP_SPECS: dict[str, list[str]] = {
     "desktop": [
         "nlp2uri[envmap]>=0.4.7",
-        "env2llm[mqtt]>=0.1.10",
+        "env2llm[mqtt]>=0.1.14",
         "testql>=1.2.55",
     ],
     "vdisplay": ["vdisplay>=0.1.58"],

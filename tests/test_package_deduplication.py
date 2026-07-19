@@ -2,12 +2,31 @@
 
 from __future__ import annotations
 
+import ast
 import importlib
 import inspect
 import sys
 from pathlib import Path
 
 import pytest
+
+
+def test_koru_src_has_no_private_env2llm_imports() -> None:
+    root = Path(__file__).resolve().parents[1] / "src"
+    offenders: list[str] = []
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                parts = node.module.split(".")
+                if parts[0] == "env2llm" and any(part.startswith("_") for part in parts):
+                    offenders.append(str(path.relative_to(root)))
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    parts = alias.name.split(".")
+                    if parts[0] == "env2llm" and any(part.startswith("_") for part in parts):
+                        offenders.append(str(path.relative_to(root)))
+    assert offenders == []
 
 
 def test_autopilot_config_is_gillm_canonical() -> None:
@@ -65,9 +84,7 @@ def test_koruide_registers_host_activity_sinks(monkeypatch) -> None:
     monkeypatch.setattr(
         activity_log,
         "activity",
-        lambda category, message, *, preview=None, **_kwargs: events.append(
-            (category, message, preview)
-        ),
+        lambda category, message, *, preview=None, **_kwargs: events.append((category, message, preview)),
     )
     monkeypatch.setattr(
         activity_log,

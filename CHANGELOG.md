@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The env2llm registry bridge now consumes the public, typed service factory
+  from env2llm 0.1.14 and includes its canonical service descriptor plus
+  request/descriptor hashes in every successful response. Service construction
+  and caching are no longer duplicated inside Koru.
 - Failed autonomous shell drives now append a deduplicated
   `[KORU-SHELL-DRIVE] provider-exhausted` note to the active ticket when every
   provider in the fallback queue is out of limits/credits; the ticket remains
@@ -25,6 +29,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Plesk/DNS/`--apply`.
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
+
+## [0.1.434] - 2026-07-19
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/architecture/dependency-boundary-inventory.yaml
+
+### Test
+- Update tests/fakes/env2llm/service/__init__.py
+- Update tests/fakes/env2llm/service/factory.py
+- Update tests/test_deps_autorepair.py
+- Update tests/test_env2llm_registry.py
+- Update tests/test_package_deduplication.py
+
+### Other
+- Update app.doql.less
+- Update uv.lock
 
 ## [0.1.433] - 2026-07-19
 

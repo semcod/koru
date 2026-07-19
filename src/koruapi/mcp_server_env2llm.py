@@ -38,7 +38,7 @@ def build_tool_schemas() -> list[dict[str, Any]]:
             "name": "koru_env2llm_get_registry",
             "description": (
                 "Get live env2llm SystemMapIR registry (JSON) for a project. "
-                "Requires: pip install 'koru[desktop]' (env2llm>=0.1.5)."
+                "Requires: pip install 'koru[desktop]' (env2llm>=0.1.14)."
             ),
             "inputSchema": {
                 "type": "object",

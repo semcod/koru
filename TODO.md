@@ -437,6 +437,13 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
       Koru zachowuje kryteria akceptacji, wybór fallbacku i zgodę na mutację.
       **Akceptacja:** brak importów `_private`, parsowania tekstu i
       reimplementacji mechanizmu tych narzędzi w Koru.
+  - [x] **env2llm slice:** env2llm 0.1.14 udostępnia publiczne
+        `ServiceFactoryRequest`, `RegistryServiceFactory` i wersjonowany
+        `env2llm.service-descriptor.v1`. Koru nie ma już własnego cache ani
+        prywatnego importu fabryki; zachowuje wybór obserwacji, a każda udana
+        odpowiedź niesie kanoniczny request/descriptor hash do audytu.
+        Minimalna wersja runtime i DSL zależności to 0.1.14; guard AST blokuje
+        powrót prywatnych importów env2llm.
 - [ ] **DEP-5 — cienki most tillm (kolejność 90, P2).** Po podbiciu minimalnej
       wersji usunąć lokalny provider registry i path injection; konsumować
       typowany completion/provenance. `ProposalEnvelope`, retry budget,

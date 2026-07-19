@@ -580,15 +580,15 @@ wheels = [
 
 [[package]]
 name = "env2llm"
-version = "0.1.13"
+version = "0.1.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/35/40/1adde2a4b2f3c43c5607993eea0b42a19691ed35bf4fdfc4d84a68463244/env2llm-0.1.13.tar.gz", hash = "sha256:1a921e67bc086f9606f74a2007eb04b4556ce99949fa7a9ef65be5a96a1d7c44", size = 83890, upload-time = "2026-06-29T09:49:41.931Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b6/59/6f4ccf1b2bcdd8d86eb1f7eceaee414a52ef3917e153bfe762c3f5e7092c/env2llm-0.1.14.tar.gz", hash = "sha256:c45c23f94e1e739e40a99941e33aec2712e11233091a06e5b2d9f42693808c4f", size = 89341, upload-time = "2026-07-19T21:26:34.391Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/fa/0dd04e82437fcbe39c2041fefe9b5be7687cc386dfb829aa413ce793b5c3/env2llm-0.1.13-py3-none-any.whl", hash = "sha256:834a1f566ede5a07d1cd7b67d50f72f2b462f2b0ce945d61a2c095ab1eb0ef97", size = 93828, upload-time = "2026-06-29T09:49:40.538Z" },
+    { url = "https://files.pythonhosted.org/packages/14/1e/4f938e500713c1207602b20f10b257904464abbcdf12f121d78f9e6677ec/env2llm-0.1.14-py3-none-any.whl", hash = "sha256:45ceadc236dfd6f80f4bb8c0b368da596215f415d58121b3e3c0b64c02afc947", size = 99115, upload-time = "2026-07-19T21:26:32.831Z" },
 ]
 
 [package.optional-dependencies]
@@ -1416,7 +1416,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.433"
+version = "0.1.434"
 source = { editable = "." }
 dependencies = [
     { name = "gillm" },
@@ -1627,10 +1627,10 @@ requires-dist = [
     { name = "curllm", extras = ["mcp"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "curllm", extras = ["mcp"], marker = "extra == 'browser'", specifier = ">=1.0.0" },
     { name = "curllm", extras = ["mcp"], marker = "extra == 'curllm'", specifier = ">=1.0.0" },
-    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'all'", specifier = ">=0.1.10" },
-    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'browser'", specifier = ">=0.1.10" },
-    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'desktop'", specifier = ">=0.1.10" },
-    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'envmap'", specifier = ">=0.1.10" },
+    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'all'", specifier = ">=0.1.14" },
+    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'browser'", specifier = ">=0.1.14" },
+    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'desktop'", specifier = ">=0.1.14" },
+    { name = "env2llm", extras = ["mqtt"], marker = "extra == 'envmap'", specifier = ">=0.1.14" },
     { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.115,<1.0" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115,<1.0" },
     { name = "fullm", marker = "extra == 'all'", specifier = ">=0.1.22" },
