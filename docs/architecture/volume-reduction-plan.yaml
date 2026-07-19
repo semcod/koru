@@ -318,7 +318,7 @@ stages:
       - Koru-specific mesh publication and ticket/evidence linkage.
     acceptance:
       - Koru has no private VDisplay imports and performs no coordinate conversion.
-      - Generic koruvision capture providers are replaced by public VDisplay 0.1.56 APIs, and VQL/IMGL payload normalization delegates to VDisplay 0.1.57; only Koru policy and domain adapters remain.
+      - Generic koruvision capture providers are replaced by public VDisplay 0.1.56 APIs, VQL/IMGL normalization delegates to VDisplay 0.1.57, and coordinate mapping plus capture metadata normalization delegate to VDisplay 0.1.58; only Koru policy and domain adapters remain.
       - Replay of one observation yields identical canonical target and coordinate hashes.
     blocked_by:
       - planfile.client_lifecycle

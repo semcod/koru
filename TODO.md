@@ -308,11 +308,17 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
         `render_intent`, `program`) do wspólnej reprezentacji. Koru deleguje
         parsing bbox/center/layers i usunęło 96 linii z `vdisplay_client.py`
         (6856→6760); wybór pliku, freshness, target policy i authority pozostają
-        w Koru. Łączna redukcja trzech ukończonych slice'ów: 1220 linii i 9
-        modułów produkcyjnych.
-  - [ ] Następnie przenieść canonical coordinate map oraz niezależne od policy
-        wzbogacanie capture metadata z `vdisplay_client.py`; po jednym wydaniu
-        shimu usunąć
+        w Koru.
+  - [x] VDisplay 0.1.58 jest właścicielem wersjonowanego kontraktu
+        `vdisplay.coordinate-map.v1`, JSON Schema, kanonicznego hasha oraz
+        czystej kompilacji mapy ze snapshotu capture metadata. Osobny adapter
+        live rozwiązuje monitor i ScreenCast bez ukrywania I/O w modelu.
+        Koru deleguje normalizację metadanych i wszystkie przeliczenia
+        global↔capture-local, zachowując wybór kalibracji IDE, freshness,
+        target policy, grant i authority. Z `vdisplay_client.py` oraz
+        `photo_vql_target.py` usunięto netto 402 linie. Łączna redukcja czterech
+        ukończonych slice'ów: 1622 linie i 9 modułów produkcyjnych.
+  - [ ] Po jednym wydaniu shimu usunąć
         `koruvision.providers.base.frame_from_png`. OBS/browser przenosić tylko
         po pojawieniu się drugiego konsumenta lub neutralnego transportu.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
@@ -396,6 +402,12 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
         normalizerem VQL/IMGL. Koru używa jednego kontraktu dla sidecarów i
         świeżych payloadów, zachowując discovery, freshness, wybór targetu i
         authority; `vdisplay_client.py` zmalał o 96 linii.
+  - [x] VDisplay 0.1.58 opublikowano z deterministycznym
+        `CaptureCoordinateMap`, schematem `vdisplay.coordinate-map.v1`,
+        kanonicznym hashem, czystą normalizacją capture metadata i osobnym
+        adapterem live. Koru nie implementuje już konwersji współrzędnych;
+        dwa główne adaptery zmalały netto o 402 linie, a audit działania
+        utrwala deskryptor i hash użytej mapy.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie

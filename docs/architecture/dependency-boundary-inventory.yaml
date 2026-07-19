@@ -418,6 +418,7 @@ extractions:
       - Canonical ScreenObservation, pixel primitives and persistent ScreenCast lifecycle are public in VDisplay 0.1.55.
       - MSS, native CLI, portal Screenshot and portal ScreenCast providers are public in VDisplay 0.1.56.
       - Deterministic VQL/IMGL payload-to-element normalization is public in VDisplay 0.1.57.
+      - Canonical capture metadata, immutable coordinate maps, packaged JSON Schema and live snapshot resolution are public in VDisplay 0.1.58.
     keep_in_koru:
       - Observe-decide-act-verify policy, GUI fallback ladder and authorization.
       - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
@@ -425,7 +426,7 @@ extractions:
       - The main Koru vdisplay client is a multi-thousand-line integration boundary.
       - Public crop, monitor and VQL layer helpers are consumed from VDisplay 0.1.54 with zero private imports.
       - Koru's VisionFrame and provider base are one-release compatibility shims over VDisplay contracts.
-      - Koru retains policy ordering plus its Koru-specific OBS and browser/mesh adapters; canonical coordinate mapping and policy-free capture metadata enrichment still await extraction.
+      - Canonical coordinate mapping and policy-free capture metadata enrichment delegate to VDisplay 0.1.58; Koru retains calibration selection, policy ordering and its Koru-specific OBS and browser/mesh adapters.
     acceptance:
       - Koru has no private vdisplay imports and performs no coordinate conversion itself.
       - Replaying one observation yields the same normalized targets and coordinate map hash.

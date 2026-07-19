@@ -3858,7 +3858,7 @@ def _matching_ide_map_capture_meta(source: str) -> dict[str, Any]:
             with open(map_path) as f:
                 map_data = json.load(f)
             mcap = map_data.get("capture_meta") if isinstance(map_data.get("capture_meta"), dict) else {}
-            if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, "", "DP-2"}:
+            if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, ""}:
                 return dict(mcap)
         except Exception:
             pass
