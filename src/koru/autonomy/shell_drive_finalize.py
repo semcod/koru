@@ -78,6 +78,34 @@ def _ticket_already_resolved(
     return status in _RESOLVED_STATUSES
 
 
+def provider_switch_note(reply: dict[str, Any]) -> str | None:
+    """Ticket-visible record of an autonomous LLM-provider fallback.
+
+    The tillm drive payload carries ``provider`` (the one that actually
+    served the drive) and ``provider_attempts`` (the configured queue). When
+    the winner is not the queue's first choice, the earlier providers were
+    unavailable — typically an exhausted limit (429/402) — and koru switched
+    autonomously. The operator only sees the loop's stdout if they are
+    watching, so the ticket itself must say what happened and how to change
+    the queue.
+    """
+    used = str(reply.get("provider") or "").strip()
+    attempts = [
+        str(item).strip()
+        for item in (reply.get("provider_attempts") or ())
+        if str(item).strip()
+    ]
+    if not used or len(attempts) < 2 or attempts[0] == used:
+        return None
+    skipped = attempts[: attempts.index(used)] if used in attempts else attempts[:1]
+    return (
+        f"{_NOTE_TAG} provider-switch: {' → '.join([*skipped, used])} — "
+        f"{', '.join(repr(p) for p in skipped)} unavailable/exhausted (limit?), "
+        f"koru autonomously drove this ticket with {used!r}. "
+        "Re-prioritize with `tillm provider order …` or TILLM_PROVIDER_ORDER."
+    )
+
+
 def _reply_note(reply: dict[str, Any]) -> str:
     message = reply.get("message") or reply.get("stdout") or reply.get("output") or ""
     if isinstance(message, bytes):
@@ -86,9 +114,13 @@ def _reply_note(reply: dict[str, Any]) -> str:
     if len(text) > _MAX_NOTE_CHARS:
         text = text[:_MAX_NOTE_CHARS] + " …[truncated]"
     client = str(reply.get("client_id") or reply.get("backend") or "shell")
-    if text:
-        return f"{_NOTE_TAG} client={client} ok=true\n{text}"
-    return f"{_NOTE_TAG} client={client} ok=true (no output captured)"
+    provider = str(reply.get("provider") or "").strip()
+    provider_part = f" provider={provider}" if provider else ""
+    header = f"{_NOTE_TAG} client={client}{provider_part} ok=true"
+    body = text if text else "(no output captured)"
+    note = f"{header}\n{body}" if text else f"{header} {body}"
+    switch = provider_switch_note(reply)
+    return f"{note}\n{switch}" if switch else note
 
 
 def _eligible_for_finalize(
@@ -208,6 +240,8 @@ def finalize_shell_drive_ticket(
         )
         return "already_resolved"
 
+    if switch := provider_switch_note(reply):
+        _hp(f"  shell-drive: {switch}")
     planfile_command(
         project,
         ["ticket", "update", ticket_id, "--note", _reply_note(reply)],
@@ -245,4 +279,4 @@ def finalize_shell_drive_ticket(
     )
 
 
-__all__ = ["finalize_shell_drive_ticket"]
+__all__ = ["finalize_shell_drive_ticket", "provider_switch_note"]

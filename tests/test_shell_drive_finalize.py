@@ -165,3 +165,61 @@ def test_bytes_reply_message_survives(tmp_path, planfile, monkeypatch):
     assert result == "noted"
     note = planfile.calls[-1][-1]
     assert "raw" in note
+
+
+class TestProviderSwitchNote:
+    """Autonomous provider fallback must be visible in the ticket note."""
+
+    def test_no_note_without_fallback(self):
+        from koru.autonomy.shell_drive_finalize import provider_switch_note
+
+        assert provider_switch_note({"provider": "z.ai"}) is None
+        assert (
+            provider_switch_note(
+                {"provider": "z.ai", "provider_attempts": ["z.ai", "minimax"]}
+            )
+            is None
+        )
+        assert provider_switch_note({}) is None
+
+    def test_fallback_produces_switch_note(self):
+        from koru.autonomy.shell_drive_finalize import provider_switch_note
+
+        note = provider_switch_note(
+            {
+                "provider": "minimax",
+                "provider_attempts": ["subscription", "z.ai", "minimax"],
+            }
+        )
+        assert note is not None
+        assert "subscription → z.ai → minimax" in note
+        assert "unavailable/exhausted" in note
+        assert "tillm provider order" in note
+
+    def test_switch_note_lands_in_ticket_update(self, tmp_path, planfile, monkeypatch):
+        monkeypatch.setattr(verify_mod, "load_post_run_verify_config", lambda p: None)
+        reply = {
+            "ok": True,
+            "message": "done",
+            "client_id": "claude-code",
+            "provider": "minimax",
+            "provider_attempts": ["z.ai", "minimax"],
+        }
+        assert _finalize(tmp_path, reply=reply) == "noted"
+        update = next(c for c in planfile.calls if c[:2] == ["ticket", "update"])
+        note = update[update.index("--note") + 1]
+        assert "provider-switch: z.ai → minimax" in note
+        assert "provider=minimax" in note
+
+    def test_switch_reported_live_to_operator(self, tmp_path, planfile, monkeypatch):
+        monkeypatch.setattr(verify_mod, "load_post_run_verify_config", lambda p: None)
+        lines: list[str] = []
+        reply = {
+            "ok": True,
+            "message": "done",
+            "client_id": "claude-code",
+            "provider": "minimax",
+            "provider_attempts": ["z.ai", "minimax"],
+        }
+        _finalize(tmp_path, reply=reply, _hp=lines.append)
+        assert any("provider-switch" in line for line in lines)

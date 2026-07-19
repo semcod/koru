@@ -22,6 +22,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
 
+## [0.1.415] - 2026-07-19
+
+### Docs
+- Update README.md
+- Update docs/llm-provider-configuration.md
+
+### Test
+- Update tests/test_shell_drive_finalize.py
+
+### Other
+- Update uv.lock
+
 ## [0.1.414] - 2026-07-18
 
 ### Docs
