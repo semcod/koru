@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import json
 import struct
-from pathlib import Path
-from unittest import mock
 
 from koruvision.providers.portal_screencast import PortalScreenCastProvider
 
@@ -43,42 +40,26 @@ def test_portal_screencast_capture_all_mocked(monkeypatch) -> None:
     assert frames[0]["provider"] == "portal_screencast"
 
 
-def test_screencast_frames_retries_after_cache_clear(monkeypatch, tmp_path: Path) -> None:
-    from koruvision.providers.screencast_session import session_file_for_project
+def test_screencast_frames_use_vdisplay_session(monkeypatch) -> None:
+    from koruvision.providers import portal_screencast as mod
 
-    session = session_file_for_project(tmp_path)
-    session.parent.mkdir(parents=True, exist_ok=True)
-    session.write_text('{"session_path": "/org/freedesktop/portal/desktop/session/stale"}\n')
-    calls = {"n": 0}
+    class FakeSession:
+        node_ids = [41, 42]
+        stream_targets = ["DP-1", "DP-2"]
+        streams = []
 
-    def fake_run(args, **kwargs):
-        calls["n"] += 1
-        if calls["n"] == 1:
-            return type("P", (), {"returncode": 2, "stdout": "", "stderr": "reuse failed"})()
-        import base64
+        def capture_png(self, *, node_index: int = 0) -> bytes:
+            return _png(4 + node_index, 3)
 
-        payload = [
-            {
-                "monitor_id": 0,
-                "output": "DP-1",
-                "native_width": 4,
-                "native_height": 3,
-                "payload_b64": base64.b64encode(_png(4, 3)).decode("ascii"),
-            }
-        ]
-        return type("P", (), {"returncode": 0, "stdout": json.dumps(payload), "stderr": ""})()
+    monkeypatch.setattr(mod, "_active_or_new_session", lambda: FakeSession())
 
-    monkeypatch.setenv("KORU_MESH_FRAME_STORE", str(tmp_path / ".koru" / "run" / "mesh.jsonl"))
-    (tmp_path / ".koru" / "run").mkdir(parents=True, exist_ok=True)
-    with mock.patch(
-        "koruvision.providers.portal_screencast._run_screencast_subprocess",
-        side_effect=fake_run,
-    ):
-        from koruvision.providers.portal_screencast import _screencast_frames
-
-        frames = _screencast_frames(0.5)
-    assert calls["n"] == 2
-    assert len(frames) == 1
+    frames = mod._screencast_frames(0.5)
+    assert [item["output"] for item in frames] == ["DP-1", "DP-2"]
+    assert frames[1]["capture_meta"] == {
+        "session": "vdisplay",
+        "stream_index": 1,
+        "node_id": 42,
+    }
 
 
 def test_rank_providers_forces_screencast(monkeypatch) -> None:

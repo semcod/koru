@@ -17,24 +17,24 @@ chain. That responsibility now lives in :mod:`koruvision.providers.detector`
 from __future__ import annotations
 
 import contextlib
-import hashlib
 import os
 import shutil
-import struct
 import subprocess
 import sys
 import tempfile
 from datetime import UTC, datetime
 from typing import Any
 
-from koruvision.scaling import downscale_rgb_nearest, rgb_mostly_black
+from vdisplay.capture import (
+    ScreenObservation,
+    downscale_rgb_nearest,
+    png_dimensions,
+    rgb_mostly_black,
+)
 
 
 class BlackFrameError(RuntimeError):
     """Captured buffer is empty/black (common with XWayland + ``mss``)."""
-
-
-_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 def is_wayland() -> bool:
@@ -45,29 +45,18 @@ def is_wayland() -> bool:
     )
 
 
-def png_dimensions(payload: bytes) -> tuple[int, int]:
-    if len(payload) >= 24 and payload.startswith(_PNG_SIGNATURE) and payload[12:16] == b"IHDR":
-        width, height = struct.unpack(">II", payload[16:24])
-        return int(width), int(height)
-    return 0, 0
-
-
 def png_payload_descriptor(payload: bytes, *, output: str) -> dict[str, Any]:
     if not payload:
         raise RuntimeError("capture backend returned an empty image")
     width, height = png_dimensions(payload)
-    return {
-        "frame_id": hashlib.sha256(payload).hexdigest()[:16],
-        "monitor_id": -1,
-        "captured_at": datetime.now(UTC).isoformat(),
-        "mime": "image/png",
-        "width": width,
-        "height": height,
-        "payload": payload,
-        "native_width": width,
-        "native_height": height,
-        "output": output,
-    }
+    if width <= 0 or height <= 0:
+        raise RuntimeError("capture backend returned an invalid PNG")
+    return ScreenObservation.from_png(
+        payload,
+        monitor_id=-1,
+        captured_at=datetime.now(UTC).isoformat(),
+        output=output,
+    ).to_descriptor()
 
 
 def frame_from_shot(
@@ -87,18 +76,14 @@ def frame_from_shot(
     dst_h = max(1, int(src_h * scale))
     rgb = downscale_rgb_nearest(shot.rgb, src_w, src_h, dst_w, dst_h)
     payload = mss.tools.to_png(rgb, (dst_w, dst_h))
-    return {
-        "frame_id": hashlib.sha256(payload).hexdigest()[:16],
-        "monitor_id": monitor_id,
-        "captured_at": datetime.now(UTC).isoformat(),
-        "mime": "image/png",
-        "width": dst_w,
-        "height": dst_h,
-        "payload": payload,
-        "native_width": src_w,
-        "native_height": src_h,
-        "output": output,
-    }
+    return ScreenObservation.from_png(
+        payload,
+        monitor_id=monitor_id,
+        captured_at=datetime.now(UTC).isoformat(),
+        native_width=src_w,
+        native_height=src_h,
+        output=output,
+    ).to_descriptor()
 
 
 def ordered_monitor_indices(targets: list[dict[str, Any]]) -> list[int]:

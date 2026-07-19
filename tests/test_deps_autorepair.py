@@ -58,8 +58,8 @@ def test_ensure_modules_skips_pip_when_present(monkeypatch) -> None:
 def test_vdisplay_autorepair_uses_public_api_release_floor() -> None:
     from koru.deps_autorepair import EXTRA_PIP_SPECS, MODULE_PIP_SPECS
 
-    assert MODULE_PIP_SPECS["vdisplay"] == "vdisplay>=0.1.54"
-    assert EXTRA_PIP_SPECS["vdisplay"] == ["vdisplay>=0.1.54"]
+    assert MODULE_PIP_SPECS["vdisplay"] == "vdisplay>=0.1.55"
+    assert EXTRA_PIP_SPECS["vdisplay"] == ["vdisplay>=0.1.55"]
 
 
 def _load_env2llm_registry_module():

@@ -13,6 +13,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 FOREIGN_NAMESPACES = ("env2llm", "imgl", "nlp2imgl")
+REMOVED_RUNTIME_MODULES = (
+    "koruvision/scaling.py",
+    "koruvision/providers/screencast_session.py",
+)
 
 
 def test_foreign_dependency_namespaces_are_absent_from_runtime_source() -> None:
@@ -49,7 +53,6 @@ print(json.dumps(resolved, sort_keys=True))
             assert not Path(origin).is_relative_to(runtime_src)
 
 
-@pytest.mark.slow
 def test_built_wheel_contains_no_foreign_dependency_namespace(tmp_path: Path) -> None:
     uv = shutil.which("uv")
     if uv is None:
@@ -68,3 +71,5 @@ def test_built_wheel_contains_no_foreign_dependency_namespace(tmp_path: Path) ->
         members = archive.namelist()
     for namespace in FOREIGN_NAMESPACES:
         assert not any(member == namespace or member.startswith(f"{namespace}/") for member in members)
+    for module in REMOVED_RUNTIME_MODULES:
+        assert module not in members, f"stale build artifact leaked into wheel: {module}"

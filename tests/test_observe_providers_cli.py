@@ -65,13 +65,19 @@ def test_providers_list_payload_structure() -> None:
     assert isinstance(payload["providers"], list)
 
 
-def test_providers_reset_clears_session_file(tmp_path: Path) -> None:
+def test_providers_reset_clears_session_file(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "koruobserve.providers_cli.reset_screencast_consent",
+        lambda: {"ok": True, "stopped": True, "token_cleared": True},
+    )
     session = screencast_session_path(tmp_path)
     session.parent.mkdir(parents=True, exist_ok=True)
     session.write_text("{}", encoding="utf-8")
     payload = providers_reset_consent(tmp_path)
     assert payload["ok"] is True
     assert not session.is_file()
+    assert "vdisplay:active-session" in payload["removed"]
+    assert "vdisplay:restore-token" in payload["removed"]
 
 
 def test_cmd_providers_list_prints(capsys: pytest.CaptureFixture[str]) -> None:

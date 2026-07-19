@@ -295,7 +295,7 @@ stages:
   - id: vdisplay.screen_capture
     order: 60
     priority: P0
-    status: blocked_by_upstream
+    status: dual_run
     action: move_to_dependency
     source_paths:
       - src/koru/integrations/photo_vql_monitor.py

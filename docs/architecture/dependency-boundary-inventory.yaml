@@ -397,7 +397,7 @@ extractions:
   - id: vdisplay.screen_truth
     order: 30
     priority: P0
-    status: proposed
+    status: compatibility_shim
     kind: move
     source_modules:
       - src/koru/integrations/photo_vql_monitor.py
@@ -408,7 +408,6 @@ extractions:
       - src/koruvision/capture_mss.py
       - src/koruvision/portal_capture.py
       - src/koruvision/providers
-      - src/koruvision/scaling.py
     target_repositories:
       - wronai/vdisplay
     contract_ids:
@@ -418,13 +417,15 @@ extractions:
       - VQL parsing and normalization, geometry, monitor topology and capture metadata.
       - Stable public APIs for multi-stream regions, monitor lookup and IMGL layer building.
       - The generic capture provider stack currently duplicated by koruvision.
+      - Canonical ScreenObservation, pixel primitives and persistent ScreenCast lifecycle are public in VDisplay 0.1.55.
     keep_in_koru:
       - Observe-decide-act-verify policy, GUI fallback ladder and authorization.
       - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
     current_smells:
       - The main Koru vdisplay client is a multi-thousand-line integration boundary.
       - Public crop, monitor and VQL layer helpers are consumed from VDisplay 0.1.54 with zero private imports.
-      - Canonical observation normalization and the duplicate koruvision capture stack still await extraction.
+      - Koru's VisionFrame is a compatibility alias for VDisplay ScreenObservation; its portal provider is now a thin VDisplay adapter.
+      - MSS, CLI, portal screenshot and OBS adapters plus coordinate normalization still await extraction.
     acceptance:
       - Koru has no private vdisplay imports and performs no coordinate conversion itself.
       - Replaying one observation yields the same normalized targets and coordinate map hash.

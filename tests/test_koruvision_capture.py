@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 import pytest
+from vdisplay.capture import SCREEN_OBSERVATION_V1, ScreenObservation
 
 from koruvision.capture import VisionFrame, capture_all_monitors, capture_monitor_png, list_monitors
 
@@ -31,6 +32,13 @@ def _fake_grabber(*, primary: bool = False) -> mock.MagicMock:
 
 def _png(width: int = 3, height: int = 2) -> bytes:
     return b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + struct.pack(">II", width, height)
+
+
+def test_vision_frame_is_the_public_vdisplay_contract() -> None:
+    assert VisionFrame is ScreenObservation
+    frame = VisionFrame("id", 0, "time", "image/png", 1, 1, b"payload")
+    assert frame.schema == SCREEN_OBSERVATION_V1
+    assert len(frame.observation_hash) == 64
 
 
 def test_list_monitors_returns_at_least_one() -> None:

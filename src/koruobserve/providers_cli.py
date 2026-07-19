@@ -6,11 +6,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from vdisplay.capture import reset_screencast_consent
+
 
 def screencast_session_path(project: Path) -> Path:
-    from koruvision.providers.screencast_session import session_file_for_project
-
-    return session_file_for_project(project)
+    """Legacy Koru session cache path, retained only for one-time cleanup."""
+    return project.resolve() / ".koru" / "keys" / "screencast.session"
 
 
 def providers_list_payload(project: Path) -> dict[str, Any]:
@@ -89,12 +90,16 @@ def providers_test_text(payload: dict[str, Any]) -> str:
 
 
 def providers_reset_consent(project: Path) -> dict[str, Any]:
-    """Remove saved ScreenCast session token (forces portal dialog on next capture)."""
-    from koruvision.providers.screencast_session import clear_session_file
-
+    """Reset VDisplay ScreenCast state and remove Koru's obsolete cache file."""
     removed: list[str] = []
+    state = reset_screencast_consent()
+    if state.get("stopped"):
+        removed.append("vdisplay:active-session")
+    if state.get("token_cleared"):
+        removed.append("vdisplay:restore-token")
     session = screencast_session_path(project)
-    if clear_session_file(session):
+    if session.is_file():
+        session.unlink()
         removed.append(str(session))
     keys_dir = session.parent
     if keys_dir.is_dir() and not any(keys_dir.iterdir()):
@@ -103,7 +108,7 @@ def providers_reset_consent(project: Path) -> dict[str, Any]:
     return {
         "ok": True,
         "removed": removed,
-        "message": "screencast consent cache cleared" if removed else "no screencast session file",
+        "message": "screencast consent reset" if removed else "no screencast consent state",
     }
 
 

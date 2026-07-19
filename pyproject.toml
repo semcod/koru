@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.424"
+version = "0.1.425"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -38,12 +38,14 @@ watch = [
 ]
 vision = [
     "mss>=9.0,<11.0",
+    "vdisplay>=0.1.55",
 ]
 mesh = [
     "websockets>=12.0,<17.0",
 ]
 observe = [
     "mss>=9.0,<11.0",
+    "vdisplay>=0.1.55",
     "websockets>=12.0,<17.0",
 ]
 desktop = [
@@ -80,7 +82,7 @@ browser = [
 ]
 vdisplay = [
     # Align with uv dev group floor used for photo-VQL / vision drive.
-    "vdisplay>=0.1.54",
+    "vdisplay>=0.1.55",
 ]
 dev = [
     "gillm>=0.1.9",
@@ -190,7 +192,7 @@ all = [
     "planfile>=0.1.116",
     "playwright>=1.40,<2.0",
     "testql>=1.2.55",
-    "vdisplay>=0.1.54",
+    "vdisplay>=0.1.55",
 ]
 
 [project.scripts]
@@ -228,7 +230,7 @@ dev = [
     # photo-VQL / vision chat drive imports vdisplay; without it in the
     # default-synced group every `uv sync` (i.e. every goal release) drops it
     # and the daemon's vision path silently disables.
-    "vdisplay>=0.1.54",
+    "vdisplay>=0.1.55",
     # the OCR placeholder anchor (vdisplay.control.vision_ocr) needs Pillow +
     # pytesseract; without them ocr_available() is false and the deterministic
     # anchor silently no-ops, forcing the imprecise full-image LLM path.

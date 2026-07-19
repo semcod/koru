@@ -270,8 +270,18 @@ cudzych namespace'ów w produkcyjnym `src/`. Kolejność jest następująca:
   - [x] Koru wymaga VDisplay 0.1.54, używa trzech publicznych fasad, a kontrakt
         CI wymusza zero prywatnych importów. Shimy po stronie VDisplay pozostają
         na okres kompatybilności.
-  - [ ] Następnie przenieść canonical observation/coordinate map i zastąpić
-        `koruvision` capture stack; ten etap nadal jest `blocked_by_upstream`.
+  - [x] VDisplay 0.1.55 posiada deterministyczny kontrakt
+        `vdisplay.screen-observation.v1` (JSON Schema, canonical provenance
+        hash, payload hash), publiczne prymitywy pikseli i lifecycle trwałej
+        sesji ScreenCast. `VisionFrame` jest aliasem kompatybilnościowym,
+        provider portalu deleguje do VDisplay, a z Koru usunięto własny skrypt
+        D-Bus/GStreamer, cache uchwytu i `koruvision.scaling`: netto -396 linii
+        produkcyjnych i -2 moduły.
+  - [ ] Następnie zastąpić pozostałe registry/provider adapters
+        (`mss`, CLI, portal screenshot, OBS) publicznym typed provider API oraz
+        przenieść canonical coordinate map i normalization z
+        `vdisplay_client.py`. Etap jest w compatibility shim, już nie
+        `blocked_by_upstream` dla obserwacji i ScreenCast.
 - [ ] **VOL-6 — kolejne mechanizmy do aktywnych zależności (order 70–100).**
       Gillm przejmuje bounded actuation/recovery; producenci analyzerów emitują
       `TicketProposalV1`; IMGL/TestQL/env2llm/Tagi dostają publiczne typed API;
@@ -342,6 +352,10 @@ execution DSL-em i sam nie nadaje żadnych uprawnień.
   - [x] VDisplay 0.1.54 opublikowano, minimum Koru podniesiono, trzy importy
         przełączono na publiczne fasady, a test DSL wymusza zero `_private`.
         Aliasy kompatybilności pozostają przez co najmniej jedno wydanie.
+  - [x] VDisplay 0.1.55 opublikowano z `ScreenObservation`, packaged schema,
+        canonical hash i publicznym ScreenCast lifecycle. Koru wymaga tej
+        wersji dla extras `vision`/`observe`, zachowuje nazwę `VisionFrame`
+        jako shim i usunęło 396 linii własnego mechanizmu capture.
 - [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
       strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
       odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie

@@ -107,11 +107,22 @@ class TestDependencyBoundaryInventory(unittest.TestCase):
         self.assertEqual(found, set())
 
     def test_vdisplay_public_screen_truth_api_is_available(self) -> None:
-        from vdisplay.capture import resolve_multi_stream_region
+        from vdisplay.capture import (
+            ScreenObservation,
+            reset_screencast_consent,
+            resolve_multi_stream_region,
+            screen_observation_v1_schema,
+        )
         from vdisplay.input import monitor_by_name
         from vdisplay.integrations import build_imgl_layers
 
         self.assertTrue(callable(resolve_multi_stream_region))
+        self.assertTrue(callable(ScreenObservation))
+        self.assertTrue(callable(reset_screencast_consent))
+        self.assertEqual(
+            screen_observation_v1_schema()["properties"]["schema"]["const"],
+            "vdisplay.screen-observation.v1",
+        )
         self.assertTrue(callable(monitor_by_name))
         self.assertTrue(callable(build_imgl_layers))
 

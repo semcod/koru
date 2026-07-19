@@ -2,20 +2,15 @@
 
 from __future__ import annotations
 
-import hashlib
-import struct
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
-from koruvision.scaling import resolve_scale
+from vdisplay.capture import ScreenObservation, png_dimensions, resolve_capture_scale
 
 
 class BlackFrameError(RuntimeError):
     """Captured buffer is empty/black (common with XWayland + ``mss``)."""
-
-
-_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 @dataclass(frozen=True)
@@ -51,13 +46,6 @@ class CaptureProvider(Protocol):
     def capture_one(self, monitor_id: int | None, scale: float) -> dict[str, Any]: ...
 
 
-def png_dimensions(payload: bytes) -> tuple[int, int]:
-    if len(payload) >= 24 and payload.startswith(_PNG_SIGNATURE) and payload[12:16] == b"IHDR":
-        width, height = struct.unpack(">II", payload[16:24])
-        return int(width), int(height)
-    return 0, 0
-
-
 def frame_from_png(
     payload: bytes,
     *,
@@ -65,6 +53,7 @@ def frame_from_png(
     scale: float,
     output: str,
     provider: str,
+    capture_meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a VisionFrame descriptor dict from raw PNG bytes."""
     if not payload:
@@ -72,19 +61,16 @@ def frame_from_png(
     native_w, native_h = png_dimensions(payload)
     if native_w <= 0 or native_h <= 0:
         raise RuntimeError(f"{provider}: invalid PNG dimensions")
-    scale_value = resolve_scale(scale)
+    scale_value = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
     thumb_w = max(1, int(native_w * scale_value))
     thumb_h = max(1, int(native_h * scale_value))
-    return {
-        "frame_id": hashlib.sha256(payload).hexdigest()[:16],
-        "monitor_id": monitor_id,
-        "captured_at": datetime.now(UTC).isoformat(),
-        "mime": "image/png",
-        "width": thumb_w,
-        "height": thumb_h,
-        "payload": payload,
-        "native_width": native_w,
-        "native_height": native_h,
-        "output": output or provider,
-        "provider": provider,
-    }
+    return ScreenObservation.from_png(
+        payload,
+        monitor_id=monitor_id,
+        captured_at=datetime.now(UTC).isoformat(),
+        width=thumb_w,
+        height=thumb_h,
+        output=output or provider,
+        provider=provider,
+        capture_meta=capture_meta or {},
+    ).to_descriptor()

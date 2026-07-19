@@ -47,6 +47,13 @@ def test_all_extra_matches_union_of_other_extras() -> None:
     assert set(optional["all"]) == expected
 
 
+def test_vision_extras_install_the_public_screen_observation_owner() -> None:
+    optional = _pyproject()["project"]["optional-dependencies"]
+
+    assert "vdisplay>=0.1.55" in optional["vision"]
+    assert "vdisplay>=0.1.55" in optional["observe"]
+
+
 def test_readme_documents_each_installation_extra() -> None:
     optional = _pyproject()["project"]["optional-dependencies"]
     readme = (ROOT / "README.md").read_text(encoding="utf-8")

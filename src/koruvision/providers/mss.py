@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from vdisplay.capture import resolve_capture_scale
+
 from koruvision.providers.base import MonitorSpec, ProviderAvailability
-from koruvision.scaling import resolve_scale
 
 
 class MssProvider:
@@ -43,7 +44,9 @@ class MssProvider:
     def capture_all(self, scale: float) -> list[dict[str, Any]]:
         from koruvision.capture_mss import _grab_all_mss_raw
 
-        frames = _grab_all_mss_raw(resolve_scale(scale))
+        frames = _grab_all_mss_raw(
+            resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
+        )
         if not frames:
             raise RuntimeError("all monitors returned black frames")
         return frames
@@ -51,4 +54,7 @@ class MssProvider:
     def capture_one(self, monitor_id: int | None, scale: float) -> dict[str, Any]:
         from koruvision.capture_mss import _grab_single_mss_raw
 
-        return _grab_single_mss_raw(monitor_id, resolve_scale(scale))
+        return _grab_single_mss_raw(
+            monitor_id,
+            resolve_capture_scale(scale, env_var="KORU_VISION_SCALE"),
+        )

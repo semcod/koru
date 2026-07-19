@@ -8,34 +8,19 @@ setups. Provider order is chosen by :mod:`koruvision.providers.detector`
 
 from __future__ import annotations
 
-import hashlib
 import shutil  # noqa: F401 — re-exported for monkeypatching from tests
 import subprocess  # noqa: F401 — re-exported for monkeypatching from tests
-from dataclasses import dataclass
 from typing import Any
+
+from vdisplay.capture import ScreenObservation, resolve_capture_scale
 
 from koruvision.capture_mss import BlackFrameError
 from koruvision.providers.detector import capture_all_with_providers, capture_one_with_providers
-from koruvision.scaling import resolve_scale
 
 
-@dataclass(frozen=True)
-class VisionFrame:
-    frame_id: str
-    monitor_id: int
-    captured_at: str
-    mime: str
-    width: int
-    height: int
-    payload: bytes
-    native_width: int = 0
-    native_height: int = 0
-    output: str = ""
-    provider: str = ""
-
-    @property
-    def sha256(self) -> str:
-        return hashlib.sha256(self.payload).hexdigest()
+# Compatibility name retained for Koru callers.  The data contract and its
+# canonical hashing now live at the capture boundary owned by VDisplay.
+VisionFrame = ScreenObservation
 
 
 def _frame(descriptor: dict[str, Any]) -> VisionFrame:
@@ -52,12 +37,14 @@ def list_monitors() -> list[dict[str, Any]]:
 
 def capture_monitor_png(monitor_id: int | None = None, scale: float | None = None) -> VisionFrame:
     """Capture a single monitor using the best available provider."""
-    return _frame(capture_one_with_providers(monitor_id, resolve_scale(scale)))
+    resolved_scale = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
+    return _frame(capture_one_with_providers(monitor_id, resolved_scale))
 
 
 def capture_all_monitors(scale: float | None = None) -> list[VisionFrame]:
     """Capture every detected monitor; black/failed monitors are skipped."""
-    return [_frame(item) for item in capture_all_with_providers(resolve_scale(scale))]
+    resolved_scale = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
+    return [_frame(item) for item in capture_all_with_providers(resolved_scale)]
 
 
 __all__ = [

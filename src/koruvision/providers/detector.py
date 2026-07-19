@@ -7,6 +7,8 @@ import subprocess
 import sys
 from typing import Any
 
+from vdisplay.capture import resolve_capture_scale
+
 from koruvision.providers.base import CaptureProvider, MonitorSpec
 from koruvision.providers.env import (
     capture_provider_pref,
@@ -165,9 +167,7 @@ def probe_capture_providers(
     scale: float = 0.2,
 ) -> list[dict[str, Any]]:
     """Try capturing with one or all providers; never raises (results per provider)."""
-    from koruvision.scaling import resolve_scale
-
-    scale_value = resolve_scale(scale)
+    scale_value = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
     if name:
         provider = provider_by_name(name.strip().lower())
         if provider is None:
