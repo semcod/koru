@@ -144,8 +144,12 @@ przechodzą przez capability dispatcher i kontrakty.
       provider_attempts + powód fallbacku z payloadu tillm w `LlmRunResult.raw`),
       a każdy patch attempt zapamiętuje własnego autora (retry po fallbacku ≠
       pierwszy provider) — `evidence.provenance_from_result`, testy w
-      `test_queue_evidence.py`. Otwarte: wersje pack/compiler/policy i pełna
-      drabina hashy proposal→plan→grant.*
+      `test_queue_evidence.py`. Bundle ma też pole `bindings` — zweryfikowane
+      hashe ProposalEnvelope (input/prompt_schema/artifact/proposal + intent
+      pack) przewleczone przez `extract_patch` → `PatchPlan.proposal` →
+      evidence; `proposal_sha256` trafia również do journalu (PHASE_RESOLVED).
+      Legacy bare diff = `bindings: null`. Otwarte: wersje pack/compiler/policy
+      i ogniwa verification_hash / execution_binding_hash.*
 - [ ] **P0-5 — kontrolowany pilot mostu Subactor → Koru → resume.** Wykonać
       realny, repo-only structural defect przez istniejący szablon, worktree,
       targeted regression i ponowny preflight zadania źródłowego.
@@ -201,6 +205,80 @@ przechodzą przez capability dispatcher i kontrakty.
       exhaustion, malformed proposal, policy deny, drift, replay, verify fail,
       rollback fail i restart w połowie runu. Remote executor/mTLS dopiero po
       zamknięciu lokalnych bramek.
+
+### Tor równoległy DEP — odchudzenie Koru na granicach zależności
+
+Reguła własności: biblioteka posiada mechanizm **jak** (transport, parser,
+geometria, retry protokołu i typowany wynik), natomiast Koru zachowuje decyzję
+**czy/kiedy/z jakim grantem** mechanizm wolno uruchomić. Zależność nie może
+importować Koru, a Koru nie może opierać decyzji na prywatnym symbolu ani
+human-readable output zależności. LLM może wytworzyć tylko proposal zgodny ze
+schematem; kompilacja, authorization, wykonanie i ocena wyniku pozostają
+deterministyczne.
+
+SSOT kolejności, właścicieli i kryteriów migracji stanowi walidowany DSL
+[`docs/architecture/dependency-boundary-inventory.yaml`](docs/architecture/dependency-boundary-inventory.yaml)
+(schema: `schemas/dependency-boundary-inventory.schema.json`). Uzupełnia on
+[`docs/boundary-refactoring-proposal.md`](docs/boundary-refactoring-proposal.md)
+i [`docs/package-extraction-plan.md`](docs/package-extraction-plan.md); nie jest
+execution DSL-em i sam nie nadaje żadnych uprawnień.
+
+- [x] **DEP-0 — inwentarz granic jako DSL.** Zapisano repozytoria, wersjonowane
+      request/result contracts, kolejność, blokery, fragmenty do przeniesienia
+      i elementy, które muszą zostać w Koru. Test CI sprawdza JSON Schema,
+      realność źródeł, zamknięcie referencji, porządek migracji oraz to, że
+      Koru pozostaje decision ownerem, ale nie jest celem ekstrakcji.
+- [ ] **DEP-1 — Planfile SDK i wspólny `TicketProposal` (kolejność 10–20,
+      P0).** Najpierw wydać publiczny, lekki klient lifecycle/lock retry oraz
+      `planfile.ticket-proposal.v1`; potem przełączyć code2llm, redup, pfix i
+      prefact na emisję tego artefaktu. Koru zachowuje harmonogram, cross-source
+      dedupe, authorization i zapis. **Akceptacja:** `scan.py` nie parsuje
+      tekstu CLI, a błędna wersja proposal nie tworzy ticketa.
+  - [x] W worktree `semcod/planfile` dodano strict `TicketProposalV1`,
+        canonical hash, bezpieczną konwersję pól oraz `PlanfileClient` ze
+        stabilnym `TicketTransitionResult` i bounded lock retry; pełny suite
+        Planfile: 215 passed, 7 skipped.
+  - [ ] Wydać Planfile, podbić minimum w Koru i wykonać dual-run SDK kontra
+        dotychczasowe CLI przed usunięciem resolvera/retry z `queue/ticket.py`.
+  - [ ] Przełączyć producentów code2llm/redup/pfix/prefact na wspólny proposal;
+        dopiero po tym usunąć parsery ich formatów z `scan.py`.
+- [ ] **DEP-2 — VDisplay jako właściciel prawdy o ekranie (kolejność 30,
+      P0).** Przenieść VQL normalization, geometrię, monitor topology, capture
+      metadata i publiczne odpowiedniki używanych `_private` API do
+      `wronai/vdisplay`. Koru zachowuje observe→decide→act→verify, GUI ladder,
+      granty i evidence. **Akceptacja:** zero prywatnych importów VDisplay w
+      Koru; replay obserwacji daje identyczny target/coordinate-map hash.
+- [ ] **DEP-3 — Gillm jako bounded actuator (kolejność 40, P1).** Przenieść
+      strategię type-at-coordinates i recovery do `semcod/gillm`, zastąpić
+      odwrotny import `koru.activity_log` rejestrowanym callbackiem i po okresie
+      zgodności usunąć kopie fallbacków z Koru. **Akceptacja:** Gillm działa bez
+      Koru, zwraca `gillm.gui-action-result.v1`, a polityka fallbacku i grant
+      nadal są wyłącznie po stronie Koru.
+- [ ] **DEP-4 — publiczne adaptery IMGL/TestQL/env2llm/Tagi (kolejność 50–80,
+      P0–P1).** IMGL przejmuje transport i freshness capture, TestQL publiczny
+      batch runner, env2llm publiczną service factory, a Tagi typed change plan.
+      Koru zachowuje kryteria akceptacji, wybór fallbacku i zgodę na mutację.
+      **Akceptacja:** brak importów `_private`, parsowania tekstu i
+      reimplementacji mechanizmu tych narzędzi w Koru.
+- [ ] **DEP-5 — cienki most tillm (kolejność 90, P2).** Po podbiciu minimalnej
+      wersji usunąć lokalny provider registry i path injection; konsumować
+      typowany completion/provenance. `ProposalEnvelope`, retry budget,
+      provider policy i capability pozostają w Koru. **Akceptacja:** fallback
+      providera nigdy nie zmienia schematu proposal ani zakresu grantu.
+- [ ] **DEP-6 — odwrócenie nlp2uri i osobny koruide (kolejność 100–110, P2).**
+      `nlp2uri` ma wyłącznie kompilować intent do canonical `ControlPlan`, bez
+      importu Koru/koruide i bez wykonywania CLI; opublikować standalone
+      `semcod/koruide`, a dispatcher pozostawić w Koru/uri2koru. **Akceptacja:**
+      oba pakiety instalują się i przechodzą contract tests bez Koru.
+- [ ] **DEP-7 — usunąć testowe pseudo-zależności z runtime tree.** Przenieść
+      `src/env2llm`, `src/imgl` i `src/nlp2imgl` do `tests/fakes`, tak aby wheel,
+      import discovery i inwentarz namespace nie sugerowały własności cudzych
+      pakietów przez Koru.
+- [ ] **DEP-8 — dependency-first release train.** Dla każdego kroku: schema i
+      API w repo właściciela → jego contract tests → wydanie → bump minimalnej
+      wersji w Koru → dual-run/diff telemetry → 1–2 wydania shimu → usunięcie
+      starej implementacji. Nie przenosić kodu bez publicznego API i zielonego
+      cross-repo E2E.
 
 ### Miary skuteczności i bramki wydania
 

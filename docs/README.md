@@ -84,6 +84,9 @@ For LLM agents starting a session in a koru-driven repository:
    internals can be refactored independently.
 17. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
    incremental plan for moving selected modules from `src` to `packages/*`.
+18. **[`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml)** —
+   validated DSL for dependency ownership, typed boundary contracts and the
+   dependency-first extraction order across `semcod/*`, `wronai/*` and TestQL.
 
 For human operators / DevOps:
 
@@ -225,6 +228,7 @@ Complete index of documentation in this directory. Start with
 | [`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md) | nlp2uri MCP bridge (PL) |
 | [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri ↔ koruide refactor plan (PL) |
 | [`package-extraction-plan.md`](./package-extraction-plan.md) | `packages/*` extraction plan |
+| [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) | Validated ownership/contracts/extraction DSL |
 
 ### Tooling & pipeline
 

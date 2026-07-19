@@ -37,24 +37,30 @@ from koru.queue.transaction.result import PatchPlan
 from koru.queue.types import CommandResult
 
 
-def extract_patch(result: CommandResult) -> tuple[str | None, PatchOutcome | None]:
+def extract_patch(
+    result: CommandResult,
+) -> tuple[str | None, dict | None, PatchOutcome | None]:
     """Pull the unified diff out of an agent reply, or explain what came instead.
 
     The agent's exit code only says it produced *an answer*; whether that answer
-    contained an applicable patch is a separate question.
+    contained an applicable patch is a separate question. When the reply is a
+    ProposalEnvelope, its verified hash bindings travel along as the second
+    element — that is the top of the run's hash ladder
+    (``input_hash → proposal_sha256 → plan → manifest``), and evidence wants it.
     """
     artifact = result.stdout
+    bindings: dict | None = None
     if looks_like_proposal_envelope(artifact):
         try:
             envelope = parse_proposal_envelope(artifact)
         except ProposalValidationError as exc:
-            return None, PatchOutcome(
+            return None, None, PatchOutcome(
                 code=NO_PATCH_EMITTED,
                 message=f"agent returned an invalid ProposalEnvelope: {exc}",
                 retryable=exc.retryable,
             )
         if envelope.artifact_kind != "unified_diff":
-            return None, PatchOutcome(
+            return None, None, PatchOutcome(
                 code=NO_PATCH_EMITTED,
                 message=(
                     "patch mode requires a unified_diff artifact, but the "
@@ -63,13 +69,23 @@ def extract_patch(result: CommandResult) -> tuple[str | None, PatchOutcome | Non
                 retryable=True,
             )
         artifact = str(envelope.artifact_content)
+        bindings = {
+            "intent_pack": {
+                "id": envelope.intent_pack_id,
+                "version": envelope.intent_pack_version,
+            },
+            "input_hash": envelope.input_hash,
+            "prompt_schema_hash": envelope.prompt_schema_hash,
+            "artifact_sha256": envelope.artifact_sha256,
+            "proposal_sha256": envelope.proposal_sha256,
+        }
 
     diff = extract_unified_diff(artifact)
     if diff is not None:
-        return diff, None
+        return diff, bindings, None
     head = (result.stdout or "").strip().splitlines()
     summary = head[0][:200] if head else "(empty reply)"
-    return None, PatchOutcome(
+    return None, None, PatchOutcome(
         code=NO_PATCH_EMITTED,
         message=(
             "agent returned no valid unified-diff artifact, so nothing could be applied. "
@@ -102,6 +118,7 @@ def build_patch_plan(
     ticket: dict,
     diff: str,
     manifest: dict | None = None,
+    proposal: dict | None = None,
 ) -> PatchPlan:
     """Resolve, once, every fact the later phases decide on.
 
@@ -123,6 +140,7 @@ def build_patch_plan(
         isolated=bool(resolution.command) and worktree_enabled(project),
         verify_source=resolution.source,
         verify_error=resolution.error,
+        proposal=proposal,
     )
 
 

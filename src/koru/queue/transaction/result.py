@@ -36,6 +36,11 @@ class PatchPlan:
     #: Set when the ticket asked for a gate that cannot be honoured (unknown
     #: profile, un-allowlisted raw command). The transaction must refuse.
     verify_error: str | None = None
+    #: Verified hash bindings of the ProposalEnvelope this diff arrived in
+    #: (input/prompt-schema/artifact/proposal hashes + intent pack); ``None``
+    #: for the legacy bare-diff contract. Carried into the evidence bundle so
+    #: the hash ladder starts at the proposal, not at the manifest.
+    proposal: dict | None = None
 
     @property
     def ticket_id(self) -> str:

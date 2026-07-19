@@ -306,7 +306,7 @@ extractions:
   - id: planfile.client_lifecycle
     order: 10
     priority: P0
-    status: proposed
+    status: upstream_api_ready
     kind: move
     source_modules:
       - src/koru/queue/planfile_ticket_note.py

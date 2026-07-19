@@ -296,6 +296,7 @@ def _finish_run(
         verdict=_verdict(plan, outcome),
         actor=actor,
         provenance=provenance_from_result(transaction.result),
+        bindings=plan.proposal if plan else None,
     )
     try:
         persist_evidence(project, bundle)

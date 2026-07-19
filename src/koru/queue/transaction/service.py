@@ -82,7 +82,7 @@ def execute_patch_transaction(
     Refusals that fire before a plan exists (no diff, symlink screen) are not
     journaled: there is no run identity yet, and nothing was going to change.
     """
-    diff, refusal = extract_patch(result)
+    diff, proposal, refusal = extract_patch(result)
     if diff is None:
         return PatchTransactionResult(result, refusal)
 
@@ -90,7 +90,7 @@ def execute_patch_transaction(
     if refusal is not None:
         return PatchTransactionResult(result, refusal)
 
-    plan = build_patch_plan(project, ticket, diff, manifest)
+    plan = build_patch_plan(project, ticket, diff, manifest, proposal=proposal)
     journal = RunJournal(project, plan.run_id)
     journal.append(
         PHASE_RESOLVED,
@@ -99,6 +99,7 @@ def execute_patch_transaction(
             "verify_source": plan.verify_source,
             "isolated": plan.isolated,
             "targets": sorted(plan.targets),
+            "proposal_sha256": (proposal or {}).get("proposal_sha256"),
         },
     )
     if plan.verify_error is not None:

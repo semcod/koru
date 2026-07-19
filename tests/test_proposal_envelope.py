@@ -89,7 +89,7 @@ class TestProposalEnvelope(unittest.TestCase):
             stderr="",
         )
 
-        diff, refusal = extract_patch(reply)
+        diff, bindings, refusal = extract_patch(reply)
 
         self.assertIsNone(refusal)
         self.assertEqual(diff, _DIFF.replace("@@ -1 +1 @@", "@@ -1,1 +1,1 @@"))
@@ -99,7 +99,7 @@ class TestProposalEnvelope(unittest.TestCase):
         tampered["provenance"]["provider"] = "other"
         invalid = SimpleNamespace(returncode=0, stdout=json.dumps(tampered), stderr="")
 
-        _diff, refusal = extract_patch(invalid)
+        _diff, _bindings, refusal = extract_patch(invalid)
 
         assert refusal is not None
         self.assertEqual(refusal.code, NO_VALID_ARTIFACT)
@@ -115,10 +115,65 @@ class TestProposalEnvelope(unittest.TestCase):
             ),
             stderr="",
         )
-        _diff, refusal = extract_patch(wrong_kind)
+        _diff, _bindings, refusal = extract_patch(wrong_kind)
         assert refusal is not None
         self.assertEqual(refusal.code, NO_VALID_ARTIFACT)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestExtractPatchBindings:
+    """The envelope's verified hashes travel out of extract_patch."""
+
+    def test_valid_envelope_yields_bindings(self):
+        import json
+        from types import SimpleNamespace
+
+        from koru.proposal_envelope import build_proposal_envelope
+        from koru.queue.transaction.preflight import extract_patch
+
+        diff = (
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1 +1 @@\n"
+            "-old\n"
+            "+new\n"
+        )
+        payload = build_proposal_envelope(
+            intent_pack_id="koru.patch",
+            intent_pack_version="1.0",
+            slots={},
+            artifact_kind="unified_diff",
+            artifact_content=diff,
+            input_hash="a" * 64,
+            prompt_schema_hash="b" * 64,
+            provider="z.ai",
+            model="glm-5.2",
+        )
+        reply = SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
+        extracted_diff, bindings, refusal = extract_patch(reply)
+        assert refusal is None and extracted_diff is not None
+        assert bindings["proposal_sha256"] == payload["hashes"]["proposal_sha256"]
+        assert bindings["artifact_sha256"] == payload["hashes"]["artifact_sha256"]
+        assert bindings["intent_pack"] == {"id": "koru.patch", "version": "1.0"}
+
+    def test_legacy_bare_diff_yields_no_bindings(self):
+        from types import SimpleNamespace
+
+        from koru.queue.transaction.preflight import extract_patch
+
+        diff = (
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1 +1 @@\n"
+            "-old\n"
+            "+new\n"
+        )
+        reply = SimpleNamespace(returncode=0, stdout=diff, stderr="")
+        extracted_diff, bindings, refusal = extract_patch(reply)
+        assert refusal is None and extracted_diff is not None
+        assert bindings is None

@@ -376,3 +376,44 @@ class TestProvenance:
             ),
         )
         assert bundle["provenance"]["provider"] == "z.ai"
+
+
+class TestBindings:
+    """P0-4: the hash ladder starts at the proposal, recorded in the bundle."""
+
+    def test_bundle_carries_envelope_bindings(self):
+        from koru.queue.evidence import build_evidence_bundle
+
+        bindings = {
+            "intent_pack": {"id": "koru.patch", "version": "1.0"},
+            "input_hash": "a" * 64,
+            "prompt_schema_hash": "b" * 64,
+            "artifact_sha256": "c" * 64,
+            "proposal_sha256": "d" * 64,
+        }
+        bundle = build_evidence_bundle(
+            run_id="run-2",
+            ticket={"id": "PLF-2"},
+            manifest=None,
+            patch_attempts=[{"attempt": 1}],
+            verify={},
+            promotion={},
+            verdict="refused",
+            bindings=bindings,
+        )
+        assert bundle["bindings"]["proposal_sha256"] == "d" * 64
+        assert bundle["bindings"]["intent_pack"]["id"] == "koru.patch"
+
+    def test_legacy_bare_diff_run_has_null_bindings(self):
+        from koru.queue.evidence import build_evidence_bundle
+
+        bundle = build_evidence_bundle(
+            run_id="run-3",
+            ticket={"id": "PLF-3"},
+            manifest=None,
+            patch_attempts=[{"attempt": 1}],
+            verify={},
+            promotion={},
+            verdict="refused",
+        )
+        assert bundle["bindings"] is None

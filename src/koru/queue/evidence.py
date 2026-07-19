@@ -112,6 +112,7 @@ def build_evidence_bundle(
     verdict: str,
     actor: str | None = None,
     provenance: dict | None = None,
+    bindings: dict | None = None,
 ) -> dict:
     """Assemble the canonical bundle for a finished run.
 
@@ -128,6 +129,10 @@ def build_evidence_bundle(
         "ticket_id": ticket.get("id"),
         "actor": actor,
         "provenance": provenance,
+        # Top of the hash ladder: the ProposalEnvelope's verified hashes.
+        # ``None`` means the legacy bare-diff contract, whose ladder starts
+        # at patch_sha256/manifest_hash instead.
+        "bindings": bindings,
         "manifest_hash": (manifest or {}).get("manifest_hash"),
         "base_head": (manifest or {}).get("base_head"),
         "workspace_snapshot": (manifest or {}).get("workspace_snapshot_sha256"),

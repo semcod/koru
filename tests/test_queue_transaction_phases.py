@@ -73,7 +73,7 @@ class _RepoCase(unittest.TestCase):
 
 class TestExtractPatch(unittest.TestCase):
     def test_returns_the_diff_and_no_refusal(self) -> None:
-        diff, refusal = extract_patch(_reply(stdout=_DIFF))
+        diff, _proposal, refusal = extract_patch(_reply(stdout=_DIFF))
 
         self.assertIsNone(refusal)
         self.assertIsNotNone(diff)
@@ -81,7 +81,7 @@ class TestExtractPatch(unittest.TestCase):
 
     def test_a_reply_without_a_diff_is_retryable_and_quotes_what_came_instead(self) -> None:
         """The agent gets re-asked, so its first line must survive into the refusal."""
-        diff, refusal = extract_patch(_reply(stdout="I cannot do that, Dave.\nmore prose"))
+        diff, _proposal, refusal = extract_patch(_reply(stdout="I cannot do that, Dave.\nmore prose"))
 
         self.assertIsNone(diff)
         self.assertIsNotNone(refusal)
@@ -91,7 +91,7 @@ class TestExtractPatch(unittest.TestCase):
         self.assertIn("I cannot do that, Dave.", refusal.message)
 
     def test_an_empty_reply_is_named_rather_than_quoted_blank(self) -> None:
-        _diff, refusal = extract_patch(_reply(stdout="   \n"))
+        _diff, _proposal, refusal = extract_patch(_reply(stdout="   \n"))
 
         assert refusal is not None
         self.assertIn("(empty reply)", refusal.message)
