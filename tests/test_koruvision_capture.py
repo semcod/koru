@@ -136,15 +136,17 @@ def test_capture_monitor_png_auto_falls_back_to_portal_on_wayland(monkeypatch, c
     monkeypatch.setenv("DBUS_SESSION_BUS_ADDRESS", "unix:path=/tmp/koru-bus")
     unavailable = ProviderAvailability(available=False, reason="mocked in test")
     with mock.patch(
-        "koruvision.providers.portal_screencast.PortalScreenCastProvider.availability",
+        "vdisplay.capture.providers.observation_builtin."
+        "PortalScreenCastObservationProvider.availability",
         return_value=unavailable,
     ):
         with mock.patch(
-            "koruvision.capture_mss._grab_single_mss_raw",
+            "vdisplay.capture.providers.observation_builtin."
+            "MssObservationProvider.capture_one",
             side_effect=RuntimeError("black frames"),
         ):
             with mock.patch(
-                "koruvision.portal_capture.capture_portal_png",
+                "vdisplay.capture.providers.observation_builtin.capture_portal_png",
                 return_value=_png(9, 4),
             ):
                 frame = capture_monitor_png(None)
@@ -160,16 +162,20 @@ def test_capture_monitor_png_auto_uses_native_command_when_mss_fails(monkeypatch
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
     monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
     monkeypatch.setattr(
-        "koruvision.capture_mss.command_candidates",
+        "vdisplay.capture.providers.observation_builtin.command_candidates",
         lambda: [("grim", ["grim", "-"], True)],
     )
-    monkeypatch.setattr("koruvision.capture_mss.shutil.which", lambda binary: f"/usr/bin/{binary}")
     monkeypatch.setattr(
-        "koruvision.capture_mss.subprocess.run",
+        "vdisplay.capture.providers.observation_builtin.shutil.which",
+        lambda binary: f"/usr/bin/{binary}",
+    )
+    monkeypatch.setattr(
+        "vdisplay.capture.providers.observation_builtin.subprocess.run",
         lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=_png(11, 6), stderr=b""),
     )
     with mock.patch(
-        "koruvision.capture_mss._grab_single_mss_raw",
+        "vdisplay.capture.providers.observation_builtin."
+        "MssObservationProvider.capture_one",
         side_effect=RuntimeError("display unavailable"),
     ):
         frame = capture_monitor_png(None)
@@ -187,15 +193,17 @@ def test_capture_all_monitors_auto_falls_back_to_portal(monkeypatch) -> None:
     monkeypatch.setenv("DBUS_SESSION_BUS_ADDRESS", "unix:path=/tmp/koru-bus")
     unavailable = ProviderAvailability(available=False, reason="mocked in test")
     with mock.patch(
-        "koruvision.providers.portal_screencast.PortalScreenCastProvider.availability",
+        "vdisplay.capture.providers.observation_builtin."
+        "PortalScreenCastObservationProvider.availability",
         return_value=unavailable,
     ):
         with mock.patch(
-            "koruvision.capture_mss._grab_all_mss_raw",
+            "vdisplay.capture.providers.observation_builtin."
+            "MssObservationProvider.capture_all",
             side_effect=RuntimeError("all monitors returned black frames"),
         ):
             with mock.patch(
-                "koruvision.portal_capture.capture_portal_png",
+                "vdisplay.capture.providers.observation_builtin.capture_portal_png",
                 return_value=_png(5, 3),
             ):
                 frames = capture_all_monitors()
@@ -210,9 +218,13 @@ def test_capture_monitor_png_reports_headless_environment(monkeypatch) -> None:
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
     monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
     monkeypatch.delenv("XDG_SESSION_TYPE", raising=False)
-    monkeypatch.setattr("koruvision.capture_mss.command_candidates", lambda: [])
+    monkeypatch.setattr(
+        "vdisplay.capture.providers.observation_builtin.command_candidates",
+        lambda: [],
+    )
     with mock.patch(
-        "koruvision.capture_mss._grab_single_mss_raw",
+        "vdisplay.capture.providers.observation_builtin."
+        "MssObservationProvider.capture_one",
         side_effect=RuntimeError("display unavailable"),
     ):
         with pytest.raises(RuntimeError, match="looks headless"):

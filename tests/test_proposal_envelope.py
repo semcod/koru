@@ -177,3 +177,65 @@ class TestExtractPatchBindings:
         extracted_diff, bindings, refusal = extract_patch(reply)
         assert refusal is None and extracted_diff is not None
         assert bindings is None
+
+
+class TestProposalProducer:
+    """Producer-side wrap: bare diffs become hash-bound envelopes."""
+
+    _DIFF = (
+        "diff --git a/a.txt b/a.txt\n"
+        "--- a/a.txt\n"
+        "+++ b/a.txt\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    def _reply(self, stdout, **extra):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(returncode=0, stdout=stdout, stderr="", **extra)
+
+    def test_bare_diff_is_wrapped_with_computed_bindings(self):
+        import json
+
+        from koru.queue.patch_mode import wrap_reply_in_proposal_envelope
+        from koru.queue.transaction.preflight import extract_patch
+
+        reply = self._reply(
+            self._DIFF, raw={"provider": "z.ai", "model": "glm-5.2"}, model=""
+        )
+        wrapped = wrap_reply_in_proposal_envelope(reply, "fix the bug")
+        payload = json.loads(wrapped.stdout)
+        assert payload["intent_pack"]["id"] == "koru.queue.patch"
+        assert payload["provenance"] == {"provider": "z.ai", "model": "glm-5.2"}
+        # the wrapped reply round-trips through the consumer side
+        diff, bindings, refusal = extract_patch(wrapped)
+        assert refusal is None and diff is not None
+        assert bindings["proposal_sha256"] == payload["hashes"]["proposal_sha256"]
+        # provenance payload survives for the evidence layer
+        assert wrapped.raw == {"provider": "z.ai", "model": "glm-5.2"}
+
+    def test_wrap_is_idempotent_and_passes_non_diffs_through(self):
+        from koru.queue.patch_mode import wrap_reply_in_proposal_envelope
+
+        prose = self._reply("I cannot do that, Dave.")
+        assert wrap_reply_in_proposal_envelope(prose, "p") is prose
+        wrapped = wrap_reply_in_proposal_envelope(self._reply(self._DIFF), "p")
+        rewrapped = wrap_reply_in_proposal_envelope(wrapped, "p")
+        assert rewrapped is wrapped
+
+    def test_kill_switch_disables_the_producer(self, monkeypatch):
+        from koru.queue.patch_mode import wrap_reply_in_proposal_envelope
+
+        monkeypatch.setenv("KORU_QUEUE_PROPOSAL_PRODUCER", "0")
+        reply = self._reply(self._DIFF)
+        assert wrap_reply_in_proposal_envelope(reply, "p") is reply
+
+    def test_unknown_provider_still_produces_valid_envelope(self):
+        from koru.proposal_envelope import parse_proposal_envelope
+        from koru.queue.patch_mode import wrap_reply_in_proposal_envelope
+
+        wrapped = wrap_reply_in_proposal_envelope(self._reply(self._DIFF), "p")
+        envelope = parse_proposal_envelope(wrapped.stdout)
+        assert envelope.provider == "unknown" and envelope.model == "unknown"

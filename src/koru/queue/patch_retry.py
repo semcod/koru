@@ -47,6 +47,7 @@ from koru.queue.patch_mode import (
     persist_manifest,
     promotion_mode,
     redact_secrets,
+    wrap_reply_in_proposal_envelope,
 )
 from koru.queue.transaction.result import PatchPlan, PatchTransactionResult
 from koru.queue.types import CommandResult
@@ -126,6 +127,9 @@ def apply_patch_with_retry(
     manifest: dict | None = None
     attempts: list[dict] = []
     authorize = build_authorizer(project, ticket, actor or "koru-shell")
+    # Producer side of the envelope contract: the bare diff the agent wrote
+    # becomes a hash-bound ProposalEnvelope before the transaction judges it.
+    result = wrap_reply_in_proposal_envelope(result, base_prompt)
 
     while True:
         transaction = execute_patch_transaction(
@@ -150,6 +154,10 @@ def apply_patch_with_retry(
         remaining -= 1
         retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
         result = llm_runner(retry_action, project)
+        # The retry's envelope binds to the retry prompt it actually answered.
+        result = wrap_reply_in_proposal_envelope(
+            result, str(retry_action.get("prompt") or "")
+        )
         if result.returncode != 0:
             return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor)
 

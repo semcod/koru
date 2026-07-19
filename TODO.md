@@ -135,6 +135,15 @@ przechodzą przez capability dispatcher i kontrakty.
         a strukturalny retry jest ograniczony do jednego.
   - [ ] Przełączyć producentów tillm/IDE na envelope i po zielonym dual-run
         usunąć zgodność z legacy bare diff; dopiero wtedy zamknąć P0-2.
+        *Postęp 2026-07-19: producer-wrap wdrożony w lane queue —
+        `patch_mode.wrap_reply_in_proposal_envelope` (model pisze goły diff,
+        hashe liczy strona producenta; sha256 nie da się delegować do LLM);
+        wpięty w `apply_patch_with_retry` dla pierwszej odpowiedzi i każdego
+        retry (input_hash wiąże się z faktycznie użytym promptem); provenance
+        provider/model z payloadu tillm; intent pack `koru.queue.patch@1.0`;
+        kill-switch dual-run `KORU_QUEUE_PROPOSAL_PRODUCER=0`; testy
+        `TestProposalProducer`. Otwarte: lane IDE/gillm oraz zdjęcie legacy
+        bare-diff po okresie dual-run.*
 - [ ] **P0-3 — publiczny `PatchTransactionResult`.** Zastąpić rozpoznawanie
       komunikatów strukturą `code/state/retryable/manifest/evidence`; most i
       notki ticketów reagują wyłącznie na stabilne kody. **Akceptacja:** brak

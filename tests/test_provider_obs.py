@@ -116,7 +116,8 @@ def test_rank_puts_obs_first_when_reachable(monkeypatch) -> None:
     monkeypatch.setenv("KORU_VISION_PROVIDER", "auto")
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     with mock.patch(
-        "koruvision.providers.portal_screencast.PortalScreenCastProvider.availability",
+        "vdisplay.capture.providers.observation_builtin."
+        "PortalScreenCastObservationProvider.availability",
         return_value=mock.Mock(available=True, reason="", install_hint="", needs_consent=True),
     ), mock.patch(
         "koruvision.providers.obs_websocket.probe_obs_reachable",
@@ -125,7 +126,7 @@ def test_rank_puts_obs_first_when_reachable(monkeypatch) -> None:
         "koruvision.providers.obs_websocket._websockets_missing",
         return_value=False,
     ), mock.patch(
-        "koruvision.providers.mss.MssProvider.availability",
+        "vdisplay.capture.providers.observation_builtin.MssObservationProvider.availability",
         return_value=mock.Mock(available=True, reason="", install_hint="", needs_consent=False),
     ):
         from koruvision.providers.detector import rank_providers

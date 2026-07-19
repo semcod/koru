@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.03s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 816, typescript: 94, shell: 60, json: 44, yaml: 33
+- **Languages**: python: 806, typescript: 94, shell: 60, json: 45, yaml: 34
 - **Analysis Mode**: static
-- **Total Functions**: 7674
-- **Total Classes**: 546
-- **Modules**: 1102
-- **Entry Points**: 2866
+- **Total Functions**: 7654
+- **Total Classes**: 547
+- **Modules**: 1094
+- **Entry Points**: 2846
 
 ## Architecture by Module
 
@@ -402,9 +402,10 @@ no
 - **Methods**: 15
 - **Key Methods**: plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.sleep, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.anchor, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.adapter, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.cfg, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.timeoutMs, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.deadline, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.attempts, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog
 
-### plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck
+### src.koru.queue.repair_recording.RepairRecordingSession
+> One queue run of one patch ticket, mirrored into the store.
 - **Methods**: 14
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.sendFocusFailureAck, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.details, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.candidates, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.reason, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.ide, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.debugLog, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck._isInputOnlyFocusToken, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.discardToxicFocusOpenCache, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.cache, plugins.koru-autopilot-shared.src.bridge-ack.SharedAutopilotBridgeAck.cached
+- **Key Methods**: src.koru.queue.repair_recording.RepairRecordingSession.__init__, src.koru.queue.repair_recording.RepairRecordingSession.begin, src.koru.queue.repair_recording.RepairRecordingSession.run_id, src.koru.queue.repair_recording.RepairRecordingSession.wrap_llm, src.koru.queue.repair_recording.RepairRecordingSession._handle_structured_reply, src.koru.queue.repair_recording.RepairRecordingSession._deliver_requested_facts, src.koru.queue.repair_recording.RepairRecordingSession._ensure_context, src.koru.queue.repair_recording.RepairRecordingSession._park_exhausted, src.koru.queue.repair_recording.RepairRecordingSession.finish, src.koru.queue.repair_recording.RepairRecordingSession._chain_for
 
 ## Data Transformation Functions
 
@@ -506,6 +507,11 @@ Key functions that process and transform data:
 - **Confidence**: 0.90
 - **Functions**: src.koruapi.dashboard_tickets.DashboardTicketCommands.reorder_ticket_from_dashboard
 
+### recursion__forbidden_slot_paths
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: src.koru.proposal_envelope._forbidden_slot_paths
+
 ### recursion__sum_structured_counts
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -535,11 +541,6 @@ Key functions that process and transform data:
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: src.koru.integrations.vdisplay_client._capture_for_verify
-
-### recursion__forbidden_slot_paths
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: src.koru.proposal_envelope._forbidden_slot_paths
 
 ### state_machine_FallbackNLP2DSLClient
 - **Type**: state_machine
@@ -590,6 +591,7 @@ Functions exposed as public API (no underscore prefix):
 - `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `scripts.subactor-development-repair-pilot.main` - 29 calls
+- `src.koru.queue.planfile_sdk.parse_lifecycle_request` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
@@ -604,7 +606,6 @@ Functions exposed as public API (no underscore prefix):
 - `packages.nlp2coru.src.nlp2coru.cli.main` - 26 calls
 - `src.koru.cli_tagi.auto` - 26 calls
 - `src.koru.cli_strategy.strategy_main` - 26 calls
-- `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
 
 ## System Interactions
 

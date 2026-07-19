@@ -46,11 +46,11 @@ def test_probe_capture_providers_mss_mocked() -> None:
     }
     avail = ProviderAvailability(available=True, reason="ok")
     with mock.patch(
-        "koruvision.providers.mss.MssProvider.capture_all",
+        "vdisplay.capture.providers.observation_builtin.MssObservationProvider.capture_all",
         return_value=[fake_frame],
     ):
         with mock.patch(
-            "koruvision.providers.mss.MssProvider.availability",
+            "vdisplay.capture.providers.observation_builtin.MssObservationProvider.availability",
             return_value=avail,
         ):
             results = probe_capture_providers("mss")

@@ -12,9 +12,7 @@ import shutil  # noqa: F401 — re-exported for monkeypatching from tests
 import subprocess  # noqa: F401 — re-exported for monkeypatching from tests
 from typing import Any
 
-from vdisplay.capture import ScreenObservation, resolve_capture_scale
-
-from koruvision.capture_mss import BlackFrameError
+from vdisplay.capture import BlackFrameError, ScreenObservation, resolve_capture_scale
 from koruvision.providers.detector import capture_all_with_providers, capture_one_with_providers
 
 

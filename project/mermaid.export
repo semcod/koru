@@ -1097,37 +1097,6 @@ flowchart TD
         services__healing_webhook__ticket_builder___reproduction_for["_reproduction_for"]
         services__healing_webhook__ticket_builder__build_ticket_payload("build_ticket_payload CC=11")
     end
-    subgraph src__env2llm
-        src__env2llm__integrators___service_factory__build_registry_service["build_registry_service"]
-        src__env2llm__service__registry_service__RegistryService____init__["__init__"]
-        src__env2llm__service__registry_service__RegistryService__to_dict["to_dict"]
-        src__env2llm__service__registry_service__RegistryService__render["render"]
-        src__env2llm__service__registry_service__RegistryService__refresh["refresh"]
-        src__env2llm__service__registry_service__RegistryService__registry_path["registry_path"]
-        src__env2llm__service__registry_service__RegistryService__desktop_payload["desktop_payload"]
-        src__env2llm__service__registry_service__RegistryService__commands_payload["commands_payload"]
-        src__env2llm__service__registry_service__RegistryService__uris_payload["uris_payload"]
-        src__env2llm__service__registry_service__RegistryService__mqtt_status["mqtt_status"]
-        src__env2llm__probes__testql__testql_available["testql_available"]
-        src__env2llm__probes__testql__discover_scenario_files["discover_scenario_files"]
-        src__env2llm__probes__testql__collect_testql_catalog["collect_testql_catalog"]
-    end
-    subgraph src__imgl
-        src__imgl__autodiag__diagnostics_enabled["diagnostics_enabled"]
-        src__imgl__autodiag__diagnose_capture["diagnose_capture"]
-        src__imgl__autodiag___parse_type_output["_parse_type_output"]
-        src__imgl__autodiag__build_operation_step["build_operation_step"]
-        src__imgl__autodiag__build_execute_report["build_execute_report"]
-        src__imgl__autodiag__render_report["render_report"]
-        src__imgl__freshness__mark_capture_fresh["mark_capture_fresh"]
-        src__imgl__freshness__sync_vql_cache_with_image["sync_vql_cache_with_image"]
-        src__imgl__freshness__capture_sidecar_path["capture_sidecar_path"]
-        src__imgl__freshness__clear_vql_cache["clear_vql_cache"]
-        src__imgl__freshness__image_freshness["image_freshness"]
-        src__imgl__freshness__max_image_age_seconds["max_image_age_seconds"]
-        src__imgl__freshness__verify_capture_updated["verify_capture_updated"]
-        src__imgl__freshness__vql_cache_paths["vql_cache_paths"]
-    end
     subgraph src__koru
         src__koru__runtime__planfile_dir["planfile_dir"]
         src__koru__runtime__runtime_dir["runtime_dir"]
@@ -1547,13 +1516,6 @@ flowchart TD
         src__koruvision__providers__detector__list_provider_status["list_provider_status"]
         src__koruvision__providers__detector__provider_diagnostics_rows["provider_diagnostics_rows"]
         src__koruvision__providers__detector__probe_capture_providers("probe_capture_providers CC=10")
-    end
-    subgraph src__nlp2imgl
-        src__nlp2imgl__control__apply_nl_with_diag("apply_nl_with_diag CC=10")
-        src__nlp2imgl__control__apply_nl["apply_nl"]
-        src__nlp2imgl__control__default_image_path["default_image_path"]
-        src__nlp2imgl__control__default_window["default_window"]
-        src__nlp2imgl__control__doctor_capture["doctor_capture"]
     end
     packages__dsl2koru__src__dsl2koru__bus__dispatch --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes
     packages__dsl2koru__src__dsl2koru__bus__dispatch --> packages__dsl2koru__src__dsl2koru__handlers__run_query
@@ -2158,5 +2120,5 @@ flowchart TD
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__repair_runs__model_router__route,src__koru__repair_runs__router__load_model_registry,src__koru__queue__grant__verify_grant,src__koru__queue__contracts__CapabilityContract__evaluate,src__koru__queue__evidence__provenance_from_result,src__koru__queue__patch_retry___finish_run highCC
+    class src__koru__repair_runs__model_router__route,src__koru__repair_runs__router__load_model_registry,src__koru__queue__evidence__provenance_from_result,src__koru__queue__grant__verify_grant,src__koru__queue__patch_retry___finish_run,src__koru__queue__contracts__CapabilityContract__evaluate,src__koru__queue__planfile_sdk__parse_lifecycle_request highCC
     class packages__dsl2koru__src__dsl2koru__bus__dispatch,packages__dsl2koru__src__dsl2koru__events__EventStore__read_all,packages__dsl2koru__src__dsl2koru__codegen___python_type,packages__dsl2koru__src__dsl2koru__codegen__render_models_module,packages__uri2coru__src__uri2coru__cli__main,packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri,packages__cli2koru__src__cli2koru__shell__run_shell,packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message,packages__nlpshim__src__nlpshim__client__FallbackNLP2DSLClient__workflow_from_text,packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step,packages__dsl2coru__src__dsl2coru__bus__dispatch,packages__dsl2coru__src__dsl2coru__codegen___python_type,packages__dsl2coru__src__dsl2coru__codegen__main,packages__dsl2coru__src__dsl2coru__parser___ui_args,packages__dsl2coru__src__dsl2coru__parser___parse_text,packages__dsl2coru__src__dsl2coru__handlers__ui___ui_prompt_for_verb,packages__cli2coru__src__cli2coru__shell__run_shell,packages__uri2koru__src__uri2koru__cli__main,packages__uri2koru__src__uri2koru__nlp2uri__nlp2uri,packages__uri2koru__src__uri2koru__decode___cmd_uri_to_dsl,packages__nlp2coru__src__nlp2coru__llm__llm_plan,packages__nlp2coru__src__nlp2coru__heuristic___resolve_heuristic_action,packages__nlp2coru__src__nlp2coru__heuristic__to_dsl_lines,packages__nlp2coru__src__nlp2coru__to_dsl__to_dsl,packages__nlp2coru__src__nlp2coru__llm_backend__LitellmBackend__complete,packages__coru__src__coru__cli_calibration___testql_run_scenario,packages__coru__src__coru__cli_calibration___parse_drive_json_from_stdout,packages__coru__src__coru__cli_calibration___lane_drive_capture,packages__coru__src__coru__cli_calibration___format_calibration_probe_report,packages__coru__src__coru__cli_calibration___resolve_calibration_lane medCC

@@ -1,49 +1,16 @@
-"""Shared types and frame helpers for capture providers."""
+"""Compatibility exports for the VDisplay-owned observation contract."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
-from vdisplay.capture import ScreenObservation, png_dimensions, resolve_capture_scale
-
-
-class BlackFrameError(RuntimeError):
-    """Captured buffer is empty/black (common with XWayland + ``mss``)."""
-
-
-@dataclass(frozen=True)
-class ProviderAvailability:
-    available: bool
-    reason: str = ""
-    install_hint: str = ""
-    needs_consent: bool = False
-
-
-@dataclass(frozen=True)
-class MonitorSpec:
-    id: int
-    output: str
-    width: int
-    height: int
-    left: int = 0
-    top: int = 0
-    is_primary: bool = False
-
-
-@runtime_checkable
-class CaptureProvider(Protocol):
-    name: str
-    streams: bool
-
-    def availability(self) -> ProviderAvailability: ...
-
-    def list_monitors(self) -> list[MonitorSpec]: ...
-
-    def capture_all(self, scale: float) -> list[dict[str, Any]]: ...
-
-    def capture_one(self, monitor_id: int | None, scale: float) -> dict[str, Any]: ...
+from vdisplay.capture import (
+    BlackFrameError,
+    MonitorSpec,
+    ObservationProvider as CaptureProvider,
+    ProviderAvailability,
+    screen_observation_from_png,
+)
 
 
 def frame_from_png(
@@ -55,21 +22,11 @@ def frame_from_png(
     provider: str,
     capture_meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build a VisionFrame descriptor dict from raw PNG bytes."""
-    if not payload:
-        raise RuntimeError(f"{provider}: empty image")
-    native_w, native_h = png_dimensions(payload)
-    if native_w <= 0 or native_h <= 0:
-        raise RuntimeError(f"{provider}: invalid PNG dimensions")
-    scale_value = resolve_capture_scale(scale, env_var="KORU_VISION_SCALE")
-    thumb_w = max(1, int(native_w * scale_value))
-    thumb_h = max(1, int(native_h * scale_value))
-    return ScreenObservation.from_png(
+    """One-release descriptor shim around VDisplay's typed factory."""
+    return screen_observation_from_png(
         payload,
         monitor_id=monitor_id,
-        captured_at=datetime.now(UTC).isoformat(),
-        width=thumb_w,
-        height=thumb_h,
+        scale=scale,
         output=output or provider,
         provider=provider,
         capture_meta=capture_meta or {},

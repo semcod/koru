@@ -165,8 +165,10 @@ def _screen_capture_plan_dict(uri: str) -> dict[str, Any]:
 
 def _capture_via_portal(uri: str) -> dict[str, Any] | None:
     try:
-        from koruvision.capture_mss import is_wayland
-        from koruvision.portal_capture import PortalCaptureError, capture_portal_png
+        from vdisplay import VDisplayError
+        from vdisplay.capture import capture_portal_png
+
+        from koruvision.providers.env import is_wayland
     except ImportError:
         return None
 
@@ -177,8 +179,8 @@ def _capture_via_portal(uri: str) -> dict[str, Any] | None:
     out_dir.mkdir(parents=True, exist_ok=True)
     outfile = out_dir / "capture-screen-portal.png"
     try:
-        png = capture_portal_png()
-    except PortalCaptureError as exc:
+        png = capture_portal_png(interactive=False)
+    except VDisplayError as exc:
         return {"ok": False, "uri": uri, "error": str(exc), "method": "xdg-portal"}
 
     outfile.write_bytes(png)

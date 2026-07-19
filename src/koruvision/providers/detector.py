@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-import re
-import subprocess
 import sys
 from typing import Any
 
-from vdisplay.capture import resolve_capture_scale
+from vdisplay.capture import (
+    ObservationProviderChainError,
+    coerce_screen_observation,
+    capture_observations_with_fallback,
+    resolve_capture_scale,
+)
+from vdisplay.discovery import list_outputs as discover_monitors
 
 from koruvision.providers.base import CaptureProvider, MonitorSpec
 from koruvision.providers.env import (
@@ -37,39 +41,25 @@ _LEGACY_MAP = {
 
 def monitors_via_xrandr() -> list[MonitorSpec]:
     try:
-        proc = subprocess.run(
-            ["xrandr", "--query"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return []
-    if proc.returncode != 0:
+        rows = discover_monitors(enrich_nl=False)
+    except Exception:  # noqa: BLE001 - monitor discovery is advisory.
         return []
     monitors: list[MonitorSpec] = []
-    index = 0
-    for line in (proc.stdout or "").splitlines():
-        match = re.match(
-            r"^(\S+)\s+connected(?:\s+primary)?\s+(\d+)x(\d+)\+(\d+)\+(\d+)",
-            line,
-        )
-        if not match:
+    for fallback_index, row in enumerate(rows):
+        if not row.get("connected", True):
             continue
-        name, width, height, left, top = match.groups()
+        monitor_index = row.get("monitor_index")
         monitors.append(
             MonitorSpec(
-                id=index,
-                output=name,
-                width=int(width),
-                height=int(height),
-                left=int(left),
-                top=int(top),
-                is_primary="primary" in line,
+                id=fallback_index if monitor_index is None else int(monitor_index),
+                output=str(row.get("name") or f"monitor-{fallback_index}"),
+                width=int(row.get("width") or 0),
+                height=int(row.get("height") or 0),
+                left=int(row.get("x") or 0),
+                top=int(row.get("y") or 0),
+                is_primary=bool(row.get("primary")),
             )
         )
-        index += 1
     return monitors
 
 
@@ -207,11 +197,12 @@ def probe_capture_providers(
             results.append(row)
             continue
         row["ok"] = True
-        row["frame_count"] = len(frames)
-        row["bytes"] = sum(len(item.get("payload") or b"") for item in frames)
-        first = frames[0]
-        row["width"] = first.get("width")
-        row["height"] = first.get("height")
+        observations = [coerce_screen_observation(item) for item in frames]
+        row["frame_count"] = len(observations)
+        row["bytes"] = sum(len(item.payload) for item in observations)
+        first = observations[0]
+        row["width"] = first.width
+        row["height"] = first.height
         results.append(row)
     return results
 
@@ -247,60 +238,59 @@ def _should_report_auto_portal(provider: CaptureProvider, index: int) -> bool:
     )
 
 
-def _stamp_provider(frame: dict[str, Any], provider_name: str) -> dict[str, Any]:
-    stamped = dict(frame)
-    stamped["provider"] = provider_name
-    return stamped
-
-
 def capture_one_with_providers(monitor_id: int | None, scale: float) -> dict[str, Any]:
     providers = rank_providers()
     if not providers:
         raise RuntimeError(_auto_failure_message(["no providers available"]))
-    errors: list[str] = []
-    for index, provider in enumerate(providers):
-        try:
-            frame = provider.capture_one(monitor_id, scale)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"{provider.name}: {exc}")
-            continue
-        if index > 0:
-            print(
-                f"koru vision: {errors[0]} — used {_provider_label(provider)} capture",
-                file=sys.stderr,
-            )
-        elif _should_report_auto_portal(provider, index):
-            print(
-                "koru vision: auto selected Wayland portal — used portal capture",
-                file=sys.stderr,
-            )
-        return _stamp_provider(frame, provider.name)
-    raise RuntimeError(_auto_failure_message(errors))
+    try:
+        batch = capture_observations_with_fallback(
+            providers,
+            scale=scale,
+            monitor_id=monitor_id,
+        )
+    except ObservationProviderChainError as exc:
+        errors = [f"{item.provider}: {item.error}" for item in exc.failures]
+        raise RuntimeError(_auto_failure_message(errors)) from exc
+    provider = next(item for item in providers if item.name == batch.provider)
+    if batch.failures:
+        first = batch.failures[0]
+        print(
+            f"koru vision: {first.provider}: {first.error} — "
+            f"used {_provider_label(provider)} capture",
+            file=sys.stderr,
+        )
+    elif _should_report_auto_portal(provider, 0):
+        print(
+            "koru vision: auto selected Wayland portal — used portal capture",
+            file=sys.stderr,
+        )
+    return batch.observations[0].to_descriptor()
 
 
 def capture_all_with_providers(scale: float) -> list[dict[str, Any]]:
     providers = rank_providers()
     if not providers:
         raise RuntimeError(_auto_failure_message(["no providers available"]))
-    errors: list[str] = []
-    for index, provider in enumerate(providers):
-        try:
-            frames = provider.capture_all(scale)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"{provider.name}: {exc}")
-            continue
-        if not frames:
-            errors.append(f"{provider.name}: no frames")
-            continue
-        if index > 0:
-            print(
-                f"koru vision: {errors[0]} — used {_provider_label(provider)} capture",
-                file=sys.stderr,
-            )
-        elif _should_report_auto_portal(provider, index):
-            print(
-                "koru vision: auto selected Wayland portal — used portal capture",
-                file=sys.stderr,
-            )
-        return [_stamp_provider(item, provider.name) for item in frames]
-    raise RuntimeError(_auto_failure_message(errors))
+    try:
+        batch = capture_observations_with_fallback(
+            providers,
+            scale=scale,
+            all_monitors=True,
+        )
+    except ObservationProviderChainError as exc:
+        errors = [f"{item.provider}: {item.error}" for item in exc.failures]
+        raise RuntimeError(_auto_failure_message(errors)) from exc
+    provider = next(item for item in providers if item.name == batch.provider)
+    if batch.failures:
+        first = batch.failures[0]
+        print(
+            f"koru vision: {first.provider}: {first.error} — "
+            f"used {_provider_label(provider)} capture",
+            file=sys.stderr,
+        )
+    elif _should_report_auto_portal(provider, 0):
+        print(
+            "koru vision: auto selected Wayland portal — used portal capture",
+            file=sys.stderr,
+        )
+    return [observation.to_descriptor() for observation in batch.observations]

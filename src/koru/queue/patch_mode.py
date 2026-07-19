@@ -142,6 +142,93 @@ def build_patch_prompt(prompt: str) -> str:
     return f"{prompt.rstrip()}\n{PATCH_PROMPT_SUFFIX}"
 
 
+# The intent pack the queue's patch lane produces envelopes under. Version is
+# bumped with the prompt contract, not with koru releases.
+PATCH_INTENT_PACK_ID = "koru.queue.patch"
+PATCH_INTENT_PACK_VERSION = "1.0"
+
+
+def proposal_producer_enabled() -> bool:
+    """Whether bare-diff agent replies are wrapped into ProposalEnvelopes.
+
+    On by default: models cannot compute the envelope's hash bindings, so the
+    producer side wraps deterministically. ``KORU_QUEUE_PROPOSAL_PRODUCER=0``
+    is the dual-run kill switch while legacy consumers still exist.
+    """
+    raw = (os.environ.get("KORU_QUEUE_PROPOSAL_PRODUCER") or "").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+@dataclass
+class _EnvelopedReply:
+    """The agent's reply with stdout replaced by its canonical envelope.
+
+    Mutable on purpose — the ``CommandResult`` protocol's attributes are
+    writable. Carries ``raw``/``model`` through so evidence provenance still
+    sees the original tillm drive payload.
+    """
+
+    returncode: int
+    stdout: str
+    stderr: str
+    raw: dict | None = None
+    model: str | None = None
+
+
+def wrap_reply_in_proposal_envelope(result, prompt: str):
+    """Producer-side wrap: a bare-diff reply becomes a hash-bound envelope.
+
+    The model authored only the diff; every binding (input hash, prompt-schema
+    hash, artifact/proposal sha256) is computed here, deterministically, from
+    what actually happened. Replies that are already envelopes, carry no
+    usable diff, or arrive with the producer disabled pass through untouched —
+    the transaction's own preflight stays the single judge of validity.
+    """
+    import hashlib
+
+    from koru.proposal_envelope import (
+        ProposalValidationError,
+        build_proposal_envelope,
+        looks_like_proposal_envelope,
+    )
+
+    stdout = result.stdout or ""
+    if not proposal_producer_enabled() or looks_like_proposal_envelope(stdout):
+        return result
+    diff = extract_unified_diff(stdout)
+    if diff is None:
+        return result
+    raw = getattr(result, "raw", None)
+    raw = raw if isinstance(raw, dict) else {}
+    provider = str(raw.get("provider") or "").strip() or "unknown"
+    model = str(raw.get("model") or getattr(result, "model", "") or "").strip() or "unknown"
+    try:
+        payload = build_proposal_envelope(
+            intent_pack_id=PATCH_INTENT_PACK_ID,
+            intent_pack_version=PATCH_INTENT_PACK_VERSION,
+            slots={},
+            artifact_kind="unified_diff",
+            artifact_content=diff,
+            input_hash=hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+            prompt_schema_hash=hashlib.sha256(
+                PATCH_PROMPT_SUFFIX.encode("utf-8")
+            ).hexdigest(),
+            provider=provider,
+            model=model,
+        )
+    except ProposalValidationError:
+        # Wrapping must never turn a usable diff into a refusal; the legacy
+        # bare-diff path still understands the original reply.
+        return result
+    return _EnvelopedReply(
+        returncode=result.returncode,
+        stdout=json.dumps(payload, ensure_ascii=False),
+        stderr=getattr(result, "stderr", "") or "",
+        raw=raw or None,
+        model=getattr(result, "model", None),
+    )
+
+
 _SECRET_PATTERNS = (
     # Assignments: API_KEY=..., token: "...", password = '...'
     re.compile(

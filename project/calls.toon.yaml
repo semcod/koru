@@ -1,36 +1,36 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.34s
+# generated in 0.45s
 # nodes: 375 | edges: 500 | modules: 74
-# CC̄=3.7
+# CC̄=3.8
 
 HUBS[20]:
   project.print
     CC=0  in:1050  out:0  total:1050
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:236  out:9  total:245
+    CC=5  in:237  out:9  total:246
   packages.dsl2koru.src.dsl2koru.bus.dispatch
     CC=11  in:27  out:25  total:52
   packages.dsl2coru.src.dsl2coru.parser._flag
     CC=7  in:33  out:8  total:41
-  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
-    CC=3  in:0  out:33  total:33
   packages.coru.src.coru.supervisor.registry.load_registry
     CC=5  in:22  out:11  total:33
+  packages.dsl2koru.src.dsl2koru.events.EventStore.append_command
+    CC=3  in:0  out:33  total:33
   packages.coru.src.coru.cli._run_lane_repair
     CC=7  in:7  out:24  total:31
-  src.koruide.ide.detect_running_ides
-    CC=4  in:25  out:4  total:29
   src.koruide.plugin_installer._repo_root
     CC=4  in:25  out:4  total:29
-  packages.coru.src.coru.cli_checks._trace
-    CC=3  in:23  out:5  total:28
+  src.koruide.ide.detect_running_ides
+    CC=4  in:25  out:4  total:29
   packages.nlp2coru.src.nlp2coru.cli._emit
     CC=4  in:24  out:4  total:28
+  packages.coru.src.coru.cli_checks._trace
+    CC=3  in:23  out:5  total:28
   packages.uri2coru.src.uri2coru.nlp2uri.nlp2uri
     CC=14  in:4  out:23  total:27
-  packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
-    CC=3  in:0  out:26  total:26
   packages.dsl2coru.src.dsl2coru.events.EventStore._append_pb
+    CC=3  in:0  out:26  total:26
+  packages.dsl2coru.src.dsl2coru.events.EventStore._append_jsonl
     CC=3  in:0  out:26  total:26
   packages.dsl2koru.src.dsl2koru.cli._main_subcommand
     CC=1  in:1  out:24  total:25
@@ -40,8 +40,8 @@ HUBS[20]:
     CC=13  in:1  out:23  total:24
   packages.dsl2koru.src.dsl2koru.codegen.render_models_module
     CC=12  in:1  out:22  total:23
-  packages.uri2coru.src.uri2coru.decode.uri_to_dsl
-    CC=7  in:4  out:18  total:22
+  packages.coru.src.coru.cli._run_koru_lane
+    CC=2  in:18  out:4  total:22
   packages.nlpshim.src.nlpshim.conversation_client.ConversationTestClient.message
     CC=9  in:0  out:22  total:22
 
