@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir \
       prometheus-client==0.20.0 \
       httpx==0.27.2 \
       pydantic==2.9.2 \
-      planfile==0.1.87 \
+      planfile==0.1.117 \
       vallm>=0.1.87 \
       "redup>=0.4.15" \
       PyYAML==6.0.2

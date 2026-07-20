@@ -2697,7 +2697,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
@@ -2775,7 +2775,7 @@ wheels = [
 
 [[package]]
 name = "planfile"
-version = "0.1.116"
+version = "0.1.117"
 source = { editable = "../planfile" }
 dependencies = [
     { name = "filelock" },
@@ -3891,7 +3891,7 @@ requires-dist = [
     { name = "env2llm", marker = "extra == 'env'", specifier = ">=0.1.12" },
     { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
     { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.100" },
+    { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.117" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0,<10.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
     { name = "testql", marker = "extra == 'dev'", specifier = ">=1.2.0" },
@@ -4193,7 +4193,7 @@ requires-dist = [
     { name = "pillow", marker = "extra == 'pillow'", specifier = ">=10.0" },
     { name = "pillow", marker = "extra == 'sampler'", specifier = ">=10.0" },
     { name = "pillow", marker = "extra == 'vision'", specifier = ">=10.0" },
-    { name = "planfile", marker = "extra == 'auto'", specifier = ">=0.1.103" },
+    { name = "planfile", marker = "extra == 'auto'", specifier = ">=0.1.117" },
     { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.40" },
     { name = "playwright", marker = "extra == 'e2e'", specifier = ">=1.40" },
     { name = "pydantic", marker = "extra == 'core'", specifier = ">=2" },
