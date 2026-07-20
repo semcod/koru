@@ -3870,7 +3870,12 @@ def _enrich_capture_meta_for_pointer(meta: dict[str, Any], source: str) -> dict[
         from vdisplay.input import monitor_by_name
 
         enriched = enrich_screencast_stream_meta(dict(meta or {}))
-        monitor = monitor_by_name(enriched.get("display"), source)
+        try:
+            monitor = monitor_by_name(enriched.get("display"), source)
+        except Exception:
+            # Headless runners have no discoverable host display. Canonical
+            # capture metadata and a calibrated fallback do not require one.
+            monitor = None
         return canonicalize_capture_meta(
             enriched,
             source=source,
@@ -4021,8 +4026,7 @@ def _map_chat_target_capture_local(*, ide: str, source: str) -> dict[str, Any] |
 def _global_coords_from_vql_local(*, x: int, y: int, source: str) -> tuple[int | None, int | None, dict[str, Any]]:
     """Map capture-local VQL coords to global pointer space (for command generation audit)."""
     try:
-        from vdisplay.capture import compile_capture_coordinate_map
-        from vdisplay.input.coords import global_pointer_coords
+        from vdisplay.capture import compile_capture_coordinate_map, global_pointer_coords
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
         coordinate_map = compile_capture_coordinate_map(capture_meta, source=source)

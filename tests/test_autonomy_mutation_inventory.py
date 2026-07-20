@@ -33,13 +33,12 @@ def _declared_source_roots(inventory: dict) -> set[str]:
     }
 
 
-def _actual_source_roots(declared: set[str]) -> set[str]:
+def _actual_source_roots() -> set[str]:
     def is_owned_source_root(path: Path) -> bool:
-        relative = path.relative_to(ROOT).as_posix()
         # Editable installs may create empty namespace directories alongside
-        # real package roots. They are not source ownership until they contain
-        # Python sources; keep explicitly declared compatibility roots visible.
-        return relative in declared or any(path.glob("*.py"))
+        # real package roots. Only a directory with Python sources represents
+        # source ownership in the checked-out repository.
+        return any(path.glob("*.py"))
 
     roots = {
         path.relative_to(ROOT).as_posix()
@@ -99,7 +98,7 @@ class TestAutonomyMutationInventory(unittest.TestCase):
         ]
 
         self.assertEqual(len(occurrences), len(declared), "source root has two owners")
-        self.assertEqual(declared, _actual_source_roots(declared))
+        self.assertEqual(declared, _actual_source_roots())
         for root in declared:
             self.assertTrue((ROOT / root).is_dir(), root)
 

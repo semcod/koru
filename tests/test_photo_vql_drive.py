@@ -1091,6 +1091,10 @@ def test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero(
         encoding="utf-8",
     )
     monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda _app_id: str(map_path))
+    def fail_monitor_discovery(_display: str | None, _source: str) -> None:
+        raise RuntimeError("headless")
+
+    monkeypatch.setattr("vdisplay.input.monitor_by_name", fail_monitor_discovery)
     meta = {"source": "DP-2", "width": 2048, "height": 1280, "region": {"x": 0, "y": 0, "width": 2048, "height": 1280}}
     enriched = vc._enrich_capture_meta_for_pointer(meta, "DP-2")
     region = enriched.get("region") or {}

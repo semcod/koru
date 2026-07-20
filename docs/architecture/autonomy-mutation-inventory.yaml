@@ -13,10 +13,6 @@ namespaces:
     boundary: koru
     roots:
       - packages/cli2koru/src/cli2koru
-      - packages/mcp2koru/src/cli2koru
-      - packages/nlp2koru/src/cli2koru
-      - packages/rest2koru/src/cli2koru
-      - packages/uri2koru/src/cli2koru
     owns: CLI-to-koru protocol adaptation.
     must_not_own: Capability policy or concrete side-effect engines.
   - id: coru
@@ -59,7 +55,6 @@ namespaces:
     boundary: koru
     roots:
       - packages/koruenv/src/koruenv
-      - src/koruenv
     owns: Environment discovery and normalized environment facts.
     must_not_own: Model policy or side effects.
   - id: koruide
@@ -107,11 +102,7 @@ namespaces:
   - id: mcp2koru
     boundary: koru
     roots:
-      - packages/cli2koru/src/mcp2koru
       - packages/mcp2koru/src/mcp2koru
-      - packages/nlp2koru/src/mcp2koru
-      - packages/rest2koru/src/mcp2koru
-      - packages/uri2koru/src/mcp2koru
     owns: MCP-to-koru transport adaptation.
     must_not_own: Capability expansion or a parallel executor.
   - id: nlp2coru
@@ -123,11 +114,7 @@ namespaces:
   - id: nlp2koru
     boundary: koru
     roots:
-      - packages/cli2koru/src/nlp2koru
-      - packages/mcp2koru/src/nlp2koru
       - packages/nlp2koru/src/nlp2koru
-      - packages/rest2koru/src/nlp2koru
-      - packages/uri2koru/src/nlp2koru
     owns: Natural-language proposal adaptation for Koru.
     must_not_own: Capability creation, approval, or execution.
   - id: nlpshim
@@ -145,11 +132,7 @@ namespaces:
   - id: rest2koru
     boundary: koru
     roots:
-      - packages/cli2koru/src/rest2koru
-      - packages/mcp2koru/src/rest2koru
-      - packages/nlp2koru/src/rest2koru
       - packages/rest2koru/src/rest2koru
-      - packages/uri2koru/src/rest2koru
     owns: REST-to-koru transport adaptation.
     must_not_own: Capability expansion or a parallel executor.
   - id: uri2coru
@@ -161,10 +144,6 @@ namespaces:
   - id: uri2koru
     boundary: koru
     roots:
-      - packages/cli2koru/src/uri2koru
-      - packages/mcp2koru/src/uri2koru
-      - packages/nlp2koru/src/uri2koru
-      - packages/rest2koru/src/uri2koru
       - packages/uri2koru/src/uri2koru
     owns: URI-to-koru transport adaptation.
     must_not_own: Capability expansion or a parallel executor.
