@@ -4030,10 +4030,15 @@ def _global_coords_from_vql_local(*, x: int, y: int, source: str) -> tuple[int |
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
         coordinate_map = compile_capture_coordinate_map(capture_meta, source=source)
-        gx, gy, details = global_pointer_coords(int(x), int(y), capture_meta)
+        pointer_meta = dict(capture_meta)
+        # The compiled contract resolves an absent rotation to ``normal``.
+        # Pass that fact on so coordinate mapping remains pure and does not
+        # fall back to optional live-monitor discovery in headless runtimes.
+        pointer_meta.setdefault("rotation", coordinate_map.rotation)
+        gx, gy, details = global_pointer_coords(int(x), int(y), pointer_meta)
         return int(gx), int(gy), {
             "capture_meta_region": capture_meta.get("region"),
-            "capture_meta_rotation": capture_meta.get("rotation"),
+            "capture_meta_rotation": pointer_meta.get("rotation"),
             "coordinate_map": coordinate_map.to_dict(),
             "mapping_details": details,
         }

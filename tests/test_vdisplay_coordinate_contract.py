@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import sys
+import types
+
 import koru.integrations.vdisplay_client as vc
 
 
@@ -18,6 +21,7 @@ def test_global_coordinate_audit_contains_canonical_map(
     monkeypatch.setenv("VDISPLAY_POINTER_SAFE_MARGIN", "0")
     monkeypatch.setattr(vc, "_photo_capture_meta_for_source", lambda _source: meta)
     monkeypatch.setattr(vc, "_enrich_capture_meta_for_pointer", lambda value, _source: value)
+    monkeypatch.setitem(sys.modules, "vdisplay.input.coords", types.SimpleNamespace())
 
     global_x, global_y, audit = vc._global_coords_from_vql_local(
         x=1024,
@@ -25,7 +29,8 @@ def test_global_coordinate_audit_contains_canonical_map(
         source="HDMI-1",
     )
 
-    assert (global_x, global_y) == (2048, 3840)
+    assert (global_x, global_y) == (2048, 3840), audit
+    assert audit["capture_meta_rotation"] == "normal"
     coordinate_map = audit["coordinate_map"]
     assert coordinate_map["schema"] == "vdisplay.coordinate-map.v1"
     assert len(coordinate_map["coordinate_map_hash"]) == 64
