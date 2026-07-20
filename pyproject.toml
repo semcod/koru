@@ -52,7 +52,7 @@ desktop = [
     "nlp2uri[envmap]>=0.4.7",
     "env2llm[mqtt]>=0.1.14",
     "planfile>=0.1.117",
-    "testql>=1.2.63",
+    "testql>=1.2.64",
 ]
 imgl = [
     "httpx>=0.27,<1.0",
@@ -62,7 +62,7 @@ envmap = [
     "env2llm[mqtt]>=0.1.14",
 ]
 testql = [
-    "testql>=1.2.63",
+    "testql>=1.2.64",
 ]
 # The queue loop shells out to `planfile`; without this extra the resolver
 # can end up with no usable planfile anywhere and every cycle dies with
@@ -76,7 +76,7 @@ curllm = [
 browser = [
     "nlp2uri[envmap]>=0.4.7",
     "env2llm[mqtt]>=0.1.14",
-    "testql>=1.2.63",
+    "testql>=1.2.64",
     "curllm[mcp]>=1.0.0",
     "playwright>=1.40,<2.0",
 ]
@@ -191,7 +191,7 @@ all = [
     "nlp2uri[envmap]>=0.4.7",
     "planfile>=0.1.117",
     "playwright>=1.40,<2.0",
-    "testql>=1.2.63",
+    "testql>=1.2.64",
     "vdisplay>=0.1.58",
 ]
 

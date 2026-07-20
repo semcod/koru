@@ -16,7 +16,7 @@ from __future__ import annotations
 import fnmatch
 import os
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from koru.init import (
@@ -47,7 +47,7 @@ _DEFAULT_EXCLUDE_GLOBS: tuple[str, ...] = (
 )
 
 
-class BootstrapStatus(str, Enum):
+class BootstrapStatus(StrEnum):
     SKIPPED = "skipped"
     INITIALIZED = "initialized"
     POLICY_ADDED = "policy_added"

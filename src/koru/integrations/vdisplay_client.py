@@ -77,7 +77,7 @@ except ImportError:
     ) -> dict[str, Any] | None:
         del ide, source
         return None
-from koru.integrations.photo_vql_guard import (  # noqa: E402
+from koru.integrations.photo_vql_guard import (  # noqa: E402,I001
     CaptureGuard,
 )
 from koru.integrations.photo_vql_guard import (  # noqa: E402
@@ -111,10 +111,10 @@ from koru.integrations.photo_vql_validation import (  # noqa: E402
     window_titles_from_vql_meta as _window_titles_from_vql_meta,
 )
 from koru.integrations.vdisplay.env_session import (  # noqa: E402
-    clear_stale_observe_session_env,
+    clear_stale_observe_session_env,  # noqa: F401
     dry_run_enabled as _dry_run,
-    session_type as _session_type,
-    sync_prepare_capture_flags_to_env,
+    session_type as _session_type,  # noqa: F401
+    sync_prepare_capture_flags_to_env,  # noqa: F401
 )
 
 
@@ -503,14 +503,12 @@ def record_koru_drive_step(
     return str(session_dir) if session_dir else None
 
 
-from koru.integrations.vdisplay.control_policy import (  # noqa: E402
+from koru.integrations.vdisplay.control_policy import (  # noqa: E402,I001
+    _photo_vql_code_edit_enabled,  # noqa: F401
+    _send_chat_os_injector_enabled,  # noqa: F401
+    _trusted_visual_target_id,  # noqa: F401
     simplified_control_likely_insufficient as _simplified_control_policy,
     vdisplay_fallback_enabled as _vdisplay_fallback_policy,
-)
-from koru.integrations.vdisplay.control_policy import (  # noqa: E402,F401
-    _photo_vql_code_edit_enabled,
-    _send_chat_os_injector_enabled,
-    _trusted_visual_target_id,
 )
 
 
@@ -577,7 +575,6 @@ from koru.integrations.vdisplay.desktop_probe import (  # noqa: E402,F401
     _desktop_probe_ide_surface_rank,
     _probe_ide_processes,
 )
-
 
 # Surface capture confirmation extracted to vdisplay.surface_capture.
 from koru.integrations.vdisplay.surface_capture import (  # noqa: E402,F401
@@ -676,13 +673,13 @@ def _photo_vql_metadata_root() -> Path:
     return Path(os.environ.get("VDISPLAY_METADATA_DIR", ".vdisplay")).expanduser()
 
 
-from koru.integrations.vdisplay.photo_vql_meta import (  # noqa: E402,F401
+from koru.integrations.vdisplay.photo_vql_meta import (  # noqa: E402,I001
     COMPETING_IDE_WINDOW_TOKENS as _COMPETING_IDE_WINDOW_TOKENS,
-    IDE_WINDOW_TITLE_TOKENS as _IDE_WINDOW_TITLE_TOKENS,
+    IDE_WINDOW_TITLE_TOKENS as _IDE_WINDOW_TITLE_TOKENS,  # noqa: F401
     _capture_validation_from_meta,
-    _photo_vql_overlay_labels,
-    _photo_vql_portal_actor_detected,
-    _photo_vql_share_prompt_detected,
+    _photo_vql_overlay_labels,  # noqa: F401
+    _photo_vql_portal_actor_detected,  # noqa: F401
+    _photo_vql_share_prompt_detected,  # noqa: F401
     _photo_vql_system_overlay_warning,
     _type_text_plan_validation_warnings,
     photo_vql_capture_validation_failed_warning,

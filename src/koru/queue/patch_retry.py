@@ -27,8 +27,8 @@ from koru.queue.evidence import (
     VERDICT_VERIFIED,
     build_evidence_bundle,
     patch_attempt_record,
-    provenance_from_result,
     persist_evidence,
+    provenance_from_result,
 )
 from koru.queue.journal import PHASE_COMPLETED, RunJournal
 from koru.queue.patch_mode import (
@@ -138,7 +138,9 @@ def apply_patch_with_retry(
         result, outcome = transaction.result, transaction.outcome
         attempts.append(_attempt_record(len(attempts) + 1, transaction))
         if outcome is None or not outcome.retryable or remaining <= 0:
-            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize))
+            return result, outcome, _finish_run(
+                project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize)
+            )
 
         # A structurally invalid model artifact gets one repair attempt. A
         # ticket/env knob may shrink that budget, never expand it into a loop.
@@ -149,7 +151,9 @@ def apply_patch_with_retry(
             project, ticket, result, budget, manifest, transaction, attempts,
         )
         if aborted is not None:
-            return result, aborted, _finish_run(project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize))
+            return result, aborted, _finish_run(
+                project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize)
+            )
 
         remaining -= 1
         retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
@@ -159,7 +163,9 @@ def apply_patch_with_retry(
             result, str(retry_action.get("prompt") or "")
         )
         if result.returncode != 0:
-            return result, outcome, _finish_run(project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize))
+            return result, outcome, _finish_run(
+                project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize)
+            )
 
 
 def _pin_or_detect_drift(
