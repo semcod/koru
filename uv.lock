@@ -1713,10 +1713,10 @@ requires-dist = [
     { name = "structlog", marker = "extra == 'obs'", specifier = ">=24.4,<26.0" },
     { name = "tagi", marker = "extra == 'all'", specifier = ">=0.49.0" },
     { name = "tagi", marker = "extra == 'dev'", specifier = ">=0.49.0" },
-    { name = "testql", marker = "extra == 'all'", specifier = ">=1.2.62" },
-    { name = "testql", marker = "extra == 'browser'", specifier = ">=1.2.62" },
-    { name = "testql", marker = "extra == 'desktop'", specifier = ">=1.2.62" },
-    { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.62" },
+    { name = "testql", marker = "extra == 'all'", specifier = ">=1.2.63" },
+    { name = "testql", marker = "extra == 'browser'", specifier = ">=1.2.63" },
+    { name = "testql", marker = "extra == 'desktop'", specifier = ">=1.2.63" },
+    { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.63" },
     { name = "tiktoken", marker = "extra == 'agent'", specifier = ">=0.8,<1.0" },
     { name = "tiktoken", marker = "extra == 'all'", specifier = ">=0.8,<1.0" },
     { name = "tillm", editable = "../tillm" },
@@ -3809,7 +3809,7 @@ wheels = [
 
 [[package]]
 name = "testql"
-version = "1.2.62"
+version = "1.2.63"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -3818,14 +3818,15 @@ dependencies = [
     { name = "goal" },
     { name = "httpx" },
     { name = "pfix" },
+    { name = "playwright" },
     { name = "pytest-cov" },
     { name = "pyyaml" },
     { name = "rich" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/55/5ab6d3e1f0c65ec1b3f575cb9f0df636ee67e2cb5396a6b5ee14d73494ac/testql-1.2.62.tar.gz", hash = "sha256:ff46aa71df26e04ac48eadc65c1d82b66549beaa6b98c753e53bd7f0433589ab", size = 400384, upload-time = "2026-07-19T21:57:19.461Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/ea/02574e9adcc5999e2e8d4f3adcb0bfe8385bf7d62e10404606e3f4beaca5/testql-1.2.63.tar.gz", hash = "sha256:ddb31d27c9713c5cbc53c4f0b185d6412acd78268fbf140a90454709c4cd0701", size = 406262, upload-time = "2026-07-20T07:47:21.852Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/fa/9d7ab62ce5ba89b27cf18ee23f7c3902bdd54f580a334f497c24551b3f0a/testql-1.2.62-py3-none-any.whl", hash = "sha256:acb61912dcd6c791fbc81e8c8b91271ec2bbadfa6485af0299398357b37870f5", size = 390775, upload-time = "2026-07-19T21:57:17.239Z" },
+    { url = "https://files.pythonhosted.org/packages/55/e0/d87c7912c7170af009af944d2105016f24953feb9d72c13518d9d35162f6/testql-1.2.63-py3-none-any.whl", hash = "sha256:3876af6538fe727cb63fa3174b1e6d6bec04d285c8e1effab6e3f54dbe9c4cef", size = 395903, upload-time = "2026-07-20T07:47:19.839Z" },
 ]
 
 [[package]]
@@ -3894,7 +3895,7 @@ requires-dist = [
     { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.117" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0,<10.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
-    { name = "testql", marker = "extra == 'dev'", specifier = ">=1.2.0" },
+    { name = "testql", marker = "extra == 'dev'", specifier = ">=1.2.63" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
 ]
 provides-extras = ["env", "planfile", "dev"]
