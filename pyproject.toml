@@ -100,6 +100,7 @@ dev = [
     # The repository test suite imports the vision and signed queue contracts.
     "vdisplay>=0.1.58",
     "cryptography>=42.0,<50.0",
+    "planfile>=0.1.117",
     "goal>=2.1.264",
     "costs>=0.1.53",
     "pfix>=0.1.60",

@@ -194,6 +194,7 @@ def _has_planfile_cli_module() -> bool:
         return False
 
 
+@lru_cache(maxsize=32)
 def _python_has_planfile_cli(python: str) -> bool:
     try:
         proc = subprocess.run(

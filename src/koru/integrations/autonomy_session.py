@@ -152,14 +152,19 @@ def _collect_session_candidates(bases: list[Path], pattern: str) -> list[Path]:
 
 
 def find_latest_koru_session(*, ide: str = "jetbrains", root: Path | None = None) -> Path | None:
-    """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` by session directory mtime."""
+    """Newest ``.vdisplay/YYYY-MM-DD/*__koru-{ide}/`` deterministically.
+
+    Session names begin with an ISO-like UTC timestamp. Use that name as the
+    tie-breaker because CI filesystems may assign identical mtimes to two
+    directories created in the same clock tick.
+    """
     bases = _session_search_bases(root)
     slug = (ide or "jetbrains").strip().lower().replace(" ", "-")[:32]
     pattern = f"*__koru-{slug}"
     candidates = _collect_session_candidates(bases, pattern)
     if not candidates:
         return None
-    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    candidates.sort(key=lambda p: (p.stat().st_mtime, p.name), reverse=True)
     return candidates[0]
 
 
