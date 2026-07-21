@@ -246,7 +246,10 @@ def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
             f"project_venv={project / '.venv'}",
             "project_venv_missing=true",
         ]
-        return WARN, "; ".join(detail_bits)
+        # A project-local virtualenv is optional (for example for Node-only
+        # queue projects). There is no alignment failure when no local target
+        # environment exists; the selected Koru runtime is checked separately.
+        return PASS, "; ".join(detail_bits)
 
     detail_bits, status = _collect_venv_detail_bits(
         existing_venvs, project, virtual_env, executable

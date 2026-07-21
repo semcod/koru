@@ -5,12 +5,38 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 from koru import autonomous_runtime
 from koru.autonomous import _apply_agent_lane_environ
 from koru.autonomous_startup import resolve_autopilot_ide_for_autonomous
 from koru.autopilot import default_socket_path
 from koru.autopilot.ide import RunningIDE
 from koru.ide_router import resolve_ide_route
+
+
+def test_repeated_sigterm_does_not_interrupt_cleanup_twice(monkeypatch) -> None:
+    installed: dict[str, object] = {}
+    messages: list[str] = []
+
+    def capture_signal(_signal: int, handler: object) -> None:
+        installed["handler"] = handler
+
+    monkeypatch.setattr(autonomous_runtime.signal, "signal", capture_signal)
+    state = autonomous_runtime.StopSignalState()
+    autonomous_runtime.install_sigterm_interrupt_handler(
+        SimpleNamespace(emit_events="human"),
+        state,
+        stdio_info=lambda message, **_kwargs: messages.append(message),
+    )
+    handler = installed["handler"]
+
+    with pytest.raises(KeyboardInterrupt):
+        handler(autonomous_runtime.signal.SIGTERM, None)
+    handler(autonomous_runtime.signal.SIGTERM, None)
+
+    assert state.stopped_by_sigterm is True
+    assert len(messages) == 1
 
 
 def test_project_venv_warning_when_running_from_other_venv(

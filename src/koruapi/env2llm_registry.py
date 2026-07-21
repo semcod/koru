@@ -14,19 +14,25 @@ _SERVICE_FACTORY: Any = None
 
 
 def _load_env2llm_api() -> bool:
-    """Load only env2llm's public, versioned service-factory boundary."""
+    """Load only env2llm's public, versioned service-factory boundary.
+
+    env2llm is a separately-versioned local package; its public shape has
+    drifted before (e.g. RegistryServiceFactory renamed/removed) without a
+    matching koru release. That must degrade this optional bridge to
+    "unavailable", not crash every `koru` invocation via the import chain.
+    """
     global _ENV2LLM_AVAILABLE, _ENV2LLM_IMPORT_ERROR
     global _SERVICE_API, _SERVICE_FACTORY
     try:
         service_api = importlib.import_module("env2llm.service")
-    except ImportError as exc:
+        _SERVICE_API = service_api
+        if _SERVICE_FACTORY is None:
+            _SERVICE_FACTORY = service_api.RegistryServiceFactory()
+    except (ImportError, AttributeError, TypeError) as exc:
         _ENV2LLM_AVAILABLE = False
-        _ENV2LLM_IMPORT_ERROR = str(exc)
+        _ENV2LLM_IMPORT_ERROR = f"{type(exc).__name__}: {exc}"
         return False
 
-    _SERVICE_API = service_api
-    if _SERVICE_FACTORY is None:
-        _SERVICE_FACTORY = service_api.RegistryServiceFactory()
     _ENV2LLM_AVAILABLE = True
     _ENV2LLM_IMPORT_ERROR = None
     return True

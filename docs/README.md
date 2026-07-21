@@ -3,7 +3,20 @@
 This directory contains the full documentation for **koru** — a closed-loop
 refactor automation system for multi-repo workspaces.
 
-**Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md)
+**Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md) · **Open work:** [`TODO.md`](../TODO.md)
+
+## Choose a path
+
+| Need | Start here | Continue with |
+|---|---|---|
+| Install and run Koru | [`quickstart-10min.md`](./quickstart-10min.md) | [`cli-examples.md`](./cli-examples.md) |
+| Operate an autonomous agent | [`agent-guide.md`](./agent-guide.md) | [`autopilot-quickstart.md`](./autopilot-quickstart.md) |
+| Understand queue lifecycle and retries | [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) | [`planfile-llm-guide.md`](./planfile-llm-guide.md) |
+| Run Subactor development repair | [`subactor-development-repair-template.md`](./subactor-development-repair-template.md) | [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) |
+| Change autonomy architecture | [`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md) | [`architecture/adr/README.md`](./architecture/adr/README.md) |
+
+`TODO.md` is only for active work. Completed implementation and documentation
+changes are recorded in `CHANGELOG.md`.
 
 ## Architecture (autonomy / determinism)
 

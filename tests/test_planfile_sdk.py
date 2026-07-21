@@ -31,6 +31,12 @@ class _Client:
     def complete(self, ticket_id: str, **kwargs):
         return self._result("complete", ticket_id, kwargs)
 
+    def fail(self, ticket_id: str, **kwargs):
+        return self._result("fail", ticket_id, kwargs)
+
+    def ready(self, ticket_id: str, **kwargs):
+        return self._result("ready", ticket_id, kwargs)
+
     def block(self, ticket_id: str, **kwargs):
         return self._result("block", ticket_id, kwargs)
 
@@ -43,6 +49,12 @@ def test_parse_lifecycle_request_maps_cli_without_policy() -> None:
         ["ticket", "claim", "PLF-1", "--assigned-to", "koru", "--lease-seconds", "60"]
     )
     note = parse_lifecycle_request(["ticket", "update", "PLF-1", "--note", "evidence"])
+    failed = parse_lifecycle_request(
+        ["ticket", "fail", "PLF-1", "--error", "temporary", "--actor", "koru"]
+    )
+    ready = parse_lifecycle_request(
+        ["ticket", "ready", "PLF-1", "--note", "Retry 2/3 scheduled"]
+    )
 
     assert claim is not None
     assert claim.operation == "claim"
@@ -50,6 +62,12 @@ def test_parse_lifecycle_request_maps_cli_without_policy() -> None:
     assert note is not None
     assert note.operation == "note"
     assert note.kwargs == {"note": "evidence"}
+    assert failed is not None
+    assert failed.operation == "fail"
+    assert failed.kwargs == {"error": "temporary", "actor": "koru"}
+    assert ready is not None
+    assert ready.operation == "ready"
+    assert ready.kwargs == {"note": "Retry 2/3 scheduled"}
     assert parse_lifecycle_request(["ticket", "delete", "PLF-1"]) is None
     assert parse_lifecycle_request(["ticket", "done", "PLF-1", "--unknown", "x"]) is None
 
@@ -153,6 +171,31 @@ def test_missing_sdk_falls_back_to_existing_cli_path(tmp_path: Path, monkeypatch
     assert calls == [["/pinned/planfile", "ticket", "start", "PLF-4"]]
 
 
+def test_older_sdk_falls_back_for_lifecycle_method_it_does_not_expose(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    calls: list[list[str]] = []
+
+    def runner(command, _project):
+        calls.append(list(command))
+        return SimpleNamespace(returncode=0, stdout="legacy fail", stderr="")
+
+    monkeypatch.setenv("KORU_PLANFILE_CMD", "/pinned/planfile")
+    result = planfile_lifecycle_command(
+        tmp_path,
+        ["ticket", "fail", "PLF-5", "--error", "temporary"],
+        runner,
+        prefer_sdk=True,
+        client_factory=lambda _project: SimpleNamespace(start=lambda *_args: None),
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "legacy fail"
+    assert calls == [
+        ["/pinned/planfile", "ticket", "fail", "PLF-5", "--error", "temporary"]
+    ]
+
+
 def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path) -> None:
     from planfile import Planfile
 
@@ -181,6 +224,21 @@ def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path) -> None
         ["ticket", "start", ticket.id, "--assigned-to", "koru-test"],
         run_process,
     )
+    failed = planfile_lifecycle_command(
+        tmp_path,
+        ["ticket", "fail", ticket.id, "--error", "temporary failure"],
+        run_process,
+    )
+    ready = planfile_lifecycle_command(
+        tmp_path,
+        ["ticket", "ready", ticket.id, "--note", "Retry 2/3 scheduled"],
+        run_process,
+    )
+    start = planfile_lifecycle_command(
+        tmp_path,
+        ["ticket", "start", ticket.id, "--assigned-to", "koru-test"],
+        run_process,
+    )
     noted, note_kind = append_shell_evidence_note(
         tmp_path,
         ticket.id,
@@ -199,11 +257,13 @@ def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path) -> None
         ("ok", "verified"),
         ("ok", "verified"),
     ]
+    assert (failed.transition_code, failed.parity) == ("ok", "verified")
+    assert (ready.transition_code, ready.parity) == ("ok", "verified")
     assert (done.transition_code, done.parity) == ("ok", "verified")
     assert (noted.transition_code, noted.parity, note_kind) == ("ok", "verified", "sdk")
     assert stored.status.value == "done"
     assert stored.execution.state == "done"
-    assert stored.outputs.notes == ["typed evidence"]
+    assert stored.outputs.notes == ["Retry 2/3 scheduled", "typed evidence"]
     events = [
         json.loads(line)
         for line in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
@@ -216,6 +276,9 @@ def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path) -> None
     ]
     assert [command["operation"] for command in sdk_commands] == [
         "ticket.claim",
+        "ticket.start",
+        "ticket.fail",
+        "ticket.ready",
         "ticket.start",
         "ticket.note",
         "ticket.complete",

@@ -606,6 +606,70 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(block_call[3], "--reason")
             self.assertIn("FAIL", block_call[4])
 
+    def test_shell_failure_is_reopened_while_attempt_budget_remains(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-003R",
+                "name": "Retry transient failure",
+                "executor": {"kind": "shell", "handler": "false"},
+                "execution": {"attempt": 0, "max_attempts": 3, "state": "ready"},
+            }
+            calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=lambda *_args: SimpleNamespace(
+                    returncode=1, stdout="", stderr="temporary failure",
+                ),
+            )
+
+            tail = [_ticket_args(call) for call in calls]
+            assert result.status == "failed"
+            assert ["ticket", "fail", "PLF-003R", "--error", "FAIL: temporary failure"] in tail
+            ready = next(args for args in tail if args[:3] == ["ticket", "ready", "PLF-003R"])
+            assert "retry 2/3" in ready[4].lower()
+            assert ["ticket", "update", "PLF-003R", "--status", "open"] in tail
+            assert not any(args[:3] == ["ticket", "block", "PLF-003R"] for args in tail)
+
+    def test_shell_failure_blocks_after_last_allowed_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-003X",
+                "name": "Exhaust retries",
+                "executor": {"kind": "shell", "handler": "false"},
+                "execution": {"attempt": 2, "max_attempts": 3, "state": "ready"},
+            }
+            calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=lambda *_args: SimpleNamespace(
+                    returncode=1, stdout="", stderr="permanent failure",
+                ),
+            )
+
+            tail = [_ticket_args(call) for call in calls]
+            assert result.status == "failed"
+            assert ["ticket", "fail", "PLF-003X", "--error", "FAIL: permanent failure"] in tail
+            assert any(args[:3] == ["ticket", "block", "PLF-003X"] for args in tail)
+            assert not any(args[:3] == ["ticket", "ready", "PLF-003X"] for args in tail)
+
     def test_api_ticket_runs_lifecycle_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)

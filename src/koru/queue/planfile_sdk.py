@@ -22,7 +22,15 @@ from koru.queue.types import CommandResult
 
 _logger = logging.getLogger(__name__)
 
-LifecycleOperation = Literal["claim", "start", "complete", "block", "note"]
+LifecycleOperation = Literal[
+    "claim",
+    "start",
+    "complete",
+    "fail",
+    "ready",
+    "block",
+    "note",
+]
 ParityStatus = Literal["disabled", "verified", "mismatch", "unavailable"]
 
 
@@ -109,6 +117,31 @@ def parse_lifecycle_request(args: Sequence[str]) -> LifecycleRequest | None:
                 for key, value in options.items()
             },
         )
+
+    if command == "fail":
+        if set(options) - {"--error", "-e", "--reason", "--actor"}:
+            return None
+        error = options.get("--error") or options.get("-e")
+        if not error or ("--error" in options and "-e" in options):
+            return None
+        kwargs = {"error": error}
+        for flag in ("--reason", "--actor"):
+            if flag in options:
+                kwargs[flag.removeprefix("--")] = options[flag]
+        return LifecycleRequest("fail", ticket_id, kwargs)
+
+    if command == "ready":
+        if set(options) - {"--note", "-n", "--reason", "--actor"}:
+            return None
+        if "--note" in options and "-n" in options:
+            return None
+        kwargs = {}
+        if note := options.get("--note") or options.get("-n"):
+            kwargs["note"] = note
+        for flag in ("--reason", "--actor"):
+            if flag in options:
+                kwargs[flag.removeprefix("--")] = options[flag]
+        return LifecycleRequest("ready", ticket_id, kwargs)
 
     if command == "block":
         if set(options) - {"--reason", "--note", "--actor"}:
@@ -223,6 +256,18 @@ def _projection(operation: LifecycleOperation, ticket: dict[str, Any]) -> dict[s
             "assigned_to": execution.get("assigned_to"),
             "state": execution.get("state"),
         }
+    elif operation == "fail":
+        base["execution"] = {
+            "state": execution.get("state"),
+            "attempt": execution.get("attempt"),
+            "last_error": execution.get("last_error"),
+        }
+    elif operation == "ready":
+        base["execution"] = {
+            "state": execution.get("state"),
+            "attempt": execution.get("attempt"),
+            "assigned_to": execution.get("assigned_to"),
+        }
     elif operation in {"complete", "block"}:
         base["execution"] = {"state": execution.get("state")}
     elif operation == "note":
@@ -289,6 +334,11 @@ def planfile_lifecycle_command(
         return planfile_command(project, args, runner=runner)
     try:
         client = factory(str(project.resolve()))
+        # Planfile <0.1.118 has the CLI lifecycle commands but its typed client
+        # does not expose fail/ready yet. Fall back before emitting an SDK
+        # control event so the mutation still happens exactly once.
+        if not callable(getattr(client, request.operation, None)):
+            return planfile_command(project, args, runner=runner)
         _emit_sdk_control(project.resolve(), request)
         transition = _dispatch(client, request)
     except (ImportError, ModuleNotFoundError):

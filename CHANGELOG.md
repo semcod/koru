@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The dev environment now installs Starlette's preferred `httpx2` test-client
+  transport, and legacy injector bridge tests explicitly assert their expected
+  deprecation warnings instead of leaking five warnings into every full run.
+- Runtime readiness now treats a missing project-local virtualenv as aligned,
+  avoiding a false warning for Node-only and other non-Python queue projects;
+  installed Koru identity/version checks remain independent.
+- Idle autonomous cycles now report the empty queue as information on the
+  first occurrence and suppress repeated operator guidance, quick-action audit
+  commands, unused control-route diagnostics, and human decision narration
+  while the idle streak remains unchanged. Structured cycle summaries and the
+  durable decision trace continue to be emitted.
+- `cycle_trace` no longer depends on import order: cycle-only runtime helpers
+  are late-bound and type-only dependencies stay behind `TYPE_CHECKING`,
+  removing the `cycle_trace → cycle_finalize → cycle_trace` import loop.
+- A plain skipped cycle with an idle queue and no waiting ticket is now
+  persisted as `idle_no_ticket` instead of the misleading `unknown` decision.
+- Autonomous shutdown now treats repeated SIGTERM delivery as idempotent, so
+  a wrapper-forwarded second signal cannot interrupt cleanup and force systemd
+  to wait for `TimeoutStopSec` before killing the process.
+- Queue executor failures now increment Planfile's persisted attempt counter,
+  reopen the ticket while `execution.max_attempts` has budget, and block only
+  after the final allowed attempt. Failed lifecycle transitions fail closed.
+- The typed Planfile lifecycle gateway now supports `ticket fail` and
+  `ticket ready`, with a CLI compatibility path for published Planfile 0.1.117.
+
 ### Added
 - The TestQL bridge now delegates scenario resolution and batch execution to
   the public `testql.verification` contract from TestQL 1.2.62. Successful
@@ -33,6 +59,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Plesk/DNS/`--apply`.
 - Queue patch tickets may set `inputs.max_patch_attempts` (overrides
   `KORU_QUEUE_PATCH_RETRIES` for mechanical diff retries).
+
+### Changed
+- Project tracking now keeps only active checkboxes in `TODO.md`; completed
+  roadmap work and the 50 resolved prefact findings from the 2026-07-18
+  snapshot are recorded here instead of being mixed into the backlog, and
+  their exact duplicate entries were removed from the active generated slice.
+- Completed stages inside still-open roadmap initiatives are now progress
+  notes rather than completed tasks, making the remaining acceptance work
+  explicit.
+- Historical changelog fragments now use explicit development/supplemental
+  headings instead of duplicating the current `Unreleased` or canonical
+  release headings; their original content and recorded dates are preserved.
+
+### Completed roadmap work
+- Established the ADR-005 isolated-worktree transaction, durable manifest and
+  evidence bundle, capability contracts, single-use Ed25519 grant identifiers,
+  Subactor development-defect template, provider fallback audit notes, and the
+  controlled `STARTER-597`/`STARTER-598` self-improvement path.
+- Completed P0-1 mutation/capability inventory and P0-4 end-to-end evidence
+  binding, including proposal, manifest, verification, authorization, version,
+  and execution-binding hashes.
+- Completed VOL-2 and DEP-7 by moving test-only shadow packages out of the
+  production namespace and enforcing the boundary in wheel/import checks.
+- Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed,
+  bounded Gillm actuator integration.
+
+## [0.1.437] - 2026-07-21
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/README.md
+- Update docs/architecture/dependency-boundary-inventory.yaml
+- Update docs/planfile-execution-gateway.md
+- Update docs/subactor-development-repair-template.md
+
+### Test
+- Update tests/test_autonomous_loop_runner.py
+- Update tests/test_autonomous_readiness.py
+- Update tests/test_autonomous_runtime.py
+- Update tests/test_autopilot_route_cli.py
+- Update tests/test_cycle_trace.py
+- Update tests/test_decision_trace.py
+- Update tests/test_healing_webhook_split.py
+- Update tests/test_koruide_bridges.py
+- Update tests/test_planfile_queue.py
+- Update tests/test_planfile_sdk.py
+
+### Other
+- Update VERSION
+- Update package-lock.json
+- Update uv.lock
 
 ## [0.1.435] - 2026-07-20
 
@@ -677,7 +756,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix import-optimization issues (ticket-6df48be4)
 - Fix ast-sorted-imports issues (ticket-f9655854)
 
-## [Unreleased]
+## Historical development notes before 0.1.407
 
 ### Added
 - Project-aware IDE proposal: koru now proposes the IDE/agent lane from the
@@ -1022,7 +1101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update project/evolution.toon.yaml
 - ... and 8 more files
 
-## [0.1.395] - 2026-07-17
+## Supplemental historical notes for 0.1.395 (2026-07-17, part 1)
 
 ### Docs
 - Update README.md
@@ -1126,7 +1205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix string-concat issues (ticket-c0c50856)
 - Fix unused-imports issues (ticket-8c747b8c)
 
-## [Unreleased]
+## Historical development notes before 0.1.388
 
 ### Added
 - **One-question onboarding** — `koru auto` on a fresh project asks a single
@@ -2831,7 +2910,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update .tmp/code2llm-plugins/flow.mmd
 - ... and 19 more files
 
-## [0.1.288] - 2026-05-26
+## Supplemental historical notes for 0.1.288 (2026-05-26, part 1)
 
 ### Docs
 - Update .tmp/code2llm-plugins/README.md
@@ -4039,7 +4118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update src/koruapi/dashboard_template.html
 - Update uv.lock
 
-## [0.1.231] - 2026-05-23
+## Supplemental historical notes for 0.1.231 (2026-05-23, part 1)
 
 ### Docs
 - Update README.md
@@ -4247,7 +4326,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 - Update uv.lock
 
-## [0.1.222] - 2026-05-22
+## Supplemental historical notes for 0.1.222 (2026-05-22, part 1)
 
 ### Docs
 - Update CHANGELOG.md
@@ -4326,7 +4405,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update project/evolution.toon.yaml
 - ... and 10 more files
 
-## [0.1.10] - 2026-05-22
+## Supplemental historical notes for 0.1.10 (2026-05-22, part 1)
 
 ### Fixed
 - Fix unused-imports issues (ticket-ac3e3e72)
@@ -4396,30 +4475,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use Antigravity's native agent-panel prompt command for autopilot delivery.
 - Bundle koru autopilot VSIX 0.1.28.
 
-## [0.1.10] - 2026-05-21
+## Supplemental historical notes for 0.1.10 (2026-05-21, part 2)
 
 ### Fixed
 - Fix unused-imports issues (ticket-d9588027)
 
-## [0.1.10] - 2026-05-21
+## Supplemental historical notes for 0.1.10 (2026-05-21, part 3)
 
 ### Fixed
 - Fix unused-imports issues (ticket-fc801415)
 - Fix string-concat issues (ticket-a8763d2d)
 
-## [0.1.10] - 2026-05-21
+## Supplemental historical notes for 0.1.10 (2026-05-21, part 4)
 
 ### Fixed
 - Fix duplicate-imports issues (ticket-85954cf4)
 - Fix unused-imports issues (ticket-02034a47)
 
-## [0.1.10] - 2026-05-21
+## Supplemental historical notes for 0.1.10 (2026-05-21, part 5)
 
 ### Fixed
 - Fix unused-imports issues (ticket-550c3386)
 - Fix string-concat issues (ticket-e09efa67)
 
-## [0.1.10] - 2026-05-20
+## Supplemental historical notes for 0.1.10 (2026-05-20, part 6)
 
 ### Fixed
 - Fix wildcard-imports issues (ticket-7590895b)
@@ -4505,13 +4584,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as capability-dependent, and clarify that `post_run_verify` is executed by
   the autonomous loop.
 
-## [0.1.10] - 2026-05-19
+## Supplemental historical notes for 0.1.10 (2026-05-19, part 7)
 
 ### Fixed
 - Fix relative-imports issues (ticket-f7325658)
 - Fix string-concat issues (ticket-706f74be)
 
-## [0.1.10] - 2026-05-17
+## Supplemental historical notes for 0.1.10 (2026-05-17, part 8)
 
 ### Fixed
 - Fix unused-imports issues (ticket-a4a995e4)
@@ -4522,19 +4601,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix magic-numbers issues (ticket-fc4c2035)
 - Fix unused-imports issues (ticket-bac2611c)
 
-## [0.1.10] - 2026-05-13
+## Supplemental historical notes for 0.1.10 (2026-05-13, part 9)
 
 ### Fixed
 - Fix string-concat issues (ticket-4db6394c)
 
-## [0.1.10] - 2026-05-12
+## Supplemental historical notes for 0.1.10 (2026-05-12, part 10)
 
 ### Fixed
 - Fix wildcard-imports issues (ticket-4577c0f1)
 - Fix ai-boilerplate issues (ticket-f68e6a91)
 - Fix string-concat issues (ticket-c4df3c8f)
 
-## [0.1.10] - 2026-05-12
+## Supplemental historical notes for 0.1.10 (2026-05-12, part 11)
 
 ### Fixed
 - Fix unused-imports issues (ticket-de208989)
@@ -5281,7 +5360,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update scripts/koru-autoloop.sh
 - Update uv.lock
 
-## [0.1.10] - 2026-05-11
+## Supplemental historical notes for 0.1.10 (2026-05-11, part 12)
 
 ### Fixed
 - Fix relative-imports issues (ticket-df60c7f0)
@@ -5385,7 +5464,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix llm-hallucinations issues (ticket-bc05499e)
 - Fix unused-imports issues (ticket-f56c986e)
 
-## [Unreleased]
+## Historical development notes before 0.1.219
 
 ### Added — Autopilot: drive an IDE's LLM chat from the terminal
 
@@ -6170,7 +6249,7 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - Update project/duplication.toon.yaml
 - ... and 7 more files
 
-## [0.1.189] - 2026-05-21
+## Supplemental historical notes for 0.1.189 (2026-05-21, part 1)
 
 ### Docs
 - Update README.md
@@ -6892,7 +6971,7 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - Update project/evolution.toon.yaml
 - ... and 9 more files
 
-## [0.1.156] - 2026-05-19
+## Supplemental historical notes for 0.1.156 (2026-05-19, part 1)
 
 ### Docs
 - Update README.md
@@ -8457,7 +8536,7 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - Update VERSION
 - Update templates/scripts/check-taskfile-escapes.sh.template
 
-## [0.1.11] - 2026-05-11
+## Supplemental historical notes for 0.1.11 (2026-05-11, part 1)
 
 ### Docs
 - Update README.md
@@ -8465,7 +8544,7 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 ### Other
 - Update uv.lock
 
-## [0.1.10] - 2026-05-11
+## Supplemental historical notes for 0.1.10 (2026-05-11, part 13)
 
 ### Docs
 - Update README.md

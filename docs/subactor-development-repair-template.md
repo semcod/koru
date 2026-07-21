@@ -61,13 +61,22 @@ command after import.
 | `patch_mode` | `true` | Agent emits unified diff; Koru applies |
 | `promotion_mode` | `branch` | Commit on `koru/run-<run_id>`; main untouched |
 | `worktree` | `true` | Staging worktree (+ template `KORU_QUEUE_WORKTREE=1`) |
-| `max_patch_attempts` | `2` | Mechanical diff retries; also `execution.max_attempts` |
+| `execution.max_attempts` | `2` | Complete queue executor runs; final failure blocks the ticket |
+| `inputs.max_patch_attempts` | `2` | Mechanical patch re-asks inside one executor run |
 | `files` | 1–2 paths | Placeholders replaced from bridge `affected_files` |
 | `verify_command` | `node --test platform/test/intent-packs.test.mjs` | Copied to `acceptance_criteria` for planfile |
 
 Override `verify_command` per ticket when the defect is outside intent-packs
 (e.g. `node --test orchestrator/tests/development-defect.test.mjs`), but keep
 commands **local** — no docker compose up, no `--apply`, no Plesk URIs.
+
+The template sets both limits explicitly, so they can be tuned independently.
+With both defaults set to `2`, one ticket may run the queue executor twice, and
+each run may perform its own bounded patch correction. Legacy tickets that omit
+`inputs.max_patch_attempts` inherit their patch retry budget from
+`execution.max_attempts`. Lower the patch limit when model cost or latency
+matters; set `execution.max_attempts: 1` for a failure that cannot improve
+without an external change.
 
 ## Planfile import vs Koru queue
 

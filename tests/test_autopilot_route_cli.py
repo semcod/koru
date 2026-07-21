@@ -97,6 +97,31 @@ def test_pre_drive_emits_control_route_line_and_telemetry(monkeypatch):
     assert telemetry["control_route"]["selected"] is None
 
 
+def test_pre_drive_skips_control_route_probe_for_idle_queue(monkeypatch):
+    from koru.autonomy.cycle import cycle as cycle_mod
+
+    def unexpected_route(*_args, **_kwargs):
+        raise AssertionError("idle queue must not probe an unused control route")
+
+    monkeypatch.setattr("gillm.routing.route_for", unexpected_route)
+    lines: list[str] = []
+    telemetry: dict = {}
+    cycle_mod._emit_pre_drive_control_route(
+        autopilot_ide="jetbrains",
+        plugin_connected=False,
+        cycle_telemetry=telemetry,
+        hp=lines.append,
+        queue_status="idle",
+    )
+
+    assert lines == []
+    assert telemetry["control_route"] == {
+        "selected": None,
+        "status": "skipped",
+        "reason": "queue_idle",
+    }
+
+
 def test_pre_drive_control_route_survives_missing_gillm_routing(monkeypatch):
     from koru.autonomy.cycle import cycle as cycle_mod
 

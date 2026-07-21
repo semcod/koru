@@ -646,6 +646,12 @@ def install_sigterm_interrupt_handler(
     stdio_info: Any,
 ) -> Any:
     def _sigterm_to_interrupt(_signo: int, _frame: object) -> None:
+        # With systemd KillMode=control-group a wrapper and its child receive
+        # SIGTERM together; wrappers such as Node's spawnSync may forward the
+        # same signal once more. The second delivery must not interrupt the
+        # cleanup already started by the first KeyboardInterrupt.
+        if stop_state.stopped_by_sigterm:
+            return
         stop_state.stopped_by_sigterm = True
         stdio_info(
             "koru autonomous: SIGTERM received (typical: OOM killer, systemd stop, "

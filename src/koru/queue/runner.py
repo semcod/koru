@@ -318,8 +318,94 @@ def _verify_declared_files_changed(
     )
 
 
+def _execution_attempt_budget(ticket: dict[str, Any]) -> tuple[int, int]:
+    """Return the persisted attempt count and the bounded execution budget."""
+
+    execution = ticket.get("execution") or {}
+    try:
+        attempt = max(0, int(execution.get("attempt") or 0))
+    except (TypeError, ValueError):
+        attempt = 0
+    try:
+        max_attempts = max(1, int(execution.get("max_attempts") or 1))
+    except (TypeError, ValueError):
+        max_attempts = 1
+    return attempt, max_attempts
+
+
+def _record_failed_attempt(
+    project: Path,
+    ticket: dict[str, Any],
+    ticket_id: str,
+    reason: str,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> bool:
+    """Persist a failure and reopen only while the ticket has retry budget.
+
+    Planfile owns the lifecycle mutations and attempt counter; Koru owns the
+    scheduling decision.  ``True`` means the ticket was made runnable again.
+    Any transition failure fails closed by blocking the ticket instead of
+    leaving an active claim stranded.
+    """
+
+    attempt, max_attempts = _execution_attempt_budget(ticket)
+    next_attempt = attempt + 1
+    failure = f"FAIL: {reason}"
+    failed = planfile_lifecycle_command(
+        project,
+        ["ticket", "fail", ticket_id, "--error", failure],
+        runner=planfile_runner,
+    )
+    if failed.returncode == 0 and next_attempt < max_attempts:
+        note = (
+            f"Koru scheduled retry {next_attempt + 1}/{max_attempts} after "
+            f"attempt {next_attempt} failed: {reason}"
+        )
+        ready = planfile_lifecycle_command(
+            project,
+            ["ticket", "ready", ticket_id, "--note", note],
+            runner=planfile_runner,
+        )
+        reopened = False
+        if ready.returncode == 0:
+            try:
+                reopened = json.loads(ready.stdout or "{}").get("status") == "open"
+            except (AttributeError, json.JSONDecodeError, TypeError):
+                reopened = False
+        if ready.returncode == 0 and not reopened:
+            # Planfile 0.1.117's `ready` clears execution state but leaves a
+            # started ticket's board status as in_progress. Keep Koru usable
+            # with that published release until 0.1.118 is available.
+            reopened_result = planfile_lifecycle_command(
+                project,
+                ["ticket", "update", ticket_id, "--status", "open"],
+                runner=planfile_runner,
+            )
+            reopened = reopened_result.returncode == 0
+        if reopened:
+            _logger.info(
+                "koru.queue.retry_scheduled ticket_id=%s next_attempt=%s max_attempts=%s",
+                ticket_id,
+                next_attempt + 1,
+                max_attempts,
+            )
+            return True
+
+    block_reason = failure
+    if failed.returncode != 0:
+        detail = (failed.stderr or failed.stdout or "ticket fail transition failed").strip()
+        block_reason = f"{failure}; could not record failed attempt: {detail}"
+    planfile_lifecycle_command(
+        project,
+        ["ticket", "block", ticket_id, "--reason", block_reason],
+        runner=planfile_runner,
+    )
+    return False
+
+
 def _finalize_ticket(
     project: Path,
+    ticket: dict[str, Any],
     ticket_id: str,
     executor_kind: str,
     result: CommandResult,
@@ -331,10 +417,12 @@ def _finalize_ticket(
         _append_shell_evidence(
             project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG,
         )
-        planfile_lifecycle_command(
+        _record_failed_attempt(
             project,
-            ["ticket", "block", ticket_id, "--reason", f"FAIL: {verification_error}"],
-            runner=planfile_runner,
+            ticket,
+            ticket_id,
+            verification_error,
+            planfile_runner,
         )
         return QueueRunResult(
             status="failed",
@@ -362,11 +450,7 @@ def _finalize_ticket(
         status = "completed"
     else:
         reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
-        planfile_lifecycle_command(
-            project,
-            ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],
-            runner=planfile_runner,
-        )
+        _record_failed_attempt(project, ticket, ticket_id, reason, planfile_runner)
         status = "failed"
 
     return QueueRunResult(
@@ -708,6 +792,7 @@ def _run_next_planfile_task_impl(
 
         return _finalize_ticket(
             project,
+            ticket,
             ticket_id,
             executor_kind,
             result,

@@ -319,7 +319,7 @@ extractions:
       - planfile.ticket_transition
     move:
       - Stable Python client, executable discovery, version negotiation and typed transition results.
-      - Lock retry and lifecycle operations such as claim, start, complete, block and note.
+      - Lock retry and lifecycle operations such as claim, start, complete, fail, ready, block and note.
     keep_in_koru:
       - Queue ordering, lane selection, capability policy and the decision to transition a ticket.
     current_smells:
