@@ -104,12 +104,20 @@ llm:
 ci:
   # Universal CI command — runs quality gates on every ticket completion.
   # Supports multiple tooling stacks; tools are skipped gracefully if not installed.
+  #
+  # Every branch below is guarded by a marker file, pytest included. An
+  # unguarded `pytest -q` at a workspace root — no root pyproject.toml, several
+  # sub-projects — collects the entire tree, vendored venv/ and node_modules/
+  # and all. That is not a quality gate, it is a hang, and because
+  # `require_ci_pass_before_complete` is on it blocks every ticket from
+  # closing. Point `command` at what actually verifies YOUR repo; this default
+  # only aims to be harmless when it does not fit.
   command: |
     echo "=== Universal Quality Gates ==="
     echo "1. Running project tests (if available)..."
-    if command -v task >/dev/null 2>&1 && task test 2>/dev/null; then
+    if command -v task >/dev/null 2>&1 && [ -f "Taskfile.yml" -o -f "Taskfile.yaml" ] && task test 2>/dev/null; then
       echo "✅ task test passed"
-    elif command -v pytest >/dev/null 2>&1 && pytest -q 2>/dev/null; then
+    elif command -v pytest >/dev/null 2>&1 && [ -f "pyproject.toml" -o -f "setup.py" -o -f "setup.cfg" -o -f "pytest.ini" -o -f "tox.ini" ] && pytest -q 2>/dev/null; then
       echo "✅ pytest passed"
     elif [ -f "package.json" ] && command -v npm >/dev/null 2>&1 && npm test 2>/dev/null; then
       echo "✅ npm test passed"

@@ -261,10 +261,15 @@ extractions:
   - id: koruide.distribution
     order: 110
     priority: P2
-    status: blocked
+    # dual_run since 2026-07-22: koruide now lives in packages/koruide/ with
+    # its own pyproject and installs standalone — verified in a clean venv
+    # with koru absent (51 modules, 12012 lines; only gillm pulled in). The
+    # koru wheel still bundles it through packages.find, so both consumption
+    # paths work until the separate release train exists.
+    status: dual_run
     kind: publish_package
     source_modules:
-      - src/koruide
+      - packages/koruide/src/koruide
     target_repositories:
       - semcod/koruide
     contract_ids:

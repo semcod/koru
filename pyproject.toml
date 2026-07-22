@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.437"
+version = "0.1.438"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -269,7 +269,11 @@ planfile = { path = "../planfile", editable = true }
 package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
-where = ["src", "packages/coru/src"]
+# koruide moved to packages/koruide/src (STARTER-563 phase 1) and now carries
+# its own pyproject. It stays bundled in this wheel until the separate
+# distribution is published; at that point drop this path and add
+# `koruide>=0.1.0` to [project].dependencies instead (phases 3-5).
+where = ["src", "packages/coru/src", "packages/koruide/src"]
 # Keep distribution ownership explicit: foreign dependency namespaces belong
 # to their own packages and test doubles live under tests/fakes.
 include = ["koru*", "coru*"]
@@ -297,6 +301,7 @@ testpaths = ["tests"]
 pythonpath = [
     "tests/fakes",
     "src",
+    "packages/koruide/src",
     "packages/coru/src",
     "packages/koruenv/src",
     "packages/nlpshim/src",

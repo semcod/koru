@@ -4,7 +4,7 @@
 Each per-IDE plugin (``plugins/koru-autopilot-<ide>/package.json``)
 declares its own VSIX version. This script keeps the daemon-side
 ``EXPECTED_PLUGIN_VERSIONS`` table in
-``src/koruide/plugin_version.py`` aligned with whichever plugin we
+``packages/koruide/src/koruide/plugin_version.py`` aligned with whichever plugin we
 just rebuilt — without touching the other plugin entries.
 
 It replaces the legacy ``sync-vscode-plugin-version.py`` which

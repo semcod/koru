@@ -838,6 +838,7 @@ def _metadata_adapter_for_ide(ide: str) -> ExtensionMetadataAdapter | None:
     relative_paths = {
         "antigravity": Path(".antigravity") / "extensions" / "extensions.json",
         "cursor": Path(".cursor") / "extensions" / "extensions.json",
+        "qoder": Path(".qoder") / "extensions" / "extensions.json",
         "vscode": Path(".vscode") / "extensions" / "extensions.json",
         "vscodium": Path(".vscode-oss") / "extensions" / "extensions.json",
         "windsurf": Path(".windsurf") / "extensions" / "extensions.json",

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "koruide"
+version = "0.1.0"
+description = "IDE truth for the koru ecosystem: identity, plugin lifecycle, autopilot daemon protocol and chat-drive orchestration for the VS Code family."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+authors = [{ name = "Semcod" }, { name = "Tom Sapletta", email = "tom@sapletta.com" }]
+keywords = ["ide", "vscode", "automation", "koru", "autopilot"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+# koruide owns IDE identity, plugin install/telemetry and the daemon
+# protocol. It must never depend on koru — the arrow points the other way,
+# and 68 koru modules import koruide.
+#
+# Three back-edges into koru remain, all resolved at call time rather than
+# import time, so none of them makes koru a real dependency:
+#   * __init__._koru_activity_bridge — an activity sink koru registers; the
+#     import only runs if koru itself is driving.
+#   * command_picker — `from koru.autonomy_strategy.openrouter import …`
+#     inside try/except ImportError, warning once and degrading.
+#   * daemon/metadata._normalized_project — try/except with a
+#     `project.resolve()` fallback.
+# They are tracked as aspirational violations in koru's importlinter config
+# (STARTER-549/551); leave them lazy until those land.
+#
+# gillm supplies the injector and its config; koruide's core (`import
+# koruide`) stays importable without it, which
+# tests/test_koruide_standalone_import.py enforces by blocking both koru and
+# gillm on the meta path. The submodules that genuinely need an injector —
+# .config, .host_setup, .injector — are lazy exports for that reason.
+dependencies = [
+    "gillm>=0.1.23",
+]
+license = "Apache-2.0"
+
+[project.urls]
+Homepage = "https://github.com/semcod/koru"
+Issues = "https://github.com/semcod/koru/issues"
+Repository = "https://github.com/semcod/koru"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["koruide*"]

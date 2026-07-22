@@ -60,7 +60,7 @@ namespaces:
   - id: koruide
     boundary: koruide
     roots:
-      - src/koruide
+      - packages/koruide/src/koruide
     owns: IDE control-plane, daemon protocol, command catalog, and plugins.
     must_not_own: Ticket prioritization, intent registry, or grants.
   - id: korullm

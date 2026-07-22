@@ -1509,23 +1509,8 @@ def _import_imgl_target_from_source(name: str):
     return getattr(targets_mod, name, None)
 
 
-def _main_vql_layer_count(vql_path: str | Path) -> int:
-    path = Path(vql_path)
-    if not path.is_file():
-        return 0
-    try:
-        with open(path) as f:
-            data = json.load(f)
-    except Exception:
-        return 0
-    return len(_layers_from_vdisplay_sidecar(data))
 
 
-def _png_path_for_vql_sidecar(vql_path: str) -> Path | None:
-    if vql_path.endswith(".png.vql.json"):
-        png = vql_path[: -len(".vql.json")]
-        return Path(png) if os.path.isfile(png) else None
-    return None
 
 
 def _resolve_photo_png_path(source: str) -> Path:
@@ -6239,58 +6224,12 @@ def _move_mouse_click_outcome(
     return result
 
 
-def _imgl_sidecar_path_for_vql(vql_path: str) -> str | None:
-    if not vql_path.endswith(".vql.json"):
-        return None
-    alt = vql_path[: -len(".vql.json")] + ".vql.imgl.json"
-    return alt if os.path.isfile(alt) else None
 
 
-def _layers_from_imgl_sidecar_file(vql_path: str) -> tuple[list[dict], str | None]:
-    """Load actuation layers from sibling ``.vql.imgl.json`` when main VQL sidecar is empty."""
-    imgl_path = _imgl_sidecar_path_for_vql(vql_path)
-    if not imgl_path:
-        return [], None
-    png_path = _png_path_for_vql_sidecar(vql_path)
-    if png_path is not None:
-        try:
-            if os.path.getmtime(imgl_path) + 1 < os.path.getmtime(png_path):
-                return [], None
-        except OSError:
-            pass
-    try:
-        with open(imgl_path) as f:
-            imgl_data = json.load(f)
-    except Exception:
-        return [], None
-    try:
-        from vdisplay.integrations import build_imgl_layers
-
-        built = build_imgl_layers({"ok": True, "scene": imgl_data})
-    except Exception:
-        built = []
-    if not built:
-        return [], None
-    return _layers_from_vdisplay_sidecar({"layers": built, "metadata": {"render_intent": {"layers": built}}}), imgl_path
 
 
-def _layers_from_vdisplay_sidecar(data: dict) -> list[dict]:
-    """Delegate sidecar element normalization to its VDisplay owner."""
-    from vdisplay.integrations import normalize_vql_ui_elements
-
-    return normalize_vql_ui_elements(data)
 
 
-def _with_embedded_capture_validation(meta: dict, raw: dict | None = None) -> dict:
-    if meta.get("capture_validation"):
-        return meta
-    nested = raw.get("metadata") if isinstance(raw, dict) and isinstance(raw.get("metadata"), dict) else {}
-    cv = meta.get("metadata", {}).get("capture_validation") if isinstance(meta.get("metadata"), dict) else None
-    if cv is None and isinstance(nested, dict):
-        cv = nested.get("capture_validation")
-    if isinstance(cv, dict):
-        meta["capture_validation"] = cv
-    return meta
 
 
 def _vql_candidate_is_stale(cand: str, png_path: Path | None, stale_tried: list[dict[str, Any]]) -> bool:
@@ -6305,23 +6244,8 @@ def _vql_candidate_is_stale(cand: str, png_path: Path | None, stale_tried: list[
     return stale
 
 
-def _vql_from_ui_elements(data: dict, cand: str, png_path: Path | None) -> dict:
-    """Normalize a sidecar that already carries ui_elements (analysis-style VQL)."""
-    data["_source"] = cand
-    if png_path and png_path.is_file():
-        data["_png"] = str(png_path)
-        data["_freshness"] = {"age_s": round(__import__("time").time() - png_path.stat().st_mtime, 2)}
-    if "layers" not in data:
-        data["layers"] = data["ui_elements"]
-    return _with_embedded_capture_validation(data, data)
 
 
-def _vql_from_fresh_elements(data: dict, cand: str, png_path: Path | None) -> dict:
-    """Normalize a fresh-capture sidecar carrying raw elements."""
-    res = _parse_fresh_vql_elements(data, cand)
-    if png_path and png_path.is_file():
-        res["_png"] = str(png_path)
-    return _with_embedded_capture_validation(res, data)
 
 
 def _vql_imgl_fallback_layers(
@@ -6346,59 +6270,12 @@ def _vql_imgl_fallback_layers(
     return [], cand
 
 
-def _vql_from_sidecar_layers(data: dict, cand: str, sidecar_layers: list[dict], png_path: Path | None) -> dict:
-    """Normalize vdisplay/imgl sidecar layers into the metadata dict shape."""
-    out = {
-        "ui_elements": sidecar_layers,
-        "layers": sidecar_layers,
-        "metadata": data.get("metadata") or {},
-        "environment": (data.get("metadata") or {}).get("environment") or data.get("environment") or {},
-        "_source": cand,
-    }
-    if png_path and png_path.is_file():
-        out["_png"] = str(png_path)
-    return _with_embedded_capture_validation(out, data)
 
 
-def _vql_from_program_wrapper(data: dict, cand: str) -> dict | None:
-    """Unwrap a nested vql.program dict when present; None to keep dispatching."""
-    if "vql" in data and isinstance(data.get("vql"), dict):
-        prog = data["vql"].get("program", data["vql"])
-        if isinstance(prog, dict):
-            prog["_source"] = cand
-            if "layers" not in prog and "ui_elements" in prog:
-                prog["layers"] = prog["ui_elements"]
-            return prog
-    return None
 
 
-def _vql_from_screen_context(data: dict, cand: str) -> dict:
-    """Normalize a screen_context/metadata-only sidecar into the metadata dict shape."""
-    meta = data.get("metadata") or data.get("screen_context") or {}
-    layers = _layers_from_vdisplay_sidecar({"metadata": meta})
-    return _with_embedded_capture_validation(
-        {
-            "ui_elements": layers,
-            "layers": layers,
-            "metadata": meta,
-            "environment": meta.get("environment") or data.get("environment") or {},
-            "_source": cand,
-        },
-        data,
-    )
 
 
-def _vql_metadata_default(data: dict, cand: str) -> dict:
-    """Fallback normalization: tag source and mirror ui_elements into layers."""
-    if isinstance(data.get("program"), (str, dict)) and "elements" not in data:
-        data["_source"] = cand
-        if "layers" not in data:
-            data["layers"] = data.get("ui_elements", [])
-        return data
-    data["_source"] = cand
-    if "layers" not in data:
-        data["layers"] = data.get("ui_elements", [])
-    return data
 
 
 def _parse_vql_candidate_data(
@@ -6543,24 +6420,6 @@ def _freshest_populated_vql_candidate() -> str | None:
     return best
 
 
-def _parse_fresh_vql_elements(data: dict, cand: str) -> dict:
-    """Normalize fresh elements through VDisplay while preserving Koru provenance."""
-    from vdisplay.integrations import normalize_vql_ui_elements
-
-    ui_elements = normalize_vql_ui_elements(data, fallback_center=(1024, 640))
-    for raw, element in zip(data["elements"], ui_elements, strict=False):
-        element["click_center"]["note"] = (
-            f"fresh VQL elem, color={raw.get('color')}, conf={raw.get('confidence')}"
-        )
-    return {
-        "ui_elements": ui_elements,
-        "layers": ui_elements,
-        "element_count": data.get("element_count", len(ui_elements)),
-        "by_role": data.get("by_role", {}),
-        "scene": data.get("scene"),
-        "_source": cand,
-        "raw_fresh": True,
-    }
 
 
 def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | None = None, label: str | None = None) -> dict | None:  # noqa: E501
@@ -6633,3 +6492,51 @@ __all__ = [
     "photo_vql_sidecar_needs_refresh",
     "begin_autonomy_session",
 ]
+
+
+# ---------------------------------------------------------------------------
+# VQL sidecar reading lives in vdisplay (boundary proposal §1, 2026-07-22).
+#
+# The sidecar format is vdisplay's own contract and vdisplay already owned half
+# of the parsing through `normalize_vql_ui_elements` / `build_imgl_layers`, so
+# the reader moved to `vdisplay.vql`. What stayed in koru is the freshness
+# *policy* — `load_vql_metadata`, `_vql_candidate_is_stale` and
+# `_vql_imgl_fallback_layers` decide whether a sidecar may be acted on, using
+# autonomy-session directories and age thresholds. That is a statement about a
+# run, not about a screen.
+#
+# Resolution is lazy (PEP 562) rather than a module-level import, because
+# vdisplay is an optional extra: every other vdisplay import in this file sits
+# inside a function for the same reason. A top-level `from vdisplay import
+# vql` breaks `import koru` outright wherever vdisplay is absent — verified,
+# and exactly the "missing sibling package in a project venv" failure the
+# proposal was written to prevent (§6).
+#
+# Binding these names here also keeps `monkeypatch.setattr(vc, "…")` working:
+# the tests patch them on this module, a real module attribute then shadows
+# __getattr__, and internal callers read the same global.
+_VQL_REEXPORTS = {
+    "_png_path_for_vql_sidecar": "png_path_for_vql_sidecar",
+    "_main_vql_layer_count": "main_vql_layer_count",
+    "_imgl_sidecar_path_for_vql": "imgl_sidecar_path_for_vql",
+    "_layers_from_imgl_sidecar_file": "layers_from_imgl_sidecar_file",
+    "_layers_from_vdisplay_sidecar": "layers_from_vdisplay_sidecar",
+    "_with_embedded_capture_validation": "with_embedded_capture_validation",
+    "_vql_from_ui_elements": "vql_from_ui_elements",
+    "_vql_from_fresh_elements": "vql_from_fresh_elements",
+    "_vql_from_sidecar_layers": "vql_from_sidecar_layers",
+    "_vql_from_program_wrapper": "vql_from_program_wrapper",
+    "_vql_from_screen_context": "vql_from_screen_context",
+    "_vql_metadata_default": "vql_metadata_default",
+    "_parse_fresh_vql_elements": "parse_fresh_vql_elements",
+}
+
+
+def __getattr__(name: str):
+    """Resolve the moved VQL readers from vdisplay on first access."""
+    target = _VQL_REEXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from vdisplay import vql as _vql
+
+    return getattr(_vql, target)
