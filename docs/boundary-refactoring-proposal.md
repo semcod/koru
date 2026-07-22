@@ -66,7 +66,7 @@ the parts that plausibly belong to vdisplay are:
 | cluster | lines | status |
 |---|---|---|
 | VQL sidecar reading | ~130 | moved |
-| `photo_vql_target.py` | 525 | separate file, not yet examined |
+| `photo_vql_target.py` | 525 | **examined — went to koruide, not vdisplay; see below** |
 | `photo_vql_monitor.py` | 376 | separate file, not yet examined |
 | pointer/coordinate mapping | ~70 | **blocked**, see below |
 
@@ -97,6 +97,36 @@ Two implementation traps worth recording, both hit during step 1:
    `except Exception` in `load_vql_metadata`, which then silently returned
    zero `ui_elements` — green imports, wrong data. Use real wrapper
    functions.
+
+**`photo_vql_target.py` had the wrong destination (2026-07-22).** This section
+listed it under "vdisplay owns screen truth". Measuring it says otherwise: of
+34 functions, **31 (383 lines) are IDE knowledge** — where JetBrains puts its
+composer, how a VS Code-family top chat differs from a status bar, what a
+plausible input box looks like. None of that is a fact about a screen; all of
+it is a fact about an IDE, which is koruide's domain.
+
+Moved to `koruide/chat_target.py`. koru's file went **525 → 79 lines** and is
+now a binding layer.
+
+The remaining 3 functions (16 lines) stayed in koru because they describe
+*koru*, not any IDE: the vocabularies that recognise koru's own terminal
+output inside a capture (`KORU_`, `DRY_RUN`, Polish operator prompts) and
+`vql_candidates_polluted`. Rather than let koruide import them, koru registers
+them through `set_label_noise_tokens()` — the same injection idiom
+`koruide.__init__` already uses for its activity sink. With nothing registered
+the penalties are zero, so the module stays usable standalone; verified in a
+clean venv with koru absent, where a noisy label's score moved from -730 to
+-6730 once tokens were registered.
+
+Tests: 94 passed across the chat-target, photo-VQL drive, koruide-standalone
+and IDE-map suites.
+
+**Method note.** Three sections of this document (§1 vdisplay geometry, §2
+gillm actuation, and this file) turned out to be mis-specified once measured.
+The common error was assigning code by the subsystem it *talks to* rather than
+the domain it *knows about*. `photo_vql_target` reads VQL layers, so it looked
+like vdisplay's; what it actually encodes is IDE layout. Measure the knowledge,
+not the imports.
 
 ### 2. gillm owns GUI actuation & recovery — recovery half DONE (2026-07-03)
 
