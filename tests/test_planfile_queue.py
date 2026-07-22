@@ -13,7 +13,12 @@ from unittest.mock import patch
 
 from koru.cqrs.event_store import JsonlEventStore
 from koru.queue import run_next_planfile_task
-from koru.queue.ticket import parse_next_ticket, planfile_command
+from koru.queue.ticket import (
+    _configured_planfile_cmd_usable,
+    _planfile_supports_structured_queue_json,
+    parse_next_ticket,
+    planfile_command,
+)
 from tests import _repolab
 
 
@@ -27,6 +32,52 @@ def _ticket_args(command: list[str]) -> list[str]:
 
 
 class TestPlanfileCommand(unittest.TestCase):
+    def test_structured_queue_probe_handles_non_utf8_bytes(self) -> None:
+        _planfile_supports_structured_queue_json.cache_clear()
+        with patch(
+            "koru.queue.ticket.subprocess.run",
+            return_value=SimpleNamespace(
+                returncode=0,
+                stdout=b"planfile wersja \xf3 0.1.101",
+                stderr=b"",
+            ),
+        ) as run:
+            self.assertTrue(_planfile_supports_structured_queue_json("/tmp/planfile"))
+        self.assertFalse(run.call_args.kwargs["text"])
+        _planfile_supports_structured_queue_json.cache_clear()
+        with patch(
+            "koru.queue.ticket.subprocess.run",
+            return_value=SimpleNamespace(
+                returncode=0,
+                stdout=b"planfile wersja \xf3 0.1.99",
+                stderr=b"",
+            ),
+        ):
+            self.assertFalse(_planfile_supports_structured_queue_json("/tmp/planfile-old"))
+
+    def test_configured_command_probe_handles_non_utf8_module_missing_marker(self) -> None:
+        _configured_planfile_cmd_usable.cache_clear()
+        with patch(
+            "koru.queue.ticket.subprocess.run",
+            return_value=SimpleNamespace(
+                returncode=1,
+                stdout=b"",
+                stderr=b"\xf3 no module named 'planfile.cli'",
+            ),
+        ) as run:
+            self.assertFalse(_configured_planfile_cmd_usable("/tmp/venv/bin/python -m planfile.cli"))
+        self.assertFalse(run.call_args.kwargs["text"])
+        _configured_planfile_cmd_usable.cache_clear()
+        with patch(
+            "koru.queue.ticket.subprocess.run",
+            return_value=SimpleNamespace(
+                returncode=0,
+                stdout=b"\xf3 planfile 0.1.101",
+                stderr=b"",
+            ),
+        ):
+            self.assertTrue(_configured_planfile_cmd_usable("/tmp/venv/bin/python -m planfile.cli"))
+
     def test_prefers_local_planfile_before_importable_module_from_active_env(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
