@@ -3,13 +3,13 @@
 Niniejsza specyfikacja definiuje oficjalny protokół komunikacyjny (`v1`) pomiędzy lokalnym daemonem orkiestracji `koru` a wtyczkami klienckimi IDE (Cursor, Windsurf, VS Code, JetBrains). Protokół ten stanowi **warstwę sterowania (Control Plane)** nad istniejącym środowiskiem programistycznym użytkownika.
 
 Dokument łączy trzy poziomy opisu:
-- **kontrakt wire protocol `v1`** (stabilny, implementowany w `src/koruide/protocol.py`),
+- **kontrakt wire protocol `v1`** (stabilny, implementowany w `packages/koruide/src/koruide/protocol.py`),
 - **semantyka adapterów IDE** (zależna od API host IDE i wersji pluginów),
 - **model operacyjny pętli autopilota** (decyzje runtime, fallbacki, verify, cooldown).
 
 W efekcie nie wszystkie ścieżki opisane poniżej są obecnie osiągalne we wszystkich adapterach IDE (szczegóły w sekcjach 1, 5 i 6).
 
-Techniczny kontrakt wire protocol jest utrzymywany równolegle w `docs/specs/kide-002-koruide-api-v1.md`, a aktualna implementacja dekodera i helperów znajduje się w `src/koruide/protocol.py`.
+Techniczny kontrakt wire protocol jest utrzymywany równolegle w `docs/specs/kide-002-koruide-api-v1.md`, a aktualna implementacja dekodera i helperów znajduje się w `packages/koruide/src/koruide/protocol.py`.
 
 ### Konwencja normatywna
 

@@ -105,8 +105,20 @@ planned `tillm-core` split was unnecessary. Implemented instead:
   `.daemon`/`.config`/`.host_setup` exports; plugin-installer cycle killed
   with bidirectional patch-binding shims). Smoke-tested with koru and gillm
   imports blocked (`tests/test_koruide_standalone_import.py`).
-- Still open (STARTER-563 phases 1,3-5): move to `packages/koruide/`,
-  publish 0.1.0, koru dep bump + de-bundling — full plan in the ticket.
+- **Phase 1 DONE (2026-07-22)**: koruide moved to `packages/koruide/src/`
+  with its own `pyproject.toml` (name `koruide`, version 0.1.0, single
+  dependency `gillm>=0.1.23`). Proven to be a distribution and not merely a
+  directory: built and installed into a clean venv **with koru absent**,
+  where `import koruide`, `koruide.ide`, `koruide.plugin_installer` and
+  `koruide.protocol` all work while `koruide.daemon` stays unimported until
+  touched. koru's full suite: 3523 passed / 0 failed. The move flushed out
+  four stale path references — both inventory YAMLs, the interface registry
+  (symlinked into `koru/data/`) and `docs/IDE_PROTOCOL.md` — now corrected.
+  koru keeps bundling the package through `packages.find`, so nothing
+  downstream breaks; that path is removed when 0.1.0 ships.
+- Still open (STARTER-563 phases 3-5): publish 0.1.0, add `koruide>=0.1.0`
+  to koru's dependencies, then drop `packages/koruide/src` from koru's
+  `packages.find` — full plan in the ticket.
 
 ### 5. planfile invocation hardening
 

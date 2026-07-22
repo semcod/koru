@@ -62,7 +62,7 @@ def test_ide_protocol_doc_exists_with_key_protocol_terms() -> None:
     assert "chat.send" in text
     assert "session.ended" in text
     assert "docs/specs/kide-002-koruide-api-v1.md" in text
-    assert "src/koruide/protocol.py" in text
+    assert "packages/koruide/src/koruide/protocol.py" in text
 
 
 def test_ide_protocol_doc_has_no_stale_payload_placeholder() -> None:

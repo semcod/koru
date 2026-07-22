@@ -60,8 +60,8 @@ interfaces:
       - reload_window
       - reconnect_plugin
     primary_code:
-      - src/koruide/protocol.py
-      - src/koruide/daemon.py
+      - packages/koruide/src/koruide/protocol.py
+      - packages/koruide/src/koruide/daemon.py
       - plugins/koru-autopilot-vscode/
 
   - id: plugin_socket_jetbrains
@@ -147,7 +147,7 @@ interfaces:
       - focus_window
       - install_xdotool
     primary_code:
-      - src/koruide/injector_backends.py
+      - packages/koruide/src/koruide/injector_backends.py
 
   - id: os_injector_wtype
     family: desktop_control
@@ -166,7 +166,7 @@ interfaces:
       - focus_window
       - install_wtype
     primary_code:
-      - src/koruide/injector_backends.py
+      - packages/koruide/src/koruide/injector_backends.py
 
   - id: os_injector_ydotool
     family: desktop_control
@@ -186,7 +186,7 @@ interfaces:
       - start_ydotoold
       - grant_uinput_access
     primary_code:
-      - src/koruide/injector_backends.py
+      - packages/koruide/src/koruide/injector_backends.py
 
   - id: filesystem_planfile
     family: artifact_exchange

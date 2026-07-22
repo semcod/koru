@@ -85,6 +85,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed,
   bounded Gillm actuator integration.
 
+## [0.1.438] - 2026-07-22
+
+### Docs
+- Update README.md
+- Update docs/IDE_PROTOCOL.md
+- Update docs/architecture/autonomy-mutation-inventory.yaml
+- Update docs/architecture/dependency-boundary-inventory.yaml
+- Update docs/boundary-refactoring-proposal.md
+- Update docs/interfaces/koru-interface-registry.yaml
+- Update packages/koruide/README.md
+
+### Test
+- Update tests/test_docs_ide_control_surfaces.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update package-lock.json
+- Update packages/koruide/pyproject.toml
+- Update packages/koruide/src/koruide/__init__.py
+- Update packages/koruide/src/koruide/audit.py
+- Update packages/koruide/src/koruide/chat_history.py
+- Update packages/koruide/src/koruide/client.py
+- Update packages/koruide/src/koruide/command_catalog.py
+- Update packages/koruide/src/koruide/command_catalog_store.py
+- Update packages/koruide/src/koruide/command_picker.py
+- ... and 47 more files
+
 ## [0.1.437] - 2026-07-21
 
 ### Docs
