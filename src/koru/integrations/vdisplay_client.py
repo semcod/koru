@@ -6497,46 +6497,81 @@ __all__ = [
 # ---------------------------------------------------------------------------
 # VQL sidecar reading lives in vdisplay (boundary proposal §1, 2026-07-22).
 #
-# The sidecar format is vdisplay's own contract and vdisplay already owned half
-# of the parsing through `normalize_vql_ui_elements` / `build_imgl_layers`, so
-# the reader moved to `vdisplay.vql`. What stayed in koru is the freshness
-# *policy* — `load_vql_metadata`, `_vql_candidate_is_stale` and
+# The sidecar format is vdisplay's own contract, and vdisplay already owned
+# half of the parsing through `normalize_vql_ui_elements` / `build_imgl_layers`,
+# so the reader moved to `vdisplay.vql`. What stayed in koru is the freshness
+# *policy*: `load_vql_metadata`, `_vql_candidate_is_stale` and
 # `_vql_imgl_fallback_layers` decide whether a sidecar may be acted on, using
 # autonomy-session directories and age thresholds. That is a statement about a
 # run, not about a screen.
 #
-# Resolution is lazy (PEP 562) rather than a module-level import, because
-# vdisplay is an optional extra: every other vdisplay import in this file sits
-# inside a function for the same reason. A top-level `from vdisplay import
-# vql` breaks `import koru` outright wherever vdisplay is absent — verified,
-# and exactly the "missing sibling package in a project venv" failure the
-# proposal was written to prevent (§6).
+# These are real functions, not aliases and not a module-level `__getattr__`:
 #
-# Binding these names here also keeps `monkeypatch.setattr(vc, "…")` working:
-# the tests patch them on this module, a real module attribute then shadows
-# __getattr__, and internal callers read the same global.
-_VQL_REEXPORTS = {
-    "_png_path_for_vql_sidecar": "png_path_for_vql_sidecar",
-    "_main_vql_layer_count": "main_vql_layer_count",
-    "_imgl_sidecar_path_for_vql": "imgl_sidecar_path_for_vql",
-    "_layers_from_imgl_sidecar_file": "layers_from_imgl_sidecar_file",
-    "_layers_from_vdisplay_sidecar": "layers_from_vdisplay_sidecar",
-    "_with_embedded_capture_validation": "with_embedded_capture_validation",
-    "_vql_from_ui_elements": "vql_from_ui_elements",
-    "_vql_from_fresh_elements": "vql_from_fresh_elements",
-    "_vql_from_sidecar_layers": "vql_from_sidecar_layers",
-    "_vql_from_program_wrapper": "vql_from_program_wrapper",
-    "_vql_from_screen_context": "vql_from_screen_context",
-    "_vql_metadata_default": "vql_metadata_default",
-    "_parse_fresh_vql_elements": "parse_fresh_vql_elements",
-}
+#   * a module-level `from vdisplay import vql` breaks `import koru` outright
+#     wherever vdisplay is absent — it is an optional extra, which is why every
+#     other vdisplay import in this file also sits inside a function body;
+#   * PEP 562 `__getattr__` looks like it solves that, but it is only consulted
+#     for `module.attr` access. Callers *inside* this module read these names as
+#     globals, and LOAD_GLOBAL never consults it — the resulting NameError was
+#     swallowed by the broad `except Exception` in `load_vql_metadata`, which
+#     then quietly returned zero ui_elements.
+#
+# Defining them keeps `monkeypatch.setattr(vc, "…")` working, which the existing
+# tests rely on, and the proposal asks for koru-side shims for one release cycle.
+def _vdisplay_vql():
+    """Import `vdisplay.vql` on demand; vdisplay is an optional extra."""
+    from vdisplay import vql
+
+    return vql
 
 
-def __getattr__(name: str):
-    """Resolve the moved VQL readers from vdisplay on first access."""
-    target = _VQL_REEXPORTS.get(name)
-    if target is None:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    from vdisplay import vql as _vql
+def _png_path_for_vql_sidecar(*args, **kwargs):
+    return _vdisplay_vql().png_path_for_vql_sidecar(*args, **kwargs)
 
-    return getattr(_vql, target)
+
+def _main_vql_layer_count(*args, **kwargs):
+    return _vdisplay_vql().main_vql_layer_count(*args, **kwargs)
+
+
+def _imgl_sidecar_path_for_vql(*args, **kwargs):
+    return _vdisplay_vql().imgl_sidecar_path_for_vql(*args, **kwargs)
+
+
+def _layers_from_imgl_sidecar_file(*args, **kwargs):
+    return _vdisplay_vql().layers_from_imgl_sidecar_file(*args, **kwargs)
+
+
+def _layers_from_vdisplay_sidecar(*args, **kwargs):
+    return _vdisplay_vql().layers_from_vdisplay_sidecar(*args, **kwargs)
+
+
+def _with_embedded_capture_validation(*args, **kwargs):
+    return _vdisplay_vql().with_embedded_capture_validation(*args, **kwargs)
+
+
+def _vql_from_ui_elements(*args, **kwargs):
+    return _vdisplay_vql().vql_from_ui_elements(*args, **kwargs)
+
+
+def _vql_from_fresh_elements(*args, **kwargs):
+    return _vdisplay_vql().vql_from_fresh_elements(*args, **kwargs)
+
+
+def _vql_from_sidecar_layers(*args, **kwargs):
+    return _vdisplay_vql().vql_from_sidecar_layers(*args, **kwargs)
+
+
+def _vql_from_program_wrapper(*args, **kwargs):
+    return _vdisplay_vql().vql_from_program_wrapper(*args, **kwargs)
+
+
+def _vql_from_screen_context(*args, **kwargs):
+    return _vdisplay_vql().vql_from_screen_context(*args, **kwargs)
+
+
+def _vql_metadata_default(*args, **kwargs):
+    return _vdisplay_vql().vql_metadata_default(*args, **kwargs)
+
+
+def _parse_fresh_vql_elements(*args, **kwargs):
+    return _vdisplay_vql().parse_fresh_vql_elements(*args, **kwargs)

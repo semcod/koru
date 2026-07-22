@@ -50,6 +50,54 @@ into `_`-prefixed helper clusters — the move is now mostly mechanical.
 Expected effect: `vdisplay_client.py` shrinks ~60-70%, killing most of the
 36 MI hard violations.
 
+**Step 1 DONE (2026-07-22)** — VQL sidecar reading is now `vdisplay.vql`:
+13 functions (`png_path_for_vql_sidecar`, `main_vql_layer_count`,
+`imgl_sidecar_path_for_vql`, `layers_from_imgl_sidecar_file`,
+`layers_from_vdisplay_sidecar`, `with_embedded_capture_validation`, the six
+`vql_from_*` normalizers and `parse_fresh_vql_elements`), with 29 tests in
+vdisplay and thin koru-side wrappers kept for one release cycle. koru keeps
+`load_vql_metadata`, `_vql_candidate_is_stale` and `_vql_imgl_fallback_layers`
+— those are freshness policy about a run, not facts about a screen.
+
+**The ~60-70% estimate above does not survive measurement.** Counted on the
+2026-07-22 tree, `vdisplay_client.py` is 6635 lines across 260 functions, and
+the parts that plausibly belong to vdisplay are:
+
+| cluster | lines | status |
+|---|---|---|
+| VQL sidecar reading | ~130 | moved |
+| `photo_vql_target.py` | 525 | separate file, not yet examined |
+| `photo_vql_monitor.py` | 376 | separate file, not yet examined |
+| pointer/coordinate mapping | ~70 | **blocked**, see below |
+
+That totals ~1100 lines, not ~4000. The bulk of the file is drive
+orchestration (koru's own) and input actuation (`_type_text_*`,
+`_move_mouse_*`), which §2 assigns to **gillm**, not vdisplay — so the
+remaining shrink has to come from the gillm move, and this section should
+stop promising it.
+
+The pointer/coordinate cluster is blocked on real coupling, not on effort:
+`_enrich_capture_meta_for_pointer` calls koru's
+`_matching_ide_map_capture_meta`, and `_map_chat_target_capture_local` calls
+six koru IDE-map functions (`_ide_prompt_app_id`, `_resolve_ide_prompt_map`,
+`_map_chat_input_candidate_keys`, `_map_chat_pointer_meta`,
+`_map_chat_bottom_right_target`, `_map_chat_nonnegative_target`). Moving it
+means either inverting those into injected callbacks or moving koru's
+IDE-map calibration format into vdisplay — a design decision, not a
+mechanical extraction.
+
+Two implementation traps worth recording, both hit during step 1:
+
+1. A module-level `from vdisplay import vql` breaks `import koru` wherever
+   vdisplay is absent — it is an optional extra, which is exactly why every
+   other vdisplay import in that file already sits inside a function body.
+2. PEP 562 module `__getattr__` looks like the fix for (1) and is not: it is
+   only consulted for `module.attr` access, never for LOAD_GLOBAL inside the
+   module itself. The resulting `NameError` was swallowed by the broad
+   `except Exception` in `load_vql_metadata`, which then silently returned
+   zero `ui_elements` — green imports, wrong data. Use real wrapper
+   functions.
+
 ### 2. gillm owns GUI actuation & recovery — recovery half DONE (2026-07-03)
 
 Failure classification (`classify_plugin/input/environment_failure`) now lives
