@@ -46,6 +46,9 @@ def finish_cycle_with_sleep(
         queue_status=str(getattr(context.queue_result, "last_status", "") or ""),
         waiting_ticket=context.waiting_ticket,
         autopilot_status=context.autopilot_status,
+        stagnation_streak=int(
+            getattr(context.loop_state, "stagnation_streak", 0) or 0
+        ),
     )
     log_operator_next_steps(
         args=context.args,

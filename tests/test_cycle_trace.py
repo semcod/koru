@@ -1,4 +1,7 @@
-from koru.autonomy.cycle_trace import decision_next_step_hint
+from types import SimpleNamespace
+
+from koru.autonomy.cycle_trace import decision_next_step_hint, record_decision_trace
+from koru.autonomy.decision_trace import load_recent_decisions
 
 
 def test_decision_next_step_hint_prefers_ok_status() -> None:
@@ -57,3 +60,25 @@ def test_decision_next_step_hint_reads_submit_unverified_status_without_telemetr
         )
         == "manual send required; validate submit trace before any redrive"
     )
+
+
+def test_repeated_idle_decision_is_persisted_without_repeated_human_log(tmp_path) -> None:
+    lines: list[str] = []
+
+    record_decision_trace(
+        project=tmp_path,
+        cycle=7,
+        queue_result=SimpleNamespace(last_status="idle", waiting_ticket=None),
+        diag_result=SimpleNamespace(status="skipped"),
+        wup_health=SimpleNamespace(status="skipped"),
+        autopilot_status="skipped",
+        autopilot_ide="local",
+        autopilot_backend=None,
+        autopilot_drive_kind=None,
+        cycle_telemetry={},
+        stagnation_streak=2,
+        hp=lines.append,
+    )
+
+    assert lines == []
+    assert load_recent_decisions(tmp_path)[-1]["cycle"] == 7

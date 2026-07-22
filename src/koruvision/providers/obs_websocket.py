@@ -11,7 +11,12 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from koruvision.providers.base import MonitorSpec, ProviderAvailability, frame_from_png
+from vdisplay.capture import (
+    MonitorSpec,
+    ProviderAvailability,
+    ScreenObservation,
+    screen_observation_from_png,
+)
 
 _PROBE_CACHE: tuple[float, bool] | None = None
 _PROBE_TTL_SECONDS = 5.0
@@ -214,10 +219,10 @@ class ObsWebSocketProvider:
             )
         ]
 
-    def capture_all(self, scale: float) -> list[dict[str, Any]]:
+    def capture_all(self, scale: float) -> list[ScreenObservation]:
         payload = _capture_source_png()
         return [
-            frame_from_png(
+            screen_observation_from_png(
                 payload,
                 monitor_id=0,
                 scale=scale,
@@ -226,6 +231,6 @@ class ObsWebSocketProvider:
             )
         ]
 
-    def capture_one(self, monitor_id: int | None, scale: float) -> dict[str, Any]:
+    def capture_one(self, monitor_id: int | None, scale: float) -> ScreenObservation:
         del monitor_id
         return self.capture_all(scale)[0]

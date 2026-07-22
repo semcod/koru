@@ -1,0 +1,346 @@
+# Deterministic planning DSL for reducing the Koru checkout and production
+# namespaces. It describes migration order and budgets; it grants no runtime
+# authority and is not an ExecutionPlan.
+schema_version: "1.0"
+
+baseline:
+  map_path: project/map.toon.yaml
+  captured_on: "2026-07-19"
+  indexed_files: 1101
+  indexed_lines: 178416
+  python_modules: 816
+  critical_functions: 6
+  dependency_cycles: 0
+  tracked_repository_bytes: 31858429
+  tracked_repository_lines: 523456
+
+targets:
+  indexed_lines_max: 150000
+  python_modules_max: 700
+  tracked_repository_bytes_max: 16777216
+  private_dependency_imports_max: 0
+  production_shadow_packages_max: 0
+
+policy:
+  mechanism_owner_rule: dependency_owns_how
+  decision_owner: semcod/koru
+  llm_role: proposal_only
+  target_repository_rule: existing_and_in_use
+  dependency_direction: dependencies_must_not_import_koru
+  release_order: dependency_first
+  compatibility_shim_releases: 1
+  destructive_cleanup_requires_explicit_ticket: true
+
+stages:
+  - id: adapters.public_api
+    order: 90
+    priority: P1
+    status: blocked_by_upstream
+    action: move_to_dependency
+    source_paths:
+      - src/koru/integrations/imgl_client.py
+      - src/koru/tagi_integration.py
+      - src/koruapi/env2llm_registry.py
+      - src/koruapi/testql_bridge.py
+    target_owners:
+      - oqlos/testql
+      - semcod/env2llm
+      - semcod/imgl
+      - semcod/tagi
+    target_available: true
+    candidate_lines: 1118
+    minimum_production_lines_removed: 500
+    minimum_checkout_lines_removed: 500
+    ecosystem_lines_deleted: 0
+    contracts:
+      - env2llm.service-descriptor.v1
+      - imgl.vision-control-result.v1
+      - tagi.change-plan.v1
+      - testql.verification-result.v1
+    keep_in_koru:
+      - Acceptance criteria, fallback selection and authorization of effects.
+      - Mapping typed verification to completed or applied_unverified.
+    acceptance:
+      - Koru imports no private TestQL or env2llm symbols.
+      - Koru neither parses display output nor reimplements dependency transport.
+    blocked_by: []
+
+  - id: analyzers.ticket_proposal
+    order: 80
+    priority: P0
+    status: blocked_by_upstream
+    action: move_to_dependency
+    source_paths:
+      - src/koru/autonomy/code2llm_discovery.py
+      - src/koru/redup_integration.py
+      - src/koru/scan.py
+    target_owners:
+      - semcod/code2llm
+      - semcod/pfix
+      - semcod/planfile
+      - semcod/prefact
+      - semcod/redup
+    target_available: true
+    candidate_lines: 2749
+    minimum_production_lines_removed: 1500
+    minimum_checkout_lines_removed: 1500
+    ecosystem_lines_deleted: 0
+    contracts:
+      - planfile.ticket-proposal.v1
+    keep_in_koru:
+      - Discovery scheduling, cross-source deduplication and ticket authorization.
+      - Idle and freshness budgets.
+    acceptance:
+      - Each analyzer emits a canonical TicketProposalV1.
+      - Koru does not parse analyzer-facing CLI text.
+    blocked_by:
+      - planfile.client_lifecycle
+
+  - id: frontend.coru_consolidation
+    order: 110
+    priority: P1
+    status: planned
+    action: collapse_namespace
+    source_paths:
+      - packages/coru
+    target_owners:
+      - semcod/koru
+    target_available: true
+    candidate_lines: 14068
+    minimum_production_lines_removed: 12000
+    minimum_checkout_lines_removed: 12000
+    ecosystem_lines_deleted: 12000
+    contracts:
+      - koru.cli-compatibility.v1
+    keep_in_koru:
+      - The coru console-script name as a compatibility alias.
+      - Operator workflows that are not yet exposed by the canonical Koru CLI.
+    acceptance:
+      - A command-by-command parity matrix is green for one compatibility release.
+      - The coru entry point delegates to canonical Koru handlers without a second repair or supervisor engine.
+    blocked_by:
+      - namespaces.coru_koru_pairs
+
+  - id: gillm.gui_actuation
+    order: 70
+    priority: P1
+    status: complete
+    action: move_to_dependency
+    source_paths:
+      - src/koru/ide_adapters/gillm_client.py
+      - src/koru/ide_adapters/gillm_recovery.py
+    target_owners:
+      - semcod/gillm
+    target_available: true
+    candidate_lines: 572
+    minimum_production_lines_removed: 400
+    minimum_checkout_lines_removed: 400
+    ecosystem_lines_deleted: 0
+    contracts:
+      - gillm.gui-action-result.v1
+    keep_in_koru:
+      - GUI fallback order, grant checks, escalation and evidence binding.
+    acceptance:
+      - Gillm has no dynamic or static import of Koru.
+      - Koru carries no behavioral copy of Gillm recovery.
+    blocked_by: []
+
+  - id: namespaces.coru_koru_pairs
+    order: 30
+    priority: P0
+    status: planned
+    action: delete_duplicate
+    source_paths:
+      - packages/cli2coru
+      - packages/cli2koru
+      - packages/dsl2coru
+      - packages/dsl2koru
+      - packages/mcp2coru
+      - packages/mcp2koru
+      - packages/nlp2coru
+      - packages/nlp2koru
+      - packages/rest2coru
+      - packages/rest2koru
+      - packages/uri2coru
+      - packages/uri2koru
+    target_owners:
+      - semcod/koru
+    target_available: true
+    candidate_lines: 7429
+    minimum_production_lines_removed: 3000
+    minimum_checkout_lines_removed: 3000
+    ecosystem_lines_deleted: 3000
+    contracts:
+      - koru.control-command.v1
+    keep_in_koru:
+      - One canonical koru-named implementation per adapter family.
+      - Temporary coru-named import and console aliases without business logic.
+    acceptance:
+      - One conformance suite runs against both command names.
+      - Legacy namespaces contain only warnings and re-exports for one release.
+    blocked_by:
+      - runtime.shadow_packages
+
+  - id: planfile.client_lifecycle
+    order: 50
+    priority: P0
+    status: dual_run
+    action: move_to_dependency
+    source_paths:
+      - src/koru/queue/planfile_ticket_note.py
+      - src/koru/queue/ticket.py
+    target_owners:
+      - semcod/planfile
+    target_available: true
+    candidate_lines: 475
+    minimum_production_lines_removed: 250
+    minimum_checkout_lines_removed: 250
+    ecosystem_lines_deleted: 0
+    contracts:
+      - planfile.ticket-transition-result.v1
+      - planfile.ticket-proposal.v1
+    keep_in_koru:
+      - Queue order, lane policy and the decision to transition a ticket.
+    acceptance:
+      - Koru uses PlanfileClient from Planfile 0.1.116 or newer.
+      - Dual-run returns identical typed lifecycle outcomes before the CLI resolver is removed.
+    blocked_by:
+      - runtime.shadow_packages
+
+  - id: repository.generated_state
+    order: 10
+    priority: P0
+    status: ready
+    action: untrack_generated
+    source_paths:
+      - .coverage_data
+      - .tmp/code2llm-plugins
+      - SUMD.md
+      - SUMR.md
+      - code2llm_output
+      - coverage.json
+      - koru.mp4
+      - project
+      - tree.txt
+    target_owners:
+      - ci/artifact-store
+    target_available: true
+    candidate_lines: 146747
+    minimum_production_lines_removed: 0
+    minimum_checkout_lines_removed: 146747
+    ecosystem_lines_deleted: 0
+    contracts:
+      - code2llm.analysis-snapshot.v1
+    keep_in_koru:
+      - A small checked-in generation manifest with tool versions and content hashes.
+      - Runtime freshness metadata outside Git.
+    acceptance:
+      - A documented command reproduces project/map.toon.yaml on demand.
+      - CI uploads analysis, coverage and media as artifacts instead of committing them.
+      - Cleanup is performed only by its own explicit, reviewed ticket.
+    blocked_by: []
+
+  - id: runtime.shadow_packages
+    order: 20
+    priority: P0
+    status: complete
+    action: move_to_test_support
+    source_paths:
+      - src/env2llm
+      - src/imgl
+      - src/nlp2imgl
+    target_owners:
+      - tests/fakes
+    target_available: true
+    candidate_lines: 302
+    minimum_production_lines_removed: 302
+    minimum_checkout_lines_removed: 0
+    ecosystem_lines_deleted: 0
+    contracts:
+      - koru.test-double.v1
+    keep_in_koru:
+      - Explicit test doubles loaded only by test configuration.
+    acceptance:
+      - Built wheels contain none of the three foreign namespaces.
+      - Import discovery outside tests resolves installed dependencies or fails clearly.
+    blocked_by:
+      - repository.generated_state
+
+  - id: tillm.provider_mechanism
+    order: 100
+    priority: P2
+    status: blocked_by_upstream
+    action: move_to_dependency
+    source_paths:
+      - src/koru/tillm_bridge.py
+      - src/korullm
+    target_owners:
+      - semcod/tillm
+    target_available: true
+    candidate_lines: 946
+    minimum_production_lines_removed: 350
+    minimum_checkout_lines_removed: 350
+    ecosystem_lines_deleted: 0
+    contracts:
+      - tillm.completion-result.v1
+    keep_in_koru:
+      - ProposalEnvelope validation, provider policy, retry budget and authority.
+      - Drive failure assessment that changes orchestration state.
+    acceptance:
+      - Koru contains no provider registry or checkout path injection.
+      - Provider fallback cannot change proposal schema or granted capability.
+    blocked_by: []
+
+  - id: vdisplay.screen_capture
+    order: 60
+    priority: P0
+    status: dual_run
+    action: move_to_dependency
+    source_paths:
+      - src/koru/integrations/photo_vql_monitor.py
+      - src/koru/integrations/photo_vql_target.py
+      - src/koru/integrations/photo_vql_validation.py
+      - src/koru/integrations/vdisplay_client.py
+      - src/koruvision
+    target_owners:
+      - wronai/vdisplay
+    target_available: true
+    candidate_lines: 11008
+    minimum_production_lines_removed: 5000
+    minimum_checkout_lines_removed: 5000
+    ecosystem_lines_deleted: 0
+    contracts:
+      - vdisplay.coordinate-map.v1
+      - vdisplay.screen-observation.v1
+    keep_in_koru:
+      - Observe-decide-act-verify policy, capability grants and GUI fallback ladder.
+      - Koru-specific mesh publication and ticket/evidence linkage.
+    acceptance:
+      - Koru has no private VDisplay imports and performs no coordinate conversion.
+      - Generic koruvision capture providers are replaced by public VDisplay 0.1.56 APIs, VQL/IMGL normalization delegates to VDisplay 0.1.57, and coordinate mapping plus capture metadata normalization delegate to VDisplay 0.1.58; only Koru policy and domain adapters remain.
+      - Koru domain providers return typed ScreenObservation values and contain no provider-base or PNG-to-descriptor compatibility shim.
+      - Replay of one observation yields identical canonical target and coordinate hashes.
+    blocked_by:
+      - planfile.client_lifecycle
+
+deferred:
+  - id: koruapi.facade
+    candidate_lines: 8459
+    reason: It is a Koru-facing API and decision surface, not a reusable dependency mechanism.
+    reconsider_when: Individual transports have public dependency APIs and the facade is thin.
+  - id: korudsl.domain
+    candidate_lines: 392
+    reason: Intent, capability and ExecutionPlan vocabulary is Koru domain authority.
+    reconsider_when: Never move authority; only split generated codecs if another consumer appears.
+  - id: koruide.package
+    candidate_lines: 12001
+    reason: The proposed semcod/koruide checkout does not exist and the package has 45 core consumers.
+    reconsider_when: A real repository, public adapter contract and standalone contract suite exist.
+  - id: korumesh.transport
+    candidate_lines: 706
+    reason: No currently used dependency owns the Koru-specific signed observation mesh.
+    reconsider_when: A second non-Koru consumer establishes a reusable protocol owner.
+  - id: plugins.autopilot
+    candidate_lines: 27333
+    reason: No existing dependency repository owns the Koru daemon wire protocol and release train.
+    reconsider_when: Plugin artifacts have an independent repository and cross-version protocol suite.

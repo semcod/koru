@@ -53,6 +53,7 @@ def _emit_idle_no_ticket_warning(
     queue_status: str,
     waiting_ticket: str,
     autopilot_status: str,
+    stagnation_streak: int = 0,
 ) -> None:
     if not _should_warn_idle_no_ticket(
         queue_status=queue_status,
@@ -60,10 +61,12 @@ def _emit_idle_no_ticket_warning(
         autopilot_status=autopilot_status,
     ):
         return
-    from koru.activity_log import activity_warn
+    if stagnation_streak > 1:
+        return
+    from koru.activity_log import activity_info
 
     message, hint, data = _idle_no_ticket_warning(project)
-    activity_warn(message, hint=hint, fmt=args.emit_events, data=data)
+    activity_info(message, hint=hint, fmt=args.emit_events, data=data)
 
 
 def _slug(value: str) -> str:
@@ -135,6 +138,16 @@ def _log_operator_next_steps(
     # ``autonomous_loop_runner._current_mission_lines`` / ``_operator_next_steps``
     # / ``_quick_action_lines`` / ``_emit_quick_action_line`` still take effect.
     from koru.autonomy.operator import operator_loop_runner as _runner_mod
+
+    queue_status = str(getattr(queue_result, "last_status", "") or "").lower()
+    repeated_idle = (
+        stop_reason is None
+        and queue_status == "idle"
+        and (not waiting_ticket or waiting_ticket == "-")
+        and int(getattr(loop_state, "stagnation_streak", 0) or 0) > 1
+    )
+    if repeated_idle:
+        return
 
     for line in _runner_mod._current_mission_lines(
         queue_result=queue_result,

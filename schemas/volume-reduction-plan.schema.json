@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://semcod.github.io/koru/schemas/volume-reduction-plan.schema.json",
+  "title": "Koru volume-reduction plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "baseline", "targets", "policy", "stages", "deferred"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "baseline": {"$ref": "#/$defs/baseline"},
+    "targets": {"$ref": "#/$defs/targets"},
+    "policy": {"$ref": "#/$defs/policy"},
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/stage"}
+    },
+    "deferred": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/deferred"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"
+    },
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "nonEmptyStringArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "positiveInteger": {"type": "integer", "minimum": 1},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_path", "captured_on", "indexed_files", "indexed_lines", "python_modules",
+        "critical_functions", "dependency_cycles", "tracked_repository_bytes",
+        "tracked_repository_lines"
+      ],
+      "properties": {
+        "map_path": {"$ref": "#/$defs/nonEmptyString"},
+        "captured_on": {"type": "string", "format": "date"},
+        "indexed_files": {"$ref": "#/$defs/positiveInteger"},
+        "indexed_lines": {"$ref": "#/$defs/positiveInteger"},
+        "python_modules": {"$ref": "#/$defs/positiveInteger"},
+        "critical_functions": {"$ref": "#/$defs/nonNegativeInteger"},
+        "dependency_cycles": {"$ref": "#/$defs/nonNegativeInteger"},
+        "tracked_repository_bytes": {"$ref": "#/$defs/positiveInteger"},
+        "tracked_repository_lines": {"$ref": "#/$defs/positiveInteger"}
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "indexed_lines_max", "python_modules_max", "tracked_repository_bytes_max",
+        "private_dependency_imports_max", "production_shadow_packages_max"
+      ],
+      "properties": {
+        "indexed_lines_max": {"$ref": "#/$defs/positiveInteger"},
+        "python_modules_max": {"$ref": "#/$defs/positiveInteger"},
+        "tracked_repository_bytes_max": {"$ref": "#/$defs/positiveInteger"},
+        "private_dependency_imports_max": {"const": 0},
+        "production_shadow_packages_max": {"const": 0}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism_owner_rule", "decision_owner", "llm_role", "target_repository_rule",
+        "dependency_direction", "release_order", "compatibility_shim_releases",
+        "destructive_cleanup_requires_explicit_ticket"
+      ],
+      "properties": {
+        "mechanism_owner_rule": {"const": "dependency_owns_how"},
+        "decision_owner": {"const": "semcod/koru"},
+        "llm_role": {"const": "proposal_only"},
+        "target_repository_rule": {"const": "existing_and_in_use"},
+        "dependency_direction": {"const": "dependencies_must_not_import_koru"},
+        "release_order": {"const": "dependency_first"},
+        "compatibility_shim_releases": {"type": "integer", "minimum": 1, "maximum": 2},
+        "destructive_cleanup_requires_explicit_ticket": {"const": true}
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "order", "priority", "status", "action", "source_paths", "target_owners",
+        "target_available", "candidate_lines", "minimum_production_lines_removed",
+        "minimum_checkout_lines_removed", "ecosystem_lines_deleted", "contracts",
+        "keep_in_koru", "acceptance", "blocked_by"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "order": {"$ref": "#/$defs/positiveInteger"},
+        "priority": {"enum": ["P0", "P1", "P2"]},
+        "status": {"enum": ["ready", "planned", "upstream_api_ready", "blocked_by_upstream", "dual_run", "complete"]},
+        "action": {"enum": ["untrack_generated", "move_to_test_support", "delete_duplicate", "collapse_namespace", "move_to_dependency"]},
+        "source_paths": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "target_owners": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "target_available": {"type": "boolean"},
+        "candidate_lines": {"$ref": "#/$defs/nonNegativeInteger"},
+        "minimum_production_lines_removed": {"$ref": "#/$defs/nonNegativeInteger"},
+        "minimum_checkout_lines_removed": {"$ref": "#/$defs/nonNegativeInteger"},
+        "ecosystem_lines_deleted": {"$ref": "#/$defs/nonNegativeInteger"},
+        "contracts": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "keep_in_koru": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "acceptance": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "blocked_by": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "deferred": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "candidate_lines", "reason", "reconsider_when"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "candidate_lines": {"$ref": "#/$defs/nonNegativeInteger"},
+        "reason": {"$ref": "#/$defs/nonEmptyString"},
+        "reconsider_when": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    }
+  }
+}

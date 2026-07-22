@@ -37,7 +37,7 @@ def test_ensure_modules_calls_pip_when_missing(monkeypatch) -> None:
     from koru.deps_autorepair import ensure_modules
 
     assert ensure_modules("env2llm", label="test") is True
-    assert calls == [["env2llm[mqtt]>=0.1.10"]]
+    assert calls == [["env2llm[mqtt]>=0.1.14"]]
 
 
 def test_ensure_modules_skips_pip_when_present(monkeypatch) -> None:
@@ -53,6 +53,20 @@ def test_ensure_modules_skips_pip_when_present(monkeypatch) -> None:
 
     assert ensure_modules("env2llm") is True
     assert calls == []
+
+
+def test_vdisplay_autorepair_uses_public_api_release_floor() -> None:
+    from koru.deps_autorepair import EXTRA_PIP_SPECS, MODULE_PIP_SPECS
+
+    assert MODULE_PIP_SPECS["vdisplay"] == "vdisplay>=0.1.58"
+    assert EXTRA_PIP_SPECS["vdisplay"] == ["vdisplay>=0.1.58"]
+
+
+def test_testql_autorepair_uses_public_runner_release_floor() -> None:
+    from koru.deps_autorepair import EXTRA_PIP_SPECS, MODULE_PIP_SPECS
+
+    assert MODULE_PIP_SPECS["testql"] == "testql>=1.2.62"
+    assert "testql>=1.2.62" in EXTRA_PIP_SPECS["desktop"]
 
 
 def _load_env2llm_registry_module():
@@ -78,12 +92,15 @@ def test_env2llm_sync_attempts_autorepair(monkeypatch) -> None:
     reg._ENV2LLM_AVAILABLE = False
     reg._ENV2LLM_IMPORT_ERROR = "No module named 'env2llm'"
 
-    class RegistryService:
-        pass
+    def fake_load_public_api() -> bool:
+        if not repair_calls:
+            return False
+        reg._ENV2LLM_AVAILABLE = True
+        reg._ENV2LLM_IMPORT_ERROR = None
+        reg._SERVICE_FACTORY = object()
+        return True
 
-    fake_pkg = types.ModuleType("env2llm.service.registry_service")
-    fake_pkg.RegistryService = RegistryService
-    monkeypatch.setitem(sys.modules, "env2llm.service.registry_service", fake_pkg)
+    monkeypatch.setattr(reg, "_load_env2llm_api", fake_load_public_api)
 
     class FakeService:
         project_id = "demo"
@@ -97,7 +114,16 @@ def test_env2llm_sync_attempts_autorepair(monkeypatch) -> None:
         def desktop_payload(self):
             return {"ide_calibrations": []}
 
-    monkeypatch.setattr(reg, "_get_service", lambda **_kwargs: FakeService())
+    class FakeDescriptor:
+        def to_dict(self):
+            return {
+                "schema": "env2llm.service-descriptor.v1",
+                "request_hash": "0" * 64,
+                "descriptor_hash": "1" * 64,
+            }
+
+    built = (FakeService(), FakeDescriptor().to_dict())
+    monkeypatch.setattr(reg, "_get_service", lambda **_kwargs: built)
     monkeypatch.setitem(
         sys.modules,
         "koruapi.calibration_validator",
@@ -107,6 +133,7 @@ def test_env2llm_sync_attempts_autorepair(monkeypatch) -> None:
     result = reg.env2llm_sync_after_calibration(project_dir="/tmp")
     assert repair_calls == ["koru calibrate"]
     assert result.get("ok") is True
+    assert result["service_descriptor"]["schema"] == "env2llm.service-descriptor.v1"
 
 
 def test_vdisplay_available_triggers_autorepair(monkeypatch) -> None:

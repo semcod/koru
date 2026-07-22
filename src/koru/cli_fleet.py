@@ -28,7 +28,6 @@ import os
 import signal
 import subprocess
 import sys
-from typing import Any
 import time
 from pathlib import Path
 from typing import Any
@@ -177,6 +176,81 @@ def _build_parser() -> argparse.ArgumentParser:
     ls = sub.add_parser("ls", help="List discovered koru-managed projects and exit.")
     ls.add_argument("--workspace", type=Path, default=None)
 
+    boot = sub.add_parser(
+        "bootstrap",
+        aliases=["init"],
+        help=(
+            "Discover child projects under a workspace folder and ensure each has "
+            ".planfile/ + .planfile/.koru/policy.yaml (idempotent; never --force "
+            "by default)."
+        ),
+    )
+    boot.add_argument(
+        "workspace",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Parent folder containing sibling projects "
+        "(default: $KORU_FLEET_WORKSPACE or ~/github).",
+    )
+    boot.add_argument(
+        "--umbrella",
+        action="store_true",
+        help="Also initialise the workspace root itself (git optional).",
+    )
+    boot.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would change without writing files.",
+    )
+    boot.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help="Only bootstrap paths matching GLOB (repeatable; matched against "
+        "basename and path relative to workspace).",
+    )
+    boot.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help="Skip paths matching GLOB (repeatable; added to built-in noise "
+        "excludes such as backups/, node_modules/).",
+    )
+    boot.add_argument(
+        "--depth",
+        type=int,
+        default=1,
+        help="How deep to walk for child projects (default: 1 = immediate children).",
+    )
+    boot.add_argument(
+        "--allow-non-git",
+        action="store_true",
+        help="Also consider directories without a .git entry (default: git-only).",
+    )
+    boot.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "DANGEROUS: pass force to koru --init (overwrites sprint tickets; "
+            "a .bak-* backup is written). Never needed just to add a missing "
+            "policy.yaml — soft ensure handles that."
+        ),
+    )
+    boot.add_argument(
+        "--agent-lane",
+        default="auto",
+        help="Agent lane for freshly initialised projects (default: auto).",
+    )
+    boot.add_argument(
+        "--prepare-host-environment",
+        action="store_true",
+        help="Write host-environment.{json,md} on fresh init (off by default "
+        "for fleet-scale bootstrap).",
+    )
+
     return parser
 
 
@@ -288,6 +362,43 @@ def _run_fleet_ls(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_fleet_bootstrap(args: argparse.Namespace) -> int:
+    from koru.fleet_bootstrap import BootstrapStatus, bootstrap_workspace
+
+    workspace = args.workspace or _default_workspace()
+    if args.force:
+        _log(
+            "koru fleet bootstrap: WARNING --force will overwrite sprint tickets "
+            "on projects that already have a planfile (timestamped .bak-* written)"
+        )
+    try:
+        summary = bootstrap_workspace(
+            workspace,
+            depth=args.depth,
+            include=args.include or None,
+            exclude=args.exclude or None,
+            require_git=not args.allow_non_git,
+            umbrella=args.umbrella,
+            force=args.force,
+            dry_run=args.dry_run,
+            agent_lane=args.agent_lane,
+            prepare_host_environment=args.prepare_host_environment,
+        )
+    except NotADirectoryError as exc:
+        _log(f"koru fleet bootstrap: {exc}")
+        return 2
+    print(summary.report_text())
+    if any(r.status == BootstrapStatus.ERROR for r in summary.results):
+        return 1
+    if not summary.results:
+        _log(
+            "koru fleet bootstrap: no candidates found "
+            "(check --include/--exclude/--depth, or pass --allow-non-git)"
+        )
+        return 1
+    return 0
+
+
 def fleet_main(argv: list[str]) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -295,6 +406,8 @@ def fleet_main(argv: list[str]) -> int:
         return _run_fleet_up(args)
     if args.fleet_command == "ls":
         return _run_fleet_ls(args)
+    if args.fleet_command in {"bootstrap", "init"}:
+        return _run_fleet_bootstrap(args)
     parser.error(f"unknown fleet command: {args.fleet_command}")
     return 2
 

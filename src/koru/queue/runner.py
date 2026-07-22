@@ -1,6 +1,7 @@
 """Main queue runner logic for executing planfile tickets."""
 
 
+import hashlib
 import json
 import logging
 import uuid
@@ -9,8 +10,19 @@ from pathlib import Path
 from typing import Any
 
 from koru.queue.context import build_project_context
+from koru.queue.evidence import completion_gap
 from koru.queue.human import default_human_prompt
 from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
+from koru.queue.patch_mode import (
+    PROMOTION_ARTIFACT,
+    PROMOTION_BRANCH,
+    PatchOutcome,
+    build_patch_prompt,
+    patch_mode_enabled,
+    promotion_mode,
+)
+from koru.queue.patch_retry import apply_patch_with_retry
+from koru.queue.planfile_sdk import planfile_lifecycle_command
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
 from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
@@ -27,16 +39,10 @@ from koru.queue.ticket import (
     ticket_command,
     ticket_llm_request,
 )
+from koru.queue.ticket_templates import hydrate_subactor_repair_ticket
 from koru.queue.types import CommandResult, QueueRunResult
 
 _logger = logging.getLogger(__name__)
-
-
-def _source_tool(ticket: dict) -> str:
-    source = ticket.get("source")
-    if isinstance(source, dict):
-        return str(source.get("tool") or "")
-    return str(source or "")
 
 
 def _resolve_executor_kind(ticket: dict, interactive: bool, dry_run: bool) -> str:
@@ -86,12 +92,12 @@ def _handle_human_ticket(
     )
     if claimed:
         return claimed
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
     )
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "done", ticket_id],
         runner=planfile_runner,
@@ -145,7 +151,7 @@ def _claim_and_start(
     claimed = ticket_claim_or_error(project, ticket_id, actor, planfile_runner=planfile_runner)
     if claimed:
         return claimed
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
@@ -258,14 +264,175 @@ def _append_shell_evidence(
         )
 
 
+def _ticket_expects_edits(ticket: dict) -> bool:
+    """Whether finishing this ticket means the declared files must change.
+
+    Opt in explicitly with ``inputs.expect_files_changed``; scan-emitted
+    refactor tickets are treated as edit tickets by default, since that is what
+    "refactor" means. Tickets that merely *reference* files (a deploy recipe, a
+    question) are unaffected.
+    """
+    inputs = ticket.get("inputs") or {}
+    if "expect_files_changed" in inputs:
+        return bool(inputs["expect_files_changed"])
+    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
+    return "refactor" in labels
+
+
+def _snapshot_declared_files(project: Path, ticket: dict) -> dict[str, str]:
+    """Hash the ticket's declared files so edits can be detected afterwards."""
+    snapshot: dict[str, str] = {}
+    for rel in ticket.get("files") or []:
+        path = project / str(rel)
+        try:
+            snapshot[str(rel)] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            snapshot[str(rel)] = ""  # missing now; creating it counts as a change
+    return snapshot
+
+
+def _verify_declared_files_changed(
+    project: Path,
+    ticket: dict,
+    before: dict[str, str],
+) -> str | None:
+    """Return a failure reason when an edit ticket changed nothing.
+
+    An agent that hits a permission prompt, refuses, or merely *describes* the
+    change still exits 0, and without this check the queue closes the ticket as
+    done while the code is untouched. Absence of any edit is cheap and
+    unambiguous to detect, so it is worth catching even though it cannot prove
+    the edit was *correct*.
+    """
+    if not before:
+        return None
+    after = _snapshot_declared_files(project, ticket)
+    if any(after.get(rel) != digest for rel, digest in before.items()):
+        return None
+    listed = ", ".join(sorted(before))
+    return (
+        "agent reported success but left every declared file unchanged "
+        f"({listed}). The work was not done — check the run note for a refusal, "
+        "a permission prompt, or an answer that only described the change. "
+        "Set inputs.expect_files_changed=false if this ticket is not meant to edit files."
+    )
+
+
+def _execution_attempt_budget(ticket: dict[str, Any]) -> tuple[int, int]:
+    """Return the persisted attempt count and the bounded execution budget."""
+
+    execution = ticket.get("execution") or {}
+    try:
+        attempt = max(0, int(execution.get("attempt") or 0))
+    except (TypeError, ValueError):
+        attempt = 0
+    try:
+        max_attempts = max(1, int(execution.get("max_attempts") or 1))
+    except (TypeError, ValueError):
+        max_attempts = 1
+    return attempt, max_attempts
+
+
+def _record_failed_attempt(
+    project: Path,
+    ticket: dict[str, Any],
+    ticket_id: str,
+    reason: str,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> bool:
+    """Persist a failure and reopen only while the ticket has retry budget.
+
+    Planfile owns the lifecycle mutations and attempt counter; Koru owns the
+    scheduling decision.  ``True`` means the ticket was made runnable again.
+    Any transition failure fails closed by blocking the ticket instead of
+    leaving an active claim stranded.
+    """
+
+    attempt, max_attempts = _execution_attempt_budget(ticket)
+    next_attempt = attempt + 1
+    failure = f"FAIL: {reason}"
+    failed = planfile_lifecycle_command(
+        project,
+        ["ticket", "fail", ticket_id, "--error", failure],
+        runner=planfile_runner,
+    )
+    if failed.returncode == 0 and next_attempt < max_attempts:
+        note = (
+            f"Koru scheduled retry {next_attempt + 1}/{max_attempts} after "
+            f"attempt {next_attempt} failed: {reason}"
+        )
+        ready = planfile_lifecycle_command(
+            project,
+            ["ticket", "ready", ticket_id, "--note", note],
+            runner=planfile_runner,
+        )
+        reopened = False
+        if ready.returncode == 0:
+            try:
+                reopened = json.loads(ready.stdout or "{}").get("status") == "open"
+            except (AttributeError, json.JSONDecodeError, TypeError):
+                reopened = False
+        if ready.returncode == 0 and not reopened:
+            # Planfile 0.1.117's `ready` clears execution state but leaves a
+            # started ticket's board status as in_progress. Keep Koru usable
+            # with that published release until 0.1.118 is available.
+            reopened_result = planfile_lifecycle_command(
+                project,
+                ["ticket", "update", ticket_id, "--status", "open"],
+                runner=planfile_runner,
+            )
+            reopened = reopened_result.returncode == 0
+        if reopened:
+            _logger.info(
+                "koru.queue.retry_scheduled ticket_id=%s next_attempt=%s max_attempts=%s",
+                ticket_id,
+                next_attempt + 1,
+                max_attempts,
+            )
+            return True
+
+    block_reason = failure
+    if failed.returncode != 0:
+        detail = (failed.stderr or failed.stdout or "ticket fail transition failed").strip()
+        block_reason = f"{failure}; could not record failed attempt: {detail}"
+    planfile_lifecycle_command(
+        project,
+        ["ticket", "block", ticket_id, "--reason", block_reason],
+        runner=planfile_runner,
+    )
+    return False
+
+
 def _finalize_ticket(
     project: Path,
+    ticket: dict[str, Any],
     ticket_id: str,
     executor_kind: str,
     result: CommandResult,
     action_label: str,
     planfile_runner: Callable[[list[str], Path], CommandResult],
+    verification_error: str | None = None,
 ) -> QueueRunResult:
+    if verification_error and result.returncode == 0:
+        _append_shell_evidence(
+            project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG,
+        )
+        _record_failed_attempt(
+            project,
+            ticket,
+            ticket_id,
+            verification_error,
+            planfile_runner,
+        )
+        return QueueRunResult(
+            status="failed",
+            ticket_id=ticket_id,
+            executor_kind=executor_kind,
+            message=action_label,
+            exit_code=1,
+            stdout=result.stdout,
+            stderr=verification_error,
+        )
     if result.returncode == 0:
         if executor_kind == "shell":
             _append_shell_evidence(project, ticket_id, result, planfile_runner)
@@ -275,7 +442,7 @@ def _finalize_ticket(
             _append_shell_evidence(
                 project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG
             )
-        planfile_command(
+        planfile_lifecycle_command(
             project,
             ["ticket", "done", ticket_id],
             runner=planfile_runner,
@@ -283,11 +450,7 @@ def _finalize_ticket(
         status = "completed"
     else:
         reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
-        planfile_command(
-            project,
-            ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],
-            runner=planfile_runner,
-        )
+        _record_failed_attempt(project, ticket, ticket_id, reason, planfile_runner)
         status = "failed"
 
     return QueueRunResult(
@@ -374,7 +537,7 @@ def _resolve_action_or_result(
     if executor_kind == "shell" and not interactive and not dry_run:
         return "true", None
 
-    planfile_command(
+    planfile_lifecycle_command(
         project,
         ["ticket", "block", ticket_id, "--reason", missing_prompt],
         runner=planfile_runner,
@@ -385,6 +548,100 @@ def _resolve_action_or_result(
         executor_kind=executor_kind,
         message=missing_prompt,
     )
+
+
+def _prepare_action_for_patch_mode(
+    executor_kind: str,
+    expects_edits: bool,
+    ticket: dict[str, Any],
+    resolved_action: Any,
+) -> tuple[Any, bool]:
+    """Rewrite the LLM prompt for patch mode when the ticket qualifies.
+
+    Returns ``(action, use_patch_mode)``; *action* is returned unchanged
+    when patch mode does not apply.
+    """
+    use_patch_mode = executor_kind == "llm" and expects_edits and patch_mode_enabled(ticket)
+    if use_patch_mode:
+        resolved_action = dict(resolved_action)
+        resolved_action["prompt"] = build_patch_prompt(str(resolved_action.get("prompt") or ""))
+    return resolved_action, use_patch_mode
+
+
+def _pre_llm_contract_denial(project: Path, ticket: dict, actor: str) -> str | None:
+    """Whether this ticket's contract forbids even proposing a patch."""
+    from koru.queue.contracts import CAP_PROPOSE, contract_for_ticket
+
+    contract = contract_for_ticket(project, ticket)
+    if contract is None:
+        return None
+    decision = contract.evaluate(
+        actor=actor,
+        capability=CAP_PROPOSE,
+        risk_class=str((ticket.get("inputs") or {}).get("risk_class") or "R1"),
+        workspace=project,
+    )
+    return None if decision.allowed else decision.reason
+
+
+def _apply_patch_step(
+    project: Path,
+    result: CommandResult,
+    ticket: dict[str, Any],
+    resolved_action: Any,
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult],
+    shell_runner: Callable[[str, Path], CommandResult],
+    use_patch_mode: bool,
+    actor: str | None = None,
+) -> tuple[CommandResult, PatchOutcome | None, dict | None]:
+    if use_patch_mode and result.returncode == 0:
+        return apply_patch_with_retry(
+            project,
+            result,
+            ticket,
+            resolved_action,
+            llm_runner,
+            shell_runner,
+            enrich=_enrich_llm_request_with_context,
+            actor=actor,
+        )
+    return result, None, None
+
+
+def _compute_verification_error(
+    project: Path,
+    ticket: dict[str, Any],
+    use_patch_mode: bool,
+    result: CommandResult,
+    patch_outcome: PatchOutcome | None,
+    patch_evidence: dict | None,
+    expects_edits: bool,
+    before: dict[str, str],
+) -> str | None:
+    """Decide whether the ticket's work should be considered unverified."""
+    verification_error = (
+        f"[{patch_outcome.code}] {patch_outcome.message}" if patch_outcome else None
+    )
+    if (
+        use_patch_mode
+        and result.returncode == 0
+        and verification_error is None
+        and (gap := completion_gap(project, patch_evidence))
+    ):
+        # A landed patch that cannot prove itself may not close its ticket:
+        # an unauditable success is indistinguishable from an unnoticed
+        # failure, which is the exact confusion evidence exists to prevent.
+        verification_error = f"[evidence_incomplete] {gap}"
+    # `branch` and `artifact` deliver the result outside the working tree on
+    # purpose, so an unchanged workspace is the expected outcome there — the
+    # branch ref or patch file is the evidence, not the files on disk.
+    delivered_outside_workspace = use_patch_mode and promotion_mode(ticket) in {
+        PROMOTION_BRANCH,
+        PROMOTION_ARTIFACT,
+    }
+    if verification_error is None and expects_edits and not delivered_outside_workspace:
+        verification_error = _verify_declared_files_changed(project, ticket, before)
+    return verification_error
 
 
 def _run_next_planfile_task_impl(
@@ -426,6 +683,7 @@ def _run_next_planfile_task_impl(
         if early_result is not None:
             return early_result
         assert ticket is not None
+        ticket = hydrate_subactor_repair_ticket(ticket)
 
         ticket_id = str(ticket["id"])
         _log_queue_ticket_start(ticket, ticket_id)
@@ -464,6 +722,40 @@ def _run_next_planfile_task_impl(
         if claimed:
             return claimed
 
+        expects_edits = _ticket_expects_edits(ticket)
+        before = _snapshot_declared_files(project, ticket) if expects_edits else {}
+        resolved_action, use_patch_mode = _prepare_action_for_patch_mode(
+            executor_kind, expects_edits, ticket, resolved_action,
+        )
+
+        recording = None
+        if use_patch_mode:
+            from koru.queue.repair_recording import RepairRecordingSession
+
+            # Best-effort at this stage: a missing store never blocks the queue,
+            # but every model call of a recorded run is persisted as an attempt.
+            recording = RepairRecordingSession.begin(project, ticket, actor)
+            if recording is not None:
+                llm_runner = recording.wrap_llm(llm_runner)
+
+        if use_patch_mode and (denial := _pre_llm_contract_denial(project, ticket, actor)):
+            # The contract is checked before the model ever sees a prompt: an
+            # actor outside its box must not spend an LLM run finding out.
+            planfile_lifecycle_command(
+                project,
+                ["ticket", "block", ticket_id, "--reason", f"FAIL: [policy_denied] {denial}"],
+                runner=planfile_runner,
+            )
+            return QueueRunResult(
+                status="failed",
+                ticket_id=ticket_id,
+                executor_kind=executor_kind,
+                message=denial,
+                exit_code=1,
+                stdout="",
+                stderr=denial,
+            )
+
         result, action_label = _execute_action(
             executor_kind,
             resolved_action,
@@ -474,13 +766,39 @@ def _run_next_planfile_task_impl(
             shell_runner,
         )
 
+        result, patch_outcome, patch_evidence = _apply_patch_step(
+            project,
+            result,
+            ticket,
+            resolved_action,
+            llm_runner,
+            shell_runner,
+            use_patch_mode,
+            actor=actor,
+        )
+        if recording is not None:
+            recording.finish(result, patch_outcome)
+
+        verification_error = _compute_verification_error(
+            project,
+            ticket,
+            use_patch_mode,
+            result,
+            patch_outcome,
+            patch_evidence,
+            expects_edits,
+            before,
+        )
+
         return _finalize_ticket(
             project,
+            ticket,
             ticket_id,
             executor_kind,
             result,
             action_label,
             planfile_runner,
+            verification_error,
         )
 
 

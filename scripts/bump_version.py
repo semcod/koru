@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
 PACKAGE_JSON = ROOT / "package.json"
 UV_LOCK = ROOT / "uv.lock"
+VERSION_FILE = ROOT / "VERSION"
 
 
 def read_version() -> str:
@@ -94,6 +95,13 @@ def update_uv_lock(new_version: str, dry_run: bool) -> None:
     print(f"  {'[dry-run] ' if dry_run else ''}uv.lock        → {new_version}")
 
 
+def update_version_file(new_version: str, dry_run: bool) -> None:
+    """Keep the top-level VERSION file in sync with pyproject.toml."""
+    if not dry_run:
+        VERSION_FILE.write_text(f"{new_version}\n", encoding="utf-8")
+    print(f"  {'[dry-run] ' if dry_run else ''}VERSION         → {new_version}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Semantic version bump for koru")
     parser.add_argument("part", nargs="?", choices=["major", "minor", "patch"])
@@ -114,6 +122,7 @@ def main() -> None:
     update_pyproject(new_version, args.dry_run)
     update_package_json(new_version, args.dry_run)
     update_uv_lock(new_version, args.dry_run)
+    update_version_file(new_version, args.dry_run)
     if args.dry_run:
         print("[dry-run] No files modified.")
     else:

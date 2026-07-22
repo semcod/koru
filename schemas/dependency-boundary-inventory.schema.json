@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://semcod.github.io/koru/schemas/dependency-boundary-inventory.schema.json",
+  "title": "Koru dependency-boundary extraction inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy",
+    "repositories",
+    "contracts",
+    "extractions"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy": {"$ref": "#/$defs/policy"},
+    "repositories": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/repository"}
+    },
+    "contracts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/contract"}
+    },
+    "extractions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/extraction"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"
+    },
+    "repositoryId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]*/[a-z][a-z0-9_.-]*$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nonEmptyStringArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "identifierArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "repositoryIdArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/repositoryId"}
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_owner",
+        "dependency_direction",
+        "private_api_imports",
+        "human_cli_output_parsing",
+        "release_order",
+        "compatibility_shim_releases"
+      ],
+      "properties": {
+        "authorization_owner": {"const": "semcod/koru"},
+        "dependency_direction": {"const": "dependencies_must_not_import_koru"},
+        "private_api_imports": {"const": "forbidden"},
+        "human_cli_output_parsing": {"const": "forbidden"},
+        "release_order": {"const": "dependency_first"},
+        "compatibility_shim_releases": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "package", "state", "checkout_hint"],
+      "properties": {
+        "id": {"$ref": "#/$defs/repositoryId"},
+        "package": {"$ref": "#/$defs/nonEmptyString"},
+        "state": {"enum": ["existing", "planned"]},
+        "checkout_hint": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "mechanism_owner",
+        "decision_owner",
+        "effect",
+        "llm_role",
+        "request_schema",
+        "result_schema"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "mechanism_owner": {"$ref": "#/$defs/repositoryId"},
+        "decision_owner": {"const": "semcod/koru"},
+        "effect": {
+          "enum": ["observe", "propose", "control", "mutate", "verify", "manage"]
+        },
+        "llm_role": {"enum": ["none", "proposal_only"]},
+        "request_schema": {"$ref": "#/$defs/nonEmptyString"},
+        "result_schema": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "priority",
+        "status",
+        "kind",
+        "source_modules",
+        "target_repositories",
+        "contract_ids",
+        "move",
+        "keep_in_koru",
+        "current_smells",
+        "acceptance",
+        "blocked_by"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "order": {"type": "integer", "minimum": 1},
+        "priority": {"enum": ["P0", "P1", "P2"]},
+        "status": {
+          "enum": [
+            "proposed",
+            "upstream_api_ready",
+            "dual_run",
+            "compatibility_shim",
+            "complete",
+            "blocked"
+          ]
+        },
+        "kind": {
+          "enum": ["move", "delete_duplicate", "invert_dependency", "publish_package"]
+        },
+        "source_modules": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "target_repositories": {"$ref": "#/$defs/repositoryIdArray"},
+        "contract_ids": {"$ref": "#/$defs/identifierArray"},
+        "move": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "keep_in_koru": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "current_smells": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "acceptance": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "blocked_by": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    }
+  }
+}

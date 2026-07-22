@@ -57,6 +57,28 @@ def test_build_decision_record_submit_unverified_from_status_without_telemetry()
     assert record.action == "submit_unverified"
 
 
+def test_build_decision_record_classifies_plain_idle_skip() -> None:
+    record = build_decision_record(
+        cycle=2,
+        queue_status="idle",
+        waiting_ticket="-",
+        stagnation_streak=5,
+        autopilot_status="skipped",
+        autopilot_ide="local",
+        autopilot_backend=None,
+        autopilot_drive_kind=None,
+        diag_status="skipped",
+        wup_status="skipped",
+        cycle_telemetry={},
+        next_step="wait",
+    )
+
+    assert record.skip_code == "idle_no_ticket"
+    assert record.blocked_by == "idle_no_ticket"
+    assert record.decided == "skip:idle_no_ticket"
+    assert record.skip_because == "queue idle AND zero open planfile tickets"
+
+
 def test_compact_line_arrow_separated_format() -> None:
     line = _record(1).compact_line()
     assert line.count(" → ") == 4, "compact line must have exactly 4 arrow separators"

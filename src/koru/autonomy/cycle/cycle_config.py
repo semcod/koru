@@ -114,8 +114,8 @@ def _shell_client_from_environ() -> str | None:
     """Honor operator-configured shell client before PATH autodetect."""
     from koru.tillm_bridge import (
         looks_like_shell_client,
-        shell_drive_client_id,
         shell_agent_available,
+        shell_drive_client_id,
     )
 
     for env_key in ("KORU_TILLM_CLIENT", "URIRUN_KORU_IDE"):

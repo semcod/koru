@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from vdisplay.capture import ProviderAvailability
 
 from koruobserve.providers_cli import (
     cmd_providers_list,
@@ -36,8 +37,6 @@ def test_probe_capture_providers_unknown_name() -> None:
 
 
 def test_probe_capture_providers_mss_mocked() -> None:
-    from koruvision.providers.base import ProviderAvailability
-
     fake_frame = {
         "payload": b"\x89PNG\r\n\x1a\n" + b"\x00" * 20,
         "width": 2,
@@ -46,11 +45,11 @@ def test_probe_capture_providers_mss_mocked() -> None:
     }
     avail = ProviderAvailability(available=True, reason="ok")
     with mock.patch(
-        "koruvision.providers.mss.MssProvider.capture_all",
+        "vdisplay.capture.providers.observation_builtin.MssObservationProvider.capture_all",
         return_value=[fake_frame],
     ):
         with mock.patch(
-            "koruvision.providers.mss.MssProvider.availability",
+            "vdisplay.capture.providers.observation_builtin.MssObservationProvider.availability",
             return_value=avail,
         ):
             results = probe_capture_providers("mss")
@@ -65,13 +64,19 @@ def test_providers_list_payload_structure() -> None:
     assert isinstance(payload["providers"], list)
 
 
-def test_providers_reset_clears_session_file(tmp_path: Path) -> None:
+def test_providers_reset_clears_session_file(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "koruobserve.providers_cli.reset_screencast_consent",
+        lambda: {"ok": True, "stopped": True, "token_cleared": True},
+    )
     session = screencast_session_path(tmp_path)
     session.parent.mkdir(parents=True, exist_ok=True)
     session.write_text("{}", encoding="utf-8")
     payload = providers_reset_consent(tmp_path)
     assert payload["ok"] is True
     assert not session.is_file()
+    assert "vdisplay:active-session" in payload["removed"]
+    assert "vdisplay:restore-token" in payload["removed"]
 
 
 def test_cmd_providers_list_prints(capsys: pytest.CaptureFixture[str]) -> None:

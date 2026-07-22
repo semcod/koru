@@ -1,11 +1,20 @@
-# Package Extraction Plan (`src` -> `packages/*`)
+# Package Extraction Plan (map-driven, dependency-first)
 
-Goal: make reusable parts independently versioned while keeping `coru` UX stable.
+> Updated 2026-07-19. The old rule “move `src` to `packages/*`” did not reduce
+> the repository and encouraged parallel namespaces. The quantitative source
+> of truth is now
+> [`architecture/volume-reduction-plan.yaml`](architecture/volume-reduction-plan.yaml),
+> backed by `project/map.toon.yaml` and a CI schema contract.
+
+Goal: reduce the Koru checkout and production surface while keeping the `koru`
+and compatibility `coru` UX stable.
 
 ## Short answer
 
-Yes, moving selected modules from `src` into `packages/*` is the right direction.
-Do it incrementally, module-by-module, with compatibility shims and CI gates.
+Move reusable mechanisms only to an existing, already-used dependency that owns
+the capability. Moving code from `src/` to `packages/` in this repository is
+not an extraction. Prefer deletion of generated state and duplicate namespaces,
+then dependency-first releases with one compatibility release.
 
 ## Current state (top-level under `src`)
 
@@ -20,25 +29,25 @@ Do it incrementally, module-by-module, with compatibility shims and CI gates.
 - `koruos` *(deprecated shim → `gillm.focus`; remove after two releases)*
 - `koruvision`
 
-## Extraction order (recommended)
+## Previous extraction list (reclassified)
 
-1. `koruide`
-Reason: clear boundary (IDE adapters and socket/control logic), already used by lane workflows.
+1. `koruide` — deferred. There is no `semcod/koruide` checkout and Koru core
+   currently has 45 consumers of this namespace.
 
-2. `koruobserve`
-Reason: observability concerns are separable and often reused across tools.
+2. `koruobserve` — keep the Koru-specific process lifecycle; move only generic
+   capture probing/diagnostics with the VDisplay extraction.
 
-3. `koruvision`
-Reason: optional capability with distinct dependencies (`mss`), good fit for optional package install.
+3. `koruvision` — replace its generic capture/provider stack with public
+   `wronai/vdisplay` APIs; keep Koru-specific orchestration and mesh evidence.
 
-4. `koruapi` and `korudsl`
-Reason: CLI-facing APIs can become stable standalone tools with independent release cadence.
+4. `koruapi` and `korudsl` — keep. They are Koru facade/domain authority, not
+   dependency mechanisms.
 
-5. `korullm`
-Reason: model/provider integration tends to churn; package boundary reduces blast radius.
+5. `korullm` — move provider registry/transport to `semcod/tillm`; keep Koru's
+   orchestration decision and `ProposalEnvelope` validation.
 
-6. `korumesh`
-Reason: lower priority unless reused by multiple modules or need separate release lifecycle.
+6. `korumesh` — defer until a second non-Koru consumer establishes a protocol
+   owner.
 
 **Done:** `koruos` OS strategies moved to **`gillm.focus`** (external package). Legacy
 ``import koruos`` emits ``DeprecationWarning`` and redirects to gillm.
@@ -49,17 +58,20 @@ Legacy paths ``koru.autopilot.injector``, ``koru.autopilot.os_injector``, ``koru
 
 ## Migration pattern per module
 
-1. Create `packages/<name>/pyproject.toml` and move canonical code there.
-2. Keep temporary compatibility wrappers in `src/<name>/` that re-export from package.
-3. Add package-local tests in `packages/<name>/tests`.
-4. Add dedicated CI workflow `.<github/workflows>/<name>-ci.yml`.
-5. Update imports in monorepo to package namespace.
-6. Remove wrappers only after two successful releases/smokes.
+1. Add a versioned request/result contract and public API in the owner repo.
+2. Pass owner-side contract tests and release that dependency.
+3. Raise Koru's minimum version and run typed API versus legacy behavior in dual-run.
+4. Keep one compatibility release with telemetry and no divergent fallback copy.
+5. Delete the Koru implementation only after cross-repo E2E is green.
+6. Regenerate the map and verify the quantitative budget in the volume DSL.
 
 ## Guardrails
 
 - No fallback to stale in-repo implementations once package is canonical.
-- Each extraction must keep CLI behavior stable from the `coru` perspective.
+- Each extraction must keep CLI behavior stable from both `koru` and the
+  compatibility `coru` entry point.
+- A dependency may own *how*; Koru retains *whether/when/with which grant*.
+- Do not claim ecosystem LOC reduction for code merely moved to another repo.
 - Prefer one package extraction per ticket to keep rollback simple.
 
 ## User UX rule

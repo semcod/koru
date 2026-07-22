@@ -448,6 +448,8 @@ def _decide_label(
     autopilot_status: str,
     autopilot_drive_kind: str | None,
     cycle_telemetry: dict[str, Any],
+    *,
+    skip_code: str = "unknown",
 ) -> str:
     """``decided=`` field. Maps to drive intent or the chosen skip path."""
     status = parse_autopilot_status(autopilot_status)
@@ -460,7 +462,8 @@ def _decide_label(
     if status.failed and (status.submit_unverified or cycle_telemetry.get("autopilot_submit_unverified")):
         return "manual_send_required"
     if status.skipped:
-        return f"skip:{status.code}"
+        code = skip_code if status.code in {"skipped", "unknown"} else status.code
+        return f"skip:{code}"
     if status.failed:
         return "drive_failed"
     return status.code or "no_action"
@@ -659,6 +662,12 @@ def build_decision_record(
     the trace internals.
     """
     skip_code = classify_skip_code(cycle_telemetry, autopilot_status)
+    if (
+        skip_code == "unknown"
+        and queue_status.strip().lower() == "idle"
+        and (not waiting_ticket or waiting_ticket == "-")
+    ):
+        skip_code = "idle_no_ticket"
     blocked_by = "" if skip_code in {"ok", "unknown"} else skip_code
     skip_because = _skip_because_for_code(
         skip_code=skip_code,
@@ -674,7 +683,12 @@ def build_decision_record(
         observed=_format_queue_observation(
             queue_status, waiting_ticket, stagnation_streak
         ),
-        decided=_decide_label(autopilot_status, autopilot_drive_kind, cycle_telemetry),
+        decided=_decide_label(
+            autopilot_status,
+            autopilot_drive_kind,
+            cycle_telemetry,
+            skip_code=skip_code,
+        ),
         action=_action_label(autopilot_status, autopilot_backend),
         evidence=_evidence_label(
             cycle_telemetry, autopilot_backend, diag_status, wup_status, blocked_by

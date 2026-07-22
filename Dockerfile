@@ -35,8 +35,8 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir -U pip setuptools wheel \
     && pip install --no-cache-dir -e ".[planfile,api,desktop]" \
     && pip install --no-cache-dir \
-        "planfile>=0.1.100" \
-        "testql>=1.2.55" \
+        "planfile>=0.1.117" \
+        "testql>=1.2.64" \
         "wup>=0.2.60" \
         "regix>=0.1.0" \
         "redup>=0.4.28" \

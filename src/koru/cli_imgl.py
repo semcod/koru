@@ -64,6 +64,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _run_doctor(args: argparse.Namespace, fmt: str) -> int:
     from imgl.autodiag import diagnose_capture, render_report
+
     from koru.integrations.imgl_client import default_image_path, doctor_capture
 
     image = args.image or str(default_image_path())

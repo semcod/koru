@@ -302,10 +302,13 @@ def activity_warn(
 def activity_info(
     msg: str,
     *,
+    hint: str | None = None,
     fmt: str | None = None,
     data: dict[str, Any] | None = None,
 ) -> None:
     """Legacy-style line with activity timestamp prefix."""
+    if hint:
+        msg = f"{msg}\n  → {hint}"
     if not activity_enabled():
         fmt = fmt or default_stdio_format_from_env()
         print(msg, file=_out_stream(fmt), flush=True)

@@ -18,6 +18,14 @@ from koru.autonomous_readiness import (
     run_plugin_reconnect_pipeline,
 )
 from koru.autonomy.environment import SocketHealth
+from koru.doctor_runtime_checks import PASS, _check_python_venv_alignment
+
+
+def test_venv_alignment_passes_when_project_has_no_local_venv(tmp_path: Path) -> None:
+    status, detail = _check_python_venv_alignment(tmp_path)
+
+    assert status == PASS
+    assert "project_venv_missing=true" in detail
 
 
 def test_runtime_consistency_warns_when_package_differs_from_pyproject(

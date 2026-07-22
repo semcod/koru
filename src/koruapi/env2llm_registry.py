@@ -2,48 +2,64 @@
 
 from __future__ import annotations
 
+import importlib
 import os
 from pathlib import Path
 from typing import Any
 
 _ENV2LLM_IMPORT_ERROR: str | None = None
+_ENV2LLM_AVAILABLE = False
+_SERVICE_API: Any = None
+_SERVICE_FACTORY: Any = None
 
-try:
-    from env2llm.service.registry_service import RegistryService
+
+def _load_env2llm_api() -> bool:
+    """Load only env2llm's public, versioned service-factory boundary.
+
+    env2llm is a separately-versioned local package; its public shape has
+    drifted before (e.g. RegistryServiceFactory renamed/removed) without a
+    matching koru release. That must degrade this optional bridge to
+    "unavailable", not crash every `koru` invocation via the import chain.
+    """
+    global _ENV2LLM_AVAILABLE, _ENV2LLM_IMPORT_ERROR
+    global _SERVICE_API, _SERVICE_FACTORY
+    try:
+        service_api = importlib.import_module("env2llm.service")
+        _SERVICE_API = service_api
+        if _SERVICE_FACTORY is None:
+            _SERVICE_FACTORY = service_api.RegistryServiceFactory()
+    except (ImportError, AttributeError, TypeError) as exc:
+        _ENV2LLM_AVAILABLE = False
+        _ENV2LLM_IMPORT_ERROR = f"{type(exc).__name__}: {exc}"
+        return False
 
     _ENV2LLM_AVAILABLE = True
-except ImportError as exc:
-    _ENV2LLM_AVAILABLE = False
-    _ENV2LLM_IMPORT_ERROR = str(exc)
-    RegistryService = None  # type: ignore[assignment,misc]
-
-_SERVICE_CACHE: dict[tuple[str, str], Any] = {}
+    _ENV2LLM_IMPORT_ERROR = None
+    return True
 
 
-def env2llm_available() -> bool:
-    global _ENV2LLM_AVAILABLE, _ENV2LLM_IMPORT_ERROR, RegistryService
-    if _ENV2LLM_AVAILABLE:
+_load_env2llm_api()
+
+
+def _ensure_env2llm(*, label: str) -> bool:
+    if _ENV2LLM_AVAILABLE and _SERVICE_FACTORY is not None:
+        return True
+    if _load_env2llm_api():
         return True
     from koru.deps_autorepair import ensure_desktop_stack
 
-    if ensure_desktop_stack(label="koru"):
-        try:
-            from env2llm.service.registry_service import RegistryService as _RS
+    return ensure_desktop_stack(label=label) and _load_env2llm_api()
 
-            RegistryService = _RS
-            _ENV2LLM_AVAILABLE = True
-            _ENV2LLM_IMPORT_ERROR = None
-            return True
-        except ImportError as exc:
-            _ENV2LLM_IMPORT_ERROR = str(exc)
-    return False
+
+def env2llm_available() -> bool:
+    return _ensure_env2llm(label="koru")
 
 
 def env2llm_missing_message() -> str:
     if _ENV2LLM_IMPORT_ERROR:
         return (
             f"env2llm is not installed ({_ENV2LLM_IMPORT_ERROR}). "
-            "Install with: pip install 'koru[desktop]' or pip install 'env2llm>=0.1.5'"
+            "Install with: pip install 'koru[desktop]' or pip install 'env2llm>=0.1.14'"
         )
     return "env2llm is not installed. Install with: pip install 'koru[desktop]'"
 
@@ -82,26 +98,20 @@ def _get_service(
     probe_desktop: bool | None = None,
     mqtt: bool | None = None,
 ) -> Any:
-    if not _ENV2LLM_AVAILABLE:
+    if not _ENV2LLM_AVAILABLE or _SERVICE_FACTORY is None:
         raise RuntimeError(env2llm_missing_message())
 
     root = _resolve_project_dir(project_dir=project_dir, project_root=project_root)
     pid = project_id or root.name
     probe_desktop = _desktop_probe_default(probe_desktop)
-    key = (str(root), pid)
-    if key not in _SERVICE_CACHE:
-        from env2llm.integrators._service_factory import build_registry_service
-
-        _SERVICE_CACHE[key] = build_registry_service(
-            root,
-            project_id=pid,
-            probe_desktop=probe_desktop,
-            mqtt=mqtt,
-        )
-    service = _SERVICE_CACHE[key]
-    if probe_desktop is not None:
-        service.probe_desktop = probe_desktop
-    return service
+    request = _SERVICE_API.ServiceFactoryRequest(
+        project_dir=root,
+        project_id=pid,
+        probe_desktop=probe_desktop,
+        mqtt=mqtt,
+    )
+    built = _SERVICE_FACTORY.create(request)
+    return built.service, built.descriptor.to_dict()
 
 
 def env2llm_get_registry(
@@ -115,7 +125,7 @@ def env2llm_get_registry(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -125,6 +135,7 @@ def env2llm_get_registry(
             "ok": True,
             "project_id": service.project_id,
             "registry": registry,
+            "service_descriptor": descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -142,7 +153,7 @@ def env2llm_render_registry(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -153,6 +164,7 @@ def env2llm_render_registry(
             "project_id": service.project_id,
             "format": fmt,
             "content": content,
+            "service_descriptor": descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -171,7 +183,7 @@ def env2llm_refresh_registry(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -189,6 +201,7 @@ def env2llm_refresh_registry(
             "example_id": ir.example_id,
             "path": str(path) if path else None,
             "command_count": len(ir.commands),
+            "service_descriptor": descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -201,23 +214,10 @@ def env2llm_sync_after_calibration(
     project_id: str | None = None,
 ) -> dict[str, Any]:
     """Refresh env2llm registry after OS-injector calibration (desktop + ide anchors)."""
-    global _ENV2LLM_AVAILABLE, _ENV2LLM_IMPORT_ERROR, RegistryService
-    if not _ENV2LLM_AVAILABLE:
-        from koru.deps_autorepair import ensure_desktop_stack
-
-        if ensure_desktop_stack(label="koru calibrate"):
-            try:
-                from env2llm.service.registry_service import RegistryService as _RS
-
-                RegistryService = _RS
-                _ENV2LLM_AVAILABLE = True
-                _ENV2LLM_IMPORT_ERROR = None
-            except ImportError as exc:
-                _ENV2LLM_IMPORT_ERROR = str(exc)
-    if not _ENV2LLM_AVAILABLE:
+    if not _ensure_env2llm(label="koru calibrate"):
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -239,6 +239,7 @@ def env2llm_sync_after_calibration(
             "registry_path": str(registry_path) if registry_path else None,
             "ide_calibration_count": len(calibrations),
             "ide_calibrations": calibrations,
+            "service_descriptor": descriptor,
         }
         if not validation.get("ok", True):
             result["validation"] = validation
@@ -258,7 +259,7 @@ def env2llm_get_desktop(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -267,6 +268,7 @@ def env2llm_get_desktop(
             "ok": True,
             "project_id": service.project_id,
             "desktop": service.desktop_payload(refresh=refresh),
+            "service_descriptor": descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -291,7 +293,7 @@ def env2llm_validate_calibration(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -302,6 +304,7 @@ def env2llm_validate_calibration(
 
         result = validate_calibrations(desktop, ide_filter=ide)
         result["project_id"] = service.project_id
+        result["service_descriptor"] = descriptor
         return result
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -318,7 +321,7 @@ def env2llm_list_commands(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -327,6 +330,7 @@ def env2llm_list_commands(
             "ok": True,
             "project_id": service.project_id,
             "commands": service.commands_payload(refresh=refresh),
+            "service_descriptor": descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -343,13 +347,14 @@ def env2llm_list_uris(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
         )
         payload = service.uris_payload(refresh=refresh)
         payload.setdefault("project_id", service.project_id)
+        payload["service_descriptor"] = descriptor
         return payload
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -365,11 +370,15 @@ def env2llm_mqtt_status(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service = _get_service(
+        service, descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
         )
-        return {"ok": True, **service.mqtt_status()}
+        return {
+            "ok": True,
+            **service.mqtt_status(),
+            "service_descriptor": descriptor,
+        }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}

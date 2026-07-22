@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.398-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$5.85-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-235.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.437-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$5.58-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-265.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $5.8524 (642 commits)
-- 👤 **Human dev:** ~$23551 (235.5h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $5.5824 (730 commits)
+- 👤 **Human dev:** ~$26527 (265.3h @ $100/h, 30min dedup)
 
-Generated on 2026-07-17 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
+Generated on 2026-07-21 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 
@@ -45,7 +45,7 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
 
 
 ## autonomous cycle chat activity
-![img.png](img.png)
+
 ```
 [10:18:48] koru ▸ KORUAUTONOMOUS: next 1/3 wait 240s; chat cooldown is active for STARTER-217, so Koru will not paste over the IDE chat
 [10:18:48] koru ▸ KORUAUTONOMOUS: next 2/3 rerun planfile queue (max 50) and check whether STARTER-217 moved
@@ -788,6 +788,22 @@ koru \
   --command "python -m pytest -q"
 ```
 
+### Fleet bootstrap (many sibling git repos)
+
+To wire Koru into every child repo under a parent folder (umbrella workspaces
+like `~/github/subactor`) without destroying existing tickets:
+
+```bash
+koru fleet bootstrap ~/github/subactor --dry-run
+koru fleet bootstrap ~/github/subactor --umbrella \
+  --include runtime --include core --include agents \
+  --exclude backups --exclude logo
+koru fleet ls --workspace ~/github/subactor
+```
+
+Idempotent soft-ensure: missing `policy.yaml` on an existing `.planfile/` is
+added **without** `--force`. See [`docs/koru-fleet.md`](./docs/koru-fleet.md).
+
 ### Or use Taskfile
 
 ```bash
@@ -836,6 +852,36 @@ specific command:
 ```bash
 KORU_PLANFILE_CMD="python -m planfile.cli" koru --queue --project .
 ```
+
+### Execution retries
+
+`execution.max_attempts` is the queue-level execution budget. Planfile's
+`execution.attempt` counts persisted failures; it is incremented by
+`ticket fail`, not by `ticket start`. After a failed shell, API, or LLM
+executor run, Koru:
+
+1. records the failure with `planfile ticket fail`;
+2. runs `planfile ticket ready` while another execution is allowed;
+3. blocks the ticket only after the final allowed failure.
+
+For example, `attempt: 0` and `max_attempts: 3` allow at most three executor
+runs. If the first two fail and the third succeeds, the completed ticket keeps
+`attempt: 2` as its failure history. Each scheduled retry is also appended as a
+ticket note.
+
+Koru uses typed `PlanfileClient.fail()` / `ready()` when available. With the
+published Planfile 0.1.117 client it falls back to the equivalent CLI sequence
+and explicitly restores `status: open`, so upgrading Koru does not require an
+unpublished Planfile package. A lifecycle transition failure fails closed: the
+ticket is blocked instead of being left with a running claim.
+
+When `inputs.max_patch_attempts` is set, it separately controls mechanical
+re-asks inside one patch-mode executor run. Legacy tickets that omit this field
+inherit their patch retry budget from `execution.max_attempts`; set both fields
+explicitly to keep the two limits independent. Keep both values small: the
+worst-case number of model calls is approximately queue executions times model
+calls allowed inside each execution. Use `max_attempts: 1` for failures that
+cannot improve without human input or an external state change.
 
 Supported executor kinds:
 

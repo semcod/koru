@@ -23,6 +23,39 @@ except ImportError:
 DEFAULT_GATES = ["regix", "redup"]
 RUN_TICKET_TIMEOUT_SECONDS = 300
 JOB_STORE_FILE = ".planfile/.koru/jobs.json"
+PATCH_BUDGET_LINES = 80
+OVERSIZED_FILE_COUNT = 5
+OVERSIZED_PROMPT_CHARS = 2000
+_PROJECT_ROOT_KEYS = ("project_root", "project", "project_dir", "cwd")
+
+
+def resolve_mcp_project_root(arguments: dict[str, Any]) -> Path:
+    """Resolve project path from MCP args; accept common aliases.
+
+    Agents often pass ``project`` / ``project_dir`` / ``cwd`` instead of
+    ``project_root``. Prefer an explicit alias over a silent KeyError.
+    """
+    for key in _PROJECT_ROOT_KEYS:
+        raw = arguments.get(key)
+        if isinstance(raw, str) and raw.strip():
+            return Path(raw).expanduser().resolve()
+    raise KeyError(
+        "Missing project path: pass project_root (or alias project / "
+        "project_dir / cwd) as an absolute path on disk."
+    )
+
+
+def _project_root_schema_props(description: str) -> dict[str, Any]:
+    return {
+        "project_root": {
+            "type": "string",
+            "description": description,
+        },
+        "project": {
+            "type": "string",
+            "description": "Alias for project_root (absolute path).",
+        },
+    }
 
 
 def build_tool_schemas(*, project_root_description: str) -> list[dict[str, Any]]:
@@ -31,25 +64,33 @@ def build_tool_schemas(*, project_root_description: str) -> list[dict[str, Any]]
         {
             "name": "koru_list_tickets",
             "description": (
-                "List open koru tickets for a given project (planfile queue). "
-                "Returns ticket id, title, status, priority, executor kind, and associated files."
+                "List koru tickets for a given project (planfile queue). "
+                "Returns ticket id, title, status, priority, executor kind, and associated files. "
+                "When the filtered list is empty, also returns queue_status, counts, and "
+                "suggested_actions (scan, waiting_input, split large work)."
             ),
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "project_root": {
-                        "type": "string",
-                        "description": project_root_description,
-                    },
+                    **_project_root_schema_props(project_root_description),
                     "queue_name": {
                         "type": "string",
                         "description": "Optional queue name if multiple queues exist.",
                     },
                     "status": {
                         "type": "string",
-                        "enum": ["open", "in_progress", "done", "all"],
+                        "enum": [
+                            "open",
+                            "in_progress",
+                            "waiting_input",
+                            "done",
+                            "all",
+                        ],
                         "default": "open",
-                        "description": "Filter tickets by status.",
+                        "description": (
+                            "Filter tickets by status. Use waiting_input to see "
+                            "human-blocked tickets when the open queue looks empty."
+                        ),
                     },
                 },
                 "required": ["project_root"],
@@ -64,10 +105,7 @@ def build_tool_schemas(*, project_root_description: str) -> list[dict[str, Any]]
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "project_root": {
-                        "type": "string",
-                        "description": project_root_description,
-                    },
+                    **_project_root_schema_props(project_root_description),
                     "ticket_id": {
                         "type": "string",
                         "description": "Ticket ID from koru queue.",
@@ -139,10 +177,7 @@ def build_tool_schemas(*, project_root_description: str) -> list[dict[str, Any]]
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "project_root": {
-                        "type": "string",
-                        "description": project_root_description,
-                    },
+                    **_project_root_schema_props(project_root_description),
                     "gates": {
                         "type": "array",
                         "items": {
@@ -185,15 +220,13 @@ def build_tool_schemas(*, project_root_description: str) -> list[dict[str, Any]]
             "name": "koru_propose_edits",
             "description": (
                 "Propose code edits for a given ticket as file edits (no direct writes). "
-                "Returns edit operations that the IDE can apply locally."
+                "Returns edit operations that the IDE can apply locally. "
+                "Includes workflow_hints when the ticket looks oversized for the ≤80-line patch budget."
             ),
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "project_root": {
-                        "type": "string",
-                        "description": project_root_description,
-                    },
+                    **_project_root_schema_props(project_root_description),
                     "ticket_id": {
                         "type": "string",
                         "description": "Ticket ID from koru queue for which to propose edits.",
@@ -298,9 +331,51 @@ def _tickets_for_status_filter(
         return open_tickets
     if status_filter == "in_progress":
         return [t for t in all_tickets if t.get("status") == "in_progress"]
+    if status_filter == "waiting_input":
+        return [t for t in all_tickets if t.get("status") == "waiting_input"]
     if status_filter == "done":
         return [t for t in all_tickets if t.get("status") == "done"]
     return open_tickets
+
+
+def _ticket_status_counts(all_tickets: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {
+        "open": 0,
+        "in_progress": 0,
+        "waiting_input": 0,
+        "done": 0,
+        "other": 0,
+        "total": len(all_tickets),
+    }
+    for ticket in all_tickets:
+        status = str(ticket.get("status") or "other")
+        if status in counts:
+            counts[status] += 1
+        else:
+            counts["other"] += 1
+    return counts
+
+
+def _idle_queue_suggested_actions(counts: dict[str, int]) -> list[str]:
+    actions = [
+        "koru scan --apply  # discover new work from repo signals",
+        (
+            f"Split large migrations into tickets with ≤{PATCH_BUDGET_LINES}-line patches "
+            "(one commit per ticket)"
+        ),
+        "koru_run_quality_gates  # check regix/redup even when the queue is idle",
+    ]
+    if counts.get("waiting_input", 0) > 0:
+        actions.insert(
+            0,
+            "koru_list_tickets status=waiting_input  # unblock human-gated tickets",
+        )
+    if counts.get("in_progress", 0) > 0:
+        actions.insert(
+            0,
+            "koru_list_tickets status=in_progress  # resume or finish claimed work",
+        )
+    return actions
 
 
 def _serialize_mcp_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
@@ -317,7 +392,10 @@ def _serialize_mcp_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
 
 def tool_list_tickets(arguments: dict[str, Any]) -> dict[str, Any]:
     """List open tickets from the planfile queue."""
-    project = Path(arguments["project_root"]).resolve()
+    try:
+        project = resolve_mcp_project_root(arguments)
+    except KeyError as exc:
+        return {"tickets": [], "error": str(exc)}
     queue_name = arguments.get("queue_name")
     status_filter = arguments.get("status", "open")
 
@@ -329,7 +407,19 @@ def tool_list_tickets(arguments: dict[str, Any]) -> dict[str, Any]:
         return {"tickets": [], "error": str(exc)}
 
     tickets = _tickets_for_status_filter(ctx, str(status_filter))
-    return {"tickets": [_serialize_mcp_ticket(t) for t in tickets]}
+    payload: dict[str, Any] = {
+        "tickets": [_serialize_mcp_ticket(t) for t in tickets],
+        "status_filter": status_filter,
+    }
+    all_tickets = ctx.get("all_tickets") or []
+    counts = _ticket_status_counts(all_tickets)
+    payload["counts"] = counts
+    if not tickets:
+        payload["queue_status"] = "idle"
+        payload["suggested_actions"] = _idle_queue_suggested_actions(counts)
+    else:
+        payload["queue_status"] = "active"
+    return payload
 
 
 def _create_job(ticket_id: str, mode: str, project: Path | None = None) -> str:
@@ -530,7 +620,10 @@ def _run_ticket_error_response(
 
 def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
     """Run the koru pipeline for a single ticket."""
-    project = Path(arguments["project_root"]).resolve()
+    try:
+        project = resolve_mcp_project_root(arguments)
+    except KeyError as exc:
+        return {"status": "error", "error": str(exc)}
     ticket_id = arguments["ticket_id"]
     mode = arguments.get("mode", "apply")
     oom_threshold = arguments.get("oom_kill_threshold_mb", 4096)
@@ -708,7 +801,10 @@ def _run_single_gate(
 
 def tool_run_quality_gates(arguments: dict[str, Any]) -> dict[str, Any]:
     """Run quality gates for the project."""
-    project = Path(arguments["project_root"]).resolve()
+    try:
+        project = resolve_mcp_project_root(arguments)
+    except KeyError as exc:
+        return {"overall_status": "error", "results": [], "error": str(exc)}
     requested_gates = arguments.get("gates") or []
     fail_fast = arguments.get("fail_fast", True)
     oom_threshold = arguments.get("oom_kill_threshold_mb", 2048)
@@ -783,42 +879,86 @@ def _build_edit_context(project: Path, file_path: str) -> dict[str, Any]:
     }
 
 
-def tool_propose_edits(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Generate proposed file edits for a ticket (read-only, no writes)."""
-    project = Path(arguments["project_root"]).resolve()
-    ticket_id = arguments["ticket_id"]
-    files_scope = arguments.get("files_scope") or []
-    max_edits = arguments.get("max_edits")
+def _ticket_workflow_hints(
+    *,
+    ticket_files: list[Any],
+    prompt: str,
+) -> dict[str, Any]:
+    file_count = len(ticket_files)
+    prompt_chars = len(prompt or "")
+    oversized = file_count >= OVERSIZED_FILE_COUNT or prompt_chars >= OVERSIZED_PROMPT_CHARS
+    hints: dict[str, Any] = {
+        "patch_budget_lines": PATCH_BUDGET_LINES,
+        "file_count": file_count,
+        "prompt_chars": prompt_chars,
+        "oversized": oversized,
+    }
+    if oversized:
+        hints["guidance"] = (
+            f"Ticket looks large for a single ≤{PATCH_BUDGET_LINES}-line patch. "
+            "Split into smaller planfile tickets (one concern / few files each) "
+            "before implementing; keep one commit per ticket."
+        )
+    return hints
 
+
+def _resolve_propose_edits_ticket(
+    project: Path, ticket_id: str
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     from koru.context import build_context
 
     try:
         ctx = build_context(project=project)
     except Exception as exc:
-        return {"ticket_id": ticket_id, "edits": [], "error": str(exc)}
+        return None, {"ticket_id": ticket_id, "edits": [], "error": str(exc)}
 
     all_tickets = ctx.get("all_tickets") or []
     ticket = _find_ticket(all_tickets, ticket_id)
-
     if ticket is None:
-        return {
+        return None, {
             "ticket_id": ticket_id,
             "edits": [],
             "error": f"Ticket {ticket_id} not found in queue.",
         }
+    return ticket, None
 
-    ticket_files = ticket.get("files") or []
-    if files_scope:
-        ticket_files = [f for f in ticket_files if f in files_scope]
+
+def _scope_ticket_files(ticket_files: list[Any], files_scope: list[Any]) -> list[Any]:
+    if not files_scope:
+        return ticket_files
+    return [f for f in ticket_files if f in files_scope]
+
+
+def _collect_edit_contexts(
+    project: Path, ticket_files: list[Any], max_edits: Any
+) -> list[dict[str, Any]]:
+    edits_context = [_build_edit_context(project, file_path) for file_path in ticket_files]
+    if max_edits and len(edits_context) > max_edits:
+        edits_context = edits_context[:max_edits]
+    return edits_context
+
+
+def tool_propose_edits(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Generate proposed file edits for a ticket (read-only, no writes)."""
+    try:
+        project = resolve_mcp_project_root(arguments)
+    except KeyError as exc:
+        return {"ticket_id": arguments.get("ticket_id"), "edits": [], "error": str(exc)}
+    ticket_id = arguments["ticket_id"]
+    files_scope = arguments.get("files_scope") or []
+    max_edits = arguments.get("max_edits")
+
+    ticket, error = _resolve_propose_edits_ticket(project, ticket_id)
+    if error is not None:
+        return error
+
+    ticket_files = _scope_ticket_files(ticket.get("files") or [], files_scope)
 
     inputs = ticket.get("inputs") or {}
     prompt = inputs.get("prompt", "")
     description = ticket.get("name", "")
 
-    edits_context = [_build_edit_context(project, file_path) for file_path in ticket_files]
-
-    if max_edits and len(edits_context) > max_edits:
-        edits_context = edits_context[:max_edits]
+    edits_context = _collect_edit_contexts(project, ticket_files, max_edits)
 
     return {
         "ticket_id": ticket_id,
@@ -827,6 +967,10 @@ def tool_propose_edits(arguments: dict[str, Any]) -> dict[str, Any]:
         "files": ticket_files,
         "edits": edits_context,
         "executor_kind": (ticket.get("executor") or {}).get("kind", "unknown"),
+        "workflow_hints": _ticket_workflow_hints(
+            ticket_files=ticket_files,
+            prompt=str(prompt or ""),
+        ),
     }
 
 

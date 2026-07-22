@@ -65,9 +65,9 @@ def ticket_claim_or_error(
     planfile_runner: Callable[[Sequence[str], Path], CommandResult],
 ) -> QueueRunResult | None:
     """Run best-effort ``planfile ticket claim``; return an error for real failures."""
-    from koru.queue.ticket import planfile_command
+    from koru.queue.planfile_sdk import planfile_lifecycle_command
 
-    claim = planfile_command(
+    claim = planfile_lifecycle_command(
         project,
         [
             "ticket",

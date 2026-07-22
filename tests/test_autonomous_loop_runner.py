@@ -42,7 +42,7 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
     sleeps: list[float] = []
     queue_result = SimpleNamespace(last_status="idle")
     diag_result = SimpleNamespace(status="ok")
-    loop_state = SimpleNamespace(stagnation_streak=2)
+    loop_state = SimpleNamespace(stagnation_streak=1)
     args = SimpleNamespace(
         emit_events="human",
         max_cycles=0,
@@ -131,13 +131,13 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
     assert sleeps == [4.5]
 
 
-def test_idle_no_ticket_warning_points_to_web_gui(monkeypatch) -> None:
-    warnings: list[tuple[str, dict[str, object]]] = []
+def test_idle_no_ticket_info_points_to_web_gui(monkeypatch) -> None:
+    messages: list[tuple[str, dict[str, object]]] = []
 
-    def capture_warning(message: str, **kwargs: object) -> None:
-        warnings.append((message, kwargs))
+    def capture_info(message: str, **kwargs: object) -> None:
+        messages.append((message, kwargs))
 
-    monkeypatch.setattr("koru.activity_log.activity_warn", capture_warning)
+    monkeypatch.setattr("koru.activity_log.activity_info", capture_info)
 
     autonomous_loop_runner._emit_idle_no_ticket_warning(
         args=SimpleNamespace(emit_events="human"),
@@ -147,8 +147,8 @@ def test_idle_no_ticket_warning_points_to_web_gui(monkeypatch) -> None:
         autopilot_status="skipped(idle_no_ticket)",
     )
 
-    assert len(warnings) == 1
-    message, kwargs = warnings[0]
+    assert len(messages) == 1
+    message, kwargs = messages[0]
     assert "brak otwartych ticketów" in message
     assert kwargs["fmt"] == "human"
     assert "/llm/prompt/create-ticket-for-project" in str(kwargs["hint"])
@@ -160,14 +160,14 @@ def test_idle_no_ticket_warning_points_to_web_gui(monkeypatch) -> None:
     assert kwargs["data"]["blocked_by"] == "idle_no_ticket"
 
 
-def test_create_ticket_quick_action_is_warn_highlighted(monkeypatch) -> None:
-    warnings: list[tuple[str, dict[str, object]]] = []
+def test_create_ticket_quick_action_is_informational(monkeypatch) -> None:
+    messages: list[tuple[str, dict[str, object]]] = []
     info_lines: list[str] = []
 
-    def capture_warning(message: str, **kwargs: object) -> None:
-        warnings.append((message, kwargs))
+    def capture_info(message: str, **kwargs: object) -> None:
+        messages.append((message, kwargs))
 
-    monkeypatch.setattr("koru.activity_log.activity_warn", capture_warning)
+    monkeypatch.setattr("koru.activity_log.activity_info", capture_info)
 
     autonomous_loop_runner._emit_quick_action_line(
         args=SimpleNamespace(emit_events="human"),
@@ -176,11 +176,49 @@ def test_create_ticket_quick_action_is_warn_highlighted(monkeypatch) -> None:
     )
 
     assert info_lines == []
-    assert len(warnings) == 1
-    message, kwargs = warnings[0]
+    assert len(messages) == 1
+    message, kwargs = messages[0]
     assert "action [create ticket]" in message
     assert "brak otwartych ticketów" in str(kwargs["hint"])
     assert kwargs["data"] == {"action": "create_ticket", "blocked_by": "idle_no_ticket"}
+
+
+def test_repeated_idle_cycle_suppresses_repeated_operator_guidance() -> None:
+    logs: list[str] = []
+
+    autonomous_loop_runner._log_operator_next_steps(
+        args=SimpleNamespace(emit_events="human", max_iterations=50),
+        project="project",
+        queue_result=SimpleNamespace(last_status="idle"),
+        waiting_ticket="-",
+        autopilot_status="skipped(idle_no_ticket)",
+        effective_sleep=900.0,
+        loop_state=SimpleNamespace(stagnation_streak=2),
+        stop_reason=None,
+        stdio_info=lambda message, **_kwargs: logs.append(message),
+        autopilot_ide="local",
+    )
+
+    assert logs == []
+
+
+def test_repeated_idle_cycle_suppresses_repeated_idle_info(monkeypatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(
+        "koru.activity_log.activity_info",
+        lambda message, **_kwargs: messages.append(message),
+    )
+
+    autonomous_loop_runner._emit_idle_no_ticket_warning(
+        args=SimpleNamespace(emit_events="human"),
+        project="project",
+        queue_status="idle",
+        waiting_ticket="-",
+        autopilot_status="skipped(idle_no_ticket)",
+        stagnation_streak=2,
+    )
+
+    assert messages == []
 
 
 def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:

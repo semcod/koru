@@ -77,7 +77,7 @@ except ImportError:
     ) -> dict[str, Any] | None:
         del ide, source
         return None
-from koru.integrations.photo_vql_guard import (  # noqa: E402
+from koru.integrations.photo_vql_guard import (  # noqa: E402,I001
     CaptureGuard,
 )
 from koru.integrations.photo_vql_guard import (  # noqa: E402
@@ -111,10 +111,10 @@ from koru.integrations.photo_vql_validation import (  # noqa: E402
     window_titles_from_vql_meta as _window_titles_from_vql_meta,
 )
 from koru.integrations.vdisplay.env_session import (  # noqa: E402
-    clear_stale_observe_session_env,
+    clear_stale_observe_session_env,  # noqa: F401
     dry_run_enabled as _dry_run,
-    session_type as _session_type,
-    sync_prepare_capture_flags_to_env,
+    session_type as _session_type,  # noqa: F401
+    sync_prepare_capture_flags_to_env,  # noqa: F401
 )
 
 
@@ -503,14 +503,12 @@ def record_koru_drive_step(
     return str(session_dir) if session_dir else None
 
 
-from koru.integrations.vdisplay.control_policy import (  # noqa: E402
+from koru.integrations.vdisplay.control_policy import (  # noqa: E402,I001
+    _photo_vql_code_edit_enabled,  # noqa: F401
+    _send_chat_os_injector_enabled,  # noqa: F401
+    _trusted_visual_target_id,  # noqa: F401
     simplified_control_likely_insufficient as _simplified_control_policy,
     vdisplay_fallback_enabled as _vdisplay_fallback_policy,
-)
-from koru.integrations.vdisplay.control_policy import (  # noqa: E402,F401
-    _photo_vql_code_edit_enabled,
-    _send_chat_os_injector_enabled,
-    _trusted_visual_target_id,
 )
 
 
@@ -577,7 +575,6 @@ from koru.integrations.vdisplay.desktop_probe import (  # noqa: E402,F401
     _desktop_probe_ide_surface_rank,
     _probe_ide_processes,
 )
-
 
 # Surface capture confirmation extracted to vdisplay.surface_capture.
 from koru.integrations.vdisplay.surface_capture import (  # noqa: E402,F401
@@ -676,13 +673,13 @@ def _photo_vql_metadata_root() -> Path:
     return Path(os.environ.get("VDISPLAY_METADATA_DIR", ".vdisplay")).expanduser()
 
 
-from koru.integrations.vdisplay.photo_vql_meta import (  # noqa: E402,F401
+from koru.integrations.vdisplay.photo_vql_meta import (  # noqa: E402,I001
     COMPETING_IDE_WINDOW_TOKENS as _COMPETING_IDE_WINDOW_TOKENS,
-    IDE_WINDOW_TITLE_TOKENS as _IDE_WINDOW_TITLE_TOKENS,
+    IDE_WINDOW_TITLE_TOKENS as _IDE_WINDOW_TITLE_TOKENS,  # noqa: F401
     _capture_validation_from_meta,
-    _photo_vql_overlay_labels,
-    _photo_vql_portal_actor_detected,
-    _photo_vql_share_prompt_detected,
+    _photo_vql_overlay_labels,  # noqa: F401
+    _photo_vql_portal_actor_detected,  # noqa: F401
+    _photo_vql_share_prompt_detected,  # noqa: F401
     _photo_vql_system_overlay_warning,
     _type_text_plan_validation_warnings,
     photo_vql_capture_validation_failed_warning,
@@ -920,7 +917,7 @@ def _auto_open_ide_enabled(*, ide: str = "auto") -> bool:
 
 
 def _real_imgl_src() -> str | None:
-    """Filesystem path to semcod imgl (not koru/src/imgl stub)."""
+    """Filesystem path to a semcod imgl checkout, when one is available."""
     candidates: list[str] = []
     explicit = os.environ.get("IMGL_SRC", "").strip()
     if explicit:
@@ -934,14 +931,12 @@ def _real_imgl_src() -> str | None:
 
 
 def _ensure_real_imgl_on_path() -> None:
-    """Prefer real semcod imgl over koru/src/imgl compatibility stub."""
+    """Prefer an explicit semcod imgl checkout over an installed package."""
     import sys
 
     imgl_root = _real_imgl_src()
     if not imgl_root:
         return
-    koru_stub = str(Path(__file__).resolve().parents[2] / "imgl")
-    sys.path = [p for p in sys.path if p not in {koru_stub, str(Path(koru_stub).resolve())}]
     if imgl_root in sys.path:
         sys.path.remove(imgl_root)
     sys.path.insert(0, imgl_root)
@@ -3396,85 +3391,11 @@ def _photo_vql_elements() -> tuple[list[dict], str | None]:
     return els, vql.get("_source")
 
 
-def _live_surface_monitor_lookup(source: str) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
-    """Locate the monitor row matching source among local monitors (best effort)."""
-    monitors: list[dict[str, Any]] = []
-    monitor: dict[str, Any] | None = None
-    try:
-        from vdisplay.application.services.discovery import list_monitors_local
-
-        monitors = list(list_monitors_local().get("monitors") or [])
-        monitor = next((row for row in monitors if str(row.get("name") or "") == source), None)
-    except Exception:
-        pass
-    return monitors, monitor
-
-
-def _live_surface_screencast_region(
-    meta: dict[str, Any],
-    monitor: dict[str, Any] | None,
-    monitors: list[dict[str, Any]],
-) -> None:
-    """Fill meta region from an active portal screencast stream (best effort)."""
-    try:
-        from vdisplay.capture.portal_screencast import get_active_screencast
-        from vdisplay.capture.screencast_crop import _resolve_multi_stream_region
-        from vdisplay.capture.screencast_stream_matching import screencast_stream_index_for_monitor
-
-        session = get_active_screencast()
-        if session is not None and isinstance(monitor, dict):
-            stream_idx = screencast_stream_index_for_monitor(
-                session,
-                monitor,
-                all_monitors=monitors or [monitor],
-            )
-            region = _resolve_multi_stream_region(session, stream_idx, monitor)
-            if isinstance(region, dict):
-                meta["region"] = dict(region)
-                meta["screencast_stream"] = True
-                meta["width"] = int(region.get("width") or 0)
-                meta["height"] = int(region.get("height") or 0)
-                meta["screencast_stream_index"] = stream_idx
-    except Exception:
-        pass
-
-
-def _live_surface_monitor_region_fallback(meta: dict[str, Any], source: str) -> None:
-    """Fill meta region from monitor geometry when no screencast region resolved."""
-    try:
-        from vdisplay.application.services.discovery import list_monitors_local
-
-        monitor = next(
-            (
-                row
-                for row in (list_monitors_local().get("monitors") or [])
-                if str(row.get("name") or "") == source
-            ),
-            None,
-        )
-        if isinstance(monitor, dict):
-            meta["region"] = {
-                "x": int(monitor.get("x") or 0),
-                "y": int(monitor.get("y") or 0),
-                "width": int(monitor.get("width") or monitor.get("width_px") or 0),
-                "height": int(monitor.get("height") or monitor.get("height_px") or 0),
-            }
-    except Exception:
-        pass
-
-
 def _live_surface_capture_meta(source: str) -> dict[str, Any]:
-    """Fresh capture metadata for surface-based pointer math (ignore stale PNG sidecars)."""
-    meta: dict[str, Any] = {"source": source, "monitor_name": source}
-    monitors, monitor = _live_surface_monitor_lookup(source)
-    if isinstance(monitor, dict):
-        meta["rotation"] = monitor.get("rotation") or "normal"
-    _live_surface_screencast_region(meta, monitor, monitors)
-    if "region" not in meta:
-        _live_surface_monitor_region_fallback(meta, source)
-    meta.setdefault("width", 2048)
-    meta.setdefault("height", 1280)
-    return meta
+    """Fresh VDisplay-owned snapshot for surface-based pointer math."""
+    from vdisplay.capture import resolve_live_capture_meta
+
+    return resolve_live_capture_meta(source, default_size=(2048, 1280))
 
 
 def _jetbrains_surface_chat_target(*, ide: str, source: str | None = None) -> dict[str, Any] | None:
@@ -3925,47 +3846,8 @@ def _photo_capture_meta_for_source(source: str) -> dict[str, Any]:
     return _enrich_capture_meta_for_pointer(meta, source)
 
 
-def _enrich_stream_meta_via_vdisplay(enriched: dict[str, Any]) -> dict[str, Any]:
-    """Best-effort screencast stream-meta enrichment via vdisplay (either import path)."""
-    try:
-        from vdisplay.capture.screencast_stream_meta import enrich_screencast_stream_meta
-
-        enriched = enrich_screencast_stream_meta(enriched)
-    except Exception:
-        try:
-            from vdisplay.control.screenshot_verify import enrich_screencast_stream_meta
-
-            enriched = enrich_screencast_stream_meta(enriched)
-        except Exception:
-            pass
-    return enriched
-
-
-def _region_origin(enriched: dict[str, Any]) -> tuple[int, int]:
-    """Return the (x, y) origin of the capture region (0, 0 when absent)."""
-    region = enriched.get("region") if isinstance(enriched.get("region"), dict) else {}
-    return int(region.get("x") or 0), int(region.get("y") or 0)
-
-
-def _region_dict_from_bounds(db: dict[str, Any]) -> dict[str, int]:
-    """Build a region dict from a bounds-like dict (x/y/width/height)."""
-    return {
-        "x": int(db.get("x") or 0),
-        "y": int(db.get("y") or 0),
-        "width": int(db.get("width") or 0),
-        "height": int(db.get("height") or 0),
-    }
-
-
-def _enrich_region_from_display_bounds(enriched: dict[str, Any]) -> None:
-    """Derive the capture region from embedded display_bounds when usable."""
-    display_bounds = enriched.get("display_bounds")
-    if isinstance(display_bounds, dict) and display_bounds.get("width") and display_bounds.get("height"):
-        enriched["region"] = _region_dict_from_bounds(display_bounds)
-
-
-def _enrich_region_from_ide_map(enriched: dict[str, Any], source: str) -> None:
-    """Copy region/rotation/stream fields from a matching calibrated IDE map's capture_meta."""
+def _matching_ide_map_capture_meta(source: str) -> dict[str, Any]:
+    """Load caller-approved calibrated metadata; VDisplay owns its normalization."""
     app_id = _ide_prompt_app_id(source if source in {"pycharm", "jetbrains", "idea"} else "pycharm")
     map_path = _resolve_ide_prompt_map(app_id)
     if map_path and os.path.isfile(map_path):
@@ -3973,55 +3855,36 @@ def _enrich_region_from_ide_map(enriched: dict[str, Any], source: str) -> None:
             with open(map_path) as f:
                 map_data = json.load(f)
             mcap = map_data.get("capture_meta") if isinstance(map_data.get("capture_meta"), dict) else {}
-            if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, "", "DP-2"}:
-                for key in (
-                    "region",
-                    "rotation",
-                    "screencast_stream",
-                    "screencast_full_frame",
-                    "width",
-                    "height",
-                    "display_bounds",
-                ):
-                    if mcap.get(key) is not None:
-                        enriched[key] = mcap[key]
-                db = mcap.get("display_bounds")
-                if isinstance(db, dict) and not enriched.get("region"):
-                    enriched["region"] = _region_dict_from_bounds(db)
+            if str(mcap.get("source") or mcap.get("monitor_name") or "") in {source, ""}:
+                return dict(mcap)
         except Exception:
             pass
-
-
-def _enrich_region_from_monitor(enriched: dict[str, Any], source: str, origin_x: int, origin_y: int) -> None:
-    """Fill rotation/region from the vdisplay monitor layout as a last resort."""
-    try:
-        from vdisplay.input.coords import _monitor_by_name
-
-        mon = _monitor_by_name(enriched.get("display"), source)
-        if isinstance(mon, dict):
-            enriched.setdefault("rotation", mon.get("rotation"))
-            if origin_x == 0 and origin_y == 0 and not enriched.get("region"):
-                enriched["region"] = {
-                    "x": int(mon.get("x") or 0),
-                    "y": int(mon.get("y") or 0),
-                    "width": int(mon.get("width") or enriched.get("width") or 0),
-                    "height": int(mon.get("height") or enriched.get("height") or 0),
-                }
-    except Exception:
-        pass
+    return {}
 
 
 def _enrich_capture_meta_for_pointer(meta: dict[str, Any], source: str) -> dict[str, Any]:
-    """Fill portal stream region/rotation when screenshot sidecar only has a 0,0 crop."""
-    enriched = _enrich_stream_meta_via_vdisplay(dict(meta or {}))
-    origin_x, origin_y = _region_origin(enriched)
-    if origin_x == 0 and origin_y == 0:
-        _enrich_region_from_display_bounds(enriched)
-        origin_x, origin_y = _region_origin(enriched)
-    if origin_x == 0 and origin_y == 0:
-        _enrich_region_from_ide_map(enriched, source)
-        _enrich_region_from_monitor(enriched, source, origin_x, origin_y)
-    return enriched
+    """Bind Koru's calibrated snapshot to VDisplay's canonical metadata model."""
+    try:
+        from vdisplay.capture import canonicalize_capture_meta
+        from vdisplay.capture.screencast_stream_meta import enrich_screencast_stream_meta
+        from vdisplay.input import monitor_by_name
+
+        enriched = enrich_screencast_stream_meta(dict(meta or {}))
+        try:
+            monitor = monitor_by_name(enriched.get("display"), source)
+        except Exception:
+            # Headless runners have no discoverable host display. Canonical
+            # capture metadata and a calibrated fallback do not require one.
+            monitor = None
+        return canonicalize_capture_meta(
+            enriched,
+            source=source,
+            fallback_meta=_matching_ide_map_capture_meta(source),
+            monitor=monitor,
+            replace_zero_origin=True,
+        )
+    except Exception:
+        return dict(meta or {})
 
 
 def _map_chat_input_candidate_keys(app_id: str) -> list[str]:
@@ -4163,13 +4026,20 @@ def _map_chat_target_capture_local(*, ide: str, source: str) -> dict[str, Any] |
 def _global_coords_from_vql_local(*, x: int, y: int, source: str) -> tuple[int | None, int | None, dict[str, Any]]:
     """Map capture-local VQL coords to global pointer space (for command generation audit)."""
     try:
-        from vdisplay.input.coords import global_pointer_coords
+        from vdisplay.capture import compile_capture_coordinate_map, global_pointer_coords
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
-        gx, gy, details = global_pointer_coords(int(x), int(y), capture_meta)
+        coordinate_map = compile_capture_coordinate_map(capture_meta, source=source)
+        pointer_meta = dict(capture_meta)
+        # The compiled contract resolves an absent rotation to ``normal``.
+        # Pass that fact on so coordinate mapping remains pure and does not
+        # fall back to optional live-monitor discovery in headless runtimes.
+        pointer_meta.setdefault("rotation", coordinate_map.rotation)
+        gx, gy, details = global_pointer_coords(int(x), int(y), pointer_meta)
         return int(gx), int(gy), {
             "capture_meta_region": capture_meta.get("region"),
-            "capture_meta_rotation": capture_meta.get("rotation"),
+            "capture_meta_rotation": pointer_meta.get("rotation"),
+            "coordinate_map": coordinate_map.to_dict(),
             "mapping_details": details,
         }
     except Exception as exc:
@@ -4610,10 +4480,12 @@ from koru.integrations.vdisplay.pointer_calibration import (  # noqa: E402,F401
 def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, Any]:
     """Direct ydotool move+click when vdisplay vision point click fails."""
     try:
+        from vdisplay.capture import compile_capture_coordinate_map
         from vdisplay.input.coords import global_pointer_coords
         from vdisplay.input.linux_ydotool import LinuxYdotoolInput
 
         capture_meta = _enrich_capture_meta_for_pointer(_photo_capture_meta_for_source(source), source)
+        coordinate_map = compile_capture_coordinate_map(capture_meta, source=source)
         # Deterministic own-uinput-ABS positioning (opt-in): a cached per-monitor
         # affine converts capture pixel -> ABS command. Preferred over ydotool's
         # opaque space on multi-monitor HiDPI. Falls back below on failure.
@@ -4644,6 +4516,7 @@ def _ydotool_click_capture_local(*, x: int, y: int, source: str) -> dict[str, An
             "y": int(gy),
             "local_x": int(x),
             "local_y": int(y),
+            "coordinate_map": coordinate_map.to_dict(),
             "details": details,
         }
     except Exception as exc:
@@ -4951,6 +4824,26 @@ def _type_text_paste_or_type(
     return result
 
 
+def _type_text_prepare_click_context(
+    *,
+    x: int,
+    y: int,
+    ide: str,
+    focus_ok: bool,
+    focus_res: dict[str, Any] | None,
+    force_point_click: bool,
+    vql_target: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool, dict[str, Any]]:
+    hints = _ide_hints(ide) if ide and ide != "auto" else {}
+    jetbrains = _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
+    must_click = force_point_click or jetbrains or not focus_ok
+    target_for_log = vql_target or (focus_res or {}).get("vql_target") or {
+        "click_center": {"x": x, "y": y},
+        "note": "pre-type chat write",
+    }
+    return hints, must_click, target_for_log
+
+
 def _type_text_at_vql_coords(
     value: str,
     *,
@@ -4965,14 +4858,16 @@ def _type_text_at_vql_coords(
     command_plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Click caret at VQL capture coords, then type/paste via resolved pointer input."""
-    hints = _ide_hints(ide) if ide and ide != "auto" else {}
+    hints, must_click, target_for_log = _type_text_prepare_click_context(
+        x=x,
+        y=y,
+        ide=ide,
+        focus_ok=focus_ok,
+        focus_res=focus_res,
+        force_point_click=force_point_click,
+        vql_target=vql_target,
+    )
     result: dict[str, Any] = {"ok": False, "coords": {"x": x, "y": y}}
-    jetbrains = _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}
-    must_click = force_point_click or jetbrains or not focus_ok
-    target_for_log = vql_target or (focus_res or {}).get("vql_target") or {
-        "click_center": {"x": x, "y": y},
-        "note": "pre-type chat write",
-    }
     blocking_warnings = _type_text_blocking_warnings(
         x=x, y=y, ide=ide, target_for_log=target_for_log, command_plan=command_plan
     )
@@ -6369,9 +6264,9 @@ def _layers_from_imgl_sidecar_file(vql_path: str) -> tuple[list[dict], str | Non
     except Exception:
         return [], None
     try:
-        from vdisplay.integrations.vql_bridge import _build_imgl_layers
+        from vdisplay.integrations import build_imgl_layers
 
-        built = _build_imgl_layers({"ok": True, "scene": imgl_data})
+        built = build_imgl_layers({"ok": True, "scene": imgl_data})
     except Exception:
         built = []
     if not built:
@@ -6379,47 +6274,11 @@ def _layers_from_imgl_sidecar_file(vql_path: str) -> tuple[list[dict], str | Non
     return _layers_from_vdisplay_sidecar({"layers": built, "metadata": {"render_intent": {"layers": built}}}), imgl_path
 
 
-def _vql_sidecar_layer_center(layer: dict, bbox: Any) -> dict:
-    """Click-center for a vdisplay sidecar layer (bbox midpoint fallback)."""
-    center = layer.get("click_center") or layer.get("center") or {}
-    if not center and isinstance(bbox, dict):
-        w = int(bbox.get("w") or bbox.get("width") or 0)
-        h = int(bbox.get("h") or bbox.get("height") or 0)
-        if w > 0 and h > 0:
-            center = {
-                "x": int(bbox.get("x") or 0) + w // 2,
-                "y": int(bbox.get("y") or 0) + h // 2,
-            }
-    return center
-
-
-def _vql_sidecar_layer_entry(layer: dict) -> dict:
-    """Normalize a single vdisplay sidecar layer into a ui-element dict."""
-    bbox = layer.get("bbox") or {}
-    center = _vql_sidecar_layer_center(layer, bbox)
-    return {
-        "id": layer.get("id"),
-        "role": layer.get("kind") or layer.get("role"),
-        "label": layer.get("text") or layer.get("label"),
-        "bounds": bbox,
-        "click_center": center,
-        "metadata": {k: layer.get(k) for k in ("confidence", "location") if k in layer},
-    }
-
-
 def _layers_from_vdisplay_sidecar(data: dict) -> list[dict]:
-    """Extract IMGL/VQL layers from vdisplay ``.png.vql.json`` sidecar."""
-    metadata = data.get("metadata") or {}
-    render = metadata.get("render_intent") or {}
-    layers = render.get("layers") or data.get("layers") or []
-    if not isinstance(layers, list):
-        return []
-    ui: list[dict] = []
-    for layer in layers:
-        if not isinstance(layer, dict):
-            continue
-        ui.append(_vql_sidecar_layer_entry(layer))
-    return ui
+    """Delegate sidecar element normalization to its VDisplay owner."""
+    from vdisplay.integrations import normalize_vql_ui_elements
+
+    return normalize_vql_ui_elements(data)
 
 
 def _with_embedded_capture_validation(meta: dict, raw: dict | None = None) -> dict:
@@ -6684,84 +6543,24 @@ def _freshest_populated_vql_candidate() -> str | None:
     return best
 
 
-def _fresh_vql_bbox_xy(bbox: dict) -> tuple[int, int]:
-    """Top-left corner of a dict-shaped fresh-VQL bbox."""
-    bx = int(bbox.get("x") or bbox.get("left") or 0)
-    by = int(bbox.get("y") or bbox.get("top") or 0)
-    return bx, by
-
-
-def _fresh_vql_bbox_wh(bbox: dict, bx: int, by: int) -> tuple[int, int]:
-    """Width/height of a dict-shaped fresh-VQL bbox, deriving from right/bottom when needed."""
-    bw = int(bbox.get("w") or bbox.get("width") or 0)
-    bh = int(bbox.get("h") or bbox.get("height") or 0)
-    if not bw and bbox.get("right") is not None:
-        bw = max(0, int(bbox.get("right") or 0) - bx)
-    if not bh and bbox.get("bottom") is not None:
-        bh = max(0, int(bbox.get("bottom") or 0) - by)
-    return bw, bh
-
-
-def _fresh_vql_center(center: Any, bx: int, by: int, bw: int, bh: int) -> tuple[int, int]:
-    """Click center from a fresh-VQL element's center field, defaulting to bbox center."""
-    if isinstance(center, dict) and center:
-        cx = int(center.get("x") or bx + bw // 2)
-        cy = int(center.get("y") or by + bh // 2)
-    elif isinstance(center, (list, tuple)) and len(center) >= 2:
-        cx, cy = int(center[0]), int(center[1])
-    else:
-        cx, cy = bx + bw // 2, by + bh // 2
-    return cx, cy
-
-
-def _fresh_vql_center_only(center: Any) -> tuple[Any, Any]:
-    """Click center when a fresh-VQL element has no usable bbox.
-
-    Falls back to the DP-1 capture-frame center (1024, 640) at every level,
-    mirroring resolve_click_for_frame's hardcoded fallback.
-    """
-    if isinstance(center, dict) and center:
-        return int(center.get("x") or 1024), int(center.get("y") or 640)
-    c = center or [1024, 640]
-    if not isinstance(c, (list, tuple)):
-        c = [1024, 640]
-    return c[0], c[1]
-
-
-def _fresh_vql_bbox_center(e: dict) -> tuple[int, int, int, int, Any, Any]:
-    """Resolve (bx, by, bw, bh, cx, cy) for a fresh-VQL element across bbox shapes."""
-    bbox = e.get("bbox") or [0, 0, 0, 0]
-    center = e.get("click_center") or e.get("center") or {}
-    if isinstance(bbox, dict):
-        bx, by = _fresh_vql_bbox_xy(bbox)
-        bw, bh = _fresh_vql_bbox_wh(bbox, bx, by)
-        cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
-    elif isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
-        bx, by = int(bbox[0]), int(bbox[1])
-        bw = max(0, int(bbox[2]) - bx)
-        bh = max(0, int(bbox[3]) - by)
-        cx, cy = _fresh_vql_center(center, bx, by, bw, bh)
-    else:
-        cx, cy = _fresh_vql_center_only(center)
-        bx, by, bw, bh = 0, 0, 0, 0
-    return bx, by, bw, bh, cx, cy
-
-
 def _parse_fresh_vql_elements(data: dict, cand: str) -> dict:
-    """Helper extracted to reduce CC in load_vql_metadata (autonomous refactor for high-CC split)."""
-    ui_els = []
-    for e in data["elements"]:
-        bx, by, bw, bh, cx, cy = _fresh_vql_bbox_center(e)
-        ui_els.append({
-            "id": str(e.get("id", f"elem-{len(ui_els)}")),
-            "role": e.get("role") or e.get("kind") or "unknown",
-            "bounds": {"x": int(bx), "y": int(by), "width": int(bw), "height": int(bh), "coordinate_space": "capture_frame_local"},  # noqa: E501
-            "click_center": {"x": int(cx), "y": int(cy), "note": f"fresh VQL elem, color={e.get('color')}, conf={e.get('confidence')}"},  # noqa: E501
-            "label": e.get("label") or e.get("text"),
-            "metadata": {k: e.get(k) for k in ("color","confidence","location") if k in e}
-        })
-    res = {"ui_elements": ui_els, "layers": ui_els, "element_count": data.get("element_count", len(ui_els)), "by_role": data.get("by_role", {}), "scene": data.get("scene"), "_source": cand, "raw_fresh": True}  # noqa: E501
-    return res
+    """Normalize fresh elements through VDisplay while preserving Koru provenance."""
+    from vdisplay.integrations import normalize_vql_ui_elements
+
+    ui_elements = normalize_vql_ui_elements(data, fallback_center=(1024, 640))
+    for raw, element in zip(data["elements"], ui_elements, strict=False):
+        element["click_center"]["note"] = (
+            f"fresh VQL elem, color={raw.get('color')}, conf={raw.get('confidence')}"
+        )
+    return {
+        "ui_elements": ui_elements,
+        "layers": ui_elements,
+        "element_count": data.get("element_count", len(ui_elements)),
+        "by_role": data.get("by_role", {}),
+        "scene": data.get("scene"),
+        "_source": cand,
+        "raw_fresh": True,
+    }
 
 
 def get_vql_target(ide: str, *, role: str | None = None, name_contains: str | None = None, label: str | None = None) -> dict | None:  # noqa: E501

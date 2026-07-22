@@ -410,11 +410,19 @@ def _emit_pre_drive_control_route(
     plugin_connected: bool,
     cycle_telemetry: dict[str, Any],
     hp: callable,
+    queue_status: str = "",
 ) -> None:
     """One line + telemetry: which control route gillm would pick, and why.
 
     Best-effort — older gillm without gillm.routing (<0.1.22) is skipped.
     """
+    if queue_status.strip().lower() == "idle":
+        cycle_telemetry["control_route"] = {
+            "selected": None,
+            "status": "skipped",
+            "reason": "queue_idle",
+        }
+        return
     try:
         from koru.tillm_bridge import shell_drive_client_id
 
@@ -502,6 +510,7 @@ def _apply_pre_drive_plugin_readiness(
             plugin_connected=False,
             cycle_telemetry=cycle_telemetry,
             hp=hp,
+            queue_status=queue_result.last_status,
         )
         return
     plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
@@ -512,6 +521,7 @@ def _apply_pre_drive_plugin_readiness(
         plugin_connected=bool(plugin_ok),
         cycle_telemetry=cycle_telemetry,
         hp=hp,
+        queue_status=queue_result.last_status,
     )
     if plugin_reason:
         cycle_telemetry["autopilot_plugin_ready_reason"] = plugin_reason

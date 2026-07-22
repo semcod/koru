@@ -1,0 +1,434 @@
+# Declarative architecture DSL. It describes ownership and migration gates;
+# it is not an execution language and grants no authority by itself.
+schema_version: "1.0"
+
+policy:
+  authorization_owner: semcod/koru
+  dependency_direction: dependencies_must_not_import_koru
+  private_api_imports: forbidden
+  human_cli_output_parsing: forbidden
+  release_order: dependency_first
+  compatibility_shim_releases: 1
+
+repositories:
+  - id: oqlos/testql
+    package: testql
+    state: existing
+    checkout_hint: ~/github/oqlos/testql
+  - id: semcod/code2llm
+    package: code2llm
+    state: existing
+    checkout_hint: ~/github/semcod/code2llm
+  - id: semcod/env2llm
+    package: env2llm
+    state: existing
+    checkout_hint: ~/github/semcod/env2llm
+  - id: semcod/gillm
+    package: gillm
+    state: existing
+    checkout_hint: ~/github/semcod/gillm
+  - id: semcod/imgl
+    package: imgl
+    state: existing
+    checkout_hint: ~/github/semcod/imgl
+  - id: semcod/koru
+    package: koru
+    state: existing
+    checkout_hint: ~/github/semcod/koru
+  - id: semcod/koruide
+    package: koruide
+    state: planned
+    checkout_hint: ~/github/semcod/koruide
+  - id: semcod/nlp2uri
+    package: nlp2uri
+    state: existing
+    checkout_hint: ~/github/semcod/nlp2uri
+  - id: semcod/pfix
+    package: pfix
+    state: existing
+    checkout_hint: ~/github/semcod/pfix
+  - id: semcod/planfile
+    package: planfile
+    state: existing
+    checkout_hint: ~/github/semcod/planfile
+  - id: semcod/prefact
+    package: prefact
+    state: existing
+    checkout_hint: ~/github/semcod/prefact
+  - id: semcod/redup
+    package: redup
+    state: existing
+    checkout_hint: ~/github/semcod/redup
+  - id: semcod/tagi
+    package: tagi
+    state: existing
+    checkout_hint: ~/github/semcod/tagi
+  - id: semcod/tillm
+    package: tillm
+    state: existing
+    checkout_hint: ~/github/semcod/tillm
+  - id: wronai/vdisplay
+    package: vdisplay
+    state: existing
+    checkout_hint: ~/github/wronai/vdisplay
+
+contracts:
+  - id: env2llm.service_factory
+    mechanism_owner: semcod/env2llm
+    decision_owner: semcod/koru
+    effect: observe
+    llm_role: none
+    request_schema: env2llm.service-factory-request.v1
+    result_schema: env2llm.service-descriptor.v1
+  - id: gillm.gui_action
+    mechanism_owner: semcod/gillm
+    decision_owner: semcod/koru
+    effect: control
+    llm_role: none
+    request_schema: gillm.gui-action-plan.v1
+    result_schema: gillm.gui-action-result.v1
+  - id: imgl.vision_control
+    mechanism_owner: semcod/imgl
+    decision_owner: semcod/koru
+    effect: control
+    llm_role: proposal_only
+    request_schema: imgl.vision-control-request.v1
+    result_schema: imgl.vision-control-result.v1
+  - id: koruide.control_adapter
+    mechanism_owner: semcod/koruide
+    decision_owner: semcod/koru
+    effect: control
+    llm_role: none
+    request_schema: koruide.control-request.v1
+    result_schema: koruide.control-result.v1
+  - id: nlp2uri.control_plan
+    mechanism_owner: semcod/nlp2uri
+    decision_owner: semcod/koru
+    effect: propose
+    llm_role: proposal_only
+    request_schema: nlp2uri.intent-request.v1
+    result_schema: nlp2uri.control-plan.v1
+  - id: planfile.ticket_proposal
+    mechanism_owner: semcod/planfile
+    decision_owner: semcod/koru
+    effect: propose
+    llm_role: proposal_only
+    request_schema: planfile.analysis-finding.v1
+    result_schema: planfile.ticket-proposal.v1
+  - id: planfile.ticket_transition
+    mechanism_owner: semcod/planfile
+    decision_owner: semcod/koru
+    effect: mutate
+    llm_role: none
+    request_schema: planfile.ticket-transition.v1
+    result_schema: planfile.ticket-transition-result.v1
+  - id: tagi.change_plan
+    mechanism_owner: semcod/tagi
+    decision_owner: semcod/koru
+    effect: propose
+    llm_role: none
+    request_schema: tagi.change-query.v1
+    result_schema: tagi.change-plan.v1
+  - id: testql.verification
+    mechanism_owner: oqlos/testql
+    decision_owner: semcod/koru
+    effect: verify
+    llm_role: none
+    request_schema: testql.verification-request.v1
+    result_schema: testql.verification-result.v1
+  - id: tillm.completion
+    mechanism_owner: semcod/tillm
+    decision_owner: semcod/koru
+    effect: propose
+    llm_role: proposal_only
+    request_schema: tillm.completion-request.v1
+    result_schema: tillm.completion-result.v1
+  - id: vdisplay.coordinate_map
+    mechanism_owner: wronai/vdisplay
+    decision_owner: semcod/koru
+    effect: observe
+    llm_role: none
+    request_schema: vdisplay.coordinate-map-request.v1
+    result_schema: vdisplay.coordinate-map.v1
+  - id: vdisplay.screen_observation
+    mechanism_owner: wronai/vdisplay
+    decision_owner: semcod/koru
+    effect: observe
+    llm_role: proposal_only
+    request_schema: vdisplay.screen-observation-request.v1
+    result_schema: vdisplay.screen-observation.v1
+
+extractions:
+  - id: analyzers.ticket_proposal
+    order: 20
+    priority: P0
+    status: proposed
+    kind: move
+    source_modules:
+      - src/koru/autonomy/code2llm_discovery.py
+      - src/koru/redup_integration.py
+      - src/koru/scan.py
+    target_repositories:
+      - semcod/code2llm
+      - semcod/pfix
+      - semcod/planfile
+      - semcod/prefact
+      - semcod/redup
+    contract_ids:
+      - planfile.ticket_proposal
+    move:
+      - Parsing and normalization of analyzer-specific output into typed findings.
+      - Emission of planfile.ticket-proposal.v1 by each analyzer adapter.
+    keep_in_koru:
+      - Cross-source deduplication, scheduling, authorization and persistence decisions.
+      - Idle and freshness budgets that decide when discovery may run.
+    current_smells:
+      - Koru parses multiple human-facing CLI formats in one large scan module.
+      - code2llm and redup already expose partial Planfile integrations with different shapes.
+    acceptance:
+      - Koru consumes canonical proposals without parsing human CLI text.
+      - Malformed or unknown proposal versions fail closed before ticket creation.
+    blocked_by:
+      - planfile.client_lifecycle
+  - id: env2llm.public_factory
+    order: 70
+    priority: P1
+    status: complete
+    kind: delete_duplicate
+    source_modules:
+      - src/koruapi/env2llm_registry.py
+    target_repositories:
+      - semcod/env2llm
+    contract_ids:
+      - env2llm.service_factory
+    move:
+      - Promote the service factory and registry descriptor to a public env2llm API.
+    keep_in_koru:
+      - The API facade and the decision which environment observations a run may request.
+    current_smells:
+      - Resolved in env2llm 0.1.14 and Koru 0.1.434+; env2llm owns typed construction, caching and serializable provenance.
+    acceptance:
+      - Koru has no env2llm private imports and unknown service kinds return a typed error.
+      - Every successful Koru registry response carries the canonical env2llm service descriptor and request hash.
+    blocked_by: []
+  - id: gillm.actuation_recovery
+    order: 40
+    priority: P1
+    status: complete
+    kind: delete_duplicate
+    source_modules:
+      - src/koru/ide_adapters/gillm_client.py
+      - src/koru/ide_adapters/gillm_recovery.py
+      - src/koru/integrations/vdisplay_client.py
+    target_repositories:
+      - semcod/gillm
+    contract_ids:
+      - gillm.gui_action
+    move:
+      - Coordinate-based typing strategy chain and reusable actuation recovery mechanisms.
+      - Runtime activity callback interface so gillm never imports Koru.
+    keep_in_koru:
+      - GUI fallback order, capability/grant checks and escalation to needs_human.
+      - Ticket notes and evidence binding for the authorized action.
+    current_smells:
+      - Resolved in Gillm 0.1.24 and Koru 0.1.432+; guard tests prevent behavioral fallback copies and reverse Koru imports from returning.
+    acceptance:
+      - gillm imports no Koru module and Koru carries no behavioral fallback copy.
+      - A typed result preserves attempted strategy, coordinates and evidence references.
+    blocked_by: []
+  - id: imgl.vision_transport
+    order: 50
+    priority: P1
+    status: proposed
+    kind: move
+    source_modules:
+      - src/koru/integrations/imgl_client.py
+    target_repositories:
+      - semcod/imgl
+    contract_ids:
+      - imgl.vision_control
+    move:
+      - Direct and REST transports, screenshot refresh and capture freshness handling.
+      - Natural-language-to-IMGL request normalization into a typed proposal.
+    keep_in_koru:
+      - Choice of transport fallback and authorization of any control or submit action.
+    current_smells:
+      - Koru combines transport, capture lifecycle, prompt handling and policy in one adapter.
+    acceptance:
+      - IMGL can execute a bounded typed request without importing Koru.
+      - Koru rejects stale observations and ungranted submit actions before dispatch.
+    blocked_by: []
+  - id: koruide.distribution
+    order: 110
+    priority: P2
+    status: blocked
+    kind: publish_package
+    source_modules:
+      - src/koruide
+    target_repositories:
+      - semcod/koruide
+    contract_ids:
+      - koruide.control_adapter
+    move:
+      - Publish the standalone-safe koruide package from its own repository and release train.
+    keep_in_koru:
+      - Optional adapter registration, lane policy, grants and evidence capture.
+    current_smells:
+      - A reusable IDE control package is versioned and released as part of the Koru monolith.
+      - The planned semcod/koruide repository does not exist and Koru core has 45 current consumers.
+    acceptance:
+      - koruide installs and passes contract tests without Koru installed.
+      - Koru consumes only the versioned public control adapter.
+    blocked_by:
+      - gillm.actuation_recovery
+      - nlp2uri.execution_inversion
+  - id: nlp2uri.execution_inversion
+    order: 100
+    priority: P2
+    status: proposed
+    kind: invert_dependency
+    source_modules:
+      - src/koruapi/desktop_uri.py
+    target_repositories:
+      - semcod/nlp2uri
+    contract_ids:
+      - nlp2uri.control_plan
+    move:
+      - Reduce nlp2uri to deterministic intent compilation and remove Koru execution calls.
+    keep_in_koru:
+      - URI dispatch, execution, capability checks and all side-effect policy.
+    current_smells:
+      - nlp2uri control_execute imports koruide and can call the Koru CLI.
+    acceptance:
+      - nlp2uri is compile-only and has no Koru or koruide runtime dependency.
+      - The same canonical intent produces the same control-plan hash.
+    blocked_by: []
+  - id: planfile.client_lifecycle
+    order: 10
+    priority: P0
+    status: dual_run
+    kind: move
+    source_modules:
+      - src/koru/queue/planfile_sdk.py
+      - src/koru/queue/planfile_ticket_note.py
+      - src/koru/queue/ticket.py
+    target_repositories:
+      - semcod/planfile
+    contract_ids:
+      - planfile.ticket_proposal
+      - planfile.ticket_transition
+    move:
+      - Stable Python client, executable discovery, version negotiation and typed transition results.
+      - Lock retry and lifecycle operations such as claim, start, complete, fail, ready, block and note.
+    keep_in_koru:
+      - Queue ordering, lane selection, capability policy and the decision to transition a ticket.
+    current_smells:
+      - Read-only and administrative Planfile operations still need CLI resolution.
+      - Dashboard and shell-finalize lifecycle call sites still await the typed gateway.
+    acceptance:
+      - Koru performs ticket operations through a public Planfile SDK with no text parsing.
+      - Planfile contract tests cover lock contention, missing ticket and invalid transition.
+    blocked_by: []
+  - id: tagi.change_planning
+    order: 80
+    priority: P1
+    status: proposed
+    kind: move
+    source_modules:
+      - src/koru/tagi_integration.py
+    target_repositories:
+      - semcod/tagi
+    contract_ids:
+      - tagi.change_plan
+    move:
+      - Typed scan, grouping, risk calculation and deploy-plan construction.
+    keep_in_koru:
+      - The decision whether a plan may auto-deploy and the required capability/grant.
+    current_smells:
+      - Koru shells out to tagi and reimplements grouping, risk and deploy planning.
+    acceptance:
+      - Koru consumes a canonical change plan and never interprets tagi display output.
+      - Auto-deploy remains impossible without a Koru grant.
+    blocked_by: []
+  - id: testql.public_runner
+    order: 60
+    priority: P0
+    status: complete
+    kind: move
+    source_modules:
+      - src/koruapi/testql_bridge.py
+    target_repositories:
+      - oqlos/testql
+    contract_ids:
+      - testql.verification
+    move:
+      - Public batch runner for input resolution and deterministic verification results.
+    keep_in_koru:
+      - Selection of acceptance criteria and the completed versus applied_unverified decision.
+    current_smells:
+      - Resolved in TestQL 1.2.62 and Koru 0.1.435+; TestQL owns path resolution, batch execution and canonical result serialization.
+    acceptance:
+      - Koru uses only a public TestQL API and records canonical verification result hashes.
+      - Malformed requests fail through the typed public contract before scenario execution.
+    blocked_by: []
+  - id: tillm.bridge_cleanup
+    order: 90
+    priority: P2
+    status: proposed
+    kind: delete_duplicate
+    source_modules:
+      - src/koru/tillm_bridge.py
+      - src/korullm
+    target_repositories:
+      - semcod/tillm
+    contract_ids:
+      - tillm.completion
+    move:
+      - Keep provider registry, transport, fallback provenance and completion result in tillm.
+      - Move reusable shell-client strategy metadata while keeping orchestration decisions in Koru.
+    keep_in_koru:
+      - ProposalEnvelope validation, retry budget, provider policy and authority decisions.
+    current_smells:
+      - Koru retains a fallback provider registry and a local checkout path injection helper.
+    acceptance:
+      - Koru has no copied provider registry and receives typed provider-switch provenance.
+      - Changing provider never changes ProposalEnvelope schema or granted capabilities.
+    blocked_by: []
+  - id: vdisplay.screen_truth
+    order: 30
+    priority: P0
+    status: compatibility_shim
+    kind: move
+    source_modules:
+      - src/koru/integrations/photo_vql_monitor.py
+      - src/koru/integrations/photo_vql_target.py
+      - src/koru/integrations/photo_vql_validation.py
+      - src/koru/integrations/vdisplay_client.py
+      - src/koruvision/capture.py
+      - src/koruvision/providers
+    target_repositories:
+      - wronai/vdisplay
+    contract_ids:
+      - vdisplay.coordinate_map
+      - vdisplay.screen_observation
+    move:
+      - VQL parsing and normalization, geometry, monitor topology and capture metadata.
+      - Stable public APIs for multi-stream regions, monitor lookup and IMGL layer building.
+      - Generic observation-provider contracts, deterministic fallback mechanics and reusable capture backends.
+      - Canonical ScreenObservation, pixel primitives and persistent ScreenCast lifecycle are public in VDisplay 0.1.55.
+      - MSS, native CLI, portal Screenshot and portal ScreenCast providers are public in VDisplay 0.1.56.
+      - Deterministic VQL/IMGL payload-to-element normalization is public in VDisplay 0.1.57.
+      - Canonical capture metadata, immutable coordinate maps, packaged JSON Schema and live snapshot resolution are public in VDisplay 0.1.58.
+    keep_in_koru:
+      - Observe-decide-act-verify policy, GUI fallback ladder and authorization.
+      - Grant, ticket and EvidenceBundle linkage for any subsequent control action.
+    current_smells:
+      - The main Koru vdisplay client is a multi-thousand-line integration boundary.
+      - Public crop, monitor and VQL layer helpers are consumed from VDisplay 0.1.54 with zero private imports.
+      - Koru's VisionFrame remains a compatibility name, while the provider-base shim has been deleted and domain adapters emit typed VDisplay observations directly.
+      - Canonical coordinate mapping and policy-free capture metadata enrichment delegate to VDisplay 0.1.58; Koru retains calibration selection, policy ordering and its Koru-specific OBS and browser/mesh adapters.
+    acceptance:
+      - Koru has no private vdisplay imports and performs no coordinate conversion itself.
+      - Koru contains no provider-base compatibility module or local PNG-to-observation factory.
+      - Replaying one observation yields the same normalized targets and coordinate map hash.
+    blocked_by: []

@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.03s
+%% generated in 0.04s
     subgraph check_dups
         check_dups__get_files["get_files"]
     end
@@ -12,6 +12,9 @@ flowchart TD
         docker__capture__smoke___run_headless["_run_headless"]
         docker__capture__smoke___run_x11["_run_x11"]
         docker__capture__smoke__main["main"]
+    end
+    subgraph docker__novnc
+        docker__novnc__start_vnc__install_koru_from_mount["install_koru_from_mount"]
     end
     subgraph examples__nlp2uri_testql_browser
         examples__nlp2uri_testql_browser__run__usage["usage"]
@@ -880,6 +883,7 @@ flowchart TD
         scripts__bump_version__update_pyproject["update_pyproject"]
         scripts__bump_version__update_package_json["update_package_json"]
         scripts__bump_version__update_uv_lock("update_uv_lock CC=8")
+        scripts__bump_version__update_version_file["update_version_file"]
         scripts__bump_version__main["main"]
     end
     subgraph scripts__docker_ide_matrix
@@ -891,7 +895,14 @@ flowchart TD
     end
     subgraph scripts__e2e_envmap_koru
         scripts__e2e_envmap_koru___section["_section"]
-        scripts__e2e_envmap_koru__main{{main CC=22}}
+        scripts__e2e_envmap_koru___check_dependencies["_check_dependencies"]
+        scripts__e2e_envmap_koru___refresh_registry["_refresh_registry"]
+        scripts__e2e_envmap_koru___print_uri_index("_print_uri_index CC=8")
+        scripts__e2e_envmap_koru___resolve_prompts["_resolve_prompts"]
+        scripts__e2e_envmap_koru___desktop_only_baseline["_desktop_only_baseline"]
+        scripts__e2e_envmap_koru___mcp_tool_smoke["_mcp_tool_smoke"]
+        scripts__e2e_envmap_koru___print_summary["_print_summary"]
+        scripts__e2e_envmap_koru__main["main"]
     end
     subgraph scripts__koru_autoloop_reset_diag_markers
         scripts__koru_autoloop_reset_diag_markers__is_true["is_true"]
@@ -977,7 +988,11 @@ flowchart TD
     end
     subgraph scripts__run_testql_conversations
         scripts__run_testql_conversations___parse_args["_parse_args"]
-        scripts__run_testql_conversations__main{{main CC=16}}
+        scripts__run_testql_conversations___discover_scenarios["_discover_scenarios"]
+        scripts__run_testql_conversations___load_conversation_modules["_load_conversation_modules"]
+        scripts__run_testql_conversations___print_scenario_report["_print_scenario_report"]
+        scripts__run_testql_conversations___run_scenario["_run_scenario"]
+        scripts__run_testql_conversations__main["main"]
     end
     subgraph scripts__scaffold_ide_plugin
         scripts__scaffold_ide_plugin___write_registry["_write_registry"]
@@ -987,6 +1002,21 @@ flowchart TD
         scripts__scaffold_ide_plugin___test_script["_test_script"]
         scripts__scaffold_ide_plugin__scaffold["scaffold"]
         scripts__scaffold_ide_plugin__main["main"]
+    end
+    subgraph scripts__subactor_development_repair_pilot
+        scripts__subactor_development_repair_pilot___load_koru_dotenv["_load_koru_dotenv"]
+        scripts__subactor_development_repair_pilot___require_llm_env["_require_llm_env"]
+        scripts__subactor_development_repair_pilot___normalize_model["_normalize_model"]
+        scripts__subactor_development_repair_pilot___run["_run"]
+        scripts__subactor_development_repair_pilot___init_fixture["_init_fixture"]
+        scripts__subactor_development_repair_pilot___init_planfile["_init_planfile"]
+        scripts__subactor_development_repair_pilot___render_ticket["_render_ticket"]
+        scripts__subactor_development_repair_pilot___import_ticket["_import_ticket"]
+        scripts__subactor_development_repair_pilot___queue_env["_queue_env"]
+        scripts__subactor_development_repair_pilot___run_queue["_run_queue"]
+        scripts__subactor_development_repair_pilot___collect_evidence["_collect_evidence"]
+        scripts__subactor_development_repair_pilot___run_ids_from_ticket["_run_ids_from_ticket"]
+        scripts__subactor_development_repair_pilot__main["main"]
     end
     subgraph scripts__sync_plugin_build
         scripts__sync_plugin_build___iter_hash_files("_iter_hash_files CC=13")
@@ -1066,37 +1096,6 @@ flowchart TD
         services__healing_webhook__ticket_builder___format_acceptance["_format_acceptance"]
         services__healing_webhook__ticket_builder___reproduction_for["_reproduction_for"]
         services__healing_webhook__ticket_builder__build_ticket_payload("build_ticket_payload CC=11")
-    end
-    subgraph src__env2llm
-        src__env2llm__integrators___service_factory__build_registry_service["build_registry_service"]
-        src__env2llm__service__registry_service__RegistryService____init__["__init__"]
-        src__env2llm__service__registry_service__RegistryService__to_dict["to_dict"]
-        src__env2llm__service__registry_service__RegistryService__render["render"]
-        src__env2llm__service__registry_service__RegistryService__refresh["refresh"]
-        src__env2llm__service__registry_service__RegistryService__registry_path["registry_path"]
-        src__env2llm__service__registry_service__RegistryService__desktop_payload["desktop_payload"]
-        src__env2llm__service__registry_service__RegistryService__commands_payload["commands_payload"]
-        src__env2llm__service__registry_service__RegistryService__uris_payload["uris_payload"]
-        src__env2llm__service__registry_service__RegistryService__mqtt_status["mqtt_status"]
-        src__env2llm__probes__testql__testql_available["testql_available"]
-        src__env2llm__probes__testql__discover_scenario_files["discover_scenario_files"]
-        src__env2llm__probes__testql__collect_testql_catalog["collect_testql_catalog"]
-    end
-    subgraph src__imgl
-        src__imgl__autodiag__diagnostics_enabled["diagnostics_enabled"]
-        src__imgl__autodiag__diagnose_capture["diagnose_capture"]
-        src__imgl__autodiag___parse_type_output["_parse_type_output"]
-        src__imgl__autodiag__build_operation_step["build_operation_step"]
-        src__imgl__autodiag__build_execute_report["build_execute_report"]
-        src__imgl__autodiag__render_report["render_report"]
-        src__imgl__freshness__mark_capture_fresh["mark_capture_fresh"]
-        src__imgl__freshness__sync_vql_cache_with_image["sync_vql_cache_with_image"]
-        src__imgl__freshness__capture_sidecar_path["capture_sidecar_path"]
-        src__imgl__freshness__clear_vql_cache["clear_vql_cache"]
-        src__imgl__freshness__image_freshness["image_freshness"]
-        src__imgl__freshness__max_image_age_seconds["max_image_age_seconds"]
-        src__imgl__freshness__verify_capture_updated["verify_capture_updated"]
-        src__imgl__freshness__vql_cache_paths["vql_cache_paths"]
     end
     subgraph src__koru
         src__koru__runtime__planfile_dir["planfile_dir"]
@@ -1459,31 +1458,10 @@ flowchart TD
     subgraph src__koruvision
         src__koruvision__capture_probe__python_can_capture["python_can_capture"]
         src__koruvision__capture_probe__resolve_observe_python["resolve_observe_python"]
-        src__koruvision__scaling__resolve_scale["resolve_scale"]
-        src__koruvision__scaling__downscale_rgb_nearest["downscale_rgb_nearest"]
-        src__koruvision__scaling__rgb_mostly_black["rgb_mostly_black"]
         src__koruvision__cli___vision_interval["_vision_interval"]
         src__koruvision__cli___mesh_publish_enabled["_mesh_publish_enabled"]
         src__koruvision__cli___maybe_publish_mesh["_maybe_publish_mesh"]
         src__koruvision__cli__vision_main["vision_main"]
-        src__koruvision__capture___frame["_frame"]
-        src__koruvision__capture__list_monitors["list_monitors"]
-        src__koruvision__capture__capture_monitor_png["capture_monitor_png"]
-        src__koruvision__capture__capture_all_monitors["capture_all_monitors"]
-        src__koruvision__capture_mss__is_wayland["is_wayland"]
-        src__koruvision__capture_mss__png_dimensions["png_dimensions"]
-        src__koruvision__capture_mss__png_payload_descriptor["png_payload_descriptor"]
-        src__koruvision__capture_mss__frame_from_shot["frame_from_shot"]
-        src__koruvision__capture_mss__ordered_monitor_indices["ordered_monitor_indices"]
-        src__koruvision__capture_mss__portal_capture_dict["portal_capture_dict"]
-        src__koruvision__capture_mss__command_candidates["command_candidates"]
-        src__koruvision__capture_mss__run_png_command("run_png_command CC=14")
-        src__koruvision__capture_mss__command_capture_dict["command_capture_dict"]
-        src__koruvision__capture_mss__grab_target["grab_target"]
-        src__koruvision__capture_mss___grab_single_mss_raw["_grab_single_mss_raw"]
-        src__koruvision__capture_mss___grab_all_mss_raw["_grab_all_mss_raw"]
-        src__koruvision__portal_capture___portal_python["_portal_python"]
-        src__koruvision__portal_capture__capture_portal_png("capture_portal_png CC=8")
         src__koruvision__mesh__default_peer_id["default_peer_id"]
         src__koruvision__mesh__resolve_mesh_publish("resolve_mesh_publish CC=8")
         src__koruvision__mesh___vision_mime["_vision_mime"]
@@ -1498,18 +1476,19 @@ flowchart TD
         src__koruvision__cli_parser___add_capture_subparser["_add_capture_subparser"]
         src__koruvision__cli_parser___add_agent_subparser["_add_agent_subparser"]
         src__koruvision__cli_parser__build_vision_parser["build_vision_parser"]
-        src__koruvision__providers__base__CaptureProvider__availability["availability"]
-        src__koruvision__providers__base__CaptureProvider__list_monitors["list_monitors"]
-        src__koruvision__providers__base__CaptureProvider__capture_all["capture_all"]
-        src__koruvision__providers__base__CaptureProvider__capture_one["capture_one"]
-        src__koruvision__providers__base__png_dimensions["png_dimensions"]
-        src__koruvision__providers__base__frame_from_png["frame_from_png"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__availability["availability"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__list_monitors["list_monitors"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__capture_all["capture_all"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__capture_one["capture_one"]
-        src__koruvision__providers__cli_tools___tool_available["_tool_available"]
-        src__koruvision__providers__detector__monitors_via_xrandr["monitors_via_xrandr"]
+        src__koruvision__providers__registry__all_providers["all_providers"]
+        src__koruvision__providers__registry__provider_by_name["provider_by_name"]
+        src__koruvision__providers__env__capture_provider_pref["capture_provider_pref"]
+        src__koruvision__providers__env__is_wayland["is_wayland"]
+        src__koruvision__providers__env__env_truthy["env_truthy"]
+        src__koruvision__providers__env__portal_possible["portal_possible"]
+        src__koruvision__providers__env__looks_headless["looks_headless"]
+        src__koruvision__providers__env__compositor_hint["compositor_hint"]
+        src__koruvision__providers__env__tool_available["tool_available"]
+        src__koruvision__capture__list_monitors["list_monitors"]
+        src__koruvision__capture__capture_monitor_png["capture_monitor_png"]
+        src__koruvision__capture__capture_all_monitors["capture_all_monitors"]
+        src__koruvision__providers__detector__monitors_via_xrandr("monitors_via_xrandr CC=10")
         src__koruvision__providers__detector___forced_provider_rank["_forced_provider_rank"]
         src__koruvision__providers__detector___auto_provider_order("_auto_provider_order CC=11")
         src__koruvision__providers__detector___available_ranked_providers["_available_ranked_providers"]
@@ -1517,13 +1496,26 @@ flowchart TD
         src__koruvision__providers__detector__list_provider_status["list_provider_status"]
         src__koruvision__providers__detector__provider_diagnostics_rows["provider_diagnostics_rows"]
         src__koruvision__providers__detector__probe_capture_providers("probe_capture_providers CC=10")
-    end
-    subgraph src__nlp2imgl
-        src__nlp2imgl__control__apply_nl_with_diag("apply_nl_with_diag CC=10")
-        src__nlp2imgl__control__apply_nl["apply_nl"]
-        src__nlp2imgl__control__default_image_path["default_image_path"]
-        src__nlp2imgl__control__default_window["default_window"]
-        src__nlp2imgl__control__doctor_capture["doctor_capture"]
+        src__koruvision__providers__detector___auto_failure_message["_auto_failure_message"]
+        src__koruvision__providers__detector___provider_label["_provider_label"]
+        src__koruvision__providers__detector___should_report_auto_portal["_should_report_auto_portal"]
+        src__koruvision__providers__detector__capture_one_with_providers("capture_one_with_providers CC=8")
+        src__koruvision__providers__detector__capture_all_with_providers("capture_all_with_providers CC=8")
+        src__koruvision__providers__obs_websocket__obs_url["obs_url"]
+        src__koruvision__providers__obs_websocket__obs_password["obs_password"]
+        src__koruvision__providers__obs_websocket__obs_source_name["obs_source_name"]
+        src__koruvision__providers__obs_websocket__obs_screenshot_width["obs_screenshot_width"]
+        src__koruvision__providers__obs_websocket___obs_auth["_obs_auth"]
+        src__koruvision__providers__obs_websocket___websockets_missing["_websockets_missing"]
+        src__koruvision__providers__obs_websocket___with_obs_connection("_with_obs_connection CC=9")
+        src__koruvision__providers__obs_websocket___obs_request("_obs_request CC=11")
+        src__koruvision__providers__obs_websocket__probe_obs_reachable["probe_obs_reachable"]
+        src__koruvision__providers__obs_websocket___run_obs_capture["_run_obs_capture"]
+        src__koruvision__providers__obs_websocket___capture_source_png["_capture_source_png"]
+        src__koruvision__providers__obs_websocket__ObsWebSocketProvider__availability["availability"]
+        src__koruvision__providers__obs_websocket__ObsWebSocketProvider__list_monitors["list_monitors"]
+        src__koruvision__providers__obs_websocket__ObsWebSocketProvider__capture_all["capture_all"]
+        src__koruvision__providers__obs_websocket__ObsWebSocketProvider__capture_one["capture_one"]
     end
     packages__dsl2koru__src__dsl2koru__bus__dispatch --> packages__dsl2koru__src__dsl2koru__codec__envelope_from_bytes
     packages__dsl2koru__src__dsl2koru__bus__dispatch --> packages__dsl2koru__src__dsl2koru__handlers__run_query
@@ -2128,5 +2120,5 @@ flowchart TD
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__cli__main,src__koru__integrations__vdisplay_client___type_text_at_vql_coords,scripts__e2e_envmap_koru__main,scripts__run_testql_conversations__main highCC
+    class src__koru__repair_runs__model_router__route,src__koru__repair_runs__router__load_model_registry,src__koru__queue__evidence__provenance_from_result,src__koru__queue__grant__verify_grant,src__koru__queue__patch_retry___finish_run,src__koru__queue__contracts__CapabilityContract__evaluate,src__koru__queue__planfile_sdk__parse_lifecycle_request highCC
     class packages__dsl2koru__src__dsl2koru__bus__dispatch,packages__dsl2koru__src__dsl2koru__events__EventStore__read_all,packages__dsl2koru__src__dsl2koru__codegen___python_type,packages__dsl2koru__src__dsl2koru__codegen__render_models_module,packages__uri2coru__src__uri2coru__cli__main,packages__uri2coru__src__uri2coru__nlp2uri__nlp2uri,packages__cli2koru__src__cli2koru__shell__run_shell,packages__nlpshim__src__nlpshim__conversation_client__ConversationTestClient__message,packages__nlpshim__src__nlpshim__client__FallbackNLP2DSLClient__workflow_from_text,packages__nlpshim__src__nlpshim__conversation_test_api__parse_conversation_step,packages__dsl2coru__src__dsl2coru__bus__dispatch,packages__dsl2coru__src__dsl2coru__codegen___python_type,packages__dsl2coru__src__dsl2coru__codegen__main,packages__dsl2coru__src__dsl2coru__parser___ui_args,packages__dsl2coru__src__dsl2coru__parser___parse_text,packages__dsl2coru__src__dsl2coru__handlers__ui___ui_prompt_for_verb,packages__cli2coru__src__cli2coru__shell__run_shell,packages__uri2koru__src__uri2koru__cli__main,packages__uri2koru__src__uri2koru__nlp2uri__nlp2uri,packages__uri2koru__src__uri2koru__decode___cmd_uri_to_dsl,packages__nlp2coru__src__nlp2coru__llm__llm_plan,packages__nlp2coru__src__nlp2coru__heuristic___resolve_heuristic_action,packages__nlp2coru__src__nlp2coru__heuristic__to_dsl_lines,packages__nlp2coru__src__nlp2coru__to_dsl__to_dsl,packages__nlp2coru__src__nlp2coru__llm_backend__LitellmBackend__complete,packages__coru__src__coru__cli_calibration___testql_run_scenario,packages__coru__src__coru__cli_calibration___parse_drive_json_from_stdout,packages__coru__src__coru__cli_calibration___lane_drive_capture,packages__coru__src__coru__cli_calibration___format_calibration_probe_report,packages__coru__src__coru__cli_calibration___resolve_calibration_lane medCC

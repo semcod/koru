@@ -380,9 +380,9 @@ def _record_reconnect_plugin_command(project: Any, *, corr: str, autopilot_ide: 
 def _emit_quick_action_line(*, args: Any, action: str, stdio_info: Any) -> None:
     line = f"koru autonomous: action {action}"
     if _is_create_ticket_action(action):
-        from koru.activity_log import activity_warn
+        from koru.activity_log import activity_info
 
-        activity_warn(
+        activity_info(
             line,
             hint=(
                 "ważne: queue jest idle i planfile zgłasza brak otwartych ticketów; "

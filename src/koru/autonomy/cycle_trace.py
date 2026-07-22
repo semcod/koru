@@ -1,16 +1,20 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from koru.autonomy.autopilot_status import parse_autopilot_status
-from koru.autonomy.cycle.cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
 from koru.autonomy.decision_trace import (
     append_decision_record,
     build_decision_record,
     human_skip_reason,
 )
-from koru.autonomy.operator.operator_wup import WupHealthResult
-from koru.queue import QueueLoopResult
+
+if TYPE_CHECKING:
+    from koru.autonomy.cycle.cycle_common import DiagnosticResult
+    from koru.autonomy.operator.operator_wup import WupHealthResult
+    from koru.queue import QueueLoopResult
 
 _TELEMETRY_NEXT_STEP_HINTS: tuple[tuple[str, str], ...] = (
     (
@@ -87,6 +91,8 @@ def record_decision_trace(
     hp: Callable[[str], None],
 ) -> None:
     """Build + persist + log a structured ``DecisionRecord`` for this cycle."""
+    from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
+
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     next_step = decision_next_step_hint(
         queue_status=str(queue_result.last_status or ""),
@@ -108,6 +114,13 @@ def record_decision_trace(
         next_step=next_step,
     )
     append_decision_record(project, record)
+    repeated_idle = (
+        str(queue_result.last_status or "").lower() == "idle"
+        and waiting_ticket == "-"
+        and stagnation_streak > 1
+    )
+    if repeated_idle:
+        return
     hp(f"  decision: {record.compact_line()}")
     if record.skip_code not in ("ok",):
         reason = human_skip_reason(record.skip_code, fallback=record.skip_code)

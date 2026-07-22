@@ -144,6 +144,77 @@ export KORU_TILLM_CLIENT=claude-code
 koru autonomous up --project . --ide claude-code
 ```
 
+### Synchronizacja konfiguracji między narzędziami (`tillm provider sync`)
+
+Store tillm (`~/.config/tillm/providers.json`) jest jedynym źródłem prawdy o
+tokenie providera. `sync` uzgadnia z nim pozostałe konfiguracje na maszynie —
+na obu poziomach:
+
+- **terminal**: Claude Code (`~/.claude/settings.json`), Codex
+  (`~/.codex/config.toml`), opencode (`~/.config/opencode/opencode.json`),
+- **gui**: JetBrains AI Assistant (OpenAI-like) i Qoder — tylko detekcja i
+  raport (klucz siedzi w keychainie IDE; wpisujesz go raz w ustawieniach IDE
+  albo dialog wyklikuje gillm).
+
+```bash
+tillm provider sync z.ai                    # dry-run: plan na oba poziomy
+tillm provider sync z.ai --level terminal   # tylko narzędzia shellowe
+tillm provider sync z.ai --apply            # import brakującego tokenu + zapisy
+tillm provider sync z.ai --apply --surface codex --surface opencode
+                                            # eksport wybiórczy (bez claude-settings)
+```
+
+`--surface` przyjmuje: `claude`, `codex`, `opencode`, `jetbrains`, `qoder`
+(lub pełne id powierzchni).
+
+Kierunki: gdy store nie ma tokenu, a któraś powierzchnia ma → **import** do
+store; gdy store ma token → **eksport** do zapisywalnych powierzchni, którym
+go brakuje lub mają nieaktualny. Tokeny nigdy nie trafiają do wyjścia komendy.
+
+Uwaga: eksport do `~/.claude/settings.json` przestawia **każde** ręcznie
+odpalone `claude` na danego providera (subskrypcja Anthropic przestaje być
+domyślna) — dry-run ostrzega o tym w planie. Klienci odpalani przez
+`tillm drive`/`koru -a` nie potrzebują syncu — dostają env overlay przy starcie.
+
+`tillm provider sync` **bez argumentu** drukuje macierz całej maszyny: każdy
+zarejestrowany provider (z.ai, MiniMax, Moonshot/Kimi, DeepSeek, xAI, Mistral,
+Groq, Qwen, …) × każda powierzchnia, z linkiem `token_url` tam, gdzie brakuje
+klucza — to jest punkt startowy automatu integracyjnego.
+
+### Kolejka priorytetów providerów (`tillm provider order`)
+
+Kolejność fallbacku można utrwalić w store (bez grzebania w env):
+
+```bash
+tillm provider order                          # pokaż aktualną kolejkę
+tillm provider order subscription z.ai minimax openrouter   # ustaw
+tillm provider order --clear                  # usuń
+```
+
+Precedencja przy drive: `--provider` (bez fallbacku) → env
+`TILLM_PROVIDER_ORDER` → **kolejka ze store** → pojedynczy
+`TILLM_PROVIDER`/domyślny. Providerzy bez tokenu są pomijani automatycznie.
+
+### Autonomiczna zmiana providera a tickety
+
+Gdy pętla autonomiczna koru trafi na wyczerpany limit (429/402), przechodzi na
+następnego providera z kolejki. Taka zmiana jest raportowana:
+
+- na żywo w logu pętli (`shell-drive: [KORU-SHELL-DRIVE] provider-switch: …`),
+- **w notce ticketa**, który był wtedy prowadzony — wpis
+  `provider-switch: z.ai → minimax — 'z.ai' unavailable/exhausted (limit?),
+  koru autonomously drove this ticket with 'minimax'` plus podpowiedź, jak
+  zmienić kolejkę (`tillm provider order …`).
+
+Każda notka drive'a zawiera też `provider=<id>`, więc po fakcie widać, który
+provider wykonał pracę nad ticketem.
+
+Gdy **cała kolejka** padnie (każdy provider 429/402/credits), ticket dostaje
+notkę `provider-exhausted: tried … — every provider in the queue was
+unavailable/exhausted` (raz na proces pętli, bez spamu przy retry), a pętla
+loguje to samo na stdout. Ticket zostaje otwarty do czasu dodania
+tokenu/providera.
+
 ### OpenAI Codex
 
 ```bash

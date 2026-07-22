@@ -3,9 +3,28 @@
 This directory contains the full documentation for **koru** — a closed-loop
 refactor automation system for multi-repo workspaces.
 
-**Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md)
+**Project root:** [`README.md`](../README.md) · **Release notes:** [`CHANGELOG.md`](../CHANGELOG.md) · **Open work:** [`TODO.md`](../TODO.md)
 
-- **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet up`: one supervisor
+## Choose a path
+
+| Need | Start here | Continue with |
+|---|---|---|
+| Install and run Koru | [`quickstart-10min.md`](./quickstart-10min.md) | [`cli-examples.md`](./cli-examples.md) |
+| Operate an autonomous agent | [`agent-guide.md`](./agent-guide.md) | [`autopilot-quickstart.md`](./autopilot-quickstart.md) |
+| Understand queue lifecycle and retries | [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) | [`planfile-llm-guide.md`](./planfile-llm-guide.md) |
+| Run Subactor development repair | [`subactor-development-repair-template.md`](./subactor-development-repair-template.md) | [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) |
+| Change autonomy architecture | [`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md) | [`architecture/adr/README.md`](./architecture/adr/README.md) |
+
+`TODO.md` is only for active work. Completed implementation and documentation
+changes are recorded in `CHANGELOG.md`.
+
+## Architecture (autonomy / determinism)
+
+- **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — Subactor-like governance for Koru (intent → grant → verify); ~18 PRs; **docs only until PR1**.
+- **[`architecture/adr/`](./architecture/adr/README.md)** — ADR stubs AD-001…AD-006 (namespaces, SSOT, ExecutionPlan, grant/manifest, worktree, remote mTLS).
+
+- **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet bootstrap` / `up` / `ls`:
+  multi-project workspace init + one supervisor for every koru-managed project
   running a `koru autonomous up` child per koru-managed project on the
   machine (mermaid + ASCII architecture diagrams, systemd deployment, and
   the `--replace-existing` cross-project-kill bug it surfaced).
@@ -78,6 +97,9 @@ For LLM agents starting a session in a koru-driven repository:
    internals can be refactored independently.
 17. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
    incremental plan for moving selected modules from `src` to `packages/*`.
+18. **[`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml)** —
+   validated DSL for dependency ownership, typed boundary contracts and the
+   dependency-first extraction order across `semcod/*`, `wronai/*` and TestQL.
 
 For human operators / DevOps:
 
@@ -219,6 +241,7 @@ Complete index of documentation in this directory. Start with
 | [`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md) | nlp2uri MCP bridge (PL) |
 | [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri ↔ koruide refactor plan (PL) |
 | [`package-extraction-plan.md`](./package-extraction-plan.md) | `packages/*` extraction plan |
+| [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) | Validated ownership/contracts/extraction DSL |
 
 ### Tooling & pipeline
 

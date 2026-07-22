@@ -70,6 +70,12 @@ ASCII view of the same shape, for a terminal/no-mermaid-renderer read:
 koru fleet ls                                    # preview discovery, no processes started
 koru fleet ls --workspace /path/to/workspace-root
 
+# Bootstrap many sibling repos under one parent folder (idempotent, no --force)
+koru fleet bootstrap ~/github/subactor --dry-run
+koru fleet bootstrap ~/github/subactor --umbrella \
+  --include runtime --include core --include agents \
+  --exclude backups --exclude logo
+
 koru fleet up                                    # supervise every discovered project, ~/github default
 koru fleet up --workspace /path/to/root \
   --restart-backoff-seconds 30 \
@@ -77,11 +83,41 @@ koru fleet up --workspace /path/to/root \
   -- --ide claude --ticket-sources all            # everything after `--` is forwarded to each child
 ```
 
+### `koru fleet bootstrap` (alias: `koru fleet init`)
+
+Takes a **parent directory** (workspace folder), discovers child projects
+(directories with `.git`, optionally filtered by `--include` / `--exclude`),
+and ensures each has `.planfile/` + `.planfile/.koru/policy.yaml` so
+`koru fleet ls` can see them.
+
+| Flag | Default | Effect |
+| --- | --- | --- |
+| `workspace` (positional) | `$KORU_FLEET_WORKSPACE` or `~/github` | Parent folder to scan |
+| `--umbrella` | off | Also initialise the workspace root itself (git optional) |
+| `--dry-run` | off | Report actions without writing |
+| `--include GLOB` | (all) | Only match basename/relative path (repeatable) |
+| `--exclude GLOB` | + built-in `backups`, `node_modules`, … | Skip matches (repeatable) |
+| `--depth N` | `1` | Walk depth for nested repos |
+| `--allow-non-git` | off | Consider dirs without `.git` |
+| `--force` | **off** | DANGEROUS — re-runs `koru --init --force` (overwrites tickets; writes `.bak-*`). Never needed just to add a missing `policy.yaml` |
+
+**Soft ensure (no clobber):** if a child already has `.planfile/config.yaml` but
+is missing `policy.yaml`, bootstrap writes **only** the policy stub (+
+`.gitignore` entry). It does **not** import starter tickets and does **not**
+require `--force`. This is the fix for the old "had to `--init --force` to get
+fleet coverage and lost all tickets" failure mode.
+
+**MCP:** there is no fleet MCP tool yet — use the CLI (`koru fleet bootstrap` /
+`koru fleet ls`). Planfile MCP tools (`koru_list_tickets`, …) remain
+per-project and take `project_root`.
+
+### `koru fleet up` / `koru fleet ls` flags
+
 | Flag | Default | Effect |
 | --- | --- | --- |
 | `--workspace` | `$KORU_FLEET_WORKSPACE` or `~/github` | Root to discover koru-managed projects under |
 | `--restart-backoff-seconds` | `30` | Delay before restarting a project's loop after it exits |
-| `--rescan-interval-seconds` | `300` | How often to re-discover projects, so a newly `koru --init`-ed project joins without a fleet restart |
+| `--rescan-interval-seconds` | `300` | How often to re-discover projects, so a newly `koru --init`-ed / bootstrapped project joins without a fleet restart |
 | `-- <args>` | — | Forwarded verbatim to every `koru autonomous up` child (e.g. `--ide`, `--ticket-sources`) |
 
 Discovery prunes obvious non-project noise during the walk (`test-data`,

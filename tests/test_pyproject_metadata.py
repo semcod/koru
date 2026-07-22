@@ -19,7 +19,7 @@ def test_base_runtime_dependencies_stay_small() -> None:
     project = _pyproject()["project"]
 
     assert project["dependencies"] == [
-        "gillm>=0.1.9",
+        "gillm>=0.1.24",
         "pyyaml>=6.0,<7.0",
         "rich>=14.3.4",
         # Zero-dep shell-client registry/driver; core so `--ide claude` can
@@ -47,6 +47,13 @@ def test_all_extra_matches_union_of_other_extras() -> None:
     assert set(optional["all"]) == expected
 
 
+def test_vision_extras_install_the_public_screen_observation_owner() -> None:
+    optional = _pyproject()["project"]["optional-dependencies"]
+
+    assert "vdisplay>=0.1.58" in optional["vision"]
+    assert "vdisplay>=0.1.58" in optional["observe"]
+
+
 def test_readme_documents_each_installation_extra() -> None:
     optional = _pyproject()["project"]["optional-dependencies"]
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -62,3 +69,10 @@ def test_uv_lock_koru_metadata_matches_pyproject() -> None:
     assert locked["version"] == project["version"]
     assert sorted(locked["optional-dependencies"]) == sorted(project["optional-dependencies"])
     assert sorted(locked["metadata"]["provides-extras"]) == sorted(project["optional-dependencies"])
+
+
+def test_version_file_matches_pyproject() -> None:
+    """VERSION must stay in sync with pyproject (0.1.399 drift trap)."""
+    project_version = _pyproject()["project"]["version"]
+    file_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    assert file_version == project_version

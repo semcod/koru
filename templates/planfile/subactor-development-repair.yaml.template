@@ -1,0 +1,89 @@
+# Koru queue ticket template — Subactor structural defect repair (P1-2).
+#
+# Use when subactor ask / orchestrator emits development_defect and Koru should
+# patch code only. Copy or render via koru.queue.ticket_templates before planfile
+# ticket import. See docs/subactor-development-repair-template.md.
+#
+# Placeholders (render_subactor_repair_ticket):
+#   __COMPONENT__ __ERROR_CODE__ __FINGERPRINT__ __DISCOVERED_IN__
+#   __FILE_1__ __FILE_2__ __PROMPT_BODY__
+
+schema: koru.queue.ticket_template/v1
+id: subactor-development-repair
+description: >
+  Safe Koru patch ticket for Subactor development_defect bridge failures.
+  Branch promotion (koru/run-<id>), isolated worktree, 1–2 declared files,
+  local unit verify — never Plesk, DNS, live connectors, or apply deploy.
+
+queue: development
+
+labels:
+  - koru
+  - llm-ready
+  - refactor
+  - type:development-defect
+  - queue:development
+  - source:subactor-bridge
+
+forbidden:
+  - plesk
+  - dns
+  - sftp
+  - live_connectors
+  - apply_deploy
+  - subactor ask --apply
+  - subactor ask --execute --apply
+
+environment:
+  KORU_QUEUE_WORKTREE: "1"
+
+ticket:
+  name: "[DEV] __COMPONENT__: __ERROR_CODE__"
+  priority: high
+  executor:
+    kind: llm
+    mode: automatic
+  execution:
+    max_attempts: 2
+  acceptance_criteria:
+    - node --test platform/test/intent-packs.test.mjs
+  files:
+    - __FILE_1__
+    - __FILE_2__
+  labels:
+    - koru
+    - llm-ready
+    - refactor
+    - type:development-defect
+    - queue:development
+    - source:subactor-bridge
+    - component:__COMPONENT__
+    - fingerprint:__FINGERPRINT__
+  inputs:
+    llm_model: openai/gpt-4o-mini
+    patch_mode: true
+    promotion_mode: branch
+    worktree: true
+    max_patch_attempts: 2
+    expect_files_changed: true
+    verify_command: node --test platform/test/intent-packs.test.mjs
+    discovered_in: __DISCOVERED_IN__
+    component: __COMPONENT__
+    error_code: __ERROR_CODE__
+    fingerprint: __FINGERPRINT__
+    prompt: |
+      Repair this Subactor structural development defect (code only).
+
+      Fingerprint: __FINGERPRINT__
+      Component: __COMPONENT__
+      Error: __ERROR_CODE__
+      Discovered in: __DISCOVERED_IN__
+      Declared files: __FILE_1__, __FILE_2__
+
+      Constraints (mandatory):
+      - Patch only the declared files; add or extend a focused regression test when missing.
+      - Do NOT touch Plesk, DNS, SFTP, live connectors, secrets, or production apply grants.
+      - Do NOT run subactor ask with --apply or deploy flags.
+      - Promotion lands on koru/run-<run_id>; human merges the branch — never force-push main.
+
+      __PROMPT_BODY__

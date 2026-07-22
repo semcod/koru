@@ -165,3 +165,137 @@ def test_bytes_reply_message_survives(tmp_path, planfile, monkeypatch):
     assert result == "noted"
     note = planfile.calls[-1][-1]
     assert "raw" in note
+
+
+class TestProviderSwitchNote:
+    """Autonomous provider fallback must be visible in the ticket note."""
+
+    def test_no_note_without_fallback(self):
+        from koru.autonomy.shell_drive_finalize import provider_switch_note
+
+        assert provider_switch_note({"provider": "z.ai"}) is None
+        assert (
+            provider_switch_note(
+                {"provider": "z.ai", "provider_attempts": ["z.ai", "minimax"]}
+            )
+            is None
+        )
+        assert provider_switch_note({}) is None
+
+    def test_fallback_produces_switch_note(self):
+        from koru.autonomy.shell_drive_finalize import provider_switch_note
+
+        note = provider_switch_note(
+            {
+                "provider": "minimax",
+                "provider_attempts": ["subscription", "z.ai", "minimax"],
+            }
+        )
+        assert note is not None
+        assert "subscription → z.ai → minimax" in note
+        assert "unavailable/exhausted" in note
+        assert "tillm provider order" in note
+
+    def test_switch_note_lands_in_ticket_update(self, tmp_path, planfile, monkeypatch):
+        monkeypatch.setattr(verify_mod, "load_post_run_verify_config", lambda p: None)
+        reply = {
+            "ok": True,
+            "message": "done",
+            "client_id": "claude-code",
+            "provider": "minimax",
+            "provider_attempts": ["z.ai", "minimax"],
+        }
+        assert _finalize(tmp_path, reply=reply) == "noted"
+        update = next(c for c in planfile.calls if c[:2] == ["ticket", "update"])
+        note = update[update.index("--note") + 1]
+        assert "provider-switch: z.ai → minimax" in note
+        assert "provider=minimax" in note
+
+    def test_switch_reported_live_to_operator(self, tmp_path, planfile, monkeypatch):
+        monkeypatch.setattr(verify_mod, "load_post_run_verify_config", lambda p: None)
+        lines: list[str] = []
+        reply = {
+            "ok": True,
+            "message": "done",
+            "client_id": "claude-code",
+            "provider": "minimax",
+            "provider_attempts": ["z.ai", "minimax"],
+        }
+        _finalize(tmp_path, reply=reply, _hp=lines.append)
+        assert any("provider-switch" in line for line in lines)
+
+
+class TestProviderExhaustionNote:
+    """A drive that failed on every provider must leave a ticket trace."""
+
+    @pytest.fixture(autouse=True)
+    def _fresh_dedupe(self):
+        from koru.autonomy import shell_drive_finalize as mod
+
+        mod._EXHAUSTION_NOTED.clear()
+        yield
+        mod._EXHAUSTION_NOTED.clear()
+
+    def _note(self, tmp_path, reply, hp=None):
+        from koru.autonomy.shell_drive_finalize import note_provider_exhaustion
+
+        return note_provider_exhaustion(
+            project=tmp_path,
+            ticket_id="STARTER-1",
+            reply=reply,
+            _hp=hp or _hp,
+        )
+
+    def test_skipped_without_attempts_or_markers(self, tmp_path, planfile):
+        assert self._note(tmp_path, {"ok": False, "stderr": "429 limit"}) == "skipped"
+        assert (
+            self._note(
+                tmp_path,
+                {"ok": False, "provider_attempts": ["z.ai"], "stderr": "file not found"},
+            )
+            == "skipped"
+        )
+        assert planfile.calls == []
+
+    def test_skipped_without_real_ticket(self, tmp_path, planfile):
+        from koru.autonomy.shell_drive_finalize import note_provider_exhaustion
+
+        reply = {
+            "ok": False,
+            "provider_attempts": ["z.ai"],
+            "stderr": "429 limit exceeded",
+        }
+        assert (
+            note_provider_exhaustion(
+                project=tmp_path,
+                ticket_id="-",
+                reply=reply,
+                _hp=_hp,
+            )
+            == "skipped"
+        )
+        assert planfile.calls == []
+
+    def test_exhaustion_writes_note_once(self, tmp_path, planfile):
+        reply = {
+            "ok": False,
+            "provider_attempts": ["subscription", "z.ai", "openrouter"],
+            "stderr": "429 rate limit exceeded",
+        }
+        assert self._note(tmp_path, reply) == "noted_exhaustion"
+        assert self._note(tmp_path, reply) == "already_noted"
+        updates = [c for c in planfile.calls if c[:2] == ["ticket", "update"]]
+        assert len(updates) == 1
+        note = updates[0][updates[0].index("--note") + 1]
+        assert "provider-exhausted: tried subscription → z.ai → openrouter" in note
+        assert "tillm provider order" in note
+
+    def test_exhaustion_reported_live(self, tmp_path, planfile):
+        lines: list[str] = []
+        reply = {
+            "ok": False,
+            "provider_attempts": ["z.ai"],
+            "message": "402 requires more credits",
+        }
+        assert self._note(tmp_path, reply, hp=lines.append) == "noted_exhaustion"
+        assert any("provider-exhausted" in line for line in lines)

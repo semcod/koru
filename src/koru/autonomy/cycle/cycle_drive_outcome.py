@@ -38,6 +38,7 @@ def apply_autopilot_drive_outcome(
     autopilot_drive_kind = idle_prompt_kind or decision_kind
     autopilot_backend = str(reply.get("backend")) if reply.get("backend") is not None else None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    ticket_id = "" if waiting_ticket == "-" else waiting_ticket
 
     if ok:
         state.last_message_sent_ts = time.time()
@@ -71,17 +72,28 @@ def apply_autopilot_drive_outcome(
         state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
     )
     try:
-        from koru.autonomy.shell_drive_finalize import finalize_shell_drive_ticket
-
-        finalize_action = finalize_shell_drive_ticket(
-            project=project,
-            autopilot_ide=autopilot_ide,
-            ticket_id=waiting_ticket,
-            reply=reply,
-            ok=ok,
-            decision_kind=decision_kind,
-            _hp=_hp,
+        from koru.autonomy.shell_drive_finalize import (
+            finalize_shell_drive_ticket,
+            note_provider_exhaustion,
         )
+
+        if ok:
+            finalize_action = finalize_shell_drive_ticket(
+                project=project,
+                autopilot_ide=autopilot_ide,
+                ticket_id=ticket_id,
+                reply=reply,
+                ok=ok,
+                decision_kind=decision_kind,
+                _hp=_hp,
+            )
+        else:
+            finalize_action = note_provider_exhaustion(
+                project=project,
+                ticket_id=ticket_id,
+                reply=reply,
+                _hp=_hp,
+            )
         if finalize_action != "skipped":
             cycle_telemetry["shell_drive_finalize"] = finalize_action
     except Exception as exc:  # noqa: BLE001 — finalization must never break the cycle

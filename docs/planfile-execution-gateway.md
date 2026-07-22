@@ -56,7 +56,7 @@ The first implementation slice is now in place:
 - `planfile` tickets carry `executor`, `execution`, `inputs`, and `outputs`.
 - `planfile ticket next` returns the next runnable ticket.
 - `planfile` exposes queue lifecycle commands: `claim`, `start`, `input`,
-  `ready`, `complete`, and `fail`.
+  `ready`, `complete`, `fail`, and `block`.
 - `planfile` API exposes matching lifecycle endpoints and broadcasts ticket
   change events over `/ws`.
 - `koru --queue --project .` executes one runnable ticket at a time.
@@ -428,6 +428,79 @@ working implementation.
 
 - optional OpenRouter-backed `llm` executor
 - richer multi-actor coordination
+
+## Typed lifecycle SDK migration (updated 2026-07-20)
+
+Koru supports the published Planfile 0.1.117 baseline and the primary queue
+lifecycle now routes `claim`, `start`, `complete`, `fail`, `ready`, `block`,
+and note append through
+`planfile.client.PlanfileClient`. Storage lock retry and stable transition
+codes therefore belong to Planfile, while Koru still decides whether and when
+the transition is allowed.
+
+Planfile 0.1.118 adds typed `fail` and `ready`. When those methods are absent
+from an older SDK, Koru falls back before emitting an SDK control event and
+performs the mutation once through the CLI. Planfile 0.1.117 leaves a started
+ticket's board status as `in_progress` after `ready`, so the compatibility path
+also applies `ticket update --status open`. Newer Planfile returns an already
+open ticket and needs no extra mutation.
+
+The compatibility release uses a single-write dual-run:
+
+1. perform the mutation exactly once through the SDK;
+2. read the ticket through `planfile ticket show --format json`;
+3. compare a canonical projection of lifecycle fields;
+4. report `verified`, `mismatch`, or `unavailable` as parity telemetry.
+
+A typed SDK failure is never retried as a CLI mutation. Every SDK request emits
+`koru.control.v1` with `interface_id=planfile_client_lifecycle`,
+`transport=python_sdk`, and `replayable=false`. Note and reason contents are
+excluded from the control log.
+
+Compatibility controls:
+
+- `KORU_PLANFILE_SDK=cli` — force the legacy CLI path;
+- `KORU_PLANFILE_SDK=sdk` — force SDK mode for a custom embedded runner;
+- `KORU_PLANFILE_SDK_VERIFY=0` — disable the read-only CLI parity probe.
+
+Custom runners retain CLI behavior unless SDK mode is explicitly requested.
+CLI executable discovery remains temporarily for read-only/administrative
+operations and for the one-release compatibility path.
+
+## Queue retry contract
+
+`execution.max_attempts` belongs to the Koru scheduler. A nonzero executor exit
+or a completion-verification error causes this sequence:
+
+```text
+running
+  → fail (attempt += 1, last_error persisted)
+  → ready + open, if attempt < max_attempts
+  → next queue iteration
+
+running
+  → fail
+  → block, if attempt >= max_attempts
+```
+
+The attempt counter records failures. Thus a success after two failures leaves
+`attempt: 2`; it does not rewrite the audit history. If `fail`, `ready`, or the
+0.1.117 compatibility reopen cannot be completed, Koru blocks the ticket to
+avoid a stale running claim.
+
+Patch-mode retries are nested inside a queue execution:
+
+- `execution.max_attempts` limits complete queue executor runs;
+- `inputs.max_patch_attempts` limits mechanical patch re-asks inside one run;
+- a capability contract may further reduce the patch retry budget.
+
+Set `inputs.max_patch_attempts` explicitly when these limits must be
+independent. For compatibility, tickets that omit it inherit the patch retry
+budget from `execution.max_attempts`.
+
+Do not raise both budgets casually. Human approval, missing credentials,
+resource waits, and other non-improving operational boundaries should be kept
+out of the autonomous queue or configured with one execution attempt.
 
 ## External queue adapters (Mullm and others)
 

@@ -2,12 +2,42 @@
 
 from __future__ import annotations
 
+import ast
 import importlib
 import inspect
 import sys
 from pathlib import Path
 
 import pytest
+
+
+def _private_dependency_imports(package: str) -> list[str]:
+    root = Path(__file__).resolve().parents[1] / "src"
+    offenders: list[str] = []
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                parts = node.module.split(".")
+                private = any(part.startswith("_") for part in parts) or any(
+                    alias.name.startswith("_") for alias in node.names
+                )
+                if parts[0] == package and private:
+                    offenders.append(str(path.relative_to(root)))
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    parts = alias.name.split(".")
+                    if parts[0] == package and any(part.startswith("_") for part in parts):
+                        offenders.append(str(path.relative_to(root)))
+    return offenders
+
+
+def test_koru_src_has_no_private_env2llm_imports() -> None:
+    assert _private_dependency_imports("env2llm") == []
+
+
+def test_koru_src_has_no_private_testql_imports() -> None:
+    assert _private_dependency_imports("testql") == []
 
 
 def test_autopilot_config_is_gillm_canonical() -> None:
@@ -46,6 +76,44 @@ def test_gillm_recovery_bridge_delegates_to_gillm() -> None:
     gillm_recovery = importlib.import_module("gillm.recovery")
     assert recovery.diagnose_drive_reply is gillm_recovery.diagnose_drive_reply
     assert recovery.recovery_hints_for_reload is gillm_recovery.recovery_hints_for_reload
+
+
+def test_gillm_adapters_have_no_behavioral_import_fallbacks() -> None:
+    root = Path(__file__).resolve().parents[1] / "src" / "koru" / "ide_adapters"
+    for name in ("gillm_client.py", "gillm_recovery.py"):
+        source = (root / name).read_text(encoding="utf-8")
+        assert "except ImportError" not in source
+        assert "class ExecutionOutcome" not in source
+        assert "def classify_failure" not in source
+
+
+def test_koruide_registers_host_activity_sinks(monkeypatch) -> None:
+    activity_log = importlib.import_module("koru.activity_log")
+    koruide = importlib.import_module("koruide")
+    events: list[tuple[str, str, str | None]] = []
+    warnings: list[tuple[str, str | None]] = []
+    monkeypatch.setattr(
+        activity_log,
+        "activity",
+        lambda category, message, *, preview=None, **_kwargs: events.append((category, message, preview)),
+    )
+    monkeypatch.setattr(
+        activity_log,
+        "activity_warn",
+        lambda message, *, hint=None, **_kwargs: warnings.append((message, hint)),
+    )
+
+    koruide._set_activity_sink(
+        koruide._koru_activity_bridge,
+        warn_sink=koruide._koru_activity_warn_bridge,
+    )
+    from gillm.runtime.activity import emit_activity, emit_activity_warn
+
+    emit_activity("ACTION", "focused", preview="cursor")
+    emit_activity_warn("profile missing", hint="calibrate")
+
+    assert events == [("ACTION", "focused", "cursor")]
+    assert warnings == [("profile missing", "calibrate")]
 
 
 def test_autopilot_injector_shims_emit_deprecation_warning() -> None:

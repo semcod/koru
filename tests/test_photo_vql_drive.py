@@ -1091,6 +1091,10 @@ def test_enrich_capture_meta_uses_map_region_when_sidecar_origin_zero(
         encoding="utf-8",
     )
     monkeypatch.setattr(vc, "_resolve_ide_prompt_map", lambda _app_id: str(map_path))
+    def fail_monitor_discovery(_display: str | None, _source: str) -> None:
+        raise RuntimeError("headless")
+
+    monkeypatch.setattr("vdisplay.input.monitor_by_name", fail_monitor_discovery)
     meta = {"source": "DP-2", "width": 2048, "height": 1280, "region": {"x": 0, "y": 0, "width": 2048, "height": 1280}}
     enriched = vc._enrich_capture_meta_for_pointer(meta, "DP-2")
     region = enriched.get("region") or {}
@@ -1838,18 +1842,19 @@ def test_real_imgl_src_prefers_semco_path(
     assert (Path(src) / "imgl" / "pipeline.py").is_file()
 
 
-def test_ensure_real_imgl_on_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ensure_real_imgl_on_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
 
-    imgl_root = vc._real_imgl_src()
-    if imgl_root is None:
-        pytest.skip("semcod imgl not on disk")
-    koru_stub = str(Path(vc.__file__).resolve().parents[2] / "imgl")
-    sys.path.insert(0, koru_stub)
+    imgl_checkout = tmp_path / "semcod" / "imgl"
+    (imgl_checkout / "imgl").mkdir(parents=True)
+    (imgl_checkout / "imgl" / "pipeline.py").write_text("# fake imgl pipeline\n", encoding="utf-8")
+    imgl_root = str(imgl_checkout)
+    monkeypatch.setenv("IMGL_SRC", imgl_root)
+    sys.path.append(imgl_root)
     vc._ensure_real_imgl_on_path()
 
     assert sys.path[0] == imgl_root
-    assert koru_stub not in sys.path[:2]
+    assert sys.path.count(imgl_root) == 1
 
 
 def test_import_imgl_targets_clears_cached_stub(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1859,7 +1864,7 @@ def test_import_imgl_targets_clears_cached_stub(monkeypatch: pytest.MonkeyPatch)
     imgl_root = vc._real_imgl_src()
     if imgl_root is None:
         pytest.skip("semcod imgl not on disk")
-    koru_stub = Path(vc.__file__).resolve().parents[2] / "imgl"
+    koru_stub = Path(__file__).resolve().parent / "fakes" / "imgl"
     stub = types.ModuleType("imgl")
     stub.__file__ = str(koru_stub / "__init__.py")
     stub.__path__ = [str(koru_stub)]
