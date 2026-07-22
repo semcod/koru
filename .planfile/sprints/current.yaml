@@ -8520,6 +8520,16 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-07-04T21:47:28.141346+00:00'
+      - action: update
+        changes:
+        - outputs
+        dsl: SODL/1 id=evt_a7e07769379d074af3e0140c event_hash=8b138a3d4256e3778c62da910e924966b45605eae0bc3e61e2a355db9236ba9c
+          timestamp=2026-07-22T17%3A42%3A45.343203%2B00%3A00 kind=task source=planfile.history
+          ticket_id=STARTER-561 actor=system oql=ticket.update uri=planfile%3A%2F%2Ftickets%2FSTARTER-561%2Fcommand%2Fupdate
+          mode=apply status=done correlation_id=STARTER-561 causation_id=- input_hash=6e5ba8087bd43825c3117b2953215180b4b59ffc6244ce36a4c2474a083cc4d5
+          receipt_ref=- replayable=true data=eyJwYXlsb2FkIjp7ImNoYW5nZXMiOlsib3V0cHV0cyJdLCJleGVjdXRpb25fc3RhdGUiOiJkb25lIiwicHJldmlvdXNfZXhlY3V0aW9uX3N0YXRlIjoiZG9uZSIsInByZXZpb3VzX3N0YXR1cyI6ImRvbmUiLCJyZWFzb24iOiIiLCJzdGF0dXMiOiJkb25lIn19
+        source: planfile.store
+        timestamp: '2026-07-22T17:42:45.343203+00:00'
       id: STARTER-561
       inputs:
         llm_model: qwen/qwen3-coder-next
@@ -8614,6 +8624,16 @@ sprint:
           in `client.py`, and a single backward-compatibility layer.\n\n**Test command:**
           \ \n```bash\npython -c \"from gillm.recovery import _classify_failure; from
           gillm.injection.strategies import build_strategy_chain; print('OK')\"\n```"
+        - 'Re-examined 2026-07-22 and re-specified. The input-strategy chain (703
+          lines, 17 functions) is NOT generic actuation: it orchestrates vdisplay.input.linux_ydotool
+          (clicks), vdisplay.control/agent RPC (AT-SPI), gillm Injector (paste/type)
+          plus koru IDE-map and telemetry, and calls 15 sibling functions in vdisplay_client.py.
+          Moving it to gillm.injection.strategies would make gillm depend on vdisplay,
+          inverting the layering. gillm already owns the generic half (Injector.type_text,
+          select_backend, window guard). Real open question is narrower: should gillm''s
+          Injector grow a coordinate-targeted entry point? That is an interface change
+          in gillm, not a move out of koru. Details in docs/boundary-refactoring-proposal.md
+          section 2.'
         result:
           actor: koru-openrouter
           model: qwen/qwen3-coder-next
@@ -8644,7 +8664,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-07-04T21:47:28.141311+00:00'
+      updated_at: '2026-07-22T17:42:45.343161+00:00'
     STARTER-562:
       acceptance_criteria: []
       blocked_by: []

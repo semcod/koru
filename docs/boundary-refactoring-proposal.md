@@ -106,9 +106,40 @@ re-export shims plus its gillm-absent fallback copies (that block *is* the
 §6 soft-degradation path). Remaining: the input-strategy chain move (blocked
 on the vdisplay_client split, STARTER-554/562). Tracked as STARTER-561.
 
-- Input strategy chain from `_type_text_at_vql_coords` (AT-SPI set_value →
+- ~~Input strategy chain from `_type_text_at_vql_coords` (AT-SPI set_value →
   ydotool click → vision click → wl-copy/xclip paste → type → forced) is
-  generic input actuation → `gillm.injection.strategies`.
+  generic input actuation → `gillm.injection.strategies`.~~
+  **Re-examined 2026-07-22 and withdrawn as specified.** The chain is 703
+  lines across 17 functions, and it is not generic actuation — it is
+  cross-provider *orchestration*:
+
+  | step | provider |
+  |---|---|
+  | ydotool clicks | `vdisplay.input.linux_ydotool.LinuxYdotoolInput` |
+  | AT-SPI set_value / click | `vdisplay.control`, or the agent RPC fallback |
+  | paste / type | `gillm.injection.injector.Injector` |
+  | target resolution, telemetry | koru (`_ide_map_message_target`, `_log_vql_cursor_positioning_at_command`) |
+
+  Moving it into `gillm.injection.strategies` would make **gillm depend on
+  vdisplay**, inverting the layering this document exists to fix. gillm
+  already owns the generic half — `Injector.type_text`, backend probing,
+  `select_backend`, the window guard — and koru is left holding exactly the
+  part that decides *which provider to try next and how to prove it worked*.
+  That is koru's job, not a boundary violation.
+
+  The cluster also calls 15 sibling functions in `vdisplay_client.py`
+  (`_canonical_ide`, `_control_click`, `_control_focus`, `_control_set_value`,
+  `_enrich_capture_meta_for_pointer`, `_ide_hints`, `_ide_map_message_target`,
+  `_ide_prompt_app_id`, `_log_vql_cursor_positioning_at_command`,
+  `_photo_capture_meta_for_source`, `_resolve_ide_prompt_map`,
+  `_surface_bounds_target_safe_for_actuation`, `_vdisplay_source_for_ide`,
+  `vdisplay_available`, `verify_chat_text_visible`), so there is no mechanical
+  cut here either.
+
+  If this is still worth doing, the real question is narrower: should gillm's
+  `Injector` grow a *coordinate-targeted* entry point so koru stops driving
+  ydotool through vdisplay directly? That is an interface change in gillm, not
+  a code move out of koru, and it should be re-specified before anyone starts.
 - Failure classification in `gillm_recovery._classify_failure` (plugin /
   input / environment) → `gillm.recovery`; koru keeps only the mapping to
   operator guidance and tickets.
