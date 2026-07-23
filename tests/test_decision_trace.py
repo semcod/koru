@@ -79,6 +79,33 @@ def test_build_decision_record_classifies_plain_idle_skip() -> None:
     assert record.skip_because == "queue idle AND zero open planfile tickets"
 
 
+def test_build_decision_record_classifies_waiting_input_without_autopilot() -> None:
+    # With --no-autopilot (or a human/operator ticket the loop can never
+    # drive), the queue parks on waiting_input but no autopilot ran to set the
+    # stuck flag. Before the fallback this reported "unknown" for a fully
+    # understood state; now it names it stuck_waiting_input.
+    record = build_decision_record(
+        cycle=4,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-012",
+        stagnation_streak=2,
+        autopilot_status="skipped",
+        autopilot_ide="qoder",
+        autopilot_backend=None,
+        autopilot_drive_kind=None,
+        diag_status="skipped",
+        wup_status="ok",
+        cycle_telemetry={},
+        next_step="wait",
+    )
+
+    assert record.skip_code == "stuck_waiting_input"
+    assert record.blocked_by == "stuck_waiting_input"
+    assert record.decided == "skip:stuck_waiting_input"
+    assert "STARTER-012" in record.skip_because
+    assert record.skip_because != "No structured reason recorded for this cycle."
+
+
 def test_compact_line_arrow_separated_format() -> None:
     line = _record(1).compact_line()
     assert line.count(" → ") == 4, "compact line must have exactly 4 arrow separators"

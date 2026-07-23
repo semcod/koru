@@ -668,6 +668,19 @@ def build_decision_record(
         and (not waiting_ticket or waiting_ticket == "-")
     ):
         skip_code = "idle_no_ticket"
+    # Same fallback for the mirror case: the queue is parked on waiting_input
+    # with a real ticket, but no autopilot ran to set the stuck flag (e.g.
+    # --no-autopilot, or a human/operator ticket the loop can never drive).
+    # classify_skip_code only emits stuck_waiting_input from the autopilot
+    # skip path, so without this the loop reports "unknown" for a state it
+    # fully understands. _skip_because already handles the stuck_* prefix.
+    if (
+        skip_code == "unknown"
+        and queue_status.strip().lower() == "waiting_input"
+        and waiting_ticket
+        and waiting_ticket != "-"
+    ):
+        skip_code = "stuck_waiting_input"
     blocked_by = "" if skip_code in {"ok", "unknown"} else skip_code
     skip_because = _skip_because_for_code(
         skip_code=skip_code,
