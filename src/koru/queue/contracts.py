@@ -71,54 +71,94 @@ class CapabilityContract:
         risk_class: str = "R1",
         workspace: Path | None = None,
     ) -> ContractDecision:
-        """Judge one intended action. Any single violation refuses the whole."""
+        """Judge one intended action. Any single violation refuses the whole.
+
+        Each rule is an independent, side-effect-free refusal check returning a
+        refusing :class:`ContractDecision` or ``None``; the first refusal wins.
+        """
+        for refusal in (
+            self._refuse_actor(actor),
+            self._refuse_capability(capability),
+            self._refuse_risk(risk_class),
+            self._refuse_workspace(workspace),
+            self._refuse_denied_paths(targets),
+            self._refuse_paths_outside_allow(targets),
+            self._refuse_file_count(targets),
+            self._refuse_patch_size(diff),
+        ):
+            if refusal is not None:
+                return refusal
+        return ContractDecision(True, "within contract")
+
+    def _refuse_actor(self, actor: str) -> ContractDecision | None:
         if actor != self.actor:
             return ContractDecision(
                 False, f"contract {self.id} is issued to `{self.actor}`, not `{actor}`",
             )
+        return None
+
+    def _refuse_capability(self, capability: str) -> ContractDecision | None:
         if capability not in self.allow_capabilities:
             return ContractDecision(
                 False, f"contract {self.id} does not allow capability `{capability}`",
             )
+        return None
+
+    def _refuse_risk(self, risk_class: str) -> ContractDecision | None:
         if _RISK_ORDER.get(risk_class, 99) > _RISK_ORDER.get(self.max_risk, -1):
             return ContractDecision(
                 False, f"risk {risk_class} exceeds the contract's max_risk {self.max_risk}",
             )
-        if workspace is not None and self.workspace_roots:
-            real = str(Path(workspace).resolve())
-            if not any(
-                real == root or real.startswith(root.rstrip("/") + "/")
-                for root in (str(Path(r).resolve()) for r in self.workspace_roots)
-            ):
-                return ContractDecision(
-                    False, f"workspace {real} is outside the contract's roots",
-                )
+        return None
 
+    def _refuse_workspace(self, workspace: Path | None) -> ContractDecision | None:
+        if workspace is None or not self.workspace_roots:
+            return None
+        real = str(Path(workspace).resolve())
+        if not any(
+            real == root or real.startswith(root.rstrip("/") + "/")
+            for root in (str(Path(r).resolve()) for r in self.workspace_roots)
+        ):
+            return ContractDecision(
+                False, f"workspace {real} is outside the contract's roots",
+            )
+        return None
+
+    def _refuse_denied_paths(self, targets: tuple[str, ...]) -> ContractDecision | None:
         denied = [rel for rel in targets if _matches_any(rel, self.deny_paths)]
         if denied:
             return ContractDecision(
                 False, f"the patch touches denied paths: {', '.join(sorted(denied))}",
             )
-        if self.allow_paths:
-            outside = [rel for rel in targets if not _matches_any(rel, self.allow_paths)]
-            if outside:
-                return ContractDecision(
-                    False,
-                    f"the patch reaches outside allowed paths: {', '.join(sorted(outside))}",
-                )
+        return None
 
+    def _refuse_paths_outside_allow(self, targets: tuple[str, ...]) -> ContractDecision | None:
+        if not self.allow_paths:
+            return None
+        outside = [rel for rel in targets if not _matches_any(rel, self.allow_paths)]
+        if outside:
+            return ContractDecision(
+                False,
+                f"the patch reaches outside allowed paths: {', '.join(sorted(outside))}",
+            )
+        return None
+
+    def _refuse_file_count(self, targets: tuple[str, ...]) -> ContractDecision | None:
         if self.max_files is not None and len(targets) > self.max_files:
             return ContractDecision(
                 False, f"the patch touches {len(targets)} files; the contract allows "
                 f"{self.max_files}",
             )
+        return None
+
+    def _refuse_patch_size(self, diff: str) -> ContractDecision | None:
         if self.max_patch_bytes is not None and len(diff.encode("utf-8")) > self.max_patch_bytes:
             return ContractDecision(
                 False,
                 f"the patch is {len(diff.encode('utf-8'))} bytes; the contract allows "
                 f"{self.max_patch_bytes}",
             )
-        return ContractDecision(True, "within contract")
+        return None
 
 
 def contract_for_ticket(project: Path, ticket: dict) -> CapabilityContract | None:
