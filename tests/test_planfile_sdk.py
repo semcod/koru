@@ -72,6 +72,44 @@ def test_parse_lifecycle_request_maps_cli_without_policy() -> None:
     assert parse_lifecycle_request(["ticket", "done", "PLF-1", "--unknown", "x"]) is None
 
 
+def test_parse_lifecycle_request_covers_block_complete_and_edge_cases() -> None:
+    # Characterisation before refactor: block, the complete alias, and the
+    # validation edge cases the existing tests never exercised.
+    block = parse_lifecycle_request(
+        ["ticket", "block", "PLF-1", "--reason", "dep", "--actor", "koru"]
+    )
+    assert block is not None
+    assert block.operation == "block"
+    assert block.kwargs == {"reason": "dep", "actor": "koru"}
+
+    complete = parse_lifecycle_request(["ticket", "complete", "PLF-1", "--note", "n"])
+    assert complete is not None
+    assert complete.operation == "complete"
+    assert complete.kwargs == {"note": "n"}
+
+    start = parse_lifecycle_request(
+        ["ticket", "start", "PLF-1", "--assigned-to", "koru"]
+    )
+    assert start is not None and start.kwargs == {"assigned_to": "koru"}
+
+    # short/long flag collisions and unknown options must all reject
+    assert parse_lifecycle_request(
+        ["ticket", "fail", "PLF-1", "--error", "a", "-e", "b"]
+    ) is None
+    assert parse_lifecycle_request(
+        ["ticket", "ready", "PLF-1", "--note", "a", "-n", "b"]
+    ) is None
+    assert parse_lifecycle_request(["ticket", "fail", "PLF-1"]) is None  # error required
+    assert parse_lifecycle_request(["ticket", "block", "PLF-1", "--bad", "x"]) is None
+    assert parse_lifecycle_request(["ticket", "claim", "PLF-1", "--lease-seconds", "abc"]) is None
+    assert parse_lifecycle_request(["ticket", "update", "PLF-1", "--reason", "x"]) is None
+    assert parse_lifecycle_request(["ticket"]) is None
+    assert parse_lifecycle_request(["ticket", "claim", "  "]) is None
+    # -n short form for ready
+    ready_short = parse_lifecycle_request(["ticket", "ready", "PLF-1", "-n", "go"])
+    assert ready_short is not None and ready_short.kwargs == {"note": "go"}
+
+
 def test_sdk_executes_mutation_once_and_returns_typed_failure(tmp_path: Path) -> None:
     client = _Client(
         str(tmp_path),

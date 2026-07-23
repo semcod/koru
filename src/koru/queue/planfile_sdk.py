@@ -68,8 +68,77 @@ def _option_pairs(tokens: Sequence[str]) -> dict[str, str] | None:
     return result
 
 
+# Commands whose kwargs are a plain flag→snake_case map once the option set is
+# validated. `done` and `complete` are the same operation. Kept as data so the
+# dispatcher stays flat instead of one if-branch per command.
+_MAPPED_LIFECYCLE_COMMANDS: dict[str, tuple[str, frozenset[str]]] = {
+    "start": ("start", frozenset({"--assigned-to", "--reason", "--actor"})),
+    "done": ("complete", frozenset({"--note", "--reason", "--actor"})),
+    "complete": ("complete", frozenset({"--note", "--reason", "--actor"})),
+    "block": ("block", frozenset({"--reason", "--note", "--actor"})),
+}
+
+
+def _snake_kwargs(options: dict[str, str]) -> dict[str, Any]:
+    """Map ``--assigned-to`` → ``assigned_to`` etc. for the plain commands."""
+    return {key.removeprefix("--").replace("-", "_"): value for key, value in options.items()}
+
+
+def _mapped_request(
+    operation: str, ticket_id: str, options: dict[str, str], allowed: frozenset[str]
+) -> LifecycleRequest | None:
+    if set(options) - allowed:
+        return None
+    return LifecycleRequest(operation, ticket_id, _snake_kwargs(options))
+
+
+def _parse_claim(ticket_id: str, options: dict[str, str]) -> LifecycleRequest | None:
+    if set(options) - {"--assigned-to", "--lease-seconds"}:
+        return None
+    kwargs: dict[str, Any] = {}
+    if assigned_to := options.get("--assigned-to"):
+        kwargs["assigned_to"] = assigned_to
+    if lease_raw := options.get("--lease-seconds"):
+        try:
+            kwargs["lease_seconds"] = int(lease_raw)
+        except ValueError:
+            return None
+    return LifecycleRequest("claim", ticket_id, kwargs)
+
+
+def _parse_fail(ticket_id: str, options: dict[str, str]) -> LifecycleRequest | None:
+    if set(options) - {"--error", "-e", "--reason", "--actor"}:
+        return None
+    error = options.get("--error") or options.get("-e")
+    if not error or ("--error" in options and "-e" in options):
+        return None
+    kwargs: dict[str, Any] = {"error": error}
+    for flag in ("--reason", "--actor"):
+        if flag in options:
+            kwargs[flag.removeprefix("--")] = options[flag]
+    return LifecycleRequest("fail", ticket_id, kwargs)
+
+
+def _parse_ready(ticket_id: str, options: dict[str, str]) -> LifecycleRequest | None:
+    if set(options) - {"--note", "-n", "--reason", "--actor"}:
+        return None
+    if "--note" in options and "-n" in options:
+        return None
+    kwargs: dict[str, Any] = {}
+    if note := options.get("--note") or options.get("-n"):
+        kwargs["note"] = note
+    for flag in ("--reason", "--actor"):
+        if flag in options:
+            kwargs[flag.removeprefix("--")] = options[flag]
+    return LifecycleRequest("ready", ticket_id, kwargs)
+
+
 def parse_lifecycle_request(args: Sequence[str]) -> LifecycleRequest | None:
-    """Parse the supported lifecycle subset; return ``None`` for CLI-only commands."""
+    """Parse the supported lifecycle subset; return ``None`` for CLI-only commands.
+
+    The per-command validators live in ``_parse_*`` helpers and
+    ``_MAPPED_LIFECYCLE_COMMANDS``; this stays a flat dispatcher.
+    """
 
     tokens = [str(token) for token in args]
     if len(tokens) < 3 or tokens[0] != "ticket":
@@ -82,79 +151,14 @@ def parse_lifecycle_request(args: Sequence[str]) -> LifecycleRequest | None:
         return None
 
     if command == "claim":
-        if set(options) - {"--assigned-to", "--lease-seconds"}:
-            return None
-        kwargs: dict[str, Any] = {}
-        if assigned_to := options.get("--assigned-to"):
-            kwargs["assigned_to"] = assigned_to
-        if lease_raw := options.get("--lease-seconds"):
-            try:
-                kwargs["lease_seconds"] = int(lease_raw)
-            except ValueError:
-                return None
-        return LifecycleRequest("claim", ticket_id, kwargs)
-
-    if command == "start":
-        if set(options) - {"--assigned-to", "--reason", "--actor"}:
-            return None
-        return LifecycleRequest(
-            "start",
-            ticket_id,
-            {
-                key.removeprefix("--").replace("-", "_"): value
-                for key, value in options.items()
-            },
-        )
-
-    if command in {"done", "complete"}:
-        if set(options) - {"--note", "--reason", "--actor"}:
-            return None
-        return LifecycleRequest(
-            "complete",
-            ticket_id,
-            {
-                key.removeprefix("--").replace("-", "_"): value
-                for key, value in options.items()
-            },
-        )
-
+        return _parse_claim(ticket_id, options)
+    if mapped := _MAPPED_LIFECYCLE_COMMANDS.get(command):
+        operation, allowed = mapped
+        return _mapped_request(operation, ticket_id, options, allowed)
     if command == "fail":
-        if set(options) - {"--error", "-e", "--reason", "--actor"}:
-            return None
-        error = options.get("--error") or options.get("-e")
-        if not error or ("--error" in options and "-e" in options):
-            return None
-        kwargs = {"error": error}
-        for flag in ("--reason", "--actor"):
-            if flag in options:
-                kwargs[flag.removeprefix("--")] = options[flag]
-        return LifecycleRequest("fail", ticket_id, kwargs)
-
+        return _parse_fail(ticket_id, options)
     if command == "ready":
-        if set(options) - {"--note", "-n", "--reason", "--actor"}:
-            return None
-        if "--note" in options and "-n" in options:
-            return None
-        kwargs = {}
-        if note := options.get("--note") or options.get("-n"):
-            kwargs["note"] = note
-        for flag in ("--reason", "--actor"):
-            if flag in options:
-                kwargs[flag.removeprefix("--")] = options[flag]
-        return LifecycleRequest("ready", ticket_id, kwargs)
-
-    if command == "block":
-        if set(options) - {"--reason", "--note", "--actor"}:
-            return None
-        return LifecycleRequest(
-            "block",
-            ticket_id,
-            {
-                key.removeprefix("--").replace("-", "_"): value
-                for key, value in options.items()
-            },
-        )
-
+        return _parse_ready(ticket_id, options)
     if command == "update" and set(options) in ({"--note"}, {"-n"}):
         return LifecycleRequest("note", ticket_id, {"note": next(iter(options.values()))})
     return None
