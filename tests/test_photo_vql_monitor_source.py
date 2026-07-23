@@ -1,4 +1,11 @@
-"""Source-monitor resolution: chat panel on a secondary monitor vs editor."""
+"""koru's binding to vdisplay.monitors: the KORU_VDISPLAY_SOURCE contract.
+
+The monitor-topology logic moved to vdisplay.monitors on 2026-07-23 (and its
+surface-preference tests moved with it, to
+vdisplay/tests/test_monitor_surface_preference.py). What stays koru's is the
+environment override: koru reads KORU_VDISPLAY_SOURCE and forwards it to
+vdisplay as ``explicit_source``. That forwarding is what this file guards.
+"""
 
 from __future__ import annotations
 
@@ -9,85 +16,42 @@ def _canon(ide: str) -> str:
     return {"pycharm": "jetbrains", "idea": "jetbrains"}.get(ide, ide)
 
 
-def _probe(*, surfaces, primary="HDMI-1", best=None):
-    monitors = [
-        {"name": "HDMI-1", "primary": primary == "HDMI-1"},
-        {"name": "DP-1", "primary": primary == "DP-1"},
-        {"name": "DP-2", "primary": primary == "DP-2"},
-    ]
-    probe = {
-        "monitors": monitors,
-        "monitor_names": ["HDMI-1", "DP-1", "DP-2"],
-        "ide_surfaces": surfaces,
+def _probe(names):
+    return {
+        "monitor_names": list(names),
+        "monitors": [{"name": n, "primary": n == names[0]} for n in names],
     }
-    if best is not None:
-        probe["ide_surface_best"] = best
-    return probe
 
 
-def test_editor_on_primary_chat_on_dp_prefers_dp():
-    # PyCharm editor ranks best on HDMI-1 (primary); Qoder chat panel on DP-1.
-    probe = _probe(
-        surfaces=[
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "HDMI-1"},
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "DP-1"},
-        ],
-        best={"ide_hint": "jetbrains", "monitor_name": "HDMI-1"},
+def test_env_override_is_read_and_forwarded(monkeypatch):
+    monkeypatch.setenv("KORU_VDISPLAY_SOURCE", "DP-2")
+    probe = _probe(["DP-1", "DP-2"])
+    chosen, out = m.resolve_vdisplay_source_for_ide(
+        "vscode", canonical_ide=_canon, desktop_probe=lambda **k: probe, probe=probe
     )
-    assert m._surface_preferred_monitor(probe, canon="jetbrains") == "DP-1"
+    assert chosen == "DP-2"
+    assert out["ok"] is True
 
 
-def test_single_monitor_ide_keeps_editor_monitor():
-    probe = _probe(
-        surfaces=[
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "HDMI-1"},
-        ],
-        best={"ide_hint": "jetbrains", "monitor_name": "HDMI-1"},
+def test_without_env_the_ide_default_applies(monkeypatch):
+    monkeypatch.delenv("KORU_VDISPLAY_SOURCE", raising=False)
+    probe = _probe(["DP-1", "DP-2"])
+    chosen, _ = m.resolve_vdisplay_source_for_ide(
+        "vscode", canonical_ide=_canon, desktop_probe=lambda **k: probe, probe=probe
     )
-    assert m._surface_preferred_monitor(probe, canon="jetbrains") == "HDMI-1"
+    assert chosen == "DP-1"
 
 
-def test_toolbox_surface_ignored_for_multimonitor_decision():
-    # A Toolbox launcher on DP-2 must not be treated as a chat panel.
-    probe = _probe(
-        surfaces=[
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "HDMI-1"},
-            {"ide_hint": "jetbrains", "display_name": "JetBrains Toolbox", "monitor_name": "DP-2"},
-        ],
-        best={"ide_hint": "jetbrains", "monitor_name": "HDMI-1"},
+def test_env_override_for_a_disconnected_monitor_fails_closed(monkeypatch):
+    monkeypatch.setenv("KORU_VDISPLAY_SOURCE", "HDMI-9")
+    probe = _probe(["DP-1"])
+    chosen, out = m.resolve_vdisplay_source_for_ide(
+        "vscode", canonical_ide=_canon, desktop_probe=lambda **k: probe, probe=probe
     )
-    assert m._surface_preferred_monitor(probe, canon="jetbrains") == "HDMI-1"
+    assert chosen == "HDMI-9"
+    assert out["ok"] is False
 
 
-def test_chat_on_primary_dp_not_preferred_over_itself():
-    # Editor already on the only DP surface → nothing else to prefer.
-    probe = _probe(
-        surfaces=[
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "DP-1"},
-        ],
-        primary="DP-1",
-        best={"ide_hint": "jetbrains", "monitor_name": "DP-1"},
-    )
-    assert m._surface_preferred_monitor(probe, canon="jetbrains") == "DP-1"
-
-
-def test_no_best_falls_back_to_first_surface_then_secondary_dp():
-    probe = _probe(
-        surfaces=[
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "HDMI-1"},
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "DP-1"},
-        ],
-    )
-    assert m._surface_preferred_monitor(probe, canon="jetbrains") == "DP-1"
-
-
-def test_ide_surface_monitors_dedupes_and_skips_toolbox():
-    probe = _probe(
-        surfaces=[
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "HDMI-1"},
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "HDMI-1"},
-            {"ide_hint": "jetbrains", "display_name": "PyCharm", "monitor_name": "DP-1"},
-            {"ide_hint": "jetbrains", "display_name": "JetBrains Toolbox", "monitor_name": "DP-2"},
-        ],
-    )
-    assert m._ide_surface_monitors(probe, canon="jetbrains") == ["HDMI-1", "DP-1"]
+def test_mismatch_and_format_hint_are_re_exported():
+    assert callable(m.map_capture_monitor_mismatch)
+    assert callable(m.format_wayland_vdisplay_operator_hint)

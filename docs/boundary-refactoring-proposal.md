@@ -67,7 +67,7 @@ the parts that plausibly belong to vdisplay are:
 |---|---|---|
 | VQL sidecar reading | ~130 | moved |
 | `photo_vql_target.py` | 525 | **examined — went to koruide, not vdisplay; see below** |
-| `photo_vql_monitor.py` | 376 | separate file, not yet examined |
+| `photo_vql_monitor.py` | 376 | **done — went to vdisplay.monitors; see below** |
 | pointer/coordinate mapping | ~70 | **blocked**, see below |
 
 That totals ~1100 lines, not ~4000. The bulk of the file is drive
@@ -127,6 +127,33 @@ The common error was assigning code by the subsystem it *talks to* rather than
 the domain it *knows about*. `photo_vql_target` reads VQL layers, so it looked
 like vdisplay's; what it actually encodes is IDE layout. Measure the knowledge,
 not the imports.
+
+**`photo_vql_monitor.py` DONE (2026-07-23) — this one the proposal got right.**
+Unlike `photo_vql_target` (which measured as IDE knowledge, not screen truth),
+this file really is display topology: which physical monitor an IDE surface
+lives on, how DP-* outputs rank, whether two renamed outputs are the same
+screen by geometry. Moved to `vdisplay.monitors`; koru's file went **376 → 95
+lines**.
+
+Two koru contracts were parametrised out rather than carried into vdisplay:
+
+* `resolve_vdisplay_source_for_ide` no longer reads `KORU_VDISPLAY_SOURCE` — it
+  takes `explicit_source`. koru's thin binding reads the variable and forwards
+  the value, so the env contract stays koru's;
+* the monitor-mismatch message no longer names that variable ("override the
+  capture source" instead).
+
+`format_wayland_vdisplay_operator_hint` stayed in koru in full: it is a
+koru-CLI operator hint (`koru autopilot vdisplay-up`, the koru dashboard on
+:8765, `KORU_ALLOW_BLIND_KEYBOARD_FALLBACK`) and describes koru, not any
+display.
+
+The six surface-preference tests moved to vdisplay with the code they cover;
+koru keeps four tests for its own binding (that the env override is read and
+forwarded, and fails closed for a disconnected monitor). New in vdisplay: 17
+tests (`test_monitors.py` + `test_monitor_surface_preference.py`), including a
+contract that the module imports nothing from koru. Verified standalone in a
+clean venv with koru absent.
 
 ### 2. gillm owns GUI actuation & recovery — recovery half DONE (2026-07-03)
 

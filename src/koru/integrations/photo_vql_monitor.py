@@ -1,277 +1,32 @@
-"""Monitor/source resolution for photo-VQL capture."""
+"""Monitor/source resolution for photo-VQL capture — koru's binding.
+
+The monitor topology moved to :mod:`vdisplay.monitors` on 2026-07-23: which
+physical screen an IDE surface lives on, how DP-* outputs rank, whether two
+renamed outputs are the same display by geometry. That is knowledge about
+screens, and vdisplay owns it.
+
+koru keeps only what is koru's own contract:
+
+* ``KORU_VDISPLAY_SOURCE`` — koru's environment override. vdisplay's
+  ``resolve_vdisplay_source_for_ide`` takes the value as ``explicit_source``;
+  this module reads the variable and passes it in.
+* :func:`format_wayland_vdisplay_operator_hint` — a koru-CLI operator hint
+  (``koru autopilot vdisplay-up``, the koru dashboard on :8765,
+  ``KORU_ALLOW_BLIND_KEYBOARD_FALLBACK``). It describes koru, not any display,
+  and stays here in full.
+
+``resolve_vdisplay_source_for_ide`` and ``map_capture_monitor_mismatch`` are
+re-exported with the same names so existing call sites and the tests that
+patch them keep working; the resolve wrapper injects the env override.
+"""
 
 from __future__ import annotations
 
 import os
 from typing import Any
 
-_IDE_DEFAULT_SOURCE: dict[str, str] = {
-    "cursor": "DP-1",
-    "windsurf": "DP-1",
-    "antigravity": "DP-1",
-    "vscode": "DP-1",
-    "jetbrains": "DP-1",
-    "pycharm": "DP-1",
-    "idea": "DP-1",
-}
-
-
-def _dp_monitor_names(probe: dict[str, Any]) -> list[str]:
-    return [
-        str(monitor.get("name") or "")
-        for monitor in probe.get("monitors") or []
-        if str(monitor.get("name") or "").startswith("DP-")
-    ]
-
-
-def _primary_monitor_names(probe: dict[str, Any]) -> list[str]:
-    return [
-        str(monitor["name"])
-        for monitor in probe.get("monitors") or []
-        if monitor.get("primary") and monitor.get("name")
-    ]
-
-
-def _monitor_candidate_order(
-    *,
-    explicit: str,
-    preferred: str,
-    probe: dict[str, Any],
-    names: set[str],
-) -> list[str]:
-    candidates: list[str] = []
-    for value in (
-        explicit,
-        preferred,
-        *_dp_monitor_names(probe),
-        *_primary_monitor_names(probe),
-    ):
-        if value and value not in candidates:
-            candidates.append(value)
-    for name in sorted(names):
-        if name not in candidates:
-            candidates.append(name)
-    return candidates
-
-
-def _finalize_resolved_probe(
-    probe: dict[str, Any],
-    *,
-    preferred: str,
-    chosen: str,
-    names: set[str],
-) -> dict[str, Any]:
-    resolved_probe = {
-        **probe,
-        "requested_source": preferred,
-        "resolved_source": chosen,
-        "source_available": chosen in names if names else None,
-    }
-    if names and chosen not in names:
-        resolved_probe["ok"] = False
-        resolved_probe["error"] = (
-            f"no connected monitor for {preferred!r} "
-            f"(available: {sorted(names)})"
-        )
-    elif chosen != preferred:
-        resolved_probe["source_auto_resolved"] = True
-        resolved_probe["source_was"] = preferred
-        resolved_probe["ok"] = True
-        resolved_probe["source_available"] = True
-        resolved_probe.pop("error", None)
-    else:
-        resolved_probe["ok"] = bool(resolved_probe.get("ok", True))
-        resolved_probe["source_available"] = chosen in names if names else None
-    return resolved_probe
-
-
-def _ide_surface_rows(probe: dict[str, Any], *, canon: str) -> list[dict[str, Any]]:
-    """IDE surface rows for ``canon``, excluding the Toolbox launcher window."""
-    rows: list[dict[str, Any]] = []
-    for row in probe.get("ide_surfaces") or []:
-        if not isinstance(row, dict):
-            continue
-        if row.get("ide_hint") != canon and not (
-            canon in {"jetbrains", "pycharm", "idea"} and row.get("ide_hint") == "jetbrains"
-        ):
-            continue
-        if "toolbox" in str(row.get("display_name") or "").lower():
-            continue
-        rows.append(row)
-    return rows
-
-
-def _ide_surface_monitors(probe: dict[str, Any], *, canon: str) -> list[str]:
-    """Distinct monitors that host a surface of the target IDE."""
-    monitors: list[str] = []
-    for row in _ide_surface_rows(probe, canon=canon):
-        name = str(row.get("monitor_name") or "").strip()
-        if name and name not in monitors:
-            monitors.append(name)
-    return monitors
-
-
-def _prefer_secondary_chat_monitor(
-    probe: dict[str, Any],
-    *,
-    canon: str,
-    editor_monitor: str,
-) -> str | None:
-    """When the IDE spans monitors, pick the one likely holding the chat panel.
-
-    JetBrains tool windows (the Qoder / AI chat panel) are commonly dragged to
-    a secondary DP-* monitor while the main editor keeps the primary output.
-    The editor surface ranks highest, so the naive best-surface pick lands on
-    the editor monitor and captures the wrong screen. When the IDE also has a
-    surface on a DP-* monitor other than the editor's, prefer that one.
-    """
-    surface_monitors = _ide_surface_monitors(probe, canon=canon)
-    if len(surface_monitors) < 2:
-        return None
-    primary = set(_primary_monitor_names(probe))
-    for name in surface_monitors:
-        if name == editor_monitor:
-            continue
-        if name.startswith("DP-") and name not in primary:
-            return name
-    return None
-
-
-def _surface_preferred_monitor(probe: dict[str, Any], *, canon: str) -> str | None:
-    """Best-effort monitor from correlated IDE surface (e.g. PyCharm on HDMI-1)."""
-    best = probe.get("ide_surface_best")
-    if not isinstance(best, dict):
-        rows = _ide_surface_rows(probe, canon=canon)
-        editor_monitor = str((rows[0].get("monitor_name") if rows else "") or "")
-        chat_monitor = _prefer_secondary_chat_monitor(
-            probe, canon=canon, editor_monitor=editor_monitor
-        )
-        if chat_monitor:
-            return chat_monitor
-        return editor_monitor or None
-    if canon in {"jetbrains", "pycharm", "idea"} and best.get("ide_hint") not in {None, "jetbrains"}:
-        return None
-    editor_monitor = str(best.get("monitor_name") or "")
-    chat_monitor = _prefer_secondary_chat_monitor(
-        probe, canon=canon, editor_monitor=editor_monitor
-    )
-    if chat_monitor:
-        return chat_monitor
-    return editor_monitor or None
-
-
-def map_capture_monitor_mismatch(
-    map_path: str,
-    *,
-    source: str,
-) -> dict[str, Any] | None:
-    """Return mismatch details when GUI map was calibrated on a different monitor."""
-    try:
-        from vdisplay.control.gui_map import load_gui_map
-
-        pack = load_gui_map(map_path)
-    except Exception as exc:
-        return {
-            "map_path": map_path,
-            "capture_source": source,
-            "error": str(exc),
-            "message": f"could not load GUI map {map_path!r} to verify capture source",
-        }
-    meta = pack.capture_meta if isinstance(pack.capture_meta, dict) else {}
-    # The top-level map monitor is the calibration contract.  capture_meta can
-    # be overwritten by a failed/partial refresh capture and must not silently
-    # re-authorize actuation on another monitor.
-    map_source = str(
-        getattr(pack, "monitor", None)
-        or meta.get("source")
-        or meta.get("monitor_name")
-        or meta.get("monitor")
-        or ""
-    ).strip()
-    if not map_source or map_source == source:
-        return None
-    if _monitor_sources_equivalent(map_source, source):
-        return None
-    connected = _connected_monitor_names()
-    if map_source not in connected and source in connected:
-        return None
-    rotation = getattr(pack, "rotation", None) or meta.get("rotation")
-    return {
-        "map_path": map_path,
-        "map_source": map_source,
-        "capture_source": source,
-        "map_rotation": rotation,
-        "message": (
-            f"GUI map {map_path!r} is calibrated for monitor {map_source!r}"
-            f"{f' (rotation={rotation!r})' if rotation else ''}, "
-            f"but capture source is {source!r}. "
-            f"Recalibrate the map or set KORU_VDISPLAY_SOURCE={map_source!r}."
-        ),
-    }
-
-
-def _connected_monitor_names() -> set[str]:
-    try:
-        from vdisplay.application.services.discovery import list_monitors_local
-    except ImportError:
-        return set()
-    try:
-        payload = list_monitors_local()
-    except Exception:
-        return set()
-    names: set[str] = set()
-    for item in payload.get("monitors") or []:
-        if item.get("connected") is False:
-            continue
-        name = str(item.get("name") or "").strip()
-        if name:
-            names.add(name)
-    return names
-
-
-def _connected_monitors_by_name() -> dict[str, Any] | None:
-    """Connected monitors keyed by name; ``None`` when discovery is unavailable."""
-    try:
-        from vdisplay.application.services.discovery import list_monitors_local
-    except ImportError:
-        return None
-    try:
-        payload = list_monitors_local()
-    except Exception:
-        return None
-    monitors = payload.get("monitors") or []
-    return {
-        str(item.get("name") or "").strip(): item
-        for item in monitors
-        if item.get("connected") is not False and str(item.get("name") or "").strip()
-    }
-
-
-def _monitor_geometry_matches(left_meta: dict[str, Any], right_meta: dict[str, Any]) -> bool:
-    """True when every geometry key present on both monitors has an equal value."""
-    keys = ("x", "y", "width_px", "height_px", "width", "height")
-    for key in keys:
-        left_val = left_meta.get(key)
-        right_val = right_meta.get(key)
-        if left_val is None or right_val is None:
-            continue
-        if int(left_val) != int(right_val):
-            return False
-    return True
-
-
-def _monitor_sources_equivalent(left: str, right: str) -> bool:
-    """Treat renamed/reconnected outputs as equivalent when geometry matches."""
-    if not left or not right or left == right:
-        return left == right
-    by_name = _connected_monitors_by_name()
-    if by_name is None:
-        return False
-    left_meta = by_name.get(left)
-    right_meta = by_name.get(right)
-    if not left_meta or not right_meta:
-        return False
-    return _monitor_geometry_matches(left_meta, right_meta)
+from vdisplay.monitors import map_capture_monitor_mismatch
+from vdisplay.monitors import resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_for_ide
 
 
 def resolve_vdisplay_source_for_ide(
@@ -282,51 +37,15 @@ def resolve_vdisplay_source_for_ide(
     probe: dict[str, Any] | None = None,
     ide_default_source: dict[str, str] | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    """Pick capture monitor: explicit env > IDE default > DP-* > primary > first connected."""
-    defaults = ide_default_source or _IDE_DEFAULT_SOURCE
-    explicit = os.environ.get("KORU_VDISPLAY_SOURCE", "").strip()
-    canon = canonical_ide(ide)
-    preferred = explicit or defaults.get(canon, "DP-1")
-    if probe is None:
-        probe = desktop_probe(ide=ide, source=preferred)
-    names = set(probe.get("monitor_names") or [])
-
-    if not explicit:
-        surface_monitor = _surface_preferred_monitor(probe, canon=canon)
-        if surface_monitor and surface_monitor in names:
-            preferred = surface_monitor
-            probe = {
-                **probe,
-                "source_from_ide_surface": surface_monitor,
-                "ide_surface_best": probe.get("ide_surface_best"),
-            }
-
-    if explicit and explicit not in names and names:
-        failed_probe = {
-            **probe,
-            "requested_source": explicit,
-            "resolved_source": explicit,
-            "source_available": False,
-            "ok": False,
-            "error": (
-                f"requested monitor {explicit!r} not connected "
-                f"(available: {sorted(names)})"
-            ),
-        }
-        return explicit, failed_probe
-
-    candidates = _monitor_candidate_order(
-        explicit=explicit,
-        preferred=preferred,
+    """Resolve the capture monitor, honouring koru's ``KORU_VDISPLAY_SOURCE``."""
+    return _resolve_vdisplay_source_for_ide(
+        ide,
+        canonical_ide=canonical_ide,
+        desktop_probe=desktop_probe,
         probe=probe,
-        names=names,
+        ide_default_source=ide_default_source,
+        explicit_source=os.environ.get("KORU_VDISPLAY_SOURCE", ""),
     )
-    chosen = preferred
-    for candidate in candidates:
-        if candidate in names:
-            chosen = candidate
-            break
-    return chosen, _finalize_resolved_probe(probe, preferred=preferred, chosen=chosen, names=names)
 
 
 def format_wayland_vdisplay_operator_hint(*, ide: str) -> str:

@@ -1372,7 +1372,7 @@ def test_map_capture_monitor_mismatch(tmp_path: Path) -> None:
         "message": (
             f"GUI map {str(map_path)!r} is calibrated for monitor 'DP-2' (rotation='left'), "
             "but capture source is 'HDMI-1'. "
-            "Recalibrate the map or set KORU_VDISPLAY_SOURCE='DP-2'."
+            "Recalibrate the map or override the capture source to 'DP-2'."
         ),
     }
     assert map_capture_monitor_mismatch(str(map_path), source="DP-2") is None
